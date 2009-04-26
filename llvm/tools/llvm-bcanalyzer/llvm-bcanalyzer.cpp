@@ -72,13 +72,22 @@ static enum {
 
 /// GetBlockName - Return a symbolic block name if known, otherwise return
 /// null.
-static const char *GetBlockName(unsigned BlockID) {
+static const char *GetBlockName(unsigned BlockID,
+                                const BitstreamReader &StreamFile) {
   // Standard blocks for all bitcode files.
   if (BlockID < bitc::FIRST_APPLICATION_BLOCKID) {
     if (BlockID == bitc::BLOCKINFO_BLOCK_ID)
       return "BLOCKINFO_BLOCK";
     return 0;
   }
+  
+  // Check to see if we have a blockinfo record for this block, with a name.
+  if (const BitstreamReader::BlockInfo *Info =
+        StreamFile.getBlockInfo(BlockID)) {
+    if (!Info->Name.empty())
+      return Info->Name.c_str();
+  }
+  
   
   if (CurStreamType != LLVMIRBitstream) return 0;
   
@@ -96,17 +105,29 @@ static const char *GetBlockName(unsigned BlockID) {
 
 /// GetCodeName - Return a symbolic code name if known, otherwise return
 /// null.
-static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
+static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
+                               const BitstreamReader &StreamFile) {
   // Standard blocks for all bitcode files.
   if (BlockID < bitc::FIRST_APPLICATION_BLOCKID) {
     if (BlockID == bitc::BLOCKINFO_BLOCK_ID) {
       switch (CodeID) {
       default: return 0;
-      case bitc::MODULE_CODE_VERSION:     return "VERSION";
+      case bitc::BLOCKINFO_CODE_SETBID:        return "SETBID";
+      case bitc::BLOCKINFO_CODE_BLOCKNAME:     return "BLOCKNAME";
+      case bitc::BLOCKINFO_CODE_SETRECORDNAME: return "SETRECORDNAME";
       }
     }
     return 0;
   }
+  
+  // Check to see if we have a blockinfo record for this record, with a name.
+  if (const BitstreamReader::BlockInfo *Info =
+        StreamFile.getBlockInfo(BlockID)) {
+    for (unsigned i = 0, e = Info->RecordNames.size(); i != e; ++i)
+      if (Info->RecordNames[i].first == CodeID)
+        return Info->RecordNames[i].second.c_str();
+  }
+  
   
   if (CurStreamType != LLVMIRBitstream) return 0;
   
@@ -289,7 +310,7 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
   const char *BlockName = 0;
   if (Dump) {
     std::cerr << Indent << "<";
-    if ((BlockName = GetBlockName(BlockID)))
+    if ((BlockName = GetBlockName(BlockID, *Stream.getBitStreamReader())))
       std::cerr << BlockName;
     else
       std::cerr << "UnknownBlock" << BlockID;
@@ -358,11 +379,13 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
       
       if (Dump) {
         std::cerr << Indent << "  <";
-        if (const char *CodeName = GetCodeName(Code, BlockID))
+        if (const char *CodeName =
+              GetCodeName(Code, BlockID, *Stream.getBitStreamReader()))
           std::cerr << CodeName;
         else
           std::cerr << "UnknownCode" << Code;
-        if (NonSymbolic && GetCodeName(Code, BlockID))
+        if (NonSymbolic &&
+            GetCodeName(Code, BlockID, *Stream.getBitStreamReader()))
           std::cerr << " codeid=" << Code;
         if (AbbrevID != bitc::UNABBREV_RECORD)
           std::cerr << " abbrevid=" << AbbrevID;
@@ -474,7 +497,7 @@ static int AnalyzeBitcode() {
   for (std::map<unsigned, PerBlockIDStats>::iterator I = BlockIDStats.begin(),
        E = BlockIDStats.end(); I != E; ++I) {
     std::cerr << "  Block ID #" << I->first;
-    if (const char *BlockName = GetBlockName(I->first))
+    if (const char *BlockName = GetBlockName(I->first, StreamFile))
       std::cerr << " (" << BlockName << ")";
     std::cerr << ":\n";
     
@@ -517,7 +540,8 @@ static int AnalyzeBitcode() {
       std::cerr << "\tCode Histogram:\n";
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
         std::cerr << "\t\t" << FreqPairs[i].first << "\t";
-        if (const char *CodeName = GetCodeName(FreqPairs[i].second, I->first))
+        if (const char *CodeName = 
+              GetCodeName(FreqPairs[i].second, I->first, StreamFile))
           std::cerr << CodeName << "\n";
         else
           std::cerr << "UnknownCode" << FreqPairs[i].second << "\n";

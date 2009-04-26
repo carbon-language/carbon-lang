@@ -30,6 +30,9 @@ public:
   struct BlockInfo {
     unsigned BlockID;
     std::vector<BitCodeAbbrev*> Abbrevs;
+    std::string Name;
+    
+    std::vector<std::pair<unsigned, std::string> > RecordNames;
   };
 private:
   /// FirstChar/LastChar - This remembers the first and last bytes of the
@@ -78,7 +81,7 @@ public:
   
   /// getBlockInfo - If there is block info for the specified ID, return it,
   /// otherwise return null.
-  BlockInfo *getBlockInfo(unsigned BlockID) {
+  const BlockInfo *getBlockInfo(unsigned BlockID) const {
     // Common case, the most recent entry matches BlockID.
     if (!BlockInfoRecords.empty() && BlockInfoRecords.back().BlockID == BlockID)
       return &BlockInfoRecords.back();
@@ -91,8 +94,8 @@ public:
   }
 
   BlockInfo &getOrCreateBlockInfo(unsigned BlockID) {
-    if (BlockInfo *BI = getBlockInfo(BlockID))
-      return *BI;
+    if (const BlockInfo *BI = getBlockInfo(BlockID))
+      return *const_cast<BlockInfo*>(BI);
 
     // Otherwise, add a new record.
     BlockInfoRecords.push_back(BlockInfo());
@@ -214,6 +217,13 @@ public:
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
     return (NextChar-BitStream->getFirstChar())*CHAR_BIT - BitsInCurWord;
+  }
+  
+  BitstreamReader *getBitStreamReader() {
+    return BitStream;
+  }
+  const BitstreamReader *getBitStreamReader() const {
+    return BitStream;
   }
   
   
@@ -363,7 +373,8 @@ public:
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
 
     // Add the abbrevs specific to this block to the CurAbbrevs list.
-    if (BitstreamReader::BlockInfo *Info = BitStream->getBlockInfo(BlockID)) {
+    if (const BitstreamReader::BlockInfo *Info =
+          BitStream->getBlockInfo(BlockID)) {
       for (unsigned i = 0, e = static_cast<unsigned>(Info->Abbrevs.size());
            i != e; ++i) {
         CurAbbrevs.push_back(Info->Abbrevs[i]);
@@ -585,6 +596,23 @@ public:
         if (Record.size() < 1) return true;
         CurBlockInfo = &BitStream->getOrCreateBlockInfo((unsigned)Record[0]);
         break;
+      case bitc::BLOCKINFO_CODE_BLOCKNAME: {
+        if (!CurBlockInfo) return true;
+        std::string Name;
+        for (unsigned i = 0, e = Record.size(); i != e; ++i)
+          Name += (char)Record[i];
+        CurBlockInfo->Name = Name;
+        break;
+      }
+      case bitc::BLOCKINFO_CODE_SETRECORDNAME: {
+        if (!CurBlockInfo) return true;
+        std::string Name;
+        for (unsigned i = 1, e = Record.size(); i != e; ++i)
+          Name += (char)Record[i];
+        CurBlockInfo->RecordNames.push_back(std::make_pair((unsigned)Record[0],
+                                                           Name));
+        break;
+      }
       }
     }
   }

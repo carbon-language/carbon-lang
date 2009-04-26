@@ -66,10 +66,12 @@ namespace bitc {
   /// BlockInfoCodes - The blockinfo block contains metadata about user-defined
   /// blocks.
   enum BlockInfoCodes {
-    BLOCKINFO_CODE_SETBID = 1  // SETBID: [blockid#]
     // DEFINE_ABBREV has magic semantics here, applying to the current SETBID'd
     // block, instead of the BlockInfo block.
-    // BLOCKNAME: give string name to block, if desired.
+    
+    BLOCKINFO_CODE_SETBID = 1,       // SETBID: [blockid#]
+    BLOCKINFO_CODE_BLOCKNAME = 2,    // BLOCKNAME: [name]
+    BLOCKINFO_CODE_SETRECORDNAME = 3 // BLOCKINFO_CODE_SETRECORDNAME: [id, name]
   };
 
 } // End bitc namespace

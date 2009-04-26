@@ -563,6 +563,8 @@ blocks.  The currently specified records are:
 <pre>
 [SETBID (#1), blockid]
 [DEFINE_ABBREV, ...]
+[BLOCKNAME, ...name...]
+[SETRECORDNAME, RecordID, ...name...]
 </pre>
 </div>
 
@@ -581,6 +583,15 @@ defined for blocks matching the block ID we are describing, <i>not</i> the
 in <tt>BLOCKINFO</tt> blocks receive abbreviation IDs as described
 in <tt><a href="#DEFINE_ABBREV">DEFINE_ABBREV</a></tt>.
 </p>
+
+<p>The <tt>BLOCKNAME</tt> can optionally occur in this block.  The elements of
+the record are the bytes for the string name of the block.  llvm-bcanalyzer uses
+this to dump out bitcode files symbolically.</p>
+
+<p>The <tt>SETRECORDNAME</tt> record can optionally occur in this block.  The
+first entry is a record ID number and the rest of the elements of the record are
+the bytes for the string name of the record.  llvm-bcanalyzer uses
+this to dump out bitcode files symbolically.</p>
 
 <p>
 Note that although the data in <tt>BLOCKINFO</tt> blocks is described as
