@@ -86,6 +86,10 @@ private:
   /// \brief The type ID that will be assigned to the next new type.
   pch::TypeID NextTypeID;
 
+  /// \brief Queue containing the types that we still need to
+  /// emit.
+  std::queue<const Type *> TypesToEmit;
+
   /// \brief Map that provides the ID numbers of each identifier in
   /// the output stream.
   ///

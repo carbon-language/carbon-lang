@@ -1674,15 +1674,12 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
   // Enter the types block.
   Stream.EnterSubblock(pch::TYPES_BLOCK_ID, 2);
 
-  // Emit all of the types in the ASTContext
-  for (std::vector<Type*>::const_iterator T = Context.getTypes().begin(),
-                                       TEnd = Context.getTypes().end();
-       T != TEnd; ++T) {
-    // Builtin types are never serialized.
-    if (isa<BuiltinType>(*T))
-      continue;
-
-    WriteType(*T);
+  // Emit all of the types that need to be emitted (so far).
+  while (!TypesToEmit.empty()) {
+    const Type *T = TypesToEmit.front();
+    TypesToEmit.pop();
+    assert(!isa<BuiltinType>(T) && "Built-in types are not serialized");
+    WriteType(T);
   }
 
   // Exit the types block
@@ -2409,8 +2406,16 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   WriteLanguageOptions(Context.getLangOptions());
   WriteSourceManagerBlock(Context.getSourceManager(), PP);
   WritePreprocessor(PP);
-  WriteTypesBlock(Context);
-  WriteDeclsBlock(Context);
+
+  // Keep writing types and declarations until all types and
+  // declarations have been written.
+  do {
+    if (!DeclsToEmit.empty())
+      WriteDeclsBlock(Context);
+    if (!TypesToEmit.empty())
+      WriteTypesBlock(Context);
+  } while (!(DeclsToEmit.empty() && TypesToEmit.empty()));
+
   WriteMethodPool(SemaRef);
   WriteIdentifierTable(PP);
 
@@ -2559,8 +2564,12 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
   }
 
   pch::TypeID &ID = TypeIDs[T.getTypePtr()];
-  if (ID == 0) // we haven't seen this type before
+  if (ID == 0) {
+    // We haven't seen this type before. Assign it a new ID and put it
+    // into the queu of types to emit.
     ID = NextTypeID++;
+    TypesToEmit.push(T.getTypePtr());
+  }
 
   // Encode the type qualifiers in the type reference.
   Record.push_back((ID << 3) | T.getCVRQualifiers());
