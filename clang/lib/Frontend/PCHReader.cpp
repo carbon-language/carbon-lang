@@ -1473,6 +1473,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
 
   SourceManager &SourceMgr = Context.getSourceManager();
   RecordData Record;
+  unsigned NumHeaderInfos = 0;
   while (true) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
@@ -1557,6 +1558,16 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       if (ParseLineTable(SourceMgr, Record))
         return Failure;
       break;
+
+    case pch::SM_HEADER_FILE_INFO: {
+      HeaderFileInfo HFI;
+      HFI.isImport = Record[0];
+      HFI.DirInfo = Record[1];
+      HFI.NumIncludes = Record[2];
+      HFI.ControllingMacroID = Record[3];
+      PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
+      break;
+    }
     }
   }
 }
@@ -1597,10 +1608,6 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
     pch::PreprocessorRecordTypes RecType =
       (pch::PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
     switch (RecType) {
-    case pch::PP_COUNTER_VALUE:
-      // Skip this record.
-      break;
-
     case pch::PP_MACRO_OBJECT_LIKE:
     case pch::PP_MACRO_FUNCTION_LIKE: {
       // If we already have a macro, that means that we've hit the end
@@ -1663,70 +1670,12 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
       Macro->AddTokenToBody(Tok);
       break;
     }
-    case pch::PP_HEADER_FILE_INFO:
-      break; // Already processed by ReadPreprocessorBlock().
   }
-  }
-}
-
-bool PCHReader::ReadPreprocessorBlock() {
-  if (Stream.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID))
-    return Error("Malformed preprocessor block record");
-  
-  RecordData Record;
-  unsigned NumHeaderInfos = 0;
-  while (true) {
-    unsigned Code = Stream.ReadCode();
-    switch (Code) {
-    case llvm::bitc::END_BLOCK:
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of preprocessor block");
-      return false;
-    
-    case llvm::bitc::ENTER_SUBBLOCK:
-      // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock())
-        return Error("Malformed block record");
-      continue;
-    
-    case llvm::bitc::DEFINE_ABBREV:
-      Stream.ReadAbbrevRecord();
-      continue;
-    default: break;
-    }
-    
-    // Read a record.
-    Record.clear();
-    pch::PreprocessorRecordTypes RecType =
-      (pch::PreprocessorRecordTypes)Stream.ReadRecord(Code, Record);
-    switch (RecType) {
-    default:  // Default behavior: ignore unknown records.
-      break;
-    case pch::PP_COUNTER_VALUE:
-      if (!Record.empty())
-        PP.setCounterValue(Record[0]);
-      break;
-
-    case pch::PP_MACRO_OBJECT_LIKE:
-    case pch::PP_MACRO_FUNCTION_LIKE:
-    case pch::PP_TOKEN:
-      break;
-    case pch::PP_HEADER_FILE_INFO: {
-      HeaderFileInfo HFI;
-      HFI.isImport = Record[0];
-      HFI.DirInfo = Record[1];
-      HFI.NumIncludes = Record[2];
-      HFI.ControllingMacroID = Record[3];
-      PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
-      break;
-    }
-    }
   }
 }
 
 PCHReader::PCHReadResult 
-PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
+PCHReader::ReadPCHBlock() {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
     Error("Malformed block record");
     return Failure;
@@ -1757,13 +1706,6 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
         break;
 
       case pch::PREPROCESSOR_BLOCK_ID:
-        // Skip the preprocessor block for now, but remember where it is.  We
-        // want to read it in after the identifier table.
-        if (PreprocessorBlockOffset) {
-          Error("Multiple preprocessor blocks found.");
-          return Failure;
-        }
-        PreprocessorBlockOffset = Stream.GetCurrentBitNo();
         if (Stream.SkipBlock()) {
           Error("Malformed block record");
           return Failure;
@@ -1907,6 +1849,11 @@ PCHReader::ReadPCHBlock(uint64_t &PreprocessorBlockOffset) {
                         PCHMethodPoolLookupTrait(*this));
       TotalSelectorsInMethodPool = Record[1];
       break;
+
+    case pch::PP_COUNTER_VALUE:
+      if (!Record.empty())
+        PP.setCounterValue(Record[0]);
+      break;
     }
   }
   Error("Premature end of bitstream");
@@ -1938,10 +1885,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     return IgnorePCH;
   }
 
-  // We expect a number of well-defined blocks, though we don't necessarily
-  // need to understand them all.
-  uint64_t PreprocessorBlockOffset = 0;
-  
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     
@@ -1961,7 +1904,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       }
       break;
     case pch::PCH_BLOCK_ID:
-      switch (ReadPCHBlock(PreprocessorBlockOffset)) {
+      switch (ReadPCHBlock()) {
       case Success:
         break;
 
@@ -2036,15 +1979,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   if (unsigned FastEnum 
         = SpecialTypes[pch::SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
     Context.setObjCFastEnumerationStateType(GetType(FastEnum));
-  // If we saw the preprocessor block, read it now.
-  if (PreprocessorBlockOffset) {
-    SavedStreamPosition SavedPos(Stream);
-    Stream.JumpToBit(PreprocessorBlockOffset);
-    if (ReadPreprocessorBlock()) {
-      Error("Malformed preprocessor block");
-      return Failure;
-    }
-  }
 
   return Success;
 }

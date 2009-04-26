@@ -245,12 +245,11 @@ private:
   /// Objective-C protocols.
   llvm::SmallVector<Decl *, 16> InterestingDecls;
 
-  PCHReadResult ReadPCHBlock(uint64_t &PreprocessorBlockOffset);
+  PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
                              FileID PCHBufferID);
   PCHReadResult ReadSourceManagerBlock();
-  bool ReadPreprocessorBlock();
   
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);

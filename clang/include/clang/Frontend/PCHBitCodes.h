@@ -169,7 +169,11 @@ namespace clang {
       SELECTOR_OFFSETS = 12,
 
       /// \brief Record code for the Objective-C method pool,
-      METHOD_POOL = 13
+      METHOD_POOL = 13,
+
+      /// \brief The value of the next __COUNTER__ to dispense.
+      /// [PP_COUNTER_VALUE, Val]
+      PP_COUNTER_VALUE = 14
     };
 
     /// \brief Record types used within a source manager block.
@@ -189,7 +193,10 @@ namespace clang {
       SM_SLOC_INSTANTIATION_ENTRY = 4,
       /// \brief Describes the SourceManager's line table, with
       /// information about #line directives.
-      SM_LINE_TABLE = 5
+      SM_LINE_TABLE = 5,
+      /// \brief Describes one header file info [isImport, DirInfo, NumIncludes]
+      /// ControllingMacro is optional.
+      SM_HEADER_FILE_INFO = 6
     };
     
     /// \brief Record types used within a preprocessor block.
@@ -208,15 +215,7 @@ namespace clang {
       
       /// \brief Describes one token.
       /// [PP_TOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
-      PP_TOKEN = 3,
-      
-      /// \brief The value of the next __COUNTER__ to dispense.
-      /// [PP_COUNTER_VALUE, Val]
-      PP_COUNTER_VALUE = 4,
-      
-      /// \brief Describes one header file info [isImport, DirInfo, NumIncludes]
-      /// ControlloingMacro is optional.
-      PP_HEADER_FILE_INFO = 5
+      PP_TOKEN = 3
     };
 
     /// \defgroup PCHAST Precompiled header AST constants

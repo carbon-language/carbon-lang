@@ -1359,7 +1359,8 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
 /// entries for files that we actually need. In the common case (no
 /// errors), we probably won't have to create file entries for any of
 /// the files in the AST.
-void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
+void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
+                                        const Preprocessor &PP) {
   // Enter the source manager block.
   Stream.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
 
@@ -1481,6 +1482,22 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
     }
   }
 
+  // Loop over all the header files.
+  HeaderSearch &HS = PP.getHeaderSearchInfo();  
+  for (HeaderSearch::header_file_iterator I = HS.header_file_begin(), 
+                                          E = HS.header_file_end();
+       I != E; ++I) {
+    Record.push_back(I->isImport);
+    Record.push_back(I->DirInfo);
+    Record.push_back(I->NumIncludes);
+    if (I->ControllingMacro)
+      AddIdentifierRef(I->ControllingMacro, Record);
+    else
+      Record.push_back(0);
+    Stream.EmitRecord(pch::SM_HEADER_FILE_INFO, Record);
+    Record.clear();
+  }
+
   Stream.ExitBlock();
 }
 
@@ -1488,14 +1505,6 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr) {
 /// preprocessor.
 ///
 void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
-  // Enter the preprocessor block.
-  Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 2);
-  
-  // If the PCH file contains __DATE__ or __TIME__ emit a warning about this.
-  // FIXME: use diagnostics subsystem for localization etc.
-  if (PP.SawDateOrTime())
-    fprintf(stderr, "warning: precompiled header used __DATE__ or __TIME__.\n");
-  
   RecordData Record;
 
   // If the preprocessor __COUNTER__ value has been bumped, remember it.
@@ -1503,8 +1512,16 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     Record.push_back(PP.getCounterValue());
     Stream.EmitRecord(pch::PP_COUNTER_VALUE, Record);
     Record.clear();
-  }  
+  }
+
+  // Enter the preprocessor block.
+  Stream.EnterSubblock(pch::PREPROCESSOR_BLOCK_ID, 2);
   
+  // If the PCH file contains __DATE__ or __TIME__ emit a warning about this.
+  // FIXME: use diagnostics subsystem for localization etc.
+  if (PP.SawDateOrTime())
+    fprintf(stderr, "warning: precompiled header used __DATE__ or __TIME__.\n");
+    
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
@@ -1563,22 +1580,6 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
       Record.clear();
     }
     ++NumMacros;
-  }
-
-  // Loop over all the header files.
-  HeaderSearch &HS = PP.getHeaderSearchInfo();  
-  for (HeaderSearch::header_file_iterator I = HS.header_file_begin(), 
-                                          E = HS.header_file_end();
-       I != E; ++I) {
-    Record.push_back(I->isImport);
-    Record.push_back(I->DirInfo);
-    Record.push_back(I->NumIncludes);
-    if (I->ControllingMacro)
-      AddIdentifierRef(I->ControllingMacro, Record);
-    else
-      Record.push_back(0);
-    Stream.EmitRecord(pch::PP_HEADER_FILE_INFO, Record);
-    Record.clear();
   }
   Stream.ExitBlock();
 }
@@ -2365,7 +2366,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
   WriteTargetTriple(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
-  WriteSourceManagerBlock(Context.getSourceManager());
+  WriteSourceManagerBlock(Context.getSourceManager(), PP);
   WritePreprocessor(PP);
   WriteTypesBlock(Context);
   WriteDeclsBlock(Context);

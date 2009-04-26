@@ -156,7 +156,8 @@ private:
 
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
-  void WriteSourceManagerBlock(SourceManager &SourceMgr);
+  void WriteSourceManagerBlock(SourceManager &SourceMgr, 
+                               const Preprocessor &PP);
   void WritePreprocessor(const Preprocessor &PP);
   void WriteType(const Type *T);
   void WriteTypesBlock(ASTContext &Context);
