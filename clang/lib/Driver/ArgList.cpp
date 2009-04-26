@@ -124,14 +124,22 @@ void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0,
 }
 
 void ArgList::AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
-                                   const char *Translation) const {
+                                   const char *Translation,
+                                   bool Joined) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;
     if (A->getOption().matches(Id0)) {
       A->claim();
-      Output.push_back(Translation);
-      Output.push_back(A->getValue(*this, 0));
+
+      if (Joined) {
+        std::string Value = Translation;
+        Value += A->getValue(*this, 0);
+        Output.push_back(MakeArgString(Value.c_str()));
+      } else {
+        Output.push_back(Translation);
+        Output.push_back(A->getValue(*this, 0));
+      }
     }
   }
 }

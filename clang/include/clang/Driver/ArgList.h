@@ -110,11 +110,15 @@ namespace driver {
     void AddAllArgValues(ArgStringList &Output, options::ID Id0, 
                          options::ID Id1) const;
 
-    // AddAllArgsTranslated - Render all the arguments matching the
-    // given ids, but forced to separate args and using the provided
-    // name instead of the first option value.
+    /// AddAllArgsTranslated - Render all the arguments matching the
+    /// given ids, but forced to separate args and using the provided
+    /// name instead of the first option value.
+    ///
+    /// \param Joined - If true, render the argument as joined with
+    /// the option specifier.
     void AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
-                              const char *Translation) const;
+                              const char *Translation, 
+                              bool Joined = false) const;
 
     /// ClaimAllArgs - Claim all arguments which match the given
     /// option id.
