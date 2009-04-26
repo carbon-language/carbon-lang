@@ -41,6 +41,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
   TUDecl = TranslationUnitDecl::Create(*this);
+  BuiltinInfo.InitializeTargetBuiltins(Target);
   if (InitializeBuiltins)
     this->InitializeBuiltins(idents);
 }
@@ -94,7 +95,6 @@ ASTContext::~ASTContext() {
 }
 
 void ASTContext::InitializeBuiltins(IdentifierTable &idents) {
-  BuiltinInfo.InitializeTargetBuiltins(Target);
   BuiltinInfo.InitializeBuiltins(idents, LangOpts.NoBuiltin);
 }
 
