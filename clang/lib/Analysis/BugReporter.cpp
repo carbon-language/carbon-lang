@@ -541,22 +541,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                     os << D->getNameAsString();
                   }
                 }
-                
-                if (GetRawInt) {
-                  
-                  // Not an enum.
-                  Expr* CondE = cast<SwitchStmt>(T)->getCond();
-                  unsigned bits = Ctx.getTypeSize(CondE->getType());
-                  llvm::APSInt V(bits, false);
-                  
-                  if (!LHS->isIntegerConstantExpr(V, Ctx, 0, true)) {
-                    assert (false && "Case condition must be constant.");
-                    continue;
-                  }
-                  
-                  os << V;
-                }       
-                
+
+                if (GetRawInt)
+                  os << LHS->EvaluateAsInt(Ctx);
+
                 os << ":'  at line "
                 << End.asLocation().getInstantiationLineNumber();
                 break;
