@@ -25,7 +25,7 @@ struct Derived : Base {
   void fn2();
 };
 struct Convertible { operator Base&(); };
-struct Priv : private Base {};
+struct Priv : private Base {}; // expected-note 2 {{'private' inheritance specifier here}}
 struct Mid : Base {};
 struct Fin : Mid, Derived {};
 typedef void (Derived::*DFnPtr)();
@@ -116,10 +116,10 @@ void test()
   (void)(i1 ? Priv() : Base()); // xpected-error private base
   (void)(i1 ? Base() : Fin()); // xpected-error ambiguous base
   (void)(i1 ? Fin() : Base()); // xpected-error ambiguous base
-  (void)(i1 ? base : priv); // xpected-error private base
-  (void)(i1 ? priv : base); // xpected-error private base
-  (void)(i1 ? base : fin); // xpected-error ambiguous base
-  (void)(i1 ? fin : base); // xpected-error ambiguous base
+  (void)(i1 ? base : priv); // expected-error {{conversion from 'struct Priv' to inaccessible base class 'struct Base'}}
+  (void)(i1 ? priv : base); // expected-error {{conversion from 'struct Priv' to inaccessible base class 'struct Base'}}
+  (void)(i1 ? base : fin); // expected-error {{ambiguous conversion from derived class 'struct Fin' to base class 'struct Base'}}
+  (void)(i1 ? fin : base); // expected-error {{ambiguous conversion from derived class 'struct Fin' to base class 'struct Base'}}
 
   // b2.2 (non-hierarchy)
   i1 = i1 ? I() : i1;

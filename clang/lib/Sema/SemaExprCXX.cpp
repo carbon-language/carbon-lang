@@ -1158,17 +1158,17 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
       ICS.Standard.ReferenceBinding) {
     assert(ICS.Standard.DirectBinding &&
            "TryClassUnification should never generate indirect ref bindings");
-    // FIXME: Should use CheckReferenceInit here, but we no longer have a
-    // reference type.
-    Self.ImpCastExprToType(E, TargetType(ICS), true);
-    return false;
+    // FIXME: CheckReferenceInit should be able to reuse the ICS instead of
+    // redoing all the work.
+    return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
+                                        TargetType(ICS)));
   }
   if (ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion &&
       ICS.UserDefined.After.ReferenceBinding) {
     assert(ICS.UserDefined.After.DirectBinding &&
            "TryClassUnification should never generate indirect ref bindings");
-    Self.ImpCastExprToType(E, TargetType(ICS), true);
-    return false;
+    return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
+                                        TargetType(ICS)));
   }
   if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, "converting"))
     return true;
