@@ -145,7 +145,7 @@ void Parser::ParseLexedMethodDefs() {
 
     if (Tok.is(tok::kw_try)) {
       ParseFunctionTryBlock(LM.D);
-      return;
+      continue;
     }
     if (Tok.is(tok::colon))
       ParseConstructorInitializer(LM.D);

@@ -1324,11 +1324,12 @@ Parser::DeclPtrTy Parser::ParseFunctionTryBlock(DeclPtrTy Decl) {
   if (Tok.is(tok::colon))
     ParseConstructorInitializer(Decl);
 
+  SourceLocation LBraceLoc = Tok.getLocation();
   OwningStmtResult FnBody(ParseCXXTryBlockCommon(TryLoc));
   // If we failed to parse the try-catch, we just give the function an empty
   // compound statement as the body.
   if (FnBody.isInvalid())
-    FnBody = Actions.ActOnCompoundStmt(TryLoc, TryLoc,
+    FnBody = Actions.ActOnCompoundStmt(LBraceLoc, LBraceLoc,
                                        MultiStmtArg(Actions), false);
 
   return Actions.ActOnFinishFunctionBody(Decl, move(FnBody));
