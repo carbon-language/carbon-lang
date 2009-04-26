@@ -208,9 +208,15 @@ public:
     };
     unsigned Flags;
     int TiedOperand;
-  public:
-    ConstraintInfo() : Flags(0), TiedOperand(-1) {}
     
+    std::string ConstraintStr;
+  public:
+    ConstraintInfo(const char *str, unsigned strlen)
+      : Flags(0), TiedOperand(-1), ConstraintStr(str, str+strlen) {}
+    explicit ConstraintInfo(const std::string &Str)
+      : Flags(0), TiedOperand(-1), ConstraintStr(Str) {}
+
+    const std::string &getConstraintStr() const { return ConstraintStr; }
     bool isReadWrite() const { return (Flags & CI_ReadWrite) != 0; }
     bool allowsRegister() const { return (Flags & CI_AllowsRegister) != 0; }
     bool allowsMemory() const { return (Flags & CI_AllowsMemory) != 0; }
@@ -229,9 +235,8 @@ public:
   // validateOutputConstraint, validateInputConstraint - Checks that
   // a constraint is valid and provides information about it.
   // FIXME: These should return a real error instead of just true/false.
-  bool validateOutputConstraint(const char *Name, ConstraintInfo &Info) const;
-  bool validateInputConstraint(const char *Name, 
-                               const std::string *OutputNamesBegin,
+  bool validateOutputConstraint(ConstraintInfo &Info) const;
+  bool validateInputConstraint(const std::string *OutputNamesBegin,
                                const std::string *OutputNamesEnd,
                                ConstraintInfo* OutputConstraints,
                                ConstraintInfo &info) const;

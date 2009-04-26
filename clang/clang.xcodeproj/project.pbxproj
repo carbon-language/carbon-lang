@@ -51,7 +51,6 @@
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
 		357EA27D0F2526F300439B60 /* SemaLookup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 357EA27C0F2526F300439B60 /* SemaLookup.cpp */; };
-		3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */; };
 		35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */; };
 		35862B0D0E3628CB0009F542 /* CheckDeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */; };
 		35862B120E3629850009F542 /* GRExprEngineInternalChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */; };
@@ -395,7 +394,6 @@
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = lib/Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		357EA27C0F2526F300439B60 /* SemaLookup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaLookup.cpp; path = lib/Sema/SemaLookup.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = LangOptions.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; tabWidth = 2; };
 		35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtIterator.cpp; path = lib/AST/StmtIterator.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckDeadStores.cpp; path = lib/Analysis/CheckDeadStores.cpp; sourceTree = "<group>"; };
@@ -1260,7 +1258,6 @@
 				DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */,
 				DED7D75E0A5242C7003AD0FB /* FileManager.cpp */,
 				DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */,
-				3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */,
 				35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */,
 				DED7D76D0A5242C7003AD0FB /* SourceManager.cpp */,
 				DED626C80AE0C065001E80A4 /* TargetInfo.cpp */,
@@ -1536,7 +1533,6 @@
 				DE3986F40CB8D50C00223765 /* IdentifierTable.cpp in Sources */,
 				35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */,
 				35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */,
-				3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */,
 				DE704B260D0FBEBE009C7762 /* SemaDeclObjC.cpp in Sources */,
 				DE704DD20D1668A4009C7762 /* HeaderMap.cpp in Sources */,
 				35BB2D7F0D19954000944DB5 /* ASTConsumer.cpp in Sources */,

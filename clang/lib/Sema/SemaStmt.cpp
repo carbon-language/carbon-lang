@@ -922,15 +922,15 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    std::string OutputConstraint(Literal->getStrData(), 
-                                 Literal->getByteLength());
-
-    TargetInfo::ConstraintInfo Info;
-    if (!Context.Target.validateOutputConstraint(OutputConstraint.c_str(),Info))
+    TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
+                                    Literal->getByteLength());
+    if (!Context.Target.validateOutputConstraint(Info))
       return StmtError(Diag(Literal->getLocStart(),
-                  diag::err_asm_invalid_output_constraint) << OutputConstraint);
+                            diag::err_asm_invalid_output_constraint)
+                       << Info.getConstraintStr());
 
     // Check that the output exprs are valid lvalues.
+    // FIXME: Operands to asms should not be parsed as ParenExprs.
     ParenExpr *OutputExpr = cast<ParenExpr>(Exprs[i]);
     if (CheckAsmLValue(OutputExpr, *this)) {
       return StmtError(Diag(OutputExpr->getSubExpr()->getLocStart(),
@@ -947,17 +947,15 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    std::string InputConstraint(Literal->getStrData(),
-                                Literal->getByteLength());
-
-    TargetInfo::ConstraintInfo Info;
-    if (!Context.Target.validateInputConstraint(InputConstraint.c_str(),
-                                                &Names[0],
+    TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
+                                    Literal->getByteLength());
+    if (!Context.Target.validateInputConstraint(&Names[0],
                                                 &Names[0] + NumOutputs, 
                                                 &OutputConstraintInfos[0],
                                                 Info)) {
       return StmtError(Diag(Literal->getLocStart(),
-                  diag::err_asm_invalid_input_constraint) << InputConstraint);
+                            diag::err_asm_invalid_input_constraint)
+                       << Info.getConstraintStr());
     }
 
     ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i]);
@@ -967,14 +965,15 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       if (CheckAsmLValue(InputExpr, *this))
         return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
                               diag::err_asm_invalid_lvalue_in_input)
-             << InputConstraint << InputExpr->getSubExpr()->getSourceRange());
+                         << Info.getConstraintStr()
+                         << InputExpr->getSubExpr()->getSourceRange());
     }
 
     if (Info.allowsRegister()) {
       if (InputExpr->getType()->isVoidType()) {
         return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
                               diag::err_asm_invalid_type_in_input)
-          << InputExpr->getType() << InputConstraint 
+          << InputExpr->getType() << Info.getConstraintStr() 
           << InputExpr->getSubExpr()->getSourceRange());
       }
     }

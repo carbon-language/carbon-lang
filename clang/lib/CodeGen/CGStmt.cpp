@@ -798,9 +798,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
     std::string OutputConstraint(S.getOutputConstraint(i));
     
-    TargetInfo::ConstraintInfo Info;
-    bool result = Target.validateOutputConstraint(OutputConstraint.c_str(), 
-                                                  Info);
+    TargetInfo::ConstraintInfo Info(OutputConstraint);
+    bool result = Target.validateOutputConstraint(Info);
     assert(result && "Failed to parse output constraint"); result=result;
     
     OutputConstraintInfos.push_back(Info);
@@ -853,9 +852,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     std::string InputConstraint(S.getInputConstraint(i));
     
-    TargetInfo::ConstraintInfo Info;
-    bool result = Target.validateInputConstraint(InputConstraint.c_str(),
-                                                 S.begin_output_names(),
+    TargetInfo::ConstraintInfo Info(InputConstraint);
+    bool result = Target.validateInputConstraint(S.begin_output_names(),
                                                  S.end_output_names(),
                                                  &OutputConstraintInfos[0],
                                                  Info); result=result;

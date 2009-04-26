@@ -163,8 +163,8 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
   return Name;
 }
 
-bool TargetInfo::validateOutputConstraint(const char *Name, 
-                                          ConstraintInfo &Info) const {
+bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
+  const char *Name = Info.getConstraintStr().c_str();
   // An output constraint must start with '=' or '+'
   if (*Name != '=' && *Name != '+')
     return false;
@@ -231,11 +231,12 @@ bool TargetInfo::resolveSymbolicName(const char *&Name,
   return false;
 }
 
-bool TargetInfo::validateInputConstraint(const char *Name,
-                                         const std::string *OutputNamesBegin,
+bool TargetInfo::validateInputConstraint(const std::string *OutputNamesBegin,
                                          const std::string *OutputNamesEnd,
                                          ConstraintInfo *OutputConstraints,
                                          ConstraintInfo &Info) const {
+  const char *Name = Info.ConstraintStr.c_str();
+
   while (*Name) {
     switch (*Name) {
     default:
