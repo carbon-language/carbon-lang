@@ -50,6 +50,10 @@ namespace clang {
   class ObjCPropertyImplDecl;
   class TargetInfo;
   class VarDecl;
+  class ObjCForCollectionStmt;
+  class ObjCAtTryStmt;
+  class ObjCAtThrowStmt;
+  class ObjCAtSynchronizedStmt;
 
 namespace CodeGen {
   class CodeGenModule;

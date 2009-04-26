@@ -16,7 +16,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/ASTContext.h"
+#include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtCXX.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 

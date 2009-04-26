@@ -1253,7 +1253,6 @@ void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 void PCHStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLoc(), Record);
-
 }
 
 

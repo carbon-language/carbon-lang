@@ -16,6 +16,8 @@
 
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtObjC.h"
 
 namespace clang {
   

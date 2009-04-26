@@ -28,6 +28,7 @@ namespace clang {
   
   class PathDiagnosticClient;
   class Diagnostic;
+  class ObjCForCollectionStmt;
 
 class GRExprEngine {  
 public:

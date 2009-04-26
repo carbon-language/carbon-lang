@@ -14,6 +14,7 @@
 
 #include "Sema.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/StmtObjC.h"
 using namespace clang;
 
 namespace {

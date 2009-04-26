@@ -14,6 +14,8 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"

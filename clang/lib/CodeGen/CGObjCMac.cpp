@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/Basic/LangOptions.h"
 
 #include "llvm/Intrinsics.h"

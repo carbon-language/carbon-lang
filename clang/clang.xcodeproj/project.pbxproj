@@ -583,6 +583,8 @@
 		DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JumpDiagnostics.cpp; path = lib/Sema/JumpDiagnostics.cpp; sourceTree = "<group>"; };
 		DECB6F030F9D939A00F5FBC7 /* InitPreprocessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InitPreprocessor.h; path = clang/Frontend/InitPreprocessor.h; sourceTree = "<group>"; };
 		DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitPreprocessor.cpp; path = lib/Frontend/InitPreprocessor.cpp; sourceTree = "<group>"; };
+		DECB734E0FA3ED8400F5FBC7 /* StmtObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtObjC.h; path = clang/AST/StmtObjC.h; sourceTree = "<group>"; };
+		DECB73550FA3EE5A00F5FBC7 /* StmtCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtCXX.h; path = clang/AST/StmtCXX.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = lib/AST/Decl.cpp; sourceTree = "<group>"; tabWidth = 2; usesTabs = 0; };
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; tabWidth = 2; };
@@ -1126,7 +1128,9 @@
 				3547129D0C88881300B3E1D5 /* PrettyPrinter.h */,
 				DE6951C60C4D1F5D00A5826B /* RecordLayout.h */,
 				DE3452800AEF1B1800DBC861 /* Stmt.h */,
+				DECB73550FA3EE5A00F5FBC7 /* StmtCXX.h */,
 				DE345F210AFD347900DBC861 /* StmtNodes.def */,
+				DECB734E0FA3ED8400F5FBC7 /* StmtObjC.h */,
 				DE345C190AFC658B00DBC861 /* StmtVisitor.h */,
 				35847BE30CC7DB9000C40FFF /* StmtIterator.h */,
 				35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */,

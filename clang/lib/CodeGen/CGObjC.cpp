@@ -16,10 +16,10 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Target/TargetData.h"
-
 using namespace clang;
 using namespace CodeGen;
 
