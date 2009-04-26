@@ -245,8 +245,7 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
         
         // The constraint should have the same info as the respective 
         // output constraint.
-        Info = OutputConstraints[i];
-        Info.setTiedOperand(i);
+        Info.setTiedOperand(i, OutputConstraints[i]);
       } else if (!validateAsmConstraint(Name, Info)) {
         // FIXME: This error return is in place temporarily so we can
         // add more constraints as we hit it.  Eventually, an unknown

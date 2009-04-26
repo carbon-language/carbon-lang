@@ -231,7 +231,15 @@ public:
     void setIsReadWrite() { Flags |= CI_ReadWrite; }
     void setAllowsMemory() { Flags |= CI_AllowsMemory; }
     void setAllowsRegister() { Flags |= CI_AllowsRegister; }
-    void setTiedOperand(unsigned N) { TiedOperand = N; }
+    
+    /// setTiedOperand - Indicate that this is an input operand that is tied to
+    /// the specified output operand.  Copy over the various constraint
+    /// information from the output.
+    void setTiedOperand(unsigned N, ConstraintInfo &Output) {
+      Flags = Output.Flags;
+      TiedOperand = N;
+      // Don't copy Name or constraint string.
+    }
   };
 
   // validateOutputConstraint, validateInputConstraint - Checks that
