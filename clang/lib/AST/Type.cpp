@@ -37,7 +37,8 @@ void Type::Destroy(ASTContext& C) {
 }
 
 void VariableArrayType::Destroy(ASTContext& C) {
-  SizeExpr->Destroy(C);
+  if (SizeExpr)
+    SizeExpr->Destroy(C);
   this->~VariableArrayType();
   C.Deallocate(this);
 }

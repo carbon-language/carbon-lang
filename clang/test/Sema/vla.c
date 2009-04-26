@@ -43,3 +43,6 @@ void f3()
 
 // PR3663
 static const unsigned array[((2 * (int)((((4) / 2) + 1.0/3.0) * (4) - 1e-8)) + 1)]; // expected-warning {{size of static array must be an integer constant expression}}
+
+int a[*]; // expected-error {{star modifier used outside of function prototype}}
+int f4(int a[*][*]);

@@ -500,7 +500,10 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   }
   llvm::APSInt ConstVal(32);
   if (!ArraySize) {
-    T = Context.getIncompleteArrayType(T, ASM, Quals);
+    if (ASM == ArrayType::Star)
+      T = Context.getVariableArrayType(T, 0, ASM, Quals);
+    else
+      T = Context.getIncompleteArrayType(T, ASM, Quals);
   } else if (ArraySize->isValueDependent()) {
     T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals);
   } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
@@ -687,6 +690,15 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         ASM = ArrayType::Static;
       else
         ASM = ArrayType::Normal;
+      if (ASM == ArrayType::Star &&
+          D.getContext() != Declarator::PrototypeContext) {
+        // FIXME: This check isn't quite right: it allows star in prototypes
+        // for function definitions, and disallows some edge cases detailed
+        // in http://gcc.gnu.org/ml/gcc-patches/2009-02/msg00133.html
+        Diag(DeclType.Loc, diag::err_array_star_outside_prototype);
+        ASM = ArrayType::Normal;
+        D.setInvalidType(true);
+      }
       T = BuildArrayType(T, ASM, ArraySize, ATI.TypeQuals, DeclType.Loc, Name);
       break;
     }

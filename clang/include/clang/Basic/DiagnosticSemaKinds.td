@@ -891,6 +891,8 @@ def err_illegal_decl_array_incomplete_type : Error<
   "array has incomplete element type %0">;
 def err_illegal_decl_array_of_references : Error<
   "'%0' declared as array of references">;
+def err_array_star_outside_prototype : Error<
+  "star modifier used outside of function prototype">;
 def err_illegal_decl_pointer_to_reference : Error<
   "'%0' declared as a pointer to a reference">;
 def err_illegal_decl_mempointer_to_void : Error<
