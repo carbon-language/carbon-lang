@@ -41,15 +41,15 @@ namespace {
   /// \brief Helper class that saves the current stream position and
   /// then restores it when destroyed.
   struct VISIBILITY_HIDDEN SavedStreamPosition {
-    explicit SavedStreamPosition(llvm::BitstreamReader &Stream)
-      : Stream(Stream), Offset(Stream.GetCurrentBitNo()) { }
+    explicit SavedStreamPosition(llvm::BitstreamCursor &Cursor)
+      : Cursor(Cursor), Offset(Cursor.GetCurrentBitNo()) { }
 
     ~SavedStreamPosition() {
-      Stream.JumpToBit(Offset);
+      Cursor.JumpToBit(Offset);
     }
 
   private:
-    llvm::BitstreamReader &Stream;
+    llvm::BitstreamCursor &Cursor;
     uint64_t Offset;
   };
 }
@@ -1974,8 +1974,9 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }
 
   // Initialize the stream
-  Stream.init((const unsigned char *)Buffer->getBufferStart(), 
-              (const unsigned char *)Buffer->getBufferEnd());
+  StreamFile.init((const unsigned char *)Buffer->getBufferStart(), 
+                  (const unsigned char *)Buffer->getBufferEnd());
+  Stream.init(StreamFile);
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||

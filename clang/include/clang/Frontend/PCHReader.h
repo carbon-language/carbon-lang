@@ -86,7 +86,8 @@ private:
   ASTConsumer *Consumer;
 
   /// \brief The bitstream reader from which we'll read the PCH file.
-  llvm::BitstreamReader Stream;
+  llvm::BitstreamReader StreamFile;
+  llvm::BitstreamCursor Stream;    
 
   /// \brief The file name of the PCH file.
   std::string FileName;
@@ -422,7 +423,7 @@ public:
   Sema *getSema() { return SemaObj; }
 
   /// \brief Retrieve the stream that this PCH reader is reading from.
-  llvm::BitstreamReader &getStream() { return Stream; }
+  llvm::BitstreamCursor &getStream() { return Stream; }
 
   /// \brief Retrieve the identifier table associated with the
   /// preprocessor.
