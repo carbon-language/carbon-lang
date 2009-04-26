@@ -412,6 +412,10 @@ public:
   void *getAsOpaquePtr() const {
     return reinterpret_cast<void*>(InfoPtr);
   }
+
+  /// \brief Determine whether this is the empty selector.
+  bool isNull() const { return InfoPtr == 0; }
+
   // Predicates to identify the selector type.
   bool isKeywordSelector() const { 
     return getIdentifierInfoFlag() != ZeroArg; 

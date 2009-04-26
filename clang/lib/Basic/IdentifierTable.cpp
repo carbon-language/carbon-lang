@@ -315,9 +315,9 @@ unsigned Selector::getNumArgs() const {
 }
 
 IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) const {
-  if (IdentifierInfo *II = getAsIdentifierInfo()) {
+  if (getIdentifierInfoFlag()) {
     assert(argIndex == 0 && "illegal keyword index");
-    return II;
+    return getAsIdentifierInfo();
   }
   // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
   MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
@@ -346,6 +346,9 @@ std::string MultiKeywordSelector::getName() const {
 }
 
 std::string Selector::getAsString() const {
+  if (InfoPtr == 0)
+    return "<null selector>";
+
   if (InfoPtr & ArgFlags) {
     IdentifierInfo *II = getAsIdentifierInfo();
     

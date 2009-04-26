@@ -412,6 +412,8 @@ namespace clang {
       DECL_FIELD,
       /// \brief A VarDecl record.
       DECL_VAR,
+      /// \brief An ImplicitParamDecl record.
+      DECL_IMPLICIT_PARAM,
       /// \brief A ParmVarDecl record.
       DECL_PARM_VAR,
       /// \brief An OriginalParmVarDecl record.

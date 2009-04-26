@@ -260,6 +260,7 @@ namespace {
     void VisitFunctionDecl(FunctionDecl *D);
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
+    void VisitImplicitParamDecl(ImplicitParamDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
     void VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
@@ -548,6 +549,11 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Code = pch::DECL_VAR;
 }
 
+void PCHDeclWriter::VisitImplicitParamDecl(ImplicitParamDecl *D) {
+  VisitVarDecl(D);
+  Code = pch::DECL_IMPLICIT_PARAM;
+}
+
 void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   VisitVarDecl(D);
   Record.push_back(D->getObjCDeclQualifier()); // FIXME: stable encoding
@@ -680,8 +686,8 @@ namespace {
     
     // Objective-C Statements    
     void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
-    void VisitObjCCatchStmt(ObjCAtCatchStmt *);
-    void VisitObjCFinallyStmt(ObjCAtFinallyStmt *);
+    void VisitObjCAtCatchStmt(ObjCAtCatchStmt *);
+    void VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *);
     void VisitObjCAtTryStmt(ObjCAtTryStmt *);
     void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
@@ -1249,12 +1255,14 @@ void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   Writer.AddSourceLocation(E->getRightLoc(), Record);
   Writer.AddSelectorRef(E->getSelector(), Record);
   Writer.AddDeclRef(E->getMethodDecl(), Record); // optional
-
-  ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
   Writer.WriteSubStmt(E->getReceiver());
-  Writer.AddDeclRef(CI.first, Record);
-  Writer.AddIdentifierRef(CI.second, Record);
-  
+
+  if (!E->getReceiver()) {
+    ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
+    Writer.AddDeclRef(CI.first, Record);
+    Writer.AddIdentifierRef(CI.second, Record);
+  }
+
   for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg)
     Writer.WriteSubStmt(*Arg);
@@ -1277,7 +1285,7 @@ void PCHStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   Code = pch::STMT_OBJC_FOR_COLLECTION;
 }
 
-void PCHStmtWriter::VisitObjCCatchStmt(ObjCAtCatchStmt *S) {
+void PCHStmtWriter::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   Writer.WriteSubStmt(S->getCatchBody());
   Writer.WriteSubStmt(S->getNextCatchStmt());
   Writer.AddDeclRef(S->getCatchParamDecl(), Record);
@@ -1286,7 +1294,7 @@ void PCHStmtWriter::VisitObjCCatchStmt(ObjCAtCatchStmt *S) {
   Code = pch::STMT_OBJC_CATCH;
 }
 
-void PCHStmtWriter::VisitObjCFinallyStmt(ObjCAtFinallyStmt *S) {
+void PCHStmtWriter::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
   Writer.WriteSubStmt(S->getFinallyBody());
   Writer.AddSourceLocation(S->getAtFinallyLoc(), Record);
   Code = pch::STMT_OBJC_FINALLY;

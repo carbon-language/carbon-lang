@@ -82,6 +82,7 @@ namespace {
     void VisitFunctionDecl(FunctionDecl *FD);
     void VisitFieldDecl(FieldDecl *FD);
     void VisitVarDecl(VarDecl *VD);
+    void VisitImplicitParamDecl(ImplicitParamDecl *PD);
     void VisitParmVarDecl(ParmVarDecl *PD);
     void VisitOriginalParmVarDecl(OriginalParmVarDecl *PD);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
@@ -200,7 +201,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   if (Record[Idx++]) {
     // In practice, this won't be executed (since method definitions
     // don't occur in header files).
-    MD->setBody(cast<CompoundStmt>(Reader.GetStmt(Record[Idx++])));
+    MD->setBody(cast<CompoundStmt>(Reader.ReadStmt()));
     MD->setSelfDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
     MD->setCmdDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
   }
@@ -376,6 +377,10 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
     VD->setInit(Reader.ReadExpr());
 }
 
+void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
+  VisitVarDecl(PD);
+}
+
 void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
@@ -504,8 +509,8 @@ namespace {
     unsigned VisitObjCSuperExpr(ObjCSuperExpr *E);
     
     unsigned VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
-    unsigned VisitObjCCatchStmt(ObjCAtCatchStmt *);
-    unsigned VisitObjCFinallyStmt(ObjCAtFinallyStmt *);
+    unsigned VisitObjCAtCatchStmt(ObjCAtCatchStmt *);
+    unsigned VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *);
     unsigned VisitObjCAtTryStmt(ObjCAtTryStmt *);
     unsigned VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     unsigned VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
@@ -1112,10 +1117,13 @@ unsigned PCHStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
 
 unsigned PCHStmtReader::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
   VisitExpr(E);
-  E->setGetterMethod(cast<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setSetterMethod(cast<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setClassProp(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setBase(cast<Expr>(StmtStack.back()));
+  E->setGetterMethod(
+                 cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setSetterMethod(
+                 cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setClassProp(
+              cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setBase(cast_or_null<Expr>(StmtStack.back()));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
@@ -1129,13 +1137,15 @@ unsigned PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   E->setSelector(Reader.GetSelector(Record, Idx));
   E->setMethodDecl(cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
   
-  ObjCMessageExpr::ClassInfo CI;
-  CI.first = cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++]));
-  CI.second = Reader.GetIdentifierInfo(Record, Idx);
-  if (E->getMethodDecl() == 0)
+  E->setReceiver(
+         cast_or_null<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
+  if (!E->getReceiver()) {
+    ObjCMessageExpr::ClassInfo CI;
+    CI.first = cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++]));
+    CI.second = Reader.GetIdentifierInfo(Record, Idx);
     E->setClassInfo(CI);
-  
-  E->setReceiver(cast<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
+  }
+
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
   return E->getNumArgs() + 1;
@@ -1157,7 +1167,7 @@ unsigned PCHStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   return 3;
 }
 
-unsigned PCHStmtReader::VisitObjCCatchStmt(ObjCAtCatchStmt *S) {
+unsigned PCHStmtReader::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   VisitStmt(S);
   S->setCatchBody(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 2]));
   S->setNextCatchStmt(cast_or_null<Stmt>(StmtStack[StmtStack.size() - 1]));
@@ -1167,7 +1177,7 @@ unsigned PCHStmtReader::VisitObjCCatchStmt(ObjCAtCatchStmt *S) {
   return 2;
 }
 
-unsigned PCHStmtReader::VisitObjCFinallyStmt(ObjCAtFinallyStmt *S) {
+unsigned PCHStmtReader::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
   VisitStmt(S);
   S->setFinallyBody(StmtStack.back());
   S->setAtFinallyLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -2519,11 +2529,14 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   }
 
-  case pch::DECL_VAR: {
+  case pch::DECL_VAR:
     D = VarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
                         VarDecl::None, SourceLocation());
     break;
-  }
+
+  case pch::DECL_IMPLICIT_PARAM:
+    D = ImplicitParamDecl::Create(Context, 0, SourceLocation(), 0, QualType());
+    break;
 
   case pch::DECL_PARM_VAR: {
     D = ParmVarDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 

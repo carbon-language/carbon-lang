@@ -7,26 +7,30 @@
 use POSIX;
 
 $exitcode = 0;
-
 sub testfiles($$) {
   my $suffix = shift;
   my $language = shift;
+  my $passed = 0;
+  my $failed = 0;
+  my $skipped = 0;
 
   @files = `ls test/*/*.$suffix`;
   foreach $file (@files) {
     chomp($file);
-    print(".");
     my $code = system("clang-cc -fsyntax-only -x $language $file > /dev/null 2>&1");
     if ($code == 0) {
+      print(".");
       $code = system("clang-cc -emit-pch -x $language -o $file.pch $file > /dev/null 2>&1");
       if ($code == 0) {
         $code = system("clang-cc -include-pch $file.pch -x $language -ast-dump-full /dev/null > /dev/null 2>&1");
         if ($code == 0) {
+          $passed++;
         } elsif (($code & 0xFF) == SIGINT) {
           exit($exitcode);
         } else {
           print("\n---Failed to dump AST file for \"$file\"---\n");
           $exitcode = 1;
+          $failed++;
         }
         unlink "$file.pch";
       } elsif (($code & 0xFF) == SIGINT) {
@@ -34,11 +38,19 @@ sub testfiles($$) {
       } else {
         print("\n---Failed to build PCH file for \"$file\"---\n");
         $exitcode = 1;
+          $failed++;
       }
     } elsif (($code & 0xFF) == SIGINT) {
       exit($exitcode);
+    } else {
+      print("x");
+      $skipped++;
     }
   }
+
+  print("\n\n$passed tests passed\n");
+  print("$failed tests failed\n");
+  print("$skipped tests skipped ('x')\n")
 }
 
 printf("-----Testing precompiled headers for C-----\n");

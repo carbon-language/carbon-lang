@@ -300,8 +300,8 @@ public:
       return SourceRange(getBase()->getLocStart(), Loc);
     return SourceRange(ClassLoc, Loc);
   }
-  const Expr *getBase() const { return cast<Expr>(Base); }
-  Expr *getBase() { return cast<Expr>(Base); }
+  const Expr *getBase() const { return cast_or_null<Expr>(Base); }
+  Expr *getBase() { return cast_or_null<Expr>(Base); }
   void setBase(Expr *base) { Base = base; }
     
   SourceLocation getLocation() const { return Loc; }
@@ -375,7 +375,7 @@ public:
                   Expr **ArgExprs, unsigned NumArgs);
                   
   explicit ObjCMessageExpr(EmptyShell Empty)
-    : Expr(ObjCMessageExprClass, Empty) {}
+    : Expr(ObjCMessageExprClass, Empty), SubExprs(0), NumArgs(0) {}
   
   ~ObjCMessageExpr() {
     delete [] SubExprs;
@@ -418,7 +418,13 @@ public:
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return NumArgs; }
-  void setNumArgs(unsigned nArgs) { NumArgs = nArgs; }
+  void setNumArgs(unsigned nArgs) { 
+    NumArgs = nArgs; 
+    // FIXME: should always allocate SubExprs via the ASTContext's
+    // allocator.
+    if (!SubExprs)
+      SubExprs = new Stmt* [NumArgs + 1];
+  }
   
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
