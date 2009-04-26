@@ -22,7 +22,7 @@ using namespace llvm;
 Deserializer::Deserializer(BitstreamReader& stream)
   : Stream(stream), RecIdx(0), FreeList(NULL), AbbrevNo(0), RecordCode(0) {
 
-    StreamStart = Stream.GetCurrentBitNo();
+  StreamStart = Stream.GetCurrentBitNo();
 }
 
 Deserializer::~Deserializer() {

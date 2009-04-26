@@ -86,7 +86,8 @@ public:
 
 class BitcodeReader : public ModuleProvider {
   MemoryBuffer *Buffer;
-  BitstreamReader Stream;
+  BitstreamReader StreamFile;
+  BitstreamCursor Stream;
   
   const char *ErrorString;
   

@@ -1346,7 +1346,8 @@ bool BitcodeReader::ParseBitcode() {
     if (SkipBitcodeWrapperHeader(BufPtr, BufEnd))
       return Error("Invalid bitcode wrapper header");
   
-  Stream.init(BufPtr, BufEnd);
+  StreamFile.init(BufPtr, BufEnd);
+  Stream.init(StreamFile);
   
   // Sniff for the signature.
   if (Stream.Read(8) != 'B' ||

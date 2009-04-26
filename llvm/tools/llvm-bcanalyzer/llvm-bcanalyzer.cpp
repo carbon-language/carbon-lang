@@ -262,7 +262,7 @@ static bool Error(const std::string &Err) {
 }
 
 /// ParseBlock - Read a block, updating statistics, etc.
-static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
+static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
   std::string Indent(IndentLevel*2, ' ');
   uint64_t BlockBitStart = Stream.GetCurrentBitNo();
   unsigned BlockID = Stream.ReadSubBlockID();
@@ -420,8 +420,8 @@ static int AnalyzeBitcode() {
     if (SkipBitcodeWrapperHeader(BufPtr, EndBufPtr))
       return Error("Invalid bitcode wrapper header");
   
-  BitstreamReader Stream(BufPtr, EndBufPtr);
-
+  BitstreamReader StreamFile(BufPtr, EndBufPtr);
+  BitstreamCursor Stream(StreamFile);
   
   // Read the stream signature.
   char Signature[6];

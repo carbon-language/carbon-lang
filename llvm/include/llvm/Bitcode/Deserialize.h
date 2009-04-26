@@ -116,7 +116,7 @@ public:
   //===----------------------------------------------------------===//
 
 private:
-  BitstreamReader& Stream;
+  BitstreamCursor Stream;
   SmallVector<uint64_t,20> Record;
   unsigned RecIdx;
   BumpPtrAllocator Allocator;
@@ -482,7 +482,7 @@ public:
 
   unsigned getRecordCode();
 
-  BitstreamReader& getStream() { return Stream; }
+  BitstreamCursor &getStream() { return Stream; }
 
 private:
   bool AdvanceStream();
