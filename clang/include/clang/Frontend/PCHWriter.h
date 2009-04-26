@@ -158,6 +158,7 @@ private:
   /// file.
   unsigned NumVisibleDeclContexts;
 
+  void WriteBlockInfoBlock();
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteSourceManagerBlock(SourceManager &SourceMgr, 

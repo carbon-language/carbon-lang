@@ -1325,6 +1325,111 @@ void PCHStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
 // PCHWriter Implementation
 //===----------------------------------------------------------------------===//
 
+static void EmitBlockID(unsigned ID, const char *Name,
+                        llvm::BitstreamWriter &Stream,
+                        PCHWriter::RecordData &Record) {
+  Record.clear();
+  Record.push_back(ID);
+  Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETBID, Record);
+
+  // Emit the block name if present.
+  if (Name == 0 || Name[0] == 0) return;
+  Record.clear();
+  while (*Name)
+    Record.push_back(*Name++);
+  Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_BLOCKNAME, Record);
+}
+
+static void EmitRecordID(unsigned ID, const char *Name,
+                         llvm::BitstreamWriter &Stream,
+                         PCHWriter::RecordData &Record) {
+  Record.clear();
+  Record.push_back(ID);
+  while (*Name)
+    Record.push_back(*Name++);
+  Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETRECORDNAME, Record);
+  
+}
+  
+void PCHWriter::WriteBlockInfoBlock() {
+  RecordData Record;
+  Stream.EnterSubblock(llvm::bitc::BLOCKINFO_BLOCK_ID, 3);
+  
+#define BLOCK(X) EmitBlockID(pch::X, #X, Stream, Record)
+#define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
+ 
+  // PCH Top-Level Block.
+  BLOCK(PCH_BLOCK_ID);
+  RECORD(TYPE_OFFSET);
+  RECORD(DECL_OFFSET);
+  RECORD(LANGUAGE_OPTIONS);
+  RECORD(TARGET_TRIPLE);
+  RECORD(IDENTIFIER_OFFSET);
+  RECORD(IDENTIFIER_TABLE);
+  RECORD(EXTERNAL_DEFINITIONS);
+  RECORD(SPECIAL_TYPES);
+  RECORD(STATISTICS);
+  RECORD(TENTATIVE_DEFINITIONS);
+  RECORD(LOCALLY_SCOPED_EXTERNAL_DECLS);
+  RECORD(SELECTOR_OFFSETS);
+  RECORD(METHOD_POOL);
+  RECORD(PP_COUNTER_VALUE);
+  
+  // SourceManager Block.
+  BLOCK(SOURCE_MANAGER_BLOCK_ID);
+  RECORD(SM_SLOC_FILE_ENTRY);
+  RECORD(SM_SLOC_BUFFER_ENTRY);
+  RECORD(SM_SLOC_BUFFER_BLOB);
+  RECORD(SM_SLOC_INSTANTIATION_ENTRY);
+  RECORD(SM_LINE_TABLE);
+  RECORD(SM_HEADER_FILE_INFO);
+  
+  // Preprocessor Block.
+  BLOCK(PREPROCESSOR_BLOCK_ID);
+  RECORD(PP_MACRO_OBJECT_LIKE);
+  RECORD(PP_MACRO_FUNCTION_LIKE);
+  RECORD(PP_TOKEN);
+
+  // Types block.
+  BLOCK(TYPES_BLOCK_ID);
+  RECORD(TYPE_EXT_QUAL);
+  RECORD(TYPE_FIXED_WIDTH_INT);
+  RECORD(TYPE_COMPLEX);
+  RECORD(TYPE_POINTER);
+  RECORD(TYPE_BLOCK_POINTER);
+  RECORD(TYPE_LVALUE_REFERENCE);
+  RECORD(TYPE_RVALUE_REFERENCE);
+  RECORD(TYPE_MEMBER_POINTER);
+  RECORD(TYPE_CONSTANT_ARRAY);
+  RECORD(TYPE_INCOMPLETE_ARRAY);
+  RECORD(TYPE_VARIABLE_ARRAY);
+  RECORD(TYPE_VECTOR);
+  RECORD(TYPE_EXT_VECTOR);
+  RECORD(TYPE_FUNCTION_PROTO);
+  RECORD(TYPE_FUNCTION_NO_PROTO);
+  RECORD(TYPE_TYPEDEF);
+  RECORD(TYPE_TYPEOF_EXPR);
+  RECORD(TYPE_TYPEOF);
+  RECORD(TYPE_RECORD);
+  RECORD(TYPE_ENUM);
+  RECORD(TYPE_OBJC_INTERFACE);
+  RECORD(TYPE_OBJC_QUALIFIED_INTERFACE);
+  RECORD(TYPE_OBJC_QUALIFIED_ID);
+  
+  // Decls block.
+  BLOCK(DECLS_BLOCK_ID);
+  // ... many others
+  RECORD(DECL_FIELD);
+  RECORD(DECL_VAR);
+  RECORD(DECL_PARM_VAR);
+  
+  
+#undef RECORD
+#undef BLOCK
+  Stream.ExitBlock();
+}
+
+
 /// \brief Write the target triple (e.g., i686-apple-darwin9).
 void PCHWriter::WriteTargetTriple(const TargetInfo &Target) {
   using namespace llvm;
@@ -2429,6 +2534,8 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   Stream.Emit((unsigned)'P', 8);
   Stream.Emit((unsigned)'C', 8);
   Stream.Emit((unsigned)'H', 8);
+  
+  WriteBlockInfoBlock();
 
   // The translation unit is the first declaration we'll emit.
   DeclIDs[Context.getTranslationUnitDecl()] = 1;
