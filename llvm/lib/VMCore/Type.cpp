@@ -1410,9 +1410,8 @@ void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
 }
 
 bool SequentialType::indexValid(const Value *V) const {
-  if (const IntegerType *IT = dyn_cast<IntegerType>(V->getType())) 
-    return IT->getBitWidth() == 16 || IT->getBitWidth() == 32 ||
-           IT->getBitWidth() == 64;
+  if (isa<IntegerType>(V->getType())) 
+    return true;
   return false;
 }
 
