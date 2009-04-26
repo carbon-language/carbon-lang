@@ -42,18 +42,16 @@ class PointerIntPair {
   intptr_t Value;
   enum {
     /// PointerBitMask - The bits that come from the pointer.
-    PointerBitMask =
-      ~(unsigned)(((intptr_t)1 << PtrTraits::NumLowBitsAvailable)-1),
-
+    PointerBitMask = ~(((intptr_t)1 << PtrTraits::NumLowBitsAvailable)-1),
     /// IntShift - The number of low bits that we reserve for other uses, and
     /// keep zero.
-    IntShift = (unsigned)PtrTraits::NumLowBitsAvailable-IntBits,
+    IntShift = PtrTraits::NumLowBitsAvailable-IntBits,
     
     /// IntMask - This is the unshifted mask for valid bits of the int type.
-    IntMask = (unsigned)(((intptr_t)1 << IntBits)-1),
+    IntMask = ((intptr_t)1 << IntBits)-1,
     
     // ShiftedIntMask - This is the bits for the integer shifted in place.
-    ShiftedIntMask = (unsigned)(IntMask << IntShift)
+    ShiftedIntMask = IntMask << IntShift
   };
 public:
   PointerIntPair() : Value(0) {}
