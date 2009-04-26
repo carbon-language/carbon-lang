@@ -554,17 +554,16 @@ public:
   /// function. The variant that accepts a FunctionDecl pointer will
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
-  CompoundStmt *getBody(ASTContext &Context, 
-                        const FunctionDecl *&Definition) const;
+  Stmt *getBody(ASTContext &Context, const FunctionDecl *&Definition) const;
 
-  virtual CompoundStmt *getBody(ASTContext &Context) const { 
+  virtual Stmt *getBody(ASTContext &Context) const {
     const FunctionDecl* Definition;
     return getBody(Context, Definition);
   }
 
   /// \brief If the function has a body that is immediately available,
   /// return it.
-  CompoundStmt *getBodyIfAvailable() const;
+  Stmt *getBodyIfAvailable() const;
 
   /// isThisDeclarationADefinition - Returns whether this specific
   /// declaration of the function is also a definition. This does not
@@ -574,7 +573,7 @@ public:
   /// CodeGenModule.cpp uses it, and I don't know if this would break it.
   bool isThisDeclarationADefinition() const { return Body; }
 
-  void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
+  void setBody(Stmt *B) { Body = B; }
   void setLazyBody(uint64_t Offset) { Body = Offset; }
 
   /// Whether this function is virtual, either by explicit marking, or by
@@ -1148,7 +1147,7 @@ public:
   SourceLocation getCaretLocation() const { return getLocation(); }
 
   CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
-  CompoundStmt *getBody(ASTContext &C) const { return (CompoundStmt*) Body; }
+  Stmt *getBody(ASTContext &C) const { return (Stmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   // Iterator access to formal parameters.

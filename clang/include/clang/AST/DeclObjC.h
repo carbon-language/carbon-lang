@@ -242,11 +242,11 @@ public:
     return ImplementationControl(DeclImplementation); 
   }
 
-  virtual CompoundStmt *getBody(ASTContext &C) const { 
-    return (CompoundStmt*) Body; 
+  virtual Stmt *getBody(ASTContext &C) const { 
+    return (Stmt*) Body; 
   }
   CompoundStmt *getBody() { return (CompoundStmt*)Body; }
-  void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
+  void setBody(Stmt *B) { Body = B; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }

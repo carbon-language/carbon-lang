@@ -536,7 +536,8 @@ Parser::ParseDeclarationOrFunctionDefinition(
               (!getLang().CPlusPlus &&
                isDeclarationSpecifier()) ||   // int X(f) int f; {}
               (getLang().CPlusPlus &&
-               Tok.is(tok::colon)))) { // X() : Base() {} (used for ctors)
+               (Tok.is(tok::colon) ||     // X() : Base() {} (used for ctors)
+                Tok.is(tok::kw_try))))) { // X() try { ... }
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       Diag(Tok, diag::err_function_declared_typedef);
 
@@ -575,7 +576,7 @@ Parser::ParseDeclarationOrFunctionDefinition(
 ///         decl-specifier-seq[opt] declarator ctor-initializer[opt]
 ///         function-body
 /// [C++] function-definition: [C++ 8.4]
-///         decl-specifier-seq[opt] declarator function-try-block [TODO]
+///         decl-specifier-seq[opt] declarator function-try-block
 ///
 Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
@@ -602,8 +603,8 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D) {
 
   // We should have either an opening brace or, in a C++ constructor,
   // we may have a colon.
-  // FIXME: In C++, we might also find the 'try' keyword.
-  if (Tok.isNot(tok::l_brace) && Tok.isNot(tok::colon)) {
+  if (Tok.isNot(tok::l_brace) && Tok.isNot(tok::colon) &&
+      Tok.isNot(tok::kw_try)) {
     Diag(Tok, diag::err_expected_fn_body);
 
     // Skip over garbage, until we get to '{'.  Don't eat the '{'.
@@ -621,12 +622,14 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D) {
   // specified Declarator for the function.
   DeclPtrTy Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
 
+  if (Tok.is(tok::kw_try))
+    return ParseFunctionTryBlock(Res);
+
   // If we have a colon, then we're probably parsing a C++
   // ctor-initializer.
   if (Tok.is(tok::colon))
     ParseConstructorInitializer(Res);
 
-  SourceLocation BraceLoc = Tok.getLocation();
   return ParseFunctionStatementBody(Res);
 }
 

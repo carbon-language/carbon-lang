@@ -225,12 +225,13 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                     FProto->getArgType(i)));
   }
 
-  const CompoundStmt *S = FD->getBody(getContext());
+  // FIXME: Support CXXTryStmt here, too.
+  if (const CompoundStmt *S = FD->getCompoundBody(getContext())) {
+    StartFunction(FD, FD->getResultType(), Fn, Args, S->getLBracLoc());
+    EmitStmt(S);
+    FinishFunction(S->getRBracLoc());
+  }
 
-  StartFunction(FD, FD->getResultType(), Fn, Args, S->getLBracLoc());
-  EmitStmt(S);
-  FinishFunction(S->getRBracLoc());
-    
   // Destroy the 'this' declaration.
   if (CXXThisDecl)
     CXXThisDecl->Destroy(getContext());

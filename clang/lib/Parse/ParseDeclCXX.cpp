@@ -737,7 +737,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
     // function-definition:
     if (Tok.is(tok::l_brace)
-        || (DeclaratorInfo.isFunctionDeclarator() && Tok.is(tok::colon))) {
+        || (DeclaratorInfo.isFunctionDeclarator() &&
+            (Tok.is(tok::colon) || Tok.is(tok::kw_try)))) {
       if (!DeclaratorInfo.isFunctionDeclarator()) {
         Diag(Tok, diag::err_func_def_no_params);
         ConsumeBrace();
@@ -1044,6 +1045,7 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
       break;
     else {
       // Skip over garbage, until we get to '{'.  Don't eat the '{'.
+      Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
       SkipUntil(tok::l_brace, true, true);
       break;
     }

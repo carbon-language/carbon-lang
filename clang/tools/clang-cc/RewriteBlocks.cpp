@@ -1091,8 +1091,9 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
     // prototype. This enables us to rewrite function declarations and
     // definitions using the same code.
     RewriteFunctionProtoType(FD->getType(), FD);
-    
-    if (CompoundStmt *Body = FD->getBody(*Context)) {
+
+    // FIXME: Handle CXXTryStmt
+    if (CompoundStmt *Body = FD->getCompoundBody(*Context)) {
       CurFunctionDef = FD;
       FD->setBody(cast_or_null<CompoundStmt>(RewriteFunctionBody(Body)));
       // This synthesizes and inserts the block "impl" struct, invoke function,

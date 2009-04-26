@@ -129,7 +129,7 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
     DebugInfo = CGM.getDebugInfo();
   StartObjCMethod(OMD, OMD->getClassInterface());
   EmitStmt(OMD->getBody(getContext()));
-  FinishFunction(cast<CompoundStmt>(OMD->getBody(getContext()))->getRBracLoc());
+  FinishFunction(OMD->getBodyRBrace(getContext()));
 }
 
 // FIXME: I wasn't sure about the synthesis approach. If we end up

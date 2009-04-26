@@ -281,11 +281,18 @@ public:
   // be defined inside or outside a function etc).
   bool isDefinedOutsideFunctionOrMethod() const;
 
-  // getBody - If this Decl represents a declaration for a body of code,
-  //  such as a function or method definition, this method returns the top-level
-  //  Stmt* of that body.  Otherwise this method returns null.  
-  virtual CompoundStmt* getBody(ASTContext &Context) const { return 0; }
-  
+  /// getBody - If this Decl represents a declaration for a body of code,
+  ///  such as a function or method definition, this method returns the
+  ///  top-level Stmt* of that body.  Otherwise this method returns null.
+  virtual Stmt* getBody(ASTContext &Context) const { return 0; }
+
+  /// getCompoundBody - Returns getBody(), dyn_casted to a CompoundStmt.
+  CompoundStmt* getCompoundBody(ASTContext &Context) const;
+
+  /// getBodyRBrace - Gets the right brace of the body, if a body exists.
+  /// This works whether the body is a CompoundStmt or a CXXTryStmt.
+  SourceLocation getBodyRBrace(ASTContext &Context) const;
+
   // global temp stats (until we have a per-module visitor)
   static void addDeclKind(Kind k);
   static bool CollectingStats(bool Enable = false);

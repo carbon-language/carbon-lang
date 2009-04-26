@@ -15,6 +15,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include <sstream>
@@ -197,8 +198,12 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
         // FIXME: We would like to always get the function body, even
         // when it needs to be de-serialized, but getting the
         // ASTContext here requires significant changes.
-        if (CompoundStmt *Body = FD->getBodyIfAvailable())
-          return Body->getSourceRange();
+        if (Stmt *Body = FD->getBodyIfAvailable()) {
+          if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Body))
+            return CS->getSourceRange();
+          else
+            return cast<CXXTryStmt>(Body)->getSourceRange();
+        }
       }
       else {
         SourceLocation L = D->getLocation();

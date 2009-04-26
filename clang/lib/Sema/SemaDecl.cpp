@@ -18,6 +18,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/StmtCXX.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
@@ -2986,7 +2987,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
 
 Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   Decl *dcl = D.getAs<Decl>();
-  CompoundStmt *Body =cast<CompoundStmt>(static_cast<Stmt*>(BodyArg.release()));
+  Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody(Body);
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
@@ -3029,13 +3030,16 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
     // function somewhere so that it is properly owned and so that the goto
     // has a valid target.  Do this by creating a new compound stmt with the
     // label in it.
-    
+
     // Give the label a sub-statement.
     L->setSubStmt(new (Context) NullStmt(L->getIdentLoc()));
-      
-    std::vector<Stmt*> Elements(Body->body_begin(), Body->body_end());
+
+    CompoundStmt *Compound = isa<CXXTryStmt>(Body) ?
+                               cast<CXXTryStmt>(Body)->getTryBlock() :
+                               cast<CompoundStmt>(Body);
+    std::vector<Stmt*> Elements(Compound->body_begin(), Compound->body_end());
     Elements.push_back(L);
-    Body->setStmts(Context, &Elements[0], Elements.size());
+    Compound->setStmts(Context, &Elements[0], Elements.size());
   }
   FunctionLabelMap.clear();
 

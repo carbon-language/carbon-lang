@@ -980,8 +980,8 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
-    SourceLocation LocEnd = OMD->getBody(*Context)->getLocStart();
-    
+    SourceLocation LocEnd = OMD->getCompoundBody(*Context)->getLocStart();
+
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
     ReplaceText(LocStart, endBuf-startBuf,
@@ -996,7 +996,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
-    SourceLocation LocEnd = OMD->getBody(*Context)->getLocStart();
+    SourceLocation LocEnd = OMD->getCompoundBody(*Context)->getLocStart();
     
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
@@ -1426,6 +1426,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf += "}\n";
   
   // Insert all these *after* the statement body.
+  // FIXME: If this should support Obj-C++, support CXXTryStmt
   if (isa<CompoundStmt>(S->getBody())) {
     SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(1);
     InsertText(endBodyLoc, buf.c_str(), buf.size());
@@ -4489,7 +4490,8 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     // definitions using the same code.
     RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
-    if (CompoundStmt *Body = FD->getBody(*Context)) {
+    // FIXME: If this should support Obj-C++, support CXXTryStmt
+    if (CompoundStmt *Body = FD->getCompoundBody(*Context)) {
       CurFunctionDef = FD;
       CollectPropertySetters(Body);
       CurrentBody = Body;

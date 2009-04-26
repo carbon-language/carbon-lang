@@ -3047,11 +3047,11 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
 
     LeakN = LeakN->succ_empty() ? 0 : *(LeakN->succ_begin());
   }
-  
+
   if (!L.isValid()) {
-    CompoundStmt *CS 
-      = BR.getStateManager().getCodeDecl().getBody(BR.getContext());
-    L = PathDiagnosticLocation(CS->getRBracLoc(), SMgr);
+    L = PathDiagnosticLocation(
+          BR.getStateManager().getCodeDecl().getBodyRBrace(BR.getContext()),
+          SMgr);
   }
 
   std::string sbuf;

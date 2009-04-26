@@ -1289,7 +1289,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
 Parser::DeclPtrTy Parser::ParseFunctionStatementBody(DeclPtrTy Decl) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
-         
+
   PrettyStackTraceActionsDecl CrashInfo(Decl, LBraceLoc, Actions,
                                         PP.getSourceManager(),
                                         "parsing function body");
@@ -1307,18 +1307,58 @@ Parser::DeclPtrTy Parser::ParseFunctionStatementBody(DeclPtrTy Decl) {
   return Actions.ActOnFinishFunctionBody(Decl, move(FnBody));
 }
 
+/// ParseFunctionTryBlock - Parse a C++ function-try-block.
+///
+///       function-try-block:
+///         'try' ctor-initializer[opt] compound-statement handler-seq
+///
+Parser::DeclPtrTy Parser::ParseFunctionTryBlock(DeclPtrTy Decl) {
+  assert(Tok.is(tok::kw_try) && "Expected 'try'");
+  SourceLocation TryLoc = ConsumeToken();
+
+  PrettyStackTraceActionsDecl CrashInfo(Decl, TryLoc, Actions,
+                                        PP.getSourceManager(),
+                                        "parsing function try block");
+
+  // Constructor initializer list?
+  if (Tok.is(tok::colon))
+    ParseConstructorInitializer(Decl);
+
+  OwningStmtResult FnBody(ParseCXXTryBlockCommon(TryLoc));
+  // If we failed to parse the try-catch, we just give the function an empty
+  // compound statement as the body.
+  if (FnBody.isInvalid())
+    FnBody = Actions.ActOnCompoundStmt(TryLoc, TryLoc,
+                                       MultiStmtArg(Actions), false);
+
+  return Actions.ActOnFinishFunctionBody(Decl, move(FnBody));
+}
+
 /// ParseCXXTryBlock - Parse a C++ try-block.
 ///
 ///       try-block:
 ///         'try' compound-statement handler-seq
 ///
-///       handler-seq:
-///         handler handler-seq[opt]
-///
 Parser::OwningStmtResult Parser::ParseCXXTryBlock() {
   assert(Tok.is(tok::kw_try) && "Expected 'try'");
 
   SourceLocation TryLoc = ConsumeToken();
+  return ParseCXXTryBlockCommon(TryLoc);
+}
+
+/// ParseCXXTryBlockCommon - Parse the common part of try-block and
+/// function-try-block.
+///
+///       try-block:
+///         'try' compound-statement handler-seq
+///
+///       function-try-block:
+///         'try' ctor-initializer[opt] compound-statement handler-seq
+///
+///       handler-seq:
+///         handler handler-seq[opt]
+///
+Parser::OwningStmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   if (Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
   OwningStmtResult TryBlock(ParseCompoundStatement());

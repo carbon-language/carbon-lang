@@ -795,6 +795,7 @@ private:
   // C++ 6: Statements and Blocks
 
   OwningStmtResult ParseCXXTryBlock();
+  OwningStmtResult ParseCXXTryBlockCommon(SourceLocation TryLoc);
   OwningStmtResult ParseCXXCatchBlock();
 
   //===--------------------------------------------------------------------===//
@@ -815,7 +816,8 @@ private:
                                         bool RequireSemi = true);
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
-  
+  DeclPtrTy ParseFunctionTryBlock(DeclPtrTy Decl);
+
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         TemplateParameterLists *TemplateParams,
                         AccessSpecifier AS);

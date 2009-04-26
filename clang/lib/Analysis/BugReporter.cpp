@@ -189,7 +189,7 @@ PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
   if (Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, SMgr);
 
-  return FullSourceLoc(CodeDecl.getBody(getContext())->getRBracLoc(), SMgr);
+  return FullSourceLoc(CodeDecl.getBodyRBrace(getContext()), SMgr);
 }
   
 PathDiagnosticLocation
@@ -825,7 +825,9 @@ public:
     
     // Finally, add an initial edge from the start location of the first
     // statement (if it doesn't already exist).
-    if (const CompoundStmt *CS = PDB.getCodeDecl().getBody(PDB.getContext()))
+    // FIXME: Should handle CXXTryStmt if analyser starts supporting C++.
+    if (const CompoundStmt *CS =
+          PDB.getCodeDecl().getCompoundBody(PDB.getContext()))
       if (!CS->body_empty()) {
         SourceLocation Loc = (*CS->body_begin())->getLocStart();
         rawAddEdge(PathDiagnosticLocation(Loc, PDB.getSourceManager()));

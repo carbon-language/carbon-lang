@@ -321,22 +321,22 @@ void FunctionDecl::Destroy(ASTContext& C) {
 }
 
 
-CompoundStmt *FunctionDecl::getBody(ASTContext &Context,
-                                    const FunctionDecl *&Definition) const {
+Stmt *FunctionDecl::getBody(ASTContext &Context,
+                            const FunctionDecl *&Definition) const {
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
     if (FD->Body) {
       Definition = FD;
-      return cast<CompoundStmt>(FD->Body.get(Context.getExternalSource()));
+      return FD->Body.get(Context.getExternalSource());
     }
   }
 
   return 0;
 }
 
-CompoundStmt *FunctionDecl::getBodyIfAvailable() const {
+Stmt *FunctionDecl::getBodyIfAvailable() const {
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
     if (FD->Body && !FD->Body.isOffset()) {
-      return cast<CompoundStmt>(FD->Body.get(0));
+      return FD->Body.get(0);
     }
   }
 

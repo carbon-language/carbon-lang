@@ -205,6 +205,7 @@ def err_expected_member_or_base_name : Error<
 def ext_ellipsis_exception_spec : Extension<
   "exception specification of '...' is a Microsoft extension">;
 def err_expected_catch : Error<"expected catch">;
+def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;

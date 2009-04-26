@@ -17,15 +17,15 @@
 #include "clang/Parse/Scope.h"
 using namespace clang;
 
-/// ParseInlineCXXMethodDef - We parsed and verified that the specified
+/// ParseCXXInlineMethodDef - We parsed and verified that the specified
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
 Parser::DeclPtrTy
 Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
-  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon)) && 
-         "Current token not a '{' or ':'!");
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
+         "Current token not a '{', ':' or 'try'!");
 
   DeclPtrTy FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
 
@@ -34,8 +34,9 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   getCurTopClassStack().MethodDefs.push_back(LexedMethod(FnD));
   CachedTokens &Toks = getCurTopClassStack().MethodDefs.back().Toks;
 
-  // We may have a constructor initializer here.
-  if (Tok.is(tok::colon)) {
+  tok::TokenKind kind = Tok.getKind();
+  // We may have a constructor initializer or function-try-block here.
+  if (kind == tok::colon || kind == tok::kw_try) {
     // Consume everything up to (and including) the left brace.
     if (!ConsumeAndStoreUntil(tok::l_brace, tok::unknown, Toks, tok::semi)) {
       // We didn't find the left-brace we expected after the
@@ -57,6 +58,14 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   }
   // Consume everything up to (and including) the matching right brace.
   ConsumeAndStoreUntil(tok::r_brace, tok::unknown, Toks);
+
+  // If we're in a function-try-block, we need to store all the catch blocks.
+  if (kind == tok::kw_try) {
+    while (Tok.is(tok::kw_catch)) {
+      ConsumeAndStoreUntil(tok::l_brace, tok::unknown, Toks);
+      ConsumeAndStoreUntil(tok::r_brace, tok::unknown, Toks);
+    }
+  }
 
   return FnD;
 }
@@ -126,14 +135,18 @@ void Parser::ParseLexedMethodDefs() {
 
     // Consume the previously pushed token.
     ConsumeAnyToken();
-    assert((Tok.is(tok::l_brace) || Tok.is(tok::colon)) && 
-           "Inline method not starting with '{' or ':'");
+    assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try))
+           && "Inline method not starting with '{', ':' or 'try'");
 
     // Parse the method body. Function body parsing code is similar enough
     // to be re-used for method bodies as well.
     ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
     Actions.ActOnStartOfFunctionDef(CurScope, LM.D);
 
+    if (Tok.is(tok::kw_try)) {
+      ParseFunctionTryBlock(LM.D);
+      return;
+    }
     if (Tok.is(tok::colon))
       ParseConstructorInitializer(LM.D);
     // FIXME: What if ParseConstructorInitializer doesn't leave us with a '{'??

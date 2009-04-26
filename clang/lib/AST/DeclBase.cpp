@@ -20,6 +20,8 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/Stmt.h"
+#include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -339,6 +341,21 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
       assert(false && "a decl that inherits DeclContext isn't handled");
       return 0;
   }
+}
+
+CompoundStmt* Decl::getCompoundBody(ASTContext &Context) const {
+  return dyn_cast_or_null<CompoundStmt>(getBody(Context));
+}
+
+SourceLocation Decl::getBodyRBrace(ASTContext &Context) const {
+  Stmt *Body = getBody(Context);
+  if (!Body)
+    return SourceLocation();
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Body))
+    return CS->getRBracLoc();
+  assert(isa<CXXTryStmt>(Body) &&
+         "Body can only be CompoundStmt or CXXTryStmt");
+  return cast<CXXTryStmt>(Body)->getSourceRange().getEnd();
 }
 
 #ifndef NDEBUG
