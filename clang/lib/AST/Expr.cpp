@@ -1525,6 +1525,16 @@ ObjCMessageExpr::ClassInfo ObjCMessageExpr::getClassInfo() const {
   }
 }
 
+void ObjCMessageExpr::setClassInfo(const ObjCMessageExpr::ClassInfo &CI) {
+  if (CI.first == 0 && CI.second == 0)
+    SubExprs[RECEIVER] = (Expr*)((uintptr_t)0 | IsInstMeth);
+  else if (CI.first == 0)
+    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.second | IsClsMethDeclUnknown);
+  else
+    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.first | IsClsMethDeclKnown);
+}
+
+
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->getIntegerConstantExprValue(C) != 0;
 }

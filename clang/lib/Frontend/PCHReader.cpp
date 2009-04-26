@@ -497,7 +497,11 @@ namespace {
     unsigned VisitObjCEncodeExpr(ObjCEncodeExpr *E);
     unsigned VisitObjCSelectorExpr(ObjCSelectorExpr *E);
     unsigned VisitObjCProtocolExpr(ObjCProtocolExpr *E);
+    unsigned VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
+    unsigned VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
+    unsigned VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
     unsigned VisitObjCMessageExpr(ObjCMessageExpr *E);
+    unsigned VisitObjCSuperExpr(ObjCSuperExpr *E);
   };
 }
 
@@ -1081,21 +1085,60 @@ unsigned PCHStmtReader::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   return 0;
 }
 
+unsigned PCHStmtReader::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
+  VisitExpr(E);
+  E->setDecl(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setBase(cast<Expr>(StmtStack.back()));
+  E->setIsArrow(Record[Idx++]);
+  E->setIsFreeIvar(Record[Idx++]);
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+  VisitExpr(E);
+  E->setProperty(cast<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setBase(cast<Expr>(StmtStack.back()));
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
+  VisitExpr(E);
+  E->setGetterMethod(cast<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setSetterMethod(cast<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setClassProp(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setBase(cast<Expr>(StmtStack.back()));
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
+
 unsigned PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   E->setNumArgs(Record[Idx++]);
-  SourceRange SR(SourceLocation::getFromRawEncoding(Record[Idx++]),
-                 SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setSourceRange(SR);
+  E->setLeftLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRightLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setSelector(Reader.GetSelector(Record, Idx));
   E->setMethodDecl(cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-  // FIXME: deal with class messages.
+  
+  ObjCMessageExpr::ClassInfo CI;
+  CI.first = cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++]));
+  CI.second = Reader.GetIdentifierInfo(Record, Idx);
+  if (E->getMethodDecl() == 0)
+    E->setClassInfo(CI);
+  
   E->setReceiver(cast<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
   return E->getNumArgs() + 1;
 }
 
+unsigned PCHStmtReader::VisitObjCSuperExpr(ObjCSuperExpr *E) {
+  VisitExpr(E);
+  E->setLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 // PCH reader implementation
@@ -3312,8 +3355,20 @@ Stmt *PCHReader::ReadStmt() {
     case pch::EXPR_OBJC_PROTOCOL_EXPR:
       S = new (Context) ObjCProtocolExpr(Empty);
       break;
+    case pch::EXPR_OBJC_IVAR_REF_EXPR:
+      S = new (Context) ObjCIvarRefExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_PROPERTY_REF_EXPR:
+      S = new (Context) ObjCPropertyRefExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_KVC_REF_EXPR:
+      S = new (Context) ObjCKVCRefExpr(Empty);
+      break;
     case pch::EXPR_OBJC_MESSAGE_EXPR:
       S = new (Context) ObjCMessageExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_SUPER_EXPR:
+      S = new (Context) ObjCSuperExpr(Empty);
       break;
     }
 

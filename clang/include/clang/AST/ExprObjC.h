@@ -181,19 +181,29 @@ public:
     Loc(l), Base(base), IsArrow(arrow),
     IsFreeIvar(freeIvar) {}
   
+  explicit ObjCIvarRefExpr(EmptyShell Empty)
+    : Expr(ObjCIvarRefExprClass, Empty) {}
+
   ObjCIvarDecl *getDecl() { return D; }
   const ObjCIvarDecl *getDecl() const { return D; }
-  virtual SourceRange getSourceRange() const { 
-    return isFreeIvar() ? SourceRange(Loc)
-                        : SourceRange(getBase()->getLocStart(), Loc); 
-  }
+  void setDecl(ObjCIvarDecl *d) { D = d; }
+  
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }
   void setBase(Expr * base) { Base = base; }
+  
   bool isArrow() const { return IsArrow; }
   bool isFreeIvar() const { return IsFreeIvar; }
+  void setIsArrow(bool A) { IsArrow = A; }
+  void setIsFreeIvar(bool A) { IsFreeIvar = A; }
   
   SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+
+  virtual SourceRange getSourceRange() const { 
+    return isFreeIvar() ? SourceRange(Loc)
+    : SourceRange(getBase()->getLocStart(), Loc); 
+  }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjCIvarRefExprClass; 
@@ -218,19 +228,24 @@ public:
                       SourceLocation l, Expr *base)
     : Expr(ObjCPropertyRefExprClass, t), AsProperty(PD), IdLoc(l), Base(base) {
   }
-  ObjCPropertyDecl *getProperty() const {
-    return AsProperty;
-  }
   
+  explicit ObjCPropertyRefExpr(EmptyShell Empty)
+    : Expr(ObjCPropertyRefExprClass, Empty) {}
+
+  ObjCPropertyDecl *getProperty() const { return AsProperty; }
+  void setProperty(ObjCPropertyDecl *D) { AsProperty = D; }
+  
+  const Expr *getBase() const { return cast<Expr>(Base); }
+  Expr *getBase() { return cast<Expr>(Base); }
+  void setBase(Expr *base) { Base = base; }
+  
+  SourceLocation getLocation() const { return IdLoc; }
+  void setLocation(SourceLocation L) { IdLoc = L; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), IdLoc);
   }
-  const Expr *getBase() const { return cast<Expr>(Base); }
-  Expr *getBase() { return cast<Expr>(Base); }
-  void setBase(Expr * base) { Base = base; }
   
-  SourceLocation getLocation() const { return IdLoc; }
-
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjCPropertyRefExprClass; 
   }
@@ -261,7 +276,8 @@ public:
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
     : Expr(ObjCKVCRefExprClass, t), Setter(setter),
-      Getter(getter), Loc(l), Base(base), ClassProp(0), ClassLoc(SourceLocation()) {
+      Getter(getter), Loc(l), Base(base), ClassProp(0),
+      ClassLoc(SourceLocation()) {
     }
   ObjCKVCRefExpr(ObjCMethodDecl *getter,
                  QualType t, 
@@ -270,17 +286,14 @@ public:
     : Expr(ObjCKVCRefExprClass, t), Setter(setter),
       Getter(getter), Loc(l), Base(0), ClassProp(C), ClassLoc(CL) {
     }
-  
-  ObjCMethodDecl *getGetterMethod() const {
-      return Getter;
-  }
-  ObjCMethodDecl *getSetterMethod() const {
-    return Setter;
-  }
+  explicit ObjCKVCRefExpr(EmptyShell Empty) : Expr(ObjCKVCRefExprClass, Empty){}
 
-  ObjCInterfaceDecl *getClassProp() const {
-    return ClassProp;
-  }
+  ObjCMethodDecl *getGetterMethod() const { return Getter; }
+  ObjCMethodDecl *getSetterMethod() const { return Setter; }
+  ObjCInterfaceDecl *getClassProp() const { return ClassProp; }
+  void setGetterMethod(ObjCMethodDecl *D) { Getter = D; }
+  void setSetterMethod(ObjCMethodDecl *D) { Setter = D; }
+  void setClassProp(ObjCInterfaceDecl *D) { ClassProp = D; }
   
   virtual SourceRange getSourceRange() const {
     if (Base)
@@ -289,9 +302,12 @@ public:
   }
   const Expr *getBase() const { return cast<Expr>(Base); }
   Expr *getBase() { return cast<Expr>(Base); }
-  void setBase(Expr * base) { Base = base; }
+  void setBase(Expr *base) { Base = base; }
     
   SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+  SourceLocation getClassLoc() const { return ClassLoc; }
+  void setClassLoc(SourceLocation L) { ClassLoc = L; }
     
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjCKVCRefExprClass; 
@@ -324,7 +340,7 @@ class ObjCMessageExpr : public Expr {
   // Constants for indexing into SubExprs.
   enum { RECEIVER=0, ARGS_START=1 };
 
-  // Bit-swizziling flags.
+  // Bit-swizzling flags.
   enum { IsInstMeth=0, IsClsMethDeclUnknown, IsClsMethDeclKnown, Flags=0x3 };
   unsigned getFlag() const { return (uintptr_t) SubExprs[RECEIVER] & Flags; }
   
@@ -391,14 +407,14 @@ public:
   ///  and IdentifierInfo* of the invoked class.  Both can be NULL if this
   ///  is an instance message, and the ObjCInterfaceDecl* can be NULL if none
   ///  was available when this ObjCMessageExpr object was constructed.  
-  ClassInfo getClassInfo() const;  
+  ClassInfo getClassInfo() const; 
+  void setClassInfo(const ClassInfo &C);
   
   /// getClassName - For class methods, this returns the invoked class,
   ///  and returns NULL otherwise.  For instance methods, use getReceiver.  
   IdentifierInfo *getClassName() const {
     return getClassInfo().second;
   }
-
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return NumArgs; }
@@ -418,7 +434,13 @@ public:
     assert(Arg < NumArgs && "Arg access out of range!");
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
+  
+  SourceLocation getLeftLoc() const { return LBracloc; }
+  SourceLocation getRightLoc() const { return RBracloc; }
 
+  void setLeftLoc(SourceLocation L) { LBracloc = L; }
+  void setRightLoc(SourceLocation L) { RBracloc = L; }
+  
   void setSourceRange(SourceRange R) {
     LBracloc = R.getBegin();
     RBracloc = R.getEnd();
@@ -452,7 +474,11 @@ class ObjCSuperExpr : public Expr {
 public:
   ObjCSuperExpr(SourceLocation L, QualType Type) 
     : Expr(ObjCSuperExprClass, Type), Loc(L) { }
+  explicit ObjCSuperExpr(EmptyShell Empty) : Expr(ObjCSuperExprClass, Empty) {}
 
+  SourceLocation getLoc() const { return Loc; }
+  void setLoc(SourceLocation L) { Loc = L; }
+  
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 

@@ -202,7 +202,6 @@
 		DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */; };
 		DEDFE5CF0F7206E40035BD10 /* NestedNameSpecifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */; };
 		DEDFE6350F7B3B180035BD10 /* Warnings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6220F7B3B180035BD10 /* Warnings.cpp */; };
-		DEDFE6360F7B3B180035BD10 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6230F7B3B180035BD10 /* SerializationTest.cpp */; };
 		DEDFE6370F7B3B180035BD10 /* RewriteTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6240F7B3B180035BD10 /* RewriteTest.cpp */; };
 		DEDFE6380F7B3B180035BD10 /* DependencyFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6250F7B3B180035BD10 /* DependencyFile.cpp */; };
 		DEDFE6390F7B3B180035BD10 /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEDFE6260F7B3B180035BD10 /* HTMLPrint.cpp */; };
@@ -615,7 +614,6 @@
 		DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NestedNameSpecifier.h; path = clang/AST/NestedNameSpecifier.h; sourceTree = "<group>"; };
 		DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NestedNameSpecifier.cpp; path = lib/AST/NestedNameSpecifier.cpp; sourceTree = "<group>"; };
 		DEDFE6220F7B3B180035BD10 /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = "tools/clang-cc/Warnings.cpp"; sourceTree = "<group>"; tabWidth = 2; };
-		DEDFE6230F7B3B180035BD10 /* SerializationTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTest.cpp; path = "tools/clang-cc/SerializationTest.cpp"; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE6240F7B3B180035BD10 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = "tools/clang-cc/RewriteTest.cpp"; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE6250F7B3B180035BD10 /* DependencyFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DependencyFile.cpp; path = "tools/clang-cc/DependencyFile.cpp"; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE6260F7B3B180035BD10 /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLPrint.cpp; path = "tools/clang-cc/HTMLPrint.cpp"; sourceTree = "<group>"; tabWidth = 2; };
@@ -1324,7 +1322,6 @@
 				DEDFE6310F7B3B180035BD10 /* RewriteMacros.cpp */,
 				DEDFE62F0F7B3B180035BD10 /* RewriteObjC.cpp */,
 				DEDFE6240F7B3B180035BD10 /* RewriteTest.cpp */,
-				DEDFE6230F7B3B180035BD10 /* SerializationTest.cpp */,
 				DEDFE6220F7B3B180035BD10 /* Warnings.cpp */,
 				1AFEF4050F8A6B2300476F2B /* clang-cc.cpp */,
 				1AFEF4060F8A6B2300476F2B /* clang-cc.h */,
@@ -1625,7 +1622,6 @@
 				DEDFE5CF0F7206E40035BD10 /* NestedNameSpecifier.cpp in Sources */,
 				1ADF47AF0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp in Sources */,
 				DEDFE6350F7B3B180035BD10 /* Warnings.cpp in Sources */,
-				DEDFE6360F7B3B180035BD10 /* SerializationTest.cpp in Sources */,
 				DEDFE6370F7B3B180035BD10 /* RewriteTest.cpp in Sources */,
 				DEDFE6380F7B3B180035BD10 /* DependencyFile.cpp in Sources */,
 				DEDFE6390F7B3B180035BD10 /* HTMLPrint.cpp in Sources */,

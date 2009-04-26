@@ -672,7 +672,11 @@ namespace {
     void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *E);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *E);
+    void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
+    void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
+    void VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
+    void VisitObjCSuperExpr(ObjCSuperExpr *E);
   };
 }
 
@@ -1199,19 +1203,57 @@ void PCHStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   Code = pch::EXPR_OBJC_PROTOCOL_EXPR;
 }
 
+void PCHStmtWriter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getDecl(), Record);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.WriteSubStmt(E->getBase());
+  Record.push_back(E->isArrow());
+  Record.push_back(E->isFreeIvar());
+}
+
+void PCHStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getProperty(), Record);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.WriteSubStmt(E->getBase());
+}
+
+void PCHStmtWriter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getGetterMethod(), Record);
+  Writer.AddDeclRef(E->getSetterMethod(), Record);
+  
+  // NOTE: ClassProp and Base are mutually exclusive.
+  Writer.AddDeclRef(E->getClassProp(), Record);
+  Writer.WriteSubStmt(E->getBase());
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.AddSourceLocation(E->getClassLoc(), Record);
+}
+
 void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
-  Writer.AddSourceLocation(E->getSourceRange().getBegin(), Record);
-  Writer.AddSourceLocation(E->getSourceRange().getEnd(), Record);
+  Writer.AddSourceLocation(E->getLeftLoc(), Record);
+  Writer.AddSourceLocation(E->getRightLoc(), Record);
   Writer.AddSelectorRef(E->getSelector(), Record);
   Writer.AddDeclRef(E->getMethodDecl(), Record); // optional
-  // FIXME: deal with class messages.
+
+  ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
   Writer.WriteSubStmt(E->getReceiver());
+  Writer.AddDeclRef(CI.first, Record);
+  Writer.AddIdentifierRef(CI.second, Record);
+  
   for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg)
     Writer.WriteSubStmt(*Arg);
   Code = pch::EXPR_OBJC_MESSAGE_EXPR;
+}
+
+void PCHStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getLoc(), Record);
+
 }
 
 

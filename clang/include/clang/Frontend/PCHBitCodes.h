@@ -553,19 +553,24 @@ namespace clang {
       
       // Objective-C
       
-      /// \brief A ObjCStringLiteral record.
+      /// \brief An ObjCStringLiteral record.
       EXPR_OBJC_STRING_LITERAL,
-      /// \brief A ObjCEncodeExpr record.
+      /// \brief An ObjCEncodeExpr record.
       EXPR_OBJC_ENCODE,
-      /// \brief A ObjCSelectorExpr record.
+      /// \brief An ObjCSelectorExpr record.
       EXPR_OBJC_SELECTOR_EXPR,
-      /// \brief A ObjCProtocolExpr record.
+      /// \brief An ObjCProtocolExpr record.
       EXPR_OBJC_PROTOCOL_EXPR,
-      /// \brief A ObjCMessageExpr record.
-      EXPR_OBJC_MESSAGE_EXPR
-      
-      // FIXME: From ExprObjC.h: ObjCIvarRefExpr, ObjCPropertyRefExpr,
-      // ObjCKVCRefExpr, ObjCSuperExpr
+      /// \brief An ObjCIvarRefExpr record.
+      EXPR_OBJC_IVAR_REF_EXPR,
+      /// \brief An ObjCPropertyRefExpr record.
+      EXPR_OBJC_PROPERTY_REF_EXPR,
+      /// \brief An ObjCKVCRefExpr record.
+      EXPR_OBJC_KVC_REF_EXPR,
+      /// \brief An ObjCMessageExpr record.
+      EXPR_OBJC_MESSAGE_EXPR,
+      /// \brief An ObjCSuperExpr record.
+      EXPR_OBJC_SUPER_EXPR
     };
 
     /// \brief The kinds of designators that can occur in a
