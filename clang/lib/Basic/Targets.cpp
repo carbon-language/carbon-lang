@@ -280,14 +280,14 @@ public:
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const;
   virtual bool validateAsmConstraint(const char *&Name,
-                                     TargetInfo::ConstraintInfo &info) const {
+                                     TargetInfo::ConstraintInfo &Info) const {
     switch (*Name) {
     default: return false;
     case 'O': // Zero
       return true;
     case 'b': // Base register
     case 'f': // Floating point register
-      info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+      Info.setAllowsRegister();
       return true;
     }
   }
@@ -638,7 +638,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   
 bool
 X86TargetInfo::validateAsmConstraint(const char *&Name,
-                                     TargetInfo::ConstraintInfo &info) const {
+                                     TargetInfo::ConstraintInfo &Info) const {
   switch (*Name) {
   default: return false;
   case 'a': // eax.
@@ -660,7 +660,7 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
             // x86_64 instructions.
   case 'N': // unsigned 8-bit integer constant for use with in and out
             // instructions.
-    info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+    Info.setAllowsRegister();
     return true;
   }
 }
@@ -997,7 +997,7 @@ public:
     NumAliases = 0;
   }
   virtual bool validateAsmConstraint(const char *&Name,
-                                     TargetInfo::ConstraintInfo &info) const {
+                                     TargetInfo::ConstraintInfo &Info) const {
     // FIXME: Check if this is complete
     switch (*Name) {
     default:
@@ -1005,7 +1005,7 @@ public:
     case 'h': // r8-r15
     case 'w': // VFP Floating point register single precision
     case 'P': // VFP Floating point register double precision
-      info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+      Info.setAllowsRegister();
       return true;
     }
     return false;

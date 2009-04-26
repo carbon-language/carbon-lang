@@ -198,11 +198,31 @@ public:
   // For example, on x86 it will return "ax" when "eax" is passed in.
   const char *getNormalizedGCCRegisterName(const char *Name) const;
   
-  enum ConstraintInfo {
-    CI_None = 0x00,
-    CI_AllowsMemory = 0x01,
-    CI_AllowsRegister = 0x02,
-    CI_ReadWrite = 0x04
+  struct ConstraintInfo {
+    enum {
+      CI_None = 0x00,
+      CI_AllowsMemory = 0x01,
+      CI_AllowsRegister = 0x02,
+      CI_ReadWrite = 0x04   // "+r" output constraint (read and write).
+    };
+    unsigned Flags;
+    int TiedOperand;
+  public:
+    ConstraintInfo() : Flags(0), TiedOperand(-1) {}
+    
+    bool isReadWrite() const { return (Flags & CI_ReadWrite) != 0; }
+    bool allowsRegister() const { return (Flags & CI_AllowsRegister) != 0; }
+    bool allowsMemory() const { return (Flags & CI_AllowsMemory) != 0; }
+    bool hasTiedOperand() const { return TiedOperand != -1; }
+    unsigned getTiedOperand() const {
+      assert(hasTiedOperand() && "Has no tied operand!");
+      return (unsigned)TiedOperand;
+    }
+    
+    void setIsReadWrite() { Flags |= CI_ReadWrite; }
+    void setAllowsMemory() { Flags |= CI_AllowsMemory; }
+    void setAllowsRegister() { Flags |= CI_AllowsRegister; }
+    void setTiedOperand(unsigned N) { TiedOperand = N; }
   };
 
   // validateOutputConstraint, validateInputConstraint - Checks that

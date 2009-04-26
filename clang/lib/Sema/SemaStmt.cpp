@@ -925,8 +925,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     std::string OutputConstraint(Literal->getStrData(), 
                                  Literal->getByteLength());
 
-    TargetInfo::ConstraintInfo info;
-    if (!Context.Target.validateOutputConstraint(OutputConstraint.c_str(),info))
+    TargetInfo::ConstraintInfo Info;
+    if (!Context.Target.validateOutputConstraint(OutputConstraint.c_str(),Info))
       return StmtError(Diag(Literal->getLocStart(),
                   diag::err_asm_invalid_output_constraint) << OutputConstraint);
 
@@ -938,7 +938,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
         << OutputExpr->getSubExpr()->getSourceRange());
     }
     
-    OutputConstraintInfos.push_back(info);
+    OutputConstraintInfos.push_back(Info);
   }
 
   for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
@@ -950,12 +950,12 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     std::string InputConstraint(Literal->getStrData(),
                                 Literal->getByteLength());
 
-    TargetInfo::ConstraintInfo info;
+    TargetInfo::ConstraintInfo Info;
     if (!Context.Target.validateInputConstraint(InputConstraint.c_str(),
                                                 &Names[0],
                                                 &Names[0] + NumOutputs, 
                                                 &OutputConstraintInfos[0],
-                                                info)) {
+                                                Info)) {
       return StmtError(Diag(Literal->getLocStart(),
                   diag::err_asm_invalid_input_constraint) << InputConstraint);
     }
@@ -963,15 +963,14 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i]);
 
     // Only allow void types for memory constraints.
-    if ((info & TargetInfo::CI_AllowsMemory) 
-        && !(info & TargetInfo::CI_AllowsRegister)) {
+    if (Info.allowsMemory() && !Info.allowsRegister()) {
       if (CheckAsmLValue(InputExpr, *this))
         return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
                               diag::err_asm_invalid_lvalue_in_input)
-          << InputConstraint << InputExpr->getSubExpr()->getSourceRange());
+             << InputConstraint << InputExpr->getSubExpr()->getSourceRange());
     }
 
-    if (info & TargetInfo::CI_AllowsRegister) {
+    if (Info.allowsRegister()) {
       if (InputExpr->getType()->isVoidType()) {
         return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
                               diag::err_asm_invalid_type_in_input)

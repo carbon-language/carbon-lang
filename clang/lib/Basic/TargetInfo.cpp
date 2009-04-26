@@ -164,24 +164,19 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
 }
 
 bool TargetInfo::validateOutputConstraint(const char *Name, 
-                                          ConstraintInfo &info) const
-{
-  info = CI_None;
-
+                                          ConstraintInfo &Info) const {
   // An output constraint must start with '=' or '+'
   if (*Name != '=' && *Name != '+')
     return false;
 
   if (*Name == '+')
-    info = CI_ReadWrite;
-  else
-    info = CI_None;
+    Info.setIsReadWrite();
 
   Name++;
   while (*Name) {
     switch (*Name) {
     default:
-      if (!validateAsmConstraint(Name, info)) {
+      if (!validateAsmConstraint(Name, Info)) {
         // FIXME: We temporarily return false
         // so we can add more constraints as we hit it.
         // Eventually, an unknown constraint should just be treated as 'g'.
@@ -190,14 +185,15 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
     case '&': // early clobber.
       break;
     case 'r': // general register.
-      info = (ConstraintInfo)(info|CI_AllowsRegister);
+      Info.setAllowsRegister();
       break;
     case 'm': // memory operand.
-      info = (ConstraintInfo)(info|CI_AllowsMemory);
+      Info.setAllowsMemory();
       break;
     case 'g': // general register, memory operand or immediate integer.
     case 'X': // any operand.
-      info = (ConstraintInfo)(info|CI_AllowsMemory|CI_AllowsRegister);
+      Info.setAllowsRegister();
+      Info.setAllowsMemory();
       break;
     }
     
@@ -210,10 +206,8 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
 bool TargetInfo::resolveSymbolicName(const char *&Name,
                                      const std::string *OutputNamesBegin,
                                      const std::string *OutputNamesEnd,
-                                     unsigned &Index) const
-{
+                                     unsigned &Index) const {
   assert(*Name == '[' && "Symbolic name did not start with '['");
-
   Name++;
   const char *Start = Name;
   while (*Name && *Name != ']')
@@ -240,10 +234,8 @@ bool TargetInfo::resolveSymbolicName(const char *&Name,
 bool TargetInfo::validateInputConstraint(const char *Name,
                                          const std::string *OutputNamesBegin,
                                          const std::string *OutputNamesEnd,
-                                         ConstraintInfo* OutputConstraints,
-                                         ConstraintInfo &info) const {
-  info = CI_None;
-
+                                         ConstraintInfo *OutputConstraints,
+                                         ConstraintInfo &Info) const {
   while (*Name) {
     switch (*Name) {
     default:
@@ -258,8 +250,9 @@ bool TargetInfo::validateInputConstraint(const char *Name,
         
         // The constraint should have the same info as the respective 
         // output constraint.
-        info = (ConstraintInfo)(info|OutputConstraints[i]);
-      } else if (!validateAsmConstraint(Name, info)) {
+        Info = OutputConstraints[i];
+        Info.setTiedOperand(i);
+      } else if (!validateAsmConstraint(Name, Info)) {
         // FIXME: This error return is in place temporarily so we can
         // add more constraints as we hit it.  Eventually, an unknown
         // constraint should just be treated as 'g'.
@@ -281,14 +274,15 @@ bool TargetInfo::validateInputConstraint(const char *Name,
     case 'n': // immediate integer with a known value.
       break;
     case 'r': // general register.
-      info = (ConstraintInfo)(info|CI_AllowsRegister);
+      Info.setAllowsRegister();
       break;
     case 'm': // memory operand.
-      info = (ConstraintInfo)(info|CI_AllowsMemory);
+      Info.setAllowsMemory();
       break;
     case 'g': // general register, memory operand or immediate integer.
     case 'X': // any operand.
-      info = (ConstraintInfo)(info|CI_AllowsMemory|CI_AllowsRegister);
+      Info.setAllowsRegister();
+      Info.setAllowsMemory();
       break;
     }
     

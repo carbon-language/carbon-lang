@@ -731,8 +731,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
                                            const Expr *InputExpr,
                                            std::string &ConstraintStr) {
   llvm::Value *Arg;
-  if ((Info & TargetInfo::CI_AllowsRegister) ||
-      !(Info & TargetInfo::CI_AllowsMemory)) { 
+  if (Info.allowsRegister() || !Info.allowsMemory()) { 
     const llvm::Type *Ty = ConvertType(InputExpr->getType());
     
     if (Ty->isSingleValueType()) {
@@ -818,8 +817,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     
     // If the first output operand is not a memory dest, we'll
     // make it the return value.
-    if (i == 0 && !(Info & TargetInfo::CI_AllowsMemory) &&
-        DestValueType->isSingleValueType()) {
+    if (i == 0 && !Info.allowsMemory() && DestValueType->isSingleValueType()) {
       ResultAddr = Dest.getAddress();
       ResultType = DestValueType;
       Constraints += "=" + OutputConstraint;
@@ -832,13 +830,13 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Constraints += OutputConstraint;
     }
     
-    if (Info & TargetInfo::CI_ReadWrite) {
+    if (Info.isReadWrite()) {
       InOutConstraints += ',';
 
       const Expr *InputExpr = S.getOutputExpr(i);
       llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, InOutConstraints);
       
-      if (Info & TargetInfo::CI_AllowsRegister)
+      if (Info.allowsRegister())
         InOutConstraints += llvm::utostr(i);
       else
         InOutConstraints += OutputConstraint;
