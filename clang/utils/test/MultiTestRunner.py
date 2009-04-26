@@ -254,6 +254,7 @@ def main():
     if not args:
         parser.error('No inputs specified')
 
+    # FIXME: It could be worth loading these in parallel with testing.
     allTests = list(getTests(args))
     allTests.sort()
     
@@ -304,29 +305,27 @@ def main():
     if not opts.quiet:
         print 'Testing Time: %.2fs'%(time.time() - startTime)
 
-    xfails = [i for i in provider.results if i and i.code==TestStatus.XFail]
-    if xfails:
+    # List test results organized organized by kind.
+    byCode = {}
+    for t in provider.results:
+        if t:
+            if t.code not in byCode:
+                byCode[t.code] = []
+            byCode[t.code].append(t)
+    for title,code in (('Expected Failures', TestStatus.XFail),
+                       ('Unexpected Passing Tests', TestStatus.XPass),
+                       ('Failing Tests', TestStatus.Fail)):
+        elts = byCode.get(code)
+        if not elts:
+            continue
         print '*'*20
-        print 'Expected Failures (%d):' % len(xfails)
-        for tr in xfails:
+        print '%s (%d):' % (title, len(elts))
+        for tr in elts:
             print '\t%s'%(tr.path,)
 
-    xpasses = [i for i in provider.results if i and i.code==TestStatus.XPass]
-    if xpasses:
-        print '*'*20
-        print 'Unexpected Passing Tests (%d):' % len(xpasses)
-        for tr in xpasses:
-            print '\t%s'%(tr.path,)
-
-    failures = [i for i in provider.results if i and i.code==TestStatus.Fail]
-    if failures:
-        print '*'*20
-        print 'Failing Tests (%d):' % len(failures)
-        for tr in failures:
-            if tr.code != TestStatus.XPass:
-                print '\t%s'%(tr.path,)
-
-        print '\nFailures: %d'%(len(failures),)
+    numFailures = len(byCode.get(TestStatus.Fail,[]))
+    if numFailures:
+        print '\nFailures: %d' % (numFailures,)
 
 if __name__=='__main__':
     main()
