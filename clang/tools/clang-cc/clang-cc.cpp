@@ -183,6 +183,8 @@ enum ProgActions {
   EmitHTML,                     // Translate input source into HTML.
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
+  ASTDumpFull,                  // Parse ASTs and dump them, including the 
+                                // contents of a PCH file.
   ASTView,                      // Parse ASTs and view them in Graphviz.
   PrintDeclContext,             // Print DeclContext and their Decls.
   ParsePrintCallbacks,          // Parse and print each callback.
@@ -224,6 +226,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and then pretty-print them"),
              clEnumValN(ASTDump, "ast-dump",
                         "Build ASTs and then debug dump them"),
+             clEnumValN(ASTDumpFull, "ast-dump-full",
+                        "Build ASTs and then debug dump them, including PCH"),
              clEnumValN(ASTView, "ast-view",
                         "Build ASTs and view them with GraphViz"),
              clEnumValN(PrintDeclContext, "print-decl-contexts",
@@ -1539,7 +1543,10 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
     return CreateASTPrinter();
     
   case ASTDump:
-    return CreateASTDumper();
+    return CreateASTDumper(false);
+
+  case ASTDumpFull:
+    return CreateASTDumper(true);
     
   case ASTView:
     return CreateASTViewer();   

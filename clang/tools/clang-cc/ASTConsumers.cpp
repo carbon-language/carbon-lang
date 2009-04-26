@@ -591,18 +591,34 @@ ASTConsumer *clang::CreateASTPrinter(llvm::raw_ostream* out) {
 namespace {
   class ASTDumper : public ASTConsumer, public DeclPrinter {
     ASTContext *Ctx;
+    bool FullDump;
+
   public:
-    ASTDumper() : DeclPrinter() {}
+    explicit ASTDumper(bool FullDump) : DeclPrinter(), FullDump(FullDump) {}
     
     void Initialize(ASTContext &Context) {
       Ctx = &Context;
     }
 
     virtual void HandleTopLevelDecl(DeclGroupRef D) {
+      if (FullDump)
+        return;
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
         HandleTopLevelSingleDecl(*I);
     }
     void HandleTopLevelSingleDecl(Decl *D);
+
+    virtual void HandleTranslationUnit(ASTContext &Ctx) {
+      if (!FullDump)
+        return;
+
+      for (DeclContext::decl_iterator 
+             D = Ctx.getTranslationUnitDecl()->decls_begin(Ctx),
+             DEnd = Ctx.getTranslationUnitDecl()->decls_end(Ctx);
+           D != DEnd; 
+           ++D)
+        HandleTopLevelSingleDecl(*D);
+    }
   };
 } // end anonymous namespace
 
@@ -652,7 +668,9 @@ void ASTDumper::HandleTopLevelSingleDecl(Decl *D) {
   }
 }
 
-ASTConsumer *clang::CreateASTDumper() { return new ASTDumper(); }
+ASTConsumer *clang::CreateASTDumper(bool FullDump) { 
+  return new ASTDumper(FullDump); 
+}
 
 //===----------------------------------------------------------------------===//
 /// ASTViewer - AST Visualization

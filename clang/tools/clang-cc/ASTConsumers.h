@@ -34,7 +34,7 @@ class LangOptions;
 
 ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS = NULL);
 
-ASTConsumer *CreateASTDumper();
+ASTConsumer *CreateASTDumper(bool FullDump);
 
 ASTConsumer *CreateASTViewer();
 
