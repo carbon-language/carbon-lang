@@ -438,8 +438,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (Arg *A = Args.getLastArg(options::OPT_trigraphs))
       if (A->getIndex() > Std->getIndex())
         A->render(Args, CmdArgs);
-  } else
+  } else {
+    // Honor -std-default.
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
+                              "-std=", /*Joined=*/true);
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
+  }
 
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");
@@ -825,6 +829,12 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
   Args.AddLastArg(CmdArgs, options::OPT_w);
   Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi,
                   options::OPT_trigraphs);
+  if (!Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi)) {
+    // Honor -std-default.
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
+                              "-std=", /*Joined=*/true);
+  }
+
   if (Args.hasArg(options::OPT_v))
     CmdArgs.push_back("-version");
   if (Args.hasArg(options::OPT_pg))
@@ -880,6 +890,11 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
   Args.AddAllArgs(CmdArgs, options::OPT_m_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_std_EQ, options::OPT_ansi,
                   options::OPT_trigraphs);
+  if (!Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi)) {
+    // Honor -std-default.
+    Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
+                              "-std=", /*Joined=*/true);
+  }
   Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
   Args.AddLastArg(CmdArgs, options::OPT_w);
 
