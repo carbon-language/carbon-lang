@@ -71,6 +71,11 @@ public:
   // Block Manipulation
   //===--------------------------------------------------------------------===//
 
+  /// hasBlockInfoRecords - Return true if we've already read and processed the
+  /// block info block for this Bitstream.  We only process it for the first
+  /// cursor that walks over it.
+  bool hasBlockInfoRecords() const { return !BlockInfoRecords.empty(); }
+  
   /// getBlockInfo - If there is block info for the specified ID, return it,
   /// otherwise return null.
   BlockInfo *getBlockInfo(unsigned BlockID) {
@@ -126,11 +131,13 @@ class BitstreamCursor {
   /// BlockScope - This tracks the codesize of parent blocks.
   SmallVector<Block, 8> BlockScope;
   
-  BitstreamCursor(const BitstreamCursor&); // NOT YET IMPLEMENTED.
-  void operator=(const BitstreamCursor&);  // NOT YET IMPLEMENTED.
 public:
   BitstreamCursor() : BitStream(0), NextChar(0) {
   }
+  BitstreamCursor(const BitstreamCursor &RHS) : BitStream(0), NextChar(0) {
+    operator=(RHS);
+  }
+  
   explicit BitstreamCursor(BitstreamReader &R) : BitStream(&R) {
     NextChar = R.getFirstChar();
     assert(NextChar && "Bitstream not initialized yet");
@@ -152,6 +159,31 @@ public:
   
   ~BitstreamCursor() {
     freeState();
+  }
+  
+  void operator=(const BitstreamCursor &RHS) {
+    freeState();
+    
+    BitStream = RHS.BitStream;
+    NextChar = RHS.NextChar;
+    CurWord = RHS.CurWord;
+    BitsInCurWord = RHS.BitsInCurWord;
+    CurCodeSize = RHS.CurCodeSize;
+    
+    // Copy abbreviations, and bump ref counts.
+    CurAbbrevs = RHS.CurAbbrevs;
+    for (unsigned i = 0, e = static_cast<unsigned>(CurAbbrevs.size());
+         i != e; ++i)
+      CurAbbrevs[i]->addRef();
+    
+    // Copy block scope and bump ref counts.
+    for (unsigned S = 0, e = static_cast<unsigned>(BlockScope.size());
+         S != e; ++S) {
+      std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
+      for (unsigned i = 0, e = static_cast<unsigned>(Abbrevs.size());
+           i != e; ++i)
+        Abbrevs[i]->addRef();
+    }
   }
   
   void freeState() {
@@ -512,6 +544,10 @@ public:
 public:
 
   bool ReadBlockInfoBlock() {
+    // If this is the second stream to get to the block info block, skip it.
+    if (BitStream->hasBlockInfoRecords())
+      return SkipBlock();
+    
     if (EnterSubBlock(bitc::BLOCKINFO_BLOCK_ID)) return true;
 
     SmallVector<uint64_t, 64> Record;
