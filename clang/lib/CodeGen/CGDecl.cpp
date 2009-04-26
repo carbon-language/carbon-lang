@@ -405,11 +405,22 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   
     CleanupScope scope(*this);
 
+    const CGFunctionInfo &Info = CGM.getTypes().getFunctionInfo(FD);
+
+    // In some cases, the type of the function argument will be different from
+    // the type of the pointer. An example of this is
+    // void f(void* arg);
+    // __attribute__((cleanup(f))) void *g;
+    // 
+    // To fix this we insert a bitcast here.
+    QualType ArgTy = Info.arg_begin()->type;
+    DeclPtr = Builder.CreateBitCast(DeclPtr, ConvertType(ArgTy));
+    
     CallArgList Args;
     Args.push_back(std::make_pair(RValue::get(DeclPtr), 
                                   getContext().getPointerType(D.getType())));
-      
-    EmitCall(CGM.getTypes().getFunctionInfo(FD), F, Args);
+    
+    EmitCall(Info, F, Args);
   }
 
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
