@@ -45,7 +45,7 @@ Driver::Driver(const char *_Name, const char *_Dir,
     Host(0),
     CCCIsCXX(false), CCCEcho(false), CCCPrintBindings(false),
     CCCGenericGCCName("gcc"), CCCUseClang(true), CCCUseClangCXX(false), 
-    CCCUseClangCPP(true), CCCUsePCH(true),
+    CCCUseClangCPP(true), CCCUsePCH(false),
     SuppressMissingInputWarning(false)
 {
   // Only use clang on i386 and x86_64 by default.
