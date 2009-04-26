@@ -15,6 +15,7 @@
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 #include <vector>
 #include <string>
 
