@@ -1210,6 +1210,7 @@ void PCHStmtWriter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
   Writer.WriteSubStmt(E->getBase());
   Record.push_back(E->isArrow());
   Record.push_back(E->isFreeIvar());
+  Code = pch::EXPR_OBJC_IVAR_REF_EXPR;
 }
 
 void PCHStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
@@ -1217,6 +1218,7 @@ void PCHStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   Writer.AddDeclRef(E->getProperty(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.WriteSubStmt(E->getBase());
+  Code = pch::EXPR_OBJC_PROPERTY_REF_EXPR;
 }
 
 void PCHStmtWriter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
@@ -1229,6 +1231,7 @@ void PCHStmtWriter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
   Writer.WriteSubStmt(E->getBase());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.AddSourceLocation(E->getClassLoc(), Record);
+  Code = pch::EXPR_OBJC_KVC_REF_EXPR;
 }
 
 void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -1253,6 +1256,7 @@ void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 void PCHStmtWriter::VisitObjCSuperExpr(ObjCSuperExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLoc(), Record);
+  Code = pch::EXPR_OBJC_SUPER_EXPR;
 }
 
 
