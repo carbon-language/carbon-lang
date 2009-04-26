@@ -4636,10 +4636,15 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 
       // FIXME: C++: Verify that MemberDecl isn't a static field.
       // FIXME: Verify that MemberDecl isn't a bitfield.
-      // MemberDecl->getType() doesn't get the right qualifiers, but it doesn't
-      // matter here.
-      Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,
-                                   MemberDecl->getType().getNonReferenceType());
+      if (cast<RecordDecl>(MemberDecl->getDeclContext())->isAnonymousStructOrUnion()) {
+        Res = static_cast<Expr*>(BuildAnonymousStructUnionMemberReference(
+                SourceLocation(), MemberDecl, Res, SourceLocation()).release());
+      } else {
+        // MemberDecl->getType() doesn't get the right qualifiers, but it
+        // doesn't matter here.
+        Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,
+                MemberDecl->getType().getNonReferenceType());
+      }
     }
   }
 

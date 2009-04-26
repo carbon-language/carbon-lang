@@ -45,3 +45,6 @@ int a(int len) {
 int a[__builtin_offsetof(struct sockaddr_un, sun_path[len+1])];
 }
 
+// PR4079
+union x {struct {int x;};};
+int x[__builtin_offsetof(union x, x)];
