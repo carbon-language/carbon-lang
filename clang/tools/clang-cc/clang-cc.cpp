@@ -168,6 +168,9 @@ static llvm::cl::opt<bool>
 DisableFree("disable-free",
            llvm::cl::desc("Disable freeing of memory on exit"),
            llvm::cl::init(false));
+static llvm::cl::opt<bool>
+EmptyInputOnly("empty-input-only", 
+      llvm::cl::desc("Force running on an empty input file"));
 
 enum ProgActions {
   RewriteObjC,                  // ObjC->C Rewriter.
@@ -1037,8 +1040,13 @@ static bool InitializeSourceManager(Preprocessor &PP,
   // Figure out where to get and map in the main file.
   SourceManager &SourceMgr = PP.getSourceManager();
   FileManager &FileMgr = PP.getFileManager();
-  
-  if (InFile != "-") {
+
+  if (EmptyInputOnly) {
+    const char *EmptyStr = "";
+    llvm::MemoryBuffer *SB = 
+      llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<empty input>");
+    SourceMgr.createMainFileIDForMemBuffer(SB);
+  } else if (InFile != "-") {
     const FileEntry *File = FileMgr.getFile(InFile);
     if (File) SourceMgr.createMainFileID(File, SourceLocation());
     if (SourceMgr.getMainFileID().isInvalid()) {
