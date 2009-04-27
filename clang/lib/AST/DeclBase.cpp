@@ -469,7 +469,7 @@ DeclContext::LoadLexicalDeclsFromExternalStorage(ASTContext &Context) const {
   ExternalASTSource *Source = Context.getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
 
-  llvm::SmallVector<unsigned, 64> Decls;
+  llvm::SmallVector<uint32_t, 64> Decls;
   if (Source->ReadDeclsLexicallyInContext(const_cast<DeclContext *>(this), 
                                           Decls))
     return;
