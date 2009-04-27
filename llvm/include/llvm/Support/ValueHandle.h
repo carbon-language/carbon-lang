@@ -39,7 +39,7 @@ public:
 class ValueHandleBase {
   friend class Value;
 protected:
-  /// HandleBaseKind - This indicates what base class the handle actually is.
+  /// HandleBaseKind - This indicates what sub class the handle actually is.
   /// This is to avoid having a vtable for the light-weight handle pointers. The
   /// fully generally Callback version does have a vtable.
   enum HandleBaseKind {
@@ -87,20 +87,7 @@ public:
   
   Value *operator->() const { return getValPtr(); }
   Value &operator*() const { return *getValPtr(); }
-  
-  bool operator==(const Value *RHS) const { return VP == RHS; }
-  bool operator==(const ValueHandleBase &RHS) const { return VP == RHS.VP; }
-  bool operator!=(const Value *RHS) const { return VP != RHS; }
-  bool operator!=(const ValueHandleBase &RHS) const { return VP != RHS.VP; }
-  bool operator<(const Value *RHS) const { return VP < RHS; }
-  bool operator<(const ValueHandleBase &RHS) const { return VP < RHS.VP; }
-  bool operator>(const Value *RHS) const { return VP > RHS; }
-  bool operator>(const ValueHandleBase &RHS) const { return VP > RHS.VP; }
-  bool operator<=(const Value *RHS) const { return VP <= RHS; }
-  bool operator<=(const ValueHandleBase &RHS) const { return VP <= RHS.VP; }
-  bool operator>=(const Value *RHS) const { return VP >= RHS; }
-  bool operator>=(const ValueHandleBase &RHS) const { return VP >= RHS.VP; }
-  
+
 protected:
   Value *getValPtr() const { return VP; }
 private:
@@ -198,33 +185,6 @@ public:
 
   ValueTy *operator->() const { return getValPtr(); }
   ValueTy &operator*() const { return *getValPtr(); }
-
-  // Duplicate these from the base class so that they work when assertions are
-  // off.
-  bool operator==(const Value *RHS) const { return getValPtr() == RHS; }
-  bool operator!=(const Value *RHS) const { return getValPtr() != RHS; }
-  bool operator<(const Value *RHS) const { return getValPtr() < RHS; }
-  bool operator>(const Value *RHS) const { return getValPtr() > RHS; }
-  bool operator<=(const Value *RHS) const { return getValPtr() <= RHS; }
-  bool operator>=(const Value *RHS) const { return getValPtr() >= RHS; }
-  bool operator==(const AssertingVH &RHS) const {
-    return getValPtr() == RHS.getValPtr();
-  }
-  bool operator!=(const AssertingVH &RHS) const {
-    return getValPtr() != RHS.getValPtr();
-  }
-  bool operator<(const AssertingVH &RHS) const {
-    return getValPtr() < RHS.getValPtr();
-  }
-  bool operator>(const AssertingVH &RHS) const {
-    return getValPtr() > RHS.getValPtr();
-  }
-  bool operator<=(const AssertingVH &RHS) const {
-    return getValPtr() <= RHS.getValPtr();
-  }
-  bool operator>=(const AssertingVH &RHS) const {
-    return getValPtr() >= RHS.getValPtr();
-  }
 };
 
 } // End llvm namespace
