@@ -106,7 +106,7 @@ private:
 
   /// \brief Offset type for all of the source location entries in the
   /// PCH file.
-  const uint64_t *SLocOffsets;
+  const uint32_t *SLocOffsets;
 
   /// \brief The number of source location entries in the PCH file.
   unsigned TotalNumSLocEntries;

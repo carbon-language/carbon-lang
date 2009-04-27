@@ -738,7 +738,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 
   // Write out the source location entry table. We skip the first
   // entry, which is always the same dummy entry.
-  std::vector<uint64_t> SLocEntryOffsets;
+  std::vector<uint32_t> SLocEntryOffsets;
   RecordData PreloadSLocs;
   SLocEntryOffsets.reserve(SourceMgr.sloc_entry_size() - 1);
   for (SourceManager::sloc_entry_iterator 
@@ -836,7 +836,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Record.push_back(SourceMgr.getNextOffset());
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record,
                             (const char *)&SLocEntryOffsets.front(), 
-                            SLocEntryOffsets.size() * 8);
+                           SLocEntryOffsets.size()*sizeof(SLocEntryOffsets[0]));
 
   // Write the source location entry preloads array, telling the PCH
   // reader which source locations entries it should load eagerly.

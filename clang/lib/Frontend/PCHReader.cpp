@@ -1017,7 +1017,7 @@ PCHReader::ReadPCHBlock() {
       break;
 
     case pch::SOURCE_LOCATION_OFFSETS:
-      SLocOffsets = (const uint64_t *)BlobStart;
+      SLocOffsets = (const uint32_t *)BlobStart;
       TotalNumSLocEntries = Record[0];
       PP.getSourceManager().PreallocateSLocEntries(this, 
                                                    TotalNumSLocEntries, 
