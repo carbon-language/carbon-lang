@@ -772,8 +772,6 @@ void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
     if (UseMO.isKill()) {
       MachineInstr *UseMI = UseMO.getParent();
       unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
-      if (JoinedCopies.count(UseMI))
-        continue;
       const LiveRange *UI = LI.getLiveRangeContaining(UseIdx);
       if (!UI || !LI.isKill(UI->valno, UseIdx+1))
         UseMO.setIsKill(false);
