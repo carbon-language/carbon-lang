@@ -237,7 +237,7 @@ static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
     if (!is32Or64BitBasicType(FD->getType(), Context))
       return false;
     
-    // FIXME: Reject bitfields wholesale; there are two problems, we
+    // FIXME: Reject bit-fields wholesale; there are two problems, we
     // don't know how to expand them yet, and the predicate for
     // telling if a bitfield still counts as "basic" is more
     // complicated than what we were doing previously.
@@ -342,7 +342,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
          e = RT->getDecl()->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
     
-    // FIXME: Reject bitfields wholesale for now; this is incorrect.
+    // FIXME: Reject bit-fields wholesale for now; this is incorrect.
     if (FD->isBitField())
       return false;
 
@@ -385,9 +385,15 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
     return ABIArgInfo::getDirect();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    // Structures with flexible arrays are always indirect.
+    if (const RecordType *RT = RetTy->getAsStructureType())
+      if (RT->getDecl()->hasFlexibleArrayMember())
+        return ABIArgInfo::getIndirect(0);
+
     // Outside of Darwin, structs and unions are always indirect.
     if (!IsDarwin && !RetTy->isAnyComplexType())
       return ABIArgInfo::getIndirect(0);
+
     // Classify "single element" structs as their element type.
     if (const Type *SeltTy = isSingleElementStruct(RetTy, Context)) {
       if (const BuiltinType *BT = SeltTy->getAsBuiltinType()) {
@@ -766,7 +772,7 @@ void X86_64ABIInfo::classify(QualType Ty,
       // AMD64-ABI 3.2.3p2: Rule 1. If ..., or it contains unaligned
       // fields, it has class MEMORY.
       //
-      // Note, skip this test for bitfields, see below.
+      // Note, skip this test for bit-fields, see below.
       if (!BitField && Offset % Context.getTypeAlign(i->getType())) {
         Lo = Memory;
         return;
@@ -780,7 +786,7 @@ void X86_64ABIInfo::classify(QualType Ty,
       // NO_CLASS.
       Class FieldLo, FieldHi;
       
-      // Bitfields require special handling, they do not force the
+      // Bit-fields require special handling, they do not force the
       // structure to be passed in memory even if unaligned, and
       // therefore they can straddle an eightbyte.
       if (BitField) {

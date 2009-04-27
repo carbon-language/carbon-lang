@@ -123,4 +123,7 @@ struct { struct {} a; struct { float a[1]; } b; } f25(void) {}
 struct s26 { struct { char a, b; } a; struct { char a, b } b; } f26(void) {}
 struct s27 { struct { char a, b, c; } a; struct { char a } b; } f27(void) {}
 
+// RUN: grep 'void @f28(%.truct.s28\* noalias sret %agg.result)' %t &&
+struct s28 { int a; int b[] } f28(void) {}
+
 // RUN: true
