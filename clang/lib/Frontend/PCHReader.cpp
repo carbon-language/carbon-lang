@@ -67,7 +67,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext &Context)
 PCHReader::~PCHReader() {}
 
 Expr *PCHReader::ReadExpr() {
-  return dyn_cast_or_null<Expr>(ReadStmt());
+  return dyn_cast_or_null<Expr>(ReadStmt(Stream));
 }
 
 
@@ -1337,7 +1337,7 @@ Stmt *PCHReader::GetStmt(uint64_t Offset) {
   SavedStreamPosition SavedPosition(Stream);
 
   Stream.JumpToBit(Offset);
-  return ReadStmt();
+  return ReadStmt(Stream);
 }
 
 bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,

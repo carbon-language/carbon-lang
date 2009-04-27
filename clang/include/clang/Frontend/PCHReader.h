@@ -88,7 +88,9 @@ private:
 
   /// \brief The bitstream reader from which we'll read the PCH file.
   llvm::BitstreamReader StreamFile;
+public:
   llvm::BitstreamCursor Stream;
+private:
 
   /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block.  It
   /// has read all the abbreviations at the start of the block and is ready to
@@ -405,8 +407,8 @@ public:
   /// \brief Reads an expression from the current stream position.
   Expr *ReadExpr();
 
-  /// \brief Reads a statement from the current stream position.
-  Stmt *ReadStmt();
+  /// \brief Reads a statement from the specified cursor.
+  Stmt *ReadStmt(llvm::BitstreamCursor &Cursor);
 
   /// \brief Reads the macro record located at the given offset.
   void ReadMacroRecord(uint64_t Offset);

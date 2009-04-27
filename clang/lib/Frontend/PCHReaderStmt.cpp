@@ -812,14 +812,14 @@ unsigned PCHStmtReader::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
 }
 
 
-Stmt *PCHReader::ReadStmt() {
-  // Within the bitstream, expressions are stored in Reverse Polish
-  // Notation, with each of the subexpressions preceding the
-  // expression they are stored in. To evaluate expressions, we
-  // continue reading expressions and placing them on the stack, with
-  // expressions having operands removing those operands from the
-  // stack. Evaluation terminates when we see a STMT_STOP record, and
-  // the single remaining expression on the stack is our result.
+// Within the bitstream, expressions are stored in Reverse Polish
+// Notation, with each of the subexpressions preceding the
+// expression they are stored in. To evaluate expressions, we
+// continue reading expressions and placing them on the stack, with
+// expressions having operands removing those operands from the
+// stack. Evaluation terminates when we see a STMT_STOP record, and
+// the single remaining expression on the stack is our result.
+Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
   RecordData Record;
   unsigned Idx;
   llvm::SmallVector<Stmt *, 16> StmtStack;
@@ -827,9 +827,9 @@ Stmt *PCHReader::ReadStmt() {
   Stmt::EmptyShell Empty;
 
   while (true) {
-    unsigned Code = Stream.ReadCode();
+    unsigned Code = Cursor.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd()) {
+      if (Cursor.ReadBlockEnd()) {
         Error("Error at end of Source Manager block");
         return 0;
       }
@@ -838,8 +838,8 @@ Stmt *PCHReader::ReadStmt() {
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock()) {
+      Cursor.ReadSubBlockID();
+      if (Cursor.SkipBlock()) {
         Error("Malformed block record");
         return 0;
       }
@@ -847,7 +847,7 @@ Stmt *PCHReader::ReadStmt() {
     }
 
     if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
+      Cursor.ReadAbbrevRecord();
       continue;
     }
 
@@ -855,7 +855,7 @@ Stmt *PCHReader::ReadStmt() {
     Idx = 0;
     Record.clear();
     bool Finished = false;
-    switch ((pch::StmtCode)Stream.ReadRecord(Code, Record)) {
+    switch ((pch::StmtCode)Cursor.ReadRecord(Code, Record)) {
     case pch::STMT_STOP:
       Finished = true;
       break;
