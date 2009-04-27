@@ -612,14 +612,24 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
       goto exit;
-    } else if (mi->modifiesRegister(interval.reg, tri_)) {
-      // Another instruction redefines the register before it is ever read.
-      // Then the register is essentially dead at the instruction that defines
-      // it. Hence its interval is:
-      // [defSlot(def), defSlot(def)+1)
-      DOUT << " dead";
-      end = start + 1;
-      goto exit;
+    } else {
+      int DefIdx = mi->findRegisterDefOperandIdx(interval.reg, false, tri_);
+      if (DefIdx != -1) {
+        if (mi->isRegTiedToUseOperand(DefIdx)) {
+          // Two-address instruction.
+          end = getDefIndex(baseIndex);
+          if (mi->getOperand(DefIdx).isEarlyClobber())
+            end = getUseIndex(baseIndex);
+        } else {
+          // Another instruction redefines the register before it is ever read.
+          // Then the register is essentially dead at the instruction that defines
+          // it. Hence its interval is:
+          // [defSlot(def), defSlot(def)+1)
+          DOUT << " dead";
+          end = start + 1;
+        }
+        goto exit;
+      }
     }
     
     baseIndex += InstrSlots::NUM;
@@ -663,14 +673,14 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
         MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
         tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
       CopyMI = MI;
-    handlePhysicalRegisterDef(MBB, MI, MIIdx, MO, 
+    handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
                               getOrCreateInterval(MO.getReg()), CopyMI);
     // Def of a register also defines its sub-registers.
     for (const unsigned* AS = tri_->getSubRegisters(MO.getReg()); *AS; ++AS)
       // If MI also modifies the sub-register explicitly, avoid processing it
       // more than once. Do not pass in TRI here so it checks for exact match.
       if (!MI->modifiesRegister(*AS))
-        handlePhysicalRegisterDef(MBB, MI, MIIdx, MO, 
+        handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
                                   getOrCreateInterval(*AS), 0);
   }
 }
