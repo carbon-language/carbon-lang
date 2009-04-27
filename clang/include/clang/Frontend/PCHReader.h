@@ -337,7 +337,7 @@ public:
   /// \returns true if there was an error while reading the
   /// declarations for this declaration context.
   virtual bool ReadDeclsLexicallyInContext(DeclContext *DC,
-                                      llvm::SmallVectorImpl<unsigned> &Decls);
+                                 llvm::SmallVectorImpl<pch::DeclID> &Decls);
 
   /// \brief Read all of the declarations visible from a declaration
   /// context.
