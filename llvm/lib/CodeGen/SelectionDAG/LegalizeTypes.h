@@ -114,15 +114,9 @@ private:
   }
 
   /// IgnoreNodeResults - Pretend all of this node's results are legal.
-  /// FIXME: Remove once PR2957 is done.
   bool IgnoreNodeResults(SDNode *N) const {
-    return N->getOpcode() == ISD::TargetConstant ||
-           IgnoredNodesResultsSet.count(N);
+    return N->getOpcode() == ISD::TargetConstant;
   }
-
-  /// IgnoredNode - Set of nodes whose result don't need to be legal.
-  /// FIXME: Remove once PR2957 is done.
-  DenseSet<SDNode*> IgnoredNodesResultsSet;
 
   /// PromotedIntegers - For integer nodes that are below legal width, this map
   /// indicates what promoted value to use.
@@ -202,7 +196,6 @@ private:
   SDValue PromoteTargetBoolean(SDValue Bool, MVT VT);
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceValueWithHelper(SDValue From, SDValue To);
-  void SetIgnoredNodeResult(SDNode* N);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SplitInteger(SDValue Op, MVT LoVT, MVT HiVT,
                     SDValue &Lo, SDValue &Hi);
@@ -577,7 +570,6 @@ private:
   SDValue SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N);
   SDValue SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo);
-  SDValue SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
 
   //===--------------------------------------------------------------------===//
   // Vector Widening Support: LegalizeVectorTypes.cpp

@@ -489,10 +489,8 @@ void SelectionDAGLegalize::HandleOp(SDValue Op) {
   // If the type legalizer was run then we should never see any illegal result
   // types here except for target constants (the type legalizer does not touch
   // those) or for build vector used as a mask for a vector shuffle.
-  // FIXME: We can removed the BUILD_VECTOR case when we fix PR2957.
   assert((TypesNeedLegalizing || getTypeAction(VT) == Legal ||
-          IsLegalizingCallArgs || Op.getOpcode() == ISD::TargetConstant ||
-          Op.getOpcode() == ISD::BUILD_VECTOR) &&
+          IsLegalizingCallArgs || Op.getOpcode() == ISD::TargetConstant) &&
          "Illegal type introduced after type legalization?");
   switch (getTypeAction(VT)) {
   default: assert(0 && "Bad type action!");

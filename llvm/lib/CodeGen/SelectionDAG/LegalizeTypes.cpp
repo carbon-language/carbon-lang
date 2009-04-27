@@ -116,11 +116,8 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
           cerr << "Unprocessed value in a map!";
           Failed = true;
         }
-      } else if (isTypeLegal(Res.getValueType()) || IgnoreNodeResults(I)) {
-        // FIXME: Because of PR2957, the build vector can be placed on this
-        // list but if the associated vector shuffle is split, the build vector
-        // can also be split so we allow this to go through for now.
-        if (Mapped > 1 && Res.getOpcode() != ISD::BUILD_VECTOR) {
+      } else if (isTypeLegal(Res.getValueType())) {
+        if (Mapped > 1) {
           cerr << "Value with legal type was transformed!";
           Failed = true;
         }
@@ -265,13 +262,6 @@ ScanOperands:
     for (i = 0; i != NumOperands; ++i) {
       if (IgnoreNodeResults(N->getOperand(i).getNode()))
         continue;
-
-      if (N->getOpcode() == ISD::VECTOR_SHUFFLE && i == 2) {
-        // The shuffle mask doesn't need to be a legal vector type.
-        // FIXME: We can remove this once we fix PR2957.
-        SetIgnoredNodeResult(N->getOperand(2).getNode());
-        continue;
-      }
 
       MVT OpVT = N->getOperand(i).getValueType();
       switch (getTypeAction(OpVT)) {
@@ -842,10 +832,6 @@ void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
   OpEntry = Result;
 }
 
-// Set to ignore result
-void DAGTypeLegalizer::SetIgnoredNodeResult(SDNode* N) {
-  IgnoredNodesResultsSet.insert(N);
-}
 
 //===----------------------------------------------------------------------===//
 // Utilities.

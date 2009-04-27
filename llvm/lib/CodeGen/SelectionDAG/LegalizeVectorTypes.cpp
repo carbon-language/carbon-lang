@@ -910,7 +910,6 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::EXTRACT_VECTOR_ELT:Res = SplitVecOp_EXTRACT_VECTOR_ELT(N); break;
     case ISD::STORE:             Res = SplitVecOp_STORE(cast<StoreSDNode>(N),
                                                         OpNo); break;
-    case ISD::VECTOR_SHUFFLE:    Res = SplitVecOp_VECTOR_SHUFFLE(N, OpNo);break;
 
     case ISD::CTTZ:
     case ISD::CTLZ:
@@ -1071,67 +1070,6 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
                       isVol, MinAlign(Alignment, IncrementSize));
 
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
-}
-
-SDValue DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo) {
-  assert(OpNo == 2 && "Shuffle source type differs from result type?");
-  SDValue Mask = N->getOperand(2);
-  DebugLoc dl = N->getDebugLoc();
-  unsigned MaskLength = Mask.getValueType().getVectorNumElements();
-  unsigned LargestMaskEntryPlusOne = 2 * MaskLength;
-  unsigned MinimumBitWidth = Log2_32_Ceil(LargestMaskEntryPlusOne);
-
-  // Look for a legal vector type to place the mask values in.
-  // Note that there may not be *any* legal vector-of-integer
-  // type for which the element type is legal!
-  for (MVT::SimpleValueType EltVT = MVT::FIRST_INTEGER_VALUETYPE;
-       EltVT <= MVT::LAST_INTEGER_VALUETYPE;
-       // Integer values types are consecutively numbered.  Exploit this.
-       EltVT = MVT::SimpleValueType(EltVT + 1)) {
-
-    // Is the element type big enough to hold the values?
-    if (MVT(EltVT).getSizeInBits() < MinimumBitWidth)
-      // Nope.
-      continue;
-
-    // Is the vector type legal?
-    MVT VecVT = MVT::getVectorVT(EltVT, MaskLength);
-    if (!isTypeLegal(VecVT))
-      // Nope.
-      continue;
-
-    // If the element type is not legal, find a larger legal type to use for
-    // the BUILD_VECTOR operands.  This is an ugly hack, but seems to work!
-    // FIXME: The real solution is to change VECTOR_SHUFFLE into a variadic
-    // node where the shuffle mask is a list of integer operands, #2 .. #2+n.
-    for (MVT::SimpleValueType OpVT = EltVT; OpVT <= MVT::LAST_INTEGER_VALUETYPE;
-         // Integer values types are consecutively numbered.  Exploit this.
-         OpVT = MVT::SimpleValueType(OpVT + 1)) {
-      if (!isTypeLegal(OpVT))
-        continue;
-
-      // Success!  Rebuild the vector using the legal types.
-      SmallVector<SDValue, 16> Ops(MaskLength);
-      for (unsigned i = 0; i < MaskLength; ++i) {
-        SDValue Arg = Mask.getOperand(i);
-        if (Arg.getOpcode() == ISD::UNDEF) {
-          Ops[i] = DAG.getUNDEF(OpVT);
-        } else {
-          uint64_t Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
-          Ops[i] = DAG.getConstant(Idx, OpVT);
-        }
-      }
-      return DAG.UpdateNodeOperands(SDValue(N,0),
-                                    N->getOperand(0), N->getOperand(1),
-                                    DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                                VecVT, &Ops[0], Ops.size()));
-    }
-
-    // Continuing is pointless - failure is certain.
-    break;
-  }
-  assert(false && "Failed to find an appropriate mask type!");
-  return SDValue(N, 0);
 }
 
 
