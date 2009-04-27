@@ -401,9 +401,146 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
 }
 
 //===----------------------------------------------------------------------===//
-// PCHReader Implementation
+// Attribute Reading
 //===----------------------------------------------------------------------===//
 
+/// \brief Reads attributes from the current stream position.
+Attr *PCHReader::ReadAttributes() {
+  unsigned Code = DeclsCursor.ReadCode();
+  assert(Code == llvm::bitc::UNABBREV_RECORD && 
+         "Expected unabbreviated record"); (void)Code;
+  
+  RecordData Record;
+  unsigned Idx = 0;
+  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
+  assert(RecCode == pch::DECL_ATTR && "Expected attribute record"); 
+  (void)RecCode;
+
+#define SIMPLE_ATTR(Name)                       \
+ case Attr::Name:                               \
+   New = ::new (Context) Name##Attr();          \
+   break
+
+#define STRING_ATTR(Name)                                       \
+ case Attr::Name:                                               \
+   New = ::new (Context) Name##Attr(ReadString(Record, Idx));   \
+   break
+
+#define UNSIGNED_ATTR(Name)                             \
+ case Attr::Name:                                       \
+   New = ::new (Context) Name##Attr(Record[Idx++]);     \
+   break
+
+  Attr *Attrs = 0;
+  while (Idx < Record.size()) {
+    Attr *New = 0;
+    Attr::Kind Kind = (Attr::Kind)Record[Idx++];
+    bool IsInherited = Record[Idx++];
+
+    switch (Kind) {
+    STRING_ATTR(Alias);
+    UNSIGNED_ATTR(Aligned);
+    SIMPLE_ATTR(AlwaysInline);
+    SIMPLE_ATTR(AnalyzerNoReturn);
+    STRING_ATTR(Annotate);
+    STRING_ATTR(AsmLabel);
+    
+    case Attr::Blocks:
+      New = ::new (Context) BlocksAttr(
+                                  (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
+      break;
+      
+    case Attr::Cleanup:
+      New = ::new (Context) CleanupAttr(
+                                  cast<FunctionDecl>(GetDecl(Record[Idx++])));
+      break;
+
+    SIMPLE_ATTR(Const);
+    UNSIGNED_ATTR(Constructor);
+    SIMPLE_ATTR(DLLExport);
+    SIMPLE_ATTR(DLLImport);
+    SIMPLE_ATTR(Deprecated);
+    UNSIGNED_ATTR(Destructor);
+    SIMPLE_ATTR(FastCall);
+    
+    case Attr::Format: {
+      std::string Type = ReadString(Record, Idx);
+      unsigned FormatIdx = Record[Idx++];
+      unsigned FirstArg = Record[Idx++];
+      New = ::new (Context) FormatAttr(Type, FormatIdx, FirstArg);
+      break;
+    }
+
+    SIMPLE_ATTR(GNUInline);
+    
+    case Attr::IBOutletKind:
+      New = ::new (Context) IBOutletAttr();
+      break;
+
+    SIMPLE_ATTR(NoReturn);
+    SIMPLE_ATTR(NoThrow);
+    SIMPLE_ATTR(Nodebug);
+    SIMPLE_ATTR(Noinline);
+    
+    case Attr::NonNull: {
+      unsigned Size = Record[Idx++];
+      llvm::SmallVector<unsigned, 16> ArgNums;
+      ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
+      Idx += Size;
+      New = ::new (Context) NonNullAttr(&ArgNums[0], Size);
+      break;
+    }
+
+    SIMPLE_ATTR(ObjCException);
+    SIMPLE_ATTR(ObjCNSObject);
+    SIMPLE_ATTR(ObjCOwnershipRetain);
+    SIMPLE_ATTR(ObjCOwnershipReturns);
+    SIMPLE_ATTR(Overloadable);
+    UNSIGNED_ATTR(Packed);
+    SIMPLE_ATTR(Pure);
+    UNSIGNED_ATTR(Regparm);
+    STRING_ATTR(Section);
+    SIMPLE_ATTR(StdCall);
+    SIMPLE_ATTR(TransparentUnion);
+    SIMPLE_ATTR(Unavailable);
+    SIMPLE_ATTR(Unused);
+    SIMPLE_ATTR(Used);
+    
+    case Attr::Visibility:
+      New = ::new (Context) VisibilityAttr(
+                              (VisibilityAttr::VisibilityTypes)Record[Idx++]);
+      break;
+
+    SIMPLE_ATTR(WarnUnusedResult);
+    SIMPLE_ATTR(Weak);
+    SIMPLE_ATTR(WeakImport);
+    }
+
+    assert(New && "Unable to decode attribute?");
+    New->setInherited(IsInherited);
+    New->setNext(Attrs);
+    Attrs = New;
+  }
+#undef UNSIGNED_ATTR
+#undef STRING_ATTR
+#undef SIMPLE_ATTR
+
+  // The list of attributes was built backwards. Reverse the list
+  // before returning it.
+  Attr *PrevAttr = 0, *NextAttr = 0;
+  while (Attrs) {
+    NextAttr = Attrs->getNext();
+    Attrs->setNext(PrevAttr);
+    PrevAttr = Attrs;
+    Attrs = NextAttr;
+  }
+
+  return PrevAttr;
+}
+
+//===----------------------------------------------------------------------===//
+// PCHReader Implementation
+//===----------------------------------------------------------------------===//
 
 /// \brief Note that we have loaded the declaration with the given
 /// Index.
@@ -450,116 +587,76 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   case pch::DECL_CONTEXT_VISIBLE:
     assert(false && "Record cannot be de-serialized with ReadDeclRecord");
     break;
-
   case pch::DECL_TRANSLATION_UNIT:
     assert(Index == 0 && "Translation unit must be at index 0");
     D = Context.getTranslationUnitDecl();
     break;
-
-  case pch::DECL_TYPEDEF: {
+  case pch::DECL_TYPEDEF:
     D = TypedefDecl::Create(Context, 0, SourceLocation(), 0, QualType());
     break;
-  }
-
-  case pch::DECL_ENUM: {
+  case pch::DECL_ENUM:
     D = EnumDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
-  }
-
-  case pch::DECL_RECORD: {
-    D = RecordDecl::Create(Context, TagDecl::TK_struct, 0, SourceLocation(), 
+  case pch::DECL_RECORD:
+    D = RecordDecl::Create(Context, TagDecl::TK_struct, 0, SourceLocation(),
                            0, 0);
     break;
-  }
-
-  case pch::DECL_ENUM_CONSTANT: {
+  case pch::DECL_ENUM_CONSTANT:
     D = EnumConstantDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
                                  0, llvm::APSInt());
     break;
-  }
-  
-  case pch::DECL_FUNCTION: {
+  case pch::DECL_FUNCTION:
     D = FunctionDecl::Create(Context, 0, SourceLocation(), DeclarationName(), 
                              QualType());
     break;
-  }
-
-  case pch::DECL_OBJC_METHOD: {
+  case pch::DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(), 
                                Selector(), QualType(), 0);
     break;
-  }
-
-  case pch::DECL_OBJC_INTERFACE: {
+  case pch::DECL_OBJC_INTERFACE:
     D = ObjCInterfaceDecl::Create(Context, 0, SourceLocation(), 0);
     break;
-  }
-
-  case pch::DECL_OBJC_IVAR: {
+  case pch::DECL_OBJC_IVAR:
     D = ObjCIvarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
                              ObjCIvarDecl::None);
     break;
-  }
-
-  case pch::DECL_OBJC_PROTOCOL: {
+  case pch::DECL_OBJC_PROTOCOL:
     D = ObjCProtocolDecl::Create(Context, 0, SourceLocation(), 0);
     break;
-  }
-
-  case pch::DECL_OBJC_AT_DEFS_FIELD: {
+  case pch::DECL_OBJC_AT_DEFS_FIELD:
     D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(), 0, 
                                     QualType(), 0);
     break;
-  }
-
-  case pch::DECL_OBJC_CLASS: {
+  case pch::DECL_OBJC_CLASS:
     D = ObjCClassDecl::Create(Context, 0, SourceLocation());
     break;
-  }
-
-  case pch::DECL_OBJC_FORWARD_PROTOCOL: {
+  case pch::DECL_OBJC_FORWARD_PROTOCOL:
     D = ObjCForwardProtocolDecl::Create(Context, 0, SourceLocation());
     break;
-  }
-
-  case pch::DECL_OBJC_CATEGORY: {
+  case pch::DECL_OBJC_CATEGORY:
     D = ObjCCategoryDecl::Create(Context, 0, SourceLocation(), 0);
     break;
-  }
-
-  case pch::DECL_OBJC_CATEGORY_IMPL: {
+  case pch::DECL_OBJC_CATEGORY_IMPL:
     D = ObjCCategoryImplDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
-  }
-  
-  case pch::DECL_OBJC_IMPLEMENTATION: {
+  case pch::DECL_OBJC_IMPLEMENTATION:
     D = ObjCImplementationDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
-  }
-  
-  case pch::DECL_OBJC_COMPATIBLE_ALIAS: {
+  case pch::DECL_OBJC_COMPATIBLE_ALIAS:
     D = ObjCCompatibleAliasDecl::Create(Context, 0, SourceLocation(), 0, 0);
     break;
-  }
-  
-  case pch::DECL_OBJC_PROPERTY: {
+  case pch::DECL_OBJC_PROPERTY:
     D = ObjCPropertyDecl::Create(Context, 0, SourceLocation(), 0, QualType());
     break;
-  }
-  
-  case pch::DECL_OBJC_PROPERTY_IMPL: {
+  case pch::DECL_OBJC_PROPERTY_IMPL:
     D = ObjCPropertyImplDecl::Create(Context, 0, SourceLocation(),
                                      SourceLocation(), 0, 
                                      ObjCPropertyImplDecl::Dynamic, 0);
     break;
-  }
-
-  case pch::DECL_FIELD: {
+  case pch::DECL_FIELD:
     D = FieldDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 0, 
                           false);
     break;
-  }
-
   case pch::DECL_VAR:
     D = VarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
                         VarDecl::None, SourceLocation());
@@ -569,35 +666,25 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = ImplicitParamDecl::Create(Context, 0, SourceLocation(), 0, QualType());
     break;
 
-  case pch::DECL_PARM_VAR: {
+  case pch::DECL_PARM_VAR:
     D = ParmVarDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 
                             VarDecl::None, 0);
     break;
-  }
-
-  case pch::DECL_ORIGINAL_PARM_VAR: {
+  case pch::DECL_ORIGINAL_PARM_VAR:
     D = OriginalParmVarDecl::Create(Context, 0, SourceLocation(), 0,
-                                    QualType(), QualType(), VarDecl::None, 
-                                    0);
+                                    QualType(), QualType(), VarDecl::None, 0);
     break;
-  }
-
-  case pch::DECL_FILE_SCOPE_ASM: {
+  case pch::DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(Context, 0, SourceLocation(), 0);
     break;
-  }
-
-  case pch::DECL_BLOCK: {
+  case pch::DECL_BLOCK:
     D = BlockDecl::Create(Context, 0, SourceLocation());
     break;
   }
-  }
 
   assert(D && "Unknown declaration reading PCH file");
-  if (D) {
-    LoadedDecl(Index, D);
-    Reader.Visit(D);
-  }
+  LoadedDecl(Index, D);
+  Reader.Visit(D);
 
   // If this declaration is also a declaration context, get the
   // offsets for its tables of lexical and visible declarations.
