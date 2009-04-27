@@ -2577,6 +2577,11 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
       RequireCompleteType(Begin, BaseType, DK))
     Invalid = true;
 
+  if (!Invalid && RequireNonAbstractType(Begin, ExDeclType,
+                                         diag::err_abstract_type_in_decl,
+                                         AbstractVariableType))
+    Invalid = true;
+
   // FIXME: Need to test for ability to copy-construct and destroy the
   // exception variable.
   // FIXME: Need to check for abstract classes.
