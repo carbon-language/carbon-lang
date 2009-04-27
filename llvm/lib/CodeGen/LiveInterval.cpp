@@ -629,6 +629,12 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
       UnusedValNo = 0;
     }
   }
+
+  if (UnusedValNo) {
+    // Delete the last unused val#.
+    valnos.pop_back();
+    UnusedValNo->~VNInfo();
+  }
 }
 
 void LiveInterval::MergeInClobberRange(unsigned Start, unsigned End,
