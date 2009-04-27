@@ -55,32 +55,35 @@ static JIT *TheJIT = 0;
 //
 namespace {
   class JITResolverState {
+  public:
+    typedef std::map<AssertingVH<Function>, void*> FunctionToStubMapTy;
+    typedef std::map<void*, Function*> StubToFunctionMapTy;
+    typedef std::map<AssertingVH<GlobalValue>, void*> GlobalToIndirectSymMapTy;
   private:
     /// FunctionToStubMap - Keep track of the stub created for a particular
     /// function so that we can reuse them if necessary.
-    std::map<AssertingVH<Function>, void*> FunctionToStubMap;
+    FunctionToStubMapTy FunctionToStubMap;
 
     /// StubToFunctionMap - Keep track of the function that each stub
     /// corresponds to.
-    std::map<void*, AssertingVH<Function> > StubToFunctionMap;
+    StubToFunctionMapTy StubToFunctionMap;
 
     /// GlobalToIndirectSymMap - Keep track of the indirect symbol created for a
     /// particular GlobalVariable so that we can reuse them if necessary.
-    std::map<GlobalValue*, void*> GlobalToIndirectSymMap;
+    GlobalToIndirectSymMapTy GlobalToIndirectSymMap;
 
   public:
-    std::map<AssertingVH<Function>, void*>& getFunctionToStubMap(const MutexGuard& locked) {
+    FunctionToStubMapTy& getFunctionToStubMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return FunctionToStubMap;
     }
 
-    std::map<void*, AssertingVH<Function> >& getStubToFunctionMap(const MutexGuard& locked) {
+    StubToFunctionMapTy& getStubToFunctionMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return StubToFunctionMap;
     }
 
-    std::map<GlobalValue*, void*>&
-    getGlobalToIndirectSymMap(const MutexGuard& locked) {
+    GlobalToIndirectSymMapTy& getGlobalToIndirectSymMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return GlobalToIndirectSymMap;
     }
@@ -89,6 +92,10 @@ namespace {
   /// JITResolver - Keep track of, and resolve, call sites for functions that
   /// have not yet been compiled.
   class JITResolver {
+    typedef JITResolverState::FunctionToStubMapTy FunctionToStubMapTy;
+    typedef JITResolverState::StubToFunctionMapTy StubToFunctionMapTy;
+    typedef JITResolverState::GlobalToIndirectSymMapTy GlobalToIndirectSymMapTy;
+
     /// LazyResolverFn - The target lazy resolver function that we actually
     /// rewrite instructions to use.
     TargetJITInfo::LazyResolverFn LazyResolverFn;
@@ -276,18 +283,17 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
                                     SmallVectorImpl<void*> &Ptrs) {
   MutexGuard locked(TheJIT->lock);
   
-  std::map<AssertingVH<Function>,void*> &FM =state.getFunctionToStubMap(locked);
-  std::map<GlobalValue*,void*> &GM = state.getGlobalToIndirectSymMap(locked);
+  FunctionToStubMapTy &FM = state.getFunctionToStubMap(locked);
+  GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
   
-  for (std::map<AssertingVH<Function>,void*>::iterator i = FM.begin(),
-       e = FM.end(); i != e; ++i) {
+  for (FunctionToStubMapTy::iterator i = FM.begin(), e = FM.end(); i != e; ++i){
     Function *F = i->first;
     if (F->isDeclaration() && F->hasExternalLinkage()) {
       GVs.push_back(i->first);
       Ptrs.push_back(i->second);
     }
   }
-  for (std::map<GlobalValue*,void*>::iterator i = GM.begin(), e = GM.end();
+  for (GlobalToIndirectSymMapTy::iterator i = GM.begin(), e = GM.end();
        i != e; ++i) {
     GVs.push_back(i->first);
     Ptrs.push_back(i->second);
@@ -297,9 +303,9 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
 GlobalValue *JITResolver::invalidateStub(void *Stub) {
   MutexGuard locked(TheJIT->lock);
   
-  std::map<AssertingVH<Function>,void*> &FM =state.getFunctionToStubMap(locked);
-  std::map<void*,AssertingVH<Function> > &SM=state.getStubToFunctionMap(locked);
-  std::map<GlobalValue*,void*> &GM = state.getGlobalToIndirectSymMap(locked);
+  FunctionToStubMapTy &FM = state.getFunctionToStubMap(locked);
+  StubToFunctionMapTy &SM = state.getStubToFunctionMap(locked);
+  GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
   
   // Look up the cheap way first, to see if it's a function stub we are
   // invalidating.  If so, remove it from both the forward and reverse maps.
@@ -311,7 +317,7 @@ GlobalValue *JITResolver::invalidateStub(void *Stub) {
   }
   
   // Otherwise, it might be an indirect symbol stub.  Find it and remove it.
-  for (std::map<GlobalValue*,void*>::iterator i = GM.begin(), e = GM.end();
+  for (GlobalToIndirectSymMapTy::iterator i = GM.begin(), e = GM.end();
        i != e; ++i) {
     if (i->second != Stub)
       continue;
@@ -349,7 +355,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
     // The address given to us for the stub may not be exactly right, it might be
     // a little bit after the stub.  As such, use upper_bound to find it.
-    std::map<void*, AssertingVH<Function> >::iterator I =
+    StubToFunctionMapTy::iterator I =
       JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
     assert(I != JR.state.getStubToFunctionMap(locked).begin() &&
            "This is not a known stub!");
