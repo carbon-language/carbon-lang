@@ -157,29 +157,32 @@ cd llvm-objects
   <li><p>Configure LLVM (here it is configured to install into <tt>/usr/local</tt>):</p>
 
 <pre class="doc_code">
-../llvm/configure --prefix=<b>/usr/local</b>
+../llvm/configure --prefix=<b>/usr/local</b> --enable-optimized --enable-assertions
 </pre>
 
       <p>If you have a multi-compiler setup and the C++ compiler is not the
       default, then you can configure like this:</p>
 
 <pre class="doc_code">
-CXX=<b>PATH_TO_C++_COMPILER</b> ../llvm/configure --prefix=<b>/usr/local</b>
+CXX=<b>PATH_TO_C++_COMPILER</b> ../llvm/configure --prefix=<b>/usr/local</b> --enable-optimized --enable-assertions
 </pre>
+
+      <p>To compile without checking (not recommended), replace
+      <tt>--enable-assertions</tt> with <tt>--disable-assertions</tt>.</p>
+
       </li>
 
-  <li><p>Build LLVM with checking enabled (use <tt>ENABLE_OPTIMIZED=1</tt> to
-         build without checking):</p>
+  <li><p>Build LLVM:</p>
 
 <pre class="doc_code">
-make ENABLE_OPTIMIZED=0
+make
 </pre>
       </li>
 
   <li><p>Install LLVM (optional):</p>
 
 <pre class="doc_code">
-make ENABLE_OPTIMIZED=0 install
+make install
 </pre>
       </li>
 
@@ -195,7 +198,8 @@ cd llvm-gcc-4.2-objects
 
   <li><p>Configure llvm-gcc (here it is configured to install into <tt>/usr/local</tt>).
       The <tt>--enable-checking</tt> flag turns on sanity checks inside the compiler.
-      If you omit it then LLVM should be built with <tt>make ENABLE_OPTIMIZED=1</tt>.
+      To turn off these checks (not recommended), replace <tt>--enable-checking</tt>
+      with <tt>--disable-checking</tt>.
       Additional languages can be appended to the <tt>--enable-languages</tt> switch,
       for example <tt>--enable-languages=ada,c,c++</tt>.</p>
 
