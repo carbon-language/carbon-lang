@@ -1037,9 +1037,11 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH,
                                             Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
+  // The back edge is edge 1 of newPHI, whatever it may have been in the
+  // original PHI.
   ConstantInt *NewEV = ConstantInt::get(Type::Int32Ty, intEV);
-  Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(BackEdge) : NewEV);
-  Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(BackEdge));
+  Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
+  Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
   ICmpInst *NewEC = new ICmpInst(NewPred, LHS, RHS, EC->getNameStart(),
                                  EC->getParent()->getTerminator());
 
