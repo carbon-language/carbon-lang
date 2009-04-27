@@ -1634,16 +1634,86 @@ welcome!</p>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.8.2.3 [temp.deduct.conv]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.8.2.4 [temp.deduct.type]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;14.8.3 [temp.over]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>15 [except]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;15.1 [except.throw]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;15.2 [except.ctor]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;15.3 [except.handle]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;15.4 [except.spec]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;15.5 [except.special]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;15.5.1 [except.terminate]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;15.5.2 [except.unexpected]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;15.5.3 [except.uncaught]</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>&nbsp;&nbsp;15.6 [except.access]</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr>
+  <td>15 [except]</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="complete" align="center">&#x2713;</td>
+  <td class="advanced" align="center">Illegal gotos are not diagnosed</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;15.1 [except.throw]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="advanced" align="center">Does not check for existence of copy constructor and destructor, and some other details</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;15.2 [except.ctor]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;15.3 [except.handle]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="advanced" align="center">Not all constraints are checked, such as existence of return statements in function-try-block handlers of constructors</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;15.4 [except.spec]</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;15.5 [except.special]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;15.5.1 [except.terminate]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;15.5.2 [except.unexpected]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;15.5.3 [except.uncaught]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td></td>
+</tr>
+<tr>
+  <td>&nbsp;&nbsp;15.6 [except.access]</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">Redundant - struck from C++0x</td>
+  <td class="na" align="center">N/A</td>
+  <td></td>
+</tr>
 <tr><td>16 [cpp]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;16.1 [cpp.cond]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;16.2 [cpp.include]</td><td></td><td></td><td></td><td></td><td></td></tr>
