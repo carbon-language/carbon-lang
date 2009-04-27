@@ -188,7 +188,14 @@ namespace clang {
       SOURCE_LOCATION_PRELOADS = 16,
 
       /// \brief Record code for the stat() cache.
-      STAT_CACHE = 17
+      STAT_CACHE = 17,
+
+      /// \brief Record code for the set of ext_vector type names.
+      EXT_VECTOR_DECLS = 18,
+
+      /// \brief Record code for the set of Objective-C category
+      /// implementations.
+      OBJC_CATEGORY_IMPLEMENTATIONS = 19
     };
 
     /// \brief Record types used within a source manager block.

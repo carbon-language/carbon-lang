@@ -208,6 +208,14 @@ private:
   /// the the PCH file.
   llvm::SmallVector<uint64_t, 16> LocallyScopedExternalDecls;
 
+  /// \brief The set of ext_vector type declarations stored in the the
+  /// PCH file.
+  llvm::SmallVector<uint64_t, 4> ExtVectorDecls;
+
+  /// \brief The set of Objective-C category definitions stored in the
+  /// the PCH file.
+  llvm::SmallVector<uint64_t, 4> ObjCCategoryImpls;
+
   /// \brief Mapping from switch-case IDs in the PCH file to
   /// switch-case statements.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
