@@ -247,7 +247,7 @@ namespace {
 class VISIBILITY_HIDDEN RetEffect {
 public:
   enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
-              NotOwnedSymbol, ReceiverAlias };
+              NotOwnedSymbol, GCNotOwnedSymbol, ReceiverAlias };
     
   enum ObjKind { CF, ObjC, AnyObj };  
 
@@ -280,7 +280,11 @@ public:
   }  
   static RetEffect MakeNotOwned(ObjKind o) {
     return RetEffect(NotOwnedSymbol, o);
-  }  
+  }
+  static RetEffect MakeGCNotOwned() {
+    return RetEffect(GCNotOwnedSymbol, ObjC);
+  }
+    
   static RetEffect MakeNoRet() {
     return RetEffect(NoRet);
   }
@@ -1086,7 +1090,8 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
   
   if (isTrackedObjectType(MD->getResultType())) {
     if (MD->getAttr<ObjCOwnershipReturnsAttr>()) {
-      RE = RetEffect::MakeOwned(RetEffect::ObjC, true);
+      RE = isGCEnabled() ? RetEffect::MakeGCNotOwned()
+                         : RetEffect::MakeOwned(RetEffect::ObjC, true);
       hasRetEffect = true;
     }
     else {
@@ -1161,7 +1166,7 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S) {
   
   RetEffect E =
     followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
-    ? (isGCEnabled() ? RetEffect::MakeNotOwned(RetEffect::ObjC)
+    ? (isGCEnabled() ? RetEffect::MakeGCNotOwned()
                      : RetEffect::MakeOwned(RetEffect::ObjC, true))
       : RetEffect::MakeNotOwned(RetEffect::ObjC);
   
@@ -1235,7 +1240,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   
   assert (ScratchArgs.empty());
   
-  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
+  RetEffect E = isGCEnabled() ? RetEffect::MakeGCNotOwned()
                               : RetEffect::MakeOwned(RetEffect::ObjC, true);  
   
   RetainSummary* Summ = getPersistentSummary(E);
@@ -1292,7 +1297,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
   
   // The next methods are allocators.
-  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
+  RetEffect E = isGCEnabled() ? RetEffect::MakeGCNotOwned()
                               : RetEffect::MakeOwned(RetEffect::ObjC, true);
   
   RetainSummary* Summ = getPersistentSummary(E);  
@@ -2051,7 +2056,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       
       break;
     }
-      
+    
+    case RetEffect::GCNotOwnedSymbol:
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
       ValueManager &ValMgr = Eng.getValueManager();

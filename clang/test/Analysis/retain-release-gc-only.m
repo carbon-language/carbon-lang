@@ -4,7 +4,9 @@
 //===----------------------------------------------------------------------===//
 // Header stuff.
 //===----------------------------------------------------------------------===//
+
 typedef unsigned int __darwin_natural_t;
+typedef struct {} div_t;
 typedef unsigned long UInt32;
 typedef signed long CFIndex;
 typedef const void * CFTypeRef;
@@ -13,15 +15,15 @@ typedef const struct __CFAllocator * CFAllocatorRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
 extern void CFRelease(CFTypeRef cf);
-CFTypeRef CFMakeCollectable(CFTypeRef cf);
 typedef struct {
 }
-  CFArrayCallBacks;
+CFArrayCallBacks;
 extern const CFArrayCallBacks kCFTypeArrayCallBacks;
 typedef const struct __CFArray * CFArrayRef;
 typedef struct __CFArray * CFMutableArrayRef;
 extern CFMutableArrayRef CFArrayCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks);
 extern const void *CFArrayGetValueAtIndex(CFArrayRef theArray, CFIndex idx);
+extern void CFArrayAppendValue(CFMutableArrayRef theArray, const void *value);
 typedef const struct __CFDictionary * CFDictionaryRef;
 typedef UInt32 CFStringEncoding;
 enum {
@@ -29,13 +31,20 @@ kCFStringEncodingMacRoman = 0,     kCFStringEncodingWindowsLatin1 = 0x0500,     
 extern CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding);
 typedef double CFTimeInterval;
 typedef CFTimeInterval CFAbsoluteTime;
+extern CFAbsoluteTime CFAbsoluteTimeGetCurrent(void);
 typedef const struct __CFDate * CFDateRef;
 extern CFDateRef CFDateCreate(CFAllocatorRef allocator, CFAbsoluteTime at);
 extern CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
 typedef __darwin_natural_t natural_t;
 typedef natural_t mach_port_name_t;
 typedef mach_port_name_t mach_port_t;
+typedef struct {
+}
+CFRunLoopObserverContext;
 typedef signed char BOOL;
+typedef unsigned int NSUInteger;
+@class NSString, Protocol;
+extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object;
@@ -43,15 +52,25 @@ typedef struct _NSZone NSZone;
 - (oneway void)release;
 - (id)autorelease;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
+@end  @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
-@end    @interface NSObject <NSObject> {
-}
-@end  typedef float CGFloat;
-typedef double NSTimeInterval;
-@interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
-@end      enum {
-NSObjCNoType = 0,     NSObjCVoidType = 'v',     NSObjCCharType = 'c',     NSObjCShortType = 's',     NSObjCLongType = 'l',     NSObjCLonglongType = 'q',     NSObjCFloatType = 'f',     NSObjCDoubleType = 'd',      NSObjCBoolType = 'B',      NSObjCSelectorType = ':',     NSObjCObjectType = '@',     NSObjCStructType = '{',     NSObjCPointerType = '^',     NSObjCStringType = '*',     NSObjCArrayType = '[',     NSObjCUnionType = '(',     NSObjCBitfield = 'b' }
-__attribute__((deprecated));
+@end
+@interface NSObject <NSObject> {}
++ (id)alloc;
++ (id)allocWithZone:(NSZone *)zone;
+@end   typedef float CGFloat;
+@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
+- (const char *)UTF8String;
+- (id)initWithUTF8String:(const char *)nullTerminatedCString;
++ (id)stringWithUTF8String:(const char *)nullTerminatedCString;
+- (id)init;
+- (void)dealloc;
+@end   extern NSString * const NSCurrentLocaleDidChangeNotification ;
+@protocol NSLocking  - (void)lock;
+@end  extern NSString * const NSUndoManagerCheckpointNotification;
+typedef enum {
+ACL_READ_DATA = (1<<1),  ACL_LIST_DIRECTORY = (1<<1),  ACL_WRITE_DATA = (1<<2),  ACL_ADD_FILE = (1<<2),  ACL_EXECUTE = (1<<3),  ACL_SEARCH = (1<<3),  ACL_DELETE = (1<<4),  ACL_APPEND_DATA = (1<<5),  ACL_ADD_SUBDIRECTORY = (1<<5),  ACL_DELETE_CHILD = (1<<6),  ACL_READ_ATTRIBUTES = (1<<7),  ACL_WRITE_ATTRIBUTES = (1<<8),  ACL_READ_EXTATTRIBUTES = (1<<9),  ACL_WRITE_EXTATTRIBUTES = (1<<10),  ACL_READ_SECURITY = (1<<11),  ACL_WRITE_SECURITY = (1<<12),  ACL_CHANGE_OWNER = (1<<13) }
+acl_entry_id_t;
 typedef int kern_return_t;
 typedef kern_return_t mach_error_t;
 typedef mach_port_t io_object_t;
@@ -63,13 +82,24 @@ extern DADiskRef DADiskCreateFromBSDName( CFAllocatorRef allocator, DASessionRef
 extern DADiskRef DADiskCreateFromIOMedia( CFAllocatorRef allocator, DASessionRef session, io_service_t media );
 extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk );
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk );
-@interface NSAppleEventManager : NSObject {
+@interface NSResponder : NSObject <NSCoding> {
+}
+@end  @class NSColor, NSFont, NSNotification;
+typedef struct __CFlags {
+}
+_CFlags;
+@interface NSCell : NSObject <NSCopying, NSCoding> {
+}
+@end  @class NSDate, NSDictionary, NSError, NSException, NSNotification;
+@interface NSManagedObjectContext : NSObject <NSCoding, NSLocking> {
 }
 @end enum {
 kDAReturnSuccess = 0,     kDAReturnError = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x01,     kDAReturnBusy = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x02,     kDAReturnBadArgument = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x03,     kDAReturnExclusiveAccess = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x04,     kDAReturnNoResources = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x05,     kDAReturnNotFound = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x06,     kDAReturnNotMounted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x07,     kDAReturnNotPermitted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x08,     kDAReturnNotPrivileged = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x09,     kDAReturnNotReady = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0A,     kDAReturnNotWritable = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0B,     kDAReturnUnsupported = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0C };
 typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string );
+
+CFTypeRef CFMakeCollectable(CFTypeRef cf) ;
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -115,9 +145,7 @@ void test_attr_2(TestOwnershipAttr *X) {
 }
 
 void test_attr_3(TestOwnershipAttr *X) {
-  // FIXME: This should be a leak.  Need to change the analyzer to
-  // to track Objective-C objects retain counts even in GC mode.
-  NSString *str = [X returnsAnOwnedString]; // no-warning
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
   [X myCFRetain:str];
   [str release];
 }
