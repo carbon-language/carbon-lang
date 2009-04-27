@@ -268,17 +268,8 @@ private:
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  explicit PCHReader(Preprocessor &PP, ASTContext &Context) 
-    : SemaObj(0), PP(PP), Context(Context), Consumer(0),
-      IdentifierTableData(0), IdentifierLookupTable(0),
-      IdentifierOffsets(0),
-      MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
-      TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-      TotalNumSelectors(0), NumStatementsRead(0), NumMacrosRead(0),
-      NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
-      NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
-
-  ~PCHReader() {}
+  explicit PCHReader(Preprocessor &PP, ASTContext &Context);
+  ~PCHReader();
 
   PCHReadResult ReadPCH(const std::string &FileName);
 
