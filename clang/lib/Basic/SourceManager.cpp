@@ -318,6 +318,22 @@ void SourceManager::PreallocateSLocEntries(ExternalSLocEntrySource *Source,
   SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries);
 }
 
+void SourceManager::ClearPreallocatedSLocEntries() {
+  unsigned I = 0;
+  for (unsigned N = SLocEntryLoaded.size(); I != N; ++I)
+    if (!SLocEntryLoaded[I])
+      break;
+
+  // We've already loaded all preallocated source location entries.
+  if (I == SLocEntryLoaded.size())
+    return;
+
+  // Remove everything from location I onward.
+  SLocEntryTable.resize(I);
+  SLocEntryLoaded.clear();
+  ExternalSLocEntries = 0;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Methods to create new FileID's and instantiations.

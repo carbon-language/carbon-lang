@@ -1116,6 +1116,14 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
         // FIXME: We could consider reading through to the end of this
         // PCH block, skipping subblocks, to see if there are other
         // PCH blocks elsewhere.
+
+        // Clear out any preallocated source location entries, so that
+        // the source manager does not try to resolve them later.
+        PP.getSourceManager().ClearPreallocatedSLocEntries();
+
+        // Remove the stat cache.
+        PP.getFileManager().setStatCache(0);
+
         return IgnorePCH;
       }
       break;

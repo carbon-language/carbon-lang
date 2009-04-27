@@ -659,6 +659,10 @@ public:
                               unsigned NumSLocEntries,
                               unsigned NextOffset);
 
+  /// \brief Clear out any preallocated source location entries that
+  /// haven't already been loaded.
+  void ClearPreallocatedSLocEntries();
+
 private:
   /// isOffsetInFileID - Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.
