@@ -1693,7 +1693,6 @@ bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
     return Failure;
   }
   
-  RecordData Record;
   while (true) {
     unsigned Code = Cursor.ReadCode();
     
