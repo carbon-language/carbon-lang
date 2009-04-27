@@ -11,6 +11,7 @@ add_clang_library(clangFrontend
   PCHReaderDecl.cpp
   PCHReaderStmt.cpp
   PCHWriter.cpp
+  PCHWriterDecl.cpp
   PlistDiagnostics.cpp
   ManagerRegistry.cpp
   )
