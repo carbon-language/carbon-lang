@@ -1667,12 +1667,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }      
 
-  case PrintPreprocessedInput: {      // -E mode.
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    DoPrintPreprocessedInput(PP, OutputFile);
-    ClearSourceMgr = true;
+  case PrintPreprocessedInput:
     break;
-  }
       
   case ParseNoop:
     break;
@@ -1750,19 +1746,23 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       /* FreeMemory = */ !DisableFree,
                                       /* size_reserve = */0,
                        /* InitializeBuiltins = */ImplicitIncludePCH.empty()));
-     
+  llvm::OwningPtr<PCHReader> Reader;
+  llvm::OwningPtr<ExternalASTSource> Source;
+    
   if (!ImplicitIncludePCH.empty()) {
+    Reader.reset(new PCHReader(PP, ContextOwner.get()));
+    
     // The user has asked us to include a precompiled header. Load
     // the precompiled header into the AST context.
-    llvm::OwningPtr<PCHReader> Reader(new PCHReader(PP, ContextOwner.get()));
     switch (Reader->ReadPCH(ImplicitIncludePCH)) {
     case PCHReader::Success: {
       // Attach the PCH reader to the AST context as an external AST
       // source, so that declarations will be deserialized from the
       // PCH file as needed.
-      llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
-      if (ContextOwner)
+      if (ContextOwner) {
+        Source.reset(Reader.take());
         ContextOwner->setExternalSource(Source);
+      }
 
       // Clear out the predefines buffer, because all of the
       // predefines are already in the PCH file.
@@ -1813,6 +1813,10 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   } else if (PA == ParseNoop) {                  // -parse-noop
     llvm::TimeRegion Timer(ClangFrontendTimer);
     ParseFile(PP, new MinimalAction(PP));
+    ClearSourceMgr = true;
+  } else if (PA == PrintPreprocessedInput){  // -E mode.
+    llvm::TimeRegion Timer(ClangFrontendTimer);
+    DoPrintPreprocessedInput(PP, OutputFile);
     ClearSourceMgr = true;
   }
   

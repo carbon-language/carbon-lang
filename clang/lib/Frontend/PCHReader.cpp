@@ -270,6 +270,8 @@ public:
     // Read all of the declarations visible at global scope with this
     // name.
     Sema *SemaObj = Reader.getSema();
+    if (!SemaObj) return II;
+    
     while (DataLen > 0) {
       NamedDecl *D = cast<NamedDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
       if (SemaObj) {
