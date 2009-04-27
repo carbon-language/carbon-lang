@@ -996,10 +996,10 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
     // Unhandled operand.  Halt "fast" selection and bail.
     return false;
 
-  // First issue a copy to GR16_ or GR32_.
+  // First issue a copy to GR16_ABCD or GR32_ABCD.
   unsigned CopyOpc = (SrcVT == MVT::i16) ? X86::MOV16rr : X86::MOV32rr;
   const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
-    ? X86::GR16_RegisterClass : X86::GR32_RegisterClass;
+    ? X86::GR16_ABCDRegisterClass : X86::GR32_ABCDRegisterClass;
   unsigned CopyReg = createResultReg(CopyRC);
   BuildMI(MBB, DL, TII.get(CopyOpc), CopyReg).addReg(InputReg);
 

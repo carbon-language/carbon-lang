@@ -1681,13 +1681,13 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
         Opc = X86::MOV8rr_NOREX;
       else
         Opc = X86::MOV8rr;
-    } else if (CommonRC == &X86::GR64_RegClass) {
+    } else if (CommonRC == &X86::GR64_ABCDRegClass) {
       Opc = X86::MOV64rr;
-    } else if (CommonRC == &X86::GR32_RegClass) {
+    } else if (CommonRC == &X86::GR32_ABCDRegClass) {
       Opc = X86::MOV32rr;
-    } else if (CommonRC == &X86::GR16_RegClass) {
+    } else if (CommonRC == &X86::GR16_ABCDRegClass) {
       Opc = X86::MOV16rr;
-    } else if (CommonRC == &X86::GR8_RegClass) {
+    } else if (CommonRC == &X86::GR8_ABCDRegClass) {
       Opc = X86::MOV8rr;
     } else if (CommonRC == &X86::GR64_NOREXRegClass) {
       Opc = X86::MOV64rr;
@@ -1802,13 +1802,13 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
     Opc = X86::MOV16mr;
   } else if (RC == &X86::GR8RegClass) {
     Opc = X86::MOV8mr;
-  } else if (RC == &X86::GR64_RegClass) {
+  } else if (RC == &X86::GR64_ABCDRegClass) {
     Opc = X86::MOV64mr;
-  } else if (RC == &X86::GR32_RegClass) {
+  } else if (RC == &X86::GR32_ABCDRegClass) {
     Opc = X86::MOV32mr;
-  } else if (RC == &X86::GR16_RegClass) {
+  } else if (RC == &X86::GR16_ABCDRegClass) {
     Opc = X86::MOV16mr;
-  } else if (RC == &X86::GR8_RegClass) {
+  } else if (RC == &X86::GR8_ABCDRegClass) {
     Opc = X86::MOV8mr;
   } else if (RC == &X86::GR64_NOREXRegClass) {
     Opc = X86::MOV64mr;
@@ -1882,13 +1882,13 @@ static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
     Opc = X86::MOV16rm;
   } else if (RC == &X86::GR8RegClass) {
     Opc = X86::MOV8rm;
-  } else if (RC == &X86::GR64_RegClass) {
+  } else if (RC == &X86::GR64_ABCDRegClass) {
     Opc = X86::MOV64rm;
-  } else if (RC == &X86::GR32_RegClass) {
+  } else if (RC == &X86::GR32_ABCDRegClass) {
     Opc = X86::MOV32rm;
-  } else if (RC == &X86::GR16_RegClass) {
+  } else if (RC == &X86::GR16_ABCDRegClass) {
     Opc = X86::MOV16rm;
-  } else if (RC == &X86::GR8_RegClass) {
+  } else if (RC == &X86::GR8_ABCDRegClass) {
     Opc = X86::MOV8rm;
   } else if (RC == &X86::GR64_NOREXRegClass) {
     Opc = X86::MOV64rm;
