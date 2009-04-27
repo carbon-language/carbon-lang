@@ -413,6 +413,8 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 - (NSString*) returnsAnOwnedString __attribute__((objc_ownership_returns));
 - (void) myRetain:(id)__attribute__((objc_ownership_retain))obj;
 - (void) myCFRetain:(id)__attribute__((objc_ownership_cfretain))obj;
+- (void) myRelease:(id)__attribute__((objc_ownership_release))obj;
+- (void) myCFRelease:(id)__attribute__((objc_ownership_cfrelease))obj;
 @end
 
 void test_attr_1(TestOwnershipAttr *X) {
@@ -429,5 +431,17 @@ void test_attr_3(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
   [X myCFRetain:str];
   [str release];
+}
+
+void test_attr_4(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+  [X myRetain:str];
+  [X myRelease:str];
+}
+
+void test_attr_5(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+  [X myCFRetain:str];
+  [X myCFRelease:str];
 }
 

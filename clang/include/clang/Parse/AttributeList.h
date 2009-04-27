@@ -76,9 +76,11 @@ public:
     AT_nothrow,
     AT_nsobject,
     AT_objc_exception,
-    AT_objc_ownership_cfretain, // Clang-specific.
-    AT_objc_ownership_retain,   // Clang-specific.
-    AT_objc_ownership_returns,  // Clang-specific.
+    AT_objc_ownership_cfrelease, // Clang-specific.
+    AT_objc_ownership_cfretain,  // Clang-specific.
+    AT_objc_ownership_release,   // Clang-specific.
+    AT_objc_ownership_retain,    // Clang-specific.
+    AT_objc_ownership_returns,   // Clang-specific.
     AT_objc_gc,
     AT_overloadable,            // Clang-specific.
     AT_packed,

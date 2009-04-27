@@ -140,6 +140,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 22:
     if (!memcmp(Str, "objc_ownership_returns", 22))
       return AT_objc_ownership_returns;
+    if (!memcmp(Str, "objc_ownership_release", 22))
+      return AT_objc_ownership_release;
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
     break;
@@ -147,6 +149,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "objc_ownership_cfretain", 23))
       return AT_objc_ownership_cfretain;
     break;
-  }
+  case 24:
+    if (!memcmp(Str, "objc_ownership_cfrelease", 24))
+      return AT_objc_ownership_cfrelease;
+    break;
+  }  
   return UnknownAttribute;
 }
