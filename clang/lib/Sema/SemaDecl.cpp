@@ -3054,6 +3054,11 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
   if (CurFunctionNeedsScopeChecking)
     DiagnoseInvalidJumps(Body);
 
+  // C++ constructors that have function-try-blocks can't have return statements
+  // in the handlers of that block. (C++ [except.handle]p14) Verify this.
+  if (isa<CXXConstructorDecl>(dcl) && isa<CXXTryStmt>(Body))
+    DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
+
   return D;
 }
 

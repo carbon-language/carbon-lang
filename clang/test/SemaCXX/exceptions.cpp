@@ -68,3 +68,32 @@ l5:
   goto l2; // expected-error {{illegal goto into protected scope}}
   goto l1;
 }
+
+struct BadReturn {
+  BadReturn() try {
+  } catch(...) {
+    // Try to hide
+    try {
+    } catch(...) {
+      {
+        if (0)
+          return; // expected-error {{return in the catch of a function try block of a constructor is illegal}}
+      }
+    }
+  }
+  BadReturn(int);
+};
+
+BadReturn::BadReturn(int) try {
+} catch(...) {
+  // Try to hide
+  try {
+  } catch(int) {
+    return; // expected-error {{return in the catch of a function try block of a constructor is illegal}}
+  } catch(...) {
+    {
+      if (0)
+        return; // expected-error {{return in the catch of a function try block of a constructor is illegal}}
+    }
+  }
+}

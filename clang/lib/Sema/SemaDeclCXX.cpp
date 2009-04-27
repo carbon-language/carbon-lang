@@ -2664,3 +2664,24 @@ void Sema::SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc) {
   }
   Fn->setDeleted();
 }
+
+static void SearchForReturnInStmt(Sema &Self, Stmt *S) {
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
+       ++CI) {
+    Stmt *SubStmt = *CI;
+    if (!SubStmt)
+      continue;
+    if (isa<ReturnStmt>(SubStmt))
+      Self.Diag(SubStmt->getSourceRange().getBegin(),
+           diag::err_return_in_constructor_handler);
+    if (!isa<Expr>(SubStmt))
+      SearchForReturnInStmt(Self, SubStmt);
+  }
+}
+
+void Sema::DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock) {
+  for (unsigned I = 0, E = TryBlock->getNumHandlers(); I != E; ++I) {
+    CXXCatchStmt *Handler = TryBlock->getHandler(I);
+    SearchForReturnInStmt(*this, Handler);
+  }
+}

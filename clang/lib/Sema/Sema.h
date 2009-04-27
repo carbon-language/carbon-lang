@@ -60,6 +60,7 @@ namespace clang {
   class ArrayType;
   class LabelStmt;
   class SwitchStmt;
+  class CXXTryStmt;
   class ExtVectorType;
   class TypedefDecl;
   class TemplateDecl;
@@ -1225,6 +1226,7 @@ public:
   virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
                                             StmtArg TryBlock,
                                             MultiStmtArg Handlers);
+  void DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock);
 
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.

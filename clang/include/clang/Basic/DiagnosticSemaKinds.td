@@ -1204,6 +1204,8 @@ def err_throw_incomplete : Error<
   "cannot throw object of incomplete type %0">;
 def err_throw_incomplete_ptr : Error<
   "cannot throw pointer to object of incomplete type %0">;
+def err_return_in_constructor_handler : Error<
+  "return in the catch of a function try block of a constructor is illegal">;
 
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
