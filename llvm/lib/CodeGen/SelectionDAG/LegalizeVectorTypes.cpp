@@ -761,6 +761,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
                                                   SDValue &Hi) {
   // The low and high parts of the original input give four input vectors.
   SDValue Inputs[4];
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
   DebugLoc dl = N->getDebugLoc();
   GetSplitVector(N->getOperand(0), Inputs[0], Inputs[1]);
   GetSplitVector(N->getOperand(1), Inputs[2], Inputs[3]);
@@ -772,10 +773,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
   // If Lo or Hi uses elements from at most two of the four input vectors, then
   // express it as a vector shuffle of those two inputs.  Otherwise extract the
   // input elements by hand and construct the Lo/Hi output using a BUILD_VECTOR.
-  SDValue Mask = N->getOperand(2);
-  MVT IdxVT = Mask.getValueType().getVectorElementType();
-  SmallVector<SDValue, 16> Ops;
-  Ops.reserve(NewElts);
+  SmallVector<int, 16> Ops;
   for (unsigned High = 0; High < 2; ++High) {
     SDValue &Output = High ? Hi : Lo;
 
@@ -787,18 +785,15 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
     unsigned FirstMaskIdx = High * NewElts;
     bool useBuildVector = false;
     for (unsigned MaskOffset = 0; MaskOffset < NewElts; ++MaskOffset) {
-      SDValue Arg = Mask.getOperand(FirstMaskIdx + MaskOffset);
-
       // The mask element.  This indexes into the input.
-      unsigned Idx = Arg.getOpcode() == ISD::UNDEF ?
-        -1U : cast<ConstantSDNode>(Arg)->getZExtValue();
+      int Idx = SVN->getMaskElt(FirstMaskIdx + MaskOffset);
 
       // The input vector this mask element indexes into.
-      unsigned Input = Idx / NewElts;
+      unsigned Input = (unsigned)Idx / NewElts;
 
       if (Input >= array_lengthof(Inputs)) {
         // The mask element does not index into any input vector.
-        Ops.push_back(DAG.getUNDEF(IdxVT));
+        Ops.push_back(-1);
         continue;
       }
 
@@ -826,27 +821,24 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
       }
 
       // Add the mask index for the new shuffle vector.
-      Ops.push_back(DAG.getConstant(Idx + OpNo * NewElts, IdxVT));
+      Ops.push_back(Idx + OpNo * NewElts);
     }
 
     if (useBuildVector) {
       MVT EltVT = NewVT.getVectorElementType();
-      Ops.clear();
+      SmallVector<SDValue, 16> SVOps;
 
       // Extract the input elements by hand.
       for (unsigned MaskOffset = 0; MaskOffset < NewElts; ++MaskOffset) {
-        SDValue Arg = Mask.getOperand(FirstMaskIdx + MaskOffset);
-
         // The mask element.  This indexes into the input.
-        unsigned Idx = Arg.getOpcode() == ISD::UNDEF ?
-          -1U : cast<ConstantSDNode>(Arg)->getZExtValue();
+        int Idx = SVN->getMaskElt(FirstMaskIdx + MaskOffset);
 
         // The input vector this mask element indexes into.
-        unsigned Input = Idx / NewElts;
+        unsigned Input = (unsigned)Idx / NewElts;
 
         if (Input >= array_lengthof(Inputs)) {
           // The mask element is "undef" or indexes off the end of the input.
-          Ops.push_back(DAG.getUNDEF(EltVT));
+          SVOps.push_back(DAG.getUNDEF(EltVT));
           continue;
         }
 
@@ -854,25 +846,22 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
         Idx -= Input * NewElts;
 
         // Extract the vector element by hand.
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
-                                  Inputs[Input], DAG.getIntPtrConstant(Idx)));
+        SVOps.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
+                                    Inputs[Input], DAG.getIntPtrConstant(Idx)));
       }
 
       // Construct the Lo/Hi output using a BUILD_VECTOR.
-      Output = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT, &Ops[0], Ops.size());
+      Output = DAG.getNode(ISD::BUILD_VECTOR,dl,NewVT, &SVOps[0], SVOps.size());
     } else if (InputUsed[0] == -1U) {
       // No input vectors were used!  The result is undefined.
       Output = DAG.getUNDEF(NewVT);
     } else {
-      // At least one input vector was used.  Create a new shuffle vector.
-      SDValue NewMask = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                    MVT::getVectorVT(IdxVT, Ops.size()),
-                                    &Ops[0], Ops.size());
       SDValue Op0 = Inputs[InputUsed[0]];
       // If only one input was used, use an undefined vector for the other.
       SDValue Op1 = InputUsed[1] == -1U ?
         DAG.getUNDEF(NewVT) : Inputs[InputUsed[1]];
-      Output = DAG.getNode(ISD::VECTOR_SHUFFLE, dl, NewVT, Op0, Op1, NewMask);
+      // At least one input vector was used.  Create a new shuffle vector.
+      Output =  DAG.getVectorShuffle(NewVT, dl, Op0, Op1, &Ops[0]);
     }
 
     Ops.clear();
@@ -1473,18 +1462,15 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
 
       if (NumOperands == 2) {
         // Replace concat of two operands with a shuffle.
-        MVT PtrVT = TLI.getPointerTy();
-        SmallVector<SDValue, 16> MaskOps(WidenNumElts);
+        SmallVector<int, 16> MaskOps(WidenNumElts);
         for (unsigned i=0; i < WidenNumElts/2; ++i) {
-          MaskOps[i] = DAG.getConstant(i, PtrVT);
-          MaskOps[i+WidenNumElts/2] = DAG.getConstant(i+WidenNumElts, PtrVT);
+          MaskOps[i] = i;
+          MaskOps[i+WidenNumElts/2] = i+WidenNumElts;
         }
-        SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                   MVT::getVectorVT(PtrVT, WidenNumElts),
-                                   &MaskOps[0], WidenNumElts);
-        return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, WidenVT,
-                           GetWidenedVector(N->getOperand(0)),
-                           GetWidenedVector(N->getOperand(1)), Mask);
+        return DAG.getVectorShuffle(WidenVT, dl, 
+                                    GetWidenedVector(N->getOperand(0)),
+                                    GetWidenedVector(N->getOperand(1)),
+                                    &MaskOps[0]);
       }
     }
   }
@@ -1761,8 +1747,9 @@ SDValue DAGTypeLegalizer::WidenVecRes_UNDEF(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_VECTOR_SHUFFLE(SDNode *N) {
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
   MVT VT = N->getValueType(0);
-  unsigned NumElts = VT.getVectorNumElements();
+  int NumElts = VT.getVectorNumElements();
   DebugLoc dl = N->getDebugLoc();
 
   MVT WidenVT = TLI.getTypeToTransformTo(VT);
@@ -1772,28 +1759,17 @@ SDValue DAGTypeLegalizer::WidenVecRes_VECTOR_SHUFFLE(SDNode *N) {
   SDValue InOp2 = GetWidenedVector(N->getOperand(1));
 
   // Adjust mask based on new input vector length.
-  SDValue Mask = N->getOperand(2);
-  SmallVector<SDValue, 16> MaskOps(WidenNumElts);
-  MVT IdxVT = Mask.getValueType().getVectorElementType();
-  for (unsigned i = 0; i < NumElts; ++i) {
-    SDValue Arg = Mask.getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF)
-      MaskOps[i] = Arg;
-    else {
-      unsigned Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
-      if (Idx < NumElts)
-        MaskOps[i] = Arg;
-      else
-        MaskOps[i] = DAG.getConstant(Idx - NumElts + WidenNumElts, IdxVT);
-    }
+  SmallVector<int, 16> NewMask;
+  for (int i = 0; i < NumElts; ++i) {
+    int Idx = SVN->getMaskElt(i);
+    if (Idx < NumElts)
+      NewMask.push_back(Idx);
+    else
+      NewMask.push_back(Idx - NumElts + WidenNumElts);
   }
   for (unsigned i = NumElts; i < WidenNumElts; ++i)
-    MaskOps[i] = DAG.getUNDEF(IdxVT);
-  SDValue NewMask = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                MVT::getVectorVT(IdxVT, WidenNumElts),
-                                &MaskOps[0], WidenNumElts);
-
-  return DAG.getNode(ISD::VECTOR_SHUFFLE, dl, WidenVT, InOp1, InOp2, NewMask);
+    NewMask.push_back(-1);
+  return DAG.getVectorShuffle(WidenVT, dl, InOp1, InOp2, &NewMask[0]);
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {

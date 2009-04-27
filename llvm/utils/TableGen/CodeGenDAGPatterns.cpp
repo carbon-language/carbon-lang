@@ -194,10 +194,6 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     ConstraintType = SDTCisOpSmallerThanOp;
     x.SDTCisOpSmallerThanOp_Info.BigOperandNum = 
       R->getValueAsInt("BigOperandNum");
-  } else if (R->isSubClassOf("SDTCisIntVectorOfSameSize")) {
-    ConstraintType = SDTCisIntVectorOfSameSize;
-    x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum =
-      R->getValueAsInt("OtherOpNum");
   } else if (R->isSubClassOf("SDTCisEltOfVec")) {
     ConstraintType = SDTCisEltOfVec;
     x.SDTCisEltOfVec_Info.OtherOperandNum =
@@ -365,23 +361,9 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     }    
     return MadeChange;
   }
-  case SDTCisIntVectorOfSameSize: {
-    TreePatternNode *OtherOperand =
-      getOperandNum(x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum,
-                    N, NumResults);
-    if (OtherOperand->hasTypeSet()) {
-      if (!isVector(OtherOperand->getTypeNum(0)))
-        TP.error(N->getOperator()->getName() + " VT operand must be a vector!");
-      MVT IVT = OtherOperand->getTypeNum(0);
-      unsigned NumElements = IVT.getVectorNumElements();
-      IVT = MVT::getIntVectorWithNumElements(NumElements);
-      return NodeToApply->UpdateNodeType(IVT.getSimpleVT(), TP);
-    }
-    return false;
-  }
   case SDTCisEltOfVec: {
     TreePatternNode *OtherOperand =
-      getOperandNum(x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum,
+      getOperandNum(x.SDTCisEltOfVec_Info.OtherOperandNum,
                     N, NumResults);
     if (OtherOperand->hasTypeSet()) {
       if (!isVector(OtherOperand->getTypeNum(0)))
@@ -925,25 +907,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     if (NI.getNumResults() == 0)
       MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     
-    // If this is a vector_shuffle operation, apply types to the build_vector
-    // operation.  The types of the integers don't matter, but this ensures they
-    // won't get checked.
-    if (getOperator()->getName() == "vector_shuffle" &&
-        getChild(2)->getOperator()->getName() == "build_vector") {
-      TreePatternNode *BV = getChild(2);
-      const std::vector<MVT::SimpleValueType> &LegalVTs
-        = CDP.getTargetInfo().getLegalValueTypes();
-      MVT::SimpleValueType LegalIntVT = MVT::Other;
-      for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
-        if (isInteger(LegalVTs[i]) && !isVector(LegalVTs[i])) {
-          LegalIntVT = LegalVTs[i];
-          break;
-        }
-      assert(LegalIntVT != MVT::Other && "No legal integer VT?");
-            
-      for (unsigned i = 0, e = BV->getNumChildren(); i != e; ++i)
-        MadeChange |= BV->getChild(i)->UpdateNodeType(LegalIntVT, TP);
-    }
     return MadeChange;  
   } else if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst = CDP.getInstruction(getOperator());
@@ -2086,7 +2049,7 @@ void CodeGenDAGPatterns::ParsePatterns() {
       IterateInference |= Result->getTree(0)->
         UpdateNodeType(Pattern->getTree(0)->getExtTypes(), *Result);
     } while (IterateInference);
-
+    
     // Verify that we inferred enough types that we can do something with the
     // pattern and result.  If these fire the user has to add type casts.
     if (!InferredAllPatternTypes)

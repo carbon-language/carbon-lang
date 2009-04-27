@@ -175,102 +175,107 @@ def PSxLDQ_imm  : SDNodeXForm<imm, [{
 
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
-def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
+def SHUFFLE_get_shuf_imm : SDNodeXForm<vector_shuffle, [{
   return getI8Imm(X86::getShuffleSHUFImmediate(N));
 }]>;
 
 // SHUFFLE_get_pshufhw_imm xform function: convert vector_shuffle mask to 
 // PSHUFHW imm.
-def SHUFFLE_get_pshufhw_imm : SDNodeXForm<build_vector, [{
+def SHUFFLE_get_pshufhw_imm : SDNodeXForm<vector_shuffle, [{
   return getI8Imm(X86::getShufflePSHUFHWImmediate(N));
 }]>;
 
 // SHUFFLE_get_pshuflw_imm xform function: convert vector_shuffle mask to 
 // PSHUFLW imm.
-def SHUFFLE_get_pshuflw_imm : SDNodeXForm<build_vector, [{
+def SHUFFLE_get_pshuflw_imm : SDNodeXForm<vector_shuffle, [{
   return getI8Imm(X86::getShufflePSHUFLWImmediate(N));
 }]>;
 
-def SSE_splat_mask : PatLeaf<(build_vector), [{
-  return X86::isSplatMask(N);
+def splat_lo : PatFrag<(ops node:$lhs, node:$rhs),
+                       (vector_shuffle node:$lhs, node:$rhs), [{
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  return SVOp->isSplat() && SVOp->getSplatIndex() == 0;
+}]>;
+
+def movddup : PatFrag<(ops node:$lhs, node:$rhs),
+                      (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVDDUPMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movhlps : PatFrag<(ops node:$lhs, node:$rhs),
+                      (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVHLPSMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movhlps_undef : PatFrag<(ops node:$lhs, node:$rhs),
+                            (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVHLPS_v_undef_Mask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movhp : PatFrag<(ops node:$lhs, node:$rhs),
+                    (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVHPMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movlp : PatFrag<(ops node:$lhs, node:$rhs),
+                    (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVLPMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movl : PatFrag<(ops node:$lhs, node:$rhs),
+                   (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVLMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movshdup : PatFrag<(ops node:$lhs, node:$rhs),
+                       (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVSHDUPMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def movsldup : PatFrag<(ops node:$lhs, node:$rhs),
+                       (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVSLDUPMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def unpckl : PatFrag<(ops node:$lhs, node:$rhs),
+                     (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isUNPCKLMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def unpckh : PatFrag<(ops node:$lhs, node:$rhs),
+                     (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isUNPCKHMask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def unpckl_undef : PatFrag<(ops node:$lhs, node:$rhs),
+                           (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isUNPCKL_v_undef_Mask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def unpckh_undef : PatFrag<(ops node:$lhs, node:$rhs),
+                           (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isUNPCKH_v_undef_Mask(cast<ShuffleVectorSDNode>(N));
+}]>;
+
+def pshufd : PatFrag<(ops node:$lhs, node:$rhs),
+                     (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isPSHUFDMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_shuf_imm>;
 
-def SSE_splat_lo_mask : PatLeaf<(build_vector), [{
-  return X86::isSplatLoMask(N);
-}]>;
-
-def MOVDDUP_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVDDUPMask(N);
-}]>;
-
-def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVHLPSMask(N);
-}]>;
-
-def MOVHLPS_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVHLPS_v_undef_Mask(N);
-}]>;
-
-def MOVHP_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVHPMask(N);
-}]>;
-
-def MOVLP_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVLPMask(N);
-}]>;
-
-def MOVL_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVLMask(N);
-}]>;
-
-def MOVSHDUP_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVSHDUPMask(N);
-}]>;
-
-def MOVSLDUP_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVSLDUPMask(N);
-}]>;
-
-def UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKLMask(N);
-}]>;
-
-def UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKHMask(N);
-}]>;
-
-def UNPCKL_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKL_v_undef_Mask(N);
-}]>;
-
-def UNPCKH_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKH_v_undef_Mask(N);
-}]>;
-
-def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isPSHUFDMask(N);
+def shufp : PatFrag<(ops node:$lhs, node:$rhs),
+                    (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isSHUFPMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_shuf_imm>;
 
-def PSHUFHW_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isPSHUFHWMask(N);
+def pshufhw : PatFrag<(ops node:$lhs, node:$rhs),
+                      (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isPSHUFHWMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_pshufhw_imm>;
 
-def PSHUFLW_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isPSHUFLWMask(N);
+def pshuflw : PatFrag<(ops node:$lhs, node:$rhs),
+                      (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isPSHUFLWMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_pshuflw_imm>;
-
-def SHUFP_unary_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isPSHUFDMask(N);
-}], SHUFFLE_get_shuf_imm>;
-
-def SHUFP_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isSHUFPMask(N);
-}], SHUFFLE_get_shuf_imm>;
-
-def PSHUFD_binary_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isSHUFPMask(N);
-}], SHUFFLE_get_shuf_imm>;
-
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -704,16 +709,14 @@ let Constraints = "$src1 = $dst" in {
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movlps\t{$src2, $dst|$dst, $src2}",
        [(set VR128:$dst, 
-             (v4f32 (vector_shuffle VR128:$src1,
-                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                     MOVLP_shuffle_mask)))]>;
+         (movlp VR128:$src1,
+                (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))))]>;
     def MOVHPSrm : PSI<0x16, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movhps\t{$src2, $dst|$dst, $src2}",
        [(set VR128:$dst, 
-             (v4f32 (vector_shuffle VR128:$src1,
-                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                     MOVHP_shuffle_mask)))]>;
+         (movhp VR128:$src1,
+                (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
@@ -728,29 +731,25 @@ def MOVLPSmr : PSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 def MOVHPSmr : PSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhps\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
-                                 (v2f64 (vector_shuffle
-                                         (bc_v2f64 (v4f32 VR128:$src)), (undef),
-                                         UNPCKH_shuffle_mask)), (iPTR 0))),
-                     addr:$dst)]>;
+                                 (unpckh (bc_v2f64 (v4f32 VR128:$src)),
+                                         (undef)), (iPTR 0))), addr:$dst)]>;
 
 let Constraints = "$src1 = $dst" in {
 let AddedComplexity = 20 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "movlhps\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
-                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
-                              MOVHP_shuffle_mask)))]>;
+                      (v4f32 (movhp VR128:$src1, VR128:$src2)))]>;
 
 def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "movhlps\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
-                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
-                              MOVHLPS_shuffle_mask)))]>;
+                      (v4f32 (movhlps VR128:$src1, VR128:$src2)))]>;
 } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
 let AddedComplexity = 20 in
-def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef), MOVDDUP_shuffle_mask)),
+def : Pat<(v4f32 (movddup VR128:$src, (undef))),
           (MOVLHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
 
 
@@ -908,51 +907,41 @@ let Constraints = "$src1 = $dst" in {
   let isConvertibleToThreeAddress = 1 in // Convert to pshufd
     def SHUFPSrri : PSIi8<0xC6, MRMSrcReg, 
                           (outs VR128:$dst), (ins VR128:$src1,
-                           VR128:$src2, i32i8imm:$src3),
+                           VR128:$src2, i8imm:$src3),
                           "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                           [(set VR128:$dst,
-                            (v4f32 (vector_shuffle
-                                    VR128:$src1, VR128:$src2,
-                                    SHUFP_shuffle_mask:$src3)))]>;
+                            (v4f32 (shufp:$src3 VR128:$src1, VR128:$src2)))]>;
   def SHUFPSrmi : PSIi8<0xC6, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1,
-                         f128mem:$src2, i32i8imm:$src3),
+                         f128mem:$src2, i8imm:$src3),
                         "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                         [(set VR128:$dst,
-                          (v4f32 (vector_shuffle
-                                  VR128:$src1, (memopv4f32 addr:$src2),
-                                  SHUFP_shuffle_mask:$src3)))]>;
+                          (v4f32 (shufp:$src3
+                                  VR128:$src1, (memopv4f32 addr:$src2))))]>;
 
   let AddedComplexity = 10 in {
     def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "unpckhps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v4f32 (vector_shuffle
-                                   VR128:$src1, VR128:$src2,
-                                   UNPCKH_shuffle_mask)))]>;
+                           (v4f32 (unpckh VR128:$src1, VR128:$src2)))]>;
     def UNPCKHPSrm : PSI<0x15, MRMSrcMem, 
                          (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                          "unpckhps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v4f32 (vector_shuffle
-                                   VR128:$src1, (memopv4f32 addr:$src2),
-                                   UNPCKH_shuffle_mask)))]>;
+                           (v4f32 (unpckh VR128:$src1,
+                                          (memopv4f32 addr:$src2))))]>;
 
     def UNPCKLPSrr : PSI<0x14, MRMSrcReg, 
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "unpcklps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v4f32 (vector_shuffle
-                                   VR128:$src1, VR128:$src2,
-                                   UNPCKL_shuffle_mask)))]>;
+                           (v4f32 (unpckl VR128:$src1, VR128:$src2)))]>;
     def UNPCKLPSrm : PSI<0x14, MRMSrcMem, 
                          (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                          "unpcklps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v4f32 (vector_shuffle
-                                   VR128:$src1, (memopv4f32 addr:$src2),
-                                   UNPCKL_shuffle_mask)))]>;
+                           (unpckl VR128:$src1, (memopv4f32 addr:$src2)))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
@@ -1044,8 +1033,7 @@ let neverHasSideEffects = 1 in
                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                        "movss\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst,
-                         (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
-                                 MOVL_shuffle_mask)))]>;
+                         (v4f32 (movl VR128:$src1, VR128:$src2)))]>;
 }
 
 // Move to lower bits of a VR128 and zeroing upper bits.
@@ -1451,16 +1439,14 @@ let Constraints = "$src1 = $dst" in {
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movlpd\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst, 
-                         (v2f64 (vector_shuffle VR128:$src1,
-                                 (scalar_to_vector (loadf64 addr:$src2)),
-                                 MOVLP_shuffle_mask)))]>;
+                         (v2f64 (movlp VR128:$src1,
+                                 (scalar_to_vector (loadf64 addr:$src2)))))]>;
     def MOVHPDrm : PDI<0x16, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movhpd\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst, 
-                         (v2f64 (vector_shuffle VR128:$src1,
-                                 (scalar_to_vector (loadf64 addr:$src2)),
-                                 MOVHP_shuffle_mask)))]>;
+                         (v2f64 (movhp VR128:$src1,
+                                 (scalar_to_vector (loadf64 addr:$src2)))))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
@@ -1474,9 +1460,8 @@ def MOVLPDmr : PDI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 def MOVHPDmr : PDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhpd\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
-                                 (v2f64 (vector_shuffle VR128:$src, (undef),
-                                         UNPCKH_shuffle_mask)), (iPTR 0))),
-                     addr:$dst)]>;
+                                 (v2f64 (unpckh VR128:$src, (undef))),
+                                 (iPTR 0))), addr:$dst)]>;
 
 // SSE2 instructions without OpSize prefix
 def Int_CVTDQ2PSrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -1744,48 +1729,39 @@ let Constraints = "$src1 = $dst" in {
   def SHUFPDrri : PDIi8<0xC6, MRMSrcReg, 
                  (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
                  "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                 [(set VR128:$dst, (v2f64 (vector_shuffle
-                                           VR128:$src1, VR128:$src2,
-                                           SHUFP_shuffle_mask:$src3)))]>;
+                 [(set VR128:$dst,
+                   (v2f64 (shufp:$src3 VR128:$src1, VR128:$src2)))]>;
   def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1,
                          f128mem:$src2, i8imm:$src3),
                         "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                         [(set VR128:$dst,
-                          (v2f64 (vector_shuffle
-                                  VR128:$src1, (memopv2f64 addr:$src2),
-                                  SHUFP_shuffle_mask:$src3)))]>;
+                          (v2f64 (shufp:$src3
+                                  VR128:$src1, (memopv2f64 addr:$src2))))]>;
 
   let AddedComplexity = 10 in {
     def UNPCKHPDrr : PDI<0x15, MRMSrcReg, 
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "unpckhpd\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v2f64 (vector_shuffle
-                                   VR128:$src1, VR128:$src2,
-                                   UNPCKH_shuffle_mask)))]>;
+                           (v2f64 (unpckh VR128:$src1, VR128:$src2)))]>;
     def UNPCKHPDrm : PDI<0x15, MRMSrcMem, 
                          (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                          "unpckhpd\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v2f64 (vector_shuffle
-                                   VR128:$src1, (memopv2f64 addr:$src2),
-                                   UNPCKH_shuffle_mask)))]>;
+                           (v2f64 (unpckh VR128:$src1,
+                                          (memopv2f64 addr:$src2))))]>;
 
     def UNPCKLPDrr : PDI<0x14, MRMSrcReg, 
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "unpcklpd\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v2f64 (vector_shuffle
-                                   VR128:$src1, VR128:$src2,
-                                   UNPCKL_shuffle_mask)))]>;
+                           (v2f64 (unpckl VR128:$src1, VR128:$src2)))]>;
     def UNPCKLPDrm : PDI<0x14, MRMSrcMem, 
                          (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                          "unpcklpd\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
-                           (v2f64 (vector_shuffle
-                                   VR128:$src1, (memopv2f64 addr:$src2),
-                                   UNPCKL_shuffle_mask)))]>;
+                           (unpckl VR128:$src1, (memopv2f64 addr:$src2)))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
@@ -2043,49 +2019,43 @@ defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128>;
 def PSHUFDri : PDIi8<0x70, MRMSrcReg,
                      (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
                      "pshufd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set VR128:$dst, (v4i32 (vector_shuffle
-                                               VR128:$src1, (undef),
-                                               PSHUFD_shuffle_mask:$src2)))]>;
+                     [(set VR128:$dst, (v4i32 (pshufd:$src2
+                                               VR128:$src1, (undef))))]>;
 def PSHUFDmi : PDIi8<0x70, MRMSrcMem,
                      (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
                      "pshufd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set VR128:$dst, (v4i32 (vector_shuffle
+                     [(set VR128:$dst, (v4i32 (pshufd:$src2
                                                (bc_v4i32(memopv2i64 addr:$src1)),
-                                               (undef),
-                                               PSHUFD_shuffle_mask:$src2)))]>;
+                                               (undef))))]>;
 
 // SSE2 with ImmT == Imm8 and XS prefix.
 def PSHUFHWri : Ii8<0x70, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
                     "pshufhw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (vector_shuffle
-                                              VR128:$src1, (undef),
-                                              PSHUFHW_shuffle_mask:$src2)))]>,
+                    [(set VR128:$dst, (v8i16 (pshufhw:$src2 VR128:$src1,
+                                                            (undef))))]>,
                 XS, Requires<[HasSSE2]>;
 def PSHUFHWmi : Ii8<0x70, MRMSrcMem,
                     (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
                     "pshufhw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (vector_shuffle
-                                              (bc_v8i16 (memopv2i64 addr:$src1)),
-                                              (undef),
-                                              PSHUFHW_shuffle_mask:$src2)))]>,
+                    [(set VR128:$dst, (v8i16 (pshufhw:$src2
+                                             (bc_v8i16 (memopv2i64 addr:$src1)),
+                                             (undef))))]>,
                 XS, Requires<[HasSSE2]>;
 
 // SSE2 with ImmT == Imm8 and XD prefix.
 def PSHUFLWri : Ii8<0x70, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
                     "pshuflw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (vector_shuffle
-                                              VR128:$src1, (undef),
-                                              PSHUFLW_shuffle_mask:$src2)))]>,
+                    [(set VR128:$dst, (v8i16 (pshuflw:$src2 VR128:$src1,
+                                                            (undef))))]>,
                 XD, Requires<[HasSSE2]>;
 def PSHUFLWmi : Ii8<0x70, MRMSrcMem,
-                    (outs VR128:$dst), (ins i128mem:$src1, i32i8imm:$src2),
+                    (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
                     "pshuflw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (vector_shuffle
-                                              (bc_v8i16 (memopv2i64 addr:$src1)),
-                                              (undef),
-                                              PSHUFLW_shuffle_mask:$src2)))]>,
+                    [(set VR128:$dst, (v8i16 (pshuflw:$src2
+                                             (bc_v8i16 (memopv2i64 addr:$src1)),
+                                             (undef))))]>,
                 XD, Requires<[HasSSE2]>;
 
 
@@ -2094,107 +2064,91 @@ let Constraints = "$src1 = $dst" in {
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpcklbw\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v16i8 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKL_shuffle_mask)))]>;
+                          (v16i8 (unpckl VR128:$src1, VR128:$src2)))]>;
   def PUNPCKLBWrm : PDI<0x60, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpcklbw\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v16i8 (vector_shuffle VR128:$src1,
-                                  (bc_v16i8 (memopv2i64 addr:$src2)),
-                                  UNPCKL_shuffle_mask)))]>;
+                          (unpckl VR128:$src1,
+                                  (bc_v16i8 (memopv2i64 addr:$src2))))]>;
   def PUNPCKLWDrr : PDI<0x61, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpcklwd\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v8i16 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKL_shuffle_mask)))]>;
+                          (v8i16 (unpckl VR128:$src1, VR128:$src2)))]>;
   def PUNPCKLWDrm : PDI<0x61, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpcklwd\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v8i16 (vector_shuffle VR128:$src1,
-                                  (bc_v8i16 (memopv2i64 addr:$src2)),
-                                  UNPCKL_shuffle_mask)))]>;
+                          (unpckl VR128:$src1,
+                                  (bc_v8i16 (memopv2i64 addr:$src2))))]>;
   def PUNPCKLDQrr : PDI<0x62, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpckldq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKL_shuffle_mask)))]>;
+                          (v4i32 (unpckl VR128:$src1, VR128:$src2)))]>;
   def PUNPCKLDQrm : PDI<0x62, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpckldq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v4i32 (vector_shuffle VR128:$src1,
-                                  (bc_v4i32 (memopv2i64 addr:$src2)),
-                                  UNPCKL_shuffle_mask)))]>;
+                          (unpckl VR128:$src1,
+                                  (bc_v4i32 (memopv2i64 addr:$src2))))]>;
   def PUNPCKLQDQrr : PDI<0x6C, MRMSrcReg, 
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "punpcklqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKL_shuffle_mask)))]>;
+                          (v2i64 (unpckl VR128:$src1, VR128:$src2)))]>;
   def PUNPCKLQDQrm : PDI<0x6C, MRMSrcMem, 
                          (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                          "punpcklqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (vector_shuffle VR128:$src1,
-                                  (memopv2i64 addr:$src2),
-                                  UNPCKL_shuffle_mask)))]>;
+                          (v2i64 (unpckl VR128:$src1,
+                                         (memopv2i64 addr:$src2))))]>;
   
   def PUNPCKHBWrr : PDI<0x68, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpckhbw\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v16i8 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKH_shuffle_mask)))]>;
+                          (v16i8 (unpckh VR128:$src1, VR128:$src2)))]>;
   def PUNPCKHBWrm : PDI<0x68, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpckhbw\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst,
-                          (v16i8 (vector_shuffle VR128:$src1,
-                                  (bc_v16i8 (memopv2i64 addr:$src2)),
-                                  UNPCKH_shuffle_mask)))]>;
+                        [(set VR128:$dst, 
+                          (unpckh VR128:$src1, 
+                                  (bc_v16i8 (memopv2i64 addr:$src2))))]>;
   def PUNPCKHWDrr : PDI<0x69, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpckhwd\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v8i16 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKH_shuffle_mask)))]>;
+                          (v8i16 (unpckh VR128:$src1, VR128:$src2)))]>;
   def PUNPCKHWDrm : PDI<0x69, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpckhwd\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v8i16 (vector_shuffle VR128:$src1,
-                                  (bc_v8i16 (memopv2i64 addr:$src2)),
-                                  UNPCKH_shuffle_mask)))]>;
+                          (unpckh VR128:$src1,
+                                  (bc_v8i16 (memopv2i64 addr:$src2))))]>;
   def PUNPCKHDQrr : PDI<0x6A, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpckhdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKH_shuffle_mask)))]>;
+                          (v4i32 (unpckh VR128:$src1, VR128:$src2)))]>;
   def PUNPCKHDQrm : PDI<0x6A, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpckhdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v4i32 (vector_shuffle VR128:$src1,
-                                  (bc_v4i32 (memopv2i64 addr:$src2)),
-                                  UNPCKH_shuffle_mask)))]>;
+                          (unpckh VR128:$src1,
+                                  (bc_v4i32 (memopv2i64 addr:$src2))))]>;
   def PUNPCKHQDQrr : PDI<0x6D, MRMSrcReg, 
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "punpckhqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
-                                  UNPCKH_shuffle_mask)))]>;
+                          (v2i64 (unpckh VR128:$src1, VR128:$src2)))]>;
   def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpckhqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (vector_shuffle VR128:$src1,
-                                  (memopv2i64 addr:$src2),
-                                  UNPCKH_shuffle_mask)))]>;
+                          (v2i64 (unpckh VR128:$src1,
+                                         (memopv2i64 addr:$src2))))]>;
 }
 
 // Extract / Insert
@@ -2357,8 +2311,7 @@ let Constraints = "$src1 = $dst" in {
                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                        "movsd\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst,
-                         (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
-                                 MOVL_shuffle_mask)))]>;
+                         (v2f64 (movl VR128:$src1, VR128:$src2)))]>;
 }
 
 // Store / copy lower 64-bits of a XMM register.
@@ -2449,44 +2402,35 @@ def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
 // Move Instructions
 def MOVSHDUPrr : S3SI<0x16, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "movshdup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (vector_shuffle
-                                                VR128:$src, (undef),
-                                                MOVSHDUP_shuffle_mask)))]>;
+                      [(set VR128:$dst, (v4f32 (movshdup
+                                                VR128:$src, (undef))))]>;
 def MOVSHDUPrm : S3SI<0x16, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                       "movshdup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (vector_shuffle
-                                                (memopv4f32 addr:$src), (undef),
-                                                MOVSHDUP_shuffle_mask)))]>;
+                      [(set VR128:$dst, (movshdup
+                                         (memopv4f32 addr:$src), (undef)))]>;
 
 def MOVSLDUPrr : S3SI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "movsldup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (vector_shuffle
-                                                VR128:$src, (undef),
-                                                MOVSLDUP_shuffle_mask)))]>;
+                      [(set VR128:$dst, (v4f32 (movsldup
+                                                VR128:$src, (undef))))]>;
 def MOVSLDUPrm : S3SI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                       "movsldup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (vector_shuffle
-                                                (memopv4f32 addr:$src), (undef),
-                                                MOVSLDUP_shuffle_mask)))]>;
+                      [(set VR128:$dst, (movsldup
+                                         (memopv4f32 addr:$src), (undef)))]>;
 
 def MOVDDUPrr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "movddup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                         (v2f64 (vector_shuffle VR128:$src, (undef),
-                                                MOVDDUP_shuffle_mask)))]>;
+                      [(set VR128:$dst,(v2f64 (movddup VR128:$src, (undef))))]>;
 def MOVDDUPrm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                       "movddup\t{$src, $dst|$dst, $src}",
                     [(set VR128:$dst,
-                      (v2f64 (vector_shuffle
-                              (scalar_to_vector (loadf64 addr:$src)),
-                              (undef), MOVDDUP_shuffle_mask)))]>;
+                      (v2f64 (movddup (scalar_to_vector (loadf64 addr:$src)),
+                                      (undef))))]>;
 
-def : Pat<(vector_shuffle
-             (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
-             (undef), MOVDDUP_shuffle_mask),
+def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
+                   (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-def : Pat<(vector_shuffle
-            (memopv2f64 addr:$src), (undef), MOVDDUP_shuffle_mask),
+def : Pat<(movddup (memopv2f64 addr:$src), (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 
@@ -2555,22 +2499,18 @@ def MWAIT   : I<0xC9, RawFrm, (outs), (ins), "mwait",
 
 // vector_shuffle v1, <undef> <1, 1, 3, 3>
 let AddedComplexity = 15 in
-def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
-                  MOVSHDUP_shuffle_mask)),
+def : Pat<(v4i32 (movshdup VR128:$src, (undef))),
           (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
 let AddedComplexity = 20 in
-def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (memopv2i64 addr:$src)), (undef),
-                  MOVSHDUP_shuffle_mask)),
+def : Pat<(v4i32 (movshdup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
           (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 // vector_shuffle v1, <undef> <0, 0, 2, 2>
 let AddedComplexity = 15 in
-  def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
-                    MOVSLDUP_shuffle_mask)),
+  def : Pat<(v4i32 (movsldup VR128:$src, (undef))),
             (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
 let AddedComplexity = 20 in
-  def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (memopv2i64 addr:$src)), (undef),
-                    MOVSLDUP_shuffle_mask)),
+  def : Pat<(v4i32 (movsldup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
             (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 //===----------------------------------------------------------------------===//
@@ -2911,207 +2851,173 @@ def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
 
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
-def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_lo_mask:$sm),
+def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
           (UNPCKLPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), UNPCKH_shuffle_mask:$sm),
+def : Pat<(unpckh (v2f64 VR128:$src), (undef)),
           (UNPCKHPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_lo_mask:$sm),
+def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
           (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), UNPCKH_shuffle_mask:$sm),
+def : Pat<(unpckh (v2i64 VR128:$src), (undef)),
           (PUNPCKHQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 // Special unary SHUFPSrri case.
-def : Pat<(v4f32 (vector_shuffle VR128:$src1, (undef),
-           SHUFP_unary_shuffle_mask:$sm)),
-          (SHUFPSrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
+def : Pat<(v4f32 (pshufd:$src3 VR128:$src1, (undef))),
+          (SHUFPSrri VR128:$src1, VR128:$src1,
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>,
       Requires<[HasSSE1]>;
+let AddedComplexity = 5 in
+def : Pat<(v4f32 (pshufd:$src2 VR128:$src1, (undef))),
+          (PSHUFDri VR128:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>,
+      Requires<[HasSSE2]>;
 // Special unary SHUFPDrri case.
-def : Pat<(v2f64 (vector_shuffle VR128:$src1, (undef),
-           SHUFP_unary_shuffle_mask:$sm)),
-          (SHUFPDrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
+def : Pat<(v2i64 (pshufd:$src3 VR128:$src1, (undef))),
+          (SHUFPDrri VR128:$src1, VR128:$src1, 
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>,
+      Requires<[HasSSE2]>;
+// Special unary SHUFPDrri case.
+def : Pat<(v2f64 (pshufd:$src3 VR128:$src1, (undef))),
+          (SHUFPDrri VR128:$src1, VR128:$src1, 
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>,
       Requires<[HasSSE2]>;
 // Unary v4f32 shuffle with PSHUF* in order to fold a load.
-def : Pat<(vector_shuffle (bc_v4i32 (memopv4f32 addr:$src1)), (undef),
-           SHUFP_unary_shuffle_mask:$sm),
-          (PSHUFDmi addr:$src1, SHUFP_unary_shuffle_mask:$sm)>,
+def : Pat<(pshufd:$src2 (bc_v4i32 (memopv4f32 addr:$src1)), (undef)),
+          (PSHUFDmi addr:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>,
       Requires<[HasSSE2]>;
 
 // Special binary v4i32 shuffle cases with SHUFPS.
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, (v4i32 VR128:$src2),
-           PSHUFD_binary_shuffle_mask:$sm)),
-          (SHUFPSrri VR128:$src1, VR128:$src2, PSHUFD_binary_shuffle_mask:$sm)>,
+def : Pat<(v4i32 (shufp:$src3 VR128:$src1, (v4i32 VR128:$src2))),
+          (SHUFPSrri VR128:$src1, VR128:$src2, 
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>,
            Requires<[HasSSE2]>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src1,
-           (bc_v4i32 (memopv2i64 addr:$src2)), PSHUFD_binary_shuffle_mask:$sm)),
-          (SHUFPSrmi VR128:$src1, addr:$src2, PSHUFD_binary_shuffle_mask:$sm)>,
+def : Pat<(v4i32 (shufp:$src3 VR128:$src1, (bc_v4i32 (memopv2i64 addr:$src2)))),
+          (SHUFPSrmi VR128:$src1, addr:$src2, 
+                    (SHUFFLE_get_shuf_imm VR128:$src3))>,
            Requires<[HasSSE2]>;
 // Special binary v2i64 shuffle cases using SHUFPDrri.
-def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
-                 SHUFP_shuffle_mask:$sm)),
-          (SHUFPDrri VR128:$src1, VR128:$src2, SHUFP_shuffle_mask:$sm)>,
+def : Pat<(v2i64 (shufp:$src3 VR128:$src1, VR128:$src2)),
+          (SHUFPDrri VR128:$src1, VR128:$src2, 
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>,
           Requires<[HasSSE2]>;
-// Special unary SHUFPDrri case.
-def : Pat<(v2i64 (vector_shuffle VR128:$src1, (undef),
-                  SHUFP_unary_shuffle_mask:$sm)),
-          (SHUFPDrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
-      Requires<[HasSSE2]>;
 
 // vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
 let AddedComplexity = 15 in {
-def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
-                                 UNPCKL_v_undef_shuffle_mask:$sm)),
-          (PSHUFDri VR128:$src, PSHUFD_shuffle_mask:$sm)>,
+def : Pat<(v4i32 (unpckl_undef:$src2 VR128:$src, (undef))),
+          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
           Requires<[OptForSpeed, HasSSE2]>;
-def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
-                                 UNPCKL_v_undef_shuffle_mask:$sm)),
-          (PSHUFDri VR128:$src, PSHUFD_shuffle_mask:$sm)>,
+def : Pat<(v4f32 (unpckl_undef:$src2 VR128:$src, (undef))),
+          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
           Requires<[OptForSpeed, HasSSE2]>;
 }
 let AddedComplexity = 10 in {
-def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
-                  UNPCKL_v_undef_shuffle_mask)),
+def : Pat<(v4f32 (unpckl_undef VR128:$src, (undef))),
           (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
-def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
-                  UNPCKL_v_undef_shuffle_mask)),
+def : Pat<(v16i8 (unpckl_undef VR128:$src, (undef))),
           (PUNPCKLBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
-                  UNPCKL_v_undef_shuffle_mask)),
+def : Pat<(v8i16 (unpckl_undef VR128:$src, (undef))),
           (PUNPCKLWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
-                  UNPCKL_v_undef_shuffle_mask)),
+def : Pat<(v4i32 (unpckl_undef VR128:$src, (undef))),
           (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 // vector_shuffle v1, <undef>, <2, 2, 3, 3, ...>
 let AddedComplexity = 15 in {
-def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
-                 UNPCKH_v_undef_shuffle_mask:$sm)),
-          (PSHUFDri VR128:$src, PSHUFD_shuffle_mask:$sm)>,
+def : Pat<(v4i32 (unpckh_undef:$src2 VR128:$src, (undef))),
+          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
           Requires<[OptForSpeed, HasSSE2]>;
-def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
-                 UNPCKH_v_undef_shuffle_mask:$sm)),
-          (PSHUFDri VR128:$src, PSHUFD_shuffle_mask:$sm)>,
+def : Pat<(v4f32 (unpckh_undef:$src2 VR128:$src, (undef))),
+          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
           Requires<[OptForSpeed, HasSSE2]>;
 }
 let AddedComplexity = 10 in {
-def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
-                  UNPCKH_v_undef_shuffle_mask)),
+def : Pat<(v4f32 (unpckh_undef VR128:$src, (undef))),
           (UNPCKHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
-def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
-                  UNPCKH_v_undef_shuffle_mask)),
+def : Pat<(v16i8 (unpckh_undef VR128:$src, (undef))),
           (PUNPCKHBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
-                  UNPCKH_v_undef_shuffle_mask)),
+def : Pat<(v8i16 (unpckh_undef VR128:$src, (undef))),
           (PUNPCKHWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
-                  UNPCKH_v_undef_shuffle_mask)),
+def : Pat<(v4i32 (unpckh_undef VR128:$src, (undef))),
           (PUNPCKHDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVHP_shuffle_mask)),
+def : Pat<(v4i32 (movhp VR128:$src1, VR128:$src2)),
           (MOVLHPSrr VR128:$src1, VR128:$src2)>;
 
 // vector_shuffle v1, v2 <6, 7, 2, 3> using MOVHLPS
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVHLPS_shuffle_mask)),
+def : Pat<(v4i32 (movhlps VR128:$src1, VR128:$src2)),
           (MOVHLPSrr VR128:$src1, VR128:$src2)>;
 
 // vector_shuffle v1, undef <2, ?, ?, ?> using MOVHLPS
-def : Pat<(v4f32 (vector_shuffle VR128:$src1, (undef),
-                  MOVHLPS_v_undef_shuffle_mask)),
+def : Pat<(v4f32 (movhlps_undef VR128:$src1, (undef))),
           (MOVHLPSrr VR128:$src1, VR128:$src1)>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, (undef),
-                  MOVHLPS_v_undef_shuffle_mask)),
+def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
           (MOVHLPSrr VR128:$src1, VR128:$src1)>;
 }
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
 // vector_shuffle v1, (load v2) <0, 1, 4, 5> using MOVHPS
-def : Pat<(v4f32 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVLP_shuffle_mask)),
+def : Pat<(v4f32 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(v2f64 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVLP_shuffle_mask)),
+def : Pat<(v2f64 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVHP_shuffle_mask)),
+def : Pat<(v4f32 (movhp VR128:$src1, (load addr:$src2))),
           (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(v2f64 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVHP_shuffle_mask)),
+def : Pat<(v2f64 (movhp VR128:$src1, (load addr:$src2))),
           (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVLP_shuffle_mask)),
+def : Pat<(v4i32 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVLP_shuffle_mask)),
+def : Pat<(v2i64 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVHP_shuffle_mask)),
+def : Pat<(v4i32 (movhp VR128:$src1, (load addr:$src2))),
           (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
-                  MOVHP_shuffle_mask)),
+def : Pat<(v2i64 (movhp VR128:$src1, (load addr:$src2))),
           (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 }
 
 // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
 // (store (vector_shuffle (load addr), v2, <0, 1, 4, 5>), addr) using MOVHPS
-def : Pat<(store (v4f32 (vector_shuffle (load addr:$src1), VR128:$src2,
-                         MOVLP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2f64 (vector_shuffle (load addr:$src1), VR128:$src2,
-                         MOVLP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v2f64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(store (v4f32 (vector_shuffle (load addr:$src1), VR128:$src2,
-                         MOVHP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v4f32 (movhp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2f64 (vector_shuffle (load addr:$src1), VR128:$src2,
-                         MOVHP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v2f64 (movhp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 
-def : Pat<(store (v4i32 (vector_shuffle
-                         (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2,
-                         MOVLP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),
+                 addr:$src1),
           (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2i64 (vector_shuffle (load addr:$src1), VR128:$src2,
-                         MOVLP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(store (v4i32 (vector_shuffle
-                         (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2,
-                         MOVHP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v4i32 (movhp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),
+                 addr:$src1),
           (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2i64 (vector_shuffle (load addr:$src1), VR128:$src2,
-                         MOVHP_shuffle_mask)), addr:$src1),
+def : Pat<(store (v2i64 (movhp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 
 
 let AddedComplexity = 15 in {
 // Setting the lowest element in the vector.
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVL_shuffle_mask)),
+def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
           (MOVLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVL_shuffle_mask)),
+def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 
 // vector_shuffle v1, v2 <4, 5, 2, 3> using MOVLPDrr (movsd)
-def : Pat<(v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVLP_shuffle_mask)),
+def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVLP_shuffle_mask)),
+def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 }
 
 // Set lowest element and zero upper elements.
 let AddedComplexity = 15 in
-def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc, VR128:$src,
-           MOVL_shuffle_mask)),
+def : Pat<(v2f64 (movl immAllZerosV_bc, VR128:$src)),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;

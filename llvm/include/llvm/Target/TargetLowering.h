@@ -28,6 +28,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/DebugLoc.h"
 #include "llvm/Target/TargetMachine.h"
@@ -328,7 +329,7 @@ public:
   /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
   /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
   /// are assumed to be legal.
-  virtual bool isShuffleMaskLegal(SDValue Mask, MVT VT) const {
+  virtual bool isShuffleMaskLegal(SmallVectorImpl<int> &Mask, MVT VT) const {
     return true;
   }
 
@@ -336,9 +337,7 @@ public:
   /// used by Targets can use this to indicate if there is a suitable
   /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
   /// pool entry.
-  virtual bool isVectorClearMaskLegal(const std::vector<SDValue> &BVOps,
-                                      MVT EVT,
-                                      SelectionDAG &DAG) const {
+  virtual bool isVectorClearMaskLegal(SmallVectorImpl<int> &M, MVT VT) const {
     return false;
   }
 

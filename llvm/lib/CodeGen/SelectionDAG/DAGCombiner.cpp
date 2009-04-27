@@ -5102,7 +5102,21 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
                        InVec.getValueType(), &Ops[0], Ops.size());
   }
+  // If the invec is an UNDEF and if EltNo is a constant, create a new 
+  // BUILD_VECTOR with undef elements and the inserted element.
+  if (!LegalOperations && InVec.getOpcode() == ISD::UNDEF && 
+      isa<ConstantSDNode>(EltNo)) {
+    MVT VT = InVec.getValueType();
+    MVT EVT = VT.getVectorElementType();
+    unsigned NElts = VT.getVectorNumElements();
+    SmallVector<SDValue, 8> Ops(NElts, DAG.getUNDEF(EVT));
 
+    unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+    if (Elt < Ops.size())
+      Ops[Elt] = InVal;
+    return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                       InVec.getValueType(), &Ops[0], Ops.size());
+  }
   return SDValue();
 }
 
@@ -5164,9 +5178,8 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // to examine the mask.
       if (BCNumEltsChanged)
         return SDValue();
-      unsigned Idx = cast<ConstantSDNode>(InVec.getOperand(2).
-                                          getOperand(Elt))->getZExtValue();
-      unsigned NumElems = InVec.getOperand(2).getNumOperands();
+      int Idx = cast<ShuffleVectorSDNode>(InVec)->getMaskElt(Elt);
+      int NumElems = InVec.getValueType().getVectorNumElements();
       InVec = (Idx < NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
       if (InVec.getOpcode() == ISD::BIT_CONVERT)
         InVec = InVec.getOperand(0);
@@ -5213,7 +5226,6 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   unsigned NumInScalars = N->getNumOperands();
   MVT VT = N->getValueType(0);
-  unsigned NumElts = VT.getVectorNumElements();
   MVT EltType = VT.getVectorElementType();
 
   // Check to see if this is a BUILD_VECTOR of a bunch of EXTRACT_VECTOR_ELT
@@ -5256,56 +5268,36 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   }
 
   // If everything is good, we can make a shuffle operation.
-  MVT IndexVT = MVT::i32;
   if (VecIn1.getNode()) {
-    SmallVector<SDValue, 8> BuildVecIndices;
+    SmallVector<int, 8> Mask;
     for (unsigned i = 0; i != NumInScalars; ++i) {
       if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
-        BuildVecIndices.push_back(DAG.getUNDEF(IndexVT));
+        Mask.push_back(-1);
         continue;
       }
 
-      SDValue Extract = N->getOperand(i);
-
       // If extracting from the first vector, just use the index directly.
+      SDValue Extract = N->getOperand(i);
       SDValue ExtVal = Extract.getOperand(1);
       if (Extract.getOperand(0) == VecIn1) {
-        if (ExtVal.getValueType() == IndexVT)
-          BuildVecIndices.push_back(ExtVal);
-        else {
-          unsigned Idx = cast<ConstantSDNode>(ExtVal)->getZExtValue();
-          BuildVecIndices.push_back(DAG.getConstant(Idx, IndexVT));
-        }
+        Mask.push_back(cast<ConstantSDNode>(ExtVal)->getZExtValue());
         continue;
       }
 
       // Otherwise, use InIdx + VecSize
       unsigned Idx = cast<ConstantSDNode>(ExtVal)->getZExtValue();
-      BuildVecIndices.push_back(DAG.getConstant(Idx+NumInScalars, IndexVT));
+      Mask.push_back(Idx+NumInScalars);
     }
 
     // Add count and size info.
-    MVT BuildVecVT = MVT::getVectorVT(IndexVT, NumElts);
-    if (!TLI.isTypeLegal(BuildVecVT) && LegalTypes)
+    if (!TLI.isTypeLegal(VT) && LegalTypes)
       return SDValue();
 
     // Return the new VECTOR_SHUFFLE node.
-    SDValue Ops[5];
+    SDValue Ops[2];
     Ops[0] = VecIn1;
-    if (VecIn2.getNode()) {
-      Ops[1] = VecIn2;
-    } else {
-      // Use an undef build_vector as input for the second operand.
-      std::vector<SDValue> UnOps(NumInScalars,
-                                 DAG.getUNDEF(EltType));
-      Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
-                           &UnOps[0], UnOps.size());
-      AddToWorkList(Ops[1].getNode());
-    }
-
-    Ops[2] = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), BuildVecVT,
-                         &BuildVecIndices[0], BuildVecIndices.size());
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(), VT, Ops, 3);
+    Ops[1] = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
+    return DAG.getVectorShuffle(VT, N->getDebugLoc(), Ops[0], Ops[1], &Mask[0]);
   }
 
   return SDValue();
@@ -5325,8 +5317,10 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
-  SDValue ShufMask = N->getOperand(2);
-  unsigned NumElts = ShufMask.getNumOperands();
+  return SDValue();
+  
+  MVT VT = N->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
 
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -5334,60 +5328,13 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   assert(N0.getValueType().getVectorNumElements() == NumElts &&
         "Vector shuffle must be normalized in DAG");
 
-  // If the shuffle mask is an identity operation on the LHS, return the LHS.
-  bool isIdentity = true;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
-        cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() != i) {
-      isIdentity = false;
-      break;
-    }
-  }
-  if (isIdentity) return N->getOperand(0);
-
-  // If the shuffle mask is an identity operation on the RHS, return the RHS.
-  isIdentity = true;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
-        cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() !=
-          i+NumElts) {
-      isIdentity = false;
-      break;
-    }
-  }
-  if (isIdentity) return N->getOperand(1);
-
-  // Check if the shuffle is a unary shuffle, i.e. one of the vectors is not
-  // needed at all.
-  bool isUnary = true;
-  bool isSplat = true;
-  int VecNum = -1;
-  unsigned BaseIdx = 0;
-  for (unsigned i = 0; i != NumElts; ++i)
-    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
-      unsigned Idx=cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue();
-      int V = (Idx < NumElts) ? 0 : 1;
-      if (VecNum == -1) {
-        VecNum = V;
-        BaseIdx = Idx;
-      } else {
-        if (BaseIdx != Idx)
-          isSplat = false;
-        if (VecNum != V) {
-          isUnary = false;
-          break;
-        }
-      }
-    }
-
-  // Normalize unary shuffle so the RHS is undef.
-  if (isUnary && VecNum == 1)
-    std::swap(N0, N1);
+  // FIXME: implement canonicalizations from DAG.getVectorShuffle()
 
   // If it is a splat, check if the argument vector is a build_vector with
   // all scalar elements the same.
-  if (isSplat) {
+  if (cast<ShuffleVectorSDNode>(N)->isSplat()) {
     SDNode *V = N0.getNode();
+    
 
     // If this is a bit convert that changes the element type of the vector but
     // not the number of vector elements, look through it.  Be careful not to
@@ -5401,6 +5348,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
     if (V->getOpcode() == ISD::BUILD_VECTOR) {
       unsigned NumElems = V->getNumOperands();
+      unsigned BaseIdx = cast<ShuffleVectorSDNode>(N)->getSplatIndex();
       if (NumElems > BaseIdx) {
         SDValue Base;
         bool AllSame = true;
@@ -5425,38 +5373,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       }
     }
   }
-
-  // If it is a unary or the LHS and the RHS are the same node, turn the RHS
-  // into an undef.
-  if (isUnary || N0 == N1) {
-    // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
-    // first operand.
-    SmallVector<SDValue, 8> MappedOps;
-
-    for (unsigned i = 0; i != NumElts; ++i) {
-      if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
-          cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() <
-            NumElts) {
-        MappedOps.push_back(ShufMask.getOperand(i));
-      } else {
-        unsigned NewIdx =
-          cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() -
-          NumElts;
-        MappedOps.push_back(DAG.getConstant(NewIdx,
-                                        ShufMask.getOperand(i).getValueType()));
-      }
-    }
-
-    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                           ShufMask.getValueType(),
-                           &MappedOps[0], MappedOps.size());
-    AddToWorkList(ShufMask.getNode());
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
-                       N->getValueType(0), N0,
-                       DAG.getUNDEF(N->getValueType(0)),
-                       ShufMask);
-  }
-
   return SDValue();
 }
 
@@ -5465,52 +5381,42 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 /// e.g. AND V, <0xffffffff, 0, 0xffffffff, 0>. ==>
 ///      vector_shuffle V, Zero, <0, 4, 2, 4>
 SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
+  MVT VT = N->getValueType(0);
+  DebugLoc dl = N->getDebugLoc();
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
   if (N->getOpcode() == ISD::AND) {
     if (RHS.getOpcode() == ISD::BIT_CONVERT)
       RHS = RHS.getOperand(0);
     if (RHS.getOpcode() == ISD::BUILD_VECTOR) {
-      std::vector<SDValue> IdxOps;
-      unsigned NumOps = RHS.getNumOperands();
-      unsigned NumElts = NumOps;
+      SmallVector<int, 8> Indices;
+      unsigned NumElts = RHS.getNumOperands();
       for (unsigned i = 0; i != NumElts; ++i) {
         SDValue Elt = RHS.getOperand(i);
         if (!isa<ConstantSDNode>(Elt))
           return SDValue();
         else if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
-          IdxOps.push_back(DAG.getIntPtrConstant(i));
+          Indices.push_back(i);
         else if (cast<ConstantSDNode>(Elt)->isNullValue())
-          IdxOps.push_back(DAG.getIntPtrConstant(NumElts));
+          Indices.push_back(NumElts);
         else
           return SDValue();
       }
 
       // Let's see if the target supports this vector_shuffle.
-      if (!TLI.isVectorClearMaskLegal(IdxOps, TLI.getPointerTy(), DAG))
+      MVT RVT = RHS.getValueType();
+      if (!TLI.isVectorClearMaskLegal(Indices, RVT))
         return SDValue();
 
       // Return the new VECTOR_SHUFFLE node.
-      MVT EVT = RHS.getValueType().getVectorElementType();
-      MVT VT = MVT::getVectorVT(EVT, NumElts);
-      MVT MaskVT = MVT::getVectorVT(TLI.getPointerTy(), NumElts);
-      std::vector<SDValue> Ops;
-      LHS = DAG.getNode(ISD::BIT_CONVERT, LHS.getDebugLoc(), VT, LHS);
-      Ops.push_back(LHS);
-      AddToWorkList(LHS.getNode());
-      std::vector<SDValue> ZeroOps(NumElts, DAG.getConstant(0, EVT));
-      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                                VT, &ZeroOps[0], ZeroOps.size()));
-      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                                MaskVT, &IdxOps[0], IdxOps.size()));
-      SDValue Result = DAG.getNode(ISD::VECTOR_SHUFFLE, N->getDebugLoc(),
-                                   VT, &Ops[0], Ops.size());
-
-      if (VT != N->getValueType(0))
-        Result = DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(),
-                             N->getValueType(0), Result);
-
-      return Result;
+      MVT EVT = RVT.getVectorElementType();
+      SmallVector<SDValue,8> ZeroOps(RVT.getVectorNumElements(),
+                                     DAG.getConstant(0, EVT));
+      SDValue Zero = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                                 RVT, &ZeroOps[0], ZeroOps.size());
+      LHS = DAG.getNode(ISD::BIT_CONVERT, dl, RVT, LHS);
+      SDValue Shuf = DAG.getVectorShuffle(RVT, dl, LHS, Zero, &Indices[0]);
+      return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Shuf);
     }
   }
 

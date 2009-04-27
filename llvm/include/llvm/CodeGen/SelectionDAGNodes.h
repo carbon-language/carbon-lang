@@ -24,6 +24,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -1703,6 +1704,41 @@ public:
   }
 };
 
+class ShuffleVectorSDNode : public SDNode {
+  SDUse Ops[2];
+  int *Mask;
+protected:
+  friend class SelectionDAG;
+  ShuffleVectorSDNode(MVT VT, DebugLoc dl, SDValue N1, SDValue N2, int *M)
+    : SDNode(ISD::VECTOR_SHUFFLE, dl, getSDVTList(VT)), Mask(M) {
+    InitOperands(Ops, N1, N2);
+  }
+public:
+
+  void getMask(SmallVectorImpl<int> &M) const {
+    MVT VT = getValueType(0);
+    M.clear();
+    for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
+      M.push_back(Mask[i]);
+  }
+  int getMaskElt(unsigned Idx) const {
+    assert(Idx < getValueType(0).getVectorNumElements() && "Idx out of range!");
+    return Mask[Idx];
+  }
+  
+  bool isSplat() const { return isSplatMask(Mask, getValueType(0)); }
+  int  getSplatIndex() const { 
+    assert(isSplat() && "Cannot get splat index for non-splat!");
+    return Mask[0];
+  }
+  static bool isSplatMask(const int *Mask, MVT VT);
+
+  static bool classof(const ShuffleVectorSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::VECTOR_SHUFFLE;
+  }
+};
+  
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
   friend class SelectionDAG;
@@ -2084,7 +2120,7 @@ public:
     return N->getOpcode() == ISD::CONDCODE;
   }
 };
-
+  
 /// CvtRndSatSDNode - NOTE: avoid using this node as this may disappear in the
 /// future and most targets don't support it.
 class CvtRndSatSDNode : public SDNode {

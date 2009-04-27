@@ -175,19 +175,21 @@ namespace llvm {
   namespace PPC {
     /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
     /// VPKUHUM instruction.
-    bool isVPKUHUMShuffleMask(SDNode *N, bool isUnary);
+    bool isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary);
     
     /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
     /// VPKUWUM instruction.
-    bool isVPKUWUMShuffleMask(SDNode *N, bool isUnary);
+    bool isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary);
 
     /// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
     /// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
-    bool isVMRGLShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary);
+    bool isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
+                            bool isUnary);
 
     /// isVMRGHShuffleMask - Return true if this is a shuffle mask suitable for
     /// a VRGH* instruction with the specified unit size (1,2 or 4 bytes).
-    bool isVMRGHShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary);
+    bool isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
+                            bool isUnary);
     
     /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
     /// amount, otherwise return -1.
@@ -196,7 +198,7 @@ namespace llvm {
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to
     /// VSPLTB/VSPLTH/VSPLTW.
-    bool isSplatShuffleMask(SDNode *N, unsigned EltSize);
+    bool isSplatShuffleMask(ShuffleVectorSDNode *N, unsigned EltSize);
     
     /// isAllNegativeZeroVector - Returns true if all elements of build_vector
     /// are -0.0.
