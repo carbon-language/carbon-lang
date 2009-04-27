@@ -31,6 +31,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include <algorithm>
 #include <cstdio>
+#include <sys/stat.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -43,7 +44,8 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext &Context)
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), NumSLocEntriesRead(0), NumStatementsRead(0), 
+    TotalNumSelectors(0), NumStatHits(0), NumStatMisses(0), 
+    NumSLocEntriesRead(0), NumStatementsRead(0), 
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
     NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
 
@@ -377,6 +379,10 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
   return true;
 }
 
+//===----------------------------------------------------------------------===//
+// Source Manager Deserialization
+//===----------------------------------------------------------------------===//
+
 /// \brief Read the line table in the source manager block.
 /// \returns true if ther was an error.
 static bool ParseLineTable(SourceManager &SourceMgr, 
@@ -419,6 +425,115 @@ static bool ParseLineTable(SourceManager &SourceMgr,
 
   return false;
 }
+
+namespace {
+
+class VISIBILITY_HIDDEN PCHStatData {
+public:
+  const bool hasStat;
+  const ino_t ino;
+  const dev_t dev;
+  const mode_t mode;
+  const time_t mtime;
+  const off_t size;
+  
+  PCHStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
+  : hasStat(true), ino(i), dev(d), mode(mo), mtime(m), size(s) {}  
+  
+  PCHStatData()
+    : hasStat(false), ino(0), dev(0), mode(0), mtime(0), size(0) {}
+};
+
+class VISIBILITY_HIDDEN PCHStatLookupTrait {
+ public:
+  typedef const char *external_key_type;
+  typedef const char *internal_key_type;
+
+  typedef PCHStatData data_type;
+
+  static unsigned ComputeHash(const char *path) {
+    return BernsteinHash(path);
+  }
+
+  static internal_key_type GetInternalKey(const char *path) { return path; }
+
+  static bool EqualKey(internal_key_type a, internal_key_type b) {
+    return strcmp(a, b) == 0;
+  }
+
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    unsigned KeyLen = (unsigned) clang::io::ReadUnalignedLE16(d);
+    unsigned DataLen = (unsigned) *d++;
+    return std::make_pair(KeyLen + 1, DataLen);
+  }
+
+  static internal_key_type ReadKey(const unsigned char *d, unsigned) {
+    return (const char *)d;
+  }
+
+  static data_type ReadData(const internal_key_type, const unsigned char *d,
+                            unsigned /*DataLen*/) {
+    using namespace clang::io;
+
+    if (*d++ == 1)
+      return data_type();
+
+    ino_t ino = (ino_t) ReadUnalignedLE32(d);
+    dev_t dev = (dev_t) ReadUnalignedLE32(d);
+    mode_t mode = (mode_t) ReadUnalignedLE16(d);
+    time_t mtime = (time_t) ReadUnalignedLE64(d);    
+    off_t size = (off_t) ReadUnalignedLE64(d);
+    return data_type(ino, dev, mode, mtime, size);
+  }
+};
+
+/// \brief stat() cache for precompiled headers.
+///
+/// This cache is very similar to the stat cache used by pretokenized
+/// headers.
+class VISIBILITY_HIDDEN PCHStatCache : public StatSysCallCache {
+  typedef OnDiskChainedHashTable<PCHStatLookupTrait> CacheTy;
+  CacheTy *Cache;
+
+  unsigned &NumStatHits, &NumStatMisses;
+public:  
+  PCHStatCache(const unsigned char *Buckets,
+               const unsigned char *Base,
+               unsigned &NumStatHits,
+               unsigned &NumStatMisses) 
+    : Cache(0), NumStatHits(NumStatHits), NumStatMisses(NumStatMisses) {
+    Cache = CacheTy::Create(Buckets, Base);
+  }
+
+  ~PCHStatCache() { delete Cache; }
+  
+  int stat(const char *path, struct stat *buf) {
+    // Do the lookup for the file's data in the PCH file.
+    CacheTy::iterator I = Cache->find(path);
+
+    // If we don't get a hit in the PCH file just forward to 'stat'.
+    if (I == Cache->end()) {
+      ++NumStatMisses;
+      return ::stat(path, buf);
+    }
+    
+    ++NumStatHits;
+    PCHStatData Data = *I;
+    
+    if (!Data.hasStat)
+      return 1;
+
+    buf->st_ino = Data.ino;
+    buf->st_dev = Data.dev;
+    buf->st_mtime = Data.mtime;
+    buf->st_mode = Data.mode;
+    buf->st_size = Data.size;
+    return 0;
+  }
+};
+} // end anonymous namespace
+
 
 /// \brief Read the source manager block
 PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
@@ -915,6 +1030,13 @@ PCHReader::ReadPCHBlock() {
         if (Result != Success)
           return Result;
       }
+      break;
+
+    case pch::STAT_CACHE:
+      PP.getFileManager().setStatCache(
+                  new PCHStatCache((const unsigned char *)BlobStart + Record[0],
+                                   (const unsigned char *)BlobStart,
+                                   NumStatHits, NumStatMisses));
       break;
     }
   }
@@ -1505,6 +1627,8 @@ void PCHReader::PrintStats() {
                                           SelectorsLoaded.end(),
                                           Selector());
 
+  std::fprintf(stderr, "  %u stat cache hits\n", NumStatHits);
+  std::fprintf(stderr, "  %u stat cache misses\n", NumStatMisses);
   if (TotalNumSLocEntries)
     std::fprintf(stderr, "  %u/%u source location entries read (%f%%)\n",
                  NumSLocEntriesRead, TotalNumSLocEntries,

@@ -1919,7 +1919,7 @@ int main(int argc, char **argv) {
   
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
-  
+
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     

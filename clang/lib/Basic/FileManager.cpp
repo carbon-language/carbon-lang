@@ -19,6 +19,7 @@
 
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/System/Path.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Config/config.h"
 using namespace clang;
@@ -281,4 +282,21 @@ void FileManager::PrintStats() const {
              << NumFileCacheMisses << " file cache misses.\n";
   
   //llvm::cerr << PagesMapped << BytesOfPagesMapped << FSLookups;
+}
+
+int MemorizeStatCalls::stat(const char *path, struct stat *buf) {
+  int result = ::stat(path, buf);
+    
+  if (result != 0) { 
+    // Cache failed 'stat' results.
+    struct stat empty;
+    StatCalls[path] = StatResult(result, empty);
+  }
+  else if (!S_ISDIR(buf->st_mode) || llvm::sys::Path(path).isAbsolute()) {
+    // Cache file 'stat' results and directories with absolutely
+    // paths.
+    StatCalls[path] = StatResult(result, *buf);
+  }
+    
+  return result;  
 }

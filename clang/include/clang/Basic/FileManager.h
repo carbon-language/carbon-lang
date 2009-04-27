@@ -81,7 +81,31 @@ public:
   virtual ~StatSysCallCache() {}
   virtual int stat(const char *path, struct stat *buf) = 0;
 };
- 
+
+/// \brief A stat listener that can be used by FileManager to keep
+/// track of the results of stat() calls that occur throughout the
+/// execution of the front end.
+class MemorizeStatCalls : public StatSysCallCache {
+public:
+  /// \brief The result of a stat() call. 
+  ///
+  /// The first member is the result of calling stat(). If stat()
+  /// found something, the second member is a copy of the stat
+  /// structure.
+  typedef std::pair<int, struct stat> StatResult;
+
+  /// \brief The set of stat() calls that have been 
+  llvm::StringMap<StatResult, llvm::BumpPtrAllocator> StatCalls;
+
+  typedef llvm::StringMap<StatResult, llvm::BumpPtrAllocator>::const_iterator
+    iterator;
+  
+  iterator begin() const { return StatCalls.begin(); }
+  iterator end() const { return StatCalls.end(); }
+
+  virtual int stat(const char *path, struct stat *buf);
+};
+
 /// FileManager - Implements support for file system lookup, file system
 /// caching, and directory search management.  This also handles more advanced
 /// properties, such as uniquing files based on "inode", so that a file with two

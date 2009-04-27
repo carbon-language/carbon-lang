@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/FileManager.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Compiler.h"
@@ -33,14 +34,22 @@ namespace {
     const Preprocessor &PP;
     std::string OutFile;
     Sema *SemaPtr;
+    MemorizeStatCalls *StatCalls; // owned by the FileManager
 
   public:
-    explicit PCHGenerator(const Preprocessor &PP, const std::string &OutFile)
-      : PP(PP), OutFile(OutFile), SemaPtr(0) { }
-
+    explicit PCHGenerator(const Preprocessor &PP, const std::string &OutFile);
     virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
     virtual void HandleTranslationUnit(ASTContext &Ctx);
   };
+}
+
+PCHGenerator::PCHGenerator(const Preprocessor &PP, const std::string &OutFile)
+  : PP(PP), OutFile(OutFile), SemaPtr(0), StatCalls(0) { 
+
+  // Install a stat() listener to keep track of all of the stat()
+  // calls.
+  StatCalls = new MemorizeStatCalls;
+  PP.getFileManager().setStatCache(StatCalls);
 }
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
@@ -54,7 +63,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
-  Writer.WritePCH(*SemaPtr);
+  Writer.WritePCH(*SemaPtr, StatCalls);
 
   // Open up the PCH file.
   std::string ErrMsg;

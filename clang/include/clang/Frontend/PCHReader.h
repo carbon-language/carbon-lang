@@ -226,6 +226,10 @@ private:
   /// been de-serialized.
   std::multimap<unsigned, AddrLabelExpr *> UnresolvedAddrLabelExprs;
 
+  /// \brief The number of stat() calls that hit/missed the stat
+  /// cache.
+  unsigned NumStatHits, NumStatMisses;
+
   /// \brief The number of source location entries de-serialized from
   /// the PCH file.
   unsigned NumSLocEntriesRead;

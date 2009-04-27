@@ -33,6 +33,7 @@ namespace clang {
 
 class ASTContext;
 class LabelStmt;
+class MemorizeStatCalls;
 class Preprocessor;
 class Sema;
 class SourceManager;
@@ -161,6 +162,7 @@ private:
   void WriteBlockInfoBlock();
   void WriteTargetTriple(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
+  void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr, 
                                const Preprocessor &PP);
   void WritePreprocessor(const Preprocessor &PP);
@@ -183,7 +185,7 @@ public:
   PCHWriter(llvm::BitstreamWriter &Stream);
   
   /// \brief Write a precompiled header for the given semantic analysis.
-  void WritePCH(Sema &SemaRef);
+  void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);

@@ -49,7 +49,7 @@ namespace {
     pch::TypeCode Code;
 
     PCHTypeWriter(PCHWriter &Writer, PCHWriter::RecordData &Record) 
-      : Writer(Writer), Record(Record) { }
+      : Writer(Writer), Record(Record), Code(pch::TYPE_EXT_QUAL) { }
 
     void VisitArrayType(const ArrayType *T);
     void VisitFunctionType(const FunctionType *T);
@@ -354,6 +354,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(PP_COUNTER_VALUE);
   RECORD(SOURCE_LOCATION_OFFSETS);
   RECORD(SOURCE_LOCATION_PRELOADS);
+  RECORD(STAT_CACHE);
 
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -511,6 +512,101 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.getVisibilityMode());
   Record.push_back(LangOpts.InstantiationDepth);
   Stream.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
+}
+
+//===----------------------------------------------------------------------===//
+// stat cache Serialization
+//===----------------------------------------------------------------------===//
+
+namespace {
+// Trait used for the on-disk hash table of stat cache results.
+class VISIBILITY_HIDDEN PCHStatCacheTrait {
+public:
+  typedef const char * key_type;
+  typedef key_type key_type_ref;
+  
+  typedef std::pair<int, struct stat> data_type;
+  typedef const data_type& data_type_ref;
+
+  static unsigned ComputeHash(const char *path) {
+    return BernsteinHash(path);
+  }
+  
+  std::pair<unsigned,unsigned> 
+    EmitKeyDataLength(llvm::raw_ostream& Out, const char *path,
+                      data_type_ref Data) {
+    unsigned StrLen = strlen(path);
+    clang::io::Emit16(Out, StrLen);
+    unsigned DataLen = 1; // result value
+    if (Data.first == 0)
+      DataLen += 4 + 4 + 2 + 8 + 8;
+    clang::io::Emit8(Out, DataLen);
+    return std::make_pair(StrLen + 1, DataLen);
+  }
+  
+  void EmitKey(llvm::raw_ostream& Out, const char *path, unsigned KeyLen) {
+    Out.write(path, KeyLen);
+  }
+  
+  void EmitData(llvm::raw_ostream& Out, key_type_ref,
+                data_type_ref Data, unsigned DataLen) {
+    using namespace clang::io;
+    uint64_t Start = Out.tell(); (void)Start;
+    
+    // Result of stat()
+    Emit8(Out, Data.first? 1 : 0);
+    
+    if (Data.first == 0) {
+      Emit32(Out, (uint32_t) Data.second.st_ino);
+      Emit32(Out, (uint32_t) Data.second.st_dev);
+      Emit16(Out, (uint16_t) Data.second.st_mode);
+      Emit64(Out, (uint64_t) Data.second.st_mtime);
+      Emit64(Out, (uint64_t) Data.second.st_size);
+    }
+
+    assert(Out.tell() - Start == DataLen && "Wrong data length");
+  }
+};
+} // end anonymous namespace
+
+/// \brief Write the stat() system call cache to the PCH file.
+void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
+  // Build the on-disk hash table containing information about every
+  // stat() call.
+  OnDiskChainedHashTableGenerator<PCHStatCacheTrait> Generator;
+  unsigned NumStatEntries = 0;
+  for (MemorizeStatCalls::iterator Stat = StatCalls.begin(), 
+                                StatEnd = StatCalls.end();
+       Stat != StatEnd; ++Stat, ++NumStatEntries)
+    Generator.insert(Stat->first(), Stat->second);
+  
+  // Create the on-disk hash table in a buffer.
+  llvm::SmallVector<char, 4096> StatCacheData; 
+  uint32_t BucketOffset;
+  {
+    llvm::raw_svector_ostream Out(StatCacheData);
+    // Make sure that no bucket is at offset 0
+    clang::io::Emit32(Out, 0);
+    BucketOffset = Generator.Emit(Out);
+  }
+
+  // Create a blob abbreviation
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::STAT_CACHE));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned StatCacheAbbrev = Stream.EmitAbbrev(Abbrev);
+
+  // Write the stat cache
+  RecordData Record;
+  Record.push_back(pch::STAT_CACHE);
+  Record.push_back(BucketOffset);
+  Record.push_back(NumStatEntries);
+  Stream.EmitRecordWithBlob(StatCacheAbbrev, Record, 
+                            &StatCacheData.front(), 
+                            StatCacheData.size());
 }
 
 //===----------------------------------------------------------------------===//
@@ -747,6 +843,10 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Stream.EmitRecord(pch::SOURCE_LOCATION_PRELOADS, PreloadSLocs);
 }
 
+//===----------------------------------------------------------------------===//
+// Preprocessor Serialization
+//===----------------------------------------------------------------------===//
+
 /// \brief Writes the block containing the serialized form of the
 /// preprocessor.
 ///
@@ -830,6 +930,9 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
   Stream.ExitBlock();
 }
 
+//===----------------------------------------------------------------------===//
+// Type Serialization
+//===----------------------------------------------------------------------===//
 
 /// \brief Write the representation of a type to the PCH stream.
 void PCHWriter::WriteType(const Type *T) {
@@ -890,6 +993,10 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
   // Exit the types block
   Stream.ExitBlock();
 }
+
+//===----------------------------------------------------------------------===//
+// Declaration Serialization
+//===----------------------------------------------------------------------===//
 
 /// \brief Write the block containing all of the declaration IDs
 /// lexically declared within the given DeclContext.
@@ -960,6 +1067,10 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   ++NumVisibleDeclContexts;
   return Offset;
 }
+
+//===----------------------------------------------------------------------===//
+// Global Method Pool and Selector Serialization
+//===----------------------------------------------------------------------===//
 
 namespace {
 // Trait used for the on-disk hash table used in the method pool.
@@ -1162,6 +1273,10 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// Identifier Table Serialization
+//===----------------------------------------------------------------------===//
+
 namespace {
 class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
   PCHWriter &Writer;
@@ -1339,6 +1454,10 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
                             IdentifierOffsets.size() * sizeof(uint32_t));
 }
 
+//===----------------------------------------------------------------------===//
+// General Serialization Routines
+//===----------------------------------------------------------------------===//
+
 /// \brief Write a record containing the given attributes.
 void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
   RecordData Record;
@@ -1487,7 +1606,7 @@ PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0) { }
 
-void PCHWriter::WritePCH(Sema &SemaRef) {
+void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;
@@ -1540,6 +1659,8 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
   WriteTargetTriple(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
+  if (StatCalls)
+    WriteStatCache(*StatCalls);
   WriteSourceManagerBlock(Context.getSourceManager(), PP);
   WritePreprocessor(PP);
 

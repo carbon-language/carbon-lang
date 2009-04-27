@@ -185,7 +185,10 @@ namespace clang {
       /// This set contains the source location entry for the
       /// predefines buffer and for any file entries that need to be
       /// preloaded.
-      SOURCE_LOCATION_PRELOADS = 16
+      SOURCE_LOCATION_PRELOADS = 16,
+
+      /// \brief Record code for the stat() cache.
+      STAT_CACHE = 17
     };
 
     /// \brief Record types used within a source manager block.
