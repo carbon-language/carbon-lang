@@ -627,8 +627,8 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   
   // The only case we should have a dead physreg here without a killing or
   // instruction where we know it's dead is if it is live-in to the function
-  // and never used.
-  assert(!CopyMI && "physreg was not killed in defining block!");
+  // and never used. Another possible case is the implicit use of the
+  // physical register has been deleted by two-address pass.
   end = start + 1;
 
 exit:
