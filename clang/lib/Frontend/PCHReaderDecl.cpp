@@ -20,24 +20,6 @@
 #include "clang/AST/Expr.h"
 using namespace clang;
 
-// FIXME: Temporarily cloned from PCHReader.cpp.
-namespace {
-  /// \brief Helper class that saves the current stream position and
-  /// then restores it when destroyed.
-  struct SavedStreamPosition {
-    explicit SavedStreamPosition(llvm::BitstreamCursor &Cursor)
-    : Cursor(Cursor), Offset(Cursor.GetCurrentBitNo()) { }
-    
-    ~SavedStreamPosition() {
-      Cursor.JumpToBit(Offset);
-    }
-    
-  private:
-    llvm::BitstreamCursor &Cursor;
-    uint64_t Offset;
-  };
-}
-
 
 //===----------------------------------------------------------------------===//
 // Declaration deserialization

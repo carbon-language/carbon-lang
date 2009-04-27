@@ -470,6 +470,21 @@ public:
   void SetLabelOf(AddrLabelExpr *S, unsigned ID);
 };
 
+/// \brief Helper class that saves the current stream position and
+/// then restores it when destroyed.
+struct SavedStreamPosition {
+  explicit SavedStreamPosition(llvm::BitstreamCursor &Cursor)
+  : Cursor(Cursor), Offset(Cursor.GetCurrentBitNo()) { }
+  
+  ~SavedStreamPosition() {
+    Cursor.JumpToBit(Offset);
+  }
+  
+private:
+  llvm::BitstreamCursor &Cursor;
+  uint64_t Offset;
+};
+  
 } // end namespace clang
 
 #endif
