@@ -464,6 +464,7 @@ static int AnalyzeBitcode() {
   
   BitstreamReader StreamFile(BufPtr, EndBufPtr);
   BitstreamCursor Stream(StreamFile);
+  StreamFile.CollectBlockInfoNames();
   
   // Read the stream signature.
   char Signature[6];

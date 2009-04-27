@@ -41,11 +41,19 @@ private:
   
   std::vector<BlockInfo> BlockInfoRecords;
 
+  /// IgnoreBlockInfoNames - This is set to true if we don't care about the
+  /// block/record name information in the BlockInfo block. Only llvm-bcanalyzer
+  /// uses this.
+  bool IgnoreBlockInfoNames;
+  
+  BitstreamReader(const BitstreamReader&);  // NOT IMPLEMENTED
+  void operator=(const BitstreamReader&);  // NOT IMPLEMENTED
 public:
-  BitstreamReader() : FirstChar(0), LastChar(0) {
+  BitstreamReader() : FirstChar(0), LastChar(0), IgnoreBlockInfoNames(true) {
   }
 
   BitstreamReader(const unsigned char *Start, const unsigned char *End) {
+    IgnoreBlockInfoNames = true;
     init(Start, End);
   }
 
@@ -70,6 +78,11 @@ public:
   const unsigned char *getFirstChar() const { return FirstChar; }
   const unsigned char *getLastChar() const { return LastChar; }
 
+  /// CollectBlockInfoNames - This is called by clients that want block/record
+  /// name information.
+  void CollectBlockInfoNames() { IgnoreBlockInfoNames = false; }
+  bool isIgnoringBlockInfoNames() { return IgnoreBlockInfoNames; }
+  
   //===--------------------------------------------------------------------===//
   // Block Manipulation
   //===--------------------------------------------------------------------===//
@@ -598,6 +611,7 @@ public:
         break;
       case bitc::BLOCKINFO_CODE_BLOCKNAME: {
         if (!CurBlockInfo) return true;
+        if (BitStream->isIgnoringBlockInfoNames()) break;  // Ignore name.
         std::string Name;
         for (unsigned i = 0, e = Record.size(); i != e; ++i)
           Name += (char)Record[i];
@@ -606,6 +620,7 @@ public:
       }
       case bitc::BLOCKINFO_CODE_SETRECORDNAME: {
         if (!CurBlockInfo) return true;
+        if (BitStream->isIgnoringBlockInfoNames()) break;  // Ignore name.
         std::string Name;
         for (unsigned i = 1, e = Record.size(); i != e; ++i)
           Name += (char)Record[i];
