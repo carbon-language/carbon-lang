@@ -701,17 +701,81 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
   if (SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
     return getZeroExtendExpr(SZ->getOperand(), Ty);
 
-  // FIXME: If the input value is a chrec scev, and we can prove that the value
+  // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
-  // operands (often constants).  This would allow analysis of something like
+  // operands (often constants).  This allows analysis of something like
   // this:  for (unsigned char X = 0; X < 100; ++X) { int Y = X; }
+  if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Op))
+    if (AR->isAffine()) {
+      // Check whether the backedge-taken count is SCEVCouldNotCompute.
+      // Note that this serves two purposes: It filters out loops that are
+      // simply not analyzable, and it covers the case where this code is
+      // being called from within backedge-taken count analysis, such that
+      // attempting to ask for the backedge-taken count would likely result
+      // in infinite recursion. In the later case, the analysis code will
+      // cope with a conservative value, and it will take care to purge
+      // that value once it has finished.
+      SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
+      if (!isa<SCEVCouldNotCompute>(BECount)) {
+        // Compute the extent of AR and divide it by the step value. This is
+        // used to determine if it's safe to extend the stride value.
+        SCEVHandle Start = AR->getStart();
+        SCEVHandle Step = AR->getStepRecurrence(*this);
+
+        // Check whether the backedge-taken count can be losslessly casted to
+        // the addrec's type. The count is always unsigned.
+        SCEVHandle CastedBECount =
+          getTruncateOrZeroExtend(BECount, Start->getType());
+        if (BECount ==
+            getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
+          const Type *WideTy =
+            IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
+          SCEVHandle ZMul =
+            getMulExpr(CastedBECount,
+                       getTruncateOrZeroExtend(Step, Start->getType()));
+          // Check whether Start+Step*BECount has no unsigned overflow.
+          if (getZeroExtendExpr(ZMul, WideTy) ==
+              getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                         getZeroExtendExpr(Step, WideTy))) {
+            SCEVHandle Add = getAddExpr(Start, ZMul);
+            if (getZeroExtendExpr(Add, WideTy) ==
+                getAddExpr(getZeroExtendExpr(Start, WideTy),
+                           getZeroExtendExpr(ZMul, WideTy)))
+              // Return the expression with the addrec on the outside.
+              return getAddRecExpr(getZeroExtendExpr(Start, Ty),
+                                   getZeroExtendExpr(Step, Ty),
+                                   AR->getLoop());
+          }
+
+          // Similar to above, only this time treat the step value as signed.
+          // This covers loops that count down.
+          SCEVHandle SMul =
+            getMulExpr(CastedBECount,
+                       getTruncateOrSignExtend(Step, Start->getType()));
+          // Check whether Start+Step*BECount has no unsigned overflow.
+          if (getSignExtendExpr(SMul, WideTy) ==
+              getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                         getSignExtendExpr(Step, WideTy))) {
+            SCEVHandle Add = getAddExpr(Start, SMul);
+            if (getZeroExtendExpr(Add, WideTy) ==
+                getAddExpr(getZeroExtendExpr(Start, WideTy),
+                           getSignExtendExpr(SMul, WideTy)))
+              // Return the expression with the addrec on the outside.
+              return getAddRecExpr(getZeroExtendExpr(Start, Ty),
+                                   getSignExtendExpr(Step, Ty),
+                                   AR->getLoop());
+          }
+        }
+      }
+    }
 
   SCEVZeroExtendExpr *&Result = (*SCEVZeroExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty);
   return Result;
 }
 
-SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *Ty) {
+SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
+                                              const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
 
@@ -726,10 +790,54 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *
   if (SCEVSignExtendExpr *SS = dyn_cast<SCEVSignExtendExpr>(Op))
     return getSignExtendExpr(SS->getOperand(), Ty);
 
-  // FIXME: If the input value is a chrec scev, and we can prove that the value
+  // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can sign extend all of the
-  // operands (often constants).  This would allow analysis of something like
+  // operands (often constants).  This allows analysis of something like
   // this:  for (signed char X = 0; X < 100; ++X) { int Y = X; }
+  if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Op))
+    if (AR->isAffine()) {
+      // Check whether the backedge-taken count is SCEVCouldNotCompute.
+      // Note that this serves two purposes: It filters out loops that are
+      // simply not analyzable, and it covers the case where this code is
+      // being called from within backedge-taken count analysis, such that
+      // attempting to ask for the backedge-taken count would likely result
+      // in infinite recursion. In the later case, the analysis code will
+      // cope with a conservative value, and it will take care to purge
+      // that value once it has finished.
+      SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
+      if (!isa<SCEVCouldNotCompute>(BECount)) {
+        // Compute the extent of AR and divide it by the step value. This is
+        // used to determine if it's safe to extend the stride value.
+        SCEVHandle Start = AR->getStart();
+        SCEVHandle Step = AR->getStepRecurrence(*this);
+
+        // Check whether the backedge-taken count can be losslessly casted to
+        // the addrec's type. The count is always unsigned.
+        SCEVHandle CastedBECount =
+          getTruncateOrZeroExtend(BECount, Start->getType());
+        if (BECount ==
+            getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
+          const Type *WideTy =
+            IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
+          SCEVHandle SMul =
+            getMulExpr(CastedBECount,
+                       getTruncateOrSignExtend(Step, Start->getType()));
+          // Check whether Start+Step*BECount has no signed overflow.
+          if (getSignExtendExpr(SMul, WideTy) ==
+              getMulExpr(getSignExtendExpr(CastedBECount, WideTy),
+                         getSignExtendExpr(Step, WideTy))) {
+            SCEVHandle Add = getAddExpr(Start, SMul);
+            if (getSignExtendExpr(Add, WideTy) ==
+                getAddExpr(getSignExtendExpr(Start, WideTy),
+                           getSignExtendExpr(SMul, WideTy)))
+              // Return the expression with the addrec on the outside.
+              return getAddRecExpr(getSignExtendExpr(Start, Ty),
+                                   getSignExtendExpr(Step, Ty),
+                                   AR->getLoop());
+          }
+        }
+      }
+    }
 
   SCEVSignExtendExpr *&Result = (*SCEVSignExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty);
@@ -1962,20 +2070,36 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
 /// hasLoopInvariantBackedgeTakenCount).
 ///
 SCEVHandle ScalarEvolution::getBackedgeTakenCount(const Loop *L) {
-  std::map<const Loop*, SCEVHandle>::iterator I = BackedgeTakenCounts.find(L);
-  if (I == BackedgeTakenCounts.end()) {
+  // Initially insert a CouldNotCompute for this loop. If the insertion
+  // succeeds, procede to actually compute a backedge-taken count and
+  // update the value. The temporary CouldNotCompute value tells SCEV
+  // code elsewhere that it shouldn't attempt to request a new
+  // backedge-taken count, which could result in infinite recursion.
+  std::pair<std::map<const Loop*, SCEVHandle>::iterator, bool> Pair =
+    BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
+  if (Pair.second) {
     SCEVHandle ItCount = ComputeBackedgeTakenCount(L);
-    I = BackedgeTakenCounts.insert(std::make_pair(L, ItCount)).first;
     if (ItCount != UnknownValue) {
       assert(ItCount->isLoopInvariant(L) &&
              "Computed trip count isn't loop invariant for loop!");
       ++NumTripCountsComputed;
+
+      // Now that we know the trip count for this loop, forget any
+      // existing SCEV values for PHI nodes in this loop since they
+      // are only conservative estimates made without the benefit
+      // of trip count information.
+      for (BasicBlock::iterator I = L->getHeader()->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I)
+        deleteValueFromRecords(PN);
+
+      // Update the value in the map.
+      Pair.first->second = ItCount;
     } else if (isa<PHINode>(L->getHeader()->begin())) {
       // Only count loops that have phi nodes as not being computable.
       ++NumTripCountsNotComputed;
     }
   }
-  return I->second;
+  return Pair.first->second;
 }
 
 /// forgetLoopBackedgeTakenCount - This method should be called by the
