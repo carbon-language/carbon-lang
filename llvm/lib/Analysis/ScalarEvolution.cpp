@@ -1756,6 +1756,8 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
       if (CI->isNullValue())
         return getSCEV(U->getOperand(1));
+      if (CI->isAllOnesValue())
+        return getSCEV(U->getOperand(0));
       const APInt &A = CI->getValue();
       unsigned Ones = A.countTrailingOnes();
       if (APIntOps::isMask(Ones, A))
