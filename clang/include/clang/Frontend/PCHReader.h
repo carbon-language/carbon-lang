@@ -87,7 +87,12 @@ private:
 
   /// \brief The bitstream reader from which we'll read the PCH file.
   llvm::BitstreamReader StreamFile;
-  llvm::BitstreamCursor Stream;    
+  llvm::BitstreamCursor Stream;
+
+  /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block.  It
+  /// has read all the abbreviations at the start of the block and is ready to
+  /// jump around with these in context.
+  llvm::BitstreamCursor DeclsCursor;
 
   /// \brief The file name of the PCH file.
   std::string FileName;
@@ -291,6 +296,11 @@ public:
   /// source each time it is called, and is meant to be used via a
   /// LazyOffsetPtr.
   virtual Stmt *GetStmt(uint64_t Offset);
+
+  /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
+  /// specified cursor.  Read the abbreviations that are at the top of the block
+  /// and then leave the cursor pointing into the block.
+  bool ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor, unsigned BlockID);
 
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.

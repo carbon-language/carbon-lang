@@ -1683,6 +1683,27 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   }
 }
 
+/// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
+/// specified cursor.  Read the abbreviations that are at the top of the block
+/// and then leave the cursor pointing into the block.
+bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
+                                 unsigned BlockID) {
+  if (Cursor.EnterSubBlock(BlockID)) {
+    Error("Malformed block record");
+    return Failure;
+  }
+  
+  RecordData Record;
+  while (true) {
+    unsigned Code = Cursor.ReadCode();
+    
+    // We expect all abbrevs to be at the start of the block.
+    if (Code != llvm::bitc::DEFINE_ABBREV)
+      return false;
+    Cursor.ReadAbbrevRecord();
+  }
+}
+
 void PCHReader::ReadMacroRecord(uint64_t Offset) {
   // Keep track of where we are in the stream, then jump back there
   // after reading this macro.
@@ -1807,7 +1828,6 @@ PCHReader::ReadPCHBlock() {
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       switch (Stream.ReadSubBlockID()) {
-      case pch::DECLS_BLOCK_ID: // Skip decls block (lazily loaded)
       case pch::TYPES_BLOCK_ID: // Skip types block (lazily loaded)
       default:  // Skip unknown content.
         if (Stream.SkipBlock()) {
@@ -1816,6 +1836,20 @@ PCHReader::ReadPCHBlock() {
         }
         break;
 
+      case pch::DECLS_BLOCK_ID:
+        // We lazily load the decls block, but we want to set up the
+        // DeclsCursor cursor to point into it.  Clone our current bitcode
+        // cursor to it, enter the block and read the abbrevs in that block.
+        // With the main cursor, we just skip over it.
+        DeclsCursor = Stream;
+        if (Stream.SkipBlock() ||  // Skip with the main cursor.
+            // Read the abbrevs.
+            ReadBlockAbbrevs(DeclsCursor, pch::DECLS_BLOCK_ID)) {
+          Error("Malformed block record");
+          return Failure;
+        }
+        break;
+          
       case pch::PREPROCESSOR_BLOCK_ID:
         if (Stream.SkipBlock()) {
           Error("Malformed block record");
