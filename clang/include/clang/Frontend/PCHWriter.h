@@ -168,11 +168,15 @@ private:
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
+  
   void WriteDeclsBlock(ASTContext &Context);
   void WriteMethodPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributeRecord(const Attr *Attr);
 
+  unsigned ParmVarDeclAbbrev;
+  void WriteDeclsBlockAbbrevs();
+  
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
@@ -264,6 +268,7 @@ public:
   /// or may not have been emitted yet.
   unsigned GetLabelID(LabelStmt *S);
 
+  unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
 };
 
 } // end namespace clang

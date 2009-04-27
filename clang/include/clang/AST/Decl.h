@@ -285,7 +285,7 @@ public:
   /// variable.
   const VarDecl *getPreviousDeclaration() const { return PreviousDeclaration; }
 
-  void setPreviousDeclaration(VarDecl * PrevDecl) {
+  void setPreviousDeclaration(VarDecl *PrevDecl) {
     PreviousDeclaration = PrevDecl;
   }
 

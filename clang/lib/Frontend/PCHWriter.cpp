@@ -18,7 +18,6 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -484,8 +483,8 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.Freestanding); // Freestanding implementation
   Record.push_back(LangOpts.NoBuiltin); // Do not use builtin functions (-fno-builtin)
 
-  Record.push_back(LangOpts.ThreadsafeStatics); // Whether static initializers are protected
-                                  // by locks.
+  // Whether static initializers are protected by locks.
+  Record.push_back(LangOpts.ThreadsafeStatics);
   Record.push_back(LangOpts.Blocks); // block extension to C
   Record.push_back(LangOpts.EmitAllDecls); // Emit all declarations, even if
                                   // they are unused.
@@ -1737,6 +1736,7 @@ pch::DeclID PCHWriter::getDeclID(const Decl *D) {
 }
 
 void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
+  // FIXME: Emit a stable enum for NameKind.  0 = Identifier etc.
   Record.push_back(Name.getNameKind());
   switch (Name.getNameKind()) {
   case DeclarationName::Identifier:

@@ -175,6 +175,7 @@
 		DECB77130FA5752300F5FBC7 /* PCHReaderStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */; };
 		DECB77790FA579B000F5FBC7 /* PCHReaderDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB77780FA579B000F5FBC7 /* PCHReaderDecl.cpp */; };
 		DECB77F70FA5850200F5FBC7 /* PCHWriterDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB77F60FA5850200F5FBC7 /* PCHWriterDecl.cpp */; };
+		DECB78170FA5882F00F5FBC7 /* PCHWriterStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECB78160FA5882F00F5FBC7 /* PCHWriterStmt.cpp */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
 		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
@@ -589,6 +590,8 @@
 		DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHReaderStmt.cpp; path = lib/Frontend/PCHReaderStmt.cpp; sourceTree = "<group>"; };
 		DECB77780FA579B000F5FBC7 /* PCHReaderDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHReaderDecl.cpp; path = lib/Frontend/PCHReaderDecl.cpp; sourceTree = "<group>"; };
 		DECB77F60FA5850200F5FBC7 /* PCHWriterDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHWriterDecl.cpp; path = lib/Frontend/PCHWriterDecl.cpp; sourceTree = "<group>"; };
+		DECB78160FA5882F00F5FBC7 /* PCHWriterStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PCHWriterStmt.cpp; path = lib/Frontend/PCHWriterStmt.cpp; sourceTree = "<group>"; };
+		DECB78540FA58F5500F5FBC7 /* AccessSpecifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AccessSpecifier.h; path = clang/Parse/AccessSpecifier.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = lib/AST/Decl.cpp; sourceTree = "<group>"; tabWidth = 2; usesTabs = 0; };
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; tabWidth = 2; };
@@ -818,6 +821,7 @@
 				DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */,
 				DEF165700F8FB34D0098507F /* PCHWriter.cpp */,
 				DECB77F60FA5850200F5FBC7 /* PCHWriterDecl.cpp */,
+				DECB78160FA5882F00F5FBC7 /* PCHWriterStmt.cpp */,
 				352246E40F5C6BE000D0D279 /* PlistDiagnostics.cpp */,
 				352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */,
 				352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */,
@@ -1105,6 +1109,7 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				DECB78540FA58F5500F5FBC7 /* AccessSpecifier.h */,
 				DE613EF30E0E148D00B05B79 /* APValue.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
@@ -1673,6 +1678,7 @@
 				DECB77130FA5752300F5FBC7 /* PCHReaderStmt.cpp in Sources */,
 				DECB77790FA579B000F5FBC7 /* PCHReaderDecl.cpp in Sources */,
 				DECB77F70FA5850200F5FBC7 /* PCHWriterDecl.cpp in Sources */,
+				DECB78170FA5882F00F5FBC7 /* PCHWriterStmt.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

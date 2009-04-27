@@ -30,10 +30,12 @@ namespace {
 
   public:
     pch::DeclCode Code;
+    unsigned AbbrevToUse;
 
     PCHDeclWriter(PCHWriter &Writer, ASTContext &Context, 
                   PCHWriter::RecordData &Record) 
-      : Writer(Writer), Context(Context), Record(Record) { }
+      : Writer(Writer), Context(Context), Record(Record) {
+    }
 
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
@@ -349,12 +351,34 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   // FIXME: why isn't the "default argument" just stored as the initializer
   // in VarDecl?
   Code = pch::DECL_PARM_VAR;
+  
+  
+  // If the assumptions about the DECL_PARM_VAR abbrev are true, use it.  Here
+  // we dynamically check for the properties that we optimize for, but don't
+  // know are true of all PARM_VAR_DECLs.
+  if (!D->hasAttrs() &&
+      !D->isImplicit() &&
+      D->getAccess() == AS_none &&
+      D->getStorageClass() == 0 &&
+      !D->hasCXXDirectInitializer() && // Can params have this ever?
+      D->getObjCDeclQualifier() == 0)
+    AbbrevToUse = Writer.getParmVarDeclAbbrev();
+
+  // Check things we know are true of *every* PARM_VAR_DECL, which is more than
+  // just us assuming it.
+  assert(!D->isInvalidDecl() && "Shouldn't emit invalid decls");
+  assert(!D->isThreadSpecified() && "PARM_VAR_DECL can't be __thread");
+  assert(D->getAccess() == AS_none && "PARM_VAR_DECL can't be public/private");
+  assert(!D->isDeclaredInCondition() && "PARM_VAR_DECL can't be in condition");
+  assert(D->getPreviousDeclaration() == 0 && "PARM_VAR_DECL can't be redecl");
+  assert(D->getInit() == 0 && "PARM_VAR_DECL never has init");
 }
 
 void PCHDeclWriter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
   VisitParmVarDecl(D);
   Writer.AddTypeRef(D->getOriginalType(), Record);
   Code = pch::DECL_ORIGINAL_PARM_VAR;
+  AbbrevToUse = 0;
 }
 
 void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
@@ -395,11 +419,48 @@ void PCHDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 // PCHWriter Implementation
 //===----------------------------------------------------------------------===//
 
+void PCHWriter::WriteDeclsBlockAbbrevs() {
+  using namespace llvm;
+  // Abbreviation for DECL_PARM_VAR.
+  BitCodeAbbrev *Abv = new BitCodeAbbrev();
+  Abv->Add(BitCodeAbbrevOp(pch::DECL_PARM_VAR));
+
+  // Decl
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Location
+  Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
+  Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
+  Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
+  Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
+  
+  // NamedDecl
+  Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  // ValueDecl
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
+  // VarDecl
+  Abv->Add(BitCodeAbbrevOp(0));                       // StorageClass
+  Abv->Add(BitCodeAbbrevOp(0));                       // isThreadSpecified
+  Abv->Add(BitCodeAbbrevOp(0));                       // hasCXXDirectInitializer
+  Abv->Add(BitCodeAbbrevOp(0));                       // isDeclaredInCondition
+  Abv->Add(BitCodeAbbrevOp(0));                       // PrevDecl
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // TypeSpecStartLoc
+  Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
+  // ParmVarDecl
+  Abv->Add(BitCodeAbbrevOp(0));                       // ObjCDeclQualifier
+  
+  ParmVarDeclAbbrev = Stream.EmitAbbrev(Abv);
+}
+
 /// \brief Write a block containing all of the declarations.
 void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   // Enter the declarations block.
-  Stream.EnterSubblock(pch::DECLS_BLOCK_ID, 2);
+  Stream.EnterSubblock(pch::DECLS_BLOCK_ID, 3);
 
+  // Output the abbreviations that we will use in this block.
+  WriteDeclsBlockAbbrevs();
+  
   // Emit all of the declarations.
   RecordData Record;
   PCHDeclWriter W(*this, Context, Record);
@@ -439,6 +500,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     // Build and emit a record for this declaration
     Record.clear();
     W.Code = (pch::DeclCode)0;
+    W.AbbrevToUse = 0;
     W.Visit(D);
     if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
 
@@ -448,8 +510,8 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
       assert(false && "Unhandled declaration kind while generating PCH");
       exit(-1);
     }
-    Stream.EmitRecord(W.Code, Record);
-
+    Stream.EmitRecord(W.Code, Record, W.AbbrevToUse);
+    
     // If the declaration had any attributes, write them now.
     if (D->hasAttrs())
       WriteAttributeRecord(D->getAttrs());
