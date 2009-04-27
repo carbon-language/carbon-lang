@@ -475,6 +475,7 @@ Attr *PCHReader::ReadAttributes() {
 
     SIMPLE_ATTR(ObjCException);
     SIMPLE_ATTR(ObjCNSObject);
+    SIMPLE_ATTR(ObjCOwnershipCFRetain);
     SIMPLE_ATTR(ObjCOwnershipRetain);
     SIMPLE_ATTR(ObjCOwnershipReturns);
     SIMPLE_ATTR(Overloadable);

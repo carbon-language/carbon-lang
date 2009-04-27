@@ -1104,7 +1104,11 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
       ScratchArgs.push_back(std::make_pair(i, IncRefMsg));
       hasArgEffect = true;
     }
-}
+    else if ((*I)->getAttr<ObjCOwnershipCFRetainAttr>()) {
+      ScratchArgs.push_back(std::make_pair(i, IncRef));
+      hasArgEffect = true;
+    }    
+  }
   
   if (!hasRetEffect && !hasArgEffect)
     return 0;

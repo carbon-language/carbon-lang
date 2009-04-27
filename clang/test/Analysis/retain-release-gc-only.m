@@ -93,3 +93,31 @@ void f3() {
   CFMakeCollectable(A);
   CFRetain(A);
 }
+
+//===----------------------------------------------------------------------===//
+// Tests of ownership attributes.
+//===----------------------------------------------------------------------===//
+
+@interface TestOwnershipAttr : NSObject
+- (NSString*) returnsAnOwnedString __attribute__((objc_ownership_returns));
+- (void) myRetain:(id)__attribute__((objc_ownership_retain))obj;
+- (void) myCFRetain:(id)__attribute__((objc_ownership_cfretain))obj;
+@end
+
+void test_attr_1(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+}
+
+void test_attr_2(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+  [X myRetain:str];
+  [str release];
+}
+
+void test_attr_3(TestOwnershipAttr *X) {
+  // FIXME: This should be a leak.  Need to change the analyzer to
+  // to track Objective-C objects retain counts even in GC mode.
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+  [X myCFRetain:str];
+  [str release];
+}

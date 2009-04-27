@@ -136,11 +136,16 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 21:
     if (!memcmp(Str, "objc_ownership_retain", 21))
       return AT_objc_ownership_retain;      
+    break;
   case 22:
     if (!memcmp(Str, "objc_ownership_returns", 22))
       return AT_objc_ownership_returns;
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
+    break;
+  case 23:
+    if (!memcmp(Str, "objc_ownership_cfretain", 23))
+      return AT_objc_ownership_cfretain;
     break;
   }
   return UnknownAttribute;

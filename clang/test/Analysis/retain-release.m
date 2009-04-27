@@ -412,6 +412,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 @interface TestOwnershipAttr : NSObject
 - (NSString*) returnsAnOwnedString __attribute__((objc_ownership_returns));
 - (void) myRetain:(id)__attribute__((objc_ownership_retain))obj;
+- (void) myCFRetain:(id)__attribute__((objc_ownership_cfretain))obj;
 @end
 
 void test_attr_1(TestOwnershipAttr *X) {
@@ -424,4 +425,9 @@ void test_attr_2(TestOwnershipAttr *X) {
   [str release];
 }
 
+void test_attr_3(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+  [X myCFRetain:str];
+  [str release];
+}
 
