@@ -247,6 +247,10 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
 
 struct PerRecordStats {
   unsigned NumInstances;
+  unsigned NumAbbrev;
+  uint64_t TotalBits;
+  
+  PerRecordStats() : NumInstances(0), NumAbbrev(0), TotalBits(0) {}
 };
 
 struct PerBlockIDStats {
@@ -332,6 +336,8 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
     if (Stream.AtEndOfStream())
       return Error("Premature end of bitstream");
 
+    uint64_t RecordStartBit = Stream.GetCurrentBitNo();
+    
     // Read the code for this record.
     unsigned AbbrevID = Stream.ReadCode();
     switch (AbbrevID) {
@@ -375,11 +381,17 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
       unsigned BlobLen = 0;
       unsigned Code = Stream.ReadRecord(AbbrevID, Record, BlobStart, BlobLen);
 
+        
+        
       // Increment the # occurrences of this code.
       if (BlockStats.CodeFreq.size() <= Code)
         BlockStats.CodeFreq.resize(Code+1);
       BlockStats.CodeFreq[Code].NumInstances++;
-      
+      BlockStats.CodeFreq[Code].TotalBits +=
+        Stream.GetCurrentBitNo()-RecordStartBit;
+      if (AbbrevID != bitc::UNABBREV_RECORD)
+        BlockStats.CodeFreq[Code].NumAbbrev++;
+        
       if (Dump) {
         std::cerr << Indent << "  <";
         if (const char *CodeName =
@@ -545,9 +557,18 @@ static int AnalyzeBitcode() {
       std::reverse(FreqPairs.begin(), FreqPairs.end());
       
       std::cerr << "\tRecord Histogram:\n";
-      fprintf(stderr, "\t\t  Count   Record Kind\n");
+      fprintf(stderr, "\t\t  Count    # Bits   %% Abv  Record Kind\n");
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
-        fprintf(stderr, "\t\t%7d   ", FreqPairs[i].first);
+        const PerRecordStats &RecStats = Stats.CodeFreq[FreqPairs[i].second];
+        
+        fprintf(stderr, "\t\t%7d %9llu ", RecStats.NumInstances,
+                RecStats.TotalBits);
+        
+        if (RecStats.NumAbbrev)
+          fprintf(stderr, "%7.2f  ",
+                  (double)RecStats.NumAbbrev/RecStats.NumInstances*100);
+        else
+          fprintf(stderr, "         ");
         
         if (const char *CodeName = 
               GetCodeName(FreqPairs[i].second, I->first, StreamFile))
