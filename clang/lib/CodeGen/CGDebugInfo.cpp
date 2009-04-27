@@ -304,6 +304,10 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
     std::string FieldName = Field->getNameAsString();
 
+    // Ignore unnamed fields.
+    if (FieldName.empty())
+      continue;
+
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
     llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
@@ -413,6 +417,10 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
     std::string FieldName = Field->getNameAsString();
+
+    // Ignore unnamed fields.
+    if (FieldName.empty())
+      continue;
 
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
