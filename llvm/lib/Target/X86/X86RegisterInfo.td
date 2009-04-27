@@ -461,21 +461,24 @@ def GR64 : RegisterClass<"X86", [i64], 64,
 }
 
 
-// GR8_ABCD, GR16_ABCD, GR32_ABCD, GR64_ABCD - Subclasses of GR8, GR16, GR32,
-// and GR64 which contain just the "a" "b", "c", and "d" registers. On x86-32,
-// GR16_ABCD and GR32_ABCD are classes for registers that support 8-bit subreg
-// operations. On x86-64, GR16_ABCD, GR32_ABCD, and GR64_ABCD are classes for
-// registers that support 8-bit h-register operations.
-def GR8_ABCD : RegisterClass<"X86", [i8], 8, [AL, CL, DL, BL]> {
+// GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD, GR32_ABCD, GR64_ABCD - Subclasses of
+// GR8, GR16, GR32, and GR64 which contain just the "a" "b", "c", and "d"
+// registers. On x86-32, GR16_ABCD and GR32_ABCD are classes for registers
+// that support 8-bit subreg operations. On x86-64, GR16_ABCD, GR32_ABCD,
+// and GR64_ABCD are classes for registers that support 8-bit h-register
+// operations.
+def GR8_ABCD_L : RegisterClass<"X86", [i8], 8, [AL, CL, DL, BL]> {
+}
+def GR8_ABCD_H : RegisterClass<"X86", [i8], 8, [AH, CH, DH, BH]> {
 }
 def GR16_ABCD : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]> {
-  let SubRegClassList = [GR8_ABCD, GR8_ABCD];
+  let SubRegClassList = [GR8_ABCD_L, GR8_ABCD_H];
 }
 def GR32_ABCD : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]> {
-  let SubRegClassList = [GR8_ABCD, GR8_ABCD, GR16_ABCD];
+  let SubRegClassList = [GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD];
 }
 def GR64_ABCD : RegisterClass<"X86", [i64], 64, [RAX, RCX, RDX, RBX]> {
-  let SubRegClassList = [GR8_ABCD, GR8_ABCD, GR16_ABCD, GR32_ABCD];
+  let SubRegClassList = [GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD, GR32_ABCD];
 }
 
 // GR8_NOREX, GR16_NOREX, GR32_NOREX, GR64_NOREX - Subclasses of

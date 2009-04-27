@@ -1645,7 +1645,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
 /// isHReg - Test if the given register is a physical h register.
 static bool isHReg(unsigned Reg) {
-  return Reg == X86::AH || Reg == X86::BH || Reg == X86::CH || Reg == X86::DH;
+  return X86::GR8_ABCD_HRegClass.contains(Reg);
 }
 
 bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -1674,7 +1674,7 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     } else if (CommonRC == &X86::GR16RegClass) {
       Opc = X86::MOV16rr;
     } else if (CommonRC == &X86::GR8RegClass) {
-      // Copying two or from a physical H register on x86-64 requires a NOREX
+      // Copying to or from a physical H register on x86-64 requires a NOREX
       // move.  Otherwise use a normal move.
       if ((isHReg(DestReg) || isHReg(SrcReg)) &&
           TM.getSubtarget<X86Subtarget>().is64Bit())
@@ -1687,8 +1687,13 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = X86::MOV32rr;
     } else if (CommonRC == &X86::GR16_ABCDRegClass) {
       Opc = X86::MOV16rr;
-    } else if (CommonRC == &X86::GR8_ABCDRegClass) {
+    } else if (CommonRC == &X86::GR8_ABCD_LRegClass) {
       Opc = X86::MOV8rr;
+    } else if (CommonRC == &X86::GR8_ABCD_HRegClass) {
+      if (TM.getSubtarget<X86Subtarget>().is64Bit())
+        Opc = X86::MOV8rr_NOREX;
+      else
+        Opc = X86::MOV8rr;
     } else if (CommonRC == &X86::GR64_NOREXRegClass) {
       Opc = X86::MOV64rr;
     } else if (CommonRC == &X86::GR32_NOREXRegClass) {
@@ -1791,8 +1796,10 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   return false;
 }
 
-static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
-                                  bool isStackAligned) {
+static unsigned getStoreRegOpcode(unsigned SrcReg,
+                                  const TargetRegisterClass *RC,
+                                  bool isStackAligned,
+                                  TargetMachine &TM) {
   unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64mr;
@@ -1801,15 +1808,26 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16mr;
   } else if (RC == &X86::GR8RegClass) {
-    Opc = X86::MOV8mr;
+    // Copying to or from a physical H register on x86-64 requires a NOREX
+    // move.  Otherwise use a normal move.
+    if (isHReg(SrcReg) &&
+        TM.getSubtarget<X86Subtarget>().is64Bit())
+      Opc = X86::MOV8mr_NOREX;
+    else
+      Opc = X86::MOV8mr;
   } else if (RC == &X86::GR64_ABCDRegClass) {
     Opc = X86::MOV64mr;
   } else if (RC == &X86::GR32_ABCDRegClass) {
     Opc = X86::MOV32mr;
   } else if (RC == &X86::GR16_ABCDRegClass) {
     Opc = X86::MOV16mr;
-  } else if (RC == &X86::GR8_ABCDRegClass) {
+  } else if (RC == &X86::GR8_ABCD_LRegClass) {
     Opc = X86::MOV8mr;
+  } else if (RC == &X86::GR8_ABCD_HRegClass) {
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      Opc = X86::MOV8mr_NOREX;
+    else
+      Opc = X86::MOV8mr;
   } else if (RC == &X86::GR64_NOREXRegClass) {
     Opc = X86::MOV64mr;
   } else if (RC == &X86::GR32_NOREXRegClass) {
@@ -1848,7 +1866,7 @@ void X86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   const MachineFunction &MF = *MBB.getParent();
   bool isAligned = (RI.getStackAlignment() >= 16) ||
     RI.needsStackRealignment(MF);
-  unsigned Opc = getStoreRegOpcode(RC, isAligned);
+  unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, TM);
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc)), FrameIdx)
@@ -1862,7 +1880,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
   bool isAligned = (RI.getStackAlignment() >= 16) ||
     RI.needsStackRealignment(MF);
-  unsigned Opc = getStoreRegOpcode(RC, isAligned);
+  unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, TM);
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
@@ -1871,8 +1889,10 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   NewMIs.push_back(MIB);
 }
 
-static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
-                                 bool isStackAligned) {
+static unsigned getLoadRegOpcode(unsigned DestReg,
+                                 const TargetRegisterClass *RC,
+                                 bool isStackAligned,
+                                 const TargetMachine &TM) {
   unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64rm;
@@ -1881,15 +1901,26 @@ static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16rm;
   } else if (RC == &X86::GR8RegClass) {
-    Opc = X86::MOV8rm;
+    // Copying to or from a physical H register on x86-64 requires a NOREX
+    // move.  Otherwise use a normal move.
+    if (isHReg(DestReg) &&
+        TM.getSubtarget<X86Subtarget>().is64Bit())
+      Opc = X86::MOV8rm_NOREX;
+    else
+      Opc = X86::MOV8rm;
   } else if (RC == &X86::GR64_ABCDRegClass) {
     Opc = X86::MOV64rm;
   } else if (RC == &X86::GR32_ABCDRegClass) {
     Opc = X86::MOV32rm;
   } else if (RC == &X86::GR16_ABCDRegClass) {
     Opc = X86::MOV16rm;
-  } else if (RC == &X86::GR8_ABCDRegClass) {
+  } else if (RC == &X86::GR8_ABCD_LRegClass) {
     Opc = X86::MOV8rm;
+  } else if (RC == &X86::GR8_ABCD_HRegClass) {
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      Opc = X86::MOV8rm_NOREX;
+    else
+      Opc = X86::MOV8rm;
   } else if (RC == &X86::GR64_NOREXRegClass) {
     Opc = X86::MOV64rm;
   } else if (RC == &X86::GR32_NOREXRegClass) {
@@ -1928,7 +1959,7 @@ void X86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   const MachineFunction &MF = *MBB.getParent();
   bool isAligned = (RI.getStackAlignment() >= 16) ||
     RI.needsStackRealignment(MF);
-  unsigned Opc = getLoadRegOpcode(RC, isAligned);
+  unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, TM);
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
@@ -1940,7 +1971,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   bool isAligned = (RI.getStackAlignment() >= 16) ||
     RI.needsStackRealignment(MF);
-  unsigned Opc = getLoadRegOpcode(RC, isAligned);
+  unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, TM);
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
@@ -2455,9 +2486,8 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     MVT VT = *RC->vt_begin();
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
-    Load = DAG.getTargetNode(getLoadRegOpcode(RC, isAligned), dl,
-                             VT, MVT::Other,
-                             &AddrOps[0], AddrOps.size());
+    Load = DAG.getTargetNode(getLoadRegOpcode(0, RC, isAligned, TM), dl,
+                             VT, MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
   }
 
@@ -2489,8 +2519,10 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     AddrOps.push_back(Chain);
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
-    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC, isAligned), dl,
-                                      MVT::Other, &AddrOps[0], AddrOps.size());
+    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(0, DstRC,
+                                                        isAligned, TM),
+                                      dl, MVT::Other,
+                                      &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }
 
