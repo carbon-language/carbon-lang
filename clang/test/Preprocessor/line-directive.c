@@ -41,11 +41,13 @@
 
 # 192 "glomp.h" // not a system header.
 typedef int x;  // expected-note {{previous definition is here}}
-typedef int x;  // expected-warning {{redefinition of typedef 'x' is invalid in C}}
+typedef int x;  // expected-error {{redefinition of typedef 'x' is invalid in C}}
 
 # 192 "glomp.h" 3 // System header.
 typedef int y;  // ok
 typedef int y;  // ok
+
+typedef int q;  // q is in system header.
 
 #line 42 "blonk.h"  // doesn't change system headerness.
 
@@ -60,8 +62,9 @@ typedef int z1;  // ok
 # 42 "blonk.h"  // DOES change system headerness.
 
 typedef int w;  // expected-note {{previous definition is here}}
-typedef int w;  // expected-warning {{redefinition of typedef 'w' is invalid in C}}
+typedef int w;  // expected-error {{redefinition of typedef 'w' is invalid in C}}
 
+typedef int q;  // original definition in system header, should not diagnose.
 
 // This should not produce an "extra tokens at end of #line directive" warning,
 // because #line is allowed to contain expanded tokens.

@@ -560,7 +560,12 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
 
   // If we have a redefinition of a typedef in C, emit a warning.  This warning
   // is normally mapped to an error, but can be controlled with
-  // -Wtypedef-redefinition.
+  // -Wtypedef-redefinition.  If either the original was in a system header,
+  // don't emit this for compatibility with GCC.
+  if (PP.getDiagnostics().getSuppressSystemWarnings() &&
+      Context.getSourceManager().isInSystemHeader(Old->getLocation()))
+    return;
+  
   Diag(New->getLocation(), diag::warn_redefinition_of_typedef)
     << New->getDeclName();
   Diag(Old->getLocation(), diag::note_previous_definition);
