@@ -1331,7 +1331,12 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
   return DeclsLoaded[Index];
 }
 
-Stmt *PCHReader::GetStmt(uint64_t Offset) {
+/// \brief Resolve the offset of a statement into a statement.
+///
+/// This operation will read a new statement from the external
+/// source each time it is called, and is meant to be used via a
+/// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
+Stmt *PCHReader::GetDeclStmt(uint64_t Offset) {
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
   SavedStreamPosition SavedPosition(Stream);

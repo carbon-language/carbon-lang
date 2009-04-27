@@ -65,12 +65,13 @@ public:
   /// building a new declaration.
   virtual Decl *GetDecl(unsigned ID) = 0;
 
-  /// \brief Resolve the offset of a statement into a statement.
+  /// \brief Resolve the offset of a statement in the decl stream into a
+  /// statement.
   ///
   /// This operation will read a new statement from the external
   /// source each time it is called, and is meant to be used via a
   /// LazyOffsetPtr.
-  virtual Stmt *GetStmt(uint64_t Offset) = 0;
+  virtual Stmt *GetDeclStmt(uint64_t Offset) = 0;
 
   /// \brief Read all of the declarations lexically stored in a
   /// declaration context.
@@ -176,7 +177,7 @@ public:
 };
 
 /// \brief A lazy pointer to a statement.
-typedef LazyOffsetPtr<Stmt, &ExternalASTSource::GetStmt> LazyStmtPtr;
+typedef LazyOffsetPtr<Stmt, &ExternalASTSource::GetDeclStmt> LazyDeclStmtPtr;
 
 } // end namespace clang
 

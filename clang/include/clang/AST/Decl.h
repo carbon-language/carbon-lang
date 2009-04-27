@@ -498,7 +498,7 @@ private:
   /// FunctionDecl object to save an allocation like FunctionType does.
   ParmVarDecl **ParamInfo;
   
-  LazyStmtPtr Body;
+  LazyDeclStmtPtr Body;
   
   /// PreviousDeclaration - A link to the previous declaration of this
   /// same function, NULL if this is the first declaration. For

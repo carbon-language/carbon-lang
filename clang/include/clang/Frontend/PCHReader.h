@@ -288,8 +288,8 @@ public:
   ///
   /// This operation will read a new statement from the external
   /// source each time it is called, and is meant to be used via a
-  /// LazyOffsetPtr.
-  virtual Stmt *GetStmt(uint64_t Offset);
+  /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
+  virtual Stmt *GetDeclStmt(uint64_t Offset);
 
   /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
   /// specified cursor.  Read the abbreviations that are at the top of the block
