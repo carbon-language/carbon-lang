@@ -1723,39 +1723,38 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }
 
-  if (Consumer) {
-    llvm::OwningPtr<ASTContext> ContextOwner;
+  if (FixItAtLocations.size() > 0) {
+    // Even without the "-fixit" flag, with may have some specific
+    // locations where the user has requested fixes. Process those
+    // locations now.
+    if (!FixItRewrite)
+      FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
+                                       PP.getSourceManager(),
+                                       PP.getLangOptions());
 
-    if (FixItAtLocations.size() > 0) {
-      // Even without the "-fixit" flag, with may have some specific
-      // locations where the user has requested fixes. Process those
-      // locations now.
-      if (!FixItRewrite)
-        FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
-                                         PP.getSourceManager(),
-                                         PP.getLangOptions());
-
-      bool AddedFixitLocation = false;
-      for (unsigned Idx = 0, Last = FixItAtLocations.size(); 
-           Idx != Last; ++Idx) {
-        RequestedSourceLocation Requested;
-        if (FixItAtLocations[Idx].ResolveLocation(PP.getFileManager(), 
-                                                  Requested)) {
-          fprintf(stderr, "FIX-IT could not find file \"%s\"\n",
-                  FixItAtLocations[Idx].FileName.c_str());
-        } else {
-          FixItRewrite->addFixItLocation(Requested);
-          AddedFixitLocation = true;
-        }
-      }
-
-      if (!AddedFixitLocation) {
-        // All of the fix-it locations were bad. Don't fix anything.
-        delete FixItRewrite;
-        FixItRewrite = 0;
+    bool AddedFixitLocation = false;
+    for (unsigned Idx = 0, Last = FixItAtLocations.size(); 
+         Idx != Last; ++Idx) {
+      RequestedSourceLocation Requested;
+      if (FixItAtLocations[Idx].ResolveLocation(PP.getFileManager(), 
+                                                Requested)) {
+        fprintf(stderr, "FIX-IT could not find file \"%s\"\n",
+                FixItAtLocations[Idx].FileName.c_str());
+      } else {
+        FixItRewrite->addFixItLocation(Requested);
+        AddedFixitLocation = true;
       }
     }
 
+    if (!AddedFixitLocation) {
+      // All of the fix-it locations were bad. Don't fix anything.
+      delete FixItRewrite;
+      FixItRewrite = 0;
+    }
+  }
+
+  llvm::OwningPtr<ASTContext> ContextOwner;
+  if (Consumer) {
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
                                       PP.getSourceManager(),
                                       PP.getTargetInfo(),
@@ -1764,7 +1763,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       /* FreeMemory = */ !DisableFree,
                                       /* size_reserve = */0,
                        /* InitializeBuiltins = */ImplicitIncludePCH.empty()));
-    
+     
     if (!ImplicitIncludePCH.empty()) {
       // The user has asked us to include a precompiled header. Load
       // the precompiled header into the AST context.
@@ -1809,16 +1808,17 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats, 
              CompleteTranslationUnit);
-    
-    if (FixItRewrite)
-      FixItRewrite->WriteFixedFile(InFile, OutputFile);
-
-    // If in -disable-free mode, don't deallocate these when they go out of
-    // scope.
-    if (DisableFree)
-      ContextOwner.take();
   }
 
+  if (FixItRewrite)
+    FixItRewrite->WriteFixedFile(InFile, OutputFile);
+  
+  // If in -disable-free mode, don't deallocate ASTContext.
+  if (DisableFree)
+    ContextOwner.take();
+  else
+    ContextOwner.reset(); // Delete ASTContext
+  
   if (VerifyDiagnostics)
     if (CheckDiagnostics(PP))
       exit(1);
