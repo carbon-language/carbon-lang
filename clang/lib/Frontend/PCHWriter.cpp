@@ -1355,11 +1355,11 @@ void PCHWriter::WriteBlockInfoBlock() {
   RecordData Record;
   Stream.EnterSubblock(llvm::bitc::BLOCKINFO_BLOCK_ID, 3);
   
-#define BLOCK(X) EmitBlockID(pch::X, #X, Stream, Record)
+#define BLOCK(X) EmitBlockID(pch::X ## _ID, #X, Stream, Record)
 #define RECORD(X) EmitRecordID(pch::X, #X, Stream, Record)
  
   // PCH Top-Level Block.
-  BLOCK(PCH_BLOCK_ID);
+  BLOCK(PCH_BLOCK);
   RECORD(TYPE_OFFSET);
   RECORD(DECL_OFFSET);
   RECORD(LANGUAGE_OPTIONS);
@@ -1376,7 +1376,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(PP_COUNTER_VALUE);
   
   // SourceManager Block.
-  BLOCK(SOURCE_MANAGER_BLOCK_ID);
+  BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
   RECORD(SM_SLOC_BUFFER_ENTRY);
   RECORD(SM_SLOC_BUFFER_BLOB);
@@ -1385,13 +1385,13 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SM_HEADER_FILE_INFO);
   
   // Preprocessor Block.
-  BLOCK(PREPROCESSOR_BLOCK_ID);
+  BLOCK(PREPROCESSOR_BLOCK);
   RECORD(PP_MACRO_OBJECT_LIKE);
   RECORD(PP_MACRO_FUNCTION_LIKE);
   RECORD(PP_TOKEN);
 
   // Types block.
-  BLOCK(TYPES_BLOCK_ID);
+  BLOCK(TYPES_BLOCK);
   RECORD(TYPE_EXT_QUAL);
   RECORD(TYPE_FIXED_WIDTH_INT);
   RECORD(TYPE_COMPLEX);
@@ -1417,7 +1417,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_OBJC_QUALIFIED_ID);
   
   // Decls block.
-  BLOCK(DECLS_BLOCK_ID);
+  BLOCK(DECLS_BLOCK);
   RECORD(DECL_ATTR);
   RECORD(DECL_TRANSLATION_UNIT);
   RECORD(DECL_TYPEDEF);
