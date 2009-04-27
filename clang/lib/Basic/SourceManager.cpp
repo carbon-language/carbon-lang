@@ -308,6 +308,17 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   return Entry;
 }
 
+void SourceManager::PreallocateSLocEntries(ExternalSLocEntrySource *Source,
+                                           unsigned NumSLocEntries,
+                                           unsigned NextOffset) {
+  ExternalSLocEntries = Source;
+  this->NextOffset = NextOffset;
+  SLocEntryLoaded.resize(NumSLocEntries + 1);
+  SLocEntryLoaded[0] = true;
+  SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries);
+}
+
+
 //===----------------------------------------------------------------------===//
 // Methods to create new FileID's and instantiations.
 //===----------------------------------------------------------------------===//
@@ -317,7 +328,26 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
 /// corresponds to a file or some other input source.
 FileID SourceManager::createFileID(const ContentCache *File,
                                    SourceLocation IncludePos,
-                                   SrcMgr::CharacteristicKind FileCharacter) {
+                                   SrcMgr::CharacteristicKind FileCharacter,
+                                   unsigned PreallocatedID,
+                                   unsigned Offset) {
+  SLocEntry NewEntry = SLocEntry::get(NextOffset, 
+                                      FileInfo::get(IncludePos, File,
+                                                    FileCharacter));
+  if (PreallocatedID) {
+    // If we're filling in a preallocated ID, just load in the file
+    // entry and return.
+    assert(PreallocatedID < SLocEntryLoaded.size() && 
+           "Preallocate ID out-of-range");
+    assert(!SLocEntryLoaded[PreallocatedID] && 
+           "Source location entry already loaded");
+    assert(Offset && "Preallocate source location cannot have zero offset");
+    SLocEntryTable[PreallocatedID] 
+      = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
+    SLocEntryLoaded[PreallocatedID] = true;
+    return LastFileIDLookup = FileID::get(PreallocatedID);
+  }
+
   SLocEntryTable.push_back(SLocEntry::get(NextOffset, 
                                           FileInfo::get(IncludePos, File,
                                                         FileCharacter)));
@@ -336,8 +366,22 @@ FileID SourceManager::createFileID(const ContentCache *File,
 SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
                                                      SourceLocation ILocStart,
                                                      SourceLocation ILocEnd,
-                                                     unsigned TokLength) {
+                                                     unsigned TokLength,
+                                                     unsigned PreallocatedID,
+                                                     unsigned Offset) {
   InstantiationInfo II = InstantiationInfo::get(ILocStart,ILocEnd, SpellingLoc);
+  if (PreallocatedID) {
+    // If we're filling in a preallocated ID, just load in the
+    // instantiation entry and return.
+    assert(PreallocatedID < SLocEntryLoaded.size() && 
+           "Preallocate ID out-of-range");
+    assert(!SLocEntryLoaded[PreallocatedID] && 
+           "Source location entry already loaded");
+    assert(Offset && "Preallocate source location cannot have zero offset");
+    SLocEntryTable[PreallocatedID] = SLocEntry::get(Offset, II);
+    SLocEntryLoaded[PreallocatedID] = true;
+    return SourceLocation::getMacroLoc(Offset);
+  }
   SLocEntryTable.push_back(SLocEntry::get(NextOffset, II));
   assert(NextOffset+TokLength+1 > NextOffset && "Ran out of source locations!");
   NextOffset += TokLength+1;
@@ -391,6 +435,8 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   unsigned NumProbes = 0;
   while (1) {
     --I;
+    if (ExternalSLocEntries)
+      getSLocEntry(FileID::get(I - SLocEntryTable.begin()));
     if (I->getOffset() <= SLocOffset) {
 #if 0
       printf("lin %d -> %d [%s] %d %d\n", SLocOffset,
@@ -399,7 +445,7 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
              LastFileIDLookup.ID,  int(SLocEntryTable.end()-I));
 #endif
       FileID Res = FileID::get(I-SLocEntryTable.begin());
-      
+
       // If this isn't an instantiation, remember it.  We have good locality
       // across FileID lookups.
       if (!I->isInstantiation())
@@ -421,7 +467,7 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   NumProbes = 0;
   while (1) {
     unsigned MiddleIndex = (GreaterIndex-LessIndex)/2+LessIndex;
-    unsigned MidOffset = SLocEntryTable[MiddleIndex].getOffset();
+    unsigned MidOffset = getSLocEntry(FileID::get(MiddleIndex)).getOffset();
     
     ++NumProbes;
     
@@ -865,3 +911,5 @@ void SourceManager::PrintStats() const {
   llvm::cerr << "FileID scans: " << NumLinearScans << " linear, "
              << NumBinaryProbes << " binary.\n";
 }
+
+ExternalSLocEntrySource::~ExternalSLocEntrySource() { }

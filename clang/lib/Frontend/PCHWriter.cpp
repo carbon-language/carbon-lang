@@ -353,7 +353,9 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SELECTOR_OFFSETS);
   RECORD(METHOD_POOL);
   RECORD(PP_COUNTER_VALUE);
-  
+  RECORD(SOURCE_LOCATION_OFFSETS);
+  RECORD(SOURCE_LOCATION_PRELOADS);
+
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -578,90 +580,16 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
 /// the files in the AST.
 void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
                                         const Preprocessor &PP) {
+  RecordData Record;
+
   // Enter the source manager block.
   Stream.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
 
   // Abbreviations for the various kinds of source-location entries.
-  int SLocFileAbbrv = -1;
-  int SLocBufferAbbrv = -1;
-  int SLocBufferBlobAbbrv = -1;
-  int SLocInstantiationAbbrv = -1;
-
-  // Write out the source location entry table. We skip the first
-  // entry, which is always the same dummy entry.
-  RecordData Record;
-  for (SourceManager::sloc_entry_iterator 
-         SLoc = SourceMgr.sloc_entry_begin() + 1,
-         SLocEnd = SourceMgr.sloc_entry_end();
-       SLoc != SLocEnd; ++SLoc) {
-    // Figure out which record code to use.
-    unsigned Code;
-    if (SLoc->isFile()) {
-      if (SLoc->getFile().getContentCache()->Entry)
-        Code = pch::SM_SLOC_FILE_ENTRY;
-      else
-        Code = pch::SM_SLOC_BUFFER_ENTRY;
-    } else
-      Code = pch::SM_SLOC_INSTANTIATION_ENTRY;
-    Record.push_back(Code);
-
-    Record.push_back(SLoc->getOffset());
-    if (SLoc->isFile()) {
-      const SrcMgr::FileInfo &File = SLoc->getFile();
-      Record.push_back(File.getIncludeLoc().getRawEncoding());
-      Record.push_back(File.getFileCharacteristic()); // FIXME: stable encoding
-      Record.push_back(File.hasLineDirectives());
-
-      const SrcMgr::ContentCache *Content = File.getContentCache();
-      if (Content->Entry) {
-        // The source location entry is a file. The blob associated
-        // with this entry is the file name.
-        if (SLocFileAbbrv == -1)
-          SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
-        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record,
-                             Content->Entry->getName(),
-                             strlen(Content->Entry->getName()));
-      } else {
-        // The source location entry is a buffer. The blob associated
-        // with this entry contains the contents of the buffer.
-        if (SLocBufferAbbrv == -1) {
-          SLocBufferAbbrv = CreateSLocBufferAbbrev(Stream);
-          SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
-        }
-
-        // We add one to the size so that we capture the trailing NULL
-        // that is required by llvm::MemoryBuffer::getMemBuffer (on
-        // the reader side).
-        const llvm::MemoryBuffer *Buffer = Content->getBuffer();
-        const char *Name = Buffer->getBufferIdentifier();
-        Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record, Name, strlen(Name) + 1);
-        Record.clear();
-        Record.push_back(pch::SM_SLOC_BUFFER_BLOB);
-        Stream.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
-                             Buffer->getBufferStart(),
-                             Buffer->getBufferSize() + 1);
-      }
-    } else {
-      // The source location entry is an instantiation.
-      const SrcMgr::InstantiationInfo &Inst = SLoc->getInstantiation();
-      Record.push_back(Inst.getSpellingLoc().getRawEncoding());
-      Record.push_back(Inst.getInstantiationLocStart().getRawEncoding());
-      Record.push_back(Inst.getInstantiationLocEnd().getRawEncoding());
-
-      // Compute the token length for this macro expansion.
-      unsigned NextOffset = SourceMgr.getNextOffset();
-      SourceManager::sloc_entry_iterator NextSLoc = SLoc;
-      if (++NextSLoc != SLocEnd)
-        NextOffset = NextSLoc->getOffset();
-      Record.push_back(NextOffset - SLoc->getOffset() - 1);
-
-      if (SLocInstantiationAbbrv == -1)
-        SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(Stream);
-      Stream.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
-    }
-
-    Record.clear();
-  }
+  int SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
+  int SLocBufferAbbrv = CreateSLocBufferAbbrev(Stream);
+  int SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
+  int SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(Stream);
 
   // Write the line table.
   if (SourceMgr.hasLineTable()) {
@@ -699,23 +627,125 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     }
   }
 
-  // Loop over all the header files.
+  // Write out entries for all of the header files we know about.
   HeaderSearch &HS = PP.getHeaderSearchInfo();  
+  Record.clear();
   for (HeaderSearch::header_file_iterator I = HS.header_file_begin(), 
                                           E = HS.header_file_end();
        I != E; ++I) {
     Record.push_back(I->isImport);
     Record.push_back(I->DirInfo);
     Record.push_back(I->NumIncludes);
-    if (I->ControllingMacro)
-      AddIdentifierRef(I->ControllingMacro, Record);
-    else
-      Record.push_back(0);
+    AddIdentifierRef(I->ControllingMacro, Record);
     Stream.EmitRecord(pch::SM_HEADER_FILE_INFO, Record);
     Record.clear();
   }
 
+  // Write out the source location entry table. We skip the first
+  // entry, which is always the same dummy entry.
+  std::vector<uint64_t> SLocEntryOffsets;
+  RecordData PreloadSLocs;
+  SLocEntryOffsets.reserve(SourceMgr.sloc_entry_size() - 1);
+  for (SourceManager::sloc_entry_iterator 
+         SLoc = SourceMgr.sloc_entry_begin() + 1,
+         SLocEnd = SourceMgr.sloc_entry_end();
+       SLoc != SLocEnd; ++SLoc) {
+    // Record the offset of this source-location entry.
+    SLocEntryOffsets.push_back(Stream.GetCurrentBitNo());
+
+    // Figure out which record code to use.
+    unsigned Code;
+    if (SLoc->isFile()) {
+      if (SLoc->getFile().getContentCache()->Entry)
+        Code = pch::SM_SLOC_FILE_ENTRY;
+      else
+        Code = pch::SM_SLOC_BUFFER_ENTRY;
+    } else
+      Code = pch::SM_SLOC_INSTANTIATION_ENTRY;
+    Record.clear();
+    Record.push_back(Code);
+
+    Record.push_back(SLoc->getOffset());
+    if (SLoc->isFile()) {
+      const SrcMgr::FileInfo &File = SLoc->getFile();
+      Record.push_back(File.getIncludeLoc().getRawEncoding());
+      Record.push_back(File.getFileCharacteristic()); // FIXME: stable encoding
+      Record.push_back(File.hasLineDirectives());
+
+      const SrcMgr::ContentCache *Content = File.getContentCache();
+      if (Content->Entry) {
+        // The source location entry is a file. The blob associated
+        // with this entry is the file name.
+        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record,
+                             Content->Entry->getName(),
+                             strlen(Content->Entry->getName()));
+
+        // FIXME: For now, preload all file source locations, so that
+        // we get the appropriate File entries in the reader. This is
+        // a temporary measure.
+        PreloadSLocs.push_back(SLocEntryOffsets.size());
+      } else {
+        // The source location entry is a buffer. The blob associated
+        // with this entry contains the contents of the buffer.
+
+        // We add one to the size so that we capture the trailing NULL
+        // that is required by llvm::MemoryBuffer::getMemBuffer (on
+        // the reader side).
+        const llvm::MemoryBuffer *Buffer = Content->getBuffer();
+        const char *Name = Buffer->getBufferIdentifier();
+        Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record, Name, strlen(Name) + 1);
+        Record.clear();
+        Record.push_back(pch::SM_SLOC_BUFFER_BLOB);
+        Stream.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
+                             Buffer->getBufferStart(),
+                             Buffer->getBufferSize() + 1);
+
+        if (strcmp(Name, "<built-in>") == 0)
+          PreloadSLocs.push_back(SLocEntryOffsets.size());
+      }
+    } else {
+      // The source location entry is an instantiation.
+      const SrcMgr::InstantiationInfo &Inst = SLoc->getInstantiation();
+      Record.push_back(Inst.getSpellingLoc().getRawEncoding());
+      Record.push_back(Inst.getInstantiationLocStart().getRawEncoding());
+      Record.push_back(Inst.getInstantiationLocEnd().getRawEncoding());
+
+      // Compute the token length for this macro expansion.
+      unsigned NextOffset = SourceMgr.getNextOffset();
+      SourceManager::sloc_entry_iterator NextSLoc = SLoc;
+      if (++NextSLoc != SLocEnd)
+        NextOffset = NextSLoc->getOffset();
+      Record.push_back(NextOffset - SLoc->getOffset() - 1);
+      Stream.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
+    }
+  }
+
   Stream.ExitBlock();
+
+  if (SLocEntryOffsets.empty())
+    return;
+
+  // Write the source-location offsets table into the PCH block. This
+  // table is used for lazily loading source-location information.
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::SOURCE_LOCATION_OFFSETS));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // # of slocs
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // next offset
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // offsets
+  unsigned SLocOffsetsAbbrev = Stream.EmitAbbrev(Abbrev);
+  
+  Record.clear();
+  Record.push_back(pch::SOURCE_LOCATION_OFFSETS);
+  Record.push_back(SLocEntryOffsets.size());
+  Record.push_back(SourceMgr.getNextOffset());
+  Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record,
+                            (const char *)&SLocEntryOffsets.front(), 
+                            SLocEntryOffsets.size() * 8);
+
+  // Write the source location entry preloads array, telling the PCH
+  // reader which source locations entries it should load eagerly.
+  Stream.EmitRecord(pch::SOURCE_LOCATION_PRELOADS, PreloadSLocs);
 }
 
 /// \brief Writes the block containing the serialized form of the

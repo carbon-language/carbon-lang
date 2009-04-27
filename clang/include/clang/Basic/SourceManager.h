@@ -249,7 +249,16 @@ namespace SrcMgr {
     }
   };
 }  // end SrcMgr namespace.
-  
+
+/// \brief External source of source location entries.
+class ExternalSLocEntrySource {
+public:
+  virtual ~ExternalSLocEntrySource();
+
+  /// \brief Read the source location entry with index ID.
+  virtual void ReadSLocEntry(unsigned ID) = 0;
+};
+
 /// SourceManager - This file handles loading and caching of source files into
 /// memory.  This object owns the MemoryBuffer objects for all of the loaded
 /// files and assigns unique FileID's for each unique #include chain.
@@ -281,7 +290,15 @@ class SourceManager {
   /// NextOffset - This is the next available offset that a new SLocEntry can
   /// start at.  It is SLocEntryTable.back().getOffset()+size of back() entry.
   unsigned NextOffset;
-  
+
+  /// \brief If source location entries are being lazily loaded from
+  /// an external source, this vector indicates whether the Ith source
+  /// location entry has already been loaded from the external storage.
+  std::vector<bool> SLocEntryLoaded;
+
+  /// \brief An external source for source location entries.
+  ExternalSLocEntrySource *ExternalSLocEntries;
+
   /// LastFileIDLookup - This is a one-entry cache to speed up getFileID.
   /// LastFileIDLookup records the last FileID looked up or created, because it
   /// is very common to look up many tokens from the same file.
@@ -308,7 +325,9 @@ class SourceManager {
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);  
 public:
-  SourceManager() : LineTable(0), NumLinearScans(0), NumBinaryProbes(0) {
+  SourceManager() 
+    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0), 
+      NumBinaryProbes(0) {
     clearIDTables();
   }
   ~SourceManager();
@@ -337,19 +356,25 @@ public:
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
+  /// PreallocateID should be non-zero to specify which a pre-allocated, 
+  /// lazily computed source location is being filled in by this operation.
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
-                      SrcMgr::CharacteristicKind FileCharacter) {
+                      SrcMgr::CharacteristicKind FileCharacter,
+                      unsigned PreallocatedID = 0,
+                      unsigned Offset = 0) {
     const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
     if (IR == 0) return FileID();    // Error opening file?
-    return createFileID(IR, IncludePos, FileCharacter);
+    return createFileID(IR, IncludePos, FileCharacter, PreallocatedID, Offset);
   }
   
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
-  FileID createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
+  FileID createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
+                                  unsigned PreallocatedID = 0,
+                                  unsigned Offset = 0) {
     return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
-                        SrcMgr::C_User);
+                        SrcMgr::C_User, PreallocatedID, Offset);
   }
   
   /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
@@ -367,7 +392,9 @@ public:
   SourceLocation createInstantiationLoc(SourceLocation Loc,
                                         SourceLocation InstantiationLocStart,
                                         SourceLocation InstantiationLocEnd,
-                                        unsigned TokLength);
+                                        unsigned TokLength,
+                                        unsigned PreallocatedID = 0,
+                                        unsigned Offset = 0);
   
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.
@@ -411,8 +438,9 @@ public:
   /// getLocForStartOfFile - Return the source location corresponding to the
   /// first byte of the specified file.
   SourceLocation getLocForStartOfFile(FileID FID) const {
-    assert(FID.ID < SLocEntryTable.size() && SLocEntryTable[FID.ID].isFile());
-    unsigned FileOffset = SLocEntryTable[FID.ID].getOffset();
+    assert(FID.ID < SLocEntryTable.size() && "FileID out of range");
+    assert(getSLocEntry(FID).isFile() && "FileID is not a file");
+    unsigned FileOffset = getSLocEntry(FID).getOffset();
     return SourceLocation::getFileLoc(FileOffset);
   }
   
@@ -616,10 +644,20 @@ public:
 
   const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
     assert(FID.ID < SLocEntryTable.size() && "Invalid id");
+    if (ExternalSLocEntries && 
+        FID.ID < SLocEntryLoaded.size() &&
+        !SLocEntryLoaded[FID.ID])
+      ExternalSLocEntries->ReadSLocEntry(FID.ID);
     return SLocEntryTable[FID.ID];
   }
 
   unsigned getNextOffset() const { return NextOffset; }
+
+  /// \brief Preallocate some number of source location entries, which
+  /// will be loaded as needed from the given external source.
+  void PreallocateSLocEntries(ExternalSLocEntrySource *Source,
+                              unsigned NumSLocEntries,
+                              unsigned NextOffset);
 
 private:
   /// isOffsetInFileID - Return true if the specified FileID contains the
@@ -632,7 +670,8 @@ private:
     // If this is the last entry than it does.  Otherwise, the entry after it
     // has to not include it.
     if (FID.ID+1 == SLocEntryTable.size()) return true;
-    return SLocOffset < SLocEntryTable[FID.ID+1].getOffset();
+
+    return SLocOffset < getSLocEntry(FileID::get(FID.ID+1)).getOffset();
   }
   
   /// createFileID - Create a new fileID for the specified ContentCache and
@@ -640,7 +679,9 @@ private:
   ///  corresponds to a file or some other input source.
   FileID createFileID(const SrcMgr::ContentCache* File,
                       SourceLocation IncludePos,
-                      SrcMgr::CharacteristicKind DirCharacter);
+                      SrcMgr::CharacteristicKind DirCharacter,
+                      unsigned PreallocatedID = 0,
+                      unsigned Offset = 0);
     
   const SrcMgr::ContentCache *
     getOrCreateContentCache(const FileEntry *SourceFile);

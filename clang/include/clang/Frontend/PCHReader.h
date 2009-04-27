@@ -21,6 +21,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
@@ -68,7 +69,8 @@ class SwitchCase;
 class PCHReader 
   : public ExternalSemaSource, 
     public IdentifierInfoLookup,
-    public ExternalIdentifierLookup {
+    public ExternalIdentifierLookup,
+    public ExternalSLocEntrySource {
 public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
 
@@ -101,6 +103,16 @@ private:
   /// \brief The memory buffer that stores the data associated with
   /// this PCH file.
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+
+  /// \brief Offset type for all of the source location entries in the
+  /// PCH file.
+  const uint64_t *SLocOffsets;
+
+  /// \brief The number of source location entries in the PCH file.
+  unsigned TotalNumSLocEntries;
+
+  /// \brief Cursor used to read source location entries.
+  llvm::BitstreamCursor SLocEntryCursor;
 
   /// \brief Offset of each type within the bitstream, indexed by the
   /// type ID, or the representation of a Type*.
@@ -214,6 +226,10 @@ private:
   /// been de-serialized.
   std::multimap<unsigned, AddrLabelExpr *> UnresolvedAddrLabelExprs;
 
+  /// \brief The number of source location entries de-serialized from
+  /// the PCH file.
+  unsigned NumSLocEntriesRead;
+
   /// \brief The number of statements (and expressions) de-serialized
   /// from the PCH file.
   unsigned NumStatementsRead;
@@ -257,6 +273,7 @@ private:
                              unsigned PCHPredefLen,
                              FileID PCHBufferID);
   PCHReadResult ReadSourceManagerBlock();
+  PCHReadResult ReadSLocEntryRecord(unsigned ID);
   
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);
@@ -379,6 +396,9 @@ public:
   virtual IdentifierInfo *GetIdentifier(unsigned ID) {
     return DecodeIdentifierInfo(ID);
   }
+
+  /// \brief Read the source location entry with index ID.
+  virtual void ReadSLocEntry(unsigned ID);
 
   Selector DecodeSelector(unsigned Idx);
   

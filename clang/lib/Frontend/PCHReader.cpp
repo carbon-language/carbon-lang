@@ -43,8 +43,8 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext &Context)
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), NumStatementsRead(0), NumMacrosRead(0),
-    NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
+    TotalNumSelectors(0), NumSLocEntriesRead(0), NumStatementsRead(0), 
+    NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
     NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
 
 PCHReader::~PCHReader() {}
@@ -423,7 +423,21 @@ static bool ParseLineTable(SourceManager &SourceMgr,
 /// \brief Read the source manager block
 PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   using namespace SrcMgr;
-  if (Stream.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID)) {
+
+  // Set the source-location entry cursor to the current position in
+  // the stream. This cursor will be used to read the contents of the
+  // source manager block initially, and then lazily read
+  // source-location entries as needed.
+  SLocEntryCursor = Stream;
+
+  // The stream itself is going to skip over the source manager block.
+  if (Stream.SkipBlock()) {
+    Error("Malformed block record");
+    return Failure;
+  }
+
+  // Enter the source manager block.
+  if (SLocEntryCursor.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID)) {
     Error("Malformed source manager block record");
     return Failure;
   }
@@ -432,20 +446,19 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   RecordData Record;
   unsigned NumHeaderInfos = 0;
   while (true) {
-    unsigned Code = Stream.ReadCode();
+    unsigned Code = SLocEntryCursor.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd()) {
+      if (SLocEntryCursor.ReadBlockEnd()) {
         Error("Error at end of Source Manager block");
         return Failure;
       }
-
       return Success;
     }
     
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock()) {
+      SLocEntryCursor.ReadSubBlockID();
+      if (SLocEntryCursor.SkipBlock()) {
         Error("Malformed block record");
         return Failure;
       }
@@ -453,7 +466,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
     }
     
     if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
+      SLocEntryCursor.ReadAbbrevRecord();
       continue;
     }
     
@@ -461,55 +474,9 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
     const char *BlobStart;
     unsigned BlobLen;
     Record.clear();
-    switch (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
     default:  // Default behavior: ignore.
       break;
-
-    case pch::SM_SLOC_FILE_ENTRY: {
-      // FIXME: We would really like to delay the creation of this
-      // FileEntry until it is actually required, e.g., when producing
-      // a diagnostic with a source location in this file.
-      const FileEntry *File 
-        = PP.getFileManager().getFile(BlobStart, BlobStart + BlobLen);
-      // FIXME: Error recovery if file cannot be found.
-      FileID ID = SourceMgr.createFileID(File,
-                                SourceLocation::getFromRawEncoding(Record[1]),
-                                         (CharacteristicKind)Record[2]);
-      if (Record[3])
-        const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(ID).getFile())
-          .setHasLineDirectives();
-      break;
-    }
-
-    case pch::SM_SLOC_BUFFER_ENTRY: {
-      const char *Name = BlobStart;
-      unsigned Code = Stream.ReadCode();
-      Record.clear();
-      unsigned RecCode = Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen);
-      assert(RecCode == pch::SM_SLOC_BUFFER_BLOB && "Ill-formed PCH file");
-      (void)RecCode;
-      llvm::MemoryBuffer *Buffer
-        = llvm::MemoryBuffer::getMemBuffer(BlobStart, 
-                                           BlobStart + BlobLen - 1,
-                                           Name);
-      FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer);
-
-      if (strcmp(Name, "<built-in>") == 0
-          && CheckPredefinesBuffer(BlobStart, BlobLen - 1, BufferID))
-        return IgnorePCH;
-      break;
-    }
-
-    case pch::SM_SLOC_INSTANTIATION_ENTRY: {
-      SourceLocation SpellingLoc 
-        = SourceLocation::getFromRawEncoding(Record[1]);
-      SourceMgr.createInstantiationLoc(
-                              SpellingLoc,
-                              SourceLocation::getFromRawEncoding(Record[2]),
-                              SourceLocation::getFromRawEncoding(Record[3]),
-                              Record[4]);
-      break;
-    }
 
     case pch::SM_LINE_TABLE:
       if (ParseLineTable(SourceMgr, Record))
@@ -525,8 +492,96 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
       break;
     }
+
+    case pch::SM_SLOC_FILE_ENTRY:
+    case pch::SM_SLOC_BUFFER_ENTRY:
+    case pch::SM_SLOC_INSTANTIATION_ENTRY:
+      // Once we hit one of the source location entries, we're done.
+      return Success;
     }
   }
+}
+
+/// \brief Read in the source location entry with the given ID.
+PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
+  if (ID == 0)
+    return Success;
+
+  if (ID > TotalNumSLocEntries) {
+    Error("source location entry ID out-of-range for PCH file");
+    return Failure;
+  }
+
+  ++NumSLocEntriesRead;
+  SLocEntryCursor.JumpToBit(SLocOffsets[ID - 1]);
+  unsigned Code = SLocEntryCursor.ReadCode();
+  if (Code == llvm::bitc::END_BLOCK ||
+      Code == llvm::bitc::ENTER_SUBBLOCK ||
+      Code == llvm::bitc::DEFINE_ABBREV) {
+    Error("incorrectly-formatted source location entry in PCH file");
+    return Failure;
+  }
+
+  SourceManager &SourceMgr = Context.getSourceManager();
+  RecordData Record;
+  const char *BlobStart;
+  unsigned BlobLen;
+  switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+  default:
+    Error("incorrectly-formatted source location entry in PCH file");
+    return Failure;
+
+  case pch::SM_SLOC_FILE_ENTRY: {
+    const FileEntry *File 
+      = PP.getFileManager().getFile(BlobStart, BlobStart + BlobLen);
+    // FIXME: Error recovery if file cannot be found.
+    FileID FID = SourceMgr.createFileID(File,
+                                SourceLocation::getFromRawEncoding(Record[1]),
+                                       (SrcMgr::CharacteristicKind)Record[2],
+                                        ID, Record[0]);
+    if (Record[3])
+      const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile())
+        .setHasLineDirectives();
+
+    break;
+  }
+
+  case pch::SM_SLOC_BUFFER_ENTRY: {
+    const char *Name = BlobStart;
+    unsigned Offset = Record[0];
+    unsigned Code = SLocEntryCursor.ReadCode();
+    Record.clear();
+    unsigned RecCode 
+      = SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen);
+    assert(RecCode == pch::SM_SLOC_BUFFER_BLOB && "Ill-formed PCH file");
+    (void)RecCode;
+    llvm::MemoryBuffer *Buffer
+      = llvm::MemoryBuffer::getMemBuffer(BlobStart, 
+                                         BlobStart + BlobLen - 1,
+                                         Name);
+    FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID, Offset);
+      
+    if (strcmp(Name, "<built-in>") == 0
+        && CheckPredefinesBuffer(BlobStart, BlobLen - 1, BufferID))
+      return IgnorePCH;
+
+    break;
+  }
+
+  case pch::SM_SLOC_INSTANTIATION_ENTRY: {
+    SourceLocation SpellingLoc 
+      = SourceLocation::getFromRawEncoding(Record[1]);
+    SourceMgr.createInstantiationLoc(SpellingLoc,
+                              SourceLocation::getFromRawEncoding(Record[2]),
+                              SourceLocation::getFromRawEncoding(Record[3]),
+                                     Record[4],
+                                     ID,
+                                     Record[0]);
+    break;
+  }  
+  }
+
+  return Success;
 }
 
 /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
@@ -807,6 +862,7 @@ PCHReader::ReadPCHBlock() {
       TotalLexicalDeclContexts = Record[2];
       TotalVisibleDeclContexts = Record[3];
       break;
+
     case pch::TENTATIVE_DEFINITIONS:
       if (!TentativeDefinitions.empty()) {
         Error("Duplicate TENTATIVE_DEFINITIONS record in PCH file");
@@ -843,6 +899,22 @@ PCHReader::ReadPCHBlock() {
     case pch::PP_COUNTER_VALUE:
       if (!Record.empty())
         PP.setCounterValue(Record[0]);
+      break;
+
+    case pch::SOURCE_LOCATION_OFFSETS:
+      SLocOffsets = (const uint64_t *)BlobStart;
+      TotalNumSLocEntries = Record[0];
+      PP.getSourceManager().PreallocateSLocEntries(this, 
+                                                   TotalNumSLocEntries, 
+                                                   Record[1]);
+      break;
+
+    case pch::SOURCE_LOCATION_PRELOADS:
+      for (unsigned I = 0, N = Record.size(); I != N; ++I) {
+        PCHReadResult Result = ReadSLocEntryRecord(Record[I]);
+        if (Result != Success)
+          return Result;
+      }
       break;
     }
   }
@@ -1434,6 +1506,10 @@ void PCHReader::PrintStats() {
                                           SelectorsLoaded.end(),
                                           Selector());
 
+  if (TotalNumSLocEntries)
+    std::fprintf(stderr, "  %u/%u source location entries read (%f%%)\n",
+                 NumSLocEntriesRead, TotalNumSLocEntries,
+                 ((float)NumSLocEntriesRead/TotalNumSLocEntries * 100));
   if (!TypesLoaded.empty())
     std::fprintf(stderr, "  %u/%u types read (%f%%)\n",
                  NumTypesLoaded, (unsigned)TypesLoaded.size(),
@@ -1602,6 +1678,10 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   }
   
   return IdentifiersLoaded[ID - 1];
+}
+
+void PCHReader::ReadSLocEntry(unsigned ID) {
+  ReadSLocEntryRecord(ID);
 }
 
 Selector PCHReader::DecodeSelector(unsigned ID) {

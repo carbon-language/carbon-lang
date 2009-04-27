@@ -173,7 +173,19 @@ namespace clang {
 
       /// \brief The value of the next __COUNTER__ to dispense.
       /// [PP_COUNTER_VALUE, Val]
-      PP_COUNTER_VALUE = 14
+      PP_COUNTER_VALUE = 14,
+
+      /// \brief Record code for the table of offsets into the block
+      /// of source-location information.
+      SOURCE_LOCATION_OFFSETS = 15,
+
+      /// \brief Record code for the set of source location entries
+      /// that need to be preloaded by the PCH reader.
+      ///
+      /// This set contains the source location entry for the
+      /// predefines buffer and for any file entries that need to be
+      /// preloaded.
+      SOURCE_LOCATION_PRELOADS = 16
     };
 
     /// \brief Record types used within a source manager block.
