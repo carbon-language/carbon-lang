@@ -370,11 +370,9 @@ static const Type *getEffectiveIndvarType(const PHINode *Phi,
   return Ty;
 }
 
-/// TestOrigIVForWrap - Analyze the original induction variable
-/// that controls the loop's iteration to determine whether it
-/// would ever undergo signed or unsigned overflow. Also, check
-/// whether an induction variable in the same type that starts
-/// at 0 would undergo signed overflow.
+/// TestOrigIVForWrap - Analyze the original induction variable that
+/// controls the loop's iteration to determine whether it would ever
+/// undergo signed or unsigned overflow.
 ///
 /// In addition to setting the NoSignedWrap and NoUnsignedWrap
 /// variables to true when appropriate (they are not set to false here),
