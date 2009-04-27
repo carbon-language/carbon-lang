@@ -1313,7 +1313,11 @@ let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [RSP] in
 def TLS_addr64 : I<0, Pseudo, (outs), (ins i64imm:$sym),
-    ".byte\t0x66; leaq\t${sym:mem}(%rip), %rdi; .word\t0x6666; rex64;call\t__tls_get_addr@PLT",
+                   ".byte\t0x66; "
+                   "leaq\t${sym:mem}(%rip), %rdi; "
+                   ".word\t0x6666; "
+                   "rex64; "
+                   "call\t__tls_get_addr@PLT",
                   [(X86tlsaddr tglobaltlsaddr:$sym)]>,
                   Requires<[In64BitMode]>;
 
@@ -1328,14 +1332,16 @@ def MOV64GSrm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 
 let Defs = [RAX, EFLAGS], Uses = [RAX] in {
 def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
-               "lock\n\tcmpxchgq\t$swap,$ptr",
+               "lock\n\t"
+               "cmpxchgq\t$swap,$ptr",
                [(X86cas addr:$ptr, GR64:$swap, 8)]>, TB, LOCK;
 }
 
 let Constraints = "$val = $dst" in {
 let Defs = [EFLAGS] in
 def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
-               "lock\n\txadd\t$val, $ptr", 
+               "lock\n\t"
+               "xadd\t$val, $ptr",
                [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
 def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),

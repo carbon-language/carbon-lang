@@ -469,7 +469,8 @@ let neverHasSideEffects = 1 in
 // PIC base
 let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
   def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
-                      "call\t$label\n\tpop{l}\t$reg", []>;
+                      "call\t$label\n\t"
+                      "pop{l}\t$reg", []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -2986,7 +2987,8 @@ let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [ESP, EBX] in
 def TLS_addr32 : I<0, Pseudo, (outs), (ins i32imm:$sym),
-                  "leal\t${sym:mem}(,%ebx,1), %eax; call\t___tls_get_addr@PLT",
+                  "leal\t${sym:mem}(,%ebx,1), %eax; "
+                  "call\t___tls_get_addr@PLT",
                   [(X86tlsaddr tglobaltlsaddr:$sym)]>,
                   Requires<[In32BitMode]>;
 
@@ -3038,38 +3040,45 @@ def XCHG8rm  : I<0x86, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
 // Atomic compare and swap.
 let Defs = [EAX, EFLAGS], Uses = [EAX] in {
 def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
-               "lock\n\tcmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
+               "lock\n\t"
+               "cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
 }
 let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
 def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i32mem:$ptr),
-               "lock\n\tcmpxchg8b\t$ptr",
+               "lock\n\t"
+               "cmpxchg8b\t$ptr",
                [(X86cas8 addr:$ptr)]>, TB, LOCK;
 }
 
 let Defs = [AX, EFLAGS], Uses = [AX] in {
 def LCMPXCHG16 : I<0xB1, MRMDestMem, (outs), (ins i16mem:$ptr, GR16:$swap),
-               "lock\n\tcmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
+               "lock\n\t"
+               "cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
 }
 let Defs = [AL, EFLAGS], Uses = [AL] in {
 def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
-               "lock\n\tcmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
+               "lock\n\t"
+               "cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
 }
 
 // Atomic exchange and add
 let Constraints = "$val = $dst", Defs = [EFLAGS] in {
 def LXADD32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock\n\txadd{l}\t{$val, $ptr|$ptr, $val}", 
+               "lock\n\t"
+               "xadd{l}\t{$val, $ptr|$ptr, $val}",
                [(set GR32:$dst, (atomic_load_add_32 addr:$ptr, GR32:$val))]>,
                 TB, LOCK;
 def LXADD16 : I<0xC1, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock\n\txadd{w}\t{$val, $ptr|$ptr, $val}", 
+               "lock\n\t"
+               "xadd{w}\t{$val, $ptr|$ptr, $val}",
                [(set GR16:$dst, (atomic_load_add_16 addr:$ptr, GR16:$val))]>,
                 TB, OpSize, LOCK;
 def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock\n\txadd{b}\t{$val, $ptr|$ptr, $val}", 
+               "lock\n\t"
+               "xadd{b}\t{$val, $ptr|$ptr, $val}",
                [(set GR8:$dst, (atomic_load_add_8 addr:$ptr, GR8:$val))]>,
                 TB, LOCK;
 }
