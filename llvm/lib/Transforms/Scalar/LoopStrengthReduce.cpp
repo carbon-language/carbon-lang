@@ -2028,7 +2028,9 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       if (!isa<SCEVConstant>(SI->first))
         continue;
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
-      if (abs(SSInt) <= abs(CmpSSInt) || (SSInt % CmpSSInt) != 0)
+      if (SSInt == CmpSSInt ||
+          abs(SSInt) < abs(CmpSSInt) ||
+          (SSInt % CmpSSInt) != 0)
         continue;
 
       Scale = SSInt / CmpSSInt;
