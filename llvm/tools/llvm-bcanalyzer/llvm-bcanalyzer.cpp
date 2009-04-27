@@ -245,6 +245,9 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   }
 }
 
+struct PerRecordStats {
+  unsigned NumInstances;
+};
 
 struct PerBlockIDStats {
   /// NumInstances - This the number of times this block ID has been seen.
@@ -264,7 +267,7 @@ struct PerBlockIDStats {
   unsigned NumRecords, NumAbbreviatedRecords;
   
   /// CodeFreq - Keep track of the number of times we see each code.
-  std::vector<unsigned> CodeFreq;
+  std::vector<PerRecordStats> CodeFreq;
   
   PerBlockIDStats()
     : NumInstances(0), NumBits(0),
@@ -375,7 +378,7 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
       // Increment the # occurrences of this code.
       if (BlockStats.CodeFreq.size() <= Code)
         BlockStats.CodeFreq.resize(Code+1);
-      BlockStats.CodeFreq[Code]++;
+      BlockStats.CodeFreq[Code].NumInstances++;
       
       if (Dump) {
         std::cerr << Indent << "  <";
@@ -419,7 +422,11 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
 }
 
 static void PrintSize(double Bits) {
-  std::cerr << Bits << "b/" << Bits/8 << "B/" << Bits/32 << "W";
+  fprintf(stderr, "%.2f/%.2fB/%lluW", Bits, Bits/8,(unsigned long long)Bits/32);
+}
+static void PrintSize(uint64_t Bits) {
+  fprintf(stderr, "%llub/%.2fB/%lluW", (unsigned long long)Bits,
+          (double)Bits/8, (unsigned long long)Bits/32);
 }
 
 
@@ -532,19 +539,21 @@ static int AnalyzeBitcode() {
     if (!NoHistogram && !Stats.CodeFreq.empty()) {
       std::vector<std::pair<unsigned, unsigned> > FreqPairs;  // <freq,code>
       for (unsigned i = 0, e = Stats.CodeFreq.size(); i != e; ++i)
-        if (unsigned Freq = Stats.CodeFreq[i])
+        if (unsigned Freq = Stats.CodeFreq[i].NumInstances)
           FreqPairs.push_back(std::make_pair(Freq, i));
       std::stable_sort(FreqPairs.begin(), FreqPairs.end());
       std::reverse(FreqPairs.begin(), FreqPairs.end());
       
-      std::cerr << "\tCode Histogram:\n";
+      std::cerr << "\tRecord Histogram:\n";
+      fprintf(stderr, "\t\t  Count   Record Kind\n");
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
-        std::cerr << "\t\t" << FreqPairs[i].first << "\t";
+        fprintf(stderr, "\t\t%7d   ", FreqPairs[i].first);
+        
         if (const char *CodeName = 
               GetCodeName(FreqPairs[i].second, I->first, StreamFile))
-          std::cerr << CodeName << "\n";
+          fprintf(stderr, "%s\n", CodeName);
         else
-          std::cerr << "UnknownCode" << FreqPairs[i].second << "\n";
+          fprintf(stderr, "UnknownCode%d\n", FreqPairs[i].second);
       }
       std::cerr << "\n";
       
