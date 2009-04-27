@@ -66,7 +66,11 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext &Context)
 
 PCHReader::~PCHReader() {}
 
-Expr *PCHReader::ReadExpr() {
+Expr *PCHReader::ReadDeclExpr() {
+  return dyn_cast_or_null<Expr>(ReadStmt(DeclsCursor));
+}
+
+Expr *PCHReader::ReadTypeExpr() {
   return dyn_cast_or_null<Expr>(ReadStmt(Stream));
 }
 
@@ -1167,7 +1171,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
-    return Context.getVariableArrayType(ElementType, ReadExpr(),
+    return Context.getVariableArrayType(ElementType, ReadTypeExpr(),
                                         ASM, IndexTypeQuals);
   }
 
@@ -1220,7 +1224,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context.getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_TYPEOF_EXPR:
-    return Context.getTypeOfExprType(ReadExpr());
+    return Context.getTypeOfExprType(ReadTypeExpr());
 
   case pch::TYPE_TYPEOF: {
     if (Record.size() != 1) {
@@ -1337,12 +1341,10 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 /// source each time it is called, and is meant to be used via a
 /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
 Stmt *PCHReader::GetDeclStmt(uint64_t Offset) {
-  // Keep track of where we are in the stream, then jump back there
-  // after reading this declaration.
-  SavedStreamPosition SavedPosition(Stream);
-
-  Stream.JumpToBit(Offset);
-  return ReadStmt(Stream);
+  // Since we know tha this statement is part of a decl, make sure to use the
+  // decl cursor to read it.
+  DeclsCursor.JumpToBit(Offset);
+  return ReadStmt(DeclsCursor);
 }
 
 bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
@@ -1711,13 +1713,13 @@ std::string PCHReader::ReadString(const RecordData &Record, unsigned &Idx) {
 
 /// \brief Reads attributes from the current stream position.
 Attr *PCHReader::ReadAttributes() {
-  unsigned Code = Stream.ReadCode();
+  unsigned Code = DeclsCursor.ReadCode();
   assert(Code == llvm::bitc::UNABBREV_RECORD && 
          "Expected unabbreviated record"); (void)Code;
   
   RecordData Record;
   unsigned Idx = 0;
-  unsigned RecCode = Stream.ReadRecord(Code, Record);
+  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
   assert(RecCode == pch::DECL_ATTR && "Expected attribute record"); 
   (void)RecCode;
 

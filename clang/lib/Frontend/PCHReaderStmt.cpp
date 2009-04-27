@@ -1131,4 +1131,3 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
   SwitchCaseStmts.clear();
   return StmtStack.back();
 }
-

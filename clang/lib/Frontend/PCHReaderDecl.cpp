@@ -154,14 +154,14 @@ void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
 void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   VisitValueDecl(ECD);
   if (Record[Idx++])
-    ECD->setInitExpr(Reader.ReadExpr());
+    ECD->setInitExpr(Reader.ReadDeclExpr());
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitValueDecl(FD);
   if (Record[Idx++])
-    FD->setLazyBody(Reader.getStream().GetCurrentBitNo());
+    FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
   FD->setPreviousDeclaration(
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
@@ -186,7 +186,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   if (Record[Idx++]) {
     // In practice, this won't be executed (since method definitions
     // don't occur in header files).
-    MD->setBody(Reader.ReadStmt(Reader.Stream));
+    MD->setBody(Reader.ReadDeclStmt());
     MD->setSelfDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
     MD->setCmdDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
   }
@@ -346,7 +346,7 @@ void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitValueDecl(FD);
   FD->setMutable(Record[Idx++]);
   if (Record[Idx++])
-    FD->setBitWidth(Reader.ReadExpr());
+    FD->setBitWidth(Reader.ReadDeclExpr());
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -359,7 +359,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   VD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
-    VD->setInit(Reader.ReadExpr());
+    VD->setInit(Reader.ReadDeclExpr());
 }
 
 void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
@@ -379,12 +379,12 @@ void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {
 
 void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
   VisitDecl(AD);
-  AD->setAsmString(cast<StringLiteral>(Reader.ReadExpr()));
+  AD->setAsmString(cast<StringLiteral>(Reader.ReadDeclExpr()));
 }
 
 void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   VisitDecl(BD);
-  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadStmt(Reader.Stream)));
+  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadDeclStmt()));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
@@ -435,16 +435,16 @@ static bool isConsumerInterestedIn(Decl *D) {
 Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
-  SavedStreamPosition SavedPosition(Stream);
+  SavedStreamPosition SavedPosition(DeclsCursor);
 
-  Decl *D = 0;
-  Stream.JumpToBit(Offset);
+  DeclsCursor.JumpToBit(Offset);
   RecordData Record;
-  unsigned Code = Stream.ReadCode();
+  unsigned Code = DeclsCursor.ReadCode();
   unsigned Idx = 0;
   PCHDeclReader Reader(*this, Record, Idx);
 
-  switch ((pch::DeclCode)Stream.ReadRecord(Code, Record)) {
+  Decl *D = 0;
+  switch ((pch::DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
   case pch::DECL_ATTR:
   case pch::DECL_CONTEXT_LEXICAL:
   case pch::DECL_CONTEXT_VISIBLE:

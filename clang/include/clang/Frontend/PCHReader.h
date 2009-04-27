@@ -88,9 +88,7 @@ private:
 
   /// \brief The bitstream reader from which we'll read the PCH file.
   llvm::BitstreamReader StreamFile;
-public:
   llvm::BitstreamCursor Stream;
-private:
 
   /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block.  It
   /// has read all the abbreviations at the start of the block and is ready to
@@ -404,11 +402,19 @@ public:
   /// \brief Reads attributes from the current stream position.
   Attr *ReadAttributes();
 
-  /// \brief Reads an expression from the current stream position.
-  Expr *ReadExpr();
+  /// \brief ReadDeclExpr - Reads an expression from the current decl cursor.
+  Expr *ReadDeclExpr();
+      
+  /// \brief ReadTypeExpr - Reads an expression from the current type cursor.
+  Expr *ReadTypeExpr();
 
   /// \brief Reads a statement from the specified cursor.
   Stmt *ReadStmt(llvm::BitstreamCursor &Cursor);
+      
+  /// \brief Read a statement from the current DeclCursor.
+  Stmt *ReadDeclStmt() {
+    return ReadStmt(DeclsCursor);
+  }
 
   /// \brief Reads the macro record located at the given offset.
   void ReadMacroRecord(uint64_t Offset);
@@ -428,6 +434,7 @@ public:
 
   /// \brief Retrieve the stream that this PCH reader is reading from.
   llvm::BitstreamCursor &getStream() { return Stream; }
+  llvm::BitstreamCursor &getDeclsCursor() { return DeclsCursor; }
 
   /// \brief Retrieve the identifier table associated with the
   /// preprocessor.
