@@ -2962,7 +2962,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     if (NarrowLoad.getNode()) {
       if (NarrowLoad.getNode() != N0.getNode())
         CombineTo(N0.getNode(), NarrowLoad);
-      return DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(), VT, NarrowLoad);
+      return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
 
     // See if the value being truncated is already sign extended.  If so, just
