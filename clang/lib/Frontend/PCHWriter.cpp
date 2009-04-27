@@ -1565,7 +1565,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   Record.push_back(TypeOffsets.size());
   Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record,
                             (const char *)&TypeOffsets.front(), 
-                            TypeOffsets.size() * sizeof(uint64_t));
+                            TypeOffsets.size() * sizeof(TypeOffsets[0]));
   
   // Write the declaration offsets array
   Abbrev = new BitCodeAbbrev();
@@ -1578,7 +1578,7 @@ void PCHWriter::WritePCH(Sema &SemaRef) {
   Record.push_back(DeclOffsets.size());
   Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
                             (const char *)&DeclOffsets.front(), 
-                            DeclOffsets.size() * sizeof(uint64_t));
+                            DeclOffsets.size() * sizeof(DeclOffsets[0]));
 
   // Write the record of special types.
   Record.clear();

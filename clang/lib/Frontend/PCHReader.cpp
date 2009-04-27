@@ -793,7 +793,7 @@ PCHReader::ReadPCHBlock() {
         Error("Duplicate TYPE_OFFSET record in PCH file");
         return Failure;
       }
-      TypeOffsets = (const uint64_t *)BlobStart;
+      TypeOffsets = (const uint32_t *)BlobStart;
       TypesLoaded.resize(Record[0]);
       break;
 
@@ -802,7 +802,7 @@ PCHReader::ReadPCHBlock() {
         Error("Duplicate DECL_OFFSET record in PCH file");
         return Failure;
       }
-      DeclOffsets = (const uint64_t *)BlobStart;
+      DeclOffsets = (const uint32_t *)BlobStart;
       DeclsLoaded.resize(Record[0]);
       break;
 

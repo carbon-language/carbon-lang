@@ -64,7 +64,7 @@ private:
 
   /// \brief Offset of each declaration in the bitstream, indexed by
   /// the declaration's ID.
-  llvm::SmallVector<uint64_t, 16> DeclOffsets;
+  std::vector<uint32_t> DeclOffsets;
 
   /// \brief Queue containing the declarations that we still need to
   /// emit.
@@ -81,7 +81,7 @@ private:
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.
-  llvm::SmallVector<uint64_t, 16> TypeOffsets;
+  std::vector<uint32_t> TypeOffsets;
 
   /// \brief The type ID that will be assigned to the next new type.
   pch::TypeID NextTypeID;

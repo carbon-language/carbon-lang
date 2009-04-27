@@ -116,7 +116,7 @@ private:
 
   /// \brief Offset of each type within the bitstream, indexed by the
   /// type ID, or the representation of a Type*.
-  const uint64_t *TypeOffsets;
+  const uint32_t *TypeOffsets;
 
   /// \brief Types that have already been loaded from the PCH file.
   /// 
@@ -126,7 +126,7 @@ private:
 
   /// \brief Offset of each declaration within the bitstream, indexed
   /// by the declaration ID (-1).
-  const uint64_t *DeclOffsets;
+  const uint32_t *DeclOffsets;
 
   /// \brief Declarations that have already been loaded from the PCH file.
   ///
