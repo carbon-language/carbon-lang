@@ -160,7 +160,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  FD->setParams(Reader.getContext(), &Params[0], NumParams);
+  FD->setParams(*Reader.getContext(), &Params[0], NumParams);
 }
 
 void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
@@ -184,7 +184,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  MD->setMethodParams(Reader.getContext(), &Params[0], NumParams);
+  MD->setMethodParams(*Reader.getContext(), &Params[0], NumParams);
 }
 
 void PCHDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
@@ -202,13 +202,13 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   Protocols.reserve(NumProtocols);
   for (unsigned I = 0; I != NumProtocols; ++I)
     Protocols.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  ID->setProtocolList(&Protocols[0], NumProtocols, Reader.getContext());
+  ID->setProtocolList(&Protocols[0], NumProtocols, *Reader.getContext());
   unsigned NumIvars = Record[Idx++];
   llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
   IVars.reserve(NumIvars);
   for (unsigned I = 0; I != NumIvars; ++I)
     IVars.push_back(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
-  ID->setIVarList(&IVars[0], NumIvars, Reader.getContext());
+  ID->setIVarList(&IVars[0], NumIvars, *Reader.getContext());
   ID->setCategoryList(
                cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
   ID->setForwardDecl(Record[Idx++]);
@@ -232,7 +232,7 @@ void PCHDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  PD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
+  PD->setProtocolList(&ProtoRefs[0], NumProtoRefs, *Reader.getContext());
 }
 
 void PCHDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
@@ -246,7 +246,7 @@ void PCHDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
   ClassRefs.reserve(NumClassRefs);
   for (unsigned I = 0; I != NumClassRefs; ++I)
     ClassRefs.push_back(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  CD->setClassList(Reader.getContext(), &ClassRefs[0], NumClassRefs);
+  CD->setClassList(*Reader.getContext(), &ClassRefs[0], NumClassRefs);
 }
 
 void PCHDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
@@ -256,7 +256,7 @@ void PCHDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  FPD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
+  FPD->setProtocolList(&ProtoRefs[0], NumProtoRefs, *Reader.getContext());
 }
 
 void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
@@ -267,7 +267,7 @@ void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  CD->setProtocolList(&ProtoRefs[0], NumProtoRefs, Reader.getContext());
+  CD->setProtocolList(&ProtoRefs[0], NumProtoRefs, *Reader.getContext());
   CD->setNextClassCategory(cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
   CD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -372,7 +372,7 @@ void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  BD->setParams(Reader.getContext(), &Params[0], NumParams);  
+  BD->setParams(*Reader.getContext(), &Params[0], NumParams);  
 }
 
 std::pair<uint64_t, uint64_t> 
@@ -400,17 +400,17 @@ Attr *PCHReader::ReadAttributes() {
 
 #define SIMPLE_ATTR(Name)                       \
  case Attr::Name:                               \
-   New = ::new (Context) Name##Attr();          \
+   New = ::new (*Context) Name##Attr();         \
    break
 
 #define STRING_ATTR(Name)                                       \
  case Attr::Name:                                               \
-   New = ::new (Context) Name##Attr(ReadString(Record, Idx));   \
+   New = ::new (*Context) Name##Attr(ReadString(Record, Idx));  \
    break
 
 #define UNSIGNED_ATTR(Name)                             \
  case Attr::Name:                                       \
-   New = ::new (Context) Name##Attr(Record[Idx++]);     \
+   New = ::new (*Context) Name##Attr(Record[Idx++]);    \
    break
 
   Attr *Attrs = 0;
@@ -428,12 +428,12 @@ Attr *PCHReader::ReadAttributes() {
     STRING_ATTR(AsmLabel);
     
     case Attr::Blocks:
-      New = ::new (Context) BlocksAttr(
+      New = ::new (*Context) BlocksAttr(
                                   (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
       break;
       
     case Attr::Cleanup:
-      New = ::new (Context) CleanupAttr(
+      New = ::new (*Context) CleanupAttr(
                                   cast<FunctionDecl>(GetDecl(Record[Idx++])));
       break;
 
@@ -449,14 +449,14 @@ Attr *PCHReader::ReadAttributes() {
       std::string Type = ReadString(Record, Idx);
       unsigned FormatIdx = Record[Idx++];
       unsigned FirstArg = Record[Idx++];
-      New = ::new (Context) FormatAttr(Type, FormatIdx, FirstArg);
+      New = ::new (*Context) FormatAttr(Type, FormatIdx, FirstArg);
       break;
     }
 
     SIMPLE_ATTR(GNUInline);
     
     case Attr::IBOutletKind:
-      New = ::new (Context) IBOutletAttr();
+      New = ::new (*Context) IBOutletAttr();
       break;
 
     SIMPLE_ATTR(NoReturn);
@@ -469,7 +469,7 @@ Attr *PCHReader::ReadAttributes() {
       llvm::SmallVector<unsigned, 16> ArgNums;
       ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
       Idx += Size;
-      New = ::new (Context) NonNullAttr(&ArgNums[0], Size);
+      New = ::new (*Context) NonNullAttr(&ArgNums[0], Size);
       break;
     }
 
@@ -492,7 +492,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(Used);
     
     case Attr::Visibility:
-      New = ::new (Context) VisibilityAttr(
+      New = ::new (*Context) VisibilityAttr(
                               (VisibilityAttr::VisibilityTypes)Record[Idx++]);
       break;
 
@@ -574,96 +574,96 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_TRANSLATION_UNIT:
     assert(Index == 0 && "Translation unit must be at index 0");
-    D = Context.getTranslationUnitDecl();
+    D = Context->getTranslationUnitDecl();
     break;
   case pch::DECL_TYPEDEF:
-    D = TypedefDecl::Create(Context, 0, SourceLocation(), 0, QualType());
+    D = TypedefDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
     break;
   case pch::DECL_ENUM:
-    D = EnumDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    D = EnumDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_RECORD:
-    D = RecordDecl::Create(Context, TagDecl::TK_struct, 0, SourceLocation(),
+    D = RecordDecl::Create(*Context, TagDecl::TK_struct, 0, SourceLocation(),
                            0, 0);
     break;
   case pch::DECL_ENUM_CONSTANT:
-    D = EnumConstantDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
+    D = EnumConstantDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
                                  0, llvm::APSInt());
     break;
   case pch::DECL_FUNCTION:
-    D = FunctionDecl::Create(Context, 0, SourceLocation(), DeclarationName(), 
+    D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(), 
                              QualType());
     break;
   case pch::DECL_OBJC_METHOD:
-    D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(), 
+    D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(), 
                                Selector(), QualType(), 0);
     break;
   case pch::DECL_OBJC_INTERFACE:
-    D = ObjCInterfaceDecl::Create(Context, 0, SourceLocation(), 0);
+    D = ObjCInterfaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case pch::DECL_OBJC_IVAR:
-    D = ObjCIvarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
+    D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
                              ObjCIvarDecl::None);
     break;
   case pch::DECL_OBJC_PROTOCOL:
-    D = ObjCProtocolDecl::Create(Context, 0, SourceLocation(), 0);
+    D = ObjCProtocolDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case pch::DECL_OBJC_AT_DEFS_FIELD:
-    D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(), 0, 
+    D = ObjCAtDefsFieldDecl::Create(*Context, 0, SourceLocation(), 0, 
                                     QualType(), 0);
     break;
   case pch::DECL_OBJC_CLASS:
-    D = ObjCClassDecl::Create(Context, 0, SourceLocation());
+    D = ObjCClassDecl::Create(*Context, 0, SourceLocation());
     break;
   case pch::DECL_OBJC_FORWARD_PROTOCOL:
-    D = ObjCForwardProtocolDecl::Create(Context, 0, SourceLocation());
+    D = ObjCForwardProtocolDecl::Create(*Context, 0, SourceLocation());
     break;
   case pch::DECL_OBJC_CATEGORY:
-    D = ObjCCategoryDecl::Create(Context, 0, SourceLocation(), 0);
+    D = ObjCCategoryDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case pch::DECL_OBJC_CATEGORY_IMPL:
-    D = ObjCCategoryImplDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    D = ObjCCategoryImplDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_OBJC_IMPLEMENTATION:
-    D = ObjCImplementationDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    D = ObjCImplementationDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_OBJC_COMPATIBLE_ALIAS:
-    D = ObjCCompatibleAliasDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    D = ObjCCompatibleAliasDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_OBJC_PROPERTY:
-    D = ObjCPropertyDecl::Create(Context, 0, SourceLocation(), 0, QualType());
+    D = ObjCPropertyDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
     break;
   case pch::DECL_OBJC_PROPERTY_IMPL:
-    D = ObjCPropertyImplDecl::Create(Context, 0, SourceLocation(),
+    D = ObjCPropertyImplDecl::Create(*Context, 0, SourceLocation(),
                                      SourceLocation(), 0, 
                                      ObjCPropertyImplDecl::Dynamic, 0);
     break;
   case pch::DECL_FIELD:
-    D = FieldDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 0, 
+    D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 
                           false);
     break;
   case pch::DECL_VAR:
-    D = VarDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
+    D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
                         VarDecl::None, SourceLocation());
     break;
 
   case pch::DECL_IMPLICIT_PARAM:
-    D = ImplicitParamDecl::Create(Context, 0, SourceLocation(), 0, QualType());
+    D = ImplicitParamDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
     break;
 
   case pch::DECL_PARM_VAR:
-    D = ParmVarDecl::Create(Context, 0, SourceLocation(), 0, QualType(), 
+    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 
                             VarDecl::None, 0);
     break;
   case pch::DECL_ORIGINAL_PARM_VAR:
-    D = OriginalParmVarDecl::Create(Context, 0, SourceLocation(), 0,
+    D = OriginalParmVarDecl::Create(*Context, 0, SourceLocation(), 0,
                                     QualType(), QualType(), VarDecl::None, 0);
     break;
   case pch::DECL_FILE_SCOPE_ASM:
-    D = FileScopeAsmDecl::Create(Context, 0, SourceLocation(), 0);
+    D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case pch::DECL_BLOCK:
-    D = BlockDecl::Create(Context, 0, SourceLocation());
+    D = BlockDecl::Create(*Context, 0, SourceLocation());
     break;
   }
 

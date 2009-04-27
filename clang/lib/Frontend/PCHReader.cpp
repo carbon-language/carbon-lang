@@ -38,7 +38,7 @@ using namespace clang;
 // PCH reader implementation
 //===----------------------------------------------------------------------===//
 
-PCHReader::PCHReader(Preprocessor &PP, ASTContext &Context) 
+PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context) 
   : SemaObj(0), PP(PP), Context(Context), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
@@ -102,7 +102,7 @@ public:
     
   internal_key_type ReadKey(const unsigned char* d, unsigned) {
     using namespace clang::io;
-    SelectorTable &SelTable = Reader.getContext().Selectors;
+    SelectorTable &SelTable = Reader.getContext()->Selectors;
     unsigned N = ReadUnalignedLE16(d);
     IdentifierInfo *FirstII 
       = Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
@@ -557,7 +557,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
     return Failure;
   }
 
-  SourceManager &SourceMgr = Context.getSourceManager();
+  SourceManager &SourceMgr = PP.getSourceManager();
   RecordData Record;
   unsigned NumHeaderInfos = 0;
   while (true) {
@@ -637,7 +637,7 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     return Failure;
   }
 
-  SourceManager &SourceMgr = Context.getSourceManager();
+  SourceManager &SourceMgr = PP.getSourceManager();
   RecordData Record;
   const char *BlobStart;
   unsigned BlobLen;
@@ -928,9 +928,9 @@ PCHReader::ReadPCHBlock() {
 
     case pch::TARGET_TRIPLE: {
       std::string TargetTriple(BlobStart, BlobLen);
-      if (TargetTriple != Context.Target.getTargetTriple()) {
+      if (TargetTriple != PP.getTargetInfo().getTargetTriple()) {
         Diag(diag::warn_pch_target_triple)
-          << TargetTriple << Context.Target.getTargetTriple();
+          << TargetTriple << PP.getTargetInfo().getTargetTriple();
         Diag(diag::note_ignoring_pch) << FileName;
         return IgnorePCH;
       }
@@ -1137,7 +1137,8 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }  
 
   // Load the translation unit declaration
-  ReadDeclRecord(DeclOffsets[0], 0);
+  if (Context)
+    ReadDeclRecord(DeclOffsets[0], 0);
 
   // Initialization of builtins and library builtins occurs before the
   // PCH file is read, so there may be some identifiers that were
@@ -1173,21 +1174,23 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }
 
   // Load the special types.
-  Context.setBuiltinVaListType(
-    GetType(SpecialTypes[pch::SPECIAL_TYPE_BUILTIN_VA_LIST]));
-  if (unsigned Id = SpecialTypes[pch::SPECIAL_TYPE_OBJC_ID])
-    Context.setObjCIdType(GetType(Id));
-  if (unsigned Sel = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SELECTOR])
-    Context.setObjCSelType(GetType(Sel));
-  if (unsigned Proto = SpecialTypes[pch::SPECIAL_TYPE_OBJC_PROTOCOL])
-    Context.setObjCProtoType(GetType(Proto));
-  if (unsigned Class = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS])
-    Context.setObjCClassType(GetType(Class));
-  if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_CF_CONSTANT_STRING])
-    Context.setCFConstantStringType(GetType(String));
-  if (unsigned FastEnum 
-        = SpecialTypes[pch::SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
-    Context.setObjCFastEnumerationStateType(GetType(FastEnum));
+  if (Context) {
+    Context->setBuiltinVaListType(
+      GetType(SpecialTypes[pch::SPECIAL_TYPE_BUILTIN_VA_LIST]));
+    if (unsigned Id = SpecialTypes[pch::SPECIAL_TYPE_OBJC_ID])
+      Context->setObjCIdType(GetType(Id));
+    if (unsigned Sel = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SELECTOR])
+      Context->setObjCSelType(GetType(Sel));
+    if (unsigned Proto = SpecialTypes[pch::SPECIAL_TYPE_OBJC_PROTOCOL])
+      Context->setObjCProtoType(GetType(Proto));
+    if (unsigned Class = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS])
+      Context->setObjCClassType(GetType(Class));
+    if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_CF_CONSTANT_STRING])
+      Context->setCFConstantStringType(GetType(String));
+    if (unsigned FastEnum 
+          = SpecialTypes[pch::SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
+      Context->setObjCFastEnumerationStateType(GetType(FastEnum));
+  }
 
   return Success;
 }
@@ -1208,7 +1211,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
 /// \returns true if the PCH file is unacceptable, false otherwise.
 bool PCHReader::ParseLanguageOptions(
                              const llvm::SmallVectorImpl<uint64_t> &Record) {
-  const LangOptions &LangOpts = Context.getLangOptions();
+  const LangOptions &LangOpts = PP.getLangOptions();
 #define PARSE_LANGOPT_BENIGN(Option) ++Idx
 #define PARSE_LANGOPT_IMPORTANT(Option, DiagID)                 \
   if (Record[Idx] != LangOpts.Option) {                         \
@@ -1304,52 +1307,52 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     
     QualType T = Base;
     if (GCAttr != QualType::GCNone)
-      T = Context.getObjCGCQualType(T, GCAttr);
+      T = Context->getObjCGCQualType(T, GCAttr);
     if (AddressSpace)
-      T = Context.getAddrSpaceQualType(T, AddressSpace);
+      T = Context->getAddrSpaceQualType(T, AddressSpace);
     return T;
   }
 
   case pch::TYPE_FIXED_WIDTH_INT: {
     assert(Record.size() == 2 && "Incorrect encoding of fixed-width int type");
-    return Context.getFixedWidthIntType(Record[0], Record[1]);
+    return Context->getFixedWidthIntType(Record[0], Record[1]);
   }
 
   case pch::TYPE_COMPLEX: {
     assert(Record.size() == 1 && "Incorrect encoding of complex type");
     QualType ElemType = GetType(Record[0]);
-    return Context.getComplexType(ElemType);
+    return Context->getComplexType(ElemType);
   }
 
   case pch::TYPE_POINTER: {
     assert(Record.size() == 1 && "Incorrect encoding of pointer type");
     QualType PointeeType = GetType(Record[0]);
-    return Context.getPointerType(PointeeType);
+    return Context->getPointerType(PointeeType);
   }
 
   case pch::TYPE_BLOCK_POINTER: {
     assert(Record.size() == 1 && "Incorrect encoding of block pointer type");
     QualType PointeeType = GetType(Record[0]);
-    return Context.getBlockPointerType(PointeeType);
+    return Context->getBlockPointerType(PointeeType);
   }
 
   case pch::TYPE_LVALUE_REFERENCE: {
     assert(Record.size() == 1 && "Incorrect encoding of lvalue reference type");
     QualType PointeeType = GetType(Record[0]);
-    return Context.getLValueReferenceType(PointeeType);
+    return Context->getLValueReferenceType(PointeeType);
   }
 
   case pch::TYPE_RVALUE_REFERENCE: {
     assert(Record.size() == 1 && "Incorrect encoding of rvalue reference type");
     QualType PointeeType = GetType(Record[0]);
-    return Context.getRValueReferenceType(PointeeType);
+    return Context->getRValueReferenceType(PointeeType);
   }
 
   case pch::TYPE_MEMBER_POINTER: {
     assert(Record.size() == 1 && "Incorrect encoding of member pointer type");
     QualType PointeeType = GetType(Record[0]);
     QualType ClassType = GetType(Record[1]);
-    return Context.getMemberPointerType(PointeeType, ClassType.getTypePtr());
+    return Context->getMemberPointerType(PointeeType, ClassType.getTypePtr());
   }
 
   case pch::TYPE_CONSTANT_ARRAY: {
@@ -1358,22 +1361,22 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     unsigned IndexTypeQuals = Record[2];
     unsigned Idx = 3;
     llvm::APInt Size = ReadAPInt(Record, Idx);
-    return Context.getConstantArrayType(ElementType, Size, ASM, IndexTypeQuals);
+    return Context->getConstantArrayType(ElementType, Size, ASM,IndexTypeQuals);
   }
 
   case pch::TYPE_INCOMPLETE_ARRAY: {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
-    return Context.getIncompleteArrayType(ElementType, ASM, IndexTypeQuals);
+    return Context->getIncompleteArrayType(ElementType, ASM, IndexTypeQuals);
   }
 
   case pch::TYPE_VARIABLE_ARRAY: {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
-    return Context.getVariableArrayType(ElementType, ReadTypeExpr(),
-                                        ASM, IndexTypeQuals);
+    return Context->getVariableArrayType(ElementType, ReadTypeExpr(),
+                                         ASM, IndexTypeQuals);
   }
 
   case pch::TYPE_VECTOR: {
@@ -1384,7 +1387,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
     QualType ElementType = GetType(Record[0]);
     unsigned NumElements = Record[1];
-    return Context.getVectorType(ElementType, NumElements);
+    return Context->getVectorType(ElementType, NumElements);
   }
 
   case pch::TYPE_EXT_VECTOR: {
@@ -1395,7 +1398,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
     QualType ElementType = GetType(Record[0]);
     unsigned NumElements = Record[1];
-    return Context.getExtVectorType(ElementType, NumElements);
+    return Context->getExtVectorType(ElementType, NumElements);
   }
 
   case pch::TYPE_FUNCTION_NO_PROTO: {
@@ -1404,7 +1407,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       return QualType();
     }
     QualType ResultType = GetType(Record[0]);
-    return Context.getFunctionNoProtoType(ResultType);
+    return Context->getFunctionNoProtoType(ResultType);
   }
 
   case pch::TYPE_FUNCTION_PROTO: {
@@ -1416,16 +1419,16 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       ParamTypes.push_back(GetType(Record[Idx++]));
     bool isVariadic = Record[Idx++];
     unsigned Quals = Record[Idx++];
-    return Context.getFunctionType(ResultType, &ParamTypes[0], NumParams,
-                                   isVariadic, Quals);
+    return Context->getFunctionType(ResultType, &ParamTypes[0], NumParams,
+                                    isVariadic, Quals);
   }
 
   case pch::TYPE_TYPEDEF:
     assert(Record.size() == 1 && "Incorrect encoding of typedef type");
-    return Context.getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
+    return Context->getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_TYPEOF_EXPR:
-    return Context.getTypeOfExprType(ReadTypeExpr());
+    return Context->getTypeOfExprType(ReadTypeExpr());
 
   case pch::TYPE_TYPEOF: {
     if (Record.size() != 1) {
@@ -1433,20 +1436,20 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       return QualType();
     }
     QualType UnderlyingType = GetType(Record[0]);
-    return Context.getTypeOfType(UnderlyingType);
+    return Context->getTypeOfType(UnderlyingType);
   }
     
   case pch::TYPE_RECORD:
     assert(Record.size() == 1 && "Incorrect encoding of record type");
-    return Context.getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));
+    return Context->getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ENUM:
     assert(Record.size() == 1 && "Incorrect encoding of enum type");
-    return Context.getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
+    return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_OBJC_INTERFACE:
     assert(Record.size() == 1 && "Incorrect encoding of objc interface type");
-    return Context.getObjCInterfaceType(
+    return Context->getObjCInterfaceType(
                                   cast<ObjCInterfaceDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_OBJC_QUALIFIED_INTERFACE: {
@@ -1456,7 +1459,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context.getObjCQualifiedInterfaceType(ItfD, &Protos[0], NumProtos);
+    return Context->getObjCQualifiedInterfaceType(ItfD, &Protos[0], NumProtos);
   }
 
   case pch::TYPE_OBJC_QUALIFIED_ID: {
@@ -1465,7 +1468,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context.getObjCQualifiedIdType(&Protos[0], NumProtos);
+    return Context->getObjCQualifiedIdType(&Protos[0], NumProtos);
   }
   }
   // Suppress a GCC warning
@@ -1481,31 +1484,31 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     QualType T;
     switch ((pch::PredefinedTypeIDs)Index) {
     case pch::PREDEF_TYPE_NULL_ID: return QualType();
-    case pch::PREDEF_TYPE_VOID_ID: T = Context.VoidTy; break;
-    case pch::PREDEF_TYPE_BOOL_ID: T = Context.BoolTy; break;
+    case pch::PREDEF_TYPE_VOID_ID: T = Context->VoidTy; break;
+    case pch::PREDEF_TYPE_BOOL_ID: T = Context->BoolTy; break;
 
     case pch::PREDEF_TYPE_CHAR_U_ID:
     case pch::PREDEF_TYPE_CHAR_S_ID:
       // FIXME: Check that the signedness of CharTy is correct!
-      T = Context.CharTy;
+      T = Context->CharTy;
       break;
 
-    case pch::PREDEF_TYPE_UCHAR_ID:      T = Context.UnsignedCharTy;     break;
-    case pch::PREDEF_TYPE_USHORT_ID:     T = Context.UnsignedShortTy;    break;
-    case pch::PREDEF_TYPE_UINT_ID:       T = Context.UnsignedIntTy;      break;
-    case pch::PREDEF_TYPE_ULONG_ID:      T = Context.UnsignedLongTy;     break;
-    case pch::PREDEF_TYPE_ULONGLONG_ID:  T = Context.UnsignedLongLongTy; break;
-    case pch::PREDEF_TYPE_SCHAR_ID:      T = Context.SignedCharTy;       break;
-    case pch::PREDEF_TYPE_WCHAR_ID:      T = Context.WCharTy;            break;
-    case pch::PREDEF_TYPE_SHORT_ID:      T = Context.ShortTy;            break;
-    case pch::PREDEF_TYPE_INT_ID:        T = Context.IntTy;              break;
-    case pch::PREDEF_TYPE_LONG_ID:       T = Context.LongTy;             break;
-    case pch::PREDEF_TYPE_LONGLONG_ID:   T = Context.LongLongTy;         break;
-    case pch::PREDEF_TYPE_FLOAT_ID:      T = Context.FloatTy;            break;
-    case pch::PREDEF_TYPE_DOUBLE_ID:     T = Context.DoubleTy;           break;
-    case pch::PREDEF_TYPE_LONGDOUBLE_ID: T = Context.LongDoubleTy;       break;
-    case pch::PREDEF_TYPE_OVERLOAD_ID:   T = Context.OverloadTy;         break;
-    case pch::PREDEF_TYPE_DEPENDENT_ID:  T = Context.DependentTy;        break;
+    case pch::PREDEF_TYPE_UCHAR_ID:      T = Context->UnsignedCharTy;     break;
+    case pch::PREDEF_TYPE_USHORT_ID:     T = Context->UnsignedShortTy;    break;
+    case pch::PREDEF_TYPE_UINT_ID:       T = Context->UnsignedIntTy;      break;
+    case pch::PREDEF_TYPE_ULONG_ID:      T = Context->UnsignedLongTy;     break;
+    case pch::PREDEF_TYPE_ULONGLONG_ID:  T = Context->UnsignedLongLongTy; break;
+    case pch::PREDEF_TYPE_SCHAR_ID:      T = Context->SignedCharTy;       break;
+    case pch::PREDEF_TYPE_WCHAR_ID:      T = Context->WCharTy;            break;
+    case pch::PREDEF_TYPE_SHORT_ID:      T = Context->ShortTy;            break;
+    case pch::PREDEF_TYPE_INT_ID:        T = Context->IntTy;              break;
+    case pch::PREDEF_TYPE_LONG_ID:       T = Context->LongTy;             break;
+    case pch::PREDEF_TYPE_LONGLONG_ID:   T = Context->LongLongTy;         break;
+    case pch::PREDEF_TYPE_FLOAT_ID:      T = Context->FloatTy;            break;
+    case pch::PREDEF_TYPE_DOUBLE_ID:     T = Context->DoubleTy;           break;
+    case pch::PREDEF_TYPE_LONGDOUBLE_ID: T = Context->LongDoubleTy;       break;
+    case pch::PREDEF_TYPE_OVERLOAD_ID:   T = Context->OverloadTy;         break;
+    case pch::PREDEF_TYPE_DEPENDENT_ID:  T = Context->DependentTy;        break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");
@@ -1814,7 +1817,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
       const char *StrLenPtr = Str - 2;
       unsigned StrLen = (((unsigned) StrLenPtr[0])
                          | (((unsigned) StrLenPtr[1]) << 8)) - 1;
-      IdentifiersLoaded[ID - 1] = &Context.Idents.get(Str, Str + StrLen);
+      IdentifiersLoaded[ID - 1]=&PP.getIdentifierTable().get(Str, Str + StrLen);
 
       // Turn on lookup into the on-disk hash table, if we have an
       // on-disk hash table.
@@ -1883,19 +1886,19 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
     return DeclarationName(GetSelector(Record, Idx));
 
   case DeclarationName::CXXConstructorName:
-    return Context.DeclarationNames.getCXXConstructorName(
+    return Context->DeclarationNames.getCXXConstructorName(
                                                       GetType(Record[Idx++]));
 
   case DeclarationName::CXXDestructorName:
-    return Context.DeclarationNames.getCXXDestructorName(
+    return Context->DeclarationNames.getCXXDestructorName(
                                                       GetType(Record[Idx++]));
 
   case DeclarationName::CXXConversionFunctionName:
-    return Context.DeclarationNames.getCXXConversionFunctionName(
+    return Context->DeclarationNames.getCXXConversionFunctionName(
                                                       GetType(Record[Idx++]));
 
   case DeclarationName::CXXOperatorName:
-    return Context.DeclarationNames.getCXXOperatorName(
+    return Context->DeclarationNames.getCXXOperatorName(
                                        (OverloadedOperatorKind)Record[Idx++]);
 
   case DeclarationName::CXXUsingDirective:
@@ -1940,7 +1943,7 @@ DiagnosticBuilder PCHReader::Diag(unsigned DiagID) {
 
 DiagnosticBuilder PCHReader::Diag(SourceLocation Loc, unsigned DiagID) {
   return PP.getDiagnostics().Report(FullSourceLoc(Loc,
-                                                  Context.getSourceManager()),
+                                                  PP.getSourceManager()),
                                     DiagID);
 }
 

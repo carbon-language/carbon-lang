@@ -134,7 +134,7 @@ unsigned PCHStmtReader::VisitNullStmt(NullStmt *S) {
 unsigned PCHStmtReader::VisitCompoundStmt(CompoundStmt *S) {
   VisitStmt(S);
   unsigned NumStmts = Record[Idx++];
-  S->setStmts(Reader.getContext(), 
+  S->setStmts(*Reader.getContext(), 
               &StmtStack[StmtStack.size() - NumStmts], NumStmts);
   S->setLBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -271,7 +271,7 @@ unsigned PCHStmtReader::VisitDeclStmt(DeclStmt *S) {
     Decls.reserve(Record.size() - Idx);
     for (unsigned N = Record.size(); Idx != N; ++Idx)
       Decls.push_back(Reader.GetDecl(Record[Idx]));
-    S->setDeclGroup(DeclGroupRef(DeclGroup::Create(Reader.getContext(),
+    S->setDeclGroup(DeclGroupRef(DeclGroup::Create(*Reader.getContext(),
                                                    &Decls[0], Decls.size())));
   }
   return 0;
@@ -367,7 +367,7 @@ unsigned PCHStmtReader::VisitStringLiteral(StringLiteral *E) {
 
   // Read string data  
   llvm::SmallVector<char, 16> Str(&Record[Idx], &Record[Idx] + Len);
-  E->setStrData(Reader.getContext(), &Str[0], Len);
+  E->setStrData(*Reader.getContext(), &Str[0], Len);
   Idx += Len;
 
   // Read source locations
@@ -425,7 +425,7 @@ unsigned PCHStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
 
 unsigned PCHStmtReader::VisitCallExpr(CallExpr *E) {
   VisitExpr(E);
-  E->setNumArgs(Reader.getContext(), Record[Idx++]);
+  E->setNumArgs(*Reader.getContext(), Record[Idx++]);
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setCallee(cast<Expr>(StmtStack[StmtStack.size() - E->getNumArgs() - 1]));
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
@@ -953,7 +953,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_STRING_LITERAL:
-      S = StringLiteral::CreateEmpty(Context, 
+      S = StringLiteral::CreateEmpty(*Context, 
                                      Record[PCHStmtReader::NumExprFields + 1]);
       break;
 
@@ -978,7 +978,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_CALL:
-      S = new (Context) CallExpr(Context, Empty);
+      S = new (Context) CallExpr(*Context, Empty);
       break;
 
     case pch::EXPR_MEMBER:
@@ -1018,7 +1018,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_DESIGNATED_INIT:
-      S = DesignatedInitExpr::CreateEmpty(Context, 
+      S = DesignatedInitExpr::CreateEmpty(*Context,
                                      Record[PCHStmtReader::NumExprFields] - 1);
      
       break;

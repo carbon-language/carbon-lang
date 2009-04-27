@@ -1657,17 +1657,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
     break;
   }
-  case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    Token Tok;
-    // Start parsing the specified input file.
-    PP.EnterMainSourceFile();
-    do {
-      PP.Lex(Tok);
-    } while (Tok.isNot(tok::eof));
-    ClearSourceMgr = true;
+  case RunPreprocessorOnly:
     break;
-  }
       
   case GeneratePTH: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
@@ -1683,12 +1674,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }
       
-  case ParseNoop: {                  // -parse-noop
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    ParseFile(PP, new MinimalAction(PP));
-    ClearSourceMgr = true;
+  case ParseNoop:
     break;
-  }
     
   case ParsePrintCallbacks: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
@@ -1754,7 +1741,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   }
 
   llvm::OwningPtr<ASTContext> ContextOwner;
-  if (Consumer) {
+  if (Consumer)
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
                                       PP.getSourceManager(),
                                       PP.getTargetInfo(),
@@ -1764,52 +1751,71 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       /* size_reserve = */0,
                        /* InitializeBuiltins = */ImplicitIncludePCH.empty()));
      
-    if (!ImplicitIncludePCH.empty()) {
-      // The user has asked us to include a precompiled header. Load
-      // the precompiled header into the AST context.
-      llvm::OwningPtr<PCHReader> Reader(new PCHReader(PP, *ContextOwner.get()));
-      switch (Reader->ReadPCH(ImplicitIncludePCH)) {
-      case PCHReader::Success: {
-        // Attach the PCH reader to the AST context as an external AST
-        // source, so that declarations will be deserialized from the
-        // PCH file as needed.
-        llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
+  if (!ImplicitIncludePCH.empty()) {
+    // The user has asked us to include a precompiled header. Load
+    // the precompiled header into the AST context.
+    llvm::OwningPtr<PCHReader> Reader(new PCHReader(PP, ContextOwner.get()));
+    switch (Reader->ReadPCH(ImplicitIncludePCH)) {
+    case PCHReader::Success: {
+      // Attach the PCH reader to the AST context as an external AST
+      // source, so that declarations will be deserialized from the
+      // PCH file as needed.
+      llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
+      if (ContextOwner)
         ContextOwner->setExternalSource(Source);
 
-        // Clear out the predefines buffer, because all of the
-        // predefines are already in the PCH file.
-        PP.setPredefines("");
-        break;
-      }
-
-      case PCHReader::Failure:
-        // Unrecoverable failure: don't even try to process the input
-        // file.
-        return;
-
-      case PCHReader::IgnorePCH:
-        // No suitable PCH file could be found. Just ignore the
-        // -include-pch option entirely.
-        
-        // We delayed the initialization of builtins in the hope of
-        // loading the PCH file. Since the PCH file could not be
-        // loaded, initialize builtins now.
-        ContextOwner->InitializeBuiltins(PP.getIdentifierTable());
-        break;
-      }
-
-      // Finish preprocessor initialization. We do this now (rather
-      // than earlier) because this initialization creates new source
-      // location entries in the source manager, which must come after
-      // the source location entries for the PCH file.
-      if (InitializeSourceManager(PP, InFile))
-        return;
+      // Clear out the predefines buffer, because all of the
+      // predefines are already in the PCH file.
+      PP.setPredefines("");
+      break;
     }
 
-    ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats, 
-             CompleteTranslationUnit);
+    case PCHReader::Failure:
+      // Unrecoverable failure: don't even try to process the input
+      // file.
+      return;
+
+    case PCHReader::IgnorePCH:
+      // No suitable PCH file could be found. Just ignore the
+      // -include-pch option entirely.
+      
+      // We delayed the initialization of builtins in the hope of
+      // loading the PCH file. Since the PCH file could not be
+      // loaded, initialize builtins now.
+      if (ContextOwner)
+        ContextOwner->InitializeBuiltins(PP.getIdentifierTable());
+      break;
+    }
+
+    // Finish preprocessor initialization. We do this now (rather
+    // than earlier) because this initialization creates new source
+    // location entries in the source manager, which must come after
+    // the source location entries for the PCH file.
+    if (InitializeSourceManager(PP, InFile))
+      return;
   }
 
+
+  // If we have an ASTConsumer, run the parser with it.
+  if (Consumer)
+    ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats, 
+             CompleteTranslationUnit);
+
+  if (PA == RunPreprocessorOnly) {    // Just lex as fast as we can, no output.
+    llvm::TimeRegion Timer(ClangFrontendTimer);
+    Token Tok;
+    // Start parsing the specified input file.
+    PP.EnterMainSourceFile();
+    do {
+      PP.Lex(Tok);
+    } while (Tok.isNot(tok::eof));
+    ClearSourceMgr = true;
+  } else if (PA == ParseNoop) {                  // -parse-noop
+    llvm::TimeRegion Timer(ClangFrontendTimer);
+    ParseFile(PP, new MinimalAction(PP));
+    ClearSourceMgr = true;
+  }
+  
   if (FixItRewrite)
     FixItRewrite->WriteFixedFile(InFile, OutputFile);
   

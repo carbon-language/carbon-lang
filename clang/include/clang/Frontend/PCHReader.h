@@ -83,7 +83,7 @@ private:
   Preprocessor &PP;
 
   /// \brief The AST context into which we'll read the PCH file.
-  ASTContext &Context;
+  ASTContext *Context;
 
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
@@ -298,7 +298,7 @@ private:
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  explicit PCHReader(Preprocessor &PP, ASTContext &Context);
+  explicit PCHReader(Preprocessor &PP, ASTContext *Context);
   ~PCHReader();
 
   PCHReadResult ReadPCH(const std::string &FileName);
@@ -453,7 +453,7 @@ public:
 
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.
-  ASTContext &getContext() { return Context; }
+  ASTContext *getContext() { return Context; }
 
   // \brief Contains declarations that were loaded before we have
   // access to a Sema object.
