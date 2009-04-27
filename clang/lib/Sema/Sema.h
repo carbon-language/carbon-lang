@@ -1494,6 +1494,7 @@ public:
   //// ActOnCXXThrow -  Parse throw expressions.
   virtual OwningExprResult ActOnCXXThrow(SourceLocation OpLoc,
                                          ExprArg expr);
+  bool CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E);
 
   /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
   /// Can be interpreted either as function-style casting ("int(x)")

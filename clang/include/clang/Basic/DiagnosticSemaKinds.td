@@ -866,6 +866,10 @@ def note_protected_by_objc_finally : Note<
   "jump bypasses initialization of @finally block">;
 def note_protected_by_objc_synchronized : Note<
   "jump bypasses initialization of @synchronized block">;
+def note_protected_by_cxx_try : Note<
+  "jump bypasses initialization of try block">;
+def note_protected_by_cxx_catch : Note<
+  "jump bypasses initialization of catch block">;
 
 def err_func_returning_array_function : Error<
   "function cannot return array or function type %0">;
@@ -1195,6 +1199,11 @@ def err_conditional_ambiguous : Error<
 def err_conditional_ambiguous_ovl : Error<
   "conditional expression is ambiguous; %0 and %1 can be converted to several "
   "common types">;
+
+def err_throw_incomplete : Error<
+  "cannot throw object of incomplete type %0">;
+def err_throw_incomplete_ptr : Error<
+  "cannot throw pointer to object of incomplete type %0">;
 
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;

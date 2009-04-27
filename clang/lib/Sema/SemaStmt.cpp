@@ -1156,6 +1156,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
   // Neither of these are explicitly forbidden, but every compiler detects them
   // and warns.
 
+  CurFunctionNeedsScopeChecking = true;
   RawHandlers.release();
   return Owned(new (Context) CXXTryStmt(TryLoc,
                                         static_cast<Stmt*>(TryBlock.release()),

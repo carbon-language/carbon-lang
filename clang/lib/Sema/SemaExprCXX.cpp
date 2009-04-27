@@ -88,8 +88,37 @@ Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
 /// ActOnCXXThrow - Parse throw expressions.
 Action::OwningExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprArg E) {
-  return Owned(new (Context) CXXThrowExpr((Expr*)E.release(), Context.VoidTy,
-                                          OpLoc));
+  Expr *Ex = E.takeAs<Expr>();
+  if (Ex && !Ex->isTypeDependent() && CheckCXXThrowOperand(OpLoc, Ex))
+    return ExprError();
+  return Owned(new (Context) CXXThrowExpr(Ex, Context.VoidTy, OpLoc));
+}
+
+/// CheckCXXThrowOperand - Validate the operand of a throw.
+bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
+  // C++ [except.throw]p3:
+  //   [...] adjusting the type from "array of T" or "function returning T"
+  //   to "pointer to T" or "pointer to function returning T", [...]
+  DefaultFunctionArrayConversion(E);
+
+  //   If the type of the exception would be an incomplete type or a pointer
+  //   to an incomplete type other than (cv) void the program is ill-formed.
+  QualType Ty = E->getType();
+  int isPointer = 0;
+  if (const PointerType* Ptr = Ty->getAsPointerType()) {
+    Ty = Ptr->getPointeeType();
+    isPointer = 1;
+  }
+  if (!isPointer || !Ty->isVoidType()) {
+    if (RequireCompleteType(ThrowLoc, Ty,
+                            isPointer ? diag::err_throw_incomplete_ptr
+                                      : diag::err_throw_incomplete,
+                            E->getSourceRange(), SourceRange(), QualType()))
+      return true;
+  }
+
+  // FIXME: Construct a temporary here.
+  return false;
 }
 
 Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {

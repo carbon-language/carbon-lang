@@ -15,6 +15,7 @@
 #include "Sema.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtCXX.h"
 using namespace clang;
 
 namespace {
@@ -115,7 +116,6 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     
     // FIXME: diagnose jumps past initialization: required in C++, warning in C.
     //   goto L; int X = 4;   L: ;
-    // FIXME: what about jumps into C++ catch blocks, what are the rules?
 
     // If this is a declstmt with a VLA definition, it defines a scope from here
     // to the end of the containing context.
@@ -184,7 +184,27 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
       BuildScopeInformation(AS->getSynchBody(), Scopes.size()-1);
       continue;
     }
-    
+
+    // Disallow jumps into any part of a C++ try statement. This is pretty
+    // much the same as for Obj-C.
+    if (CXXTryStmt *TS = dyn_cast<CXXTryStmt>(SubStmt)) {
+      Scopes.push_back(GotoScope(ParentScope, diag::note_protected_by_cxx_try,
+                                 TS->getSourceRange().getBegin()));
+      if (Stmt *TryBlock = TS->getTryBlock())
+        BuildScopeInformation(TryBlock, Scopes.size()-1);
+
+      // Jump from the catch into the try is not allowed either.
+      for(unsigned I = 0, E = TS->getNumHandlers(); I != E; ++I) {
+        CXXCatchStmt *CS = TS->getHandler(I);
+        Scopes.push_back(GotoScope(ParentScope,
+                                   diag::note_protected_by_cxx_catch,
+                                   CS->getSourceRange().getBegin()));
+        BuildScopeInformation(CS->getHandlerBlock(), Scopes.size()-1);
+      }
+
+      continue;
+    }
+
     // Recursively walk the AST.
     BuildScopeInformation(SubStmt, ParentScope);
   }
