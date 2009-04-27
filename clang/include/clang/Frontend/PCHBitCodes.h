@@ -446,12 +446,12 @@ namespace clang {
     /// These constants describe the records that describe statements
     /// or expressions. These records can occur within either the type
     /// or declaration blocks, so they begin with record values of
-    /// 100. Each constant describes a record for a specific
+    /// 50.  Each constant describes a record for a specific
     /// statement or expression class in the AST.
     enum StmtCode {
       /// \brief A marker record that indicates that we are at the end
       /// of an expression.
-      STMT_STOP,
+      STMT_STOP = 50,
       /// \brief A NULL expression.
       STMT_NULL_PTR,
       /// \brief A NullStmt record.
