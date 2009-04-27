@@ -10,6 +10,7 @@
 //  This file defines the PCHReader class, which reads a precompiled header.
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CLANG_FRONTEND_PCH_READER_H
 #define LLVM_CLANG_FRONTEND_PCH_READER_H
 
