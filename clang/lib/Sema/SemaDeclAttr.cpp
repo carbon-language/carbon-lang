@@ -1533,28 +1533,36 @@ static void HandleObjCOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
   d->addAttr(::new (S.Context) ObjCOwnershipReturnsAttr());
 }
 
-static void HandleObjCOwnershipRetainAttr(Decl *d, const AttributeList &Attr,
-                                           Sema &S) {
+static void HandleObjCOwnershipParmAttr(Decl *d, const AttributeList &Attr,
+                                        Sema &S) {
   
   if (!isa<ParmVarDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-    "objc_ownership_retain" << 4 /* parameter */;
-    return;
-  }
-  
-  d->addAttr(::new (S.Context) ObjCOwnershipRetainAttr());
-}
+    const char *name;
+    
+    switch (Attr.getKind()) {
+      default:
+        assert(0 && "invalid ownership attribute");
+        return;
+      case AttributeList::AT_objc_ownership_retain:
+        name = "objc_ownership_retain"; break;
+      case AttributeList::AT_objc_ownership_cfretain:
+        name = "objc_ownership_cfretain"; break;
+    };
 
-static void HandleObjCOwnershipCFRetainAttr(Decl *d, const AttributeList &Attr,
-                                            Sema &S) {
-  
-  if (!isa<ParmVarDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-    "objc_ownership_cfretain" << 4 /* parameter */;
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) << name
+          << 4 /* parameter */;
     return;
   }
   
-  d->addAttr(::new (S.Context) ObjCOwnershipCFRetainAttr());
+  switch (Attr.getKind()) {
+    default:
+      assert(0 && "invalid ownership attribute");
+      return;
+    case AttributeList::AT_objc_ownership_retain:
+      d->addAttr(::new (S.Context) ObjCOwnershipRetainAttr());   return;
+    case AttributeList::AT_objc_ownership_cfretain:
+      d->addAttr(::new (S.Context) ObjCOwnershipCFRetainAttr()); return;
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -1596,11 +1604,10 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Checker-specific.
   case AttributeList::AT_objc_ownership_retain:
-    HandleObjCOwnershipRetainAttr(D, Attr, S); break;
+  case AttributeList::AT_objc_ownership_cfretain:
+    HandleObjCOwnershipParmAttr(D, Attr, S); break;
   case AttributeList::AT_objc_ownership_returns:
     HandleObjCOwnershipReturnsAttr(D, Attr, S); break;
-  case AttributeList::AT_objc_ownership_cfretain:
-    HandleObjCOwnershipCFRetainAttr(D, Attr, S); break;
 
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;
