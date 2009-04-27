@@ -1411,14 +1411,14 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this context.
-  SavedStreamPosition SavedPosition(Stream);
+  SavedStreamPosition SavedPosition(DeclsCursor);
 
   // Load the record containing all of the declarations lexically in
   // this context.
-  Stream.JumpToBit(Offset);
+  DeclsCursor.JumpToBit(Offset);
   RecordData Record;
-  unsigned Code = Stream.ReadCode();
-  unsigned RecCode = Stream.ReadRecord(Code, Record);
+  unsigned Code = DeclsCursor.ReadCode();
+  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
   (void)RecCode;
   assert(RecCode == pch::DECL_CONTEXT_LEXICAL && "Expected lexical block");
 
@@ -1430,7 +1430,7 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
 }
 
 bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
-                           llvm::SmallVectorImpl<VisibleDeclaration> & Decls) {
+                           llvm::SmallVectorImpl<VisibleDeclaration> &Decls) {
   assert(DC->hasExternalVisibleStorage() && 
          "DeclContext has no visible decls in storage");
   uint64_t Offset = DeclContextOffsets[DC].second;
@@ -1438,14 +1438,14 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this context.
-  SavedStreamPosition SavedPosition(Stream);
+  SavedStreamPosition SavedPosition(DeclsCursor);
 
   // Load the record containing all of the declarations visible in
   // this context.
-  Stream.JumpToBit(Offset);
+  DeclsCursor.JumpToBit(Offset);
   RecordData Record;
-  unsigned Code = Stream.ReadCode();
-  unsigned RecCode = Stream.ReadRecord(Code, Record);
+  unsigned Code = DeclsCursor.ReadCode();
+  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
   (void)RecCode;
   assert(RecCode == pch::DECL_CONTEXT_VISIBLE && "Expected visible block");
   if (Record.size() == 0)
@@ -1459,8 +1459,7 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
     Decls.back().Name = ReadDeclarationName(Record, Idx);
 
     unsigned Size = Record[Idx++];
-    llvm::SmallVector<unsigned, 4> & LoadedDecls
-      = Decls.back().Declarations;
+    llvm::SmallVector<unsigned, 4> &LoadedDecls = Decls.back().Declarations;
     LoadedDecls.reserve(Size);
     for (unsigned I = 0; I < Size; ++I)
       LoadedDecls.push_back(Record[Idx++]);
