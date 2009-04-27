@@ -22,6 +22,8 @@
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Types.h"
 
+#include "clang/Basic/Version.h"
+
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
@@ -353,8 +355,8 @@ void Driver::PrintVersion(const Compilation &C) const {
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
 
-  // FIXME: Do not hardcode clang version.
-  llvm::errs() << "clang version 1.0 (" << vers << " " << revision << ")" << "\n";
+  llvm::errs() << "clang version " CLANG_VERSION_STRING " (" 
+               << vers << " " << revision << ")" << "\n";
 
   const ToolChain &TC = C.getDefaultToolChain();
   llvm::errs() << "Target: " << TC.getTripleString() << '\n';
@@ -366,8 +368,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // in practice.
 
   if (C.getArgs().hasArg(options::OPT_dumpversion)) {
-    // FIXME: Do not hardcode clang version.
-    llvm::outs() << "1.0\n";
+    llvm::outs() << CLANG_VERSION_STRING "\n";
     return false;
   }
 

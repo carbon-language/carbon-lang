@@ -27,6 +27,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/Version.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -341,7 +342,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_OFFSET);
   RECORD(DECL_OFFSET);
   RECORD(LANGUAGE_OPTIONS);
-  RECORD(TARGET_TRIPLE);
+  RECORD(METADATA);
   RECORD(IDENTIFIER_OFFSET);
   RECORD(IDENTIFIER_TABLE);
   RECORD(EXTERNAL_DEFINITIONS);
@@ -440,18 +441,26 @@ void PCHWriter::WriteBlockInfoBlock() {
 }
 
 
-/// \brief Write the target triple (e.g., i686-apple-darwin9).
-void PCHWriter::WriteTargetTriple(const TargetInfo &Target) {
+/// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
+void PCHWriter::WriteMetadata(const TargetInfo &Target) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::TARGET_TRIPLE));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Triple name
-  unsigned TripleAbbrev = Stream.EmitAbbrev(Abbrev);
+  Abbrev->Add(BitCodeAbbrevOp(pch::METADATA));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
+  unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
 
   RecordData Record;
-  Record.push_back(pch::TARGET_TRIPLE);
+  Record.push_back(pch::METADATA);
+  Record.push_back(pch::VERSION_MAJOR);
+  Record.push_back(pch::VERSION_MINOR);
+  Record.push_back(CLANG_VERSION_MAJOR);
+  Record.push_back(CLANG_VERSION_MINOR);
   const char *Triple = Target.getTargetTriple();
-  Stream.EmitRecordWithBlob(TripleAbbrev, Record, Triple, strlen(Triple));
+  Stream.EmitRecordWithBlob(AbbrevCode, Record, Triple, strlen(Triple));
 }
 
 /// \brief Write the LangOptions structure.
@@ -1672,7 +1681,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls) {
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
-  WriteTargetTriple(Context.Target);
+  WriteMetadata(Context.Target);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls)
     WriteStatCache(*StatCalls);

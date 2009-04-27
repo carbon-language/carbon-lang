@@ -115,4 +115,8 @@ def warn_pch_preprocessor : Warning<
     "current translation unit">;
 def note_predef_in_pch : Note<
     "preprocessor definitions in PCH file">;
+def warn_pch_version_too_old : Warning<
+    "PCH file uses an older PCH format that is no longer supported">;
+def warn_pch_version_too_new : Warning<
+    "PCH file uses a newer PCH format that cannot be read">;
 }

@@ -22,6 +22,25 @@
 
 namespace clang {
   namespace pch {
+    /// \brief PCH major version number supported by this version of
+    /// Clang.
+    ///
+    /// Whenever the PCH format changes in a way that makes it
+    /// incompatible with previous versions (such that a reader
+    /// designed for the previous version could not support reading
+    /// the new version), this number should be increased.
+    const unsigned VERSION_MAJOR = 1;
+
+    /// \brief PCH minor version number supported by this version of
+    /// Clang.
+    ///
+    /// Whenever the PCH format changes in a way that is still
+    /// compatible with previous versions (such that a reader designed
+    /// for the previous version could still support reading the new
+    /// version by ignoring new kinds of subblocks), this number
+    /// should be increased.
+    const unsigned VERSION_MINOR = 0;
+
     /// \brief An ID number that refers to a declaration in a PCH file.
     ///
     /// The ID numbers of types are consecutive (in order of
@@ -108,9 +127,9 @@ namespace clang {
       /// actually important to check.
       LANGUAGE_OPTIONS = 3,
 
-      /// \brief Record code for the target triple used to build the
-      /// PCH file.
-      TARGET_TRIPLE = 4,
+      /// \brief PCH metadata, including the PCH file version number
+      /// and the target triple used to build the PCH file.
+      METADATA = 4,
 
       /// \brief Record code for the table of offsets of each
       /// identifier ID.

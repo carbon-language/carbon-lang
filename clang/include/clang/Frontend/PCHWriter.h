@@ -160,7 +160,7 @@ private:
   unsigned NumVisibleDeclContexts;
 
   void WriteBlockInfoBlock();
-  void WriteTargetTriple(const TargetInfo &Target);
+  void WriteMetadata(const TargetInfo &Target);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr, 

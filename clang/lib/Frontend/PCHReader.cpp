@@ -928,7 +928,13 @@ PCHReader::ReadPCHBlock() {
         return IgnorePCH;
       break;
 
-    case pch::TARGET_TRIPLE: {
+    case pch::METADATA: {
+      if (Record[0] != pch::VERSION_MAJOR) {
+        Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
+                                           : diag::warn_pch_version_too_new);
+        return IgnorePCH;
+      }
+
       std::string TargetTriple(BlobStart, BlobLen);
       if (TargetTriple != PP.getTargetInfo().getTargetTriple()) {
         Diag(diag::warn_pch_target_triple)
