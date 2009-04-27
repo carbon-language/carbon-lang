@@ -2,7 +2,7 @@
 // RUN: grep -e "\^{Innermost=CC}" %t | count 1 &&
 // RUN: grep -e "{Derived=#ib32b8b3b8sb16b8b8b2b8ccb6}" %t | count 1 &&
 // RUN: grep -e "{B1=#@c}" %t | count 1 &&
-// RUN: grep -e "v12@0:4\[3\[4{Test=i}]]8" %t | count 1 &&
+// RUN: grep -e "v12@0:4\[3\[4@]]8" %t | count 1 &&
 // RUN: grep -e "r\^{S=i}" %t | count 1 &&
 // RUN: grep -e "\^{Object=#}" %t | count 1
 
@@ -67,11 +67,11 @@ struct Innermost {
 {
 	int ivar;
 }
--(void) test3: (Test  [3] [4])b ; 
+-(void) test3: (Test*  [3] [4])b ; 
 @end
 
 @implementation Test
--(void) test3: (Test [3] [4])b {}
+-(void) test3: (Test* [3] [4])b {}
 @end
 
 struct S { int iS; };

@@ -487,7 +487,8 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     if (EltTy->getDecl()->hasFlexibleArrayMember())
       Diag(Loc, diag::ext_flexible_array_in_array) << T;
   } else if (T->isObjCInterfaceType()) {
-    Diag(Loc, diag::warn_objc_array_of_interfaces) << T;
+    Diag(Loc, diag::err_objc_array_of_interfaces) << T;
+    return QualType();
   }
       
   // C99 6.7.5.2p1: The size expression shall have integer type.

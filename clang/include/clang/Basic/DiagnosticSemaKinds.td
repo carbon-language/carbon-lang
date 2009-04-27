@@ -1632,8 +1632,8 @@ def err_missing_type_specifier : Error<
   "C++ requires a type specifier for all declarations">;
 def err_missing_param_declspec : Error<
   "parameter requires a declaration specifier">;
-def warn_objc_array_of_interfaces : Warning<
-  "array of interface %0 should probably be an array of pointers">;
+def err_objc_array_of_interfaces : Error<
+  "array of interface %0 is invalid (probably should be an array of pointers)">;
 def ext_c99_array_usage : Extension<
   "use of C99-specific array features, accepted as an extension">;
 def err_invalid_protocol_qualifiers : Error<
