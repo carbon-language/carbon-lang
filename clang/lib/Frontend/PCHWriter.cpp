@@ -681,10 +681,10 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Stream.EnterSubblock(pch::SOURCE_MANAGER_BLOCK_ID, 3);
 
   // Abbreviations for the various kinds of source-location entries.
-  int SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
-  int SLocBufferAbbrv = CreateSLocBufferAbbrev(Stream);
-  int SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
-  int SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(Stream);
+  unsigned SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
+  unsigned SLocBufferAbbrv = CreateSLocBufferAbbrev(Stream);
+  unsigned SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
+  unsigned SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(Stream);
 
   // Write the line table.
   if (SourceMgr.hasLineTable()) {
