@@ -476,6 +476,16 @@ public:
   /// exist.
   virtual unsigned getSubReg(unsigned RegNo, unsigned Index) const = 0;
 
+  /// getMatchingSuperReg - Return a super-register of the specified register
+  /// Reg so its sub-register of index SubIdx is Reg.
+  unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx, 
+                               const TargetRegisterClass *RC) const {
+    for (const unsigned *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
+      if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
+        return SR;
+    return 0;
+  }
+
   //===--------------------------------------------------------------------===//
   // Register Class Information
   //

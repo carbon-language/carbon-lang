@@ -1000,18 +1000,6 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
   }
 }
 
-/// getMatchingSuperReg - Return a super-register of the specified register
-/// Reg so its sub-register of index SubIdx is Reg.
-static unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx, 
-                                    const TargetRegisterClass *RC,
-                                    const TargetRegisterInfo* TRI) {
-  for (const unsigned *SRs = TRI->getSuperRegisters(Reg);
-       unsigned SR = *SRs; ++SRs)
-    if (Reg == TRI->getSubReg(SR, SubIdx) && RC->contains(SR))
-      return SR;
-  return 0;
-}
-
 /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
 /// two virtual registers from different register classes.
 bool
@@ -1064,7 +1052,7 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
           TargetRegisterInfo::isPhysicalRegister(SrcReg)
           ? tri_->getPhysicalRegisterRegClass(SrcReg)
           : mri_->getRegClass(SrcReg);
-        if (!getMatchingSuperReg(PhysReg, SubIdx, RC, tri_))
+        if (!tri_->getMatchingSuperReg(PhysReg, SubIdx, RC))
           return true;
       }
     }
@@ -1080,7 +1068,7 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
           TargetRegisterInfo::isPhysicalRegister(DstReg)
           ? tri_->getPhysicalRegisterRegClass(DstReg)
           : mri_->getRegClass(DstReg);
-        if (!getMatchingSuperReg(PhysReg, SubIdx, RC, tri_))
+        if (!tri_->getMatchingSuperReg(PhysReg, SubIdx, RC))
           return true;
       }
     }
@@ -1097,7 +1085,7 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
                                                unsigned SrcReg, unsigned SubIdx,
                                                unsigned &RealDstReg) {
   const TargetRegisterClass *RC = mri_->getRegClass(SrcReg);
-  RealDstReg = getMatchingSuperReg(DstReg, SubIdx, RC, tri_);
+  RealDstReg = tri_->getMatchingSuperReg(DstReg, SubIdx, RC);
   assert(RealDstReg && "Invalid extract_subreg instruction!");
 
   // For this type of EXTRACT_SUBREG, conservatively
@@ -1127,7 +1115,7 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
                                                unsigned SrcReg, unsigned SubIdx,
                                                unsigned &RealSrcReg) {
   const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
-  RealSrcReg = getMatchingSuperReg(SrcReg, SubIdx, RC, tri_);
+  RealSrcReg = tri_->getMatchingSuperReg(SrcReg, SubIdx, RC);
   assert(RealSrcReg && "Invalid extract_subreg instruction!");
 
   LiveInterval &RHS = li_->getInterval(DstReg);
