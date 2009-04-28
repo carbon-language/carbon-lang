@@ -900,8 +900,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     }
   }
   
-  if (E->getOpcode() == BinaryOperator::Sub) {
-    if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
+  if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
+    if (E->getOpcode() == BinaryOperator::Sub || E->isEqualityOp()) {
       APValue LHSValue;
       if (!EvaluatePointer(E->getLHS(), LHSValue, Info))
         return false;
@@ -915,13 +915,22 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       if (LHSValue.getLValueBase() || RHSValue.getLValueBase())
         return false;
 
-      const QualType Type = E->getLHS()->getType();
-      const QualType ElementType = Type->getAsPointerType()->getPointeeType();
+      if (E->getOpcode() == BinaryOperator::Sub) {
+        const QualType Type = E->getLHS()->getType();
+        const QualType ElementType = Type->getAsPointerType()->getPointeeType();
 
-      uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
-      D /= Info.Ctx.getTypeSize(ElementType) / 8;
+        uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
+        D /= Info.Ctx.getTypeSize(ElementType) / 8;
 
-      return Success(D, E);
+        return Success(D, E);
+      }
+      bool Result;
+      if (E->getOpcode() == BinaryOperator::EQ) {
+        Result = LHSValue.getLValueOffset() == RHSValue.getLValueOffset();
+      } else if (E->getOpcode() == BinaryOperator::NE) {
+        Result = LHSValue.getLValueOffset() != RHSValue.getLValueOffset();
+      }
+      return Success(Result, E);
     }
   }
   if (!LHSTy->isIntegralType() ||
