@@ -478,7 +478,6 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.Microsoft);  // Microsoft extensions.
   Record.push_back(LangOpts.CPlusPlus);  // C++ Support
   Record.push_back(LangOpts.CPlusPlus0x);  // C++0x Support
-  Record.push_back(LangOpts.NoExtensions);  // All extensions are disabled, strict mode.
   Record.push_back(LangOpts.CXXOperatorNames);  // Treat C++ operator names as keywords.
     
   Record.push_back(LangOpts.ObjC1);  // Objective-C 1 support enabled.
@@ -486,7 +485,6 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C modern abi enabled
     
   Record.push_back(LangOpts.PascalStrings);  // Allow Pascal strings
-  Record.push_back(LangOpts.Boolean);  // Allow bool/true/false
   Record.push_back(LangOpts.WritableStrings);  // Allow writable strings
   Record.push_back(LangOpts.LaxVectorConversions);
   Record.push_back(LangOpts.Exceptions);  // Support exception handling.

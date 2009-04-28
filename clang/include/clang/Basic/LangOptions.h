@@ -32,7 +32,6 @@ public:
   unsigned Microsoft         : 1;  // Microsoft extensions.
   unsigned CPlusPlus         : 1;  // C++ Support
   unsigned CPlusPlus0x       : 1;  // C++0x Support
-  unsigned NoExtensions      : 1;  // All extensions are disabled, strict mode.
   unsigned CXXOperatorNames  : 1;  // Treat C++ operator names as keywords.
     
   unsigned ObjC1             : 1;  // Objective-C 1 support enabled.
@@ -40,7 +39,6 @@ public:
   unsigned ObjCNonFragileABI : 1;  // Objective-C modern abi enabled
     
   unsigned PascalStrings     : 1;  // Allow Pascal strings
-  unsigned Boolean           : 1;  // Allow bool/true/false
   unsigned WritableStrings   : 1;  // Allow writable strings
   unsigned LaxVectorConversions : 1;
   unsigned Exceptions        : 1;  // Support exception handling.
@@ -103,8 +101,8 @@ public:
     GNUMode = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
-    C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
-    CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
+    C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
+    CXXOperatorNames = PascalStrings = WritableStrings = 0;
     Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;

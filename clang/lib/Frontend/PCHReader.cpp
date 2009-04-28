@@ -1242,13 +1242,11 @@ bool PCHReader::ParseLanguageOptions(
   PARSE_LANGOPT_IMPORTANT(Microsoft, diag::warn_pch_microsoft_extensions);
   PARSE_LANGOPT_IMPORTANT(CPlusPlus, diag::warn_pch_cplusplus);
   PARSE_LANGOPT_IMPORTANT(CPlusPlus0x, diag::warn_pch_cplusplus0x);
-  PARSE_LANGOPT_IMPORTANT(NoExtensions, diag::warn_pch_extensions);
   PARSE_LANGOPT_BENIGN(CXXOperatorName);
   PARSE_LANGOPT_IMPORTANT(ObjC1, diag::warn_pch_objective_c);
   PARSE_LANGOPT_IMPORTANT(ObjC2, diag::warn_pch_objective_c2);
   PARSE_LANGOPT_IMPORTANT(ObjCNonFragileABI, diag::warn_pch_nonfragile_abi);
   PARSE_LANGOPT_BENIGN(PascalStrings);
-  PARSE_LANGOPT_BENIGN(Boolean);
   PARSE_LANGOPT_BENIGN(WritableStrings);
   PARSE_LANGOPT_IMPORTANT(LaxVectorConversions, 
                           diag::warn_pch_lax_vector_conversions);

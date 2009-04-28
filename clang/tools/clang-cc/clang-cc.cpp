@@ -753,7 +753,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   case lang_cxx98:
     Options.CPlusPlus = 1;
     Options.CXXOperatorNames = !NoOperatorNames;
-    Options.Boolean = 1;
     // FALL THROUGH.
   case lang_gnu99:
   case lang_c99:
