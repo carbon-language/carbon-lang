@@ -249,9 +249,7 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
         else
           return PathDiagnosticLocation(S, SMgr);        
       case Stmt::DoStmtClass:
-        if (cast<DoStmt>(Parent)->getCond() != S)
           return PathDiagnosticLocation(S, SMgr); 
-        break;        
       case Stmt::ForStmtClass:
         if (cast<ForStmt>(Parent)->getBody() == S)
           return PathDiagnosticLocation(S, SMgr); 
@@ -259,7 +257,7 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
       case Stmt::IfStmtClass:
         if (cast<IfStmt>(Parent)->getCond() != S)
           return PathDiagnosticLocation(S, SMgr);
-        break;        
+        break;
       case Stmt::ObjCForCollectionStmtClass:
         if (cast<ObjCForCollectionStmt>(Parent)->getBody() == S)
           return PathDiagnosticLocation(S, SMgr);
@@ -772,7 +770,6 @@ class VISIBILITY_HIDDEN EdgeBuilder {
                         const PathDiagnosticLocation &Containee);
   
   PathDiagnosticLocation getContextLocation(const PathDiagnosticLocation &L);
-  void rawAddEdge(PathDiagnosticLocation NewLoc);
   
   void popLocation() {
     PathDiagnosticLocation L = CLocs.back();
@@ -790,6 +787,8 @@ class VISIBILITY_HIDDEN EdgeBuilder {
             S = CE->getCond();
           else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
             S = BE->getLHS();
+          else if (const DoStmt *DS = dyn_cast<DoStmt>(S))
+            S = DS->getCond();
           else
             break;
         }
@@ -840,6 +839,8 @@ public:
   void addEdge(const Stmt *S, bool alwaysAdd = false) {
     addEdge(PathDiagnosticLocation(S, PDB.getSourceManager()), alwaysAdd);
   }
+  
+  void rawAddEdge(PathDiagnosticLocation NewLoc);
   
   void addContext(const Stmt *S);
 };  
@@ -1007,14 +1008,39 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     // Block edges.
     if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
       const CFGBlock &Blk = *BE->getSrc();
-
-      if (const Stmt *Term = Blk.getTerminator())
+      const Stmt *Term = Blk.getTerminator();
+      
+      if (Term)
         EB.addContext(Term);
 
+      // Are we jumping to the head of a loop?  Add a special diagnostic.
+      if (const Stmt *Loop = BE->getDst()->getLoopTarget()) {
+        
+        PathDiagnosticLocation L(Loop, PDB.getSourceManager());
+        PathDiagnosticEventPiece *p =
+          new PathDiagnosticEventPiece(L,
+                                       "Looping back to the head of the loop");
+        
+        EB.addEdge(p->getLocation(), true);
+        PD.push_front(p);
+        
+        if (!Term) {
+          const CompoundStmt *CS = NULL;
+          if (const ForStmt *FS = dyn_cast<ForStmt>(Loop))
+            CS = dyn_cast<CompoundStmt>(FS->getBody());
+          else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
+            CS = dyn_cast<CompoundStmt>(WS->getBody());
+                   
+          if (CS)
+            EB.rawAddEdge(PathDiagnosticLocation(CS->getRBracLoc(),
+                                                 PDB.getSourceManager()));
+        }
+      }
+            
       continue;
     }
 
-    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
+    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {      
       if (const Stmt* S = BE->getFirstStmt()) {
        if (IsControlFlowExpr(S))
          EB.addContext(S);
