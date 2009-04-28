@@ -570,12 +570,13 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
 }
 
 void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                                            const char *Modifier){
+                                            const char *Modifier,
+                                            bool NotRIPRel) {
   MachineOperand BaseReg  = MI->getOperand(Op);
   MachineOperand IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
-  bool NotRIPRel = IndexReg.getReg() || BaseReg.getReg();
+  NotRIPRel |= IndexReg.getReg() || BaseReg.getReg();
   if (DispSpec.isGlobal() ||
       DispSpec.isCPI() ||
       DispSpec.isJTI() ||
@@ -615,14 +616,14 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
 }
 
 void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
-                                         const char *Modifier){
+                                         const char *Modifier, bool NotRIPRel){
   assert(isMem(MI, Op) && "Invalid memory reference!");
   MachineOperand Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
       printOperand(MI, Op+4, Modifier);
       O << ':';
     }
-  printLeaMemReference(MI, Op, Modifier);
+  printLeaMemReference(MI, Op, Modifier, NotRIPRel);
 }
 
 void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
@@ -723,7 +724,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return false;
 
     case 'P': // Don't print @PLT, but do print as memory.
-      printOperand(MI, OpNo, "mem");
+      printOperand(MI, OpNo, "mem", /*NotRIPRel=*/true);
       return false;
     }
   }
@@ -749,7 +750,7 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
       // These only apply to registers, ignore on mem.
       break;
     case 'P': // Don't print @PLT, but do print as memory.
-      printOperand(MI, OpNo, "mem");
+      printMemReference(MI, OpNo, "mem", /*NotRIPRel=*/true);
       return false;
     }
   }
