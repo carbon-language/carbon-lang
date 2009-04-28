@@ -414,7 +414,6 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
     const std::string &Missing = MissingPredefines[I];
     if (!startsWith(Missing, "#define ") != 0) {
       Diag(diag::warn_pch_compiler_options_mismatch);
-      Diag(diag::note_ignoring_pch) << FileName;
       return true;
     }
     
@@ -489,10 +488,8 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
     Diag(PCHMissingLoc, diag::note_using_macro_def_from_pch);
   }
   
-  if (ConflictingDefines) {
-    Diag(diag::note_ignoring_pch) << FileName;
+  if (ConflictingDefines)
     return true;
-  }
   
   // Determine what predefines were introduced based on command-line
   // parameters that were not present when building the PCH
@@ -506,7 +503,6 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
     const std::string &Extra = ExtraPredefines[I];
     if (!startsWith(Extra, "#define ") != 0) {
       Diag(diag::warn_pch_compiler_options_mismatch);
-      Diag(diag::note_ignoring_pch) << FileName;
       return true;
     }
 
@@ -527,8 +523,6 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
                                  MacroName.c_str() + MacroName.size())) {
       Diag(diag::warn_macro_name_used_in_pch)
         << II;
-      Diag(diag::note_ignoring_pch)
-        << FileName;
       return true;
     }
 
@@ -1102,7 +1096,6 @@ PCHReader::ReadPCHBlock() {
       if (TargetTriple != PP.getTargetInfo().getTargetTriple()) {
         Diag(diag::warn_pch_target_triple)
           << TargetTriple << PP.getTargetInfo().getTargetTriple();
-        Diag(diag::note_ignoring_pch) << FileName;
         return IgnorePCH;
       }
       break;
@@ -1392,7 +1385,6 @@ bool PCHReader::ParseLanguageOptions(
 #define PARSE_LANGOPT_IMPORTANT(Option, DiagID)                 \
   if (Record[Idx] != LangOpts.Option) {                         \
     Diag(DiagID) << (unsigned)Record[Idx] << LangOpts.Option;   \
-    Diag(diag::note_ignoring_pch) << FileName;                  \
     return true;                                                \
   }                                                             \
   ++Idx
@@ -1446,7 +1438,6 @@ bool PCHReader::ParseLanguageOptions(
   if ((LangOpts.getGCMode() != 0) != (Record[Idx] != 0)) {
     Diag(diag::warn_pch_gc_mode) 
       << (unsigned)Record[Idx] << LangOpts.getGCMode();
-    Diag(diag::note_ignoring_pch) << FileName;
     return true;
   }
   ++Idx;

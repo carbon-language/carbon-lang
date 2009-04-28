@@ -1775,15 +1775,19 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       return;
 
     case PCHReader::IgnorePCH:
-      // No suitable PCH file could be found. Just ignore the
-      // -include-pch option entirely.
-      
+      // No suitable PCH file could be found. Return an error.
+      return;
+
+#if 0
+      // FIXME: We can recover from failed attempts to load PCH
+      // files. This code will do so, if we ever want to enable it.
+
       // We delayed the initialization of builtins in the hope of
       // loading the PCH file. Since the PCH file could not be
       // loaded, initialize builtins now.
       if (ContextOwner)
         ContextOwner->InitializeBuiltins(PP.getIdentifierTable());
-      break;
+#endif
     }
 
     // Finish preprocessor initialization. We do this now (rather
