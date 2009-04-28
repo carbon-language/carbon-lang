@@ -16,12 +16,6 @@
 #include "clang/AST/StmtVisitor.h"
 using namespace clang;
 
-// FIXME: use the diagnostics machinery
-static bool Error(const char *Str) {
-  std::fprintf(stderr, "%s\n", Str);
-  return true;
-}
-
 namespace {
   class PCHStmtReader : public StmtVisitor<PCHStmtReader, unsigned> {
     PCHReader &Reader;
@@ -830,7 +824,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
     unsigned Code = Cursor.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
       if (Cursor.ReadBlockEnd()) {
-        Error("Error at end of Source Manager block");
+        Error("error at end of block in PCH file");
         return 0;
       }
       break;
@@ -840,7 +834,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       // No known subblocks, always skip them.
       Cursor.ReadSubBlockID();
       if (Cursor.SkipBlock()) {
-        Error("Malformed block record");
+        Error("malformed block record in PCH file");
         return 0;
       }
       continue;

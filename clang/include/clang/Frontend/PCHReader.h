@@ -312,6 +312,12 @@ private:
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(uint64_t Offset, unsigned Index);
 
+  /// \brief Produce an error diagnostic and return true.
+  ///
+  /// This routine should only be used for fatal errors that have to
+  /// do with non-routine failures (e.g., corrupted PCH file).
+  bool Error(const char *Msg);
+
   PCHReader(const PCHReader&); // do not implement
   PCHReader &operator=(const PCHReader &); // do not implement
 

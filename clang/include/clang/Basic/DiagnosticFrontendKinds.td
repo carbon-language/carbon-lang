@@ -129,4 +129,6 @@ def warn_macro_name_used_in_pch : Warning<
 def warn_pch_compiler_options_mismatch : Warning<
     "compiler options used when building the precompiled header differ from "
     "the options used when using the precompiled header">;
+def err_not_a_pch_file : Error<
+    "'%0' does not appear to be a precompiled header file">, DefaultFatal;
 }

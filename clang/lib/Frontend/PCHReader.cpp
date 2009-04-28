@@ -313,8 +313,10 @@ typedef OnDiskChainedHashTable<PCHIdentifierLookupTrait>
   PCHIdentifierLookupTable;
 
 // FIXME: use the diagnostics machinery
-static bool Error(const char *Str) {
-  std::fprintf(stderr, "%s\n", Str);
+bool PCHReader::Error(const char *Msg) {
+  Diagnostic &Diags = PP.getDiagnostics();
+  unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Fatal, Msg);
+  Diag(DiagID);
   return true;
 }
 
@@ -708,13 +710,13 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
 
   // The stream itself is going to skip over the source manager block.
   if (Stream.SkipBlock()) {
-    Error("Malformed block record");
+    Error("malformed block record in PCH file");
     return Failure;
   }
 
   // Enter the source manager block.
   if (SLocEntryCursor.EnterSubBlock(pch::SOURCE_MANAGER_BLOCK_ID)) {
-    Error("Malformed source manager block record");
+    Error("malformed source manager block record in PCH file");
     return Failure;
   }
 
@@ -725,7 +727,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
     unsigned Code = SLocEntryCursor.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
       if (SLocEntryCursor.ReadBlockEnd()) {
-        Error("Error at end of Source Manager block");
+        Error("error at end of Source Manager block in PCH file");
         return Failure;
       }
       return Success;
@@ -735,7 +737,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       // No known subblocks, always skip them.
       SLocEntryCursor.ReadSubBlockID();
       if (SLocEntryCursor.SkipBlock()) {
-        Error("Malformed block record");
+        Error("malformed block record in PCH file");
         return Failure;
       }
       continue;
@@ -868,7 +870,7 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
 bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
                                  unsigned BlockID) {
   if (Cursor.EnterSubBlock(BlockID)) {
-    Error("Malformed block record");
+    Error("malformed block record in PCH file");
     return Failure;
   }
   
@@ -902,7 +904,7 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
       // No known subblocks, always skip them.
       Stream.ReadSubBlockID();
       if (Stream.SkipBlock()) {
-        Error("Malformed block record");
+        Error("malformed block record in PCH file");
         return;
       }
       continue;
@@ -928,7 +930,7 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
 
       IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
       if (II == 0) {
-        Error("Macro must have a name");
+        Error("macro must have a name in PCH file");
         return;
       }
       SourceLocation Loc = SourceLocation::getFromRawEncoding(Record[1]);
@@ -987,7 +989,7 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
 PCHReader::PCHReadResult 
 PCHReader::ReadPCHBlock() {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
-    Error("Malformed block record");
+    Error("malformed block record in PCH file");
     return Failure;
   }
 
@@ -997,7 +999,7 @@ PCHReader::ReadPCHBlock() {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
       if (Stream.ReadBlockEnd()) {
-        Error("Error at end of module block");
+        Error("error at end of module block in PCH file");
         return Failure;
       }
 
@@ -1009,7 +1011,7 @@ PCHReader::ReadPCHBlock() {
       case pch::TYPES_BLOCK_ID: // Skip types block (lazily loaded)
       default:  // Skip unknown content.
         if (Stream.SkipBlock()) {
-          Error("Malformed block record");
+          Error("malformed block record in PCH file");
           return Failure;
         }
         break;
@@ -1023,14 +1025,14 @@ PCHReader::ReadPCHBlock() {
         if (Stream.SkipBlock() ||  // Skip with the main cursor.
             // Read the abbrevs.
             ReadBlockAbbrevs(DeclsCursor, pch::DECLS_BLOCK_ID)) {
-          Error("Malformed block record");
+          Error("malformed block record in PCH file");
           return Failure;
         }
         break;
           
       case pch::PREPROCESSOR_BLOCK_ID:
         if (Stream.SkipBlock()) {
-          Error("Malformed block record");
+          Error("malformed block record in PCH file");
           return Failure;
         }
         break;
@@ -1041,7 +1043,7 @@ PCHReader::ReadPCHBlock() {
           break;
 
         case Failure:
-          Error("Malformed source manager block");
+          Error("malformed source manager block in PCH file");
           return Failure;
 
         case IgnorePCH:
@@ -1068,7 +1070,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::TYPE_OFFSET:
       if (!TypesLoaded.empty()) {
-        Error("Duplicate TYPE_OFFSET record in PCH file");
+        Error("duplicate TYPE_OFFSET record in PCH file");
         return Failure;
       }
       TypeOffsets = (const uint32_t *)BlobStart;
@@ -1077,7 +1079,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::DECL_OFFSET:
       if (!DeclsLoaded.empty()) {
-        Error("Duplicate DECL_OFFSET record in PCH file");
+        Error("duplicate DECL_OFFSET record in PCH file");
         return Failure;
       }
       DeclOffsets = (const uint32_t *)BlobStart;
@@ -1120,7 +1122,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::IDENTIFIER_OFFSET:
       if (!IdentifiersLoaded.empty()) {
-        Error("Duplicate IDENTIFIER_OFFSET record in PCH file");
+        Error("duplicate IDENTIFIER_OFFSET record in PCH file");
         return Failure;
       }
       IdentifierOffsets = (const uint32_t *)BlobStart;
@@ -1130,7 +1132,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::EXTERNAL_DEFINITIONS:
       if (!ExternalDefinitions.empty()) {
-        Error("Duplicate EXTERNAL_DEFINITIONS record in PCH file");
+        Error("duplicate EXTERNAL_DEFINITIONS record in PCH file");
         return Failure;
       }
       ExternalDefinitions.swap(Record);
@@ -1149,7 +1151,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::TENTATIVE_DEFINITIONS:
       if (!TentativeDefinitions.empty()) {
-        Error("Duplicate TENTATIVE_DEFINITIONS record in PCH file");
+        Error("duplicate TENTATIVE_DEFINITIONS record in PCH file");
         return Failure;
       }
       TentativeDefinitions.swap(Record);
@@ -1157,7 +1159,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
       if (!LocallyScopedExternalDecls.empty()) {
-        Error("Duplicate LOCALLY_SCOPED_EXTERNAL_DECLS record in PCH file");
+        Error("duplicate LOCALLY_SCOPED_EXTERNAL_DECLS record in PCH file");
         return Failure;
       }
       LocallyScopedExternalDecls.swap(Record);
@@ -1210,7 +1212,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::EXT_VECTOR_DECLS:
       if (!ExtVectorDecls.empty()) {
-        Error("Duplicate EXT_VECTOR_DECLS record in PCH file");
+        Error("duplicate EXT_VECTOR_DECLS record in PCH file");
         return Failure;
       }
       ExtVectorDecls.swap(Record);
@@ -1218,14 +1220,14 @@ PCHReader::ReadPCHBlock() {
 
     case pch::OBJC_CATEGORY_IMPLEMENTATIONS:
       if (!ObjCCategoryImpls.empty()) {
-        Error("Duplicate OBJC_CATEGORY_IMPLEMENTATIONS record in PCH file");
+        Error("duplicate OBJC_CATEGORY_IMPLEMENTATIONS record in PCH file");
         return Failure;
       }
       ObjCCategoryImpls.swap(Record);
       break;
     }
   }
-  Error("Premature end of bitstream");
+  Error("premature end of bitstream in PCH file");
   return Failure;
 }
 
@@ -1251,15 +1253,15 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       Stream.Read(8) != 'P' ||
       Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'H') {
-    Error("Not a PCH file");
-    return IgnorePCH;
+    Diag(diag::err_not_a_pch_file) << FileName;
+    return Failure;
   }
 
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     
     if (Code != llvm::bitc::ENTER_SUBBLOCK) {
-      Error("Invalid record at top-level");
+      Error("invalid record at top-level of PCH file");
       return Failure;
     }
 
@@ -1269,7 +1271,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     switch (BlockID) {
     case llvm::bitc::BLOCKINFO_BLOCK_ID:
       if (Stream.ReadBlockInfoBlock()) {
-        Error("Malformed BlockInfoBlock");
+        Error("malformed BlockInfoBlock in PCH file");
         return Failure;
       }
       break;
@@ -1298,7 +1300,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       break;
     default:
       if (Stream.SkipBlock()) {
-        Error("Malformed block record");
+        Error("malformed block record in PCH file");
         return Failure;
       }
       break;
@@ -1553,7 +1555,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
   case pch::TYPE_VECTOR: {
     if (Record.size() != 2) {
-      Error("Incorrect encoding of vector type in PCH file");
+      Error("incorrect encoding of vector type in PCH file");
       return QualType();
     }
 
@@ -1564,7 +1566,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
   case pch::TYPE_EXT_VECTOR: {
     if (Record.size() != 2) {
-      Error("Incorrect encoding of extended vector type in PCH file");
+      Error("incorrect encoding of extended vector type in PCH file");
       return QualType();
     }
 
@@ -1575,7 +1577,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
   case pch::TYPE_FUNCTION_NO_PROTO: {
     if (Record.size() != 1) {
-      Error("Incorrect encoding of no-proto function type");
+      Error("incorrect encoding of no-proto function type");
       return QualType();
     }
     QualType ResultType = GetType(Record[0]);
@@ -1596,7 +1598,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
 
   case pch::TYPE_TYPEDEF:
-    assert(Record.size() == 1 && "Incorrect encoding of typedef type");
+    assert(Record.size() == 1 && "incorrect encoding of typedef type");
     return Context->getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_TYPEOF_EXPR:
@@ -1604,7 +1606,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
   case pch::TYPE_TYPEOF: {
     if (Record.size() != 1) {
-      Error("Incorrect encoding of typeof(type) in PCH file");
+      Error("incorrect encoding of typeof(type) in PCH file");
       return QualType();
     }
     QualType UnderlyingType = GetType(Record[0]);
@@ -1612,15 +1614,15 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
     
   case pch::TYPE_RECORD:
-    assert(Record.size() == 1 && "Incorrect encoding of record type");
+    assert(Record.size() == 1 && "incorrect encoding of record type");
     return Context->getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ENUM:
-    assert(Record.size() == 1 && "Incorrect encoding of enum type");
+    assert(Record.size() == 1 && "incorrect encoding of enum type");
     return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_OBJC_INTERFACE:
-    assert(Record.size() == 1 && "Incorrect encoding of objc interface type");
+    assert(Record.size() == 1 && "incorrect encoding of objc interface type");
     return Context->getObjCInterfaceType(
                                   cast<ObjCInterfaceDecl>(GetDecl(Record[0])));
 
@@ -1700,7 +1702,7 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
     return 0;
 
   if (ID > DeclsLoaded.size()) {
-    Error("Declaration ID out-of-range for PCH file");
+    Error("declaration ID out-of-range for PCH file");
     return 0;
   }
 
@@ -1952,7 +1954,7 @@ PCHReader::ReadMethodPool(Selector Sel) {
 
 void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
   assert(ID && "Non-zero identifier ID required");
-  assert(ID <= IdentifiersLoaded.size() && "Identifier ID out of range");
+  assert(ID <= IdentifiersLoaded.size() && "identifier ID out of range");
   IdentifiersLoaded[ID - 1] = II;
 }
 
@@ -1961,7 +1963,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
     return 0;
   
   if (!IdentifierTableData || IdentifiersLoaded.empty()) {
-    Error("No identifier table in PCH file");
+    Error("no identifier table in PCH file");
     return 0;
   }
   
@@ -1990,13 +1992,11 @@ Selector PCHReader::DecodeSelector(unsigned ID) {
   if (ID == 0)
     return Selector();
   
-  if (!MethodPoolLookupTableData) {
-    Error("No selector table in PCH file");
+  if (!MethodPoolLookupTableData)
     return Selector();
-  }
 
   if (ID > TotalNumSelectors) {
-    Error("Selector ID out of range");
+    Error("selector ID out of range in PCH file");
     return Selector();
   }
 
