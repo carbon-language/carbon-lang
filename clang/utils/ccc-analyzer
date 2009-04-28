@@ -41,7 +41,10 @@ sub GetPPExt {
   return ".i";
 }
 
+# Set this to 1 if we want to include 'parser rejects' files.
+my $IncludeParserRejects = 0;
 my $ParserRejects = "Parser Rejects";
+
 my $AttributeIgnored = "Attribute Ignored";
 
 sub ProcessClangFailure {
@@ -184,7 +187,7 @@ sub Analyze {
                         "Crash", $ofile);
   }
   elsif ($Result) {
-    if (!($file =~/conftest/)) {
+    if ($IncludeParserRejects && !($file =~/conftest/)) {
       ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
                           $ParserRejects, $ofile);
     }
