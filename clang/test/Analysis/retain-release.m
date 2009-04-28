@@ -433,13 +433,37 @@ void test_attr_3(TestOwnershipAttr *X) {
   [str release];
 }
 
-void test_attr_4(TestOwnershipAttr *X) {
+void test_attr_4a(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+}
+
+void test_attr_4b(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+  [X myRelease:str];
+}
+
+void test_attr_4c(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
   [X myRetain:str];
   [X myRelease:str];
 }
 
-void test_attr_5(TestOwnershipAttr *X) {
+void test_attr_4d(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString];
+  [X myRelease:str];
+  [X myRelease:str]; // expected-warning{{Reference-counted object is used after it is released}}
+}
+
+void test_attr_5a(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+}
+
+void test_attr_5b(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+  [X myCFRelease:str];
+}
+
+void test_attr_5c(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
   [X myCFRetain:str];
   [X myCFRelease:str];

@@ -152,13 +152,31 @@ void test_attr_3(TestOwnershipAttr *X) {
   [str release];
 }
 
-void test_attr_4(TestOwnershipAttr *X) {
+void test_attr_4a(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+}
+
+void test_attr_4b(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+  [X myRelease:str];
+}
+
+void test_attr_4c(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // no-warning
   [X myRetain:str];
   [X myRelease:str];
 }
 
-void test_attr_5(TestOwnershipAttr *X) {
+void test_attr_5a(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-waring
+}
+
+void test_attr_5b(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString];
+  [X myCFRelease:str];  // expected-warning{{Incorrect decrement of the reference count of an object is not owned at this point by the caller}}
+}
+
+void test_attr_5c(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // no-warning
   [X myCFRetain:str];
   [X myCFRelease:str];
