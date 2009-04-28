@@ -128,5 +128,5 @@ def warn_macro_name_used_in_pch : Warning<
     "precompiled header">;
 def warn_pch_compiler_options_mismatch : Warning<
     "compiler options used when building the precompiled header differ from "
-    "the ptions used when using the precompiled header">;
+    "the options used when using the precompiled header">;
 }
