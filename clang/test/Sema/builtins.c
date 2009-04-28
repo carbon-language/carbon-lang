@@ -32,7 +32,7 @@ void cfstring() {
 }
 
 
-typedef __attribute__(( ext_vector_type(16) )) unsigned char uchar16;  // expected-warning {{extension}}
+typedef __attribute__(( ext_vector_type(16) )) unsigned char uchar16;
 
 // rdar://5905347
 unsigned char foo( short v ) {

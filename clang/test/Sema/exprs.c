@@ -51,7 +51,7 @@ void test7(int *P, _Complex float Gamma) {
 // rdar://6095061
 int test8(void) {
   int i;
-  __builtin_choose_expr (0, 42, i) = 10;  // expected-warning {{extension used}}
+  __builtin_choose_expr (0, 42, i) = 10;
   return i;
 }
 
@@ -60,8 +60,8 @@ int test8(void) {
 struct f { int x : 4;  float y[]; };
 int test9(struct f *P) {
   int R;
-  R = __alignof(P->x);  // expected-error {{invalid application of '__alignof' to bitfield}} expected-warning {{extension used}}
-  R = __alignof(P->y);   // ok. expected-warning {{extension used}}
+  R = __alignof(P->x);  // expected-error {{invalid application of '__alignof' to bitfield}}
+  R = __alignof(P->y);   // ok.
   R = sizeof(P->x); // expected-error {{invalid application of 'sizeof' to bitfield}}
   return R;
 }
@@ -98,8 +98,8 @@ void test13(
 // rdar://6326239 - Vector comparisons are not fully trusted yet, until the
 // backend is known to work, just unconditionally reject them.
 void test14() {
-  typedef long long __m64 __attribute__((__vector_size__(8))); // expected-warning {{extension used}}
-  typedef short __v4hi __attribute__((__vector_size__(8))); // expected-warning {{extension used}}
+  typedef long long __m64 __attribute__((__vector_size__(8)));
+  typedef short __v4hi __attribute__((__vector_size__(8)));
 
   __v4hi a;
   __m64 mask = (__m64)((__v4hi)a >  // expected-error {{comparison of vector types ('__v4hi' and '__v4hi') not supported yet}}

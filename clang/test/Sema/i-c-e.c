@@ -61,6 +61,6 @@ int illegaldiv1[1 || 1/0];
 int illegaldiv2[1/0]; // expected-error {{variable length array declaration not allowed at file scope}}
 int illegaldiv3[INT_MIN / -1]; // expected-error {{variable length array declaration not allowed at file scope}}
 
-int chooseexpr[__builtin_choose_expr(1, 1, expr)]; // expected-warning {{extension used}}
-int realop[(__real__ 4) == 4 ? 1 : -1]; // expected-warning {{extension used}}
-int imagop[(__imag__ 4) == 0 ? 1 : -1]; // expected-warning {{extension used}}
+int chooseexpr[__builtin_choose_expr(1, 1, expr)];
+int realop[(__real__ 4) == 4 ? 1 : -1];
+int imagop[(__imag__ 4) == 0 ? 1 : -1];

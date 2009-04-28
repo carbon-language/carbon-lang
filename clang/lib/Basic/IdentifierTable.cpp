@@ -58,6 +58,18 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
 // Language Keyword Implementation
 //===----------------------------------------------------------------------===//
 
+// Constants for TokenKinds.def
+namespace {
+  enum {
+    KEYALL = 1,
+    KEYC99 = 2,
+    KEYCXX = 4,
+    KEYCXX0X = 8,
+    KEYGNU = 16,
+    KEYMS = 32
+  };
+}
+
 /// AddKeyword - This method is used to associate a token ID with specific
 /// identifiers because they are language keywords.  This causes the lexer to
 /// automatically map matching identifiers to specialized token codes.
@@ -67,39 +79,23 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
 /// in the specified language, and set to 2 if disabled in the
 /// specified language.
 static void AddKeyword(const char *Keyword, unsigned KWLen,
-                       tok::TokenKind TokenCode,
-                       int C90, int C99, int CXX, int CXX0x, int BoolSupport,
+                       tok::TokenKind TokenCode, unsigned Flags,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
-  int Flags = 0;
-  if (BoolSupport != 0) {
-    Flags = LangOpts.CPlusPlus? 0 : LangOpts.Boolean ? BoolSupport : 2;
-  } else if (LangOpts.CPlusPlus) {
-    Flags = LangOpts.CPlusPlus0x ? CXX0x : CXX;
-  } else if (LangOpts.C99) {
-    Flags = C99;
-  } else {
-    Flags = C90;
-  }
-  
-  // Don't add this keyword if disabled in this language or if an extension
-  // and extensions are disabled.
-  if (Flags + LangOpts.NoExtensions >= 2) return;
-  
+  unsigned AddResult = 0;
+  if (Flags & KEYALL) AddResult = 2;
+  else if (LangOpts.CPlusPlus && (Flags & KEYCXX)) AddResult = 2;
+  else if (LangOpts.CPlusPlus0x && (Flags & KEYCXX0X)) AddResult = 2;
+  else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
+  else if (LangOpts.GNUMode && (Flags & KEYGNU)) AddResult = 1;
+  else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
+
+  // Don't add this keyword if disabled in this language.
+  if (AddResult == 0) return;
+
   IdentifierInfo &Info = Table.get(Keyword, Keyword+KWLen);
   Info.setTokenID(TokenCode);
-  Info.setIsExtensionToken(Flags == 1);
+  Info.setIsExtensionToken(AddResult == 1);
 }
-
-static void AddAlias(const char *Keyword, unsigned KWLen,
-                     tok::TokenKind AliaseeID,
-                     const char *AliaseeKeyword, unsigned AliaseeKWLen,
-                     const LangOptions &LangOpts, IdentifierTable &Table) {
-  IdentifierInfo &AliasInfo = Table.get(Keyword, Keyword+KWLen);
-  IdentifierInfo &AliaseeInfo = Table.get(AliaseeKeyword,
-                                          AliaseeKeyword+AliaseeKWLen);
-  AliasInfo.setTokenID(AliaseeID);
-  AliasInfo.setIsExtensionToken(AliaseeInfo.isExtensionToken());
-}  
 
 /// AddCXXOperatorKeyword - Register a C++ operator keyword alternative
 /// representations.
@@ -122,35 +118,13 @@ static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID,
 /// AddKeywords - Add all keywords to the symbol table.
 ///
 void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
-  enum {
-    C90Shift = 0,
-    EXTC90   = 1 << C90Shift,
-    NOTC90   = 2 << C90Shift,
-    C99Shift = 2,
-    EXTC99   = 1 << C99Shift,
-    NOTC99   = 2 << C99Shift,
-    CPPShift = 4,
-    EXTCPP   = 1 << CPPShift,
-    NOTCPP   = 2 << CPPShift,
-    CPP0xShift = 6,
-    EXTCPP0x   = 1 << CPP0xShift,
-    NOTCPP0x   = 2 << CPP0xShift,
-    BoolShift = 8,
-    BOOLSUPPORT = 1 << BoolShift,
-    Mask     = 3
-  };
-  
   // Add keywords and tokens for the current language.
 #define KEYWORD(NAME, FLAGS) \
   AddKeyword(#NAME, strlen(#NAME), tok::kw_ ## NAME,  \
-             ((FLAGS) >> C90Shift) & Mask, \
-             ((FLAGS) >> C99Shift) & Mask, \
-             ((FLAGS) >> CPPShift) & Mask, \
-             ((FLAGS) >> CPP0xShift) & Mask, \
-             ((FLAGS) >> BoolShift) & Mask, LangOpts, *this);
-#define ALIAS(NAME, TOK) \
-  AddAlias(NAME, strlen(NAME), tok::kw_ ## TOK, #TOK, strlen(#TOK),  \
-           LangOpts, *this);
+             FLAGS, LangOpts, *this);
+#define ALIAS(NAME, TOK, FLAGS) \
+  AddKeyword(NAME, strlen(NAME), tok::kw_ ## TOK,  \
+             FLAGS, LangOpts, *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
   if (LangOpts.CXXOperatorNames)          \
     AddCXXOperatorKeyword(#NAME, strlen(#NAME), tok::ALIAS, *this);

@@ -63,4 +63,4 @@ struct xyz test8() { return a; }  // a should be be marked invalid, no diag.
 static f;      // expected-warning {{type specifier missing, defaults to 'int'}}
 static g = 4;  // expected-warning {{type specifier missing, defaults to 'int'}}
 static h        // expected-warning {{type specifier missing, defaults to 'int'}} 
-      __asm__("foo"); // expected-warning {{extension used}}
+      __asm__("foo");
