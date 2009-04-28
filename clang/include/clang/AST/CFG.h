@@ -61,12 +61,17 @@ class CFGBlock {
   /// Label - An (optional) label that prefixes the executable
   ///  statements in the block.  When this variable is non-NULL, it is
   ///  either an instance of LabelStmt or SwitchCase.
-  Stmt* Label;
+  Stmt *Label;
   
   /// Terminator - The terminator for a basic block that
   ///  indicates the type of control-flow that occurs between a block
   ///  and its successors.
-  Stmt* Terminator;
+  Stmt *Terminator;
+  
+  /// LoopTarget - Some blocks are used to represent the "loop edge" to
+  ///  the start of a loop from within the loop body.  This Stmt* will be
+  ///  refer to the loop statement for such blocks (and be null otherwise).
+  const Stmt *LoopTarget; 
   
   /// BlockID - A numerical ID assigned to a CFGBlock during construction
   ///   of the CFG.
@@ -80,7 +85,7 @@ class CFGBlock {
   
 public:
   explicit CFGBlock(unsigned blockid) : Label(NULL), Terminator(NULL),
-                                        BlockID(blockid) {}
+                                        LoopTarget(NULL), BlockID(blockid) {}
   ~CFGBlock() {};
 
   // Statement iterators
@@ -149,6 +154,7 @@ public:
   void appendStmt(Stmt* Statement) { Stmts.push_back(Statement); }
   void setTerminator(Stmt* Statement) { Terminator = Statement; }
   void setLabel(Stmt* Statement) { Label = Statement; }
+  void setLoopTarget(const Stmt *loopTarget) { LoopTarget = loopTarget; }
 
   Stmt* getTerminator() { return Terminator; }
   const Stmt* getTerminator() const { return Terminator; }
@@ -158,6 +164,8 @@ public:
   const Stmt* getTerminatorCondition() const {
     return const_cast<CFGBlock*>(this)->getTerminatorCondition();
   }
+  
+  const Stmt *getLoopTarget() const { return LoopTarget; }
   
   bool hasBinaryBranchTerminator() const;
   

@@ -752,21 +752,27 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
       // Generate increment code in its own basic block.  This is the target
       // of continue statements.
       Succ = Visit(I);
-      
-      // Finish up the increment block if it hasn't been already.
-      if (Block) {
-        assert (Block == Succ);
-        FinishBlock(Block);
-        Block = 0;
-      }
-      
-      ContinueTargetBlock = Succ;    
     }
     else {
-      // No increment code.  Continues should go the the entry condition block.
-      ContinueTargetBlock = EntryConditionBlock;
+      // No increment code.  Create a special, empty, block that is used as
+      // the target block for "looping back" to the start of the loop.
+      assert(Succ == EntryConditionBlock);
+      Succ = createBlock();
     }
     
+    // Finish up the increment (or empty) block if it hasn't been already.
+    if (Block) {
+      assert(Block == Succ);
+      FinishBlock(Block);
+      Block = 0;
+    }
+    
+    ContinueTargetBlock = Succ;
+    
+    // The starting block for the loop increment is the block that should
+    // represent the 'loop target' for looping back to the start of the loop.
+    ContinueTargetBlock->setLoopTarget(F);
+
     // All breaks should go to the code following the loop.
     BreakTargetBlock = LoopSuccessor;    
     
