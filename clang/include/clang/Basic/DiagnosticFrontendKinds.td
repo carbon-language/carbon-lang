@@ -110,13 +110,18 @@ def warn_pch_gc_mode : Warning<
     "the PCH file was built with %select{no||hybrid}0 garbage collection but "
     "the current translation unit will compiled with %select{no||hybrid}1 "
     "garbage collection">;
-def warn_pch_preprocessor : Warning<
-    "the PCH file was built with different preprocessor definitions than the "
-    "current translation unit">;
-def note_predef_in_pch : Note<
-    "preprocessor definitions in PCH file">;
 def warn_pch_version_too_old : Warning<
     "PCH file uses an older PCH format that is no longer supported">;
 def warn_pch_version_too_new : Warning<
     "PCH file uses a newer PCH format that cannot be read">;
+def warn_cmdline_conflicting_macro_def : Warning<
+    "definition of the macro '%0' conflicts with the definition used to "
+    "build the precompiled header">;
+def note_pch_macro_defined_as : Note<
+    "definition of macro '%0' in the precompiled header">;
+def warn_cmdline_missing_macro_defs : Warning<
+    "macro definitions used to build the precompiled header are missing">;
+def note_using_macro_def_from_pch : Note<
+    "using this macro definition from precompiled header">;
+
 }

@@ -1755,6 +1755,10 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     // the precompiled header into the AST context.
     switch (Reader->ReadPCH(ImplicitIncludePCH)) {
     case PCHReader::Success: {
+      // Set the predefines buffer as suggested by the PCH
+      // reader. Typically, the predefines buffer will be empty.
+      PP.setPredefines(Reader->getSuggestedPredefines());
+
       // Attach the PCH reader to the AST context as an external AST
       // source, so that declarations will be deserialized from the
       // PCH file as needed.
@@ -1762,10 +1766,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
         Source.reset(Reader.take());
         ContextOwner->setExternalSource(Source);
       }
-
-      // Clear out the predefines buffer, because all of the
-      // predefines are already in the PCH file.
-      PP.setPredefines("");
       break;
     }
 

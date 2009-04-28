@@ -30,6 +30,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <algorithm>
+#include <iterator>
 #include <cstdio>
 #include <sys/stat.h>
 using namespace clang;
@@ -306,6 +307,47 @@ static bool Error(const char *Str) {
   return true;
 }
 
+/// \brief Split the given string into a vector of lines, eliminating
+/// any empty lines in the process.
+///
+/// \param Str the string to split.
+/// \param Len the length of Str.
+/// \param KeepEmptyLines true if empty lines should be included
+/// \returns a vector of lines, with the line endings removed
+std::vector<std::string> splitLines(const char *Str, unsigned Len,
+                                    bool KeepEmptyLines = false) {
+  std::vector<std::string> Lines;
+  for (unsigned LineStart = 0; LineStart < Len; ++LineStart) {
+    unsigned LineEnd = LineStart;
+    while (LineEnd < Len && Str[LineEnd] != '\n')
+      ++LineEnd;
+    if (LineStart != LineEnd || KeepEmptyLines)
+      Lines.push_back(std::string(&Str[LineStart], &Str[LineEnd]));
+    LineStart = LineEnd;
+  }
+  return Lines;
+}
+
+/// \brief Determine whether the string Haystack starts with the
+/// substring Needle.
+static bool startsWith(const std::string &Haystack, const char *Needle) {
+  for (unsigned I = 0, N = Haystack.size(); Needle[I] != 0; ++I) {
+    if (I == N)
+      return false;
+    if (Haystack[I] != Needle[I])
+      return false;
+  }
+
+  return true;
+}
+
+/// \brief Determine whether the string Haystack starts with the
+/// substring Needle.
+static inline bool startsWith(const std::string &Haystack,
+                              const std::string &Needle) {
+  return startsWith(Haystack, Needle.c_str());
+}
+
 /// \brief Check the contents of the predefines buffer against the
 /// contents of the predefines buffer used to build the PCH file.
 ///
@@ -329,56 +371,154 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
   const char *Predef = PP.getPredefines().c_str();
   unsigned PredefLen = PP.getPredefines().size();
 
-  // If the two predefines buffers compare equal, we're done!.
+  // If the two predefines buffers compare equal, we're done!
   if (PredefLen == PCHPredefLen && 
       strncmp(Predef, PCHPredef, PCHPredefLen) == 0)
     return false;
-  
-  // The predefines buffers are different. Produce a reasonable
-  // diagnostic showing where they are different.
 
-  // The source locations (potentially in the two different predefines
-  // buffers)
-  SourceLocation Loc1, Loc2;
   SourceManager &SourceMgr = PP.getSourceManager();
+  
+  // The predefines buffers are different. Determine what the
+  // differences are, and whether they require us to reject the PCH
+  // file.
+  std::vector<std::string> CmdLineLines = splitLines(Predef, PredefLen);
+  std::vector<std::string> PCHLines = splitLines(PCHPredef, PCHPredefLen);
 
-  // Create a source buffer for our predefines string, so
-  // that we can build a diagnostic that points into that
-  // source buffer.
-  FileID BufferID;
-  if (Predef && Predef[0]) {
-    llvm::MemoryBuffer *Buffer
-      = llvm::MemoryBuffer::getMemBuffer(Predef, Predef + PredefLen,
-                                         "<built-in>");
-    BufferID = SourceMgr.createFileIDForMemBuffer(Buffer);
-  }
+  // Sort both sets of predefined buffer lines, since 
+  std::sort(CmdLineLines.begin(), CmdLineLines.end());
+  std::sort(PCHLines.begin(), PCHLines.end());
 
-  unsigned MinLen = std::min(PredefLen, PCHPredefLen);
-  std::pair<const char *, const char *> Locations
-    = std::mismatch(Predef, Predef + MinLen, PCHPredef); 
- 
-  if (Locations.first != Predef + MinLen) {
-    // We found the location in the two buffers where there is a
-    // difference. Form source locations to point there (in both
-    // buffers).
-    unsigned Offset = Locations.first - Predef;
-    Loc1 = SourceMgr.getLocForStartOfFile(BufferID)
-             .getFileLocWithOffset(Offset);
-    Loc2 = SourceMgr.getLocForStartOfFile(PCHBufferID)
-             .getFileLocWithOffset(Offset);
-  } else if (PredefLen > PCHPredefLen) {
-    Loc1 = SourceMgr.getLocForStartOfFile(BufferID)
-             .getFileLocWithOffset(MinLen);
-  } else {
-    Loc1 = SourceMgr.getLocForStartOfFile(PCHBufferID)
-             .getFileLocWithOffset(MinLen);
+  // Determine which predefines that where used to build the PCH file
+  // are missing from the command line.
+  std::vector<std::string> MissingPredefines;
+  std::set_difference(PCHLines.begin(), PCHLines.end(),
+                      CmdLineLines.begin(), CmdLineLines.end(),
+                      std::back_inserter(MissingPredefines));
+
+  bool MissingDefines = false;
+  bool ConflictingDefines = false;
+  for (unsigned I = 0, N = MissingPredefines.size(); I != N; ++I) {
+    const std::string &Missing = MissingPredefines[I];
+    if (!startsWith(Missing, "#define ") != 0) {
+      fprintf(stderr, "FIXME: command line is missing a non-macro entry in the predefines buffer that was used to build the PCH file\n%s\n",
+              Missing.c_str());
+      return true;
+    }
+    
+    // This is a macro definition. Determine the name of the macro
+    // we're defining.
+    std::string::size_type StartOfMacroName = strlen("#define ");
+    std::string::size_type EndOfMacroName 
+      = Missing.find_first_of("( \n\r", StartOfMacroName);
+    assert(EndOfMacroName != std::string::npos &&
+           "Couldn't find the end of the macro name");
+    std::string MacroName = Missing.substr(StartOfMacroName,
+                                           EndOfMacroName - StartOfMacroName);
+
+    // Determine whether this macro was given a different definition
+    // on the command line.
+    std::string MacroDefStart = "#define " + MacroName;
+    std::string::size_type MacroDefLen = MacroDefStart.size();
+    std::vector<std::string>::iterator ConflictPos
+      = std::lower_bound(CmdLineLines.begin(), CmdLineLines.end(),
+                         MacroDefStart);
+    for (; ConflictPos != CmdLineLines.end(); ++ConflictPos) {
+      if (!startsWith(*ConflictPos, MacroDefStart)) {
+        // Different macro; we're done.
+        ConflictPos = CmdLineLines.end();
+        break; 
+      }
+      
+      assert(ConflictPos->size() > MacroDefLen && 
+             "Invalid #define in predefines buffer?");
+      if ((*ConflictPos)[MacroDefLen] != ' ' && 
+          (*ConflictPos)[MacroDefLen] != '(')
+        continue; // Longer macro name; keep trying.
+      
+      // We found a conflicting macro definition.
+      break;
+    }
+    
+    if (ConflictPos != CmdLineLines.end()) {
+      Diag(diag::warn_cmdline_conflicting_macro_def)
+          << MacroName;
+
+      // Show the definition of this macro within the PCH file.
+      const char *MissingDef = strstr(PCHPredef, Missing.c_str());
+      unsigned Offset = MissingDef - PCHPredef;
+      SourceLocation PCHMissingLoc
+        = SourceMgr.getLocForStartOfFile(PCHBufferID)
+            .getFileLocWithOffset(Offset);
+      Diag(PCHMissingLoc, diag::note_pch_macro_defined_as)
+        << MacroName;
+
+      ConflictingDefines = true;
+      continue;
+    }
+    
+    // If the macro doesn't conflict, then we'll just pick up the
+    // macro definition from the PCH file. Warn the user that they
+    // made a mistake.
+    if (ConflictingDefines)
+      continue; // Don't complain if there are already conflicting defs
+    
+    if (!MissingDefines) {
+      Diag(diag::warn_cmdline_missing_macro_defs);
+      MissingDefines = true;
+    }
+
+    // Show the definition of this macro within the PCH file.
+    const char *MissingDef = strstr(PCHPredef, Missing.c_str());
+    unsigned Offset = MissingDef - PCHPredef;
+    SourceLocation PCHMissingLoc
+      = SourceMgr.getLocForStartOfFile(PCHBufferID)
+      .getFileLocWithOffset(Offset);
+    Diag(PCHMissingLoc, diag::note_using_macro_def_from_pch);
   }
   
-  Diag(Loc1, diag::warn_pch_preprocessor);
-  if (Loc2.isValid())
-    Diag(Loc2, diag::note_predef_in_pch);
-  Diag(diag::note_ignoring_pch) << FileName;
-  return true;
+  if (ConflictingDefines) {
+    Diag(diag::note_ignoring_pch) << FileName;
+    return true;
+  }
+  
+  // Determine what predefines were introduced based on command-line
+  // parameters that were not present when building the PCH
+  // file. Extra #defines are okay, so long as the identifiers being
+  // defined were not used within the precompiled header.
+  std::vector<std::string> ExtraPredefines;
+  std::set_difference(CmdLineLines.begin(), CmdLineLines.end(),
+                      PCHLines.begin(), PCHLines.end(),
+                      std::back_inserter(ExtraPredefines));  
+  for (unsigned I = 0, N = ExtraPredefines.size(); I != N; ++I) {
+    const std::string &Extra = ExtraPredefines[I];
+    if (!startsWith(Extra, "#define ") != 0) {
+      fprintf(stderr, "FIXME: command line has extra predefines not used to build the PCH file.%s\n",
+              Extra.c_str());
+      return true;
+    }
+
+    // This is an extra macro definition. Determine the name of the
+    // macro we're defining.
+    std::string::size_type StartOfMacroName = strlen("#define ");
+    std::string::size_type EndOfMacroName 
+      = Extra.find_first_of("( \n\r", StartOfMacroName);
+    assert(EndOfMacroName != std::string::npos &&
+           "Couldn't find the end of the macro name");
+    std::string MacroName = Extra.substr(StartOfMacroName,
+                                         EndOfMacroName - StartOfMacroName);
+
+    // FIXME: Perform this check!
+    fprintf(stderr, "FIXME: check whether '%s' was used in the PCH file\n",
+            MacroName.c_str());
+
+    // Add this definition to the suggested predefines buffer.
+    SuggestedPredefines += Extra;
+    SuggestedPredefines += '\n';
+  }
+
+  // If we get here, it's because the predefines buffer had compatible
+  // contents. Accept the PCH file.
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

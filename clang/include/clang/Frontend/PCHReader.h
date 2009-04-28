@@ -280,6 +280,16 @@ private:
   /// Objective-C protocols.
   llvm::SmallVector<Decl *, 16> InterestingDecls;
 
+  /// \brief Suggested contents of the predefines buffer, after this
+  /// PCH file has been processed.
+  ///
+  /// In most cases, this string will be empty, because the predefines
+  /// buffer computed to build the PCH file will be identical to the
+  /// predefines buffer computed from the command line. However, when
+  /// there are differences that the PCH reader can work around, this
+  /// predefines buffer may contain additional definitions.
+  std::string SuggestedPredefines;
+  
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
@@ -302,6 +312,11 @@ public:
   ~PCHReader();
 
   PCHReadResult ReadPCH(const std::string &FileName);
+
+  /// \brief Returns the suggested contents of the predefines buffer,
+  /// which contains a (typically-empty) subset of the predefines
+  /// build prior to including the precompiled header.
+  const std::string &getSuggestedPredefines() { return SuggestedPredefines; }
 
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
