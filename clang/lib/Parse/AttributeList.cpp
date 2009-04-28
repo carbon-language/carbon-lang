@@ -152,6 +152,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 24:
     if (!memcmp(Str, "objc_ownership_cfrelease", 24))
       return AT_objc_ownership_cfrelease;
+    break;      
+  case 31:
+    if (!memcmp(Str, "objc_ownership_make_collectable", 31))
+      return AT_objc_ownership_make_collectable;
     break;
   }  
   return UnknownAttribute;

@@ -134,6 +134,7 @@ void f3() {
 - (void) myCFRetain:(id)__attribute__((objc_ownership_cfretain))obj;
 - (void) myRelease:(id)__attribute__((objc_ownership_release))obj;
 - (void) myCFRelease:(id)__attribute__((objc_ownership_cfrelease))obj;
+- (void) makeCollectable:(id)__attribute__((objc_ownership_make_collectable))obj;
 @end
 
 void test_attr_1(TestOwnershipAttr *X) {
@@ -181,3 +182,14 @@ void test_attr_5c(TestOwnershipAttr *X) {
   [X myCFRetain:str];
   [X myCFRelease:str];
 }
+
+void test_attr_6a(TestOwnershipAttr *X) {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
+}
+
+void test_attr_6b(TestOwnershipAttr *X) {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  [X makeCollectable:(id)A];
+}
+
+

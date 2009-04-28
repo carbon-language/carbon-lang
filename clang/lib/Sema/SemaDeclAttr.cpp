@@ -1539,14 +1539,16 @@ static void HandleObjCOwnershipParmAttr(Decl *d, const AttributeList &Attr,
       default:
         assert(0 && "invalid ownership attribute");
         return;
-      case AttributeList::AT_objc_ownership_release:
-        name = "objc_ownership_release"; break;
       case AttributeList::AT_objc_ownership_cfrelease:
-        name = "objc_ownership_cfrelease"; break;        
-      case AttributeList::AT_objc_ownership_retain:
-        name = "objc_ownership_retain"; break;
+        name = "objc_ownership_cfrelease"; break;
       case AttributeList::AT_objc_ownership_cfretain:
         name = "objc_ownership_cfretain"; break;
+      case AttributeList::AT_objc_ownership_make_collectable:
+        name = "objc_ownership_make_collectable"; break;
+      case AttributeList::AT_objc_ownership_release:
+        name = "objc_ownership_release"; break;
+      case AttributeList::AT_objc_ownership_retain:
+        name = "objc_ownership_retain"; break;
     };
 
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) << name
@@ -1558,14 +1560,16 @@ static void HandleObjCOwnershipParmAttr(Decl *d, const AttributeList &Attr,
     default:
       assert(0 && "invalid ownership attribute");
       return;
-    case AttributeList::AT_objc_ownership_release:
-      d->addAttr(::new (S.Context) ObjCOwnershipReleaseAttr());   return;
     case AttributeList::AT_objc_ownership_cfrelease:
       d->addAttr(::new (S.Context) ObjCOwnershipCFReleaseAttr()); return;      
-    case AttributeList::AT_objc_ownership_retain:
-      d->addAttr(::new (S.Context) ObjCOwnershipRetainAttr());   return;
     case AttributeList::AT_objc_ownership_cfretain:
       d->addAttr(::new (S.Context) ObjCOwnershipCFRetainAttr()); return;
+    case AttributeList::AT_objc_ownership_make_collectable:
+      d->addAttr(::new (S.Context) ObjCOwnershipMakeCollectableAttr()); return;
+    case AttributeList::AT_objc_ownership_release:
+      d->addAttr(::new (S.Context) ObjCOwnershipReleaseAttr());   return;
+    case AttributeList::AT_objc_ownership_retain:
+      d->addAttr(::new (S.Context) ObjCOwnershipRetainAttr());   return;
   }
 }
 
@@ -1607,10 +1611,11 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
 
   // Checker-specific.
-  case AttributeList::AT_objc_ownership_release:
-  case AttributeList::AT_objc_ownership_cfrelease:
-  case AttributeList::AT_objc_ownership_retain:
+  case AttributeList::AT_objc_ownership_cfrelease:     
   case AttributeList::AT_objc_ownership_cfretain:
+  case AttributeList::AT_objc_ownership_make_collectable:
+  case AttributeList::AT_objc_ownership_release:
+  case AttributeList::AT_objc_ownership_retain:
     HandleObjCOwnershipParmAttr(D, Attr, S); break;
   case AttributeList::AT_objc_ownership_returns:
     HandleObjCOwnershipReturnsAttr(D, Attr, S); break;

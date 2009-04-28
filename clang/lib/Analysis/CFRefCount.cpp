@@ -1121,6 +1121,10 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
       ScratchArgs.push_back(std::make_pair(i, DecRef));
       hasArgEffect = true;
     }
+    else if ((*I)->getAttr<ObjCOwnershipMakeCollectableAttr>()) {
+      ScratchArgs.push_back(std::make_pair(i, MakeCollectable));
+      hasArgEffect = true;
+    }    
   }
   
   if (!hasRetEffect && !hasArgEffect)

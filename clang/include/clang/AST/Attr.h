@@ -59,11 +59,12 @@ public:
     NonNull,
     ObjCException,
     ObjCNSObject,
-    ObjCOwnershipCFRelease, // Clang/Checker-specific.
-    ObjCOwnershipCFRetain,  // Clang/Checker-specific.
-    ObjCOwnershipRelease,   // Clang/Checker-specific.
-    ObjCOwnershipRetain,    // Clang/Checker-specific.
-    ObjCOwnershipReturns,   // Clang/Checker-specific.
+    ObjCOwnershipCFRelease,       // Clang/Checker-specific.
+    ObjCOwnershipCFRetain,        // Clang/Checker-specific.
+    ObjCOwnershipMakeCollectable, // Clang/Checker-specific.
+    ObjCOwnershipRelease,         // Clang/Checker-specific.
+    ObjCOwnershipRetain,          // Clang/Checker-specific.
+    ObjCOwnershipReturns,         // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
     Pure,
@@ -467,6 +468,7 @@ DEF_SIMPLE_ATTR(ObjCOwnershipCFRelease);
 DEF_SIMPLE_ATTR(ObjCOwnershipRelease);
 DEF_SIMPLE_ATTR(ObjCOwnershipCFRetain);
 DEF_SIMPLE_ATTR(ObjCOwnershipRetain);
+DEF_SIMPLE_ATTR(ObjCOwnershipMakeCollectable);
 DEF_SIMPLE_ATTR(ObjCOwnershipReturns);
 
 #undef DEF_SIMPLE_ATTR
