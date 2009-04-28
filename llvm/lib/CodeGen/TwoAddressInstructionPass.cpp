@@ -88,6 +88,9 @@ namespace {
     bool NoUseAfterLastDef(unsigned Reg, MachineBasicBlock *MBB, unsigned Dist,
                            unsigned &LastDef);
 
+    MachineInstr *FindLastUseInMBB(unsigned Reg, MachineBasicBlock *MBB,
+                                   unsigned Dist);
+
     bool isProfitableToCommute(unsigned regB, unsigned regC,
                                MachineInstr *MI, MachineBasicBlock *MBB,
                                unsigned Dist);
@@ -308,6 +311,28 @@ bool TwoAddressInstructionPass::NoUseAfterLastDef(unsigned Reg,
   }
 
   return !(LastUse > LastDef && LastUse < Dist);
+}
+
+MachineInstr *TwoAddressInstructionPass::FindLastUseInMBB(unsigned Reg,
+                                                         MachineBasicBlock *MBB,
+                                                         unsigned Dist) {
+  unsigned LastUseDist = Dist;
+  MachineInstr *LastUse = 0;
+  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(Reg),
+         E = MRI->reg_end(); I != E; ++I) {
+    MachineOperand &MO = I.getOperand();
+    MachineInstr *MI = MO.getParent();
+    if (MI->getParent() != MBB)
+      continue;
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
+    if (DI == DistanceMap.end())
+      continue;
+    if (MO.isUse() && DI->second < LastUseDist) {
+      LastUse = DI->first;
+      LastUseDist = DI->second;
+    }
+  }
+  return LastUse;
 }
 
 /// isCopyToReg - Return true if the specified MI is a copy instruction or
@@ -684,7 +709,9 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
 
 /// isSafeToDelete - If the specified instruction does not produce any side
 /// effects and all of its defs are dead, then it's safe to delete.
-static bool isSafeToDelete(MachineInstr *MI, const TargetInstrInfo *TII) {
+static bool isSafeToDelete(MachineInstr *MI, unsigned Reg,
+                           const TargetInstrInfo *TII,
+                           SmallVector<unsigned, 4> &Kills) {
   const TargetInstrDesc &TID = MI->getDesc();
   if (TID.mayStore() || TID.isCall())
     return false;
@@ -693,10 +720,12 @@ static bool isSafeToDelete(MachineInstr *MI, const TargetInstrInfo *TII) {
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isReg())
       continue;
-    if (!MO.isDead())
+    if (MO.isDef() && !MO.isDead())
       return false;
+    if (MO.isUse() && MO.getReg() != Reg && MO.isKill())
+      Kills.push_back(MO.getReg());
   }
 
   return true;
@@ -787,11 +816,53 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           if (!isKilled(*mi, regB, MRI, TII)) {
             // If regA is dead and the instruction can be deleted, just delete
             // it so it doesn't clobber regB.
-            if (mi->getOperand(ti).isDead() && isSafeToDelete(mi, TII)) {
-              mbbi->erase(mi); // Nuke the old inst.
-              mi = nmi;
-              ++NumDeletes;
-              break; // Done with this instruction.
+            SmallVector<unsigned, 4> Kills;
+            if (mi->getOperand(ti).isDead() &&
+                isSafeToDelete(mi, regB, TII, Kills)) {
+              SmallVector<std::pair<std::pair<unsigned, bool>
+                ,MachineInstr*>, 4> NewKills;
+              bool ReallySafe = true;
+              // If this instruction kills some virtual registers, we need
+              // update the kill information. If it's not possible to do so,
+              // then bail out.
+              while (!Kills.empty()) {
+                unsigned Kill = Kills.back();
+                Kills.pop_back();
+                if (TargetRegisterInfo::isPhysicalRegister(Kill)) {
+                  ReallySafe = false;
+                  break;
+                }
+                MachineInstr *LastKill = FindLastUseInMBB(Kill, &*mbbi, Dist);
+                if (LastKill) {
+                  bool isModRef = LastKill->modifiesRegister(Kill);
+                  NewKills.push_back(std::make_pair(std::make_pair(Kill,isModRef),
+                                                    LastKill));
+                } else {
+                  ReallySafe = false;
+                  break;
+                }
+              }
+
+              if (ReallySafe) {
+                if (LV) {
+                  while (!NewKills.empty()) {
+                    MachineInstr *NewKill = NewKills.back().second;
+                    unsigned Kill = NewKills.back().first.first;
+                    bool isDead = NewKills.back().first.second;
+                    NewKills.pop_back();
+                    if (LV->removeVirtualRegisterKilled(Kill,  mi)) {
+                      if (isDead)
+                        LV->addVirtualRegisterDead(Kill, NewKill);
+                      else
+                        LV->addVirtualRegisterKilled(Kill, NewKill);
+                    }
+                  }
+                }
+                mbbi->erase(mi); // Nuke the old inst.
+                mi = nmi;
+                ++NumDeletes;
+                break; // Done with this instruction.
+              }
             }
 
             // If this instruction is commutative, check to see if C dies.  If
