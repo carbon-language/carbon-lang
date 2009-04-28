@@ -59,11 +59,11 @@ public:
 
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
-  virtual QualType GetType(unsigned ID) = 0;
+  virtual QualType GetType(uint32_t ID) = 0;
 
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
-  virtual Decl *GetDecl(unsigned ID) = 0;
+  virtual Decl *GetDecl(uint32_t ID) = 0;
 
   /// \brief Resolve the offset of a statement in the decl stream into a
   /// statement.
