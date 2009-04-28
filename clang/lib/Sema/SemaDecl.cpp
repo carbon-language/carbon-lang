@@ -759,7 +759,6 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // from the types in the prototype. GCC then keeps the types from
   // the prototype.
   if (!getLangOptions().CPlusPlus &&
-      !getLangOptions().NoExtensions &&
       Old->hasPrototype() && !New->hasPrototype() &&
       New->getType()->getAsFunctionProtoType() &&
       Old->getNumParams() == New->getNumParams()) {

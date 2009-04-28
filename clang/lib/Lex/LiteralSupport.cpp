@@ -132,11 +132,9 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     // Otherwise, these are not valid escapes.
   case '(': case '{': case '[': case '%':
     // GCC accepts these as extensions.  We warn about them as such though.
-    if (!PP.getLangOptions().NoExtensions) {
-      PP.Diag(Loc, diag::ext_nonstandard_escape)
-        << std::string()+(char)ResultChar;
-      break;
-    }
+    PP.Diag(Loc, diag::ext_nonstandard_escape)
+      << std::string()+(char)ResultChar;
+    break;
     // FALL THROUGH.
   default:
     if (isgraph(ThisTokBuf[0]))

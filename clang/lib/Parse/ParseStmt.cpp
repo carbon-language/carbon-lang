@@ -1017,7 +1017,7 @@ Parser::OwningStmtResult Parser::ParseGotoStatement() {
     Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
                                 Tok.getIdentifierInfo());
     ConsumeToken();
-  } else if (Tok.is(tok::star) && !getLang().NoExtensions) {
+  } else if (Tok.is(tok::star)) {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
     SourceLocation StarLoc = ConsumeToken();
