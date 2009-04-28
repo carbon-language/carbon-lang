@@ -19,6 +19,10 @@
  #include <dbghelp.h>
 #endif
 
+#ifdef _MSC_VER
+ #include <ntverp.h>
+#endif
+
 #ifdef __MINGW32__
  #if (HAVE_LIBIMAGEHLP != 1)
   #error "libimagehlp.a should be present"
@@ -44,7 +48,14 @@ static std::vector<HMODULE> OpenedHandles;
 #endif
 
 extern "C" {
-#if !defined(_MSC_VER) || _MSC_VER < 1500
+// Use old callback if:
+//  - Not using Visual Studio
+//  - Visual Studio 2005 or earlier but only if we are not using the Windows SDK 
+//    or Windows SDK version is older than 6.0
+// Use new callback if:
+//  - Newer Visual Studio (comes with newer SDK).
+//  - Visual Studio 2005 with Windows SDK 6.0+
+#if !defined(_MSC_VER) || _MSC_VER < 1500 && (!defined(VER_PRODUCTBUILD) || VER_PRODUCTBUILD < 6000)
   static BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
                                     ModuleBaseType ModuleBase,
                                     ULONG ModuleSize,
