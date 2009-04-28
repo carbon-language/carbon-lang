@@ -78,3 +78,5 @@ void test13b() {
   int b = 1[test13a().X]; /* expected-warning {{ISO C90 does not allow subscripting non-lvalue array}} */
 }
 
+/* Make sure we allow *test14 as a "function designator" */
+int test14() { return (&*test14)(); }

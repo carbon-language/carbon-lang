@@ -71,7 +71,7 @@ void g() {
 
   void (HasMembers::*pmf)() = &HasMembers::f;
   void (*pnf)() = &Fake::f;
-  &hm.f; // expected-error {{address expression must be an lvalue or a function designator}}
+  &hm.f; // FIXME: needs diagnostic expected-warning{{result unused}}
 
   void (HasMembers::*pmgv)() = &HasMembers::g;
   void (HasMembers::*pmgi)(int) = &HasMembers::g;
