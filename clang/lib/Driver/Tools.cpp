@@ -138,7 +138,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 
       if (FoundPCH || FoundPTH) {
         A->claim();
-        if (FoundPCH)
+        if (D.CCCUsePCH)
           CmdArgs.push_back("-include-pch");
         else
           CmdArgs.push_back("-include-pth");
