@@ -934,7 +934,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   if (Stmt* C = W->getCond()) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
-    assert (Block == EntryConditionBlock);
+    assert(Block == EntryConditionBlock);
     if (Block) FinishBlock(EntryConditionBlock);
   }
   
@@ -944,15 +944,20 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   
   // Process the loop body.
   {
-    assert (W->getBody());
+    assert(W->getBody());
 
     // Save the current values for Block, Succ, and continue and break targets
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
                               save_continue(ContinueTargetBlock),
                               save_break(BreakTargetBlock);
-          
-    // All continues within this loop should go to the condition block
-    ContinueTargetBlock = EntryConditionBlock;
+
+    // Create an empty block to represent the transition block for looping
+    // back to the head of the loop.
+    Block = 0;
+    assert(Succ == EntryConditionBlock);
+    Succ = createBlock();
+    Succ->setLoopTarget(W);
+    ContinueTargetBlock = Succ;    
     
     // All breaks should go to the code following the loop.
     BreakTargetBlock = LoopSuccessor;
