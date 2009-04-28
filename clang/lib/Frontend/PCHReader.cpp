@@ -220,6 +220,23 @@ public:
                            const unsigned char* d,
                            unsigned DataLen) {
     using namespace clang::io;
+    pch::IdentID ID = ReadUnalignedLE32(d);
+    bool IsInteresting = ID & 0x01;
+
+    // Wipe out the "is interesting" bit.
+    ID = ID >> 1;
+
+    if (!IsInteresting) {
+      // For unintersting identifiers, just build the IdentifierInfo
+      // and associate it with the persistent ID.
+      IdentifierInfo *II = KnownII;
+      if (!II)
+        II = &Reader.getIdentifierTable().CreateIdentifierInfo(
+                                                 k.first, k.first + k.second);
+      Reader.SetIdentifierInfo(ID, II);
+      return II;
+    }
+
     uint32_t Bits = ReadUnalignedLE32(d);
     bool CPlusPlusOperatorKeyword = Bits & 0x01;
     Bits >>= 1;
@@ -233,8 +250,7 @@ public:
     Bits >>= 10;
     unsigned TokenID = Bits & 0xFF;
     Bits >>= 8;
-
-    pch::IdentID ID = ReadUnalignedLE32(d);
+    
     assert(Bits == 0 && "Extra bits in the identifier?");
     DataLen -= 8;
 

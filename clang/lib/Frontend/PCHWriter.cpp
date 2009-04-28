@@ -1291,6 +1291,17 @@ class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
   PCHWriter &Writer;
   Preprocessor &PP;
 
+  /// \brief Determines whether this is an "interesting" identifier
+  /// that needs a full IdentifierInfo structure written into the hash
+  /// table.
+  static bool isInterestingIdentifier(const IdentifierInfo *II) {
+    return II->isPoisoned() ||
+      II->isExtensionToken() ||
+      II->hasMacroDefinition() ||
+      II->getObjCOrBuiltinID() ||
+      II->getFETokenInfo<void>();
+  }
+
 public:
   typedef const IdentifierInfo* key_type;
   typedef key_type  key_type_ref;
@@ -1309,15 +1320,17 @@ public:
     EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II, 
                       pch::IdentID ID) {
     unsigned KeyLen = strlen(II->getName()) + 1;
-    unsigned DataLen = 4 + 4; // 4 bytes for token ID, builtin, flags
-                              // 4 bytes for the persistent ID
-    if (II->hasMacroDefinition() && 
-        !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro())
-      DataLen += 8;
-    for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
-                                   DEnd = IdentifierResolver::end();
-         D != DEnd; ++D)
-      DataLen += sizeof(pch::DeclID);
+    unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
+    if (isInterestingIdentifier(II)) {
+      DataLen += 4; // 4 bytes for token ID, builtin, flags
+      if (II->hasMacroDefinition() && 
+          !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro())
+        DataLen += 8;
+      for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
+                                     DEnd = IdentifierResolver::end();
+           D != DEnd; ++D)
+        DataLen += sizeof(pch::DeclID);
+    }
     clang::io::Emit16(Out, DataLen);
     // We emit the key length after the data length so that every
     // string is preceded by a 16-bit length. This matches the PTH
@@ -1336,6 +1349,11 @@ public:
   
   void EmitData(llvm::raw_ostream& Out, const IdentifierInfo* II, 
                 pch::IdentID ID, unsigned) {
+    if (!isInterestingIdentifier(II)) {
+      clang::io::Emit32(Out, ID << 1);
+      return;
+    }
+    clang::io::Emit32(Out, (ID << 1) | 0x01);
     uint32_t Bits = 0;
     bool hasMacroDefinition = 
       II->hasMacroDefinition() && 
@@ -1347,7 +1365,6 @@ public:
     Bits = (Bits << 1) | II->isPoisoned();
     Bits = (Bits << 1) | II->isCPlusPlusOperatorKeyword();
     clang::io::Emit32(Out, Bits);
-    clang::io::Emit32(Out, ID);
 
     if (hasMacroDefinition)
       clang::io::Emit64(Out, Writer.getMacroOffset(II));
