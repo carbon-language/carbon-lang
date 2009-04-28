@@ -483,13 +483,8 @@ bool PIC16TargetLowering::isRomAddress(const SDValue &Op) {
   // It is BUILD_PAIR((PIC16Lo TGA), (PIC16Hi TGA)) and Op is BUILD_PAIR
   SDValue TGA = Op.getOperand(0).getOperand(0);
   GlobalAddressSDNode *GSDN = dyn_cast<GlobalAddressSDNode>(TGA);
-  const Type *ValueType = GSDN->getGlobal()->getType();
+  int AddrSpace = GSDN->getGlobal()->getType()->getAddressSpace();
 
-  if (!isa<PointerType>(ValueType)) {
-    assert(0 && "TGA must be of a PointerType");
-  }
-
-  int AddrSpace = dyn_cast<PointerType>(ValueType)->getAddressSpace();
   if (AddrSpace == PIC16ISD::ROM_SPACE)
     return true;
 
