@@ -690,6 +690,19 @@ public:
   bool isC99InlineDefinition() const { return C99InlineDefinition; }
   void setC99InlineDefinition(bool I) { C99InlineDefinition = I; }
 
+  /// \brief Determines whether this function has a gnu_inline
+  /// attribute that affects its semantics.
+  ///
+  /// The gnu_inline attribute only introduces GNU inline semantics
+  /// when all of the inline declarations of the function are marked
+  /// gnu_inline.
+  bool hasActiveGNUInlineAttribute() const;
+
+  /// \brief Determines whether this function is a GNU "extern
+  /// inline", which is roughly the opposite of a C99 "extern inline"
+  /// function.
+  bool isExternGNUInline() const;
+
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".
   bool isOverloadedOperator() const { 

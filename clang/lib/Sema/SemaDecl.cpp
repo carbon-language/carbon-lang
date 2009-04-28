@@ -584,22 +584,13 @@ static bool DeclHasAttr(const Decl *decl, const Attr *target) {
 
 /// MergeAttributes - append attributes from the Old decl to the New one.
 static void MergeAttributes(Decl *New, Decl *Old, ASTContext &C) {
-  Attr *attr = const_cast<Attr*>(Old->getAttrs());
-
-  while (attr) {
-    Attr *tmp = attr;
-    attr = attr->getNext();
-
-    if (!DeclHasAttr(New, tmp) && tmp->isMerged()) {
-      tmp->setInherited(true);
-      New->addAttr(tmp);
-    } else {
-      tmp->setNext(0);
-      tmp->Destroy(C);
+  for (const Attr *attr = Old->getAttrs(); attr; attr = attr->getNext()) {
+    if (!DeclHasAttr(New, attr) && attr->isMerged()) {
+      Attr *NewAttr = attr->clone(C);
+      NewAttr->setInherited(true);
+      New->addAttr(NewAttr);
     }
   }
-
-  Old->invalidateAttrs();
 }
 
 /// Used in MergeFunctionDecl to keep track of function parameters in
@@ -851,7 +842,8 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   MergeAttributes(New, Old, Context);
 
   // Merge the storage class.
-  New->setStorageClass(Old->getStorageClass());
+  if (Old->getStorageClass() != FunctionDecl::Extern)
+    New->setStorageClass(Old->getStorageClass());
 
   // Merge "inline"
   if (Old->isInline())
@@ -2186,19 +2178,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
-  // FIXME: We need to determine whether the GNU inline attribute will
-  // be applied to this function declaration, since it affects
-  // declaration merging. This hack will go away when the FIXME below
-  // is resolved, since we should be putting *all* attributes onto the
-  // declaration now.
-  for (const AttributeList *Attr = D.getDeclSpec().getAttributes();
-       Attr; Attr = Attr->getNext()) {
-    if (Attr->getKind() == AttributeList::AT_gnu_inline) {
-      NewFD->addAttr(::new (Context) GNUInlineAttr());
-      break;
-    }
-  }
-
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
   CheckFunctionDeclaration(NewFD, PrevDecl, Redeclaration,
@@ -2328,18 +2307,10 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
   // Here we determine whether this function, in isolation, would be a
   // C99 inline definition. MergeCompatibleFunctionDecls looks at
   // previous declarations.
-  if (NewFD->isInline() && 
-      NewFD->getDeclContext()->getLookupContext()->isTranslationUnit()) {
-    bool GNUInline = NewFD->hasAttr<GNUInlineAttr>() || 
-      (PrevDecl && PrevDecl->hasAttr<GNUInlineAttr>());
-    if (GNUInline || (!getLangOptions().CPlusPlus && !getLangOptions().C99)) {
-      // GNU "extern inline" is the same as "inline" in C99.
-      if (NewFD->getStorageClass() == FunctionDecl::Extern)
-        NewFD->setC99InlineDefinition(true);
-    } else if (getLangOptions().C99 && 
-               NewFD->getStorageClass() == FunctionDecl::None)
-      NewFD->setC99InlineDefinition(true);
-  }           
+  if (NewFD->isInline() && getLangOptions().C99 && 
+      NewFD->getStorageClass() == FunctionDecl::None &&
+      NewFD->getDeclContext()->getLookupContext()->isTranslationUnit())
+    NewFD->setC99InlineDefinition(true);
 
   // Check for a previous declaration of this name.
   if (!PrevDecl && NewFD->isExternC(Context)) {

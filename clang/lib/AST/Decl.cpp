@@ -468,6 +468,30 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
+bool FunctionDecl::hasActiveGNUInlineAttribute() const {
+  if (!isInline() || !hasAttr<GNUInlineAttr>())
+    return false;
+
+  for (const FunctionDecl *FD = getPreviousDeclaration(); FD; 
+       FD = FD->getPreviousDeclaration()) {
+    if (FD->isInline() && !FD->hasAttr<GNUInlineAttr>())
+      return false;
+  }
+
+  return true;
+}
+
+bool FunctionDecl::isExternGNUInline() const {
+  if (!hasActiveGNUInlineAttribute())
+    return false;
+
+  for (const FunctionDecl *FD = this; FD; FD = FD->getPreviousDeclaration())
+    if (FD->getStorageClass() == Extern && FD->hasAttr<GNUInlineAttr>())
+      return true;
+
+  return false;
+}
+
 /// getOverloadedOperator - Which C++ overloaded operator this
 /// function represents, if any.
 OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {

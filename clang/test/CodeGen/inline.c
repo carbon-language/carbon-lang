@@ -7,9 +7,11 @@
 // RUN: not grep unreferenced2 %t &&
 // RUN: grep "define void @gnu_inline()" %t &&
 // RUN: grep "define available_externally void @gnu_ei_inline()" %t &&
-// RUN: grep "define void @test3()" %t &&
 // RUN: grep "define i32 @test1" %t &&
 // RUN: grep "define i32 @test2" %t &&
+// RUN: grep "define void @test3()" %t &&
+// RUN: grep "define available_externally i32 @test4" %t &&
+// RUN: grep "define available_externally i32 @test5" %t &&
 
 // RUN: echo "\nC99 tests:" &&
 // RUN: clang %s -emit-llvm -S -o %t -std=c99 &&
@@ -22,6 +24,9 @@
 // RUN: grep "define available_externally void @gnu_ei_inline()" %t &&
 // RUN: grep "define i32 @test1" %t &&
 // RUN: grep "define i32 @test2" %t &&
+// RUN: grep "define available_externally void @test3" %t &&
+// RUN: grep "define available_externally i32 @test4" %t &&
+// RUN: grep "define i32 @test5" %t &&
 
 // RUN: echo "\nC++ tests:" &&
 // RUN: clang %s -emit-llvm -S -o %t -std=c++98 &&
@@ -62,4 +67,20 @@ void test_test2() { test2(); }
 
 // PR3989
 extern __inline void test3() __attribute__((gnu_inline));
-__inline void test3()  {}
+__inline void test3() {}
+
+void test_test3() { test3(); }
+
+extern int test4(void);
+extern __inline __attribute__ ((__gnu_inline__)) int test4(void)
+{
+}
+
+void test_test4() { test4(); }
+
+extern __inline int test5(void);
+extern __inline int __attribute__ ((__gnu_inline__)) test5(void)
+{
+}
+
+void test_test5() { test5(); }

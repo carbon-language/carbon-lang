@@ -240,9 +240,17 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   
   // If the inline function explicitly has the GNU inline attribute on it, or if
   // this is C89 mode, we use to GNU semantics.
-  if (FD->hasAttr<GNUInlineAttr>() || (!Features.C99 && !Features.CPlusPlus)) {
+  if (!Features.C99 && !Features.CPlusPlus) {
     // extern inline in GNU mode is like C99 inline.
-    if (FD->isC99InlineDefinition())
+    if (FD->getStorageClass() == FunctionDecl::Extern)
+      return CodeGenModule::GVA_C99Inline;
+    // Normal inline is a strong symbol.
+    return CodeGenModule::GVA_StrongExternal;
+  } else if (FD->hasActiveGNUInlineAttribute()) {
+    // GCC in C99 mode seems to use a different decision-making
+    // process for extern inline, which factors in previous
+    // declarations.
+    if (FD->isExternGNUInline())
       return CodeGenModule::GVA_C99Inline;
     // Normal inline is a strong symbol.
     return CodeGenModule::GVA_StrongExternal;

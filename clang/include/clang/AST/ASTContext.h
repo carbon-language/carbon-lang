@@ -16,6 +16,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -768,7 +769,7 @@ private:
 ///                  allocator supports it).
 /// @return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, clang::ASTContext &C,
-                          size_t Alignment = 16) throw () {
+                          size_t Alignment) throw () {
   return C.Allocate(Bytes, Alignment);
 }
 /// @brief Placement delete companion to the new above.

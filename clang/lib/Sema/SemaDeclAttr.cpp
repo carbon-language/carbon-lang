@@ -1474,11 +1474,7 @@ static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  // FIXME: We only do this because of the hack in
-  // Sema::ActOnFunctionDeclarator, which needs to add the
-  // GNUInlineAttr early.
-  if (!d->hasAttr<GNUInlineAttr>())
-    d->addAttr(::new (S.Context) GNUInlineAttr());
+  d->addAttr(::new (S.Context) GNUInlineAttr());
 }
 
 static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
