@@ -458,7 +458,7 @@ void LiveInterval::join(LiveInterval &Other, const int *LHSValNoAssignments,
   for (unsigned i = 0; i < NumNewVals; ++i) {
     VNInfo *VNI = NewVNInfo[i];
     if (VNI) {
-      if (i >= NumVals)
+      if (NumValNos >= NumVals)
         valnos.push_back(VNI);
       else 
         valnos[NumValNos] = VNI;
