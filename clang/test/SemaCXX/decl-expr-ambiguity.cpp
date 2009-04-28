@@ -15,7 +15,7 @@ void f() {
   for (int(a)+1;;) {}
   a = sizeof(int()+1);
   a = sizeof(int(1));
-  typeof(int()+1) a2;
+  typeof(int()+1) a2; // expected-error {{extension used}}
   (int(1)); // expected-warning {{expression result unused}}
 
   // type-id
@@ -25,7 +25,7 @@ void f() {
   int fd(T(a)); // expected-warning {{parentheses were disambiguated as a function declarator}}
   T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-note {{previous definition is here}}
   T(d)[5]; // expected-error {{redefinition of 'd'}}
-  typeof(int[])(f) = { 1, 2 }; 
+  typeof(int[])(f) = { 1, 2 }; // expected-error {{extension used}}
   void(b)(int);
   int(d2) __attribute__(()); 
   if (int(a)=1) {}

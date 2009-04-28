@@ -471,6 +471,8 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 
   // If this is an extension token, diagnose its use.
   // We avoid diagnosing tokens that originate from macro definitions.
-  if (II.isExtensionToken() && Features.C99 && !DisableMacroExpansion)
+  // FIXME: This warning is disabled in cases where it shouldn't be,
+  // like "#define TY typeof", "TY(1) x".
+  if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
 }
