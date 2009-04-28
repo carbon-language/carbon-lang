@@ -30,6 +30,7 @@ def : DiagGroup<"char-subscripts">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
+def ExtraTokens : DiagGroup<"extra-tokens">;
 def : DiagGroup<"format-security">;
 def : DiagGroup<"format=2">;
 def : DiagGroup<"format">;
@@ -88,10 +89,10 @@ def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
 
-def Extra : DiagGroup<"extra">;
-def : DiagGroup<"", [Extra]>;  // -W = -Wextra
-
 // Aggregation warning settings.
+
+def Extra : DiagGroup<"extra">;
+
 def Most : DiagGroup<"most", [
     Comment,
     Implicit,
@@ -108,4 +109,8 @@ def Most : DiagGroup<"most", [
 
 // -Wall is -Wmost -Wparentheses
 def : DiagGroup<"all", [Most, Parentheses]>;
+
+// Aliases.
+def : DiagGroup<"", [Extra]>;  // -W = -Wextra
+def : DiagGroup<"endif-labels", [ExtraTokens]>; // endif-labels = endif-tokens
 

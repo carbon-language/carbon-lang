@@ -135,7 +135,7 @@ def ext_pp_include_next_directive : Extension<
 def ext_pp_warning_directive : Extension<"#warning is a language extension">;
 
 def ext_pp_extra_tokens_at_eol : ExtWarn<
-  "extra tokens at end of #%0 directive">, InGroup<DiagGroup<"extra-tokens">>;
+  "extra tokens at end of #%0 directive">, InGroup<ExtraTokens>;
   
 def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<
