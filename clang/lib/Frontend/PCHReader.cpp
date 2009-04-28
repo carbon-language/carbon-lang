@@ -507,9 +507,17 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
     std::string MacroName = Extra.substr(StartOfMacroName,
                                          EndOfMacroName - StartOfMacroName);
 
-    // FIXME: Perform this check!
-    fprintf(stderr, "FIXME: check whether '%s' was used in the PCH file\n",
-            MacroName.c_str());
+    // Check whether this name was used somewhere in the PCH file. If
+    // so, defining it as a macro could change behavior, so we reject
+    // the PCH file.
+    if (IdentifierInfo *II = get(MacroName.c_str(),
+                                 MacroName.c_str() + MacroName.size())) {
+      Diag(diag::warn_macro_name_used_in_pch)
+        << II;
+      Diag(diag::note_ignoring_pch)
+        << FileName;
+      return true;
+    }
 
     // Add this definition to the suggested predefines buffer.
     SuggestedPredefines += Extra;
@@ -818,9 +826,11 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
                                          Name);
     FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID, Offset);
       
-    if (strcmp(Name, "<built-in>") == 0
-        && CheckPredefinesBuffer(BlobStart, BlobLen - 1, BufferID))
-      return IgnorePCH;
+    if (strcmp(Name, "<built-in>") == 0) {
+      PCHPredefinesBufferID = BufferID;
+      PCHPredefines = BlobStart;
+      PCHPredefinesLen = BlobLen - 1;
+    }
 
     break;
   }
@@ -1287,7 +1297,12 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Load the translation unit declaration
   if (Context)
     ReadDeclRecord(DeclOffsets[0], 0);
-
+  
+  // Check the predefines buffer.
+  if (CheckPredefinesBuffer(PCHPredefines, PCHPredefinesLen, 
+                            PCHPredefinesBufferID))
+    return IgnorePCH;
+  
   // Initialization of builtins and library builtins occurs before the
   // PCH file is read, so there may be some identifiers that were
   // loaded into the IdentifierTable before we intercepted the

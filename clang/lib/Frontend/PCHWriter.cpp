@@ -1378,11 +1378,21 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
 
   // Create and write out the blob that contains the identifier
   // strings.
-  IdentifierOffsets.resize(IdentifierIDs.size());
   {
     OnDiskChainedHashTableGenerator<PCHIdentifierTableTrait> Generator;
     
+    // Look for any identifiers that were named while processing the
+    // headers, but are otherwise not needed. We add these to the hash
+    // table to enable checking of the predefines buffer in the case
+    // where the user adds new macro definitions when building the PCH
+    // file.
+    for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
+                                IDEnd = PP.getIdentifierTable().end();
+         ID != IDEnd; ++ID)
+      getIdentifierRef(ID->second);
+
     // Create the on-disk hash table representation.
+    IdentifierOffsets.resize(IdentifierIDs.size());
     for (llvm::DenseMap<const IdentifierInfo *, pch::IdentID>::iterator
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {

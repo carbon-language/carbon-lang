@@ -280,6 +280,16 @@ private:
   /// Objective-C protocols.
   llvm::SmallVector<Decl *, 16> InterestingDecls;
 
+  /// \brief The file ID for the predefines buffer in the PCH file.
+  FileID PCHPredefinesBufferID;
+
+  /// \brief Pointer to the beginning of the predefines buffer in the
+  /// PCH file.
+  const char *PCHPredefines;
+
+  /// \brief Length of the predefines buffer in the PCH file.
+  unsigned PCHPredefinesLen;
+
   /// \brief Suggested contents of the predefines buffer, after this
   /// PCH file has been processed.
   ///

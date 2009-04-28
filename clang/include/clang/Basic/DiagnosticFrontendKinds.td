@@ -123,5 +123,7 @@ def warn_cmdline_missing_macro_defs : Warning<
     "macro definitions used to build the precompiled header are missing">;
 def note_using_macro_def_from_pch : Note<
     "using this macro definition from precompiled header">;
-
+def warn_macro_name_used_in_pch : Warning<
+    "definition of macro %0 conflicts with an identifier used in the "
+    "precompiled header">;
 }
