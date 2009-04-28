@@ -1322,10 +1322,10 @@ public:
     unsigned KeyLen = strlen(II->getName()) + 1;
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
     if (isInterestingIdentifier(II)) {
-      DataLen += 4; // 4 bytes for token ID, builtin, flags
+      DataLen += 2; // 2 bytes for builtin ID, flags
       if (II->hasMacroDefinition() && 
           !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro())
-        DataLen += 8;
+        DataLen += 4;
       for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                      DEnd = IdentifierResolver::end();
            D != DEnd; ++D)
@@ -1353,21 +1353,21 @@ public:
       clang::io::Emit32(Out, ID << 1);
       return;
     }
+
     clang::io::Emit32(Out, (ID << 1) | 0x01);
     uint32_t Bits = 0;
     bool hasMacroDefinition = 
       II->hasMacroDefinition() && 
       !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro();
-    Bits = Bits | (uint32_t)II->getTokenID();
-    Bits = (Bits << 10) | (uint32_t)II->getObjCOrBuiltinID();
+    Bits = (uint32_t)II->getObjCOrBuiltinID();
     Bits = (Bits << 1) | hasMacroDefinition;
     Bits = (Bits << 1) | II->isExtensionToken();
     Bits = (Bits << 1) | II->isPoisoned();
     Bits = (Bits << 1) | II->isCPlusPlusOperatorKeyword();
-    clang::io::Emit32(Out, Bits);
+    clang::io::Emit16(Out, Bits);
 
     if (hasMacroDefinition)
-      clang::io::Emit64(Out, Writer.getMacroOffset(II));
+      clang::io::Emit32(Out, Writer.getMacroOffset(II));
 
     // Emit the declaration IDs in reverse order, because the
     // IdentifierResolver provides the declarations as they would be
