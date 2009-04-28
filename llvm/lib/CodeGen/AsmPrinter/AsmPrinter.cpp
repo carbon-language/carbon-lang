@@ -971,12 +971,13 @@ void AsmPrinter::EmitString(const ConstantArray *CVA) const {
   O << '\n';
 }
 
-void AsmPrinter::EmitGlobalConstantArray(const ConstantArray *CVA) {
+void AsmPrinter::EmitGlobalConstantArray(const ConstantArray *CVA,
+                                         unsigned AddrSpace) {
   if (CVA->isString()) {
     EmitString(CVA);
   } else { // Not a string.  Print the values in successive locations
     for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-      EmitGlobalConstant(CVA->getOperand(i));
+      EmitGlobalConstant(CVA->getOperand(i), AddrSpace);
   }
 }
 
@@ -1233,7 +1234,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     EmitZeros(Size, AddrSpace);
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    EmitGlobalConstantArray(CVA);
+    EmitGlobalConstantArray(CVA , AddrSpace);
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     EmitGlobalConstantStruct(CVS, AddrSpace);

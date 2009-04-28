@@ -390,7 +390,7 @@ namespace llvm {
     void EmitXXStructorList(Constant *List);
     void EmitGlobalConstantStruct(const ConstantStruct* CVS,
                                   unsigned AddrSpace);
-    void EmitGlobalConstantArray(const ConstantArray* CVA);
+    void EmitGlobalConstantArray(const ConstantArray* CVA, unsigned AddrSpace);
     void EmitGlobalConstantVector(const ConstantVector* CP);
     void EmitGlobalConstantFP(const ConstantFP* CFP, unsigned AddrSpace);
     void EmitGlobalConstantLargeInt(const ConstantInt* CI, unsigned AddrSpace);
