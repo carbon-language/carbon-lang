@@ -38,10 +38,11 @@ td {
 </li>
 <li><a href="#c">C Language Features</a>
   <ul>
-<!--  <li><a href="#pragmas">Pragmas Supported</a></li> -->
-  <li><a href="#c_extensions">C Extensions Supported</a></li>
-  <li><a href="#c_incompatibilities">Intentional Incompatibilities with
-      GCC</a></li>
+  <li><a href="#c_ext">Extensions supported by clang</a></li>
+  <li><a href="#c_modes">Differences between various standard modes</a></li>
+  <li><a href="#c_unimpl_gcc">GCC extensions not implemented yet</a></li>
+  <li><a href="#c_unsupp_gcc">Intentionally unsupported GCC extensions</a></li>
+  <li><a href="#c_ms">Microsoft extensions</a></li>
   </ul>
 </li>
 <li><a href="#objc">Objective-C Language Features</a>
@@ -482,15 +483,134 @@ and not specified on the command line using <tt>-include</tt>.</p>
 <h2 id="c">C Language Features</h2>
 <!-- ======================================================================= -->
 
+<p>The support for standard C in clang is feature-complete except for the C99
+floating-point pragmas.</p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
-<h3 id="c_incompatibilities">Intentional Incompatibilities with GCC</h3>
+<h3 id="c_ext">Extensions supported by clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
-<p>No VLAs in structs.</p>
+<p>See <a href="LanguageExtensions.html">clang language extensions</a>.</p>
 
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="c_modes">Differences between various standard modes</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
+<p>clang supports the -std option, which changes what language mode clang uses.
+The supported modes for C are c89, gnu89, c94, c99, gnu99 and various aliases
+for those modes.  If no -std option is specified, clang defaults to gnu99 mode.
+</p>
 
+<p>Differences between all c* and gnu* modes:</p>
+<ul>
+<li>c* modes define "__STRICT_ANSI__".</li>
+<li>Target-specific defines not prefixed by underscores, like "linux", are defined
+in gnu* modes.</li>
+<li>Trigraphs default to being off in gnu* modes; they can be enabled by the
+-trigraphs option.</li>
+<li>The parser recognizes "asm" and "typeof" as keywords in gnu* modes; the
+variants "__asm__" and "__typeof__" are recognized in all modes.</li>
+<li>Some warnings are different.</li>
+</ul>
+
+<p>Differences between *89 and *99 modes:</p>
+<ul>
+<li>The *99 modes default to implementing "inline" as specified in C99, while
+the *89 modes implement the GNU version.  This can be overridden for individual
+functions with the __gnu_inline__ attribute.</li>
+<li>Digraphs are enabled in the *99 modes.</li>
+<li>The scope of names defined inside a "for", "if", "switch", "while", or "do"
+statement is different. (example: "if ((struct x {int x;}*)0) {}".)</li>
+<li>__STDC_VERSION__ is not defined in *89 modes.</li>
+<li>"inline" and "restrict" are not recognized as keywords in c89 mode.</li>
+<li>Commas are allowed in integer constant expressions in *99 modes.</li>
+<li>Arrays which are not lvalues are not implicitly promoted to pointers in
+*89 modes.</li>
+<li>Constructs like "&*X" are always allowed in *99 modes.</li>
+<li>Some warnings are different.</li>
+</ul>
+
+<p>c94 mode is identical to c89 mode except that digraphs are enabled in
+c94 mode (FIXME: And __STDC_VERSION__ should be defined!).</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="c_unimpl_gcc">GCC extensions not implemented yet</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>clang tries to be compatible with gcc as much as possible, but some gcc
+extensions are not implemented yet:</p>
+
+<ul>
+<li>clang does not support __label__
+(<a href="http://llvm.org/bugs/show_bug.cgi?id=3429">bug 3429</a>). This is
+a relatively small feature, so it is likely to be implemented relatively
+soon.</li>
+
+<li>clang does not support attributes on function pointers
+(<a href="http://llvm.org/bugs/show_bug.cgi?id=2461">bug 2461</a>). This is
+a relatively important feature, so it is likely to be implemented relatively
+soon.</li>
+
+<li>clang does not support #pragma weak
+(<a href="http://llvm.org/bugs/show_bug.cgi?id=2461">bug 3679</a>). Due to
+the uses described in the bug, this is likely to be implemented at some
+point, at least partially.</li>
+
+<li>clang does not support #pragma align
+(<a href="http://llvm.org/bugs/show_bug.cgi?id=2461">bug 3811</a>). This is a
+relatively small feature, so it is likely to be implemented relatively
+soon.</li>
+
+<li>clang does not implement overloads for the __sync_* builtins
+(<a href="http://llvm.org/bugs/show_bug.cgi?id=2461">bug 3824</a>). The
+builtins only currently work with 32-bit types. This is a relatively
+small feature, so it is likely to be implemented relatively soon.</li>
+
+<li>clang does not support code generation for variables pinned to registers
+(<a href="http://llvm.org/bugs/show_bug.cgi?id=3933">bug 3933</a>).  This
+is a relatively small feature, so it is likely to be implemented relatively
+soon.</li>
+
+<li>clang does not support decimal floating point types (_Decimal32 and
+friends) or fixed-point types (_Fract and friends); nobody has expressed
+interest in these features yet, so it's hard to say when they will be
+implemented.</li>
+
+<li>clang does not support nested functions; this is a complex feature which
+is infrequently used, so it is unlikely to be implemented anytime soon.</li>
+
+<li>clang does not support __builtin_apply and friends; this extension requires
+complex code generator support that does not currently exist in LLVM, and there
+is very little demand, so it is unlikely to be implemented anytime soon.</li>
+
+</ul>
+
+<p>This is not a complete list; if you find an unsupported extension
+missing from this list, please send an e-mail to cfe-dev.  This list
+currently excludes C++; see <a href="#cxx">C++ Language Features</a>.
+Also, this list does not include bugs in mostly-implemented features; please
+see the <a href="http://llvm.org/bugs/buglist.cgi?quicksearch=product%3Aclang+component%3A-New%2BBugs%2CAST%2CBasic%2CDriver%2CHeaders%2CLLVM%2BCodeGen%2Cparser%2Cpreprocessor%2CSemantic%2BAnalyzer">
+bug tracker</a> for known existing bugs (FIXME: Is there a section for
+bug-reporting guidelines somewhere?).</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="c_unsupp_gcc">Intentionally unsupported GCC extensions</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>clang does not support the gcc extension that allows variable-length arrays
+in structures.  This is for a few of reasons: one, it is tricky
+to implement, two, the extension is completely undocumented, and three, the
+extension appears to be very rarely used.</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="c_ms">Microsoft extensions</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>clang has some experimental support for extensions from
+Microsoft Visual C++; to enable it, use the -fms-extensions command-line
+option.  Eventually, this will be the default for Windows targets.
+These extensions are not anywhere near complete, so please do not
+file bugs; patches are welcome, though.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objc">Objective-C Language Features</h2>
