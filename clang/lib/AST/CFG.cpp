@@ -1069,8 +1069,18 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     else if (Block)
       FinishBlock(BodyBlock);
         
+    // Add an intermediate block between the BodyBlock and the
+    // ExitConditionBlock to represent the "loop back" transition.
+    // Create an empty block to represent the transition block for looping
+    // back to the head of the loop.
+    // FIXME: Can we do this more efficiently without adding another block?
+    Block = NULL;
+    Succ = BodyBlock;
+    CFGBlock *LoopBackBlock = createBlock();
+    LoopBackBlock->setLoopTarget(D);
+    
     // Add the loop body entry as a successor to the condition.
-    ExitConditionBlock->addSuccessor(BodyBlock);
+    ExitConditionBlock->addSuccessor(LoopBackBlock);
   }
   
   // Link up the condition block with the code that follows the loop.
