@@ -33,7 +33,7 @@ def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"format-security">;
 def : DiagGroup<"format=2">;
 def : DiagGroup<"format">;
-def : DiagGroup<"four-char-constants">;
+def FourByteMultiChar : DiagGroup<"four-char-constants">;
 
 
 def : DiagGroup<"init-self">;

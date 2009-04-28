@@ -53,6 +53,9 @@ def err_invalid_character_to_charify : Error<
   "invalid argument to convert to character">;
 def ext_multichar_character_literal : ExtWarn<
   "multi-character character constant">, InGroup<MultiChar>;
+def ext_four_char_character_literal : Extension<
+  "multi-character character constant">, InGroup<FourByteMultiChar>;
+  
 
 // Literal
 def ext_nonstandard_escape : Extension<

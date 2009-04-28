@@ -631,19 +631,19 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
   // FIXME: The "Value" is an uint64_t so we can handle char literals of 
   // upto 64-bits.
-  assert(PP.getTargetInfo().getIntWidth() <= 64 &&
-         "Assumes sizeof(int) on target is <= 64");
-  assert(PP.getTargetInfo().getWCharWidth() <= 64 &&
-         "Assumes sizeof(wchar) on target is <= 64");
   // FIXME: This extensively assumes that 'char' is 8-bits.
   assert(PP.getTargetInfo().getCharWidth() == 8 &&
          "Assumes char is 8 bits");
+  assert(PP.getTargetInfo().getIntWidth() <= 64 &&
+         (PP.getTargetInfo().getIntWidth() & 7) == 0 &&
+         "Assumes sizeof(int) on target is <= 64 and a multiple of char");
+  assert(PP.getTargetInfo().getWCharWidth() <= 64 &&
+         "Assumes sizeof(wchar) on target is <= 64");
 
   // This is what we will use for overflow detection 
   llvm::APInt LitVal(PP.getTargetInfo().getIntWidth(), 0);
   
-  bool isFirstChar = true;
-  bool isMultiChar = false;
+  unsigned NumCharsSoFar = 0;
   while (begin[0] != '\'') {
     uint64_t ResultChar;
     if (begin[0] != '\\')     // If this is a normal character, consume it.
@@ -653,33 +653,33 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
     // If this is a multi-character constant (e.g. 'abc'), handle it.  These are
     // implementation defined (C99 6.4.4.4p10).
-    if (!isFirstChar) {
-      // If this is the second character being processed, do special handling.
-      if (!isMultiChar) {
-        isMultiChar = true;
-      
-        // Warn about discarding the top bits for multi-char wide-character
-        // constants (L'abcd').
-        if (IsWide)
-          PP.Diag(Loc, diag::warn_extraneous_wide_char_constant);
-        else
-          PP.Diag(Loc, diag::ext_multichar_character_literal);
-      }
-
+    if (NumCharsSoFar) {
       if (IsWide) {
         // Emulate GCC's (unintentional?) behavior: L'ab' -> L'b'.
         LitVal = 0;
       } else {
         // Narrow character literals act as though their value is concatenated
-        // in this implementation.
-        if ((LitVal.shl(8)).lshr(8) != LitVal)
+        // in this implementation, but warn on overflow.
+        if (LitVal.countLeadingZeros() < 8)
           PP.Diag(Loc, diag::warn_char_constant_too_large);
         LitVal <<= 8;
       }
     }
     
     LitVal = LitVal + ResultChar;
-    isFirstChar = false;
+    ++NumCharsSoFar;
+  }
+
+  // If this is the second character being processed, do special handling.
+  if (NumCharsSoFar > 1) {
+    // Warn about discarding the top bits for multi-char wide-character
+    // constants (L'abcd').
+    if (IsWide)
+      PP.Diag(Loc, diag::warn_extraneous_wide_char_constant);
+    else if (NumCharsSoFar != 4)
+      PP.Diag(Loc, diag::ext_multichar_character_literal);
+    else
+      PP.Diag(Loc, diag::ext_four_char_character_literal);
   }
 
   // Transfer the value from APInt to uint64_t
@@ -689,7 +689,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   // if 'char' is signed for this target (C99 6.4.4.4p10).  Note that multiple
   // character constants are not sign extended in the this implementation:
   // '\xFF\xFF' = 65536 and '\x0\xFF' = 255, which matches GCC.
-  if (!IsWide && !isMultiChar && (Value & 128) &&
+  if (!IsWide && NumCharsSoFar == 1 && (Value & 128) &&
       PP.getTargetInfo().isCharSigned())
     Value = (signed char)Value;
 }

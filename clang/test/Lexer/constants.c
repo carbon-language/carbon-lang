@@ -16,14 +16,20 @@ float Y = 08.123456;
 
 
 char c[] = {
-  'df',  // expected-warning {{multi-character character constant}}
+  'df',   // expected-warning {{multi-character character constant}}
   '\t',
   '\\
 t',
-  '??!'  // expected-warning {{trigraph converted to '|' character}}
+  '??!',  // expected-warning {{trigraph converted to '|' character}}
+  'abcd'  // expected-warning {{multi-character character constant}}
 };
 
 
 #pragma GCC diagnostic ignored "-Wmultichar"
 
 char d = 'df'; // no warning.
+char e = 'abcd';  // still warn: expected-warning {{multi-character character constant}}
+
+#pragma GCC diagnostic ignored "-Wfour-char-constants"
+
+char f = 'abcd';  // ignored.
