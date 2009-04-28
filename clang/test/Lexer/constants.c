@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -pedantic -trigraphs %s
 
 int x = 000000080;  // expected-error {{invalid digit}}
 
@@ -13,3 +13,17 @@ float Y = 08.123456;
 // PR2252
 #if -0x8000000000000000  // should not warn.
 #endif
+
+
+char c[] = {
+  'df',  // expected-warning {{multi-character character constant}}
+  '\t',
+  '\\
+t',
+  '??!'  // expected-warning {{trigraph converted to '|' character}}
+};
+
+
+#pragma GCC diagnostic ignored "-Wmultichar"
+
+char d = 'df'; // no warning.

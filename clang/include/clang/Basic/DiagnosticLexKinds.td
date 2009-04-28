@@ -51,6 +51,8 @@ def err_empty_character : Error<"empty character constant">;
 def err_unterminated_block_comment : Error<"unterminated /* comment">;
 def err_invalid_character_to_charify : Error<
   "invalid argument to convert to character">;
+def ext_multichar_character_literal : ExtWarn<
+  "multi-character character constant">, InGroup<MultiChar>;
 
 // Literal
 def ext_nonstandard_escape : Extension<

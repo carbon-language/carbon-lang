@@ -662,6 +662,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
         // constants (L'abcd').
         if (IsWide)
           PP.Diag(Loc, diag::warn_extraneous_wide_char_constant);
+        else
+          PP.Diag(Loc, diag::ext_multichar_character_literal);
       }
 
       if (IsWide) {
@@ -671,7 +673,6 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
         // Narrow character literals act as though their value is concatenated
         // in this implementation.
         if ((LitVal.shl(8)).lshr(8) != LitVal)
-        // if (((LitVal << 8) >> 8) != LitVal)
           PP.Diag(Loc, diag::warn_char_constant_too_large);
         LitVal <<= 8;
       }
