@@ -1160,22 +1160,25 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
 
-  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  unsigned SrcReg, DstReg, SrcSubIdx = 0, DstSubIdx = 0;
   bool isExtSubReg = CopyMI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG;
   bool isInsSubReg = CopyMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG;
   bool isSubRegToReg = CopyMI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG;
   unsigned SubIdx = 0;
   if (isExtSubReg) {
-    DstReg = CopyMI->getOperand(0).getReg();
-    SrcReg = CopyMI->getOperand(1).getReg();
+    DstReg    = CopyMI->getOperand(0).getReg();
+    DstSubIdx = CopyMI->getOperand(0).getSubReg();
+    SrcReg    = CopyMI->getOperand(1).getReg();
+    SrcSubIdx = CopyMI->getOperand(2).getImm();
   } else if (isInsSubReg || isSubRegToReg) {
     if (CopyMI->getOperand(2).getSubReg()) {
       DOUT << "\tSource of insert_subreg is already coalesced "
            << "to another register.\n";
       return false;  // Not coalescable.
     }
-    DstReg = CopyMI->getOperand(0).getReg();
-    SrcReg = CopyMI->getOperand(2).getReg();
+    DstReg    = CopyMI->getOperand(0).getReg();
+    DstSubIdx = CopyMI->getOperand(3).getImm();
+    SrcReg    = CopyMI->getOperand(2).getReg();
   } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
     assert(0 && "Unrecognized copy instruction!");
     return false;
@@ -1204,6 +1207,40 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (DstIsPhys && !allocatableRegs_[DstReg]) {
     DOUT << "\tDst reg is unallocatable physreg.\n";
     return false;  // Not coalescable.
+  }
+
+  // Check that a physical source register is compatible with dst regclass
+  if (SrcIsPhys) {
+    unsigned SrcSubReg = SrcSubIdx ?
+      tri_->getSubReg(SrcReg, SrcSubIdx) : SrcReg;
+    const TargetRegisterClass *DstRC = mri_->getRegClass(DstReg);
+    const TargetRegisterClass *DstSubRC = DstRC;
+    if (DstSubIdx)
+      DstSubRC = DstRC->getSubRegisterRegClass(DstSubIdx);
+    assert(DstSubRC && "Illegal subregister index");
+    if (!DstSubRC->contains(SrcSubReg)) {
+      DOUT << "\tIncompatible destination regclass: "
+           << tri_->getName(SrcSubReg) << " not in " << DstSubRC->getName()
+           << ".\n";
+      return false;             // Not coalescable.
+    }
+  }
+
+  // Check that a physical dst register is compatible with source regclass
+  if (DstIsPhys) {
+    unsigned DstSubReg = DstSubIdx ?
+      tri_->getSubReg(DstReg, DstSubIdx) : DstReg;
+    const TargetRegisterClass *SrcRC = mri_->getRegClass(SrcReg);
+    const TargetRegisterClass *SrcSubRC = SrcRC;
+    if (SrcSubIdx)
+      SrcSubRC = SrcRC->getSubRegisterRegClass(SrcSubIdx);
+    assert(SrcSubRC && "Illegal subregister index");
+    if (!SrcSubRC->contains(DstReg)) {
+      DOUT << "\tIncompatible source regclass: "
+           << tri_->getName(DstSubReg) << " not in " << SrcSubRC->getName()
+           << ".\n";
+      return false;             // Not coalescable.
+    }
   }
 
   // Should be non-null only when coalescing to a sub-register class.
