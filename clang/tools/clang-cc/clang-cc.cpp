@@ -1990,9 +1990,10 @@ int main(int argc, char **argv) {
     fprintf(stderr, "clang version 1.0 based upon " PACKAGE_STRING
             " hosted on " LLVM_HOSTTRIPLE "\n");
 
-  if (unsigned NumDiagnostics = Diags.getNumDiagnostics())
-    fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
-            (NumDiagnostics == 1 ? "" : "s"));
+  if (!NoCaretDiagnostics)
+    if (unsigned NumDiagnostics = Diags.getNumDiagnostics())
+      fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
+              (NumDiagnostics == 1 ? "" : "s"));
   
   if (Stats) {
     FileMgr.PrintStats();
