@@ -202,7 +202,7 @@ public:
   /// certain types of nodes together, or eliminating superfluous nodes.  The
   /// Level argument controls whether Combine is allowed to produce nodes and
   /// types that are illegal on the target.
-  void Combine(CombineLevel Level, AliasAnalysis &AA, bool Fast);
+  void Combine(CombineLevel Level, AliasAnalysis &AA, unsigned OptLevel);
 
   /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
   /// only uses types natively supported by the target.  Returns "true" if it
@@ -218,7 +218,7 @@ public:
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
-  void Legalize(bool TypesNeedLegalizing, bool Fast);
+  void Legalize(bool TypesNeedLegalizing, unsigned OptLevel);
 
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG.

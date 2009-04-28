@@ -1995,7 +1995,7 @@ char CppWriter::ID = 0;
 bool CPPTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
                                                 raw_ostream &o,
                                                 CodeGenFileType FileType,
-                                                bool Fast) {
+                                                unsigned OptLevel) {
   if (FileType != TargetMachine::AssemblyFile) return true;
   PM.add(new CppWriter(o));
   return false;

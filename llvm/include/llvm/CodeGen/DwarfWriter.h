@@ -81,7 +81,7 @@ public:
   void EndFunction(MachineFunction *MF);
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
-  bool ValidDebugInfo(Value *V, bool FastISel);
+  bool ValidDebugInfo(Value *V, unsigned OptLevel);
 
   /// RecordSourceLine - Register a source line with debug info. Returns a
   /// unique label ID used to generate a label and provide correspondence to

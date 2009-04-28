@@ -108,7 +108,7 @@ namespace llvm {
   /// generated.
   extern bool DisableJumpTables;
 
-  /// FastISel - This flag enables fast-path instruction selection
+  /// EnableFastISel - This flag enables fast-path instruction selection
   /// which trades away generated code quality in favor of reducing
   /// compile time.
   extern bool EnableFastISel;

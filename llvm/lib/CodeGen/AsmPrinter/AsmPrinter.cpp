@@ -42,8 +42,8 @@ AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
 
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
-                       const TargetAsmInfo *T, bool F, bool VDef)
-  : MachineFunctionPass(&ID), FunctionNumber(0), Fast(F), O(o),
+                       const TargetAsmInfo *T, unsigned OL, bool VDef)
+  : MachineFunctionPass(&ID), FunctionNumber(0), OptLevel(OL), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
     IsInTextSection(false)
 {

@@ -136,16 +136,16 @@ namespace llvm {
   /// createDefaultScheduler - This creates an instruction scheduler appropriate
   /// for the target.
   ScheduleDAGSDNodes* createDefaultScheduler(SelectionDAGISel *IS,
-                                             bool Fast) {
+                                             unsigned OptLevel) {
     const TargetLowering &TLI = IS->getTargetLowering();
 
-    if (Fast)
-      return createFastDAGScheduler(IS, Fast);
+    if (OptLevel == 0)
+      return createFastDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
-      return createTDListDAGScheduler(IS, Fast);
+      return createTDListDAGScheduler(IS, OptLevel);
     assert(TLI.getSchedulingPreference() ==
          TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
-    return createBURRListDAGScheduler(IS, Fast);
+    return createBURRListDAGScheduler(IS, OptLevel);
   }
 }
 
@@ -262,13 +262,13 @@ static void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
-SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, bool fast) :
+SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, unsigned OL) :
   FunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
-  SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo, fast)),
+  SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo, OL)),
   GFI(),
-  Fast(fast),
+  OptLevel(OL),
   DAGSize(0)
 {}
 
@@ -576,9 +576,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // Run the DAG combiner in pre-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 1", GroupName);
-    CurDAG->Combine(Unrestricted, *AA, Fast);
+    CurDAG->Combine(Unrestricted, *AA, OptLevel);
   } else {
-    CurDAG->Combine(Unrestricted, *AA, Fast);
+    CurDAG->Combine(Unrestricted, *AA, OptLevel);
   }
   
   DOUT << "Optimized lowered selection DAG:\n";
@@ -608,9 +608,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
       // Run the DAG combiner in post-type-legalize mode.
       if (TimePassesIsEnabled) {
         NamedRegionTimer T("DAG Combining after legalize types", GroupName);
-        CurDAG->Combine(NoIllegalTypes, *AA, Fast);
+        CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
       } else {
-        CurDAG->Combine(NoIllegalTypes, *AA, Fast);
+        CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
       }
 
       DOUT << "Optimized type-legalized selection DAG:\n";
@@ -622,9 +622,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Legalization", GroupName);
-    CurDAG->Legalize(DisableLegalizeTypes, Fast);
+    CurDAG->Legalize(DisableLegalizeTypes, OptLevel);
   } else {
-    CurDAG->Legalize(DisableLegalizeTypes, Fast);
+    CurDAG->Legalize(DisableLegalizeTypes, OptLevel);
   }
   
   DOUT << "Legalized selection DAG:\n";
@@ -635,9 +635,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // Run the DAG combiner in post-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 2", GroupName);
-    CurDAG->Combine(NoIllegalOperations, *AA, Fast);
+    CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
   } else {
-    CurDAG->Combine(NoIllegalOperations, *AA, Fast);
+    CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
   }
   
   DOUT << "Optimized legalized selection DAG:\n";
@@ -645,7 +645,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
   
-  if (!Fast)
+  if (OptLevel != 0)
     ComputeLiveOutVRegInfo();
 
   // Third, instruction select all of the operations to machine code, adding the
@@ -1082,7 +1082,7 @@ ScheduleDAGSDNodes *SelectionDAGISel::CreateScheduler() {
     RegisterScheduler::setDefault(Ctor);
   }
   
-  return Ctor(this, Fast);
+  return Ctor(this, OptLevel);
 }
 
 ScheduleHazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {

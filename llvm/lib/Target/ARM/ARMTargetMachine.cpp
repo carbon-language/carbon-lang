@@ -138,35 +138,37 @@ const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
 
 
 // Pass Pipeline Configuration
-bool ARMTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
+bool ARMTargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
   PM.add(createARMISelDag(*this));
   return false;
 }
 
-bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
+bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, unsigned OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
-  if (!Fast && !DisableLdStOpti && !Subtarget.isThumb())
+  if (OptLevel != 0 && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass());
 
-  if (!Fast && !DisableIfConversion && !Subtarget.isThumb())
+  if (OptLevel != 0 && !DisableIfConversion && !Subtarget.isThumb())
     PM.add(createIfConverterPass());
 
   PM.add(createARMConstantIslandPass());
   return true;
 }
 
-bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast,
-                                          bool Verbose, raw_ostream &Out) {
+bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
+                                          unsigned OptLevel,
+                                          bool Verbose,
+                                          raw_ostream &Out) {
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Fast, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
 
   return false;
 }
 
 
-bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
+bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   if (DefRelocModel == Reloc::Default)
@@ -177,20 +179,22 @@ bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
+      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
   }
 
   return false;
 }
 
-bool ARMTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
-                                        bool DumpAsm, MachineCodeEmitter &MCE) {
+bool ARMTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                            unsigned OptLevel,
+                                            bool DumpAsm,
+                                            MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
+      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
   }
 
   return false;
