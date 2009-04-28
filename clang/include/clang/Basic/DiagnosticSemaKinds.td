@@ -1551,6 +1551,8 @@ def err_goto_in_block : Error<
   "goto not allowed in block literal">;
 def err_return_in_block_expression : Error<
   "return not allowed in block expression literal">;
+def err_block_returns_array : Error<
+  "block declared as returning an array">;
 
 def err_ret_local_block : Error<
   "returning block that lives on the local stack">;

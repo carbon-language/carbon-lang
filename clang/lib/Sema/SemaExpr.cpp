@@ -4726,6 +4726,12 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
       || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
     QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
 
+    if (T->isArrayType()) {
+      Diag(ParamInfo.getSourceRange().getBegin(),
+           diag::err_block_returns_array);
+      return;
+    }
+
     // The parameter list is optional, if there was none, assume ().
     if (!T->isFunctionType())
       T = Context.getFunctionType(T, NULL, 0, 0, 0);

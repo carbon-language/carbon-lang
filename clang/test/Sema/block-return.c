@@ -92,3 +92,6 @@ bptr foo5(int j) {
     return ^{ ^{ i=0; }(); };  // expected-error {{returning block that lives on the local stack}}
   return ^{ i=0; };  // expected-error {{returning block that lives on the local stack}}
 }
+
+int (*funcptr3[5])(long);
+int sz8 = sizeof(^int (*[5])(long) {return funcptr3;}); // expected-error {{block declared as returning an array}}
