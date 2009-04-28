@@ -209,6 +209,16 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   while (CaretLine[CaretLine.size()-1] == ' ')
     CaretLine.erase(CaretLine.end()-1);
   
+  // If we are in -fdiagnostics-print-source-range-info mode, we are trying to
+  // produce easily machine parsable output.  Add a space before the source line
+  // and the caret to make it trivial to tell the main diagnostic line from what
+  // the user is intended to see.
+  if (PrintRangeInfo) {
+    SourceLine = ' ' + SourceLine;
+    CaretLine = ' ' + CaretLine;
+  }
+  
+  
   // Emit what we have computed.
   OS << SourceLine << '\n';
   OS << CaretLine << '\n';
@@ -238,8 +248,11 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       }
     }
 
-    if (!InsertionLine.empty())
+    if (!InsertionLine.empty()) {
+      if (PrintRangeInfo) 
+        OS << ' ';
       OS << InsertionLine << '\n';
+    }
   }
 }
 
