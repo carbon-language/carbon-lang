@@ -1010,7 +1010,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       const CFGBlock &Blk = *BE->getSrc();
       const Stmt *Term = Blk.getTerminator();
       
-      if (Term)
+      if (Term && !isa<DoStmt>(Term))
         EB.addContext(Term);
 
       // Are we jumping to the head of a loop?  Add a special diagnostic.
