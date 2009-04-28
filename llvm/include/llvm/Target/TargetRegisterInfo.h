@@ -148,6 +148,16 @@ public:
     return I;
   }
 
+  /// getSubRegisterRegClass - Return the register class of subregisters with
+  /// index SubIdx, or NULL if no such class exists.
+  const TargetRegisterClass* getSubRegisterRegClass(unsigned SubIdx) const {
+    assert(SubIdx>0 && "Invalid subregister index");
+    for (unsigned s = 0; s != SubIdx-1; ++s)
+      if (!SubRegClasses[s])
+        return NULL;
+    return SubRegClasses[SubIdx-1];
+  }
+
   /// superregclasses_begin / superregclasses_end - Loop over all of
   /// the superreg register classes of this register class.
   sc_iterator superregclasses_begin() const {

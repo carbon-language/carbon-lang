@@ -329,18 +329,6 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
   }
 }
 
-/// getSubRegisterRegClass - Returns the register class of specified register
-/// class' "SubIdx"'th sub-register class.
-static const TargetRegisterClass*
-getSubRegisterRegClass(const TargetRegisterClass *TRC, unsigned SubIdx) {
-  // Pick the register class of the subregister
-  TargetRegisterInfo::regclass_iterator I =
-    TRC->subregclasses_begin() + SubIdx-1;
-  assert(I < TRC->subregclasses_end() &&
-         "Invalid subregister index for register class");
-  return *I;
-}
-
 /// getSuperRegisterRegClass - Returns the register class of a superreg A whose
 /// "SubIdx"'th sub-register class is the specified register class and whose
 /// type matches the specified type.
@@ -350,7 +338,7 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
   // Pick the register class of the superegister for this type
   for (TargetRegisterInfo::regclass_iterator I = TRC->superregclasses_begin(),
          E = TRC->superregclasses_end(); I != E; ++I)
-    if ((*I)->hasType(VT) && getSubRegisterRegClass(*I, SubIdx) == TRC)
+    if ((*I)->hasType(VT) && (*I)->getSubRegisterRegClass(SubIdx) == TRC)
       return *I;
   assert(false && "Couldn't find the register class");
   return 0;
@@ -388,7 +376,8 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     // Figure out the register class to create for the destreg.
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
     const TargetRegisterClass *TRC = MRI.getRegClass(VReg);
-    const TargetRegisterClass *SRC = getSubRegisterRegClass(TRC, SubIdx);
+    const TargetRegisterClass *SRC = TRC->getSubRegisterRegClass(SubIdx);
+    assert(SRC && "Invalid subregister index in EXTRACT_SUBREG");
 
     // Figure out the register class to create for the destreg.
     // Note that if we're going to directly use an existing register,
