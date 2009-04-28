@@ -6,7 +6,7 @@
 ; for the bb6 loop without using a maximum calculation (icmp, select)
 ; because it should be able to prove that the comparison is guarded
 ; by an appropriate conditional branch. Unfortunately, indvars is
-; not yet able to find the comparison for the other too loops in
+; not yet able to find the comparison for the other two loops in
 ; this testcase.
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
