@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -O0 | grep movslq
-; RUN: llvm-as < %s | llc -march=x86 -O0
+; RUN: llvm-as < %s | llc -march=x86-64 -fast | grep movslq
+; RUN: llvm-as < %s | llc -march=x86 -fast
 ; PR3181
 
 ; GEP indices are interpreted as signed integers, so they

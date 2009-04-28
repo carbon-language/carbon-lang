@@ -355,17 +355,17 @@ public:
   ///
   FunctionLoweringInfo &FuncInfo;
 
-  /// OptLevel - What optimization level we're generating code for.
+  /// Fast - We are in -fast mode.
   /// 
-  unsigned OptLevel;
+  bool Fast;
   
   /// GFI - Garbage collection metadata for the function.
   GCFunctionInfo *GFI;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
-                       FunctionLoweringInfo &funcinfo, unsigned ol)
+                       FunctionLoweringInfo &funcinfo, bool fast)
     : CurDebugLoc(DebugLoc::getUnknownLoc()), 
-      TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol) {
+      TLI(tli), DAG(dag), FuncInfo(funcinfo), Fast(fast) {
   }
 
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa);

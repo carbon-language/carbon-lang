@@ -3910,9 +3910,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_stoppoint: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (DW && DW->ValidDebugInfo(SPI.getContext(), OptLevel)) {
+    if (DW && DW->ValidDebugInfo(SPI.getContext(), Fast)) {
       MachineFunction &MF = DAG.getMachineFunction();
-      if (OptLevel == 0)
+      if (Fast)
         DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
                                         SPI.getLine(),
                                         SPI.getColumn(),
@@ -3930,8 +3930,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-
-    if (DW && DW->ValidDebugInfo(RSI.getContext(), OptLevel)) {
+    if (DW && DW->ValidDebugInfo(RSI.getContext(), Fast)) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
       DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
@@ -3943,8 +3942,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_end: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
+    if (DW && DW->ValidDebugInfo(REI.getContext(), Fast)) {
 
-    if (DW && DW->ValidDebugInfo(REI.getContext(), OptLevel)) {
       MachineFunction &MF = DAG.getMachineFunction();
       DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
       std::string SPName;
@@ -3953,7 +3952,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
           && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
           // This is end of inlined function. Debugging information for
           // inlined function is not handled yet (only supported by FastISel).
-        if (OptLevel == 0) {
+        if (Fast) {
           unsigned ID = DW->RecordInlinedFnEnd(Subprogram);
           if (ID != 0)
             // Returned ID is 0 if this is unbalanced "end of inlined
@@ -3979,9 +3978,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (!DW) return 0;
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
     Value *SP = FSI.getSubprogram();
-    if (SP && DW->ValidDebugInfo(SP, OptLevel)) {
-      MachineFunction &MF = DAG.getMachineFunction();
-      if (OptLevel == 0) {
+    if (SP && DW->ValidDebugInfo(SP, Fast)) {
+        MachineFunction &MF = DAG.getMachineFunction();
+      if (Fast) {
         // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
         // (most?) gdb expects.
         DebugLoc PrevLoc = CurDebugLoc;
@@ -4052,11 +4051,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    if (OptLevel == 0) {
+    if (Fast) {
       DwarfWriter *DW = DAG.getDwarfWriter();
       DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
       Value *Variable = DI.getVariable();
-      if (DW && DW->ValidDebugInfo(Variable, OptLevel))
+      if (DW && DW->ValidDebugInfo(Variable, Fast))
         DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
                                 getValue(DI.getAddress()), getValue(Variable)));
     } else {

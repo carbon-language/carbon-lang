@@ -25,15 +25,13 @@ using namespace llvm;
 ///
 FunctionPass *llvm::createX86CodePrinterPass(raw_ostream &o,
                                              X86TargetMachine &tm,
-                                             unsigned OptLevel, bool verbose) {
+                                             bool fast, bool verbose) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 
   if (Subtarget->isFlavorIntel()) {
-    return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo(),
-                                  OptLevel, verbose);
+    return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
   } else {
-    return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(),
-                                OptLevel, verbose);
+    return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
   }
 }
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -O0
+; RUN: llvm-as < %s | llc -fast
 
 define float @test(i32 %tmp12771278) {
         switch i32 %tmp12771278, label %bb1279 [

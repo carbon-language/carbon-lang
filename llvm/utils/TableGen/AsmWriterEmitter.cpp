@@ -650,7 +650,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   O << "\";\n\n";
 
   O << "  if (TAI->doesSupportDebugInformation() &&\n"
-    << "      DW->ShouldEmitDwarfDebug() && OptLevel != 0) {\n"
+    << "      DW->ShouldEmitDwarfDebug() && !Fast) {\n"
     << "    DebugLoc CurDL = MI->getDebugLoc();\n\n"
     << "    if (!CurDL.isUnknown()) {\n"
     << "      static DebugLocTuple PrevDLT(~0U, ~0U, ~0U);\n"

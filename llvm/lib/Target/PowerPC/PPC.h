@@ -28,7 +28,7 @@ FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createPPCAsmPrinterPass(raw_ostream &OS,
                                       PPCTargetMachine &TM,
-                                      unsigned OptLevel, bool Verbose);
+                                      bool Fast, bool Verbose);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 } // end namespace llvm;

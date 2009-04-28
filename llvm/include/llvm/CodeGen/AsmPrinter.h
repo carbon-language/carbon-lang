@@ -65,8 +65,8 @@ namespace llvm {
     // Necessary for external weak linkage support
     std::set<const GlobalValue*> ExtWeakSymbols;
 
-    /// OptLevel - Generating code at a specific optimization level.
-    unsigned OptLevel;
+    /// Fast - Generating code via fast instruction selection.
+    bool Fast;
   public:
     /// Output stream on which we're printing assembly code.
     ///
@@ -110,8 +110,8 @@ namespace llvm {
     bool VerboseAsm;
 
   protected:
-    explicit AsmPrinter(raw_ostream &o, TargetMachine &TM,
-                        const TargetAsmInfo *T, unsigned OL, bool V);
+    AsmPrinter(raw_ostream &o, TargetMachine &TM,
+               const TargetAsmInfo *T, bool F, bool V);
     
   public:
     virtual ~AsmPrinter();

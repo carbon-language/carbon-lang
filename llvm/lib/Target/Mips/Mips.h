@@ -25,7 +25,7 @@ namespace llvm {
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
   FunctionPass *createMipsCodePrinterPass(raw_ostream &OS, 
                                           MipsTargetMachine &TM,
-                                          unsigned OptLevel, bool Verbose);
+                                          bool Fast, bool Verbose);
 } // end namespace llvm;
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

@@ -27,8 +27,7 @@ struct CTargetMachine : public TargetMachine {
 
   virtual bool WantsWholeFile() const { return true; }
   virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
-                                        CodeGenFileType FileType,
-                                        unsigned OptLevel);
+                                        CodeGenFileType FileType, bool Fast);
 
   // This class always works, but must be requested explicitly on 
   // llc command line.

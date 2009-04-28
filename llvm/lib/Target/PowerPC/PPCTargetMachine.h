@@ -46,7 +46,7 @@ protected:
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                             PPCTargetMachine &tm, 
-                                            unsigned OptLevel, bool verbose);
+                                            bool fast, bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
@@ -76,13 +76,13 @@ public:
   }
 
   // Pass Pipeline Configuration
-  virtual bool addInstSelector(PassManagerBase &PM, unsigned OptLevel);
-  virtual bool addPreEmitPass(PassManagerBase &PM, unsigned OptLevel);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, unsigned OptLevel, 
+  virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
+  virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                   bool Verbose, raw_ostream &Out);
-  virtual bool addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+  virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
                               bool DumpAsm, MachineCodeEmitter &MCE);
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                     bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool getEnableTailMergeDefault() const;
 };

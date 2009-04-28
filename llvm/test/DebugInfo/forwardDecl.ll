@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -O0 | %prcontext ST 1 | grep 0x1 | count 1
+; RUN: llvm-as < %s | llc -fast | %prcontext ST 1 | grep 0x1 | count 1
 
 target triple = "i386-apple-darwin9.6"
 	%llvm.dbg.anchor.type = type { i32, i32 }

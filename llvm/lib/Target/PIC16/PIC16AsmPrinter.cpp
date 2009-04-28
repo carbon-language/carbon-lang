@@ -161,9 +161,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 ///
 FunctionPass *llvm::createPIC16CodePrinterPass(raw_ostream &o,
                                                PIC16TargetMachine &tm,
-                                               unsigned OptLevel,
-                                               bool verbose) {
-  return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+                                               bool fast, bool verbose) {
+  return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }
 
 void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {

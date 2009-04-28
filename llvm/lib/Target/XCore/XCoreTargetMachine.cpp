@@ -55,17 +55,14 @@ unsigned XCoreTargetMachine::getModuleMatchQuality(const Module &M) {
   return 0;
 }
 
-bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,
-                                         unsigned OptLevel) {
+bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   PM.add(createXCoreISelDag(*this));
   return false;
 }
 
-bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                            unsigned OptLevel,
-                                            bool Verbose,
-                                            raw_ostream &Out) {
+bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+                                            bool Verbose, raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createXCoreCodePrinterPass(Out, *this, OptLevel, Verbose));
+  PM.add(createXCoreCodePrinterPass(Out, *this, Fast, Verbose));
   return false;
 }

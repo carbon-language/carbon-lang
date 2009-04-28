@@ -55,13 +55,8 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-// Determine optimization level. Level -O0 is equivalent to "fast" code gen.
-static cl::opt<unsigned>
-OptLevel("O",
-         cl::desc("Optimization level. Similar to llvm-gcc -O. (default: -O3)"),
-         cl::Prefix,
-         cl::ZeroOrMore,
-         cl::init(3));
+static cl::opt<bool> Fast("fast",
+      cl::desc("Generate code quickly, potentially sacrificing code quality"));
 
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
@@ -262,7 +257,7 @@ int main(int argc, char **argv) {
       PM.add(createVerifierPass());
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OptLevel)) {
+    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, Fast)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
       if (Out != &outs()) delete Out;
@@ -288,7 +283,7 @@ int main(int argc, char **argv) {
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
 
-    switch (Target.addPassesToEmitFile(Passes, *Out, FileType, OptLevel)) {
+    switch (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
     default:
       assert(0 && "Invalid file model!");
       return 1;
@@ -309,7 +304,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    if (Target.addPassesToEmitFileFinish(Passes, MCE, OptLevel)) {
+    if (Target.addPassesToEmitFileFinish(Passes, MCE, Fast)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
       if (Out != &outs()) delete Out;

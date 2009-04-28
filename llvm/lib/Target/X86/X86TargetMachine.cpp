@@ -180,9 +180,9 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool X86TargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
+bool X86TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   // Install an instruction selector.
-  PM.add(createX86ISelDag(*this, OptLevel));
+  PM.add(createX86ISelDag(*this, Fast));
 
   // If we're using Fast-ISel, clean up the mess.
   if (EnableFastISel)
@@ -194,29 +194,27 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
   return false;
 }
 
-bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM, unsigned OptLevel) {
+bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM, bool Fast) {
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
   PM.add(createX86MaxStackAlignmentCalculatorPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
 
-bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, unsigned OptLevel) {
+bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, bool Fast) {
   PM.add(createX86FloatingPointStackifierPass());
   return true;  // -print-machineinstr should print after this.
 }
 
-bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          unsigned OptLevel,
-                                          bool Verbose,
-                                          raw_ostream &Out) {
+bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+                                          bool Verbose, raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, Fast, Verbose));
   return false;
 }
 
-bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
@@ -238,20 +236,19 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;
 }
 
-bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            unsigned OptLevel, bool DumpAsm,
-                                            MachineCodeEmitter &MCE) {
+bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
+                                        bool DumpAsm, MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;

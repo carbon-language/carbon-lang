@@ -80,9 +80,9 @@ namespace {
     /// True if asm printer is printing a series of CONSTPOOL_ENTRY.
     bool InCPMode;
   public:
-    explicit ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, unsigned OL, bool V)
-      : AsmPrinter(O, TM, T, OL, V), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
+    ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                  const TargetAsmInfo *T, bool F, bool V)
+      : AsmPrinter(O, TM, T, F, V), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
@@ -1061,8 +1061,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
                                              ARMTargetMachine &tm,
-                                             unsigned OptLevel, bool verbose) {
-  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+                                             bool fast, bool verbose) {
+  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }
 
 namespace {

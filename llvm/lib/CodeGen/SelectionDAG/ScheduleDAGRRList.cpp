@@ -1505,7 +1505,7 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 //===----------------------------------------------------------------------===//
 
 llvm::ScheduleDAGSDNodes *
-llvm::createBURRListDAGScheduler(SelectionDAGISel *IS, unsigned) {
+llvm::createBURRListDAGScheduler(SelectionDAGISel *IS, bool) {
   const TargetMachine &TM = IS->TM;
   const TargetInstrInfo *TII = TM.getInstrInfo();
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
@@ -1519,7 +1519,7 @@ llvm::createBURRListDAGScheduler(SelectionDAGISel *IS, unsigned) {
 }
 
 llvm::ScheduleDAGSDNodes *
-llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS, unsigned) {
+llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS, bool) {
   const TargetMachine &TM = IS->TM;
   const TargetInstrInfo *TII = TM.getInstrInfo();
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();

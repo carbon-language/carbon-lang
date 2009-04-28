@@ -48,9 +48,9 @@ namespace {
   class VISIBILITY_HIDDEN SPUAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
   public:
-    explicit SPUAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, unsigned OL, bool V) :
-      AsmPrinter(O, TM, T, OL, V) {}
+    SPUAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                  const TargetAsmInfo *T, bool F, bool V) :
+      AsmPrinter(O, TM, T, F, V) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
@@ -615,6 +615,6 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
                                             SPUTargetMachine &tm,
-                                            unsigned OptLevel, bool verbose) {
-  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+                                            bool fast, bool verbose) {
+  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }

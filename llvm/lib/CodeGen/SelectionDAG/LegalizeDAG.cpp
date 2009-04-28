@@ -55,8 +55,8 @@ namespace {
 class VISIBILITY_HIDDEN SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
-  unsigned OptLevel;
   bool TypesNeedLegalizing;
+  bool Fast;
 
   // Libcall insertion helpers.
 
@@ -139,7 +139,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
 
 public:
   explicit SelectionDAGLegalize(SelectionDAG &DAG, bool TypesNeedLegalizing,
-                                unsigned ol);
+                                bool fast);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
@@ -345,9 +345,9 @@ SDValue SelectionDAGLegalize::promoteShuffle(MVT NVT, MVT VT, DebugLoc dl,
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
-                                           bool types, unsigned ol)
-  : TLI(dag.getTargetLoweringInfo()), DAG(dag), OptLevel(ol),
-    TypesNeedLegalizing(types), ValueTypeActions(TLI.getValueTypeActions()) {
+                                           bool types, bool fast)
+  : TLI(dag.getTargetLoweringInfo()), DAG(dag), TypesNeedLegalizing(types),
+    Fast(fast), ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
 }
@@ -1271,7 +1271,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
 
-        if (OptLevel == 0) {
+        if (Fast) {
           // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
           // won't hurt anything.
           if (useDEBUG_LOC) {
@@ -8566,9 +8566,9 @@ SDValue SelectionDAGLegalize::StoreWidenVectorOp(StoreSDNode *ST,
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize(bool TypesNeedLegalizing, unsigned OptLevel) {
+void SelectionDAG::Legalize(bool TypesNeedLegalizing, bool Fast) {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(*this, TypesNeedLegalizing, OptLevel).LegalizeDAG();
+  SelectionDAGLegalize(*this, TypesNeedLegalizing, Fast).LegalizeDAG();
 }
 

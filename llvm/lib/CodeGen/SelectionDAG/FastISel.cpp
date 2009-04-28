@@ -327,7 +327,7 @@ bool FastISel::SelectCall(User *I) {
   default: break;
   case Intrinsic::dbg_stoppoint: {
     DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
-    if (DW && DW->ValidDebugInfo(SPI->getContext(), 0)) {
+    if (DW && DW->ValidDebugInfo(SPI->getContext(), true)) {
       DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
       std::string Dir, FN;
       unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
@@ -344,7 +344,7 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_start: {
     DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
-    if (DW && DW->ValidDebugInfo(RSI->getContext(), 0)) {
+    if (DW && DW->ValidDebugInfo(RSI->getContext(), true)) {
       unsigned ID = 
         DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
@@ -354,7 +354,7 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_end: {
     DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
-    if (DW && DW->ValidDebugInfo(REI->getContext(), 0)) {
+    if (DW && DW->ValidDebugInfo(REI->getContext(), true)) {
      unsigned ID = 0;
      DISubprogram Subprogram(cast<GlobalVariable>(REI->getContext()));
      if (!Subprogram.isNull() && !Subprogram.describes(MF.getFunction())) {
@@ -380,7 +380,7 @@ bool FastISel::SelectCall(User *I) {
     DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
     Value *SP = FSI->getSubprogram();
 
-    if (DW->ValidDebugInfo(SP, 0)) {
+    if (DW->ValidDebugInfo(SP, true)) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
       // (most?) gdb expects.
       DebugLoc PrevLoc = DL;
@@ -425,7 +425,7 @@ bool FastISel::SelectCall(User *I) {
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     Value *Variable = DI->getVariable();
-    if (DW && DW->ValidDebugInfo(Variable, 0)) {
+    if (DW && DW->ValidDebugInfo(Variable, true)) {
       // Determine the address of the declared object.
       Value *Address = DI->getAddress();
       if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))

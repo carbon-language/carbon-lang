@@ -129,31 +129,29 @@ PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool PPCTargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
+bool PPCTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   // Install an instruction selector.
   PM.add(createPPCISelDag(*this));
   return false;
 }
 
-bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM, unsigned OptLevel) {
+bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   
   // Must run branch selection immediately preceding the asm printer.
   PM.add(createPPCBranchSelectionPass());
   return false;
 }
 
-bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          unsigned OptLevel,
-                                          bool Verbose,
-                                          raw_ostream &Out) {
+bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+                                          bool Verbose, raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, Fast, Verbose));
 
   return false;
 }
 
-bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
@@ -178,20 +176,20 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;
 }
 
-bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                             bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, Fast, true));
   }
 
   return false;

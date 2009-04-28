@@ -49,9 +49,9 @@ namespace {
   class VISIBILITY_HIDDEN MipsAsmPrinter : public AsmPrinter {
     const MipsSubtarget *Subtarget;
   public:
-    explicit MipsAsmPrinter(raw_ostream &O, MipsTargetMachine &TM, 
-                            const TargetAsmInfo *T, unsigned OL, bool V)
-      : AsmPrinter(O, TM, T, OL, V) {
+    MipsAsmPrinter(raw_ostream &O, MipsTargetMachine &TM, 
+                   const TargetAsmInfo *T, bool F, bool V)
+      : AsmPrinter(O, TM, T, F, V) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
     }
 
@@ -91,8 +91,8 @@ namespace {
 /// regardless of whether the function is in SSA form.
 FunctionPass *llvm::createMipsCodePrinterPass(raw_ostream &o,
                                               MipsTargetMachine &tm,
-                                              unsigned OptLevel, bool verbose) {
-  return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+                                              bool fast, bool verbose) {
+  return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
 }
 
 //===----------------------------------------------------------------------===//

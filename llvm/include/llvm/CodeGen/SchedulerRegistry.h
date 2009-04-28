@@ -32,7 +32,7 @@ class MachineBasicBlock;
 
 class RegisterScheduler : public MachinePassRegistryNode {
 public:
-  typedef ScheduleDAGSDNodes *(*FunctionPassCtor)(SelectionDAGISel*, unsigned);
+  typedef ScheduleDAGSDNodes *(*FunctionPassCtor)(SelectionDAGISel*, bool);
 
   static MachinePassRegistry Registry;
 
@@ -64,27 +64,27 @@ public:
 /// createBURRListDAGScheduler - This creates a bottom up register usage
 /// reduction list scheduler.
 ScheduleDAGSDNodes *createBURRListDAGScheduler(SelectionDAGISel *IS,
-                                               unsigned OptLevel);
+                                               bool Fast);
 
 /// createTDRRListDAGScheduler - This creates a top down register usage
 /// reduction list scheduler.
 ScheduleDAGSDNodes *createTDRRListDAGScheduler(SelectionDAGISel *IS,
-                                               unsigned OptLevel);
+                                               bool Fast);
 
 /// createTDListDAGScheduler - This creates a top-down list scheduler with
 /// a hazard recognizer.
 ScheduleDAGSDNodes *createTDListDAGScheduler(SelectionDAGISel *IS,
-                                             unsigned OptLevel);
+                                             bool Fast);
 
 /// createFastDAGScheduler - This creates a "fast" scheduler.
 ///
 ScheduleDAGSDNodes *createFastDAGScheduler(SelectionDAGISel *IS,
-                                           unsigned OptLevel);
+                                           bool Fast);
 
 /// createDefaultScheduler - This creates an instruction scheduler appropriate
 /// for the target.
 ScheduleDAGSDNodes *createDefaultScheduler(SelectionDAGISel *IS,
-                                           unsigned OptLevel);
+                                           bool Fast);
 
 } // end namespace llvm
 

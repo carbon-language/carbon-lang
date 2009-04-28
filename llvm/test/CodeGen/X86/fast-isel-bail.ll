@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -O0
+; RUN: llvm-as < %s | llc -march=x86 -fast
 
 ; This file is for regression tests for cases where FastISel needs
 ; to gracefully bail out and let SelectionDAGISel take over.

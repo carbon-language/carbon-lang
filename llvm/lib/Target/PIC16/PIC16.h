@@ -75,7 +75,7 @@ namespace PIC16CC {
   FunctionPass *createPIC16ISelDag(PIC16TargetMachine &TM);
   FunctionPass *createPIC16CodePrinterPass(raw_ostream &OS, 
                                            PIC16TargetMachine &TM,
-                                           unsigned OptLevel, bool Verbose);
+                                           bool Fast, bool Verbose);
 } // end namespace llvm;
 
 // Defines symbolic names for PIC16 registers.  This defines a mapping from

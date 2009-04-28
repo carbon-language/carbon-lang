@@ -55,9 +55,9 @@ FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                        raw_ostream &Out,
                                        CodeGenFileType FileType,
-                                       unsigned OptLevel) {
+                                       bool Fast) {
   // Add common CodeGen passes.
-  if (addCommonCodeGenPasses(PM, OptLevel))
+  if (addCommonCodeGenPasses(PM, Fast))
     return FileModel::Error;
 
   // Fold redundant debug labels.
@@ -66,17 +66,17 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
+  if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  if (OptLevel != 0)
+  if (!Fast)
     PM.add(createLoopAlignerPass());
 
   switch (FileType) {
   default:
     break;
   case TargetMachine::AssemblyFile:
-    if (addAssemblyEmitter(PM, OptLevel, getAsmVerbosityDefault(), Out))
+    if (addAssemblyEmitter(PM, Fast, getAsmVerbosityDefault(), Out))
       return FileModel::Error;
     return FileModel::AsmFile;
   case TargetMachine::ObjectFile:
@@ -94,9 +94,9 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 /// finish up adding passes to emit the file, if necessary.
 bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   MachineCodeEmitter *MCE,
-                                                  unsigned OptLevel) {
+                                                  bool Fast) {
   if (MCE)
-    addSimpleCodeEmitter(PM, OptLevel, PrintEmittedAsm, *MCE);
+    addSimpleCodeEmitter(PM, Fast, PrintEmittedAsm, *MCE);
 
   PM.add(createGCInfoDeleter());
 
@@ -114,15 +114,15 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
 ///
 bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    MachineCodeEmitter &MCE,
-                                                   unsigned OptLevel) {
+                                                   bool Fast) {
   // Add common CodeGen passes.
-  if (addCommonCodeGenPasses(PM, OptLevel))
+  if (addCommonCodeGenPasses(PM, Fast))
     return true;
 
-  if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
+  if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  addCodeEmitter(PM, OptLevel, PrintEmittedAsm, MCE);
+  addCodeEmitter(PM, Fast, PrintEmittedAsm, MCE);
 
   PM.add(createGCInfoDeleter());
 
@@ -135,12 +135,11 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
 /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
 /// both emitting to assembly files or machine code output.
 ///
-bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
-                                               unsigned OptLevel) {
+bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   // Standard LLVM-Level Passes.
 
   // Run loop strength reduction before anything else.
-  if (OptLevel != 0) {
+  if (!Fast) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
       PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &errs()));
@@ -154,7 +153,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (OptLevel != 0)
+  if (!Fast)
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
   PM.add(createStackProtectorPass(getTargetLowering()));
@@ -168,38 +167,38 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Enable FastISel with -fast, but allow that to be overridden.
   if (EnableFastISelOption == cl::BOU_TRUE ||
-      (OptLevel == 0 && EnableFastISelOption != cl::BOU_FALSE))
+      (Fast && EnableFastISelOption != cl::BOU_FALSE))
     EnableFastISel = true;
 
   // Ask the target for an isel.
-  if (addInstSelector(PM, OptLevel))
+  if (addInstSelector(PM, Fast))
     return true;
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  if (OptLevel != 0) {
+  if (!Fast) {
     PM.add(createMachineLICMPass());
     PM.add(createMachineSinkingPass());
   }
 
   // Run pre-ra passes.
-  if (addPreRegAlloc(PM, OptLevel) && PrintMachineCode)
+  if (addPreRegAlloc(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   // Perform register allocation.
   PM.add(createRegisterAllocator());
 
   // Perform stack slot coloring.
-  if (OptLevel != 0)
+  if (!Fast)
     PM.add(createStackSlotColoringPass());
 
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   // Run post-ra passes.
-  if (addPostRegAlloc(PM, OptLevel) && PrintMachineCode)
+  if (addPostRegAlloc(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   if (PrintMachineCode)
@@ -217,7 +216,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   // Second pass scheduler.
-  if (OptLevel != 0 && !DisablePostRAScheduler) {
+  if (!Fast && !DisablePostRAScheduler) {
     PM.add(createPostRAScheduler());
 
     if (PrintMachineCode)
@@ -225,7 +224,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   }
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
-  if (OptLevel != 0)
+  if (!Fast)
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
 
   if (PrintMachineCode)
