@@ -126,4 +126,7 @@ def note_using_macro_def_from_pch : Note<
 def warn_macro_name_used_in_pch : Warning<
     "definition of macro %0 conflicts with an identifier used in the "
     "precompiled header">;
+def warn_pch_compiler_options_mismatch : Warning<
+    "compiler options used when building the precompiled header differ from "
+    "the ptions used when using the precompiled header">;
 }

@@ -400,8 +400,8 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
   for (unsigned I = 0, N = MissingPredefines.size(); I != N; ++I) {
     const std::string &Missing = MissingPredefines[I];
     if (!startsWith(Missing, "#define ") != 0) {
-      fprintf(stderr, "FIXME: command line is missing a non-macro entry in the predefines buffer that was used to build the PCH file\n%s\n",
-              Missing.c_str());
+      Diag(diag::warn_pch_compiler_options_mismatch);
+      Diag(diag::note_ignoring_pch) << FileName;
       return true;
     }
     
@@ -492,8 +492,8 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
   for (unsigned I = 0, N = ExtraPredefines.size(); I != N; ++I) {
     const std::string &Extra = ExtraPredefines[I];
     if (!startsWith(Extra, "#define ") != 0) {
-      fprintf(stderr, "FIXME: command line has extra predefines not used to build the PCH file.%s\n",
-              Extra.c_str());
+      Diag(diag::warn_pch_compiler_options_mismatch);
+      Diag(diag::note_ignoring_pch) << FileName;
       return true;
     }
 
