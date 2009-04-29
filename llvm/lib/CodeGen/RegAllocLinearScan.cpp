@@ -799,8 +799,14 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
           Reg = SrcReg;
         else if (vrm_->isAssignedReg(SrcReg))
           Reg = vrm_->getPhys(SrcReg);
-        if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
-          cur->preference = Reg;
+        if (Reg) {
+          if (SrcSubReg)
+            Reg = tri_->getSubReg(Reg, SrcSubReg);
+          if (DstSubReg)
+            Reg = tri_->getMatchingSuperReg(Reg, DstSubReg, RC);
+          if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
+            cur->preference = Reg;
+        }
       }
     }
   }
@@ -1265,14 +1271,10 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   // If copy coalescer has assigned a "preferred" register, check if it's
   // available first.
   if (cur->preference) {
+    DOUT << "(preferred: " << tri_->getName(cur->preference) << ") ";
     if (prt_->isRegAvail(cur->preference) && 
-        RC->contains(cur->preference)) {
-      DOUT << "\t\tassigned the preferred register: "
-           << tri_->getName(cur->preference) << "\n";
+        RC->contains(cur->preference))
       return cur->preference;
-    } else
-      DOUT << "\t\tunable to assign the preferred register: "
-           << tri_->getName(cur->preference) << "\n";
   }
 
   if (!DowngradedRegs.empty()) {
