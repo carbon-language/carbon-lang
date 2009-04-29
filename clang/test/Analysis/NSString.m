@@ -1,9 +1,9 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s
+// RUN: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s
 
 
-// NOTWORK: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
-// NOTWORK: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// NOTWORK: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// NOTWORK: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -14,6 +14,7 @@
 // both svelte and portable to non-Mac platforms.
 //===----------------------------------------------------------------------===//
 
+typedef int int32_t;
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
@@ -230,6 +231,15 @@ void testOSCompareAndSwap() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
   if (!OSAtomicCompareAndSwapPtr(0, s, (void**) &old))
+    [s release];
+  else    
+    [old release];
+}
+
+void testOSCompareAndSwap32Barrier() {
+  NSString *old = 0;
+  NSString *s = [[NSString alloc] init]; // no-warning
+  if (!OSAtomicCompareAndSwap32Barrier((int32_t) 0, (int32_t) s, (int32_t*) &old))
     [s release];
   else    
     [old release];
