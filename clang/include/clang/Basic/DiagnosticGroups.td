@@ -30,6 +30,7 @@ def : DiagGroup<"char-subscripts">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
+def : DiagGroup<"disabled-optimization">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
@@ -81,6 +82,7 @@ def : DiagGroup<"strict-overflow">;
 def : DiagGroup<"strict-prototypes">;
 def : DiagGroup<"strict-selector-match">;
 def Switch         : DiagGroup<"switch">;
+def : DiagGroup<"type-limits">;
 def Uninitialized  : DiagGroup<"uninitialized">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
 def : DiagGroup<"unused-function">;
