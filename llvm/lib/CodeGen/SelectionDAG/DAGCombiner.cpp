@@ -5163,13 +5163,14 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     }
 
     LoadSDNode *LN0 = NULL;
+    const ShuffleVectorSDNode *SVN = NULL;
     if (ISD::isNormalLoad(InVec.getNode())) {
       LN0 = cast<LoadSDNode>(InVec);
     } else if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
                InVec.getOperand(0).getValueType() == EVT &&
                ISD::isNormalLoad(InVec.getOperand(0).getNode())) {
       LN0 = cast<LoadSDNode>(InVec.getOperand(0));
-    } else if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE) {
+    } else if ((SVN = dyn_cast<ShuffleVectorSDNode>(InVec))) {
       // (vextract (vector_shuffle (load $addr), v2, <1, u, u, u>), 1)
       // =>
       // (load $addr+1*size)
@@ -5178,14 +5179,17 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // to examine the mask.
       if (BCNumEltsChanged)
         return SDValue();
-      int Idx = cast<ShuffleVectorSDNode>(InVec)->getMaskElt(Elt);
-      int NumElems = InVec.getValueType().getVectorNumElements();
-      InVec = (Idx < NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
+
+      // Select the input vector, guarding against out of range extract vector.
+      unsigned NumElems = VT.getVectorNumElements();
+      int Idx = (Elt > NumElems) ? -1 : SVN->getMaskElt(Elt);
+      InVec = (Idx < (int)NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
+
       if (InVec.getOpcode() == ISD::BIT_CONVERT)
         InVec = InVec.getOperand(0);
       if (ISD::isNormalLoad(InVec.getNode())) {
         LN0 = cast<LoadSDNode>(InVec);
-        Elt = (Idx < NumElems) ? Idx : Idx - NumElems;
+        Elt = (Idx < (int)NumElems) ? Idx : Idx - NumElems;
       }
     }
 
@@ -5280,7 +5284,11 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       SDValue Extract = N->getOperand(i);
       SDValue ExtVal = Extract.getOperand(1);
       if (Extract.getOperand(0) == VecIn1) {
-        Mask.push_back(cast<ConstantSDNode>(ExtVal)->getZExtValue());
+        unsigned ExtIndex = cast<ConstantSDNode>(ExtVal)->getZExtValue();
+        if (ExtIndex > VT.getVectorNumElements())
+          return SDValue();
+        
+        Mask.push_back(ExtIndex);
         continue;
       }
 

@@ -356,7 +356,7 @@ public:
   
   /// getVectorShuffle - Return an ISD::VECTOR_SHUFFLE node.  The number of
   /// elements in VT, which must be a vector type, must match the number of
-  /// mask elements NumElts.  A negative integer mask element is treated as
+  /// mask elements NumElts.  A integer mask element equal to -1 is treated as
   /// undefined.
   SDValue getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
                            const int *MaskElts);
@@ -822,7 +822,7 @@ public:
 
   /// getShuffleScalarElt - Returns the scalar element that will make up the ith
   /// element of the result of the vector shuffle.
-  SDValue getShuffleScalarElt(const SDNode *N, unsigned Idx);
+  SDValue getShuffleScalarElt(const ShuffleVectorSDNode *N, unsigned Idx);
 
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);

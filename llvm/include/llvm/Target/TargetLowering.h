@@ -329,7 +329,8 @@ public:
   /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
   /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
   /// are assumed to be legal.
-  virtual bool isShuffleMaskLegal(SmallVectorImpl<int> &Mask, MVT VT) const {
+  virtual bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
+                                  MVT VT) const {
     return true;
   }
 
@@ -337,7 +338,8 @@ public:
   /// used by Targets can use this to indicate if there is a suitable
   /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
   /// pool entry.
-  virtual bool isVectorClearMaskLegal(SmallVectorImpl<int> &M, MVT VT) const {
+  virtual bool isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
+                                      MVT VT) const {
     return false;
   }
 

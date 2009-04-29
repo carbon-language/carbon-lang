@@ -2431,10 +2431,10 @@ void SelectionDAGLowering::visitExtractElement(User &I) {
 
 // Utility for visitShuffleVector - Returns true if the mask is mask starting
 // from SIndx and increasing to the element length (undefs are allowed).
-static bool SequentialMask(SmallVectorImpl<int> &Mask, int SIndx) {
-  int MaskNumElts = Mask.size();
-  for (int i = 0; i != MaskNumElts; ++i)
-    if ((Mask[i] >= 0) && (Mask[i] != i + SIndx))
+static bool SequentialMask(SmallVectorImpl<int> &Mask, unsigned SIndx) {
+  unsigned MaskNumElts = Mask.size();
+  for (unsigned i = 0; i != MaskNumElts; ++i)
+    if ((Mask[i] >= 0) && (Mask[i] != (int)(i + SIndx)))
       return false;
   return true;
 }
@@ -2448,8 +2448,8 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   // representing undef values.
   SmallVector<Constant*, 8> MaskElts;
   cast<Constant>(I.getOperand(2))->getVectorElements(MaskElts);
-  int MaskNumElts = MaskElts.size();
-  for (int i = 0; i != MaskNumElts; ++i) {
+  unsigned MaskNumElts = MaskElts.size();
+  for (unsigned i = 0; i != MaskNumElts; ++i) {
     if (isa<UndefValue>(MaskElts[i]))
       Mask.push_back(-1);
     else
@@ -2458,7 +2458,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   
   MVT VT = TLI.getValueType(I.getType());
   MVT SrcVT = Src1.getValueType();
-  int SrcNumElts = SrcVT.getVectorNumElements();
+  unsigned SrcNumElts = SrcVT.getVectorNumElements();
 
   if (SrcNumElts == MaskNumElts) {
     setValue(&I, DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
@@ -2498,9 +2498,9 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
 
     // Readjust mask for new input vector length.
     SmallVector<int, 8> MappedOps;
-    for (int i = 0; i != MaskNumElts; ++i) {
+    for (unsigned i = 0; i != MaskNumElts; ++i) {
       int Idx = Mask[i];
-      if (Idx < SrcNumElts)
+      if (Idx < (int)SrcNumElts)
         MappedOps.push_back(Idx);
       else
         MappedOps.push_back(Idx + MaskNumElts - SrcNumElts);
@@ -2511,32 +2511,19 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   }
 
   if (SrcNumElts > MaskNumElts) {
-    // Resulting vector is shorter than the incoming vector.
-    if (SrcNumElts == MaskNumElts && SequentialMask(Mask,0)) {
-      // Shuffle extracts 1st vector.
-      setValue(&I, Src1);
-      return;
-    }
-
-    if (SrcNumElts == MaskNumElts && SequentialMask(Mask,MaskNumElts)) {
-      // Shuffle extracts 2nd vector.
-      setValue(&I, Src2);
-      return;
-    }
-
     // Analyze the access pattern of the vector to see if we can extract
     // two subvectors and do the shuffle. The analysis is done by calculating
     // the range of elements the mask access on both vectors.
     int MinRange[2] = { SrcNumElts+1, SrcNumElts+1};
     int MaxRange[2] = {-1, -1};
 
-    for (int i = 0; i != MaskNumElts; ++i) {
+    for (unsigned i = 0; i != MaskNumElts; ++i) {
       int Idx = Mask[i];
       int Input = 0;
       if (Idx < 0)
         continue;
       
-      if (Idx >= SrcNumElts) {
+      if (Idx >= (int)SrcNumElts) {
         Input = 1;
         Idx -= SrcNumElts;
       }
@@ -2551,18 +2538,18 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
     int RangeUse[2] = { 2, 2 };  // 0 = Unused, 1 = Extract, 2 = Can not Extract.
     int StartIdx[2];  // StartIdx to extract from
     for (int Input=0; Input < 2; ++Input) {
-      if (MinRange[Input] == SrcNumElts+1 && MaxRange[Input] == -1) {
+      if (MinRange[Input] == (int)(SrcNumElts+1) && MaxRange[Input] == -1) {
         RangeUse[Input] = 0; // Unused
         StartIdx[Input] = 0;
-      } else if (MaxRange[Input] - MinRange[Input] < MaskNumElts) {
+      } else if (MaxRange[Input] - MinRange[Input] < (int)MaskNumElts) {
         // Fits within range but we should see if we can find a good
         // start index that is a multiple of the mask length.
-        if (MaxRange[Input] < MaskNumElts) {
+        if (MaxRange[Input] < (int)MaskNumElts) {
           RangeUse[Input] = 1; // Extract from beginning of the vector
           StartIdx[Input] = 0;
         } else {
           StartIdx[Input] = (MinRange[Input]/MaskNumElts)*MaskNumElts;
-          if (MaxRange[Input] - StartIdx[Input] < MaskNumElts &&
+          if (MaxRange[Input] - StartIdx[Input] < (int)MaskNumElts &&
               StartIdx[Input] + MaskNumElts < SrcNumElts)
             RangeUse[Input] = 1; // Extract from a multiple of the mask length.
         }
@@ -2586,11 +2573,11 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
       }
       // Calculate new mask.
       SmallVector<int, 8> MappedOps;
-      for (int i = 0; i != MaskNumElts; ++i) {
+      for (unsigned i = 0; i != MaskNumElts; ++i) {
         int Idx = Mask[i];
         if (Idx < 0)
           MappedOps.push_back(Idx);
-        else if (Idx < SrcNumElts)
+        else if (Idx < (int)SrcNumElts)
           MappedOps.push_back(Idx - StartIdx[0]);
         else
           MappedOps.push_back(Idx - SrcNumElts - StartIdx[1] + MaskNumElts);
@@ -2607,12 +2594,12 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   MVT EltVT = VT.getVectorElementType();
   MVT PtrVT = TLI.getPointerTy();
   SmallVector<SDValue,8> Ops;
-  for (int i = 0; i != MaskNumElts; ++i) {
+  for (unsigned i = 0; i != MaskNumElts; ++i) {
     if (Mask[i] < 0) {
       Ops.push_back(DAG.getUNDEF(EltVT));
     } else {
       int Idx = Mask[i];
-      if (Idx < SrcNumElts)
+      if (Idx < (int)SrcNumElts)
         Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
                                   EltVT, Src1, DAG.getConstant(Idx, PtrVT)));
       else

@@ -1133,6 +1133,9 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
   return SDValue(CondCodeNodes[Cond], 0);
 }
 
+// commuteShuffle - swaps the values of N1 and N2, and swaps all indices in
+// the shuffle mask M that point at N1 to point at N2, and indices that point
+// N2 to point at N1.
 static void commuteShuffle(SDValue &N1, SDValue &N2, SmallVectorImpl<int> &M) {
   std::swap(N1, N2);
   int NElts = M.size();
@@ -1158,21 +1161,18 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
 
   // Validate that all indices in Mask are within the range of the elements 
   // input to the shuffle.
-  int NElts = VT.getVectorNumElements();
+  unsigned NElts = VT.getVectorNumElements();
   SmallVector<int, 8> MaskVec;
-  for (int i = 0; i != NElts; ++i) {
-    if (Mask[i] >= (NElts * 2)) {
-      assert(0 && "Index out of range");
-      return SDValue();
-    }
+  for (unsigned i = 0; i != NElts; ++i) {
+    assert(Mask[i] < (int)(NElts * 2) && "Index out of range");
     MaskVec.push_back(Mask[i]);
   }
   
   // Canonicalize shuffle v, v -> v, undef
   if (N1 == N2) {
     N2 = getUNDEF(VT);
-    for (int i = 0; i != NElts; ++i)
-      if (MaskVec[i] >= NElts) MaskVec[i] -= NElts;
+    for (unsigned i = 0; i != NElts; ++i)
+      if (MaskVec[i] >= (int)NElts) MaskVec[i] -= NElts;
   }
   
   // Canonicalize shuffle undef, v -> v, undef.  Commute the shuffle mask.
@@ -1183,8 +1183,8 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
   // Canonicalize all index into rhs, -> shuffle rhs, undef
   bool AllLHS = true, AllRHS = true;
   bool N2Undef = N2.getOpcode() == ISD::UNDEF;
-  for (int i = 0; i != NElts; ++i) {
-    if (MaskVec[i] >= NElts) {
+  for (unsigned i = 0; i != NElts; ++i) {
+    if (MaskVec[i] >= (int)NElts) {
       if (N2Undef)
         MaskVec[i] = -1;
       else
@@ -1195,7 +1195,7 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
   }
   if (AllLHS && AllRHS)
     return getUNDEF(VT);
-  if (AllLHS)
+  if (AllLHS && !N2Undef)
     N2 = getUNDEF(VT);
   if (AllRHS) {
     N1 = getUNDEF(VT);
@@ -1205,8 +1205,8 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
   // If Identity shuffle, or all shuffle in to undef, return that node.
   bool AllUndef = true;
   bool Identity = true;
-  for (int i = 0; i < NElts; ++i) {
-    if (MaskVec[i] >= 0 && MaskVec[i] != i) Identity = false;
+  for (unsigned i = 0; i != NElts; ++i) {
+    if (MaskVec[i] >= 0 && MaskVec[i] != (int)i) Identity = false;
     if (MaskVec[i] >= 0) AllUndef = false;
   }
   if (Identity)
@@ -1217,7 +1217,7 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
   FoldingSetNodeID ID;
   SDValue Ops[2] = { N1, N2 };
   AddNodeIDNode(ID, ISD::VECTOR_SHUFFLE, getVTList(VT), Ops, 2);
-  for (int i = 0; i != NElts; ++i)
+  for (unsigned i = 0; i != NElts; ++i)
     ID.AddInteger(MaskVec[i]);
   
   void* IP = 0;
@@ -2195,14 +2195,14 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
 
 /// getShuffleScalarElt - Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
-SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
+SDValue SelectionDAG::getShuffleScalarElt(const ShuffleVectorSDNode *N,
+                                          unsigned i) {
   MVT VT = N->getValueType(0);
   DebugLoc dl = N->getDebugLoc();
-  const ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
-  int Index = SVN->getMaskElt(i);
-  if (Index < 0)
+  if (N->getMaskElt(i) < 0)
     return getUNDEF(VT.getVectorElementType());
-  int NumElems = VT.getVectorNumElements();
+  unsigned Index = N->getMaskElt(i);
+  unsigned NumElems = VT.getVectorNumElements();
   SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
   Index %= NumElems;
 
@@ -2217,8 +2217,8 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
                       : getUNDEF(VT.getVectorElementType());
   if (V.getOpcode() == ISD::BUILD_VECTOR)
     return V.getOperand(Index);
-  if (V.getOpcode() == ISD::VECTOR_SHUFFLE)
-    return getShuffleScalarElt(V.getNode(), Index);
+  if (const ShuffleVectorSDNode *SVN = dyn_cast<ShuffleVectorSDNode>(V))
+    return getShuffleScalarElt(SVN, Index);
   return SDValue();
 }
 
@@ -5726,11 +5726,19 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
 }
 
 bool ShuffleVectorSDNode::isSplatMask(const int *Mask, MVT VT) {
-  int Idx = -1;
-  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
-    if (Idx < 0) Idx = Mask[i];
+  // Find the first non-undef value in the shuffle mask.
+  unsigned i, e;
+  for (i = 0, e = VT.getVectorNumElements(); i != e && Mask[i] < 0; ++i)
+    /* search */;
+
+  // If we hit the end of the mask looking for a non-undef value, return false.
+  if (i == e)
+    return false;
+  
+  // Make sure all remaining elements are either undef or the same as the first
+  // non-undef value.
+  for (int Idx = Mask[i]; i != e; ++i)
     if (Mask[i] >= 0 && Mask[i] != Idx)
       return false;
-  }
   return true;
 }

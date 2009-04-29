@@ -267,10 +267,13 @@ private:
                             bool isVolatile, SDValue ValOp,
                             unsigned StWidth, DebugLoc dl);
 
-  /// promoteShuffle - Promote a shuffle mask of a vector VT to perform the
-  /// same shuffle on a vector of NVT.  Must not create an illegal shuffle mask.
-  SDValue promoteShuffle(MVT NVT, MVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
-                         SmallVectorImpl<int> &Mask) const;
+  /// ShuffleWithNarrowerEltType - Return a vector shuffle operation which
+  /// performs the same shuffe in terms of order or result bytes, but on a type
+  /// whose vector element type is narrower than the original shuffle type.
+  /// e.g. <v4i32> <0, 1, 0, 1> -> v8i16 <0, 1, 2, 3, 0, 1, 2, 3>
+  SDValue ShuffleWithNarrowerEltType(MVT NVT, MVT VT, DebugLoc dl,
+                                     SDValue N1, SDValue N2, 
+                                     SmallVectorImpl<int> &Mask) const;
 
   bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
                                     SmallPtrSet<SDNode*, 32> &NodesLeadingTo);
@@ -313,15 +316,17 @@ private:
 };
 }
 
-/// promoteShuffle - Promote a shuffle mask of a vector VT to perform the
-/// same shuffle on a vector of NVT.  Must not create an illegal shuffle mask.
+/// ShuffleWithNarrowerEltType - Return a vector shuffle operation which
+/// performs the same shuffe in terms of order or result bytes, but on a type
+/// whose vector element type is narrower than the original shuffle type.
 /// e.g. <v4i32> <0, 1, 0, 1> -> v8i16 <0, 1, 2, 3, 0, 1, 2, 3>
-SDValue SelectionDAGLegalize::promoteShuffle(MVT NVT, MVT VT, DebugLoc dl, 
-                                             SDValue N1, SDValue N2,
+SDValue 
+SelectionDAGLegalize::ShuffleWithNarrowerEltType(MVT NVT, MVT VT,  DebugLoc dl, 
+                                                 SDValue N1, SDValue N2,
                                              SmallVectorImpl<int> &Mask) const {
   MVT EltVT = NVT.getVectorElementType();
-  int NumMaskElts = VT.getVectorNumElements();
-  int NumDestElts = NVT.getVectorNumElements();
+  unsigned NumMaskElts = VT.getVectorNumElements();
+  unsigned NumDestElts = NVT.getVectorNumElements();
   unsigned NumEltsGrowth = NumDestElts / NumMaskElts;
 
   assert(NumEltsGrowth && "Cannot promote to vector type with fewer elts!");
@@ -330,7 +335,7 @@ SDValue SelectionDAGLegalize::promoteShuffle(MVT NVT, MVT VT, DebugLoc dl,
     return DAG.getVectorShuffle(NVT, dl, N1, N2, &Mask[0]);
   
   SmallVector<int, 8> NewMask;
-  for (int i = 0; i != NumMaskElts; ++i) {
+  for (unsigned i = 0; i != NumMaskElts; ++i) {
     int Idx = Mask[i];
     for (unsigned j = 0; j != NumEltsGrowth; ++j) {
       if (Idx < 0) 
@@ -339,7 +344,7 @@ SDValue SelectionDAGLegalize::promoteShuffle(MVT NVT, MVT VT, DebugLoc dl,
         NewMask.push_back(Idx * NumEltsGrowth + j);
     }
   }
-  assert((int)NewMask.size() == NumDestElts && "Non-integer NumEltsGrowth?");
+  assert(NewMask.size() == NumDestElts && "Non-integer NumEltsGrowth?");
   assert(TLI.isShuffleMaskLegal(NewMask, NVT) && "Shuffle not legal?");
   return DAG.getVectorShuffle(NVT, dl, N1, N2, &NewMask[0]);
 }
@@ -1678,7 +1683,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
     MVT VT = Result.getValueType();
 
-    // Copy the Mask to a local SmallVector for use wi
+    // Copy the Mask to a local SmallVector for use with isShuffleMaskLegal.
     SmallVector<int, 8> Mask;
     cast<ShuffleVectorSDNode>(Result)->getMask(Mask);
 
@@ -1698,14 +1703,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // FALLTHROUGH
     case TargetLowering::Expand: {
       MVT EltVT = VT.getVectorElementType();
-      int NumElems = VT.getVectorNumElements();
+      unsigned NumElems = VT.getVectorNumElements();
       SmallVector<SDValue, 8> Ops;
-      for (int i = 0; i != NumElems; ++i) {
+      for (unsigned i = 0; i != NumElems; ++i) {
         if (Mask[i] < 0) {
           Ops.push_back(DAG.getUNDEF(EltVT));
           continue;
         }
-        int Idx = Mask[i];
+        unsigned Idx = Mask[i];
         if (Idx < NumElems)
           Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp1,
                                     DAG.getIntPtrConstant(Idx)));
@@ -1726,7 +1731,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Tmp2 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Tmp2);
 
       // Convert the shuffle mask to the right # elements.
-      Result = promoteShuffle(NVT, OVT, dl, Tmp1, Tmp2, Mask);
+      Result = ShuffleWithNarrowerEltType(NVT, OVT, dl, Tmp1, Tmp2, Mask);
       Result = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Result);
       break;
     }

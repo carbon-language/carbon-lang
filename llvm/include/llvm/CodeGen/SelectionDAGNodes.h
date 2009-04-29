@@ -1704,12 +1704,24 @@ public:
   }
 };
 
+/// ShuffleVectorSDNode - This SDNode is used to implement the code generator
+/// support for the llvm IR shufflevector instruction.  It combines elements
+/// from two input vectors into a new input vector, with the selection and
+/// ordering of elements determined by an array of integers, referred to as
+/// the shuffle mask.  For input vectors of width N, mask indices of 0..N-1
+/// refer to elements from the LHS input, and indices from N to 2N-1 the RHS.
+/// An index of -1 is treated as undef, such that the code generator may put
+/// any value in the corresponding element of the result.
 class ShuffleVectorSDNode : public SDNode {
   SDUse Ops[2];
-  int *Mask;
+
+  // The memory for Mask is owned by the SelectionDAG's OperandAllocator, and
+  // is freed when the SelectionDAG object is destroyed.
+  const int *Mask;
 protected:
   friend class SelectionDAG;
-  ShuffleVectorSDNode(MVT VT, DebugLoc dl, SDValue N1, SDValue N2, int *M)
+  ShuffleVectorSDNode(MVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
+                      const int *M)
     : SDNode(ISD::VECTOR_SHUFFLE, dl, getSDVTList(VT)), Mask(M) {
     InitOperands(Ops, N1, N2);
   }

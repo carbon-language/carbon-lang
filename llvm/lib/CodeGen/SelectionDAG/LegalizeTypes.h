@@ -559,7 +559,8 @@ private:
   void SplitVecRes_LOAD(LoadSDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_SCALAR_TO_VECTOR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_UNDEF(SDNode *N, SDValue &Lo, SDValue &Hi);
-  void SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N, SDValue &Lo, 
+                                  SDValue &Hi);
   void SplitVecRes_VSETCC(SDNode *N, SDValue &Lo, SDValue &Hi);
 
   // Vector Operand Splitting: <128 x ty> -> 2 x <64 x ty>.
@@ -602,7 +603,7 @@ private:
   SDValue WidenVecRes_SELECT(SDNode* N);
   SDValue WidenVecRes_SELECT_CC(SDNode* N);
   SDValue WidenVecRes_UNDEF(SDNode *N);
-  SDValue WidenVecRes_VECTOR_SHUFFLE(SDNode *N);
+  SDValue WidenVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N);
   SDValue WidenVecRes_VSETCC(SDNode* N);
 
   SDValue WidenVecRes_Binary(SDNode *N);
