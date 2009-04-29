@@ -113,3 +113,15 @@ void test_constant_bindings(void) {
   printf(s4); // expected-warning{{not a string literal}}
   printf(s5); // expected-warning{{not a string literal}}
 }
+
+
+// Test what happens when -Wformat-security only.
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#pragma GCC diagnostic warning "-Wformat-security"
+
+void test9(char *P) {
+  int x;
+  printf(P);   // expected-warning {{format string is not a string literal (potentially insecure)}}
+  printf(P, 42);
+  printf("%n", &x); // expected-warning {{use of '%n' in format string discouraged }}
+}

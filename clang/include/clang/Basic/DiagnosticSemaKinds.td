@@ -1057,8 +1057,11 @@ def err_builtin_direct_init_more_than_one_arg : Error<
   "initializer of a builtin type can only take one argument">;
 def err_value_init_for_array_type : Error<
   "array types cannot be value-initialized">;
-def warn_printf_not_string_constant : Warning<
+def warn_printf_nonliteral_noargs : Warning<
   "format string is not a string literal (potentially insecure)">,
+  InGroup<FormatSecurity>;
+def warn_printf_nonliteral : Warning<
+  "format string is not a string literal">,
   InGroup<FormatNonLiteral>, DefaultIgnore;
 
 def err_unexpected_interface : Error<

@@ -604,9 +604,16 @@ Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
       if (isa<ParmVarDecl>(DR->getDecl()))
         return;
 
-  Diag(TheCall->getArg(format_idx)->getLocStart(), 
-       diag::warn_printf_not_string_constant)
-       << OrigFormatExpr->getSourceRange();
+  // If there are no arguments specified, warn with -Wformat-security, otherwise
+  // warn only with -Wformat-nonliteral.
+  if (TheCall->getNumArgs() == format_idx+1)
+    Diag(TheCall->getArg(format_idx)->getLocStart(), 
+         diag::warn_printf_nonliteral_noargs)
+      << OrigFormatExpr->getSourceRange();
+  else
+    Diag(TheCall->getArg(format_idx)->getLocStart(), 
+         diag::warn_printf_nonliteral)
+           << OrigFormatExpr->getSourceRange();
 }
 
 void Sema::CheckPrintfString(const StringLiteral *FExpr,
