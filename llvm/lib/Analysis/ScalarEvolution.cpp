@@ -718,7 +718,7 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
       SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
       if (!isa<SCEVCouldNotCompute>(BECount)) {
         // Manually compute the final value for AR, checking for
-        // overflow at each step.
+        // overflow.
         SCEVHandle Start = AR->getStart();
         SCEVHandle Step = AR->getStepRecurrence(*this);
 
@@ -730,41 +730,34 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
             getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
+          // Check whether Start+Step*BECount has no unsigned overflow.
           SCEVHandle ZMul =
             getMulExpr(CastedBECount,
                        getTruncateOrZeroExtend(Step, Start->getType()));
-          // Check whether Start+Step*BECount has no unsigned overflow.
-          if (getZeroExtendExpr(ZMul, WideTy) ==
-              getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
-                         getZeroExtendExpr(Step, WideTy))) {
-            SCEVHandle Add = getAddExpr(Start, ZMul);
-            if (getZeroExtendExpr(Add, WideTy) ==
-                getAddExpr(getZeroExtendExpr(Start, WideTy),
-                           getZeroExtendExpr(ZMul, WideTy)))
-              // Return the expression with the addrec on the outside.
-              return getAddRecExpr(getZeroExtendExpr(Start, Ty),
-                                   getZeroExtendExpr(Step, Ty),
-                                   AR->getLoop());
-          }
+          SCEVHandle Add = getAddExpr(Start, ZMul);
+          if (getZeroExtendExpr(Add, WideTy) ==
+              getAddExpr(getZeroExtendExpr(Start, WideTy),
+                         getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                                    getZeroExtendExpr(Step, WideTy))))
+            // Return the expression with the addrec on the outside.
+            return getAddRecExpr(getZeroExtendExpr(Start, Ty),
+                                 getZeroExtendExpr(Step, Ty),
+                                 AR->getLoop());
 
           // Similar to above, only this time treat the step value as signed.
           // This covers loops that count down.
           SCEVHandle SMul =
             getMulExpr(CastedBECount,
                        getTruncateOrSignExtend(Step, Start->getType()));
-          // Check whether Start+Step*BECount has no unsigned overflow.
-          if (getSignExtendExpr(SMul, WideTy) ==
-              getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
-                         getSignExtendExpr(Step, WideTy))) {
-            SCEVHandle Add = getAddExpr(Start, SMul);
-            if (getZeroExtendExpr(Add, WideTy) ==
-                getAddExpr(getZeroExtendExpr(Start, WideTy),
-                           getSignExtendExpr(SMul, WideTy)))
-              // Return the expression with the addrec on the outside.
-              return getAddRecExpr(getZeroExtendExpr(Start, Ty),
-                                   getSignExtendExpr(Step, Ty),
-                                   AR->getLoop());
-          }
+          Add = getAddExpr(Start, SMul);
+          if (getZeroExtendExpr(Add, WideTy) ==
+              getAddExpr(getZeroExtendExpr(Start, WideTy),
+                         getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                                    getSignExtendExpr(Step, WideTy))))
+            // Return the expression with the addrec on the outside.
+            return getAddRecExpr(getZeroExtendExpr(Start, Ty),
+                                 getSignExtendExpr(Step, Ty),
+                                 AR->getLoop());
         }
       }
     }
@@ -807,37 +800,31 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
       SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
       if (!isa<SCEVCouldNotCompute>(BECount)) {
         // Manually compute the final value for AR, checking for
-        // overflow at each step.
+        // overflow.
         SCEVHandle Start = AR->getStart();
         SCEVHandle Step = AR->getStepRecurrence(*this);
 
         // Check whether the backedge-taken count can be losslessly casted to
-        // the addrec's type. The count needs to be the same whether sign
-        // extended or zero extended.
+        // the addrec's type. The count is always unsigned.
         SCEVHandle CastedBECount =
           getTruncateOrZeroExtend(BECount, Start->getType());
         if (BECount ==
-            getTruncateOrZeroExtend(CastedBECount, BECount->getType()) &&
-            BECount ==
-            getTruncateOrSignExtend(CastedBECount, BECount->getType())) {
+            getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
+          // Check whether Start+Step*BECount has no signed overflow.
           SCEVHandle SMul =
             getMulExpr(CastedBECount,
                        getTruncateOrSignExtend(Step, Start->getType()));
-          // Check whether Start+Step*BECount has no signed overflow.
-          if (getSignExtendExpr(SMul, WideTy) ==
-              getMulExpr(getSignExtendExpr(CastedBECount, WideTy),
-                         getSignExtendExpr(Step, WideTy))) {
-            SCEVHandle Add = getAddExpr(Start, SMul);
-            if (getSignExtendExpr(Add, WideTy) ==
-                getAddExpr(getSignExtendExpr(Start, WideTy),
-                           getSignExtendExpr(SMul, WideTy)))
-              // Return the expression with the addrec on the outside.
-              return getAddRecExpr(getSignExtendExpr(Start, Ty),
-                                   getSignExtendExpr(Step, Ty),
-                                   AR->getLoop());
-          }
+          SCEVHandle Add = getAddExpr(Start, SMul);
+          if (getSignExtendExpr(Add, WideTy) ==
+              getAddExpr(getSignExtendExpr(Start, WideTy),
+                         getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                                    getSignExtendExpr(Step, WideTy))))
+            // Return the expression with the addrec on the outside.
+            return getAddRecExpr(getSignExtendExpr(Start, Ty),
+                                 getSignExtendExpr(Step, Ty),
+                                 AR->getLoop());
         }
       }
     }
