@@ -384,6 +384,11 @@ namespace llvm {
     /// GlobalDirective - This is the directive used to declare a global entity.
     ///
     const char *GlobalDirective;          // Defaults to NULL.
+
+    /// ExternDirective - This is the directive used to declare external 
+    /// globals.
+    ///
+    const char *ExternDirective;          // Defaults to NULL.
     
     /// SetDirective - This is the name of a directive that can be used to tell
     /// the assembler to set the value of a variable to some expression.
@@ -800,6 +805,9 @@ namespace llvm {
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;
+    }
+    const char *getExternDirective() const {
+      return ExternDirective;
     }
     const char *getSetDirective() const {
       return SetDirective;
