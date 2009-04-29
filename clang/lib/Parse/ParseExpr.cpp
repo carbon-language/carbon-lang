@@ -1291,6 +1291,10 @@ void Parser::ParseBlockId() {
   Declarator DeclaratorInfo(DS, Declarator::BlockLiteralContext);
   ParseDeclarator(DeclaratorInfo);
 
+  // We do this for: ^ __attribute__((noreturn)) {, as DS has the attributes.
+  DeclaratorInfo.AddAttributes(DS.TakeAttributes(),
+                               SourceLocation());
+
   if (Tok.is(tok::kw___attribute)) {
     SourceLocation Loc;
     AttributeList *AttrList = ParseAttributes(&Loc);
