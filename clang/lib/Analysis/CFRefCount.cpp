@@ -730,12 +730,12 @@ public:
   
   RetainSummary* getSummary(FunctionDecl* FD);  
   
-  RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID) {
-    return getMethodSummary(ME->getSelector(), ME->getClassName(),
+  RetainSummary* getInstanceMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID) {
+    return getInstanceMethodSummary(ME->getSelector(), ME->getClassName(),
                             ID, ME->getMethodDecl(), ME->getType());    
   }
   
-  RetainSummary* getMethodSummary(Selector S, IdentifierInfo *ClsName,
+  RetainSummary* getInstanceMethodSummary(Selector S, IdentifierInfo *ClsName,
                                   ObjCInterfaceDecl* ID,
                                   ObjCMethodDecl *MD, QualType RetTy);
 
@@ -1208,9 +1208,11 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
 }
 
 RetainSummary*
-RetainSummaryManager::getMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                       ObjCInterfaceDecl* ID,
-                                       ObjCMethodDecl *MD, QualType RetTy) {
+RetainSummaryManager::getInstanceMethodSummary(Selector S,
+                                               IdentifierInfo *ClsName,
+                                               ObjCInterfaceDecl* ID,
+                                               ObjCMethodDecl *MD,
+                                               QualType RetTy) {
 
   // Look up a summary in our summary cache.
   ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(ID, ClsName, S);
@@ -2145,7 +2147,9 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
       }
     }
     
-    Summ = Summaries.getMethodSummary(ME, ID);
+    // FIXME: The receiver could be a reference to a class, meaning that
+    //  we should use the class method.
+    Summ = Summaries.getInstanceMethodSummary(ME, ID);
 
     // Special-case: are we sending a mesage to "self"?
     //  This is a hack.  When we have full-IP this should be removed.
