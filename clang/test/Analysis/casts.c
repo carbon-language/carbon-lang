@@ -1,3 +1,6 @@
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region --verify %s
+// XFAIL
+
 struct sockaddr_storage {
   int d;
 };
