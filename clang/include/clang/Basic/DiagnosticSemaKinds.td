@@ -1509,7 +1509,7 @@ def warn_printf_write_back : Warning<
 def warn_printf_insufficient_data_args : Warning<
   "more '%%' conversions than data arguments">;
 def warn_printf_too_many_data_args : Warning<
-  "more data arguments than '%%' conversions">;
+  "more data arguments than '%%' conversions">, InGroup<FormatExtraArgs>;
 def warn_printf_invalid_conversion : Warning<"invalid conversion '%0'">;
 def warn_printf_missing_format_string : Warning<"format string missing">;
 def warn_printf_empty_format_string : Warning<"format string is empty">;

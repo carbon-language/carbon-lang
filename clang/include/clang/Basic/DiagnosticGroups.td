@@ -35,14 +35,13 @@ def ExtraTokens : DiagGroup<"extra-tokens">;
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
 
 def Format : DiagGroup<"format", [FormatExtraArgs]>;
-def Format2 : DiagGroup<"format=2", [Format]>;
 def FormatNonLiteral : DiagGroup<"format-nonliteral", [Format]>;
 def FormatSecurity : DiagGroup<"format-security", [Format]>;
-def : DiagGroup<"format-y2k", [Format]>;
+def FormatY2K : DiagGroup<"format-y2k", [Format]>;
+def Format2 : DiagGroup<"format=2",
+                        [FormatNonLiteral, FormatSecurity, FormatY2K]>;
 
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
-
-
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;
