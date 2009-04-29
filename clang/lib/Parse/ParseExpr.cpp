@@ -1402,4 +1402,3 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     Actions.ActOnBlockError(CaretLoc, CurScope);
   return move(Result);
 }
-
