@@ -1609,6 +1609,8 @@ def ext_return_has_void_expr : Extension<
   "void %select{function|method}1 %0 should not return void expression">;
 def err_noreturn_function_has_return_expr : Error<
   "function %0 declared 'noreturn' should not return">;
+def err_noreturn_block_has_return_expr : Error<
+  "block declared 'noreturn' should not return">;
 
 def err_shufflevector_non_vector : Error<
   "first two arguments to __builtin_shufflevector must be vectors">;

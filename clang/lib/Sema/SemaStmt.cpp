@@ -707,6 +707,12 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 Action::OwningStmtResult
 Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
+  if (CurBlock->TheDecl->hasAttr<NoReturnAttr>()) {
+    Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr)
+      << getCurFunctionOrMethodDecl()->getDeclName();
+    return StmtError();
+  }
+
   // If this is the first return we've seen in the block, infer the type of
   // the block from it.
   if (CurBlock->ReturnType == 0) {

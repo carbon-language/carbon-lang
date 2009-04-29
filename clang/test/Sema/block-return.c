@@ -95,3 +95,9 @@ bptr foo5(int j) {
 
 int (*funcptr3[5])(long);
 int sz8 = sizeof(^int (*[5])(long) {return funcptr3;}); // expected-error {{block declared as returning an array}}
+
+void foo6() {
+  void (^b)(int) __attribute__((noreturn));
+  b = ^ (int i) __attribute__((noreturn)) { return 1; };  // expected-error {{block declared 'noreturn' should not return}}
+  b(1);
+}

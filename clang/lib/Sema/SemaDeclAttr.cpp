@@ -408,10 +408,13 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
     return false;
   }
 
-  if (!isFunctionOrMethod(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << attrName << 0 /*function*/;
-    return false;
+  if (!isFunctionOrMethod(d) && !isa<BlockDecl>(d)) {
+    ValueDecl *VD = dyn_cast<ValueDecl>(d);
+    if (VD == 0 || !VD->getType()->isBlockPointerType()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << attrName << 0 /*function*/;
+      return false;
+    }
   }
   
   return true;

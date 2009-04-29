@@ -1290,6 +1290,13 @@ void Parser::ParseBlockId() {
   // Parse the block-declarator.
   Declarator DeclaratorInfo(DS, Declarator::BlockLiteralContext);
   ParseDeclarator(DeclaratorInfo);
+
+  if (Tok.is(tok::kw___attribute)) {
+    SourceLocation Loc;
+    AttributeList *AttrList = ParseAttributes(&Loc);
+    DeclaratorInfo.AddAttributes(AttrList, Loc);
+  }
+
   // Inform sema that we are starting a block.
   Actions.ActOnBlockArguments(DeclaratorInfo, CurScope);
 }
@@ -1345,6 +1352,13 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
       Actions.ActOnBlockError(CaretLoc, CurScope);
       return ExprError();
     }
+
+    if (Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseAttributes(&Loc);
+      ParamInfo.AddAttributes(AttrList, Loc);
+    }
+
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, CurScope);
   } else if (!Tok.is(tok::l_brace)) {
@@ -1357,6 +1371,13 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
                                                        false, false, 0, 0,
                                                        CaretLoc, ParamInfo),
                           CaretLoc);
+
+    if (Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseAttributes(&Loc);
+      ParamInfo.AddAttributes(AttrList, Loc);
+    }
+
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, CurScope);
   }

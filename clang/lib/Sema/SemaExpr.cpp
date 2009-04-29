@@ -4773,6 +4773,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   }
   CurBlock->TheDecl->setParams(Context, &CurBlock->Params[0], 
                                CurBlock->Params.size());
+  ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
 
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
        E = CurBlock->TheDecl->param_end(); AI != E; ++AI)
