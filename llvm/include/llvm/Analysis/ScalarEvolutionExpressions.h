@@ -357,7 +357,10 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   /// SCEVAddRecExpr - This node represents a polynomial recurrence on the trip
-  /// count of the specified loop.
+  /// count of the specified loop.  This is the primary focus of the
+  /// ScalarEvolution framework; all the other SCEV subclasses are mostly just
+  /// supporting infrastructure to allow SCEVAddRecExpr expressions to be
+  /// created and analyzed.
   ///
   /// All operands of an AddRec are required to be loop invariant.
   ///
