@@ -1895,7 +1895,6 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   // Check that we have a valid, previously declared ivar for @synthesize
   if (Synthesize) {
     // @synthesize
-    bool NoExplicitPropertyIvar = (!PropertyIvar);
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
     QualType PropType = Context.getCanonicalType(property->getType());
@@ -1914,7 +1913,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         // a property implementation and to avoid future warnings.
     }
     else if (getLangOptions().ObjCNonFragileABI &&
-             NoExplicitPropertyIvar && ClassDeclared != IDecl) {
+             ClassDeclared != IDecl) {
       Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
         << property->getDeclName() << Ivar->getDeclName() 
         << ClassDeclared->getDeclName();
