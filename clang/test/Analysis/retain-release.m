@@ -12,8 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 typedef unsigned int __darwin_natural_t;
-typedef struct {} div_t;
-typedef unsigned long UInt32;
+typedef unsigned int UInt32;
 typedef signed long CFIndex;
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;
@@ -44,11 +43,11 @@ extern CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
 typedef __darwin_natural_t natural_t;
 typedef natural_t mach_port_name_t;
 typedef mach_port_name_t mach_port_t;
-typedef struct {
-}
-CFRunLoopObserverContext;
+typedef int kern_return_t;
+typedef kern_return_t mach_error_t;
+typedef struct objc_selector *SEL;
 typedef signed char BOOL;
-typedef unsigned int NSUInteger;
+typedef unsigned long NSUInteger;
 @class NSString, Protocol;
 extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
@@ -60,25 +59,30 @@ typedef struct _NSZone NSZone;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end  @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
-@end
-@interface NSObject <NSObject> {}
-+ (id)alloc;
+@end    @interface NSObject <NSObject> {
+}
 + (id)allocWithZone:(NSZone *)zone;
-@end   typedef float CGFloat;
++ (id)alloc;
+- (void)dealloc;
+@end      extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
+typedef struct {
+}
+NSFastEnumerationState;
+@protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
+@end           @class NSString, NSDictionary;
+typedef double NSTimeInterval;
+@interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
+@end            typedef unsigned short unichar;
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
-- (const char *)UTF8String;
+- ( const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
-- (id)init;
-- (void)dealloc;
-@end   extern NSString * const NSCurrentLocaleDidChangeNotification ;
-@protocol NSLocking  - (void)lock;
-@end  extern NSString * const NSUndoManagerCheckpointNotification;
-typedef enum {
-ACL_READ_DATA = (1<<1),  ACL_LIST_DIRECTORY = (1<<1),  ACL_WRITE_DATA = (1<<2),  ACL_ADD_FILE = (1<<2),  ACL_EXECUTE = (1<<3),  ACL_SEARCH = (1<<3),  ACL_DELETE = (1<<4),  ACL_APPEND_DATA = (1<<5),  ACL_ADD_SUBDIRECTORY = (1<<5),  ACL_DELETE_CHILD = (1<<6),  ACL_READ_ATTRIBUTES = (1<<7),  ACL_WRITE_ATTRIBUTES = (1<<8),  ACL_READ_EXTATTRIBUTES = (1<<9),  ACL_WRITE_EXTATTRIBUTES = (1<<10),  ACL_READ_SECURITY = (1<<11),  ACL_WRITE_SECURITY = (1<<12),  ACL_CHANGE_OWNER = (1<<13) }
-acl_entry_id_t;
-typedef int kern_return_t;
-typedef kern_return_t mach_error_t;
+@end        @class NSDictionary;
+@interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
+@end    @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
+- (void)setObject:(id)anObject forKey:(id)aKey;
+@end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (id)dictionaryWithCapacity:(NSUInteger)numItems;
+@end @class NSString, NSDictionary, NSArray;
 typedef mach_port_t io_object_t;
 typedef io_object_t io_service_t;
 typedef struct __DASession * DASessionRef;
@@ -88,25 +92,42 @@ extern DADiskRef DADiskCreateFromBSDName( CFAllocatorRef allocator, DASessionRef
 extern DADiskRef DADiskCreateFromIOMedia( CFAllocatorRef allocator, DASessionRef session, io_service_t media );
 extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk );
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk );
+@interface NSTask : NSObject - (id)init;
+@end  extern NSString * const NSTaskDidTerminateNotification;
 @interface NSResponder : NSObject <NSCoding> {
+struct __vaFlags {
+}
+_vaFlags;
+}
+@end    @protocol NSAnimatablePropertyContainer      - (id)animator;
+@end  extern NSString *NSAnimationTriggerOrderIn ;
+@class NSBitmapImageRep, NSCursor, NSGraphicsContext, NSImage, NSPasteboard, NSScrollView, NSTextInputContext, NSWindow, NSAttributedString;
+@interface NSView : NSResponder  <NSAnimatablePropertyContainer>  {
+struct __VFlags2 {
+}
+_vFlags2;
 }
 @end  @class NSColor, NSFont, NSNotification;
-typedef struct __CFlags {
+@interface NSTextTab : NSObject <NSCopying, NSCoding> {
 }
-_CFlags;
-@interface NSCell : NSObject <NSCopying, NSCoding> {
+@end @protocol NSValidatedUserInterfaceItem - (SEL)action;
+@end   @protocol NSUserInterfaceValidations - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem;
+@end @class NSArray, NSError, NSImage, NSView, NSNotificationCenter, NSURL, NSScreen, NSRunningApplication;
+@interface NSApplication : NSResponder <NSUserInterfaceValidations> {
 }
-@end  @class NSDate, NSDictionary, NSError, NSException, NSNotification;
-@interface NSManagedObjectContext : NSObject <NSCoding, NSLocking> {
+@end   enum {
+NSTerminateCancel = 0,         NSTerminateNow = 1,         NSTerminateLater = 2 };
+typedef NSUInteger NSApplicationTerminateReply;
+@protocol NSApplicationDelegate <NSObject> @optional        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+@end    enum {
+NSUserInterfaceLayoutDirectionLeftToRight = 0,     NSUserInterfaceLayoutDirectionRightToLeft = 1 };
+@interface NSManagedObject : NSObject {
 }
 @end enum {
 kDAReturnSuccess = 0,     kDAReturnError = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x01,     kDAReturnBusy = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x02,     kDAReturnBadArgument = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x03,     kDAReturnExclusiveAccess = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x04,     kDAReturnNoResources = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x05,     kDAReturnNotFound = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x06,     kDAReturnNotMounted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x07,     kDAReturnNotPermitted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x08,     kDAReturnNotPrivileged = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x09,     kDAReturnNotReady = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0A,     kDAReturnNotWritable = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0B,     kDAReturnUnsupported = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0C };
 typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string );
-
-
-
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -468,4 +489,31 @@ void test_attr_5c(TestOwnershipAttr *X) {
   [X myCFRetain:str];
   [X myCFRelease:str];
 }
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6833332>
+// One build of the analyzer accidentally stopped tracking the allocated
+// object after the 'retain'.
+//===----------------------------------------------------------------------===//                             
+
+@interface rdar_6833332 : NSObject <NSApplicationDelegate> {
+    NSWindow *window;
+}
+@property (nonatomic, retain) NSWindow *window;
+@end
+
+@implementation rdar_6833332
+@synthesize window;
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+ NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain]; // expected-warning{{leak}}
+
+ [dict setObject:@"foo" forKey:@"bar"];
+
+ NSLog(@"%@", dict);
+}
+- (void)dealloc {
+    [window release];
+    [super dealloc];
+}
+@end
 
