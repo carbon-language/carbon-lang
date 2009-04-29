@@ -788,9 +788,14 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 
   QualType FnRetType;
-  if (FunctionDecl *FD = getCurFunctionDecl())
+  if (const FunctionDecl *FD = getCurFunctionDecl()) {
     FnRetType = FD->getResultType();
-  else if (ObjCMethodDecl *MD = getCurMethodDecl())
+    if (FD->hasAttr<NoReturnAttr>()) {
+      Diag(ReturnLoc, diag::err_noreturn_function_has_return_expr)
+        << getCurFunctionOrMethodDecl()->getDeclName();
+      return StmtError();
+    }
+  } else if (ObjCMethodDecl *MD = getCurMethodDecl())
     FnRetType = MD->getResultType();
   else // If we don't have a function/method context, bail.
     return StmtError();
