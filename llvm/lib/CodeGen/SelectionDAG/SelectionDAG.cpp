@@ -5649,6 +5649,13 @@ void SDNode::dumpr() const {
   DumpNodesr(errs(), this, 0, 0, once);
 }
 
+
+// getAddressSpace - Return the address space this GlobalAddress belongs to.
+unsigned GlobalAddressSDNode::getAddressSpace() const {
+  return getGlobal()->getType()->getAddressSpace();
+}
+
+
 const Type *ConstantPoolSDNode::getType() const {
   if (isMachineConstantPoolEntry())
     return Val.MachineCPVal->getType();

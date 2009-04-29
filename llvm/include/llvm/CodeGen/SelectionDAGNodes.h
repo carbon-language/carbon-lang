@@ -1814,6 +1814,8 @@ public:
 
   GlobalValue *getGlobal() const { return TheGlobal; }
   int64_t getOffset() const { return Offset; }
+  // Return the address space this GlobalAddress belongs to.
+  unsigned getAddressSpace() const;
 
   static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {
