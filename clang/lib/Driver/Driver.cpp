@@ -23,6 +23,7 @@
 #include "clang/Driver/Types.h"
 
 #include "clang/Basic/Version.h"
+#include "clang/Frontend/PCHBitCodes.h"
 
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -357,6 +358,8 @@ void Driver::PrintVersion(const Compilation &C) const {
 
   llvm::errs() << "clang version " CLANG_VERSION_STRING " (" 
                << vers << " " << revision << ")" << "\n";
+  llvm::errs() << "PCH version " << pch::VERSION_MAJOR << "."
+               << pch::VERSION_MINOR << "\n";
 
   const ToolChain &TC = C.getDefaultToolChain();
   llvm::errs() << "Target: " << TC.getTripleString() << '\n';
