@@ -912,6 +912,10 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
       if (SymReaper.isLive(Loc, VR->getDecl()))
         RegionRoots.push_back(VR); // This is a live "root".
+    } 
+    else if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
+      if (SymReaper.isLive(SR->getSymbol()))
+        RegionRoots.push_back(SR);
     }
     else {
       // Get the super region for R.
