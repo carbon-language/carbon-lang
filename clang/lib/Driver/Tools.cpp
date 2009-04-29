@@ -237,155 +237,155 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     // Add -Xanalyzer arguments when running as analyzer.
     Args.AddAllArgValues(CmdArgs, options::OPT_Xanalyzer);
-  } else {
-    // Perform argument translation for LLVM backend. This
-    // takes some care in reconciling with llvm-gcc. The
-    // issue is that llvm-gcc translates these options based on
-    // the values in cc1, whereas we are processing based on
-    // the driver arguments.
-    //
-    // FIXME: This is currently broken for -f flags when -fno
-    // variants are present.
+  } 
+  
+  // Perform argument translation for LLVM backend. This
+  // takes some care in reconciling with llvm-gcc. The
+  // issue is that llvm-gcc translates these options based on
+  // the values in cc1, whereas we are processing based on
+  // the driver arguments.
+  //
+  // FIXME: This is currently broken for -f flags when -fno
+  // variants are present.
 
-    // This comes from the default translation the driver + cc1
-    // would do to enable flag_pic.
-    //
-    // FIXME: Centralize this code.
-    bool PICEnabled = (Args.hasArg(options::OPT_fPIC) ||
-                       Args.hasArg(options::OPT_fpic) ||
-                       Args.hasArg(options::OPT_fPIE) ||
-                       Args.hasArg(options::OPT_fpie));
-    bool PICDisabled = (Args.hasArg(options::OPT_mkernel) ||
-                        Args.hasArg(options::OPT_static));
-    const char *Model = getToolChain().GetForcedPicModel();
-    if (!Model) {
-      if (Args.hasArg(options::OPT_mdynamic_no_pic))
-        Model = "dynamic-no-pic";
-      else if (PICDisabled)
-        Model = "static";
-      else if (PICEnabled)
-        Model = "pic";
-      else
-        Model = getToolChain().GetDefaultRelocationModel();
-    }
-    CmdArgs.push_back("--relocation-model");
-    CmdArgs.push_back(Model);
-
-    // Infer the __PIC__ value.
-    //
-    // FIXME:  This isn't quite right on Darwin, which always sets
-    // __PIC__=2.
-    if (strcmp(Model, "pic") == 0 || strcmp(Model, "dynamic-no-pic") == 0) {
-      if (Args.hasArg(options::OPT_fPIC))
-        CmdArgs.push_back("-pic-level=2");
-      else
-        CmdArgs.push_back("-pic-level=1");
-    }
-
-    if (Args.hasArg(options::OPT_ftime_report))
-      CmdArgs.push_back("--time-passes");
-    // FIXME: Set --enable-unsafe-fp-math.
-    if (!Args.hasArg(options::OPT_fomit_frame_pointer))
-      CmdArgs.push_back("--disable-fp-elim");
-    if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
-                      options::OPT_fno_zero_initialized_in_bss,
-                      true))
-      CmdArgs.push_back("--nozero-initialized-in-bss");
-    if (Args.hasArg(options::OPT_dA) || Args.hasArg(options::OPT_fverbose_asm))
-      CmdArgs.push_back("--asm-verbose");
-    if (Args.hasArg(options::OPT_fdebug_pass_structure))
-      CmdArgs.push_back("--debug-pass=Structure");
-    if (Args.hasArg(options::OPT_fdebug_pass_arguments))
-      CmdArgs.push_back("--debug-pass=Arguments");
-    // FIXME: set --inline-threshhold=50 if (optimize_size || optimize
-    // < 3)
-    if (Args.hasFlag(options::OPT_funwind_tables,
-                     options::OPT_fno_unwind_tables,
-                     (getToolChain().IsUnwindTablesDefault() &&
-                      !Args.hasArg(options::OPT_mkernel))))
-      CmdArgs.push_back("--unwind-tables=1");
+  // This comes from the default translation the driver + cc1
+  // would do to enable flag_pic.
+  //
+  // FIXME: Centralize this code.
+  bool PICEnabled = (Args.hasArg(options::OPT_fPIC) ||
+                     Args.hasArg(options::OPT_fpic) ||
+                     Args.hasArg(options::OPT_fPIE) ||
+                     Args.hasArg(options::OPT_fpie));
+  bool PICDisabled = (Args.hasArg(options::OPT_mkernel) ||
+                      Args.hasArg(options::OPT_static));
+  const char *Model = getToolChain().GetForcedPicModel();
+  if (!Model) {
+    if (Args.hasArg(options::OPT_mdynamic_no_pic))
+      Model = "dynamic-no-pic";
+    else if (PICDisabled)
+      Model = "static";
+    else if (PICEnabled)
+      Model = "pic";
     else
-      CmdArgs.push_back("--unwind-tables=0");
-    if (!Args.hasFlag(options::OPT_mred_zone,
-                      options::OPT_mno_red_zone,
-                      true) ||
-        Args.hasArg(options::OPT_mkernel) ||
-        Args.hasArg(options::OPT_fapple_kext))
-      CmdArgs.push_back("--disable-red-zone");
-    if (Args.hasFlag(options::OPT_msoft_float,
-                     options::OPT_mno_soft_float,
-                     false))
-      CmdArgs.push_back("--soft-float");
-
-    // FIXME: Need target hooks.
-    if (memcmp(getToolChain().getPlatform().c_str(), "darwin", 6) == 0) {
-      if (getToolChain().getArchName() == "x86_64")
-        CmdArgs.push_back("--mcpu=core2");
-      else if (getToolChain().getArchName() == "i386")
-        CmdArgs.push_back("--mcpu=yonah");
-    }
-
-    // FIXME: Ignores ordering. Also, we need to find a realistic
-    // solution for this.
-    static const struct {
-      options::ID Pos, Neg;
-      const char *Name;
-    } FeatureOptions[] = {
-      { options::OPT_mmmx, options::OPT_mno_mmx, "mmx" },
-      { options::OPT_msse, options::OPT_mno_sse, "sse" },
-      { options::OPT_msse2, options::OPT_mno_sse2, "sse2" },
-      { options::OPT_msse3, options::OPT_mno_sse3, "sse3" },
-      { options::OPT_mssse3, options::OPT_mno_ssse3, "ssse3" },
-      { options::OPT_msse41, options::OPT_mno_sse41, "sse41" },
-      { options::OPT_msse42, options::OPT_mno_sse42, "sse42" },
-      { options::OPT_msse4a, options::OPT_mno_sse4a, "sse4a" },
-      { options::OPT_m3dnow, options::OPT_mno_3dnow, "3dnow" },
-      { options::OPT_m3dnowa, options::OPT_mno_3dnowa, "3dnowa" }
-    };
-    const unsigned NumFeatureOptions =
-      sizeof(FeatureOptions)/sizeof(FeatureOptions[0]);
-
-    // FIXME: Avoid std::string
-    std::string Attrs;
-    for (unsigned i=0; i < NumFeatureOptions; ++i) {
-      if (Args.hasArg(FeatureOptions[i].Pos)) {
-        if (!Attrs.empty())
-          Attrs += ',';
-        Attrs += '+';
-        Attrs += FeatureOptions[i].Name;
-      } else if (Args.hasArg(FeatureOptions[i].Neg)) {
-        if (!Attrs.empty())
-          Attrs += ',';
-        Attrs += '-';
-        Attrs += FeatureOptions[i].Name;
-      }
-    }
-    if (!Attrs.empty()) {
-      CmdArgs.push_back("--mattr");
-      CmdArgs.push_back(Args.MakeArgString(Attrs.c_str()));
-    }
-
-    if (Args.hasFlag(options::OPT_fmath_errno,
-                     options::OPT_fno_math_errno,
-                     getToolChain().IsMathErrnoDefault()))
-      CmdArgs.push_back("--fmath-errno=1");
-    else
-      CmdArgs.push_back("--fmath-errno=0");
-
-    if (Arg *A = Args.getLastArg(options::OPT_flimited_precision_EQ)) {
-      CmdArgs.push_back("--limit-float-precision");
-      CmdArgs.push_back(A->getValue(Args));
-    }
-
-    // FIXME: Add --stack-protector-buffer-size=<xxx> on
-    // -fstack-protect.
-
-    Arg *Unsupported;
-    if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
-        (Unsupported = Args.getLastArg(options::OPT_MQ)))
-      D.Diag(clang::diag::err_drv_unsupported_opt)
-        << Unsupported->getOption().getName();
+      Model = getToolChain().GetDefaultRelocationModel();
   }
+  CmdArgs.push_back("--relocation-model");
+  CmdArgs.push_back(Model);
+
+  // Infer the __PIC__ value.
+  //
+  // FIXME:  This isn't quite right on Darwin, which always sets
+  // __PIC__=2.
+  if (strcmp(Model, "pic") == 0 || strcmp(Model, "dynamic-no-pic") == 0) {
+    if (Args.hasArg(options::OPT_fPIC))
+      CmdArgs.push_back("-pic-level=2");
+    else
+      CmdArgs.push_back("-pic-level=1");
+  }
+
+  if (Args.hasArg(options::OPT_ftime_report))
+    CmdArgs.push_back("--time-passes");
+  // FIXME: Set --enable-unsafe-fp-math.
+  if (!Args.hasArg(options::OPT_fomit_frame_pointer))
+    CmdArgs.push_back("--disable-fp-elim");
+  if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
+                    options::OPT_fno_zero_initialized_in_bss,
+                    true))
+    CmdArgs.push_back("--nozero-initialized-in-bss");
+  if (Args.hasArg(options::OPT_dA) || Args.hasArg(options::OPT_fverbose_asm))
+    CmdArgs.push_back("--asm-verbose");
+  if (Args.hasArg(options::OPT_fdebug_pass_structure))
+    CmdArgs.push_back("--debug-pass=Structure");
+  if (Args.hasArg(options::OPT_fdebug_pass_arguments))
+    CmdArgs.push_back("--debug-pass=Arguments");
+  // FIXME: set --inline-threshhold=50 if (optimize_size || optimize
+  // < 3)
+  if (Args.hasFlag(options::OPT_funwind_tables,
+                   options::OPT_fno_unwind_tables,
+                   (getToolChain().IsUnwindTablesDefault() &&
+                    !Args.hasArg(options::OPT_mkernel))))
+    CmdArgs.push_back("--unwind-tables=1");
+  else
+    CmdArgs.push_back("--unwind-tables=0");
+  if (!Args.hasFlag(options::OPT_mred_zone,
+                    options::OPT_mno_red_zone,
+                    true) ||
+      Args.hasArg(options::OPT_mkernel) ||
+      Args.hasArg(options::OPT_fapple_kext))
+    CmdArgs.push_back("--disable-red-zone");
+  if (Args.hasFlag(options::OPT_msoft_float,
+                   options::OPT_mno_soft_float,
+                   false))
+    CmdArgs.push_back("--soft-float");
+
+  // FIXME: Need target hooks.
+  if (memcmp(getToolChain().getPlatform().c_str(), "darwin", 6) == 0) {
+    if (getToolChain().getArchName() == "x86_64")
+      CmdArgs.push_back("--mcpu=core2");
+    else if (getToolChain().getArchName() == "i386")
+      CmdArgs.push_back("--mcpu=yonah");
+  }
+
+  // FIXME: Ignores ordering. Also, we need to find a realistic
+  // solution for this.
+  static const struct {
+    options::ID Pos, Neg;
+    const char *Name;
+  } FeatureOptions[] = {
+    { options::OPT_mmmx, options::OPT_mno_mmx, "mmx" },
+    { options::OPT_msse, options::OPT_mno_sse, "sse" },
+    { options::OPT_msse2, options::OPT_mno_sse2, "sse2" },
+    { options::OPT_msse3, options::OPT_mno_sse3, "sse3" },
+    { options::OPT_mssse3, options::OPT_mno_ssse3, "ssse3" },
+    { options::OPT_msse41, options::OPT_mno_sse41, "sse41" },
+    { options::OPT_msse42, options::OPT_mno_sse42, "sse42" },
+    { options::OPT_msse4a, options::OPT_mno_sse4a, "sse4a" },
+    { options::OPT_m3dnow, options::OPT_mno_3dnow, "3dnow" },
+    { options::OPT_m3dnowa, options::OPT_mno_3dnowa, "3dnowa" }
+  };
+  const unsigned NumFeatureOptions =
+    sizeof(FeatureOptions)/sizeof(FeatureOptions[0]);
+
+  // FIXME: Avoid std::string
+  std::string Attrs;
+  for (unsigned i=0; i < NumFeatureOptions; ++i) {
+    if (Args.hasArg(FeatureOptions[i].Pos)) {
+      if (!Attrs.empty())
+        Attrs += ',';
+      Attrs += '+';
+      Attrs += FeatureOptions[i].Name;
+    } else if (Args.hasArg(FeatureOptions[i].Neg)) {
+      if (!Attrs.empty())
+        Attrs += ',';
+      Attrs += '-';
+      Attrs += FeatureOptions[i].Name;
+    }
+  }
+  if (!Attrs.empty()) {
+    CmdArgs.push_back("--mattr");
+    CmdArgs.push_back(Args.MakeArgString(Attrs.c_str()));
+  }
+
+  if (Args.hasFlag(options::OPT_fmath_errno,
+                   options::OPT_fno_math_errno,
+                   getToolChain().IsMathErrnoDefault()))
+    CmdArgs.push_back("--fmath-errno=1");
+  else
+    CmdArgs.push_back("--fmath-errno=0");
+
+  if (Arg *A = Args.getLastArg(options::OPT_flimited_precision_EQ)) {
+    CmdArgs.push_back("--limit-float-precision");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
+  // FIXME: Add --stack-protector-buffer-size=<xxx> on
+  // -fstack-protect.
+
+  Arg *Unsupported;
+  if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
+      (Unsupported = Args.getLastArg(options::OPT_MQ)))
+    D.Diag(clang::diag::err_drv_unsupported_opt)
+      << Unsupported->getOption().getName();
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
   Args.AddLastArg(CmdArgs, options::OPT_P);
