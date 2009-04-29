@@ -2707,8 +2707,31 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(SCEV *V, const Loop *L) {
     return UnknownValue;
   }
 
-  //assert(0 && "Unknown SCEV type!");
-  return UnknownValue;
+  if (SCEVZeroExtendExpr *Cast = dyn_cast<SCEVZeroExtendExpr>(V)) {
+    SCEVHandle Op = getSCEVAtScope(Cast->getOperand(), L);
+    if (Op == UnknownValue) return Op;
+    if (Op == Cast->getOperand())
+      return Cast;  // must be loop invariant
+    return getZeroExtendExpr(Op, Cast->getType());
+  }
+
+  if (SCEVSignExtendExpr *Cast = dyn_cast<SCEVSignExtendExpr>(V)) {
+    SCEVHandle Op = getSCEVAtScope(Cast->getOperand(), L);
+    if (Op == UnknownValue) return Op;
+    if (Op == Cast->getOperand())
+      return Cast;  // must be loop invariant
+    return getSignExtendExpr(Op, Cast->getType());
+  }
+
+  if (SCEVTruncateExpr *Cast = dyn_cast<SCEVTruncateExpr>(V)) {
+    SCEVHandle Op = getSCEVAtScope(Cast->getOperand(), L);
+    if (Op == UnknownValue) return Op;
+    if (Op == Cast->getOperand())
+      return Cast;  // must be loop invariant
+    return getTruncateExpr(Op, Cast->getType());
+  }
+
+  assert(0 && "Unknown SCEV type!");
 }
 
 /// getSCEVAtScope - Return a SCEV expression handle for the specified value
