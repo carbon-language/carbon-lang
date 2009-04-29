@@ -812,11 +812,14 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
         SCEVHandle Step = AR->getStepRecurrence(*this);
 
         // Check whether the backedge-taken count can be losslessly casted to
-        // the addrec's type. The count is always unsigned.
+        // the addrec's type. The count needs to be the same whether sign
+        // extended or zero extended.
         SCEVHandle CastedBECount =
           getTruncateOrZeroExtend(BECount, Start->getType());
         if (BECount ==
-            getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
+            getTruncateOrZeroExtend(CastedBECount, BECount->getType()) &&
+            BECount ==
+            getTruncateOrSignExtend(CastedBECount, BECount->getType())) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
           SCEVHandle SMul =
