@@ -405,12 +405,23 @@ public:
             "variable-length array (VLA) '"
          << VD->getNameAsString() << "' evaluates to ";
       
-      if (Eng.getStateManager().GetSVal(N->getState(), SizeExpr).isUndef())
+      bool isUndefined = Eng.getStateManager().GetSVal(N->getState(),
+                                                       SizeExpr).isUndef();
+      
+      if (isUndefined)
         os << "an undefined or garbage value.";
       else
         os << "0. VLAs with no elements have undefined behavior.";
+      
+      std::string shortBuf;
+      llvm::raw_string_ostream os_short(shortBuf);
+      os_short << "Variable-length array '" << VD->getNameAsString() << "' "
+               << (isUndefined ? " garbage value for array size"
+                   : " has zero elements (undefined behavior)");
 
-      RangedBugReport *report = new RangedBugReport(*this, os.str().c_str(), N);
+      RangedBugReport *report = new RangedBugReport(*this,
+                                                    os_short.str().c_str(),
+                                                    os.str().c_str(), N);
       report->addRange(SizeExpr->getSourceRange());
       BR.EmitReport(report);
     }

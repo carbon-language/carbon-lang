@@ -45,6 +45,7 @@ namespace {
     PathGenerationScheme getGenerationScheme() const { return Extensive; }
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
+    virtual bool useVerboseDescription() const { return false; }
   };  
 } // end anonymous namespace
 

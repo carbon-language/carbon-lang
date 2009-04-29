@@ -1667,14 +1667,18 @@ void BugReporter::EmitReport(BugReport* R) {
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   assert(!EQ.Reports.empty());
   BugReport &R = **EQ.begin();
+  PathDiagnosticClient* PD = getPathDiagnosticClient();
   
   // FIXME: Make sure we use the 'R' for the path that was actually used.
   // Probably doesn't make a difference in practice.  
   BugType& BT = R.getBugType();
   
-  llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getBugType().getName(),
-                                                R.getDescription(),
-                                                BT.getCategory()));
+  llvm::OwningPtr<PathDiagnostic>
+    D(new PathDiagnostic(R.getBugType().getName(),
+                         PD->useVerboseDescription()
+                         ? R.getDescription() : R.getShortDescription(),
+                         BT.getCategory()));
+
   GeneratePathDiagnostic(*D.get(), EQ);
   
   // Get the meta data.
@@ -1682,7 +1686,6 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   for (const char** s = Meta.first; s != Meta.second; ++s) D->addMeta(*s);
 
   // Emit a summary diagnostic to the regular Diagnostics engine.
-  PathDiagnosticClient* PD = getPathDiagnosticClient();
   const SourceRange *Beg = 0, *End = 0;
   R.getRanges(*this, Beg, End);    
   Diagnostic& Diag = getDiagnostic();

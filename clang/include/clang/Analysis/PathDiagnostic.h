@@ -50,6 +50,7 @@ public:
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }   
   virtual bool supportsLogicalOpControlFlow() const { return false; }
   virtual bool supportsAllBlockEdges() const { return false; }
+  virtual bool useVerboseDescription() const { return true; }
 };  
   
 //===----------------------------------------------------------------------===//

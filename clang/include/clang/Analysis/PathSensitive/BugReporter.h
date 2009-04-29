@@ -48,6 +48,7 @@ class ParentMap;
 class BugReport {
 protected:
   BugType& BT;
+  std::string ShortDescription;
   std::string Description;
   const ExplodedNode<GRState> *EndNode;
   SourceRange R;
@@ -70,6 +71,11 @@ public:
   
   BugReport(BugType& bt, const char* desc, const ExplodedNode<GRState> *n)
     : BT(bt), Description(desc), EndNode(n) {}
+  
+  BugReport(BugType& bt, const char* shortDesc, const char* desc,
+            const ExplodedNode<GRState> *n)
+  : BT(bt), ShortDescription(shortDesc), Description(desc), EndNode(n) {}
+
 
   virtual ~BugReport();
 
@@ -84,6 +90,10 @@ public:
   Stmt* getStmt(BugReporter& BR) const;
   
   const std::string& getDescription() const { return Description; }
+
+  const std::string& getShortDescription() const {
+    return ShortDescription.empty() ? Description : ShortDescription;
+  }
   
   // FIXME: Is this needed?
   virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
@@ -196,6 +206,10 @@ class RangedBugReport : public BugReport {
 public:
   RangedBugReport(BugType& D, const char* description, ExplodedNode<GRState> *n)
     : BugReport(D, description, n) {}
+  
+  RangedBugReport(BugType& D, const char *shortDescription,
+                  const char *description, ExplodedNode<GRState> *n)
+  : BugReport(D, shortDescription, description, n) {}
   
   ~RangedBugReport();
 
