@@ -379,6 +379,12 @@ namespace clang {
       return Node;
     }
 
+    /// Take outside ownership of the raw pointer and cast it down.
+    template<typename T>
+    T *takeAs() {
+      return static_cast<T*>(Node);
+    }
+
     /// Alias for interface familiarity with unique_ptr.
     void * release() {
       return take();
@@ -698,8 +704,9 @@ namespace clang {
     unsigned size() const { return Count; }
 
     void reset(void **args, bool *argIsType, unsigned count) {
+#if !defined(DISABLE_SMART_POINTERS)
       destroy();
-
+#endif
       Args = args;
       ArgIsType = argIsType;
       Count = count;
