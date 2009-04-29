@@ -260,7 +260,8 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
     switch (TM->addPassesToEmitFile(*PM, *AsmOutStream,
-                                    TargetMachine::AssemblyFile, Fast)) {
+                                    TargetMachine::AssemblyFile,
+                                    CompileOpts.OptimizationLevel)) {
     default:
     case FileModel::Error:
       Error = "Unable to interface with target machine!\n";
@@ -269,7 +270,8 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       break;
     }
     
-    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, 0, Fast)) {
+    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, 0,
+                                      CompileOpts.OptimizationLevel)) {
       Error = "Unable to interface with target machine!\n";
       return false;
     }
