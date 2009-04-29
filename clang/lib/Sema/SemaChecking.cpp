@@ -629,10 +629,10 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
   }
 
   // Str - The format string.  NOTE: this is NOT null-terminated!
-  const char * const Str = FExpr->getStrData();
+  const char *Str = FExpr->getStrData();
 
   // CHECK: empty format string?
-  const unsigned StrLen = FExpr->getByteLength();
+  unsigned StrLen = FExpr->getByteLength();
   
   if (StrLen == 0) {
     Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string)
