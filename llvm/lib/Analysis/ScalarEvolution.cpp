@@ -717,8 +717,8 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
       // that value once it has finished.
       SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
       if (!isa<SCEVCouldNotCompute>(BECount)) {
-        // Compute the extent of AR and divide it by the step value. This is
-        // used to determine if it's safe to extend the stride value.
+        // Manually compute the final value for AR, checking for
+        // overflow at each step.
         SCEVHandle Start = AR->getStart();
         SCEVHandle Step = AR->getStepRecurrence(*this);
 
@@ -806,8 +806,8 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
       // that value once it has finished.
       SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
       if (!isa<SCEVCouldNotCompute>(BECount)) {
-        // Compute the extent of AR and divide it by the step value. This is
-        // used to determine if it's safe to extend the stride value.
+        // Manually compute the final value for AR, checking for
+        // overflow at each step.
         SCEVHandle Start = AR->getStart();
         SCEVHandle Step = AR->getStepRecurrence(*this);
 
