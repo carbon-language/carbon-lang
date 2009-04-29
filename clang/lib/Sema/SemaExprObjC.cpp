@@ -461,8 +461,12 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
+  
+  // If necessary, apply function/array conversion to the receiver.
+  // C99 6.7.5.3p[7,8].
+  DefaultFunctionArrayConversion(RExpr);
+  
   QualType returnType;
-
   QualType ReceiverCType =
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
 

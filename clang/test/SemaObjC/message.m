@@ -1,5 +1,10 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+typedef struct objc_object {
+  Class isa;
+} *id;
+
+
 @interface foo
 - (void)meth;
 @end
@@ -86,5 +91,10 @@ int test5(int X) {
   int b = [S somemsg];  // expected-error {{bad receiver type 'struct S'}}
 }
 
-
+// PR4021
+void foo4() {
+  struct objc_object X[10];
+  
+  [X rect];
+}
 
