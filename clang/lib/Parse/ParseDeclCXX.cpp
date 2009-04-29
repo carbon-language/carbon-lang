@@ -1112,7 +1112,9 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
 ///         type-id
 ///         type-id-list ',' type-id
 ///
-bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc) {
+bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
+                                         std::vector<TypeTy*> &Exceptions,
+                                         bool &hasAnyExceptionSpec) {
   assert(Tok.is(tok::kw_throw) && "expected throw");
   
   SourceLocation ThrowLoc = ConsumeToken();
@@ -1125,6 +1127,7 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc) {
   // Parse throw(...), a Microsoft extension that means "this function
   // can throw anything".
   if (Tok.is(tok::ellipsis)) {
+    hasAnyExceptionSpec = true;
     SourceLocation EllipsisLoc = ConsumeToken();
     if (!getLang().Microsoft)
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
@@ -1134,10 +1137,12 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc) {
 
   // Parse the sequence of type-ids.
   while (Tok.isNot(tok::r_paren)) {
-    ParseTypeName();
+    TypeResult Res(ParseTypeName());
+    if (!Res.isInvalid())
+      Exceptions.push_back(Res.get());
     if (Tok.is(tok::comma))
       ConsumeToken();
-    else 
+    else
       break;
   }
 

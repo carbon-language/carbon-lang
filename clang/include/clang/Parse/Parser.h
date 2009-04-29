@@ -682,7 +682,9 @@ private:
   // C++ 15: C++ Throw Expression
   OwningExprResult ParseThrowExpression();
   // EndLoc is filled with the location of the last token of the specification.
-  bool ParseExceptionSpecification(SourceLocation &EndLoc);
+  bool ParseExceptionSpecification(SourceLocation &EndLoc,
+                                   std::vector<TypeTy*> &Exceptions,
+                                   bool &hasAnyExceptionSpec);
 
   //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals

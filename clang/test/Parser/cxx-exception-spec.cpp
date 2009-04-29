@@ -13,3 +13,5 @@ void h() throw(X, Y) { }
 class Class {
   void foo() throw (X, Y) { }
 };
+
+void (*fptr)() throw();

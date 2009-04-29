@@ -512,31 +512,45 @@ struct DeclaratorChunk {
     /// argument.  If the function is () or (a,b,c), then it has no prototype,
     /// and is treated as a K&R-style function.
     bool hasPrototype : 1;
-    
+
     /// isVariadic - If this function has a prototype, and if that
     /// proto ends with ',...)', this is true. When true, EllipsisLoc
     /// contains the location of the ellipsis.
     bool isVariadic : 1;
 
-    /// When isVariadic is true, the location of the ellipsis in the source.
-    unsigned EllipsisLoc;
-
     /// The type qualifiers: const/volatile/restrict.
     /// The qualifier bitmask values are the same as in QualType. 
     unsigned TypeQuals : 3;
 
+    /// hasExceptionSpec - True if the function has an exception specification.
+    bool hasExceptionSpec : 1;
+
+    /// hasAnyExceptionSpec - True if the function has a throw(...) specifier.
+    bool hasAnyExceptionSpec : 1;
+
     /// DeleteArgInfo - If this is true, we need to delete[] ArgInfo.
     bool DeleteArgInfo : 1;
+
+    /// When isVariadic is true, the location of the ellipsis in the source.
+    unsigned EllipsisLoc;
 
     /// NumArgs - This is the number of formal arguments provided for the
     /// declarator.
     unsigned NumArgs;
 
+    /// NumExceptions - This is the number of types in the exception-decl, if
+    /// the function has one.
+    unsigned NumExceptions;
+
     /// ArgInfo - This is a pointer to a new[]'d array of ParamInfo objects that
     /// describe the arguments for this function declarator.  This is null if
     /// there are no arguments specified.
     ParamInfo *ArgInfo;
-    
+
+    /// Exceptions - This is a pointer to a new[]'d array of TypeTy pointers
+    /// that contains the types in the function's exception specification.
+    ActionBase::TypeTy **Exceptions;
+
     /// freeArgs - reset the argument list to having zero arguments.  This is
     /// used in various places for error recovery.
     void freeArgs() {
@@ -546,10 +560,11 @@ struct DeclaratorChunk {
       }
       NumArgs = 0;
     }
-    
+
     void destroy() {
       if (DeleteArgInfo)
         delete[] ArgInfo;
+      delete[] Exceptions;
     }
 
     SourceLocation getEllipsisLoc() const {
@@ -670,7 +685,10 @@ struct DeclaratorChunk {
   static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
                                      SourceLocation EllipsisLoc,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
-                                     unsigned TypeQuals, SourceLocation Loc,
+                                     unsigned TypeQuals, bool hasExceptionSpec,
+                                     bool hasAnyExceptionSpec,
+                                     ActionBase::TypeTy **Exceptions,
+                                     unsigned NumExceptions, SourceLocation Loc,
                                      Declarator &TheDeclarator);
   
   /// getBlockPointer - Return a DeclaratorChunk for a block.

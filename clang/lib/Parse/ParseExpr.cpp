@@ -1353,8 +1353,9 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     // Otherwise, pretend we saw (void).
     ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false, 
                                                        SourceLocation(),
-                                                       0, 0, 0, CaretLoc,
-                                                       ParamInfo),
+                                                       0, 0, 0,
+                                                       false, false, 0, 0,
+                                                       CaretLoc, ParamInfo),
                           CaretLoc);
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, CurScope);

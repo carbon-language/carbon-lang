@@ -2246,14 +2246,21 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
     // cv-qualifier-seq[opt].
     DeclSpec DS;
+    bool hasExceptionSpec = false;
+    bool hasAnyExceptionSpec = false;
+    // FIXME: Does an empty vector ever allocate? Exception specifications are
+    // extremely rare, so we want something like a SmallVector<TypeTy*, 0>. :-)
+    std::vector<TypeTy*> Exceptions;
     if (getLang().CPlusPlus) {
       ParseTypeQualifierListOpt(DS, false /*no attributes*/);
       if (!DS.getSourceRange().getEnd().isInvalid())
         Loc = DS.getSourceRange().getEnd();
 
       // Parse exception-specification[opt].
-      if (Tok.is(tok::kw_throw))
-        ParseExceptionSpecification(Loc);
+      if (Tok.is(tok::kw_throw)) {
+        hasExceptionSpec = true;
+        ParseExceptionSpecification(Loc, Exceptions, hasAnyExceptionSpec);
+      }
     }
 
     // Remember that we parsed a function type, and remember the attributes.
@@ -2263,6 +2270,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                SourceLocation(),
                                                /*arglist*/ 0, 0,
                                                DS.getTypeQualifiers(),
+                                               hasExceptionSpec,
+                                               hasAnyExceptionSpec,
+                                               Exceptions.empty() ? 0 :
+                                                 &Exceptions[0],
+                                               Exceptions.size(),
                                                LParenLoc, D),
                   Loc);
     return;
@@ -2406,6 +2418,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   SourceLocation Loc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
   DeclSpec DS;
+  bool hasExceptionSpec = false;
+  bool hasAnyExceptionSpec = false;
+  // FIXME: Does an empty vector ever allocate? Exception specifications are
+  // extremely rare, so we want something like a SmallVector<TypeTy*, 0>. :-)
+  std::vector<TypeTy*> Exceptions;
   if (getLang().CPlusPlus) {
     // Parse cv-qualifier-seq[opt].
     ParseTypeQualifierListOpt(DS, false /*no attributes*/);
@@ -2413,8 +2430,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         Loc = DS.getSourceRange().getEnd();
 
     // Parse exception-specification[opt].
-    if (Tok.is(tok::kw_throw))
-      ParseExceptionSpecification(Loc);
+    if (Tok.is(tok::kw_throw)) {
+      hasExceptionSpec = true;
+      ParseExceptionSpecification(Loc, Exceptions, hasAnyExceptionSpec);
+    }
   }
 
   // Remember that we parsed a function type, and remember the attributes.
@@ -2422,7 +2441,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              EllipsisLoc,
                                              &ParamInfo[0], ParamInfo.size(),
                                              DS.getTypeQualifiers(),
-                                             LParenLoc, D),
+                                             hasExceptionSpec,
+                                             hasAnyExceptionSpec,
+                                             Exceptions.empty() ? 0 :
+                                               &Exceptions[0],
+                                             Exceptions.size(), LParenLoc, D),
                 Loc);
 }
 
@@ -2496,7 +2519,9 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/false, /*varargs*/false,
                                              SourceLocation(),
                                              &ParamInfo[0], ParamInfo.size(),
-                                             /*TypeQuals*/0, LParenLoc, D),
+                                             /*TypeQuals*/0,
+                                             /*exception*/false, false, 0, 0,
+                                             LParenLoc, D),
                 RLoc);
 }
 

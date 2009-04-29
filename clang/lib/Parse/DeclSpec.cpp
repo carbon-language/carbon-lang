@@ -32,19 +32,27 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
                                              ParamInfo *ArgInfo,
                                              unsigned NumArgs,
                                              unsigned TypeQuals,
+                                             bool hasExceptionSpec,
+                                             bool hasAnyExceptionSpec,
+                                             ActionBase::TypeTy **Exceptions,
+                                             unsigned NumExceptions,
                                              SourceLocation Loc,
                                              Declarator &TheDeclarator) {
   DeclaratorChunk I;
-  I.Kind             = Function;
-  I.Loc              = Loc;
-  I.Fun.hasPrototype = hasProto;
-  I.Fun.isVariadic   = isVariadic;
-  I.Fun.EllipsisLoc  = EllipsisLoc.getRawEncoding();
-  I.Fun.DeleteArgInfo = false;
-  I.Fun.TypeQuals    = TypeQuals;
-  I.Fun.NumArgs      = NumArgs;
-  I.Fun.ArgInfo      = 0;
-  
+  I.Kind                 = Function;
+  I.Loc                  = Loc;
+  I.Fun.hasPrototype     = hasProto;
+  I.Fun.isVariadic       = isVariadic;
+  I.Fun.EllipsisLoc      = EllipsisLoc.getRawEncoding();
+  I.Fun.DeleteArgInfo    = false;
+  I.Fun.TypeQuals        = TypeQuals;
+  I.Fun.NumArgs          = NumArgs;
+  I.Fun.ArgInfo          = 0;
+  I.Fun.hasExceptionSpec = hasExceptionSpec;
+  I.Fun.hasAnyExceptionSpec = hasAnyExceptionSpec;
+  I.Fun.NumExceptions    = NumExceptions;
+  I.Fun.Exceptions       = 0;
+
   // new[] an argument array if needed.
   if (NumArgs) {
     // If the 'InlineParams' in Declarator is unused and big enough, put our
@@ -61,6 +69,12 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
       I.Fun.DeleteArgInfo = true;
     }
     memcpy(I.Fun.ArgInfo, ArgInfo, sizeof(ArgInfo[0])*NumArgs);
+  }
+  // new[] an exception array if needed
+  if (NumExceptions) {
+    I.Fun.Exceptions = new ActionBase::TypeTy*[NumExceptions];
+    memcpy(I.Fun.Exceptions, Exceptions,
+           sizeof(ActionBase::TypeTy*)*NumExceptions);
   }
   return I;
 }
