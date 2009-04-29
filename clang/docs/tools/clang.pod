@@ -1,0 +1,151 @@
+=pod
+
+=head1 NAME
+
+clang - the clang C and Objective-C compiler
+
+=head1 SYNOPSIS
+
+B<clang> [I<options>] I<filenames...>
+
+FIXME: Fill in synposis and options.
+
+=head1 DESCRIPTION
+
+FIXME: Fill in description.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-###>
+
+Print the commands to run for this compilation.
+
+=item B<--analyze>
+
+Run the static analyzer.
+
+=item B<--help>
+
+Display available options.
+
+=item B<-E>
+
+Only run the preprocessor.
+
+=item B<-ObjC++>
+
+Treat source input files as Objective-C++ inputs.
+
+=item B<-ObjC>
+
+Treat source input files as Objective-C inputs.
+
+=item B<-Qunused-arguments>
+
+Don't emit warning for unused driver arguments.
+
+=item B<-S>
+
+Only run preprocess and compilation steps.
+
+=item B<-Wa,>I<args>
+
+Pass the comma separated arguments in I<args> to the assembler.
+
+=item B<-Wl,>I<args>
+
+Pass the comma separated arguments in I<args> to the linker.
+
+=item B<-Wp,>I<args>
+
+Pass the comma separated arguments in I<args> to the preprocessor.
+
+=item B<-Xanalyzer> I<arg>
+
+Pass I<arg> to the static analyzer.
+
+=item B<-Xassembler> I<arg>
+
+Pass I<arg> to the assembler.
+
+=item B<-Xclang> I<arg>
+
+Pass I<arg> to the clang compiler.
+
+=item B<-Xlinker> I<arg>
+
+Pass I<arg> to the linker.
+
+=item B<-Xpreprocessor> I<arg>
+
+Pass I<arg> to the preprocessor.
+
+=item B<-c>
+
+Only run preprocess, compile, and assemble steps.
+
+=item B<-emit-llvm>
+
+Use the LLVM representation for assembler and object files.
+
+=item B<-o> I<file>               
+
+Write output to I<file>.
+
+=item B<-pipe>
+
+Use pipes between commands, when possible.
+
+=item B<-print-file-name>=I<file>
+
+Print the full library path of I<file>.
+
+=item B<-print-libgcc-file-name>
+
+Print the library path for "libgcc.a".
+
+=item B<-print-prog-name>=I<name>
+
+Print the full program path of I<name>.
+
+=item B<-print-search-dirs>
+
+Print the paths used for finding libraries and programs.
+
+=item B<-save-temps>
+
+Save intermediate compilation results.
+
+=item B<-time>
+
+Time individual commands.
+
+=item B<-v>
+
+Show commands to run and use verbose output.
+
+=item B<-x> I<language>
+
+Treat subsequent input files as having type I<language>.
+
+=back
+
+=head1 ENVIRONMENT
+
+FIXME: Fill in environment.
+
+=head1 BUGS
+
+FIXME: Bugs?
+
+=head1 SEE ALSO
+
+FIXME: See also?
+
+=head1 AUTHOR
+
+Maintained by the Clang / LLVM Team (L<http://clang.llvm.org>).
+
+=cut
