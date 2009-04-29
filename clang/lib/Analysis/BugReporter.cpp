@@ -1675,7 +1675,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   
   llvm::OwningPtr<PathDiagnostic>
     D(new PathDiagnostic(R.getBugType().getName(),
-                         PD->useVerboseDescription()
+                         !PD || PD->useVerboseDescription()
                          ? R.getDescription() : R.getShortDescription(),
                          BT.getCategory()));
 
