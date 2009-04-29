@@ -5731,9 +5731,7 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, MVT VT) {
   for (i = 0, e = VT.getVectorNumElements(); i != e && Mask[i] < 0; ++i)
     /* search */;
 
-  // If we hit the end of the mask looking for a non-undef value, return false.
-  if (i == e)
-    return false;
+  assert(i != e && "VECTOR_SHUFFLE node with all undef indices!");
   
   // Make sure all remaining elements are either undef or the same as the first
   // non-undef value.
