@@ -219,7 +219,7 @@ SCEVTruncateExpr::~SCEVTruncateExpr() {
 }
 
 void SCEVTruncateExpr::print(raw_ostream &OS) const {
-  OS << "(truncate " << *Op << " to " << *Ty << ")";
+  OS << "(trunc " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
 // SCEVZeroExtends - Only allow the creation of one SCEVZeroExtendExpr for any
@@ -240,7 +240,7 @@ SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
 }
 
 void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
-  OS << "(zeroextend " << *Op << " to " << *Ty << ")";
+  OS << "(zext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
 // SCEVSignExtends - Only allow the creation of one SCEVSignExtendExpr for any
@@ -261,7 +261,7 @@ SCEVSignExtendExpr::~SCEVSignExtendExpr() {
 }
 
 void SCEVSignExtendExpr::print(raw_ostream &OS) const {
-  OS << "(signextend " << *Op << " to " << *Ty << ")";
+  OS << "(sext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
 // SCEVCommExprs - Only allow the creation of one SCEVCommutativeExpr for any
