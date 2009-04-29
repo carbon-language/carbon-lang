@@ -748,6 +748,20 @@ public:
                                  ME->getClassInfo().first,
                                  ME->getMethodDecl(), ME->getType());
   }
+
+  /// getMethodSummary - This version of getMethodSummary is used to query
+  ///  the summary for the current method being analyzed.
+  RetainSummary *getMethodSummary(ObjCMethodDecl *MD) {
+    Selector S = MD->getSelector();
+    ObjCInterfaceDecl *ID = MD->getClassInterface();
+    IdentifierInfo *ClsName = ID->getIdentifier();
+    QualType ResultTy = MD->getResultType();
+    
+    if (MD->isInstanceMethod())
+      return getInstanceMethodSummary(S, ClsName, ID, MD, ResultTy);
+    else
+      return getClassMethodSummary(S, ClsName, ID, MD, ResultTy);
+  }
   
   RetainSummary* getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
                                         QualType RetTy);
