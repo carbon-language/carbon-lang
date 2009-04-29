@@ -724,8 +724,19 @@ public:
   
   RetainSummary* getSummary(FunctionDecl* FD);  
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
-  RetainSummary* getClassMethodSummary(ObjCMessageExpr *ME);
-  RetainSummary* getCommonMethodSummary(ObjCMessageExpr *ME, Selector S);
+
+  RetainSummary *getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
+                                       ObjCInterfaceDecl *ID,
+                                       ObjCMethodDecl *MD, QualType RetTy);
+  
+  RetainSummary *getClassMethodSummary(ObjCMessageExpr *ME) {
+    return getClassMethodSummary(ME->getSelector(), ME->getClassName(),
+                                 ME->getClassInfo().first,
+                                 ME->getMethodDecl(), ME->getType());
+  }
+  
+  RetainSummary* getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
+                                        QualType RetTy);
   RetainSummary* getMethodSummaryFromAnnotations(ObjCMethodDecl *MD);
   
   bool isGCEnabled() const { return GCEnabled; }
@@ -1134,9 +1145,10 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
 }
 
 RetainSummary*
-RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S) {
+RetainSummaryManager::getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
+                                             QualType RetTy) {
 
-  if (ObjCMethodDecl *MD = ME->getMethodDecl()) {
+  if (MD) {
     // Scan the method decl for 'void*' arguments.  These should be treated
     // as 'StopTracking' because they are often used with delegates.
     // Delegates are a frequent form of false positives with the retain
@@ -1165,7 +1177,7 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMessageExpr* ME, Selector S) {
   }
   
   // Look for methods that return an owned object.
-  if (!isTrackedObjectType(ME->getType())) {
+  if (!isTrackedObjectType(RetTy)) {
     if (ScratchArgs.empty() && ReceiverEff == DoNothing)
       return 0;
     
@@ -1209,7 +1221,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
         == InitRule)
       return getInitMethodSummary(ME);
   
-    Summ = getCommonMethodSummary(ME, S);
+    Summ = getCommonMethodSummary(ME->getMethodDecl(), S, ME->getType());
   }
 
   ObjCMethodSummaries[ME] = Summ;
@@ -1217,19 +1229,19 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
 }
 
 RetainSummary*
-RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr *ME) {
+RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
+                                            ObjCInterfaceDecl *ID,
+                                            ObjCMethodDecl *MD, QualType RetTy){
 
-  Selector S = ME->getSelector();
-  ObjCMethodSummariesTy::iterator I;  
+  assert(ClsName && "Class name must be specified.");
+  ObjCMethodSummariesTy::iterator I;
   
-  if (ObjCInterfaceDecl *ID = ME->getClassInfo().first) {
+  if (ID) {
     // Lookup the method using the decl for the class @interface.
     I = ObjCClassMethodSummaries.find(ID, S); 
   }
   else {
     // Fallback to using the class name.
-    IdentifierInfo *ClsName = ME->getClassName();
-  
     // Look up a summary in our cache of Selectors -> Summaries.
     I = ObjCClassMethodSummaries.find(ClsName, S);
   }
@@ -1239,12 +1251,12 @@ RetainSummaryManager::getClassMethodSummary(ObjCMessageExpr *ME) {
   
   // Annotations take precedence over all other ways to derive
   // summaries.
-  RetainSummary *Summ = getMethodSummaryFromAnnotations(ME->getMethodDecl());
+  RetainSummary *Summ = getMethodSummaryFromAnnotations(MD);
   
   if (!Summ)
-    Summ = getCommonMethodSummary(ME, S);
+    Summ = getCommonMethodSummary(MD, S, RetTy);
   
-  ObjCClassMethodSummaries[ObjCSummaryKey(ME->getClassName(), S)] = Summ;
+  ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
 }
 
