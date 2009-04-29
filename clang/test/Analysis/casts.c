@@ -1,14 +1,6 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region --verify %s
-// XFAIL
 
-struct sockaddr_storage {
-  int d;
-};
-
-struct sockaddr {
-  int sa_family;
-};
-
+#include <sys/socket.h>
 void f(int sock) {
   struct sockaddr_storage storage;
   struct sockaddr* sockaddr = (struct sockaddr*)&storage;
