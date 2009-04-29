@@ -1914,7 +1914,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     }
     else if (getLangOptions().ObjCNonFragileABI &&
              ClassDeclared != IDecl) {
-      Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
+      Diag(PropertyLoc, diag::warn_ivar_in_superclass_use)
         << property->getDeclName() << Ivar->getDeclName() 
         << ClassDeclared->getDeclName();
       Diag(Ivar->getLocation(), diag::note_previous_access_declaration)
