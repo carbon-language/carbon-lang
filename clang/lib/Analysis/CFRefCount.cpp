@@ -452,6 +452,12 @@ public:
   
   typedef MapTy::iterator iterator;
   
+  iterator find(ObjCInterfaceDecl* D, IdentifierInfo *ClsName, Selector S) {
+    // Lookup the method using the decl for the class @interface.  If we
+    // have no decl, lookup using the class name.
+    return D ? find(D, S) : find(ClsName, S);
+  }
+  
   iterator find(ObjCInterfaceDecl* D, Selector S) {
     
     // Do a lookup with the (D,S) pair.  If we find a match return
@@ -618,7 +624,7 @@ public:
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
   
-  RetainSummary* getPersistentStopSummary() {
+  RetainSummary *getPersistentStopSummary() {
     if (StopSummary)
       return StopSummary;
     
@@ -628,7 +634,7 @@ public:
     return StopSummary;
   }  
 
-  RetainSummary* getInitMethodSummary(ObjCMessageExpr* ME);
+  RetainSummary *getInitMethodSummary(QualType RetTy);
 
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
@@ -723,7 +729,15 @@ public:
   ~RetainSummaryManager();
   
   RetainSummary* getSummary(FunctionDecl* FD);  
-  RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
+  
+  RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID) {
+    return getMethodSummary(ME->getSelector(), ME->getClassName(),
+                            ID, ME->getMethodDecl(), ME->getType());    
+  }
+  
+  RetainSummary* getMethodSummary(Selector S, IdentifierInfo *ClsName,
+                                  ObjCInterfaceDecl* ID,
+                                  ObjCMethodDecl *MD, QualType RetTy);
 
   RetainSummary *getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
                                        ObjCInterfaceDecl *ID,
@@ -1075,17 +1089,13 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
 //===----------------------------------------------------------------------===//
 
 RetainSummary*
-RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
+RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
   assert(ScratchArgs.empty());
     
   // 'init' methods only return an alias if the return type is a location type.
-  QualType T = ME->getType();
-  RetainSummary* Summ =
-    getPersistentSummary(Loc::IsLocType(T) ? RetEffect::MakeReceiverAlias()
-                                           : RetEffect::MakeNoRet());
-  
-  ObjCMethodSummaries[ME] = Summ;
-  return Summ;
+  return getPersistentSummary(Loc::IsLocType(RetTy)
+                              ? RetEffect::MakeReceiverAlias()
+                              : RetEffect::MakeNoRet());  
 }
 
 RetainSummary*
@@ -1198,13 +1208,12 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
 }
 
 RetainSummary*
-RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
-                                       ObjCInterfaceDecl* ID) {
+RetainSummaryManager::getMethodSummary(Selector S, IdentifierInfo *ClsName,
+                                       ObjCInterfaceDecl* ID,
+                                       ObjCMethodDecl *MD, QualType RetTy) {
 
-  Selector S = ME->getSelector();
-  
-  // Look up a summary in our summary cache.  
-  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(ID, S);
+  // Look up a summary in our summary cache.
+  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(ID, ClsName, S);
   
   if (I != ObjCMethodSummaries.end())
     return I->second;
@@ -1213,18 +1222,18 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
 
   // Annotations take precedence over all other ways to derive
   // summaries.
-  RetainSummary *Summ = getMethodSummaryFromAnnotations(ME->getMethodDecl());
+  RetainSummary *Summ = getMethodSummaryFromAnnotations(MD);
   
   if (!Summ) {      
     // "initXXX": pass-through for receiver.
     if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
         == InitRule)
-      return getInitMethodSummary(ME);
-  
-    Summ = getCommonMethodSummary(ME->getMethodDecl(), S, ME->getType());
+      Summ = getInitMethodSummary(RetTy);
+    else
+      Summ = getCommonMethodSummary(MD, S, RetTy);
   }
 
-  ObjCMethodSummaries[ME] = Summ;
+  ObjCMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
 }
 
@@ -1234,17 +1243,8 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
                                             ObjCMethodDecl *MD, QualType RetTy){
 
   assert(ClsName && "Class name must be specified.");
-  ObjCMethodSummariesTy::iterator I;
-  
-  if (ID) {
-    // Lookup the method using the decl for the class @interface.
-    I = ObjCClassMethodSummaries.find(ID, S); 
-  }
-  else {
-    // Fallback to using the class name.
-    // Look up a summary in our cache of Selectors -> Summaries.
-    I = ObjCClassMethodSummaries.find(ClsName, S);
-  }
+  ObjCMethodSummariesTy::iterator I =
+    ObjCClassMethodSummaries.find(ID, ClsName, S);  
   
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
@@ -2126,6 +2126,8 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
 
     // FIXME: Wouldn't it be great if this code could be reduced?  It's just
     // a chain of lookups.
+    // FIXME: Is this really working as expected?  There are cases where
+    //  we just use the 'ID' from the message expression.
     const GRState* St = Builder.GetState(Pred);
     SVal V = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
 
