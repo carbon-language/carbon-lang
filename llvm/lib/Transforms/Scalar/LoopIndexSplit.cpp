@@ -10,33 +10,44 @@
 // This file implements Loop Index Splitting Pass. This pass handles three
 // kinds of loops.
 //
-// [1] Loop is eliminated when loop body is executed only once. For example,
+// [1] A loop may be eliminated if the body is executed exactly once.
+//     For example,
+//
 // for (i = 0; i < N; ++i) {
-//   if ( i == X) {
+//   if (i == X) {
+//     body;
+//   }
+// }
+//
+// is transformed to
+//
+// i = X;
+// body;
+//
+// [2] A loop's iteration space may be shrunk if the loop body is executed
+//     for a proper sub-range of the loop's iteration space. For example,
+//
+// for (i = 0; i < N; ++i) {
+//   if (i > A && i < B) {
 //     ...
 //   }
 // }
 //
-// [2] Loop's iteration space is shrunk if loop body is executed for certain
-//     range only. For example,
-// 
-// for (i = 0; i < N; ++i) {
-//   if ( i > A && i < B) {
-//     ...
-//   }
-// }
-// is trnasformed to iterators from A to B, if A > 0 and B < N.
+// is transformed to iterators from A to B, if A > 0 and B < N.
 //
-// [3] Loop is split if the loop body is dominated by an branch. For example,
+// [3] A loop may be split if the loop body is dominated by a branch.
+//     For example,
 //
 // for (i = LB; i < UB; ++i) { if (i < SV) A; else B; }
 //
 // is transformed into
+//
 // AEV = BSV = SV
 // for (i = LB; i < min(UB, AEV); ++i)
 //    A;
 // for (i = max(LB, BSV); i < UB; ++i);
 //    B;
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-index-split"
@@ -1060,7 +1071,7 @@ bool LoopIndexSplit::splitLoop() {
   DT->changeImmediateDominator(B_ExitBlock, B_ExitingBlock);
   DF->changeImmediateDominator(B_ExitBlock, B_ExitingBlock, DT);
 
- //[*] Split ALoop's exit edge. This creates a new block which
+  //[*] Split ALoop's exit edge. This creates a new block which
   //    serves two purposes. First one is to hold PHINode defnitions
   //    to ensure that ALoop's LCSSA form. Second use it to act
   //    as a preheader for BLoop.
