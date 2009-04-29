@@ -2451,12 +2451,11 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
     << MD.getSelector().getAsString()
     << "') does not contain 'copy' or otherwise starts with"
     " 'new' or 'alloc'.  This violates the naming convention rules given"
-    " in the Memory Management Guide for Cocoa (object leaked).";
+    " in the Memory Management Guide for Cocoa (object leaked)";
   }
   else
     os << " is no longer referenced after this point and has a retain count of"
-    " +"
-    << RV->getCount() << " (object leaked).";
+          " +" << RV->getCount() << " (object leaked)";
   
   return new PathDiagnosticEventPiece(L, os.str());
 }
