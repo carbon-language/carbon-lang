@@ -577,39 +577,36 @@ Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
   // C string (e.g. "%d")
   // ObjC string uses the same format specifiers as C string, so we can use 
   // the same format string checking logic for both ObjC and C strings.
-  bool isFExpr = SemaCheckStringLiteral(OrigFormatExpr, TheCall, 
-                                        HasVAListArg, format_idx,
-                                        firstDataArg);
+  if (SemaCheckStringLiteral(OrigFormatExpr, TheCall, HasVAListArg, format_idx,
+                             firstDataArg))
+    return;  // Literal format string found, check done!
 
-  if (!isFExpr) {
-    // For vprintf* functions (i.e., HasVAListArg==true), we add a
-    // special check to see if the format string is a function parameter
-    // of the function calling the printf function.  If the function
-    // has an attribute indicating it is a printf-like function, then we
-    // should suppress warnings concerning non-literals being used in a call
-    // to a vprintf function.  For example:
-    //
-    // void
-    // logmessage(char const *fmt __attribute__ (format (printf, 1, 2)), ...) {
-    //      va_list ap;
-    //      va_start(ap, fmt);
-    //      vprintf(fmt, ap);  // Do NOT emit a warning about "fmt".
-    //      ...
-    //
-    //
-    //  FIXME: We don't have full attribute support yet, so just check to see
-    //    if the argument is a DeclRefExpr that references a parameter.  We'll
-    //    add proper support for checking the attribute later.
-    if (HasVAListArg)
-      if (const DeclRefExpr* DR = dyn_cast<DeclRefExpr>(OrigFormatExpr))
-        if (isa<ParmVarDecl>(DR->getDecl()))
-          return;
+  // For vprintf* functions (i.e., HasVAListArg==true), we add a
+  // special check to see if the format string is a function parameter
+  // of the function calling the printf function.  If the function
+  // has an attribute indicating it is a printf-like function, then we
+  // should suppress warnings concerning non-literals being used in a call
+  // to a vprintf function.  For example:
+  //
+  // void
+  // logmessage(char const *fmt __attribute__ (format (printf, 1, 2)), ...) {
+  //      va_list ap;
+  //      va_start(ap, fmt);
+  //      vprintf(fmt, ap);  // Do NOT emit a warning about "fmt".
+  //      ...
+  //
+  //
+  //  FIXME: We don't have full attribute support yet, so just check to see
+  //    if the argument is a DeclRefExpr that references a parameter.  We'll
+  //    add proper support for checking the attribute later.
+  if (HasVAListArg)
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OrigFormatExpr))
+      if (isa<ParmVarDecl>(DR->getDecl()))
+        return;
 
-    Diag(TheCall->getArg(format_idx)->getLocStart(), 
-         diag::warn_printf_not_string_constant)
-         << OrigFormatExpr->getSourceRange();
-    return;
-  }
+  Diag(TheCall->getArg(format_idx)->getLocStart(), 
+       diag::warn_printf_not_string_constant)
+       << OrigFormatExpr->getSourceRange();
 }
 
 void Sema::CheckPrintfString(const StringLiteral *FExpr,
