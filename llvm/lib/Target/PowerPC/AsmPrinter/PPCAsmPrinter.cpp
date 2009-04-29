@@ -54,9 +54,9 @@ namespace {
     StringSet<> FnStubs, GVStubs, HiddenGVStubs;
     const PPCSubtarget &Subtarget;
   public:
-    PPCAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                  const TargetAsmInfo *T, bool F, bool V)
-      : AsmPrinter(O, TM, T, F, V),
+    explicit PPCAsmPrinter(raw_ostream &O, TargetMachine &TM,
+                           const TargetAsmInfo *T, unsigned OL, bool V)
+      : AsmPrinter(O, TM, T, OL, V),
         Subtarget(TM.getSubtarget<PPCSubtarget>()) {}
 
     virtual const char *getPassName() const {
@@ -297,9 +297,9 @@ namespace {
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
   public:
-    PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                       const TargetAsmInfo *T, bool F, bool V)
-      : PPCAsmPrinter(O, TM, T, F, V), DW(0), MMI(0) {}
+    explicit PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
+                                const TargetAsmInfo *T, unsigned OL, bool V)
+      : PPCAsmPrinter(O, TM, T, OL, V), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
@@ -326,9 +326,9 @@ namespace {
     MachineModuleInfo *MMI;
     raw_ostream &OS;
   public:
-    PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                        const TargetAsmInfo *T, bool F, bool V)
-      : PPCAsmPrinter(O, TM, T, F, V), DW(0), MMI(0), OS(O) {}
+    explicit PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
+                                 const TargetAsmInfo *T, unsigned OL, bool V)
+      : PPCAsmPrinter(O, TM, T, OL, V), DW(0), MMI(0), OS(O) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -1176,13 +1176,15 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(raw_ostream &o,
                                             PPCTargetMachine &tm,
-                                            bool fast, bool verbose) {
+                                            unsigned OptLevel, bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin()) {
-    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
+    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(),
+                                   OptLevel, verbose);
   } else {
-    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
+    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(),
+                                  OptLevel, verbose);
   }
 }
 

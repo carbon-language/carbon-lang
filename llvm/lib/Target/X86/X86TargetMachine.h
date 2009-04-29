@@ -45,7 +45,7 @@ protected:
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                             X86TargetMachine &tm,
-                                            bool fast, bool verbose);
+                                            unsigned OptLevel, bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
@@ -74,14 +74,14 @@ public:
   }
 
   // Set up the pass pipeline.
-  virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
-  virtual bool addPreRegAlloc(PassManagerBase &PM, bool Fast);
-  virtual bool addPostRegAlloc(PassManagerBase &PM, bool Fast);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+  virtual bool addInstSelector(PassManagerBase &PM, unsigned OptLevel);
+  virtual bool addPreRegAlloc(PassManagerBase &PM, unsigned OptLevel);
+  virtual bool addPostRegAlloc(PassManagerBase &PM, unsigned OptLevel);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, unsigned OptLevel, 
                                   bool Verbose, raw_ostream &Out);
-  virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
+  virtual bool addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
                               bool DumpAsm, MachineCodeEmitter &MCE);
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
                                     bool DumpAsm, MachineCodeEmitter &MCE);
 
   /// symbolicAddressesAreRIPRel - Return true if symbolic addresses are

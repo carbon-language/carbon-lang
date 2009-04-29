@@ -51,10 +51,10 @@ public:
   MachineBasicBlock *BB;
   AliasAnalysis *AA;
   GCFunctionInfo *GFI;
-  bool Fast;
+  unsigned OptLevel;
   static char ID;
 
-  explicit SelectionDAGISel(TargetMachine &tm, bool fast = false);
+  explicit SelectionDAGISel(TargetMachine &tm, unsigned OL = 3);
   virtual ~SelectionDAGISel();
   
   TargetLowering &getTargetLowering() { return TLI; }

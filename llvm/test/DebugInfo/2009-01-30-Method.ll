@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -fast | grep "\\"foo" | count 3
+; RUN: llvm-as < %s | llc -O0 | grep "\\"foo" | count 3
 ; 1 declaration, 1 definition and 1 pubnames entry.
 target triple = "i386-apple-darwin*"
 	%llvm.dbg.anchor.type = type { i32, i32 }

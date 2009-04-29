@@ -36,9 +36,9 @@ namespace {
     /// Unique incrementer for label values for referencing Global values.
     ///
 
-    AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm,
-                    const TargetAsmInfo *T, bool F, bool V)
-      : AsmPrinter(o, tm, T, F, V) {}
+    explicit AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm,
+                             const TargetAsmInfo *T, unsigned OL, bool V)
+      : AsmPrinter(o, tm, T, OL, V) {}
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
@@ -68,8 +68,9 @@ namespace {
 ///
 FunctionPass *llvm::createAlphaCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm,
-                                               bool fast, bool verbose) {
-  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), fast, verbose);
+                                               unsigned OptLevel,
+                                               bool verbose) {
+  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }
 
 #include "AlphaGenAsmWriter.inc"

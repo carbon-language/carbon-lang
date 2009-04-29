@@ -42,11 +42,11 @@ namespace {
       llvm::linkOcamlGC();
       llvm::linkShadowStackGC();
       
-      (void) llvm::createBURRListDAGScheduler(NULL, false);
-      (void) llvm::createTDRRListDAGScheduler(NULL, false);
-      (void) llvm::createTDListDAGScheduler(NULL, false);
-      (void) llvm::createFastDAGScheduler(NULL, false);
-      (void) llvm::createDefaultScheduler(NULL, false);
+      (void) llvm::createBURRListDAGScheduler(NULL, 3);
+      (void) llvm::createTDRRListDAGScheduler(NULL, 3);
+      (void) llvm::createTDListDAGScheduler(NULL, 3);
+      (void) llvm::createFastDAGScheduler(NULL, 3);
+      (void) llvm::createDefaultScheduler(NULL, 3);
 
     }
   } ForceCodegenLinking; // Force link by creating a global definition.

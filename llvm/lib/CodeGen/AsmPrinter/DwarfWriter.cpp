@@ -3351,7 +3351,7 @@ public:
   }
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
-  bool ValidDebugInfo(Value *V, bool FastISel) {
+  bool ValidDebugInfo(Value *V, unsigned OptLevel) {
     if (!V)
       return false;
 
@@ -3393,7 +3393,7 @@ public:
     case DW_TAG_lexical_block:
       /// FIXME. This interfers with the qualitfy of generated code when 
       /// during optimization.
-      if (FastISel == false)
+      if (OptLevel != 0)
         return false;
     default:
       break;
@@ -3574,7 +3574,7 @@ public:
       return 0;
 
     SmallVector<DbgScope *, 2> &Scopes = I->second;
-    if (Scopes.empty()) return 0;
+    assert(!Scopes.empty() && "We should have at least one debug scope!");
     DbgScope *Scope = Scopes.back(); Scopes.pop_back();
     unsigned ID = MMI->NextLabelID();
     MMI->RecordUsedDbgLabel(ID);
@@ -4731,8 +4731,8 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
 }
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
-bool DwarfWriter::ValidDebugInfo(Value *V, bool FastISel) {
-  return DD && DD->ValidDebugInfo(V, FastISel);
+bool DwarfWriter::ValidDebugInfo(Value *V, unsigned OptLevel) {
+  return DD && DD->ValidDebugInfo(V, OptLevel);
 }
 
 /// RecordSourceLine - Records location information and associates it with a 

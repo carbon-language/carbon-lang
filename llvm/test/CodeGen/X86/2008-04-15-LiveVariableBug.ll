@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -relocation-model=pic -disable-fp-elim -fast -regalloc=local
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -relocation-model=pic -disable-fp-elim -O0 -regalloc=local
 
 	%struct.CGPoint = type { double, double }
 	%struct.NSArray = type { %struct.NSObject }

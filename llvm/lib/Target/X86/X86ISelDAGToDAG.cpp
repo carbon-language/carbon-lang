@@ -134,8 +134,8 @@ namespace {
     bool OptForSize;
 
   public:
-    X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
-      : SelectionDAGISel(tm, fast),
+    explicit X86DAGToDAGISel(X86TargetMachine &tm, unsigned OptLevel)
+      : SelectionDAGISel(tm, OptLevel),
         TM(tm), X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
         OptForSize(false) {}
@@ -306,7 +306,7 @@ static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
 
 bool X86DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
                                                  SDNode *Root) const {
-  if (Fast) return false;
+  if (OptLevel == 0) return false;
 
   if (U == Root)
     switch (U->getOpcode()) {
@@ -512,7 +512,7 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
 
 
 /// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
-/// This is only run if not in -fast mode (aka -O0).
+/// This is only run if not in -O0 mode.
 /// This allows the instruction selector to pick more read-modify-write
 /// instructions. This is a common case:
 ///
@@ -714,10 +714,10 @@ void X86DAGToDAGISel::InstructionSelect() {
   OptForSize = F->hasFnAttr(Attribute::OptimizeForSize);
 
   DEBUG(BB->dump());
-  if (!Fast)
+  if (OptLevel != 0)
     PreprocessForRMW();
 
-  // FIXME: This should only happen when not -fast.
+  // FIXME: This should only happen when not compiled with -O0.
   PreprocessForFPConvert();
 
   // Codegen the basic block.
@@ -1744,6 +1744,6 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM, bool Fast) {
-  return new X86DAGToDAGISel(TM, Fast);
+FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM, unsigned OptLevel) {
+  return new X86DAGToDAGISel(TM, OptLevel);
 }

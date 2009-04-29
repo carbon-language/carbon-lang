@@ -630,6 +630,6 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
 //===----------------------------------------------------------------------===//
 
 llvm::ScheduleDAGSDNodes *
-llvm::createFastDAGScheduler(SelectionDAGISel *IS, bool) {
+llvm::createFastDAGScheduler(SelectionDAGISel *IS, unsigned) {
   return new ScheduleDAGFast(*IS->MF);
 }

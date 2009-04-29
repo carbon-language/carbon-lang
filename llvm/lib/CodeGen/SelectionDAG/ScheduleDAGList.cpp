@@ -261,7 +261,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
 /// new hazard recognizer. This scheduler takes ownership of the hazard
 /// recognizer and deletes it when done.
 ScheduleDAGSDNodes *
-llvm::createTDListDAGScheduler(SelectionDAGISel *IS, bool Fast) {
+llvm::createTDListDAGScheduler(SelectionDAGISel *IS, unsigned) {
   return new ScheduleDAGList(*IS->MF,
                              new LatencyPriorityQueue(),
                              IS->CreateTargetHazardRecognizer());
