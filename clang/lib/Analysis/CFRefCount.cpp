@@ -1919,14 +1919,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  disambiguate conjured symbols. 
         
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
-        
-        // Blast through TypedViewRegions to get the original region type.
-        while (R) {
-          const TypedViewRegion* ATR = dyn_cast<TypedViewRegion>(R);
-          if (!ATR) break;
-          R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
-        }
-        
+
         if (R) {          
           // Is the invalidated variable something that we were tracking?
           SymbolRef Sym = state.GetSValAsScalarOrLoc(R).getAsLocSymbol();
