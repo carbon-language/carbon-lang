@@ -55,7 +55,8 @@ namespace {
     const PPCSubtarget &Subtarget;
   public:
     explicit PPCAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, unsigned OL, bool V)
+                           const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                           bool V)
       : AsmPrinter(O, TM, T, OL, V),
         Subtarget(TM.getSubtarget<PPCSubtarget>()) {}
 
@@ -298,7 +299,8 @@ namespace {
     MachineModuleInfo *MMI;
   public:
     explicit PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                                const TargetAsmInfo *T, unsigned OL, bool V)
+                                const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                                bool V)
       : PPCAsmPrinter(O, TM, T, OL, V), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
@@ -327,7 +329,8 @@ namespace {
     raw_ostream &OS;
   public:
     explicit PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
-                                 const TargetAsmInfo *T, unsigned OL, bool V)
+                                 const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                                 bool V)
       : PPCAsmPrinter(O, TM, T, OL, V), DW(0), MMI(0), OS(O) {}
 
     virtual const char *getPassName() const {
@@ -1176,7 +1179,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(raw_ostream &o,
                                             PPCTargetMachine &tm,
-                                            unsigned OptLevel, bool verbose) {
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin()) {

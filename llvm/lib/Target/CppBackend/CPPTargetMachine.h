@@ -30,7 +30,7 @@ struct CPPTargetMachine : public TargetMachine {
   virtual bool WantsWholeFile() const { return true; }
   virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
                                         CodeGenFileType FileType,
-                                        unsigned OptLevel);
+                                        CodeGenOpt::Level OptLevel);
 
   // This class always works, but shouldn't be the default in most cases.
   static unsigned getModuleMatchQuality(const Module &M) { return 1; }

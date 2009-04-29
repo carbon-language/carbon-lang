@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Target/TargetMachine.h"
 #include <vector>
 #include <set>
 
@@ -357,13 +358,14 @@ public:
 
   /// OptLevel - What optimization level we're generating code for.
   /// 
-  unsigned OptLevel;
+  CodeGenOpt::Level OptLevel;
   
   /// GFI - Garbage collection metadata for the function.
   GCFunctionInfo *GFI;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
-                       FunctionLoweringInfo &funcinfo, unsigned ol)
+                       FunctionLoweringInfo &funcinfo,
+                       CodeGenOpt::Level ol)
     : CurDebugLoc(DebugLoc::getUnknownLoc()), 
       TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol) {
   }

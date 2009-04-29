@@ -129,21 +129,22 @@ PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool PPCTargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
+bool PPCTargetMachine::addInstSelector(PassManagerBase &PM,
+                                       CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.
   PM.add(createPPCISelDag(*this));
   return false;
 }
 
-bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM, unsigned OptLevel) {
-  
+bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel) {
   // Must run branch selection immediately preceding the asm printer.
   PM.add(createPPCBranchSelectionPass());
   return false;
 }
 
 bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          unsigned OptLevel,
+                                          CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
@@ -153,7 +154,8 @@ bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   return false;
 }
 
-bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
@@ -184,7 +186,8 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
   return false;
 }
 
-bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                            CodeGenOpt::Level OptLevel,
                                             bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));

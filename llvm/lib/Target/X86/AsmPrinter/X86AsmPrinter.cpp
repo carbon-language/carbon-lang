@@ -25,7 +25,8 @@ using namespace llvm;
 ///
 FunctionPass *llvm::createX86CodePrinterPass(raw_ostream &o,
                                              X86TargetMachine &tm,
-                                             unsigned OptLevel, bool verbose) {
+                                             CodeGenOpt::Level OptLevel,
+                                             bool verbose) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 
   if (Subtarget->isFlavorIntel()) {

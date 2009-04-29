@@ -138,17 +138,20 @@ const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
 
 
 // Pass Pipeline Configuration
-bool ARMTargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
+bool ARMTargetMachine::addInstSelector(PassManagerBase &PM,
+                                       CodeGenOpt::Level OptLevel) {
   PM.add(createARMISelDag(*this));
   return false;
 }
 
-bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, unsigned OptLevel) {
+bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
-  if (OptLevel != 0 && !DisableLdStOpti && !Subtarget.isThumb())
+  if (OptLevel != CodeGenOpt::None && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass());
 
-  if (OptLevel != 0 && !DisableIfConversion && !Subtarget.isThumb())
+  if (OptLevel != CodeGenOpt::None &&
+      !DisableIfConversion && !Subtarget.isThumb())
     PM.add(createIfConverterPass());
 
   PM.add(createARMConstantIslandPass());
@@ -156,7 +159,7 @@ bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, unsigned OptLevel) {
 }
 
 bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          unsigned OptLevel,
+                                          CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           raw_ostream &Out) {
   // Output assembly language.
@@ -168,8 +171,10 @@ bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 }
 
 
-bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
-                                      bool DumpAsm, MachineCodeEmitter &MCE) {
+bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel,
+                                      bool DumpAsm,
+                                      MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   if (DefRelocModel == Reloc::Default)
     setRelocationModel(Reloc::Static);
@@ -186,7 +191,7 @@ bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
 }
 
 bool ARMTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            unsigned OptLevel,
+                                            CodeGenOpt::Level OptLevel,
                                             bool DumpAsm,
                                             MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.

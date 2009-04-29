@@ -68,6 +68,19 @@ namespace FileModel {
   };
 }
 
+// Code generation optimization level.
+namespace CodeGenOpt {
+  enum Level {
+    Default,
+    None,
+    One,
+    Two,
+    Size,
+    Aggressive,
+    LTO
+  };
+}
+
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
@@ -213,7 +226,7 @@ public:
   virtual FileModel::Model addPassesToEmitFile(PassManagerBase &,
                                                raw_ostream &,
                                                CodeGenFileType,
-                                               unsigned /* OptLevel */) {
+                                               CodeGenOpt::Level) {
     return FileModel::None;
   }
 
@@ -223,7 +236,7 @@ public:
   ///
   virtual bool addPassesToEmitFileFinish(PassManagerBase &,
                                          MachineCodeEmitter *,
-                                         unsigned /* OptLevel */) {
+                                         CodeGenOpt::Level) {
     return true;
   }
  
@@ -235,7 +248,7 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &,
                                           MachineCodeEmitter &,
-                                          unsigned /* OptLevel */) {
+                                          CodeGenOpt::Level) {
     return true;
   }
 
@@ -245,7 +258,7 @@ public:
   virtual bool WantsWholeFile() const { return false; }
   virtual bool addPassesToEmitWholeFile(PassManager &, raw_ostream &,
                                         CodeGenFileType,
-                                        unsigned /* OptLevel */) {
+                                        CodeGenOpt::Level) {
     return true;
   }
 };
@@ -260,13 +273,13 @@ protected: // Can only create subclasses.
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
   /// both emitting to assembly files or machine code output.
   ///
-  bool addCommonCodeGenPasses(PassManagerBase &, unsigned /* OptLevel */);
+  bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level);
 
 public:
   
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.  If OptLevel is 0, the code generator should emit code as fast
+  /// generation.  If OptLevel is None, the code generator should emit code as fast
   /// as possible, though the generated code may be less efficient.  This method
   /// should return FileModel::Error if emission of this file type is not
   /// supported.
@@ -278,7 +291,7 @@ public:
   virtual FileModel::Model addPassesToEmitFile(PassManagerBase &PM,
                                                raw_ostream &Out,
                                                CodeGenFileType FileType,
-                                               unsigned OptLevel);
+                                               CodeGenOpt::Level);
   
   /// addPassesToEmitFileFinish - If the passes to emit the specified file had
   /// to be split up (e.g., to add an object writer pass), this method can be
@@ -286,7 +299,7 @@ public:
   ///
   virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
                                          MachineCodeEmitter *MCE,
-                                         unsigned OptLevel);
+                                         CodeGenOpt::Level);
  
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
@@ -296,21 +309,21 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
                                           MachineCodeEmitter &MCE,
-                                          unsigned OptLevel);
+                                          CodeGenOpt::Level);
   
   /// Target-Independent Code Generator Pass Configuration Options.
   
   /// addInstSelector - This method should add any "last minute" LLVM->LLVM
   /// passes, then install an instruction selector pass, which converts from
   /// LLVM code to machine instructions.
-  virtual bool addInstSelector(PassManagerBase &, unsigned /* OptLevel */) {
+  virtual bool addInstSelector(PassManagerBase &, CodeGenOpt::Level) {
     return true;
   }
 
   /// addPreRegAllocPasses - This method may be implemented by targets that want
   /// to run passes immediately before register allocation. This should return
   /// true if -print-machineinstrs should print after these passes.
-  virtual bool addPreRegAlloc(PassManagerBase &, unsigned /* OptLevel */) {
+  virtual bool addPreRegAlloc(PassManagerBase &, CodeGenOpt::Level) {
     return false;
   }
 
@@ -318,14 +331,14 @@ public:
   /// want to run passes after register allocation but before prolog-epilog
   /// insertion.  This should return true if -print-machineinstrs should print
   /// after these passes.
-  virtual bool addPostRegAlloc(PassManagerBase &, unsigned /* OptLevel */) {
+  virtual bool addPostRegAlloc(PassManagerBase &, CodeGenOpt::Level) {
     return false;
   }
   
   /// addPreEmitPass - This pass may be implemented by targets that want to run
   /// passes immediately before machine code is emitted.  This should return
   /// true if -print-machineinstrs should print out the code after the passes.
-  virtual bool addPreEmitPass(PassManagerBase &, unsigned /* OptLevel */) {
+  virtual bool addPreEmitPass(PassManagerBase &, CodeGenOpt::Level) {
     return false;
   }
   
@@ -333,7 +346,7 @@ public:
   /// addAssemblyEmitter - This pass should be overridden by the target to add
   /// the asmprinter, if asm emission is supported.  If this is not supported,
   /// 'true' should be returned.
-  virtual bool addAssemblyEmitter(PassManagerBase &, unsigned /* OptLevel */,
+  virtual bool addAssemblyEmitter(PassManagerBase &, CodeGenOpt::Level,
                                   bool /* VerboseAsmDefault */, raw_ostream &) {
     return true;
   }
@@ -341,7 +354,7 @@ public:
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned. If DumpAsm is true, the generated assembly is printed to cerr.
-  virtual bool addCodeEmitter(PassManagerBase &, unsigned /* OptLevel */,
+  virtual bool addCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
                               bool /*DumpAsm*/, MachineCodeEmitter &) {
     return true;
   }
@@ -350,7 +363,7 @@ public:
   /// a code emitter (without setting flags), if supported.  If this is not
   /// supported, 'true' should be returned.  If DumpAsm is true, the generated
   /// assembly is printed to cerr.
-  virtual bool addSimpleCodeEmitter(PassManagerBase &, unsigned /* OptLevel */,
+  virtual bool addSimpleCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
                                     bool /*DumpAsm*/, MachineCodeEmitter &) {
     return true;
   }

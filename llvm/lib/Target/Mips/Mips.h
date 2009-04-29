@@ -15,6 +15,8 @@
 #ifndef TARGET_MIPS_H
 #define TARGET_MIPS_H
 
+#include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
   class MipsTargetMachine;
   class FunctionPass;
@@ -25,7 +27,8 @@ namespace llvm {
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
   FunctionPass *createMipsCodePrinterPass(raw_ostream &OS, 
                                           MipsTargetMachine &TM,
-                                          unsigned OptLevel, bool Verbose);
+                                          CodeGenOpt::Level OptLevel,
+                                          bool Verbose);
 } // end namespace llvm;
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

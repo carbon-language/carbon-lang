@@ -3587,7 +3587,7 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
 bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
                                               raw_ostream &o,
                                               CodeGenFileType FileType,
-                                              unsigned OptLevel) {
+                                              CodeGenOpt::Level OptLevel) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   PM.add(createGCLoweringPass());

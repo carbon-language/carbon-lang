@@ -15,17 +15,18 @@
 #ifndef TARGET_SPARC_H
 #define TARGET_SPARC_H
 
+#include "llvm/Target/TargetMachine.h"
 #include <cassert>
 
 namespace llvm {
   class FunctionPass;
-  class TargetMachine;
   class SparcTargetMachine;
   class raw_ostream;
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
   FunctionPass *createSparcCodePrinterPass(raw_ostream &OS, TargetMachine &TM,
-                                           unsigned OptLevel, bool Verbose);
+                                           CodeGenOpt::Level OptLevel,
+                                           bool Verbose);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
 } // end namespace llvm;

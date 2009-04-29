@@ -57,7 +57,7 @@ namespace {
     SelectionDAG &DAG;
     const TargetLowering &TLI;
     CombineLevel Level;
-    unsigned OptLevel;
+    CodeGenOpt::Level OptLevel;
     bool LegalOperations;
     bool LegalTypes;
 
@@ -254,7 +254,7 @@ namespace {
     }
 
 public:
-    DAGCombiner(SelectionDAG &D, AliasAnalysis &A, unsigned OL)
+    DAGCombiner(SelectionDAG &D, AliasAnalysis &A, CodeGenOpt::Level OL)
       : DAG(D),
         TLI(D.getTargetLoweringInfo()),
         Level(Unrestricted),
@@ -4784,7 +4784,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   SDValue Ptr   = LD->getBasePtr();
 
   // Try to infer better alignment information than the load already has.
-  if (OptLevel != 0 && LD->isUnindexed()) {
+  if (OptLevel != CodeGenOpt::None && LD->isUnindexed()) {
     if (unsigned Align = InferAlignment(Ptr, DAG)) {
       if (Align > LD->getAlignment())
         return DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
@@ -4904,7 +4904,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   SDValue Ptr   = ST->getBasePtr();
 
   // Try to infer better alignment information than the store already has.
-  if (OptLevel != 0 && ST->isUnindexed()) {
+  if (OptLevel != CodeGenOpt::None && ST->isUnindexed()) {
     if (unsigned Align = InferAlignment(Ptr, DAG)) {
       if (Align > ST->getAlignment())
         return DAG.getTruncStore(Chain, N->getDebugLoc(), Value,
@@ -6093,7 +6093,7 @@ SDValue DAGCombiner::FindBetterChain(SDNode *N, SDValue OldChain) {
 // SelectionDAG::Combine - This is the entry point for the file.
 //
 void SelectionDAG::Combine(CombineLevel Level, AliasAnalysis &AA,
-                           unsigned OptLevel) {
+                           CodeGenOpt::Level OptLevel) {
   /// run - This is the main entry point to this class.
   ///
   DAGCombiner(*this, AA, OptLevel).Run(Level);

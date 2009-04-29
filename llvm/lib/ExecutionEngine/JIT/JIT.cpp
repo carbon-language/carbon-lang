@@ -196,7 +196,7 @@ void DarwinRegisterFrame(void* FrameBegin) {
 ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
                                             std::string *ErrorStr,
                                             JITMemoryManager *JMM,
-                                            unsigned OptLevel) {
+                                            CodeGenOpt::Level OptLevel) {
   ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM, OptLevel);
   if (!EE) return 0;
   
@@ -207,7 +207,7 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
 }
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
-         JITMemoryManager *JMM, unsigned OptLevel)
+         JITMemoryManager *JMM, CodeGenOpt::Level OptLevel)
   : ExecutionEngine(MP), TM(tm), TJI(tji) {
   setTargetData(TM.getTargetData());
 
@@ -272,7 +272,7 @@ void JIT::addModuleProvider(ModuleProvider *MP) {
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *MCE, 3 /* OptLevel */)) {
+    if (TM.addPassesToEmitMachineCode(PM, *MCE, CodeGenOpt::Default)) {
       cerr << "Target does not support machine code emission!\n";
       abort();
     }
@@ -305,7 +305,7 @@ Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
     
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *MCE, 3 /* OptLevel */)) {
+    if (TM.addPassesToEmitMachineCode(PM, *MCE, CodeGenOpt::Default)) {
       cerr << "Target does not support machine code emission!\n";
       abort();
     }
@@ -337,7 +337,7 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
     
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *MCE, 3 /* OptLevel */)) {
+    if (TM.addPassesToEmitMachineCode(PM, *MCE, CodeGenOpt::Default)) {
       cerr << "Target does not support machine code emission!\n";
       abort();
     }

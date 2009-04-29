@@ -51,10 +51,11 @@ public:
   MachineBasicBlock *BB;
   AliasAnalysis *AA;
   GCFunctionInfo *GFI;
-  unsigned OptLevel;
+  CodeGenOpt::Level OptLevel;
   static char ID;
 
-  explicit SelectionDAGISel(TargetMachine &tm, unsigned OL = 3);
+  explicit SelectionDAGISel(TargetMachine &tm,
+                            CodeGenOpt::Level OL = CodeGenOpt::Default);
   virtual ~SelectionDAGISel();
   
   TargetLowering &getTargetLowering() { return TLI; }

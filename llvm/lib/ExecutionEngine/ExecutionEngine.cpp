@@ -383,7 +383,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
                                          bool ForceInterpreter,
                                          std::string *ErrorStr,
-                                         unsigned OptLevel) {
+                                         CodeGenOpt::Level OptLevel) {
   ExecutionEngine *EE = 0;
 
   // Make sure we can resolve symbols in the program as well. The zero arg

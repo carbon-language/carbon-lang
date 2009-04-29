@@ -16,6 +16,7 @@
 #define LLVM_TARGET_IBMCELLSPU_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
   class SPUTargetMachine;
@@ -25,7 +26,8 @@ namespace llvm {
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
   FunctionPass *createSPUAsmPrinterPass(raw_ostream &o,
                                         SPUTargetMachine &tm,
-                                        unsigned OptLevel, bool verbose);
+                                        CodeGenOpt::Level OptLevel,
+                                        bool verbose);
 
   /*--== Utility functions/predicates/etc used all over the place: --==*/
   //! Predicate test for a signed 10-bit value

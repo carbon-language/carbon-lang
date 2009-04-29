@@ -57,8 +57,9 @@ namespace {
     DwarfWriter *DW;
     const XCoreSubtarget &Subtarget;
   public:
-    XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
-                    const TargetAsmInfo *T, unsigned OL, bool V)
+    explicit XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
+                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                             bool V)
       : AsmPrinter(O, TM, T, OL, V), DW(0),
         Subtarget(*TM.getSubtargetImpl()) {}
 
@@ -105,7 +106,7 @@ namespace {
 ///
 FunctionPass *llvm::createXCoreCodePrinterPass(raw_ostream &o,
                                                XCoreTargetMachine &tm,
-                                               unsigned OptLevel,
+                                               CodeGenOpt::Level OptLevel,
                                                bool verbose) {
   return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }

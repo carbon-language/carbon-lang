@@ -37,7 +37,8 @@ namespace {
     ///
 
     explicit AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm,
-                             const TargetAsmInfo *T, unsigned OL, bool V)
+                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                             bool V)
       : AsmPrinter(o, tm, T, OL, V) {}
 
     virtual const char *getPassName() const {
@@ -68,7 +69,7 @@ namespace {
 ///
 FunctionPass *llvm::createAlphaCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm,
-                                               unsigned OptLevel,
+                                               CodeGenOpt::Level OptLevel,
                                                bool verbose) {
   return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }

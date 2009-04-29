@@ -16,9 +16,10 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_H
 #define LLVM_CODEGEN_ASMPRINTER_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/Target/TargetMachine.h"
 #include <set>
 
 namespace llvm {
@@ -66,7 +67,7 @@ namespace llvm {
     std::set<const GlobalValue*> ExtWeakSymbols;
 
     /// OptLevel - Generating code at a specific optimization level.
-    unsigned OptLevel;
+    CodeGenOpt::Level OptLevel;
   public:
     /// Output stream on which we're printing assembly code.
     ///
@@ -111,7 +112,7 @@ namespace llvm {
 
   protected:
     explicit AsmPrinter(raw_ostream &o, TargetMachine &TM,
-                        const TargetAsmInfo *T, unsigned OL, bool V);
+                        const TargetAsmInfo *T, CodeGenOpt::Level OL, bool V);
     
   public:
     virtual ~AsmPrinter();

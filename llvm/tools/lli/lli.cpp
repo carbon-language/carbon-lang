@@ -122,7 +122,9 @@ int main(int argc, char **argv, char * const *envp) {
   if (!TargetTriple.empty())
     Mod->setTargetTriple(TargetTriple);
 
-  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, Fast);
+  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg,
+                               Fast ?
+                                 CodeGenOpt::None : CodeGenOpt::Aggressive);
   if (!EE && !ErrorMsg.empty()) {
     std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
     exit(1);

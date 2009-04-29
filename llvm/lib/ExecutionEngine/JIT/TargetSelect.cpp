@@ -42,7 +42,8 @@ MAttrs("mattr",
 /// available for the current target.  Otherwise, return null.
 ///
 ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
-                                JITMemoryManager *JMM, unsigned OptLevel) {
+                                JITMemoryManager *JMM,
+                                CodeGenOpt::Level OptLevel) {
   const TargetMachineRegistry::entry *TheArch = MArch;
   if (TheArch == 0) {
     std::string Error;

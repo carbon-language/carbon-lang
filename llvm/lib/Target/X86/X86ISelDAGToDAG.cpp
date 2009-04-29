@@ -134,7 +134,7 @@ namespace {
     bool OptForSize;
 
   public:
-    explicit X86DAGToDAGISel(X86TargetMachine &tm, unsigned OptLevel)
+    explicit X86DAGToDAGISel(X86TargetMachine &tm, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(tm, OptLevel),
         TM(tm), X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
@@ -306,7 +306,7 @@ static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
 
 bool X86DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
                                                  SDNode *Root) const {
-  if (OptLevel == 0) return false;
+  if (OptLevel == CodeGenOpt::None) return false;
 
   if (U == Root)
     switch (U->getOpcode()) {
@@ -714,7 +714,7 @@ void X86DAGToDAGISel::InstructionSelect() {
   OptForSize = F->hasFnAttr(Attribute::OptimizeForSize);
 
   DEBUG(BB->dump());
-  if (OptLevel != 0)
+  if (OptLevel != CodeGenOpt::None)
     PreprocessForRMW();
 
   // FIXME: This should only happen when not compiled with -O0.
@@ -1744,6 +1744,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM, unsigned OptLevel) {
+FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM,
+                                     llvm::CodeGenOpt::Level OptLevel) {
   return new X86DAGToDAGISel(TM, OptLevel);
 }

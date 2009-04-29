@@ -56,15 +56,15 @@ const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const {
 }
 
 bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM,
-                                         unsigned OptLevel) {
+                                         CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.
   PM.add(createPIC16ISelDag(*this));
   return false;
 }
 
 bool PIC16TargetMachine::
-addAssemblyEmitter(PassManagerBase &PM, unsigned OptLevel, bool Verbose,
-                   raw_ostream &Out) {
+addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
+                   bool Verbose, raw_ostream &Out) {
   // Output assembly language.
   PM.add(createPIC16CodePrinterPass(Out, *this, OptLevel, Verbose));
   return false;

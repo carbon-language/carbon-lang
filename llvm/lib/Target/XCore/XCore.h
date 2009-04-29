@@ -15,6 +15,8 @@
 #ifndef TARGET_XCORE_H
 #define TARGET_XCORE_H
 
+#include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
   class FunctionPass;
   class TargetMachine;
@@ -24,7 +26,8 @@ namespace llvm {
   FunctionPass *createXCoreISelDag(XCoreTargetMachine &TM);
   FunctionPass *createXCoreCodePrinterPass(raw_ostream &OS,
                                            XCoreTargetMachine &TM,
-                                           unsigned OptLevel, bool Verbose);
+                                           CodeGenOpt::Level OptLevel,
+                                           bool Verbose);
 } // end namespace llvm;
 
 // Defines symbolic names for XCore registers.  This defines a mapping from

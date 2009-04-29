@@ -55,7 +55,7 @@ namespace {
 class VISIBILITY_HIDDEN SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
-  unsigned OptLevel;
+  CodeGenOpt::Level OptLevel;
   bool TypesNeedLegalizing;
 
   // Libcall insertion helpers.
@@ -139,7 +139,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
 
 public:
   explicit SelectionDAGLegalize(SelectionDAG &DAG, bool TypesNeedLegalizing,
-                                unsigned ol);
+                                CodeGenOpt::Level ol);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
@@ -350,7 +350,7 @@ SelectionDAGLegalize::ShuffleWithNarrowerEltType(MVT NVT, MVT VT,  DebugLoc dl,
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
-                                           bool types, unsigned ol)
+                                           bool types, CodeGenOpt::Level ol)
   : TLI(dag.getTargetLoweringInfo()), DAG(dag), OptLevel(ol),
     TypesNeedLegalizing(types), ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 32 &&
@@ -1276,7 +1276,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
 
-        if (OptLevel == 0) {
+        if (OptLevel == CodeGenOpt::None) {
           // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
           // won't hurt anything.
           if (useDEBUG_LOC) {
@@ -8571,7 +8571,8 @@ SDValue SelectionDAGLegalize::StoreWidenVectorOp(StoreSDNode *ST,
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize(bool TypesNeedLegalizing, unsigned OptLevel) {
+void SelectionDAG::Legalize(bool TypesNeedLegalizing,
+                            CodeGenOpt::Level OptLevel) {
   /// run - This is the main entry point to this class.
   ///
   SelectionDAGLegalize(*this, TypesNeedLegalizing, OptLevel).LegalizeDAG();

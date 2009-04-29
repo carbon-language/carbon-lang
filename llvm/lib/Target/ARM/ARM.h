@@ -15,6 +15,7 @@
 #ifndef TARGET_ARM_H
 #define TARGET_ARM_H
 
+#include "llvm/Target/TargetMachine.h"
 #include <cassert>
 
 namespace llvm {
@@ -91,7 +92,8 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
 FunctionPass *createARMISelDag(ARMTargetMachine &TM);
 FunctionPass *createARMCodePrinterPass(raw_ostream &O,
                                        ARMTargetMachine &TM,
-                                       unsigned OptLevel, bool Verbose);
+                                       CodeGenOpt::Level OptLevel,
+                                       bool Verbose);
 FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 FunctionPass *createARMLoadStoreOptimizationPass();

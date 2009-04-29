@@ -49,7 +49,8 @@ namespace {
     ValueMapTy NumberForBB;
   public:
     explicit SparcAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                             const TargetAsmInfo *T, unsigned OL, bool V)
+                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                             bool V)
       : AsmPrinter(O, TM, T, OL, V) {}
 
     virtual const char *getPassName() const {
@@ -82,7 +83,7 @@ namespace {
 ///
 FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm,
-                                               unsigned OptLevel,
+                                               CodeGenOpt::Level OptLevel,
                                                bool verbose) {
   return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }

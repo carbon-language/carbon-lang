@@ -3351,7 +3351,7 @@ public:
   }
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
-  bool ValidDebugInfo(Value *V, unsigned OptLevel) {
+  bool ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
     if (!V)
       return false;
 
@@ -3393,7 +3393,7 @@ public:
     case DW_TAG_lexical_block:
       /// FIXME. This interfers with the qualitfy of generated code when 
       /// during optimization.
-      if (OptLevel != 0)
+      if (OptLevel != CodeGenOpt::None)
         return false;
     default:
       break;
@@ -4731,7 +4731,7 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
 }
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
-bool DwarfWriter::ValidDebugInfo(Value *V, unsigned OptLevel) {
+bool DwarfWriter::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
   return DD && DD->ValidDebugInfo(V, OptLevel);
 }
 

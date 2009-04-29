@@ -25,7 +25,8 @@
 namespace llvm {
   struct VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
     explicit PIC16AsmPrinter(raw_ostream &O, PIC16TargetMachine &TM,
-                             const TargetAsmInfo *T, unsigned OL, bool V)
+                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                             bool V)
       : AsmPrinter(O, TM, T, OL, V) {
       CurBank = "";
       FunctionLabelBegin = '@';

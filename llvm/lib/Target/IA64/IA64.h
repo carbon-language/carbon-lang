@@ -14,6 +14,8 @@
 #ifndef TARGET_IA64_H
 #define TARGET_IA64_H
 
+#include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
 
 class IA64TargetMachine;
@@ -37,7 +39,8 @@ FunctionPass *createIA64BundlingPass(IA64TargetMachine &TM);
 ///
 FunctionPass *createIA64CodePrinterPass(raw_ostream &o,
                                         IA64TargetMachine &tm,
-                                        unsigned OptLevel, bool verbose);
+                                        CodeGenOpt::Level OptLevel,
+                                        bool verbose);
 
 } // End llvm namespace
 

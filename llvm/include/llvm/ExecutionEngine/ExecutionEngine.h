@@ -18,8 +18,9 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "llvm/System/Mutex.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/System/Mutex.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
@@ -84,7 +85,7 @@ protected:
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
   typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*,
-                                       unsigned OptLevel);
+                                       CodeGenOpt::Level OptLevel);
   static EECtorFn JITCtor, InterpCtor;
 
   /// LazyFunctionCreator - If an unknown function is needed, this function
@@ -114,7 +115,8 @@ public:
   static ExecutionEngine *create(ModuleProvider *MP,
                                  bool ForceInterpreter = false,
                                  std::string *ErrorStr = 0,
-                                 unsigned OptLevel = 3);
+                                 CodeGenOpt::Level OptLevel =
+                                   CodeGenOpt::Default);
   
   /// create - This is the factory method for creating an execution engine which
   /// is appropriate for the current machine.  This takes ownership of the
@@ -127,10 +129,9 @@ public:
   static ExecutionEngine *createJIT(ModuleProvider *MP,
                                     std::string *ErrorStr = 0,
                                     JITMemoryManager *JMM = 0,
-                                    unsigned OptLevel = 3);
-  
-  
-  
+                                    CodeGenOpt::Level OptLevel =
+                                      CodeGenOpt::Default);
+
   /// addModuleProvider - Add a ModuleProvider to the list of modules that we
   /// can JIT from.  Note that this takes ownership of the ModuleProvider: when
   /// the ExecutionEngine is destroyed, it destroys the MP as well.

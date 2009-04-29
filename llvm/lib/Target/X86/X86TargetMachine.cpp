@@ -180,7 +180,8 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool X86TargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
+bool X86TargetMachine::addInstSelector(PassManagerBase &PM,
+                                       CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.
   PM.add(createX86ISelDag(*this, OptLevel));
 
@@ -194,20 +195,22 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM, unsigned OptLevel) {
   return false;
 }
 
-bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM, unsigned OptLevel) {
+bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel) {
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
   PM.add(createX86MaxStackAlignmentCalculatorPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
 
-bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, unsigned OptLevel) {
+bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
+                                       CodeGenOpt::Level OptLevel) {
   PM.add(createX86FloatingPointStackifierPass());
   return true;  // -print-machineinstr should print after this.
 }
 
 bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          unsigned OptLevel,
+                                          CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
@@ -216,7 +219,8 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   return false;
 }
 
-bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
@@ -245,7 +249,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
 }
 
 bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            unsigned OptLevel, bool DumpAsm,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool DumpAsm,
                                             MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
   if (DumpAsm) {

@@ -108,7 +108,7 @@ public:
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
   static ExecutionEngine *create(ModuleProvider *M, std::string *ErrorStr = 0,
-                                 unsigned OptLevel /*unused*/ = 3);
+                                 CodeGenOpt::Level = CodeGenOpt::Default);
 
   /// run - Start execution with the specified function and arguments.
   ///

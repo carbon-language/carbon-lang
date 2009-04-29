@@ -15,18 +15,20 @@
 #ifndef TARGET_ALPHA_H
 #define TARGET_ALPHA_H
 
+#include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
 
   class AlphaTargetMachine;
   class FunctionPass;
-  class TargetMachine;
   class MachineCodeEmitter;
   class raw_ostream;
 
   FunctionPass *createAlphaISelDag(AlphaTargetMachine &TM);
   FunctionPass *createAlphaCodePrinterPass(raw_ostream &OS,
                                            TargetMachine &TM,
-                                           unsigned OptLevel, bool Verbose);
+                                           CodeGenOpt::Level OptLevel,
+                                           bool Verbose);
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);
   FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
                                            MachineCodeEmitter &MCE);

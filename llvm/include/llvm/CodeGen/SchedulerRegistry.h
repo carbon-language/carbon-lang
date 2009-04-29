@@ -16,6 +16,7 @@
 #define LLVM_CODEGENSCHEDULERREGISTRY_H
 
 #include "llvm/CodeGen/MachinePassRegistry.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
@@ -32,7 +33,8 @@ class MachineBasicBlock;
 
 class RegisterScheduler : public MachinePassRegistryNode {
 public:
-  typedef ScheduleDAGSDNodes *(*FunctionPassCtor)(SelectionDAGISel*, unsigned);
+  typedef ScheduleDAGSDNodes *(*FunctionPassCtor)(SelectionDAGISel*,
+                                                  CodeGenOpt::Level);
 
   static MachinePassRegistry Registry;
 
@@ -64,27 +66,27 @@ public:
 /// createBURRListDAGScheduler - This creates a bottom up register usage
 /// reduction list scheduler.
 ScheduleDAGSDNodes *createBURRListDAGScheduler(SelectionDAGISel *IS,
-                                               unsigned OptLevel);
+                                               CodeGenOpt::Level OptLevel);
 
 /// createTDRRListDAGScheduler - This creates a top down register usage
 /// reduction list scheduler.
 ScheduleDAGSDNodes *createTDRRListDAGScheduler(SelectionDAGISel *IS,
-                                               unsigned OptLevel);
+                                               CodeGenOpt::Level OptLevel);
 
 /// createTDListDAGScheduler - This creates a top-down list scheduler with
 /// a hazard recognizer.
 ScheduleDAGSDNodes *createTDListDAGScheduler(SelectionDAGISel *IS,
-                                             unsigned OptLevel);
+                                             CodeGenOpt::Level OptLevel);
 
 /// createFastDAGScheduler - This creates a "fast" scheduler.
 ///
 ScheduleDAGSDNodes *createFastDAGScheduler(SelectionDAGISel *IS,
-                                           unsigned OptLevel);
+                                           CodeGenOpt::Level OptLevel);
 
 /// createDefaultScheduler - This creates an instruction scheduler appropriate
 /// for the target.
 ScheduleDAGSDNodes *createDefaultScheduler(SelectionDAGISel *IS,
-                                           unsigned OptLevel);
+                                           CodeGenOpt::Level OptLevel);
 
 } // end namespace llvm
 

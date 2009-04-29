@@ -105,7 +105,7 @@ getModuleMatchQuality(const Module &M)
 // Install an instruction selector pass using 
 // the ISelDag to gen Mips code.
 bool MipsTargetMachine::
-addInstSelector(PassManagerBase &PM, unsigned OptLevel) 
+addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel) 
 {
   PM.add(createMipsISelDag(*this));
   return false;
@@ -115,7 +115,7 @@ addInstSelector(PassManagerBase &PM, unsigned OptLevel)
 // machine code is emitted. return true if -print-machineinstrs should 
 // print out the code after the passes.
 bool MipsTargetMachine::
-addPreEmitPass(PassManagerBase &PM, unsigned OptLevel) 
+addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel) 
 {
   PM.add(createMipsDelaySlotFillerPass(*this));
   return true;
@@ -124,7 +124,7 @@ addPreEmitPass(PassManagerBase &PM, unsigned OptLevel)
 // Implements the AssemblyEmitter for the target. Must return
 // true if AssemblyEmitter is supported
 bool MipsTargetMachine::
-addAssemblyEmitter(PassManagerBase &PM, unsigned OptLevel, 
+addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel, 
                    bool Verbose, raw_ostream &Out) 
 {
   // Output assembly language.

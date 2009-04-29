@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/GCs.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace {
   struct ForceCodegenLinking {
@@ -42,11 +43,11 @@ namespace {
       llvm::linkOcamlGC();
       llvm::linkShadowStackGC();
       
-      (void) llvm::createBURRListDAGScheduler(NULL, 3);
-      (void) llvm::createTDRRListDAGScheduler(NULL, 3);
-      (void) llvm::createTDListDAGScheduler(NULL, 3);
-      (void) llvm::createFastDAGScheduler(NULL, 3);
-      (void) llvm::createDefaultScheduler(NULL, 3);
+      (void) llvm::createBURRListDAGScheduler(NULL, llvm::CodeGenOpt::Default);
+      (void) llvm::createTDRRListDAGScheduler(NULL, llvm::CodeGenOpt::Default);
+      (void) llvm::createTDListDAGScheduler(NULL, llvm::CodeGenOpt::Default);
+      (void) llvm::createFastDAGScheduler(NULL, llvm::CodeGenOpt::Default);
+      (void) llvm::createDefaultScheduler(NULL, llvm::CodeGenOpt::Default);
 
     }
   } ForceCodegenLinking; // Force link by creating a global definition.

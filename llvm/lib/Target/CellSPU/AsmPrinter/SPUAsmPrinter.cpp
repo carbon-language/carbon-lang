@@ -49,7 +49,8 @@ namespace {
     std::set<std::string> FnStubs, GVStubs;
   public:
     explicit SPUAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, unsigned OL, bool V) :
+                           const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                           bool V) :
       AsmPrinter(O, TM, T, OL, V) {}
 
     virtual const char *getPassName() const {
@@ -288,8 +289,9 @@ namespace {
     DwarfWriter *DW;
     MachineModuleInfo *MMI;
   public:
-    LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
-                    const TargetAsmInfo *T, bool F, bool V)
+    explicit LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
+                             const TargetAsmInfo *T, CodeGenOpt::Level F,
+                             bool V)
       : SPUAsmPrinter(O, TM, T, F, V), DW(0), MMI(0) {}
 
     virtual const char *getPassName() const {
@@ -615,6 +617,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
                                             SPUTargetMachine &tm,
-                                            unsigned OptLevel, bool verbose) {
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose) {
   return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }

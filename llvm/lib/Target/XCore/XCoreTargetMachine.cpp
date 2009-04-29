@@ -56,13 +56,13 @@ unsigned XCoreTargetMachine::getModuleMatchQuality(const Module &M) {
 }
 
 bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,
-                                         unsigned OptLevel) {
+                                         CodeGenOpt::Level OptLevel) {
   PM.add(createXCoreISelDag(*this));
   return false;
 }
 
 bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                            unsigned OptLevel,
+                                            CodeGenOpt::Level OptLevel,
                                             bool Verbose,
                                             raw_ostream &Out) {
   // Output assembly language.

@@ -21,6 +21,7 @@
 #define LLVM_CODEGEN_DWARFWRITER_H
 
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
@@ -81,7 +82,7 @@ public:
   void EndFunction(MachineFunction *MF);
 
   /// ValidDebugInfo - Return true if V represents valid debug info value.
-  bool ValidDebugInfo(Value *V, unsigned OptLevel);
+  bool ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel);
 
   /// RecordSourceLine - Register a source line with debug info. Returns a
   /// unique label ID used to generate a label and provide correspondence to

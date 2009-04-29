@@ -45,7 +45,8 @@ protected:
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                             X86TargetMachine &tm,
-                                            unsigned OptLevel, bool verbose);
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
@@ -74,14 +75,16 @@ public:
   }
 
   // Set up the pass pipeline.
-  virtual bool addInstSelector(PassManagerBase &PM, unsigned OptLevel);
-  virtual bool addPreRegAlloc(PassManagerBase &PM, unsigned OptLevel);
-  virtual bool addPostRegAlloc(PassManagerBase &PM, unsigned OptLevel);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, unsigned OptLevel, 
+  virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+  virtual bool addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+  virtual bool addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM,
+                                  CodeGenOpt::Level OptLevel, 
                                   bool Verbose, raw_ostream &Out);
-  virtual bool addCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               bool DumpAsm, MachineCodeEmitter &MCE);
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, unsigned OptLevel,
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
+                                    CodeGenOpt::Level OptLevel,
                                     bool DumpAsm, MachineCodeEmitter &MCE);
 
   /// symbolicAddressesAreRIPRel - Return true if symbolic addresses are

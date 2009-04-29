@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -38,7 +37,8 @@ namespace {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
   public:
     explicit IA64AsmPrinter(raw_ostream &O, TargetMachine &TM,
-                            const TargetAsmInfo *T, unsigned OL, bool V)
+                            const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                            bool V)
       : AsmPrinter(O, TM, T, OL, V) {}
 
     virtual const char *getPassName() const {
@@ -370,7 +370,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createIA64CodePrinterPass(raw_ostream &o,
                                               IA64TargetMachine &tm,
-                                              unsigned OptLevel,
+                                              CodeGenOpt::Level OptLevel,
                                               bool verbose) {
   return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }

@@ -465,7 +465,7 @@ public:
       NumInputRootOps = N->getNumChildren();
 
       if (DisablePatternForFastISel(N, CGP))
-        emitCheck("OptLevel != 0");
+        emitCheck("OptLevel != CodeGenOpt::None");
 
       emitCheck(PredicateCheck);
     }

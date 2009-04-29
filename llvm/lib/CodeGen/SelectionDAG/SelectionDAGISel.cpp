@@ -136,10 +136,10 @@ namespace llvm {
   /// createDefaultScheduler - This creates an instruction scheduler appropriate
   /// for the target.
   ScheduleDAGSDNodes* createDefaultScheduler(SelectionDAGISel *IS,
-                                             unsigned OptLevel) {
+                                             CodeGenOpt::Level OptLevel) {
     const TargetLowering &TLI = IS->getTargetLowering();
 
-    if (OptLevel == 0)
+    if (OptLevel == CodeGenOpt::None)
       return createFastDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
       return createTDListDAGScheduler(IS, OptLevel);
@@ -262,7 +262,7 @@ static void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
-SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, unsigned OL) :
+SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, CodeGenOpt::Level OL) :
   FunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
@@ -645,7 +645,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
   
-  if (OptLevel != 0)
+  if (OptLevel != CodeGenOpt::None)
     ComputeLiveOutVRegInfo();
 
   // Third, instruction select all of the operations to machine code, adding the

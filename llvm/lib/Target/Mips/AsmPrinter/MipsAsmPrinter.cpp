@@ -50,7 +50,8 @@ namespace {
     const MipsSubtarget *Subtarget;
   public:
     explicit MipsAsmPrinter(raw_ostream &O, MipsTargetMachine &TM, 
-                            const TargetAsmInfo *T, unsigned OL, bool V)
+                            const TargetAsmInfo *T, CodeGenOpt::Level OL,
+                            bool V)
       : AsmPrinter(O, TM, T, OL, V) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
     }
@@ -91,7 +92,8 @@ namespace {
 /// regardless of whether the function is in SSA form.
 FunctionPass *llvm::createMipsCodePrinterPass(raw_ostream &o,
                                               MipsTargetMachine &tm,
-                                              unsigned OptLevel, bool verbose) {
+                                              CodeGenOpt::Level OptLevel,
+                                              bool verbose) {
   return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }
 

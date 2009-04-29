@@ -20,7 +20,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
-
+#include "llvm/Target/TargetMachine.h"
 #include <cassert>
 #include <vector>
 #include <map>
@@ -30,7 +30,6 @@ namespace llvm {
 
 class AliasAnalysis;
 class TargetLowering;
-class TargetMachine;
 class MachineModuleInfo;
 class DwarfWriter;
 class MachineFunction;
@@ -202,7 +201,8 @@ public:
   /// certain types of nodes together, or eliminating superfluous nodes.  The
   /// Level argument controls whether Combine is allowed to produce nodes and
   /// types that are illegal on the target.
-  void Combine(CombineLevel Level, AliasAnalysis &AA, unsigned OptLevel);
+  void Combine(CombineLevel Level, AliasAnalysis &AA,
+               CodeGenOpt::Level OptLevel);
 
   /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
   /// only uses types natively supported by the target.  Returns "true" if it
@@ -218,7 +218,7 @@ public:
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
-  void Legalize(bool TypesNeedLegalizing, unsigned OptLevel);
+  void Legalize(bool TypesNeedLegalizing, CodeGenOpt::Level OptLevel);
 
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG.

@@ -27,7 +27,6 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -42,7 +41,7 @@ AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
 
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
-                       const TargetAsmInfo *T, unsigned OL, bool VDef)
+                       const TargetAsmInfo *T, CodeGenOpt::Level OL, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), OptLevel(OL), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
     IsInTextSection(false)

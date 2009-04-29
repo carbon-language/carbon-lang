@@ -56,12 +56,12 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
 // Determine optimization level. Level -O0 is equivalent to "fast" code gen.
-static cl::opt<unsigned>
+static cl::opt<char>
 OptLevel("O",
-         cl::desc("Optimization level. Similar to llvm-gcc -O. (default: -O3)"),
+         cl::desc("Optimization level. Similar to llvm-gcc -O."),
          cl::Prefix,
          cl::ZeroOrMore,
-         cl::init(3));
+         cl::init(' '));
 
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
@@ -253,6 +253,19 @@ int main(int argc, char **argv) {
   raw_ostream *Out = GetOutputStream(argv[0]);
   if (Out == 0) return 1;
 
+  CodeGenOpt::Level OLvl = CodeGenOpt::Aggressive;
+
+  switch (OptLevel) {
+  default:
+  case ' ': break;
+  case '0': OLvl = CodeGenOpt::None; break;
+  case '1': OLvl = CodeGenOpt::One; break;
+  case '2': OLvl = CodeGenOpt::Two; break;
+  case 's': OLvl = CodeGenOpt::Size; break;
+  case '3': OLvl = CodeGenOpt::Aggressive; break;
+  case '4': OLvl = CodeGenOpt::LTO; break;
+  }
+
   // If this target requires addPassesToEmitWholeFile, do it now.  This is
   // used by strange things like the C backend.
   if (Target.WantsWholeFile()) {
@@ -262,7 +275,7 @@ int main(int argc, char **argv) {
       PM.add(createVerifierPass());
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OptLevel)) {
+    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OLvl)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
       if (Out != &outs()) delete Out;
@@ -288,7 +301,7 @@ int main(int argc, char **argv) {
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
 
-    switch (Target.addPassesToEmitFile(Passes, *Out, FileType, OptLevel)) {
+    switch (Target.addPassesToEmitFile(Passes, *Out, FileType, OLvl)) {
     default:
       assert(0 && "Invalid file model!");
       return 1;
@@ -309,7 +322,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    if (Target.addPassesToEmitFileFinish(Passes, MCE, OptLevel)) {
+    if (Target.addPassesToEmitFileFinish(Passes, MCE, OLvl)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
       if (Out != &outs()) delete Out;

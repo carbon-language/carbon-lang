@@ -57,8 +57,10 @@ public:
     return const_cast<PIC16TargetLowering*>(&TLInfo); 
   }
 
-  virtual bool addInstSelector(PassManagerBase &PM, unsigned OptLevel);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, unsigned OptLevel,
+  virtual bool addInstSelector(PassManagerBase &PM,
+                               CodeGenOpt::Level OptLevel);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM,
+                                  CodeGenOpt::Level OptLevel,
                                   bool Verbose, raw_ostream &Out);
 }; // PIC16TargetMachine.
 

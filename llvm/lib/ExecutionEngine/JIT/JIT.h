@@ -55,7 +55,7 @@ class JIT : public ExecutionEngine {
   JITState *jitstate;
 
   JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji, 
-      JITMemoryManager *JMM, unsigned OptLevel);
+      JITMemoryManager *JMM, CodeGenOpt::Level OptLevel);
 public:
   ~JIT();
 
@@ -71,7 +71,8 @@ public:
   /// for the current target.  Otherwise, return null.
   ///
   static ExecutionEngine *create(ModuleProvider *MP, std::string *Err,
-                                 unsigned OptLevel = 3) {
+                                 CodeGenOpt::Level OptLevel =
+                                   CodeGenOpt::Default) {
     return createJIT(MP, Err, 0, OptLevel);
   }
 
@@ -148,7 +149,8 @@ public:
   MachineCodeEmitter *getCodeEmitter() const { return MCE; }
   
   static ExecutionEngine *createJIT(ModuleProvider *MP, std::string *Err,
-                                    JITMemoryManager *JMM, unsigned OptLevel);
+                                    JITMemoryManager *JMM,
+                                    CodeGenOpt::Level OptLevel);
   
 private:
   static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
