@@ -1834,6 +1834,674 @@ void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
   Out << nl;
 }
 
+//===----------------------------------------------------------------------===//
+// Error reporting.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  
+  //===-------------===//
+  // Bug Descriptions. //
+  //===-------------===//  
+  
+  class VISIBILITY_HIDDEN CFRefBug : public BugType {
+  protected:
+    CFRefCount& TF;
+    
+    CFRefBug(CFRefCount* tf, const char* name) 
+    : BugType(name, "Memory (Core Foundation/Objective-C)"), TF(*tf) {}    
+  public:
+    
+    CFRefCount& getTF() { return TF; }
+    const CFRefCount& getTF() const { return TF; }
+    
+    // FIXME: Eventually remove.
+    virtual const char* getDescription() const = 0;
+    
+    virtual bool isLeak() const { return false; }
+  };
+  
+  class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
+  public:
+    UseAfterRelease(CFRefCount* tf)
+    : CFRefBug(tf, "Use-after-release") {}
+    
+    const char* getDescription() const {
+      return "Reference-counted object is used after it is released";
+    }    
+  };
+  
+  class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
+  public:
+    BadRelease(CFRefCount* tf) : CFRefBug(tf, "Bad release") {}
+    
+    const char* getDescription() const {
+      return "Incorrect decrement of the reference count of an "
+      "object is not owned at this point by the caller";
+    }
+  };
+  
+  class VISIBILITY_HIDDEN DeallocGC : public CFRefBug {
+  public:
+    DeallocGC(CFRefCount *tf) : CFRefBug(tf,
+                                         "-dealloc called while using GC") {}
+    
+    const char *getDescription() const {
+      return "-dealloc called while using GC";
+    }
+  };
+  
+  class VISIBILITY_HIDDEN DeallocNotOwned : public CFRefBug {
+  public:
+    DeallocNotOwned(CFRefCount *tf) : CFRefBug(tf,
+                                               "-dealloc sent to non-exclusively owned object") {}
+    
+    const char *getDescription() const {
+      return "-dealloc sent to object that may be referenced elsewhere";
+    }
+  };  
+  
+  class VISIBILITY_HIDDEN Leak : public CFRefBug {
+    const bool isReturn;
+  protected:
+    Leak(CFRefCount* tf, const char* name, bool isRet)
+    : CFRefBug(tf, name), isReturn(isRet) {}
+  public:
+    
+    const char* getDescription() const { return ""; }
+    
+    bool isLeak() const { return true; }
+  };
+  
+  class VISIBILITY_HIDDEN LeakAtReturn : public Leak {
+  public:
+    LeakAtReturn(CFRefCount* tf, const char* name)
+    : Leak(tf, name, true) {}
+  };
+  
+  class VISIBILITY_HIDDEN LeakWithinFunction : public Leak {
+  public:
+    LeakWithinFunction(CFRefCount* tf, const char* name)
+    : Leak(tf, name, false) {}
+  };  
+  
+  //===---------===//
+  // Bug Reports.  //
+  //===---------===//
+  
+  class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
+  protected:
+    SymbolRef Sym;
+    const CFRefCount &TF;
+  public:
+    CFRefReport(CFRefBug& D, const CFRefCount &tf,
+                ExplodedNode<GRState> *n, SymbolRef sym)
+    : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
+    
+    virtual ~CFRefReport() {}
+    
+    CFRefBug& getBugType() {
+      return (CFRefBug&) RangedBugReport::getBugType();
+    }
+    const CFRefBug& getBugType() const {
+      return (const CFRefBug&) RangedBugReport::getBugType();
+    }
+    
+    virtual void getRanges(BugReporter& BR, const SourceRange*& beg,           
+                           const SourceRange*& end) {
+      
+      if (!getBugType().isLeak())
+        RangedBugReport::getRanges(BR, beg, end);
+      else
+        beg = end = 0;
+    }
+    
+    SymbolRef getSymbol() const { return Sym; }
+    
+    PathDiagnosticPiece* getEndPath(BugReporter& BR,
+                                    const ExplodedNode<GRState>* N);
+    
+    std::pair<const char**,const char**> getExtraDescriptiveText();
+    
+    PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
+                                   const ExplodedNode<GRState>* PrevN,
+                                   const ExplodedGraph<GRState>& G,
+                                   BugReporter& BR,
+                                   NodeResolver& NR);
+  };
+  
+  class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
+    SourceLocation AllocSite;
+    const MemRegion* AllocBinding;
+  public:
+    CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
+                    ExplodedNode<GRState> *n, SymbolRef sym,
+                    GRExprEngine& Eng);
+    
+    PathDiagnosticPiece* getEndPath(BugReporter& BR,
+                                    const ExplodedNode<GRState>* N);
+    
+    SourceLocation getLocation() const { return AllocSite; }
+  };  
+} // end anonymous namespace
+
+void CFRefCount::RegisterChecks(BugReporter& BR) {
+  useAfterRelease = new UseAfterRelease(this);
+  BR.Register(useAfterRelease);
+  
+  releaseNotOwned = new BadRelease(this);
+  BR.Register(releaseNotOwned);
+  
+  deallocGC = new DeallocGC(this);
+  BR.Register(deallocGC);
+  
+  deallocNotOwned = new DeallocNotOwned(this);
+  BR.Register(deallocNotOwned);
+  
+  // First register "return" leaks.
+  const char* name = 0;
+  
+  if (isGCEnabled())
+    name = "Leak of returned object when using garbage collection";
+  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
+    name = "Leak of returned object when not using garbage collection (GC) in "
+    "dual GC/non-GC code";
+  else {
+    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
+    name = "Leak of returned object";
+  }
+  
+  leakAtReturn = new LeakAtReturn(this, name);
+  BR.Register(leakAtReturn);
+  
+  // Second, register leaks within a function/method.
+  if (isGCEnabled())
+    name = "Leak of object when using garbage collection";  
+  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
+    name = "Leak of object when not using garbage collection (GC) in "
+    "dual GC/non-GC code";
+  else {
+    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
+    name = "Leak";
+  }
+  
+  leakWithinFunction = new LeakWithinFunction(this, name);
+  BR.Register(leakWithinFunction);
+  
+  // Save the reference to the BugReporter.
+  this->BR = &BR;
+}
+
+static const char* Msgs[] = {
+  // GC only
+  "Code is compiled to only use garbage collection",    
+  // No GC.
+  "Code is compiled to use reference counts",
+  // Hybrid, with GC.
+  "Code is compiled to use either garbage collection (GC) or reference counts"
+  " (non-GC).  The bug occurs with GC enabled",  
+  // Hybrid, without GC
+  "Code is compiled to use either garbage collection (GC) or reference counts"
+  " (non-GC).  The bug occurs in non-GC mode"
+};
+
+std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
+  CFRefCount& TF = static_cast<CFRefBug&>(getBugType()).getTF();
+  
+  switch (TF.getLangOptions().getGCMode()) {
+    default:
+      assert(false);
+      
+    case LangOptions::GCOnly:
+      assert (TF.isGCEnabled());
+      return std::make_pair(&Msgs[0], &Msgs[0]+1);      
+      
+    case LangOptions::NonGC:
+      assert (!TF.isGCEnabled());
+      return std::make_pair(&Msgs[1], &Msgs[1]+1);
+      
+    case LangOptions::HybridGC:
+      if (TF.isGCEnabled())
+        return std::make_pair(&Msgs[2], &Msgs[2]+1);
+      else
+        return std::make_pair(&Msgs[3], &Msgs[3]+1);
+  }
+}
+
+static inline bool contains(const llvm::SmallVectorImpl<ArgEffect>& V,
+                            ArgEffect X) {
+  for (llvm::SmallVectorImpl<ArgEffect>::const_iterator I=V.begin(), E=V.end();
+       I!=E; ++I)
+    if (*I == X) return true;
+  
+  return false;
+}
+
+PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
+                                            const ExplodedNode<GRState>* PrevN,
+                                            const ExplodedGraph<GRState>& G,
+                                            BugReporter& BR,
+                                            NodeResolver& NR) {
+  
+  // Check if the type state has changed.  
+  GRStateManager &StMgr = cast<GRBugReporter>(BR).getStateManager();
+  GRStateRef PrevSt(PrevN->getState(), StMgr);
+  GRStateRef CurrSt(N->getState(), StMgr);
+  
+  const RefVal* CurrT = CurrSt.get<RefBindings>(Sym);  
+  if (!CurrT) return NULL;
+  
+  const RefVal& CurrV = *CurrT;
+  const RefVal* PrevT = PrevSt.get<RefBindings>(Sym);
+  
+  // Create a string buffer to constain all the useful things we want
+  // to tell the user.
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
+  
+  // This is the allocation site since the previous node had no bindings
+  // for this symbol.
+  if (!PrevT) {
+    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    
+    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+      // Get the name of the callee (if it is available).
+      SVal X = CurrSt.GetSValAsScalarOrLoc(CE->getCallee());
+      if (const FunctionDecl* FD = X.getAsFunctionDecl())
+        os << "Call to function '" << FD->getNameAsString() <<'\'';
+      else
+        os << "function call";      
+    }          
+    else {
+      assert (isa<ObjCMessageExpr>(S));
+      os << "Method";
+    }
+    
+    if (CurrV.getObjKind() == RetEffect::CF) {
+      os << " returns a Core Foundation object with a ";
+    }
+    else {
+      assert (CurrV.getObjKind() == RetEffect::ObjC);
+      os << " returns an Objective-C object with a ";
+    }
+    
+    if (CurrV.isOwned()) {
+      os << "+1 retain count (owning reference).";
+      
+      if (static_cast<CFRefBug&>(getBugType()).getTF().isGCEnabled()) {
+        assert(CurrV.getObjKind() == RetEffect::CF);
+        os << "  "
+        "Core Foundation objects are not automatically garbage collected.";
+      }
+    }
+    else {
+      assert (CurrV.isNotOwned());
+      os << "+0 retain count (non-owning reference).";
+    }
+    
+    PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
+    return new PathDiagnosticEventPiece(Pos, os.str());
+  }
+  
+  // Gather up the effects that were performed on the object at this
+  // program point
+  llvm::SmallVector<ArgEffect, 2> AEffects;
+  
+  if (const RetainSummary *Summ = TF.getSummaryOfNode(NR.getOriginalNode(N))) {
+    // We only have summaries attached to nodes after evaluating CallExpr and
+    // ObjCMessageExprs.
+    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    
+    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+      // Iterate through the parameter expressions and see if the symbol
+      // was ever passed as an argument.
+      unsigned i = 0;
+      
+      for (CallExpr::arg_iterator AI=CE->arg_begin(), AE=CE->arg_end();
+           AI!=AE; ++AI, ++i) {
+        
+        // Retrieve the value of the argument.  Is it the symbol
+        // we are interested in?
+        if (CurrSt.GetSValAsScalarOrLoc(*AI).getAsLocSymbol() != Sym)
+          continue;
+        
+        // We have an argument.  Get the effect!
+        AEffects.push_back(Summ->getArg(i));
+      }
+    }
+    else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
+      if (Expr *receiver = ME->getReceiver())
+        if (CurrSt.GetSValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
+          // The symbol we are tracking is the receiver.
+          AEffects.push_back(Summ->getReceiverEffect());
+        }
+    }
+  }
+  
+  do {
+    // Get the previous type state.
+    RefVal PrevV = *PrevT;
+    
+    // Specially handle -dealloc.
+    if (!TF.isGCEnabled() && contains(AEffects, Dealloc)) {
+      // Determine if the object's reference count was pushed to zero.
+      assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
+      // We may not have transitioned to 'release' if we hit an error.
+      // This case is handled elsewhere.
+      if (CurrV.getKind() == RefVal::Released) {
+        assert(CurrV.getCount() == 0);
+        os << "Object released by directly sending the '-dealloc' message";
+        break;
+      }
+    }
+    
+    // Specially handle CFMakeCollectable and friends.
+    if (contains(AEffects, MakeCollectable)) {
+      // Get the name of the function.
+      Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+      SVal X = CurrSt.GetSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
+      const FunctionDecl* FD = X.getAsFunctionDecl();
+      const std::string& FName = FD->getNameAsString();
+      
+      if (TF.isGCEnabled()) {
+        // Determine if the object's reference count was pushed to zero.
+        assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
+        
+        os << "In GC mode a call to '" << FName
+        <<  "' decrements an object's retain count and registers the "
+        "object with the garbage collector. ";
+        
+        if (CurrV.getKind() == RefVal::Released) {
+          assert(CurrV.getCount() == 0);
+          os << "Since it now has a 0 retain count the object can be "
+          "automatically collected by the garbage collector.";
+        }
+        else
+          os << "An object must have a 0 retain count to be garbage collected. "
+          "After this call its retain count is +" << CurrV.getCount()
+          << '.';
+      }
+      else 
+        os << "When GC is not enabled a call to '" << FName
+        << "' has no effect on its argument.";
+      
+      // Nothing more to say.
+      break;
+    }
+    
+    // Determine if the typestate has changed.  
+    if (!(PrevV == CurrV))
+      switch (CurrV.getKind()) {
+        case RefVal::Owned:
+        case RefVal::NotOwned:
+          
+          if (PrevV.getCount() == CurrV.getCount())
+            return 0;
+          
+          if (PrevV.getCount() > CurrV.getCount())
+            os << "Reference count decremented.";
+          else
+            os << "Reference count incremented.";
+          
+          if (unsigned Count = CurrV.getCount())
+            os << " The object now has a +" << Count << " retain count.";
+          
+          if (PrevV.getKind() == RefVal::Released) {
+            assert(TF.isGCEnabled() && CurrV.getCount() > 0);
+            os << " The object is not eligible for garbage collection until the "
+            "retain count reaches 0 again.";
+          }
+          
+          break;
+          
+        case RefVal::Released:
+          os << "Object released.";
+          break;
+          
+        case RefVal::ReturnedOwned:
+          os << "Object returned to caller as an owning reference (single retain "
+          "count transferred to caller).";
+          break;
+          
+        case RefVal::ReturnedNotOwned:
+          os << "Object returned to caller with a +0 (non-owning) retain count.";
+          break;
+          
+        default:
+          return NULL;
+      }
+    
+    // Emit any remaining diagnostics for the argument effects (if any).
+    for (llvm::SmallVectorImpl<ArgEffect>::iterator I=AEffects.begin(),
+         E=AEffects.end(); I != E; ++I) {
+      
+      // A bunch of things have alternate behavior under GC.
+      if (TF.isGCEnabled())
+        switch (*I) {
+          default: break;
+          case Autorelease:
+            os << "In GC mode an 'autorelease' has no effect.";
+            continue;
+          case IncRefMsg:
+            os << "In GC mode the 'retain' message has no effect.";
+            continue;
+          case DecRefMsg:
+            os << "In GC mode the 'release' message has no effect.";
+            continue;
+        }
+    }
+  } while(0);
+  
+  if (os.str().empty())
+    return 0; // We have nothing to say!
+  
+  Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
+  PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
+  PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
+  
+  // Add the range by scanning the children of the statement for any bindings
+  // to Sym.
+  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
+    if (Expr* Exp = dyn_cast_or_null<Expr>(*I))
+      if (CurrSt.GetSValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
+        P->addRange(Exp->getSourceRange());
+        break;
+      }
+  
+  return P;
+}
+
+namespace {
+  class VISIBILITY_HIDDEN FindUniqueBinding :
+  public StoreManager::BindingsHandler {
+    SymbolRef Sym;
+    const MemRegion* Binding;
+    bool First;
+    
+  public:
+    FindUniqueBinding(SymbolRef sym) : Sym(sym), Binding(0), First(true) {}
+    
+    bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
+                       SVal val) {
+      
+      SymbolRef SymV = val.getAsSymbol();    
+      if (!SymV || SymV != Sym)
+        return true;
+      
+      if (Binding) {
+        First = false;
+        return false;
+      }
+      else
+        Binding = R;
+      
+      return true;    
+    }
+    
+    operator bool() { return First && Binding; }
+    const MemRegion* getRegion() { return Binding; }
+  };  
+}
+
+static std::pair<const ExplodedNode<GRState>*,const MemRegion*>
+GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode<GRState>* N,
+                  SymbolRef Sym) {
+  
+  // Find both first node that referred to the tracked symbol and the
+  // memory location that value was store to.
+  const ExplodedNode<GRState>* Last = N;
+  const MemRegion* FirstBinding = 0;  
+  
+  while (N) {
+    const GRState* St = N->getState();
+    RefBindings B = St->get<RefBindings>();
+    
+    if (!B.lookup(Sym))
+      break;
+    
+    FindUniqueBinding FB(Sym);
+    StateMgr.iterBindings(St, FB);      
+    if (FB) FirstBinding = FB.getRegion();      
+    
+    Last = N;
+    N = N->pred_empty() ? NULL : *(N->pred_begin());    
+  }
+  
+  return std::make_pair(Last, FirstBinding);
+}
+
+PathDiagnosticPiece*
+CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
+  // Tell the BugReporter to report cases when the tracked symbol is
+  // assigned to different variables, etc.
+  GRBugReporter& BR = cast<GRBugReporter>(br);
+  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
+  return RangedBugReport::getEndPath(BR, EndN);
+}
+
+PathDiagnosticPiece*
+CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
+  
+  GRBugReporter& BR = cast<GRBugReporter>(br);
+  // Tell the BugReporter to report cases when the tracked symbol is
+  // assigned to different variables, etc.
+  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
+  
+  // We are reporting a leak.  Walk up the graph to get to the first node where
+  // the symbol appeared, and also get the first VarDecl that tracked object
+  // is stored to.
+  const ExplodedNode<GRState>* AllocNode = 0;
+  const MemRegion* FirstBinding = 0;
+  
+  llvm::tie(AllocNode, FirstBinding) =
+  GetAllocationSite(BR.getStateManager(), EndN, Sym);
+  
+  // Get the allocate site.  
+  assert(AllocNode);
+  Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
+  
+  SourceManager& SMgr = BR.getContext().getSourceManager();
+  unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
+  
+  // Compute an actual location for the leak.  Sometimes a leak doesn't
+  // occur at an actual statement (e.g., transition between blocks; end
+  // of function) so we need to walk the graph and compute a real location.
+  const ExplodedNode<GRState>* LeakN = EndN;
+  PathDiagnosticLocation L;
+  
+  while (LeakN) {
+    ProgramPoint P = LeakN->getLocation();
+    
+    if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
+      L = PathDiagnosticLocation(PS->getStmt()->getLocStart(), SMgr);
+      break;
+    }
+    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      if (const Stmt* Term = BE->getSrc()->getTerminator()) {
+        L = PathDiagnosticLocation(Term->getLocStart(), SMgr);
+        break;
+      }
+    }
+    
+    LeakN = LeakN->succ_empty() ? 0 : *(LeakN->succ_begin());
+  }
+  
+  if (!L.isValid()) {
+    L = PathDiagnosticLocation(
+                               BR.getStateManager().getCodeDecl().getBodyRBrace(BR.getContext()),
+                               SMgr);
+  }
+  
+  std::string sbuf;
+  llvm::raw_string_ostream os(sbuf);
+  
+  os << "Object allocated on line " << AllocLine;
+  
+  if (FirstBinding)
+    os << " and stored into '" << FirstBinding->getString() << '\'';  
+  
+  // Get the retain count.
+  const RefVal* RV = EndN->getState()->get<RefBindings>(Sym);
+  
+  if (RV->getKind() == RefVal::ErrorLeakReturned) {
+    // FIXME: Per comments in rdar://6320065, "create" only applies to CF
+    // ojbects.  Only "copy", "alloc", "retain" and "new" transfer ownership
+    // to the caller for NS objects.
+    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
+    os << " is returned from a method whose name ('"
+    << MD.getSelector().getAsString()
+    << "') does not contain 'copy' or otherwise starts with"
+    " 'new' or 'alloc'.  This violates the naming convention rules given"
+    " in the Memory Management Guide for Cocoa (object leaked).";
+  }
+  else
+    os << " is no longer referenced after this point and has a retain count of"
+    " +"
+    << RV->getCount() << " (object leaked).";
+  
+  return new PathDiagnosticEventPiece(L, os.str());
+}
+
+
+CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
+                                 ExplodedNode<GRState> *n,
+                                 SymbolRef sym, GRExprEngine& Eng)
+: CFRefReport(D, tf, n, sym)
+{
+  
+  // Most bug reports are cached at the location where they occured.
+  // With leaks, we want to unique them by the location where they were
+  // allocated, and only report a single path.  To do this, we need to find
+  // the allocation site of a piece of tracked memory, which we do via a
+  // call to GetAllocationSite.  This will walk the ExplodedGraph backwards.
+  // Note that this is *not* the trimmed graph; we are guaranteed, however,
+  // that all ancestor nodes that represent the allocation site have the
+  // same SourceLocation.
+  const ExplodedNode<GRState>* AllocNode = 0;
+  
+  llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
+  GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
+  
+  // Get the SourceLocation for the allocation site.
+  ProgramPoint P = AllocNode->getLocation();
+  AllocSite = cast<PostStmt>(P).getStmt()->getLocStart();
+  
+  // Fill in the description of the bug.
+  Description.clear();
+  llvm::raw_string_ostream os(Description);
+  SourceManager& SMgr = Eng.getContext().getSourceManager();
+  unsigned AllocLine = SMgr.getInstantiationLineNumber(AllocSite);
+  os << "Potential leak of object allocated on line " << AllocLine;
+  
+  // FIXME: AllocBinding doesn't get populated for RegionStore yet.
+  if (AllocBinding)
+    os << " and stored into '" << AllocBinding->getString() << '\'';
+}
+
+//===----------------------------------------------------------------------===//
+// Main checker logic.
+//===----------------------------------------------------------------------===//
+
 static inline ArgEffect GetArgE(RetainSummary* Summ, unsigned idx) {
   return Summ ? Summ->getArg(idx) : MayEscape;
 }
@@ -2253,25 +2921,12 @@ CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
                               SymbolRef sid,
                               RefVal V, bool& hasLeak) {
 
-  GRStateRef state(St, VMgr);
-  assert ((!V.isReturnedOwned() || CD) &&
-          "CodeDecl must be available for reporting ReturnOwned errors.");
-
-  if (V.isReturnedOwned() && V.getCount() == 0)
-    if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
-      std::string s = MD->getSelector().getAsString();
-      if (!followsReturnRule(s.c_str())) {
-        hasLeak = true;
-        state = state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
-        return std::make_pair(state, true);
-      }
-    }
-  
-  // All other cases.
-  
+  // Any remaining leaks?
   hasLeak = V.isOwned() || 
             ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
 
+  GRStateRef state(St, VMgr);
+  
   if (!hasLeak)
     return std::make_pair(state.remove<RefBindings>(sid), false);
   
@@ -2333,7 +2988,30 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   
   // Update the binding.
   state = state.set<RefBindings>(Sym, X);
-  Builder.MakeNode(Dst, S, Pred, state);
+  Pred = Builder.MakeNode(Dst, S, Pred, state);
+  
+  // Any leaks or other errors?
+  if (X.isReturnedOwned() && X.getCount() == 0) {
+    const Decl *CD = &Eng.getStateManager().getCodeDecl();
+    
+    if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
+      std::string s = MD->getSelector().getAsString();
+      // FIXME: Use method summary.
+      if (!followsReturnRule(s.c_str())) {
+        static int ReturnOwnLeakTag = 0;
+        state = state.set<RefBindings>(Sym, X ^ RefVal::ErrorLeakReturned);
+
+        // Generate an error node.
+        ExplodedNode<GRState> *N =
+          Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred);
+        
+        CFRefLeakReport *report =
+          new CFRefLeakReport(*static_cast<CFRefBug*>(leakAtReturn), *this,
+                              N, Sym, Eng);
+        BR->EmitReport(report);
+      }
+    }
+  }
 }
 
 // Assumptions.
@@ -2501,670 +3179,6 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
       break;
   }
   return state.set<RefBindings>(sym, V);
-}
-
-//===----------------------------------------------------------------------===//
-// Error reporting.
-//===----------------------------------------------------------------------===//
-
-namespace {
-  
-  //===-------------===//
-  // Bug Descriptions. //
-  //===-------------===//  
-  
-  class VISIBILITY_HIDDEN CFRefBug : public BugType {
-  protected:
-    CFRefCount& TF;
-
-    CFRefBug(CFRefCount* tf, const char* name) 
-      : BugType(name, "Memory (Core Foundation/Objective-C)"), TF(*tf) {}    
-  public:
-    
-    CFRefCount& getTF() { return TF; }
-    const CFRefCount& getTF() const { return TF; }
-
-    // FIXME: Eventually remove.
-    virtual const char* getDescription() const = 0;
-    
-    virtual bool isLeak() const { return false; }
-  };
-  
-  class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
-  public:
-    UseAfterRelease(CFRefCount* tf)
-      : CFRefBug(tf, "Use-after-release") {}
-    
-    const char* getDescription() const {
-      return "Reference-counted object is used after it is released";
-    }    
-  };
-  
-  class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
-  public:
-    BadRelease(CFRefCount* tf) : CFRefBug(tf, "Bad release") {}
-
-    const char* getDescription() const {
-      return "Incorrect decrement of the reference count of an "
-             "object is not owned at this point by the caller";
-    }
-  };
-  
-  class VISIBILITY_HIDDEN DeallocGC : public CFRefBug {
-  public:
-    DeallocGC(CFRefCount *tf) : CFRefBug(tf,
-                                         "-dealloc called while using GC") {}
-    
-    const char *getDescription() const {
-      return "-dealloc called while using GC";
-    }
-  };
-  
-  class VISIBILITY_HIDDEN DeallocNotOwned : public CFRefBug {
-  public:
-    DeallocNotOwned(CFRefCount *tf) : CFRefBug(tf,
-                            "-dealloc sent to non-exclusively owned object") {}
-    
-    const char *getDescription() const {
-      return "-dealloc sent to object that may be referenced elsewhere";
-    }
-  };  
-  
-  class VISIBILITY_HIDDEN Leak : public CFRefBug {
-    const bool isReturn;
-  protected:
-    Leak(CFRefCount* tf, const char* name, bool isRet)
-      : CFRefBug(tf, name), isReturn(isRet) {}
-  public:
-    
-    const char* getDescription() const { return ""; }
-
-    bool isLeak() const { return true; }
-  };
-    
-  class VISIBILITY_HIDDEN LeakAtReturn : public Leak {
-  public:
-    LeakAtReturn(CFRefCount* tf, const char* name)
-      : Leak(tf, name, true) {}
-  };
-  
-  class VISIBILITY_HIDDEN LeakWithinFunction : public Leak {
-  public:
-    LeakWithinFunction(CFRefCount* tf, const char* name)
-      : Leak(tf, name, false) {}
-  };  
-  
-  //===---------===//
-  // Bug Reports.  //
-  //===---------===//
-  
-  class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
-  protected:
-    SymbolRef Sym;
-    const CFRefCount &TF;
-  public:
-    CFRefReport(CFRefBug& D, const CFRefCount &tf,
-                ExplodedNode<GRState> *n, SymbolRef sym)
-      : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
-        
-    virtual ~CFRefReport() {}
-    
-    CFRefBug& getBugType() {
-      return (CFRefBug&) RangedBugReport::getBugType();
-    }
-    const CFRefBug& getBugType() const {
-      return (const CFRefBug&) RangedBugReport::getBugType();
-    }
-    
-    virtual void getRanges(BugReporter& BR, const SourceRange*& beg,           
-                           const SourceRange*& end) {
-      
-      if (!getBugType().isLeak())
-        RangedBugReport::getRanges(BR, beg, end);
-      else
-        beg = end = 0;
-    }
-    
-    SymbolRef getSymbol() const { return Sym; }
-    
-    PathDiagnosticPiece* getEndPath(BugReporter& BR,
-                                    const ExplodedNode<GRState>* N);
-    
-    std::pair<const char**,const char**> getExtraDescriptiveText();
-    
-    PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
-                                   const ExplodedNode<GRState>* PrevN,
-                                   const ExplodedGraph<GRState>& G,
-                                   BugReporter& BR,
-                                   NodeResolver& NR);
-  };
-  
-  class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
-    SourceLocation AllocSite;
-    const MemRegion* AllocBinding;
-  public:
-    CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
-                    ExplodedNode<GRState> *n, SymbolRef sym,
-                    GRExprEngine& Eng);
-
-    PathDiagnosticPiece* getEndPath(BugReporter& BR,
-                                    const ExplodedNode<GRState>* N);
-
-    SourceLocation getLocation() const { return AllocSite; }
-  };  
-} // end anonymous namespace
-
-void CFRefCount::RegisterChecks(BugReporter& BR) {
-  useAfterRelease = new UseAfterRelease(this);
-  BR.Register(useAfterRelease);
-  
-  releaseNotOwned = new BadRelease(this);
-  BR.Register(releaseNotOwned);
-  
-  deallocGC = new DeallocGC(this);
-  BR.Register(deallocGC);
-  
-  deallocNotOwned = new DeallocNotOwned(this);
-  BR.Register(deallocNotOwned);
-  
-  // First register "return" leaks.
-  const char* name = 0;
-  
-  if (isGCEnabled())
-    name = "Leak of returned object when using garbage collection";
-  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "Leak of returned object when not using garbage collection (GC) in "
-           "dual GC/non-GC code";
-  else {
-    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "Leak of returned object";
-  }
-  
-  leakAtReturn = new LeakAtReturn(this, name);
-  BR.Register(leakAtReturn);
-
-  // Second, register leaks within a function/method.
-  if (isGCEnabled())
-    name = "Leak of object when using garbage collection";  
-  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "Leak of object when not using garbage collection (GC) in "
-           "dual GC/non-GC code";
-  else {
-    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "Leak";
-  }
-  
-  leakWithinFunction = new LeakWithinFunction(this, name);
-  BR.Register(leakWithinFunction);
-  
-  // Save the reference to the BugReporter.
-  this->BR = &BR;
-}
-
-static const char* Msgs[] = {
-  // GC only
-  "Code is compiled to only use garbage collection",    
-  // No GC.
-  "Code is compiled to use reference counts",
-  // Hybrid, with GC.
-  "Code is compiled to use either garbage collection (GC) or reference counts"
-  " (non-GC).  The bug occurs with GC enabled",  
-  // Hybrid, without GC
-  "Code is compiled to use either garbage collection (GC) or reference counts"
-  " (non-GC).  The bug occurs in non-GC mode"
-};
-
-std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
-  CFRefCount& TF = static_cast<CFRefBug&>(getBugType()).getTF();
-
-  switch (TF.getLangOptions().getGCMode()) {
-    default:
-      assert(false);
-          
-    case LangOptions::GCOnly:
-      assert (TF.isGCEnabled());
-      return std::make_pair(&Msgs[0], &Msgs[0]+1);      
-
-    case LangOptions::NonGC:
-      assert (!TF.isGCEnabled());
-      return std::make_pair(&Msgs[1], &Msgs[1]+1);
-    
-    case LangOptions::HybridGC:
-      if (TF.isGCEnabled())
-        return std::make_pair(&Msgs[2], &Msgs[2]+1);
-      else
-        return std::make_pair(&Msgs[3], &Msgs[3]+1);
-  }
-}
-
-static inline bool contains(const llvm::SmallVectorImpl<ArgEffect>& V,
-                              ArgEffect X) {
-  for (llvm::SmallVectorImpl<ArgEffect>::const_iterator I=V.begin(), E=V.end();
-        I!=E; ++I)
-    if (*I == X) return true;
-  
-  return false;
-}
-
-PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
-                                            const ExplodedNode<GRState>* PrevN,
-                                            const ExplodedGraph<GRState>& G,
-                                            BugReporter& BR,
-                                            NodeResolver& NR) {
-
-  // Check if the type state has changed.  
-  GRStateManager &StMgr = cast<GRBugReporter>(BR).getStateManager();
-  GRStateRef PrevSt(PrevN->getState(), StMgr);
-  GRStateRef CurrSt(N->getState(), StMgr);
-
-  const RefVal* CurrT = CurrSt.get<RefBindings>(Sym);  
-  if (!CurrT) return NULL;
-
-  const RefVal& CurrV = *CurrT;
-  const RefVal* PrevT = PrevSt.get<RefBindings>(Sym);
-
-  // Create a string buffer to constain all the useful things we want
-  // to tell the user.
-  std::string sbuf;
-  llvm::raw_string_ostream os(sbuf);
-
-  // This is the allocation site since the previous node had no bindings
-  // for this symbol.
-  if (!PrevT) {
-    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-
-    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-      // Get the name of the callee (if it is available).
-      SVal X = CurrSt.GetSValAsScalarOrLoc(CE->getCallee());
-      if (const FunctionDecl* FD = X.getAsFunctionDecl())
-        os << "Call to function '" << FD->getNameAsString() <<'\'';
-      else
-        os << "function call";      
-    }          
-    else {
-      assert (isa<ObjCMessageExpr>(S));
-      os << "Method";
-    }
-    
-    if (CurrV.getObjKind() == RetEffect::CF) {
-      os << " returns a Core Foundation object with a ";
-    }
-    else {
-      assert (CurrV.getObjKind() == RetEffect::ObjC);
-      os << " returns an Objective-C object with a ";
-    }
-    
-    if (CurrV.isOwned()) {
-      os << "+1 retain count (owning reference).";
-      
-      if (static_cast<CFRefBug&>(getBugType()).getTF().isGCEnabled()) {
-        assert(CurrV.getObjKind() == RetEffect::CF);
-        os << "  "
-          "Core Foundation objects are not automatically garbage collected.";
-      }
-    }
-    else {
-      assert (CurrV.isNotOwned());
-      os << "+0 retain count (non-owning reference).";
-    }
-    
-    PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
-    return new PathDiagnosticEventPiece(Pos, os.str());
-  }
-  
-  // Gather up the effects that were performed on the object at this
-  // program point
-  llvm::SmallVector<ArgEffect, 2> AEffects;
-
-  if (const RetainSummary *Summ = TF.getSummaryOfNode(NR.getOriginalNode(N))) {
-    // We only have summaries attached to nodes after evaluating CallExpr and
-    // ObjCMessageExprs.
-    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-    
-    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-      // Iterate through the parameter expressions and see if the symbol
-      // was ever passed as an argument.
-      unsigned i = 0;
-      
-      for (CallExpr::arg_iterator AI=CE->arg_begin(), AE=CE->arg_end();
-           AI!=AE; ++AI, ++i) {
-        
-        // Retrieve the value of the argument.  Is it the symbol
-        // we are interested in?
-        if (CurrSt.GetSValAsScalarOrLoc(*AI).getAsLocSymbol() != Sym)
-          continue;
-
-        // We have an argument.  Get the effect!
-        AEffects.push_back(Summ->getArg(i));
-      }
-    }
-    else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
-      if (Expr *receiver = ME->getReceiver())
-        if (CurrSt.GetSValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
-          // The symbol we are tracking is the receiver.
-          AEffects.push_back(Summ->getReceiverEffect());
-        }
-    }
-  }
-  
-  do {
-    // Get the previous type state.
-    RefVal PrevV = *PrevT;
-    
-    // Specially handle -dealloc.
-    if (!TF.isGCEnabled() && contains(AEffects, Dealloc)) {
-      // Determine if the object's reference count was pushed to zero.
-      assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
-      // We may not have transitioned to 'release' if we hit an error.
-      // This case is handled elsewhere.
-      if (CurrV.getKind() == RefVal::Released) {
-        assert(CurrV.getCount() == 0);
-        os << "Object released by directly sending the '-dealloc' message";
-        break;
-      }
-    }
-
-    // Specially handle CFMakeCollectable and friends.
-    if (contains(AEffects, MakeCollectable)) {
-      // Get the name of the function.
-      Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-      SVal X = CurrSt.GetSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
-      const FunctionDecl* FD = X.getAsFunctionDecl();
-      const std::string& FName = FD->getNameAsString();
-      
-      if (TF.isGCEnabled()) {
-        // Determine if the object's reference count was pushed to zero.
-        assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
-        
-        os << "In GC mode a call to '" << FName
-           <<  "' decrements an object's retain count and registers the "
-               "object with the garbage collector. ";
-
-        if (CurrV.getKind() == RefVal::Released) {
-          assert(CurrV.getCount() == 0);
-          os << "Since it now has a 0 retain count the object can be "
-                "automatically collected by the garbage collector.";
-        }
-        else
-          os << "An object must have a 0 retain count to be garbage collected. "
-                "After this call its retain count is +" << CurrV.getCount()
-             << '.';
-      }
-      else 
-        os << "When GC is not enabled a call to '" << FName
-           << "' has no effect on its argument.";
-
-      // Nothing more to say.
-      break;
-    }
-
-    // Determine if the typestate has changed.  
-    if (!(PrevV == CurrV))
-      switch (CurrV.getKind()) {
-      case RefVal::Owned:
-      case RefVal::NotOwned:
-
-        if (PrevV.getCount() == CurrV.getCount())
-          return 0;
-        
-        if (PrevV.getCount() > CurrV.getCount())
-          os << "Reference count decremented.";
-        else
-          os << "Reference count incremented.";
-                  
-        if (unsigned Count = CurrV.getCount())
-          os << " The object now has a +" << Count << " retain count.";
-          
-        if (PrevV.getKind() == RefVal::Released) {
-          assert(TF.isGCEnabled() && CurrV.getCount() > 0);
-          os << " The object is not eligible for garbage collection until the "
-                "retain count reaches 0 again.";
-        }
-          
-        break;
-        
-      case RefVal::Released:
-        os << "Object released.";
-        break;
-        
-      case RefVal::ReturnedOwned:
-        os << "Object returned to caller as an owning reference (single retain "
-              "count transferred to caller).";
-        break;
-        
-      case RefVal::ReturnedNotOwned:
-        os << "Object returned to caller with a +0 (non-owning) retain count.";
-        break;
-
-      default:
-        return NULL;
-      }
-    
-    // Emit any remaining diagnostics for the argument effects (if any).
-    for (llvm::SmallVectorImpl<ArgEffect>::iterator I=AEffects.begin(),
-         E=AEffects.end(); I != E; ++I) {
-      
-      // A bunch of things have alternate behavior under GC.
-      if (TF.isGCEnabled())
-        switch (*I) {
-          default: break;
-          case Autorelease:
-            os << "In GC mode an 'autorelease' has no effect.";
-            continue;
-          case IncRefMsg:
-            os << "In GC mode the 'retain' message has no effect.";
-            continue;
-          case DecRefMsg:
-            os << "In GC mode the 'release' message has no effect.";
-            continue;
-        }
-    }
-  } while(0);
-
-  if (os.str().empty())
-    return 0; // We have nothing to say!
-  
-  Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
-  PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
-  PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
-  
-  // Add the range by scanning the children of the statement for any bindings
-  // to Sym.
-  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
-    if (Expr* Exp = dyn_cast_or_null<Expr>(*I))
-      if (CurrSt.GetSValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
-        P->addRange(Exp->getSourceRange());
-        break;
-      }
-  
-  return P;
-}
-
-namespace {
-class VISIBILITY_HIDDEN FindUniqueBinding :
-  public StoreManager::BindingsHandler {
-    SymbolRef Sym;
-    const MemRegion* Binding;
-    bool First;
-    
-  public:
-    FindUniqueBinding(SymbolRef sym) : Sym(sym), Binding(0), First(true) {}
-    
-  bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
-                     SVal val) {
-
-    SymbolRef SymV = val.getAsSymbol();    
-    if (!SymV || SymV != Sym)
-      return true;
-    
-    if (Binding) {
-      First = false;
-      return false;
-    }
-    else
-      Binding = R;
-    
-    return true;    
-  }
-    
-  operator bool() { return First && Binding; }
-  const MemRegion* getRegion() { return Binding; }
-};  
-}
-
-static std::pair<const ExplodedNode<GRState>*,const MemRegion*>
-GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode<GRState>* N,
-                  SymbolRef Sym) {
-
-  // Find both first node that referred to the tracked symbol and the
-  // memory location that value was store to.
-  const ExplodedNode<GRState>* Last = N;
-  const MemRegion* FirstBinding = 0;  
-  
-  while (N) {
-    const GRState* St = N->getState();
-    RefBindings B = St->get<RefBindings>();
-    
-    if (!B.lookup(Sym))
-      break;
-
-    FindUniqueBinding FB(Sym);
-    StateMgr.iterBindings(St, FB);      
-    if (FB) FirstBinding = FB.getRegion();      
-    
-    Last = N;
-    N = N->pred_empty() ? NULL : *(N->pred_begin());    
-  }
-  
-  return std::make_pair(Last, FirstBinding);
-}
-
-PathDiagnosticPiece*
-CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
-  // Tell the BugReporter to report cases when the tracked symbol is
-  // assigned to different variables, etc.
-  GRBugReporter& BR = cast<GRBugReporter>(br);
-  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
-  return RangedBugReport::getEndPath(BR, EndN);
-}
-
-PathDiagnosticPiece*
-CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
-
-  GRBugReporter& BR = cast<GRBugReporter>(br);
-  // Tell the BugReporter to report cases when the tracked symbol is
-  // assigned to different variables, etc.
-  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
-    
-  // We are reporting a leak.  Walk up the graph to get to the first node where
-  // the symbol appeared, and also get the first VarDecl that tracked object
-  // is stored to.
-  const ExplodedNode<GRState>* AllocNode = 0;
-  const MemRegion* FirstBinding = 0;
-
-  llvm::tie(AllocNode, FirstBinding) =
-    GetAllocationSite(BR.getStateManager(), EndN, Sym);
-  
-  // Get the allocate site.  
-  assert(AllocNode);
-  Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
-
-  SourceManager& SMgr = BR.getContext().getSourceManager();
-  unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
-
-  // Compute an actual location for the leak.  Sometimes a leak doesn't
-  // occur at an actual statement (e.g., transition between blocks; end
-  // of function) so we need to walk the graph and compute a real location.
-  const ExplodedNode<GRState>* LeakN = EndN;
-  PathDiagnosticLocation L;
-  
-  while (LeakN) {
-    ProgramPoint P = LeakN->getLocation();
-    
-    if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
-      L = PathDiagnosticLocation(PS->getStmt()->getLocStart(), SMgr);
-      break;
-    }
-    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      if (const Stmt* Term = BE->getSrc()->getTerminator()) {
-        L = PathDiagnosticLocation(Term->getLocStart(), SMgr);
-        break;
-      }
-    }
-
-    LeakN = LeakN->succ_empty() ? 0 : *(LeakN->succ_begin());
-  }
-
-  if (!L.isValid()) {
-    L = PathDiagnosticLocation(
-          BR.getStateManager().getCodeDecl().getBodyRBrace(BR.getContext()),
-          SMgr);
-  }
-
-  std::string sbuf;
-  llvm::raw_string_ostream os(sbuf);
-  
-  os << "Object allocated on line " << AllocLine;
-  
-  if (FirstBinding)
-    os << " and stored into '" << FirstBinding->getString() << '\'';  
-  
-  // Get the retain count.
-  const RefVal* RV = EndN->getState()->get<RefBindings>(Sym);
-  
-  if (RV->getKind() == RefVal::ErrorLeakReturned) {
-    // FIXME: Per comments in rdar://6320065, "create" only applies to CF
-    // ojbects.  Only "copy", "alloc", "retain" and "new" transfer ownership
-    // to the caller for NS objects.
-    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
-    os << " is returned from a method whose name ('"
-       << MD.getSelector().getAsString()
-       << "') does not contain 'copy' or otherwise starts with"
-          " 'new' or 'alloc'.  This violates the naming convention rules given"
-          " in the Memory Management Guide for Cocoa (object leaked).";
-  }
-  else
-    os << " is no longer referenced after this point and has a retain count of"
-          " +"
-       << RV->getCount() << " (object leaked).";
-  
-  return new PathDiagnosticEventPiece(L, os.str());
-}
-
-
-CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
-                                 ExplodedNode<GRState> *n,
-                                 SymbolRef sym, GRExprEngine& Eng)
-  : CFRefReport(D, tf, n, sym)
-{
-  
-  // Most bug reports are cached at the location where they occured.
-  // With leaks, we want to unique them by the location where they were
-  // allocated, and only report a single path.  To do this, we need to find
-  // the allocation site of a piece of tracked memory, which we do via a
-  // call to GetAllocationSite.  This will walk the ExplodedGraph backwards.
-  // Note that this is *not* the trimmed graph; we are guaranteed, however,
-  // that all ancestor nodes that represent the allocation site have the
-  // same SourceLocation.
-  const ExplodedNode<GRState>* AllocNode = 0;
-  
-  llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
-    GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
-
-  // Get the SourceLocation for the allocation site.
-  ProgramPoint P = AllocNode->getLocation();
-  AllocSite = cast<PostStmt>(P).getStmt()->getLocStart();
-    
-  // Fill in the description of the bug.
-  Description.clear();
-  llvm::raw_string_ostream os(Description);
-  SourceManager& SMgr = Eng.getContext().getSourceManager();
-  unsigned AllocLine = SMgr.getInstantiationLineNumber(AllocSite);
-  os << "Potential leak of object allocated on line " << AllocLine;
-  
-  // FIXME: AllocBinding doesn't get populated for RegionStore yet.
-  if (AllocBinding)
-    os << " and stored into '" << AllocBinding->getString() << '\'';
 }
 
 //===----------------------------------------------------------------------===//

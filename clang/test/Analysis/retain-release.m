@@ -438,6 +438,17 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 - (void) myCFRelease:(id)__attribute__((objc_ownership_cfrelease))obj;
 @end
 
+@interface TestAttrHelper : NSObject
+- (NSString*) createString:(TestOwnershipAttr*)X;
+@end
+
+@implementation TestAttrHelper
+- (NSString*) createString:(TestOwnershipAttr*)X {
+  return [X returnsAnOwnedString]; // expected-warning{{leak}}
+}
+
+@end
+
 void test_attr_1(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
 }
