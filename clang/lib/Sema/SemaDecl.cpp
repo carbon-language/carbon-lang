@@ -2895,6 +2895,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   // (C99 6.9.1p3, C++ [dcl.fct]p6).
   QualType ResultType = FD->getResultType();
   if (!ResultType->isDependentType() && !ResultType->isVoidType() &&
+      !FD->isInvalidDecl() &&
       RequireCompleteType(FD->getLocation(), ResultType,
                           diag::err_func_def_incomplete_result))
     FD->setInvalidDecl();
@@ -3713,7 +3714,6 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     Diag(Loc, diag::err_duplicate_member) << II;
     Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
     NewFD->setInvalidDecl();
-    Record->setInvalidDecl();
   }
 
   if (getLangOptions().CPlusPlus && !T->isPODType())

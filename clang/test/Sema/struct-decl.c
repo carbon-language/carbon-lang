@@ -33,3 +33,11 @@ struct datatag {
  char data;
 };
 
+
+// PR4092
+struct s0 {
+  char a;  // expected-note {{previous declaration is here}}
+  char a;  // expected-error {{duplicate member 'a'}}
+};
+
+struct s0 f0(void) {}
