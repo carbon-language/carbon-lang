@@ -1413,7 +1413,9 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
-  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, false);
+  // Type is a vararg. In 32bit code gen. it is ignored. In 64bit it is
+  // looked at.
+  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, true);
 
   llvm::Constant *Fn;
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
