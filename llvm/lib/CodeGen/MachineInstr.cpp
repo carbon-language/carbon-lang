@@ -709,7 +709,8 @@ int MachineInstr::findFirstPredOperandIdx() const {
 /// check if the register def is tied to a source operand, due to either
 /// two-address elimination or inline assembly constraints. Returns the
 /// first tied use operand index by reference is UseOpIdx is not null.
-bool MachineInstr::isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx){
+bool MachineInstr::
+isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
   if (getOpcode() == TargetInstrInfo::INLINEASM) {
     assert(DefOpIdx >= 2);
     const MachineOperand &MO = getOperand(DefOpIdx);
@@ -759,7 +760,8 @@ bool MachineInstr::isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx){
 /// isRegTiedToDefOperand - Return true if the operand of the specified index
 /// is a register use and it is tied to an def operand. It also returns the def
 /// operand index by reference.
-bool MachineInstr::isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx){
+bool MachineInstr::
+isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
   if (getOpcode() == TargetInstrInfo::INLINEASM) {
     const MachineOperand &MO = getOperand(UseOpIdx);
     if (!MO.isReg() || !MO.isUse() || MO.getReg() == 0)
