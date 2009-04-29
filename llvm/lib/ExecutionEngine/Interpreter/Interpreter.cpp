@@ -37,7 +37,7 @@ namespace llvm {
 /// create - Create a new interpreter object.  This can never fail.
 ///
 ExecutionEngine *Interpreter::create(ModuleProvider *MP, std::string* ErrStr,
-                                     bool Fast /*unused*/) {
+                                     unsigned OptLevel /*unused*/) {
   // Tell this ModuleProvide to materialize and release the module
   if (!MP->materializeModule(ErrStr))
     // We got an error, just return 0

@@ -108,7 +108,7 @@ public:
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
   static ExecutionEngine *create(ModuleProvider *M, std::string *ErrorStr = 0,
-                                 bool Fast /*unused*/ = 0);
+                                 unsigned OptLevel /*unused*/ = 3);
 
   /// run - Start execution with the specified function and arguments.
   ///

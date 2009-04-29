@@ -84,7 +84,7 @@ protected:
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
   typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*,
-                                       bool Fast);
+                                       unsigned OptLevel);
   static EECtorFn JITCtor, InterpCtor;
 
   /// LazyFunctionCreator - If an unknown function is needed, this function
@@ -114,7 +114,7 @@ public:
   static ExecutionEngine *create(ModuleProvider *MP,
                                  bool ForceInterpreter = false,
                                  std::string *ErrorStr = 0,
-                                 bool Fast = false);
+                                 unsigned OptLevel = 3);
   
   /// create - This is the factory method for creating an execution engine which
   /// is appropriate for the current machine.  This takes ownership of the
@@ -127,7 +127,7 @@ public:
   static ExecutionEngine *createJIT(ModuleProvider *MP,
                                     std::string *ErrorStr = 0,
                                     JITMemoryManager *JMM = 0,
-                                    bool Fast = false);
+                                    unsigned OptLevel = 3);
   
   
   

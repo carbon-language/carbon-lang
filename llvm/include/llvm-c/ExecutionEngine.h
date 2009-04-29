@@ -62,7 +62,7 @@ int LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
 
 int LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
                           LLVMModuleProviderRef MP,
-                          int Fast,
+                          unsigned OptLevel,
                           char **OutError);
 
 void LLVMDisposeExecutionEngine(LLVMExecutionEngineRef EE);
