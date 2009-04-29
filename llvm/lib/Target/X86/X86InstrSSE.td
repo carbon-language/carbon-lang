@@ -748,10 +748,12 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:
 } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
-let AddedComplexity = 20 in
+let AddedComplexity = 20 in {
 def : Pat<(v4f32 (movddup VR128:$src, (undef))),
           (MOVLHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
-
+def : Pat<(v2i64 (movddup VR128:$src, (undef))),
+          (MOVLHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+}
 
 
 
@@ -2430,9 +2432,17 @@ def MOVDDUPrm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
 def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
                    (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
+
+let AddedComplexity = 5 in {
 def : Pat<(movddup (memopv2f64 addr:$src), (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-
+def : Pat<(movddup (bc_v4f32 (memopv2f64 addr:$src)), (undef)),
+          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
+def : Pat<(movddup (memopv2i64 addr:$src), (undef)),
+          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
+def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
+          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
+}
 
 // Arithmetic
 let Constraints = "$src1 = $dst" in {

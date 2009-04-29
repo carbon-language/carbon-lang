@@ -1,6 +1,9 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2       | not grep shuf
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse3 | grep movlhps | count 2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse3       | grep movddup | count 1
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=pentium-m -o %t -f
+; RUN: grep movlhps %t | count 1
+; RUN: grep pshufd %t | count 1
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t -f
+; RUN: grep movlhps %t | count 1
+; RUN: grep movddup %t | count 1
 
 define <4 x float> @t1(<4 x float> %a) nounwind  {
 entry:

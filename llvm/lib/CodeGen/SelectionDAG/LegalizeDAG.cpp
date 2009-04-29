@@ -3946,8 +3946,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       MVT TVT = MVT::getVectorVT(EVT, NumElems);
       if (TLI.isTypeLegal(TVT)) {
         // Turn this into a bit convert of the vector input.
-        Result = DAG.getNode(ISD::BIT_CONVERT, dl, Node->getValueType(0),
-                             LegalizeOp(Node->getOperand(0)));
+        Tmp1 = LegalizeOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::BIT_CONVERT, dl, Node->getValueType(0), Tmp1);
         break;
       } else if (NumElems == 1) {
         // Turn this into a bit convert of the scalar input.

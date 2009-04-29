@@ -2884,44 +2884,6 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG,
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, V1);
 }
 
-/// isVectorLoad - Returns true if the node is a vector load, a scalar
-/// load that's promoted to vector, or a load bitcasted.
-static bool isVectorLoad(SDValue Op) {
-  assert(Op.getValueType().isVector() && "Expected a vector type");
-  if (Op.getOpcode() == ISD::SCALAR_TO_VECTOR ||
-      Op.getOpcode() == ISD::BIT_CONVERT) {
-    return isa<LoadSDNode>(Op.getOperand(0));
-  }
-  return isa<LoadSDNode>(Op);
-}
-
-
-/// CanonicalizeMovddup - Cannonicalize movddup shuffle to v2f64.
-///
-static SDValue CanonicalizeMovddup(ShuffleVectorSDNode *SV, SelectionDAG &DAG,
-                                   bool HasSSE3) {
-  // If we have sse3 and shuffle has more than one use or input is a load, then
-  // use movddup. Otherwise, use movlhps.
-  SDValue V1 = SV->getOperand(0);
-  
-  bool UseMovddup = HasSSE3 && (!SV->hasOneUse() || isVectorLoad(V1));
-  MVT PVT = UseMovddup ? MVT::v2f64 : MVT::v4f32;
-  MVT VT = SV->getValueType(0);
-  if (VT == PVT)
-    return SDValue(SV, 0);
-  
-  DebugLoc dl = SV->getDebugLoc();
-  V1 = DAG.getNode(ISD::BIT_CONVERT, dl, PVT, V1);
-  if (PVT.getVectorNumElements() == 2) {
-    int Mask[2] = { 0, 0 };
-    V1 = DAG.getVectorShuffle(PVT, dl, V1, DAG.getUNDEF(PVT), Mask);
-  } else {
-    int Mask[4] = { 0, 1, 0, 1 };
-    V1 = DAG.getVectorShuffle(PVT, dl, V1, DAG.getUNDEF(PVT), Mask);
-  }
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, V1);
-}
-
 /// getShuffleVectorZeroOrUndef - Return a vector_shuffle of the specified
 /// vector of zero or undef vector.  This produces a shuffle where the low
 /// element of V2 is swizzled into the zero/undef vector, landing at element
@@ -3976,11 +3938,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   if (isZeroShuffle(SVOp))
     return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
-
-  // Canonicalize movddup shuffles.
-  if (V2IsUndef && Subtarget->hasSSE2() && VT.getSizeInBits() == 128 &&
-      X86::isMOVDDUPMask(SVOp))
-    return CanonicalizeMovddup(SVOp, DAG, Subtarget->hasSSE3());
 
   // Promote splats to v4f32.
   if (SVOp->isSplat()) {
