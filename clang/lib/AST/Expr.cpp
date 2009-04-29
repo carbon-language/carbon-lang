@@ -500,7 +500,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return true;
 
   case CallExprClass:
-  case CXXOperatorCallExprClass: {
+  case CXXOperatorCallExprClass:
+  case CXXMemberCallExprClass: {
     // If this is a direct call, get the callee.
     const CallExpr *CE = cast<CallExpr>(this);
     const Expr *CalleeExpr = CE->getCallee()->IgnoreParenCasts();
