@@ -31,9 +31,14 @@ def Comment : DiagGroup<"comment">;
 def : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
-def : DiagGroup<"format-security">;
-def : DiagGroup<"format=2">;
-def : DiagGroup<"format">;
+
+def Format : DiagGroup<"format">;
+def Format2 : DiagGroup<"format=2", [Format]>;
+def : DiagGroup<"format-extra-args", [Format]>;
+def FormatNonLiteral : DiagGroup<"format-nonliteral", [Format]>;
+def FormatSecurity : DiagGroup<"format-security", [Format]>;
+def : DiagGroup<"format-y2k", [Format]>;
+
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 
 
@@ -47,7 +52,6 @@ def : DiagGroup<"missing-noreturn">;
 def MultiChar : DiagGroup<"multichar">;
 def : DiagGroup<"nested-externs">;
 def : DiagGroup<"newline-eof">;
-def : DiagGroup<"format-y2k">;
 def : DiagGroup<"long-long">;
 def : DiagGroup<"missing-field-initializers">;
 def : DiagGroup<"nonportable-cfstrings">;
@@ -95,6 +99,7 @@ def Extra : DiagGroup<"extra">;
 
 def Most : DiagGroup<"most", [
     Comment,
+    Format,
     Implicit,
     MultiChar,
     Switch,

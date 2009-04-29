@@ -1059,7 +1059,7 @@ def err_value_init_for_array_type : Error<
   "array types cannot be value-initialized">;
 def warn_printf_not_string_constant : Warning<
   "format string is not a string literal (potentially insecure)">,
-  InGroup<DiagGroup<"format-nonliteral">>;
+  InGroup<FormatNonLiteral>, DefaultIgnore;
 
 def err_unexpected_interface : Error<
   "unexpected interface name %0: expected expression">;
