@@ -263,7 +263,6 @@ int main(int argc, char **argv) {
   case '2': OLvl = CodeGenOpt::Two; break;
   case 's': OLvl = CodeGenOpt::Size; break;
   case '3': OLvl = CodeGenOpt::Aggressive; break;
-  case '4': OLvl = CodeGenOpt::LTO; break;
   }
 
   // If this target requires addPassesToEmitWholeFile, do it now.  This is

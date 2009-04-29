@@ -76,8 +76,7 @@ namespace CodeGenOpt {
     One,
     Two,
     Size,
-    Aggressive,
-    LTO
+    Aggressive
   };
 }
 
