@@ -978,6 +978,15 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         li_->getApproximateInstructionCount(*cur) == 0) {
       // Spill a physical register around defs and uses.
       if (li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_)) {
+        // spillPhysRegAroundRegDefsUses may have invalidated iterator stored
+        // in fixed_. Reset them.
+        for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
+          IntervalPtr &IP = fixed_[i];
+          LiveInterval *I = IP.first;
+          if (I->reg == minReg || tri_->isSubRegister(minReg, I->reg))
+            IP.second = I->advanceTo(I->begin(), StartPosition);
+        }
+
         DowngradedRegs.clear();
         assignRegOrStackSlotAtInterval(cur);
       } else {
