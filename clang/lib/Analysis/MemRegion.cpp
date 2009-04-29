@@ -160,7 +160,7 @@ void AllocaRegion::print(llvm::raw_ostream& os) const {
 void CodeTextRegion::print(llvm::raw_ostream& os) const {
   os << "code{";
   if (isDeclared())
-    os << getDecl()->getDeclName();
+    os << getDecl()->getDeclName().getAsString();
   else
     os << '$' << getSymbol();
 
