@@ -1060,7 +1060,12 @@ public:
   void setMemberLoc(SourceLocation L) { MemberLoc = L; }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getBase()->getLocStart(), MemberLoc);
+    // If we have an implicit base (like a C++ implicit this),
+    // make sure not to return its location
+    SourceLocation BaseLoc = getBase()->getLocStart();
+    if (BaseLoc.isInvalid())
+      return SourceRange(MemberLoc, MemberLoc);
+    return SourceRange(BaseLoc, MemberLoc);
   }
   
   virtual SourceLocation getExprLoc() const { return MemberLoc; }

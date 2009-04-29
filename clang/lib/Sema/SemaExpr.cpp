@@ -878,7 +878,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           Expr *This = new (Context) CXXThisExpr(SourceLocation(),
                                                  MD->getThisType(Context));
           return Owned(new (Context) MemberExpr(This, true, D,
-                                                SourceLocation(), MemberType));
+                                                Loc, MemberType));
         }
       }
     }
