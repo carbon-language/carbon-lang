@@ -422,9 +422,10 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
   
-  // Open the output buffer.
+  // Open the output buffer using "Binary" mode. On Windows, this distinction
+  // is important (to surpress automatic LF->CFLF conversion).
   std::string Err;
-  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), false, Err);
+  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), true, Err);
   if (!Err.empty()) {
     fprintf(stderr, "%s\n", Err.c_str());
     exit(1);
