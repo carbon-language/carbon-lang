@@ -1505,26 +1505,32 @@ def warn_explicit_conversion_functions : Warning<
   "explicit conversion functions are a C++0x extension">;
 
 def warn_printf_write_back : Warning<
-  "use of '%%n' in format string discouraged (potentially insecure)">;
+  "use of '%%n' in format string discouraged (potentially insecure)">,
+  InGroup<FormatSecurity>;
 def warn_printf_insufficient_data_args : Warning<
-  "more '%%' conversions than data arguments">;
+  "more '%%' conversions than data arguments">, InGroup<Format>;
 def warn_printf_too_many_data_args : Warning<
   "more data arguments than '%%' conversions">, InGroup<FormatExtraArgs>;
-def warn_printf_invalid_conversion : Warning<"invalid conversion '%0'">;
-def warn_printf_missing_format_string : Warning<"format string missing">;
-def warn_printf_empty_format_string : Warning<"format string is empty">;
+def warn_printf_invalid_conversion : Warning<
+  "invalid conversion '%0'">, InGroup<Format>;
+def warn_printf_missing_format_string : Warning<
+  "format string missing">, InGroup<Format>;
+def warn_printf_empty_format_string : Warning<
+  "format string is empty">, InGroup<Format>;
 def warn_printf_format_string_is_wide_literal : Warning<
-  "format string should not be a wide string">;
+  "format string should not be a wide string">, InGroup<Format>;
 def warn_printf_format_string_contains_null_char : Warning<
-  "format string contains '\\0' within the string body">;
+  "format string contains '\\0' within the string body">, InGroup<Format>;
 def warn_printf_asterisk_width_missing_arg : Warning<
   "'*' specified field width is missing a matching 'int' argument">;
 def warn_printf_asterisk_precision_missing_arg : Warning<
   "'.*' specified field precision is missing a matching 'int' argument">;
 def warn_printf_asterisk_width_wrong_type : Warning<
-  "field width should have type 'int', but argument has type %0">;
+  "field width should have type 'int', but argument has type %0">,
+  InGroup<Format>;
 def warn_printf_asterisk_precision_wrong_type : Warning<
-  "field precision should have type 'int', but argument has type %0">;
+  "field precision should have type 'int', but argument has type %0">,
+  InGroup<Format>;
 
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr : Warning<
@@ -1533,7 +1539,7 @@ def warn_ret_stack_ref : Warning<
   "reference to stack memory associated with local variable %0 returned">;
 
 
-// for non-floating point, expressions of the form x == x or x != x
+// For non-floating point, expressions of the form x == x or x != x
 // should result in a warning, since these always evaluate to a constant.
 def warn_selfcomparison : Warning<
   "self-comparison always results in a constant value">;
