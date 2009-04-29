@@ -1808,7 +1808,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       DOUT << "    Examining use ";
       DEBUG(WriteAsOperand(*DOUT, UsersToProcess.back().OperandValToReplace,
                            /*PrintType=*/false));
-      DOUT << " in Inst: " << *Inst;
+      DOUT << " in Inst: " << *(User.Inst);
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
