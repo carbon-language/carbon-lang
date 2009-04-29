@@ -3124,6 +3124,73 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return Incompatible;
 }
 
+/// \brief Constructs a transparent union from an expression that is
+/// used to initialize the transparent union.
+static void ConstructTransparentUnion(ASTContext &C, Expr *&E, 
+                                      QualType UnionType, FieldDecl *Field) {
+  // Build an initializer list that designates the appropriate member
+  // of the transparent union.
+  InitListExpr *Initializer = new (C) InitListExpr(SourceLocation(),
+                                                   &E, 1,
+                                                   SourceLocation());
+  Initializer->setType(UnionType);
+  Initializer->setInitializedFieldInUnion(Field);
+
+  // Build a compound literal constructing a value of the transparent
+  // union type from this initializer list.
+  E = new (C) CompoundLiteralExpr(SourceLocation(), UnionType, Initializer,
+                                  false);
+}
+
+Sema::AssignConvertType
+Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
+  QualType FromType = rExpr->getType();
+
+  // If the ArgType is a Union type, we want to handle a potential 
+  // transparent_union GCC extension.
+  const RecordType *UT = ArgType->getAsUnionType();
+  if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>())
+    return Incompatible;
+
+  // The field to initialize within the transparent union.
+  RecordDecl *UD = UT->getDecl();
+  FieldDecl *InitField = 0;
+  // It's compatible if the expression matches any of the fields.
+  for (RecordDecl::field_iterator it = UD->field_begin(Context),
+         itend = UD->field_end(Context);
+       it != itend; ++it) {
+    if (it->getType()->isPointerType()) {
+      // If the transparent union contains a pointer type, we allow:
+      // 1) void pointer
+      // 2) null pointer constant
+      if (FromType->isPointerType())
+        if (FromType->getAsPointerType()->getPointeeType()->isVoidType()) {
+          ImpCastExprToType(rExpr, it->getType());
+          InitField = *it;
+          break;
+        }
+      
+      if (rExpr->isNullPointerConstant(Context)) {
+        ImpCastExprToType(rExpr, it->getType());
+        InitField = *it;
+        break;
+      }
+    }
+
+    if (CheckAssignmentConstraints(it->getType(), rExpr->getType())
+          == Compatible) {
+      InitField = *it;
+      break;
+    }
+  }
+
+  if (!InitField)
+    return Incompatible;
+
+  ConstructTransparentUnion(Context, rExpr, ArgType, InitField);
+  return Compatible;
+}
+
 Sema::AssignConvertType
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   if (getLangOptions().CPlusPlus) {
@@ -3169,7 +3236,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // so that we can use references in built-in functions even in C.
   // The getNonReferenceType() call makes sure that the resulting expression
   // does not have reference type.
-  if (rExpr->getType() != lhsType)
+  if (result != Incompatible && rExpr->getType() != lhsType)
     ImpCastExprToType(rExpr, lhsType.getNonReferenceType());
   return result;
 }

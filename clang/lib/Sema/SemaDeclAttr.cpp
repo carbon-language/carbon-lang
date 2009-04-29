@@ -1178,36 +1178,63 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
     return;
   }
 
-  // FIXME: This shouldn't be restricted to typedefs
+  // Try to find the underlying union declaration.
+  RecordDecl *RD = 0;
   TypedefDecl *TD = dyn_cast<TypedefDecl>(d);
-  if (!TD || !TD->getUnderlyingType()->isUnionType()) {
+  if (TD && TD->getUnderlyingType()->isUnionType())
+    RD = TD->getUnderlyingType()->getAsUnionType()->getDecl();
+  else
+    RD = dyn_cast<RecordDecl>(d);
+
+  if (!RD || !RD->isUnion()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << "transparent_union" << 1 /*union*/;
     return;
   }
 
-  RecordDecl* RD = TD->getUnderlyingType()->getAsUnionType()->getDecl();
+  if (!RD->isDefinition()) {
+    S.Diag(Attr.getLoc(), 
+        diag::warn_transparent_union_attribute_not_definition);
+    return;
+  }
 
-  // FIXME: Should we do a check for RD->isDefinition()?
+  RecordDecl::field_iterator Field = RD->field_begin(S.Context),
+                          FieldEnd = RD->field_end(S.Context);
+  if (Field == FieldEnd) {
+    S.Diag(Attr.getLoc(), diag::warn_transparent_union_attribute_zero_fields);
+    return;
+  }
 
-  // FIXME: This isn't supposed to be restricted to pointers, but otherwise
-  // we might silently generate incorrect code; see following code
-  for (RecordDecl::field_iterator Field = RD->field_begin(S.Context),
-                               FieldEnd = RD->field_end(S.Context);
-       Field != FieldEnd; ++Field) {
-    if (!Field->getType()->isPointerType()) {
-      S.Diag(Attr.getLoc(), diag::warn_transparent_union_nonpointer);
+  FieldDecl *FirstField = *Field;
+  QualType FirstType = FirstField->getType();
+  if (FirstType->isFloatingType() || FirstType->isVectorType()) {
+    S.Diag(FirstField->getLocation(), 
+           diag::warn_transparent_union_attribute_floating);
+    return;
+  }
+
+  uint64_t FirstSize = S.Context.getTypeSize(FirstType);
+  uint64_t FirstAlign = S.Context.getTypeAlign(FirstType);
+  for (; Field != FieldEnd; ++Field) {
+    QualType FieldType = Field->getType();
+    if (S.Context.getTypeSize(FieldType) != FirstSize ||
+        S.Context.getTypeAlign(FieldType) != FirstAlign) {
+      // Warn if we drop the attribute.
+      bool isSize = S.Context.getTypeSize(FieldType) != FirstSize;
+      unsigned FieldBits = isSize? S.Context.getTypeSize(FieldType) 
+                                 : S.Context.getTypeAlign(FieldType);
+      S.Diag(Field->getLocation(), 
+          diag::warn_transparent_union_attribute_field_size_align)
+        << isSize << Field->getDeclName() << FieldBits;
+      unsigned FirstBits = isSize? FirstSize : FirstAlign;
+      S.Diag(FirstField->getLocation(), 
+             diag::note_transparent_union_first_field_size_align)
+        << isSize << FirstBits;
       return;
     }
   }
 
-  // FIXME: This is a complete hack; we should be properly propagating
-  // transparent_union through Sema.  That said, this is close enough to
-  // correctly compile all the common cases of transparent_union without
-  // errors or warnings
-  QualType NewTy = S.Context.VoidPtrTy;
-  NewTy.addConst();
-  TD->setUnderlyingType(NewTy);
+  RD->addAttr(::new (S.Context) TransparentUnionAttr());
 }
 
 static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {

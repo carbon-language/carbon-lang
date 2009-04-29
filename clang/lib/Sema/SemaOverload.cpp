@@ -1888,9 +1888,13 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   if (!getLangOptions().CPlusPlus) {
     // In C, argument passing is the same as performing an assignment.
     QualType FromType = From->getType();
+    
     AssignConvertType ConvTy =
       CheckSingleAssignmentConstraints(ToType, From);
-
+    if (ConvTy != Compatible &&
+        CheckTransparentUnionArgumentConstraints(ToType, From) == Compatible)
+      ConvTy = Compatible;
+    
     return DiagnoseAssignmentResult(ConvTy, From->getLocStart(), ToType,
                                     FromType, From, Flavor);
   }

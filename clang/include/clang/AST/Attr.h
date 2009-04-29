@@ -400,7 +400,9 @@ public:
 
   virtual bool isMerged() const { return false; }
 
-  virtual Attr *clone(ASTContext &C) const { return ::new (C) OverloadableAttr; }
+  virtual Attr *clone(ASTContext &C) const { 
+    return ::new (C) OverloadableAttr; 
+  }
 
   static bool classof(const Attr *A) { return A->getKind() == Overloadable; }
   static bool classof(const OverloadableAttr *) { return true; }

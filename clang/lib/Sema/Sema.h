@@ -2355,11 +2355,17 @@ public:
   /// This routine is only used by the following two methods. C99 6.5.16.
   AssignConvertType CheckAssignmentConstraints(QualType lhs, QualType rhs);
   
-  // CheckSingleAssignmentConstraints - Currently used by ActOnCallExpr,
+  // CheckSingleAssignmentConstraints - Currently used by 
   // CheckAssignmentOperands, and ActOnReturnStmt. Prior to type checking, 
   // this routine performs the default function/array converions.
   AssignConvertType CheckSingleAssignmentConstraints(QualType lhs, 
                                                      Expr *&rExpr);
+
+  // \brief If the lhs type is a transparent union, check whether we
+  // can initialize the transparent union with the given expression.
+  AssignConvertType CheckTransparentUnionArgumentConstraints(QualType lhs, 
+                                                             Expr *&rExpr);
+
   // CheckCompoundAssignmentConstraints - Type check without performing any 
   // conversions. For compound assignments, the "Check...Operands" methods 
   // perform the necessary conversions. 

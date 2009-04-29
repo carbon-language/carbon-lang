@@ -415,18 +415,21 @@ def warn_gnu_inline_attribute_requires_inline : Warning<
 
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;
-def warn_transparent_union_attribute_field_size : Warning<
-  "transparent_union attribute ignored, size of type %0 must match "
-  "type of first field">;
-def warn_transparent_union_attribute_not_difinition : Warning<
-  "transparent_union attribute ignored, union type must be defined">;
+def warn_transparent_union_attribute_field_size_align : Warning<
+  "%select{alignment|size}0 of field %1 (%2 bits) does not match the "
+  "%select{alignment|size}0 of the first field in transparent union; "
+  "transparent_union attribute ignored">;
+def note_transparent_union_first_field_size_align : Note<
+  "%select{alignment|size}0 of first field is %1 bits">;
+def warn_transparent_union_attribute_not_definition : Warning<
+  "transparent_union attribute can only be applied to a union definition; "
+  "attribute ignored">;
 def warn_transparent_union_attribute_floating : Warning<
-  "transparent_union attribute ignored, first field cannot be a floating-point "
-  "or vector type">;
+  "first field of a transparent union cannot have floating point or vector "
+  "type; transparent_union attribute ignored">;
 def warn_transparent_union_attribute_zero_fields : Warning<
-  "transparent_union attribute ignored, the union does not contain any fields">;
-def warn_transparent_union_attribute_not_c : Warning<
-  "transparent_union attribute ignored, attribute is c only">;
+  "transparent union definition must contain at least one field; "
+  "transparent_union attribute ignored">;
 def warn_attribute_type_not_supported : Warning<
   "'%0' attribute argument not supported: %1">;
 def warn_attribute_unknown_visibility : Warning<"unknown visibility '%1'">;
