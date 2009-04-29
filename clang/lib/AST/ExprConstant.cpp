@@ -927,7 +927,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       bool Result;
       if (E->getOpcode() == BinaryOperator::EQ) {
         Result = LHSValue.getLValueOffset() == RHSValue.getLValueOffset();
-      } else if (E->getOpcode() == BinaryOperator::NE) {
+      } else {
         Result = LHSValue.getLValueOffset() != RHSValue.getLValueOffset();
       }
       return Success(Result, E);
