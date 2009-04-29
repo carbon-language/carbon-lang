@@ -149,9 +149,14 @@ static bool followsFundamentalRule(const char* s) {
   return deriveNamingConvention(s) == CreateRule;
 }
 
-static bool followsReturnRule(const char* s) {
-  NamingConvention C = deriveNamingConvention(s);
-  return C == CreateRule || C == InitRule;
+static const ObjCMethodDecl*
+ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD, ASTContext &Context) {  
+  ObjCInterfaceDecl *ID =
+    const_cast<ObjCInterfaceDecl*>(MD->getClassInterface());
+  
+  return MD->isInstanceMethod()
+         ? ID->lookupInstanceMethod(Context, MD->getSelector())
+         : ID->lookupClassMethod(Context, MD->getSelector());
 }
 
 //===----------------------------------------------------------------------===//
@@ -267,6 +272,10 @@ public:
   unsigned getIndex() const { 
     assert(getKind() == Alias);
     return index;
+  }
+  
+  bool isOwned() const {
+    return K == OwnedSymbol || K == OwnedAllocatedSymbol;
   }
   
   static RetEffect MakeAlias(unsigned Idx) {
@@ -399,7 +408,7 @@ public:
   ObjCSummaryKey(IdentifierInfo* ii, Selector s)
     : II(ii), S(s) {}
 
-  ObjCSummaryKey(ObjCInterfaceDecl* d, Selector s)
+  ObjCSummaryKey(const ObjCInterfaceDecl* d, Selector s)
     : II(d ? d->getIdentifier() : 0), S(s) {}
   
   ObjCSummaryKey(Selector s)
@@ -452,14 +461,14 @@ public:
   
   typedef MapTy::iterator iterator;
   
-  iterator find(ObjCInterfaceDecl* D, IdentifierInfo *ClsName, Selector S) {
+  iterator find(const ObjCInterfaceDecl* D, IdentifierInfo *ClsName,
+                Selector S) {
     // Lookup the method using the decl for the class @interface.  If we
     // have no decl, lookup using the class name.
     return D ? find(D, S) : find(ClsName, S);
   }
   
-  iterator find(ObjCInterfaceDecl* D, Selector S) {
-    
+  iterator find(const ObjCInterfaceDecl* D, Selector S) {    
     // Do a lookup with the (D,S) pair.  If we find a match return
     // the iterator.
     ObjCSummaryKey K(D, S);
@@ -730,18 +739,21 @@ public:
   
   RetainSummary* getSummary(FunctionDecl* FD);  
   
-  RetainSummary* getInstanceMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID) {
+  RetainSummary* getInstanceMethodSummary(ObjCMessageExpr* ME,
+                                          const ObjCInterfaceDecl* ID) {
     return getInstanceMethodSummary(ME->getSelector(), ME->getClassName(),
                             ID, ME->getMethodDecl(), ME->getType());    
   }
   
   RetainSummary* getInstanceMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                  ObjCInterfaceDecl* ID,
-                                  ObjCMethodDecl *MD, QualType RetTy);
+                                          const ObjCInterfaceDecl* ID,
+                                          const ObjCMethodDecl *MD,
+                                          QualType RetTy);
 
   RetainSummary *getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                       ObjCInterfaceDecl *ID,
-                                       ObjCMethodDecl *MD, QualType RetTy);
+                                       const ObjCInterfaceDecl *ID,
+                                       const ObjCMethodDecl *MD,
+                                       QualType RetTy);
   
   RetainSummary *getClassMethodSummary(ObjCMessageExpr *ME) {
     return getClassMethodSummary(ME->getSelector(), ME->getClassName(),
@@ -751,9 +763,12 @@ public:
 
   /// getMethodSummary - This version of getMethodSummary is used to query
   ///  the summary for the current method being analyzed.
-  RetainSummary *getMethodSummary(ObjCMethodDecl *MD) {
+  RetainSummary *getMethodSummary(const ObjCMethodDecl *MD) {
+    // FIXME: Eventually this should be unneeded.
+    MD = ResolveToInterfaceMethodDecl(MD, Ctx);    
+    
     Selector S = MD->getSelector();
-    ObjCInterfaceDecl *ID = MD->getClassInterface();
+    const ObjCInterfaceDecl *ID = MD->getClassInterface();
     IdentifierInfo *ClsName = ID->getIdentifier();
     QualType ResultTy = MD->getResultType();
     
@@ -763,9 +778,10 @@ public:
       return getClassMethodSummary(S, ClsName, ID, MD, ResultTy);
   }
   
-  RetainSummary* getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
-                                        QualType RetTy);
-  RetainSummary* getMethodSummaryFromAnnotations(ObjCMethodDecl *MD);
+  RetainSummary* getCommonMethodSummary(const ObjCMethodDecl* MD,
+                                        Selector S, QualType RetTy);
+
+  RetainSummary* getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -1113,7 +1129,7 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
 }
 
 RetainSummary*
-RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
+RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   if (!MD)
     return 0;
   
@@ -1169,8 +1185,8 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(ObjCMethodDecl *MD) {
 }
 
 RetainSummary*
-RetainSummaryManager::getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
-                                             QualType RetTy) {
+RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
+                                             Selector S, QualType RetTy) {
 
   if (MD) {
     // Scan the method decl for 'void*' arguments.  These should be treated
@@ -1224,8 +1240,8 @@ RetainSummaryManager::getCommonMethodSummary(ObjCMethodDecl* MD, Selector S,
 RetainSummary*
 RetainSummaryManager::getInstanceMethodSummary(Selector S,
                                                IdentifierInfo *ClsName,
-                                               ObjCInterfaceDecl* ID,
-                                               ObjCMethodDecl *MD,
+                                               const ObjCInterfaceDecl* ID,
+                                               const ObjCMethodDecl *MD,
                                                QualType RetTy) {
 
   // Look up a summary in our summary cache.
@@ -1255,8 +1271,9 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
 
 RetainSummary*
 RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                            ObjCInterfaceDecl *ID,
-                                            ObjCMethodDecl *MD, QualType RetTy){
+                                            const ObjCInterfaceDecl *ID,
+                                            const ObjCMethodDecl *MD,
+                                            QualType RetTy) {
 
   assert(ClsName && "Class name must be specified.");
   ObjCMethodSummariesTy::iterator I =
@@ -2448,7 +2465,7 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
     // to the caller for NS objects.
     ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
     os << " is returned from a method whose name ('"
-    << MD.getSelector().getAsString()
+       << MD.getSelector().getAsString()
     << "') does not contain 'copy' or otherwise starts with"
     " 'new' or 'alloc'.  This violates the naming convention rules given"
     " in the Memory Management Guide for Cocoa (object leaked)";
@@ -2992,13 +3009,11 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   if (X.isReturnedOwned() && X.getCount() == 0) {
     const Decl *CD = &Eng.getStateManager().getCodeDecl();
     
-    if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
-      std::string s = MD->getSelector().getAsString();
-      // FIXME: Use method summary.
-      if (!followsReturnRule(s.c_str())) {
+    if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {      
+      RetainSummary *Summ = Summaries.getMethodSummary(MD);
+      if (!GetRetEffect(Summ).isOwned()) {
         static int ReturnOwnLeakTag = 0;
         state = state.set<RefBindings>(Sym, X ^ RefVal::ErrorLeakReturned);
-
         // Generate an error node.
         ExplodedNode<GRState> *N =
           Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred);

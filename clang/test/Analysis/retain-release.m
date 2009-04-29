@@ -440,13 +440,16 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 
 @interface TestAttrHelper : NSObject
 - (NSString*) createString:(TestOwnershipAttr*)X;
+- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((objc_ownership_returns));
 @end
 
 @implementation TestAttrHelper
 - (NSString*) createString:(TestOwnershipAttr*)X {
   return [X returnsAnOwnedString]; // expected-warning{{leak}}
 }
-
+- (NSString*) createStringAttr:(TestOwnershipAttr*)X {
+  return [X returnsAnOwnedString]; // no-warning
+}
 @end
 
 void test_attr_1(TestOwnershipAttr *X) {
