@@ -262,7 +262,22 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
 }
 
 SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
-                             Loc L, NonLoc R) {  
+                             Loc L, NonLoc R) {
+  
+  // Special case: 'R' is an integer that has the same width as a pointer and
+  // we are using the integer location in a comparison.  Normally this cannot be
+  // triggered, but transfer functions like those for OSCommpareAndSwapBarrier32
+  // can generate comparisons that trigger this code.
+  // FIXME: Are all locations guaranteed to have pointer width?
+  if (BinaryOperator::isEqualityOp(Op)) {
+    if (nonloc::ConcreteInt *RInt = dyn_cast<nonloc::ConcreteInt>(&R)) {
+      const llvm::APSInt &X = RInt->getValue();
+      ASTContext &C = Eng.getContext();
+      if (C.getTypeSize(C.VoidPtrTy) == X.getBitWidth())
+        return EvalBinOp(Eng, Op, L, loc::ConcreteInt(X));
+    }
+  }
+  
   // Delegate pointer arithmetic to store manager.
   return Eng.getStoreManager().EvalBinOp(Op, L, R);
 }
