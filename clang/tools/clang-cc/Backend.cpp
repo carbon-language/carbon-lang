@@ -256,12 +256,20 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     // FIXME: This is disabled right now until bugs can be worked out.  Reenable
     // this for fast -O0 compiles!
     FunctionPassManager *PM = getCodeGenPasses();
-    
+    CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
+
+    switch (CompileOpts.OptimizationLevel) {
+    default: break;
+    case 0: OptLevel = CodeGenOpt::None; break;
+    case 1: OptLevel = CodeGenOpt::One; break;
+    case 2: OptLevel = CodeGenOpt::Two; break;
+    case 3: OptLevel = CodeGenOpt::Aggressive; break;
+    }
+
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
     switch (TM->addPassesToEmitFile(*PM, *AsmOutStream,
-                                    TargetMachine::AssemblyFile,
-                                    CompileOpts.OptimizationLevel)) {
+                                    TargetMachine::AssemblyFile, OptLevel)) {
     default:
     case FileModel::Error:
       Error = "Unable to interface with target machine!\n";
@@ -270,8 +278,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       break;
     }
     
-    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, 0,
-                                      CompileOpts.OptimizationLevel)) {
+    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, 0, OptLevel)) {
       Error = "Unable to interface with target machine!\n";
       return false;
     }
