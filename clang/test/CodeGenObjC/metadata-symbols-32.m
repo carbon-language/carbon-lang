@@ -27,6 +27,7 @@
 // RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_[0-9]*" = internal global .*section "__OBJC,__message_refs,literal_pointers,no_dead_strip", align 4' %t && 
 // RUN: grep '@"\\01L_OBJC_SYMBOLS" = internal global .*section "__OBJC,__symbols,regular,no_dead_strip", align 4' %t && 
 // RUN: grep '@"\\01l_OBJC_$_PROP_LIST_A" = internal global .*section "__OBJC,__property,regular,no_dead_strip", align 4' %t && 
+// RUN: grep "\.lazy_reference \.objc_class_name_J0" %t &&
 
 // RUN: true
 
@@ -74,6 +75,11 @@ llvm-gcc -m32 -emit-llvm -S -o - metadata-symbols-32.m | \
 -(void) im1 {
 }
 @end
+
+@interface J0
+@end
+
+@implementation J0(Category) @end
 
 void *f0() {
    [B im0];
