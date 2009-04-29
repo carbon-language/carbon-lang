@@ -40,3 +40,8 @@ extern y b;
 struct Length {
   Length l() const { return *this; }
 };
+
+// <rdar://problem/6815988>
+struct mmst_reg{
+ char mmst_reg[10];
+};

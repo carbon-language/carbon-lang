@@ -1982,16 +1982,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
       if (Tok.is(tok::identifier)) {
         assert(Tok.getIdentifierInfo() && "Not an identifier?");
-
-        // If this identifier is the name of the current class, it's a
-        // constructor name. 
-        if (Actions.isCurrentClassName(*Tok.getIdentifierInfo(),CurScope)){
-          D.setConstructor(Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                               Tok.getLocation(), CurScope),
-                           Tok.getLocation());
-        // This is a normal identifier.
-        } else
-          D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+        D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
         ConsumeToken();
         goto PastIdentifier;
       } else if (Tok.is(tok::annot_template_id)) {
@@ -2101,6 +2092,15 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           break;
       }
       ParseFunctionDeclarator(ConsumeParen(), D);
+      
+      // If this identifier is the name of the current class, it's a
+      // constructor name. 
+      if (IdentifierInfo *II = D.getIdentifier()) {
+        if (Actions.isCurrentClassName(*II, CurScope))
+        D.setConstructor(Actions.getTypeName(*II, D.getIdentifierLoc(), 
+                                             CurScope), 
+                         D.getIdentifierLoc());
+      } 
     } else if (Tok.is(tok::l_square)) {
       ParseBracketDeclarator(D);
     } else {
