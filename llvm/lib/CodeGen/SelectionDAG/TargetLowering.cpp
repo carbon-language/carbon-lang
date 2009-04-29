@@ -1538,19 +1538,22 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
           N0.getOperand(0).getNode()->hasOneUse() &&
           isa<ConstantSDNode>(N0.getOperand(1))) {
         LoadSDNode *Lod = cast<LoadSDNode>(N0.getOperand(0));
-        uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
         uint64_t bestMask = 0;
         unsigned bestWidth = 0, bestOffset = 0;
-        if (!Lod->isVolatile() && Lod->isUnindexed()) {
+        if (!Lod->isVolatile() && Lod->isUnindexed() &&
+            // FIXME: This uses getZExtValue() below so it only works on i64 and
+            // below.
+            N0.getValueType().getSizeInBits() <= 64) {
           unsigned origWidth = N0.getValueType().getSizeInBits();
           // We can narrow (e.g.) 16-bit extending loads on 32-bit target to 
           // 8 bits, but have to be careful...
           if (Lod->getExtensionType() != ISD::NON_EXTLOAD)
             origWidth = Lod->getMemoryVT().getSizeInBits();
+          uint64_t Mask =cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
           for (unsigned width = origWidth / 2; width>=8; width /= 2) {
             uint64_t newMask = (1ULL << width) - 1;
             for (unsigned offset=0; offset<origWidth/width; offset++) {
-              if ((newMask & Mask)==Mask) {
+              if ((newMask & Mask) == Mask) {
                 if (!TD->isLittleEndian())
                   bestOffset = (origWidth/width - offset - 1) * (width/8);
                 else
