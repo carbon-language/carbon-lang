@@ -679,6 +679,28 @@ public:
 
 EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
 
+//--------------------------------------------------
+// parser<char>
+//
+template<>
+class parser<char> : public basic_parser<char> {
+public:
+  // parse - Return true on error.
+  bool parse(Option &, const char *, const std::string &Arg,
+             char &Value) {
+    Value = Arg[0];
+    return false;
+  }
+
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "char"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
+};
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<char>);
+
 //===----------------------------------------------------------------------===//
 // applicator class - This class is used because we must use partial
 // specialization to handle literal string arguments specially (const char* does
@@ -923,6 +945,7 @@ public:
 EXTERN_TEMPLATE_INSTANTIATION(class opt<unsigned>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<int>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<std::string>);
+EXTERN_TEMPLATE_INSTANTIATION(class opt<char>);
 EXTERN_TEMPLATE_INSTANTIATION(class opt<bool>);
 
 //===----------------------------------------------------------------------===//
