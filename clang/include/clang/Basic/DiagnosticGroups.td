@@ -32,9 +32,10 @@ def : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 
-def Format : DiagGroup<"format">;
+def FormatExtraArgs : DiagGroup<"format-extra-args">;
+
+def Format : DiagGroup<"format", [FormatExtraArgs]>;
 def Format2 : DiagGroup<"format=2", [Format]>;
-def : DiagGroup<"format-extra-args", [Format]>;
 def FormatNonLiteral : DiagGroup<"format-nonliteral", [Format]>;
 def FormatSecurity : DiagGroup<"format-security", [Format]>;
 def : DiagGroup<"format-y2k", [Format]>;
