@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep truncate | not grep extend
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep {(trunc i} | not grep ext
 
 define i16 @test1(i8 %x) {
   %A = sext i8 %x to i32
