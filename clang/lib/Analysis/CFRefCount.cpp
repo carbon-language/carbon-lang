@@ -3008,6 +3008,10 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   state = state.set<RefBindings>(Sym, X);
   Pred = Builder.MakeNode(Dst, S, Pred, state);
   
+  // Did we cache out?
+  if (!Pred)
+    return;
+  
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
     const Decl *CD = &Eng.getStateManager().getCodeDecl();
@@ -3018,13 +3022,13 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
         static int ReturnOwnLeakTag = 0;
         state = state.set<RefBindings>(Sym, X ^ RefVal::ErrorLeakReturned);
         // Generate an error node.
-        ExplodedNode<GRState> *N =
-          Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred);
-        
-        CFRefLeakReport *report =
-          new CFRefLeakReport(*static_cast<CFRefBug*>(leakAtReturn), *this,
-                              N, Sym, Eng);
-        BR->EmitReport(report);
+        if (ExplodedNode<GRState> *N =
+            Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred)) {
+          CFRefLeakReport *report =
+            new CFRefLeakReport(*static_cast<CFRefBug*>(leakAtReturn), *this,
+                                N, Sym, Eng);
+          BR->EmitReport(report);
+        }
       }
     }
   }
