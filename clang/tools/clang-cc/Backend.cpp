@@ -261,8 +261,6 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     switch (CompileOpts.OptimizationLevel) {
     default: break;
     case 0: OptLevel = CodeGenOpt::None; break;
-    case 1: OptLevel = CodeGenOpt::One; break;
-    case 2: OptLevel = CodeGenOpt::Two; break;
     case 3: OptLevel = CodeGenOpt::Aggressive; break;
     }
 
