@@ -2613,21 +2613,28 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(SCEV *V, const Loop *L) {
             // If any of the operands is non-constant and if they are
             // non-integer and non-pointer, don't even try to analyze them
             // with scev techniques.
-            if (!isa<IntegerType>(Op->getType()) &&
-                !isa<PointerType>(Op->getType()))
+            if (!isSCEVable(Op->getType()))
               return V;
 
             SCEVHandle OpV = getSCEVAtScope(getSCEV(Op), L);
-            if (SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))
-              Operands.push_back(ConstantExpr::getIntegerCast(SC->getValue(), 
-                                                              Op->getType(), 
-                                                              false));
-            else if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV)) {
-              if (Constant *C = dyn_cast<Constant>(SU->getValue()))
-                Operands.push_back(ConstantExpr::getIntegerCast(C, 
-                                                                Op->getType(), 
-                                                                false));
-              else
+            if (SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV)) {
+              Constant *C = SC->getValue();
+              if (C->getType() != Op->getType())
+                C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                                  Op->getType(),
+                                                                  false),
+                                          C, Op->getType());
+              Operands.push_back(C);
+            } else if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV)) {
+              if (Constant *C = dyn_cast<Constant>(SU->getValue())) {
+                if (C->getType() != Op->getType())
+                  C =
+                    ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                                  Op->getType(),
+                                                                  false),
+                                          C, Op->getType());
+                Operands.push_back(C);
+              } else
                 return V;
             } else {
               return V;

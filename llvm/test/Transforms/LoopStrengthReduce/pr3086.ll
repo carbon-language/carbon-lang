@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output
 ; PR 3086
 
 	%struct.Cls = type { i32, i8, [2 x %struct.Cls*], [2 x %struct.Lit*] }
