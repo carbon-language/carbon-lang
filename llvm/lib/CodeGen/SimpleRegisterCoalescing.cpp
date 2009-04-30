@@ -1482,27 +1482,15 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       }
       Limit = allocatableRCRegs_[DstRC].count();
     } else if (!SrcIsPhys && !DstIsPhys) {
-      unsigned SrcSize = SrcRC->getSize();
-      unsigned DstSize = DstRC->getSize();
-      if (SrcSize < DstSize)
-        // For example X86::MOVSD2PDrr copies from FR64 to VR128.
-        NewRC = DstRC;
-      else if (DstSize > SrcSize) {
-        NewRC = SrcRC;
-        std::swap(LargeReg, SmallReg);
-      } else {
-        unsigned SrcNumRegs = SrcRC->getNumRegs();
-        unsigned DstNumRegs = DstRC->getNumRegs();
-        if (DstNumRegs < SrcNumRegs)
-          // Sub-register class?
-          NewRC = DstRC;
-        else if (SrcNumRegs < DstNumRegs) {
-          NewRC = SrcRC;
-          std::swap(LargeReg, SmallReg);
-        } else
-          // No idea what's the right register class to use.
-          return false;
+      NewRC = getCommonSubClass(SrcRC, DstRC);
+      if (!NewRC) {
+        DOUT << "\tDisjoint regclasses: "
+             << SrcRC->getName() << ", "
+             << DstRC->getName() << ".\n";
+        return false;           // Not coalescable.
       }
+      if (DstRC->getSize() > SrcRC->getSize())
+        std::swap(LargeReg, SmallReg);
     }
 
     // If we are joining two virtual registers and the resulting register
