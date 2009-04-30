@@ -1559,10 +1559,10 @@ static void HandleObjCOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
   d->addAttr(::new (S.Context) ObjCOwnershipReturnsAttr());
 }
 
-static void HandleObjCOwnershipParmAttr(Decl *d, const AttributeList &Attr,
-                                        Sema &S) {
+static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &Attr,
+                                    Sema &S, bool attachToMethodDecl = false) {
   
-  if (!isa<ParmVarDecl>(d)) {
+  if (!isa<ParmVarDecl>(d) && (!attachToMethodDecl || !isa<ObjCMethodDecl>(d))){
     const char *name;
     
     switch (Attr.getKind()) {
@@ -1582,7 +1582,8 @@ static void HandleObjCOwnershipParmAttr(Decl *d, const AttributeList &Attr,
     };
 
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) << name
-          << 4 /* parameter */;
+      << (attachToMethodDecl ? 5 /* parameter or method decl */ 
+                             : 4 /* parameter */);
     return;
   }
   
@@ -1643,10 +1644,11 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   // Checker-specific.
   case AttributeList::AT_objc_ownership_cfrelease:     
   case AttributeList::AT_objc_ownership_cfretain:
+      HandleObjCOwnershipAttr(D, Attr, S); break;
   case AttributeList::AT_objc_ownership_make_collectable:
   case AttributeList::AT_objc_ownership_release:
   case AttributeList::AT_objc_ownership_retain:
-    HandleObjCOwnershipParmAttr(D, Attr, S); break;
+      HandleObjCOwnershipAttr(D, Attr, S, true); break;
   case AttributeList::AT_objc_ownership_returns:
     HandleObjCOwnershipReturnsAttr(D, Attr, S); break;
 
