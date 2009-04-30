@@ -340,8 +340,21 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       bool Empty = true;
       for (unsigned rc2 = 0, e2 = RegisterClasses.size(); rc2 != e2; ++rc2) {
         const CodeGenRegisterClass &RC2 = RegisterClasses[rc2];
+
+        // RC2 is a sub-class of RC if it is a valid replacement for any
+        // instruction operand where an RC register is required. It must satisfy
+        // these conditions:
+        //
+        // 1. All RC2 registers are also in RC.
+        // 2. The RC2 spill size must not be smaller that the RC spill size.
+        // 3. RC2 spill alignment must be compatible with RC.
+        //
+        // Sub-classes are used to determine if a virtual register can be used
+        // as an instruction operand, or if it must be copied first.
+
         if (rc == rc2 || RC2.Elements.size() > RC.Elements.size() ||
-            RC.SpillSize != RC2.SpillSize || !isSubRegisterClass(RC2, RegSet))
+            (RC.SpillAlignment && RC2.SpillAlignment % RC.SpillAlignment) ||
+            RC.SpillSize > RC2.SpillSize || !isSubRegisterClass(RC2, RegSet))
           continue;
       
         if (!Empty) OS << ", ";
