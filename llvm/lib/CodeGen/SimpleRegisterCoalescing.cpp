@@ -60,6 +60,11 @@ CrossClassJoin("join-cross-class-copies",
                cl::desc("Coalesce cross register class copies"),
                cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+PhysJoinTweak("tweak-phys-join-heuristics",
+               cl::desc("Tweak heuristics for joining phys reg with vr"),
+               cl::init(false), cl::Hidden);
+
 static RegisterPass<SimpleRegisterCoalescing> 
 X("simple-register-coalescing", "Simple Register Coalescing");
 
@@ -1000,6 +1005,117 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
   }
 }
 
+/// isWinToJoinVRWithSrcPhysReg - Return true if it's worth while to join a
+/// a virtual destination register with physical source register.
+bool
+SimpleRegisterCoalescing::isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
+                                                     MachineBasicBlock *CopyMBB,
+                                                     LiveInterval &DstInt,
+                                                     LiveInterval &SrcInt) {
+  // If the virtual register live interval is long but it has low use desity,
+  // do not join them, instead mark the physical register as its allocation
+  // preference.
+  const TargetRegisterClass *RC = mri_->getRegClass(DstInt.reg);
+  unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
+  unsigned Length = li_->getApproximateInstructionCount(DstInt);
+  if (Length > Threshold &&
+      (((float)std::distance(mri_->use_begin(DstInt.reg),
+                             mri_->use_end()) / Length) < (1.0 / Threshold)))
+    return false;
+
+  // If the virtual register live interval extends into a loop, turn down
+  // aggressiveness.
+  unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
+  const MachineLoop *L = loopInfo->getLoopFor(CopyMBB);
+  if (!L) {
+    // Let's see if the virtual register live interval extends into the loop.
+    LiveInterval::iterator DLR = DstInt.FindLiveRangeContaining(CopyIdx);
+    assert(DLR != DstInt.end() && "Live range not found!");
+    DLR = DstInt.FindLiveRangeContaining(DLR->end+1);
+    if (DLR != DstInt.end()) {
+      CopyMBB = li_->getMBBFromIndex(DLR->start);
+      L = loopInfo->getLoopFor(CopyMBB);
+    }
+  }
+
+  if (!L || Length <= Threshold)
+    return true;
+
+  unsigned UseIdx = li_->getUseIndex(CopyIdx);
+  LiveInterval::iterator SLR = SrcInt.FindLiveRangeContaining(UseIdx);
+  MachineBasicBlock *SMBB = li_->getMBBFromIndex(SLR->start);
+  if (loopInfo->getLoopFor(SMBB) != L) {
+    if (!loopInfo->isLoopHeader(CopyMBB))
+      return false;
+    // If vr's live interval extends pass the loop header, do not join.
+    for (MachineBasicBlock::succ_iterator SI = CopyMBB->succ_begin(),
+           SE = CopyMBB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock *SuccMBB = *SI;
+      if (SuccMBB == CopyMBB)
+        continue;
+      if (DstInt.overlaps(li_->getMBBStartIdx(SuccMBB),
+                          li_->getMBBEndIdx(SuccMBB)+1))
+        return false;
+    }
+  }
+  return true;
+}
+
+/// isWinToJoinVRWithDstPhysReg - Return true if it's worth while to join a
+/// copy from a virtual source register to a physical destination register.
+bool
+SimpleRegisterCoalescing::isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
+                                                     MachineBasicBlock *CopyMBB,
+                                                     LiveInterval &DstInt,
+                                                     LiveInterval &SrcInt) {
+  // If the virtual register live interval is long but it has low use desity,
+  // do not join them, instead mark the physical register as its allocation
+  // preference.
+  const TargetRegisterClass *RC = mri_->getRegClass(SrcInt.reg);
+  unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
+  unsigned Length = li_->getApproximateInstructionCount(SrcInt);
+  if (Length > Threshold &&
+      (((float)std::distance(mri_->use_begin(SrcInt.reg),
+                             mri_->use_end()) / Length) < (1.0 / Threshold)))
+    return false;
+
+  if (SrcInt.empty())
+    // Must be implicit_def.
+    return false;
+
+  // If the virtual register live interval is defined or cross a loop, turn
+  // down aggressiveness.
+  unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
+  unsigned UseIdx = li_->getUseIndex(CopyIdx);
+  LiveInterval::iterator SLR = SrcInt.FindLiveRangeContaining(UseIdx);
+  assert(SLR != SrcInt.end() && "Live range not found!");
+  SLR = SrcInt.FindLiveRangeContaining(SLR->start-1);
+  if (SLR == SrcInt.end())
+    return true;
+  MachineBasicBlock *SMBB = li_->getMBBFromIndex(SLR->start);
+  const MachineLoop *L = loopInfo->getLoopFor(SMBB);
+
+  if (!L || Length <= Threshold)
+    return true;
+
+  if (loopInfo->getLoopFor(CopyMBB) != L) {
+    if (SMBB != L->getLoopLatch())
+      return false;
+    // If vr's live interval is extended from before the loop latch, do not
+    // join.
+    for (MachineBasicBlock::pred_iterator PI = SMBB->pred_begin(),
+           PE = SMBB->pred_end(); PI != PE; ++PI) {
+      MachineBasicBlock *PredMBB = *PI;
+      if (PredMBB == SMBB)
+        continue;
+      if (SrcInt.overlaps(li_->getMBBStartIdx(PredMBB),
+                          li_->getMBBEndIdx(PredMBB)+1))
+        return false;
+    }
+  }
+  return true;
+}
+
 /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
 /// two virtual registers from different register classes.
 bool
@@ -1440,26 +1556,51 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     // these are not spillable! If the destination interval uses are far away,
     // think twice about coalescing them!
     if (!isDead && (SrcIsPhys || DstIsPhys)) {
-      LiveInterval &JoinVInt = SrcIsPhys ? DstInt : SrcInt;
-      unsigned JoinVReg = SrcIsPhys ? DstReg : SrcReg;
-      unsigned JoinPReg = SrcIsPhys ? SrcReg : DstReg;
-      const TargetRegisterClass *RC = mri_->getRegClass(JoinVReg);
-      unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
-      if (TheCopy.isBackEdge)
-        Threshold *= 2; // Favors back edge copies.
+      // If the copy is in a loop, take care not to coalesce aggressively if the
+      // src is coming in from outside the loop (or the dst is out of the loop).
+      // If it's not in a loop, then determine whether to join them base purely
+      // by the length of the interval.
+      if (PhysJoinTweak) {
+        if (SrcIsPhys) {
+          if (!isWinToJoinVRWithSrcPhysReg(CopyMI, CopyMBB, DstInt, SrcInt)) {
+            DstInt.preference = SrcReg;
+            ++numAborts;
+            DOUT << "\tMay tie down a physical register, abort!\n";
+            Again = true;  // May be possible to coalesce later.
+            return false;
+          }
+        } else {
+          if (!isWinToJoinVRWithDstPhysReg(CopyMI, CopyMBB, DstInt, SrcInt)) {
+            SrcInt.preference = DstReg;
+            ++numAborts;
+            DOUT << "\tMay tie down a physical register, abort!\n";
+            Again = true;  // May be possible to coalesce later.
+            return false;
+          }
+        }
+      } else {
+        // If the virtual register live interval is long but it has low use desity,
+        // do not join them, instead mark the physical register as its allocation
+        // preference.
+        LiveInterval &JoinVInt = SrcIsPhys ? DstInt : SrcInt;
+        unsigned JoinVReg = SrcIsPhys ? DstReg : SrcReg;
+        unsigned JoinPReg = SrcIsPhys ? SrcReg : DstReg;
+        const TargetRegisterClass *RC = mri_->getRegClass(JoinVReg);
+        unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
+        if (TheCopy.isBackEdge)
+          Threshold *= 2; // Favors back edge copies.
 
-      // If the virtual register live interval is long but it has low use desity,
-      // do not join them, instead mark the physical register as its allocation
-      // preference.
-      unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
-      if (Length > Threshold &&
-          (((float)std::distance(mri_->use_begin(JoinVReg), mri_->use_end())
-            / Length) < (1.0 / Threshold))) {
-        JoinVInt.preference = JoinPReg;
-        ++numAborts;
-        DOUT << "\tMay tie down a physical register, abort!\n";
-        Again = true;  // May be possible to coalesce later.
-        return false;
+        unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
+        float Ratio = 1.0 / Threshold;
+        if (Length > Threshold &&
+            (((float)std::distance(mri_->use_begin(JoinVReg),
+                                   mri_->use_end()) / Length) < Ratio)) {
+          JoinVInt.preference = JoinPReg;
+          ++numAborts;
+          DOUT << "\tMay tie down a physical register, abort!\n";
+          Again = true;  // May be possible to coalesce later.
+          return false;
+        }
       }
     }
   }

@@ -224,6 +224,18 @@ namespace llvm {
     /// identity copies so they will be removed.
     void RemoveCopiesFromValNo(LiveInterval &li, VNInfo *VNI);
 
+    /// isWinToJoinVRWithSrcPhysReg - Return true if it's worth while to join a
+    /// a virtual destination register with physical source register.
+    bool isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
+                                    MachineBasicBlock *CopyMBB,
+                                    LiveInterval &DstInt, LiveInterval &SrcInt);
+
+    /// isWinToJoinVRWithDstPhysReg - Return true if it's worth while to join a
+    /// copy from a virtual source register to a physical destination register.
+    bool isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
+                                    MachineBasicBlock *CopyMBB,
+                                    LiveInterval &DstInt, LiveInterval &SrcInt);
+
     /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
     /// two virtual registers from different register classes.
     bool isWinToJoinCrossClass(unsigned LargeReg, unsigned SmallReg,
