@@ -34,6 +34,8 @@
 // RUN: grep '@"\\01l_objc_msgSend_fixup_alloc" = weak hidden global .* section "__DATA, __objc_msgrefs, coalesced", align 16' %t &&
 // RUN: grep '@_objc_empty_cache = external global' %t &&
 // RUN: grep '@_objc_empty_vtable = external global' %t &&
+// RUN: grep '@objc_msgSend_fixup(' %t &&
+// RUN: grep '@objc_msgSend_fpret_fixup(' %t &&
 
 // RUN: true
 
@@ -94,7 +96,36 @@ llvm-gcc -m64 -emit-llvm -S -o - metadata-symbols-64.m | \
 }
 @end
 
+// Test for FP dispatch method APIs
+@interface Example 
+@end
+
+float FLOAT;
+double DOUBLE;
+long double LONGDOUBLE;
+id    ID;
+
+@implementation Example
+ - (double) RET_DOUBLE
+   {
+        return DOUBLE;
+   }
+ - (float) RET_FLOAT
+   {
+        return FLOAT;
+   }
+ - (long double) RET_LONGDOUBLE
+   {
+        return LONGDOUBLE;
+   }
+@end
+
 void *f0(id x) {
+   Example* pe;
+   double dd = [pe RET_DOUBLE];
+   dd = [pe RET_FLOAT];
+   dd = [pe RET_LONGDOUBLE];
+
    [B im0];
    [C im1];
    [D alloc];
