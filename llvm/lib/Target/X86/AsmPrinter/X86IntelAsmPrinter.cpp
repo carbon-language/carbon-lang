@@ -26,7 +26,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
