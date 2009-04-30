@@ -36,6 +36,7 @@ public:
     bool                addModule(class LTOModule*, std::string& errMsg);
     bool                setDebugInfo(lto_debug_model, std::string& errMsg);
     bool                setCodePICModel(lto_codegen_model, std::string& errMsg);
+    void                setGccPath(const char* path);
     void                addMustPreserveSymbol(const char* sym);
     bool                writeMergedModules(const char* path, 
                                                            std::string& errMsg);
@@ -59,6 +60,7 @@ private:
     StringSet                   _mustPreserveSymbols;
     llvm::MemoryBuffer*         _nativeObjectFile;
     std::vector<const char*>    _codegenOptions;
+    llvm::sys::Path*            _gccPath;
 };
 
 #endif // LTO_CODE_GENERATOR_H

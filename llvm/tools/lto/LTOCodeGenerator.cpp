@@ -71,7 +71,7 @@ LTOCodeGenerator::LTOCodeGenerator()
     : _linker("LinkTimeOptimizer", "ld-temp.o"), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-      _nativeObjectFile(NULL)
+      _nativeObjectFile(NULL), _gccPath(NULL)
 {
 
 }
@@ -118,6 +118,13 @@ bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
     }
     errMsg = "unknown pic model";
     return true;
+}
+
+void LTOCodeGenerator::setGccPath(const char* path)
+{
+    if ( _gccPath )
+        delete _gccPath;
+    _gccPath = new sys::Path(path);
 }
 
 void LTOCodeGenerator::addMustPreserveSymbol(const char* sym)
@@ -212,11 +219,16 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
 bool LTOCodeGenerator::assemble(const std::string& asmPath, 
                                 const std::string& objPath, std::string& errMsg)
 {
-    // find compiler driver
-    const sys::Path gcc = sys::Program::FindProgramByName("gcc");
-    if ( gcc.isEmpty() ) {
-        errMsg = "can't locate gcc";
-        return true;
+    sys::Path gcc;
+    if ( _gccPath ) {
+        gcc = *_gccPath;
+    } else {
+        // find compiler driver
+        gcc = sys::Program::FindProgramByName("gcc");
+        if ( gcc.isEmpty() ) {
+            errMsg = "can't locate gcc";
+            return true;
+        }
     }
 
     // build argument list

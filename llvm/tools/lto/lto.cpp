@@ -202,6 +202,14 @@ bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model)
 }
 
 //
+// sets the path to gcc
+//
+void lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path)
+{
+    cg->setGccPath(path);
+}
+
+//
 // adds to a list of all global symbols that must exist in the final
 // generated code.  If a function is not listed there, it might be
 // inlined into every usage and optimized away.
