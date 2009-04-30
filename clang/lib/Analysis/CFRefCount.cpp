@@ -770,8 +770,10 @@ public:
     IdentifierInfo *ClsName = ID->getIdentifier();
     QualType ResultTy = MD->getResultType();
     
-    // Resolve the method decl last.
-    MD = ResolveToInterfaceMethodDecl(MD, Ctx);    
+    // Resolve the method decl last.    
+    if (const ObjCMethodDecl *InterfaceMD =
+        ResolveToInterfaceMethodDecl(MD, Ctx))
+      MD = InterfaceMD;
     
     if (MD->isInstanceMethod())
       return getInstanceMethodSummary(S, ClsName, ID, MD, ResultTy);
