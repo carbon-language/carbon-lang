@@ -5075,6 +5075,10 @@ hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
       if (CType == TargetLowering::C_Memory)
         return true;
     }
+    
+    // Indirect operand accesses access memory.
+    if (CI.isIndirect)
+      return true;
   }
 
   return false;
@@ -5088,11 +5092,6 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   /// ConstraintOperands - Information about all of the constraints.
   std::vector<SDISelAsmOperandInfo> ConstraintOperands;
 
-  // We won't need to flush pending loads if this asm doesn't touch
-  // memory and is nonvolatile.
-  SDValue Chain = IA->hasSideEffects() ? getRoot() : DAG.getRoot();
-  SDValue Flag;
-
   std::set<unsigned> OutputRegs, InputRegs;
 
   // Do a prepass over the constraints, canonicalizing them, and building up the
@@ -5101,10 +5100,15 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     ConstraintInfos = IA->ParseConstraints();
 
   bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
-  // Flush pending loads if this touches memory (includes clobbering it).
-  // It's possible this is overly conservative.
-  if (hasMemory)
+  
+  SDValue Chain, Flag;
+  
+  // We won't need to flush pending loads if this asm doesn't touch
+  // memory and is nonvolatile.
+  if (hasMemory || IA->hasSideEffects())
     Chain = getRoot();
+  else
+    Chain = DAG.getRoot();
 
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
   unsigned ResNo = 0;   // ResNo - The result number of the next output.
@@ -5482,6 +5486,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     SDValue OutVal = OutRegs.getCopyFromRegs(DAG, getCurDebugLoc(),
                                              Chain, &Flag);
     StoresToEmit.push_back(std::make_pair(OutVal, Ptr));
+
   }
 
   // Emit the non-flagged stores from the physregs.
