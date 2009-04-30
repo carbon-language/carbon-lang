@@ -67,7 +67,8 @@ private:  // Semantic analysis methods.
   bool SetValue(Record *TheRec, TGLoc Loc, const std::string &ValName, 
                 const std::vector<unsigned> &BitList, Init *V);
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
-  bool AddSubMultiClass(MultiClass *MV, SubMultiClassReference &SubMultiClass);
+  bool AddSubMultiClass(MultiClass *CurMC,
+                        SubMultiClassReference &SubMultiClass);
 
 private:  // Parser methods.
   bool ParseObjectList();
@@ -88,7 +89,7 @@ private:  // Parser methods.
   std::string ParseDeclaration(Record *CurRec, bool ParsingTemplateArgs);
 
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
-  SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMultiClass);
+  SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);
 
   Init *ParseIDValue(Record *CurRec);
   Init *ParseIDValue(Record *CurRec, const std::string &Name, TGLoc NameLoc);

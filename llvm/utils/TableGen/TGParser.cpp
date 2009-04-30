@@ -196,14 +196,14 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
 }
 
 /// AddSubMultiClass - Add SubMultiClass as a subclass to
-/// CurMultiClass, resolving its template args as SubMultiClass's
+/// CurMC, resolving its template args as SubMultiClass's
 /// template arguments.
-bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass,
+bool TGParser::AddSubMultiClass(MultiClass *CurMC,
                                 SubMultiClassReference &SubMultiClass) {
   MultiClass *SMC = SubMultiClass.MC;
-  Record *CurRec = &CurMultiClass->Rec;
+  Record *CurRec = &CurMC->Rec;
 
-  const std::vector<RecordVal> &MCVals = CurMultiClass->Rec.getValues();
+  const std::vector<RecordVal> &MCVals = CurRec->getValues();
 
   // Add all of the values in the subclass into the current class.
   const std::vector<RecordVal> &SMCVals = SMC->Rec.getValues();
@@ -211,7 +211,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass,
     if (AddValue(CurRec, SubMultiClass.RefLoc, SMCVals[i]))
       return true;
 
-  int newDefStart = CurMultiClass->DefPrototypes.size();
+  int newDefStart = CurMC->DefPrototypes.size();
 
   // Add all of the defs in the subclass into the current multiclass.
   for (MultiClass::RecordVector::const_iterator i = SMC->DefPrototypes.begin(),
@@ -226,7 +226,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass,
       if (AddValue(NewDef, SubMultiClass.RefLoc, MCVals[i]))
         return true;
 
-    CurMultiClass->DefPrototypes.push_back(NewDef);
+    CurMC->DefPrototypes.push_back(NewDef);
   }
 
   const std::vector<std::string> &SMCTArgs = SMC->Rec.getTemplateArgs();
@@ -257,8 +257,8 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass,
       // If a value is specified for this template arg, set it in the
       // new defs now.
       for (MultiClass::RecordVector::iterator j =
-             CurMultiClass->DefPrototypes.begin() + newDefStart,
-             jend = CurMultiClass->DefPrototypes.end();
+             CurMC->DefPrototypes.begin() + newDefStart,
+             jend = CurMC->DefPrototypes.end();
            j != jend;
            ++j) {
         Record *Def = *j;
