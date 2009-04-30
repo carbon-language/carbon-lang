@@ -181,7 +181,7 @@ CAMLprim LLVMExecutionEngineRef
 llvm_ee_create_jit(LLVMModuleProviderRef MP) {
   LLVMExecutionEngineRef JIT;
   char *Error;
-  if (LLVMCreateJITCompiler(&JIT, MP, 0, &Error))
+  if (LLVMCreateJITCompiler(&JIT, MP, 3, &Error))
     llvm_raise(llvm_ee_error_exn, Error);
   return JIT;
 }
@@ -191,7 +191,7 @@ CAMLprim LLVMExecutionEngineRef
 llvm_ee_create_fast_jit(LLVMModuleProviderRef MP) {
   LLVMExecutionEngineRef JIT;
   char *Error;
-  if (LLVMCreateJITCompiler(&JIT, MP, 1, &Error))
+  if (LLVMCreateJITCompiler(&JIT, MP, 0, &Error))
     llvm_raise(llvm_ee_error_exn, Error);
   return JIT;
 }

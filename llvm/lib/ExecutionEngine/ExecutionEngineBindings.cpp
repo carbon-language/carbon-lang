@@ -114,11 +114,12 @@ int LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
 
 int LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
                           LLVMModuleProviderRef MP,
-                          CodeGenOpt::Level OptLevel,
+                          unsigned OptLevel,
                           char **OutError) {
   std::string Error;
-  if (ExecutionEngine *JIT = ExecutionEngine::createJIT(unwrap(MP), &Error, 0,
-                                                        OptLevel)) {
+  if (ExecutionEngine *JIT =
+      ExecutionEngine::createJIT(unwrap(MP), &Error, 0,
+                                 (CodeGenOpt::Level)OptLevel)) {
     *OutJIT = wrap(JIT);
     return 0;
   }
