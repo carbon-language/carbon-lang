@@ -511,6 +511,21 @@ void test_attr_5c(TestOwnershipAttr *X) {
   [X myCFRelease:str];
 }
 
+void test_attr_6a() {
+  TestOwnershipAttr *X = [TestOwnershipAttr alloc]; // expected-warning{{leak}}
+}
+
+void test_attr_6b() {
+  TestOwnershipAttr *X = [TestOwnershipAttr alloc]; // no-warning
+  [X myRelease];
+}
+
+void test_attr_6c() {
+  TestOwnershipAttr *X = [TestOwnershipAttr alloc]; // expected-warning{{leak}}
+  [X myRetain];
+  [X myRelease];
+}
+
 //===----------------------------------------------------------------------===//
 // <rdar://problem/6833332>
 // One build of the analyzer accidentally stopped tracking the allocated

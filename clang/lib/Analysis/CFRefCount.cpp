@@ -1139,14 +1139,14 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   assert(ScratchArgs.empty());
   
   // Determine if there is a special return effect for this method.
-  bool hasRetEffect = false;
+  bool hasEffect = false;
   RetEffect RE = RetEffect::MakeNoRet();
   
   if (isTrackedObjectType(MD->getResultType())) {
     if (MD->getAttr<ObjCOwnershipReturnsAttr>()) {
       RE = isGCEnabled() ? RetEffect::MakeGCNotOwned()
                          : RetEffect::MakeOwned(RetEffect::ObjC, true);
-      hasRetEffect = true;
+      hasEffect = true;
     }
     else {
       // Default to 'not owned'.
@@ -1155,36 +1155,46 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   }
   
   // Determine if there are any arguments with a specific ArgEffect.
-  bool hasArgEffect = false;
   unsigned i = 0;
   for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
        E = MD->param_end(); I != E; ++I, ++i) {
     if ((*I)->getAttr<ObjCOwnershipRetainAttr>()) {
       ScratchArgs.push_back(std::make_pair(i, IncRefMsg));
-      hasArgEffect = true;
+      hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipCFRetainAttr>()) {
       ScratchArgs.push_back(std::make_pair(i, IncRef));
-      hasArgEffect = true;
+      hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipReleaseAttr>()) {
       ScratchArgs.push_back(std::make_pair(i, DecRefMsg));
-      hasArgEffect = true;
+      hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipCFReleaseAttr>()) {
       ScratchArgs.push_back(std::make_pair(i, DecRef));
-      hasArgEffect = true;
+      hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipMakeCollectableAttr>()) {
       ScratchArgs.push_back(std::make_pair(i, MakeCollectable));
-      hasArgEffect = true;
+      hasEffect = true;
     }    
   }
   
-  if (!hasRetEffect && !hasArgEffect)
+  // Determine any effects on the receiver.
+  ArgEffect ReceiverEff = DoNothing;
+  if (MD->getAttr<ObjCOwnershipRetainAttr>()) {
+    ReceiverEff = IncRefMsg;
+    hasEffect = true;
+  }
+  else if (MD->getAttr<ObjCOwnershipReleaseAttr>()) {
+    ReceiverEff = DecRefMsg;
+    hasEffect = true;
+  }  
+  
+  if (!hasEffect)
     return 0;
 
-  return getPersistentSummary(RE);
+  return getPersistentSummary(RE, ReceiverEff);
 }
 
 RetainSummary*
