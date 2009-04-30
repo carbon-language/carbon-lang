@@ -146,3 +146,11 @@ void (^test15f)(void);
 void test15() {
   foo(^{ return LESS; });	// expected-error {{incompatible block pointer types passing 'int (^)(void)', expected 'long (^)()'}}
 }
+
+__block int test16i;  // expected-error {{__block attribute not allowed, only allowed on local variables}}
+
+void test16(__block int i) { // expected-error {{__block attribute not allowed, only allowed on local variables}}
+  extern __block double extern_var; // expected-error {{__block attribute not allowed, only allowed on local variables}}
+  static __block char * pch; // expected-error {{__block attribute not allowed, only allowed on local variables}}
+}
+

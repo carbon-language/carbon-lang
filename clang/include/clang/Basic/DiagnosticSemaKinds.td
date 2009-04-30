@@ -1614,6 +1614,8 @@ def err_noreturn_function_has_return_expr : Error<
   "function %0 declared 'noreturn' should not return">;
 def err_noreturn_block_has_return_expr : Error<
   "block declared 'noreturn' should not return">;
+def err_block_on_nonlocal : Error<
+  "__block attribute not allowed, only allowed on local variables">;
 
 def err_shufflevector_non_vector : Error<
   "first two arguments to __builtin_shufflevector must be vectors">;

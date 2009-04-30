@@ -1909,6 +1909,11 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
     return NewVD->setInvalidDecl();
   }
 
+  if (!NewVD->hasLocalStorage() && NewVD->hasAttr<BlocksAttr>()) {
+    Diag(NewVD->getLocation(), diag::err_block_on_nonlocal);
+    return NewVD->setInvalidDecl();
+  }
+    
   if (PrevDecl) {
     Redeclaration = true;
     MergeVarDecl(NewVD, PrevDecl);
@@ -2818,6 +2823,10 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     IdResolver.AddDecl(New);
 
   ProcessDeclAttributes(New, D);
+
+  if (New->hasAttr<BlocksAttr>()) {
+    Diag(New->getLocation(), diag::err_block_on_nonlocal);
+  }
   return DeclPtrTy::make(New);
 }
 
@@ -4256,4 +4265,3 @@ Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
   return DeclPtrTy::make(FileScopeAsmDecl::Create(Context, CurContext,
                                                   Loc, AsmString));
 }
-
