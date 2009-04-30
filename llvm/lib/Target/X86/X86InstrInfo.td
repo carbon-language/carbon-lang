@@ -2939,6 +2939,7 @@ def MOVZX32_NOREXrr8 : I<0xB6, MRMSrcReg,
                          (outs GR32_NOREX:$dst), (ins GR8:$src),
                          "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
                          []>, TB;
+let mayLoad = 1 in
 def MOVZX32_NOREXrm8 : I<0xB6, MRMSrcMem,
                          (outs GR32_NOREX:$dst), (ins i8mem:$src),
                          "movz{bl|x}\t{$src, $dst|$dst, $src}  # NOREX",
