@@ -1051,6 +1051,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   unsigned char *FnStart =
     (unsigned char *)TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
 
+  // FnEnd is the end of the function's machine code.
+  unsigned char *FnEnd = CurBufferPtr;
+
   if (!Relocations.empty()) {
     CurFn = F.getFunction();
     NumRelos += Relocations.size();
@@ -1128,9 +1131,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     }
   }
 
-  unsigned char *FnEnd = CurBufferPtr;
-
-  MemMgr->endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
+  // CurBufferPtr may have moved beyond FnEnd, due to memory allocation for
+  // global variables that were referenced in the relocations.
+  MemMgr->endFunctionBody(F.getFunction(), BufferBegin, CurBufferPtr);
 
   if (CurBufferPtr == BufferEnd) {
     // FIXME: Allocate more space, then try again.
