@@ -1152,23 +1152,42 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   }
 
   FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
-                    bool isVariadic, unsigned typeQuals, QualType Canonical)
+                    bool isVariadic, unsigned typeQuals, bool hasExs,
+                    bool hasAnyExs, const QualType *ExArray,
+                    unsigned numExs, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
                    (Result->isDependentType() || 
                     hasAnyDependentType(ArgArray, numArgs))),
-      NumArgs(numArgs) {
+      NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
+      AnyExceptionSpec(hasAnyExs) {
     // Fill in the trailing argument array.
-    QualType *ArgInfo = reinterpret_cast<QualType *>(this+1);;
+    QualType *ArgInfo = reinterpret_cast<QualType*>(this+1);
     for (unsigned i = 0; i != numArgs; ++i)
       ArgInfo[i] = ArgArray[i];
+    // Fill in the exception array.
+    QualType *Ex = ArgInfo + numArgs;
+    for (unsigned i = 0; i != numExs; ++i)
+      Ex[i] = ExArray[i];
   }
-  
+
   /// NumArgs - The number of arguments this function has, not counting '...'.
-  unsigned NumArgs;
-  
+  unsigned NumArgs : 20;
+
+  /// NumExceptions - The number of types in the exception spec, if any.
+  unsigned NumExceptions : 10;
+
+  /// HasExceptionSpec - Whether this function has an exception spec at all.
+  bool HasExceptionSpec : 1;
+
+  /// AnyExceptionSpec - Whether this function has a throw(...) spec.
+  bool AnyExceptionSpec : 1;
+
   /// ArgInfo - There is an variable size array after the class in memory that
   /// holds the argument types.
-  
+
+  /// Exceptions - There is another variable size array after ArgInfo that
+  /// holds the exception types.
+
   friend class ASTContext;  // ASTContext creates these.
 
 public:
@@ -1177,7 +1196,15 @@ public:
     assert(i < NumArgs && "Invalid argument number!");
     return arg_type_begin()[i];
   }
-    
+
+  bool hasExceptionSpec() const { return HasExceptionSpec; }
+  bool hasAnyExceptionSpec() const { return AnyExceptionSpec; }
+  unsigned getNumExceptions() const { return NumExceptions; }
+  QualType getExceptionType(unsigned i) const {
+    assert(i < NumExceptions && "Invalid exception number!");
+    return exception_begin()[i];
+  }
+
   bool isVariadic() const { return getSubClassData(); }
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
   
@@ -1186,18 +1213,29 @@ public:
     return reinterpret_cast<const QualType *>(this+1);
   }
   arg_type_iterator arg_type_end() const { return arg_type_begin()+NumArgs; }
-  
+
+  typedef const QualType *exception_iterator;
+  exception_iterator exception_begin() const {
+    // exceptions begin where arguments end
+    return arg_type_end();
+  }
+  exception_iterator exception_end() const {
+    return exception_begin() + NumExceptions;
+  }
+
   virtual void getAsStringInternal(std::string &InnerString) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
   }
   static bool classof(const FunctionProtoType *) { return true; }
-  
+
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
-                      bool isVariadic, unsigned TypeQuals);
+                      bool isVariadic, unsigned TypeQuals,
+                      bool hasExceptionSpec, bool anyExceptionSpec,
+                      unsigned NumExceptions, exception_iterator Exs);
 };
 
 

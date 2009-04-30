@@ -920,17 +920,26 @@ const char *BuiltinType::getName() const {
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 arg_type_iterator ArgTys,
                                 unsigned NumArgs, bool isVariadic,
-                                unsigned TypeQuals) {
+                                unsigned TypeQuals, bool hasExceptionSpec,
+                                bool anyExceptionSpec, unsigned NumExceptions,
+                                exception_iterator Exs) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
   ID.AddInteger(isVariadic);
   ID.AddInteger(TypeQuals);
+  ID.AddInteger(hasExceptionSpec);
+  if (hasExceptionSpec) {
+    ID.AddInteger(anyExceptionSpec);
+    for(unsigned i = 0; i != NumExceptions; ++i)
+      ID.AddPointer(Exs[i].getAsOpaquePtr());
+  }
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic(),
-          getTypeQuals());
+          getTypeQuals(), hasExceptionSpec(), hasAnyExceptionSpec(),
+          getNumExceptions(), exception_begin());
 }
 
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,

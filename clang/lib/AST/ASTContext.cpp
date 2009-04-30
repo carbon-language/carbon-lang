@@ -1321,12 +1321,15 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy) {
 /// list.  isVariadic indicates whether the argument list includes '...'.
 QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      unsigned NumArgs, bool isVariadic,
-                                     unsigned TypeQuals) {
+                                     unsigned TypeQuals, bool hasExceptionSpec,
+                                     bool hasAnyExceptionSpec, unsigned NumExs,
+                                     const QualType *ExArray) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
   FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
-                             TypeQuals);
+                             TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
+                             NumExs, ExArray);
 
   void *InsertPos = 0;
   if (FunctionProtoType *FTP = 
@@ -1346,24 +1349,32 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
       CanonicalArgs.push_back(getCanonicalType(ArgArray[i]));
-    
+    llvm::SmallVector<QualType, 2> CanonicalExs;
+    CanonicalExs.reserve(NumExs);
+    for (unsigned i = 0; i != NumExs; ++i)
+      CanonicalExs.push_back(getCanonicalType(ExArray[i]));
+
     Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 &CanonicalArgs[0], NumArgs,
-                                isVariadic, TypeQuals);
-    
+                                isVariadic, TypeQuals, hasExceptionSpec,
+                                hasAnyExceptionSpec, NumExs, &CanonicalExs[0]);
+
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =
       FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
-  
+
   // FunctionProtoType objects are allocated with extra bytes after them
-  // for a variable size array (for parameter types) at the end of them.
+  // for two variable size arrays (for parameter and exception types) at the
+  // end of them.
   FunctionProtoType *FTP = 
-    (FunctionProtoType*)Allocate(sizeof(FunctionProtoType) + 
-                                 NumArgs*sizeof(QualType), 8);
+    (FunctionProtoType*)Allocate(sizeof(FunctionProtoType) +
+                                 NumArgs*sizeof(QualType) +
+                                 NumExs*sizeof(QualType), 8);
   new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, isVariadic,
-                              TypeQuals, Canonical);
+                              TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
+                              ExArray, NumExs, Canonical);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);
@@ -2930,6 +2941,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     allRTypes = false;
 
   if (lproto && rproto) { // two C99 style function prototypes
+    assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
+           "C++ shouldn't be here");
     unsigned lproto_nargs = lproto->getNumArgs();
     unsigned rproto_nargs = rproto->getNumArgs();
 
@@ -2968,6 +2981,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
 
   const FunctionProtoType *proto = lproto ? lproto : rproto;
   if (proto) {
+    assert(!proto->hasExceptionSpec() && "C++ shouldn't be here");
     if (proto->isVariadic()) return QualType();
     // Check that the types are compatible with the types that
     // would result from default argument promotions (C99 6.7.5.3p15).

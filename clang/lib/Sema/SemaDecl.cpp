@@ -714,6 +714,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         (OldProto = dyn_cast<FunctionProtoType>(OldFuncType))) {
       // The old declaration provided a function prototype, but the
       // new declaration does not. Merge in the prototype.
+      assert(!OldProto->hasExceptionSpec() && "Exception spec in C");
       llvm::SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
                                                  OldProto->arg_type_end());
       NewQType = Context.getFunctionType(NewFuncType->getResultType(),

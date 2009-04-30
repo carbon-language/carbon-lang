@@ -1584,8 +1584,16 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       ParamTypes.push_back(GetType(Record[Idx++]));
     bool isVariadic = Record[Idx++];
     unsigned Quals = Record[Idx++];
+    bool hasExceptionSpec = Record[Idx++];
+    bool hasAnyExceptionSpec = Record[Idx++];
+    unsigned NumExceptions = Record[Idx++];
+    llvm::SmallVector<QualType, 2> Exceptions;
+    for (unsigned I = 0; I != NumExceptions; ++I)
+      Exceptions.push_back(GetType(Record[Idx++]));
     return Context->getFunctionType(ResultType, &ParamTypes[0], NumParams,
-                                    isVariadic, Quals);
+                                    isVariadic, Quals, hasExceptionSpec,
+                                    hasAnyExceptionSpec, NumExceptions,
+                                    &Exceptions[0]);
   }
 
   case pch::TYPE_TYPEDEF:
