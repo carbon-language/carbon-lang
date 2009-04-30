@@ -398,9 +398,9 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
 /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
 /// source file, line, and column. If none currently exists, create a new
 /// DebugLocTuple, and insert it into the DebugIdMap.
-unsigned MachineFunction::getOrCreateDebugLocID(unsigned Src, unsigned Line,
-                                                unsigned Col) {
-  DebugLocTuple Tuple(Src, Line, Col);
+unsigned MachineFunction::getOrCreateDebugLocID(GlobalVariable *CompileUnit,
+                                                unsigned Line, unsigned Col) {
+  DebugLocTuple Tuple(CompileUnit, Line, Col);
   DenseMap<DebugLocTuple, unsigned>::iterator II
     = DebugLocInfo.DebugIdMap.find(Tuple);
   if (II != DebugLocInfo.DebugIdMap.end())

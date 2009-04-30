@@ -1269,9 +1269,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
       if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
         DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
-        std::string Dir, FN;
-        unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
-                                                   CU.getFilename(FN));
 
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
@@ -1282,10 +1279,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           if (useDEBUG_LOC) {
             SDValue Ops[] = { Tmp1, DAG.getConstant(Line, MVT::i32),
                               DAG.getConstant(Col, MVT::i32),
-                              DAG.getConstant(SrcFile, MVT::i32) };
+                              DAG.getSrcValue(CU.getGV()) };
             Result = DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Ops, 4);
           } else {
-            unsigned ID = DW->RecordSourceLine(Line, Col, SrcFile);
+            unsigned ID = DW->RecordSourceLine(Line, Col, CU);
             Result = DAG.getLabel(ISD::DBG_LABEL, dl, Tmp1, ID);
           }
         } else {

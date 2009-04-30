@@ -337,10 +337,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
             if (DW && DW->ValidDebugInfo(SPI->getContext(),
                                          CodeGenOpt::Default)) {
               DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
-              std::string Dir, FN;
-              unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
-                                                         CU.getFilename(FN));
-              unsigned idx = MF->getOrCreateDebugLocID(SrcFile,
+              unsigned idx = MF->getOrCreateDebugLocID(CU.getGV(),
                                                        SPI->getLine(),
                                                        SPI->getColumn());
               DL = DebugLoc::get(idx);
@@ -357,11 +354,9 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
               if (DW->ValidDebugInfo(SP, CodeGenOpt::Default)) {
                 DISubprogram Subprogram(cast<GlobalVariable>(SP));
                 DICompileUnit CU(Subprogram.getCompileUnit());
-                std::string Dir, FN;
-                unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
-                                                           CU.getFilename(FN));
                 unsigned Line = Subprogram.getLineNumber();
-                DL = DebugLoc::get(MF->getOrCreateDebugLocID(SrcFile, Line, 0));
+                DL = DebugLoc::get(MF->getOrCreateDebugLocID(CU.getGV(),
+                                                             Line, 0));
               }
             }
 
@@ -3905,10 +3900,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                                         SPI.getColumn(),
                                         SPI.getContext()));
       DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
-      std::string Dir, FN;
-      unsigned SrcFile = DW->getOrCreateSourceID(CU.getDirectory(Dir),
-                                                 CU.getFilename(FN));
-      unsigned idx = MF.getOrCreateDebugLocID(SrcFile,
+      unsigned idx = MF.getOrCreateDebugLocID(CU.getGV(),
                                               SPI.getLine(), SPI.getColumn());
       setCurDebugLoc(DebugLoc::get(idx));
     }
@@ -3974,9 +3966,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         DebugLoc PrevLoc = CurDebugLoc;
         DISubprogram Subprogram(cast<GlobalVariable>(SP));
         DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-        std::string Dir, FN;
-        unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(Dir),
-                                                   CompileUnit.getFilename(FN));
         
         if (!Subprogram.describes(MF.getFunction())) {
           // This is a beginning of an inlined function.
@@ -3989,21 +3978,23 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
           // Record the source line.
           unsigned Line = Subprogram.getLineNumber();
-          unsigned LabelID = DW->RecordSourceLine(Line, 0, SrcFile);
-          setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
+          unsigned LabelID = DW->RecordSourceLine(Line, 0, CompileUnit);
+          setCurDebugLoc(DebugLoc::get(
+                       MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
 
           DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                    getRoot(), LabelID));
           DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
           DW->RecordInlinedFnStart(&FSI, Subprogram, LabelID, 
-                                   PrevLocTpl.Src,
+                                   DICompileUnit(PrevLocTpl.CompileUnit),
                                    PrevLocTpl.Line,
                                    PrevLocTpl.Col);
         } else {
           // Record the source line.
           unsigned Line = Subprogram.getLineNumber();
-          setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
-          DW->RecordSourceLine(Line, 0, SrcFile);
+          setCurDebugLoc(DebugLoc::get(
+                       MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
+          DW->RecordSourceLine(Line, 0, CompileUnit);
           // llvm.dbg.func_start also defines beginning of function scope.
           DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
         }
@@ -4022,15 +4013,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
         // what (most?) gdb expects.
         DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-        std::string Dir, FN;
-        unsigned SrcFile = DW->getOrCreateSourceID(CompileUnit.getDirectory(Dir),
-                                                   CompileUnit.getFilename(FN));
         
         // Record the source line but does not create a label for the normal
         // function start. It will be emitted at asm emission time. However,
         // create a label if this is a beginning of inlined function.
         unsigned Line = Subprogram.getLineNumber();
-        setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(SrcFile, Line, 0)));
+        setCurDebugLoc(DebugLoc::get(
+                       MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
         // FIXME -  Start new region because llvm.dbg.func_start also defines 
         // beginning of function scope.
       }

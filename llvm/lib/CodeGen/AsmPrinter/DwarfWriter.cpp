@@ -1103,7 +1103,7 @@ class SrcLineInfo {
 public:
   SrcLineInfo(unsigned L, unsigned C, unsigned S, unsigned I)
     : Line(L), Column(C), SourceID(S), LabelID(I) {}
-  
+
   // Accessors
   unsigned getLine()     const { return Line; }
   unsigned getColumn()   const { return Column; }
@@ -3426,10 +3426,13 @@ public:
   /// RecordSourceLine - Records location information and associates it with a 
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
-  unsigned RecordSourceLine(unsigned Line, unsigned Col, unsigned Src) {
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, DICompileUnit CU) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
 
+    std::string Dir, Fn;
+    unsigned Src = GetOrCreateSourceID(CU.getDirectory(Dir),
+                                       CU.getFilename(Fn));
     unsigned ID = MMI->NextLabelID();
     Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
 
@@ -3529,10 +3532,13 @@ public:
 
   //// RecordInlinedFnStart - Indicate the start of inlined subroutine.
   void RecordInlinedFnStart(Instruction *FSI, DISubprogram &SP, unsigned LabelID,
-                            unsigned Src, unsigned Line, unsigned Col) {
+                            DICompileUnit CU, unsigned Line, unsigned Col) {
     if (!TAI->doesDwarfUsesInlineInfoSection())
       return;
 
+    std::string Dir, Fn;
+    unsigned Src = GetOrCreateSourceID(CU.getDirectory(Dir),
+                                       CU.getFilename(Fn));
     DbgScope *Scope = createInlinedSubroutineScope(SP, Src, Line, Col);
     Scope->setStartLabelID(LabelID);
     MMI->RecordUsedDbgLabel(LabelID);
@@ -4739,17 +4745,8 @@ bool DwarfWriter::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
 /// label. Returns a unique label ID used to generate a label and provide
 /// correspondence to the source line list.
 unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
-                                       unsigned Src) {
-  return DD->RecordSourceLine(Line, Col, Src);
-}
-
-/// getOrCreateSourceID - Look up the source id with the given directory and
-/// source file names. If none currently exists, create a new id and insert it
-/// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
-/// as well.
-unsigned DwarfWriter::getOrCreateSourceID(const std::string &DirName,
-                                          const std::string &FileName) {
-  return DD->getOrCreateSourceID(DirName, FileName);
+                                       DICompileUnit CU) {
+  return DD->RecordSourceLine(Line, Col, CU);
 }
 
 /// RecordRegionStart - Indicate the start of a region.
@@ -4783,9 +4780,9 @@ bool DwarfWriter::ShouldEmitDwarfDebug() const {
 //// RecordInlinedFnStart - Global variable GV is inlined at the location marked
 //// by LabelID label.
 void DwarfWriter::RecordInlinedFnStart(Instruction *I, DISubprogram &SP, 
-                                       unsigned LabelID, unsigned Src, 
+                                       unsigned LabelID, DICompileUnit CU,
                                        unsigned Line, unsigned Col) {
-  DD->RecordInlinedFnStart(I, SP, LabelID, Src, Line, Col);
+  DD->RecordInlinedFnStart(I, SP, LabelID, CU, Line, Col);
 }
 
 /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.

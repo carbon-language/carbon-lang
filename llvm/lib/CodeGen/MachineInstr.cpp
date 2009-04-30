@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
@@ -979,8 +980,10 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   if (!debugLoc.isUnknown()) {
     const MachineFunction *MF = getParent()->getParent();
     DebugLocTuple DLT = MF->getDebugLocTuple(debugLoc);
+    DICompileUnit CU(DLT.CompileUnit);
+    std::string Dir, Fn;
     OS << " [dbg: "
-       << DLT.Src  << ","
+       << CU.getDirectory(Dir) << '/' << CU.getFilename(Fn) << ","
        << DLT.Line << ","
        << DLT.Col  << "]";
   }

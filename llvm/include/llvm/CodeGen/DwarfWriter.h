@@ -37,6 +37,7 @@ class GlobalVariable;
 class TargetAsmInfo;
 class raw_ostream;
 class Instruction;
+class DICompileUnit;
 class DISubprogram;
 class DIVariable;
 
@@ -87,14 +88,7 @@ public:
   /// RecordSourceLine - Register a source line with debug info. Returns a
   /// unique label ID used to generate a label and provide correspondence to
   /// the source line list.
-  unsigned RecordSourceLine(unsigned Line, unsigned Col, unsigned Src);
-
-  /// getOrCreateSourceID - Look up the source id with the given directory and
-  /// source file names. If none currently exists, create a new id and insert it
-  /// in the SourceIds map. This can update DirectoryIds and SourceFileIds maps
-  /// as well.
-  unsigned getOrCreateSourceID(const std::string &DirName,
-                               const std::string &FileName);
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, DICompileUnit CU);
 
   /// RecordRegionStart - Indicate the start of a region.
   unsigned RecordRegionStart(GlobalVariable *V);
@@ -116,7 +110,7 @@ public:
 
   //// RecordInlinedFnStart - Indicate the start of a inlined function.
   void RecordInlinedFnStart(Instruction *I, DISubprogram &SP, unsigned LabelID,
-                            unsigned Src, unsigned Line, unsigned Col);
+                            DICompileUnit CU, unsigned Line, unsigned Col);
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
   unsigned RecordInlinedFnEnd(DISubprogram &SP);
