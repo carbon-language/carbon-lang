@@ -217,9 +217,39 @@ namespace llvm {
     ///
     std::map<Value*, SCEVHandle> Scalars;
 
+    /// BackedgeTakenInfo - Information about the backedge-taken count
+    /// of a loop. This currently inclues an exact count and a maximum count.
+    ///
+    struct BackedgeTakenInfo {
+      /// Exact - An expression indicating the exact backedge-taken count of
+      /// the loop if it is known, or a SCEVCouldNotCompute otherwise.
+      SCEVHandle Exact;
+
+      /// Exact - An expression indicating the least maximum backedge-taken
+      /// count of the loop that is known, or a SCEVCouldNotCompute.
+      SCEVHandle Max;
+
+      /*implicit*/ BackedgeTakenInfo(SCEVHandle exact) :
+        Exact(exact), Max(exact) {}
+
+      /*implicit*/ BackedgeTakenInfo(SCEV *exact) :
+        Exact(exact), Max(exact) {}
+
+      BackedgeTakenInfo(SCEVHandle exact, SCEVHandle max) :
+        Exact(exact), Max(max) {}
+
+      /// hasAnyInfo - Test whether this BackedgeTakenInfo contains any
+      /// computed information, or whether it's all SCEVCouldNotCompute
+      /// values.
+      bool hasAnyInfo() const {
+        return !isa<SCEVCouldNotCompute>(Exact) ||
+               !isa<SCEVCouldNotCompute>(Max);
+      }
+    };
+
     /// BackedgeTakenCounts - Cache the backedge-taken count of the loops for
     /// this function as they are computed.
-    std::map<const Loop*, SCEVHandle> BackedgeTakenCounts;
+    std::map<const Loop*, BackedgeTakenInfo> BackedgeTakenCounts;
 
     /// ConstantEvolutionLoopExitValue - This map contains entries for all of
     /// the PHI instructions that we attempt to compute constant evolutions for.
@@ -244,9 +274,14 @@ namespace llvm {
                                           const SCEVHandle &SymName,
                                           const SCEVHandle &NewVal);
 
+    /// getBackedgeTakenInfo - Return the BackedgeTakenInfo for the given
+    /// loop, lazily computing new values if the loop hasn't been analyzed
+    /// yet.
+    const BackedgeTakenInfo &getBackedgeTakenInfo(const Loop *L);
+
     /// ComputeBackedgeTakenCount - Compute the number of times the specified
     /// loop will iterate.
-    SCEVHandle ComputeBackedgeTakenCount(const Loop *L);
+    BackedgeTakenInfo ComputeBackedgeTakenCount(const Loop *L);
 
     /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
     /// of 'icmp op load X, cst', try to see if we can compute the trip count.
@@ -277,8 +312,8 @@ namespace llvm {
     /// HowManyLessThans - Return the number of times a backedge containing the
     /// specified less-than comparison will execute.  If not computable, return
     /// UnknownValue. isSigned specifies whether the less-than is signed.
-    SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
-                                bool isSigned);
+    BackedgeTakenInfo HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
+                                       bool isSigned);
 
     /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
     /// (which may not be an immediate predecessor) which has exactly one
@@ -430,6 +465,11 @@ namespace llvm {
     /// hasLoopInvariantBackedgeTakenCount).
     ///
     SCEVHandle getBackedgeTakenCount(const Loop *L);
+
+    /// getMaxBackedgeTakenCount - Similar to getBackedgeTakenCount, except
+    /// return the least SCEV value that is known never to be less than the
+    /// actual backedge taken count.
+    SCEVHandle getMaxBackedgeTakenCount(const Loop *L);
 
     /// hasLoopInvariantBackedgeTakenCount - Return true if the specified loop
     /// has an analyzable loop-invariant backedge-taken count.

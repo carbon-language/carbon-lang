@@ -715,8 +715,8 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
       // in infinite recursion. In the later case, the analysis code will
       // cope with a conservative value, and it will take care to purge
       // that value once it has finished.
-      SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
-      if (!isa<SCEVCouldNotCompute>(BECount)) {
+      SCEVHandle MaxBECount = getMaxBackedgeTakenCount(AR->getLoop());
+      if (!isa<SCEVCouldNotCompute>(MaxBECount)) {
         // Manually compute the final value for AR, checking for
         // overflow.
         SCEVHandle Start = AR->getStart();
@@ -724,20 +724,20 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
 
         // Check whether the backedge-taken count can be losslessly casted to
         // the addrec's type. The count is always unsigned.
-        SCEVHandle CastedBECount =
-          getTruncateOrZeroExtend(BECount, Start->getType());
-        if (BECount ==
-            getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
+        SCEVHandle CastedMaxBECount =
+          getTruncateOrZeroExtend(MaxBECount, Start->getType());
+        if (MaxBECount ==
+            getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType())) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
-          // Check whether Start+Step*BECount has no unsigned overflow.
+          // Check whether Start+Step*MaxBECount has no unsigned overflow.
           SCEVHandle ZMul =
-            getMulExpr(CastedBECount,
+            getMulExpr(CastedMaxBECount,
                        getTruncateOrZeroExtend(Step, Start->getType()));
           SCEVHandle Add = getAddExpr(Start, ZMul);
           if (getZeroExtendExpr(Add, WideTy) ==
               getAddExpr(getZeroExtendExpr(Start, WideTy),
-                         getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                         getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
                                     getZeroExtendExpr(Step, WideTy))))
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getZeroExtendExpr(Start, Ty),
@@ -747,12 +747,12 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
           // Similar to above, only this time treat the step value as signed.
           // This covers loops that count down.
           SCEVHandle SMul =
-            getMulExpr(CastedBECount,
+            getMulExpr(CastedMaxBECount,
                        getTruncateOrSignExtend(Step, Start->getType()));
           Add = getAddExpr(Start, SMul);
           if (getZeroExtendExpr(Add, WideTy) ==
               getAddExpr(getZeroExtendExpr(Start, WideTy),
-                         getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                         getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
                                     getSignExtendExpr(Step, WideTy))))
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getZeroExtendExpr(Start, Ty),
@@ -797,8 +797,8 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
       // in infinite recursion. In the later case, the analysis code will
       // cope with a conservative value, and it will take care to purge
       // that value once it has finished.
-      SCEVHandle BECount = getBackedgeTakenCount(AR->getLoop());
-      if (!isa<SCEVCouldNotCompute>(BECount)) {
+      SCEVHandle MaxBECount = getMaxBackedgeTakenCount(AR->getLoop());
+      if (!isa<SCEVCouldNotCompute>(MaxBECount)) {
         // Manually compute the final value for AR, checking for
         // overflow.
         SCEVHandle Start = AR->getStart();
@@ -806,20 +806,20 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
 
         // Check whether the backedge-taken count can be losslessly casted to
         // the addrec's type. The count is always unsigned.
-        SCEVHandle CastedBECount =
-          getTruncateOrZeroExtend(BECount, Start->getType());
-        if (BECount ==
-            getTruncateOrZeroExtend(CastedBECount, BECount->getType())) {
+        SCEVHandle CastedMaxBECount =
+          getTruncateOrZeroExtend(MaxBECount, Start->getType());
+        if (MaxBECount ==
+            getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType())) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
-          // Check whether Start+Step*BECount has no signed overflow.
+          // Check whether Start+Step*MaxBECount has no signed overflow.
           SCEVHandle SMul =
-            getMulExpr(CastedBECount,
+            getMulExpr(CastedMaxBECount,
                        getTruncateOrSignExtend(Step, Start->getType()));
           SCEVHandle Add = getAddExpr(Start, SMul);
           if (getSignExtendExpr(Add, WideTy) ==
               getAddExpr(getSignExtendExpr(Start, WideTy),
-                         getMulExpr(getZeroExtendExpr(CastedBECount, WideTy),
+                         getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
                                     getSignExtendExpr(Step, WideTy))))
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getSignExtendExpr(Start, Ty),
@@ -2060,27 +2060,32 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
 /// hasLoopInvariantBackedgeTakenCount).
 ///
 SCEVHandle ScalarEvolution::getBackedgeTakenCount(const Loop *L) {
+  return getBackedgeTakenInfo(L).Exact;
+}
+
+/// getMaxBackedgeTakenCount - Similar to getBackedgeTakenCount, except
+/// return the least SCEV value that is known never to be less than the
+/// actual backedge taken count.
+SCEVHandle ScalarEvolution::getMaxBackedgeTakenCount(const Loop *L) {
+  return getBackedgeTakenInfo(L).Max;
+}
+
+const ScalarEvolution::BackedgeTakenInfo &
+ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // Initially insert a CouldNotCompute for this loop. If the insertion
   // succeeds, procede to actually compute a backedge-taken count and
   // update the value. The temporary CouldNotCompute value tells SCEV
   // code elsewhere that it shouldn't attempt to request a new
   // backedge-taken count, which could result in infinite recursion.
-  std::pair<std::map<const Loop*, SCEVHandle>::iterator, bool> Pair =
+  std::pair<std::map<const Loop*, BackedgeTakenInfo>::iterator, bool> Pair =
     BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
   if (Pair.second) {
-    SCEVHandle ItCount = ComputeBackedgeTakenCount(L);
-    if (ItCount != UnknownValue) {
-      assert(ItCount->isLoopInvariant(L) &&
+    BackedgeTakenInfo ItCount = ComputeBackedgeTakenCount(L);
+    if (ItCount.Exact != UnknownValue) {
+      assert(ItCount.Exact->isLoopInvariant(L) &&
+             ItCount.Max->isLoopInvariant(L) &&
              "Computed trip count isn't loop invariant for loop!");
       ++NumTripCountsComputed;
-
-      // Now that we know the trip count for this loop, forget any
-      // existing SCEV values for PHI nodes in this loop since they
-      // are only conservative estimates made without the benefit
-      // of trip count information.
-      for (BasicBlock::iterator I = L->getHeader()->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I)
-        deleteValueFromRecords(PN);
 
       // Update the value in the map.
       Pair.first->second = ItCount;
@@ -2088,6 +2093,15 @@ SCEVHandle ScalarEvolution::getBackedgeTakenCount(const Loop *L) {
       // Only count loops that have phi nodes as not being computable.
       ++NumTripCountsNotComputed;
     }
+
+    // Now that we know more about the trip count for this loop, forget any
+    // existing SCEV values for PHI nodes in this loop since they are only
+    // conservative estimates made without the benefit
+    // of trip count information.
+    if (ItCount.hasAnyInfo())
+      for (BasicBlock::iterator I = L->getHeader()->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I)
+        deleteValueFromRecords(PN);
   }
   return Pair.first->second;
 }
@@ -2102,7 +2116,8 @@ void ScalarEvolution::forgetLoopBackedgeTakenCount(const Loop *L) {
 
 /// ComputeBackedgeTakenCount - Compute the number of times the backedge
 /// of the specified loop will execute.
-SCEVHandle ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
+ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   // If the loop has a non-one exit block count, we can't analyze it.
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
@@ -2223,25 +2238,25 @@ SCEVHandle ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
     break;
   }
   case ICmpInst::ICMP_SLT: {
-    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, true);
-    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    BackedgeTakenInfo BTI = HowManyLessThans(LHS, RHS, L, true);
+    if (BTI.hasAnyInfo()) return BTI;
     break;
   }
   case ICmpInst::ICMP_SGT: {
-    SCEVHandle TC = HowManyLessThans(getNotSCEV(LHS),
-                                     getNotSCEV(RHS), L, true);
-    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    BackedgeTakenInfo BTI = HowManyLessThans(getNotSCEV(LHS),
+                                             getNotSCEV(RHS), L, true);
+    if (BTI.hasAnyInfo()) return BTI;
     break;
   }
   case ICmpInst::ICMP_ULT: {
-    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, false);
-    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    BackedgeTakenInfo BTI = HowManyLessThans(LHS, RHS, L, false);
+    if (BTI.hasAnyInfo()) return BTI;
     break;
   }
   case ICmpInst::ICMP_UGT: {
-    SCEVHandle TC = HowManyLessThans(getNotSCEV(LHS),
-                                     getNotSCEV(RHS), L, false);
-    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    BackedgeTakenInfo BTI = HowManyLessThans(getNotSCEV(LHS),
+                                             getNotSCEV(RHS), L, false);
+    if (BTI.hasAnyInfo()) return BTI;
     break;
   }
   default:
@@ -3093,7 +3108,7 @@ bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// UnknownValue.
-SCEVHandle ScalarEvolution::
+ScalarEvolution::BackedgeTakenInfo ScalarEvolution::
 HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
   // Only handle:  "ADDREC < LoopInvariant".
   if (!RHS->isLoopInvariant(L)) return UnknownValue;
@@ -3104,34 +3119,81 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
 
   if (AddRec->isAffine()) {
     // FORNOW: We only support unit strides.
-    SCEVHandle One = getIntegerSCEV(1, RHS->getType());
-    if (AddRec->getOperand(1) != One)
+    unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
+    SCEVHandle Step = AddRec->getStepRecurrence(*this);
+    SCEVHandle NegOne = getIntegerSCEV(-1, AddRec->getType());
+
+    // TODO: handle non-constant strides.
+    const SCEVConstant *CStep = dyn_cast<SCEVConstant>(Step);
+    if (!CStep || CStep->isZero())
+      return UnknownValue;
+    if (CStep->getValue()->getValue() == 1) {
+      // With unit stride, the iteration never steps past the limit value.
+    } else if (CStep->getValue()->getValue().isStrictlyPositive()) {
+      if (const SCEVConstant *CLimit = dyn_cast<SCEVConstant>(RHS)) {
+        // Test whether a positive iteration iteration can step past the limit
+        // value and past the maximum value for its type in a single step.
+        if (isSigned) {
+          APInt Max = APInt::getSignedMaxValue(BitWidth);
+          if ((Max - CStep->getValue()->getValue())
+                .slt(CLimit->getValue()->getValue()))
+            return UnknownValue;
+        } else {
+          APInt Max = APInt::getMaxValue(BitWidth);
+          if ((Max - CStep->getValue()->getValue())
+                .ult(CLimit->getValue()->getValue()))
+            return UnknownValue;
+        }
+      } else
+        // TODO: handle non-constant limit values below.
+        return UnknownValue;
+    } else
+      // TODO: handle negative strides below.
       return UnknownValue;
 
-    // We know the LHS is of the form {n,+,1} and the RHS is some loop-invariant
-    // m.  So, we count the number of iterations in which {n,+,1} < m is true.
-    // Note that we cannot simply return max(m-n,0) because it's not safe to
+    // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
+    // m.  So, we count the number of iterations in which {n,+,s} < m is true.
+    // Note that we cannot simply return max(m-n,0)/s because it's not safe to
     // treat m-n as signed nor unsigned due to overflow possibility.
 
     // First, we get the value of the LHS in the first iteration: n
     SCEVHandle Start = AddRec->getOperand(0);
 
-    if (isLoopGuardedByCond(L,
-                            isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                            getMinusSCEV(AddRec->getOperand(0), One), RHS)) {
-      // Since we know that the condition is true in order to enter the loop,
-      // we know that it will run exactly m-n times.
-      return getMinusSCEV(RHS, Start);
-    } else {
-      // Then, we get the value of the LHS in the first iteration in which the
-      // above condition doesn't hold.  This equals to max(m,n).
-      SCEVHandle End = isSigned ? getSMaxExpr(RHS, Start)
-                                : getUMaxExpr(RHS, Start);
+    // Determine the minimum constant start value.
+    SCEVHandle MinStart = isa<SCEVConstant>(Start) ? Start :
+      getConstant(isSigned ? APInt::getSignedMinValue(BitWidth) :
+                             APInt::getMinValue(BitWidth));
 
-      // Finally, we subtract these two values to get the number of times the
-      // backedge is executed: max(m,n)-n.
-      return getMinusSCEV(End, Start);
-    }
+    // If we know that the condition is true in order to enter the loop,
+    // then we know that it will run exactly (m-n)/s times. Otherwise, we
+    // only know if will execute (max(m,n)-n)/s times. In both cases, the
+    // division must round up.
+    SCEVHandle End = RHS;
+    if (!isLoopGuardedByCond(L,
+                             isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                             getMinusSCEV(Start, Step), RHS))
+      End = isSigned ? getSMaxExpr(RHS, Start)
+                     : getUMaxExpr(RHS, Start);
+
+    // Determine the maximum constant end value.
+    SCEVHandle MaxEnd = isa<SCEVConstant>(End) ? End :
+      getConstant(isSigned ? APInt::getSignedMaxValue(BitWidth) :
+                             APInt::getMaxValue(BitWidth));
+
+    // Finally, we subtract these two values and divide, rounding up, to get
+    // the number of times the backedge is executed.
+    SCEVHandle BECount = getUDivExpr(getAddExpr(getMinusSCEV(End, Start),
+                                                getAddExpr(Step, NegOne)),
+                                     Step);
+
+    // The maximum backedge count is similar, except using the minimum start
+    // value and the maximum end value.
+    SCEVHandle MaxBECount = getUDivExpr(getAddExpr(getMinusSCEV(MaxEnd,
+                                                                MinStart),
+                                                   getAddExpr(Step, NegOne)),
+                                        Step);
+
+    return BackedgeTakenInfo(BECount, MaxBECount);
   }
 
   return UnknownValue;
