@@ -1697,7 +1697,6 @@ void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
   }
 }
 
-
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
@@ -1719,3 +1718,36 @@ void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
     ProcessDeclAttributeList(D, Attrs);
 }
 
+
+/// ProcessObjCMethDeclReturnAttribute - Apply the specific attribute to the
+///   specified ObjCMethodDecl.  This is a separate codepath because it
+///   corresponds to attributes applied essentially to the return type of
+///   an Objective-C method declaration (as opposed to attributes that hang off
+///   the end of the method declaration).
+static void ProcessObjCMethDeclReturnAttribute(Decl *D,
+                                               const AttributeList &Attr,
+                                               Sema &S) {
+  switch (Attr.getKind()) {
+      // Checker-specific.
+    case AttributeList::AT_objc_ownership_returns:
+      HandleObjCOwnershipReturnsAttr(D, Attr, S); break;
+      break;
+    default:
+      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+      break;
+  }
+}
+
+/// ProcessObjCMethDeclAttributeList - Apply all the decl attributes in the
+///  specified attribute list to the specified ObjCMethodDecl.  This is
+///  a separate codepath because it corresponds to attributes applied
+///  essentiallyto the return type of an Objective-C method declaration
+///  (as opposed to attributes that hang off the end of the method declaration).
+void Sema::ProcessObjCMethDeclReturnAttributeList(ObjCMethodDecl *D,
+                                                  const AttributeList *AttrList)
+{
+  while (AttrList) {
+    ProcessObjCMethDeclReturnAttribute(D, *AttrList, *this);
+    AttrList = AttrList->getNext();
+  }
+}

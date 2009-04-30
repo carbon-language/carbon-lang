@@ -705,7 +705,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
-                                          0, CargNames, 
+                                          0, CargNames, ReturnAttrs, 
                                           MethodAttrs, MethodImplKind);
   }
 
@@ -779,7 +779,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                                    &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel, 
-                                        &ArgInfos[0], CargNames, 
+                                        &ArgInfos[0], CargNames, ReturnAttrs,
                                         MethodAttrs,
                                         MethodImplKind, isVariadic);
 }

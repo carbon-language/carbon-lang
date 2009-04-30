@@ -1439,6 +1439,7 @@ public:
     Selector Sel,              // a unique name for the method.
     ObjCArgInfo *ArgInfo,      // ArgInfo: Has 'Sel.getNumArgs()' entries.
     llvm::SmallVectorImpl<Declarator> &Cdecls, // c-style args
+    AttributeList *ReturnAttrList, // optional
     AttributeList *MethodAttrList, // optional
     // tok::objc_not_keyword, tok::objc_optional, tok::objc_required    
     tok::ObjCKeywordKind impKind,

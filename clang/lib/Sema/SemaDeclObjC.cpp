@@ -1509,6 +1509,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     // from the Sel.getNumArgs().
     ObjCArgInfo *ArgInfo,
     llvm::SmallVectorImpl<Declarator> &Cdecls,
+    AttributeList *ReturnAttrList,                                             
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic) {
   Decl *ClassDecl = classDecl.getAs<Decl>();
@@ -1590,6 +1591,9 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
 
   if (AttrList)
     ProcessDeclAttributeList(ObjCMethod, AttrList);
+  
+  if (ReturnAttrList)
+    ProcessObjCMethDeclReturnAttributeList(ObjCMethod, ReturnAttrList);
  
   // For implementations (which can be very "coarse grain"), we add the 
   // method now. This allows the AST to implement lookup methods that work 
