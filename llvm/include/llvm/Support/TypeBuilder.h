@@ -40,21 +40,21 @@ namespace llvm {
 ///   int8 AFunction(struct MyType *value);
 ///
 /// You'll want to use
-///   Function::Create(TypeBuilder<types::i<8>(MyType*)>::get(), ...)
+///   Function::Create(TypeBuilder<types::i<8>(MyType*), true>::get(), ...)
 /// to declare the function, but when you first try this, your compiler will
-/// complain that TypeBuilder<MyType>::get() doesn't exist. To fix this, write:
+/// complain that TypeBuilder<MyType, true>::get() doesn't exist. To fix this,
+/// write:
 ///
 ///   namespace llvm {
-///   using types::i;
 ///   template<bool xcompile> class TypeBuilder<MyType, xcompile> {
 ///   public:
 ///     static const StructType *get() {
 ///       // Using the static result variable ensures that the type is
 ///       // only looked up once.
 ///       static const StructType *const result = StructType::get(
-///         TypeBuilder<i<32>, xcompile>::get(),
-///         TypeBuilder<i<32>*, xcompile>::get(),
-///         TypeBuilder<i<8>*[], xcompile>::get(),
+///         TypeBuilder<types::i<32>, xcompile>::get(),
+///         TypeBuilder<types::i<32>*, xcompile>::get(),
+///         TypeBuilder<types::i<8>*[], xcompile>::get(),
 ///         NULL);
 ///       return result;
 ///     }

@@ -117,6 +117,7 @@ with another <tt>Value</tt></a> </li>
           <li><a href="#schanges_deletingGV">Deleting <tt>GlobalVariable</tt>s</a> </li>  
         </ul>
       </li>
+      <li><a href="#create_types">How to Create Types</a></li>
 <!--
     <li>Working with the Control Flow Graph
     <ul>
@@ -2085,6 +2086,46 @@ Instruction. First, you must have a pointer to the global variable that you wish
 GV-&gt;eraseFromParent();
 </pre>
 </div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="create_types">How to Create Types</a>
+</div>
+
+<div class="doc_text">
+
+<p>In generating IR, you may need some complex types.  If you know these types
+statically, you can use <tt>TypeBuilder&lt;...>::get()</tt>, defined
+in <tt>llvm/Support/TypeBuilder.h</tt>, to retrieve them.  <tt>TypeBuilder</tt>
+has two forms depending on whether you're building types for cross-compilation
+or native library use.  <tt>TypeBuilder&lt;T, true></tt> requires
+that <tt>T</tt> be independent of the host environment, meaning that it's built
+out of types from
+the <a href="/doxygen/namespacellvm_1_1types.html"><tt>llvm::types</tt></a>
+namespace and pointers, functions, arrays, etc. built of
+those.  <tt>TypeBuilder&lt;T, false></tt> additionally allows native C types
+whose size may depend on the host compiler.  For example,</p>
+
+<div class="doc_code">
+<pre>
+FunctionType *ft = TypeBuilder&lt;types::i&lt;8>(types::i&lt;32>*), true>::get();
+</pre>
+</div>
+
+<p>is easier to read and write than the equivalent</p>
+
+<div class="doc_code">
+<pre>
+std::vector<const Type*> params;
+params.push_back(PointerType::getUnqual(Type::Int32Ty));
+FunctionType *ft = FunctionType::get(Type::Int8Ty, params, false);
+</pre>
+</div>
+
+<p>See the <a href="/doxygen/TypeBuilder_8h-source.html#l00001">class
+comment</a> for more details.</p>
 
 </div>
 
