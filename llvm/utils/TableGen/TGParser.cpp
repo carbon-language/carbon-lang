@@ -199,7 +199,7 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
 /// CurMultiClass, resolving its template args as SubMultiClass's
 /// template arguments.
 bool TGParser::AddSubMultiClass(MultiClass *CurMultiClass,
-                                class SubMultiClassReference &SubMultiClass) {
+                                SubMultiClassReference &SubMultiClass) {
   MultiClass *SMC = SubMultiClass.MC;
   Record *CurRec = &CurMultiClass->Rec;
 
