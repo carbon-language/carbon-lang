@@ -4979,7 +4979,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   // needed to find the message name.
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, 
                                         llvm::SmallVector<QualType, 16>());
-  llvm::Constant *Fn;
+  llvm::Constant *Fn = 0;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
 #if 0
@@ -5034,6 +5034,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
       Name += "objc_msgSend_fixup";
     }
   }
+  assert(Fn && "CGObjCNonFragileABIMac::EmitMessageSend");
   Name += '_';
   std::string SelName(Sel.getAsString());
   // Replace all ':' in selector name with '_'  ouch!
