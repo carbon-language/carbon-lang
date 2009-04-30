@@ -677,6 +677,12 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName(DSRet);
   
+  // Parse attributes that can appear before the selector.
+  AttributeList *ReturnAttrs = 0;
+
+  if (getLang().ObjC2 && Tok.is(tok::kw___attribute)) 
+    ReturnAttrs = ParseAttributes();  
+  
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(selLoc);
 
