@@ -73,9 +73,6 @@ namespace CodeGenOpt {
   enum Level {
     Default,
     None,
-    One,
-    Two,
-    Size,
     Aggressive
   };
 }

@@ -58,7 +58,7 @@ static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 // Determine optimization level. Level -O0 is equivalent to "fast" code gen.
 static cl::opt<char>
 OptLevel("O",
-         cl::desc("Optimization level. [-O0, -O1, -O2, -Os, or -O3]"),
+         cl::desc("Optimization level. [-O0, -O1, -O2, or -O3]"),
          cl::Prefix,
          cl::ZeroOrMore,
          cl::init(' '));
@@ -261,9 +261,8 @@ int main(int argc, char **argv) {
     return 1;
   case ' ': break;
   case '0': OLvl = CodeGenOpt::None; break;
-  case '1': OLvl = CodeGenOpt::One; break;
-  case '2': OLvl = CodeGenOpt::Two; break;
-  case 's': OLvl = CodeGenOpt::Size; break;
+  case '1':
+  case '2': OLvl = CodeGenOpt::Default; break;
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
 
