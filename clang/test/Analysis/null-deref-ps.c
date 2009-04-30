@@ -69,7 +69,7 @@ int f4_b() {
     *p = 5; // no-warning
     p = 0;
   }
-  else return;
+  else return; // expected-warning {{non-void function 'f4_b' should return a value}}
 
   *p += 10; // expected-warning{{Dereference of null pointer}}
 }
@@ -160,7 +160,7 @@ int* f10(int* p, signed char x, int y) {
   // This tests that our symbolication worked, and that we correctly test
   // x against 0 (with the same bitwidth).
   if (!x) {
-    if (!p) return;
+    if (!p) return; // expected-warning {{non-void function 'f10' should return a value}}
     *p = 10;
   }
   else p = 0;

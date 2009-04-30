@@ -1604,7 +1604,7 @@ def err_first_argument_to_va_arg_not_of_type_va_list : Error<
 
 def warn_return_missing_expr : Warning<
   "non-void %select{function|method}1 %0 should return a value">;
-def ext_return_missing_expr : Extension<
+def ext_return_missing_expr : ExtWarn<
   "non-void %select{function|method}1 %0 should return a value">;
 def ext_return_has_expr : ExtWarn<
   "void %select{function|method}1 %0 should not return a value">;
