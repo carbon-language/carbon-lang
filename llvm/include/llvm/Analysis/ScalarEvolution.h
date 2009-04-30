@@ -449,7 +449,8 @@ namespace llvm {
     SCEVHandle getSCEVAtScope(Value *V, const Loop *L);
 
     /// isLoopGuardedByCond - Test whether entry to the loop is protected by
-    /// a conditional between LHS and RHS.
+    /// a conditional between LHS and RHS.  This is used to help avoid max
+    /// expressions in loop trip counts.
     bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                              SCEV *LHS, SCEV *RHS);
 

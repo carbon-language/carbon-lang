@@ -2986,8 +2986,9 @@ SCEVHandle ScalarEvolution::HowFarToNonZero(SCEV *V, const Loop *L) {
 ///
 BasicBlock *
 ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
-  // If the block has a unique predecessor, the predecessor must have
-  // no other successors from which BB is reachable.
+  // If the block has a unique predecessor, then there is no path from the
+  // predecessor to the block that does not go through the direct edge
+  // from the predecessor to the block.
   if (BasicBlock *Pred = BB->getSinglePredecessor())
     return Pred;
 
@@ -3002,10 +3003,11 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
 }
 
 /// isLoopGuardedByCond - Test whether entry to the loop is protected by
-/// a conditional between LHS and RHS.
+/// a conditional between LHS and RHS.  This is used to help avoid max
+/// expressions in loop trip counts.
 bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
-                                               ICmpInst::Predicate Pred,
-                                               SCEV *LHS, SCEV *RHS) {
+                                          ICmpInst::Predicate Pred,
+                                          SCEV *LHS, SCEV *RHS) {
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *PreheaderDest = L->getHeader();
 
