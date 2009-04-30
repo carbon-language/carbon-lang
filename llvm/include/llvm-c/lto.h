@@ -200,6 +200,14 @@ lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model);
 
 
 /**
+ * Sets the location of the "gcc" to run. If not set, libLTO will search for
+ * "gcc" on the path.
+ */
+extern void
+lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path);
+
+
+/**
  * Adds to a list of all global symbols that must exist in the final
  * generated code.  If a function is not listed, it might be
  * inlined into every usage and optimized away.
