@@ -251,6 +251,10 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(DoubleTy,            BuiltinType::Double);
   InitBuiltinType(LongDoubleTy,        BuiltinType::LongDouble);
 
+  // GNU extension, 128-bit integers.
+  InitBuiltinType(Int128Ty,            BuiltinType::Int128);
+  InitBuiltinType(UnsignedInt128Ty,    BuiltinType::UInt128);
+
   if (LangOpts.CPlusPlus) // C++ 3.9.1p5
     InitBuiltinType(WCharTy,           BuiltinType::WChar);
   else // C99
@@ -420,6 +424,13 @@ ASTContext::getTypeInfo(const Type *T) {
     case BuiltinType::LongDouble:
       Width = Target.getLongDoubleWidth();
       Align = Target.getLongDoubleAlign();
+      break;
+    case BuiltinType::Int128:
+    case BuiltinType::UInt128:
+      Width = 128;
+          
+      // FIXME: Is this correct for all targets?
+      Align = 128;
       break;
     }
     break;
@@ -1923,6 +1934,9 @@ unsigned ASTContext::getIntegerRank(Type *T) {
   case BuiltinType::LongLong:
   case BuiltinType::ULongLong:
     return 6 + (getIntWidth(LongLongTy) << 3);
+  case BuiltinType::Int128:
+  case BuiltinType::UInt128:
+    return 7 + (getIntWidth(Int128Ty) << 3);
   }
 }
 
@@ -2291,6 +2305,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           encoding = 
             (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'L' : 'Q'; 
           break;
+      case BuiltinType::UInt128:    encoding = 'T'; break;
       case BuiltinType::ULongLong:  encoding = 'Q'; break;
       case BuiltinType::Char_S:
       case BuiltinType::SChar:      encoding = 'c'; break;
@@ -2301,6 +2316,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'l' : 'q'; 
         break;
       case BuiltinType::LongLong:   encoding = 'q'; break;
+      case BuiltinType::Int128:     encoding = 't'; break;
       case BuiltinType::Float:      encoding = 'f'; break;
       case BuiltinType::Double:     encoding = 'd'; break;
       case BuiltinType::LongDouble: encoding = 'd'; break;
@@ -3244,6 +3260,8 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
     return UnsignedLongTy;
   case BuiltinType::LongLong:
     return UnsignedLongLongTy;
+  case BuiltinType::Int128:
+    return UnsignedInt128Ty;
   default:
     assert(0 && "Unexpected signed integer type");
     return QualType();

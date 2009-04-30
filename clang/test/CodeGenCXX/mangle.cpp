@@ -46,5 +46,8 @@ namespace N { int i; }
 namespace N { int f(int, int) { static int b; return b; } }
 
 // RUN: grep "_ZZN1N1gEvE1a =" %t | count 1 &&
-// RUN: grep "_ZGVZN1N1gEvE1a =" %t | count 1
+// RUN: grep "_ZGVZN1N1gEvE1a =" %t | count 1 &&
 namespace N { int h(); void g() { static int a = h(); } }
+
+// RUN: grep "_Z1fno" %t | count 1
+void f(__int128_t, __uint128_t) { } 

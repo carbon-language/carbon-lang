@@ -315,7 +315,11 @@ namespace clang {
       /// \brief The placeholder type for overloaded function sets.
       PREDEF_TYPE_OVERLOAD_ID   = 19,
       /// \brief The placeholder type for dependent types.
-      PREDEF_TYPE_DEPENDENT_ID  = 20
+      PREDEF_TYPE_DEPENDENT_ID  = 20,
+      /// \brief The '__uint128_t' type.
+      PREDEF_TYPE_UINT128_ID    = 21,
+      /// \brief The '__int128_t' type.
+      PREDEF_TYPE_INT128_ID     = 22
     };
 
     /// \brief The number of predefined type IDs that are reserved for

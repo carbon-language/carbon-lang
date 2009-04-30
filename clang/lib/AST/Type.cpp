@@ -584,7 +584,7 @@ Type::getAsTemplateSpecializationType() const {
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::LongLong;
+           BT->getKind() <= BuiltinType::Int128;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     // Incomplete enum types are not treated as integer types.
     // FIXME: In C++, enum types are never integer types.
@@ -901,11 +901,13 @@ const char *BuiltinType::getName() const {
   case Int:               return "int";
   case Long:              return "long";
   case LongLong:          return "long long";
+  case Int128:            return "__int128_t";
   case UChar:             return "unsigned char";
   case UShort:            return "unsigned short";
   case UInt:              return "unsigned int";
   case ULong:             return "unsigned long";
   case ULongLong:         return "unsigned long long";
+  case UInt128:           return "__uint128_t";
   case Float:             return "float";
   case Double:            return "double";
   case LongDouble:        return "long double";

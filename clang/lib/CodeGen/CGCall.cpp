@@ -640,6 +640,9 @@ void X86_64ABIInfo::classify(QualType Ty,
 
     if (k == BuiltinType::Void) {
       Current = NoClass; 
+    } else if (k == BuiltinType::Int128 || k == BuiltinType::UInt128) {
+      Lo = Memory;
+      Hi = Memory;
     } else if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
       Current = Integer;
     } else if (k == BuiltinType::Float || k == BuiltinType::Double) {
@@ -650,7 +653,6 @@ void X86_64ABIInfo::classify(QualType Ty,
     }
     // FIXME: _Decimal32 and _Decimal64 are SSE.
     // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
-    // FIXME: __int128 is (Integer, Integer).
   } else if (const EnumType *ET = Ty->getAsEnumType()) {
     // Classify the underlying integer type.
     classify(ET->getDecl()->getIntegerType(), Context, OffsetBase, Lo, Hi);

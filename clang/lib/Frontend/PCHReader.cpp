@@ -1663,12 +1663,14 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     case pch::PREDEF_TYPE_UINT_ID:       T = Context->UnsignedIntTy;      break;
     case pch::PREDEF_TYPE_ULONG_ID:      T = Context->UnsignedLongTy;     break;
     case pch::PREDEF_TYPE_ULONGLONG_ID:  T = Context->UnsignedLongLongTy; break;
+    case pch::PREDEF_TYPE_UINT128_ID:    T = Context->UnsignedInt128Ty;   break;
     case pch::PREDEF_TYPE_SCHAR_ID:      T = Context->SignedCharTy;       break;
     case pch::PREDEF_TYPE_WCHAR_ID:      T = Context->WCharTy;            break;
     case pch::PREDEF_TYPE_SHORT_ID:      T = Context->ShortTy;            break;
     case pch::PREDEF_TYPE_INT_ID:        T = Context->IntTy;              break;
     case pch::PREDEF_TYPE_LONG_ID:       T = Context->LongTy;             break;
     case pch::PREDEF_TYPE_LONGLONG_ID:   T = Context->LongLongTy;         break;
+    case pch::PREDEF_TYPE_INT128_ID:     T = Context->Int128Ty;           break;
     case pch::PREDEF_TYPE_FLOAT_ID:      T = Context->FloatTy;            break;
     case pch::PREDEF_TYPE_DOUBLE_ID:     T = Context->DoubleTy;           break;
     case pch::PREDEF_TYPE_LONGDOUBLE_ID: T = Context->LongDoubleTy;       break;

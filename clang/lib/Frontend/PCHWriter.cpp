@@ -1829,6 +1829,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     case BuiltinType::UInt:       ID = pch::PREDEF_TYPE_UINT_ID;       break;
     case BuiltinType::ULong:      ID = pch::PREDEF_TYPE_ULONG_ID;      break;
     case BuiltinType::ULongLong:  ID = pch::PREDEF_TYPE_ULONGLONG_ID;  break;
+    case BuiltinType::UInt128:    ID = pch::PREDEF_TYPE_UINT128_ID;    break;
     case BuiltinType::Char_S:     ID = pch::PREDEF_TYPE_CHAR_S_ID;     break;
     case BuiltinType::SChar:      ID = pch::PREDEF_TYPE_SCHAR_ID;      break;
     case BuiltinType::WChar:      ID = pch::PREDEF_TYPE_WCHAR_ID;      break;
@@ -1836,6 +1837,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     case BuiltinType::Int:        ID = pch::PREDEF_TYPE_INT_ID;        break;
     case BuiltinType::Long:       ID = pch::PREDEF_TYPE_LONG_ID;       break;
     case BuiltinType::LongLong:   ID = pch::PREDEF_TYPE_LONGLONG_ID;   break;
+    case BuiltinType::Int128:     ID = pch::PREDEF_TYPE_INT128_ID;     break;
     case BuiltinType::Float:      ID = pch::PREDEF_TYPE_FLOAT_ID;      break;
     case BuiltinType::Double:     ID = pch::PREDEF_TYPE_DOUBLE_ID;     break;
     case BuiltinType::LongDouble: ID = pch::PREDEF_TYPE_LONGDOUBLE_ID; break;

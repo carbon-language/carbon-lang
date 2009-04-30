@@ -108,6 +108,18 @@ static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   PushDeclContext(S, Context.getTranslationUnitDecl());
+  
+  // Install [u]int128_t.
+  PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
+                                        SourceLocation(),
+                                        &Context.Idents.get("__int128_t"),
+                                        Context.Int128Ty), TUScope);
+  PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
+                                        SourceLocation(),
+                                        &Context.Idents.get("__uint128_t"),
+                                        Context.UnsignedInt128Ty), TUScope);
+  
+  
   if (!PP.getLangOptions().ObjC1) return;
   
   if (Context.getObjCSelType().isNull()) {

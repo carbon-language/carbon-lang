@@ -256,6 +256,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::Double:
     case BuiltinType::LongDouble:
       return getTypeForFormat(Context.getFloatTypeSemantics(T));
+          
+    case BuiltinType::UInt128:
+    case BuiltinType::Int128:
+      return llvm::IntegerType::get(128);
     }
     break;
   }

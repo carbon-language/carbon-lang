@@ -537,6 +537,7 @@ public:
     UInt,
     ULong,
     ULongLong,
+    UInt128,  // __uint128_t
     
     Char_S,   // This is 'char' for targets where char is signed.
     SChar,    // This is explicitly qualified signed char.
@@ -545,6 +546,7 @@ public:
     Int,
     Long,
     LongLong,
+    Int128,   // __int128_t
     
     Float, Double, LongDouble,
 
