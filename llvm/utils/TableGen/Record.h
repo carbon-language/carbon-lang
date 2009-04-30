@@ -53,7 +53,7 @@ class VarListElementInit;
 // Other classes.
 class Record;
 class RecordVal;
-class MultiClass;
+struct MultiClass;
 
 //===----------------------------------------------------------------------===//
 //  Type Classes
