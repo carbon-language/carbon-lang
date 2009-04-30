@@ -63,7 +63,7 @@ def Parentheses : DiagGroup<"parentheses">;
 def : DiagGroup<"pointer-arith">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
-def : DiagGroup<"return-type">;
+def ReturnType : DiagGroup<"return-type">;
 def : DiagGroup<"sequence-point">;
 def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
