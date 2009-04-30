@@ -94,7 +94,6 @@ namespace {
   /// CppWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C++ translation unit.
   class CppWriter : public ModulePass {
-    const char* progname;
     raw_ostream &Out;
     const Module *TheModule;
     uint64_t uniqueNum;
@@ -218,7 +217,7 @@ namespace {
   }
 
   void CppWriter::error(const std::string& msg) {
-    cerr << progname << ": " << msg << "\n";
+    cerr << msg << "\n";
     exit(2);
   }
 
