@@ -45,3 +45,16 @@ struct Length {
 struct mmst_reg{
  char mmst_reg[10];
 };
+
+// PR3948
+namespace PR3948 {
+// PR3948
+class a {
+  public:
+  int b(int a());
+};
+int x();
+void y() {
+  a z; z.b(x);
+}
+}

@@ -1294,19 +1294,6 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
     D.setInvalidType();
     SC = FunctionDecl::None;
   }
-  if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
-    // Constructors don't have return types, but the parser will
-    // happily parse something like:
-    //
-    //   class X {
-    //     float X(float);
-    //   };
-    //
-    // The return type will be eliminated later.
-    Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
-      << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
-      << SourceRange(D.getIdentifierLoc());
-  }
   
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
   if (FTI.TypeQuals != 0) {

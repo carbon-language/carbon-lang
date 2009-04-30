@@ -2035,6 +2035,18 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       
     isVirtualOkay = true;
   } else if (DC->isRecord()) {
+    // If the of the function is the same as the name of the record, then this
+    // must be an invalid constructor that has a return type. 
+    // (The parser checks for a return type and makes the declarator a 
+    // constructor if it has no return type).
+    // must have an invalid constructor that has a return type 
+    if (Name.getAsIdentifierInfo() == cast<CXXRecordDecl>(DC)->getIdentifier()){
+      Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
+        << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
+        << SourceRange(D.getIdentifierLoc());
+      return 0;
+    }
+    
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R,
