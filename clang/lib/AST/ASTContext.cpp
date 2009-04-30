@@ -413,6 +413,11 @@ ASTContext::getTypeInfo(const Type *T) {
       Width = Target.getLongLongWidth();
       Align = Target.getLongLongAlign();
       break;
+    case BuiltinType::Int128:
+    case BuiltinType::UInt128:
+      Width = 128;
+      Align = 128; // int128_t is 128-bit aligned on all targets.
+      break;
     case BuiltinType::Float:
       Width = Target.getFloatWidth();
       Align = Target.getFloatAlign();
@@ -424,13 +429,6 @@ ASTContext::getTypeInfo(const Type *T) {
     case BuiltinType::LongDouble:
       Width = Target.getLongDoubleWidth();
       Align = Target.getLongDoubleAlign();
-      break;
-    case BuiltinType::Int128:
-    case BuiltinType::UInt128:
-      Width = 128;
-          
-      // FIXME: Is this correct for all targets?
-      Align = 128;
       break;
     }
     break;
