@@ -31,6 +31,7 @@ def Comment : DiagGroup<"comment">;
 def : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"disabled-optimization">;
+def : DiagGroup<"discard-qual">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
@@ -63,6 +64,7 @@ def : DiagGroup<"pointer-arith">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
 def : DiagGroup<"return-type">;
+def : DiagGroup<"sequence-point">;
 def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
 def : DiagGroup<"sign-compare">;
