@@ -334,24 +334,30 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
 /// does not work on incomplete types.
 std::pair<uint64_t, unsigned>
 ASTContext::getTypeInfo(const Type *T) {
-  T = getCanonicalType(T);
   uint64_t Width=0;
   unsigned Align=8;
   switch (T->getTypeClass()) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
-#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Should not see non-canonical or dependent types");
+    assert(false && "Should not see dependent types");
     break;
 
   case Type::FunctionNoProto:
   case Type::FunctionProto:
+    // GCC extension: alignof(function) = 32 bits
+    Width = 0;
+    Align = 32;
+    break;
+
   case Type::IncompleteArray:
-    assert(0 && "Incomplete types have no size!");
   case Type::VariableArray:
-    assert(0 && "VLAs not implemented yet!");
+    Width = 0;
+    Align = getTypeAlign(cast<ArrayType>(T)->getElementType());
+    break;
+
   case Type::ConstantArray: {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
@@ -377,7 +383,11 @@ ASTContext::getTypeInfo(const Type *T) {
     switch (cast<BuiltinType>(T)->getKind()) {
     default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
-      assert(0 && "Incomplete types have no size!");
+      // GCC extension: alignof(void) = 8 bits.
+      Width = 0;
+      Align = 8;
+      break;
+
     case BuiltinType::Bool:
       Width = Target.getBoolWidth();
       Align = Target.getBoolAlign();
@@ -517,9 +527,33 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
 
-  case Type::TemplateSpecialization:
-    assert(false && "Dependent types have no size");
+  case Type::Typedef: {
+    const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
+    if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>()) {
+      Align = Aligned->getAlignment();
+      Width = getTypeSize(Typedef->getUnderlyingType().getTypePtr());
+    } else
+      return getTypeInfo(Typedef->getUnderlyingType().getTypePtr());
     break;
+  }
+
+  case Type::TypeOfExpr:
+    return getTypeInfo(cast<TypeOfExprType>(T)->getUnderlyingExpr()->getType()
+                         .getTypePtr());
+
+  case Type::TypeOf:
+    return getTypeInfo(cast<TypeOfType>(T)->getUnderlyingType().getTypePtr());
+
+  case Type::QualifiedName:
+    return getTypeInfo(cast<QualifiedNameType>(T)->getNamedType().getTypePtr());
+    
+  case Type::TemplateSpecialization:
+    assert(getCanonicalType(T) != T && 
+           "Cannot request the size of a dependent type");
+    // FIXME: this is likely to be wrong once we support template
+    // aliases, since a template alias could refer to a typedef that
+    // has an __aligned__ attribute on it.
+    return getTypeInfo(getCanonicalType(T));
   }
   
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");

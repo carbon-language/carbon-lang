@@ -1021,32 +1021,11 @@ bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
 }
 
 unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
-  const Type *Ty = Info.Ctx.getCanonicalType(T).getTypePtr();
-  
-  // __alignof__(void) = 1 as a gcc extension.
-  if (Ty->isVoidType())
-    return 1;
-
-  // GCC extension: alignof(function) = 4.
-  // FIXME: AlignOf shouldn't be unconditionally 4!  It should listen to the
-  // attribute(align) directive.
-  if (Ty->isFunctionType())
-    return 4;
-
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(Ty))
-    return GetAlignOfType(QualType(EXTQT->getBaseType(), 0));
-
-  // alignof VLA/incomplete array.
-  if (const ArrayType *VAT = dyn_cast<ArrayType>(Ty))
-    return GetAlignOfType(VAT->getElementType());
-
-  // sizeof (objc class)?
-  if (isa<ObjCInterfaceType>(Ty))
-    return 1;  // FIXME: This probably isn't right.
-
   // Get information about the alignment.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
-  return Info.Ctx.getPreferredTypeAlign(Ty) / CharSize;
+
+  // FIXME: Why do we ask for the preferred alignment?
+  return Info.Ctx.getPreferredTypeAlign(T.getTypePtr()) / CharSize;
 }
 
 unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
