@@ -254,6 +254,10 @@ public:
   int getCopyCost() const { return CopyCost; }
 };
 
+/// getCommonSubClass - find the largest common subclass of A and B. Return NULL
+/// if there is no common subclass.
+const TargetRegisterClass *getCommonSubClass(const TargetRegisterClass *A,
+                                             const TargetRegisterClass *B);
 
 /// TargetRegisterInfo base class - We assume that the target defines a static
 /// array of TargetRegisterDesc objects that represent all of the machine

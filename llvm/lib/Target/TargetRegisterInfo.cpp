@@ -100,3 +100,45 @@ TargetRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const 
   // Default is to do nothing.
 }
 
+const TargetRegisterClass *
+llvm::getCommonSubClass(const TargetRegisterClass *A,
+                        const TargetRegisterClass *B) {
+  // First take care of the trivial cases
+  if (A == B)
+    return A;
+  if (!A || !B)
+    return 0;
+
+  // If B is a subclass of A, it will be handled in the loop below
+  if (B->hasSubClass(A))
+    return A;
+
+  const TargetRegisterClass *Best = 0;
+  for (TargetRegisterClass::sc_iterator I = A->subclasses_begin();
+       const TargetRegisterClass *X = *I; ++I) {
+    if (X == B)
+      return B;                 // B is a subclass of A
+
+    // X must be a common subclass of A and B
+    if (!B->hasSubClass(X))
+      continue;
+
+    // A superclass is definitely better.
+    if (!Best || Best->hasSuperClass(X)) {
+      Best = X;
+      continue;
+    }
+
+    // A subclass is definitely worse
+    if (Best->hasSubClass(X))
+      continue;
+
+    // Best and *I have no super/sub class relation - pick the larger class, or
+    // the smaller spill size.
+    int nb = std::distance(Best->begin(), Best->end());
+    int ni = std::distance(X->begin(), X->end());
+    if (ni>nb || (ni==nb && X->getSize() < Best->getSize()))
+      Best = X;
+  }
+  return Best;
+}
