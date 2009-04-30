@@ -1258,6 +1258,18 @@ public:
   APInt multiplicativeInverse(const APInt& modulo) const;
 
   /// @}
+  /// @name Support for division by constant
+  /// @{
+
+  /// Calculate the magic number for signed division by a constant.
+  struct ms;
+  ms magic() const;
+
+  /// Calculate the magic number for unsigned division by a constant.
+  struct mu;
+  mu magicu() const;
+
+  /// @}
   /// @name Building-block Operations for APInt and APFloat
   /// @{
 
@@ -1386,6 +1398,19 @@ public:
   void dump() const;
 
   /// @}
+};
+
+/// Magic data for optimising signed division by a constant.
+struct APInt::ms {
+  APInt m;  ///< magic number
+  unsigned s;  ///< shift amount
+};
+
+/// Magic data for optimising unsigned division by a constant.
+struct APInt::mu {
+  APInt m;     ///< magic number
+  bool a;      ///< add indicator
+  unsigned s;  ///< shift amount
 };
 
 inline bool operator==(uint64_t V1, const APInt& V2) {

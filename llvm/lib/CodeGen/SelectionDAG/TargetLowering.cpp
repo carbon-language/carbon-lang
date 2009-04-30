@@ -2434,105 +2434,6 @@ bool TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return true;
 }
 
-struct mu {
-  APInt m;     // magic number
-  bool a;      // add indicator
-  unsigned s;  // shift amount
-};
-
-/// magicu - calculate the magic numbers required to codegen an integer udiv as
-/// a sequence of multiply, add and shifts.  Requires that the divisor not be 0.
-static mu magicu(const APInt& d) {
-  unsigned p;
-  APInt nc, delta, q1, r1, q2, r2;
-  struct mu magu;
-  magu.a = 0;               // initialize "add" indicator
-  APInt allOnes = APInt::getAllOnesValue(d.getBitWidth());
-  APInt signedMin = APInt::getSignedMinValue(d.getBitWidth());
-  APInt signedMax = APInt::getSignedMaxValue(d.getBitWidth());
-
-  nc = allOnes - (-d).urem(d);
-  p = d.getBitWidth() - 1;  // initialize p
-  q1 = signedMin.udiv(nc);  // initialize q1 = 2p/nc
-  r1 = signedMin - q1*nc;   // initialize r1 = rem(2p,nc)
-  q2 = signedMax.udiv(d);   // initialize q2 = (2p-1)/d
-  r2 = signedMax - q2*d;    // initialize r2 = rem((2p-1),d)
-  do {
-    p = p + 1;
-    if (r1.uge(nc - r1)) {
-      q1 = q1 + q1 + 1;  // update q1
-      r1 = r1 + r1 - nc; // update r1
-    }
-    else {
-      q1 = q1+q1; // update q1
-      r1 = r1+r1; // update r1
-    }
-    if ((r2 + 1).uge(d - r2)) {
-      if (q2.uge(signedMax)) magu.a = 1;
-      q2 = q2+q2 + 1;     // update q2
-      r2 = r2+r2 + 1 - d; // update r2
-    }
-    else {
-      if (q2.uge(signedMin)) magu.a = 1;
-      q2 = q2+q2;     // update q2
-      r2 = r2+r2 + 1; // update r2
-    }
-    delta = d - 1 - r2;
-  } while (p < d.getBitWidth()*2 &&
-           (q1.ult(delta) || (q1 == delta && r1 == 0)));
-  magu.m = q2 + 1; // resulting magic number
-  magu.s = p - d.getBitWidth();  // resulting shift
-  return magu;
-}
-
-// Magic for divide replacement
-struct ms {
-  APInt m;  // magic number
-  unsigned s;  // shift amount
-};
-
-/// magic - calculate the magic numbers required to codegen an integer sdiv as
-/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1,
-/// or -1.
-static ms magic(const APInt& d) {
-  unsigned p;
-  APInt ad, anc, delta, q1, r1, q2, r2, t;
-  APInt allOnes = APInt::getAllOnesValue(d.getBitWidth());
-  APInt signedMin = APInt::getSignedMinValue(d.getBitWidth());
-  APInt signedMax = APInt::getSignedMaxValue(d.getBitWidth());
-  struct ms mag;
-  
-  ad = d.abs();
-  t = signedMin + (d.lshr(d.getBitWidth() - 1));
-  anc = t - 1 - t.urem(ad);   // absolute value of nc
-  p = d.getBitWidth() - 1;    // initialize p
-  q1 = signedMin.udiv(anc);   // initialize q1 = 2p/abs(nc)
-  r1 = signedMin - q1*anc;    // initialize r1 = rem(2p,abs(nc))
-  q2 = signedMin.udiv(ad);    // initialize q2 = 2p/abs(d)
-  r2 = signedMin - q2*ad;     // initialize r2 = rem(2p,abs(d))
-  do {
-    p = p + 1;
-    q1 = q1<<1;          // update q1 = 2p/abs(nc)
-    r1 = r1<<1;          // update r1 = rem(2p/abs(nc))
-    if (r1.uge(anc)) {  // must be unsigned comparison
-      q1 = q1 + 1;
-      r1 = r1 - anc;
-    }
-    q2 = q2<<1;          // update q2 = 2p/abs(d)
-    r2 = r2<<1;          // update r2 = rem(2p/abs(d))
-    if (r2.uge(ad)) {   // must be unsigned comparison
-      q2 = q2 + 1;
-      r2 = r2 - ad;
-    }
-    delta = ad - r2;
-  } while (q1.ule(delta) || (q1 == delta && r1 == 0));
-  
-  mag.m = q2 + 1;
-  if (d.isNegative()) mag.m = -mag.m;   // resulting magic number
-  mag.s = p - d.getBitWidth();          // resulting shift
-  return mag;
-}
-
 /// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
@@ -2548,7 +2449,7 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
     return SDValue();
   
   APInt d = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
-  ms magics = magic(d);
+  APInt::ms magics = d.magic();
   
   // Multiply the numerator (operand 0) by the magic value
   // FIXME: We should support doing a MUL in a wider type
@@ -2607,7 +2508,7 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
   // FIXME: We should use a narrower constant when the upper
   // bits are known to be zero.
   ConstantSDNode *N1C = cast<ConstantSDNode>(N->getOperand(1));
-  mu magics = magicu(N1C->getAPIntValue());
+  APInt::mu magics = N1C->getAPIntValue().magicu();
 
   // Multiply the numerator (operand 0) by the magic value
   // FIXME: We should support doing a MUL in a wider type
