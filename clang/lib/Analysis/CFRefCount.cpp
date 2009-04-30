@@ -765,12 +765,13 @@ public:
   ///  the summary for the current method being analyzed.
   RetainSummary *getMethodSummary(const ObjCMethodDecl *MD) {
     // FIXME: Eventually this should be unneeded.
-    MD = ResolveToInterfaceMethodDecl(MD, Ctx);    
-    
-    Selector S = MD->getSelector();
     const ObjCInterfaceDecl *ID = MD->getClassInterface();
+    Selector S = MD->getSelector();
     IdentifierInfo *ClsName = ID->getIdentifier();
     QualType ResultTy = MD->getResultType();
+    
+    // Resolve the method decl last.
+    MD = ResolveToInterfaceMethodDecl(MD, Ctx);    
     
     if (MD->isInstanceMethod())
       return getInstanceMethodSummary(S, ClsName, ID, MD, ResultTy);
