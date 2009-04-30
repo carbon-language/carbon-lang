@@ -641,8 +641,8 @@ void X86_64ABIInfo::classify(QualType Ty,
     if (k == BuiltinType::Void) {
       Current = NoClass; 
     } else if (k == BuiltinType::Int128 || k == BuiltinType::UInt128) {
-      Lo = Memory;
-      Hi = Memory;
+      Lo = Integer;
+      Hi = Integer;
     } else if (k >= BuiltinType::Bool && k <= BuiltinType::LongLong) {
       Current = Integer;
     } else if (k == BuiltinType::Float || k == BuiltinType::Double) {
