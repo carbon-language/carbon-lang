@@ -59,8 +59,9 @@ public:
       return EmitUnion(CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF), 
                        Ty);
     }
-    if (CGM.getContext().getCanonicalType(E->getSubExpr()->getType()) ==
-        CGM.getContext().getCanonicalType(E->getType())) {
+    // Explicit and implicit no-op casts
+    QualType Ty = E->getType(), SubTy = E->getSubExpr()->getType();
+    if (CGM.getContext().hasSameUnqualifiedType(Ty, SubTy)) {
       return Visit(E->getSubExpr());
     }
     return 0;

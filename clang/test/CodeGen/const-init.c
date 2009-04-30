@@ -96,4 +96,9 @@ void *g20(void) {
   return l0.f1;
 }
 
+// PR4108
+struct g21 {int g21;};
+const struct g21 g21 = (struct g21){1};
+
 // RUN: true
+
