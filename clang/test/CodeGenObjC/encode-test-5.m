@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple=i686-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple=x86_64-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
 
 // RUN: grep ji %t | count 1 &&
 char *a = @encode(_Complex int);

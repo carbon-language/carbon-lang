@@ -18,6 +18,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
 /// ConvertQualTypeToStringFn - This function is used to pretty print the 
@@ -109,15 +110,17 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   PushDeclContext(S, Context.getTranslationUnitDecl());
   
-  // Install [u]int128_t.
-  PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
-                                        SourceLocation(),
-                                        &Context.Idents.get("__int128_t"),
-                                        Context.Int128Ty), TUScope);
-  PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
-                                        SourceLocation(),
-                                        &Context.Idents.get("__uint128_t"),
-                                        Context.UnsignedInt128Ty), TUScope);
+  if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
+    // Install [u]int128_t for 64-bit targets.
+    PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
+                                          SourceLocation(),
+                                          &Context.Idents.get("__int128_t"),
+                                          Context.Int128Ty), TUScope);
+    PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
+                                          SourceLocation(),
+                                          &Context.Idents.get("__uint128_t"),
+                                          Context.UnsignedInt128Ty), TUScope);
+  }
   
   
   if (!PP.getLangOptions().ObjC1) return;
