@@ -64,8 +64,10 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
             return CI;
           }
     }
-    return CastInst::Create(opcode, V, Ty, V->getName(), 
-                            A->getParent()->getEntryBlock().begin());
+    Instruction *I = CastInst::Create(opcode, V, Ty, V->getName(),
+                                      A->getParent()->getEntryBlock().begin());
+    InsertedValues.insert(I);
+    return I;
   }
 
   Instruction *I = cast<Instruction>(V);
@@ -93,7 +95,9 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
   while (isa<PHINode>(IP)) ++IP;
-  return CastInst::Create(opcode, V, Ty, V->getName(), IP);
+  Instruction *CI = CastInst::Create(opcode, V, Ty, V->getName(), IP);
+  InsertedValues.insert(CI);
+  return CI;
 }
 
 /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
@@ -135,7 +139,9 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   }
   
   // If we haven't found this binop, insert it.
-  return BinaryOperator::Create(Opcode, LHS, RHS, "tmp", InsertPt);
+  Instruction *BO = BinaryOperator::Create(Opcode, LHS, RHS, "tmp", InsertPt);
+  InsertedValues.insert(BO);
+  return BO;
 }
 
 Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
@@ -218,6 +224,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // specified loop.
     BasicBlock *Header = L->getHeader();
     PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
+    InsertedValues.insert(PN);
     PN->addIncoming(Constant::getNullValue(Ty), L->getLoopPreheader());
 
     pred_iterator HPI = pred_begin(Header);
@@ -231,6 +238,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     Constant *One = ConstantInt::get(Ty, 1);
     Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
                                                  (*HPI)->getTerminator());
+    InsertedValues.insert(Add);
 
     pred_iterator PI = pred_begin(Header);
     if (*PI == L->getLoopPreheader())
@@ -296,21 +304,27 @@ Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expand(S->getOperand());
   V = InsertNoopCastOfTo(V, SE.getEffectiveSCEVType(V->getType()));
-  return new TruncInst(V, Ty, "tmp.", InsertPt);
+  Instruction *I = new TruncInst(V, Ty, "tmp.", InsertPt);
+  InsertedValues.insert(I);
+  return I;
 }
 
 Value *SCEVExpander::visitZeroExtendExpr(const SCEVZeroExtendExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expand(S->getOperand());
   V = InsertNoopCastOfTo(V, SE.getEffectiveSCEVType(V->getType()));
-  return new ZExtInst(V, Ty, "tmp.", InsertPt);
+  Instruction *I = new ZExtInst(V, Ty, "tmp.", InsertPt);
+  InsertedValues.insert(I);
+  return I;
 }
 
 Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expand(S->getOperand());
   V = InsertNoopCastOfTo(V, SE.getEffectiveSCEVType(V->getType()));
-  return new SExtInst(V, Ty, "tmp.", InsertPt);
+  Instruction *I = new SExtInst(V, Ty, "tmp.", InsertPt);
+  InsertedValues.insert(I);
+  return I;
 }
 
 Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
@@ -320,8 +334,12 @@ Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
     Value *RHS = expand(S->getOperand(i));
     RHS = InsertNoopCastOfTo(RHS, Ty);
-    Value *ICmp = new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS, "tmp", InsertPt);
-    LHS = SelectInst::Create(ICmp, LHS, RHS, "smax", InsertPt);
+    Instruction *ICmp =
+      new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS, "tmp", InsertPt);
+    InsertedValues.insert(ICmp);
+    Instruction *Sel = SelectInst::Create(ICmp, LHS, RHS, "smax", InsertPt);
+    InsertedValues.insert(Sel);
+    LHS = Sel;
   }
   return LHS;
 }
@@ -333,8 +351,12 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
     Value *RHS = expand(S->getOperand(i));
     RHS = InsertNoopCastOfTo(RHS, Ty);
-    Value *ICmp = new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS, "tmp", InsertPt);
-    LHS = SelectInst::Create(ICmp, LHS, RHS, "umax", InsertPt);
+    Instruction *ICmp =
+      new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS, "tmp", InsertPt);
+    InsertedValues.insert(ICmp);
+    Instruction *Sel = SelectInst::Create(ICmp, LHS, RHS, "umax", InsertPt);
+    InsertedValues.insert(Sel);
+    LHS = Sel;
   }
   return LHS;
 }
