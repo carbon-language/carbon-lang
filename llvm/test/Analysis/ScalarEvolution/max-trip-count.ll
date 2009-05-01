@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
-; RUN:   | grep {\{(ptrtoint i32\\* %d to iPTR),+,4\}<bb>}
+; RUN:   | grep {\{%d,+,4\}<bb>}
 
 define void @foo(i32* nocapture %d, i32 %n) nounwind {
 entry:

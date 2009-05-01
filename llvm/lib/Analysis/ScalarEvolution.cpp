@@ -434,11 +434,7 @@ const Type *SCEVUnknown::getType() const {
 }
 
 void SCEVUnknown::print(raw_ostream &OS) const {
-  if (isa<PointerType>(V->getType()))
-    OS << "(ptrtoint " << *V->getType() << " ";
   WriteAsOperand(OS, V, false);
-  if (isa<PointerType>(V->getType()))
-    OS << " to iPTR)";
 }
 
 //===----------------------------------------------------------------------===//
