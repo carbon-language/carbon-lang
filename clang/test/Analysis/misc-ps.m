@@ -272,3 +272,15 @@ next_opcode:
   }
 }
 
+// Test invalidating pointers-to-pointers with slightly different types.  This
+// example came from a recent false positive due to a regression where the
+// branch condition was falsely reported as being uninitialized.
+void invalidate_by_ref(char **x);
+int test_invalidate_by_ref() {
+  unsigned short y;
+  invalidate_by_ref((char**) &y);
+  if (y) // no-warning
+    return 1;
+  return 0;  
+}
+
