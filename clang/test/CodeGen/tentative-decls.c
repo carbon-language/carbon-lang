@@ -30,4 +30,10 @@ int *f1() {
 int c[];
 int c[4];
 
+// Check that we emit static tentative definitions
+// RUN: grep '@c5 = internal global \[1 x .*\] zeroinitializer' %t &&
+static int c5[];
+static int func() { return c5[0]; }
+int callfunc() { return func(); }
+
 // RUN: true
