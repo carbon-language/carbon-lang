@@ -1170,7 +1170,9 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
                                                 const Type *Ty2) {
   if (Ty1 == Ty2)
     return false;
-  if (SE->getEffectiveSCEVType(Ty1) == SE->getEffectiveSCEVType(Ty2))
+  Ty1 = SE->getEffectiveSCEVType(Ty1);
+  Ty2 = SE->getEffectiveSCEVType(Ty2);
+  if (Ty1 == Ty2)
     return false;
   if (Ty1->canLosslesslyBitCastTo(Ty2))
     return false;
