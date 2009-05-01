@@ -14,6 +14,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/raw_ostream.h"
@@ -100,16 +101,22 @@ MinimalAction::~MinimalAction() {
 
 void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
-  if (!PP.getLangOptions().ObjC1) return;
-
 
   TypeNameInfoTable &TNIT = *getTable(TypeNameInfoTablePtr);
+
+  if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
+    // Install [u]int128_t for 64-bit targets.
+    TNIT.AddEntry(true, &Idents.get("__int128_t"));
+    TNIT.AddEntry(true, &Idents.get("__uint128_t"));
+  }
   
-  // Recognize the ObjC built-in type identifiers as types. 
-  TNIT.AddEntry(true, &Idents.get("id"));
-  TNIT.AddEntry(true, &Idents.get("SEL"));
-  TNIT.AddEntry(true, &Idents.get("Class"));
-  TNIT.AddEntry(true, &Idents.get("Protocol"));
+  if (PP.getLangOptions().ObjC1) {
+    // Recognize the ObjC built-in type identifiers as types. 
+    TNIT.AddEntry(true, &Idents.get("id"));
+    TNIT.AddEntry(true, &Idents.get("SEL"));
+    TNIT.AddEntry(true, &Idents.get("Class"));
+    TNIT.AddEntry(true, &Idents.get("Protocol"));
+  }
 }
 
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
