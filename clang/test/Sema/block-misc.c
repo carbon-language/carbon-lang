@@ -150,7 +150,9 @@ void test15() {
 __block int test16i;  // expected-error {{__block attribute not allowed, only allowed on local variables}}
 
 void test16(__block int i) { // expected-error {{__block attribute not allowed, only allowed on local variables}}
+  int size = 5;
   extern __block double extern_var; // expected-error {{__block attribute not allowed, only allowed on local variables}}
   static __block char * pch; // expected-error {{__block attribute not allowed, only allowed on local variables}}
+  __block int a[size]; // expected-error {{__block attribute not allowed on declaration with a variably modified type}}
+  __block int (*ap)[size]; // expected-error {{__block attribute not allowed on declaration with a variably modified type}}
 }
-

@@ -1916,6 +1916,11 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
     return NewVD->setInvalidDecl();
   }
     
+  if (isVM && NewVD->hasAttr<BlocksAttr>()) {
+    Diag(NewVD->getLocation(), diag::err_block_on_vm);
+    return NewVD->setInvalidDecl();
+  }
+
   if (PrevDecl) {
     Redeclaration = true;
     MergeVarDecl(NewVD, PrevDecl);
