@@ -27,6 +27,7 @@ add_clang_library(clangAnalysis
   RangeConstraintManager.cpp
   RegionStore.cpp
   SimpleConstraintManager.cpp
+  Store.cpp
   SVals.cpp
   SymbolManager.cpp
   UninitializedValues.cpp
