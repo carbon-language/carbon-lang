@@ -324,32 +324,17 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
   switch (loc.getSubKind()) {      
     case loc::MemRegionKind: {
       const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
+      ASTContext &C = StateMgr.getContext();
       
       // Special case: handle store of pointer values (Loc) to pointers via
       // a cast to intXX_t*, void*, etc.  This is needed to handle
       // OSCompareAndSwap32Barrier/OSCompareAndSwap64Barrier.
       if (isa<Loc>(V) || isa<nonloc::LocAsInteger>(V))
         if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
-          ASTContext &C = StateMgr.getContext();
           QualType T = TR->getLValueType(C);
         
-          if (isHigherOrderRawPtr(T, C)) {
+          if (isHigherOrderRawPtr(T, C))
             R = TR->removeViews();
-            
-            if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
-              // Only convert 'V' to a location iff the underlying region type
-              // is a location as well.
-              // FIXME: We are allowing a store of an arbitrary location to
-              // a pointer.  We may wish to flag a type error here if the types
-              // are incompatible.  This may also cause lots of breakage
-              // elsewhere. Food for thought.
-              if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
-                if (TyR->isBoundable(C) &&
-                    Loc::IsLocType(TyR->getRValueType(C)))              
-                  V = X->getLoc();
-              }
-            }
-          }
         }      
       
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
@@ -359,6 +344,20 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
       if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
         if (IVR->getSuperRegion() != SelfRegion)
           return store;
+      
+      if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
+        // Only convert 'V' to a location iff the underlying region type
+        // is a location as well.
+        // FIXME: We are allowing a store of an arbitrary location to
+        // a pointer.  We may wish to flag a type error here if the types
+        // are incompatible.  This may also cause lots of breakage
+        // elsewhere. Food for thought.
+        if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
+          if (TyR->isBoundable(C) &&
+              Loc::IsLocType(TyR->getRValueType(C)))              
+            V = X->getLoc();
+        }
+      }
 
       BindingsTy B = GetBindings(store);
       return V.isUnknown()
