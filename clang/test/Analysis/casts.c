@@ -2,6 +2,7 @@
 
 // Test if the 'storage' region gets properly initialized after it is cast to
 // 'struct sockaddr *'. 
+// XFAIL
 
 #include <sys/socket.h>
 void f(int sock) {

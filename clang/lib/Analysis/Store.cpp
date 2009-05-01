@@ -59,9 +59,15 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
       return CastResult(state, R);
     }
 
-  // FIXME: We don't want to layer region views.  Need to handle
-  // arbitrary downcasts.
+  // FIXME: Need to handle arbitrary downcasts.
+  // FIXME: Handle the case where a TypedViewRegion (layering a SymbolicRegion
+  //         or an AllocaRegion is cast to another view, thus causing the memory
+  //         to be re-used for a different purpose.
 
-  const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
-  return CastResult(AddRegionView(state, ViewR, R), ViewR);
+  if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
+    const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
+    return CastResult(AddRegionView(state, ViewR, R), ViewR);
+  }
+  
+  return CastResult(state, R);
 }
