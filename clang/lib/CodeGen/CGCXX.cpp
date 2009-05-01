@@ -91,11 +91,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   
   llvm::Value *BaseValue = 0;
   
-  // There's a deref operator node added in Sema::BuildCallToMemberFunction
-  // that's giving the wrong type for -> call exprs so we just ignore them
-  // for now.
   if (ME->isArrow())
-    return EmitUnsupportedRValue(CE, "C++ member call expr");
+    BaseValue = EmitScalarExpr(ME->getBase());
   else {
     LValue BaseLV = EmitLValue(ME->getBase());
     BaseValue = BaseLV.getAddress();
