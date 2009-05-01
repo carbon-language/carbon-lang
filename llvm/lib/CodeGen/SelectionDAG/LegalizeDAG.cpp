@@ -1750,23 +1750,46 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
 
   case ISD::CONCAT_VECTORS: {
-    // Use extract/insert/build vector for now. We might try to be
-    // more clever later.
-    MVT PtrVT = TLI.getPointerTy();
+    // Legalize the operands.
     SmallVector<SDValue, 8> Ops;
-    unsigned NumOperands = Node->getNumOperands();
-    for (unsigned i=0; i < NumOperands; ++i) {
-      SDValue SubOp = Node->getOperand(i);
-      MVT VVT = SubOp.getNode()->getValueType(0);
-      MVT EltVT = VVT.getVectorElementType();
-      unsigned NumSubElem = VVT.getVectorNumElements();
-      for (unsigned j=0; j < NumSubElem; ++j) {
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, SubOp,
-                                  DAG.getConstant(j, PtrVT)));
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+      Ops.push_back(LegalizeOp(Node->getOperand(i)));
+    Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
+
+    switch (TLI.getOperationAction(ISD::CONCAT_VECTORS,
+                                   Node->getValueType(0))) {
+    default: assert(0 && "Unknown operation action!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.getNode()) {
+        Result = Tmp3;
+        break;
       }
+      // FALLTHROUGH
+    case TargetLowering::Expand: {
+      // Use extract/insert/build vector for now. We might try to be
+      // more clever later.
+      MVT PtrVT = TLI.getPointerTy();
+      SmallVector<SDValue, 8> Ops;
+      unsigned NumOperands = Node->getNumOperands();
+      for (unsigned i=0; i < NumOperands; ++i) {
+        SDValue SubOp = Node->getOperand(i);
+        MVT VVT = SubOp.getNode()->getValueType(0);
+        MVT EltVT = VVT.getVectorElementType();
+        unsigned NumSubElem = VVT.getVectorNumElements();
+        for (unsigned j=0; j < NumSubElem; ++j) {
+          Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, SubOp,
+                                    DAG.getConstant(j, PtrVT)));
+        }
+      }
+      return LegalizeOp(DAG.getNode(ISD::BUILD_VECTOR, dl,
+                                    Node->getValueType(0),
+                                    &Ops[0], Ops.size()));
     }
-    return LegalizeOp(DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
-                      &Ops[0], Ops.size()));
+    }
+    break;
   }
 
   case ISD::CALLSEQ_START: {
