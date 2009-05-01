@@ -21,7 +21,7 @@ typedef float CGFloat;
 typedef struct _XCElementInset {} XCElementInset;
 
 @protocol XCElementP < NSObject >
--(BOOL) vertical;
+-(id) vertical;
 @end
 
 @protocol XCElementDisplayDelegateP;
@@ -60,6 +60,6 @@ typedef NSObject < XCElementJustifierP > XCElementJustifier;
   if (_marker && _marker.variableSized) {
   }
 }
-- vertical { return self; }
+- (id)vertical { return self; }
 - (BOOL)isEqual:x { return 1; }
 @end

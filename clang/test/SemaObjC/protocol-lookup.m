@@ -39,7 +39,7 @@
 	return self;
 }
 
-- (void)dealloc
+- dealloc
 {
 	[_foo release];
 	[_bar release];

@@ -44,7 +44,7 @@
 -(id) O{ return 0; }
 -(void) setO:(id)arg { }
 
-- (void)dealloc
+- (id)dealloc
 {
   [_X release];
   [_Z release];

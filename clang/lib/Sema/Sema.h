@@ -1114,6 +1114,17 @@ public:
                                   const ObjCMethodDecl *PrevMethod,
                                   bool matchBasedOnSizeAndAlignment = false); 
 
+  /// MatchAllMethodDeclarations - Check methods declaraed in interface or
+  /// or protocol against those declared in their implementations.
+  void MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
+                                  const llvm::DenseSet<Selector> &ClsMap,
+                                  llvm::DenseSet<Selector> &InsMapSeen,
+                                  llvm::DenseSet<Selector> &ClsMapSeen,
+                                  ObjCImplDecl* IMPDecl,
+                                  ObjCContainerDecl* IDecl,
+                                  bool &IncompleteImpl,
+                                  bool ImmediateClass);
+
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking

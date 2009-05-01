@@ -885,6 +885,79 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
     CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap, IDecl);
 }
 
+/// MatchAllMethodDeclarations - Check methods declaraed in interface or
+/// or protocol against those declared in their implementations.
+///
+void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
+                                      const llvm::DenseSet<Selector> &ClsMap,
+                                      llvm::DenseSet<Selector> &InsMapSeen,
+                                      llvm::DenseSet<Selector> &ClsMapSeen,
+                                      ObjCImplDecl* IMPDecl,
+                                      ObjCContainerDecl* CDecl,
+                                      bool &IncompleteImpl,
+                                      bool ImmediateClass)
+{
+  // Check and see if instance methods in class interface have been
+  // implemented in the implementation class. If so, their types match.
+  for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(Context),
+       E = CDecl->instmeth_end(Context); I != E; ++I) {
+    if (InsMapSeen.count((*I)->getSelector()))
+        continue;
+    InsMapSeen.insert((*I)->getSelector());
+    if (!(*I)->isSynthesized() && 
+        !InsMap.count((*I)->getSelector())) {
+      if (ImmediateClass)
+        WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
+      continue;
+    }
+    else {
+      ObjCMethodDecl *ImpMethodDecl = 
+      IMPDecl->getInstanceMethod(Context, (*I)->getSelector());
+      ObjCMethodDecl *IntfMethodDecl = 
+      CDecl->getInstanceMethod(Context, (*I)->getSelector());
+      assert(IntfMethodDecl && 
+             "IntfMethodDecl is null in ImplMethodsVsClassMethods");
+      // ImpMethodDecl may be null as in a @dynamic property.
+      if (ImpMethodDecl)
+        WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+    }
+  }
+  
+  // Check and see if class methods in class interface have been
+  // implemented in the implementation class. If so, their types match.
+   for (ObjCInterfaceDecl::classmeth_iterator 
+       I = CDecl->classmeth_begin(Context),
+       E = CDecl->classmeth_end(Context);
+        I != E; ++I) {
+     if (ClsMapSeen.count((*I)->getSelector()))
+       continue;
+     ClsMapSeen.insert((*I)->getSelector());
+    if (!ClsMap.count((*I)->getSelector())) {
+      if (ImmediateClass)
+        WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
+    }
+    else {
+      ObjCMethodDecl *ImpMethodDecl = 
+      IMPDecl->getClassMethod(Context, (*I)->getSelector());
+      ObjCMethodDecl *IntfMethodDecl = 
+      CDecl->getClassMethod(Context, (*I)->getSelector());
+      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+    }
+  }
+  if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
+    // Check for any implementation of a methods declared in protocol.
+    for (ObjCInterfaceDecl::protocol_iterator PI = I->protocol_begin(),
+         E = I->protocol_end(); PI != E; ++PI)
+      MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen, 
+                                 IMPDecl, 
+                                 (*PI), IncompleteImpl, false);
+    if (I->getSuperClass())
+      MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
+                                 IMPDecl, 
+                                 I->getSuperClass(), IncompleteImpl, false);
+  }
+}
+
 void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl, 
                                      ObjCContainerDecl* CDecl, 
                                      bool IncompleteImpl) {
@@ -933,51 +1006,26 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
         }
       }
   
-  for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(Context),
-       E = CDecl->instmeth_end(Context); I != E; ++I) {
-    if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector())) {
-      WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
-      continue;
-    }
-    
-    ObjCMethodDecl *ImpMethodDecl = 
-      IMPDecl->getInstanceMethod(Context, (*I)->getSelector());
-    ObjCMethodDecl *IntfMethodDecl = 
-      CDecl->getInstanceMethod(Context, (*I)->getSelector());
-    assert(IntfMethodDecl && 
-           "IntfMethodDecl is null in ImplMethodsVsClassMethods");
-    // ImpMethodDecl may be null as in a @dynamic property.
-    if (ImpMethodDecl)
-      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
-  }
-      
   llvm::DenseSet<Selector> ClsMap;
-  // Check and see if class methods in class interface have been
-  // implemented in the implementation class.
   for (ObjCImplementationDecl::classmeth_iterator 
-         I = IMPDecl->classmeth_begin(Context),
-         E = IMPDecl->classmeth_end(Context); I != E; ++I)
+       I = IMPDecl->classmeth_begin(Context),
+       E = IMPDecl->classmeth_end(Context); I != E; ++I)
     ClsMap.insert((*I)->getSelector());
   
-  for (ObjCInterfaceDecl::classmeth_iterator 
-         I = CDecl->classmeth_begin(Context),
-         E = CDecl->classmeth_end(Context);
-       I != E; ++I)
-    if (!ClsMap.count((*I)->getSelector()))
-      WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
-    else {
-      ObjCMethodDecl *ImpMethodDecl = 
-        IMPDecl->getClassMethod(Context, (*I)->getSelector());
-      ObjCMethodDecl *IntfMethodDecl = 
-        CDecl->getClassMethod(Context, (*I)->getSelector());
-      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
-    }
-  
+  // Check for type conflict of methods declared in a class/protocol and
+  // its implementation; if any.
+  llvm::DenseSet<Selector> InsMapSeen, ClsMapSeen;
+  MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen, 
+                             IMPDecl, CDecl, 
+                             IncompleteImpl, true);
   
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
+  // Check and see if class methods in class interface have been
+  // implemented in the implementation class.
+  
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
-    for (ObjCCategoryDecl::protocol_iterator PI = I->protocol_begin(),
+    for (ObjCInterfaceDecl::protocol_iterator PI = I->protocol_begin(),
          E = I->protocol_end(); PI != E; ++PI)
       CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl, 
                               InsMap, ClsMap, I);
