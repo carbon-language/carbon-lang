@@ -30,7 +30,7 @@ namespace llvm {
     ScalarEvolution &SE;
     LoopInfo &LI;
     std::map<SCEVHandle, Value*> InsertedExpressions;
-    std::set<Instruction*> InsertedInstructions;
+    std::set<Value*> InsertedValues;
 
     BasicBlock::iterator InsertPt;
 
@@ -50,7 +50,7 @@ namespace llvm {
     /// inserted by the code rewriter.  If so, the client should not modify the
     /// instruction.
     bool isInsertedInstruction(Instruction *I) const {
-      return InsertedInstructions.count(I);
+      return InsertedValues.count(I);
     }
 
     /// getOrInsertCanonicalInductionVariable - This method returns the
@@ -66,9 +66,9 @@ namespace llvm {
 
     /// addInsertedValue - Remember the specified instruction as being the
     /// canonical form for the specified SCEV.
-    void addInsertedValue(Instruction *I, const SCEV *S) {
-      InsertedExpressions[S] = (Value*)I;
-      InsertedInstructions.insert(I);
+    void addInsertedValue(Value *V, const SCEV *S) {
+      InsertedExpressions[S] = V;
+      InsertedValues.insert(V);
     }
 
     void setInsertionPoint(BasicBlock::iterator NewIP) { InsertPt = NewIP; }
