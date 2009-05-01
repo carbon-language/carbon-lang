@@ -19,6 +19,9 @@
 #include <algorithm>
 using namespace clang;
 
+/// \brief Number of spaces to indent when word-wrapping.
+const unsigned WordWrapIndentation = 6;
+
 void TextDiagnosticPrinter::
 PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
   if (Loc.isInvalid()) return;
@@ -110,14 +113,15 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 unsigned NumRanges,
                                                 SourceManager &SM,
                                           const CodeModificationHint *Hints,
-                                                unsigned NumHints) {
+                                                unsigned NumHints,
+                                                unsigned AvoidColumn) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
   
   // We always emit diagnostics about the instantiation points, not the spelling
   // points.  This more closely correlates to what the user writes.
   if (!Loc.isFileID()) {
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
-    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM);
+    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, AvoidColumn);
     
     // Map the location through the macro.
     Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
@@ -141,6 +145,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       OS << ' ';
     }
     OS << "note: instantiated from:\n";
+    AvoidColumn = 0;
   }
   
   // Decompose the location into a FID/Offset pair.
@@ -218,6 +223,19 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     CaretLine = ' ' + CaretLine;
   }
   
+  // AvoidColumn tells us which column we should avoid when printing
+  // the source line. If the source line would start at or near that
+  // column, add another line of whitespace before printing the source
+  // line. Otherwise, the source line and the diagnostic text can get
+  // jumbled together.
+  unsigned StartCol = 0;
+  for (unsigned N = SourceLine.size(); StartCol != N; ++StartCol)
+    if (!isspace(SourceLine[StartCol]))
+      break;
+  
+  if (StartCol != SourceLine.size() &&
+      abs((int)StartCol - (int)AvoidColumn) <= 2)
+    OS << '\n';
   
   // Emit what we have computed.
   OS << SourceLine << '\n';
@@ -256,9 +274,181 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   }
 }
 
+/// \brief Skip over whitespace in the string, starting at the given
+/// index.
+///
+/// \returns The index of the first non-whitespace character that is
+/// greater than or equal to Idx or, if no such character exists,
+/// returns the end of the string.
+static unsigned skipWhitespace(unsigned Idx, 
+			       const llvm::SmallVectorImpl<char> &Str,
+                               unsigned Length) {
+  while (Idx < Length && isspace(Str[Idx]))
+    ++Idx;
+  return Idx;
+}
+
+/// \brief If the given character is the start of some kind of
+/// balanced punctuation (e.g., quotes or parentheses), return the
+/// character that will terminate the punctuation.
+///
+/// \returns The ending punctuation character, if any, or the NULL
+/// character if the input character does not start any punctuation.
+static inline char findMatchingPunctuation(char c) {
+  switch (c) {
+  case '\'': return '\'';
+  case '`': return '\'';
+  case '"':  return '"';
+  case '(':  return ')';
+  case '[': return ']'; 
+  case '{': return '}';
+  default: break;
+  }
+
+  return 0;
+}
+
+/// \brief Find the end of the word starting at the given offset
+/// within a string.
+///
+/// \returns the index pointing one character past the end of the
+/// word.
+unsigned findEndOfWord(unsigned Start, 
+                       const llvm::SmallVectorImpl<char> &Str,
+                       unsigned Length, unsigned Column, 
+                       unsigned Columns) {
+  unsigned End = Start + 1;
+
+  // Determine if the start of the string is actually opening
+  // punctuation, e.g., a quote or parentheses.
+  char EndPunct = findMatchingPunctuation(Str[Start]);
+  if (!EndPunct) {
+    // This is a normal word. Just find the first space character.
+    while (End < Length && !isspace(Str[End]))
+      ++End;
+    return End;
+  }
+
+  // We have the start of a balanced punctuation sequence (quotes,
+  // parentheses, etc.). Determine the full sequence is.
+  llvm::SmallVector<char, 16> PunctuationEndStack;
+  PunctuationEndStack.push_back(EndPunct);
+  while (End < Length && !PunctuationEndStack.empty()) {
+    if (Str[End] == PunctuationEndStack.back())
+      PunctuationEndStack.pop_back();
+    else if (char SubEndPunct = findMatchingPunctuation(Str[End]))
+      PunctuationEndStack.push_back(SubEndPunct);
+
+    ++End;
+  }
+
+  // Find the first space character after the punctuation ended.
+  while (End < Length && !isspace(Str[End]))
+    ++End;
+
+  unsigned PunctWordLength = End - Start;
+  if (// If the word fits on this line
+      Column + PunctWordLength <= Columns ||
+      // ... or the word is "short enough" to take up the next line
+      // without too much ugly white space
+      PunctWordLength < Columns/3)
+    return End; // Take the whole thing as a single "word".
+
+  // The whole quoted/parenthesized string is too long to print as a
+  // single "word". Instead, find the "word" that starts just after
+  // the punctuation and use that end-point instead. This will recurse
+  // until it finds something small enough to consider a word.
+  return findEndOfWord(Start + 1, Str, Length, Column + 1, Columns);
+}
+
+/// \brief Print the given string to a stream, word-wrapping it to
+/// some number of columns in the process.
+///
+/// \brief OS the stream to which the word-wrapping string will be
+/// emitted.
+///
+/// \brief Str the string to word-wrap and output.
+///
+/// \brief Columns the number of columns to word-wrap to.
+///
+/// \brief Column the column number at which the first character of \p
+/// Str will be printed. This will be non-zero when part of the first
+/// line has already been printed.
+///
+/// \brief Indentation the number of spaces to indent any lines beyond
+/// the first line.
+///
+/// \returns true if word-wrapping was required, or false if the
+/// string fit on the first line.
+static bool PrintWordWrapped(llvm::raw_ostream &OS, 
+			     const llvm::SmallVectorImpl<char> &Str, 
+                             unsigned Columns, 
+                             unsigned Column = 0,
+                             unsigned Indentation = WordWrapIndentation) {
+  unsigned Length = Str.size();
+  
+  // If there is a newline in this message somewhere, find that
+  // newline and split the message into the part before the newline
+  // (which will be word-wrapped) and the part from the newline one
+  // (which will be emitted unchanged).
+  for (unsigned I = 0; I != Length; ++I)
+    if (Str[I] == '\n') {
+      Length = I;
+      break;
+    }
+
+  // The string used to indent each line.
+  llvm::SmallString<16> IndentStr;
+  IndentStr.assign(Indentation, ' ');
+  bool Wrapped = false;
+  for (unsigned WordStart = 0, WordEnd; WordStart < Length; 
+       WordStart = WordEnd) {
+    // Find the beginning of the next word.
+    WordStart = skipWhitespace(WordStart, Str, Length);
+    if (WordStart == Length)
+      break;
+
+    // Find the end of this word.
+    WordEnd = findEndOfWord(WordStart, Str, Length, Column, Columns);
+    
+    // Does this word fit on the current line?
+    unsigned WordLength = WordEnd - WordStart;
+    if (Column + WordLength < Columns) {
+      // This word fits on the current line; print it there.
+      if (WordStart) {
+        OS << ' ';
+        Column += 1;
+      }
+      OS.write(&Str[WordStart], WordLength);
+      Column += WordLength;
+      continue;
+    }
+
+    // This word does not fit on the current line, so wrap to the next
+    // line.
+    OS << '\n' << IndentStr.begin();
+    OS.write(&Str[WordStart], WordLength);
+    Column = Indentation + WordLength;
+    Wrapped = true;
+  }
+  
+  if (Length == Str.size())
+    return Wrapped; // We're done.
+
+  // There is a newline in the message, followed by something that
+  // will not be word-wrapped. Print that.
+  OS.write(&Str[Length], Str.size() - Length);
+  return true;
+}
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              const DiagnosticInfo &Info) {
+  // Keeps track of the the starting position of the location
+  // information (e.g., "foo.c:10:4:") that precedes the error
+  // message. We use this information to determine how long the
+  // file+line+column number prefix is.
+  uint64_t StartOfLocationInfo = OS.tell();
+
   // If the location is specified, print out a file/line/col and include trace
   // if enabled.
   if (Info.getLocation().isValid()) {
@@ -271,8 +461,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     if (LastWarningLoc != PLoc.getIncludeLoc()) {
       LastWarningLoc = PLoc.getIncludeLoc();
       PrintIncludeStack(LastWarningLoc, SM);
+      StartOfLocationInfo = OS.tell();
     }
-  
+    
     // Compute the column number.
     if (ShowLocation) {
       OS << PLoc.getFilename() << ':' << LineNo << ':';
@@ -328,12 +519,24 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
-  OS.write(OutStr.begin(), OutStr.size());
   
   if (PrintDiagnosticOption)
-    if (const char *Option = Diagnostic::getWarningOptionForDiag(Info.getID()))
-      OS << " [-W" << Option << ']';
+    if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
+      OutStr += " [-W";
+      OutStr += Opt;
+      OutStr += ']';
+    }
   
+  bool WordWrapped = false;
+  if (MessageLength) {
+    // We will be word-wrapping the error message, so compute the
+    // column number where we currently are (after printing the
+    // location information).
+    unsigned Column = OS.tell() - StartOfLocationInfo;
+    WordWrapped = PrintWordWrapped(OS, OutStr, MessageLength, Column);
+  } else {
+    OS.write(OutStr.begin(), OutStr.size());
+  }
   OS << '\n';
   
   // If caret diagnostics are enabled and we have location, we want to
@@ -368,7 +571,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getCodeModificationHints(),
-                        Info.getNumCodeModificationHints());
+                        Info.getNumCodeModificationHints(),
+                        WordWrapped? WordWrapIndentation : 0);
   }
   
   OS.flush();

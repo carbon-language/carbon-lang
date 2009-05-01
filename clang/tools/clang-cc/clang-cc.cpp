@@ -319,6 +319,12 @@ static llvm::cl::opt<bool>
 PrintDiagnosticOption("fdiagnostics-show-option",
              llvm::cl::desc("Print diagnostic name with mappable diagnostics"));
 
+static llvm::cl::opt<unsigned>
+MessageLength("fmessage-length",
+	      llvm::cl::desc("Format message diagnostics so that they fit "
+			     "within N columns or fewer, when possible."),
+	      llvm::cl::value_desc("N"));
+
 //===----------------------------------------------------------------------===//
 // C++ Visualization.
 //===----------------------------------------------------------------------===//
@@ -1481,7 +1487,8 @@ public:
                                            !NoShowLocation,
                                            PrintSourceRangeInfo,
                                            PrintDiagnosticOption,
-                                           !NoDiagnosticsFixIt));
+                                           !NoDiagnosticsFixIt,
+					   MessageLength));
   }
   
   virtual void setLangOptions(const LangOptions *LO) {
@@ -1893,7 +1900,8 @@ int main(int argc, char **argv) {
                                                !NoShowLocation,
                                                PrintSourceRangeInfo,
                                                PrintDiagnosticOption,
-                                               !NoDiagnosticsFixIt));
+                                               !NoDiagnosticsFixIt,
+                                               MessageLength));
   } else {
     DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
   }

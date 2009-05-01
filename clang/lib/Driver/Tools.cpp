@@ -457,6 +457,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_fgnu_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_flax_vector_conversions);
+  Args.AddLastArg(CmdArgs, options::OPT_fmessage_length_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_fms_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_fnext_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_fno_caret_diagnostics);
