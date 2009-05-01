@@ -1928,8 +1928,10 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
 
   // We need to have an object of class type.
   QualType FromType = From->getType();
-  if (!FromType->isRecordType())
-    return ICS;
+  if (const PointerType *PT = FromType->getAsPointerType())
+    FromType = PT->getPointeeType();
+
+  assert(FromType->isRecordType());
 
   // The implicit object parmeter is has the type "reference to cv X",
   // where X is the class of which the function is a member
@@ -1972,22 +1974,33 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
 /// expression.
 bool
 Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
-  QualType ImplicitParamType
-    = Method->getThisType(Context)->getAsPointerType()->getPointeeType();
+  QualType FromRecordType, DestType;
+  QualType ImplicitParamRecordType  = 
+    Method->getThisType(Context)->getAsPointerType()->getPointeeType();
+  
+  if (const PointerType *PT = From->getType()->getAsPointerType()) {
+    FromRecordType = PT->getPointeeType();
+    DestType = Method->getThisType(Context);
+  } else {
+    FromRecordType = From->getType();
+    DestType = ImplicitParamRecordType;
+  }
+
   ImplicitConversionSequence ICS 
     = TryObjectArgumentInitialization(From, Method);
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_implicit_object_parameter_init)
-       << ImplicitParamType << From->getType() << From->getSourceRange();
-
+       << ImplicitParamRecordType << FromRecordType << From->getSourceRange();
+  
   if (ICS.Standard.Second == ICK_Derived_To_Base &&
-      CheckDerivedToBaseConversion(From->getType(), ImplicitParamType,
+      CheckDerivedToBaseConversion(FromRecordType,
+                                   ImplicitParamRecordType,
                                    From->getSourceRange().getBegin(),
                                    From->getSourceRange()))
     return true;
 
-  ImpCastExprToType(From, ImplicitParamType, /*isLvalue=*/true);
+  ImpCastExprToType(From, DestType, /*isLvalue=*/true);
   return false;
 }
 
@@ -4048,10 +4061,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   // Extract the object argument.
   Expr *ObjectArg = MemExpr->getBase();
-  if (MemExpr->isArrow())
-    ObjectArg = new (Context) UnaryOperator(ObjectArg, UnaryOperator::Deref,
-                     ObjectArg->getType()->getAsPointerType()->getPointeeType(),
-                                            ObjectArg->getLocStart());
+
   CXXMethodDecl *Method = 0;
   if (OverloadedFunctionDecl *Ovl 
         = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
