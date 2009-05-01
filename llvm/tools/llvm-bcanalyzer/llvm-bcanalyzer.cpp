@@ -563,7 +563,7 @@ static int AnalyzeBitcode() {
         const PerRecordStats &RecStats = Stats.CodeFreq[FreqPairs[i].second];
         
         fprintf(stderr, "\t\t%7d %9llu ", RecStats.NumInstances,
-                RecStats.TotalBits);
+                (unsigned long long)RecStats.TotalBits);
         
         if (RecStats.NumAbbrev)
           fprintf(stderr, "%7.2f  ",
