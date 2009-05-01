@@ -85,18 +85,18 @@ HTML_DIR := $(PROJ_docsdir)/html/clang
 MAN_DIR  := $(PROJ_mandir)/man1
 PS_DIR   := $(PROJ_docsdir)/ps
 
-install-html::
+install-html:: $(HTML)
 	$(Echo) Installing HTML Clang Tools Documentation
 	$(Verb) $(MKDIR) $(HTML_DIR)
 	$(Verb) $(DataInstall) $(HTML) $(HTML_DIR)
 	$(Verb) $(DataInstall) $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
 
-install-man::
+install-man:: $(MAN)
 	$(Echo) Installing MAN Clang Tools Documentation
 	$(Verb) $(MKDIR) $(MAN_DIR)
 	$(Verb) $(DataInstall) $(MAN) $(MAN_DIR)
 
-install-ps::
+install-ps:: $(PS)
 	$(Echo) Installing PS Clang Tools Documentation
 	$(Verb) $(MKDIR) $(PS_DIR)
 	$(Verb) $(DataInstall) $(PS) $(PS_DIR)
