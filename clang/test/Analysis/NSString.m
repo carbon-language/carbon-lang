@@ -225,6 +225,7 @@ id testSharedClassFromFunction() {
 
 // Test OSCompareAndSwap
 _Bool OSAtomicCompareAndSwapPtr( void *__oldValue, void *__newValue, void * volatile *__theValue );
+_Bool OSAtomicCompareAndSwap32Barrier( int32_t __oldValue, int32_t __newValue, volatile int32_t *__theValue );
 extern BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation);
 
 void testOSCompareAndSwap() {
