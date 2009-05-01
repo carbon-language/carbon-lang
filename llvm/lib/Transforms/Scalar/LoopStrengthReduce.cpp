@@ -157,7 +157,7 @@ namespace {
       AU.addPreserved<ScalarEvolution>();
     }
 
-private:
+  private:
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
                                SmallPtrSet<Instruction*,16> &Processed);
     ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
