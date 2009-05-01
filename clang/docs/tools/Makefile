@@ -52,6 +52,12 @@ HTML := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_HTML_DIR)%.html, $(POD))
 MAN  := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_MAN_DIR)%.1, $(POD))
 PS   := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_PS_DIR)%.ps, $(POD))
 
+ifdef ONLY_MAN_DOCS
+INSTALL_TARGETS := install-man
+else
+INSTALL_TARGETS := install-html install-man install-ps
+endif
+
 .SUFFIXES:
 .SUFFIXES: .html .pod .1 .ps
 
@@ -79,17 +85,23 @@ HTML_DIR := $(PROJ_docsdir)/html/clang
 MAN_DIR  := $(PROJ_mandir)/man1
 PS_DIR   := $(PROJ_docsdir)/ps
 
-install-local:: $(HTML) $(MAN) $(PS)
+install-html::
 	$(Echo) Installing HTML Clang Tools Documentation
 	$(Verb) $(MKDIR) $(HTML_DIR)
 	$(Verb) $(DataInstall) $(HTML) $(HTML_DIR)
 	$(Verb) $(DataInstall) $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
+
+install-man::
 	$(Echo) Installing MAN Clang Tools Documentation
 	$(Verb) $(MKDIR) $(MAN_DIR)
 	$(Verb) $(DataInstall) $(MAN) $(MAN_DIR)
+
+install-ps::
 	$(Echo) Installing PS Clang Tools Documentation
 	$(Verb) $(MKDIR) $(PS_DIR)
 	$(Verb) $(DataInstall) $(PS) $(PS_DIR)
+
+install-local:: $(INSTALL_TARGETS)
 
 uninstall-local::
 	$(Echo) Uninstalling Clang Tools Documentation

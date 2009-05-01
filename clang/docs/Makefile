@@ -33,7 +33,10 @@ EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
 
 .PHONY: install-html install-doxygen doxygen generated
 
-install_targets := install-html
+install_targets :=
+ifndef ONLY_MAN_DOCS
+install_targets += install-html
+endif
 ifeq ($(ENABLE_DOXYGEN),1)
 install_targets += install-doxygen
 endif
