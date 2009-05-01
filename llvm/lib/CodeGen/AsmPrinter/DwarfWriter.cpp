@@ -3535,6 +3535,9 @@ public:
     if (!TAI->doesDwarfUsesInlineInfoSection())
       return;
 
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     std::string Dir, Fn;
     unsigned Src = GetOrCreateSourceID(CU.getDirectory(Dir),
                                        CU.getFilename(Fn));
@@ -3557,6 +3560,9 @@ public:
       InlineInfo[GV].push_back(LabelID);
     else
       I->second.push_back(LabelID);
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
   }
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
@@ -3564,11 +3570,18 @@ public:
     if (!TAI->doesDwarfUsesInlineInfoSection())
       return 0;
 
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     GlobalVariable *GV = SP.getGV();
     DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
       I = DbgInlinedScopeMap.find(GV);
-    if (I == DbgInlinedScopeMap.end()) 
+    if (I == DbgInlinedScopeMap.end()) {
+      if (TimePassesIsEnabled)
+        DebugTimer->stopTimer();
+
       return 0;
+    }
 
     SmallVector<DbgScope *, 2> &Scopes = I->second;
     assert(!Scopes.empty() && "We should have at least one debug scope!");
@@ -3576,6 +3589,10 @@ public:
     unsigned ID = MMI->NextLabelID();
     MMI->RecordUsedDbgLabel(ID);
     Scope->setEndLabelID(ID);
+
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
     return ID;
   }
 
@@ -3584,18 +3601,26 @@ public:
   /// Record scopes for only inlined subroutine variables. Other
   /// variables' scopes are determined during RecordVariable().
   void RecordVariableScope(DIVariable &DV, const MachineInstr *DeclareMI) {
+    if (TimePassesIsEnabled)
+      DebugTimer->startTimer();
+
     DISubprogram SP(DV.getContext().getGV());
-    if (SP.isNull())
+
+    if (SP.isNull()) {
+      if (TimePassesIsEnabled)
+        DebugTimer->stopTimer();
+
       return;
+    }
+
     DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
       I = DbgInlinedScopeMap.find(SP.getGV());
-    if (I == DbgInlinedScopeMap.end())
-      return;
+    if (I != DbgInlinedScopeMap.end())
+      InlinedVariableScopes[DeclareMI] = I->second.back();
 
-    SmallVector<DbgScope *, 2> &Scopes = I->second;
-    InlinedVariableScopes[DeclareMI] = Scopes.back();
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
   }
-
 };
 
 //===----------------------------------------------------------------------===//
