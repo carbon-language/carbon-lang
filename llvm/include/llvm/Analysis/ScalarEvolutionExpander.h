@@ -53,6 +53,12 @@ namespace llvm {
       return InsertedValues.count(I);
     }
 
+    /// isInsertedExpression - Return true if the the code rewriter has a
+    /// Value* recorded for the given expression.
+    bool isInsertedExpression(const SCEV *S) const {
+      return InsertedExpressions.count(S);
+    }
+
     /// getOrInsertCanonicalInductionVariable - This method returns the
     /// canonical induction variable of the specified type for the specified
     /// loop (inserting one if there is none).  A canonical induction variable
