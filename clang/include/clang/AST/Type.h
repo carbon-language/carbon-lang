@@ -29,15 +29,24 @@ using llvm::cast;
 using llvm::cast_or_null;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
+namespace clang { class Type; }
 
 namespace llvm {
   template <typename T>
   class PointerLikeTypeTraits;
+  template<>
+  class PointerLikeTypeTraits< ::clang::Type*> {
+  public:
+    static inline void *getAsVoidPointer(::clang::Type *P) { return P; }
+    static inline ::clang::Type *getFromVoidPointer(void *P) {
+      return static_cast< ::clang::Type*>(P);
+    }
+    enum { NumLowBitsAvailable = 3 };
+  };
 }
 
 namespace clang {
   class ASTContext;
-  class Type;
   class TypedefDecl;
   class TemplateDecl;
   class TemplateTypeParmDecl;
