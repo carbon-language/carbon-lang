@@ -3545,14 +3545,11 @@ public:
 
     DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
       SI = DbgInlinedScopeMap.find(GV);
-    if (SI == DbgInlinedScopeMap.end()) {
-      SmallVector<DbgScope *, 2> Scopes;
-      Scopes.push_back(Scope);
-      DbgInlinedScopeMap[GV] = Scopes;
-    } else {
-      SmallVector<DbgScope *, 2> &Scopes = SI->second;
-      Scopes.push_back(Scope);
-    }
+
+    if (SI == DbgInlinedScopeMap.end())
+      DbgInlinedScopeMap[GV].push_back(Scope);
+    else
+      SI->second.push_back(Scope);
 
     DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
       I = InlineInfo.find(GV);
