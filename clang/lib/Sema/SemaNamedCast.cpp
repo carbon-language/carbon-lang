@@ -63,7 +63,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation RAngleBracketLoc,
                         SourceLocation LParenLoc, ExprArg E,
                         SourceLocation RParenLoc) {
-  Expr *Ex = (Expr*)E.release();
+  Expr *Ex = E.takeAs<Expr>();
   QualType DestType = QualType::getFromOpaquePtr(Ty);
   SourceRange OpRange(OpLoc, RParenLoc);
   SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);

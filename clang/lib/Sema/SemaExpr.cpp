@@ -719,8 +719,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
           return Owned(new (Context) 
                        ObjCIvarRefExpr(IV, IV->getType(), Loc, 
-                                       static_cast<Expr*>(SelfExpr.release()),
-                                       true, true));
+                                       SelfExpr.takeAs<Expr>(), true, true));
         }
       }
     }
@@ -1221,7 +1220,7 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
 Action::OwningExprResult Sema::ActOnParenExpr(SourceLocation L,
                                               SourceLocation R, ExprArg Val) {
-  Expr *E = (Expr *)Val.release();
+  Expr *E = Val.takeAs<Expr>();
   assert((E != 0) && "ActOnParenExpr() missing expr");
   return Owned(new (Context) ParenExpr(L, R, E));
 }
@@ -4423,7 +4422,7 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                           tok::TokenKind Kind,
                                           ExprArg LHS, ExprArg RHS) {
   BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
-  Expr *lhs = (Expr *)LHS.release(), *rhs = (Expr*)RHS.release();
+  Expr *lhs = LHS.takeAs<Expr>(), *rhs = RHS.takeAs<Expr>();
 
   assert((lhs != 0) && "ActOnBinOp(): missing left expression");
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
@@ -4926,7 +4925,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     DiagnoseInvalidJumps(static_cast<CompoundStmt*>(body.get()));
   CurFunctionNeedsScopeChecking = BSI->SavedFunctionNeedsScopeChecking;
   
-  BSI->TheDecl->setBody(static_cast<CompoundStmt*>(body.release()));
+  BSI->TheDecl->setBody(body.takeAs<CompoundStmt>());
   return Owned(new (Context) BlockExpr(BSI->TheDecl, BlockTy,
                                        BSI->hasBlockDeclRefExprs));
 }

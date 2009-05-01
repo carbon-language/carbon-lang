@@ -1691,8 +1691,7 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   DesignatedInitExpr *DIE
     = DesignatedInitExpr::Create(Context, &Designators[0], Designators.size(),
                                  &InitExpressions[0], InitExpressions.size(),
-                                 Loc, GNUSyntax, 
-                                 static_cast<Expr *>(Init.release()));
+                                 Loc, GNUSyntax, Init.takeAs<Expr>());
   return Owned(DIE);
 }
 

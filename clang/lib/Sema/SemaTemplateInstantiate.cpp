@@ -303,7 +303,7 @@ InstantiateDependentSizedArrayType(const DependentSizedArrayType *T,
     return QualType();
   
   return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(),
-                                (Expr *)InstantiatedArraySize.release(),
+                                InstantiatedArraySize.takeAs<Expr>(),
                                 T->getIndexTypeQualifier(), Loc, Entity);
 }
 

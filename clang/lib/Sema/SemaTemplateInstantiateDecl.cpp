@@ -171,7 +171,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
       Invalid = true;
       BitWidth = 0;
     } else
-      BitWidth = (Expr *)InstantiatedBitWidth.release();
+      BitWidth = InstantiatedBitWidth.takeAs<Expr>();
   }
 
   FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(), T,

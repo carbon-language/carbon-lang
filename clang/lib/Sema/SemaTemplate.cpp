@@ -302,7 +302,7 @@ void Sema::ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParamD,
     return;
   }
 
-  TemplateParm->setDefaultArgument(static_cast<Expr *>(DefaultE.release()));
+  TemplateParm->setDefaultArgument(DefaultE.takeAs<Expr>());
 }
 
 

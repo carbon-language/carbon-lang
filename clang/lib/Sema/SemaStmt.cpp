@@ -180,7 +180,7 @@ Action::OwningStmtResult
 Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
                   StmtArg ThenVal, SourceLocation ElseLoc,
                   StmtArg ElseVal) {
-  Expr *condExpr = (Expr *)CondVal.release();
+  Expr *condExpr = CondVal.takeAs<Expr>();
 
   assert(condExpr && "ActOnIfStmt(): missing expression");
 
@@ -196,7 +196,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
     return StmtError(Diag(IfLoc, diag::err_typecheck_statement_requires_scalar)
       << condType << condExpr->getSourceRange());
 
-  Stmt *thenStmt = (Stmt *)ThenVal.release();
+  Stmt *thenStmt = ThenVal.takeAs<Stmt>();
 
   // Warn if the if block has a null body without an else value.
   // this helps prevent bugs due to typos, such as
@@ -209,7 +209,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
 
   CondVal.release();
   return Owned(new (Context) IfStmt(IfLoc, condExpr, thenStmt,
-                                    (Stmt*)ElseVal.release()));
+                                    ElseVal.takeAs<Stmt>()));
 }
 
 Action::OwningStmtResult
@@ -324,7 +324,7 @@ static bool CmpCaseVals(const std::pair<llvm::APSInt, CaseStmt*>& lhs,
 Action::OwningStmtResult
 Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
                             StmtArg Body) {
-  Stmt *BodyStmt = (Stmt*)Body.release();
+  Stmt *BodyStmt = Body.takeAs<Stmt>();
 
   SwitchStmt *SS = getSwitchStack().back();
   assert(SS == (SwitchStmt*)Switch.get() && "switch stack missing push/pop!");
@@ -514,7 +514,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 
 Action::OwningStmtResult
 Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond, StmtArg Body) {
-  Expr *condExpr = (Expr *)Cond.release();
+  Expr *condExpr = Cond.takeAs<Expr>();
   assert(condExpr && "ActOnWhileStmt(): missing expression");
 
   DefaultFunctionArrayConversion(condExpr);
@@ -530,14 +530,14 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond, StmtArg Body) {
       << condType << condExpr->getSourceRange());
 
   Cond.release();
-  return Owned(new (Context) WhileStmt(condExpr, (Stmt*)Body.release(),
+  return Owned(new (Context) WhileStmt(condExpr, Body.takeAs<Stmt>(), 
                                        WhileLoc));
 }
 
 Action::OwningStmtResult
 Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
                   SourceLocation WhileLoc, ExprArg Cond) {
-  Expr *condExpr = (Expr *)Cond.release();
+  Expr *condExpr = Cond.takeAs<Expr>();
   assert(condExpr && "ActOnDoStmt(): missing expression");
 
   DefaultFunctionArrayConversion(condExpr);
@@ -552,7 +552,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
       << condType << condExpr->getSourceRange());
 
   Cond.release();
-  return Owned(new (Context) DoStmt((Stmt*)Body.release(), condExpr, DoLoc));
+  return Owned(new (Context) DoStmt(Body.takeAs<Stmt>(), condExpr, DoLoc));
 }
 
 Action::OwningStmtResult
@@ -1069,7 +1069,7 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
   }
 
   ObjCAtCatchStmt *CS = new (Context) ObjCAtCatchStmt(AtLoc, RParen,
-    PVD, static_cast<Stmt*>(Body.release()), CatchList);
+    PVD, Body.takeAs<Stmt>(), CatchList);
   return Owned(CatchList ? CatchList : CS);
 }
 
@@ -1083,10 +1083,9 @@ Action::OwningStmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
                          StmtArg Try, StmtArg Catch, StmtArg Finally) {
   CurFunctionNeedsScopeChecking = true;
-  return Owned(new (Context) ObjCAtTryStmt(AtLoc,
-                                        static_cast<Stmt*>(Try.release()),
-                                        static_cast<Stmt*>(Catch.release()),
-                                        static_cast<Stmt*>(Finally.release())));
+  return Owned(new (Context) ObjCAtTryStmt(AtLoc, Try.takeAs<Stmt>(),
+                                           Catch.takeAs<Stmt>(),
+                                           Finally.takeAs<Stmt>()));
 }
 
 Action::OwningStmtResult
@@ -1127,9 +1126,9 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
                        << SyncExpr->getType() << SyncExpr->getSourceRange());
   }
   
-  return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc,
-                     static_cast<Stmt*>(SynchExpr.release()),
-                     static_cast<Stmt*>(SynchBody.release())));
+  return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc, 
+                                                    SynchExpr.takeAs<Stmt>(),
+                                                    SynchBody.takeAs<Stmt>()));
 }
 
 /// ActOnCXXCatchBlock - Takes an exception declaration and a handler block
@@ -1140,7 +1139,7 @@ Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclPtrTy ExDecl,
   // There's nothing to test that ActOnExceptionDecl didn't already test.
   return Owned(new (Context) CXXCatchStmt(CatchLoc,
                                   cast_or_null<VarDecl>(ExDecl.getAs<Decl>()),
-                                  static_cast<Stmt*>(HandlerBlock.release())));
+                                          HandlerBlock.takeAs<Stmt>()));
 }
 
 /// ActOnCXXTryBlock - Takes a try compound-statement and a number of
