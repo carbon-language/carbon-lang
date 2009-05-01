@@ -346,12 +346,12 @@ private:
     // probe almost the entire table until it found the empty bucket.  If the
     // table completely filled with tombstones, no lookup would ever succeed,
     // causing infinite loops in lookup.
+    ++NumEntries;
     if (NumEntries*4 >= NumBuckets*3 ||
         NumBuckets-(NumEntries+NumTombstones) < NumBuckets/8) {
       this->grow(NumBuckets * 2);
       LookupBucketFor(Key, TheBucket);
     }
-    ++NumEntries;
 
     // If we are writing over a tombstone, remember this.
     if (!KeyInfoT::isEqual(TheBucket->first, getEmptyKey()))
