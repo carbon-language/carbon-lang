@@ -2604,6 +2604,17 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
       return true;
   } else if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr)) {
     return Diag(castExpr->getLocStart(), diag::err_illegal_super_cast) << TyR;
+  } else if (!castType->isArithmeticType()) {
+    QualType castExprType = castExpr->getType();
+    if (!castExprType->isIntegralType() && castExprType->isArithmeticType())
+      return Diag(castExpr->getLocStart(),
+                  diag::err_cast_pointer_from_non_pointer_int)
+        << castExprType << castExpr->getSourceRange();
+  } else if (!castExpr->getType()->isArithmeticType()) {
+    if (!castType->isIntegralType() && castType->isArithmeticType())
+      return Diag(castExpr->getLocStart(),
+                  diag::err_cast_pointer_to_non_pointer_int)
+        << castType << castExpr->getSourceRange();
   }
   return false;
 }

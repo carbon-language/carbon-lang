@@ -5,7 +5,7 @@
 static int f = 10;
 static int b = f; // expected-error {{initializer element is not a compile-time constant}}
 
-float r  = (float) &r; // expected-error {{initializer element is not a compile-time constant}}
+float r  = (float) (intptr_t) &r; // expected-error {{initializer element is not a compile-time constant}}
 intptr_t s = (intptr_t) &s;
 _Bool t = &t;
 
