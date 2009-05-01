@@ -1852,7 +1852,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
                                IdentifierInfo &Member,
                                DeclPtrTy ObjCImpDecl) {
-  Expr *BaseExpr = static_cast<Expr *>(Base.release());
+  Expr *BaseExpr = Base.takeAs<Expr>();
   assert(BaseExpr && "no record expression");
 
   // Perform default conversions.
@@ -2322,7 +2322,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                     MultiExprArg args,
                     SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   unsigned NumArgs = args.size();
-  Expr *Fn = static_cast<Expr *>(fn.release());
+  Expr *Fn = fn.takeAs<Expr>();
   Expr **Args = reinterpret_cast<Expr**>(args.release());
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
@@ -2643,7 +2643,7 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   assert((Ty != 0) && (Op.get() != 0) &&
          "ActOnCastExpr(): missing type or expr");
 
-  Expr *castExpr = static_cast<Expr*>(Op.release());
+  Expr *castExpr = Op.takeAs<Expr>();
   QualType castType = QualType::getFromOpaquePtr(Ty);
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
@@ -4715,8 +4715,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       // FIXME: C++: Verify that MemberDecl isn't a static field.
       // FIXME: Verify that MemberDecl isn't a bitfield.
       if (cast<RecordDecl>(MemberDecl->getDeclContext())->isAnonymousStructOrUnion()) {
-        Res = static_cast<Expr*>(BuildAnonymousStructUnionMemberReference(
-                SourceLocation(), MemberDecl, Res, SourceLocation()).release());
+        Res = BuildAnonymousStructUnionMemberReference(
+            SourceLocation(), MemberDecl, Res, SourceLocation()).takeAs<Expr>();
       } else {
         // MemberDecl->getType() doesn't get the right qualifiers, but it
         // doesn't matter here.

@@ -465,7 +465,7 @@ InstantiateTemplateSpecializationType(
                                   NumTemplateArgs);
       if (E.isInvalid())
         return QualType();
-      InstantiatedTemplateArgs.push_back((Expr *)E.release());
+      InstantiatedTemplateArgs.push_back(E.takeAs<Expr>());
       break;
     }
   }

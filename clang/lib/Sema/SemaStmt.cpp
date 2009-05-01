@@ -22,7 +22,7 @@
 using namespace clang;
 
 Sema::OwningStmtResult Sema::ActOnExprStmt(ExprArg expr) {
-  Expr *E = static_cast<Expr*>(expr.release());
+  Expr *E = expr.takeAs<Expr>();
   assert(E && "ActOnExprStmt(): missing expression");
 
   // C99 6.8.3p2: The expression in an expression statement is evaluated as a
@@ -129,14 +129,14 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
 /// ActOnCaseStmtBody - This installs a statement as the body of a case.
 void Sema::ActOnCaseStmtBody(StmtTy *caseStmt, StmtArg subStmt) {
   CaseStmt *CS = static_cast<CaseStmt*>(caseStmt);
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+  Stmt *SubStmt = subStmt.takeAs<Stmt>();
   CS->setSubStmt(SubStmt);
 }
 
 Action::OwningStmtResult
 Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
                        StmtArg subStmt, Scope *CurScope) {
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+  Stmt *SubStmt = subStmt.takeAs<Stmt>();
 
   if (getSwitchStack().empty()) {
     Diag(DefaultLoc, diag::err_default_not_in_switch);
@@ -151,7 +151,7 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
 Action::OwningStmtResult
 Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                      SourceLocation ColonLoc, StmtArg subStmt) {
-  Stmt *SubStmt = static_cast<Stmt*>(subStmt.release());
+  Stmt *SubStmt = subStmt.takeAs<Stmt>();
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = getLabelMap()[II];
 
@@ -214,7 +214,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
 
 Action::OwningStmtResult
 Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
-  Expr *Cond = static_cast<Expr*>(cond.release());
+  Expr *Cond = cond.takeAs<Expr>();
 
   if (getLangOptions().CPlusPlus) {
     // C++ 6.4.2.p2:
@@ -788,7 +788,7 @@ static bool IsReturnCopyElidable(ASTContext &Ctx, QualType RetType,
 
 Action::OwningStmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
-  Expr *RetValExp = static_cast<Expr *>(rex.release());
+  Expr *RetValExp = rex.takeAs<Expr>();
   if (CurBlock)
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 
@@ -1051,7 +1051,7 @@ Action::OwningStmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            SourceLocation RParen, DeclPtrTy Parm,
                            StmtArg Body, StmtArg catchList) {
-  Stmt *CatchList = static_cast<Stmt*>(catchList.release());
+  Stmt *CatchList = catchList.takeAs<Stmt>();
   ParmVarDecl *PVD = cast_or_null<ParmVarDecl>(Parm.getAs<Decl>());
   
   // PVD == 0 implies @catch(...).
@@ -1091,7 +1091,7 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
 
 Action::OwningStmtResult
 Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
-  Expr *ThrowExpr = static_cast<Expr*>(expr.release());
+  Expr *ThrowExpr = expr.takeAs<Expr>();
   if (!ThrowExpr) {
     // @throw without an expression designates a rethrow (which much occur
     // in the context of an @catch clause).

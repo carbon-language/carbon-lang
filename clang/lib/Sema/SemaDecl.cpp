@@ -2485,7 +2485,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
 
   // Take ownership of the expression, now that we're sure we have somewhere
   // to put it.
-  Expr *Init = static_cast<Expr *>(init.release());
+  Expr *Init = init.takeAs<Expr>();
   assert(Init && "missing initializer");
 
   // Get the decls type and save a reference for later, since
@@ -4274,7 +4274,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDeclX,
 
 Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
                                             ExprArg expr) {
-  StringLiteral *AsmString = cast<StringLiteral>((Expr*)expr.release());
+  StringLiteral *AsmString = cast<StringLiteral>(expr.takeAs<Expr>());
 
   return DeclPtrTy::make(FileScopeAsmDecl::Create(Context, CurContext,
                                                   Loc, AsmString));

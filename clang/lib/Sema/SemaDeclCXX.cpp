@@ -108,7 +108,7 @@ void
 Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc, 
                                 ExprArg defarg) {
   ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
-  ExprOwningPtr<Expr> DefaultArg(this, (Expr *)defarg.release());
+  ExprOwningPtr<Expr> DefaultArg(this, defarg.takeAs<Expr>());
   QualType ParamType = Param->getType();
 
   // Default arguments are only permitted in C++
