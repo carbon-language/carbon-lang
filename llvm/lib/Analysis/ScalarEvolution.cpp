@@ -646,7 +646,8 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It,
 //                    SCEV Expression folder implementations
 //===----------------------------------------------------------------------===//
 
-SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty) {
+SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op,
+                                            const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) > getTypeSizeInBits(Ty) &&
          "This is not a truncating conversion!");
   assert(isSCEVable(Ty) &&
