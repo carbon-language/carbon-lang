@@ -68,8 +68,9 @@ public:
   void setBlockCounter(GRBlockCounter C) { CurrentCounter = C; }
   GRBlockCounter getBlockCounter() const { return CurrentCounter; }
   
-  static GRWorkList* MakeDFS(); 
-  static GRWorkList* MakeBFSBlockDFSContents();
+  static GRWorkList *MakeDFS();
+  static GRWorkList *MakeBFS();
+  static GRWorkList *MakeBFSBlockDFSContents();
 };
 } // end clang namespace  
 #endif

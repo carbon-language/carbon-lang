@@ -47,13 +47,35 @@ public:
     return U;
   }
 };
+  
+class VISIBILITY_HIDDEN BFS : public GRWorkList {
+  std::queue<GRWorkListUnit> Queue;
+public:
+  virtual bool hasWork() const {
+    return !Queue.empty();
+  }
+  
+  virtual void Enqueue(const GRWorkListUnit& U) {
+    Queue.push(U);
+  }
+  
+  virtual GRWorkListUnit Dequeue() {
+    // Don't use const reference.  The subsequent pop_back() might make it
+    // unsafe.
+    GRWorkListUnit U = Queue.front(); 
+    Queue.pop();
+    return U;
+  }
+};
+  
 } // end anonymous namespace
 
 // Place the dstor for GRWorkList here because it contains virtual member
 // functions, and we the code for the dstor generated in one compilation unit.
 GRWorkList::~GRWorkList() {}
 
-GRWorkList* GRWorkList::MakeDFS() { return new DFS(); }
+GRWorkList *GRWorkList::MakeDFS() { return new DFS(); }
+GRWorkList *GRWorkList::MakeBFS() { return new BFS(); }
 
 namespace {
   class VISIBILITY_HIDDEN BFSBlockDFSContents : public GRWorkList {
