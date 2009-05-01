@@ -359,9 +359,10 @@ namespace {
         unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
         return "IntegerType::get(" + utostr(BitWidth) + ")";
       }
-      case Type::FloatTyID:  return "Type::FloatTy";
-      case Type::DoubleTyID: return "Type::DoubleTy";
-      case Type::LabelTyID:  return "Type::LabelTy";
+      case Type::X86_FP80TyID: return "Type::X86_FP80Ty";
+      case Type::FloatTyID:    return "Type::FloatTy";
+      case Type::DoubleTyID:   return "Type::DoubleTy";
+      case Type::LabelTyID:    return "Type::LabelTy";
       default:
         error("Invalid primitive type");
         break;
