@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region %s
 // XFAIL
 
 // *** These tests will be migrated to other test files once these failures
