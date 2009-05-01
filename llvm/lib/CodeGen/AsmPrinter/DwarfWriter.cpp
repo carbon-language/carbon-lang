@@ -3553,15 +3553,10 @@ public:
 
     DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
       I = InlineInfo.find(GV);
-    if (I == InlineInfo.end()) {
-      SmallVector<unsigned, 4> Labels;
-      Labels.push_back(LabelID);
-      InlineInfo[GV] = Labels;
-      return;
-    }
-
-    SmallVector<unsigned, 4> &Labels = I->second;
-    Labels.push_back(LabelID);
+    if (I == InlineInfo.end())
+      InlineInfo[GV].push_back(LabelID);
+    else
+      I->second.push_back(LabelID);
   }
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
