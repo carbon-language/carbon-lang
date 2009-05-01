@@ -11,3 +11,12 @@ void g() {
 
   int (*fp2)(int, float, short, float) = f;
 }
+
+void a_func_to_call(int, int, int);
+
+void a_very_long_line(int *ip, float *FloatPointer) {
+  for (int ALongIndexName = 0; ALongIndexName < 100; ALongIndexName++) if (ip[ALongIndexName] == 17) a_func_to_call(ip == FloatPointer, ip[ALongIndexName], FloatPointer[ALongIndexName]);
+
+
+  int array0[] = { [3] 3, 5, 7, 4, 2, 7, 6, 3, 4, 5, 6, 7, 8, 9, 12, 345, 14, 345, 789, 234, 678, 345, 123, 765, 234 };
+}

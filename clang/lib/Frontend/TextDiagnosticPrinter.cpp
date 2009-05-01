@@ -108,20 +108,158 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaretLine[i] = '~';
 }
 
+/// \brief Whether this is a closing delimiter such as ')' or ']'.
+static inline bool isClosingDelimiter(char c) {
+  return c == ')' || c == ']' || c == '}';
+}
+
+/// \brief When the source code line we want to print is too long for
+/// the terminal, select the "interesting" region.
+static void SelectInterestingSourceRegion(std::string &SourceLine,
+                                          std::string &CaretLine,
+                                          std::string &FixItInsertionLine,
+                                          unsigned Columns) {
+  if (CaretLine.size() > SourceLine.size())
+    SourceLine.resize(CaretLine.size(), ' ');
+
+  // Find the slice that we need to display the full caret line
+  // correctly.
+  unsigned CaretStart = 0, CaretEnd = CaretLine.size();
+  for (; CaretStart != CaretEnd; ++CaretStart)
+    if (!isspace(CaretLine[CaretStart]))
+      break;
+
+  for (; CaretEnd != CaretStart; --CaretEnd)
+    if (!isspace(CaretLine[CaretEnd - 1]))
+      break;
+    
+  // CaretLine[CaretStart, CaretEnd) contains all of the interesting
+  // parts of the caret line. While this slice is smaller than the
+  // number of columns we have, try to grow the slice to encompass
+  // more context.
+
+  // If the end of the interesting region comes before we run out of
+  // space in the terminal, start at the beginning of the line.
+  if (CaretEnd < Columns)
+    CaretStart = 0;
+
+  unsigned TargetColumns = Columns - 4; // Give us a little extra room.
+  unsigned SourceLength = SourceLine.size();
+  bool StartIsFixed = false;
+  while (CaretEnd - CaretStart < TargetColumns) {
+    bool ExpandedRegion = false;
+    // Move the start of the interesting region left until we've
+    // pulled in something else interesting.
+    if (CaretStart && !StartIsFixed && 
+        CaretEnd - CaretStart < TargetColumns) {
+      unsigned NewStart = CaretStart;
+        
+      bool BadStart = false;
+      do {
+        // Skip over any whitespace we see here; we're looking for
+        // another bit of interesting text.
+        if (NewStart)
+          --NewStart;
+        while (NewStart && isspace(SourceLine[NewStart]))
+          --NewStart;
+          
+        // Skip over this bit of "interesting" text.
+        while (NewStart && !isspace(SourceLine[NewStart])) {
+          if (isClosingDelimiter(SourceLine[NewStart]))
+            StartIsFixed = true;
+          --NewStart;
+        }
+
+        // Move up to the non-whitespace character we just saw.
+        if (!StartIsFixed && 
+            isspace(SourceLine[NewStart]) &&
+            !isspace(SourceLine[NewStart + 1]))
+          ++NewStart;
+
+        // Never go back past closing delimeters, because
+        // they're unlikely to be important (and they result in
+        // weird slices). Instead, move forward to the next
+        // non-whitespace character.
+        BadStart = false;
+        if (StartIsFixed) {
+          ++NewStart;
+          while (NewStart != CaretEnd && isspace(SourceLine[NewStart]))
+            ++NewStart;
+        } else if (NewStart) {
+          // There are some characters that always signal that we've
+          // found a bad stopping place, because they always occur in
+          // the middle of or at the end of an expression. In these
+          // cases, we either keep bringing in more "interesting" text
+          // to try to get to a somewhat-complete slice of the code.
+          BadStart = ispunct(SourceLine[NewStart]);
+        }
+      } while (BadStart);
+
+      // If we're still within our limit, update the starting
+      // position within the source/caret line.
+      if (CaretEnd - NewStart <= TargetColumns && !StartIsFixed) {
+        CaretStart = NewStart;
+        ExpandedRegion = true;
+      }
+    }
+
+    // Move the end of the interesting region right until we've
+    // pulled in something else interesting.
+    if (CaretEnd != SourceLength && 
+        CaretEnd - CaretStart < TargetColumns) {
+      unsigned NewEnd = CaretEnd;
+
+      // Skip over any whitespace we see here; we're looking for
+      // another bit of interesting text.
+      while (CaretEnd != SourceLength && isspace(SourceLine[NewEnd - 1]))
+        ++NewEnd;
+        
+      // Skip over this bit of "interesting" text.
+      while (CaretEnd != SourceLength && !isspace(SourceLine[NewEnd - 1]))
+        ++NewEnd;
+
+      if (NewEnd - CaretStart <= TargetColumns) {
+        CaretEnd = NewEnd;
+        ExpandedRegion = true;
+      }
+
+      if (!ExpandedRegion)
+        break;
+    }
+  }
+
+  // [CaretStart, CaretEnd) is the slice we want. Update the various
+  // output lines to show only this slice, with two-space padding
+  // before the lines so that it looks nicer.
+  SourceLine.erase(CaretEnd, std::string::npos);
+  CaretLine.erase(CaretEnd, std::string::npos);
+  if (FixItInsertionLine.size() > CaretEnd)
+    FixItInsertionLine.erase(CaretEnd, std::string::npos);
+  
+  if (CaretStart > 2) {
+    SourceLine.replace(0, CaretStart, "  ");
+    CaretLine.replace(0, CaretStart, "  ");
+    if (FixItInsertionLine.size() >= CaretStart)
+      FixItInsertionLine.replace(0, CaretStart, "  ");
+  }
+}
+
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 SourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 SourceManager &SM,
                                           const CodeModificationHint *Hints,
                                                 unsigned NumHints,
-                                                unsigned AvoidColumn) {
+                                                unsigned AvoidColumn,
+                                                unsigned Columns) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
   
   // We always emit diagnostics about the instantiation points, not the spelling
   // points.  This more closely correlates to what the user writes.
   if (!Loc.isFileID()) {
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
-    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, AvoidColumn);
+    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, AvoidColumn,
+                        Columns);
     
     // Map the location through the macro.
     Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
@@ -210,10 +348,6 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
   }
   
-  // Finally, remove any blank spaces from the end of CaretLine.
-  while (CaretLine[CaretLine.size()-1] == ' ')
-    CaretLine.erase(CaretLine.end()-1);
-  
   // If we are in -fdiagnostics-print-source-range-info mode, we are trying to
   // produce easily machine parsable output.  Add a space before the source line
   // and the caret to make it trivial to tell the main diagnostic line from what
@@ -222,27 +356,9 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     SourceLine = ' ' + SourceLine;
     CaretLine = ' ' + CaretLine;
   }
-  
-  // AvoidColumn tells us which column we should avoid when printing
-  // the source line. If the source line would start at or near that
-  // column, add another line of whitespace before printing the source
-  // line. Otherwise, the source line and the diagnostic text can get
-  // jumbled together.
-  unsigned StartCol = 0;
-  for (unsigned N = SourceLine.size(); StartCol != N; ++StartCol)
-    if (!isspace(SourceLine[StartCol]))
-      break;
-  
-  if (StartCol != SourceLine.size() &&
-      abs((int)StartCol - (int)AvoidColumn) <= 2)
-    OS << '\n';
-  
-  // Emit what we have computed.
-  OS << SourceLine << '\n';
-  OS << CaretLine << '\n';
-
+    
+  std::string FixItInsertionLine;
   if (NumHints && PrintFixItInfo) {
-    std::string InsertionLine;
     for (const CodeModificationHint *Hint = Hints, *LastHint = Hints + NumHints;
          Hint != LastHint; ++Hint) {
       if (Hint->InsertionLoc.isValid()) {
@@ -258,19 +374,47 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
             = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
           unsigned LastColumnModified 
             = HintColNo - 1 + Hint->CodeToInsert.size();
-          if (LastColumnModified > InsertionLine.size())
-            InsertionLine.resize(LastColumnModified, ' ');
+          if (LastColumnModified > FixItInsertionLine.size())
+            FixItInsertionLine.resize(LastColumnModified, ' ');
           std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
-                    InsertionLine.begin() + HintColNo - 1);
+                    FixItInsertionLine.begin() + HintColNo - 1);
         }
       }
     }
+  }
 
-    if (!InsertionLine.empty()) {
-      if (PrintRangeInfo) 
-        OS << ' ';
-      OS << InsertionLine << '\n';
-    }
+  // If the source line is too long for our terminal, select only the
+  // "interesting" source region within that line.
+  if (Columns && SourceLine.size() > Columns)
+    SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
+                                  Columns);    
+
+  // AvoidColumn tells us which column we should avoid when printing
+  // the source line. If the source line would start at or near that
+  // column, add another line of whitespace before printing the source
+  // line. Otherwise, the source line and the diagnostic text can get
+  // jumbled together.
+  unsigned StartCol = 0;
+  for (unsigned N = SourceLine.size(); StartCol != N; ++StartCol)
+    if (!isspace(SourceLine[StartCol]))
+      break;
+  
+  if (StartCol != SourceLine.size() &&
+      abs((int)StartCol - (int)AvoidColumn) <= 2)
+    OS << '\n';
+
+  // Finally, remove any blank spaces from the end of CaretLine.
+  while (CaretLine[CaretLine.size()-1] == ' ')
+    CaretLine.erase(CaretLine.end()-1);
+  
+  // Emit what we have computed.
+  OS << SourceLine << '\n';
+  OS << CaretLine << '\n';
+
+  if (!FixItInsertionLine.empty()) {
+    if (PrintRangeInfo) 
+      OS << ' ';
+    OS << FixItInsertionLine << '\n';
   }
 }
 
@@ -572,7 +716,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getCodeModificationHints(),
                         Info.getNumCodeModificationHints(),
-                        WordWrapped? WordWrapIndentation : 0);
+                        WordWrapped? WordWrapIndentation : 0,
+                        MessageLength);
   }
   
   OS.flush();
