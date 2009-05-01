@@ -274,9 +274,10 @@ CXXDestroyExpr *CXXDestroyExpr::Create(ASTContext &C, VarDecl *vd) {
   return new (C) CXXDestroyExpr(vd, C.VoidTy);
 }
 
-CXXExprWithCleanup::CXXExprWithCleanup(Expr *subexpr, CXXTempVarDecl **decls, 
-                                       unsigned numdecls)
-: Expr(CXXExprWithCleanupClass, subexpr->getType(),
+CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr, 
+                                               CXXTempVarDecl **decls, 
+                                               unsigned numdecls)
+: Expr(CXXExprWithTemporariesClass, subexpr->getType(),
        subexpr->isTypeDependent(), subexpr->isValueDependent()), 
   SubExpr(subexpr), Decls(0), NumDecls(numdecls) {
   if (NumDecls > 0) {
@@ -286,7 +287,7 @@ CXXExprWithCleanup::CXXExprWithCleanup(Expr *subexpr, CXXTempVarDecl **decls,
   }
 }
 
-CXXExprWithCleanup::~CXXExprWithCleanup() {
+CXXExprWithTemporaries::~CXXExprWithTemporaries() {
   delete[] Decls;
 }
 
@@ -306,7 +307,7 @@ Stmt::child_iterator CXXDestroyExpr::child_end() {
   return child_iterator();
 }
 
-// CXXExprWithCleanup
-Stmt::child_iterator CXXExprWithCleanup::child_begin() { return &SubExpr; }
-Stmt::child_iterator CXXExprWithCleanup::child_end() { return &SubExpr + 1; }
+// CXXExprWithTemporaries
+Stmt::child_iterator CXXExprWithTemporaries::child_begin() { return &SubExpr; }
+Stmt::child_iterator CXXExprWithTemporaries::child_end() { return &SubExpr + 1;}
 

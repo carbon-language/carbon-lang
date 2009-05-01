@@ -120,7 +120,7 @@ STMT(QualifiedDeclRefExpr   , DeclRefExpr)
 STMT(UnresolvedDeclRefExpr  , Expr)
 STMT(CXXDestroyExpr         , Expr)
 STMT(CXXConstructExpr       , Expr)
-STMT(CXXExprWithCleanup     , Expr)
+STMT(CXXExprWithTemporaries , Expr)
 STMT(CXXTemporaryObjectExpr , CXXConstructExpr)
 
 // Obj-C Expressions.

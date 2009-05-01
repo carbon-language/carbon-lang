@@ -1105,7 +1105,7 @@ void StmtPrinter::VisitCXXDestroyExpr(CXXDestroyExpr *E) {
   // Nothing to print.
 }
 
-void StmtPrinter::VisitCXXExprWithCleanup(CXXExprWithCleanup *E) {
+void StmtPrinter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   // Just forward to the sub expression.
   PrintExpr(E->getSubExpr());
 }

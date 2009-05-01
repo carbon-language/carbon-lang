@@ -923,39 +923,16 @@ public:
   virtual StmtIterator child_end();
 };
 
-/// CXXDestroyExpr - Represents an implicit call to a C++ destructor.
-class CXXDestroyExpr : public Expr {
-  VarDecl *VD;
-  
-  CXXDestroyExpr(VarDecl* vd, QualType T) 
-  : Expr(CXXDestroyExprClass, T, false, vd->getType()->isDependentType()),
-    VD(vd) { }
-  
-public:
-  static CXXDestroyExpr *Create(ASTContext &C, VarDecl *vd);
-
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
-  
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXDestroyExprClass;
-  }
-  static bool classof(const CXXDestroyExpr *) { return true; }
-  
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-};
-
-class CXXExprWithCleanup : public Expr {
+class CXXExprWithTemporaries : public Expr {
   Stmt *SubExpr;
     
   CXXTempVarDecl **Decls;
   unsigned NumDecls;
 
 public:
-  CXXExprWithCleanup(Expr *subexpr, CXXTempVarDecl **decls, unsigned numdecls);
-  ~CXXExprWithCleanup();
+  CXXExprWithTemporaries(Expr *subexpr, CXXTempVarDecl **decls, 
+                         unsigned numdecls);
+  ~CXXExprWithTemporaries();
 
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
@@ -964,9 +941,9 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXExprWithCleanupClass;
+    return T->getStmtClass() == CXXExprWithTemporariesClass;
   }
-  static bool classof(const CXXExprWithCleanup *) { return true; }
+  static bool classof(const CXXExprWithTemporaries *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();
