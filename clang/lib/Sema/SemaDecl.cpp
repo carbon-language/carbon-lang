@@ -1817,9 +1817,10 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 /// declaration.
 ///
 /// This routine performs all of the type-checking required for a
-/// variable declaration once it has been build. It is used both to
+/// variable declaration once it has been built. It is used both to
 /// check variables after they have been parsed and their declarators
-/// have been translated into a declaration, and to check 
+/// have been translated into a declaration, and to check variables
+/// that have been instantiated from a template.
 ///
 /// Sets NewVD->isInvalidDecl() if an error was encountered.
 void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
