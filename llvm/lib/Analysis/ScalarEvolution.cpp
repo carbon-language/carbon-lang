@@ -649,6 +649,9 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It,
 SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) > getTypeSizeInBits(Ty) &&
          "This is not a truncating conversion!");
+  assert(isSCEVable(Ty) &&
+         "This is not a conversion to a SCEVable type!");
+  Ty = getEffectiveSCEVType(Ty);
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return getUnknown(
@@ -689,6 +692,9 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
                                               const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
+  assert(isSCEVable(Ty) &&
+         "This is not a conversion to a SCEVable type!");
+  Ty = getEffectiveSCEVType(Ty);
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
     const Type *IntTy = getEffectiveSCEVType(Ty);
@@ -771,6 +777,9 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
                                               const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
+  assert(isSCEVable(Ty) &&
+         "This is not a conversion to a SCEVable type!");
+  Ty = getEffectiveSCEVType(Ty);
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
     const Type *IntTy = getEffectiveSCEVType(Ty);
