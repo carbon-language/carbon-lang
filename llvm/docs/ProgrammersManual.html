@@ -2097,20 +2097,20 @@ GV-&gt;eraseFromParent();
 <div class="doc_text">
 
 <p>In generating IR, you may need some complex types.  If you know these types
-statically, you can use <tt>TypeBuilder&lt;...>::get()</tt>, defined
+statically, you can use <tt>TypeBuilder&lt;...&gt;::get()</tt>, defined
 in <tt>llvm/Support/TypeBuilder.h</tt>, to retrieve them.  <tt>TypeBuilder</tt>
 has two forms depending on whether you're building types for cross-compilation
-or native library use.  <tt>TypeBuilder&lt;T, true></tt> requires
+or native library use.  <tt>TypeBuilder&lt;T, true&gt;</tt> requires
 that <tt>T</tt> be independent of the host environment, meaning that it's built
 out of types from
 the <a href="/doxygen/namespacellvm_1_1types.html"><tt>llvm::types</tt></a>
 namespace and pointers, functions, arrays, etc. built of
-those.  <tt>TypeBuilder&lt;T, false></tt> additionally allows native C types
+those.  <tt>TypeBuilder&lt;T, false&gt;</tt> additionally allows native C types
 whose size may depend on the host compiler.  For example,</p>
 
 <div class="doc_code">
 <pre>
-FunctionType *ft = TypeBuilder&lt;types::i&lt;8>(types::i&lt;32>*), true>::get();
+FunctionType *ft = TypeBuilder&lt;types::i&lt;8&gt;(types::i&lt;32&gt;*), true&gt;::get();
 </pre>
 </div>
 
