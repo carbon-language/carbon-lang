@@ -267,13 +267,6 @@ void CXXConstructExpr::Destroy(ASTContext &C) {
   C.Deallocate(this);
 }
 
-CXXDestroyExpr *CXXDestroyExpr::Create(ASTContext &C, VarDecl *vd) {
-  assert((vd->getKind() == Decl::CXXTempVar || vd->getKind() == Decl::Var) &&
-         "Can only create a destroy expr with a temp var decl or a var decl!");
-
-  return new (C) CXXDestroyExpr(vd, C.VoidTy);
-}
-
 CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr, 
                                                CXXTempVarDecl **decls, 
                                                unsigned numdecls)
@@ -299,15 +292,12 @@ Stmt::child_iterator CXXConstructExpr::child_end() {
   return &Args[0]+NumArgs;
 }
 
-// CXXDestroyExpr
-Stmt::child_iterator CXXDestroyExpr::child_begin() { 
-  return child_iterator();
-}
-Stmt::child_iterator CXXDestroyExpr::child_end() {
-  return child_iterator();
+// CXXExprWithTemporaries
+Stmt::child_iterator CXXExprWithTemporaries::child_begin() {
+  return &SubExpr;
 }
 
-// CXXExprWithTemporaries
-Stmt::child_iterator CXXExprWithTemporaries::child_begin() { return &SubExpr; }
-Stmt::child_iterator CXXExprWithTemporaries::child_end() { return &SubExpr + 1;}
+Stmt::child_iterator CXXExprWithTemporaries::child_end() { 
+  return &SubExpr + 1;
+}
 

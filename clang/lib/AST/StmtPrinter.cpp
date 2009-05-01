@@ -1101,10 +1101,6 @@ void StmtPrinter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   // Nothing to print.
 }
 
-void StmtPrinter::VisitCXXDestroyExpr(CXXDestroyExpr *E) {
-  // Nothing to print.
-}
-
 void StmtPrinter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   // Just forward to the sub expression.
   PrintExpr(E->getSubExpr());
