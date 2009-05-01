@@ -794,10 +794,14 @@ static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
 
   if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
     if (GlobalValue *GV = dyn_cast<GlobalValue>(SU->getValue())) {
-      TargetLowering::AddrMode AM;
-      AM.BaseGV = GV;
-      AM.HasBaseReg = HasBaseReg;
-      return TLI->isLegalAddressingMode(AM, UseTy);
+      if (TLI) {
+        TargetLowering::AddrMode AM;
+        AM.BaseGV = GV;
+        AM.HasBaseReg = HasBaseReg;
+        return TLI->isLegalAddressingMode(AM, UseTy);
+      } else {
+        // Default: assume global addresses are not legal.
+      }
     }
 
   return false;
