@@ -1526,7 +1526,7 @@ def warn_printf_invalid_conversion : Warning<
 def warn_printf_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
 def warn_printf_empty_format_string : Warning<
-  "format string is empty">, InGroup<Format>;
+  "format string is empty">, InGroup<FormatZeroLength>;
 def warn_printf_format_string_is_wide_literal : Warning<
   "format string should not be a wide string">, InGroup<Format>;
 def warn_printf_format_string_contains_null_char : Warning<

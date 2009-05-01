@@ -35,8 +35,9 @@ def : DiagGroup<"discard-qual">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
+def FormatZeroLength : DiagGroup<"format-zero-length">;
 
-def Format : DiagGroup<"format", [FormatExtraArgs]>;
+def Format : DiagGroup<"format", [FormatExtraArgs, FormatZeroLength]>;
 def FormatSecurity : DiagGroup<"format-security", [Format]>;
 def FormatNonLiteral : DiagGroup<"format-nonliteral", [FormatSecurity]>;
 def FormatY2K : DiagGroup<"format-y2k", [Format]>;
