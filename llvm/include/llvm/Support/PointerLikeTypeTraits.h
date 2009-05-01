@@ -44,7 +44,7 @@ public:
   ///
   /// All clients should use assertions to do a run-time check to ensure that
   /// this is actually true.
-  enum { NumLowBitsAvailable = 3 };
+  enum { NumLowBitsAvailable = 2 };
 };
   
 // Provide PointerLikeTypeTraits for const pointers.
@@ -55,7 +55,7 @@ public:
   static inline const T *getFromVoidPointer(const void *P) {
     return static_cast<const T*>(P);
   }
-  enum { NumLowBitsAvailable = 3 };
+  enum { NumLowBitsAvailable = 2 };
 };
 
 // Provide PointerLikeTypeTraits for uintptr_t.
