@@ -781,8 +781,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   
   std::string Constraints;
   
-  llvm::Value *ResultAddr = 0;
-  const llvm::Type *ResultType = llvm::Type::VoidTy;
+  std::vector<llvm::Value *> ResultAddrs;
+  std::vector<const llvm::Type *> ResultTypes;
   
   std::vector<const llvm::Type*> ArgTypes;
   std::vector<llvm::Value*> Args;
@@ -812,18 +812,17 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     LValue Dest = EmitLValue(OutExpr);
     const llvm::Type *DestValueType = 
       cast<llvm::PointerType>(Dest.getAddress()->getType())->getElementType();
-    
-    // If the first output operand is not a memory dest, we'll
-    // make it the return value.
-    if (i == 0 && !Info.allowsMemory() && DestValueType->isSingleValueType()) {
-      ResultAddr = Dest.getAddress();
-      ResultType = DestValueType;
+
+    if (i != 0)
+      Constraints += ',';
+
+    if (!Info.allowsMemory() && DestValueType->isSingleValueType()) {
+      ResultAddrs.push_back(Dest.getAddress());
+      ResultTypes.push_back(DestValueType);
       Constraints += "=" + OutputConstraint;
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
       Args.push_back(Dest.getAddress());
-      if (i != 0)
-        Constraints += ',';
       Constraints += "=*";
       Constraints += OutputConstraint;
     }
@@ -900,17 +899,30 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Constraints += ',';
     Constraints += MachineClobbers;
   }
-    
+
+  const llvm::Type *ResultType;
+  if (ResultTypes.empty())
+    ResultType = llvm::Type::VoidTy;
+  else if (ResultTypes.size() == 1)
+    ResultType = ResultTypes[0];
+  else
+    ResultType = llvm::StructType::get(ResultTypes);
+  
   const llvm::FunctionType *FTy = 
     llvm::FunctionType::get(ResultType, ArgTypes, false);
   
   llvm::InlineAsm *IA = 
     llvm::InlineAsm::get(FTy, AsmString, Constraints, 
                          S.isVolatile() || S.getNumOutputs() == 0);
-  llvm::CallInst *Result
-    = Builder.CreateCall(IA, Args.begin(), Args.end(), "");
+  llvm::CallInst *Result = Builder.CreateCall(IA, Args.begin(), Args.end());
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
   
-  if (ResultAddr) // FIXME: volatility
-    Builder.CreateStore(Result, ResultAddr);
+  if (ResultTypes.size() == 1) {
+    Builder.CreateStore(Result, ResultAddrs[0]);
+  } else {
+    for (unsigned i = 0, e = ResultTypes.size(); i != e; ++i) {
+      llvm::Value *Tmp = Builder.CreateExtractValue(Result, i, "asmresult");
+      Builder.CreateStore(Tmp, ResultAddrs[i]);
+    }
+  }
 }
