@@ -25,3 +25,7 @@ struct a {
   unsigned : -2;  // expected-error {{anonymous bit-field has negative width (-2)}}
   float : 12;     // expected-error {{anonymous bit-field has non-integral type 'float'}}
 };
+
+struct b {unsigned x : 2;} x;
+__typeof__(x.x+1) y;
+int y;

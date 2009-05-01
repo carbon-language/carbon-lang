@@ -122,6 +122,45 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   }
 }
 
+/// \brief Whether this is a promotable bitfield reference according
+/// to C99 6.3.1.1p2, bullet 2.
+///
+/// \returns the type this bit-field will promote to, or NULL if no
+/// promotion occurs.
+static QualType isPromotableBitField(Expr *E, ASTContext &Context) {
+  MemberExpr *MemRef = dyn_cast<MemberExpr>(E->IgnoreParenCasts());
+  if (!MemRef)
+    return QualType();
+
+  FieldDecl *Field = dyn_cast<FieldDecl>(MemRef->getMemberDecl());
+  if (!Field || !Field->isBitField())
+    return QualType();
+
+  const BuiltinType *BT = Field->getType()->getAsBuiltinType();
+  if (!BT)
+    return QualType();
+
+  if (BT->getKind() != BuiltinType::Bool &&
+      BT->getKind() != BuiltinType::Int &&
+      BT->getKind() != BuiltinType::UInt) 
+    return QualType();
+
+  llvm::APSInt BitWidthAP;
+  if (!Field->getBitWidth()->isIntegerConstantExpr(BitWidthAP, Context))
+    return QualType();
+
+  uint64_t BitWidth = BitWidthAP.getZExtValue();
+  uint64_t IntSize = Context.getTypeSize(Context.IntTy);
+  if (BitWidth < IntSize ||
+      (Field->getType()->isSignedIntegerType() && BitWidth == IntSize))
+    return Context.IntTy;
+
+  if (BitWidth == IntSize && Field->getType()->isUnsignedIntegerType())
+    return Context.UnsignedIntTy;
+
+  return QualType();
+}
+
 /// UsualUnaryConversions - Performs various conversions that are common to most
 /// operators (C99 6.3). The conversions of array and function types are 
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
@@ -131,11 +170,31 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
   QualType Ty = Expr->getType();
   assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
   
-  if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
+  // C99 6.3.1.1p2:
+  //
+  //   The following may be used in an expression wherever an int or
+  //   unsigned int may be used:
+  //     - an object or expression with an integer type whose integer
+  //       conversion rank is less than or equal to the rank of int
+  //       and unsigned int.
+  //     - A bit-field of type _Bool, int, signed int, or unsigned int.
+  //
+  //   If an int can represent all values of the original type, the
+  //   value is converted to an int; otherwise, it is converted to an
+  //   unsigned int. These are called the integer promotions. All
+  //   other types are unchanged by the integer promotions.
+  if (Ty->isPromotableIntegerType()) {
     ImpCastExprToType(Expr, Context.IntTy);
-  else
-    DefaultFunctionArrayConversion(Expr);
-  
+    return Expr;
+  } else {
+    QualType T = isPromotableBitField(Expr, Context);
+    if (!T.isNull()) {
+      ImpCastExprToType(Expr, T);
+      return Expr;
+    }
+  } 
+    
+  DefaultFunctionArrayConversion(Expr);
   return Expr;
 }
 
