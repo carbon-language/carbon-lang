@@ -27,13 +27,20 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
 
   // Short-circuit unnecessary inttoptr<->ptrtoint casts.
   if ((opcode == Instruction::PtrToInt || opcode == Instruction::IntToPtr) &&
-      SE.getTypeSizeInBits(Ty) == SE.getTypeSizeInBits(V->getType()))
+      SE.getTypeSizeInBits(Ty) == SE.getTypeSizeInBits(V->getType())) {
     if (CastInst *CI = dyn_cast<CastInst>(V))
       if ((CI->getOpcode() == Instruction::PtrToInt ||
            CI->getOpcode() == Instruction::IntToPtr) &&
           SE.getTypeSizeInBits(CI->getType()) ==
           SE.getTypeSizeInBits(CI->getOperand(0)->getType()))
         return CI->getOperand(0);
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      if ((CE->getOpcode() == Instruction::PtrToInt ||
+           CE->getOpcode() == Instruction::IntToPtr) &&
+          SE.getTypeSizeInBits(CE->getType()) ==
+          SE.getTypeSizeInBits(CE->getOperand(0)->getType()))
+        return CE->getOperand(0);
+  }
 
   // FIXME: keep track of the cast instruction.
   if (Constant *C = dyn_cast<Constant>(V))
