@@ -158,6 +158,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     BlockHasCopyDispose |= subBlockHasCopyDispose;
     Elts[3] = Fn;
 
+    // FIXME: Don't use BlockHasCopyDispose, it is set more often then necessary, for
+    // example: { ^{ __block int i; ^{ i = 1; }(); }(); }
     if (subBlockHasCopyDispose)
       flags |= BLOCK_HAS_COPY_DISPOSE;
 
@@ -557,7 +559,6 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
                                                  subBlockHasCopyDispose);
   assert(subBlockSize == BlockLiteralSize
          && "no imports allowed for global block");
-  assert(!subBlockHasCopyDispose && "no imports allowed for global block");
 
   // isa
   LiteralFields[0] = getNSConcreteGlobalBlock();

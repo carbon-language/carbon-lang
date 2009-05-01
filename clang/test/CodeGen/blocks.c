@@ -22,5 +22,9 @@ void *P = ^{
   void *Q = __func__;
 };
 
+void (^test1)(void) = ^(void) {
+  __block int i;
+  ^ { i = 1; }();
+};
 
 // RUN: true
