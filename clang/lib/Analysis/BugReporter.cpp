@@ -757,21 +757,33 @@ static bool IsControlFlowExpr(const Stmt *S) {
 }
 
 namespace {
+class VISIBILITY_HIDDEN ContextLocation : public PathDiagnosticLocation {
+  bool IsDead;
+public:
+  ContextLocation(const PathDiagnosticLocation &L, bool isdead = false)
+    : PathDiagnosticLocation(L), IsDead(isdead) {}
+  
+  void markDead() { IsDead = true; }  
+  bool isDead() const { return IsDead; }
+};
+  
 class VISIBILITY_HIDDEN EdgeBuilder {
-  std::vector<PathDiagnosticLocation> CLocs;
-  typedef std::vector<PathDiagnosticLocation>::iterator iterator;
+  std::vector<ContextLocation> CLocs;
+  typedef std::vector<ContextLocation>::iterator iterator;
   PathDiagnostic &PD;
   PathDiagnosticBuilder &PDB;
   PathDiagnosticLocation PrevLoc;
-
+  
+  bool IsConsumedExpr(const PathDiagnosticLocation &L);
+  
   bool containsLocation(const PathDiagnosticLocation &Container,
                         const PathDiagnosticLocation &Containee);
   
   PathDiagnosticLocation getContextLocation(const PathDiagnosticLocation &L);
   
   void popLocation() {
-    PathDiagnosticLocation L = CLocs.back();
-    if (L.asLocation().isFileID()) {
+    if (!CLocs.back().isDead() && CLocs.back().asLocation().isFileID()) {
+      PathDiagnosticLocation L = CLocs.back();
       
       if (const Stmt *S = L.asStmt()) {
         while (1) {
@@ -938,20 +950,30 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
   const PathDiagnosticLocation &CLoc = getContextLocation(NewLoc);
 
   while (!CLocs.empty()) {
-    const PathDiagnosticLocation &TopContextLoc = CLocs.back();
+    ContextLocation &TopContextLoc = CLocs.back();
     
     // Is the top location context the same as the one for the new location?
     if (TopContextLoc == CLoc) {
-      if (alwaysAdd)
+      if (alwaysAdd) {
+        if (IsConsumedExpr(TopContextLoc))
+            TopContextLoc.markDead();
+
         rawAddEdge(NewLoc);
+      }
 
       return;
     }
 
     if (containsLocation(TopContextLoc, CLoc)) {
-      if (alwaysAdd)
+      if (alwaysAdd) {
         rawAddEdge(NewLoc);
-
+        
+        if (IsConsumedExpr(CLoc)) {
+          CLocs.push_back(ContextLocation(CLoc, true));
+          return;
+        }
+      }
+      
       CLocs.push_back(CLoc);
       return;      
     }
@@ -964,6 +986,13 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
   rawAddEdge(NewLoc);
 }
 
+bool EdgeBuilder::IsConsumedExpr(const PathDiagnosticLocation &L) {
+  if (const Expr *X = dyn_cast_or_null<Expr>(L.asStmt()))
+    return PDB.getParentMap().isConsumedExpr(X) && !IsControlFlowExpr(X);
+  
+  return false;
+}
+  
 void EdgeBuilder::addContext(const Stmt *S) {
   if (!S)
     return;
@@ -1040,8 +1069,10 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
     if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {      
       if (const Stmt* S = BE->getFirstStmt()) {
-       if (IsControlFlowExpr(S))
+       if (IsControlFlowExpr(S)) {
+         // Add the proper context for '&&', '||', and '?'.
          EB.addContext(S);
+       }
        else
          EB.addContext(PDB.getEnclosingStmtLocation(S).asStmt());
       }
