@@ -25,6 +25,7 @@ namespace llvm {
 class Instruction;
 class Pass;
 class AliasAnalysis;
+class ValueDeletionListener;
 
 /// DeleteDeadBlock - Delete the specified block, which must have no
 /// predecessors.
@@ -36,8 +37,14 @@ void DeleteDeadBlock(BasicBlock *BB);
 /// when all entries to the PHI nodes in a block are guaranteed equal, such as
 /// when the block has exactly one predecessor.
 void FoldSingleEntryPHINodes(BasicBlock *BB);
-  
-  
+
+/// DeleteDeadPHIs - Examine each PHI in the given block and delete it if it
+/// is dead. Also recursively delete any operands that become dead as
+/// a result. This includes tracing the def-use list from the PHI to see if
+/// it is ultimately unused or if it reaches an unused cycle.  If a
+/// ValueDeletionListener is specified, it is notified of the deletions.
+void DeleteDeadPHIs(BasicBlock *BB, ValueDeletionListener *VDL = 0);
+
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
 bool MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P = 0);

@@ -32,6 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
@@ -2138,6 +2139,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
     CondUse = &IVUsesByStride[*NewStride].Users.back();
     CondStride = NewStride;
     ++NumEliminated;
+    Changed = true;
   }
 
   return Cond;
@@ -2501,44 +2503,21 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   StrideOrder.clear();
 
   // Clean up after ourselves
-  if (!DeadInsts.empty()) {
+  if (!DeadInsts.empty())
     DeleteTriviallyDeadInstructions();
 
-    BasicBlock::iterator I = L->getHeader()->begin();
-    while (PHINode *PN = dyn_cast<PHINode>(I++)) {
-      // At this point, we know that we have killed one or more IV users.
-      // It is worth checking to see if the cannonical indvar is also
-      // dead, so that we can remove it as well.
-      //
-      // We can remove a PHI if it is on a cycle in the def-use graph
-      // where each node in the cycle has degree one, i.e. only one use,
-      // and is an instruction with no side effects.
-      //
-      // FIXME: this needs to eliminate an induction variable even if it's being
-      // compared against some value to decide loop termination.
-      if (!PN->hasOneUse())
-        continue;
-      
-      SmallPtrSet<PHINode *, 4> PHIs;
-      for (Instruction *J = dyn_cast<Instruction>(*PN->use_begin());
-           J && J->hasOneUse() && !J->mayWriteToMemory();
-           J = dyn_cast<Instruction>(*J->use_begin())) {
-        // If we find the original PHI, we've discovered a cycle.
-        if (J == PN) {
-          // Break the cycle and mark the PHI for deletion.
-          SE->deleteValueFromRecords(PN);
-          PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-          DeadInsts.push_back(PN);
-          Changed = true;
-          break;
-        }
-        // If we find a PHI more than once, we're on a cycle that
-        // won't prove fruitful.
-        if (isa<PHINode>(J) && !PHIs.insert(cast<PHINode>(J)))
-          break;
-      }
+  // At this point, it is worth checking to see if any recurrence PHIs are also
+  // dead, so that we can remove them as well. To keep ScalarEvolution
+  // current, use a ValueDeletionListener class.
+  struct LSRListener : public ValueDeletionListener {
+    ScalarEvolution &SE;
+    explicit LSRListener(ScalarEvolution &se) : SE(se) {}
+
+    virtual void ValueWillBeDeleted(Value *V) {
+      SE.deleteValueFromRecords(V);
     }
-    DeleteTriviallyDeadInstructions();
-  }
+  } VDL(*SE);
+  DeleteDeadPHIs(L->getHeader(), &VDL);
+
   return Changed;
 }

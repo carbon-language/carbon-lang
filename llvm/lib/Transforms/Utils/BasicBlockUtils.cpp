@@ -22,6 +22,8 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/ValueHandle.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -72,6 +74,24 @@ void llvm::FoldSingleEntryPHINodes(BasicBlock *BB) {
   }
 }
 
+
+/// DeleteDeadPHIs - Examine each PHI in the given block and delete it if it
+/// is dead. Also recursively delete any operands that become dead as
+/// a result. This includes tracing the def-use list from the PHI to see if
+/// it is ultimately unused or if it reaches an unused cycle.  If a
+/// ValueDeletionListener is specified, it is notified of the deletions.
+void llvm::DeleteDeadPHIs(BasicBlock *BB, ValueDeletionListener *VDL) {
+  // Recursively deleting a PHI may cause multiple PHIs to be deleted
+  // or RAUW'd undef, so use an array of WeakVH for the PHIs to delete.
+  SmallVector<WeakVH, 8> PHIs;
+  for (BasicBlock::iterator I = BB->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    PHIs.push_back(PN);
+
+  for (unsigned i = 0, e = PHIs.size(); i != e; ++i)
+    if (PHINode *PN = dyn_cast_or_null<PHINode>(PHIs[i].operator Value*()))
+      RecursivelyDeleteDeadPHINode(PN, VDL);
+}
 
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.

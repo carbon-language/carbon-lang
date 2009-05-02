@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -177,14 +178,18 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
   return false;
 }
 
+/// ~ValueDeletionListener - A trivial dtor, defined out of line to give the
+/// class a home.
+llvm::ValueDeletionListener::~ValueDeletionListener() {}
+
 /// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
 /// trivially dead instruction, delete it.  If that makes any of its operands
 /// trivially dead, delete them too, recursively.
 ///
-/// If DeadInst is specified, the vector is filled with the instructions that
-/// are actually deleted.
+/// If a ValueDeletionListener is specified, it is notified of instructions that
+/// are actually deleted (before they are actually deleted).
 void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
-                                      SmallVectorImpl<Instruction*> *DeadInst) {
+                                                   ValueDeletionListener *VDL) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || !I->use_empty() || !isInstructionTriviallyDead(I))
     return;
@@ -197,8 +202,8 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
     DeadInsts.pop_back();
 
     // If the client wanted to know, tell it about deleted instructions.
-    if (DeadInst)
-      DeadInst->push_back(I);
+    if (VDL)
+      VDL->ValueWillBeDeleted(I);
     
     // Null out all of the instruction's operands to see if any operand becomes
     // dead as we go.
@@ -220,6 +225,38 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
   }
 }
 
+/// RecursivelyDeleteDeadPHINode - If the specified value is an effectively
+/// dead PHI node, due to being a def-use chain of single-use nodes that
+/// either forms a cycle or is terminated by a trivially dead instruction,
+/// delete it.  If that makes any of its operands trivially dead, delete them
+/// too, recursively.
+///
+/// If a ValueDeletionListener is specified, it is notified of instructions that
+/// are actually deleted (before they are actually deleted).
+void
+llvm::RecursivelyDeleteDeadPHINode(PHINode *PN, ValueDeletionListener *VDL) {
+
+  // We can remove a PHI if it is on a cycle in the def-use graph
+  // where each node in the cycle has degree one, i.e. only one use,
+  // and is an instruction with no side effects.
+  if (!PN->hasOneUse())
+    return;
+
+  SmallPtrSet<PHINode *, 4> PHIs;
+  PHIs.insert(PN);
+  for (Instruction *J = cast<Instruction>(*PN->use_begin());
+       J->hasOneUse() && !J->mayWriteToMemory();
+       J = cast<Instruction>(*J->use_begin()))
+    // If we find a PHI more than once, we're on a cycle that
+    // won't prove fruitful.
+    if (PHINode *JP = dyn_cast<PHINode>(J))
+      if (!PHIs.insert(cast<PHINode>(JP))) {
+        // Break the cycle and delete the PHI and its operands.
+        JP->replaceAllUsesWith(UndefValue::get(JP->getType()));
+        RecursivelyDeleteTriviallyDeadInstructions(JP, VDL);
+        break;
+      }
+}
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring...

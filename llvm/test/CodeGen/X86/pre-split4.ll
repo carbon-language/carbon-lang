@@ -14,6 +14,8 @@ bb:		; preds = %bb, %entry
 	%2 = tail call double @sin(double %k.0.reg2mem.0) nounwind readonly		; <double> [#uses=1]
 	%3 = mul double 0.000000e+00, %2		; <double> [#uses=1]
 	%4 = fdiv double 1.000000e+00, %3		; <double> [#uses=1]
+        store double %Flint.0.reg2mem.0, double* null
+        store double %twoThrd.0.reg2mem.0, double* null
 	%5 = add double %4, %Flint.0.reg2mem.0		; <double> [#uses=1]
 	%6 = add double %k.0.reg2mem.0, 1.000000e+00		; <double> [#uses=1]
 	br label %bb

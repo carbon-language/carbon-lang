@@ -17,6 +17,7 @@ bb554:		; preds = %bb554, %entry
 	%tmp555 = and <2 x i32> %1, < i32 -1, i32 0 >		; <<2 x i32>> [#uses=1]
 	%2 = bitcast <2 x i32> %tmp555 to <1 x i64>		; <<1 x i64>> [#uses=1]
 	%3 = call <1 x i64> @llvm.x86.mmx.psrli.q(<1 x i64> %0, i32 32) nounwind readnone		; <<1 x i64>> [#uses=1]
+        store <1 x i64> %sum.0.reg2mem.0, <1 x i64>* null
 	%tmp558 = add <1 x i64> %sum.0.reg2mem.0, %2		; <<1 x i64>> [#uses=1]
 	%4 = call <1 x i64> @llvm.x86.mmx.psrli.q(<1 x i64> %tmp558, i32 32) nounwind readnone		; <<1 x i64>> [#uses=1]
 	%tmp562 = add <1 x i64> %4, %3		; <<1 x i64>> [#uses=1]
