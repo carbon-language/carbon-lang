@@ -1466,34 +1466,6 @@ SCEVHandle ScalarEvolution::getUnknown(Value *V) {
 //            Basic SCEV Analysis and PHI Idiom Recognition Code
 //
 
-/// deleteValueFromRecords - This method should be called by the
-/// client before it removes an instruction from the program, to make sure
-/// that no dangling references are left around.
-void ScalarEvolution::deleteValueFromRecords(Value *V) {
-  SmallVector<Value *, 16> Worklist;
-
-  if (Scalars.erase(V)) {
-    if (PHINode *PN = dyn_cast<PHINode>(V))
-      ConstantEvolutionLoopExitValue.erase(PN);
-    Worklist.push_back(V);
-  }
-
-  while (!Worklist.empty()) {
-    Value *VV = Worklist.back();
-    Worklist.pop_back();
-
-    for (Instruction::use_iterator UI = VV->use_begin(), UE = VV->use_end();
-         UI != UE; ++UI) {
-      Instruction *Inst = cast<Instruction>(*UI);
-      if (Scalars.erase(Inst)) {
-        if (PHINode *PN = dyn_cast<PHINode>(VV))
-          ConstantEvolutionLoopExitValue.erase(PN);
-        Worklist.push_back(Inst);
-      }
-    }
-  }
-}
-
 /// isSCEVable - Test if values of the given type are analyzable within
 /// the SCEV framework. This primarily includes integer types, and it
 /// can optionally include pointer types if the ScalarEvolution class
@@ -1555,10 +1527,10 @@ bool ScalarEvolution::hasSCEV(Value *V) const {
 SCEVHandle ScalarEvolution::getSCEV(Value *V) {
   assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
 
-  std::map<Value*, SCEVHandle>::iterator I = Scalars.find(V);
+  std::map<SCEVCallbackVH, SCEVHandle>::iterator I = Scalars.find(V);
   if (I != Scalars.end()) return I->second;
   SCEVHandle S = createSCEV(V);
-  Scalars.insert(std::make_pair(V, S));
+  Scalars.insert(std::make_pair(SCEVCallbackVH(V, this), S));
   return S;
 }
 
@@ -1647,7 +1619,8 @@ ScalarEvolution::getTruncateOrSignExtend(const SCEVHandle &V,
 void ScalarEvolution::
 ReplaceSymbolicValueWithConcrete(Instruction *I, const SCEVHandle &SymName,
                                  const SCEVHandle &NewVal) {
-  std::map<Value*, SCEVHandle>::iterator SI = Scalars.find(I);
+  std::map<SCEVCallbackVH, SCEVHandle>::iterator SI =
+    Scalars.find(SCEVCallbackVH(I, this));
   if (SI == Scalars.end()) return;
 
   SCEVHandle NV =
@@ -1679,7 +1652,7 @@ SCEVHandle ScalarEvolution::createNodeForPHI(PHINode *PN) {
         SCEVHandle SymbolicName = getUnknown(PN);
         assert(Scalars.find(PN) == Scalars.end() &&
                "PHI node already processed?");
-        Scalars.insert(std::make_pair(PN, SymbolicName));
+        Scalars.insert(std::make_pair(SCEVCallbackVH(PN, this), SymbolicName));
 
         // Using this symbolic name for the PHI, analyze the value coming around
         // the back-edge.
@@ -2131,7 +2104,7 @@ void ScalarEvolution::forgetLoopBackedgeTakenCount(const Loop *L) {
 void ScalarEvolution::forgetLoopPHIs(const Loop *L) {
   for (BasicBlock::iterator I = L->getHeader()->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I)
-    deleteValueFromRecords(PN);
+    Scalars.erase(PN);
 }
 
 /// ComputeBackedgeTakenCount - Compute the number of times the backedge
@@ -3342,6 +3315,25 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 }
 
 
+
+//===----------------------------------------------------------------------===//
+//                   SCEVCallbackVH Class Implementation
+//===----------------------------------------------------------------------===//
+
+void SCEVCallbackVH::deleted() {
+  assert(SE && "SCEVCallbackVH called with a non-null ScalarEvolution!");
+  SE->Scalars.erase(getValPtr());
+  // this now dangles!
+}
+
+void SCEVCallbackVH::allUsesReplacedWith(Value *V) {
+  assert(SE && "SCEVCallbackVH called with a non-null ScalarEvolution!");
+  SE->Scalars.erase(getValPtr());
+  // this now dangles!
+}
+
+SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
+  : CallbackVH(V), SE(se) {}
 
 //===----------------------------------------------------------------------===//
 //                   ScalarEvolution Class Implementation

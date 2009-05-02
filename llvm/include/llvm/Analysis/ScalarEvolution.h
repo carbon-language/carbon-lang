@@ -24,6 +24,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ValueHandle.h"
 #include <iosfwd>
 
 namespace llvm {
@@ -192,11 +193,23 @@ namespace llvm {
   template<> struct simplify_type<SCEVHandle>
     : public simplify_type<const SCEVHandle> {};
 
+  /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
+  /// notified whenever a Value is deleted.
+  class SCEVCallbackVH : public CallbackVH {
+    ScalarEvolution *SE;
+    virtual void deleted();
+    virtual void allUsesReplacedWith(Value *V);
+  public:
+    SCEVCallbackVH(Value *V, ScalarEvolution *SE = 0);
+  };
+
   /// ScalarEvolution - This class is the main scalar evolution driver.  Because
   /// client code (intentionally) can't do much with the SCEV objects directly,
   /// they must ask this class for services.
   ///
   class ScalarEvolution : public FunctionPass {
+    friend class SCEVCallbackVH;
+
     /// F - The function we are analyzing.
     ///
     Function *F;
@@ -215,7 +228,7 @@ namespace llvm {
 
     /// Scalars - This is a cache of the scalars we have analyzed so far.
     ///
-    std::map<Value*, SCEVHandle> Scalars;
+    std::map<SCEVCallbackVH, SCEVHandle> Scalars;
 
     /// BackedgeTakenInfo - Information about the backedge-taken count
     /// of a loop. This currently inclues an exact count and a maximum count.
@@ -486,11 +499,6 @@ namespace llvm {
     /// ScalarEvolution's ability to compute a trip count, or if the loop
     /// is deleted.
     void forgetLoopBackedgeTakenCount(const Loop *L);
-
-    /// deleteValueFromRecords - This method should be called by the
-    /// client before it removes a Value from the program, to make sure
-    /// that no dangling references are left around.
-    void deleteValueFromRecords(Value *V);
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
