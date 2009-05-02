@@ -140,9 +140,7 @@ public:
   // a 'return'.
   CFGBlock* VisitObjCAtThrowStmt(ObjCAtThrowStmt* S);
 
-  CFGBlock* VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S){
-    return NYS();
-  }
+  CFGBlock* VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S);
   
   // Blocks.
   CFGBlock* VisitBlockExpr(BlockExpr* E) { return NYS(); }
@@ -934,6 +932,16 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   Block = createBlock();
   return addStmt(S->getCollection());
 }    
+  
+CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
+  // FIXME: Add locking 'primitives' to CFG for @synchronized.
+  
+  // Inline the body.
+  Visit(S->getSynchBody());
+  
+  // Inline the sync expression.
+  return Visit(S->getSynchExpr());
+}
   
 CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
   return NYS();

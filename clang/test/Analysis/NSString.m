@@ -271,3 +271,11 @@ typedef NSString* WonkyTypedef;
 void test_isTrackedObjectType(void) {
   NSString *str = [TestIsTracked newString]; // expected-warning{{Potential leak}}
 }
+
+// Test @synchronized
+void test_synchronized(id x) {
+  @synchronized(x) {
+    NSString *string = [[NSString stringWithFormat:@"%ld", (long) 100] retain]; // expected-warning {{leak}}
+  }
+}
+
