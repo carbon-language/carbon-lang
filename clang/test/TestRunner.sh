@@ -68,6 +68,10 @@ fi
 
 # Try to sanity check $CLANGCC too
 CLANGCC=$(which "$CLANGCC")
+# If that failed, ask clang.
+if [ -z "$CLANGCC" ]; then
+    CLANGCC=$($CLANG -print-prog-name=clang-cc)
+fi
 if [ -z "$CLANGCC" ]; then
   echo "Couldn't find 'clang-cc' program, make sure clang is found in your build directory"
   exit 1
