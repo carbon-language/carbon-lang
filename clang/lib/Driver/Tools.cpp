@@ -608,6 +608,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
                                const InputInfoList &Inputs,
                                const ArgList &Args,
                                const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
 
   for (ArgList::const_iterator
@@ -660,6 +661,12 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
+
+    // Don't try to pass LLVM inputs to a generic gcc.
+    if (II.getType() == types::TY_LLVMBC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString().c_str();
+
     if (types::canTypeBeUserSpecified(II.getType())) {
       CmdArgs.push_back("-x");
       CmdArgs.push_back(types::getTypeName(II.getType()));
@@ -1726,8 +1733,8 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  Job &Dest, const InputInfo &Output,
                                  const InputInfoList &Inputs,
                                  const ArgList &Args,
-                                 const char *LinkingOutput) const
-{
+                                 const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
 
   if (Args.hasArg(options::OPT_static)) {
@@ -1778,6 +1785,12 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
+
+    // Don't try to pass LLVM inputs to a generic gcc.
+    if (II.getType() == types::TY_LLVMBC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString().c_str();
+
     if (II.isPipe())
       CmdArgs.push_back("-");
     else if (II.isFilename())
@@ -1871,6 +1884,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  const InputInfoList &Inputs,
                                  const ArgList &Args,
                                  const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
 
   if (Args.hasArg(options::OPT_static)) {
@@ -1920,6 +1934,12 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
+
+    // Don't try to pass LLVM inputs to a generic gcc.
+    if (II.getType() == types::TY_LLVMBC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString().c_str();
+
     if (II.isPipe())
       CmdArgs.push_back("-");
     else if (II.isFilename())

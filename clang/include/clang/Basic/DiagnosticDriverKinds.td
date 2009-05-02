@@ -41,6 +41,8 @@ def err_drv_argument_not_allowed_with : Error<
   "invalid argument '%0' not allowed with '%1'">;
 def err_drv_invalid_version_number : Error<
   "invalid version number in '%0'">;
+def err_drv_no_linker_llvm_support : Error<
+  "'%0': unable to pass LLVM bit-code files to linker">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
