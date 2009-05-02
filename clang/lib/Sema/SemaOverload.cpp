@@ -746,14 +746,14 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
   // other value of that type for promotion purposes (C++ 4.5p3).
   // FIXME: We should delay checking of bit-fields until we actually
   // perform the conversion.
-  if (MemberExpr *MemRef = dyn_cast_or_null<MemberExpr>(From)) {
-    using llvm::APSInt;
-    if (FieldDecl *MemberDecl = dyn_cast<FieldDecl>(MemRef->getMemberDecl())) {
+  using llvm::APSInt;
+  if (From)
+    if (FieldDecl *MemberDecl = From->getBitField()) {
       APSInt BitWidth;
-      if (MemberDecl->isBitField() &&
-          FromType->isIntegralType() && !FromType->isEnumeralType() &&
-          From->isIntegerConstantExpr(BitWidth, Context)) {
-        APSInt ToSize(Context.getTypeSize(ToType));
+      if (FromType->isIntegralType() && !FromType->isEnumeralType() &&
+          MemberDecl->getBitWidth()->isIntegerConstantExpr(BitWidth, Context)) {
+        APSInt ToSize(BitWidth.getBitWidth(), BitWidth.isUnsigned());
+        ToSize = Context.getTypeSize(ToType);
         
         // Are we promoting to an int from a bitfield that fits in an int?
         if (BitWidth < ToSize ||
@@ -770,8 +770,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
         return false;
       }
     }
-  }
-
+  
   // An rvalue of type bool can be converted to an rvalue of type int,
   // with false becoming zero and true becoming one (C++ 4.5p4).
   if (FromType->isBooleanType() && To->getKind() == BuiltinType::Int) {

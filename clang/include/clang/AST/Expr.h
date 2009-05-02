@@ -175,7 +175,9 @@ public:
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
                                               SourceLocation *Loc = 0) const;
   
-  bool isBitField();
+  /// \brief If this expression refers to a bit-field, retrieve the
+  /// declaration of that bit-field.
+  FieldDecl *getBitField();
 
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a

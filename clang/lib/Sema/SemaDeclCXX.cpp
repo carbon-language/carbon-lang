@@ -2090,7 +2090,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   //
   // Note that the bit-field check is skipped if we are just computing
   // the implicit conversion sequence (C++ [over.best.ics]p2).
-  if (InitLvalue == Expr::LV_Valid && (ICS || !Init->isBitField()) &&
+  if (InitLvalue == Expr::LV_Valid && (ICS || !Init->getBitField()) &&
       RefRelationship >= Ref_Compatible_With_Added_Qualification) {
     BindsDirectly = true;
 

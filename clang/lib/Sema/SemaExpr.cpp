@@ -128,12 +128,8 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
 /// \returns the type this bit-field will promote to, or NULL if no
 /// promotion occurs.
 static QualType isPromotableBitField(Expr *E, ASTContext &Context) {
-  MemberExpr *MemRef = dyn_cast<MemberExpr>(E->IgnoreParenCasts());
-  if (!MemRef)
-    return QualType();
-
-  FieldDecl *Field = dyn_cast<FieldDecl>(MemRef->getMemberDecl());
-  if (!Field || !Field->isBitField())
+  FieldDecl *Field = E->getBitField();
+  if (!Field)
     return QualType();
 
   const BuiltinType *BT = Field->getType()->getAsBuiltinType();
@@ -1344,16 +1340,17 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
   if (E->isTypeDependent())
     return false;
 
-  if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-    if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
-      if (FD->isBitField()) {
-        Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 1 << ExprRange;
-        return true;
-      }
-      // Other fields are ok.
-      return false;
-    }
+  if (E->getBitField()) {
+    Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 1 << ExprRange;
+    return true;
   }
+
+  // Alignment of a field access is always okay, so long as it isn't a
+  // bit-field.
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    if (dyn_cast<FieldDecl>(ME->getMemberDecl()))
+      return false;
+
   return CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
 }
 
@@ -1385,7 +1382,7 @@ Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
     // Delay type-checking for type-dependent expressions.
   } else if (!isSizeOf) {
     isInvalid = CheckAlignOfExpr(E, OpLoc, R);
-  } else if (E->isBitField()) {  // C99 6.5.3.4p1.
+  } else if (E->getBitField()) {  // C99 6.5.3.4p1.
     Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
     isInvalid = true;
   } else {
@@ -4254,7 +4251,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
         << op->getSourceRange();
       return QualType();
     }
-  } else if (op->isBitField()) { // C99 6.5.3.2p1
+  } else if (op->getBitField()) { // C99 6.5.3.2p1
     // The operand cannot be a bit-field
     Diag(OpLoc, diag::err_typecheck_address_of)
       << "bit-field" << op->getSourceRange();

@@ -31,6 +31,6 @@ __typeof__(x.x+1) y;
 int y;
 
 struct {unsigned x : 2;} x2;
-// FIXME: __typeof__((x.x+=1)+1) y;
+__typeof__((x.x+=1)+1) y;
 __typeof__(x.x<<1) y;
 int y;

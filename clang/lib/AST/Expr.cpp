@@ -1379,13 +1379,19 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const
   return isIntegerConstantExpr(Result, Ctx) && Result == 0;
 }
 
-/// isBitField - Return true if this expression is a bit-field.
-bool Expr::isBitField() {
+FieldDecl *Expr::getBitField() {
   Expr *E = this->IgnoreParenCasts();
+
   if (MemberExpr *MemRef = dyn_cast<MemberExpr>(E))
     if (FieldDecl *Field = dyn_cast<FieldDecl>(MemRef->getMemberDecl()))
-        return Field->isBitField();
-  return false;
+      if (Field->isBitField())
+        return Field;
+
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(E))
+    if (BinOp->isAssignmentOp() && BinOp->getLHS())
+      return BinOp->getLHS()->getBitField();
+
+  return 0;
 }
 
 /// isArrow - Return true if the base expression is a pointer to vector,
