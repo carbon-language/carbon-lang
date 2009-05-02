@@ -617,7 +617,8 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     if (A->getOption().hasForwardToGCC()) {
       // It is unfortunate that we have to claim here, as this means
       // we will basically never report anything interesting for
-      // platforms using a generic gcc.
+      // platforms using a generic gcc, even if we are just using gcc
+      // to get to the assembler.
       A->claim();
       A->render(Args, CmdArgs);
     }
@@ -637,6 +638,14 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       Str = "ppc64";
     CmdArgs.push_back(Str);
   }
+
+  // Try to force gcc to match the tool chain we want, if we recognize
+  // the arch.
+  const char *Str = getToolChain().getArchName().c_str();
+  if (strcmp(Str, "i386") == 0 || strcmp(Str, "powerpc") == 0)
+    CmdArgs.push_back("-m32");
+  else if (strcmp(Str, "x86_64") == 0 || strcmp(Str, "powerpc64") == 0)
+    CmdArgs.push_back("-m64");
 
   if (Output.isPipe()) {
     CmdArgs.push_back("-o");
