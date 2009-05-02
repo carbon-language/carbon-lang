@@ -155,7 +155,7 @@ private:
   CFGBlock* WalkAST_VisitChildren(Stmt* Terminator);
   CFGBlock* WalkAST_VisitDeclSubExpr(Decl* D);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* Terminator);
-  void FinishBlock(CFGBlock* B);
+  bool FinishBlock(CFGBlock* B);
   
   bool badCFG;
 };
@@ -262,9 +262,13 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
 /// FinishBlock - When the last statement has been added to the block,
 ///  we must reverse the statements because they have been inserted
 ///  in reverse order.
-void CFGBuilder::FinishBlock(CFGBlock* B) {
+bool CFGBuilder::FinishBlock(CFGBlock* B) {
+  if (badCFG)
+    return false;
+
   assert (B);
   B->reverseStmts();
+  return true;
 }
 
 /// addStmt - Used to add statements/expressions to the current CFGBlock 
@@ -290,7 +294,8 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
       // of the ternary expression.
       CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
       ConfluenceBlock->appendStmt(C);
-      FinishBlock(ConfluenceBlock);      
+      if (!FinishBlock(ConfluenceBlock))
+        return 0;
 
       // Create a block for the LHS expression if there is an LHS expression.
       // A GCC extension allows LHS to be NULL, causing the condition to
@@ -301,15 +306,17 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
       CFGBlock* LHSBlock = NULL;
       if (C->getLHS()) {
         LHSBlock = Visit(C->getLHS());
-        FinishBlock(LHSBlock);
-        Block = NULL;
+        if (!FinishBlock(LHSBlock))
+          return 0;
+        Block = NULL;        
       }
       
       // Create the block for the RHS expression.
       Succ = ConfluenceBlock;
       CFGBlock* RHSBlock = Visit(C->getRHS());
-      FinishBlock(RHSBlock);
-      
+      if (!FinishBlock(RHSBlock))
+        return 0;
+
       // Create the block that will contain the condition.
       Block = createBlock(false);
       
@@ -338,19 +345,22 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
     case Stmt::ChooseExprClass: {
       ChooseExpr* C = cast<ChooseExpr>(Terminator);      
       
-      CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
+      CFGBlock* ConfluenceBlock = Block ? Block : createBlock();  
       ConfluenceBlock->appendStmt(C);
-      FinishBlock(ConfluenceBlock);
+      if (!FinishBlock(ConfluenceBlock))
+        return 0;
       
       Succ = ConfluenceBlock;
       Block = NULL;
       CFGBlock* LHSBlock = Visit(C->getLHS());
-      FinishBlock(LHSBlock);
+      if (!FinishBlock(LHSBlock))
+        return 0;
 
       Succ = ConfluenceBlock;
       Block = NULL;
       CFGBlock* RHSBlock = Visit(C->getRHS());
-      FinishBlock(RHSBlock);
+      if (!FinishBlock(RHSBlock))
+        return 0;
       
       Block = createBlock(false);
       Block->addSuccessor(LHSBlock);
@@ -427,7 +437,8 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
       if (B->isLogicalOp()) { // && or ||
         CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
         ConfluenceBlock->appendStmt(B);
-        FinishBlock(ConfluenceBlock);
+        if (!FinishBlock(ConfluenceBlock))
+          return 0;
 
         // create the block evaluating the LHS
         CFGBlock* LHSBlock = createBlock(false);
@@ -437,7 +448,8 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
         Succ = ConfluenceBlock;
         Block = NULL;
         CFGBlock* RHSBlock = Visit(B->getRHS());
-        FinishBlock(RHSBlock);
+        if (!FinishBlock(RHSBlock))
+          return 0;
 
         // Now link the LHSBlock with RHSBlock.
         if (B->getOpcode() == BinaryOperator::LOr) {
@@ -572,7 +584,8 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // successor block.
   if (Block) { 
     Succ = Block;
-    FinishBlock(Block);
+    if (!FinishBlock(Block))
+      return 0;
   }
   
   // Process the false branch.  NULL out Block so that the recursive
@@ -590,8 +603,10 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
               
     if (!ElseBlock) // Can occur when the Else body has all NullStmts.
       ElseBlock = sv.get();
-    else if (Block) 
-      FinishBlock(ElseBlock);
+    else if (Block) {
+      if (!FinishBlock(ElseBlock))
+        return 0;
+    }
   }
   
   // Process the true branch.  NULL out Block so that the recursive
@@ -612,8 +627,10 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
       ThenBlock = createBlock(false);
       ThenBlock->addSuccessor(sv.get());
     }
-    else if (Block)
-      FinishBlock(ThenBlock);
+    else if (Block) {
+      if (!FinishBlock(ThenBlock))
+        return 0;
+    }        
   }
 
   // Now create a new block containing the if statement.        
@@ -671,7 +688,8 @@ CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
   // label (and we have already processed the substatement) there is no
   // extra control-flow to worry about.
   LabelBlock->setLabel(L);
-  FinishBlock(LabelBlock);
+  if (!FinishBlock(LabelBlock))
+    return 0;
   
   // We set Block to NULL to allow lazy creation of a new block
   // (if necessary);
@@ -710,7 +728,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   CFGBlock* LoopSuccessor = NULL;
   
   if (Block) {
-    FinishBlock(Block);
+    if (!FinishBlock(Block))
+      return 0;
     LoopSuccessor = Block;
   }
   else LoopSuccessor = Succ;
@@ -729,7 +748,10 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   if (Stmt* C = F->getCond()) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
-    if (Block) FinishBlock(EntryConditionBlock);
+    if (Block) {
+      if (!FinishBlock(EntryConditionBlock))
+        return 0;
+    }
   }
 
   // The condition block is the implicit successor for the loop body as
@@ -763,7 +785,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     // Finish up the increment (or empty) block if it hasn't been already.
     if (Block) {
       assert(Block == Succ);
-      FinishBlock(Block);
+      if (!FinishBlock(Block))
+        return 0;
       Block = 0;
     }
     
@@ -782,8 +805,10 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "for (...;...; ) ;"
-    else if (Block)
-      FinishBlock(BodyBlock);
+    else if (Block) {
+      if (!FinishBlock(BodyBlock))
+        return 0;
+    }      
     
     // This new body block is a successor to our "exit" condition block.
     ExitConditionBlock->addSuccessor(BodyBlock);
@@ -845,7 +870,8 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   CFGBlock* LoopSuccessor = 0;
   
   if (Block) {
-    FinishBlock(Block);
+    if (!FinishBlock(Block))
+      return 0;
     LoopSuccessor = Block;
     Block = 0;
   }
@@ -868,7 +894,11 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   // generate new blocks as necesary.  We DON'T add the statement by default
   // to the CFG unless it contains control-flow.
   EntryConditionBlock = WalkAST(S->getElement(), false);
-  if (Block) { FinishBlock(EntryConditionBlock); Block = 0; }
+  if (Block) { 
+    if (!FinishBlock(EntryConditionBlock))
+      return 0;
+    Block = 0;
+  }
   
   // The condition block is the implicit successor for the loop body as
   // well as any code above the loop.
@@ -887,8 +917,10 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "for (X in Y) ;"
-    else if (Block)
-      FinishBlock(BodyBlock);
+    else if (Block) {
+      if (!FinishBlock(BodyBlock))
+        return 0;
+    }
                   
     // This new body block is a successor to our "exit" condition block.
     ExitConditionBlock->addSuccessor(BodyBlock);
@@ -914,7 +946,8 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   CFGBlock* LoopSuccessor = NULL;
   
   if (Block) {
-    FinishBlock(Block);
+    if (!FinishBlock(Block))
+      return 0;
     LoopSuccessor = Block;
   }
   else LoopSuccessor = Succ;
@@ -935,7 +968,10 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
     assert(Block == EntryConditionBlock);
-    if (Block) FinishBlock(EntryConditionBlock);
+    if (Block) {
+      if (!FinishBlock(EntryConditionBlock))
+        return 0;
+    }
   }
   
   // The condition block is the implicit successor for the loop body as
@@ -970,8 +1006,10 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "while(...) ;"
-    else if (Block)
-      FinishBlock(BodyBlock);
+    else if (Block) {
+      if (!FinishBlock(BodyBlock))
+        return 0;
+    }
     
     // Add the loop body entry as a successor to the condition.
     ExitConditionBlock->addSuccessor(BodyBlock);
@@ -997,7 +1035,10 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
   
   // If we were in the middle of a block we stop processing that block
   // and reverse its statements.
-  if (Block) FinishBlock(Block);
+  if (Block) {
+    if (!FinishBlock(Block))
+      return 0;
+  }
   
   // Create the new block.
   Block = createBlock(false);
@@ -1017,7 +1058,8 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
   CFGBlock* LoopSuccessor = NULL;
   
   if (Block) {
-    FinishBlock(Block);
+    if (!FinishBlock(Block))
+      return 0;
     LoopSuccessor = Block;
   }
   else LoopSuccessor = Succ;
@@ -1036,7 +1078,10 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
   if (Stmt* C = D->getCond()) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
-    if (Block) FinishBlock(EntryConditionBlock);
+    if (Block) {
+      if (!FinishBlock(EntryConditionBlock))
+        return 0;
+    }
   }
   
   // The condition block is the implicit successor for the loop body.
@@ -1066,8 +1111,10 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "do ; while(...)"
-    else if (Block)
-      FinishBlock(BodyBlock);
+    else if (Block) {
+      if (!FinishBlock(BodyBlock))
+        return 0;
+    }
         
     // Add an intermediate block between the BodyBlock and the
     // ExitConditionBlock to represent the "loop back" transition.
@@ -1100,7 +1147,10 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
 CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   // "continue" is a control-flow statement.  Thus we stop processing the
   // current block.
-  if (Block) FinishBlock(Block);
+  if (Block) {
+    if (!FinishBlock(Block))
+      return 0;
+  }
   
   // Now create a new block that ends with the continue statement.
   Block = createBlock(false);
@@ -1119,7 +1169,10 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
 CFGBlock* CFGBuilder::VisitBreakStmt(BreakStmt* B) {
   // "break" is a control-flow statement.  Thus we stop processing the
   // current block.
-  if (Block) FinishBlock(Block);
+  if (Block) {
+    if (!FinishBlock(Block))
+      return 0;
+  }
   
   // Now create a new block that ends with the continue statement.
   Block = createBlock(false);
@@ -1142,7 +1195,8 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   CFGBlock* SwitchSuccessor = NULL;
   
   if (Block) {
-    FinishBlock(Block);
+    if (!FinishBlock(Block))
+      return 0;
     SwitchSuccessor = Block;
   }
   else SwitchSuccessor = Succ;
@@ -1171,7 +1225,10 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   assert (Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
   CFGBlock *BodyBlock = Visit(Terminator->getBody());
-  if (Block) FinishBlock(BodyBlock);
+  if (Block) {
+    if (!FinishBlock(BodyBlock))
+      return 0;
+  }
 
   // If we have no "default:" case, the default transition is to the
   // code following the switch body.
@@ -1196,7 +1253,8 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* Terminator) {
   // Cases statements partition blocks, so this is the top of
   // the basic block we were processing (the "case XXX:" is the label).
   CaseBlock->setLabel(Terminator);
-  FinishBlock(CaseBlock);
+  if (!FinishBlock(CaseBlock))
+    return 0;
   
   // Add this block to the list of successors for the block with the
   // switch statement.
@@ -1220,7 +1278,8 @@ CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* Terminator) {
   // Default statements partition blocks, so this is the top of
   // the basic block we were processing (the "default:" is the label).
   DefaultCaseBlock->setLabel(Terminator);
-  FinishBlock(DefaultCaseBlock);
+  if (!FinishBlock(DefaultCaseBlock))
+    return 0;
 
   // Unlike case statements, we don't add the default block to the
   // successors for the switch statement immediately.  This is done
@@ -1250,7 +1309,10 @@ CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
   
   // IndirectGoto is a control-flow statement.  Thus we stop processing the
   // current block and create a new one.
-  if (Block) FinishBlock(Block);
+  if (Block) {
+    if (!FinishBlock(Block))
+      return 0;
+  }
   Block = createBlock(false);
   Block->setTerminator(I);
   Block->addSuccessor(IBlock);
