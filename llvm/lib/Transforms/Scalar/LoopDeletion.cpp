@@ -258,6 +258,11 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     (*LI)->dropAllReferences();
   }
   
+  // Tell ScalarEvolution that the loop is deleted. Do this before
+  // deleting the loop so that ScalarEvolution can look at the loop
+  // to determine what it needs to clean up.
+  SE.forgetLoopBackedgeTakenCount(L);
+
   // Erase the instructions and the blocks without having to worry
   // about ordering because we already dropped the references.
   // NOTE: This iteration is safe because erasing the block does not remove its
@@ -265,9 +270,6 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI)
     (*LI)->eraseFromParent();
-
-  // Tell ScalarEvolution that the loop is deleted.
-  SE.forgetLoopBackedgeTakenCount(L);
 
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.
