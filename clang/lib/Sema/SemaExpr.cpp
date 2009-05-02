@@ -264,6 +264,14 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
     return lhs;
 
+  // Perform bitfield promotions.
+  QualType LHSBitfieldPromoteTy = isPromotableBitField(lhsExpr, Context);
+  if (!LHSBitfieldPromoteTy.isNull())
+    lhs = LHSBitfieldPromoteTy;
+  QualType RHSBitfieldPromoteTy = isPromotableBitField(rhsExpr, Context);
+  if (!RHSBitfieldPromoteTy.isNull())
+    rhs = RHSBitfieldPromoteTy;
+
   QualType destType = UsualArithmeticConversionsType(lhs, rhs);
   if (!isCompAssign)
     ImpCastExprToType(lhsExpr, destType);
@@ -3475,6 +3483,12 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
         QualType LHSTy = lex->getType();
         if (LHSTy->isPromotableIntegerType())
           LHSTy = Context.IntTy;
+        else {
+          QualType T = isPromotableBitField(lex, Context);
+          if (!T.isNull())
+            LHSTy = T;
+        }
+
         *CompLHSTy = LHSTy;
       }
       return PExp->getType();
@@ -3628,8 +3642,11 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType LHSTy;
   if (lex->getType()->isPromotableIntegerType())
     LHSTy = Context.IntTy;
-  else
-    LHSTy = lex->getType();
+  else {
+    LHSTy = isPromotableBitField(lex, Context);
+    if (LHSTy.isNull())
+      LHSTy = lex->getType();
+  }
   if (!isCompAssign)
     ImpCastExprToType(lex, LHSTy);
 
@@ -4067,7 +4084,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   // C99 6.5.16.1p2: In simple assignment, the value of the right operand
   // is converted to the type of the assignment expression (above).
   // C++ 5.17p1: the type of the assignment expression is that of its left
-  // oprdu.
+  // operand.
   return LHSType.getUnqualifiedType();
 }
 
