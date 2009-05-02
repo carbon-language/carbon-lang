@@ -116,6 +116,14 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
+class VISIBILITY_HIDDEN DragonFly : public Generic_GCC {
+public:
+  DragonFly(const HostInfo &Host, const char *Arch, const char *Platform, 
+          const char *OS);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+};
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

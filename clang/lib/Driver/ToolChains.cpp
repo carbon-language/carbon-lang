@@ -31,8 +31,7 @@ Darwin_X86::Darwin_X86(const HostInfo &Host, const char *Arch,
                        const char *Platform, const char *OS, 
                        const unsigned (&_DarwinVersion)[3],
                        const unsigned (&_GCCVersion)[3])
-  : ToolChain(Host, Arch, Platform, OS) 
-{
+  : ToolChain(Host, Arch, Platform, OS) {
   DarwinVersion[0] = _DarwinVersion[0];
   DarwinVersion[1] = _DarwinVersion[1];
   DarwinVersion[2] = _DarwinVersion[2];
@@ -415,6 +414,46 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
       T = new tools::freebsd::Assemble(*this); break;
     case Action::LinkJobClass:
       T = new tools::freebsd::Link(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA);
+    }
+  }
+
+  return *T;
+}
+
+/// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
+
+DragonFly::DragonFly(const HostInfo &Host, const char *Arch, 
+                 const char *Platform, const char *OS)
+  : Generic_GCC(Host, Arch, Platform, OS) {
+
+  // Path mangling to find libexec
+  std::string Path(getHost().getDriver().Dir);
+
+  Path += "/../libexec";
+  getProgramPaths().push_back(Path);
+  getProgramPaths().push_back(getHost().getDriver().Dir);  
+
+  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+  getFilePaths().push_back("/usr/lib");
+  getFilePaths().push_back("/usr/lib/gcc41");
+}
+
+Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::dragonfly::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::dragonfly::Link(*this); break;
     default:
       T = &Generic_GCC::SelectTool(C, JA);
     }

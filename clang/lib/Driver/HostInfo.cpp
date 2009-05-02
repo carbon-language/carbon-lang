@@ -273,6 +273,62 @@ ToolChain *FreeBSDHostInfo::getToolChain(const ArgList &Args,
   return TC;
 }
 
+// DragonFly Host Info
+
+/// DragonFlyHostInfo -  DragonFly host information implementation.
+class DragonFlyHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  DragonFlyHostInfo(const Driver &D, const char *Arch, 
+                  const char *Platform, const char *OS);
+  ~DragonFlyHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *getToolChain(const ArgList &Args, 
+                                  const char *ArchName) const;
+};
+
+DragonFlyHostInfo::DragonFlyHostInfo(const Driver &D, const char *Arch, 
+                                 const char *Platform, const char *OS) 
+  : HostInfo(D, Arch, Platform, OS) {
+}
+
+DragonFlyHostInfo::~DragonFlyHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool DragonFlyHostInfo::useDriverDriver() const { 
+  return false;
+}
+
+ToolChain *DragonFlyHostInfo::getToolChain(const ArgList &Args, 
+                                         const char *ArchName) const {
+
+  assert(!ArchName && 
+         "Unexpected arch name on platform without driver driver support.");
+
+
+  ArchName = getArchName().c_str();
+  
+  ToolChain *&TC = ToolChains[ArchName];
+
+
+  if (!TC)
+    TC = new toolchains::DragonFly(*this, ArchName, 
+                                 getPlatformName().c_str(), 
+                                 getOSName().c_str());
+  return TC;
+}
+
 }
 
 const HostInfo *clang::driver::createDarwinHostInfo(const Driver &D,
@@ -287,6 +343,13 @@ const HostInfo *clang::driver::createFreeBSDHostInfo(const Driver &D,
                                                      const char *Platform, 
                                                      const char *OS) {
   return new FreeBSDHostInfo(D, Arch, Platform, OS);
+}
+
+const HostInfo *clang::driver::createDragonFlyHostInfo(const Driver &D,
+                                                     const char *Arch, 
+                                                     const char *Platform, 
+                                                     const char *OS) {
+  return new DragonFlyHostInfo(D, Arch, Platform, OS);
 }
 
 const HostInfo *clang::driver::createUnknownHostInfo(const Driver &D,

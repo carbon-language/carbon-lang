@@ -522,6 +522,7 @@ OPTION("-no-integrated-cpp", no_integrated_cpp, Flag, INVALID, INVALID, "d", 0, 
 OPTION("-no_dead_strip_inits_and_terms", no__dead__strip__inits__and__terms, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-nodefaultlibs", nodefaultlibs, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-nofixprebinding", nofixprebinding, Flag, INVALID, INVALID, "", 0, 0, 0)
+OPTION("-nolibc", nolibc, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-nomultidefs", nomultidefs, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-noprebind", noprebind, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-noseglinkedit", noseglinkedit, Flag, INVALID, INVALID, "", 0, 0, 0)
