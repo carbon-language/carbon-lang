@@ -383,6 +383,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   
+  unsigned RuntimeLang = DefUnit.getRunTimeVersion();
+
   // To handle recursive interface, we
   // first generate a debug descriptor for the struct as a forward declaration.
   // Then (if it is a definition) we go through and get debug info for all of
@@ -391,7 +393,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // uses of the forward declaration with the final definition.
   llvm::DIType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, 0, 0, 0, 0,
-                                     llvm::DIType(), llvm::DIArray());
+                                     llvm::DIType(), llvm::DIArray(),
+                                     RuntimeLang);
   
   // If this is just a forward declaration, return it.
   if (Decl->isForwardDecl())
@@ -478,7 +481,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   
   llvm::DIType RealDecl =
     DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, Size,
-                                     Align, 0, 0, llvm::DIType(), Elements);
+                                     Align, 0, 0, llvm::DIType(), Elements,
+                                     RuntimeLang);
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
