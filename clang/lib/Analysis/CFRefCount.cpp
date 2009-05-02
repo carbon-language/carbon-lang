@@ -2519,7 +2519,11 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   llvm::raw_string_ostream os(Description);
   SourceManager& SMgr = Eng.getContext().getSourceManager();
   unsigned AllocLine = SMgr.getInstantiationLineNumber(AllocSite);
-  os << "Potential leak of object allocated on line " << AllocLine;
+  os << "Potential leak ";
+  if (tf.isGCEnabled()) {
+    os << "(when using garbage collection) ";
+  }  
+  os << "of an object allocated on line " << AllocLine;
   
   // FIXME: AllocBinding doesn't get populated for RegionStore yet.
   if (AllocBinding)
