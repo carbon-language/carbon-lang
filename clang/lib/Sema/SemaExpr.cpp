@@ -4777,9 +4777,9 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       RecordDecl *RD = RC->getDecl();
       if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
         if (!CRD->isPOD())
-          return ExprError(Diag(BuiltinLoc, diag::err_offsetof_non_pod_type)
-                   << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
-                   << Res->getType());
+          ExprError(Diag(BuiltinLoc, diag::warn_offsetof_non_pod_type)
+            << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
+            << Res->getType());
       }
       
       FieldDecl *MemberDecl

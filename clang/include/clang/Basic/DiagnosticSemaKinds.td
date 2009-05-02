@@ -936,7 +936,8 @@ def err_offsetof_record_type : Error<
 def err_offsetof_array_type : Error<"offsetof requires array type, %0 invalid">;
 def ext_offsetof_extended_field_designator : Extension<
   "using extended field designator is an extension">;
-def err_offsetof_non_pod_type : Error<"offset of on non-POD type %0">;
+def warn_offsetof_non_pod_type : Warning<"offset of on non-POD type %0">,
+  InGroup<InvalidOffsetof>;
 
 def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,

@@ -82,6 +82,7 @@ def : DiagGroup<"strict-overflow=1">;
 def : DiagGroup<"strict-overflow=2">;
 def : DiagGroup<"strict-overflow">;
 
+def InvalidOffsetof : DiagGroup<"invalid-offsetof">;
 def : DiagGroup<"strict-prototypes">;
 def : DiagGroup<"strict-selector-match">;
 def Switch         : DiagGroup<"switch">;
