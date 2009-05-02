@@ -511,7 +511,9 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
       ThisNode->operator=(0);
       break;
     case Callback:
-      assert(0 && "Callback not implemented yet!");
+      // Forward to the subclass's implementation.
+      static_cast<CallbackVH*>(ThisNode)->deleted();
+      break;
     }
   }
   
@@ -543,10 +545,16 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
       ThisNode->operator=(New);
       break;
     case Callback:
-      assert(0 && "Callback not implemented yet!");
+      // Forward to the subclass's implementation.
+      static_cast<CallbackVH*>(ThisNode)->allUsesReplacedWith(New);
+      break;
     }
   }
 }
+
+/// ~CallbackVH. Empty, but defined here to avoid emitting the vtable
+/// more than once.
+CallbackVH::~CallbackVH() {}
 
 
 //===----------------------------------------------------------------------===//

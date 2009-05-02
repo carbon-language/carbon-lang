@@ -41,7 +41,7 @@ class ValueHandleBase {
 protected:
   /// HandleBaseKind - This indicates what sub class the handle actually is.
   /// This is to avoid having a vtable for the light-weight handle pointers. The
-  /// fully generally Callback version does have a vtable.
+  /// fully general Callback version does have a vtable.
   enum HandleBaseKind {
     Assert,
     Weak,
@@ -185,6 +185,50 @@ public:
 
   ValueTy *operator->() const { return getValPtr(); }
   ValueTy &operator*() const { return *getValPtr(); }
+};
+
+/// CallbackVH - This is a value handle that allows subclasses to define
+/// callbacks that run when the underlying Value has RAUW called on it or is
+/// destroyed.  This class can be used as the key of a map, as long as the user
+/// takes it out of the map before calling setValPtr() (since the map has to
+/// rearrange itself when the pointer changes).  Unlike ValueHandleBase, this
+/// class has a vtable and a virtual destructor.
+class CallbackVH : public ValueHandleBase {
+protected:
+  CallbackVH(const CallbackVH &RHS)
+    : ValueHandleBase(Callback, RHS) {}
+
+  virtual ~CallbackVH();
+
+  void setValPtr(Value *P) {
+    ValueHandleBase::operator=(P);
+  }
+
+public:
+  CallbackVH() : ValueHandleBase(Callback) {}
+  CallbackVH(Value *P) : ValueHandleBase(Callback, P) {}
+
+  operator Value*() const {
+    return getValPtr();
+  }
+
+  /// Called when this->getValPtr() is destroyed, inside ~Value(), so you may
+  /// call any non-virtual Value method on getValPtr(), but no subclass methods.
+  /// If WeakVH were implemented as a CallbackVH, it would use this method to
+  /// call setValPtr(NULL).  AssertingVH would use this method to cause an
+  /// assertion failure.
+  ///
+  /// All implementations must remove the reference from this object to the
+  /// Value that's being destroyed.
+  virtual void deleted() {
+    setValPtr(NULL);
+  }
+
+  /// Called when this->getValPtr()->replaceAllUsesWith(new_value) is called,
+  /// _before_ any of the uses have actually been replaced.  If WeakVH were
+  /// implemented as a CallbackVH, it would use this method to call
+  /// setValPtr(new_value).  AssertingVH would do nothing in this method.
+  virtual void allUsesReplacedWith(Value *new_value) {}
 };
 
 } // End llvm namespace

@@ -30,6 +30,12 @@ protected:
   }
 };
 
+class ConcreteCallbackVH : public CallbackVH {
+public:
+  ConcreteCallbackVH() : CallbackVH() {}
+  ConcreteCallbackVH(Value *V) : CallbackVH(V) {}
+};
+
 TEST_F(ValueHandle, WeakVH_BasicOperation) {
   WeakVH WVH(BitcastV.get());
   EXPECT_EQ(BitcastV.get(), WVH);
@@ -177,5 +183,135 @@ TEST_F(ValueHandle, AssertingVH_Asserts) {
 #endif  // GTEST_HAS_DEATH_TEST
 
 #endif  // NDEBUG
+
+TEST_F(ValueHandle, CallbackVH_BasicOperation) {
+  ConcreteCallbackVH CVH(BitcastV.get());
+  EXPECT_EQ(BitcastV.get(), CVH);
+  CVH = ConstantV;
+  EXPECT_EQ(ConstantV, CVH);
+
+  // Make sure I can call a method on the underlying Value.  It
+  // doesn't matter which method.
+  EXPECT_EQ(Type::Int32Ty, CVH->getType());
+  EXPECT_EQ(Type::Int32Ty, (*CVH).getType());
+}
+
+TEST_F(ValueHandle, CallbackVH_Comparisons) {
+  ConcreteCallbackVH BitcastCVH(BitcastV.get());
+  ConcreteCallbackVH ConstantCVH(ConstantV);
+
+  EXPECT_TRUE(BitcastCVH == BitcastCVH);
+  EXPECT_TRUE(BitcastV.get() == BitcastCVH);
+  EXPECT_TRUE(BitcastCVH == BitcastV.get());
+  EXPECT_FALSE(BitcastCVH == ConstantCVH);
+
+  EXPECT_TRUE(BitcastCVH != ConstantCVH);
+  EXPECT_TRUE(BitcastV.get() != ConstantCVH);
+  EXPECT_TRUE(BitcastCVH != ConstantV);
+  EXPECT_FALSE(BitcastCVH != BitcastCVH);
+
+  // Cast to Value* so comparisons work.
+  Value *BV = BitcastV.get();
+  Value *CV = ConstantV;
+  EXPECT_EQ(BV < CV, BitcastCVH < ConstantCVH);
+  EXPECT_EQ(BV <= CV, BitcastCVH <= ConstantCVH);
+  EXPECT_EQ(BV > CV, BitcastCVH > ConstantCVH);
+  EXPECT_EQ(BV >= CV, BitcastCVH >= ConstantCVH);
+
+  EXPECT_EQ(BV < CV, BitcastV.get() < ConstantCVH);
+  EXPECT_EQ(BV <= CV, BitcastV.get() <= ConstantCVH);
+  EXPECT_EQ(BV > CV, BitcastV.get() > ConstantCVH);
+  EXPECT_EQ(BV >= CV, BitcastV.get() >= ConstantCVH);
+
+  EXPECT_EQ(BV < CV, BitcastCVH < ConstantV);
+  EXPECT_EQ(BV <= CV, BitcastCVH <= ConstantV);
+  EXPECT_EQ(BV > CV, BitcastCVH > ConstantV);
+  EXPECT_EQ(BV >= CV, BitcastCVH >= ConstantV);
+}
+
+TEST_F(ValueHandle, CallbackVH_CallbackOnDeletion) {
+  class RecordingVH : public CallbackVH {
+  public:
+    int DeletedCalls;
+    int AURWCalls;
+
+    RecordingVH() : DeletedCalls(0), AURWCalls(0) {}
+    RecordingVH(Value *V) : CallbackVH(V), DeletedCalls(0), AURWCalls(0) {}
+
+  private:
+    virtual void deleted() { DeletedCalls++; CallbackVH::deleted(); }
+    virtual void allUsesReplacedWith(Value *) { AURWCalls++; }
+  };
+
+  RecordingVH RVH;
+  RVH = BitcastV.get();
+  EXPECT_EQ(0, RVH.DeletedCalls);
+  EXPECT_EQ(0, RVH.AURWCalls);
+  BitcastV.reset();
+  EXPECT_EQ(1, RVH.DeletedCalls);
+  EXPECT_EQ(0, RVH.AURWCalls);
+}
+
+TEST_F(ValueHandle, CallbackVH_CallbackOnRAUW) {
+  class RecordingVH : public CallbackVH {
+  public:
+    int DeletedCalls;
+    Value *AURWArgument;
+
+    RecordingVH() : DeletedCalls(0), AURWArgument(NULL) {}
+    RecordingVH(Value *V)
+      : CallbackVH(V), DeletedCalls(0), AURWArgument(NULL) {}
+
+  private:
+    virtual void deleted() { DeletedCalls++; CallbackVH::deleted(); }
+    virtual void allUsesReplacedWith(Value *new_value) {
+      EXPECT_EQ(NULL, AURWArgument);
+      AURWArgument = new_value;
+    }
+  };
+
+  RecordingVH RVH;
+  RVH = BitcastV.get();
+  EXPECT_EQ(0, RVH.DeletedCalls);
+  EXPECT_EQ(NULL, RVH.AURWArgument);
+  BitcastV->replaceAllUsesWith(ConstantV);
+  EXPECT_EQ(0, RVH.DeletedCalls);
+  EXPECT_EQ(ConstantV, RVH.AURWArgument);
+}
+
+TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
+  class RecoveringVH : public CallbackVH {
+  public:
+    int DeletedCalls;
+    Value *AURWArgument;
+
+    RecoveringVH() : DeletedCalls(0), AURWArgument(NULL) {}
+    RecoveringVH(Value *V)
+      : CallbackVH(V), DeletedCalls(0), AURWArgument(NULL) {}
+
+  private:
+    virtual void deleted() {
+      getValPtr()->replaceAllUsesWith(Constant::getNullValue(Type::Int32Ty));
+      setValPtr(NULL);
+    }
+    virtual void allUsesReplacedWith(Value *new_value) {
+      ASSERT_TRUE(NULL != getValPtr());
+      EXPECT_EQ(1, getValPtr()->getNumUses());
+      EXPECT_EQ(NULL, AURWArgument);
+      AURWArgument = new_value;
+    }
+  };
+
+  // Normally, if a value has uses, deleting it will crash.  However, we can use
+  // a CallbackVH to remove the uses before the check for no uses.
+  RecoveringVH RVH;
+  RVH = BitcastV.get();
+  std::auto_ptr<BinaryOperator> BitcastUser(
+    BinaryOperator::CreateAdd(RVH, Constant::getNullValue(Type::Int32Ty)));
+  EXPECT_EQ(BitcastV.get(), BitcastUser->getOperand(0));
+  BitcastV.reset();  // Would crash without the ValueHandler.
+  EXPECT_EQ(Constant::getNullValue(Type::Int32Ty), RVH.AURWArgument);
+  EXPECT_EQ(Constant::getNullValue(Type::Int32Ty), BitcastUser->getOperand(0));
+}
 
 }
