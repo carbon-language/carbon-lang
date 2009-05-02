@@ -62,6 +62,11 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 #include <cstdlib>
+#if HAVE_UNISTD_H
+#  include <unistd.h>
+#  include <sys/ioctl.h>
+#  include <sys/types.h>
+#endif
 
 using namespace clang;
 
@@ -1865,6 +1870,33 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
+/// \brief Determine the width of the terminal we'll be printing to,
+/// if any.
+///
+/// \returns the width of the terminal (in characters), if there is a
+/// terminal. If there is no terminal, returns 0.
+static unsigned getTerminalWidth() {
+#if HAVE_UNISTD_H
+  // Is this a terminal? If not, don't wrap by default.
+  if (!isatty(/* Standard Error=*/2))
+    return 0;
+
+  // Try to determine the width of the terminal.
+  struct winsize ws;
+  unsigned Columns = 80; // A guess, in case the ioctl fails.
+  if (ioctl(2, TIOCGWINSZ, &ws) == 0)
+    Columns = ws.ws_col;
+
+  // Give ourselves just a little extra room, since printing to the
+  // end of the terminal will make it wrap when we don't want it to.
+  if (Columns)
+    --Columns;
+  return Columns;
+#endif
+
+  return 0;
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -1877,7 +1909,7 @@ int main(int argc, char **argv) {
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
-  
+
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
   llvm::OwningPtr<DiagnosticClient> DiagClient;
@@ -1894,6 +1926,13 @@ int main(int argc, char **argv) {
     }
   } else if (HTMLDiag.empty()) {
     // Print diagnostics to stderr by default.
+
+    // If -fmessage-length=N was not specified, determine whether this
+    // is a terminal and, if so, implicitly define -fmessage-length
+    // appropriately.
+    if (MessageLength.getNumOccurrences() == 0)
+      MessageLength.setValue(getTerminalWidth());
+
     DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
                                                !NoCaretDiagnostics,
