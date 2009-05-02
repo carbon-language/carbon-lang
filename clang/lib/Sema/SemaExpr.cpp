@@ -4734,6 +4734,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
 
   if (!Dependent) {
+    bool DidWarnAboutNonPOD;
+    
     // FIXME: Dependent case loses a lot of information here. And probably
     // leaks like a sieve.
     for (unsigned i = 0; i != NumComponents; ++i) {
@@ -4776,10 +4778,12 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       // Get the decl corresponding to this.
       RecordDecl *RD = RC->getDecl();
       if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
-        if (!CRD->isPOD())
+        if (!CRD->isPOD() && !DidWarnAboutNonPOD) {
           ExprError(Diag(BuiltinLoc, diag::warn_offsetof_non_pod_type)
             << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
             << Res->getType());
+          DidWarnAboutNonPOD = true;
+        }
       }
       
       FieldDecl *MemberDecl
