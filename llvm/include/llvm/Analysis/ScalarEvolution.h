@@ -333,6 +333,11 @@ namespace llvm {
     /// expression cannot be evaluated, return UnknownValue itself.
     SCEVHandle getSCEVAtScope(SCEV *S, const Loop *L);
 
+    /// forgetLoopPHIs - Delete the memoized SCEVs associated with the
+    /// PHI nodes in the given loop. This is used when the trip count of
+    /// the loop may have changed.
+    void forgetLoopPHIs(const Loop *L);
+
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();

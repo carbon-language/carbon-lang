@@ -2111,9 +2111,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
     // conservative estimates made without the benefit
     // of trip count information.
     if (ItCount.hasAnyInfo())
-      for (BasicBlock::iterator I = L->getHeader()->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I)
-        deleteValueFromRecords(PN);
+      forgetLoopPHIs(L);
   }
   return Pair.first->second;
 }
@@ -2124,6 +2122,16 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
 /// is deleted.
 void ScalarEvolution::forgetLoopBackedgeTakenCount(const Loop *L) {
   BackedgeTakenCounts.erase(L);
+  forgetLoopPHIs(L);
+}
+
+/// forgetLoopPHIs - Delete the memoized SCEVs associated with the
+/// PHI nodes in the given loop. This is used when the trip count of
+/// the loop may have changed.
+void ScalarEvolution::forgetLoopPHIs(const Loop *L) {
+  for (BasicBlock::iterator I = L->getHeader()->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    deleteValueFromRecords(PN);
 }
 
 /// ComputeBackedgeTakenCount - Compute the number of times the backedge
