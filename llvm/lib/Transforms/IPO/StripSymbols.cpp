@@ -291,7 +291,7 @@ bool StripDebugInfo(Module &M) {
         if (Constant *C = dyn_cast<Constant>(Arg1)) 
           DeadConstants.push_back(C);
         else 
-          RecursivelyDeleteTriviallyDeadInstructions(Arg1, NULL);
+          RecursivelyDeleteTriviallyDeadInstructions(Arg1);
       }
       if (Arg2->use_empty())
         if (Constant *C = dyn_cast<Constant>(Arg2)) 
@@ -381,7 +381,7 @@ bool StripDebugDeclare::runOnModule(Module &M) {
         if (Constant *C = dyn_cast<Constant>(Arg1)) 
           DeadConstants.push_back(C);
         else 
-          RecursivelyDeleteTriviallyDeadInstructions(Arg1, NULL);
+          RecursivelyDeleteTriviallyDeadInstructions(Arg1);
       }
       if (Arg2->use_empty())
         if (Constant *C = dyn_cast<Constant>(Arg2)) 
