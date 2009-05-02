@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_TYPEBUILDER_H
 
 #include "llvm/DerivedTypes.h"
+#include <limits.h>
 
 namespace llvm {
 
