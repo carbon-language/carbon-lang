@@ -162,11 +162,6 @@ namespace clang {
         unsigned ID = DiagInfo.size()+DIAG_UPPER_LIMIT;
         DiagIDs.insert(std::make_pair(D, ID));
         DiagInfo.push_back(D);
-
-        // If this is a warning, and all warnings are supposed to map to errors,
-        // insert the mapping now.
-        if (L == Diagnostic::Warning && Diags.getWarningsAsErrors())
-          Diags.setDiagnosticMapping((diag::kind)ID, diag::MAP_ERROR);
         return ID;
       }
     };
