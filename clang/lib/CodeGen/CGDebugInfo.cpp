@@ -103,13 +103,20 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     LangTag = llvm::dwarf::DW_LANG_C89;
   }
 
+  std::string Producer = "clang";// FIXME: clang version.
+  bool isOptimized = false; // FIXME: Encode optimization level.
+  const char *Flags = "";   // FIXME: Encode command line options.
+
+  // Figure out which version of the ObjC runtime we have.
+  unsigned RuntimeVers = 0;
+  if (LO.ObjC1)
+    RuntimeVers = LO.ObjCNonFragileABI ? 2 : 1;
+  
   // Create new compile unit.
-  // FIXME: Do not know how to get clang version yet.
-  // FIXME: Encode command line options.
-  // FIXME: Encode optimization level.
   return Unit = DebugFactory.CreateCompileUnit(LangTag, AbsFileName.getLast(),
                                                AbsFileName.getDirname(), 
-                                               "clang", isMain);
+                                               Producer, isMain, isOptimized,
+                                               Flags, RuntimeVers);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
