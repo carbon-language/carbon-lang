@@ -117,6 +117,20 @@ int f7(int x) {
   return x;
 }
 
+int* f7b(int *x) {
+  
+  int* p = 0;
+  
+  if (((void*)0) == x)
+    p = qux();
+  
+  if (((void*)0) == x)
+    *p = 1; // no-warning
+    
+  return x;
+}
+
+
 int f8(int *p, int *q) {
   if (!p)
     if (p)
