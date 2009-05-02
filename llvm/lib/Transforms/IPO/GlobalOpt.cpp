@@ -1549,10 +1549,12 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::Int1Ty, false,
-         GlobalValue::InternalLinkage, ConstantInt::getFalse(),
-                                             GV->getName()+".b",
+                                             GlobalValue::InternalLinkage, 
+                                             ConstantInt::getFalse(),
+                                             "",
                                              (Module *)NULL,
                                              GV->isThreadLocal());
+  NewGV->takeName(GV);
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   Constant *InitVal = GV->getInitializer();
