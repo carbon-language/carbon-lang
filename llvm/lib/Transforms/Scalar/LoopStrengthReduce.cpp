@@ -406,20 +406,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
     }
 
   // Okay, all uses of IV by PN are in predecessor blocks that really are
-  // dominated by the latch block.  Split the critical edges and use the
-  // post-incremented value.
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (PN->getIncomingValue(i) == IV) {
-      SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P, false);
-      // Splitting the critical edge can reduce the number of entries in this
-      // PHI.
-      e = PN->getNumIncomingValues();
-      if (--NumUses == 0) break;
-    }
-
-  // PHI node might have become a constant value after SplitCriticalEdge.
-  DeadInsts.push_back(User);
-  
+  // dominated by the latch block.  Use the post-incremented value.
   return true;
 }
 
