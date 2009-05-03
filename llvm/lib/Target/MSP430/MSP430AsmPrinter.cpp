@@ -200,7 +200,7 @@ void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
    assert(0 && "Unsupported CC code");
    break;
   case MSP430::COND_E:
-   O << 'e';
+   O << "eq";
    break;
   case MSP430::COND_NE:
    O << "ne";
