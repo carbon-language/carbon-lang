@@ -461,7 +461,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     //   the class-key shall agree in kind with the original class
     //   template declaration (7.1.5.3).
     RecordDecl *PrevRecordDecl = PrevClassTemplate->getTemplatedDecl();
-    if (PrevRecordDecl->getTagKind() != Kind) {
+    if (!isAcceptableTagRedeclaration(PrevRecordDecl->getTagKind(), Kind)) {
       Diag(KWLoc, diag::err_use_with_wrong_tag) 
         << Name
         << CodeModificationHint::CreateReplacement(KWLoc, 
@@ -1975,7 +1975,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
   case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
   }
-  if (ClassTemplate->getTemplatedDecl()->getTagKind() != Kind) {
+  if (!isAcceptableTagRedeclaration(
+                              ClassTemplate->getTemplatedDecl()->getTagKind(),
+                                    Kind)) {
     Diag(KWLoc, diag::err_use_with_wrong_tag) 
       << ClassTemplate
       << CodeModificationHint::CreateReplacement(KWLoc, 

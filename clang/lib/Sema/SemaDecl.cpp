@@ -3295,7 +3295,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       if (TK == TK_Reference || isDeclInScope(PrevDecl, SearchDC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
-        if (PrevTagDecl->getTagKind() != Kind) {
+        if (!isAcceptableTagRedeclaration(PrevTagDecl->getTagKind(), Kind)) {
           bool SafeToContinue 
             = (PrevTagDecl->getTagKind() != TagDecl::TK_enum &&
                Kind != TagDecl::TK_enum);

@@ -14,12 +14,9 @@ extern "C" {
   template<typename T> class D; // expected-error{{templates must have C++ linkage}}
 }
 
-template<class U> class A; // expected-note{{previous template declaration is here}}\
-                           // expected-note{{previous use is here}}
+template<class U> class A; // expected-note{{previous template declaration is here}}
 
 template<int N> class A; // expected-error{{template parameter has a different kind in template redeclaration}}
-
-template<class T> struct A; // expected-error{{use of 'A' with tag type that does not match previous declaration}}
 
 template<int N> class NonTypeTemplateParm;
 

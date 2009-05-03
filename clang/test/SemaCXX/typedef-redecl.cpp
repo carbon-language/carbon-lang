@@ -29,5 +29,3 @@ typedef I I;
 
 struct s { };
 
-typedef class st { /* ... */ } st; // expected-note{{previous use is here}}
-struct st; // expected-error{{use of 'st' with tag type that does not match previous declaration}}
