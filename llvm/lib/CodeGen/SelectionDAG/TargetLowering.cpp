@@ -79,7 +79,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SREM_I32] = "__modsi3";
   Names[RTLIB::SREM_I64] = "__moddi3";
   Names[RTLIB::SREM_I128] = "__modti3";
-  Names[RTLIB::UREM_I16] = "__umodsi3";
+  Names[RTLIB::UREM_I16] = "__umodhi3";
   Names[RTLIB::UREM_I32] = "__umodsi3";
   Names[RTLIB::UREM_I64] = "__umoddi3";
   Names[RTLIB::UREM_I128] = "__umodti3";
