@@ -3980,12 +3980,14 @@ void Sema::ActOnFields(Scope* S,
         for (ObjCInterfaceDecl::ivar_iterator IVI = ID->ivar_begin(), 
              IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
           ObjCIvarDecl* Ivar = (*IVI);
-          IdentifierInfo *II = Ivar->getIdentifier();
-          ObjCIvarDecl* prevIvar =
-            ID->getSuperClass()->lookupInstanceVariable(Context, II);
-          if (prevIvar) {
-            Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
-            Diag(prevIvar->getLocation(), diag::note_previous_declaration);
+
+          if (IdentifierInfo *II = Ivar->getIdentifier()) {
+            ObjCIvarDecl* prevIvar =
+              ID->getSuperClass()->lookupInstanceVariable(Context, II);
+            if (prevIvar) {
+              Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
+              Diag(prevIvar->getLocation(), diag::note_previous_declaration);
+            }
           }
         }
       }
