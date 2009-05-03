@@ -1385,14 +1385,11 @@ public:
     if (InitializePreprocessor(*PP, InFile, InitOpts))
       return 0;
 
-    /// FIXME: PP can only handle one callback
-    if (ProgAction != PrintPreprocessedInput) {
-      std::string ErrStr;
-      bool DFG = CreateDependencyFileGen(PP.get(), ErrStr);
-      if (!DFG && !ErrStr.empty()) {
-        fprintf(stderr, "%s", ErrStr.c_str());
-        return 0;
-      }
+    std::string ErrStr;
+    bool DFG = CreateDependencyFileGen(PP.get(), ErrStr);
+    if (!DFG && !ErrStr.empty()) {
+      fprintf(stderr, "%s", ErrStr.c_str());
+      return 0;
     }
 
     return PP.take();
