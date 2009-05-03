@@ -2565,7 +2565,8 @@ private:
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
   Action::OwningExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
   bool SemaBuiltinPrefetch(CallExpr *TheCall); 
-  bool SemaBuiltinObjectSize(CallExpr *TheCall); 
+  bool SemaBuiltinObjectSize(CallExpr *TheCall);
+  bool SemaBuiltinLongjmp(CallExpr *TheCall);
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                               bool HasVAListArg, unsigned format_idx,
                               unsigned firstDataArg);
