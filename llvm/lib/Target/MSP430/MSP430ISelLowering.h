@@ -36,7 +36,20 @@ namespace llvm {
 
       /// Wrapper - A wrapper node for TargetConstantPool, TargetExternalSymbol,
       /// and TargetGlobalAddress.
-      Wrapper
+      Wrapper,
+
+      /// CMP - Compare instruction.
+      CMP,
+
+      /// SetCC. Operand 0 is condition code, and operand 1 is the flag
+      /// operand produced by a CMP instruction.
+      SETCC,
+
+      /// MSP430 conditional branches. Operand 0 is the chain operand, operand 1
+      /// is the block to branch if condition is true, operand 2 is the
+      /// condition code, and operand 3 is the flag operand produced by a CMP
+      /// instruction.
+      BRCOND
     };
   }
 
@@ -54,12 +67,16 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+    virtual MVT getSetCCResultType(MVT VT) const;
+
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
                            unsigned CC);

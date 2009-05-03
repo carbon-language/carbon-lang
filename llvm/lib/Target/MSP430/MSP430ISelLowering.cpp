@@ -70,6 +70,10 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SRA, MVT::i16, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
+  setOperationAction(ISD::BR_CC, MVT::Other, Expand);
+  setOperationAction(ISD::BRCOND, MVT::Other, Custom);
+  setOperationAction(ISD::SETCC, MVT::i8   , Custom);
+  setOperationAction(ISD::SETCC, MVT::i16  , Custom);
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -79,6 +83,8 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::RET:              return LowerRET(Op, DAG);
   case ISD::CALL:             return LowerCALL(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
+  case ISD::SETCC:            return LowerSETCC(Op, DAG);
+  case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -437,6 +443,80 @@ SDValue MSP430TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
                      getPointerTy(), Result);
 }
 
+MVT MSP430TargetLowering::getSetCCResultType(MVT VT) const {
+  return MVT::i8;
+}
+
+SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+
+  // FIXME: Handle bittests someday
+  assert(!LHS.getValueType().isFloatingPoint() && "We don't handle FP yet");
+
+  // FIXME: Handle jump negative someday
+  unsigned TargetCC = 0;
+  switch (CC) {
+  default: assert(0 && "Invalid integer condition!");
+  case ISD::SETEQ:
+    TargetCC = MSP430::COND_E;  // aka COND_Z
+    break;
+  case ISD::SETNE:
+    TargetCC = MSP430::COND_NE; // aka COND_NZ
+    break;
+  case ISD::SETULE:
+    std::swap(LHS, RHS);        // FALLTHROUGH
+  case ISD::SETUGE:
+    TargetCC = MSP430::COND_HS; // aka COND_C
+    break;
+  case ISD::SETUGT:
+    std::swap(LHS, RHS);        // FALLTHROUGH
+  case ISD::SETULT:
+    TargetCC = MSP430::COND_LO; // aka COND_NC
+    break;
+  case ISD::SETLE:
+    std::swap(LHS, RHS);        // FALLTHROUGH
+  case ISD::SETGE:
+    TargetCC = MSP430::COND_GE;
+    break;
+  case ISD::SETGT:
+    std::swap(LHS, RHS);        // FALLTHROUGH
+  case ISD::SETLT:
+    TargetCC = MSP430::COND_L;
+    break;
+  }
+
+  SDValue Cond = DAG.getNode(MSP430ISD::CMP, dl, MVT::i16, LHS, RHS);
+  return DAG.getNode(MSP430ISD::SETCC, dl, MVT::i8,
+                     DAG.getConstant(TargetCC, MVT::i8), Cond);
+}
+
+SDValue MSP430TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Cond  = Op.getOperand(1);
+  SDValue Dest  = Op.getOperand(2);
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue CC;
+
+  // Lower condition if not lowered yet
+  if (Cond.getOpcode() == ISD::SETCC)
+    Cond = LowerSETCC(Cond, DAG);
+
+  // If condition flag is set by a MSP430ISD::CMP, then use it as the condition
+  // setting operand in place of the MSP430ISD::SETCC.
+  if (Cond.getOpcode() == MSP430ISD::SETCC) {
+    CC = Cond.getOperand(0);
+    Cond = Cond.getOperand(1);
+  } else
+    assert(0 && "Unimplemented condition!");
+
+  return DAG.getNode(MSP430ISD::BRCOND, dl, Op.getValueType(),
+                     Chain, Dest, CC, Cond);
+}
+
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
@@ -444,5 +524,8 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::RRA:                return "MSP430ISD::RRA";
   case MSP430ISD::CALL:               return "MSP430ISD::CALL";
   case MSP430ISD::Wrapper:            return "MSP430ISD::Wrapper";
+  case MSP430ISD::BRCOND:             return "MSP430ISD::BRCOND";
+  case MSP430ISD::CMP:                return "MSP430ISD::CMP";
+  case MSP430ISD::SETCC:              return "MSP430ISD::SETCC";
   }
 }

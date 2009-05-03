@@ -21,6 +21,21 @@ namespace llvm {
 
 class MSP430TargetMachine;
 
+namespace MSP430 {
+  // MSP430 specific condition code. These correspond to MSP430_*_COND in
+  // MSP430InstrInfo.td. They must be kept in synch.
+  enum CondCode {
+    COND_E  = 0,  // aka COND_Z
+    COND_NE = 1,  // aka COND_NZ
+    COND_HS = 2,  // aka COND_C
+    COND_LO = 3,  // aka COND_NC
+    COND_GE = 4,
+    COND_L  = 5,
+
+    COND_INVALID
+  };
+}
+
 class MSP430InstrInfo : public TargetInstrInfoImpl {
   const MSP430RegisterInfo RI;
   MSP430TargetMachine &TM;
