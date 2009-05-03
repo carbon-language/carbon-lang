@@ -75,9 +75,12 @@ FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM) {
 // FIXME: This is pretty dummy routine and needs to be rewritten in the future.
 bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
                                     SDValue &Base, SDValue &Disp) {
-  // We don't support frame index stuff yet.
-  if (isa<FrameIndexSDNode>(Addr))
-    return false;
+  // Try to match frame address first.
+  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i16);
+    Disp = CurDAG->getTargetConstant(0, MVT::i16);
+    return true;
+  }
 
   // Operand is a result from ADD with constant operand which fits into i16.
   switch (Addr.getOpcode()) {
@@ -86,13 +89,13 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
       uint64_t CVal = CN->getZExtValue();
       // Offset should fit into 16 bits.
       if (((CVal << 48) >> 48) == CVal) {
-        // We don't support frame index stuff yet.
-        if (isa<FrameIndexSDNode>(Addr.getOperand(0)))
-          return false;
+        SDValue N0 = Addr.getOperand(0);
+        if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0))
+          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i16);
+        else
+          Base = N0;
 
-        Base = Addr.getOperand(0);
         Disp = CurDAG->getTargetConstant(CVal, MVT::i16);
-
         return true;
       }
     }
@@ -103,7 +106,6 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
       Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
                                             MVT::i16, G->getOffset());
       Disp = CurDAG->getTargetConstant(0, MVT::i16);
-
       return true;
     }
     break;
