@@ -262,7 +262,7 @@ void test_stringWithFormat() {
   [string release]; // expected-warning{{Incorrect decrement of the reference count}}
 }
 
-// Test isTrackedObjectType()
+// Test isTrackedObjectType().
 typedef NSString* WonkyTypedef;
 @interface TestIsTracked
 + (WonkyTypedef)newString;
@@ -272,6 +272,22 @@ void test_isTrackedObjectType(void) {
   NSString *str = [TestIsTracked newString]; // expected-warning{{Potential leak}}
 }
 
+// Test isTrackedCFObjectType().
+@interface TestIsCFTracked
++ (CFStringRef) badNewCFString;
++ (CFStringRef) newCFString;
+@end
+
+@implementation TestIsCFTracked
++ (CFStringRef) newCFString {
+  return CFStringCreateWithFormat(kCFAllocatorDefault, ((void*)0), ((CFStringRef) __builtin___CFStringMakeConstantString ("" "%d" "")), 100); // no-warning
+}
++ (CFStringRef) badNewCFString {
+  return CFStringCreateWithFormat(kCFAllocatorDefault, ((void*)0), ((CFStringRef) __builtin___CFStringMakeConstantString ("" "%d" "")), 100); // expected-warning{{leak}}
+}
+
+
+
 // Test @synchronized
 void test_synchronized(id x) {
   @synchronized(x) {
@@ -279,3 +295,4 @@ void test_synchronized(id x) {
   }
 }
 
+// Test return from method starting with 'new' or 'copy'

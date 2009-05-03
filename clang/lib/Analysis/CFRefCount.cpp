@@ -621,6 +621,7 @@ public:
   void InitializeMethodSummaries();
   
   bool isTrackedObjCObjectType(QualType T);
+  bool isTrackedCFObjectType(QualType T);
   
 private:
   
@@ -832,6 +833,14 @@ bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
       return true;
   
   return false;
+}
+
+bool RetainSummaryManager::isTrackedCFObjectType(QualType T) {
+  return isRefType(T, "CF") || // Core Foundation.
+         isRefType(T, "CG") || // Core Graphics.
+         isRefType(T, "DADisk") || // Disk Arbitration API.
+         isRefType(T, "DADissenter") ||
+         isRefType(T, "DASessionRef");
 }
 
 //===----------------------------------------------------------------------===//
@@ -1170,26 +1179,37 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
     assert(!str.empty());
     if (CStrInCStrNoCase(&str[0], "delegate:")) ReceiverEff = StopTracking;
   }
+
   
   // Look for methods that return an owned object.
-  if (!isTrackedObjCObjectType(RetTy)) {
-    if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
-      return 0;
+  if (isTrackedObjCObjectType(RetTy)) {    
+    // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
+    //  by instance methods.
     
-    return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff,
-                                MayEscape);
+    RetEffect E =
+      followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
+      ? (isGCEnabled() ? RetEffect::MakeGCNotOwned()
+         : RetEffect::MakeOwned(RetEffect::ObjC, true))
+      : RetEffect::MakeNotOwned(RetEffect::ObjC);
+    
+    return getPersistentSummary(E, ReceiverEff, MayEscape);    
   }
   
-  // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
-  //  by instance methods.
+  // Look for methods that return an owned core foundation object.
+  if (isTrackedCFObjectType(RetTy)) {
+    RetEffect E =
+      followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
+    ? RetEffect::MakeOwned(RetEffect::CF, true)
+    : RetEffect::MakeNotOwned(RetEffect::CF);
+    
+    return getPersistentSummary(E, ReceiverEff, MayEscape);
+  }
   
-  RetEffect E =
-    followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
-    ? (isGCEnabled() ? RetEffect::MakeGCNotOwned()
-                     : RetEffect::MakeOwned(RetEffect::ObjC, true))
-      : RetEffect::MakeNotOwned(RetEffect::ObjC);
+  if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
+    return 0;
   
-  return getPersistentSummary(E, ReceiverEff, MayEscape);
+  return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff,
+                              MayEscape);
 }
 
 RetainSummary*
