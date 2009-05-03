@@ -648,7 +648,7 @@ public:
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
   
-  bool isTrackedObjectType(QualType T);
+  bool isTrackedObjCObjectType(QualType T);
   
 private:
   
@@ -865,7 +865,7 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
 // Predicates.
 //===----------------------------------------------------------------------===//
 
-bool RetainSummaryManager::isTrackedObjectType(QualType Ty) {
+bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
   if (!Ctx.isObjCObjectPointerType(Ty))
     return false;
 
@@ -1142,7 +1142,7 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   bool hasEffect = false;
   RetEffect RE = RetEffect::MakeNoRet();
   
-  if (isTrackedObjectType(MD->getResultType())) {
+  if (isTrackedObjCObjectType(MD->getResultType())) {
     if (MD->getAttr<ObjCOwnershipReturnsAttr>()) {
       RE = isGCEnabled() ? RetEffect::MakeGCNotOwned()
                          : RetEffect::MakeOwned(RetEffect::ObjC, true);
@@ -1230,7 +1230,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   }
   
   // Look for methods that return an owned object.
-  if (!isTrackedObjectType(RetTy)) {
+  if (!isTrackedObjCObjectType(RetTy)) {
     if (ScratchArgs.empty() && ReceiverEff == DoNothing)
       return 0;
     
