@@ -83,7 +83,27 @@ bool MSP430AsmPrinter::doFinalization(Module &M) {
   return AsmPrinter::doFinalization(M);
 }
 
-bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &F) {
+bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  // Print out code for the function.
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    // Print a label for the basic block.
+    if (I != MF.begin()) {
+      printBasicBlockLabel(I, true , true);
+      O << '\n';
+    }
+
+    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
+         II != E; ++II) {
+      // Print the assembly for the instruction.
+      O << "\t";
+      printMachineInstruction(II);
+    }
+
+    // Each Basic Block is separated by a newline
+    O << '\n';
+  }
+
   // We didn't modify anything
   return false;
 }
