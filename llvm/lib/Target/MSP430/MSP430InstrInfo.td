@@ -152,4 +152,15 @@ def SAR16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                      [(set GR16:$dst, (MSP430rra GR16:$src)),
                       (implicit SR)]>;
 } // Defs = [SR]
+
+let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
+def OR16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                    "bis.w\t{$src2, $dst|$dst, $src2}",
+                    [(set GR16:$dst, (or GR16:$src1, GR16:$src2))]>;
+}
+
+def OR16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                    "bis.w\t{$src2, $dst|$dst, $src2}",
+                    [(set GR16:$dst, (or GR16:$src1, imm:$src2))]>;
+
 } // isTwoAddress = 1

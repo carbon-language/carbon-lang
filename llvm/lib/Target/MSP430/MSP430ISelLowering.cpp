@@ -54,7 +54,6 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setShiftAmountType(MVT::i8);
 
   setOperationAction(ISD::SRA, MVT::i16, Custom);
-
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 

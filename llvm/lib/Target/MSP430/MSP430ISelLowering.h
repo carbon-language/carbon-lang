@@ -50,7 +50,6 @@ namespace llvm {
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
-
   private:
     const MSP430Subtarget &Subtarget;
     const MSP430TargetMachine &TM;
