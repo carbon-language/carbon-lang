@@ -79,7 +79,8 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
     return false;
 
   // Operand is a result from ADD with constant operand which fits into i16.
-  if (Addr.getOpcode() == ISD::ADD) {
+  switch (Addr.getOpcode()) {
+  case ISD::ADD:
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
       uint64_t CVal = CN->getZExtValue();
       // Offset should fit into 16 bits.
@@ -94,7 +95,21 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
         return true;
       }
     }
-  }
+    break;
+  case MSP430ISD::Wrapper:
+    SDValue N0 = Addr.getOperand(0);
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+      // We can match addresses of globals without any offsets
+      if (!G->getOffset()) {
+        Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
+                                              MVT::i16, 0);
+        Disp = CurDAG->getTargetConstant(0, MVT::i16);
+
+        return true;
+      }
+    }
+    break;
+  };
 
   Base = Addr;
   Disp = CurDAG->getTargetConstant(0, MVT::i16);
