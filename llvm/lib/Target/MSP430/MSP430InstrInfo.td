@@ -209,6 +209,22 @@ def MOVZX16rm8 : Pseudo<(outs GR16:$dst), (ins memsrc:$src),
                 "mov.b\t{$src, $dst}",
                 [(set GR16:$dst, (zextloadi16i8 addr:$src))]>;
 
+// Any instruction that defines a 8-bit result leaves the high half of the
+// register. Truncate can be lowered to EXTRACT_SUBREG, and CopyFromReg may
+// be copying from a truncate, but any other 8-bit operation will zero-extend
+// up to 16 bits.
+def def8 : PatLeaf<(i8 GR8:$src), [{
+  return N->getOpcode() != ISD::TRUNCATE &&
+         N->getOpcode() != TargetInstrInfo::EXTRACT_SUBREG &&
+         N->getOpcode() != ISD::CopyFromReg;
+}]>;
+
+// In the case of a 8-bit def that is known to implicitly zero-extend,
+// we can use a SUBREG_TO_REG.
+def : Pat<(i16 (zext def8:$src)),
+          (SUBREG_TO_REG (i16 0), GR8:$src, subreg_8bit)>;
+
+
 def MOV8mi  : Pseudo<(outs), (ins memdst:$dst, i8imm:$src),
                 "mov.b\t{$src, $dst}",
                 [(store (i8 imm:$src), addr:$dst)]>;
