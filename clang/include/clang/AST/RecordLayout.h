@@ -24,7 +24,7 @@ namespace clang {
 /// This class contains layout information for one RecordDecl,
 /// which is a struct/union/class.  The decl represented must be a definition,
 /// not a forward declaration.  
-/// This class is also used to contain layout informaiton for one 
+/// This class is also used to contain layout information for one 
 /// ObjCInterfaceDecl. FIXME - Find appropriate name.
 /// These objects are managed by ASTContext.
 class ASTRecordLayout {

@@ -71,15 +71,6 @@ ASTContext::~ASTContext() {
     }
   }
 
-  {
-    llvm::DenseMap<const ObjCInterfaceDecl*, RecordDecl*>::iterator
-      I = ASTRecordForInterface.begin(), E = ASTRecordForInterface.end();
-    while (I != E) {
-      RecordDecl *R = (I++)->second;
-      R->Destroy(*this);
-    }
-  }
-
   // Destroy nested-name-specifiers.
   for (llvm::FoldingSet<NestedNameSpecifier>::iterator
          NNS = NestedNameSpecifiers.begin(),
@@ -676,7 +667,10 @@ static void CollectLocalObjCIvars(ASTContext *Ctx,
     if (!IVDecl->isInvalidDecl())
       Fields.push_back(cast<FieldDecl>(IVDecl));
   }
-  // look into properties.
+  // Look into properties.
+  //
+  // FIXME: This needs to go away, synthesized ivars shouldn't be
+  // accessible from the interface decl.
   for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*Ctx),
        E = OI->prop_end(*Ctx); I != E; ++I) {
     if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
@@ -689,51 +683,6 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
   if (const ObjCInterfaceDecl *SuperClass = OI->getSuperClass())
     CollectObjCIvars(SuperClass, Fields);
   CollectLocalObjCIvars(this, OI, Fields);
-}
-
-/// addRecordToClass - produces record info. for the class for its
-/// ivars and all those inherited.
-///
-const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
-  assert(!D->isForwardDecl() && "Invalid decl!");
-
-  RecordDecl *&RD = ASTRecordForInterface[D];
-  if (RD)
-    return RD;
-  
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
-  CollectLocalObjCIvars(this, D, RecFields);
-  
-  RD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, D->getLocation(),
-                          D->getIdentifier());
-  const RecordDecl *SRD;
-  if (const ObjCInterfaceDecl *SuperClass = D->getSuperClass()) {
-    SRD = addRecordToClass(SuperClass);
-  } else {
-    SRD = RecordDecl::Create(*this, TagDecl::TK_struct, 0, SourceLocation(), 0);
-    const_cast<RecordDecl*>(SRD)->completeDefinition(*this);
-  }
-
-  RD->addDecl(*this, 
-              FieldDecl::Create(*this, RD,
-                                SourceLocation(),
-                                0,
-                                getTagDeclType(const_cast<RecordDecl*>(SRD)),
-                                0, false));
-
-  /// FIXME! Can do collection of ivars and adding to the record while
-  /// doing it.
-  for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
-    RD->addDecl(*this,
-                FieldDecl::Create(*this, RD, 
-                                  RecFields[i]->getLocation(), 
-                                  RecFields[i]->getIdentifier(),
-                                  RecFields[i]->getType(), 
-                                  RecFields[i]->getBitWidth(), false));
-  }
-  
-  RD->completeDefinition(*this);
-  return RD;
 }
 
 /// getInterfaceLayoutImpl - Get or compute information about the

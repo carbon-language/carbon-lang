@@ -97,10 +97,6 @@ class ASTContext {
 
   llvm::DenseMap<unsigned, FixedWidthIntType*> SignedFixedWidthIntTypes;
   llvm::DenseMap<unsigned, FixedWidthIntType*> UnsignedFixedWidthIntTypes;
-
-  // FIXME: ASTRecordForInterface/ASTFieldForIvarRef and addRecordToClass and
-  // getFieldDecl be part of the backend (i.e. CodeGenTypes)?
-  llvm::DenseMap<const ObjCInterfaceDecl*, RecordDecl*> ASTRecordForInterface;
   
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
@@ -539,7 +535,6 @@ public:
   const ASTRecordLayout &
   getASTObjCImplementationLayout(const ObjCImplementationDecl *D);
 
-  const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
   void CollectObjCIvars(const ObjCInterfaceDecl *OI,
                         llvm::SmallVectorImpl<FieldDecl*> &Fields);
 
