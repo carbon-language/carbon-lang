@@ -3980,7 +3980,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                      MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
 
         if (DW && DW->ShouldEmitDwarfDebug()) {
-          unsigned LabelID = DAG.getMachineModuleInfo()->NextLabelID();
+          unsigned LabelID = DW->RecordSourceLine(Line, 0, CompileUnit);
           DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                    getRoot(), LabelID));
           DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
@@ -3995,6 +3995,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         setCurDebugLoc(DebugLoc::get(
                      MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
         if (DW && DW->ShouldEmitDwarfDebug()) {
+          DW->RecordSourceLine(Line, 0, CompileUnit);
           // llvm.dbg.func_start also defines beginning of function scope.
           DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
         }

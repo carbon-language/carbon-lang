@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep "\\"m.h\\"" | count 1
+; RUN: llvm-as < %s | llc | grep "m.h" | count 1
 target triple = "i386-apple-darwin9.6"
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32 }
