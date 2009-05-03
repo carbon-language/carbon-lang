@@ -25,6 +25,7 @@ class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
 def SDT_MSP430Call         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_MSP430CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>]>;
 def SDT_MSP430CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
+def SDT_MSP430Wrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -42,6 +43,7 @@ def MSP430callseq_start :
 def MSP430callseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_MSP430CallSeqEnd,
                         [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def MSP430Wrapper : SDNode<"MSP430ISD::Wrapper",     SDT_MSP430Wrapper>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.
@@ -610,6 +612,12 @@ def : Pat<(extloadi16i8 addr:$src), (MOVZX16rm8 addr:$src)>;
 // truncs
 def : Pat<(i8 (trunc GR16:$src)),
           (EXTRACT_SUBREG GR16:$src, subreg_8bit)>;
+
+// GlobalAddress
+def : Pat<(i16 (MSP430Wrapper tglobaladdr :$dst)), (MOV16ri tglobaladdr :$dst)>;
+
+def : Pat<(add GR16:$src1, (MSP430Wrapper tglobaladdr :$src2)),
+          (ADD16ri GR16:$src1, tglobaladdr:$src2)>;
 
 // calls
 def : Pat<(MSP430call (i16 tglobaladdr:$dst)),

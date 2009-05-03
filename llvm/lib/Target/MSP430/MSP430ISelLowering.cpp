@@ -65,6 +65,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
 
   setOperationAction(ISD::SRA, MVT::i16, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -73,6 +74,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SRA:              return LowerShifts(Op, DAG);
   case ISD::RET:              return LowerRET(Op, DAG);
   case ISD::CALL:             return LowerCALL(Op, DAG);
+  case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -421,11 +423,22 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   return Victim;
 }
 
+SDValue MSP430TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
+
+  // Create the TargetGlobalAddress node, folding in the constant offset.
+  SDValue Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
+  return DAG.getNode(MSP430ISD::Wrapper, Op.getDebugLoc(),
+                     getPointerTy(), Result);
+}
+
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
   case MSP430ISD::RET_FLAG:           return "MSP430ISD::RET_FLAG";
   case MSP430ISD::RRA:                return "MSP430ISD::RRA";
   case MSP430ISD::CALL:               return "MSP430ISD::CALL";
+  case MSP430ISD::Wrapper:            return "MSP430ISD::Wrapper";
   }
 }

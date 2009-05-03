@@ -32,7 +32,11 @@ namespace llvm {
 
       /// CALL/TAILCALL - These operations represent an abstract call
       /// instruction, which includes a bunch of information.
-      CALL
+      CALL,
+
+      /// Wrapper - A wrapper node for TargetConstantPool, TargetExternalSymbol,
+      /// and TargetGlobalAddress.
+      Wrapper
     };
   }
 
@@ -55,6 +59,7 @@ namespace llvm {
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
                            unsigned CC);
