@@ -845,11 +845,6 @@ protected:
   /// defined. The return value has type ProtocolPtrTy.
   llvm::Constant *GetProtocolRef(const ObjCProtocolDecl *PD);
 
-  /// GetFieldBaseOffset - return's field byte offset.
-  uint64_t GetFieldBaseOffset(const ObjCImplementationDecl *OI,
-                              const llvm::StructLayout *Layout,
-                              const FieldDecl *Field);
-  
   /// CreateMetadataVar - Create a global variable with internal
   /// linkage for use by the Objective-C runtime.
   ///
@@ -2228,16 +2223,6 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   return Method;
 }
 
-/// GetFieldBaseOffset - return the field's byte offset.
-uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCImplementationDecl *OI,
-                                             const llvm::StructLayout *Layout,
-                                             const FieldDecl *Field) {
-  // Is this a C struct?
-  if (!OI)
-    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
-  return ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
-}
-
 llvm::GlobalVariable *
 CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
                                    llvm::Constant *Init,
@@ -2958,7 +2943,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
-    unsigned FieldOffset = GetFieldBaseOffset(OI, Layout, Field);
+    uint64_t FieldOffset;
+    if (RD)
+      FieldOffset = 
+        Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+    else
+      FieldOffset = ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
 
     // Skip over unnamed or bitfields
     if (!Field->getIdentifier() || Field->isBitField()) {
