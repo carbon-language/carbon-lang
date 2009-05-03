@@ -155,6 +155,15 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
     return;
   }
+  case MachineOperand::MO_ExternalSymbol: {
+    bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+    if (isCallOp)
+      O << '#';
+    O << Name;
+    return;
+  }
   default:
     assert(0 && "Not implemented yet!");
   }

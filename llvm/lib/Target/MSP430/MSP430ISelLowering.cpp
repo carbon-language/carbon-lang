@@ -71,6 +71,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SHL,              MVT::i16,   Custom);
   setOperationAction(ISD::RET,              MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
+  setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
   setOperationAction(ISD::BR_CC,            MVT::Other, Expand);
   setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
   setOperationAction(ISD::SETCC,            MVT::i8,    Custom);
@@ -95,6 +96,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::RET:              return LowerRET(Op, DAG);
   case ISD::CALL:             return LowerCALL(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
+  case ISD::ExternalSymbol:   return LowerExternalSymbol(Op, DAG);
   case ISD::SETCC:            return LowerSETCC(Op, DAG);
   case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
   case ISD::SELECT:           return LowerSELECT(Op, DAG);
@@ -458,6 +460,16 @@ SDValue MSP430TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
   return DAG.getNode(MSP430ISD::Wrapper, Op.getDebugLoc(),
                      getPointerTy(), Result);
 }
+
+SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
+                                                  SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
+  SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
+
+  return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
+}
+
 
 MVT MSP430TargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i8;

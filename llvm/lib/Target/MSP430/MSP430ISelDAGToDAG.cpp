@@ -107,6 +107,9 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
                                             MVT::i16, G->getOffset());
       Disp = CurDAG->getTargetConstant(0, MVT::i16);
       return true;
+    } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(N0)) {
+      Base = CurDAG->getTargetExternalSymbol(E->getSymbol(), MVT::i16);
+      Disp = CurDAG->getTargetConstant(0, MVT::i16);
     }
     break;
   };

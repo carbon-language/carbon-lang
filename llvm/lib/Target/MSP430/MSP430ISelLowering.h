@@ -79,6 +79,7 @@ namespace llvm {
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);

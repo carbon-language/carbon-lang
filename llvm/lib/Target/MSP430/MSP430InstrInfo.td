@@ -718,15 +718,25 @@ def : Pat<(extloadi16i8 addr:$src), (MOVZX16rm8 addr:$src)>;
 def : Pat<(i8 (trunc GR16:$src)),
           (EXTRACT_SUBREG GR16:$src, subreg_8bit)>;
 
-// GlobalAddress
+// GlobalAddress, ExternalSymbol
 def : Pat<(i16 (MSP430Wrapper tglobaladdr:$dst)), (MOV16ri tglobaladdr:$dst)>;
+def : Pat<(i16 (MSP430Wrapper texternalsym:$dst)), (MOV16ri texternalsym:$dst)>;
 
 def : Pat<(add GR16:$src1, (MSP430Wrapper tglobaladdr :$src2)),
           (ADD16ri GR16:$src1, tglobaladdr:$src2)>;
+def : Pat<(add GR16:$src1, (MSP430Wrapper texternalsym:$src2)),
+          (ADD16ri GR16:$src1, texternalsym:$src2)>;
+
+def : Pat<(store (i16 (MSP430Wrapper tglobaladdr:$src)), addr:$dst),
+          (MOV16mi addr:$dst, tglobaladdr:$src)>;
+def : Pat<(store (i16 (MSP430Wrapper texternalsym:$src)), addr:$dst),
+          (MOV16mi addr:$dst, texternalsym:$src)>;
 
 // calls
 def : Pat<(MSP430call (i16 tglobaladdr:$dst)),
           (CALLi tglobaladdr:$dst)>;
+def : Pat<(MSP430call (i16 texternalsym:$dst)),
+          (CALLi texternalsym:$dst)>;
 
 // add and sub always produce carry
 def : Pat<(addc GR16:$src1, GR16:$src2),
