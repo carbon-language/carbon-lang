@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements construction of a TargetInfo object from a 
+// This file implements construction of a TargetInfo object from a
 // target triple.
 //
 //===----------------------------------------------------------------------===//
@@ -39,21 +39,21 @@ static void Define(std::vector<char> &Buf, const char *Macro,
 /// DefineStd - Define a macro name and standard variants.  For example if
 /// MacroName is "unix", then this will define "__unix", "__unix__", and "unix"
 /// when in GNU mode.
-static void DefineStd(std::vector<char> &Buf, const char *MacroName, 
+static void DefineStd(std::vector<char> &Buf, const char *MacroName,
                       const LangOptions &Opts) {
   assert(MacroName[0] != '_' && "Identifier should be in the user's namespace");
-  
+
   // If in GNU mode (e.g. -std=gnu99 but not -std=c99) define the raw identifier
   // in the user's namespace.
   if (Opts.GNUMode)
     Define(Buf, MacroName);
-  
+
   // Define __unix.
   llvm::SmallString<20> TmpStr;
   TmpStr = "__";
   TmpStr += MacroName;
   Define(Buf, TmpStr.c_str());
-  
+
   // Define __unix__.
   TmpStr += "__";
   Define(Buf, TmpStr.c_str());
@@ -116,28 +116,28 @@ static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min, un
   Maj = Min = Revision = 0;
   const char *Darwin = strstr(Triple, "-darwin");
   if (Darwin == 0) return false;
-  
+
   Darwin += strlen("-darwin");
   if (Darwin[0] < '0' || Darwin[0] > '9')
     return true;
-  
+
   Maj = Darwin[0]-'0';
   ++Darwin;
-    
+
   // Handle "darwin11".
   if (Maj == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
     Maj = Maj*10 + (Darwin[0] - '0');
     ++Darwin;
   }
-    
+
   // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
   if (Darwin[0] != '.')
     return true;
-  
+
   ++Darwin;
   if (Darwin[0] < '0' || Darwin[0] > '9')
     return true;
-  
+
   Min = Darwin[0]-'0';
   ++Darwin;
 
@@ -146,23 +146,23 @@ static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min, un
     Min = Min*10 + (Darwin[0] - '0');
     ++Darwin;
   }
-  
+
   // Handle revision darwin8.9.1
   if (Darwin[0] != '.')
     return true;
-  
+
   ++Darwin;
   if (Darwin[0] < '0' || Darwin[0] > '9')
     return true;
-  
+
   Revision = Darwin[0]-'0';
   ++Darwin;
-  
+
   if (Revision == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
     Revision = Revision*10 + (Darwin[0] - '0');
     ++Darwin;
   }
-  
+
   return true;
 }
 
@@ -170,10 +170,10 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
   Define(Defs, "OBJC_NEW_PROPERTIES");
-  
+
   // __weak is always defined, for use in blocks and with objc pointers.
   Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
-  
+
   // Darwin defines __strong even in C mode (just to nothing).
   if (!Opts.ObjC1 || Opts.getGCMode() == LangOptions::NonGC)
     Define(Defs, "__strong", "");
@@ -190,7 +190,7 @@ static void getDarwinOSXDefines(std::vector<char> &Defs, const char *Triple) {
       // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
       MacOSXStr[2] = '0' + Maj-4;
     }
-        
+
     // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
     // Cap 10.4.11 -> darwin8.11 -> "1049"
     MacOSXStr[3] = std::min(Min, 9U)+'0';
@@ -198,7 +198,7 @@ static void getDarwinOSXDefines(std::vector<char> &Defs, const char *Triple) {
   }
 }
 
-static void getDarwinIPhoneOSDefines(std::vector<char> &Defs, 
+static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
                                      const char *Triple) {
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
@@ -210,10 +210,10 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
       // darwin9.2.0 -> 20000, darwin9.3.0 -> 30000, etc.
       iPhoneOSStr[0] = '0' + Min;
     }
-      
+
     // Handle minor version: 2.2 -> darwin9.2.2 -> 20200
     iPhoneOSStr[2] = std::min(Rev, 9U)+'0';
-    Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", 
+    Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__",
            iPhoneOSStr);
   }
 }
@@ -222,14 +222,14 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
 static void GetDarwinLanguageOptions(LangOptions &Opts,
                                      const char *Triple) {
   Opts.NeXTRuntime = true;
-  
+
   unsigned Maj, Min, Rev;
   if (!getDarwinNumber(Triple, Maj, Min, Rev))
     return;
-  
+
   // Blocks default to on for 10.6 (darwin10) and beyond.
   // As does nonfragile-abi for 64bit mode
-  if (Maj > 9) 
+  if (Maj > 9)
     Opts.Blocks = 1;
 
   if (Maj >= 9 && Opts.ObjC1 && !strncmp(Triple, "x86_64", 6))
@@ -257,10 +257,10 @@ public:
     Records = BuiltinInfo;
     NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
-  
+
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const;
-  
+
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
     // This is the right definition for ABI/V4: System V.4/eabi.
@@ -275,9 +275,9 @@ public:
   virtual const char *getTargetPrefix() const {
     return "ppc";
   }
-  virtual void getGCCRegNames(const char * const *&Names, 
+  virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const;
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &Info) const {
@@ -301,8 +301,8 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
 #include "clang/AST/PPCBuiltins.def"
 };
-  
-  
+
+
 /// PPCTargetInfo::getTargetDefines - Return a set of the PowerPC-specific
 /// #defines that are not tied to a specific subtarget.
 void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
@@ -319,15 +319,15 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   } else {
     Define(Defs, "__ppc__");
   }
-  
+
   // Target properties.
   Define(Defs, "_BIG_ENDIAN");
   Define(Defs, "__BIG_ENDIAN__");
-  
+
   // Subtarget options.
   Define(Defs, "__NATURAL_ALIGNMENT__");
   Define(Defs, "__REGISTER_PREFIX__", "");
-  
+
   // FIXME: Should be controlled by command line option.
   Define(Defs, "__LONG_DOUBLE_128__");
 }
@@ -354,7 +354,7 @@ const char * const PPCTargetInfo::GCCRegNames[] = {
   "sfp"
 };
 
-void PPCTargetInfo::getGCCRegNames(const char * const *&Names, 
+void PPCTargetInfo::getGCCRegNames(const char * const *&Names,
                                    unsigned &NumNames) const {
   Names = GCCRegNames;
   NumNames = llvm::array_lengthof(GCCRegNames);
@@ -363,41 +363,41 @@ void PPCTargetInfo::getGCCRegNames(const char * const *&Names,
 const TargetInfo::GCCRegAlias PPCTargetInfo::GCCRegAliases[] = {
   // While some of these aliases do map to different registers
   // they still share the same register name.
-  { { "cc", "cr0", "fr0", "r0", "v0"}, "0" }, 
-  { { "cr1", "fr1", "r1", "sp", "v1"}, "1" }, 
-  { { "cr2", "fr2", "r2", "toc", "v2"}, "2" }, 
-  { { "cr3", "fr3", "r3", "v3"}, "3" }, 
-  { { "cr4", "fr4", "r4", "v4"}, "4" }, 
-  { { "cr5", "fr5", "r5", "v5"}, "5" }, 
-  { { "cr6", "fr6", "r6", "v6"}, "6" }, 
-  { { "cr7", "fr7", "r7", "v7"}, "7" }, 
-  { { "fr8", "r8", "v8"}, "8" }, 
-  { { "fr9", "r9", "v9"}, "9" }, 
-  { { "fr10", "r10", "v10"}, "10" }, 
-  { { "fr11", "r11", "v11"}, "11" }, 
-  { { "fr12", "r12", "v12"}, "12" }, 
-  { { "fr13", "r13", "v13"}, "13" }, 
-  { { "fr14", "r14", "v14"}, "14" }, 
-  { { "fr15", "r15", "v15"}, "15" }, 
-  { { "fr16", "r16", "v16"}, "16" }, 
-  { { "fr17", "r17", "v17"}, "17" }, 
-  { { "fr18", "r18", "v18"}, "18" }, 
-  { { "fr19", "r19", "v19"}, "19" }, 
-  { { "fr20", "r20", "v20"}, "20" }, 
-  { { "fr21", "r21", "v21"}, "21" }, 
-  { { "fr22", "r22", "v22"}, "22" }, 
-  { { "fr23", "r23", "v23"}, "23" }, 
-  { { "fr24", "r24", "v24"}, "24" }, 
-  { { "fr25", "r25", "v25"}, "25" }, 
-  { { "fr26", "r26", "v26"}, "26" }, 
-  { { "fr27", "r27", "v27"}, "27" }, 
-  { { "fr28", "r28", "v28"}, "28" }, 
-  { { "fr29", "r29", "v29"}, "29" }, 
-  { { "fr30", "r30", "v30"}, "30" }, 
-  { { "fr31", "r31", "v31"}, "31" }, 
+  { { "cc", "cr0", "fr0", "r0", "v0"}, "0" },
+  { { "cr1", "fr1", "r1", "sp", "v1"}, "1" },
+  { { "cr2", "fr2", "r2", "toc", "v2"}, "2" },
+  { { "cr3", "fr3", "r3", "v3"}, "3" },
+  { { "cr4", "fr4", "r4", "v4"}, "4" },
+  { { "cr5", "fr5", "r5", "v5"}, "5" },
+  { { "cr6", "fr6", "r6", "v6"}, "6" },
+  { { "cr7", "fr7", "r7", "v7"}, "7" },
+  { { "fr8", "r8", "v8"}, "8" },
+  { { "fr9", "r9", "v9"}, "9" },
+  { { "fr10", "r10", "v10"}, "10" },
+  { { "fr11", "r11", "v11"}, "11" },
+  { { "fr12", "r12", "v12"}, "12" },
+  { { "fr13", "r13", "v13"}, "13" },
+  { { "fr14", "r14", "v14"}, "14" },
+  { { "fr15", "r15", "v15"}, "15" },
+  { { "fr16", "r16", "v16"}, "16" },
+  { { "fr17", "r17", "v17"}, "17" },
+  { { "fr18", "r18", "v18"}, "18" },
+  { { "fr19", "r19", "v19"}, "19" },
+  { { "fr20", "r20", "v20"}, "20" },
+  { { "fr21", "r21", "v21"}, "21" },
+  { { "fr22", "r22", "v22"}, "22" },
+  { { "fr23", "r23", "v23"}, "23" },
+  { { "fr24", "r24", "v24"}, "24" },
+  { { "fr25", "r25", "v25"}, "25" },
+  { { "fr26", "r26", "v26"}, "26" },
+  { { "fr27", "r27", "v27"}, "27" },
+  { { "fr28", "r28", "v28"}, "28" },
+  { { "fr29", "r29", "v29"}, "29" },
+  { { "fr30", "r30", "v30"}, "30" },
+  { { "fr31", "r31", "v31"}, "31" },
 };
 
-void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases, 
+void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
                                      unsigned &NumAliases) const {
   Aliases = GCCRegAliases;
   NumAliases = llvm::array_lengthof(GCCRegAliases);
@@ -439,7 +439,7 @@ public:
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
-  /// options. 
+  /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {
     GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
@@ -459,7 +459,7 @@ public:
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
-  /// options. 
+  /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {
     GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
@@ -502,7 +502,7 @@ class X86TargetInfo : public TargetInfo {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
   } SSELevel;
 public:
-  X86TargetInfo(const std::string& triple) 
+  X86TargetInfo(const std::string& triple)
     : TargetInfo(triple),
       // FIXME: hard coding to SSE2 for now.  This should change to NoMMXSSE so
       // that the driver controls this.
@@ -516,13 +516,13 @@ public:
   }
   virtual const char *getTargetPrefix() const {
     return "x86";
-  }  
-  virtual void getGCCRegNames(const char * const *&Names, 
+  }
+  virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
     Names = GCCRegNames;
     NumNames = llvm::array_lengthof(GCCRegNames);
   }
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const {
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
@@ -535,7 +535,7 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const;
-  
+
   virtual int HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
                                    std::string &ErrorReason);
 };
@@ -551,10 +551,10 @@ int X86TargetInfo::HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
     if (Feature.size() < 2) return i;
     // Ignore explicitly disabled features.
     if (Feature[0] == '-') continue;
-    
+
     // Feature strings are of the form "+feature".
     if (Feature[0] != '+') return i;
-    
+
     // The set of supported subtarget features is defined in
     // lib/Target/X86/X86.td.  Here we recognize and map onto our internal
     // state.
@@ -597,10 +597,10 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   } else {
     DefineStd(Defs, "i386", Opts);
   }
-  
+
   // Target properties.
   Define(Defs, "__LITTLE_ENDIAN__");
-  
+
   // Subtarget options.
   Define(Defs, "__nocona");
   Define(Defs, "__nocona__");
@@ -611,7 +611,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   // functions in glibc header files that use FP Stack inline asm which the
   // backend can't deal with (PR879).
   Define(Defs, "__NO_MATH_INLINES");
-  
+
   // Each case falls through to the previous one here.
   switch (SSELevel) {
   case SSE42:
@@ -634,8 +634,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   }
 }
-  
-  
+
+
 bool
 X86TargetInfo::validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &Info) const {
@@ -654,9 +654,9 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
   case 'y': // Any MMX register.
   case 'x': // Any SSE register.
   case 'Q': // Any register accessible as [r]h: a, b, c, and d.
-  case 'e': // 32-bit signed integer constant for use with zero-extending 
+  case 'e': // 32-bit signed integer constant for use with zero-extending
             // x86_64 instructions.
-  case 'Z': // 32-bit unsigned integer constant for use with zero-extending 
+  case 'Z': // 32-bit unsigned integer constant for use with zero-extending
             // x86_64 instructions.
   case 'N': // unsigned 8-bit integer constant for use with in and out
             // instructions.
@@ -721,19 +721,19 @@ public:
     TLSSupported = false;
   }
 
-  virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
+  virtual const char *getStringSymbolPrefix(bool IsConstant) const {
     return IsConstant ? "\01LC" : "\01lC";
   }
 
-  virtual const char *getUnicodeStringSymbolPrefix() const { 
+  virtual const char *getUnicodeStringSymbolPrefix() const {
     return "__utf16_string_";
   }
 
-  virtual const char *getUnicodeStringSection() const { 
+  virtual const char *getUnicodeStringSection() const {
     return "__TEXT,__ustring";
   }
 
-  virtual const char *getCFStringSymbolPrefix() const { 
+  virtual const char *getCFStringSymbolPrefix() const {
     return "\01LC";
   }
 
@@ -746,7 +746,7 @@ public:
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
-  /// options. 
+  /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {
     GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
@@ -885,19 +885,19 @@ public:
     TLSSupported = false;
   }
 
-  virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
+  virtual const char *getStringSymbolPrefix(bool IsConstant) const {
     return IsConstant ? "\01LC" : "\01lC";
   }
 
-  virtual const char *getUnicodeStringSymbolPrefix() const { 
+  virtual const char *getUnicodeStringSymbolPrefix() const {
     return "__utf16_string_";
   }
 
-  virtual const char *getUnicodeStringSection() const { 
+  virtual const char *getUnicodeStringSection() const {
     return "__TEXT,__ustring";
   }
 
-  virtual const char *getCFStringSymbolPrefix() const { 
+  virtual const char *getCFStringSymbolPrefix() const {
     return "\01L_unnamed_cfstring_";
   }
 
@@ -910,7 +910,7 @@ public:
 
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
-  /// options. 
+  /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {
     GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
@@ -950,10 +950,10 @@ public:
     // Target identification.
     Define(Defs, "__arm");
     Define(Defs, "__arm__");
-    
+
     // Target properties.
     Define(Defs, "__LITTLE_ENDIAN__");
-    
+
     // Subtarget options.
     if (ArmArch == Armv6) {
       Define(Defs, "__ARM_ARCH_6K__");
@@ -984,13 +984,13 @@ public:
   virtual const char *getTargetPrefix() const {
     return "arm";
   }
-  virtual void getGCCRegNames(const char * const *&Names, 
+  virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
     // FIXME: Implement.
     Names = 0;
     NumNames = 0;
   }
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const {
     // FIXME: Implement.
     Aliases = 0;
@@ -1075,9 +1075,9 @@ public:
   virtual const char *getTargetPrefix() const {
     return "sparc";
   }
-  virtual void getGCCRegNames(const char * const *&Names, 
+  virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const;
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const {
@@ -1097,48 +1097,48 @@ const char * const SparcV8TargetInfo::GCCRegNames[] = {
   "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
 };
 
-void SparcV8TargetInfo::getGCCRegNames(const char * const *&Names, 
+void SparcV8TargetInfo::getGCCRegNames(const char * const *&Names,
                                        unsigned &NumNames) const {
   Names = GCCRegNames;
   NumNames = llvm::array_lengthof(GCCRegNames);
 }
 
 const TargetInfo::GCCRegAlias SparcV8TargetInfo::GCCRegAliases[] = {
-  { { "g0" }, "r0" }, 
-  { { "g1" }, "r1" }, 
-  { { "g2" }, "r2" }, 
-  { { "g3" }, "r3" }, 
-  { { "g4" }, "r4" }, 
-  { { "g5" }, "r5" }, 
-  { { "g6" }, "r6" }, 
-  { { "g7" }, "r7" }, 
-  { { "o0" }, "r8" }, 
-  { { "o1" }, "r9" }, 
-  { { "o2" }, "r10" }, 
-  { { "o3" }, "r11" }, 
-  { { "o4" }, "r12" }, 
-  { { "o5" }, "r13" }, 
-  { { "o6", "sp" }, "r14" }, 
-  { { "o7" }, "r15" }, 
-  { { "l0" }, "r16" }, 
-  { { "l1" }, "r17" }, 
-  { { "l2" }, "r18" }, 
-  { { "l3" }, "r19" }, 
-  { { "l4" }, "r20" }, 
-  { { "l5" }, "r21" }, 
-  { { "l6" }, "r22" }, 
-  { { "l7" }, "r23" }, 
-  { { "i0" }, "r24" }, 
-  { { "i1" }, "r25" }, 
-  { { "i2" }, "r26" }, 
-  { { "i3" }, "r27" }, 
-  { { "i4" }, "r28" }, 
-  { { "i5" }, "r29" }, 
-  { { "i6", "fp" }, "r30" }, 
-  { { "i7" }, "r31" }, 
+  { { "g0" }, "r0" },
+  { { "g1" }, "r1" },
+  { { "g2" }, "r2" },
+  { { "g3" }, "r3" },
+  { { "g4" }, "r4" },
+  { { "g5" }, "r5" },
+  { { "g6" }, "r6" },
+  { { "g7" }, "r7" },
+  { { "o0" }, "r8" },
+  { { "o1" }, "r9" },
+  { { "o2" }, "r10" },
+  { { "o3" }, "r11" },
+  { { "o4" }, "r12" },
+  { { "o5" }, "r13" },
+  { { "o6", "sp" }, "r14" },
+  { { "o7" }, "r15" },
+  { { "l0" }, "r16" },
+  { { "l1" }, "r17" },
+  { { "l2" }, "r18" },
+  { { "l3" }, "r19" },
+  { { "l4" }, "r20" },
+  { { "l5" }, "r21" },
+  { { "l6" }, "r22" },
+  { { "l7" }, "r23" },
+  { { "i0" }, "r24" },
+  { { "i1" }, "r25" },
+  { { "i2" }, "r26" },
+  { { "i3" }, "r27" },
+  { { "i4" }, "r28" },
+  { { "i5" }, "r29" },
+  { { "i6", "fp" }, "r30" },
+  { { "i7" }, "r31" },
 };
 
-void SparcV8TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases, 
+void SparcV8TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
                                          unsigned &NumAliases) const {
   Aliases = GCCRegAliases;
   NumAliases = llvm::array_lengthof(GCCRegAliases);
@@ -1191,13 +1191,13 @@ namespace {
     virtual const char *getVAListDeclaration() const { return "";}
     virtual const char *getClobbers() const {return "";}
     virtual const char *getTargetPrefix() const {return "pic16";}
-    virtual void getGCCRegNames(const char * const *&Names, 
-                                unsigned &NumNames) const {} 
-    virtual bool validateAsmConstraint(const char *&Name, 
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const {}
+    virtual bool validateAsmConstraint(const char *&Name,
                                        TargetInfo::ConstraintInfo &info) const {
       return true;
     }
-    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                   unsigned &NumAliases) const {}
     virtual bool useGlobalsForAutomaticVariables() const {return true;}
   };
@@ -1281,4 +1281,3 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   return NULL;
 }
-
