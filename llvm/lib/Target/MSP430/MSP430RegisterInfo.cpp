@@ -31,8 +31,8 @@ MSP430RegisterInfo::MSP430RegisterInfo(const TargetInstrInfo &tii)
 const unsigned*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
-    MSP430::FP, MSP430::R5, MSP430::R6, MSP430::R7,
-    MSP430::R8, MSP430::R9, MSP430::R10, MSP430::R11,
+    MSP430::FPW, MSP430::R5W, MSP430::R6W, MSP430::R7W,
+    MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
     0
   };
 
@@ -57,14 +57,14 @@ MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
 
   // Mark 4 special registers as reserved.
-  Reserved.set(MSP430::PC);
-  Reserved.set(MSP430::SP);
-  Reserved.set(MSP430::SR);
-  Reserved.set(MSP430::CG);
+  Reserved.set(MSP430::PCW);
+  Reserved.set(MSP430::SPW);
+  Reserved.set(MSP430::SRW);
+  Reserved.set(MSP430::CGW);
 
   // Mark frame pointer as reserved if needed.
   if (hasFP(MF))
-    Reserved.set(MSP430::FP);
+    Reserved.set(MSP430::FPW);
 
   return Reserved;
 }

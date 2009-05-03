@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 def RetCC_MSP430 : CallingConv<[
   // i16 are returned in registers R15, R14, R13, R12
-  CCIfType<[i16], CCAssignToReg<[R15, R14, R13, R12]>>
+  CCIfType<[i16], CCAssignToReg<[R15W, R14W, R13W, R12W]>>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -26,7 +26,7 @@ def CC_MSP430 : CallingConv<[
 
   // The first 4 integer arguments of non-varargs functions are passed in
   // integer registers.
-  CCIfNotVarArg<CCIfType<[i16], CCAssignToReg<[R15, R14, R13, R12]>>>,
+  CCIfNotVarArg<CCIfType<[i16], CCAssignToReg<[R15W, R14W, R13W, R12W]>>>,
 
   // Integer values get stored in stack slots that are 2 bytes in
   // size and 2-byte aligned.
