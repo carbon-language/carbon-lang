@@ -709,9 +709,10 @@ public:
   // FIXME - accessibility
   class GC_IVAR {
   public:
-    unsigned int ivar_bytepos;
-    unsigned int ivar_size;
-    GC_IVAR() : ivar_bytepos(0), ivar_size(0) {}
+    unsigned ivar_bytepos;
+    unsigned ivar_size;
+    GC_IVAR(unsigned bytepos = 0, unsigned size = 0)
+       : ivar_bytepos(bytepos), ivar_size(size) {}
 
     // Allow sorting based on byte pos.
     bool operator<(const GC_IVAR &b) const {
@@ -720,10 +721,11 @@ public:
   };
   
   class SKIP_SCAN {
-    public:
-    unsigned int skip;
-    unsigned int scan;
-    SKIP_SCAN() : skip(0), scan(0) {}
+  public:
+    unsigned skip;
+    unsigned scan;
+    SKIP_SCAN(unsigned _skip = 0, unsigned _scan = 0) 
+      : skip(_skip), scan(_scan) {}
   };
   
 protected:
@@ -2998,19 +3000,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         for (int FirstIndex = IvarsInfo.size() - 1, 
                  FirstSkIndex = SkipIvars.size() - 1 ;ElIx < ElCount; ElIx++) {
           uint64_t Size = CGM.getContext().getTypeSize(RT)/ByteSizeInBits;
-          for (int i = OldIndex+1; i <= FirstIndex; ++i) {
-            GC_IVAR gcivar;
-            gcivar.ivar_bytepos = IvarsInfo[i].ivar_bytepos + Size*ElIx;
-            gcivar.ivar_size = IvarsInfo[i].ivar_size;
-            IvarsInfo.push_back(gcivar);
-          }
-          
-          for (int i = OldSkIndex+1; i <= FirstSkIndex; ++i) {
-            GC_IVAR skivar;
-            skivar.ivar_bytepos = SkipIvars[i].ivar_bytepos + Size*ElIx;
-            skivar.ivar_size = SkipIvars[i].ivar_size;
-            SkipIvars.push_back(skivar);
-          }
+          for (int i = OldIndex+1; i <= FirstIndex; ++i)
+            IvarsInfo.push_back(GC_IVAR(IvarsInfo[i].ivar_bytepos + Size*ElIx,
+                                        IvarsInfo[i].ivar_size));
+          for (int i = OldSkIndex+1; i <= FirstSkIndex; ++i)
+            SkipIvars.push_back(GC_IVAR(SkipIvars[i].ivar_bytepos + Size*ElIx,
+                                        SkipIvars[i].ivar_size));
         }
         continue;
       }
@@ -3032,37 +3027,36 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       }
     } while (true);
     
+    unsigned FieldSize = CGM.getContext().getTypeSize(Field->getType());
     if ((ForStrongLayout && GCAttr == QualType::Strong)
         || (!ForStrongLayout && GCAttr == QualType::Weak)) {
       if (IsUnion) {
-        uint64_t UnionIvarSize = CGM.getContext().getTypeSize(Field->getType())
-                                 / WordSizeInBits;
+        uint64_t UnionIvarSize = FieldSize / WordSizeInBits;
         if (UnionIvarSize > MaxUnionIvarSize) {
           MaxUnionIvarSize = UnionIvarSize;
           MaxField = Field;
         }
       } else {
-        GC_IVAR gcivar;
-        gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
-        gcivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
-                           WordSizeInBits;
-        IvarsInfo.push_back(gcivar);
+        IvarsInfo.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                                 Field),
+                                    FieldSize / WordSizeInBits));
       }
     } else if ((ForStrongLayout && 
                 (GCAttr == QualType::GCNone || GCAttr == QualType::Weak))
                || (!ForStrongLayout && GCAttr != QualType::Weak)) {
       if (IsUnion) {
-        uint64_t UnionIvarSize = CGM.getContext().getTypeSize(Field->getType());
+        // FIXME: Why the asymmetry? We divide by word size in bits on
+        // other side.
+        uint64_t UnionIvarSize = FieldSize;
         if (UnionIvarSize > MaxSkippedUnionIvarSize) {
           MaxSkippedUnionIvarSize = UnionIvarSize;
           MaxSkippedField = Field;
         }
       } else {
-        GC_IVAR skivar;
-        skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
-        skivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
-                           ByteSizeInBits;
-        SkipIvars.push_back(skivar);
+        // FIXME: Why the asymmetry, we divide by byte size in bits here?
+        SkipIvars.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                                 Field),
+                                    FieldSize / ByteSizeInBits));
       }
     }
   }
@@ -3079,20 +3073,14 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     SkipIvars.push_back(skivar);    
   }
   
-  if (MaxField) {
-    GC_IVAR gcivar;
-    gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, MaxField);
-    gcivar.ivar_size = MaxUnionIvarSize;
-    IvarsInfo.push_back(gcivar);
-  }
-  
-  if (MaxSkippedField) {
-    GC_IVAR skivar;
-    skivar.ivar_bytepos = BytePos + 
-                          GetFieldBaseOffset(OI, Layout, MaxSkippedField);
-    skivar.ivar_size = MaxSkippedUnionIvarSize;
-    SkipIvars.push_back(skivar);
-  }
+  if (MaxField)
+    IvarsInfo.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                             MaxField), 
+                                MaxUnionIvarSize));
+  if (MaxSkippedField)
+    SkipIvars.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                             MaxSkippedField),
+                                MaxSkippedUnionIvarSize));
 }
 
 /// BuildIvarLayout - Builds ivar layout bitmap for the class
