@@ -44,12 +44,21 @@ public:
 
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   unsigned SrcReg, bool isKill,
+                                   int FrameIndex,
                                    const TargetRegisterClass *RC) const;
   virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     unsigned DestReg, int FrameIdx,
                                     const TargetRegisterClass *RC) const;
+
+  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI) const;
+  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI) const;
+
 };
 
 }

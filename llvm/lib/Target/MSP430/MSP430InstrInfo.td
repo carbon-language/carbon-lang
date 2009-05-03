@@ -117,6 +117,17 @@ let isCall = 1 in
 
 
 //===----------------------------------------------------------------------===//
+//  Miscellaneous Instructions...
+//
+let Defs = [SPW], Uses = [SPW], neverHasSideEffects=1 in {
+let mayLoad = 1 in
+def POP16r   : Pseudo<(outs GR16:$reg), (ins), "pop.w\t$reg", []>;
+
+let mayStore = 1 in
+def PUSH16r  : Pseudo<(outs), (ins GR16:$reg), "push.w\t$reg",[]>;
+}
+
+//===----------------------------------------------------------------------===//
 // Move Instructions
 
 // FIXME: Provide proper encoding!

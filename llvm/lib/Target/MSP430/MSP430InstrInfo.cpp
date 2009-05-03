@@ -13,6 +13,7 @@
 
 #include "MSP430.h"
 #include "MSP430InstrInfo.h"
+#include "MSP430MachineFunctionInfo.h"
 #include "MSP430TargetMachine.h"
 #include "MSP430GenInstrInfo.inc"
 #include "llvm/Function.h"
@@ -107,4 +108,44 @@ MSP430InstrInfo::isMoveInstr(const MachineInstr& MI,
     DstReg = MI.getOperand(0).getReg();
     return true;
   }
+}
+
+bool
+MSP430InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  MachineFunction &MF = *MBB.getParent();
+  MSP430MachineFunctionInfo *MFI = MF.getInfo<MSP430MachineFunctionInfo>();
+  MFI->setCalleeSavedFrameSize(CSI.size() * 2);
+
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    BuildMI(MBB, MI, DL, get(MSP430::PUSH16r))
+      .addReg(Reg, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
+  }
+  return true;
+}
+
+bool
+MSP430InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i)
+    BuildMI(MBB, MI, DL, get(MSP430::POP16r), CSI[i].getReg());
+
+  return true;
 }
