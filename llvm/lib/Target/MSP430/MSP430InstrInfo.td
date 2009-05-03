@@ -41,6 +41,7 @@ def MSP430retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInFlag]>;
 
 def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
+def MSP430rla     : SDNode<"MSP430ISD::RLA", SDTIntUnaryOp, []>;
 
 def MSP430call    : SDNode<"MSP430ISD::CALL", SDT_MSP430Call,
                      [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
@@ -589,6 +590,11 @@ def SBC16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
 def SAR16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                      "rra.w\t$dst",
                      [(set GR16:$dst, (MSP430rra GR16:$src)),
+                      (implicit SRW)]>;
+
+def SHL16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                     "rla.w\t$dst",
+                     [(set GR16:$dst, (MSP430rla GR16:$src)),
                       (implicit SRW)]>;
 
 def SEXT16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
