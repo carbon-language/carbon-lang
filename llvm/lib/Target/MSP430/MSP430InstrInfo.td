@@ -33,7 +33,6 @@ def SDT_MSP430BrCond       : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>,
                                                   SDTCisVT<1, i8>, SDTCisVT<2, i16>]>;
 def SDT_MSP430Select       : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
                                                   SDTCisVT<3, i8>, SDTCisVT<4, i16>]>;
-def SDT_MSP430Clrc         : SDTypeProfile<0, 0, []>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -43,7 +42,7 @@ def MSP430retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
 
 def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 def MSP430rla     : SDNode<"MSP430ISD::RLA", SDTIntUnaryOp, []>;
-def MSP430rrc     : SDNode<"MSP430ISD::RRC", SDTIntUnaryOp, [SDNPInFlag]>;
+def MSP430rrc     : SDNode<"MSP430ISD::RRC", SDTIntUnaryOp, []>;
 
 def MSP430call    : SDNode<"MSP430ISD::CALL", SDT_MSP430Call,
                      [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
@@ -58,7 +57,6 @@ def MSP430setcc   : SDNode<"MSP430ISD::SETCC", SDT_MSP430SetCC>;
 def MSP430cmp     : SDNode<"MSP430ISD::CMP", SDT_MSP430Cmp>;
 def MSP430brcond  : SDNode<"MSP430ISD::BRCOND", SDT_MSP430BrCond, [SDNPHasChain]>;
 def MSP430select  : SDNode<"MSP430ISD::SELECT", SDT_MSP430Select>;
-def MSP430clrc    : SDNode<"MSP430ISD::CLRC", SDT_MSP430Clrc, [SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.
@@ -590,17 +588,31 @@ def SBC16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
 } // Uses = [SRW]
 
 // FIXME: Provide proper encoding!
+def SAR8r1  : Pseudo<(outs GR8:$dst), (ins GR8:$src),
+                     "rra.b\t$dst",
+                     [(set GR8:$dst, (MSP430rra GR8:$src)),
+                      (implicit SRW)]>;
 def SAR16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                      "rra.w\t$dst",
                      [(set GR16:$dst, (MSP430rra GR16:$src)),
                       (implicit SRW)]>;
 
+def SHL8r1  : Pseudo<(outs GR8:$dst), (ins GR8:$src),
+                     "rla.b\t$dst",
+                     [(set GR8:$dst, (MSP430rla GR8:$src)),
+                      (implicit SRW)]>;
 def SHL16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                      "rla.w\t$dst",
                      [(set GR16:$dst, (MSP430rla GR16:$src)),
                       (implicit SRW)]>;
 
+def SAR8r1c  : Pseudo<(outs GR8:$dst), (ins GR8:$src),
+                      "clrc\n"
+                      "rrc.b\t$dst",
+                      [(set GR8:$dst, (MSP430rrc GR8:$src)),
+                       (implicit SRW)]>;
 def SAR16r1c : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                      "clrc\n"
                       "rrc.w\t$dst",
                       [(set GR16:$dst, (MSP430rrc GR16:$src)),
                        (implicit SRW)]>;
@@ -669,10 +681,6 @@ def OR16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
 }
 
 } // isTwoAddress = 1
-
-let Defs = [SRW] in
-def CLRC   : Pseudo<(outs), (ins),
-                     "clrc", [(MSP430clrc)]>;
 
 // Integer comparisons
 let Defs = [SRW] in {

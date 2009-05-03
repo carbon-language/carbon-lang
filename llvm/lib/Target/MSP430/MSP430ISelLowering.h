@@ -56,10 +56,7 @@ namespace llvm {
 
       /// SELECT. Operand 0 and operand 1 are selection variable, operand 3 is
       /// condition code and operand 4 is flag operand.
-      SELECT,
-
-      /// CLRC - Clear carry bit
-      CLRC
+      SELECT
     };
   }
 

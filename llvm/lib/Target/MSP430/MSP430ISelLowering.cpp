@@ -67,6 +67,9 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // We don't have any truncstores
   setTruncStoreAction(MVT::i16, MVT::i8, Expand);
 
+  setOperationAction(ISD::SRA,              MVT::i8,    Custom);
+  setOperationAction(ISD::SHL,              MVT::i8,    Custom);
+  setOperationAction(ISD::SRL,              MVT::i8,    Custom);
   setOperationAction(ISD::SRA,              MVT::i16,   Custom);
   setOperationAction(ISD::SHL,              MVT::i16,   Custom);
   setOperationAction(ISD::SRL,              MVT::i16,   Custom);
@@ -450,8 +453,7 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   if (Opc == ISD::SRL && ShiftAmount) {
     // Emit a special goodness here:
     // srl A, 1 => clrc; rrc A
-    SDValue clrc = DAG.getNode(MSP430ISD::CLRC, dl, MVT::Other);
-    Victim = DAG.getNode(MSP430ISD::RRC, dl, VT, Victim, clrc);
+    Victim = DAG.getNode(MSP430ISD::RRC, dl, VT, Victim);
     ShiftAmount -= 1;
   }
 
@@ -603,7 +605,6 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::CMP:                return "MSP430ISD::CMP";
   case MSP430ISD::SETCC:              return "MSP430ISD::SETCC";
   case MSP430ISD::SELECT:             return "MSP430ISD::SELECT";
-  case MSP430ISD::CLRC:               return "MSP430ISD::CLRC";
   }
 }
 

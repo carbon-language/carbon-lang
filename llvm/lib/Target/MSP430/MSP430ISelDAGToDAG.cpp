@@ -127,8 +127,15 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
 void MSP430DAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
-  // Select target instructions for the DAG.
+  // Codegen the basic block.
+#ifndef NDEBUG
+  DOUT << "===== Instruction selection begins:\n";
+  Indent = 0;
+#endif
   SelectRoot(*CurDAG);
+#ifndef NDEBUG
+  DOUT << "===== Instruction selection ends:\n";
+#endif
 
   CurDAG->RemoveDeadNodes();
 }
