@@ -72,6 +72,7 @@ FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM) {
   return new MSP430DAGToDAGISel(TM);
 }
 
+// FIXME: This is pretty dummy routine and needs to be rewritten in the future.
 bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
                                     SDValue &Disp, SDValue &Base) {
   // We don't support frame index stuff yet.
@@ -99,20 +100,17 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
   case MSP430ISD::Wrapper:
     SDValue N0 = Addr.getOperand(0);
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-      // We can match addresses of globals without any offsets
-      if (!G->getOffset()) {
-        Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
-                                              MVT::i16, 0);
-        Disp = CurDAG->getTargetConstant(0, MVT::i16);
+      Base = CurDAG->getRegister(0, MVT::i16);
+      Disp = CurDAG->getTargetGlobalAddress(G->getGlobal(),
+                                            MVT::i16, G->getOffset());
 
-        return true;
-      }
+      return true;
     }
     break;
   };
 
-  Base = Addr;
-  Disp = CurDAG->getTargetConstant(0, MVT::i16);
+  Base = CurDAG->getRegister(0, MVT::i16);
+  Disp = Addr;
 
   return true;
 }

@@ -162,17 +162,23 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
                                           const char* Modifier) {
   const MachineOperand &Disp = MI->getOperand(OpNum);
-  assert(Disp.isImm() && "Displacement can be only immediate!");
+  const MachineOperand &Base = MI->getOperand(OpNum+1);
 
-  // Special case: 0(Reg) -> @Reg
-  if (Disp.getImm() == 0) {
-    O << "@";
-    printOperand(MI, OpNum + 1);
-  } else {
-    printOperand(MI, OpNum, "nohash");
-    O << '(';
-    printOperand(MI, OpNum + 1);
-    O << ')';
-  }
+  if (Disp.isGlobal())
+    printOperand(MI, OpNum, "mem");
+  else if (Disp.isImm() && !Base.getReg())
+    printOperand(MI, OpNum);
+  else if (Base.getReg()) {
+    if (Disp.getImm()) {
+      printOperand(MI, OpNum, "nohash");
+      O << '(';
+      printOperand(MI, OpNum + 1);
+      O << ')';
+    } else {
+      O << '@';
+      printOperand(MI, OpNum + 1);
+    }
+  } else
+    assert(0 && "Unsupported memory operand");
 }
 
