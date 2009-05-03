@@ -168,8 +168,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
     bool ExpandedRegion = false;
     // Move the start of the interesting region left until we've
     // pulled in something else interesting.
-    if (CaretStart && !StartIsFixed && 
-        CaretEnd - CaretStart < TargetColumns) {
+    if (CaretStart && !StartIsFixed) {
       unsigned NewStart = CaretStart;
         
       bool BadStart = false;
@@ -223,8 +222,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 
     // Move the end of the interesting region right until we've
     // pulled in something else interesting.
-    if (CaretEnd != SourceLength && 
-        CaretEnd - CaretStart < TargetColumns) {
+    if (CaretEnd != SourceLength) {
       unsigned NewEnd = CaretEnd;
 
       // Skip over any whitespace we see here; we're looking for
@@ -240,10 +238,10 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
         CaretEnd = NewEnd;
         ExpandedRegion = true;
       }
-
-      if (!ExpandedRegion)
-        break;
     }
+
+    if (!ExpandedRegion)
+      break;
   }
 
   // [CaretStart, CaretEnd) is the slice we want. Update the various
