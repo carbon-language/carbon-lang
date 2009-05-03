@@ -132,7 +132,25 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   for (; CaretEnd != CaretStart; --CaretEnd)
     if (!isspace(CaretLine[CaretEnd - 1]))
       break;
+   
+  // If we have a fix-it line, make sure the slice includes all of the
+  // fix-it information.
+  if (!FixItInsertionLine.empty()) {
+    unsigned FixItStart = 0, FixItEnd = FixItInsertionLine.size();
+    for (; FixItStart != FixItEnd; ++FixItStart)
+      if (!isspace(FixItInsertionLine[FixItStart]))
+        break;
     
+    for (; FixItEnd != FixItStart; --FixItEnd)
+      if (!isspace(FixItInsertionLine[FixItEnd - 1]))
+        break;
+
+    if (FixItStart < CaretStart)
+      CaretStart = FixItStart;
+    if (FixItEnd > CaretEnd)
+      CaretEnd = FixItEnd;
+  }
+
   // CaretLine[CaretStart, CaretEnd) contains all of the interesting
   // parts of the caret line. While this slice is smaller than the
   // number of columns we have, try to grow the slice to encompass
@@ -379,6 +397,9 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
             FixItInsertionLine.resize(LastColumnModified, ' ');
           std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
                     FixItInsertionLine.begin() + HintColNo - 1);
+        } else {
+          FixItInsertionLine.clear();
+          break;
         }
       }
     }
