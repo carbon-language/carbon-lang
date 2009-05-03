@@ -2940,9 +2940,6 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     if (FQT->isRecordType() || FQT->isUnionType()) {
       if (FQT->isUnionType())
         HasUnion = true;
-      else
-        assert(FQT->isRecordType() && 
-               "only union/record is supported for ivar layout bitmap");
 
       const RecordType *RT = FQT->getAsRecordType();
       const RecordDecl *RD = RT->getDecl();
@@ -3001,8 +2998,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         for (int FirstIndex = IvarsInfo.size() - 1, 
                  FirstSkIndex = SkipIvars.size() - 1 ;ElIx < ElCount; ElIx++) {
           uint64_t Size = CGM.getContext().getTypeSize(RT)/ByteSizeInBits;
-          for (int i = OldIndex+1; i <= FirstIndex; ++i)
-          {
+          for (int i = OldIndex+1; i <= FirstIndex; ++i) {
             GC_IVAR gcivar;
             gcivar.ivar_bytepos = IvarsInfo[i].ivar_bytepos + Size*ElIx;
             gcivar.ivar_size = IvarsInfo[i].ivar_size;
@@ -3026,54 +3022,42 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       if (FQT.isObjCGCStrong() || FQT.isObjCGCWeak()) {
         GCAttr = FQT.isObjCGCStrong() ? QualType::Strong : QualType::Weak;
         break;
-      }
-      else if (CGM.getContext().isObjCObjectPointerType(FQT)) {
+      } else if (CGM.getContext().isObjCObjectPointerType(FQT)) {
         GCAttr = QualType::Strong;
         break;
-      }
-      else if (const PointerType *PT = FQT->getAsPointerType()) {
+      } else if (const PointerType *PT = FQT->getAsPointerType()) {
         FQT = PT->getPointeeType();
-      }
-      else {
+      } else {
         break;
       }
     } while (true);
     
     if ((ForStrongLayout && GCAttr == QualType::Strong)
         || (!ForStrongLayout && GCAttr == QualType::Weak)) {
-      if (IsUnion)
-      {
+      if (IsUnion) {
         uint64_t UnionIvarSize = CGM.getContext().getTypeSize(Field->getType())
                                  / WordSizeInBits;
-        if (UnionIvarSize > MaxUnionIvarSize)
-        {
+        if (UnionIvarSize > MaxUnionIvarSize) {
           MaxUnionIvarSize = UnionIvarSize;
           MaxField = Field;
         }
-      }
-      else
-      {
+      } else {
         GC_IVAR gcivar;
         gcivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
         gcivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
                            WordSizeInBits;
         IvarsInfo.push_back(gcivar);
       }
-    }
-    else if ((ForStrongLayout && 
-              (GCAttr == QualType::GCNone || GCAttr == QualType::Weak))
-             || (!ForStrongLayout && GCAttr != QualType::Weak)) {
-      if (IsUnion)
-      {
+    } else if ((ForStrongLayout && 
+                (GCAttr == QualType::GCNone || GCAttr == QualType::Weak))
+               || (!ForStrongLayout && GCAttr != QualType::Weak)) {
+      if (IsUnion) {
         uint64_t UnionIvarSize = CGM.getContext().getTypeSize(Field->getType());
-        if (UnionIvarSize > MaxSkippedUnionIvarSize)
-        {
+        if (UnionIvarSize > MaxSkippedUnionIvarSize) {
           MaxSkippedUnionIvarSize = UnionIvarSize;
           MaxSkippedField = Field;
         }
-      }
-      else
-      {
+      } else {
         GC_IVAR skivar;
         skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, Field);
         skivar.ivar_size = CGM.getContext().getTypeSize(Field->getType()) /
@@ -3084,12 +3068,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   }
   if (LastFieldBitfield) {
     // Last field was a bitfield. Must update skip info.
-    GC_IVAR skivar;
-    skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                       LastFieldBitfield);
     Expr *BitWidth = LastFieldBitfield->getBitWidth();
     uint64_t BitFieldSize =
       BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
+    GC_IVAR skivar;
+    skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                       LastFieldBitfield);
     skivar.ivar_size = (BitFieldSize / ByteSizeInBits) 
                          + ((BitFieldSize % ByteSizeInBits) != 0);
     SkipIvars.push_back(skivar);    
