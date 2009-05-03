@@ -69,19 +69,19 @@ static const FieldDecl *LookupFieldDeclForIvar(ASTContext &Context,
   return LookupFieldDeclForIvar(Context, Super, OIVD, Found);
 }
 
-uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                              const ObjCInterfaceDecl *OID,
-                                              const ObjCIvarDecl *Ivar) {
+static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
+                                     const ObjCInterfaceDecl *OID,
+                                     const ObjCIvarDecl *Ivar) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
   const ObjCInterfaceDecl *Container;
   const FieldDecl *Field = 
     LookupFieldDeclForIvar(CGM.getContext(), OID, Ivar, Container);
-  QualType T = CGM.getContext().getObjCInterfaceType(Container);
-  const llvm::StructType *STy = GetConcreteClassStruct(CGM, Container);
+  const llvm::StructType *STy = 
+    CGObjCRuntime::GetConcreteClassStruct(CGM, Container);
   const llvm::StructLayout *Layout = 
     CGM.getTargetData().getStructLayout(STy);
   if (!Field->isBitField())
-    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field)) * 8;
   
   // FIXME. Must be a better way of getting a bitfield base offset.
   CodeGenTypes::BitFieldInfo BFI = CGM.getTypes().getBitFieldInfo(Field);
@@ -91,7 +91,13 @@ uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
   const llvm::Type *Ty = 
     CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
   Offset *= CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
-  return (Offset + BFI.Begin) / 8;
+  return Offset + BFI.Begin;
+}
+
+uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                              const ObjCInterfaceDecl *OID,
+                                              const ObjCIvarDecl *Ivar) {
+  return LookupFieldBitOffset(CGM, OID, Ivar) / 8;
 }
 
 LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
@@ -100,43 +106,28 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                const ObjCIvarDecl *Ivar,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
-  // Force generation of the codegen information for this structure.
-  //
-  // FIXME: Remove once we don't use the bit-field lookup map.
-  (void) GetConcreteClassStruct(CGF.CGM, OID);
+  // We need to compute the bit offset for the bit-field, the offset
+  // is to the byte.
+  uint64_t BitOffset = LookupFieldBitOffset(CGF.CGM, OID, Ivar) % 8;
 
-  // FIXME: For now, we use an implementation based on just computing
-  // the offset and calculating things directly. For optimization
-  // purposes, it would be cleaner to use a GEP on the proper type
-  // since the structure layout is fixed; however for that we need to
-  // be able to walk the class chain for an Ivar.
-  const ObjCInterfaceDecl *Container;
-  const FieldDecl *Field = 
-    LookupFieldDeclForIvar(CGF.CGM.getContext(), OID, Ivar, Container);
-  
-  // (char *) BaseValue
+  // Compute (type*) ( (char *) BaseValue + Offset)
   llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  QualType IvarTy = Ivar->getType();
+  const llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
   llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, I8Ptr);
-  // (char*)BaseValue + Offset_symbol
   V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
-  // (type *)((char*)BaseValue + Offset_symbol)
-  const llvm::Type *IvarTy = 
-    CGF.CGM.getTypes().ConvertTypeForMem(Ivar->getType());
-  llvm::Type *ptrIvarTy = llvm::PointerType::getUnqual(IvarTy);
-  V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
+  V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
   
   if (Ivar->isBitField()) {
-    QualType IvarTy = Ivar->getType();
-    CodeGenTypes::BitFieldInfo bitFieldInfo =
-                                 CGF.CGM.getTypes().getBitFieldInfo(Field);
-    return LValue::MakeBitfield(V, bitFieldInfo.Begin % 8, bitFieldInfo.Size,
+    uint64_t BitFieldSize =
+      Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
+    return LValue::MakeBitfield(V, BitOffset, BitFieldSize,
                                 IvarTy->isSignedIntegerType(),
                                 IvarTy.getCVRQualifiers()|CVRQualifiers);
   }
 
-  LValue LV = LValue::MakeAddr(V, 
-              Ivar->getType().getCVRQualifiers()|CVRQualifiers,
-              CGF.CGM.getContext().getObjCGCAttrKind(Ivar->getType()));
+  LValue LV = LValue::MakeAddr(V, IvarTy.getCVRQualifiers()|CVRQualifiers,
+                               CGF.CGM.getContext().getObjCGCAttrKind(IvarTy));
   LValue::SetObjCIvar(LV, true);
   return LV;
 }
@@ -1865,7 +1856,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getNameAsString(),
                      Interface->protocol_begin(),
                      Interface->protocol_end());
-  const llvm::Type *InterfaceTy = GetConcreteClassStruct(CGM, Interface);
+  const llvm::Type *InterfaceTy = 
+    CGObjCRuntime::GetConcreteClassStruct(CGM, Interface);
   unsigned Flags = eClassFlags_Factory;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
 
