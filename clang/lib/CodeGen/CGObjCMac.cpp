@@ -72,6 +72,7 @@ static const FieldDecl *LookupFieldDeclForIvar(ASTContext &Context,
 
 static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
                                      const ObjCInterfaceDecl *OID,
+                                     const ObjCImplementationDecl *ID,
                                      const ObjCIvarDecl *Ivar) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
   const ObjCInterfaceDecl *Container;
@@ -98,7 +99,13 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
                                               const ObjCInterfaceDecl *OID,
                                               const ObjCIvarDecl *Ivar) {
-  return LookupFieldBitOffset(CGM, OID, Ivar) / 8;
+  return LookupFieldBitOffset(CGM, OID, 0, Ivar) / 8;
+}
+
+uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
+                                              const ObjCImplementationDecl *OID,
+                                              const ObjCIvarDecl *Ivar) {
+  return LookupFieldBitOffset(CGM, OID->getClassInterface(), OID, Ivar) / 8;
 }
 
 LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
@@ -107,10 +114,6 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                const ObjCIvarDecl *Ivar,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
-  // We need to compute the bit offset for the bit-field, the offset
-  // is to the byte.
-  uint64_t BitOffset = LookupFieldBitOffset(CGF.CGM, OID, Ivar) % 8;
-
   // Compute (type*) ( (char *) BaseValue + Offset)
   llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   QualType IvarTy = Ivar->getType();
@@ -120,6 +123,13 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
   
   if (Ivar->isBitField()) {
+    // We need to compute the bit offset for the bit-field, the offset
+    // is to the byte. Note, there is a subtle invariant here: we can
+    // only call this routine on non-sythesized ivars but we may be
+    // called for synthesized ivars. However, a synthesized ivar can
+    // never be a bit-field so this is safe.
+    uint64_t BitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar) % 8;
+
     uint64_t BitFieldSize =
       Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
     return LValue::MakeBitfield(V, BitOffset, BitFieldSize,
@@ -1184,7 +1194,7 @@ private:
     return "OBJC_CLASS_$_";
   }
 
-  void GetClassSizeInfo(const ObjCInterfaceDecl *OID,
+  void GetClassSizeInfo(const ObjCImplementationDecl *OID,
                         uint32_t &InstanceStart,
                         uint32_t &InstanceSize);
 
@@ -4258,14 +4268,14 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   return GV;
 }
 
-void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCInterfaceDecl *OID,
+void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
   // Find first and last (non-padding) ivars in this interface.
 
   // FIXME: Use iterator.
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  GetNamedIvarList(OID, OIvars);
+  GetNamedIvarList(OID->getClassInterface(), OIvars);
 
   if (OIvars.empty()) {
     InstanceStart = InstanceSize = 0;
@@ -4368,7 +4378,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
       ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = GetClassGlobal(ObjCClassName + RootClassName);
   }
-  GetClassSizeInfo(ID->getClassInterface(), InstanceStart, InstanceSize);
+  GetClassSizeInfo(ID, InstanceStart, InstanceSize);
   CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                          InstanceStart,
                                          InstanceSize, 
@@ -4664,7 +4674,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
     ObjCIvarDecl *IVD = OIvars[i];
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), IVD, 
-                                ComputeIvarBaseOffset(CGM, OID, IVD));
+                                ComputeIvarBaseOffset(CGM, ID, IVD));
     Ivar[1] = GetMethodVarName(IVD->getIdentifier());
     Ivar[2] = GetMethodVarType(IVD);
     const llvm::Type *FieldTy =
