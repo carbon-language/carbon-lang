@@ -72,6 +72,8 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::RET,              MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
   setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
+  setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
+  setOperationAction(ISD::BRIND,            MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,            MVT::Other, Expand);
   setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
   setOperationAction(ISD::SETCC,            MVT::i8,    Custom);
