@@ -70,8 +70,9 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
-  case ISD::SRA: return LowerShifts(Op, DAG);
-  case ISD::RET: return LowerRET(Op, DAG);
+  case ISD::SRA:              return LowerShifts(Op, DAG);
+  case ISD::RET:              return LowerRET(Op, DAG);
+  case ISD::CALL:             return LowerCALL(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -93,6 +94,18 @@ SDValue MSP430TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   case CallingConv::C:
   case CallingConv::Fast:
     return LowerCCCArguments(Op, DAG);
+  }
+}
+
+SDValue MSP430TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  unsigned CallingConv = TheCall->getCallingConv();
+  switch (CallingConv) {
+  default:
+    assert(0 && "Unsupported calling convention");
+  case CallingConv::Fast:
+  case CallingConv::C:
+    return LowerCCCCallTo(Op, DAG, CallingConv);
   }
 }
 
@@ -225,6 +238,166 @@ SDValue MSP430TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain);
 }
 
+/// LowerCCCCallTo - functions arguments are copied from virtual regs to
+/// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
+/// TODO: sret.
+SDValue MSP430TargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
+                                             unsigned CC) {
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  SDValue Chain  = TheCall->getChain();
+  SDValue Callee = TheCall->getCallee();
+  bool isVarArg  = TheCall->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
+
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+
+  CCInfo.AnalyzeCallOperands(TheCall, CC_MSP430);
+
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  Chain = DAG.getCALLSEQ_START(Chain ,DAG.getConstant(NumBytes,
+                                                      getPointerTy(), true));
+
+  SmallVector<std::pair<unsigned, SDValue>, 4> RegsToPass;
+  SmallVector<SDValue, 12> MemOpChains;
+  SDValue StackPtr;
+
+  // Walk the register/memloc assignments, inserting copies/loads.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+
+    // Arguments start after the 5 first operands of ISD::CALL
+    SDValue Arg = TheCall->getArg(i);
+
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+      default: assert(0 && "Unknown loc info!");
+      case CCValAssign::Full: break;
+      case CCValAssign::SExt:
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::ZExt:
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::AExt:
+        Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+    }
+
+    // Arguments that can be passed on register must be kept at RegsToPass
+    // vector
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+
+      if (StackPtr.getNode() == 0)
+        StackPtr = DAG.getCopyFromReg(Chain, dl, MSP430::SPW, getPointerTy());
+
+      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                   StackPtr,
+                                   DAG.getIntPtrConstant(VA.getLocMemOffset()));
+
+
+      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                         PseudoSourceValue::getStack(),
+                                         VA.getLocMemOffset()));
+    }
+  }
+
+  // Transform all store nodes into one single node because all store nodes are
+  // independent of each other.
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain and
+  // flag operands which copy the outgoing args into registers.  The InFlag in
+  // necessary since all emited instructions must be stuck together.
+  SDValue InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
+                             RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  // Likewise ExternalSymbol -> TargetExternalSymbol.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i16);
+  else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i16);
+
+  // Returns a chain & a flag for retval copy to use.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+
+  // Add argument registers to the end of the list so that they are
+  // known live into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
+
+  if (InFlag.getNode())
+    Ops.push_back(InFlag);
+
+  Chain = DAG.getNode(MSP430ISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+  InFlag = Chain.getValue(1);
+
+  // Create the CALLSEQ_END node.
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, getPointerTy(), true),
+                             DAG.getConstant(0, getPointerTy(), true),
+                             InFlag);
+  InFlag = Chain.getValue(1);
+
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return SDValue(LowerCallResult(Chain, InFlag, TheCall, CC, DAG),
+                 Op.getResNo());
+}
+
+/// LowerCallResult - Lower the result values of an ISD::CALL into the
+/// appropriate copies out of appropriate physical registers.  This assumes that
+/// Chain/InFlag are the input chain/flag to use, and that TheCall is the call
+/// being lowered. Returns a SDNode with the same number of values as the
+/// ISD::CALL.
+SDNode*
+MSP430TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
+                                      CallSDNode *TheCall,
+                                      unsigned CallingConv,
+                                      SelectionDAG &DAG) {
+  bool isVarArg = TheCall->isVarArg();
+  DebugLoc dl = TheCall->getDebugLoc();
+
+  // Assign locations to each value returned by this call.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
+
+  CCInfo.AnalyzeCallResult(TheCall, RetCC_MSP430);
+  SmallVector<SDValue, 8> ResultVals;
+
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
+                               RVLocs[i].getValVT(), InFlag).getValue(1);
+    InFlag = Chain.getValue(2);
+    ResultVals.push_back(Chain.getValue(0));
+  }
+
+  ResultVals.push_back(Chain);
+
+  // Merge everything together with a MERGE_VALUES node.
+  return DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
+                     &ResultVals[0], ResultVals.size()).getNode();
+}
+
 SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
                                           SelectionDAG &DAG) {
   assert(Op.getOpcode() == ISD::SRA && "Only SRA is currently supported.");
@@ -255,4 +428,3 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::RRA:                return "MSP430ISD::RRA";
   }
 }
-

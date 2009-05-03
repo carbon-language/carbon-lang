@@ -22,6 +22,7 @@ class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
 //===----------------------------------------------------------------------===//
 // Type Profiles.
 //===----------------------------------------------------------------------===//
+def SDT_MSP430Call : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -30,6 +31,9 @@ def MSP430retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInFlag]>;
 
 def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
+
+def MSP430call    : SDNode<"MSP430ISD::CALL", SDT_MSP430Call,
+                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.

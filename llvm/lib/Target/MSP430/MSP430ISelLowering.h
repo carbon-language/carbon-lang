@@ -28,7 +28,11 @@ namespace llvm {
       RET_FLAG,
 
       /// Y = RRA X, rotate right arithmetically
-      RRA
+      RRA,
+
+      /// CALL/TAILCALL - These operations represent an abstract call
+      /// instruction, which includes a bunch of information.
+      CALL
     };
   }
 
@@ -47,9 +51,18 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
+
+    SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
+                           unsigned CC);
+    SDNode* LowerCallResult(SDValue Chain, SDValue InFlag,
+                            CallSDNode *TheCall,
+                            unsigned CallingConv, SelectionDAG &DAG);
+
+
   private:
     const MSP430Subtarget &Subtarget;
     const MSP430TargetMachine &TM;
