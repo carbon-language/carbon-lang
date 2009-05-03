@@ -52,12 +52,12 @@ def MSP430Wrapper : SDNode<"MSP430ISD::Wrapper",     SDT_MSP430Wrapper>;
 // Address operands
 def memsrc : Operand<i16> {
   let PrintMethod = "printSrcMemOperand";
-  let MIOperandInfo = (ops i16imm, GR16);
+  let MIOperandInfo = (ops GR16, i16imm);
 }
 
 def memdst : Operand<i16> {
   let PrintMethod = "printSrcMemOperand";
-  let MIOperandInfo = (ops i16imm, GR16);
+  let MIOperandInfo = (ops GR16, i16imm);
 }
 
 

@@ -161,22 +161,22 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
 void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
                                           const char* Modifier) {
-  const MachineOperand &Disp = MI->getOperand(OpNum);
-  const MachineOperand &Base = MI->getOperand(OpNum+1);
+  const MachineOperand &Base = MI->getOperand(OpNum);
+  const MachineOperand &Disp = MI->getOperand(OpNum+1);
 
-  if (Disp.isGlobal())
+  if (Base.isGlobal())
     printOperand(MI, OpNum, "mem");
   else if (Disp.isImm() && !Base.getReg())
     printOperand(MI, OpNum);
   else if (Base.getReg()) {
     if (Disp.getImm()) {
-      printOperand(MI, OpNum, "nohash");
+      printOperand(MI, OpNum + 1, "nohash");
       O << '(';
-      printOperand(MI, OpNum + 1);
+      printOperand(MI, OpNum);
       O << ')';
     } else {
       O << '@';
-      printOperand(MI, OpNum + 1);
+      printOperand(MI, OpNum);
     }
   } else
     assert(0 && "Unsupported memory operand");
