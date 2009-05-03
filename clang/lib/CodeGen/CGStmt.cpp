@@ -805,9 +805,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   
   std::vector<LValue> ResultRegDests;
   std::vector<QualType> ResultRegQualTys;
-  
-  std::vector<const llvm::Type *> ResultTypes;
-  
+  std::vector<const llvm::Type *> ResultRegTypes;
+  std::vector<const llvm::Type *> ResultTruncRegTypes;
   std::vector<const llvm::Type*> ArgTypes;
   std::vector<llvm::Value*> Args;
 
@@ -832,11 +831,38 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     if (!Constraints.empty())
       Constraints += ',';
 
+    // If this is a register output, then make the inline asm return it
+    // by-value.  If this is a memory result, return the value by-reference.
     if (!Info.allowsMemory() && !hasAggregateLLVMType(OutExpr->getType())) {
+      Constraints += "=" + OutputConstraint;
       ResultRegQualTys.push_back(OutExpr->getType());
       ResultRegDests.push_back(Dest);
-      ResultTypes.push_back(ConvertTypeForMem(OutExpr->getType()));
-      Constraints += "=" + OutputConstraint;
+      ResultRegTypes.push_back(ConvertTypeForMem(OutExpr->getType()));
+      ResultTruncRegTypes.push_back(ResultRegTypes.back());
+      
+      // If this output is tied to an input, and if the input is larger, then
+      // we need to set the actual result type of the inline asm node to be the
+      // same as the input type.
+      if (Info.hasMatchingInput()) {
+        unsigned InputNo = ~0;
+        for (unsigned i = 0, e = S.getNumInputs(); i != e; ++i)
+          if (InputConstraintInfos[i].hasTiedOperand() &&
+              InputConstraintInfos[i].getTiedOperand() == i) {
+            InputNo = i;
+            break;
+          }
+        assert(InputNo != ~0U && "Didn't find matching input!");
+        
+        QualType InputTy = S.getInputExpr(InputNo)->getType();
+        QualType OutputTy = OutExpr->getType();
+        
+        uint64_t InputSize = getContext().getTypeSize(InputTy);
+        if (getContext().getTypeSize(OutputTy) < InputSize) {
+          // Form the asm to return the value as a larger integer type.
+          ResultRegTypes.back() = llvm::IntegerType::get((unsigned)InputSize);
+        }
+      }
+      
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
       Args.push_back(Dest.getAddress());
@@ -935,12 +961,12 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   }
 
   const llvm::Type *ResultType;
-  if (ResultTypes.empty())
+  if (ResultRegTypes.empty())
     ResultType = llvm::Type::VoidTy;
-  else if (ResultTypes.size() == 1)
-    ResultType = ResultTypes[0];
+  else if (ResultRegTypes.size() == 1)
+    ResultType = ResultRegTypes[0];
   else
-    ResultType = llvm::StructType::get(ResultTypes);
+    ResultType = llvm::StructType::get(ResultRegTypes);
   
   const llvm::FunctionType *FTy = 
     llvm::FunctionType::get(ResultType, ArgTypes, false);
@@ -951,14 +977,37 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::CallInst *Result = Builder.CreateCall(IA, Args.begin(), Args.end());
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
   
-  if (ResultTypes.size() == 1) {
-    EmitStoreThroughLValue(RValue::get(Result), ResultRegDests[0],
-                           ResultRegQualTys[0]);
+  
+  // Extract all of the register value results from the asm.
+  std::vector<llvm::Value*> RegResults;
+  if (ResultRegTypes.size() == 1) {
+    RegResults.push_back(Result);
   } else {
-    for (unsigned i = 0, e = ResultTypes.size(); i != e; ++i) {
+    for (unsigned i = 0, e = ResultRegTypes.size(); i != e; ++i) {
       llvm::Value *Tmp = Builder.CreateExtractValue(Result, i, "asmresult");
-      EmitStoreThroughLValue(RValue::get(Tmp), ResultRegDests[i],
-                             ResultRegQualTys[i]);
+      RegResults.push_back(Tmp);
     }
+  }
+  
+  for (unsigned i = 0, e = RegResults.size(); i != e; ++i) {
+    llvm::Value *Tmp = RegResults[i];
+    
+    // If the result type of the LLVM IR asm doesn't match the result type of
+    // the expression, do the conversion.
+    if (ResultRegTypes[i] != ResultTruncRegTypes[i]) {
+      const llvm::Type *TruncTy = ResultTruncRegTypes[i];
+      // Truncate the integer result to the right size, note that
+      // ResultTruncRegTypes can be a pointer.
+      uint64_t ResSize = CGM.getTargetData().getTypeSizeInBits(TruncTy);
+      Tmp = Builder.CreateTrunc(Tmp, llvm::IntegerType::get((unsigned)ResSize));
+      
+      if (Tmp->getType() != TruncTy) {
+        assert(isa<llvm::PointerType>(TruncTy));
+        Tmp = Builder.CreateIntToPtr(Tmp, TruncTy);
+      }
+    }
+    
+    EmitStoreThroughLValue(RValue::get(Tmp), ResultRegDests[i],
+                           ResultRegQualTys[i]);
   }
 }

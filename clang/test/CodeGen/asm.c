@@ -60,7 +60,14 @@ unsigned t11(signed char input) {
   return output;
 }
 
-
+// PR3373
+unsigned char t12(unsigned input) {
+  unsigned char output;
+  __asm__("xyz"
+          : "=a" (output)
+          : "0" (input));
+  return output;
+}
 
 
 struct S {
