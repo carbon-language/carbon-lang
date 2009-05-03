@@ -70,28 +70,6 @@ class DIE;
 class DIEValue;
 
 //===----------------------------------------------------------------------===//
-/// Utility routines.
-///
-/// getGlobalVariable - Return either a direct or cast Global value.
-///
-static GlobalVariable *getGlobalVariable(Value *V) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-    return GV;
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::BitCast) {
-      return dyn_cast<GlobalVariable>(CE->getOperand(0));
-    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
-      for (unsigned int i=1; i<CE->getNumOperands(); i++) {
-        if (!CE->getOperand(i)->isNullValue())
-          return NULL;
-      }
-      return dyn_cast<GlobalVariable>(CE->getOperand(0));
-    }
-  }
-  return NULL;
-}
-
-//===----------------------------------------------------------------------===//
 /// DWLabel - Labels are used to track locations in the assembler file.
 /// Labels appear in the form @verbatim <prefix><Tag><Number> @endverbatim,
 /// where the tag is a category of label (Ex. location) and number is a value
@@ -3349,61 +3327,6 @@ public:
       DebugTimer->stopTimer();
   }
 
-  /// ValidDebugInfo - Return true if V represents valid debug info value.
-  bool ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
-    if (!V)
-      return false;
-
-    if (!shouldEmit)
-      return false;
-
-    GlobalVariable *GV = getGlobalVariable(V);
-    if (!GV)
-      return false;
-
-    if (!GV->hasInternalLinkage () && !GV->hasLinkOnceLinkage())
-      return false;
-
-    if (TimePassesIsEnabled)
-      DebugTimer->startTimer();
-
-    DIDescriptor DI(GV);
-
-    // Check current version. Allow Version6 for now.
-    unsigned Version = DI.getVersion();
-    if (Version != LLVMDebugVersion && Version != LLVMDebugVersion6) {
-      if (TimePassesIsEnabled)
-        DebugTimer->stopTimer();
-
-      return false;
-    }
-
-    unsigned Tag = DI.getTag();
-    switch (Tag) {
-    case DW_TAG_variable:
-      assert(DIVariable(GV).Verify() && "Invalid DebugInfo value");
-      break;
-    case DW_TAG_compile_unit:
-      assert(DICompileUnit(GV).Verify() && "Invalid DebugInfo value");
-      break;
-    case DW_TAG_subprogram:
-      assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
-      break;
-    case DW_TAG_lexical_block:
-      /// FIXME. This interfers with the qualitfy of generated code when 
-      /// during optimization.
-      if (OptLevel != CodeGenOpt::None)
-        return false;
-    default:
-      break;
-    }
-
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return true;
-  }
-
   /// RecordSourceLine - Records location information and associates it with a 
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
@@ -4752,11 +4675,6 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
     MMI->EndFunction();
 }
 
-/// ValidDebugInfo - Return true if V represents valid debug info value.
-bool DwarfWriter::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
-  return DD && DD->ValidDebugInfo(V, OptLevel);
-}
-
 /// RecordSourceLine - Records location information and associates it with a 
 /// label. Returns a unique label ID used to generate a label and provide
 /// correspondence to the source line list.
@@ -4790,7 +4708,7 @@ void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
 /// be emitted.
 bool DwarfWriter::ShouldEmitDwarfDebug() const {
-  return DD->ShouldEmitDwarfDebug();
+  return DD && DD->ShouldEmitDwarfDebug();
 }
 
 //// RecordInlinedFnStart - Global variable GV is inlined at the location marked

@@ -15,6 +15,7 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Dwarf.h"
@@ -69,6 +70,9 @@ namespace llvm {
     unsigned getTag() const {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
+
+    /// ValidDebugInfo - Return true if V represents valid debug info value.
+    static bool ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel);
 
   };
 

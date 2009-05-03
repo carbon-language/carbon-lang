@@ -20,12 +20,56 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
+using namespace llvm::dwarf;
 
 //===----------------------------------------------------------------------===//
 // DIDescriptor
 //===----------------------------------------------------------------------===//
+
+/// ValidDebugInfo - Return true if V represents valid debug info value.
+bool DIDescriptor::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
+  if (!V)
+    return false;
+
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(V->stripPointerCasts());
+  if (!GV)
+    return false;
+
+  if (!GV->hasInternalLinkage () && !GV->hasLinkOnceLinkage())
+    return false;
+
+  DIDescriptor DI(GV);
+
+  // Check current version. Allow Version6 for now.
+  unsigned Version = DI.getVersion();
+  if (Version != LLVMDebugVersion && Version != LLVMDebugVersion6)
+    return false;
+
+  unsigned Tag = DI.getTag();
+  switch (Tag) {
+  case DW_TAG_variable:
+    assert(DIVariable(GV).Verify() && "Invalid DebugInfo value");
+    break;
+  case DW_TAG_compile_unit:
+    assert(DICompileUnit(GV).Verify() && "Invalid DebugInfo value");
+    break;
+  case DW_TAG_subprogram:
+    assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
+    break;
+  case DW_TAG_lexical_block:
+    /// FIXME. This interfers with the quality of generated code when
+    /// during optimization.
+    if (OptLevel != CodeGenOpt::None)
+      return false;
+  default:
+    break;
+  }
+
+  return true;
+}
 
 DIDescriptor::DIDescriptor(GlobalVariable *gv, unsigned RequiredTag) {
   GV = gv;
