@@ -24,8 +24,7 @@ void f6(signed short x) { }
 
 void f7(unsigned short x) { }
 
-// F8 is dead so it should not be emitted.
-// RUN: not grep '@f8' %t &&
+// RUN: grep 'define void @f8() nounwind alwaysinline' %t &&
 void __attribute__((always_inline)) f8(void) { }
 
 // RUN: grep 'call void @f9_t() noreturn' %t &&
