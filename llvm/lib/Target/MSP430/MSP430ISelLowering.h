@@ -30,6 +30,8 @@ namespace llvm {
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
 
   private:
     const MSP430Subtarget &Subtarget;
