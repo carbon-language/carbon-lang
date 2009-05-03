@@ -1041,22 +1041,25 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     unsigned TiedTo = Info.getTiedOperand();
     Expr *OutputExpr     = Exprs[TiedTo];
     ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i+NumOutputs]);
-    QualType T1 = OutputExpr->getType();
-    QualType T2 = InputExpr->getType();
-    if (Context.hasSameType(T1, T2))
+    QualType InTy = InputExpr->getType();
+    QualType OutTy = OutputExpr->getType();
+    if (Context.hasSameType(InTy, OutTy))
       continue;  // All types can be tied to themselves.
     
-    
-    // Int/ptr operands are ok if they are the same size.
-    if ((T1->isIntegerType() || T1->isPointerType()) &&
-        (T2->isIntegerType() || T2->isPointerType())) {
-      if (Context.getTypeSize(T1) == Context.getTypeSize(T2))
+    // Int/ptr operands have some special cases that we allow.
+    if ((OutTy->isIntegerType() || OutTy->isPointerType()) &&
+        (InTy->isIntegerType() || InTy->isPointerType())) {
+      
+      // They are ok if they are the same size.  Tying void* to int is ok if
+      // they are the same size, for example.  This also allows tying void* to
+      // int*.
+      if (Context.getTypeSize(OutTy) == Context.getTypeSize(InTy))
         continue;
     }
     
     Diag(InputExpr->getSubExpr()->getLocStart(),
          diag::err_asm_tying_incompatible_types)
-      << T2 << T1 << OutputExpr->getSourceRange()
+      << InTy << OutTy << OutputExpr->getSourceRange()
       << InputExpr->getSourceRange();
     DeleteStmt(NS);
     return StmtError();
