@@ -31,6 +31,8 @@ def SDT_MSP430SetCC        : SDTypeProfile<1, 2, [SDTCisVT<0, i8>,
 def SDT_MSP430Cmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_MSP430BrCond       : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>,
                                                   SDTCisVT<1, i8>, SDTCisVT<2, i16>]>;
+def SDT_MSP430Select       : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
+                                                  SDTCisVT<3, i8>, SDTCisVT<4, i16>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -52,6 +54,7 @@ def MSP430Wrapper : SDNode<"MSP430ISD::Wrapper", SDT_MSP430Wrapper>;
 def MSP430setcc   : SDNode<"MSP430ISD::SETCC", SDT_MSP430SetCC>;
 def MSP430cmp     : SDNode<"MSP430ISD::CMP", SDT_MSP430Cmp>;
 def MSP430brcond  : SDNode<"MSP430ISD::BRCOND", SDT_MSP430BrCond, [SDNPHasChain]>;
+def MSP430select  : SDNode<"MSP430ISD::SELECT", SDT_MSP430Select>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.
@@ -71,6 +74,11 @@ def memdst : Operand<i16> {
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
 
+// Operand for printing out a condition code.
+def cc : Operand<i8> {
+  let PrintMethod = "printCCOperand";
+}
+
 //===----------------------------------------------------------------------===//
 // MSP430 Complex Pattern Definitions.
 //===----------------------------------------------------------------------===//
@@ -81,15 +89,6 @@ def addr : ComplexPattern<iPTR, 2, "SelectAddr", [], []>;
 // Pattern Fragments
 def zextloadi16i8 : PatFrag<(ops node:$ptr), (i16 (zextloadi8 node:$ptr))>;
 def  extloadi16i8 : PatFrag<(ops node:$ptr), (i16 ( extloadi8 node:$ptr))>;
-
-// MSP430 specific condition code. These correspond to CondCode in
-// MSP430InstrInfo.h. They must be kept in synch.
-def MSP430_COND_E   : PatLeaf<(i8 0)>;  // aka COND_Z
-def MSP430_COND_NE  : PatLeaf<(i8 1)>;  // aka COND_NZ
-def MSP430_COND_HS  : PatLeaf<(i8 2)>;  // aka COND_C
-def MSP430_COND_LO  : PatLeaf<(i8 3)>;  // aka COND_NC
-def MSP430_COND_GE  : PatLeaf<(i8 4)>;
-def MSP430_COND_L   : PatLeaf<(i8 5)>;
 
 //===----------------------------------------------------------------------===//
 // Instruction list..
@@ -108,6 +107,12 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i16imm:$amt1, i16imm:$amt2),
                               [(MSP430callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
+let usesCustomDAGSchedInserter = 1 in {
+  def Select16 : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2, i8imm:$cc),
+                        "# Select16 PSEUDO",
+                        [(set GR16:$dst,
+                          (MSP430select GR16:$src1, GR16:$src2, imm:$cc, SRW))]>;
+}
 
 let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "nop", []>;
@@ -123,18 +128,9 @@ let isReturn = 1, isTerminator = 1 in {
 
 // Conditional branches
 let isBranch = 1, isTerminator = 1, Uses = [SRW] in {
-def JE  : Pseudo<(outs), (ins brtarget:$dst), "je\t$dst",
-              [(MSP430brcond bb:$dst, MSP430_COND_E, SRW)]>;
-def JNE : Pseudo<(outs), (ins brtarget:$dst), "jne\t$dst",
-              [(MSP430brcond bb:$dst, MSP430_COND_NE, SRW)]>;
-def JHS : Pseudo<(outs), (ins brtarget:$dst), "jhs\t$dst",
-              [(MSP430brcond bb:$dst, MSP430_COND_HS, SRW)]>;
-def JLO : Pseudo<(outs), (ins brtarget:$dst), "jlo\t$dst",
-              [(MSP430brcond bb:$dst, MSP430_COND_LO, SRW)]>;
-def JGE : Pseudo<(outs), (ins brtarget:$dst), "jge\t$dst",
-              [(MSP430brcond bb:$dst, MSP430_COND_GE, SRW)]>;
-def JL  : Pseudo<(outs), (ins brtarget:$dst), "jl\t$dst",
-              [(MSP430brcond bb:$dst, MSP430_COND_L, SRW)]>;
+def JCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
+                          "j$cc $dst",
+                          [(MSP430brcond bb:$dst, imm:$cc, SRW)]>;
 } // Uses = [SRW]
 
 //===----------------------------------------------------------------------===//
@@ -656,17 +652,17 @@ def OR16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
 // Integer comparisons
 let Defs = [SRW] in {
 def CMP8rr  : Pseudo<(outs), (ins GR8:$src1, GR8:$src2),
-                     "cmp.b\t{$src2, $src1|$src1, $src2}",
+                     "cmp.b\t{$src1, $src2}",
                      [(MSP430cmp GR8:$src1, GR8:$src2), (implicit SRW)]>;
 def CMP16rr : Pseudo<(outs), (ins GR16:$src1, GR16:$src2),
-                     "cmp.w\t{$src2, $src1|$src1, $src2}",
+                     "cmp.w\t{$src1, $src2}",
                      [(MSP430cmp GR16:$src1, GR16:$src2), (implicit SRW)]>;
 
 def CMP8ri  : Pseudo<(outs), (ins GR8:$src1, i8imm:$src2),
-                     "cmp.b\t{$src2, $src1|$src1, $src2}",
+                     "cmp.b\t{$src1, $src2}",
                      [(MSP430cmp GR8:$src1, imm:$src2), (implicit SRW)]>;
 def CMP16ri : Pseudo<(outs), (ins GR16:$src1, i16imm:$src2),
-                     "cmp.w\t{$src2, $src1|$src1, $src2}",
+                     "cmp.w\t{$src1, $src2}",
                      [(MSP430cmp GR16:$src1, imm:$src2), (implicit SRW)]>;
 
 def CMP8rm  : Pseudo<(outs), (ins GR8:$src1, memsrc:$src2),

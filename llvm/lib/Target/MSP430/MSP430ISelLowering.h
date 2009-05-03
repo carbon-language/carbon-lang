@@ -49,7 +49,11 @@ namespace llvm {
       /// is the block to branch if condition is true, operand 2 is the
       /// condition code, and operand 3 is the flag operand produced by a CMP
       /// instruction.
-      BRCOND
+      BRCOND,
+
+      /// SELECT. Operand 0 and operand 1 are selection variable, operand 3 is
+      /// condition code and operand 4 is flag operand.
+      SELECT
     };
   }
 
@@ -77,6 +81,7 @@ namespace llvm {
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
                            unsigned CC);
@@ -84,6 +89,8 @@ namespace llvm {
                             CallSDNode *TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
 
+    MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                   MachineBasicBlock *BB) const;
 
   private:
     const MSP430Subtarget &Subtarget;

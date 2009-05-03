@@ -58,7 +58,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(SchedulingForLatency);
 
-  setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
@@ -67,13 +67,16 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // We don't have any truncstores
   setTruncStoreAction(MVT::i16, MVT::i8, Expand);
 
-  setOperationAction(ISD::SRA, MVT::i16, Custom);
-  setOperationAction(ISD::RET, MVT::Other, Custom);
-  setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
-  setOperationAction(ISD::BR_CC, MVT::Other, Expand);
-  setOperationAction(ISD::BRCOND, MVT::Other, Custom);
-  setOperationAction(ISD::SETCC, MVT::i8   , Custom);
-  setOperationAction(ISD::SETCC, MVT::i16  , Custom);
+  setOperationAction(ISD::SRA,              MVT::i16,   Custom);
+  setOperationAction(ISD::RET,              MVT::Other, Custom);
+  setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
+  setOperationAction(ISD::BR_CC,            MVT::Other, Expand);
+  setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
+  setOperationAction(ISD::SETCC,            MVT::i8,    Custom);
+  setOperationAction(ISD::SETCC,            MVT::i16,   Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::Other, Expand);
+  setOperationAction(ISD::SELECT,           MVT::i8,    Custom);
+  setOperationAction(ISD::SELECT,           MVT::i16,   Custom);
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -85,6 +88,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   case ISD::SETCC:            return LowerSETCC(Op, DAG);
   case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
+  case ISD::SELECT:           return LowerSELECT(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -517,6 +521,40 @@ SDValue MSP430TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
                      Chain, Dest, CC, Cond);
 }
 
+SDValue MSP430TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
+  SDValue Cond   = Op.getOperand(0);
+  SDValue TrueV  = Op.getOperand(1);
+  SDValue FalseV = Op.getOperand(2);
+  DebugLoc dl    = Op.getDebugLoc();
+  SDValue CC;
+
+  // Lower condition if not lowered yet
+  if (Cond.getOpcode() == ISD::SETCC)
+    Cond = LowerSETCC(Cond, DAG);
+
+  // If condition flag is set by a MSP430ISD::CMP, then use it as the condition
+  // setting operand in place of the MSP430ISD::SETCC.
+  if (Cond.getOpcode() == MSP430ISD::SETCC) {
+    CC = Cond.getOperand(0);
+    Cond = Cond.getOperand(1);
+    TrueV = Cond.getOperand(0);
+    FalseV = Cond.getOperand(1);
+  } else {
+    CC = DAG.getConstant(MSP430::COND_NE, MVT::i16);
+    Cond = DAG.getNode(MSP430ISD::CMP, dl, MVT::i16,
+                       Cond, DAG.getConstant(0, MVT::i16));
+  }
+
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  SmallVector<SDValue, 4> Ops;
+  Ops.push_back(TrueV);
+  Ops.push_back(FalseV);
+  Ops.push_back(CC);
+  Ops.push_back(Cond);
+
+  return DAG.getNode(MSP430ISD::SELECT, dl, VTs, &Ops[0], Ops.size());
+}
+
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
@@ -527,5 +565,69 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::BRCOND:             return "MSP430ISD::BRCOND";
   case MSP430ISD::CMP:                return "MSP430ISD::CMP";
   case MSP430ISD::SETCC:              return "MSP430ISD::SETCC";
+  case MSP430ISD::SELECT:             return "MSP430ISD::SELECT";
   }
+}
+
+//===----------------------------------------------------------------------===//
+//  Other Lowering Code
+//===----------------------------------------------------------------------===//
+
+MachineBasicBlock*
+MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                  MachineBasicBlock *BB) const {
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  assert((MI->getOpcode() == MSP430::Select16) &&
+         "Unexpected instr type to insert");
+
+  // To "insert" a SELECT instruction, we actually have to insert the diamond
+  // control-flow pattern.  The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator I = BB;
+  ++I;
+
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   cmpTY ccX, r1, r2
+  //   jCC copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB = BB;
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *copy1MBB = F->CreateMachineBasicBlock(LLVM_BB);
+  BuildMI(BB, dl, TII.get(MSP430::JCC))
+    .addMBB(copy1MBB)
+    .addImm(MI->getOperand(3).getImm());
+  F->insert(I, copy0MBB);
+  F->insert(I, copy1MBB);
+  // Update machine-CFG edges by transferring all successors of the current
+  // block to the new block which will contain the Phi node for the select.
+  copy1MBB->transferSuccessors(BB);
+  // Next, add the true and fallthrough blocks as its successors.
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(copy1MBB);
+
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to copy1MBB
+  BB = copy0MBB;
+
+  // Update machine-CFG edges
+  BB->addSuccessor(copy1MBB);
+
+  //  copy1MBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+  //  ...
+  BB = copy1MBB;
+  BuildMI(BB, dl, TII.get(MSP430::PHI),
+          MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
+    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
+
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+  return BB;
 }
