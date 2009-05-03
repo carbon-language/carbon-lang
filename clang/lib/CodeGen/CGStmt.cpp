@@ -844,14 +844,16 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       // we need to set the actual result type of the inline asm node to be the
       // same as the input type.
       if (Info.hasMatchingInput()) {
-        unsigned InputNo = ~0;
-        for (unsigned i = 0, e = S.getNumInputs(); i != e; ++i)
-          if (InputConstraintInfos[i].hasTiedOperand() &&
-              InputConstraintInfos[i].getTiedOperand() == i) {
+        unsigned InputNo;
+        for (InputNo = 0; InputNo != S.getNumInputs(); ++InputNo) {
+          TargetInfo::ConstraintInfo &Input = InputConstraintInfos[InputNo];
+          if (Input.hasTiedOperand() &&
+              Input.getTiedOperand() == i) {
             InputNo = i;
             break;
           }
-        assert(InputNo != ~0U && "Didn't find matching input!");
+        }
+        assert(InputNo != S.getNumInputs() && "Didn't find matching input!");
         
         QualType InputTy = S.getInputExpr(InputNo)->getType();
         QualType OutputTy = OutExpr->getType();
