@@ -246,6 +246,13 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     DT.eraseNode(*LI);
     if (DF) DF->removeBlock(*LI);
 
+    // Remove instructions that we're deleting from ScalarEvolution.
+    for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
+         BI != BE; ++BI)
+      SE.deleteValueFromRecords(BI);
+    
+    SE.deleteValueFromRecords(*LI);
+    
     // Remove the block from the reference counting scheme, so that we can
     // delete it freely later.
     (*LI)->dropAllReferences();
