@@ -727,3 +727,48 @@ def : Pat<(add GR16:$src1, (MSP430Wrapper tglobaladdr :$src2)),
 // calls
 def : Pat<(MSP430call (i16 tglobaladdr:$dst)),
           (CALLi tglobaladdr:$dst)>;
+
+// add and sub always produce carry
+def : Pat<(addc GR16:$src1, GR16:$src2),
+          (ADD16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(addc GR16:$src1, (load addr:$src2)),
+          (ADD16rm GR16:$src1, addr:$src2)>;
+def : Pat<(addc GR16:$src1, imm:$src2),
+          (ADD16ri GR16:$src1, imm:$src2)>;
+def : Pat<(store (addc (load addr:$dst), GR16:$src), addr:$dst),
+          (ADD16mr addr:$dst, GR16:$src)>;
+def : Pat<(store (addc (load addr:$dst), (i16 (load addr:$src))), addr:$dst),
+          (ADD16mm addr:$dst, addr:$src)>;
+
+def : Pat<(addc GR8:$src1, GR8:$src2),
+          (ADD8rr GR8:$src1, GR8:$src2)>;
+def : Pat<(addc GR8:$src1, (load addr:$src2)),
+          (ADD8rm GR8:$src1, addr:$src2)>;
+def : Pat<(addc GR8:$src1, imm:$src2),
+          (ADD8ri GR8:$src1, imm:$src2)>;
+def : Pat<(store (addc (load addr:$dst), GR8:$src), addr:$dst),
+          (ADD8mr addr:$dst, GR8:$src)>;
+def : Pat<(store (addc (load addr:$dst), (i8 (load addr:$src))), addr:$dst),
+          (ADD8mm addr:$dst, addr:$src)>;
+
+def : Pat<(subc GR16:$src1, GR16:$src2),
+          (SUB16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(subc GR16:$src1, (load addr:$src2)),
+          (SUB16rm GR16:$src1, addr:$src2)>;
+def : Pat<(subc GR16:$src1, imm:$src2),
+          (SUB16ri GR16:$src1, imm:$src2)>;
+def : Pat<(store (subc (load addr:$dst), GR16:$src), addr:$dst),
+          (SUB16mr addr:$dst, GR16:$src)>;
+def : Pat<(store (subc (load addr:$dst), (i16 (load addr:$src))), addr:$dst),
+          (SUB16mm addr:$dst, addr:$src)>;
+
+def : Pat<(subc GR8:$src1, GR8:$src2),
+          (SUB8rr GR8:$src1, GR8:$src2)>;
+def : Pat<(subc GR8:$src1, (load addr:$src2)),
+          (SUB8rm GR8:$src1, addr:$src2)>;
+def : Pat<(subc GR8:$src1, imm:$src2),
+          (SUB8ri GR8:$src1, imm:$src2)>;
+def : Pat<(store (subc (load addr:$dst), GR8:$src), addr:$dst),
+          (SUB8mr addr:$dst, GR8:$src)>;
+def : Pat<(store (subc (load addr:$dst), (i8 (load addr:$src))), addr:$dst),
+          (SUB8mm addr:$dst, addr:$src)>;
