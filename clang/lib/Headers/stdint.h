@@ -22,8 +22,15 @@
  *
 \*===----------------------------------------------------------------------===*/
 
-#ifndef __STDINT_H
-#define __STDINT_H
+#ifndef __CLANG_STDINT_H
+#define __CLANG_STDINT_H
+
+/* If we're hosted, fall back to the system's stdint.h, which might have
+ * additional definitions.
+ */
+#if __STDC_HOSTED__
+# include_next <stdint.h>
+#else
 
 /* We currently only support targets with power of two, 2s complement integers.
  */
@@ -221,4 +228,5 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define INTMAX_C(v)  (v##LL)
 #define UINTMAX_C(v) (v##ULL)
 
-#endif /* __STDINT_H */
+#endif /* __STDC_HOSTED__ */
+#endif /* __CLANG_STDINT_H */
