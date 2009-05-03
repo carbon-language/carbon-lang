@@ -43,7 +43,6 @@ MSP430TargetMachine::MSP430TargetMachine(const Module &M,
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
 
-
 const TargetAsmInfo *MSP430TargetMachine::createTargetAsmInfo() const {
   return new MSP430TargetAsmInfo(*this);
 }
@@ -54,10 +53,22 @@ bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   return false;
 }
 
-bool MSP430TargetMachine::
-addAssemblyEmitter(PassManagerBase &PM, bool Fast, bool Verbose,
-                   raw_ostream &Out) {
+bool MSP430TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
+                                             bool Fast, bool Verbose,
+                                             raw_ostream &Out) {
   // Output assembly language.
   PM.add(createMSP430CodePrinterPass(Out, *this, Fast, Verbose));
   return false;
 }
+
+unsigned MSP430TargetMachine::getModuleMatchQuality(const Module &M) {
+  std::string TT = M.getTargetTriple();
+
+  // We strongly match msp430
+  if (TT.size() >= 6 && TT[0] == 'm' && TT[1] == 's' && TT[2] == 'p' &&
+      TT[3] == '4' &&  TT[4] == '3' && TT[5] == '0')
+    return 20;
+
+  return 0;
+}
+

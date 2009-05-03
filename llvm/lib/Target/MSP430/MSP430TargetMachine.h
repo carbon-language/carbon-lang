@@ -59,6 +59,7 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast,
                                   bool Verbose, raw_ostream &Out);
+  static unsigned getModuleMatchQuality(const Module &M);
 }; // MSP430TargetMachine.
 
 } // end namespace llvm
