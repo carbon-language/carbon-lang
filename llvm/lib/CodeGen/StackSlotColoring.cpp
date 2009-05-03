@@ -37,7 +37,7 @@ DisableSharing("no-stack-slot-sharing",
              cl::desc("Suppress slot sharing during stack coloring"));
 
 static cl::opt<bool>
-ColorWithRegs("-color-ss-with-regs",
+ColorWithRegs("color-ss-with-regs",
              cl::init(false), cl::Hidden,
              cl::desc("Color stack slots with free registers"));
 
