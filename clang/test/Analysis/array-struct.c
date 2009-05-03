@@ -119,3 +119,14 @@ void f13(double timeout) {
   if (a.e.d == 10)
     a.e.d = 4;
 }
+
+struct s3 {
+  int a[2];
+};
+
+static struct s3 opt;
+
+// Test if the embedded array is retrieved correctly.
+void f14() {
+  struct s3 my_opt = opt;
+}

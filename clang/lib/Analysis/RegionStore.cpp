@@ -270,6 +270,8 @@ private:
   /// y's value is retrieved by this method.
   SVal RetrieveStruct(const GRState* St, const TypedRegion* R);
 
+  SVal RetrieveArray(const GRState* St, const TypedRegion* R);
+
   const GRState* BindStruct(const GRState* St, const TypedRegion* R, SVal V);
 
   /// KillStruct - Set the entire struct to unknown. 
@@ -652,8 +654,13 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   // Such funny addressing will occur due to layering of regions.
 
   QualType RTy = R->getRValueType(getContext());
+
   if (RTy->isStructureType())
     return RetrieveStruct(St, R);
+
+  if (RTy->isArrayType())
+    return RetrieveArray(St, R);
+
   // FIXME: handle Vector types.
   if (RTy->isVectorType())
       return UnknownVal();
@@ -732,10 +739,6 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 }
 
 SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
-
-  Store store = St->getStore();
-  GRStateRef state(St, StateMgr);
-
   // FIXME: Verify we want getRValueType instead of getLValueType.
   QualType T = R->getRValueType(getContext());
   assert(T->isStructureType());
@@ -753,25 +756,33 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
                                                FieldEnd = Fields.rend();
        Field != FieldEnd; ++Field) {
     FieldRegion* FR = MRMgr.getFieldRegion(*Field, R);
-    RegionBindingsTy B = GetRegionBindings(store);
-    RegionBindingsTy::data_type* data = B.lookup(FR);
-
-    SVal FieldValue;
-    if (data)
-      FieldValue = *data;
-    else if (state.contains<RegionKills>(FR))
-      FieldValue = UnknownVal();
-    else {
-      if (MRMgr.onStack(FR) || MRMgr.onHeap(FR))
-        FieldValue = UndefinedVal();
-      else
-        FieldValue = ValMgr.getRValueSymbolVal(FR);
-    }
-
+    QualType FTy = (*Field)->getType();
+    SVal FieldValue = Retrieve(St, loc::MemRegionVal(FR), FTy);
     StructVal = getBasicVals().consVals(FieldValue, StructVal);
   }
 
   return NonLoc::MakeCompoundVal(T, StructVal, getBasicVals());
+}
+
+SVal RegionStoreManager::RetrieveArray(const GRState* St, const TypedRegion* R){
+  QualType T = R->getRValueType(getContext());
+  ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
+
+  llvm::ImmutableList<SVal> ArrayVal = getBasicVals().getEmptySValList();
+
+  llvm::APSInt Size(CAT->getSize(), false);
+  llvm::APSInt i = getBasicVals().getValue(0, Size.getBitWidth(), 
+					   Size.isUnsigned());
+
+  for (; i < Size; ++i) {
+    SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
+    ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
+    QualType ETy = ER->getRValueType(getContext());
+    SVal ElementVal = Retrieve(St, loc::MemRegionVal(ER), ETy);
+    ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
+  }
+
+  return NonLoc::MakeCompoundVal(T, ArrayVal, getBasicVals());
 }
 
 const GRState* RegionStoreManager::Bind(const GRState* St, Loc L, SVal V) {
