@@ -49,6 +49,12 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // Division is expensive
   setIntDivIsCheap(false);
 
+  // Even if we have only 1 bit shift here, we can perform
+  // shifts of the whole bitwidth 1 bit per step.
+  setShiftAmountType(MVT::i8);
+
+  setOperationAction(ISD::SRA, MVT::i16, Custom);
+
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 
@@ -56,6 +62,7 @@ SDValue MSP430TargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
+  case ISD::SRA: return LowerShifts(Op, DAG);
   case ISD::RET: return LowerRET(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
@@ -210,10 +217,34 @@ SDValue MSP430TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain);
 }
 
+SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
+                                          SelectionDAG &DAG) {
+  assert(Op.getOpcode() == ISD::SRA && "Only SRA is currently supported.");
+  SDNode* N = Op.getNode();
+  MVT VT = Op.getValueType();
+  DebugLoc dl = N->getDebugLoc();
+
+  // We currently only lower SRA of constant argument.
+  if (!isa<ConstantSDNode>(N->getOperand(1)))
+    return SDValue();
+
+  uint64_t ShiftAmount = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+
+  // Expand the stuff into sequence of shifts.
+  // FIXME: for some shift amounts this might be done better!
+  // E.g.: foo >> (8 + N) => sxt(swpb(foo)) >> N
+  SDValue Victim = N->getOperand(0);
+  while (ShiftAmount--)
+    Victim = DAG.getNode(MSP430ISD::RRA, dl, VT, Victim);
+
+  return Victim;
+}
+
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
   case MSP430ISD::RET_FLAG:           return "MSP430ISD::RET_FLAG";
+  case MSP430ISD::RRA:                return "MSP430ISD::RRA";
   }
 }
 

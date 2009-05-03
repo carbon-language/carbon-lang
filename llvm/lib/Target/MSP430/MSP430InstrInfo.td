@@ -26,8 +26,10 @@ class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
 //===----------------------------------------------------------------------===//
-def retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
+def MSP430retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInFlag]>;
+
+def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo Instructions
@@ -41,7 +43,7 @@ def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 // FIXME: Provide proper encoding!
 let isReturn = 1, isTerminator = 1 in {
-  def RETI : Pseudo<(outs), (ins), "ret", [(retflag)]>;
+  def RETI : Pseudo<(outs), (ins), "ret", [(MSP430retflag)]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -73,4 +75,13 @@ def ADD16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
                       (implicit SR)]>;
 }
+
+// FIXME: Provide proper encoding!
+let isTwoAddress = 1 in {
+def SAR16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                     "rra.w\t$dst",
+                     [(set GR16:$dst, (MSP430rra GR16:$src)),
+                      (implicit SR)]>;
 }
+
+} // Defs = [SR]

@@ -25,7 +25,10 @@ namespace llvm {
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       /// Return with a flag operand. Operand 0 is the chain operand.
-      RET_FLAG
+      RET_FLAG,
+
+      /// Y = RRA X, rotate right arithmetically
+      RRA
     };
   }
 
@@ -46,6 +49,7 @@ namespace llvm {
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
 
   private:
     const MSP430Subtarget &Subtarget;
