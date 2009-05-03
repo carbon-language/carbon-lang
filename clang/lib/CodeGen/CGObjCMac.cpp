@@ -821,7 +821,7 @@ protected:
   void BuildAggrIvarRecordLayout(const RecordType *RT,
                            unsigned int BytePos, bool ForStrongLayout,
                            bool &HasUnion);
-  void BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
+  void BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
                            const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
@@ -846,7 +846,7 @@ protected:
   llvm::Constant *GetProtocolRef(const ObjCProtocolDecl *PD);
 
   /// GetFieldBaseOffset - return's field byte offset.
-  uint64_t GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
+  uint64_t GetFieldBaseOffset(const ObjCImplementationDecl *OI,
                               const llvm::StructLayout *Layout,
                               const FieldDecl *Field);
   
@@ -2229,7 +2229,7 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
 }
 
 /// GetFieldBaseOffset - return the field's byte offset.
-uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCInterfaceDecl *OI,
+uint64_t CGObjCCommonMac::GetFieldBaseOffset(const ObjCImplementationDecl *OI,
                                              const llvm::StructLayout *Layout,
                                              const FieldDecl *Field) {
   // Is this a C struct?
@@ -2935,7 +2935,7 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
                       ForStrongLayout, HasUnion);
 }
 
-void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
+void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                               const llvm::StructLayout *Layout,
                               const RecordDecl *RD,
                              const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
@@ -3109,7 +3109,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   SkipIvars.clear(); 
   IvarsInfo.clear();
   
-  BuildAggrIvarLayout(OI, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
+  BuildAggrIvarLayout(OMD, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
   if (IvarsInfo.empty())
     return llvm::Constant::getNullValue(PtrTy);
   
