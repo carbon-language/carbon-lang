@@ -20,12 +20,18 @@
 namespace llvm {
 
 class TargetInstrInfo;
+class MSP430TargetMachine;
 
 struct MSP430RegisterInfo : public MSP430GenRegisterInfo {
 private:
+  MSP430TargetMachine &TM;
   const TargetInstrInfo &TII;
+
+  /// StackAlign - Default stack alignment.
+  ///
+  unsigned StackAlign;
 public:
-  MSP430RegisterInfo(const TargetInstrInfo &tii);
+  MSP430RegisterInfo(MSP430TargetMachine &tm, const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
@@ -36,6 +42,11 @@ public:
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
   bool hasFP(const MachineFunction &MF) const;
+  bool hasReservedCallFrame(MachineFunction &MF) const;
+
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;

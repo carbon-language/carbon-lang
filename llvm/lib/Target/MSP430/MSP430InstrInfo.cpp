@@ -25,7 +25,7 @@ using namespace llvm;
 
 MSP430InstrInfo::MSP430InstrInfo(MSP430TargetMachine &tm)
   : TargetInstrInfoImpl(MSP430Insts, array_lengthof(MSP430Insts)),
-    RI(*this), TM(tm) {}
+    RI(tm, *this), TM(tm) {}
 
 bool MSP430InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I,

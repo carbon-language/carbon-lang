@@ -22,7 +22,9 @@ class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
 //===----------------------------------------------------------------------===//
 // Type Profiles.
 //===----------------------------------------------------------------------===//
-def SDT_MSP430Call : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_MSP430Call         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_MSP430CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>]>;
+def SDT_MSP430CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -34,6 +36,12 @@ def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 
 def MSP430call    : SDNode<"MSP430ISD::CALL", SDT_MSP430Call,
                      [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
+def MSP430callseq_start :
+                 SDNode<"ISD::CALLSEQ_START", SDT_MSP430CallSeqStart,
+                        [SDNPHasChain, SDNPOutFlag]>;
+def MSP430callseq_end :
+                 SDNode<"ISD::CALLSEQ_END",   SDT_MSP430CallSeqEnd,
+                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.
@@ -63,18 +71,47 @@ def zextloadi16i8 : PatFrag<(ops node:$ptr), (i16 (zextloadi8 node:$ptr))>;
 def  extloadi16i8 : PatFrag<(ops node:$ptr), (i16 ( extloadi8 node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
-// Pseudo Instructions
+// Instruction list..
+
+// ADJCALLSTACKDOWN/UP implicitly use/def SP because they may be expanded into
+// a stack adjustment and the codegen must know that they may modify the stack
+// pointer before prolog-epilog rewriting occurs.
+// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
+// sub / add which can clobber SRW.
+let Defs = [SPW, SRW], Uses = [SPW] in {
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i16imm:$amt),
+                              "#ADJCALLSTACKDOWN",
+                              [(MSP430callseq_start timm:$amt)]>;
+def ADJCALLSTACKUP   : Pseudo<(outs), (ins i16imm:$amt1, i16imm:$amt2),
+                              "#ADJCALLSTACKUP",
+                              [(MSP430callseq_end timm:$amt1, timm:$amt2)]>;
+}
+
 
 let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "nop", []>;
 
-//===----------------------------------------------------------------------===//
-// Real Instructions
-
 // FIXME: Provide proper encoding!
 let isReturn = 1, isTerminator = 1 in {
-  def RETI : Pseudo<(outs), (ins), "ret", [(MSP430retflag)]>;
+  def RET : Pseudo<(outs), (ins), "ret", [(MSP430retflag)]>;
 }
+
+//===----------------------------------------------------------------------===//
+//  Call Instructions...
+//
+let isCall = 1 in
+  // All calls clobber the non-callee saved registers. SPW is marked as
+  // a use to prevent stack-pointer assignments that appear immediately
+  // before calls from potentially appearing dead. Uses for argument
+  // registers are added manually.
+  let Defs = [R12W, R13W, R14W, R15W, SRW],
+      Uses = [SPW] in {
+    def CALL32r     : Pseudo<(outs), (ins GR16:$dst, variable_ops),
+                        "call\t{*}$dst", [(MSP430call GR16:$dst)]>;
+    def CALL32m     : Pseudo<(outs), (ins memsrc:$dst, variable_ops),
+                        "call\t{*}$dst", [(MSP430call (load addr:$dst))]>;
+  }
+
 
 //===----------------------------------------------------------------------===//
 // Move Instructions

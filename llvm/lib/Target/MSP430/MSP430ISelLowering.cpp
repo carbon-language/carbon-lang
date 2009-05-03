@@ -426,5 +426,6 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   default: return NULL;
   case MSP430ISD::RET_FLAG:           return "MSP430ISD::RET_FLAG";
   case MSP430ISD::RRA:                return "MSP430ISD::RRA";
+  case MSP430ISD::CALL:               return "MSP430ISD::CALL";
   }
 }
