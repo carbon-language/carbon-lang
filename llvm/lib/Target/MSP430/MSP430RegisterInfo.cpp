@@ -211,11 +211,11 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned MSP430RegisterInfo::getRARegister() const {
-  assert(0 && "Not implemented yet!");
+  return MSP430::PCW;
 }
 
 unsigned MSP430RegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  assert(0 && "Not implemented yet!");
+  return hasFP(MF) ? MSP430::FPW : MSP430::SPW;
 }
 
 int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
