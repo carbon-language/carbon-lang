@@ -98,7 +98,7 @@ public:
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
   }
-  void VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *E);
+  void VisitCXXConstructExpr(const CXXConstructExpr *E);
   void VisitVAArgExpr(VAArgExpr *E);
 
   void EmitInitializationToLValue(Expr *E, LValue Address);
@@ -294,15 +294,10 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 }
 
 void
-AggExprEmitter::VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *E) {
-  llvm::Value *This = 0;
+AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
+  assert(DestPtr && "Must have a dest to emit into!");
   
-  if (DestPtr)
-    This = DestPtr;
-  else 
-    This = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "tmp");
-  
-  CGF.EmitCXXTemporaryObjectExpr(This, E);
+  CGF.EmitCXXConstructExpr(DestPtr, E);
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {

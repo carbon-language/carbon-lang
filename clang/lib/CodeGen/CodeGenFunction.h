@@ -643,7 +643,6 @@ public:
   LValue EmitBlockDeclRefLValue(const BlockDeclRefExpr *E);
 
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
-  LValue EmitCXXTemporaryObjectExprLValue(const CXXTemporaryObjectExpr *E);
 
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
@@ -756,8 +755,7 @@ public:
   void GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
                                          llvm::GlobalVariable *GV);
 
-  void EmitCXXTemporaryObjectExpr(llvm::Value *Dest, 
-                                  const CXXTemporaryObjectExpr *E);
+  void EmitCXXConstructExpr(llvm::Value *Dest, const CXXConstructExpr *E);
   
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers

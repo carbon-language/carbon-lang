@@ -139,21 +139,9 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
            CGM.GetAddrOfCXXConstructor(D, Type), Args, D);
 }
 
-LValue 
-CodeGenFunction::EmitCXXTemporaryObjectExprLValue(
-                                              const CXXTemporaryObjectExpr *E) {
-  // Allocate the destination.
-  llvm::Value *Dest = CreateTempAlloca(ConvertType(E->getType()), "tmp");
-  
-  EmitCXXTemporaryObjectExpr(Dest, E);
-  
-  return LValue::MakeAddr(Dest, E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
-}
-
 void 
-CodeGenFunction::EmitCXXTemporaryObjectExpr(llvm::Value *Dest, 
-                                            const CXXTemporaryObjectExpr *E) {
+CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest, 
+                                      const CXXConstructExpr *E) {
   assert(Dest && "Must have a destination!");
   
   const CXXRecordDecl *RD = 

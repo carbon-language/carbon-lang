@@ -193,8 +193,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass:
     return EmitCastLValue(cast<CastExpr>(E));
-  case Expr::CXXTemporaryObjectExprClass:
-    return EmitCXXTemporaryObjectExprLValue(cast<CXXTemporaryObjectExpr>(E));
   }
 }
 
