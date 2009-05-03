@@ -82,10 +82,10 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
     return true;
   }
 
-  // Operand is a result from ADD with constant operand which fits into i16.
   switch (Addr.getOpcode()) {
   case ISD::ADD:
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+   // Operand is a result from ADD with constant operand which fits into i16.
+   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
       uint64_t CVal = CN->getZExtValue();
       // Offset should fit into 16 bits.
       if (((CVal << 48) >> 48) == CVal) {

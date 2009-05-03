@@ -54,6 +54,10 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // shifts of the whole bitwidth 1 bit per step.
   setShiftAmountType(MVT::i8);
 
+  setStackPointerRegisterToSaveRestore(MSP430::SPW);
+  setBooleanContents(ZeroOrOneBooleanContent);
+  setSchedulingPreference(SchedulingForLatency);
+
   setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
