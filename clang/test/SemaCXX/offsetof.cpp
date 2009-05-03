@@ -1,6 +1,4 @@
-// FIXME: This test fails on 32-bit platforms? Investigate.
-
-// RUNX: clang-cc -fsyntax-only -verify %s -Winvalid-offsetof
+// RUN: clang-cc -fsyntax-only -verify %s -Winvalid-offsetof
 
 struct NonPOD {
   virtual void f();

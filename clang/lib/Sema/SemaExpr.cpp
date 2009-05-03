@@ -4734,7 +4734,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       << SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd);
 
   if (!Dependent) {
-    bool DidWarnAboutNonPOD;
+    bool DidWarnAboutNonPOD = false;
     
     // FIXME: Dependent case loses a lot of information here. And probably
     // leaks like a sieve.
