@@ -77,6 +77,19 @@ unsigned char t13(unsigned input) {
   return output;
 }
 
+struct large {
+  int x[1000];
+};
+
+unsigned long t15(int x, struct large *P) {
+  __asm__("xyz "
+          : "=r" (x)
+          : "m" (*P), "0" (x));
+  return x;
+}
+
+
+
 
 // bitfield destination of an asm.
 struct S {

@@ -848,10 +848,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         for (InputNo = 0; InputNo != S.getNumInputs(); ++InputNo) {
           TargetInfo::ConstraintInfo &Input = InputConstraintInfos[InputNo];
           if (Input.hasTiedOperand() &&
-              Input.getTiedOperand() == i) {
-            InputNo = i;
+              Input.getTiedOperand() == i)
             break;
-          }
         }
         assert(InputNo != S.getNumInputs() && "Didn't find matching input!");
         
