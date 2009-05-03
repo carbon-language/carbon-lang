@@ -744,6 +744,8 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
 const ASTRecordLayout &
 ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
                           const ObjCImplementationDecl *Impl) {
+  assert(!D->isForwardDecl() && "Invalid interface decl!");
+
   // Look up this layout, if already laid out, return what we have.
   ObjCContainerDecl *Key = 
     Impl ? (ObjCContainerDecl*) Impl : (ObjCContainerDecl*) D;
@@ -768,6 +770,9 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   ASTRecordLayout *NewEntry = NULL;
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
+    // FIXME: This increment of FieldCount is wrong, we don't actually
+    // count the super class as a member (see the field index passed
+    // to LayoutField below).
     FieldCount++;
     const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
     unsigned Alignment = SL.getAlignment();

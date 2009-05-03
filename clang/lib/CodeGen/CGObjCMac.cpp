@@ -43,57 +43,59 @@ GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
   return cast<llvm::StructType>(CGM.getTypes().ConvertTagDeclType(RD));
 }
 
-
-/// LookupFieldDeclForIvar - looks up a field decl in the laid out
-/// storage which matches this 'ivar'.
+/// FindIvarInterface - Find the interface containing the ivar. 
 ///
-static const FieldDecl *LookupFieldDeclForIvar(ASTContext &Context, 
-                                               const ObjCInterfaceDecl *OID,
-                                               const ObjCIvarDecl *OIVD,
-                                               const ObjCInterfaceDecl *&Found) {
-  assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  const RecordDecl *RecordForDecl = Context.addRecordToClass(OID);
-  assert(RecordForDecl && "lookupFieldDeclForIvar no storage for class");
-  DeclContext::lookup_const_result Lookup =
-    RecordForDecl->lookup(Context, OIVD->getDeclName());
+/// FIXME: We shouldn't need to do this, the containing context should
+/// be fixed.
+static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
+                                                  const ObjCInterfaceDecl *OID,
+                                                  const ObjCIvarDecl *OIVD,
+                                                  unsigned &Index) {
+  const ObjCInterfaceDecl *Super = OID->getSuperClass();
 
-  if (Lookup.first != Lookup.second) {
-    Found = OID;
-    return cast<FieldDecl>(*Lookup.first);
+  // FIXME: The index here is closely tied to how
+  // ASTContext::getObjCLayout is implemented. This should be fixed to
+  // get the information from the layout directly.
+  Index = 0;
+  for (ObjCInterfaceDecl::ivar_iterator IVI = OID->ivar_begin(), 
+         IVE = OID->ivar_end(); IVI != IVE; ++IVI, ++Index)
+    if (OIVD == *IVI)
+      return OID;
+  
+  // Also look in synthesized ivars.
+  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(Context),
+         E = OID->prop_end(Context); I != E; ++I) {
+    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl()) {
+      if (OIVD == Ivar)
+        return OID;
+      ++Index;
+    }
   }
 
-  // If lookup failed, try the superclass.
-  //
-  // FIXME: This is slow, we shouldn't need to do this.
-  const ObjCInterfaceDecl *Super = OID->getSuperClass();
-  assert(Super && "field decl not found!");
-  return LookupFieldDeclForIvar(Context, Super, OIVD, Found);
+  // Otherwise check in the super class.
+  if (Super)
+    return FindIvarInterface(Context, Super, OIVD, Index);
+    
+  return 0;
 }
 
 static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
                                      const ObjCInterfaceDecl *OID,
                                      const ObjCImplementationDecl *ID,
                                      const ObjCIvarDecl *Ivar) {
-  assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  const ObjCInterfaceDecl *Container;
-  const FieldDecl *Field = 
-    LookupFieldDeclForIvar(CGM.getContext(), OID, Ivar, Container);
-  const llvm::StructType *STy = 
-    GetConcreteClassStruct(CGM, Container);
-  const llvm::StructLayout *Layout = 
-    CGM.getTargetData().getStructLayout(STy);
-  if (!Field->isBitField())
-    return Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field)) * 8;
-  
-  // FIXME. Must be a better way of getting a bitfield base offset.
-  CodeGenTypes::BitFieldInfo BFI = CGM.getTypes().getBitFieldInfo(Field);
-  // FIXME: The "field no" for bitfields is something completely
-  // different; it is the offset in multiples of the base type size!
-  uint64_t Offset = CGM.getTypes().getLLVMFieldNo(Field);
-  const llvm::Type *Ty = 
-    CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
-  Offset *= CGM.getTypes().getTargetData().getTypePaddedSizeInBits(Ty);
-  return Offset + BFI.Begin;
+  unsigned Index;
+  const ObjCInterfaceDecl *Container = 
+    FindIvarInterface(CGM.getContext(), OID, Ivar, Index);
+  assert(Container && "Unable to find ivar container");
+
+  // If we know have an implementation (and the ivar is in it) then
+  // look up in the implementation layout.
+  const ASTRecordLayout *RL;  
+  if (ID && ID->getClassInterface() == Container)
+    RL = &CGM.getContext().getASTObjCImplementationLayout(ID);
+  else
+    RL = &CGM.getContext().getASTObjCInterfaceLayout(Container);
+  return RL->getFieldOffset(Index);
 }
 
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
