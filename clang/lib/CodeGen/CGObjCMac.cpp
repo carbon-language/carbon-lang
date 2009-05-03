@@ -3127,22 +3127,17 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   if (IvarsInfo[0].ivar_bytepos == 0) {
     WordsToSkip = 0;
     WordsToScan = IvarsInfo[0].ivar_size;
-  }
-  else {
+  } else {
     WordsToSkip = IvarsInfo[0].ivar_bytepos/WordSize;
     WordsToScan = IvarsInfo[0].ivar_size;
   }
-  for (unsigned int i=1, Last=IvarsInfo.size(); i != Last; i++)
-  {
+  for (unsigned int i=1, Last=IvarsInfo.size(); i != Last; i++) {
     unsigned int TailPrevGCObjC = 
       IvarsInfo[i-1].ivar_bytepos + IvarsInfo[i-1].ivar_size * WordSize;
-    if (IvarsInfo[i].ivar_bytepos == TailPrevGCObjC)
-    {
+    if (IvarsInfo[i].ivar_bytepos == TailPrevGCObjC) {
       // consecutive 'scanned' object pointers.
       WordsToScan += IvarsInfo[i].ivar_size;
-    }
-    else
-    {
+    } else {
       // Skip over 'gc'able object pointer which lay over each other.
       if (TailPrevGCObjC > IvarsInfo[i].ivar_bytepos)
         continue;
@@ -3161,8 +3156,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       WordsToScan = IvarsInfo[i].ivar_size;
     }
   }
-  if (WordsToScan > 0)
-  {
+  if (WordsToScan > 0) {
     SKIP_SCAN SkScan;
     SkScan.skip = WordsToSkip;
     SkScan.scan = WordsToScan;
@@ -3170,8 +3164,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   }
   
   bool BytesSkipped = false;
-  if (!SkipIvars.empty())
-  {
+  if (!SkipIvars.empty()) {
     unsigned int LastIndex = SkipIvars.size()-1;
     int LastByteSkipped = 
           SkipIvars[LastIndex].ivar_bytepos + SkipIvars[LastIndex].ivar_size;
@@ -3181,8 +3174,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
           IvarsInfo[LastIndex].ivar_size * WordSize;
     BytesSkipped = (LastByteSkipped > LastByteScanned);
     // Compute number of bytes to skip at the tail end of the last ivar scanned.
-    if (BytesSkipped)
-    {
+    if (BytesSkipped) {
       unsigned int TotalWords = (LastByteSkipped + (WordSize -1)) / WordSize;
       SKIP_SCAN SkScan;
       SkScan.skip = TotalWords - (LastByteScanned/WordSize);
@@ -3193,8 +3185,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   // Mini optimization of nibbles such that an 0xM0 followed by 0x0N is produced
   // as 0xMN.
   int SkipScan = SkipScanIvars.size()-1;
-  for (int i = 0; i <= SkipScan; i++)
-  {
+  for (int i = 0; i <= SkipScan; i++) {
     if ((i < SkipScan) && SkipScanIvars[i].skip && SkipScanIvars[i].scan == 0
         && SkipScanIvars[i+1].skip == 0 && SkipScanIvars[i+1].scan) {
       // 0xM0 followed by 0x0N detected.
@@ -3207,8 +3198,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   
   // Generate the string.
   std::string BitMap;
-  for (int i = 0; i <= SkipScan; i++)
-  {
+  for (int i = 0; i <= SkipScan; i++) {
     unsigned char byte;
     unsigned int skip_small = SkipScanIvars[i].skip % 0xf;
     unsigned int scan_small = SkipScanIvars[i].scan % 0xf;
@@ -3222,16 +3212,12 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       BitMap += (unsigned char)(0xf0);
     
     // next (skip small, scan)
-    if (skip_small)
-    {
+    if (skip_small) {
       byte = skip_small << 4;
-      if (scan_big > 0)
-      {
+      if (scan_big > 0) {
         byte |= 0xf;
         --scan_big;
-      }
-      else if (scan_small)
-      {
+      } else if (scan_small) {
         byte |= scan_small;
         scan_small = 0;
       }
@@ -3241,8 +3227,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     for (unsigned int ix = 0; ix < scan_big; ix++)
       BitMap += (unsigned char)(0x0f);
     // last scan small
-    if (scan_small)
-    {
+    if (scan_small) {
       byte = scan_small;
       BitMap += byte;
     }
