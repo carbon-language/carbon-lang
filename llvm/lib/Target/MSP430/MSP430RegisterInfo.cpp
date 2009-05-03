@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "msp430-reg-info"
 
 #include "MSP430.h"
+#include "MSP430MachineFunctionInfo.h"
 #include "MSP430RegisterInfo.h"
 #include "MSP430TargetMachine.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -165,11 +166,13 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned BasePtr = (hasFP(MF) ? MSP430::FPW : MSP430::SPW);
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-  if (!hasFP(MF))
-    Offset += MF.getFrameInfo()->getStackSize();
-
   // Skip the saved PC
   Offset += 2;
+
+  if (!hasFP(MF))
+    Offset += MF.getFrameInfo()->getStackSize();
+  else
+    Offset += 2; // Skip the saved FPW
 
   // Fold imm into offset
   Offset += MI.getOperand(i+1).getImm();
@@ -201,13 +204,140 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 
+void
+MSP430RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
+                                                                         const {
+  // Create a frame entry for the FPW register that must be saved.
+  if (hasFP(MF)) {
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4);
+    assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
+           "Slot for FPW register must be last in order to be found!");
+    FrameIdx = 0;
+  }
+}
+
+
 void MSP430RegisterInfo::emitPrologue(MachineFunction &MF) const {
-  // Nothing here yet
+  MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
+  DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
+                 DebugLoc::getUnknownLoc());
+
+  // Get the number of bytes to allocate from the FrameInfo.
+  uint64_t StackSize = MFI->getStackSize();
+
+  uint64_t NumBytes = 0;
+  if (hasFP(MF)) {
+    // Calculate required stack adjustment
+    uint64_t FrameSize = StackSize - 2;
+    NumBytes = FrameSize - MSP430FI->getCalleeSavedFrameSize();
+
+    // Get the offset of the stack slot for the EBP register... which is
+    // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
+    // Update the frame offset adjustment.
+    MFI->setOffsetAdjustment(-NumBytes);
+
+    // Save FPW into the appropriate stack slot...
+    BuildMI(MBB, MBBI, DL, TII.get(MSP430::PUSH16r))
+      .addReg(MSP430::FPW, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
+
+    // Update FPW with the new base value...
+    BuildMI(MBB, MBBI, DL, TII.get(MSP430::MOV16rr), MSP430::FPW)
+      .addReg(MSP430::SPW);
+
+    // Mark the FramePtr as live-in in every block except the entry.
+    for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+         I != E; ++I)
+      I->addLiveIn(MSP430::FPW);
+
+  } else
+    NumBytes = StackSize - MSP430FI->getCalleeSavedFrameSize();
+
+  // Skip the callee-saved push instructions.
+  while (MBBI != MBB.end() && (MBBI->getOpcode() == MSP430::PUSH16r))
+    ++MBBI;
+
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
+
+  if (NumBytes) { // adjust stack pointer: SPW -= numbytes
+    // If there is an SUB16ri of SPW immediately before this instruction, merge
+    // the two.
+    //NumBytes -= mergeSPUpdates(MBB, MBBI, true);
+    // If there is an ADD16ri or SUB16ri of SPW immediately after this
+    // instruction, merge the two instructions.
+    // mergeSPUpdatesDown(MBB, MBBI, &NumBytes);
+
+    if (NumBytes) {
+      MachineInstr *MI =
+        BuildMI(MBB, MBBI, DL, TII.get(MSP430::SUB16ri), MSP430::SPW)
+        .addReg(MSP430::SPW).addImm(NumBytes);
+      // The SRW implicit def is dead.
+      MI->getOperand(3).setIsDead();
+    }
+  }
 }
 
 void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
                                       MachineBasicBlock &MBB) const {
-  // Nothing here yet
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
+  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  unsigned RetOpcode = MBBI->getOpcode();
+  DebugLoc DL = MBBI->getDebugLoc();
+
+  switch (RetOpcode) {
+  case MSP430::RET: break;  // These are ok
+  default:
+    assert(0 && "Can only insert epilog into returning blocks");
+  }
+
+  // Get the number of bytes to allocate from the FrameInfo
+  uint64_t StackSize = MFI->getStackSize();
+  unsigned CSSize = MSP430FI->getCalleeSavedFrameSize();
+  uint64_t NumBytes = 0;
+
+  if (hasFP(MF)) {
+    // Calculate required stack adjustment
+    uint64_t FrameSize = StackSize - 2;
+    NumBytes = FrameSize - CSSize;
+
+    // pop FPW.
+    BuildMI(MBB, MBBI, DL, TII.get(MSP430::POP16r), MSP430::FPW);
+  } else
+    NumBytes = StackSize - CSSize;
+
+  // Skip the callee-saved pop instructions.
+  MachineBasicBlock::iterator LastCSPop = MBBI;
+  while (MBBI != MBB.begin()) {
+    MachineBasicBlock::iterator PI = prior(MBBI);
+    unsigned Opc = PI->getOpcode();
+    if (Opc != MSP430::POP16r && !PI->getDesc().isTerminator())
+      break;
+    --MBBI;
+  }
+
+  DL = MBBI->getDebugLoc();
+
+  // If there is an ADD16ri or SUB16ri of SPW immediately before this
+  // instruction, merge the two instructions.
+  //if (NumBytes || MFI->hasVarSizedObjects())
+  //  mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
+
+  if (MFI->hasVarSizedObjects()) {
+    assert(0 && "Not implemented yet!");
+  } else {
+    // adjust stack pointer back: SPW += numbytes
+    if (NumBytes) {
+      MachineInstr *MI =
+        BuildMI(MBB, MBBI, DL, TII.get(MSP430::ADD16ri), MSP430::SPW)
+        .addReg(MSP430::SPW).addImm(NumBytes);
+      // The SRW implicit def is dead.
+      MI->getOperand(3).setIsDead();
+    }
+  }
 }
 
 unsigned MSP430RegisterInfo::getRARegister() const {

@@ -41,7 +41,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Module &M,
   // FIXME: Check TargetData string.
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),
   InstrInfo(*this), TLInfo(*this),
-  FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) { }
+  FrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2) { }
 
 const TargetAsmInfo *MSP430TargetMachine::createTargetAsmInfo() const {
   return new MSP430TargetAsmInfo(*this);
