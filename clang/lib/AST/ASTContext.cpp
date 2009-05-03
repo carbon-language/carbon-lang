@@ -745,16 +745,29 @@ const ASTRecordLayout &
 ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
                           const ObjCImplementationDecl *Impl) {
   // Look up this layout, if already laid out, return what we have.
-  const ASTRecordLayout *&Entry = ObjCLayouts[D];
+  const ASTRecordLayout *&Entry = 
+    ObjCLayouts[Impl ? (ObjCContainerDecl*) Impl : (ObjCContainerDecl*) D];
   if (Entry) return *Entry;
+
+  unsigned FieldCount = D->ivar_size();
+  // Add in synthesized ivar count if laying out an implementation.
+  if (Impl) {
+    for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(*this),
+           E = D->prop_end(*this); I != E; ++I)
+      if ((*I)->getPropertyIvarDecl())
+        ++FieldCount;
+
+    // If there aren't any sythesized ivar's then reuse the interface
+    // entry. Note we can't cache this because we simply free all
+    // entries later; however we shouldn't look up implementations
+    // frequently.
+    if (FieldCount == D->ivar_size())
+      return getObjCLayout(D, 0);
+  }
 
   // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
   // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
   ASTRecordLayout *NewEntry = NULL;
-  // FIXME. Add actual count of synthesized ivars, instead of count
-  // of properties which is the upper bound, but is safe.
-  unsigned FieldCount = 
-    D->ivar_size() + std::distance(D->prop_begin(*this), D->prop_end(*this));
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
     FieldCount++;
     const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
@@ -785,11 +798,13 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
     const ObjCIvarDecl* Ivar = (*IVI);
     NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
   }
-  // Also synthesized ivars
-  for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(*this),
-       E = D->prop_end(*this); I != E; ++I) {
-    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
-      NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
+  // And synthesized ivars, if this is an implementation.
+  if (Impl) {
+    for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(*this),
+           E = D->prop_end(*this); I != E; ++I) {
+      if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
+        NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
+    }
   }
   
   // Finally, round the size of the total struct up to the alignment of the
