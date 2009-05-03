@@ -59,3 +59,14 @@ unsigned t11(signed char input) {
           : "0" (input));
   return output;
 }
+
+
+
+
+struct S {
+  int a : 4;
+};
+
+void test13(struct S *P) {
+  __asm__("abc %0" : "=r"(P->a) );
+}

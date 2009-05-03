@@ -803,7 +803,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   
   std::string Constraints;
   
-  std::vector<llvm::Value *> ResultAddrs;
+  std::vector<LValue> ResultRegDests;
+  std::vector<QualType> ResultRegQualTys;
+  
   std::vector<const llvm::Type *> ResultTypes;
   
   std::vector<const llvm::Type*> ArgTypes;
@@ -827,15 +829,13 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     OutExpr = OutExpr->IgnoreParenNoopCasts(getContext());
     
     LValue Dest = EmitLValue(OutExpr);
-    const llvm::Type *DestValueType = 
-      cast<llvm::PointerType>(Dest.getAddress()->getType())->getElementType();
-
-    if (i != 0)
+    if (!Constraints.empty())
       Constraints += ',';
 
-    if (!Info.allowsMemory() && DestValueType->isSingleValueType()) {
-      ResultAddrs.push_back(Dest.getAddress());
-      ResultTypes.push_back(DestValueType);
+    if (!Info.allowsMemory() && !hasAggregateLLVMType(OutExpr->getType())) {
+      ResultRegQualTys.push_back(OutExpr->getType());
+      ResultRegDests.push_back(Dest);
+      ResultTypes.push_back(ConvertTypeForMem(OutExpr->getType()));
       Constraints += "=" + OutputConstraint;
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
@@ -867,7 +867,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];
 
-    if (i != 0 || S.getNumOutputs() > 0)
+    if (!Constraints.empty())
       Constraints += ',';
     
     // Simplify the input constraint.
@@ -952,11 +952,13 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
   
   if (ResultTypes.size() == 1) {
-    Builder.CreateStore(Result, ResultAddrs[0]);
+    EmitStoreThroughLValue(RValue::get(Result), ResultRegDests[0],
+                           ResultRegQualTys[0]);
   } else {
     for (unsigned i = 0, e = ResultTypes.size(); i != e; ++i) {
       llvm::Value *Tmp = Builder.CreateExtractValue(Result, i, "asmresult");
-      Builder.CreateStore(Tmp, ResultAddrs[i]);
+      EmitStoreThroughLValue(RValue::get(Tmp), ResultRegDests[i],
+                             ResultRegQualTys[i]);
     }
   }
 }
