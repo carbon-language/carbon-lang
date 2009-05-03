@@ -58,8 +58,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 
-SDValue MSP430TargetLowering::
-LowerOperation(SDValue Op, SelectionDAG &DAG) {
+SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::SRA: return LowerShifts(Op, DAG);
