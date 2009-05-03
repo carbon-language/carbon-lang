@@ -170,11 +170,6 @@ public:
     return ID;
   }
   
-  /// RecordSourceLine - Records location information and associates it with a
-  /// label.  Returns a unique label ID used to generate a label and 
-  /// provide correspondence to the source line list.
-  unsigned RecordSourceLine(unsigned Line, unsigned Column, unsigned Source);
-  
   /// InvalidateLabel - Inhibit use of the specified label # from
   /// MachineModuleInfo, for example because the code was deleted.
   void InvalidateLabel(unsigned LabelID) {
