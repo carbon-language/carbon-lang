@@ -241,7 +241,8 @@ public:
   /// it.
   PPCallbacks *getPPCallbacks() const { return Callbacks; }
   void setPPCallbacks(PPCallbacks *C) {
-    delete Callbacks;
+    if (Callbacks)
+      C = new PPChainedCallbacks(C, Callbacks);
     Callbacks = C;
   }
   

@@ -35,10 +35,6 @@ class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
   std::vector<std::string> Targets;
   llvm::raw_ostream *OS;
 
-  // FIXME: This functionality should be moved into a common class for
-  // chaining callbacks.
-  PPCallbacks *PrevCallbacks;
-
 private:
   bool FileMatchesDepCriteria(const char *Filename,
                               SrcMgr::CharacteristicKind FileType);
@@ -47,14 +43,11 @@ private:
 public:
   DependencyFileCallback(const Preprocessor *_PP, 
                          llvm::raw_ostream *_OS, 
-                         const std::vector<std::string> &_Targets,
-                         PPCallbacks *_PrevCallbacks)
-    : PP(_PP), Targets(_Targets), OS(_OS), PrevCallbacks(_PrevCallbacks) {
+                         const std::vector<std::string> &_Targets)
+    : PP(_PP), Targets(_Targets), OS(_OS) {
   }
 
   ~DependencyFileCallback() {
-    if (PrevCallbacks)
-      delete PrevCallbacks;
     OutputDependencyFile();
     OS->flush();
     delete OS;
@@ -62,32 +55,6 @@ public:
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType);
-
-  virtual void Ident(SourceLocation Loc, const std::string &str) {
-    if (PrevCallbacks)
-      PrevCallbacks->Ident(Loc, str);
-  }
-  
-  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
-                             const std::string &Str) {
-    if (PrevCallbacks)
-      PrevCallbacks->PragmaComment(Loc, Kind, Str);
-  }
-  
-  virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
-    if (PrevCallbacks)
-      PrevCallbacks->MacroExpands(Id, MI);
-  }
-  
-  virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
-    if (PrevCallbacks)
-      PrevCallbacks->MacroDefined(II, MI);
-  }
-
-  virtual void MacroUndefined(const IdentifierInfo *II, const MacroInfo *MI) {
-    if (PrevCallbacks)
-      PrevCallbacks->MacroUndefined(II, MI);
-  }
 };
 }
 
@@ -135,13 +102,8 @@ bool clang::CreateDependencyFileGen(Preprocessor *PP,
     }
   }
 
-  // Claim any previous callbacks.
-  PPCallbacks *Prev = PP->getPPCallbacks();
-  if (Prev)
-    PP->setPPCallbacks(0);
-
   DependencyFileCallback *PPDep = 
-    new DependencyFileCallback(PP, OS, DependencyTargets, Prev);
+    new DependencyFileCallback(PP, OS, DependencyTargets);
   PP->setPPCallbacks(PPDep);
   return true;
 }
@@ -162,9 +124,6 @@ bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
 void DependencyFileCallback::FileChanged(SourceLocation Loc,
                                          FileChangeReason Reason,
                                          SrcMgr::CharacteristicKind FileType) {
-  if (PrevCallbacks)
-    PrevCallbacks->FileChanged(Loc, Reason, FileType);
-
   if (Reason != PPCallbacks::EnterFile)
     return;
   
