@@ -80,8 +80,8 @@ SDValue MSP430TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
 /// generate load operations for arguments places on the stack.
 // FIXME: struct return stuff
 // FIXME: varargs
-SDValue MSP430TargetLowering:: LowerCCCArguments(SDValue Op,
-                                                 SelectionDAG &DAG) {
+SDValue MSP430TargetLowering::LowerCCCArguments(SDValue Op,
+                                                SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
@@ -193,8 +193,8 @@ SDValue MSP430TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
                              Op.getOperand(i*2+1), Flag);
 
-    // guarantee that all emitted copies are
-    // stuck together, avoiding something bad
+    // Guarantee that all emitted copies are stuck together,
+    // avoiding something bad.
     Flag = Chain.getValue(1);
   }
 

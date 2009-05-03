@@ -38,7 +38,19 @@ MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
 
 BitVector
 MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
-  assert(0 && "Not implemented yet!");
+  BitVector Reserved(getNumRegs());
+
+  // Mark 4 special registers as reserved.
+  Reserved.set(MSP430::PC);
+  Reserved.set(MSP430::SP);
+  Reserved.set(MSP430::SR);
+  Reserved.set(MSP430::CG);
+
+  // Mark frame pointer as reserved if needed.
+  if (hasFP(MF))
+    Reserved.set(MSP430::FP);
+
+  return Reserved;
 }
 
 bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
