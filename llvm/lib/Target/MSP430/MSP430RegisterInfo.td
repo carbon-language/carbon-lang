@@ -37,7 +37,9 @@ def R13 : MSP430Reg<13, "R13">;
 def R14 : MSP430Reg<14, "R14">;
 def R15 : MSP430Reg<15, "R15">;
 
-def MSP430Regs : RegisterClass<"MSP430", [i16], 16,
+// FIXME: we need subregs & special handling for 8 bit stuff
+
+def GR16 : RegisterClass<"MSP430", [i16], 16,
    // Volatile registers
   [R12, R13, R14, R15, R11, R10, R9, R8, R7, R6, R5,
    // Frame pointer, sometimes allocable
@@ -49,8 +51,8 @@ def MSP430Regs : RegisterClass<"MSP430", [i16], 16,
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
-    MSP430RegsClass::iterator
-    MSP430RegsClass::allocation_order_end(const MachineFunction &MF) const {
+    GR16Class::iterator
+    GR16Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       // Depending on whether the function uses frame pointer or not, last 5 or 4

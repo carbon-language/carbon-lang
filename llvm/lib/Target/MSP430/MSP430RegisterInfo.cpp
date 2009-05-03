@@ -42,10 +42,10 @@ MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const TargetRegisterClass* const*
 MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
-    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
-    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
-    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
     0
   };
 

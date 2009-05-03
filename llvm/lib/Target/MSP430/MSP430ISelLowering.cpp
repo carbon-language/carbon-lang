@@ -39,7 +39,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   TargetLowering(tm), Subtarget(*tm.getSubtargetImpl()), TM(tm) {
 
   // Set up the register classes.
-  addRegisterClass(MVT::i16, MSP430::MSP430RegsRegisterClass);
+  addRegisterClass(MVT::i16, MSP430::GR16RegisterClass);
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -111,7 +111,7 @@ SDValue MSP430TargetLowering::LowerCCCArguments(SDValue Op,
         abort();
       case MVT::i16:
         unsigned VReg =
-          RegInfo.createVirtualRegister(MSP430::MSP430RegsRegisterClass);
+          RegInfo.createVirtualRegister(MSP430::GR16RegisterClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgValue = DAG.getCopyFromReg(Root, dl, VReg, RegVT);
 

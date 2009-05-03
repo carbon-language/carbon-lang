@@ -41,5 +41,22 @@ def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 // FIXME: Provide proper encoding!
 let isReturn = 1, isTerminator = 1 in {
-  def RETI: Pseudo<(outs), (ins), "reti", [(retflag)]>;
+  def RETI : Pseudo<(outs), (ins), "reti", [(retflag)]>;
+}
+
+//===----------------------------------------------------------------------===//
+// Move Instructions
+
+// FIXME: Provide proper encoding!
+let neverHasSideEffects = 1 in {
+def MOV16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                     "mov.w\t{$src, $dst|$dst, $src}",
+                     []>;
+}
+
+// FIXME: Provide proper encoding!
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+def MOV16ri : Pseudo<(outs GR16:$dst), (ins i16imm:$src),
+                     "mov.w\t{$src, $dst|$dst, $src}",
+                     [(set GR16:$dst, imm:$src)]>;
 }

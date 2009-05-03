@@ -32,6 +32,15 @@ public:
   /// always be able to get register info as well (through this method).
   ///
   virtual const TargetRegisterInfo &getRegisterInfo() const { return RI; }
+
+  bool copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                    unsigned DestReg, unsigned SrcReg,
+                    const TargetRegisterClass *DestRC,
+                    const TargetRegisterClass *SrcRC) const;
+
+  bool isMoveInstr(const MachineInstr& MI,
+                   unsigned &SrcReg, unsigned &DstReg,
+                   unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 };
 
 }
