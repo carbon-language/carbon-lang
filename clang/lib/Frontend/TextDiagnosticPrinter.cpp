@@ -158,7 +158,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 
   // If the end of the interesting region comes before we run out of
   // space in the terminal, start at the beginning of the line.
-  if (CaretEnd < Columns)
+  if (CaretEnd < Columns - 3)
     CaretStart = 0;
 
   unsigned TargetColumns = Columns - 8; // Give us extra room for the ellipses.
@@ -251,7 +251,8 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   // before the lines so that it looks nicer.
   if (CaretEnd < SourceLine.size())
     SourceLine.replace(CaretEnd, std::string::npos, "...");
-  //CaretLine.erase(CaretEnd, std::string::npos);
+  if (CaretEnd < CaretLine.size())
+    CaretLine.erase(CaretEnd, std::string::npos);
   if (FixItInsertionLine.size() > CaretEnd)
     FixItInsertionLine.erase(CaretEnd, std::string::npos);
   
