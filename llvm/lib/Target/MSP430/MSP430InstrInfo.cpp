@@ -149,3 +149,29 @@ MSP430InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   return true;
 }
+
+unsigned
+MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                              MachineBasicBlock *FBB,
+                            const SmallVectorImpl<MachineOperand> &Cond) const {
+  // FIXME this should probably have a DebugLoc operand
+  DebugLoc dl = DebugLoc::getUnknownLoc();
+
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert((Cond.size() == 1 || Cond.size() == 0) &&
+         "MSP430 branch conditions have one component!");
+
+  if (Cond.empty()) {
+    // Unconditional branch?
+    assert(!FBB && "Unconditional branch with multiple successors!");
+    BuildMI(&MBB, dl, get(MSP430::JMP)).addMBB(TBB);
+    return 1;
+  }
+
+  // Conditional branch.
+  unsigned Count = 0;
+  assert(0 && "Implement conditional branches!");
+
+  return Count;
+}

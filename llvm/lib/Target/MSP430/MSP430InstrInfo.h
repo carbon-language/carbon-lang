@@ -73,6 +73,10 @@ public:
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
 
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                             const SmallVectorImpl<MachineOperand> &Cond) const;
+
 };
 
 }
