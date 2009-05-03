@@ -20,6 +20,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallVector.h"
@@ -742,18 +743,13 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     const_cast<ObjCInterfaceDecl *>(OID->getClassInterface());
   std::string ClassName = ClassDecl->getNameAsString();
 
-  // Get the size of instances.  For runtimes that support late-bound instances
-  // this should probably be something different (size just of instance
-  // varaibles in this class, not superclasses?).
-  const llvm::Type *ObjTy = 
-    CGObjCRuntime::GetConcreteClassStruct(CGM, ClassDecl);
-  int instanceSize = CGM.getTargetData().getTypePaddedSize(ObjTy);
+  // Get the size of instances.
+  int instanceSize = Context.getASTObjCImplementationLayout(OID).getSize() / 8;
 
   // Collect information about instance variables.
   llvm::SmallVector<llvm::Constant*, 16> IvarNames;
   llvm::SmallVector<llvm::Constant*, 16> IvarTypes;
   llvm::SmallVector<llvm::Constant*, 16> IvarOffsets;
-  ObjTy = llvm::PointerType::getUnqual(ObjTy);
   for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
       endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
       // Store the name

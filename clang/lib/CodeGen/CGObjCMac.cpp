@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/LangOptions.h"
 
@@ -34,9 +35,9 @@ using namespace CodeGen;
 // don't belong in CGObjCRuntime either so we will live with it for
 // now.
 
-const llvm::StructType *
-CGObjCRuntime::GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
-                                      const ObjCInterfaceDecl *OID) {
+static const llvm::StructType *
+GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
+                       const ObjCInterfaceDecl *OID) {
   assert(!OID->isForwardDecl() && "Invalid interface decl!");
   const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
   return cast<llvm::StructType>(CGM.getTypes().ConvertTagDeclType(RD));
@@ -65,7 +66,7 @@ static const FieldDecl *LookupFieldDeclForIvar(ASTContext &Context,
   //
   // FIXME: This is slow, we shouldn't need to do this.
   const ObjCInterfaceDecl *Super = OID->getSuperClass();
-  assert(OID && "field decl not found!");
+  assert(Super && "field decl not found!");
   return LookupFieldDeclForIvar(Context, Super, OIVD, Found);
 }
 
@@ -77,7 +78,7 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
   const FieldDecl *Field = 
     LookupFieldDeclForIvar(CGM.getContext(), OID, Ivar, Container);
   const llvm::StructType *STy = 
-    CGObjCRuntime::GetConcreteClassStruct(CGM, Container);
+    GetConcreteClassStruct(CGM, Container);
   const llvm::StructLayout *Layout = 
     CGM.getTargetData().getStructLayout(STy);
   if (!Field->isBitField())
@@ -1855,10 +1856,9 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     EmitProtocolList("\01L_OBJC_CLASS_PROTOCOLS_" + ID->getNameAsString(),
                      Interface->protocol_begin(),
                      Interface->protocol_end());
-  const llvm::Type *InterfaceTy = 
-    CGObjCRuntime::GetConcreteClassStruct(CGM, Interface);
   unsigned Flags = eClassFlags_Factory;
-  unsigned Size = CGM.getTargetData().getTypePaddedSize(InterfaceTy);
+  unsigned Size = 
+    CGM.getContext().getASTObjCImplementationLayout(ID).getSize() / 8;
 
   // FIXME: Set CXX-structors flag.
   if (CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden)

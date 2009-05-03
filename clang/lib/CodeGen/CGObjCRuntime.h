@@ -66,12 +66,6 @@ public:
   // eventually be folded into other places (the structure layout
   // code).
 
-  /// Return the (fixed) LLVM struct type for the interface. This is
-  /// only very meaningful for runtimes which use a non-fragile ABI.
-  static 
-  const llvm::StructType * GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
-                                                  const ObjCInterfaceDecl *OID);
-
 protected:
   /// Compute an offset to the given ivar, suitable for passing to
   /// EmitValueForIvarAtOffset.  Note that the correct handling of
