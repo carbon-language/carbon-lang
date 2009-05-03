@@ -204,7 +204,8 @@ public:
       CI_None = 0x00,
       CI_AllowsMemory = 0x01,
       CI_AllowsRegister = 0x02,
-      CI_ReadWrite = 0x04   // "+r" output constraint (read and write).
+      CI_ReadWrite = 0x04,       // "+r" output constraint (read and write).
+      CI_HasMatchingInput = 0x08 // This output operand has a matching input.
     };
     unsigned Flags;
     int TiedOperand;
@@ -222,6 +223,14 @@ public:
     bool isReadWrite() const { return (Flags & CI_ReadWrite) != 0; }
     bool allowsRegister() const { return (Flags & CI_AllowsRegister) != 0; }
     bool allowsMemory() const { return (Flags & CI_AllowsMemory) != 0; }
+    
+    /// hasMatchingInput - Return true if this output operand has a matching
+    /// (tied) input operand.
+    bool hasMatchingInput() const { return (Flags & CI_HasMatchingInput) != 0; }
+    
+    /// hasTiedOperand() - Return true if this input operand is a matching
+    /// constraint that ties it to an output operand.  If this returns true,
+    /// then getTiedOperand will indicate which output operand this is tied to.
     bool hasTiedOperand() const { return TiedOperand != -1; }
     unsigned getTiedOperand() const {
       assert(hasTiedOperand() && "Has no tied operand!");
@@ -231,11 +240,13 @@ public:
     void setIsReadWrite() { Flags |= CI_ReadWrite; }
     void setAllowsMemory() { Flags |= CI_AllowsMemory; }
     void setAllowsRegister() { Flags |= CI_AllowsRegister; }
+    void setHasMatchingInput() { Flags |= CI_HasMatchingInput; }
     
     /// setTiedOperand - Indicate that this is an input operand that is tied to
     /// the specified output operand.  Copy over the various constraint
     /// information from the output.
     void setTiedOperand(unsigned N, ConstraintInfo &Output) {
+      Output.setHasMatchingInput();
       Flags = Output.Flags;
       TiedOperand = N;
       // Don't copy Name or constraint string.
