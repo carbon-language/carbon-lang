@@ -41,6 +41,15 @@ public:
   bool isMoveInstr(const MachineInstr& MI,
                    unsigned &SrcReg, unsigned &DstReg,
                    unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   const TargetRegisterClass *RC) const;
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI,
+                                    unsigned DestReg, int FrameIdx,
+                                    const TargetRegisterClass *RC) const;
 };
 
 }

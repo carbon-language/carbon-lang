@@ -16,16 +16,52 @@
 #include "MSP430TargetMachine.h"
 #include "MSP430GenInstrInfo.inc"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-
+#include "llvm/CodeGen/PseudoSourceValue.h"
 
 using namespace llvm;
 
 MSP430InstrInfo::MSP430InstrInfo(MSP430TargetMachine &tm)
   : TargetInstrInfoImpl(MSP430Insts, array_lengthof(MSP430Insts)),
     RI(tm, *this), TM(tm) {}
+
+void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator MI,
+                                    unsigned SrcReg, bool isKill, int FrameIdx,
+                                    const TargetRegisterClass *RC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  if (RC == &MSP430::GR16RegClass)
+    BuildMI(MBB, MI, DL, get(MSP430::MOV16mr))
+      .addFrameIndex(FrameIdx).addImm(0)
+      .addReg(SrcReg, false, false, isKill);
+  else if (RC == &MSP430::GR8RegClass)
+    BuildMI(MBB, MI, DL, get(MSP430::MOV8mr))
+      .addFrameIndex(FrameIdx).addImm(0)
+      .addReg(SrcReg, false, false, isKill);
+  else
+    assert(0 && "Cannot store this register to stack slot!");
+}
+
+void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                           unsigned DestReg, int FrameIdx,
+                                           const TargetRegisterClass *RC) const{
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  if (RC == &MSP430::GR16RegClass)
+    BuildMI(MBB, MI, DL, get(MSP430::MOV16rm))
+      .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0);
+  else if (RC == &MSP430::GR8RegClass)
+    BuildMI(MBB, MI, DL, get(MSP430::MOV8rm))
+      .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0);
+  else
+    assert(0 && "Cannot store this register to stack slot!");
+}
 
 bool MSP430InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I,

@@ -74,6 +74,11 @@ MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+const TargetRegisterClass* MSP430RegisterInfo::getPointerRegClass() const {
+  return &MSP430::GR16RegClass;
+}
+
+
 bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
@@ -143,7 +148,32 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 void
 MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                         int SPAdj, RegScavenger *RS) const {
-  assert(0 && "Not implemented yet!");
+  assert(SPAdj == 0 && "Unexpected");
+
+  unsigned i = 0;
+  MachineInstr &MI = *II;
+  MachineFunction &MF = *MI.getParent()->getParent();
+  while (!MI.getOperand(i).isFI()) {
+    ++i;
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  }
+
+  int FrameIndex = MI.getOperand(i).getIndex();
+
+  unsigned BasePtr = (hasFP(MF) ? MSP430::FPW : MSP430::SPW);
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+
+  if (!hasFP(MF))
+    Offset += MF.getFrameInfo()->getStackSize();
+
+  // Skip the saved PC
+  Offset += 2;
+
+  MI.getOperand(i).ChangeToRegister(BasePtr, false);
+
+  // Fold imm into offset
+  Offset += MI.getOperand(i+1).getImm();
+  MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 
 void MSP430RegisterInfo::emitPrologue(MachineFunction &MF) const {
