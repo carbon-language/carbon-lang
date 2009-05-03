@@ -39,7 +39,7 @@ def R15 : MSP430Reg<15, "R15">;
 
 def MSP430Regs : RegisterClass<"MSP430", [i16], 16,
   // Volatile registers
-  [R4, R5, R6, R7, R8, R9, R9, R10, R11, R12, R13, R14, R15,
+  [R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15,
   // Volatile, but not allocable
   PC, SP, SR, CG]>
 {
