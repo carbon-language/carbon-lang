@@ -30,12 +30,26 @@ MSP430RegisterInfo::MSP430RegisterInfo(const TargetInstrInfo &tii)
 
 const unsigned*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  assert(0 && "Not implemented yet!");
+  static const unsigned CalleeSavedRegs[] = {
+    MSP430::FP, MSP430::R5, MSP430::R6, MSP430::R7,
+    MSP430::R8, MSP430::R9, MSP430::R10, MSP430::R11,
+    0
+  };
+
+  return CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
 MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  assert(0 && "Not implemented yet!");
+  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
+    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
+    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
+    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
+    &MSP430::MSP430RegsRegClass, &MSP430::MSP430RegsRegClass,
+    0
+  };
+
+  return CalleeSavedRegClasses;
 }
 
 BitVector
