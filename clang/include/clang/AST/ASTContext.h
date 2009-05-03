@@ -93,8 +93,7 @@ class ASTContext {
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
-  llvm::DenseMap<const ObjCInterfaceDecl*, 
-                 const ASTRecordLayout*> ASTObjCInterfaces;
+  llvm::DenseMap<const ObjCContainerDecl*, const ASTRecordLayout*> ObjCLayouts;
 
   llvm::DenseMap<unsigned, FixedWidthIntType*> SignedFixedWidthIntTypes;
   llvm::DenseMap<unsigned, FixedWidthIntType*> UnsignedFixedWidthIntTypes;
@@ -530,7 +529,16 @@ public:
   /// position information.
   const ASTRecordLayout &getASTRecordLayout(const RecordDecl *D);
   
+  /// getASTObjCInterfaceLayout - Get or compute information about the
+  /// layout of the specified Objective-C interface.
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
+
+  /// getASTObjCImplementationLayout - Get or compute information about
+  /// the layout of the specified Objective-C implementation. This may
+  /// differ from the interface if synthesized ivars are present.
+  const ASTRecordLayout &
+  getASTObjCImplementationLayout(const ObjCImplementationDecl *D);
+
   const RecordDecl *addRecordToClass(const ObjCInterfaceDecl *D);
   void CollectObjCIvars(const ObjCInterfaceDecl *OI,
                         llvm::SmallVectorImpl<FieldDecl*> &Fields);
@@ -741,7 +749,9 @@ private:
                                   const FieldDecl *Field,
                                   bool OutermostType = false,
                                   bool EncodingProperty = false);
-                                  
+
+  const ASTRecordLayout &getObjCLayout(const ObjCInterfaceDecl *D,
+                                       const ObjCImplementationDecl *Impl);    
 };
 
 }  // end namespace clang

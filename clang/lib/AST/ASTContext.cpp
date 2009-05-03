@@ -63,8 +63,8 @@ ASTContext::~ASTContext() {
   }
 
   {
-    llvm::DenseMap<const ObjCInterfaceDecl*, const ASTRecordLayout*>::iterator
-      I = ASTObjCInterfaces.begin(), E = ASTObjCInterfaces.end();
+    llvm::DenseMap<const ObjCContainerDecl*, const ASTRecordLayout*>::iterator
+      I = ObjCLayouts.begin(), E = ObjCLayouts.end();
     while (I != E) {
       ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
       delete R;
@@ -736,13 +736,16 @@ const RecordDecl *ASTContext::addRecordToClass(const ObjCInterfaceDecl *D) {
   return RD;
 }
 
-/// getASTObjcInterfaceLayout - Get or compute information about the layout of
-/// the specified Objective C, which indicates its size and ivar
-/// position information.
+/// getInterfaceLayoutImpl - Get or compute information about the
+/// layout of the given interface.
+///
+/// \param Impl - If given, also include the layout of the interface's
+/// implementation. This may differ by including synthesized ivars.
 const ASTRecordLayout &
-ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
+ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
+                          const ObjCImplementationDecl *Impl) {
   // Look up this layout, if already laid out, return what we have.
-  const ASTRecordLayout *&Entry = ASTObjCInterfaces[D];
+  const ASTRecordLayout *&Entry = ObjCLayouts[D];
   if (Entry) return *Entry;
 
   // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
@@ -793,6 +796,16 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
   // struct itself.
   NewEntry->FinalizeLayout();
   return *NewEntry;
+}
+
+const ASTRecordLayout &
+ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
+  return getObjCLayout(D, 0);
+}
+
+const ASTRecordLayout &
+ASTContext::getASTObjCImplementationLayout(const ObjCImplementationDecl *D) {
+  return getObjCLayout(D->getClassInterface(), D);
 }
 
 /// getASTRecordLayout - Get or compute information about the layout of the
