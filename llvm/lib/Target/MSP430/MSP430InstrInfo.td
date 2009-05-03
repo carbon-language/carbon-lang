@@ -32,15 +32,35 @@ def MSP430retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
 def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 
 //===----------------------------------------------------------------------===//
-// Pseudo Instructions
+// MSP430 Operand Definitions.
 //===----------------------------------------------------------------------===//
+
+// Address operand
+def memsrc : Operand<i16> {
+  let PrintMethod = "printSrcMemOperand";
+  let MIOperandInfo = (ops i16imm, GR16);
+}
+
+
+//===----------------------------------------------------------------------===//
+// MSP430 Complex Pattern Definitions.
+//===----------------------------------------------------------------------===//
+
+def addr : ComplexPattern<iPTR, 2, "SelectAddr", [], []>;
+
+//===----------------------------------------------------------------------===//
+// Pattern Fragments
+def zextloadi16i8 : PatFrag<(ops node:$ptr), (i16 (zextloadi8 node:$ptr))>;
+def  extloadi16i8 : PatFrag<(ops node:$ptr), (i16 ( extloadi8 node:$ptr))>;
+
+//===----------------------------------------------------------------------===//
+// Pseudo Instructions
 
 let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 //===----------------------------------------------------------------------===//
 // Real Instructions
-//===----------------------------------------------------------------------===//
 
 // FIXME: Provide proper encoding!
 let isReturn = 1, isTerminator = 1 in {
@@ -52,24 +72,39 @@ let isReturn = 1, isTerminator = 1 in {
 
 // FIXME: Provide proper encoding!
 let neverHasSideEffects = 1 in {
-def MOV16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src),
-                     "mov.w\t{$src, $dst|$dst, $src}",
-                     []>;
 def MOV8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src),
                      "mov.b\t{$src, $dst|$dst, $src}",
+                     []>;
+def MOV16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                     "mov.w\t{$src, $dst|$dst, $src}",
                      []>;
 }
 
 // FIXME: Provide proper encoding!
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def MOV16ri : Pseudo<(outs GR16:$dst), (ins i16imm:$src),
-                     "mov.w\t{$src, $dst|$dst, $src}",
-                     [(set GR16:$dst, imm:$src)]>;
 def MOV8ri  : Pseudo<(outs GR8:$dst), (ins i8imm:$src),
                      "mov.b\t{$src, $dst|$dst, $src}",
                      [(set GR8:$dst, imm:$src)]>;
-
+def MOV16ri : Pseudo<(outs GR16:$dst), (ins i16imm:$src),
+                     "mov.w\t{$src, $dst|$dst, $src}",
+                     [(set GR16:$dst, imm:$src)]>;
 }
+
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+def MOV8rm  : Pseudo<(outs GR8:$dst), (ins memsrc:$src),
+                "mov.b\t{$src, $dst|$dst, $src}",
+                [(set GR8:$dst, (load addr:$src))]>;
+def MOV16rm : Pseudo<(outs GR16:$dst), (ins memsrc:$src),
+                "mov.w\t{$src, $dst|$dst, $src}",
+                [(set GR16:$dst, (load addr:$src))]>;
+}
+
+def MOVZX16rr8 : Pseudo<(outs GR16:$dst), (ins GR8:$src),
+                "mov.b\t{$src, $dst|$dst, $src}",
+                [(set GR16:$dst, (zext GR8:$src))]>;
+def MOVZX16rm8 : Pseudo<(outs GR16:$dst), (ins memsrc:$src),
+                "mov.b\t{$src, $dst|$dst, $src}",
+                [(set GR16:$dst, (zextloadi16i8 addr:$src))]>;
 
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
@@ -232,3 +267,9 @@ def OR8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     [(set GR8:$dst, (or GR8:$src1, imm:$src2))]>;
 
 } // isTwoAddress = 1
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+
+// extload
+def : Pat<(extloadi16i8 addr:$src), (MOVZX16rm8 addr:$src)>;

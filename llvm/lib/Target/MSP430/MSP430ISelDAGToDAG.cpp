@@ -57,6 +57,7 @@ namespace {
 
   private:
     SDNode *Select(SDValue Op);
+    bool SelectAddr(SDValue Op, SDValue Addr, SDValue &Disp, SDValue &Base);
 
   #ifndef NDEBUG
     unsigned Indent;
@@ -70,6 +71,38 @@ namespace {
 FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM) {
   return new MSP430DAGToDAGISel(TM);
 }
+
+bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
+                                    SDValue &Disp, SDValue &Base) {
+  // We don't support frame index stuff yet.
+  if (isa<FrameIndexSDNode>(Addr))
+    return false;
+
+  // Operand is a result from ADD with constant operand which fits into i16.
+  if (Addr.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+      uint64_t CVal = CN->getZExtValue();
+      // Offset should fit into 16 bits.
+      if (((CVal << 48) >> 48) == CVal) {
+        // We don't support frame index stuff yet.
+        if (isa<FrameIndexSDNode>(Addr.getOperand(0)))
+          return false;
+
+        Base = Addr.getOperand(0);
+        Disp = CurDAG->getTargetConstant(CVal, MVT::i16);
+
+        return true;
+      }
+    }
+  }
+
+  Base = Addr;
+  Disp = CurDAG->getTargetConstant(0, MVT::i16);
+
+  return true;
+}
+
+
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.

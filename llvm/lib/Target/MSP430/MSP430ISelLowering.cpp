@@ -53,6 +53,12 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // shifts of the whole bitwidth 1 bit per step.
   setShiftAmountType(MVT::i8);
 
+  setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
+
   setOperationAction(ISD::SRA, MVT::i16, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
