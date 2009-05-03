@@ -251,7 +251,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   // before the lines so that it looks nicer.
   if (CaretEnd < SourceLine.size())
     SourceLine.replace(CaretEnd, std::string::npos, "...");
-  CaretLine.erase(CaretEnd, std::string::npos);
+  //CaretLine.erase(CaretEnd, std::string::npos);
   if (FixItInsertionLine.size() > CaretEnd)
     FixItInsertionLine.erase(CaretEnd, std::string::npos);
   
