@@ -77,13 +77,26 @@ def ADD16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      "add.w\t{$src2, $dst|$dst, $src2}",
                      [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
                       (implicit SR)]>;
+}
+
+def ADD16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "add.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (add GR16:$src1, imm:$src2)),
+                      (implicit SR)]>;
 
 let Uses = [SR] in {
+
+let isCommutable = 1 in { // X = ADDC Y, Z  == X = ADDC Z, Y
 def ADC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      "addc.w\t{$src2, $dst|$dst, $src2}",
                      [(set GR16:$dst, (adde GR16:$src1, GR16:$src2)),
                       (implicit SR)]>;
-}
+} // isCommutable
+
+def ADC16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "addc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (adde GR16:$src1, imm:$src2)),
+                      (implicit SR)]>;
 }
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
@@ -93,12 +106,22 @@ def AND16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                       (implicit SR)]>;
 }
 
-let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
+def AND16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "and.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (and GR16:$src1, imm:$src2)),
+                      (implicit SR)]>;
+
+let isCommutable = 1 in { // X = XOR Y, Z  == X = XOR Z, Y
 def XOR16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      "xor.w\t{$src2, $dst|$dst, $src2}",
                      [(set GR16:$dst, (xor GR16:$src1, GR16:$src2)),
                       (implicit SR)]>;
 }
+
+def XOR16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "xor.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (xor GR16:$src1, imm:$src2)),
+                      (implicit SR)]>;
 
 
 def SUB16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
@@ -106,10 +129,20 @@ def SUB16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      [(set GR16:$dst, (sub GR16:$src1, GR16:$src2)),
                       (implicit SR)]>;
 
+def SUB16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "sub.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (sub GR16:$src1, imm:$src2)),
+                      (implicit SR)]>;
+
 let Uses = [SR] in {
 def SBC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      "subc.w\t{$src2, $dst|$dst, $src2}",
                      [(set GR16:$dst, (sube GR16:$src1, GR16:$src2)),
+                      (implicit SR)]>;
+
+def SBC16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "subc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (sube GR16:$src1, imm:$src2)),
                       (implicit SR)]>;
 }
 
