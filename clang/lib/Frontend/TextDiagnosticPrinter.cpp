@@ -143,7 +143,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   if (CaretEnd < Columns)
     CaretStart = 0;
 
-  unsigned TargetColumns = Columns - 4; // Give us a little extra room.
+  unsigned TargetColumns = Columns - 8; // Give us extra room for the ellipses.
   unsigned SourceLength = SourceLine.size();
   bool StartIsFixed = false;
   while (CaretEnd - CaretStart < TargetColumns) {
@@ -231,16 +231,17 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   // [CaretStart, CaretEnd) is the slice we want. Update the various
   // output lines to show only this slice, with two-space padding
   // before the lines so that it looks nicer.
-  SourceLine.erase(CaretEnd, std::string::npos);
+  if (CaretEnd < SourceLine.size())
+    SourceLine.replace(CaretEnd, std::string::npos, "...");
   CaretLine.erase(CaretEnd, std::string::npos);
   if (FixItInsertionLine.size() > CaretEnd)
     FixItInsertionLine.erase(CaretEnd, std::string::npos);
   
   if (CaretStart > 2) {
-    SourceLine.replace(0, CaretStart, "  ");
-    CaretLine.replace(0, CaretStart, "  ");
+    SourceLine.replace(0, CaretStart, "  ...");
+    CaretLine.replace(0, CaretStart, "     ");
     if (FixItInsertionLine.size() >= CaretStart)
-      FixItInsertionLine.replace(0, CaretStart, "  ");
+      FixItInsertionLine.replace(0, CaretStart, "     ");
   }
 }
 
