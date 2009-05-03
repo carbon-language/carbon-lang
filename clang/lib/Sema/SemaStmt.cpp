@@ -1060,10 +1060,11 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       // case now.
       bool MentionedInput = false;
       bool MentionedOutput = false;
-      for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
-        if (!Pieces[i].isOperand()) continue;
-        MentionedInput |= Pieces[i].getOperandNo() == i+NumOutputs;
-        MentionedOutput |= Pieces[i].getOperandNo() == TiedTo;
+      for (unsigned p = 0, e = Pieces.size(); p != e; ++p) {
+        AsmStmt::AsmStringPiece &Piece = Pieces[p];
+        if (!Piece.isOperand()) continue;
+        MentionedInput |= Piece.getOperandNo() == i+NumOutputs;
+        MentionedOutput |= Piece.getOperandNo() == TiedTo;
       }
       
       // If neither the input nor the output was mentioned in the asm string,
