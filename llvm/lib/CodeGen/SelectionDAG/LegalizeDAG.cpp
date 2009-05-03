@@ -3315,10 +3315,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         }
         break;
       case ISD::MUL:
+        if (VT == MVT::i16)
+          LC = RTLIB::MUL_I16;
         if (VT == MVT::i32)
           LC = RTLIB::MUL_I32;
         else if (VT == MVT::i64)
           LC = RTLIB::MUL_I64;
+        else if (VT == MVT::i128)
+          LC = RTLIB::MUL_I128;
         break;
       case ISD::FPOW:
         LC = GetFPLibCall(VT, RTLIB::POW_F32, RTLIB::POW_F64, RTLIB::POW_F80,
