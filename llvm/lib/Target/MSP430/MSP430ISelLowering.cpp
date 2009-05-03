@@ -78,6 +78,13 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SELECT_CC,        MVT::Other, Expand);
   setOperationAction(ISD::SELECT,           MVT::i8,    Custom);
   setOperationAction(ISD::SELECT,           MVT::i16,   Custom);
+
+  // FIXME: Implement efficiently multiplication by a constant
+  setOperationAction(ISD::MUL,              MVT::i16,   Expand);
+  setOperationAction(ISD::MULHS,            MVT::i16,   Expand);
+  setOperationAction(ISD::MULHU,            MVT::i16,   Expand);
+  setOperationAction(ISD::SMUL_LOHI,        MVT::i16,   Expand);
+  setOperationAction(ISD::UMUL_LOHI,        MVT::i16,   Expand);
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
