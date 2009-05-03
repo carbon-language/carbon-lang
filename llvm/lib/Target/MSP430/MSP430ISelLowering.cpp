@@ -39,6 +39,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   TargetLowering(tm), Subtarget(*tm.getSubtargetImpl()), TM(tm) {
 
   // Set up the register classes.
+  addRegisterClass(MVT::i8,  MSP430::GR8RegisterClass);
   addRegisterClass(MVT::i16, MSP430::GR16RegisterClass);
 
   // Compute derived properties from the register classes
@@ -58,6 +59,9 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
+
+  // We don't have any truncstores
+  setTruncStoreAction(MVT::i16, MVT::i8, Expand);
 
   setOperationAction(ISD::SRA, MVT::i16, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);

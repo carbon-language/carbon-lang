@@ -65,6 +65,8 @@ def : SubRegSet<1, [PCW, SPW, SRW, CGW, FPW,
                    [PCB, SPB, SRB, CGB, FPB,
                     R5B, R6B, R7B, R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
 
+def subreg_8bit : PatLeaf<(i32 1)>;
+
 def GR8 : RegisterClass<"MSP430", [i8], 8,
    // Volatile registers
   [R12B, R13B, R14B, R15B, R11B, R10B, R9B, R8B, R7B, R6B, R5B,

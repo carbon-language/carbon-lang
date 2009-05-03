@@ -35,8 +35,13 @@ def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 // MSP430 Operand Definitions.
 //===----------------------------------------------------------------------===//
 
-// Address operand
+// Address operands
 def memsrc : Operand<i16> {
+  let PrintMethod = "printSrcMemOperand";
+  let MIOperandInfo = (ops i16imm, GR16);
+}
+
+def memdst : Operand<i16> {
   let PrintMethod = "printSrcMemOperand";
   let MIOperandInfo = (ops i16imm, GR16);
 }
@@ -105,6 +110,20 @@ def MOVZX16rr8 : Pseudo<(outs GR16:$dst), (ins GR8:$src),
 def MOVZX16rm8 : Pseudo<(outs GR16:$dst), (ins memsrc:$src),
                 "mov.b\t{$src, $dst|$dst, $src}",
                 [(set GR16:$dst, (zextloadi16i8 addr:$src))]>;
+
+def MOV8mi  : Pseudo<(outs), (ins memdst:$dst, i8imm:$src),
+                "mov.b\t{$src, $dst|$dst, $src}",
+                [(store (i8 imm:$src), addr:$dst)]>;
+def MOV16mi : Pseudo<(outs), (ins memdst:$dst, i16imm:$src),
+                "mov.w\t{$src, $dst|$dst, $src}",
+                [(store (i16 imm:$src), addr:$dst)]>;
+
+def MOV8mr  : Pseudo<(outs), (ins memdst:$dst, GR8:$src),
+                "mov.b\t{$src, $dst|$dst, $src}",
+                [(store GR8:$src, addr:$dst)]>;
+def MOV16mr : Pseudo<(outs), (ins memdst:$dst, GR16:$src),
+                "mov.w\t{$src, $dst|$dst, $src}",
+                [(store GR16:$src, addr:$dst)]>;
 
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
@@ -273,3 +292,7 @@ def OR8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
 
 // extload
 def : Pat<(extloadi16i8 addr:$src), (MOVZX16rm8 addr:$src)>;
+
+// truncs
+def : Pat<(i8 (trunc GR16:$src)),
+          (EXTRACT_SUBREG GR16:$src, subreg_8bit)>;
