@@ -602,12 +602,11 @@ def SEXT16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                      [(set GR16:$dst, (sext_inreg GR16:$src, i8)),
                       (implicit SRW)]>;
 
-//def SEXT16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
-//                     "sxt\t$dst",
-//                     [(set GR16:$dst, (sext_inreg GR16:$src, i8)),
-//                      (implicit SRW)]>;
-
 } // Defs = [SRW]
+
+def SWPB16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                     "swpb\t$dst",
+                     [(set GR16:$dst, (bswap GR16:$src))]>;
 
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 def OR8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
