@@ -1039,7 +1039,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (!Info.hasTiedOperand()) continue;
     
     unsigned TiedTo = Info.getTiedOperand();
-    Expr *OutputExpr     = Exprs[TiedTo];
+    Expr *OutputExpr = Exprs[TiedTo];
     Expr *InputExpr = Exprs[i+NumOutputs];
     QualType InTy = InputExpr->getType();
     QualType OutTy = OutputExpr->getType();
@@ -1054,6 +1054,25 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       // they are the same size, for example.  This also allows tying void* to
       // int*.
       if (Context.getTypeSize(OutTy) == Context.getTypeSize(InTy))
+        continue;
+      
+      // If the input and output operands are not mentioned in the asm string,
+      // then we can promote them and the asm string won't notice.  Check this
+      // case now.
+      bool MentionedInput = false;
+      bool MentionedOutput = false;
+      for (unsigned i = 0, e = Pieces.size(); i != e; ++i) {
+        if (!Pieces[i].isOperand()) continue;
+        MentionedInput |= Pieces[i].getOperandNo() == i+NumOutputs;
+        MentionedOutput |= Pieces[i].getOperandNo() == TiedTo;
+      }
+      
+      // If neither the input nor the output was mentioned in the asm string,
+      // and if the output was a register, just extend the shorter one to the
+      // size of the larger one.
+      // TODO: if only the larger one is mentioned, we could also support this.
+      if (!MentionedInput && !MentionedOutput &&
+          OutputConstraintInfos[TiedTo].allowsRegister())
         continue;
     }
     

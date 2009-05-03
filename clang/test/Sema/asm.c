@@ -73,6 +73,6 @@ void asm_string_tests(int i) {
 // PR4077
 int test7(unsigned long long b) {
   int a;
-  asm volatile("foo " : "=a" (a) :"0" (b)); // expected-error {{input with type 'unsigned long long' matching output with type 'int'}}
+  asm volatile("foo %0 %1" : "=a" (a) :"0" (b)); // expected-error {{input with type 'unsigned long long' matching output with type 'int'}}
   return a;
 }
