@@ -80,12 +80,12 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 }
 
 void MSP430RegisterInfo::emitPrologue(MachineFunction &MF) const {
-  assert(0 && "Not implemented yet!");
+  // Nothing here yet
 }
 
 void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
                                       MachineBasicBlock &MBB) const {
-  assert(0 && "Not implemented yet!");
+  // Nothing here yet
 }
 
 unsigned MSP430RegisterInfo::getRARegister() const {
