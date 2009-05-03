@@ -622,5 +622,3 @@ def : Pat<(add GR16:$src1, (MSP430Wrapper tglobaladdr :$src2)),
 // calls
 def : Pat<(MSP430call (i16 tglobaladdr:$dst)),
           (CALLi tglobaladdr:$dst)>;
-def : Pat<(MSP430call (i16 texternalsym:$dst)),
-          (CALLi texternalsym:$dst)>;
