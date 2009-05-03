@@ -222,7 +222,7 @@ void TokenLexer::ExpandFunctionArguments() {
       
       // If the next token was supposed to get leading whitespace, ensure it has
       // it now.
-      if (NextTokGetsSpace) {
+      if (CurTok.hasLeadingSpace() || NextTokGetsSpace) {
         ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
         NextTokGetsSpace = false;
       }
