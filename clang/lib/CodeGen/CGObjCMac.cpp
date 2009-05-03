@@ -35,14 +35,6 @@ using namespace CodeGen;
 // don't belong in CGObjCRuntime either so we will live with it for
 // now.
 
-static const llvm::StructType *
-GetConcreteClassStruct(CodeGen::CodeGenModule &CGM,
-                       const ObjCInterfaceDecl *OID) {
-  assert(!OID->isForwardDecl() && "Invalid interface decl!");
-  const RecordDecl *RD = CGM.getContext().addRecordToClass(OID);
-  return cast<llvm::StructType>(CGM.getTypes().ConvertTagDeclType(RD));
-}
-
 /// FindIvarInterface - Find the interface containing the ivar. 
 ///
 /// FIXME: We shouldn't need to do this, the containing context should
@@ -3117,9 +3109,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   SkipIvars.clear(); 
   IvarsInfo.clear();
   
-  const llvm::StructLayout *Layout = 
-    CGM.getTargetData().getStructLayout(GetConcreteClassStruct(CGM, OI));
-  BuildAggrIvarLayout(OI, Layout, 0, RecFields, 0, ForStrongLayout, hasUnion);
+  BuildAggrIvarLayout(OI, 0, 0, RecFields, 0, ForStrongLayout, hasUnion);
   if (IvarsInfo.empty())
     return llvm::Constant::getNullValue(PtrTy);
   
