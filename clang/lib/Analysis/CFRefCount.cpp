@@ -222,28 +222,23 @@ static bool isRefType(QualType RetTy, const char* prefix,
 // Primitives used for constructing summaries for function/method calls.
 //===----------------------------------------------------------------------===//
 
-namespace {
 /// ArgEffect is used to summarize a function/method call's effect on a
 /// particular argument.
 enum ArgEffect { Autorelease, Dealloc, DecRef, DecRefMsg, DoNothing,
                  DoNothingByRef, IncRefMsg, IncRef, MakeCollectable, MayEscape,
                  NewAutoreleasePool, SelfOwn, StopTracking };
 
-/// ArgEffects summarizes the effects of a function/method call on all of
-/// its arguments.
-typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
-}
-
 namespace llvm {
-template <> struct FoldingSetTrait<ArgEffects> {
-  static void Profile(const ArgEffects& X, FoldingSetNodeID& ID) {
-    for (ArgEffects::const_iterator I = X.begin(), E = X.end(); I!= E; ++I) {
-      ID.AddInteger(I->first);
-      ID.AddInteger((unsigned) I->second);
-    }
-  }    
+template <> struct FoldingSetTrait<ArgEffect> {
+static inline void Profile(const ArgEffect X, FoldingSetNodeID& ID) {
+  ID.AddInteger((unsigned) X);
+}
 };
 } // end llvm namespace
+
+/// ArgEffects summarizes the effects of a function/method call on all of
+/// its arguments.
+typedef llvm::ImmutableMap<unsigned,ArgEffect> ArgEffects;
 
 namespace {
 
@@ -310,7 +305,7 @@ class VISIBILITY_HIDDEN RetainSummary : public llvm::FoldingSetNode {
   /// Args - an ordered vector of (index, ArgEffect) pairs, where index
   ///  specifies the argument (starting from 0).  This can be sparsely
   ///  populated; arguments with no entry in Args use 'DefaultArgEffect'.
-  ArgEffects* Args;
+  ArgEffects Args;
   
   /// DefaultArgEffect - The default ArgEffect to apply to arguments that
   ///  do not have an entry in Args.
@@ -330,8 +325,7 @@ class VISIBILITY_HIDDEN RetainSummary : public llvm::FoldingSetNode {
   bool EndPath;
   
 public:
-  
-  RetainSummary(ArgEffects* A, RetEffect R, ArgEffect defaultEff,
+  RetainSummary(ArgEffects A, RetEffect R, ArgEffect defaultEff,
                 ArgEffect ReceiverEff, bool endpath = false)
     : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R),
       EndPath(endpath) {}  
@@ -339,31 +333,14 @@ public:
   /// getArg - Return the argument effect on the argument specified by
   ///  idx (starting from 0).
   ArgEffect getArg(unsigned idx) const {
-
-    if (!Args)
-      return DefaultArgEffect;
-    
-    // If Args is present, it is likely to contain only 1 element.
-    // Just do a linear search.  Do it from the back because functions with
-    // large numbers of arguments will be tail heavy with respect to which
-    // argument they actually modify with respect to the reference count.    
-    for (ArgEffects::reverse_iterator I=Args->rbegin(), E=Args->rend();
-           I!=E; ++I) {
-      
-      if (idx > I->first)
-        return DefaultArgEffect;
-      
-      if (idx == I->first)
-        return I->second;
-    }
+    if (const ArgEffect *AE = Args.lookup(idx))
+      return *AE;
     
     return DefaultArgEffect;
   }
   
   /// getRetEffect - Returns the effect on the return value of the call.
-  RetEffect getRetEffect() const {
-    return Ret;
-  }
+  RetEffect getRetEffect() const { return Ret; }
   
   /// isEndPath - Returns true if executing the given method/function should
   ///  terminate the path.
@@ -371,19 +348,17 @@ public:
   
   /// getReceiverEffect - Returns the effect on the receiver of the call.
   ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
-  ArgEffect getReceiverEffect() const {
-    return Receiver;
-  }
+  ArgEffect getReceiverEffect() const { return Receiver; }
   
-  typedef ArgEffects::const_iterator ExprIterator;
+  typedef ArgEffects::iterator ExprIterator;
   
-  ExprIterator begin_args() const { return Args->begin(); }
-  ExprIterator end_args()   const { return Args->end(); }
+  ExprIterator begin_args() const { return Args.begin(); }
+  ExprIterator end_args()   const { return Args.end(); }
   
-  static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects* A,
+  static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects A,
                       RetEffect RetEff, ArgEffect DefaultEff,
                       ArgEffect ReceiverEff, bool EndPath) {
-    ID.AddPointer(A);
+    ID.Add(A);
     ID.Add(RetEff);
     ID.AddInteger((unsigned) DefaultEff);
     ID.AddInteger((unsigned) ReceiverEff);
@@ -555,9 +530,6 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   //  Typedefs.
   //==-----------------------------------------------------------------==//
   
-  typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<ArgEffects> >
-          ArgEffectsSetTy;
-  
   typedef llvm::FoldingSet<RetainSummary>
           SummarySetTy;
   
@@ -593,12 +565,12 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   /// ObjCMethodSummaries - A map from selectors to summaries.
   ObjCMethodSummariesTy ObjCMethodSummaries;
 
-  /// ArgEffectsSet - A FoldingSet of uniqued ArgEffects.
-  ArgEffectsSetTy ArgEffectsSet;
-  
   /// BPAlloc - A BumpPtrAllocator used for allocating summaries, ArgEffects,
   ///  and all other data used by the checker.
   llvm::BumpPtrAllocator BPAlloc;
+  
+  /// AF - A factory for ArgEffects objects.
+  ArgEffects::Factory AF;  
   
   /// ScratchArgs - A holding buffer for construct ArgEffects.
   ArgEffects ScratchArgs;
@@ -611,7 +583,7 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   
   /// getArgEffects - Returns a persistent ArgEffects object based on the
   ///  data in ScratchArgs.
-  ArgEffects*   getArgEffects();
+  ArgEffects getArgEffects();
 
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
   
@@ -622,7 +594,7 @@ public:
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, const char* FName);
   
-  RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
+  RetainSummary* getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
                                       ArgEffect DefaultEff = MayEscape,
                                       bool isEndPath = false);
@@ -716,7 +688,8 @@ private:
   }
 
   void addPanicSummary(const char* Cls, ...) {
-    RetainSummary* Summ = getPersistentSummary(0, RetEffect::MakeNoRet(),
+    RetainSummary* Summ = getPersistentSummary(AF.GetEmptyMap(),
+                                               RetEffect::MakeNoRet(),
                                                DoNothing,  DoNothing, true);
     va_list argp;
     va_start (argp, Cls);
@@ -729,7 +702,8 @@ public:
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
    : Ctx(ctx),
      CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
-     GCEnabled(gcenabled), StopSummary(0) {
+     GCEnabled(gcenabled), AF(BPAlloc), ScratchArgs(AF.GetEmptyMap()),
+     StopSummary(0) {
 
     InitializeClassMethodSummaries();
     InitializeMethodSummaries();
@@ -795,48 +769,16 @@ public:
 // Implementation of checker data structures.
 //===----------------------------------------------------------------------===//
 
-RetainSummaryManager::~RetainSummaryManager() {
-  
-  // FIXME: The ArgEffects could eventually be allocated from BPAlloc, 
-  //   mitigating the need to do explicit cleanup of the
-  //   Argument-Effect summaries.
-  
-  for (ArgEffectsSetTy::iterator I = ArgEffectsSet.begin(), 
-                                 E = ArgEffectsSet.end(); I!=E; ++I)
-    I->getValue().~ArgEffects();
-}
+RetainSummaryManager::~RetainSummaryManager() {}
 
-ArgEffects* RetainSummaryManager::getArgEffects() {
-
-  if (ScratchArgs.empty())
-    return NULL;
-  
-  // Compute a profile for a non-empty ScratchArgs.
-  llvm::FoldingSetNodeID profile;
-  profile.Add(ScratchArgs);
-  void* InsertPos;
-  
-  // Look up the uniqued copy, or create a new one.
-  llvm::FoldingSetNodeWrapper<ArgEffects>* E =
-    ArgEffectsSet.FindNodeOrInsertPos(profile, InsertPos);
-  
-  if (E) {
-    ScratchArgs.clear();
-    return &E->getValue();
-  }
-  
-  E = (llvm::FoldingSetNodeWrapper<ArgEffects>*)
-        BPAlloc.Allocate<llvm::FoldingSetNodeWrapper<ArgEffects> >();
-                       
-  new (E) llvm::FoldingSetNodeWrapper<ArgEffects>(ScratchArgs);
-  ArgEffectsSet.InsertNode(E, InsertPos);
-
-  ScratchArgs.clear();
-  return &E->getValue();
+ArgEffects RetainSummaryManager::getArgEffects() {
+  ArgEffects AE = ScratchArgs;
+  ScratchArgs = AF.GetEmptyMap();
+  return AE;
 }
 
 RetainSummary*
-RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
+RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                            ArgEffect ReceiverEff,
                                            ArgEffect DefaultEff,
                                            bool isEndPath) {
@@ -947,8 +889,8 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       // FIXES: <rdar://problem/6326900>
       // This should be addressed using a API table.  This strcmp is also
       // a little gross, but there is no need to super optimize here.
-      assert (ScratchArgs.empty());
-      ScratchArgs.push_back(std::make_pair(1, DecRef));
+      assert (ScratchArgs.isEmpty());
+      ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
       break;
     }
@@ -1020,7 +962,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       if (isRelease(FD, FName))
         S = getUnarySummary(FT, cfrelease);
       else {
-        assert (ScratchArgs.empty());
+        assert (ScratchArgs.isEmpty());
         // Remaining CoreFoundation and CoreGraphics functions.
         // We use to assume that they all strictly followed the ownership idiom
         // and that ownership cannot be transferred.  While this is technically
@@ -1074,23 +1016,23 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
   if (!FTP || FTP->getNumArgs() != 1)
     return getPersistentStopSummary();
   
-  assert (ScratchArgs.empty());
+  assert (ScratchArgs.isEmpty());
   
   switch (func) {
-    case cfretain: {      
-      ScratchArgs.push_back(std::make_pair(0, IncRef));
+    case cfretain: {
+      ScratchArgs = AF.Add(ScratchArgs, 0, IncRef);
       return getPersistentSummary(RetEffect::MakeAlias(0),
                                   DoNothing, DoNothing);
     }
       
     case cfrelease: {
-      ScratchArgs.push_back(std::make_pair(0, DecRef));
+      ScratchArgs = AF.Add(ScratchArgs, 0, DecRef);
       return getPersistentSummary(RetEffect::MakeNoRet(),
                                   DoNothing, DoNothing);
     }
       
     case cfmakecollectable: {
-      ScratchArgs.push_back(std::make_pair(0, MakeCollectable));
+      ScratchArgs = AF.Add(ScratchArgs, 0, MakeCollectable);
       return getPersistentSummary(RetEffect::MakeAlias(0),DoNothing, DoNothing);    
     }
       
@@ -1101,18 +1043,18 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
-  assert (ScratchArgs.empty());
+  assert (ScratchArgs.isEmpty());
   
   if (FD->getIdentifier() == CFDictionaryCreateII) {
-    ScratchArgs.push_back(std::make_pair(1, DoNothingByRef));
-    ScratchArgs.push_back(std::make_pair(2, DoNothingByRef));
+    ScratchArgs = AF.Add(ScratchArgs, 1, DoNothingByRef);
+    ScratchArgs = AF.Add(ScratchArgs, 2, DoNothingByRef);
   }
   
   return getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
-  assert (ScratchArgs.empty());  
+  assert (ScratchArgs.isEmpty());  
   return getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::CF),
                               DoNothing, DoNothing);
 }
@@ -1123,7 +1065,7 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
 
 RetainSummary*
 RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
-  assert(ScratchArgs.empty());
+  assert(ScratchArgs.isEmpty());
     
   // 'init' methods only return an alias if the return type is a location type.
   return getPersistentSummary(Loc::IsLocType(RetTy)
@@ -1136,7 +1078,7 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   if (!MD)
     return 0;
   
-  assert(ScratchArgs.empty());
+  assert(ScratchArgs.isEmpty());
   
   // Determine if there is a special return effect for this method.
   bool hasEffect = false;
@@ -1159,23 +1101,23 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
        E = MD->param_end(); I != E; ++I, ++i) {
     if ((*I)->getAttr<ObjCOwnershipRetainAttr>()) {
-      ScratchArgs.push_back(std::make_pair(i, IncRefMsg));
+      ScratchArgs = AF.Add(ScratchArgs, i, IncRefMsg);
       hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipCFRetainAttr>()) {
-      ScratchArgs.push_back(std::make_pair(i, IncRef));
+      ScratchArgs = AF.Add(ScratchArgs, i, IncRef);
       hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipReleaseAttr>()) {
-      ScratchArgs.push_back(std::make_pair(i, DecRefMsg));
+      ScratchArgs = AF.Add(ScratchArgs, i, DecRefMsg);
       hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipCFReleaseAttr>()) {
-      ScratchArgs.push_back(std::make_pair(i, DecRef));
+      ScratchArgs = AF.Add(ScratchArgs, i, DecRef);
       hasEffect = true;
     }
     else if ((*I)->getAttr<ObjCOwnershipMakeCollectableAttr>()) {
-      ScratchArgs.push_back(std::make_pair(i, MakeCollectable));
+      ScratchArgs = AF.Add(ScratchArgs, i, MakeCollectable);
       hasEffect = true;
     }    
   }
@@ -1212,7 +1154,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
       if (ParmVarDecl *PD = *I) {
         QualType Ty = Ctx.getCanonicalType(PD->getType());
         if (Ty.getUnqualifiedType() == Ctx.VoidPtrTy)
-          ScratchArgs.push_back(std::make_pair(i, StopTracking));
+          ScratchArgs = AF.Add(ScratchArgs, i, StopTracking);
       }
   }
   
@@ -1231,7 +1173,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   
   // Look for methods that return an owned object.
   if (!isTrackedObjCObjectType(RetTy)) {
-    if (ScratchArgs.empty() && ReceiverEff == DoNothing)
+    if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
       return 0;
     
     return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff,
@@ -1263,7 +1205,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   if (I != ObjCMethodSummaries.end())
     return I->second;
 
-  assert(ScratchArgs.empty());
+  assert(ScratchArgs.isEmpty());
 
   // Annotations take precedence over all other ways to derive
   // summaries.
@@ -1308,7 +1250,7 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
 
 void RetainSummaryManager::InitializeClassMethodSummaries() {
   
-  assert (ScratchArgs.empty());
+  assert (ScratchArgs.isEmpty());
   
   RetEffect E = isGCEnabled() ? RetEffect::MakeGCNotOwned()
                               : RetEffect::MakeOwned(RetEffect::ObjC, true);  
@@ -1327,7 +1269,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
                 getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC)));
   
   // Create the [NSAutoreleasePool addObject:] summary.
-  ScratchArgs.push_back(std::make_pair(0, Autorelease));
+  ScratchArgs = AF.Add(ScratchArgs, 0, Autorelease);
   addClsMethSummary(&Ctx.Idents.get("NSAutoreleasePool"),
                     GetUnarySelector("addObject", Ctx),
                     getPersistentSummary(RetEffect::MakeNoRet(),
@@ -1358,7 +1300,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
 
 void RetainSummaryManager::InitializeMethodSummaries() {
   
-  assert (ScratchArgs.empty());  
+  assert (ScratchArgs.isEmpty());  
   
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
