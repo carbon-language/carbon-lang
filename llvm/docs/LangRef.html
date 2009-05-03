@@ -1074,8 +1074,8 @@ an exception that escapes into the caller.</dd>
 pointer arguments (including <tt><a href="#byval">byval</a></tt> arguments)
 or otherwise modify any state (e.g. memory, control registers, etc) visible to
 caller functions.  It may dereference pointer arguments and read state that may
-be set in the caller.  A readonly function always returns the same value (or
-throws the same exception) when called with the same set of arguments and global
+be set in the caller.  A readonly function always returns the same value when
+called with the same set of arguments and global
 state.  readonly functions may not throw an exception that escapes into the
 caller.</dd>
 
