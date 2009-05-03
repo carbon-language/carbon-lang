@@ -3308,16 +3308,20 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       switch (Node->getOpcode()) {
       case ISD::UDIV:
       case ISD::SDIV:
-        if (VT == MVT::i32) {
-          LC = Node->getOpcode() == ISD::UDIV
-               ? RTLIB::UDIV_I32 : RTLIB::SDIV_I32;
-          isSigned = Node->getOpcode() == ISD::SDIV;
-        }
-        break;
+       isSigned = Node->getOpcode() == ISD::SDIV;
+       if (VT == MVT::i16)
+         LC = (isSigned ? RTLIB::SDIV_I16  : RTLIB::UDIV_I16);
+       else if (VT == MVT::i32)
+         LC = (isSigned ? RTLIB::SDIV_I32  : RTLIB::UDIV_I32);
+       else if (VT == MVT::i64)
+         LC = (isSigned ? RTLIB::SDIV_I64  : RTLIB::UDIV_I64);
+       else if (VT == MVT::i128)
+         LC = (isSigned ? RTLIB::SDIV_I128 : RTLIB::UDIV_I128);
+       break;
       case ISD::MUL:
         if (VT == MVT::i16)
           LC = RTLIB::MUL_I16;
-        if (VT == MVT::i32)
+        else if (VT == MVT::i32)
           LC = RTLIB::MUL_I32;
         else if (VT == MVT::i64)
           LC = RTLIB::MUL_I64;
