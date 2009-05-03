@@ -713,6 +713,9 @@ def CMP16mm : Pseudo<(outs), (ins memsrc:$src1, memsrc:$src2),
 // extload
 def : Pat<(extloadi16i8 addr:$src), (MOVZX16rm8 addr:$src)>;
 
+// anyext
+def : Pat<(anyext addr:$src), (MOVZX16rr8 GR8:$src)>;
+
 // truncs
 def : Pat<(i8 (trunc GR16:$src)),
           (EXTRACT_SUBREG GR16:$src, subreg_8bit)>;
