@@ -134,9 +134,11 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin_object_size:
     if (SemaBuiltinObjectSize(TheCall))
       return ExprError();
+    return move(TheCallResult);
   case Builtin::BI__builtin_longjmp:
     if (SemaBuiltinLongjmp(TheCall))
       return ExprError();
+    return move(TheCallResult);
   }
 
   // FIXME: This mechanism should be abstracted to be less fragile and
@@ -427,7 +429,7 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
   return false;
 }
 
-/// SemaBuiltinObjectSize - Handle __builtin_longjmp(void *env[5], int val).
+/// SemaBuiltinLongjmp - Handle __builtin_longjmp(void *env[5], int val).
 /// This checks that val is a constant 1.
 bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
   Expr *Arg = TheCall->getArg(1);
