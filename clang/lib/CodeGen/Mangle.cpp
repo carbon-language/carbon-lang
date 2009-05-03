@@ -657,6 +657,11 @@ namespace clang {
   /// (\c D->getIdentifier()) as its name.
   bool mangleName(const NamedDecl *D, ASTContext &Context, 
                   llvm::raw_ostream &os) {
+    assert(!isa<CXXConstructorDecl>(D) &&
+           "Use mangleCXXCtor for constructor decls!");
+    assert(!isa<CXXDestructorDecl>(D) &&
+           "Use mangleCXXDtor for destructor decls!");
+    
     CXXNameMangler Mangler(Context, os);
     if (!Mangler.mangle(D))
       return false;
