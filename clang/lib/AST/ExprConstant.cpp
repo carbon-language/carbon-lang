@@ -1067,17 +1067,8 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   if (!SrcTy->isConstantSizeType())
     return false;
 
-  unsigned BitWidth = 0;
-  if (SrcTy->isObjCInterfaceType()) {
-    // Slightly unusual case: the size of an ObjC interface type is the
-    // size of the class.
-    ObjCInterfaceDecl *OI = SrcTy->getAsObjCInterfaceType()->getDecl();
-    const ASTRecordLayout &Layout = Info.Ctx.getASTObjCInterfaceLayout(OI);
-    BitWidth = Layout.getSize();
-  } else
-    BitWidth = Info.Ctx.getTypeSize(SrcTy);
-
   // Get information about the size.
+  unsigned BitWidth = Info.Ctx.getTypeSize(SrcTy);
   return Success(BitWidth / Info.Ctx.Target.getCharWidth(), E);
 }
 
