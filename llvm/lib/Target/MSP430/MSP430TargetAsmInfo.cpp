@@ -17,5 +17,6 @@
 using namespace llvm;
 
 MSP430TargetAsmInfo::MSP430TargetAsmInfo(const MSP430TargetMachine &TM)
-  : TargetAsmInfo(TM) {
+  : ELFTargetAsmInfo(TM) {
+  AlignmentIsInBytes = false;
 }

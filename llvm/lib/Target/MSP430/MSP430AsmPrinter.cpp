@@ -125,6 +125,7 @@ void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
 bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
+  O << "\n\n";
 
   // Print the 'header' of function
   emitFunctionHeader(MF);
@@ -133,20 +134,18 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin()) {
-      printBasicBlockLabel(I, true , true);
+    if (!VerboseAsm && (I->pred_empty() || I->isOnlyReachableByFallthrough())) {
+      // This is an entry block or a block that's only reachable via a
+      // fallthrough edge. In non-VerboseAsm mode, don't print the label.
+    } else {
+      printBasicBlockLabel(I, true, true, VerboseAsm);
       O << '\n';
     }
 
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-         II != E; ++II) {
+         II != E; ++II)
       // Print the assembly for the instruction.
-      O << "\t";
       printMachineInstruction(II);
-    }
-
-    // Each Basic Block is separated by a newline
-    O << '\n';
   }
 
   if (TAI->hasDotTypeDotSizeDirective())

@@ -15,13 +15,14 @@
 #define MSP430TARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
 
 namespace llvm {
 
   // Forward declaration.
   class MSP430TargetMachine;
 
-  struct MSP430TargetAsmInfo : public TargetAsmInfo {
+  struct MSP430TargetAsmInfo : public ELFTargetAsmInfo {
     explicit MSP430TargetAsmInfo(const MSP430TargetMachine &TM);
   };
 
