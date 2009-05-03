@@ -38,6 +38,7 @@ X("msp430", "MSP430 [experimental]");
 MSP430TargetMachine::MSP430TargetMachine(const Module &M,
                                          const std::string &FS) :
   Subtarget(*this, M, FS),
+  // FIXME: Check TargetData string.
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
