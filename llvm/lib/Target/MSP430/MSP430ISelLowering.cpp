@@ -44,6 +44,11 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // Compute derived properties from the register classes
   computeRegisterProperties();
 
+  // Provide all sorts of operation actions
+
+  // Division is expensive
+  setIntDivIsCheap(false);
+
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 
