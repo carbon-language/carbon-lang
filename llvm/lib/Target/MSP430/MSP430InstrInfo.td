@@ -134,125 +134,177 @@ let Defs = [SRW] in {
 
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 // FIXME: Provide proper encoding!
-def ADD16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                     "add.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
-                      (implicit SRW)]>;
-
 def ADD8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                      "add.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (add GR8:$src1, GR8:$src2)),
                       (implicit SRW)]>;
+def ADD16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                     "add.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
+                      (implicit SRW)]>;
 }
 
-def ADD16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                     "add.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (add GR16:$src1, imm:$src2)),
+def ADD8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                     "add.b\t{$src2, $dst|$dst, $src2}",
+                     [(set GR8:$dst, (add GR8:$src1, (load addr:$src2))),
                       (implicit SRW)]>;
+def ADD16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                     "add.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (add GR16:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+
 def ADD8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                      "add.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (add GR8:$src1, imm:$src2)),
+                      (implicit SRW)]>;
+def ADD16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "add.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (add GR16:$src1, imm:$src2)),
                       (implicit SRW)]>;
 
 let Uses = [SRW] in {
 
 let isCommutable = 1 in { // X = ADDC Y, Z  == X = ADDC Z, Y
-def ADC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                     "addc.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (adde GR16:$src1, GR16:$src2)),
-                      (implicit SRW)]>;
 def ADC8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                      "addc.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (adde GR8:$src1, GR8:$src2)),
                       (implicit SRW)]>;
+def ADC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                     "addc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (adde GR16:$src1, GR16:$src2)),
+                      (implicit SRW)]>;
 } // isCommutable
 
-def ADC16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                     "addc.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (adde GR16:$src1, imm:$src2)),
-                      (implicit SRW)]>;
 def ADC8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                      "addc.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (adde GR8:$src1, imm:$src2)),
                       (implicit SRW)]>;
+def ADC16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "addc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (adde GR16:$src1, imm:$src2)),
+                      (implicit SRW)]>;
+
+def ADC8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                     "addc.b\t{$src2, $dst|$dst, $src2}",
+                     [(set GR8:$dst, (adde GR8:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+def ADC16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                     "addc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (adde GR16:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
 }
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
-def AND16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                     "and.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (and GR16:$src1, GR16:$src2)),
-                      (implicit SRW)]>;
 def AND8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                      "and.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (and GR8:$src1, GR8:$src2)),
                       (implicit SRW)]>;
+def AND16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                     "and.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (and GR16:$src1, GR16:$src2)),
+                      (implicit SRW)]>;
 }
 
-def AND16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                     "and.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (and GR16:$src1, imm:$src2)),
-                      (implicit SRW)]>;
 def AND8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                      "and.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (and GR8:$src1, imm:$src2)),
                       (implicit SRW)]>;
+def AND16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "and.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (and GR16:$src1, imm:$src2)),
+                      (implicit SRW)]>;
+
+def AND8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                     "and.b\t{$src2, $dst|$dst, $src2}",
+                     [(set GR8:$dst, (and GR8:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+def AND16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                     "and.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (and GR16:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
 
 let isCommutable = 1 in { // X = XOR Y, Z  == X = XOR Z, Y
-def XOR16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                     "xor.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (xor GR16:$src1, GR16:$src2)),
-                      (implicit SRW)]>;
 def XOR8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                      "xor.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (xor GR8:$src1, GR8:$src2)),
                       (implicit SRW)]>;
+def XOR16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                     "xor.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (xor GR16:$src1, GR16:$src2)),
+                      (implicit SRW)]>;
 }
 
-def XOR16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                     "xor.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (xor GR16:$src1, imm:$src2)),
-                      (implicit SRW)]>;
 def XOR8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                      "xor.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (xor GR8:$src1, imm:$src2)),
                       (implicit SRW)]>;
-
-
-def SUB16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                     "sub.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (sub GR16:$src1, GR16:$src2)),
+def XOR16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "xor.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (xor GR16:$src1, imm:$src2)),
                       (implicit SRW)]>;
+
+def XOR8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                     "xor.b\t{$src2, $dst|$dst, $src2}",
+                     [(set GR8:$dst, (xor GR8:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+def XOR16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                     "xor.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (xor GR16:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+
 def SUB8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                      "sub.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (sub GR8:$src1, GR8:$src2)),
                       (implicit SRW)]>;
-
-def SUB16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+def SUB16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                      "sub.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (sub GR16:$src1, imm:$src2)),
+                     [(set GR16:$dst, (sub GR16:$src1, GR16:$src2)),
                       (implicit SRW)]>;
+
 def SUB8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                      "sub.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (sub GR8:$src1, imm:$src2)),
                       (implicit SRW)]>;
+def SUB16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                     "sub.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (sub GR16:$src1, imm:$src2)),
+                      (implicit SRW)]>;
+
+def SUB8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                     "sub.b\t{$src2, $dst|$dst, $src2}",
+                     [(set GR8:$dst, (sub GR8:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+def SUB16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                     "sub.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (sub GR16:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
 
 let Uses = [SRW] in {
-def SBC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                     "subc.w\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (sube GR16:$src1, GR16:$src2)),
-                      (implicit SRW)]>;
 def SBC8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                      "subc.b\t{$src2, $dst|$dst, $src2}",
                      [(set GR8:$dst, (sube GR8:$src1, GR8:$src2)),
                       (implicit SRW)]>;
+def SBC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                     "subc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (sube GR16:$src1, GR16:$src2)),
+                      (implicit SRW)]>;
 
+def SBC8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
+                     "subc.b\t{$src2, $dst|$dst, $src2}",
+                     [(set GR8:$dst, (sube GR8:$src1, imm:$src2)),
+                      (implicit SRW)]>;
 def SBC16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                      "subc.w\t{$src2, $dst|$dst, $src2}",
                      [(set GR16:$dst, (sube GR16:$src1, imm:$src2)),
                       (implicit SRW)]>;
-def SBC8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
+
+def SBC8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
                      "subc.b\t{$src2, $dst|$dst, $src2}",
-                     [(set GR8:$dst, (sube GR8:$src1, imm:$src2)),
+                     [(set GR8:$dst, (sube GR8:$src1, (load addr:$src2))),
+                      (implicit SRW)]>;
+def SBC16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                     "subc.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (sube GR16:$src1, (load addr:$src2))),
                       (implicit SRW)]>;
 }
 
@@ -270,21 +322,27 @@ def SEXT16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
 } // Defs = [SRW]
 
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
-def OR16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                    "bis.w\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (or GR16:$src1, GR16:$src2))]>;
 def OR8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                     "bis.b\t{$src2, $dst|$dst, $src2}",
                     [(set GR8:$dst, (or GR8:$src1, GR8:$src2))]>;
+def OR16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                    "bis.w\t{$src2, $dst|$dst, $src2}",
+                    [(set GR16:$dst, (or GR16:$src1, GR16:$src2))]>;
 }
 
-def OR16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
-                    "bis.w\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (or GR16:$src1, imm:$src2))]>;
 def OR8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     "bis.b\t{$src2, $dst|$dst, $src2}",
                     [(set GR8:$dst, (or GR8:$src1, imm:$src2))]>;
+def OR16ri : Pseudo<(outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
+                    "bis.w\t{$src2, $dst|$dst, $src2}",
+                    [(set GR16:$dst, (or GR16:$src1, imm:$src2))]>;
 
+def OR8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                    "bis.b\t{$src2, $dst|$dst, $src2}",
+                    [(set GR8:$dst, (or GR8:$src1, (load addr:$src2)))]>;
+def OR16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                    "bis.w\t{$src2, $dst|$dst, $src2}",
+                    [(set GR16:$dst, (or GR16:$src1, (load addr:$src2)))]>;
 } // isTwoAddress = 1
 
 //===----------------------------------------------------------------------===//
