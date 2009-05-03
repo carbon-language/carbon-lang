@@ -35,6 +35,7 @@ def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 // Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
+let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 //===----------------------------------------------------------------------===//
