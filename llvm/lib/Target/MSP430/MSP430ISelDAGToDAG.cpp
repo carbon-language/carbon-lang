@@ -57,6 +57,10 @@ namespace {
 
   private:
     SDNode *Select(SDValue Op);
+
+  #ifndef NDEBUG
+    unsigned Indent;
+  #endif
   };
 }  // end anonymous namespace
 
@@ -79,5 +83,49 @@ void MSP430DAGToDAGISel::InstructionSelect() {
 }
 
 SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
-  return SelectCode(Op);
+  SDNode *Node = Op.getNode();
+
+  // Dump information about the Node being selected
+  #ifndef NDEBUG
+  DOUT << std::string(Indent, ' ') << "Selecting: ";
+  DEBUG(Node->dump(CurDAG));
+  DOUT << "\n";
+  Indent += 2;
+  #endif
+
+  // If we have a custom node, we already have selected!
+  if (Node->isMachineOpcode()) {
+    #ifndef NDEBUG
+    DOUT << std::string(Indent-2, ' ') << "== ";
+    DEBUG(Node->dump(CurDAG));
+    DOUT << "\n";
+    Indent -= 2;
+    #endif
+    return NULL;
+  }
+
+  // Instruction Selection not handled by the auto-generated tablegen selection
+  // should be handled here.
+  // Something like this:
+  //   unsigned Opcode = Node->getOpcode();
+  //   switch (Opcode) {
+  //   default: break;
+  //   case ISD::Foo:
+  //    return SelectFoo(Node)
+  //  }
+
+  // Select the default instruction
+  SDNode *ResNode = SelectCode(Op);
+
+  #ifndef NDEBUG
+  DOUT << std::string(Indent-2, ' ') << "=> ";
+  if (ResNode == NULL || ResNode == Op.getNode())
+    DEBUG(Op.getNode()->dump(CurDAG));
+  else
+    DEBUG(ResNode->dump(CurDAG));
+  DOUT << "\n";
+  Indent -= 2;
+  #endif
+
+  return ResNode;
 }
