@@ -2947,6 +2947,9 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   FieldDecl *MaxField = 0;
   FieldDecl *MaxSkippedField = 0;
   FieldDecl *LastFieldBitfield = 0;
+  uint64_t MaxFieldOffset = 0;
+  uint64_t MaxSkippedFieldOffset = 0;
+  uint64_t LastBitfieldOffset = 0;
   
   if (RecFields.empty())
     return;
@@ -2955,14 +2958,14 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
+    unsigned FieldOffset = GetFieldBaseOffset(OI, Layout, Field);
 
     // Skip over unnamed or bitfields
     if (!Field->getIdentifier() || Field->isBitField()) {
       LastFieldBitfield = Field;
+      LastBitfieldOffset = FieldOffset;
       continue;
     }
-
-    unsigned FieldOffset = GetFieldBaseOffset(OI, Layout, Field);
 
     LastFieldBitfield = 0;
     QualType FQT = Field->getType();
@@ -3027,6 +3030,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
         if (UnionIvarSize > MaxUnionIvarSize) {
           MaxUnionIvarSize = UnionIvarSize;
           MaxField = Field;
+          MaxFieldOffset = FieldOffset;
         }
       } else {
         IvarsInfo.push_back(GC_IVAR(BytePos + FieldOffset,
@@ -3042,6 +3046,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
         if (UnionIvarSize > MaxSkippedUnionIvarSize) {
           MaxSkippedUnionIvarSize = UnionIvarSize;
           MaxSkippedField = Field;
+          MaxSkippedFieldOffset = FieldOffset;
         }
       } else {
         // FIXME: Why the asymmetry, we divide by byte size in bits here?
@@ -3057,20 +3062,17 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     uint64_t BitFieldSize =
       BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
     GC_IVAR skivar;
-    skivar.ivar_bytepos = BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                       LastFieldBitfield);
+    skivar.ivar_bytepos = BytePos + LastBitfieldOffset;
     skivar.ivar_size = (BitFieldSize / ByteSizeInBits) 
                          + ((BitFieldSize % ByteSizeInBits) != 0);
     SkipIvars.push_back(skivar);    
   }
   
   if (MaxField)
-    IvarsInfo.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                             MaxField), 
+    IvarsInfo.push_back(GC_IVAR(BytePos + MaxFieldOffset, 
                                 MaxUnionIvarSize));
   if (MaxSkippedField)
-    SkipIvars.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                             MaxSkippedField),
+    SkipIvars.push_back(GC_IVAR(BytePos + MaxSkippedFieldOffset,
                                 MaxSkippedUnionIvarSize));
 }
 
