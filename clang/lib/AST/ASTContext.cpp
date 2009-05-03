@@ -745,9 +745,10 @@ const ASTRecordLayout &
 ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
                           const ObjCImplementationDecl *Impl) {
   // Look up this layout, if already laid out, return what we have.
-  const ASTRecordLayout *&Entry = 
-    ObjCLayouts[Impl ? (ObjCContainerDecl*) Impl : (ObjCContainerDecl*) D];
-  if (Entry) return *Entry;
+  ObjCContainerDecl *Key = 
+    Impl ? (ObjCContainerDecl*) Impl : (ObjCContainerDecl*) D;
+  if (const ASTRecordLayout *Entry = ObjCLayouts[Key])
+    return *Entry;
 
   unsigned FieldCount = D->ivar_size();
   // Add in synthesized ivar count if laying out an implementation.
@@ -757,7 +758,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
       if ((*I)->getPropertyIvarDecl())
         ++FieldCount;
 
-    // If there aren't any sythesized ivar's then reuse the interface
+    // If there aren't any sythesized ivars then reuse the interface
     // entry. Note we can't cache this because we simply free all
     // entries later; however we shouldn't look up implementations
     // frequently.
@@ -765,23 +766,21 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
       return getObjCLayout(D, 0);
   }
 
-  // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
-  // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
   ASTRecordLayout *NewEntry = NULL;
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
     FieldCount++;
     const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
     unsigned Alignment = SL.getAlignment();
     uint64_t Size = SL.getSize();
-    NewEntry = new ASTRecordLayout(Size, Alignment);
+
+    ObjCLayouts[Key] = NewEntry = new ASTRecordLayout(Size, Alignment);
     NewEntry->InitializeLayout(FieldCount);
     // Super class is at the beginning of the layout.
     NewEntry->SetFieldOffset(0, 0);
   } else {
-    NewEntry = new ASTRecordLayout();
+    ObjCLayouts[Key] = NewEntry = new ASTRecordLayout();
     NewEntry->InitializeLayout(FieldCount);
   }
-  Entry = NewEntry;
 
   unsigned StructPacking = 0;
   if (const PackedAttr *PA = D->getAttr<PackedAttr>())
