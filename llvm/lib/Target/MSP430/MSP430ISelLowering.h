@@ -52,11 +52,11 @@ namespace llvm {
       /// is the block to branch if condition is true, operand 2 is the
       /// condition code, and operand 3 is the flag operand produced by a CMP
       /// instruction.
-      BRCOND,
+      BR_CC,
 
-      /// SELECT. Operand 0 and operand 1 are selection variable, operand 3 is
-      /// condition code and operand 4 is flag operand.
-      SELECT
+      /// SELECT_CC. Operand 0 and operand 1 are selection variable, operand 3
+      /// is condition code and operand 4 is flag operand.
+      SELECT_CC
     };
   }
 
@@ -74,8 +74,6 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
-    virtual MVT getSetCCResultType(MVT VT) const;
-
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
@@ -83,9 +81,8 @@ namespace llvm {
     SDValue LowerShifts(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,

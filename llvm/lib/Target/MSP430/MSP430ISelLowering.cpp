@@ -78,13 +78,15 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
   setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
   setOperationAction(ISD::BRIND,            MVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,            MVT::Other, Expand);
-  setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
-  setOperationAction(ISD::SETCC,            MVT::i8,    Custom);
-  setOperationAction(ISD::SETCC,            MVT::i16,   Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::Other, Expand);
-  setOperationAction(ISD::SELECT,           MVT::i8,    Custom);
-  setOperationAction(ISD::SELECT,           MVT::i16,   Custom);
+  setOperationAction(ISD::BR_CC,            MVT::i8,    Custom);
+  setOperationAction(ISD::BR_CC,            MVT::i16,   Custom);
+  setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
+  setOperationAction(ISD::SETCC,            MVT::i8,    Expand);
+  setOperationAction(ISD::SETCC,            MVT::i16,   Expand);
+  setOperationAction(ISD::SELECT,           MVT::i8,    Expand);
+  setOperationAction(ISD::SELECT,           MVT::i16,   Expand);
+  setOperationAction(ISD::SELECT_CC,        MVT::i8,    Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::i16,   Custom);
   setOperationAction(ISD::SIGN_EXTEND,      MVT::i16,   Custom);
 
   // FIXME: Implement efficiently multiplication by a constant
@@ -110,9 +112,8 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::CALL:             return LowerCALL(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   case ISD::ExternalSymbol:   return LowerExternalSymbol(Op, DAG);
-  case ISD::SETCC:            return LowerSETCC(Op, DAG);
-  case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
-  case ISD::SELECT:           return LowerSELECT(Op, DAG);
+  case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
+  case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND:      return LowerSIGN_EXTEND(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
@@ -490,23 +491,14 @@ SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
   return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
 }
 
-
-MVT MSP430TargetLowering::getSetCCResultType(MVT VT) const {
-  return MVT::i8;
-}
-
-SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
-  assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  DebugLoc dl = Op.getDebugLoc();
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-
+static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, unsigned &TargetCC,
+                       ISD::CondCode CC,
+                       DebugLoc dl, SelectionDAG &DAG) {
   // FIXME: Handle bittests someday
   assert(!LHS.getValueType().isFloatingPoint() && "We don't handle FP yet");
 
   // FIXME: Handle jump negative someday
-  unsigned TargetCC = 0;
+  TargetCC = MSP430::COND_INVALID;
   switch (CC) {
   default: assert(0 && "Invalid integer condition!");
   case ISD::SETEQ:
@@ -537,66 +529,46 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
     break;
   }
 
-  SDValue Cond = DAG.getNode(MSP430ISD::CMP, dl, MVT::i16, LHS, RHS);
-  return DAG.getNode(MSP430ISD::SETCC, dl, MVT::i8,
-                     DAG.getConstant(TargetCC, MVT::i8), Cond);
+  return DAG.getNode(MSP430ISD::CMP, dl, MVT::Flag, LHS, RHS);
 }
 
-SDValue MSP430TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
+
+SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = Op.getOperand(0);
-  SDValue Cond  = Op.getOperand(1);
-  SDValue Dest  = Op.getOperand(2);
-  DebugLoc dl = Op.getDebugLoc();
-  SDValue CC;
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+  SDValue LHS   = Op.getOperand(2);
+  SDValue RHS   = Op.getOperand(3);
+  SDValue Dest  = Op.getOperand(4);
+  DebugLoc dl   = Op.getDebugLoc();
 
-  // Lower condition if not lowered yet
-  if (Cond.getOpcode() == ISD::SETCC)
-    Cond = LowerSETCC(Cond, DAG);
+  unsigned TargetCC = MSP430::COND_INVALID;
+  SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
 
-  // If condition flag is set by a MSP430ISD::CMP, then use it as the condition
-  // setting operand in place of the MSP430ISD::SETCC.
-  if (Cond.getOpcode() == MSP430ISD::SETCC) {
-    CC = Cond.getOperand(0);
-    Cond = Cond.getOperand(1);
-  } else
-    assert(0 && "Unimplemented condition!");
-
-  return DAG.getNode(MSP430ISD::BRCOND, dl, Op.getValueType(),
-                     Chain, Dest, CC, Cond);
+  return DAG.getNode(MSP430ISD::BR_CC, dl, Op.getValueType(),
+                     Chain,
+                     Dest, DAG.getConstant(TargetCC, MVT::i8),
+                     Flag);
 }
 
-SDValue MSP430TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
-  SDValue Cond   = Op.getOperand(0);
-  SDValue TrueV  = Op.getOperand(1);
-  SDValue FalseV = Op.getOperand(2);
+SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
+  SDValue LHS    = Op.getOperand(0);
+  SDValue RHS    = Op.getOperand(1);
+  SDValue TrueV  = Op.getOperand(2);
+  SDValue FalseV = Op.getOperand(3);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   DebugLoc dl    = Op.getDebugLoc();
-  SDValue CC;
 
-  // Lower condition if not lowered yet
-  if (Cond.getOpcode() == ISD::SETCC)
-    Cond = LowerSETCC(Cond, DAG);
-
-  // If condition flag is set by a MSP430ISD::CMP, then use it as the condition
-  // setting operand in place of the MSP430ISD::SETCC.
-  if (Cond.getOpcode() == MSP430ISD::SETCC) {
-    CC = Cond.getOperand(0);
-    Cond = Cond.getOperand(1);
-    TrueV = Cond.getOperand(0);
-    FalseV = Cond.getOperand(1);
-  } else {
-    CC = DAG.getConstant(MSP430::COND_NE, MVT::i16);
-    Cond = DAG.getNode(MSP430ISD::CMP, dl, MVT::i16,
-                       Cond, DAG.getConstant(0, MVT::i16));
-  }
+  unsigned TargetCC = MSP430::COND_INVALID;
+  SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
   SmallVector<SDValue, 4> Ops;
   Ops.push_back(TrueV);
   Ops.push_back(FalseV);
-  Ops.push_back(CC);
-  Ops.push_back(Cond);
+  Ops.push_back(DAG.getConstant(TargetCC, MVT::i8));
+  Ops.push_back(Flag);
 
-  return DAG.getNode(MSP430ISD::SELECT, dl, VTs, &Ops[0], Ops.size());
+  return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, &Ops[0], Ops.size());
 }
 
 SDValue MSP430TargetLowering::LowerSIGN_EXTEND(SDValue Op,
@@ -621,10 +593,9 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::RRC:                return "MSP430ISD::RRC";
   case MSP430ISD::CALL:               return "MSP430ISD::CALL";
   case MSP430ISD::Wrapper:            return "MSP430ISD::Wrapper";
-  case MSP430ISD::BRCOND:             return "MSP430ISD::BRCOND";
+  case MSP430ISD::BR_CC:              return "MSP430ISD::BR_CC";
   case MSP430ISD::CMP:                return "MSP430ISD::CMP";
-  case MSP430ISD::SETCC:              return "MSP430ISD::SETCC";
-  case MSP430ISD::SELECT:             return "MSP430ISD::SELECT";
+  case MSP430ISD::SELECT_CC:          return "MSP430ISD::SELECT_CC";
   }
 }
 

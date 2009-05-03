@@ -26,13 +26,11 @@ def SDT_MSP430Call         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_MSP430CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>]>;
 def SDT_MSP430CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
 def SDT_MSP430Wrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
-def SDT_MSP430SetCC        : SDTypeProfile<1, 2, [SDTCisVT<0, i8>,
-                                                  SDTCisVT<1, i8>, SDTCisVT<2, i16>]>;
 def SDT_MSP430Cmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
-def SDT_MSP430BrCond       : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>,
-                                                  SDTCisVT<1, i8>, SDTCisVT<2, i16>]>;
-def SDT_MSP430Select       : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
-                                                  SDTCisVT<3, i8>, SDTCisVT<4, i16>]>;
+def SDT_MSP430BrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
+                                                  SDTCisVT<1, i8>]>;
+def SDT_MSP430SelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
+                                                  SDTCisVT<3, i8>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -53,10 +51,9 @@ def MSP430callseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_MSP430CallSeqEnd,
                         [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def MSP430Wrapper : SDNode<"MSP430ISD::Wrapper", SDT_MSP430Wrapper>;
-def MSP430setcc   : SDNode<"MSP430ISD::SETCC", SDT_MSP430SetCC>;
-def MSP430cmp     : SDNode<"MSP430ISD::CMP", SDT_MSP430Cmp>;
-def MSP430brcond  : SDNode<"MSP430ISD::BRCOND", SDT_MSP430BrCond, [SDNPHasChain]>;
-def MSP430select  : SDNode<"MSP430ISD::SELECT", SDT_MSP430Select>;
+def MSP430cmp     : SDNode<"MSP430ISD::CMP", SDT_MSP430Cmp, [SDNPOutFlag]>;
+def MSP430brcc    : SDNode<"MSP430ISD::BR_CC", SDT_MSP430BrCC, [SDNPHasChain, SDNPInFlag]>;
+def MSP430selectcc: SDNode<"MSP430ISD::SELECT_CC", SDT_MSP430SelectCC, [SDNPInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.
@@ -113,7 +110,7 @@ let usesCustomDAGSchedInserter = 1 in {
   def Select16 : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2, i8imm:$cc),
                         "# Select16 PSEUDO",
                         [(set GR16:$dst,
-                          (MSP430select GR16:$src1, GR16:$src2, imm:$cc, SRW))]>;
+                          (MSP430selectcc GR16:$src1, GR16:$src2, imm:$cc))]>;
 }
 
 let neverHasSideEffects = 1 in
@@ -140,7 +137,7 @@ let isBarrier = 1 in
 let Uses = [SRW] in
   def JCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
                             "j$cc $dst",
-                            [(MSP430brcond bb:$dst, imm:$cc, SRW)]>;
+                            [(MSP430brcc bb:$dst, imm:$cc)]>;
 } // isBranch, isTerminator
 
 //===----------------------------------------------------------------------===//
