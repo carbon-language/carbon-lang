@@ -60,3 +60,17 @@ def MOV16ri : Pseudo<(outs GR16:$dst), (ins i16imm:$src),
                      "mov.w\t{$src, $dst|$dst, $src}",
                      [(set GR16:$dst, imm:$src)]>;
 }
+
+//===----------------------------------------------------------------------===//
+// Arithmetic Instructions
+
+let Defs = [SR] in {
+let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
+
+// FIXME: Provide proper encoding!
+def ADD16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                     "add.w\t{$src2, $dst|$dst, $src2}",
+                     [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
+                      (implicit SR)]>;
+}
+}
