@@ -1066,7 +1066,8 @@ exception it throws) based strictly on its arguments, without dereferencing any
 pointer arguments or otherwise accessing any mutable state (e.g. memory, control
 registers, etc) visible to caller functions.  It does not write through any
 pointer arguments (including <tt><a href="#byval">byval</a></tt> arguments) and
-never changes any state visible to callers.</dd>
+never changes any state visible to callers.  readnone functions may not throw
+an exception that escapes into the caller.</dd>
 
 <dt><tt><a name="readonly">readonly</a></tt></dt>
 <dd>This attribute indicates that the function does not write through any
@@ -1075,7 +1076,8 @@ or otherwise modify any state (e.g. memory, control registers, etc) visible to
 caller functions.  It may dereference pointer arguments and read state that may
 be set in the caller.  A readonly function always returns the same value (or
 throws the same exception) when called with the same set of arguments and global
-state.</dd>
+state.  readonly functions may not throw an exception that escapes into the
+caller.</dd>
 
 <dt><tt><a name="ssp">ssp</a></tt></dt>
 <dd>This attribute indicates that the function should emit a stack smashing
