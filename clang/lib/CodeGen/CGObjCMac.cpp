@@ -126,12 +126,12 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   V = CGF.Builder.CreateBitCast(V, ptrIvarTy);
   
   if (Ivar->isBitField()) {
-    QualType FieldTy = Field->getType();
+    QualType IvarTy = Ivar->getType();
     CodeGenTypes::BitFieldInfo bitFieldInfo =
                                  CGF.CGM.getTypes().getBitFieldInfo(Field);
     return LValue::MakeBitfield(V, bitFieldInfo.Begin % 8, bitFieldInfo.Size,
-                                FieldTy->isSignedIntegerType(),
-                                FieldTy.getCVRQualifiers()|CVRQualifiers);
+                                IvarTy->isSignedIntegerType(),
+                                IvarTy.getCVRQualifiers()|CVRQualifiers);
   }
 
   LValue LV = LValue::MakeAddr(V, 
