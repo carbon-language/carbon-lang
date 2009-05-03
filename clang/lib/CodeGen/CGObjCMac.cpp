@@ -2907,6 +2907,22 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
   return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
 }
 
+static QualType::GCAttrTypes GetGCAttrTypeForType(QualType FQT) {
+  if (FQT.isObjCGCStrong())
+    return QualType::Strong;
+
+  if (FQT.isObjCGCWeak())
+    return QualType::Weak;
+
+  if (CGM.getContext().isObjCObjectPointerType(FQT))
+    return QualType::Strong;
+
+  if (const PointerType *PT = FQT->getAsPointerType())
+    return GetGCAttrTypeForType(PT->getPointeeType());
+
+  return QualType::GCNone;
+}
+
 void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                               const llvm::StructLayout *Layout,
                               const RecordDecl *RD,
@@ -2961,13 +2977,13 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     
     if (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
       const ConstantArrayType *CArray = 
-                                 dyn_cast_or_null<ConstantArrayType>(Array);
+        dyn_cast_or_null<ConstantArrayType>(Array);
       uint64_t ElCount = CArray->getSize().getZExtValue();
-      assert(CArray && "only array with know element size is supported");
+      assert(CArray && "only array with known element size is supported");
       FQT = CArray->getElementType();
       while (const ArrayType *Array = CGM.getContext().getAsArrayType(FQT)) {
         const ConstantArrayType *CArray =
-                                 dyn_cast_or_null<ConstantArrayType>(Array);
+          dyn_cast_or_null<ConstantArrayType>(Array);
         ElCount *= CArray->getSize().getZExtValue();
         FQT = CArray->getElementType();
       }
@@ -2981,12 +2997,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         // FIXME - Use a common routine with the above!
         const RecordType *RT = FQT->getAsRecordType();
         const RecordDecl *RD = RT->getDecl();
-        // FIXME - Find a more efficiant way of passing records down.
+        // FIXME - Find a more efficient way of passing records down.
         TmpRecFields.append(RD->field_begin(CGM.getContext()),
                             RD->field_end(CGM.getContext()));
         const llvm::Type *Ty = CGM.getTypes().ConvertType(FQT);
         const llvm::StructLayout *RecLayout = 
-        CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
+          CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
         
         BuildAggrIvarLayout(0, RecLayout, RD,
                             TmpRecFields,
@@ -3012,21 +3028,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     }
     // At this point, we are done with Record/Union and array there of.
     // For other arrays we are down to its element type.
-    QualType::GCAttrTypes GCAttr = QualType::GCNone;
-    do {
-      if (FQT.isObjCGCStrong() || FQT.isObjCGCWeak()) {
-        GCAttr = FQT.isObjCGCStrong() ? QualType::Strong : QualType::Weak;
-        break;
-      } else if (CGM.getContext().isObjCObjectPointerType(FQT)) {
-        GCAttr = QualType::Strong;
-        break;
-      } else if (const PointerType *PT = FQT->getAsPointerType()) {
-        FQT = PT->getPointeeType();
-      } else {
-        break;
-      }
-    } while (true);
-    
+    QualType::GCAttrTypes GCAttr = GetGCAttrTypeForType(FQT):
+
     unsigned FieldSize = CGM.getContext().getTypeSize(Field->getType());
     if ((ForStrongLayout && GCAttr == QualType::Strong)
         || (!ForStrongLayout && GCAttr == QualType::Weak)) {
