@@ -69,11 +69,22 @@ unsigned char t12(unsigned input) {
   return output;
 }
 
+unsigned char t13(unsigned input) {
+  unsigned char output;
+  __asm__("xyz %1"
+          : "=a" (output)
+          : "0" (input));
+  return output;
+}
 
+
+// bitfield destination of an asm.
 struct S {
   int a : 4;
 };
 
-void test13(struct S *P) {
+void t14(struct S *P) {
   __asm__("abc %0" : "=r"(P->a) );
 }
+
+

@@ -1052,26 +1052,42 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       // They are ok if they are the same size.  Tying void* to int is ok if
       // they are the same size, for example.  This also allows tying void* to
       // int*.
-      if (Context.getTypeSize(OutTy) == Context.getTypeSize(InTy))
+      uint64_t OutSize = Context.getTypeSize(OutTy);
+      uint64_t InSize = Context.getTypeSize(InTy);
+      if (OutSize == InSize)
         continue;
       
-      // If the input and output operands are not mentioned in the asm string,
-      // then we can promote them and the asm string won't notice.  Check this
+      // If the smaller input/output operand is not mentioned in the asm string,
+      // then we can promote it and the asm string won't notice.  Check this
       // case now.
-      bool MentionedInput = false;
-      bool MentionedOutput = false;
+      bool SmallerValueMentioned = false;
       for (unsigned p = 0, e = Pieces.size(); p != e; ++p) {
         AsmStmt::AsmStringPiece &Piece = Pieces[p];
         if (!Piece.isOperand()) continue;
-        MentionedInput |= Piece.getOperandNo() == i+NumOutputs;
-        MentionedOutput |= Piece.getOperandNo() == TiedTo;
+        
+        // If this is a reference to the input and if the input was the smaller
+        // one, then we have to reject this asm.
+        if (Piece.getOperandNo() == i+NumOutputs) {
+          if (InSize < OutSize) {
+            SmallerValueMentioned = true;
+            break;
+          }
+        }
+
+        // If this is a reference to the input and if the input was the smaller
+        // one, then we have to reject this asm.
+        if (Piece.getOperandNo() == TiedTo) {
+          if (InSize > OutSize) {
+            SmallerValueMentioned = true;
+            break;
+          }
+        }
       }
       
-      // If neither the input nor the output was mentioned in the asm string,
-      // and if the output was a register, just extend the shorter one to the
-      // size of the larger one.
-      // TODO: if only the larger one is mentioned, we could also support this.
-      if (!MentionedInput && !MentionedOutput &&
+      // If the smaller value wasn't mentioned in the asm string, and if the
+      // output was a register, just extend the shorter one to the size of the
+      // larger one.
+      if (!SmallerValueMentioned &&
           OutputConstraintInfos[TiedTo].allowsRegister())
         continue;
     }
