@@ -69,8 +69,7 @@ FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM) {
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void MSP430DAGToDAGISel::
-InstructionSelect() {
+void MSP430DAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
