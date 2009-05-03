@@ -940,12 +940,11 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                        << Info.getConstraintStr());
 
     // Check that the output exprs are valid lvalues.
-    // FIXME: Operands to asms should not be parsed as ParenExprs.
-    ParenExpr *OutputExpr = cast<ParenExpr>(Exprs[i]);
+    Expr *OutputExpr = Exprs[i];
     if (CheckAsmLValue(OutputExpr, *this)) {
-      return StmtError(Diag(OutputExpr->getSubExpr()->getLocStart(),
+      return StmtError(Diag(OutputExpr->getLocStart(),
                   diag::err_asm_invalid_lvalue_in_output)
-        << OutputExpr->getSubExpr()->getSourceRange());
+        << OutputExpr->getSourceRange());
     }
     
     OutputConstraintInfos.push_back(Info);
@@ -969,23 +968,23 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                        << Info.getConstraintStr());
     }
 
-    ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i]);
+    Expr *InputExpr = Exprs[i];
 
     // Only allow void types for memory constraints.
     if (Info.allowsMemory() && !Info.allowsRegister()) {
       if (CheckAsmLValue(InputExpr, *this))
-        return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
+        return StmtError(Diag(InputExpr->getLocStart(),
                               diag::err_asm_invalid_lvalue_in_input)
                          << Info.getConstraintStr()
-                         << InputExpr->getSubExpr()->getSourceRange());
+                         << InputExpr->getSourceRange());
     }
 
     if (Info.allowsRegister()) {
       if (InputExpr->getType()->isVoidType()) {
-        return StmtError(Diag(InputExpr->getSubExpr()->getLocStart(),
+        return StmtError(Diag(InputExpr->getLocStart(),
                               diag::err_asm_invalid_type_in_input)
           << InputExpr->getType() << Info.getConstraintStr() 
-          << InputExpr->getSubExpr()->getSourceRange());
+          << InputExpr->getSourceRange());
       }
     }
     

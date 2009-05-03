@@ -1272,7 +1272,9 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
     }
 
     // Read the parenthesized expression.
-    OwningExprResult Res(ParseSimpleParenExpression());
+    SourceLocation OpenLoc = ConsumeParen();
+    OwningExprResult Res(ParseExpression());
+    MatchRHSPunctuation(tok::r_paren, OpenLoc);
     if (Res.isInvalid()) {
       SkipUntil(tok::r_paren);
       return true;
