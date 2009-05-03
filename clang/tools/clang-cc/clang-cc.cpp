@@ -60,12 +60,12 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 #include <cstdlib>
-#if HAVE_UNISTD_H
-#  include <unistd.h>
-#  include <sys/ioctl.h>
+#if HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#  include <sys/ioctl.h>
 #endif
 
 using namespace clang;
@@ -1876,11 +1876,18 @@ InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 /// \returns the width of the terminal (in characters), if there is a
 /// terminal. If there is no terminal, returns 0.
 static unsigned getTerminalWidth() {
-#if HAVE_UNISTD_H
+  // If COLUMNS is defined in the environment, wrap to that many columns.
+  if (const char *ColumnsStr = std::getenv("COLUMNS")) {
+    int Columns = atoi(ColumnsStr);
+    if (Columns > 0)
+      return Columns;
+  }
+
   // Is this a terminal? If not, don't wrap by default.
-  if (!isatty(/* Standard Error=*/2))
+  if (!llvm::sys::Process::StandardErrIsDisplayed())
     return 0;
 
+#if HAVE_SYS_TYPES_H
   // Try to determine the width of the terminal.
   struct winsize ws;
   unsigned Columns = 80; // A guess, in case the ioctl fails.

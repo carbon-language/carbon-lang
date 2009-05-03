@@ -570,7 +570,8 @@ static bool PrintWordWrapped(llvm::raw_ostream &OS,
 
     // This word does not fit on the current line, so wrap to the next
     // line.
-    OS << '\n' << IndentStr.begin();
+    OS << '\n';
+    OS.write(&IndentStr[0], Indentation);
     OS.write(&Str[WordStart], WordLength);
     Column = Indentation + WordLength;
     Wrapped = true;
