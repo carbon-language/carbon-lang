@@ -127,19 +127,33 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-      O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
-    else
-      assert(0 && "not implemented");
-    break;
+    assert (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+            "Virtual registers should be already mapped!");
+    O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
+    return;
   case MachineOperand::MO_Immediate:
     if (!Modifier || strcmp(Modifier, "nohash"))
       O << '#';
     O << MO.getImm();
-    break;
+    return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMBB());
-    break;
+    return;
+  case MachineOperand::MO_GlobalAddress: {
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    std::string Name = Mang->getValueName(MO.getGlobal());
+    assert(MO.getOffset() == 0 && "No offsets allowed!");
+
+    if (isCallOp)
+      O << '#';
+    else if (isMemOp)
+      O << '&';
+
+    O << Name;
+
+    return;
+  }
   default:
     assert(0 && "Not implemented yet!");
   }

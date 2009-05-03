@@ -106,10 +106,12 @@ let isCall = 1 in
   // registers are added manually.
   let Defs = [R12W, R13W, R14W, R15W, SRW],
       Uses = [SPW] in {
-    def CALL32r     : Pseudo<(outs), (ins GR16:$dst, variable_ops),
-                        "call\t{*}$dst", [(MSP430call GR16:$dst)]>;
-    def CALL32m     : Pseudo<(outs), (ins memsrc:$dst, variable_ops),
-                        "call\t{*}$dst", [(MSP430call (load addr:$dst))]>;
+    def CALLi     : Pseudo<(outs), (ins i16imm:$dst, variable_ops),
+                           "call\t${dst:call}", [(MSP430call imm:$dst)]>;
+    def CALLr     : Pseudo<(outs), (ins GR16:$dst, variable_ops),
+                           "call\t$dst", [(MSP430call GR16:$dst)]>;
+    def CALLm     : Pseudo<(outs), (ins memsrc:$dst, variable_ops),
+                           "call\t${dst:mem}", [(MSP430call (load addr:$dst))]>;
   }
 
 
@@ -608,3 +610,9 @@ def : Pat<(extloadi16i8 addr:$src), (MOVZX16rm8 addr:$src)>;
 // truncs
 def : Pat<(i8 (trunc GR16:$src)),
           (EXTRACT_SUBREG GR16:$src, subreg_8bit)>;
+
+// calls
+def : Pat<(MSP430call (i16 tglobaladdr:$dst)),
+          (CALLi tglobaladdr:$dst)>;
+def : Pat<(MSP430call (i16 texternalsym:$dst)),
+          (CALLi texternalsym:$dst)>;
