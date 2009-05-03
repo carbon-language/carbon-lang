@@ -69,6 +69,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
 
   setOperationAction(ISD::SRA,              MVT::i16,   Custom);
   setOperationAction(ISD::SHL,              MVT::i16,   Custom);
+  setOperationAction(ISD::SRL,              MVT::i16,   Custom);
   setOperationAction(ISD::RET,              MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
   setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
@@ -94,6 +95,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::SHL: // FALLTHROUGH
+  case ISD::SRL:
   case ISD::SRA:              return LowerShifts(Op, DAG);
   case ISD::RET:              return LowerRET(Op, DAG);
   case ISD::CALL:             return LowerCALL(Op, DAG);
@@ -430,8 +432,6 @@ MSP430TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
                                           SelectionDAG &DAG) {
   unsigned Opc = Op.getOpcode();
-  assert((Opc == ISD::SRA || ISD::SHL) &&
-         "Only SRA and SHL are currently supported.");
   SDNode* N = Op.getNode();
   MVT VT = Op.getValueType();
   DebugLoc dl = N->getDebugLoc();
@@ -446,6 +446,15 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   // FIXME: for some shift amounts this might be done better!
   // E.g.: foo >> (8 + N) => sxt(swpb(foo)) >> N
   SDValue Victim = N->getOperand(0);
+
+  if (Opc == ISD::SRL && ShiftAmount) {
+    // Emit a special goodness here:
+    // srl A, 1 => clrc; rrc A
+    SDValue clrc = DAG.getNode(MSP430ISD::CLRC, dl, MVT::Other);
+    Victim = DAG.getNode(MSP430ISD::RRC, dl, VT, Victim, clrc);
+    ShiftAmount -= 1;
+  }
+
   while (ShiftAmount--)
     Victim = DAG.getNode((Opc == ISD::SRA ? MSP430ISD::RRA : MSP430ISD::RLA),
                          dl, VT, Victim);
@@ -586,13 +595,15 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   default: return NULL;
   case MSP430ISD::RET_FLAG:           return "MSP430ISD::RET_FLAG";
   case MSP430ISD::RRA:                return "MSP430ISD::RRA";
-  case MSP430ISD::RLA:                return "MSP430ISD::RRA";
+  case MSP430ISD::RLA:                return "MSP430ISD::RLA";
+  case MSP430ISD::RRC:                return "MSP430ISD::RRC";
   case MSP430ISD::CALL:               return "MSP430ISD::CALL";
   case MSP430ISD::Wrapper:            return "MSP430ISD::Wrapper";
   case MSP430ISD::BRCOND:             return "MSP430ISD::BRCOND";
   case MSP430ISD::CMP:                return "MSP430ISD::CMP";
   case MSP430ISD::SETCC:              return "MSP430ISD::SETCC";
   case MSP430ISD::SELECT:             return "MSP430ISD::SELECT";
+  case MSP430ISD::CLRC:               return "MSP430ISD::CLRC";
   }
 }
 

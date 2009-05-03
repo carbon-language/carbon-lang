@@ -30,6 +30,9 @@ namespace llvm {
       /// Y = R{R,L}A X, rotate right (left) arithmetically
       RRA, RLA,
 
+      /// Y = RRC X, rotate right via carry
+      RRC,
+
       /// CALL/TAILCALL - These operations represent an abstract call
       /// instruction, which includes a bunch of information.
       CALL,
@@ -53,7 +56,10 @@ namespace llvm {
 
       /// SELECT. Operand 0 and operand 1 are selection variable, operand 3 is
       /// condition code and operand 4 is flag operand.
-      SELECT
+      SELECT,
+
+      /// CLRC - Clear carry bit
+      CLRC
     };
   }
 
