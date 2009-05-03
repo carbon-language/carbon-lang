@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t -arch=i386 &&
+c// RUN: clang-cc -emit-llvm %s -o %t -arch=i386 &&
 void t1(int len) {
   __asm__ volatile("" : "=&r"(len), "+&r"(len));
 }
@@ -49,3 +49,13 @@ unsigned t9(unsigned int a) {
 void t10(int r) {
   __asm__("PR3908 %[lf] %[xx] %[li] %[r]" : [r] "+r" (r) : [lf] "mx" (0), [li] "mr" (0), [xx] "x" ((double)(0)));
 }         
+
+
+// PR3373
+unsigned t11(signed char input) {
+  unsigned  output;
+  __asm__("xyz"
+          : "=a" (output)
+          : "0" (input));
+  return output;
+}

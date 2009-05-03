@@ -877,6 +877,28 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, Constraints);
     
+    // If this input argument is tied to a larger output result, extend the
+    // input to be the same size as the output.  The LLVM backend wants to see
+    // the input and output of a matching constraint be the same size.  Note
+    // that GCC does not define what the top bits are here.  We use zext because
+    // that is usually cheaper, but LLVM IR should really get an anyext someday.
+    if (Info.hasTiedOperand()) {
+      unsigned Output = Info.getTiedOperand();
+      QualType OutputTy = S.getOutputExpr(Output)->getType();
+      QualType InputTy = InputExpr->getType();
+      
+      if (getContext().getTypeSize(OutputTy) >
+          getContext().getTypeSize(InputTy)) {
+        // Use ptrtoint as appropriate so that we can do our extension.
+        if (isa<llvm::PointerType>(Arg->getType()))
+          Arg = Builder.CreatePtrToInt(Arg,
+                                      llvm::IntegerType::get(LLVMPointerWidth));
+        unsigned OutputSize = (unsigned)getContext().getTypeSize(OutputTy);
+        Arg = Builder.CreateZExt(Arg, llvm::IntegerType::get(OutputSize));
+      }
+    }
+    
+    
     ArgTypes.push_back(Arg->getType());
     Args.push_back(Arg);
     Constraints += InputConstraint;
