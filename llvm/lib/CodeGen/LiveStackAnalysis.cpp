@@ -32,7 +32,8 @@ void LiveStacks::getAnalysisUsage(AnalysisUsage &AU) const {
 void LiveStacks::releaseMemory() {
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
   VNInfoAllocator.Reset();
-  s2iMap.clear();
+  S2IMap.clear();
+  S2RCMap.clear();
 }
 
 bool LiveStacks::runOnMachineFunction(MachineFunction &) {
@@ -42,10 +43,15 @@ bool LiveStacks::runOnMachineFunction(MachineFunction &) {
 }
 
 /// print - Implement the dump method.
-void LiveStacks::print(std::ostream &O, const Module* ) const {
+void LiveStacks::print(std::ostream &O, const Module*) const {
   O << "********** INTERVALS **********\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     I->second.print(O);
-    O << "\n";
+    int Slot = I->first;
+    const TargetRegisterClass *RC = getIntervalRegClass(Slot);
+    if (RC)
+      O << " [" << RC->getName() << "]\n";
+    else
+      O << " [Unknown]\n";
   }
 }

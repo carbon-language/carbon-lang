@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -27,6 +28,7 @@
 #include <map>
 
 namespace llvm {
+  class LiveIntervals;
   class MachineInstr;
   class MachineFunction;
   class TargetInstrInfo;
@@ -121,6 +123,9 @@ namespace llvm {
     /// ImplicitDefed - One bit for each virtual register. If set it indicates
     /// the register is implicitly defined.
     BitVector ImplicitDefed;
+
+    /// UnusedRegs - A list of physical registers that have not been used.
+    BitVector UnusedRegs;
 
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
@@ -277,8 +282,10 @@ namespace llvm {
 
     /// @brief records the specified MachineInstr as a spill point for virtReg.
     void addSpillPoint(unsigned virtReg, bool isKill, MachineInstr *Pt) {
-      if (SpillPt2VirtMap.find(Pt) != SpillPt2VirtMap.end())
-        SpillPt2VirtMap[Pt].push_back(std::make_pair(virtReg, isKill));
+      std::map<MachineInstr*, std::vector<std::pair<unsigned,bool> > >::iterator
+        I = SpillPt2VirtMap.find(Pt);
+      if (I != SpillPt2VirtMap.end())
+        I->second.push_back(std::make_pair(virtReg, isKill));
       else {
         std::vector<std::pair<unsigned,bool> > Virts;
         Virts.push_back(std::make_pair(virtReg, isKill));
@@ -289,7 +296,7 @@ namespace llvm {
     /// @brief - transfer spill point information from one instruction to
     /// another.
     void transferSpillPts(MachineInstr *Old, MachineInstr *New) {
-      std::map<MachineInstr*,std::vector<std::pair<unsigned,bool> > >::iterator
+      std::map<MachineInstr*, std::vector<std::pair<unsigned,bool> > >::iterator
         I = SpillPt2VirtMap.find(Old);
       if (I == SpillPt2VirtMap.end())
         return;
@@ -315,8 +322,10 @@ namespace llvm {
 
     /// @brief records the specified MachineInstr as a restore point for virtReg.
     void addRestorePoint(unsigned virtReg, MachineInstr *Pt) {
-      if (RestorePt2VirtMap.find(Pt) != RestorePt2VirtMap.end())
-        RestorePt2VirtMap[Pt].push_back(virtReg);
+      std::map<MachineInstr*, std::vector<unsigned> >::iterator I =
+        RestorePt2VirtMap.find(Pt);
+      if (I != RestorePt2VirtMap.end())
+        I->second.push_back(virtReg);
       else {
         std::vector<unsigned> Virts;
         Virts.push_back(virtReg);
@@ -327,7 +336,7 @@ namespace llvm {
     /// @brief - transfer restore point information from one instruction to
     /// another.
     void transferRestorePts(MachineInstr *Old, MachineInstr *New) {
-      std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
+      std::map<MachineInstr*, std::vector<unsigned> >::iterator I =
         RestorePt2VirtMap.find(Old);
       if (I == RestorePt2VirtMap.end())
         return;
@@ -429,6 +438,40 @@ namespace llvm {
     /// RemoveMachineInstrFromMaps - MI is being erased, remove it from the
     /// the folded instruction map and spill point map.
     void RemoveMachineInstrFromMaps(MachineInstr *MI);
+
+    /// FindUnusedRegisters - Gather a list of allocatable registers that
+    /// have not been allocated to any virtual register.
+    bool FindUnusedRegisters(const TargetRegisterInfo *TRI,
+                             LiveIntervals* LIs);
+
+    /// HasUnusedRegisters - Return true if there are any allocatable registers
+    /// that have not been allocated to any virtual register.
+    bool HasUnusedRegisters() const {
+      return !UnusedRegs.none();
+    }
+
+    /// setRegisterUsed - Remember the physical register is now used.
+    void setRegisterUsed(unsigned Reg) {
+      UnusedRegs.reset(Reg);
+    }
+
+    /// isRegisterUnused - Return true if the physical register has not been
+    /// used.
+    bool isRegisterUnused(unsigned Reg) const {
+      return UnusedRegs[Reg];
+    }
+
+    /// getFirstUnusedRegister - Return the first physical register that has not
+    /// been used.
+    unsigned getFirstUnusedRegister(const TargetRegisterClass *RC) {
+      int Reg = UnusedRegs.find_first();
+      while (Reg != -1) {
+        if (RC->contains(Reg))
+          return (unsigned)Reg;
+        Reg = UnusedRegs.find_next(Reg);
+      }
+      return 0;
+    }
 
     void print(std::ostream &OS, const Module* M = 0) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }

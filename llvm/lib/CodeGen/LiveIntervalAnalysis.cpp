@@ -1229,9 +1229,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
                  const MachineLoopInfo *loopInfo,
                  unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
                  DenseMap<unsigned,unsigned> &MBBVRegsMap,
-                 std::vector<LiveInterval*> &NewLIs, float &SSWeight) {
-  MachineBasicBlock *MBB = MI->getParent();
-  unsigned loopDepth = loopInfo->getLoopDepth(MBB);
+                 std::vector<LiveInterval*> &NewLIs) {
   bool CanFold = false;
  RestartInstruction:
   for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
@@ -1312,11 +1310,6 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       // the INSERT_SUBREG and both target registers that would overlap.
       HasUse = false;
 
-    // Update stack slot spill weight if we are splitting.
-    float Weight = getSpillWeight(HasDef, HasUse, loopDepth);
-    if (!TrySplit)
-      SSWeight += Weight;
-
     // Create a new virtual register for the spill interval.
     // Create the new register now so we can map the fold instruction
     // to the new register so when it is unfolded we get the correct
@@ -1348,10 +1341,8 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
           HasUse = false;
           HasDef = false;
           CanFold = false;
-          if (isNotInMIMap(MI)) {
-            SSWeight -= Weight;
+          if (isNotInMIMap(MI))
             break;
-          }
           goto RestartInstruction;
         }
       } else {
@@ -1486,7 +1477,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     BitVector &RestoreMBBs,
                     DenseMap<unsigned, std::vector<SRInfo> > &RestoreIdxes,
                     DenseMap<unsigned,unsigned> &MBBVRegsMap,
-                    std::vector<LiveInterval*> &NewLIs, float &SSWeight) {
+                    std::vector<LiveInterval*> &NewLIs) {
   bool AllCanFold = true;
   unsigned NewVReg = 0;
   unsigned start = getBaseIndex(I->start);
@@ -1588,7 +1579,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                          index, end, MI, ReMatOrigDefMI, ReMatDefMI,
                          Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                          CanDelete, vrm, rc, ReMatIds, loopInfo, NewVReg,
-                         ImpUse, HasDef, HasUse, MBBVRegsMap, NewLIs, SSWeight);
+                         ImpUse, HasDef, HasUse, MBBVRegsMap, NewLIs);
     if (!HasDef && !HasUse)
       continue;
 
@@ -1747,7 +1738,7 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpillsFast(const LiveInterval &li,
                           const MachineLoopInfo *loopInfo,
-                          VirtRegMap &vrm, float& SSWeight) {
+                          VirtRegMap &vrm) {
   unsigned slot = vrm.assignVirt2StackSlot(li.reg);
 
   std::vector<LiveInterval*> added;
@@ -1760,8 +1751,6 @@ addIntervalsForSpillsFast(const LiveInterval &li,
   DOUT << '\n';
 
   const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
-
-  SSWeight = 0.0f;
 
   MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg);
   while (RI != mri_->reg_end()) {
@@ -1825,15 +1814,6 @@ addIntervalsForSpillsFast(const LiveInterval &li,
       DOUT << "\t\t\t\tadded new interval: ";
       DEBUG(nI.dump());
       DOUT << '\n';
-      
-      unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
-      if (HasUse) {
-        if (HasDef)
-          SSWeight += getSpillWeight(true, true, loopDepth);
-        else
-          SSWeight += getSpillWeight(false, true, loopDepth);
-      } else
-        SSWeight += getSpillWeight(true, false, loopDepth);
     }
     
     
@@ -1846,11 +1826,10 @@ addIntervalsForSpillsFast(const LiveInterval &li,
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
                       SmallVectorImpl<LiveInterval*> &SpillIs,
-                      const MachineLoopInfo *loopInfo, VirtRegMap &vrm,
-                      float &SSWeight) {
+                      const MachineLoopInfo *loopInfo, VirtRegMap &vrm) {
   
   if (EnableFastSpilling)
-    return addIntervalsForSpillsFast(li, loopInfo, vrm, SSWeight);
+    return addIntervalsForSpillsFast(li, loopInfo, vrm);
   
   assert(li.weight != HUGE_VALF &&
          "attempt to spill already spilled interval!");
@@ -1858,9 +1837,6 @@ addIntervalsForSpills(const LiveInterval &li,
   DOUT << "\t\t\t\tadding intervals for spills for interval: ";
   li.print(DOUT, tri_);
   DOUT << '\n';
-
-  // Spill slot weight.
-  SSWeight = 0.0f;
 
   // Each bit specify whether a spill is required in the MBB.
   BitVector SpillMBBs(mf_->getNumBlockIDs());
@@ -1916,18 +1892,17 @@ addIntervalsForSpills(const LiveInterval &li,
                              Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                              false, vrm, rc, ReMatIds, loopInfo,
                              SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
-                             MBBVRegsMap, NewLIs, SSWeight);
+                             MBBVRegsMap, NewLIs);
       } else {
         rewriteInstructionsForSpills(li, false, I, NULL, 0,
                              Slot, 0, false, false, false,
                              false, vrm, rc, ReMatIds, loopInfo,
                              SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
-                             MBBVRegsMap, NewLIs, SSWeight);
+                             MBBVRegsMap, NewLIs);
       }
       IsFirstRange = false;
     }
 
-    SSWeight = 0.0f;  // Already accounted for when split.
     handleSpilledImpDefs(li, vrm, rc, NewLIs);
     return NewLIs;
   }
@@ -2001,7 +1976,7 @@ addIntervalsForSpills(const LiveInterval &li,
                                Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                                CanDelete, vrm, rc, ReMatIds, loopInfo,
                                SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
-                               MBBVRegsMap, NewLIs, SSWeight);
+                               MBBVRegsMap, NewLIs);
   }
 
   // Insert spills / restores if we are splitting.
@@ -2015,8 +1990,6 @@ addIntervalsForSpills(const LiveInterval &li,
   if (NeedStackSlot) {
     int Id = SpillMBBs.find_first();
     while (Id != -1) {
-      MachineBasicBlock *MBB = mf_->getBlockNumbered(Id);
-      unsigned loopDepth = loopInfo->getLoopDepth(MBB);
       std::vector<SRInfo> &spills = SpillIdxes[Id];
       for (unsigned i = 0, e = spills.size(); i != e; ++i) {
         int index = spills[i].index;
@@ -2073,10 +2046,6 @@ addIntervalsForSpills(const LiveInterval &li,
           if (isKill)
             AddedKill.insert(&nI);
         }
-
-        // Update spill slot weight.
-        if (!isReMat)
-          SSWeight += getSpillWeight(true, false, loopDepth);
       }
       Id = SpillMBBs.find_next(Id);
     }
@@ -2084,9 +2053,6 @@ addIntervalsForSpills(const LiveInterval &li,
 
   int Id = RestoreMBBs.find_first();
   while (Id != -1) {
-    MachineBasicBlock *MBB = mf_->getBlockNumbered(Id);
-    unsigned loopDepth = loopInfo->getLoopDepth(MBB);
-
     std::vector<SRInfo> &restores = RestoreIdxes[Id];
     for (unsigned i = 0, e = restores.size(); i != e; ++i) {
       int index = restores[i].index;
@@ -2148,10 +2114,6 @@ addIntervalsForSpills(const LiveInterval &li,
         nI.removeRange(getLoadIndex(index), getUseIndex(index)+1);
       else
         vrm.addRestorePoint(VReg, MI);
-
-      // Update spill slot weight.
-      if (!isReMat)
-        SSWeight += getSpillWeight(false, true, loopDepth);
     }
     Id = RestoreMBBs.find_next(Id);
   }

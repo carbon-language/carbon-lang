@@ -165,7 +165,7 @@ namespace {
 
     //! \brief Adds a stack interval if the given live interval has been
     //! spilled. Used to support stack slot coloring.
-    void addStackInterval(const LiveInterval *spilled, float &weight);
+    void addStackInterval(const LiveInterval *spilled,MachineRegisterInfo* mri);
 
     //! \brief Given a solved PBQP problem maps this solution back to a register
     //! assignment.
@@ -637,14 +637,15 @@ pbqp* PBQPRegAlloc::constructPBQPProblem() {
   return solver;
 }
 
-void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled, float &weight) {
+void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled,
+                                    MachineRegisterInfo* mri) {
   int stackSlot = vrm->getStackSlot(spilled->reg);
 
   if (stackSlot == VirtRegMap::NO_STACK_SLOT)
     return;
 
-  LiveInterval &stackInterval = lss->getOrCreateInterval(stackSlot);
-  stackInterval.weight += weight;
+  const TargetRegisterClass *RC = mri->getRegClass(spilled->reg);
+  LiveInterval &stackInterval = lss->getOrCreateInterval(stackSlot, RC);
 
   VNInfo *vni;
   if (stackInterval.getNumValNums() != 0)
@@ -688,16 +689,13 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(pbqp *problem) {
       // of allocation
       vregIntervalsToAlloc.erase(&lis->getInterval(virtReg));
 
-      float ssWeight;
-
       // Insert spill ranges for this live range
       const LiveInterval *spillInterval = node2LI[node];
       double oldSpillWeight = spillInterval->weight;
       SmallVector<LiveInterval*, 8> spillIs;
       std::vector<LiveInterval*> newSpills =
-        lis->addIntervalsForSpills(*spillInterval, spillIs, loopInfo, *vrm,
-                                   ssWeight);
-      addStackInterval(spillInterval, ssWeight);
+        lis->addIntervalsForSpills(*spillInterval, spillIs, loopInfo, *vrm);
+      addStackInterval(spillInterval, mri);
 
       DOUT << "VREG " << virtReg << " -> SPILLED (Cost: "
            << oldSpillWeight << ", New vregs: ";

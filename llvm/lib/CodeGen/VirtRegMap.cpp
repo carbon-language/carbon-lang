@@ -19,6 +19,7 @@
 #define DEBUG_TYPE "virtregmap"
 #include "VirtRegMap.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -199,6 +200,41 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
   SpillPt2VirtMap.erase(MI);
   RestorePt2VirtMap.erase(MI);
   EmergencySpillMap.erase(MI);
+}
+
+/// FindUnusedRegisters - Gather a list of allocatable registers that
+/// have not been allocated to any virtual register.
+bool VirtRegMap::FindUnusedRegisters(const TargetRegisterInfo *TRI,
+                                     LiveIntervals* LIs) {
+  unsigned NumRegs = TRI->getNumRegs();
+  UnusedRegs.reset();
+  UnusedRegs.resize(NumRegs);
+
+  BitVector Used(NumRegs);
+  for (unsigned i = TargetRegisterInfo::FirstVirtualRegister,
+         e = MF->getRegInfo().getLastVirtReg(); i <= e; ++i)
+    if (Virt2PhysMap[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
+      Used.set(Virt2PhysMap[i]);
+
+  BitVector Allocatable = TRI->getAllocatableSet(*MF);
+  bool AnyUnused = false;
+  for (unsigned Reg = 1; Reg < NumRegs; ++Reg) {
+    if (Allocatable[Reg] && !Used[Reg] && !LIs->hasInterval(Reg)) {
+      bool ReallyUnused = true;
+      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+        if (Used[*AS] || LIs->hasInterval(*AS)) {
+          ReallyUnused = false;
+          break;
+        }
+      }
+      if (ReallyUnused) {
+        AnyUnused = true;
+        UnusedRegs.set(Reg);
+      }
+    }
+  }
+
+  return AnyUnused;
 }
 
 void VirtRegMap::print(std::ostream &OS, const Module* M) const {

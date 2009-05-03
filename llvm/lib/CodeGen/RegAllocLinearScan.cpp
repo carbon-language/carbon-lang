@@ -216,6 +216,18 @@ namespace {
     }
 
     void finalizeRegUses() {
+#ifndef NDEBUG
+      // Verify all the registers are "freed".
+      bool Error = false;
+      for (unsigned i = 0, e = tri_->getNumRegs(); i != e; ++i) {
+        if (regUse_[i] != 0) {
+          cerr << tri_->getName(i) << " is still in use!\n";
+          Error = true;
+        }
+      }
+      if (Error)
+        abort();
+#endif
       regUse_.clear();
       regUseBackUp_.clear();
     }
@@ -514,6 +526,13 @@ void RALinScan::linearScan()
   }
 
   DOUT << *vrm_;
+
+  // Look for physical registers that end up not being allocated even though
+  // register allocator had to spill other registers in its register class.
+  if (ls_->getNumIntervals() == 0)
+    return;
+  if (!vrm_->FindUnusedRegisters(tri_, li_))
+    return;
 }
 
 /// processActiveIntervals - expire old intervals and move non-overlapping ones
@@ -630,9 +649,9 @@ void RALinScan::updateSpillWeights(std::vector<float> &Weights,
   //      bl should get the same spill weight otherwise it will be choosen
   //      as a spill candidate since spilling bh doesn't make ebx available.
   for (unsigned i = 0, e = Supers.size(); i != e; ++i) {
-      for (const unsigned *sr = tri_->getSubRegisters(Supers[i]); *sr; ++sr)
-        if (!Processed.count(*sr))
-          Weights[*sr] += weight;
+    for (const unsigned *sr = tri_->getSubRegisters(Supers[i]); *sr; ++sr)
+      if (!Processed.count(*sr))
+        Weights[*sr] += weight;
   }
 }
 
@@ -658,13 +677,14 @@ static void RevertVectorIteratorsTo(RALinScan::IntervalPtrs &V, unsigned Point){
 /// addStackInterval - Create a LiveInterval for stack if the specified live
 /// interval has been spilled.
 static void addStackInterval(LiveInterval *cur, LiveStacks *ls_,
-                             LiveIntervals *li_, float &Weight,
-                             VirtRegMap &vrm_) {
+                             LiveIntervals *li_,
+                             MachineRegisterInfo* mri_, VirtRegMap &vrm_) {
   int SS = vrm_.getStackSlot(cur->reg);
   if (SS == VirtRegMap::NO_STACK_SLOT)
     return;
-  LiveInterval &SI = ls_->getOrCreateInterval(SS);
-  SI.weight += Weight;
+
+  const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
+  LiveInterval &SI = ls_->getOrCreateInterval(SS, RC);
 
   VNInfo *VNI;
   if (SI.hasAtLeastOneValue())
@@ -679,10 +699,10 @@ static void addStackInterval(LiveInterval *cur, LiveStacks *ls_,
 
 /// getConflictWeight - Return the number of conflicts between cur
 /// live interval and defs and uses of Reg weighted by loop depthes.
-static float getConflictWeight(LiveInterval *cur, unsigned Reg,
-                                  LiveIntervals *li_,
-                                  MachineRegisterInfo *mri_,
-                                  const MachineLoopInfo *loopInfo) {
+static
+float getConflictWeight(LiveInterval *cur, unsigned Reg, LiveIntervals *li_,
+                        MachineRegisterInfo *mri_,
+                        const MachineLoopInfo *loopInfo) {
   float Conflicts = 0;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(Reg),
          E = mri_->reg_end(); I != E; ++I) {
@@ -1072,12 +1092,11 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // linearscan.
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DOUT << "\t\t\tspilling(c): " << *cur << '\n';
-    float SSWeight;
     SmallVector<LiveInterval*, 8> spillIs;
     std::vector<LiveInterval*> added =
-      li_->addIntervalsForSpills(*cur, spillIs, loopInfo, *vrm_, SSWeight);
+      li_->addIntervalsForSpills(*cur, spillIs, loopInfo, *vrm_);
     std::sort(added.begin(), added.end(), LISorter());
-    addStackInterval(cur, ls_, li_, SSWeight, *vrm_);
+    addStackInterval(cur, ls_, li_, mri_, *vrm_);
     if (added.empty())
       return;  // Early exit if all spills were folded.
 
@@ -1149,10 +1168,9 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     spillIs.pop_back();
     DOUT << "\t\t\tspilling(a): " << *sli << '\n';
     earliestStart = std::min(earliestStart, sli->beginNumber());
-    float SSWeight;
     std::vector<LiveInterval*> newIs =
-      li_->addIntervalsForSpills(*sli, spillIs, loopInfo, *vrm_, SSWeight);
-    addStackInterval(sli, ls_, li_, SSWeight, *vrm_);
+      li_->addIntervalsForSpills(*sli, spillIs, loopInfo, *vrm_);
+    addStackInterval(sli, ls_, li_, mri_, *vrm_);
     std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);
   }

@@ -238,8 +238,6 @@ public:
     return end();
   }
 
-
-
   /// getSize - Return the size of the register in bytes, which is also the size
   /// of a stack slot allocated to hold a spilled copy of this register.
   unsigned getSize() const { return RegSize; }
@@ -254,10 +252,6 @@ public:
   int getCopyCost() const { return CopyCost; }
 };
 
-/// getCommonSubClass - find the largest common subclass of A and B. Return NULL
-/// if there is no common subclass.
-const TargetRegisterClass *getCommonSubClass(const TargetRegisterClass *A,
-                                             const TargetRegisterClass *B);
 
 /// TargetRegisterInfo base class - We assume that the target defines a static
 /// array of TargetRegisterDesc objects that represent all of the machine
@@ -644,12 +638,18 @@ public:
   virtual void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 };
 
+
 // This is useful when building IndexedMaps keyed on virtual registers
 struct VirtReg2IndexFunctor : std::unary_function<unsigned, unsigned> {
   unsigned operator()(unsigned Reg) const {
     return Reg - TargetRegisterInfo::FirstVirtualRegister;
   }
 };
+
+/// getCommonSubClass - find the largest common subclass of A and B. Return NULL
+/// if there is no common subclass.
+const TargetRegisterClass *getCommonSubClass(const TargetRegisterClass *A,
+                                             const TargetRegisterClass *B);
 
 } // End llvm namespace
 

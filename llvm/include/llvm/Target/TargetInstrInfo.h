@@ -391,7 +391,7 @@ public:
   /// possible, returns true as well as the new instructions by reference.
   virtual bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
-                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const{
     return false;
   }
 

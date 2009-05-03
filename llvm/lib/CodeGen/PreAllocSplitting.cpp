@@ -339,7 +339,7 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
   }
 
   // Create live interval for stack slot.
-  CurrSLI = &LSs->getOrCreateInterval(SS);
+  CurrSLI = &LSs->getOrCreateInterval(SS, RC);
   if (CurrSLI->hasAtLeastOneValue())
     CurrSValNo = CurrSLI->getValNumInfo(0);
   else
@@ -926,8 +926,7 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
   if (I != IntervalSSMap.end()) {
     SS = I->second;
   } else {
-    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
-    
+    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());    
   }
   
   MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),
@@ -939,7 +938,7 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
     ++NumFolds;
     
     IntervalSSMap[vreg] = SS;
-    CurrSLI = &LSs->getOrCreateInterval(SS);
+    CurrSLI = &LSs->getOrCreateInterval(SS, RC);
     if (CurrSLI->hasAtLeastOneValue())
       CurrSValNo = CurrSLI->getValNumInfo(0);
     else
