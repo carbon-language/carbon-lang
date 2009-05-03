@@ -32,16 +32,24 @@ bool MSP430InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
-  if (DestRC != SrcRC) {
-    // Not yet supported!
-    return false;
-  }
-
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  BuildMI(MBB, I, DL, get(MSP430::MOV16rr), DestReg).addReg(SrcReg);
-  return true;
+  if (DestRC == SrcRC) {
+    unsigned Opc;
+    if (DestRC == &MSP430::GR16RegClass) {
+      Opc = MSP430::MOV16rr;
+    } else if (DestRC == &MSP430::GR8RegClass) {
+      Opc = MSP430::MOV8rr;
+    } else {
+      return false;
+    }
+
+    BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg);
+    return true;
+  }
+
+  return false;
 }
 
 bool
@@ -53,8 +61,9 @@ MSP430InstrInfo::isMoveInstr(const MachineInstr& MI,
   switch (MI.getOpcode()) {
   default:
     return false;
+  case MSP430::MOV8rr:
   case MSP430::MOV16rr:
-    assert(MI.getNumOperands() >= 2 &&
+   assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
            "invalid register-register move instruction");
