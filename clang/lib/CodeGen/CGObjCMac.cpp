@@ -826,6 +826,9 @@ protected:
   llvm::Constant *BuildIvarLayout(const ObjCImplementationDecl *OI,
                                   bool ForStrongLayout);
   
+  void BuildAggrIvarRecordLayout(const RecordType *RT,
+                           unsigned int BytePos, bool ForStrongLayout,
+                           bool &HasUnion);
   void BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
@@ -2907,20 +2910,37 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
   return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
 }
 
-static QualType::GCAttrTypes GetGCAttrTypeForType(QualType FQT) {
+static QualType::GCAttrTypes GetGCAttrTypeForType(ASTContext &Ctx, 
+                                                  QualType FQT) {
   if (FQT.isObjCGCStrong())
     return QualType::Strong;
 
   if (FQT.isObjCGCWeak())
     return QualType::Weak;
 
-  if (CGM.getContext().isObjCObjectPointerType(FQT))
+  if (Ctx.isObjCObjectPointerType(FQT))
     return QualType::Strong;
 
   if (const PointerType *PT = FQT->getAsPointerType())
-    return GetGCAttrTypeForType(PT->getPointeeType());
+    return GetGCAttrTypeForType(Ctx, PT->getPointeeType());
 
   return QualType::GCNone;
+}
+
+void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
+                                                unsigned int BytePos, 
+                                                bool ForStrongLayout,
+                                                bool &HasUnion) {
+  const RecordDecl *RD = RT->getDecl();
+  // FIXME - Use iterator.
+  llvm::SmallVector<FieldDecl*, 16> Fields(RD->field_begin(CGM.getContext()),
+                                           RD->field_end(CGM.getContext()));
+  const llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
+  const llvm::StructLayout *RecLayout = 
+    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
+  
+  BuildAggrIvarLayout(0, RecLayout, RD, Fields, BytePos,
+                      ForStrongLayout, HasUnion);
 }
 
 void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
@@ -2944,8 +2964,6 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
   unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
 
-  llvm::SmallVector<FieldDecl*, 16> TmpRecFields;
-
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
     // Skip over unnamed or bitfields
@@ -2959,19 +2977,9 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       if (FQT->isUnionType())
         HasUnion = true;
 
-      const RecordType *RT = FQT->getAsRecordType();
-      const RecordDecl *RD = RT->getDecl();
-      // FIXME - Find a more efficient way of passing records down.
-      TmpRecFields.append(RD->field_begin(CGM.getContext()),
-                          RD->field_end(CGM.getContext()));
-      const llvm::Type *Ty = CGM.getTypes().ConvertType(FQT);
-      const llvm::StructLayout *RecLayout = 
-        CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
-      
-      BuildAggrIvarLayout(0, RecLayout, RD, TmpRecFields,
-                          BytePos + GetFieldBaseOffset(OI, Layout, Field),
-                          ForStrongLayout, HasUnion);
-      TmpRecFields.clear();
+      BuildAggrIvarRecordLayout(FQT->getAsRecordType(), 
+                                BytePos + GetFieldBaseOffset(OI, Layout, Field),
+                                ForStrongLayout, HasUnion);
       continue;
     }
     
@@ -2994,22 +3002,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         int OldIndex = IvarsInfo.size() - 1;
         int OldSkIndex = SkipIvars.size() -1;
         
-        // FIXME - Use a common routine with the above!
         const RecordType *RT = FQT->getAsRecordType();
-        const RecordDecl *RD = RT->getDecl();
-        // FIXME - Find a more efficient way of passing records down.
-        TmpRecFields.append(RD->field_begin(CGM.getContext()),
-                            RD->field_end(CGM.getContext()));
-        const llvm::Type *Ty = CGM.getTypes().ConvertType(FQT);
-        const llvm::StructLayout *RecLayout = 
-          CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
-        
-        BuildAggrIvarLayout(0, RecLayout, RD,
-                            TmpRecFields,
-                            BytePos + GetFieldBaseOffset(OI, Layout, Field),
-                            ForStrongLayout, HasUnion);
-        TmpRecFields.clear();
-
+        BuildAggrIvarRecordLayout(RT, 
+                                  BytePos + GetFieldBaseOffset(OI, Layout, 
+                                                               Field),
+                                  ForStrongLayout, HasUnion);
+                                  
         // Replicate layout information for each array element. Note that
         // one element is already done.
         uint64_t ElIx = 1;
@@ -3028,7 +3026,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
     }
     // At this point, we are done with Record/Union and array there of.
     // For other arrays we are down to its element type.
-    QualType::GCAttrTypes GCAttr = GetGCAttrTypeForType(FQT):
+    QualType::GCAttrTypes GCAttr = GetGCAttrTypeForType(CGM.getContext(), FQT);
 
     unsigned FieldSize = CGM.getContext().getTypeSize(Field->getType());
     if ((ForStrongLayout && GCAttr == QualType::Strong)
@@ -3063,6 +3061,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
       }
     }
   }
+
   if (LastFieldBitfield) {
     // Last field was a bitfield. Must update skip info.
     Expr *BitWidth = LastFieldBitfield->getBitWidth();
