@@ -126,12 +126,20 @@ let isReturn = 1, isTerminator = 1 in {
   def RET : Pseudo<(outs), (ins), "ret", [(MSP430retflag)]>;
 }
 
+let isBranch = 1, isTerminator = 1 in {
+
+// Direct branch
+let isBarrier = 1 in
+  def JMP : Pseudo<(outs), (ins brtarget:$dst),
+                   "jmp\t$dst",
+                   [(br bb:$dst)]>;
+
 // Conditional branches
-let isBranch = 1, isTerminator = 1, Uses = [SRW] in {
-def JCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
-                          "j$cc $dst",
-                          [(MSP430brcond bb:$dst, imm:$cc, SRW)]>;
-} // Uses = [SRW]
+let Uses = [SRW] in
+  def JCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
+                            "j$cc $dst",
+                            [(MSP430brcond bb:$dst, imm:$cc, SRW)]>;
+} // isBranch, isTerminator
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
