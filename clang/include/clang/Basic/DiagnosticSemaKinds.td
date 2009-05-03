@@ -1651,6 +1651,9 @@ def err_argument_invalid_range : Error<
 def err_object_size_invalid_argument : Error<
   "argument to __builtin_object_size must be a constant integer">;
 
+def err_builtin_longjmp_invalid_val : Error<
+  "argument to __builtin_longjmp must be a constant 1">;
+
 def ext_mixed_decls_code : Extension<
   "ISO C90 forbids mixing declarations and code">;
 def err_non_variable_decl_in_for : Error<
