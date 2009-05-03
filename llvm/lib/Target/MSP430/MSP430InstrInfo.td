@@ -26,9 +26,20 @@ class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
 //===----------------------------------------------------------------------===//
+def retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
+                     [SDNPHasChain, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
 def NOP : Pseudo<(outs), (ins), "nop", []>;
+
+//===----------------------------------------------------------------------===//
+// Real Instructions
+//===----------------------------------------------------------------------===//
+
+// FIXME: Provide proper encoding!
+let isReturn = 1, isTerminator = 1 in {
+  def RETI: Pseudo<(outs), (ins), "reti", [(retflag)]>;
+}

@@ -20,6 +20,14 @@
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
+  namespace MSP430ISD {
+    enum {
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+
+      /// Return with a flag operand. Operand 0 is the chain operand.
+      RET_FLAG
+    };
+  }
 
   class MSP430Subtarget;
   class MSP430TargetMachine;
@@ -30,7 +38,13 @@ namespace llvm {
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
+
+    /// getTargetNodeName - This method returns the name of a target specific
+    /// DAG node.
+    virtual const char *getTargetNodeName(unsigned Opcode) const;
+
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
 
   private:

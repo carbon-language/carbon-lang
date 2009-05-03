@@ -43,12 +43,15 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
+
+  setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 
 SDValue MSP430TargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
+  case ISD::RET: return LowerRET(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -154,3 +157,58 @@ SDValue MSP430TargetLowering:: LowerCCCArguments(SDValue Op,
   return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
                      &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
 }
+
+SDValue MSP430TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
+  // CCValAssign - represent the assignment of the return value to a location
+  SmallVector<CCValAssign, 16> RVLocs;
+  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
+  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
+
+  // CCState - Info about the registers and stack slot.
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
+
+  // Analize return values of ISD::RET
+  CCInfo.AnalyzeReturn(Op.getNode(), RetCC_MSP430);
+
+  // If this is the first return lowered for this function, add the regs to the
+  // liveout set for the function.
+  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
+    for (unsigned i = 0; i != RVLocs.size(); ++i)
+      if (RVLocs[i].isRegLoc())
+        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
+  }
+
+  // The chain is always operand #0
+  SDValue Chain = Op.getOperand(0);
+  SDValue Flag;
+
+  // Copy the result values into the output registers.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+
+    // ISD::RET => ret chain, (regnum1,val1), ...
+    // So i*2+1 index only the regnums
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
+                             Op.getOperand(i*2+1), Flag);
+
+    // guarantee that all emitted copies are
+    // stuck together, avoiding something bad
+    Flag = Chain.getValue(1);
+  }
+
+  if (Flag.getNode())
+    return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+
+  // Return Void
+  return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain);
+}
+
+const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return NULL;
+  case MSP430ISD::RET_FLAG:           return "MSP430ISD::RET_FLAG";
+  }
+}
+
