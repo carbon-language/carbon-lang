@@ -41,7 +41,7 @@ def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 // FIXME: Provide proper encoding!
 let isReturn = 1, isTerminator = 1 in {
-  def RETI : Pseudo<(outs), (ins), "reti", [(retflag)]>;
+  def RETI : Pseudo<(outs), (ins), "ret", [(retflag)]>;
 }
 
 //===----------------------------------------------------------------------===//
