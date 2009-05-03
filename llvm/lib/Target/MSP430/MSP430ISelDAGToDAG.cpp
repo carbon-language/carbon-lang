@@ -132,6 +132,7 @@ void MSP430DAGToDAGISel::InstructionSelect() {
 
 SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
   SDNode *Node = Op.getNode();
+  DebugLoc dl = Op.getDebugLoc();
 
   // Dump information about the Node being selected
   #ifndef NDEBUG
@@ -152,15 +153,20 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
     return NULL;
   }
 
-  // Instruction Selection not handled by the auto-generated tablegen selection
-  // should be handled here.
-  // Something like this:
-  //   unsigned Opcode = Node->getOpcode();
-  //   switch (Opcode) {
-  //   default: break;
-  //   case ISD::Foo:
-  //    return SelectFoo(Node)
-  //  }
+  // Few custom selection stuff.
+  switch (Node->getOpcode()) {
+  default: break;
+  case ISD::FrameIndex: {
+    assert(Op.getValueType() == MVT::i16);
+    int FI = cast<FrameIndexSDNode>(Node)->getIndex();
+    SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i16);
+    if (Node->hasOneUse())
+      return CurDAG->SelectNodeTo(Node, MSP430::ADD16ri, MVT::i16,
+                                  TFI, CurDAG->getTargetConstant(0, MVT::i16));
+    return CurDAG->getTargetNode(MSP430::ADD16ri, dl, MVT::i16,
+                                 TFI, CurDAG->getTargetConstant(0, MVT::i16));
+  }
+  }
 
   // Select the default instruction
   SDNode *ResNode = SelectCode(Op);

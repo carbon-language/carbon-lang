@@ -152,7 +152,9 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   unsigned i = 0;
   MachineInstr &MI = *II;
-  MachineFunction &MF = *MI.getParent()->getParent();
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
+  DebugLoc dl = MI.getDebugLoc();
   while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
@@ -169,10 +171,33 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Skip the saved PC
   Offset += 2;
 
-  MI.getOperand(i).ChangeToRegister(BasePtr, false);
-
   // Fold imm into offset
   Offset += MI.getOperand(i+1).getImm();
+
+  if (MI.getOpcode() == MSP430::ADD16ri) {
+    // This is actually "load effective address" of the stack slot
+    // instruction. We have only two-address instructions, thus we need to
+    // expand it into mov + add
+
+    MI.setDesc(TII.get(MSP430::MOV16rr));
+    MI.getOperand(i).ChangeToRegister(BasePtr, false);
+
+    if (Offset == 0)
+      return;
+
+    // We need to materialize the offset via add instruction.
+    unsigned DstReg = MI.getOperand(0).getReg();
+    if (Offset < 0)
+      BuildMI(MBB, next(II), dl, TII.get(MSP430::SUB16ri), DstReg)
+        .addReg(DstReg).addImm(-Offset);
+    else
+      BuildMI(MBB, next(II), dl, TII.get(MSP430::ADD16ri), DstReg)
+        .addReg(DstReg).addImm(Offset);
+
+    return;
+  }
+
+  MI.getOperand(i).ChangeToRegister(BasePtr, false);
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 

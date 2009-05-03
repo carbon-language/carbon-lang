@@ -60,7 +60,6 @@ def memdst : Operand<i16> {
   let MIOperandInfo = (ops GR16, i16imm);
 }
 
-
 //===----------------------------------------------------------------------===//
 // MSP430 Complex Pattern Definitions.
 //===----------------------------------------------------------------------===//
@@ -614,7 +613,7 @@ def : Pat<(i8 (trunc GR16:$src)),
           (EXTRACT_SUBREG GR16:$src, subreg_8bit)>;
 
 // GlobalAddress
-def : Pat<(i16 (MSP430Wrapper tglobaladdr :$dst)), (MOV16ri tglobaladdr :$dst)>;
+def : Pat<(i16 (MSP430Wrapper tglobaladdr:$dst)), (MOV16ri tglobaladdr:$dst)>;
 
 def : Pat<(add GR16:$src1, (MSP430Wrapper tglobaladdr :$src2)),
           (ADD16ri GR16:$src1, tglobaladdr:$src2)>;
