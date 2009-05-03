@@ -109,6 +109,7 @@ int main() {
   // FIXME
   // V(clear_cache, (&N, &N+1));
   V(trap, ());
+  P(extract_return_addr, (&N));
 
   return 0;
 }

@@ -310,7 +310,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::frameaddress, 0, 0);
     return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
   }
-
+  case Builtin::BI__builtin_extract_return_addr: {
+    // FIXME: There should be a target hook for this
+    return RValue::get(EmitScalarExpr(E->getArg(0)));
+  }
   case Builtin::BI__sync_fetch_and_add:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_add, E);
   case Builtin::BI__sync_fetch_and_sub:
