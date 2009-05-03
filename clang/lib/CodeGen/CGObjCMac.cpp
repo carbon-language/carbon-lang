@@ -2956,21 +2956,22 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
   FieldDecl *MaxSkippedField = 0;
   FieldDecl *LastFieldBitfield = 0;
   
-  unsigned base = 0;
   if (RecFields.empty())
     return;
-  if (IsUnion)
-    base = BytePos + GetFieldBaseOffset(OI, Layout, RecFields[0]);
   unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
   unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
 
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
+
     // Skip over unnamed or bitfields
     if (!Field->getIdentifier() || Field->isBitField()) {
       LastFieldBitfield = Field;
       continue;
     }
+
+    unsigned FieldOffset = GetFieldBaseOffset(OI, Layout, Field);
+
     LastFieldBitfield = 0;
     QualType FQT = Field->getType();
     if (FQT->isRecordType() || FQT->isUnionType()) {
@@ -2978,7 +2979,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         HasUnion = true;
 
       BuildAggrIvarRecordLayout(FQT->getAsRecordType(), 
-                                BytePos + GetFieldBaseOffset(OI, Layout, Field),
+                                BytePos + FieldOffset,
                                 ForStrongLayout, HasUnion);
       continue;
     }
@@ -3003,9 +3004,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         int OldSkIndex = SkipIvars.size() -1;
         
         const RecordType *RT = FQT->getAsRecordType();
-        BuildAggrIvarRecordLayout(RT, 
-                                  BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                               Field),
+        BuildAggrIvarRecordLayout(RT, BytePos + FieldOffset,
                                   ForStrongLayout, HasUnion);
                                   
         // Replicate layout information for each array element. Note that
@@ -3038,8 +3037,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
           MaxField = Field;
         }
       } else {
-        IvarsInfo.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                                 Field),
+        IvarsInfo.push_back(GC_IVAR(BytePos + FieldOffset,
                                     FieldSize / WordSizeInBits));
       }
     } else if ((ForStrongLayout && 
@@ -3055,8 +3053,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCInterfaceDecl *OI,
         }
       } else {
         // FIXME: Why the asymmetry, we divide by byte size in bits here?
-        SkipIvars.push_back(GC_IVAR(BytePos + GetFieldBaseOffset(OI, Layout, 
-                                                                 Field),
+        SkipIvars.push_back(GC_IVAR(BytePos + FieldOffset,
                                     FieldSize / ByteSizeInBits));
       }
     }
