@@ -15,8 +15,10 @@
 
 #include "MSP430.h"
 #include "MSP430RegisterInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 
 using namespace llvm;
@@ -54,7 +56,7 @@ MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
-  assert(0 && "Not implemented yet!");
+  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 void
