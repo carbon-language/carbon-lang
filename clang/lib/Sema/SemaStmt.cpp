@@ -1040,7 +1040,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     
     unsigned TiedTo = Info.getTiedOperand();
     Expr *OutputExpr     = Exprs[TiedTo];
-    ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i+NumOutputs]);
+    Expr *InputExpr = Exprs[i+NumOutputs];
     QualType InTy = InputExpr->getType();
     QualType OutTy = OutputExpr->getType();
     if (Context.hasSameType(InTy, OutTy))
@@ -1057,7 +1057,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
         continue;
     }
     
-    Diag(InputExpr->getSubExpr()->getLocStart(),
+    Diag(InputExpr->getLocStart(),
          diag::err_asm_tying_incompatible_types)
       << InTy << OutTy << OutputExpr->getSourceRange()
       << InputExpr->getSourceRange();
