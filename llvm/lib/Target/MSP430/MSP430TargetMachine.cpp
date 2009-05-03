@@ -47,17 +47,19 @@ const TargetAsmInfo *MSP430TargetMachine::createTargetAsmInfo() const {
   return new MSP430TargetAsmInfo(*this);
 }
 
-bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
+bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM,
+                                          CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.
-  PM.add(createMSP430ISelDag(*this));
+  PM.add(createMSP430ISelDag(*this, OptLevel));
   return false;
 }
 
 bool MSP430TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                             bool Fast, bool Verbose,
+                                             CodeGenOpt::Level OptLevel,
+                                             bool Verbose,
                                              raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createMSP430CodePrinterPass(Out, *this, Fast, Verbose));
+  PM.add(createMSP430CodePrinterPass(Out, *this, OptLevel, Verbose));
   return false;
 }
 

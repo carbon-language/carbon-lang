@@ -15,15 +15,19 @@
 #ifndef LLVM_TARGET_MSP430_H
 #define LLVM_TARGET_MSP430_H
 
+#include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
   class MSP430TargetMachine;
   class FunctionPass;
   class raw_ostream;
 
-  FunctionPass *createMSP430ISelDag(MSP430TargetMachine &TM);
-  FunctionPass *createMSP430CodePrinterPass(raw_ostream &OS,
-                                            MSP430TargetMachine &TM,
-                                            bool Fast, bool Verbose);
+  FunctionPass *createMSP430ISelDag(MSP430TargetMachine &TM,
+                                    CodeGenOpt::Level OptLevel);
+  FunctionPass *createMSP430CodePrinterPass(raw_ostream &o,
+                                            MSP430TargetMachine &tm,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose);
 } // end namespace llvm;
 
 // Defines symbolic names for MSP430 registers.

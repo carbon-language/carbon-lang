@@ -56,9 +56,10 @@ public:
     return const_cast<MSP430TargetLowering*>(&TLInfo);
   }
 
-  virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast,
-                                  bool Verbose, raw_ostream &Out);
+  virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM,
+                                  CodeGenOpt::Level OptLevel, bool Verbose,
+                                  raw_ostream &Out);
   static unsigned getModuleMatchQuality(const Module &M);
 }; // MSP430TargetMachine.
 

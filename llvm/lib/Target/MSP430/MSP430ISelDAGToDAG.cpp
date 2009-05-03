@@ -41,8 +41,8 @@ namespace {
     const MSP430Subtarget &Subtarget;
 
   public:
-    MSP430DAGToDAGISel(MSP430TargetMachine &TM)
-      : SelectionDAGISel(TM),
+    MSP430DAGToDAGISel(MSP430TargetMachine &TM, CodeGenOpt::Level OptLevel)
+      : SelectionDAGISel(TM, OptLevel),
         Lowering(*TM.getTargetLowering()),
         Subtarget(*TM.getSubtargetImpl()) { }
 
@@ -68,8 +68,9 @@ namespace {
 /// createMSP430ISelDag - This pass converts a legalized DAG into a
 /// MSP430-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM) {
-  return new MSP430DAGToDAGISel(TM);
+FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM,
+                                        CodeGenOpt::Level OptLevel) {
+  return new MSP430DAGToDAGISel(TM, OptLevel);
 }
 
 // FIXME: This is pretty dummy routine and needs to be rewritten in the future.
