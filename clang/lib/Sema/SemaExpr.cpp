@@ -4245,7 +4245,12 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
 
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
-    if (!op->getType()->isFunctionType()) {
+    if (op->getType()->isFunctionType()) {
+      // Function designator is valid
+    } else if (lval == Expr::LV_IncompleteVoidType) {
+      Diag(OpLoc, diag::ext_typecheck_addrof_void)
+        << op->getSourceRange();
+    } else {
       // FIXME: emit more specific diag...
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
         << op->getSourceRange();

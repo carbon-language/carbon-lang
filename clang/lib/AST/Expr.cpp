@@ -603,18 +603,26 @@ static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
 ///  - reference type [C++ [expr]]
 ///
 Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
+  assert(!TR->isReferenceType() && "Expressions can't have reference type.");
+
+  isLvalueResult Res = isLvalueInternal(Ctx);
+  if (Res != LV_Valid || Ctx.getLangOptions().CPlusPlus)
+    return Res;
+
   // first, check the type (C99 6.3.2.1). Expressions with function
   // type in C are not lvalues, but they can be lvalues in C++.
-  if (!Ctx.getLangOptions().CPlusPlus && TR->isFunctionType())
+  if (TR->isFunctionType())
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
   if (TR->isVoidType() && !Ctx.getCanonicalType(TR).getCVRQualifiers())
     return LV_IncompleteVoidType;
 
-  assert(!TR->isReferenceType() && "Expressions can't have reference type.");
+  return LV_Valid;
+}
 
-  // the type looks fine, now check the expression
+// Check whether the expression can be sanely treated like an l-value
+Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
   switch (getStmtClass()) {
   case StringLiteralClass:  // C99 6.5.1p4
   case ObjCEncodeExprClass: // @encode behaves like its string in every way.
@@ -754,8 +762,6 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
-  case VAArgExprClass:
-    return LV_NotObjectType;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
   case CXXConditionDeclExprClass:

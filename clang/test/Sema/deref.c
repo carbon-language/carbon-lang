@@ -1,4 +1,5 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c90 %s
+/* RUN: clang-cc -fsyntax-only -verify -std=c90 -pedantic %s
+ */
 void
 foo (void)
 {
@@ -17,7 +18,7 @@ void foo2 (void)
 void foo3 (void)
 {
  void* x = 0;
- void* y = &*x; // expected-error{{address expression must be an lvalue or a function designator}}
+ void* y = &*x; /* expected-warning{{address of an expression of type 'void'}} */
 }
 
 extern const void cv1;
@@ -30,7 +31,7 @@ const void *foo4 (void)
 extern void cv2;
 void *foo5 (void)
 {
-  return &cv2; // expected-error{{address expression must be an lvalue or a function designator}}
+  return &cv2; /* expected-warning{{address of an expression of type 'void'}} */
 }
 
 typedef const void CVT;

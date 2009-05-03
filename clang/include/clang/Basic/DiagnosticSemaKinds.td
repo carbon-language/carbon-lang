@@ -1021,6 +1021,8 @@ def err_typecheck_sclass_func : Error<"illegal storage class on function">;
 def err_static_block_func : Error<
   "function declared in block scope cannot have 'static' storage class">;
 def err_typecheck_address_of : Error<"address of %0 requested">;
+def ext_typecheck_addrof_void : Extension<
+  "ISO C forbids taking the address of an expression of type 'void'">;
 def err_typecheck_invalid_lvalue_addrof : Error<
   "address expression must be an lvalue or a function designator">;
 def err_typecheck_unary_expr : Error<

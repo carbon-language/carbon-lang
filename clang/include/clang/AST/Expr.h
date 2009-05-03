@@ -147,6 +147,9 @@ public:
     LV_MemberFunction
   };
   isLvalueResult isLvalue(ASTContext &Ctx) const;
+
+  // Same as above, but excluding checks for non-object and void types in C
+  isLvalueResult isLvalueInternal(ASTContext &Ctx) const;
   
   /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
   /// does not have an incomplete type, does not have a const-qualified type,
