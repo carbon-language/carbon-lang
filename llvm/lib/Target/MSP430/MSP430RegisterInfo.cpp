@@ -15,6 +15,8 @@
 
 #include "MSP430.h"
 #include "MSP430RegisterInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 
 using namespace llvm;
