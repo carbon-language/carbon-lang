@@ -1203,6 +1203,76 @@ namespace {
   };
 }
 
+namespace {
+  class MSP430TargetInfo : public TargetInfo {
+    static const char * const GCCRegNames[];
+  public:
+    MSP430TargetInfo(const std::string& triple) : TargetInfo(triple) {
+      TLSSupported = false;
+      IntWidth = 16;
+      LongWidth = LongLongWidth = 32;
+      PointerWidth = 16;
+      IntAlign = 8;
+      LongAlign = LongLongAlign = 8;
+      PointerAlign = 8;
+      SizeType = UnsignedInt;
+      IntMaxType = SignedLong;
+      UIntMaxType = UnsignedLong;
+      IntPtrType = SignedShort;
+      PtrDiffType = SignedInt;
+      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
+   }
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                 std::vector<char> &Defines) const {
+      Define(Defines, "MSP430");
+      Define(Defines, "__MSP430__");
+      // FIXME: defines for different 'flavours' of MCU
+    }
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {
+     // FIXME: Implement.
+      Records = 0;
+      NumRecords = 0;
+    }
+    virtual const char *getTargetPrefix() const {
+      return "msp430";
+    }
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const;
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {
+      // No aliases.
+      Aliases = 0;
+      NumAliases = 0;
+    }
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo &info) const {
+      // FIXME: implement
+      return true;
+    }
+    virtual const char *getClobbers() const {
+      // FIXME: Is this really right?
+      return "";
+    }
+    virtual const char *getVAListDeclaration() const {
+      // FIXME: implement
+      return "";
+   }
+  };
+
+  const char * const MSP430TargetInfo::GCCRegNames[] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+  };
+
+  void MSP430TargetInfo::getGCCRegNames(const char * const *&Names,
+                                        unsigned &NumNames) const {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
@@ -1264,6 +1334,9 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   if (T.find("pic16-") == 0)
     return new PIC16TargetInfo(T);
+
+  if (T.find("msp430-") == 0)
+    return new MSP430TargetInfo(T);
 
   if (IsX86(T)) {
     if (isDarwin)
