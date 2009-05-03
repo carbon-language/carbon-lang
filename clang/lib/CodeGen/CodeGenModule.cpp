@@ -230,7 +230,7 @@ void CodeGenModule::EmitAnnotations() {
 
 static CodeGenModule::GVALinkage
 GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
-  // "static" and attr(always_inline) functions get internal linkage.
+  // "static" functions get internal linkage.
   if (FD->getStorageClass() == FunctionDecl::Static)
     return CodeGenModule::GVA_Internal;
 
