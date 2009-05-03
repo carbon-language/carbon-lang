@@ -85,6 +85,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SELECT_CC,        MVT::Other, Expand);
   setOperationAction(ISD::SELECT,           MVT::i8,    Custom);
   setOperationAction(ISD::SELECT,           MVT::i16,   Custom);
+  setOperationAction(ISD::SIGN_EXTEND,      MVT::i16,   Custom);
 
   // FIXME: Implement efficiently multiplication by a constant
   setOperationAction(ISD::MUL,              MVT::i16,   Expand);
@@ -107,6 +108,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SETCC:            return LowerSETCC(Op, DAG);
   case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
   case ISD::SELECT:           return LowerSELECT(Op, DAG);
+  case ISD::SIGN_EXTEND:      return LowerSIGN_EXTEND(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -590,6 +592,19 @@ SDValue MSP430TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
   Ops.push_back(Cond);
 
   return DAG.getNode(MSP430ISD::SELECT, dl, VTs, &Ops[0], Ops.size());
+}
+
+SDValue MSP430TargetLowering::LowerSIGN_EXTEND(SDValue Op,
+                                               SelectionDAG &DAG) {
+  SDValue Val = Op.getOperand(0);
+  MVT VT      = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+
+  assert(VT == MVT::i16 && "Only support i16 for now!");
+
+  return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, VT,
+                     DAG.getNode(ISD::ANY_EXTEND, dl, VT, Val),
+                     DAG.getValueType(Val.getValueType()));
 }
 
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {

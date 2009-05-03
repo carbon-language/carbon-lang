@@ -86,6 +86,7 @@ namespace llvm {
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
                            unsigned CC);
