@@ -946,7 +946,6 @@ private:
   /// given implementation. The return value has type ClassPtrTy.
   llvm::Constant *EmitMetaClass(const ObjCImplementationDecl *ID,
                                 llvm::Constant *Protocols,
-                                const llvm::Type *InterfaceTy,
                                 const ConstantVector &Methods);
   
   llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
@@ -1897,7 +1896,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   }
 
   std::vector<llvm::Constant*> Values(12);
-  Values[ 0] = EmitMetaClass(ID, Protocols, InterfaceTy, ClassMethods);
+  Values[ 0] = EmitMetaClass(ID, Protocols, ClassMethods);
   if (ObjCInterfaceDecl *Super = Interface->getSuperClass()) {
     // Record a reference to the super class.
     LazySymbols.insert(Super->getIdentifier());
@@ -1935,7 +1934,6 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
 llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          llvm::Constant *Protocols,
-                                         const llvm::Type *InterfaceTy,
                                          const ConstantVector &Methods) {
   unsigned Flags = eClassFlags_Meta;
   unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassTy);
