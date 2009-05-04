@@ -3,6 +3,7 @@
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"A\\00"' %t &&
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\11q\\10\\00"' %t &&
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"!q\\00"' %t &&
+// RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\01\\14\\00"' %t &&
 // RUN: true
 
 /*
@@ -64,3 +65,25 @@ __weak B *f2;
 @implementation D
 @synthesize p3 = _p3;
 @end
+
+typedef unsigned short UInt16;
+
+
+typedef signed char BOOL;
+typedef unsigned int FSCatalogInfoBitmap;
+
+@interface NSFileLocationComponent {
+    @private
+
+    id _specifierOrStandardizedPath;
+    BOOL _carbonCatalogInfoAndNameAreValid;
+    FSCatalogInfoBitmap _carbonCatalogInfoMask;
+    id _name;
+    id _containerComponent;
+    id _presentableName;
+    id _iconAsAttributedString;
+}
+@end
+
+@implementation NSFileLocationComponent @end
+
