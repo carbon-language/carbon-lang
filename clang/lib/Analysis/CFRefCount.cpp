@@ -870,19 +870,12 @@ static bool isRelease(FunctionDecl* FD, const char* FName) {
 }
 
 RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
-
-  SourceLocation Loc = FD->getLocation();
-  
-  if (!Loc.isFileID())
-    return getDefaultSummary();
-  
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
-
   if (I != FuncSummaries.end())
     return I->second;
 
-  // No summary.  Generate one.
+  // No summary?  Generate one.
   RetainSummary *S = 0;
   
   do {
