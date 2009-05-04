@@ -38,10 +38,9 @@ void test_S5_scope() {
   S4 *s4; // expected-error{{use of undeclared identifier 'S4'}}
 }
 
-// FIXME: the warning below should be an error!
 int test_funcparam_scope(struct S5 * s5) {
   struct S5 { int y; } *s5_2 = 0;
-  if (s5 == s5_2) return 1; // expected-warning {{comparison of distinct pointer types ('struct S5 *' and 'struct S5 *')}}
+  if (s5 == s5_2) return 1; // expected-error {{comparison of distinct pointer types ('struct S5 *' and 'struct S5 *')}}
   return 0;
 }
 

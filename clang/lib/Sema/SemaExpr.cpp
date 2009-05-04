@@ -3653,7 +3653,7 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   return LHSTy;
 }
 
-// C99 6.5.8
+// C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     unsigned OpaqueOpc, bool isRelational) {
   BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)OpaqueOpc;
@@ -3757,6 +3757,31 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       Context.getCanonicalType(lType->getAsPointerType()->getPointeeType());
     QualType RCanPointeeTy =
       Context.getCanonicalType(rType->getAsPointerType()->getPointeeType());
+
+    // Simple check: if the pointee types are identical, we're done.
+    if (LCanPointeeTy == RCanPointeeTy)
+      return ResultTy;
+
+    if (getLangOptions().CPlusPlus) {
+      // C++ [expr.rel]p2:
+      //   [...] Pointer conversions (4.10) and qualification
+      //   conversions (4.4) are performed on pointer operands (or on
+      //   a pointer operand and a null pointer constant) to bring
+      //   them to their composite pointer type. [...]
+      //
+      // C++ [expr.eq]p2 uses the same notion for (in)equality
+      // comparisons of pointers.
+      QualType T = CompositePointerType(lex, rex, LHSIsNull, RHSIsNull);
+      if (T.isNull()) {
+        Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+        return QualType();
+      }
+
+      ImpCastExprToType(lex, T);
+      ImpCastExprToType(rex, T);
+      return ResultTy;
+    }
 
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
         !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&

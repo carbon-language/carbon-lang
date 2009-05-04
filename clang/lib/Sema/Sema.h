@@ -2424,6 +2424,8 @@ public:
                                                         QualType rhsType);
 
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
+  QualType CompositePointerType(Expr *LHS, Expr *RHS,
+                                bool LHSIsNull, bool RHSIsNull);
 
   bool PerformImplicitConversion(Expr *&From, QualType ToType, 
                                  const char *Flavor,

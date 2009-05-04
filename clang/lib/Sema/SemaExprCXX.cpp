@@ -768,6 +768,77 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
   return false;
 }
 
+/// \brief Determine the composite pointer type (C++ [expr.rel]p2)
+/// given the left- and right-hand expressions in a relational
+/// operation.
+///
+/// While the notion of a composite pointer type is only described for
+/// relational operators (<, >, <=, >=), the same computation is used
+/// to determine the "common type" used for the equality operators
+/// (==, !=) when comparing pointers.
+///
+/// \param LHS the left-hand operand.
+/// \param RHS the right-hand operand.
+/// \param LHSIsNull whether \p LHS is the NULL pointer constant
+/// \param RHSIsNull whether \p RHS is the NULL pointer constant
+///
+/// \returns the composite pointer type, if any, or the null type if
+/// no such type exists. It is the caller's responsibility to emit
+/// diagnostic.
+QualType Sema::CompositePointerType(Expr *LHS, Expr *RHS,
+                                    bool LHSIsNull, bool RHSIsNull) {
+  // First, determine whether LHS and RHS have pointer types, and what
+  // types they point to.
+  QualType LHSPointee;
+  QualType RHSPointee;
+  if (const PointerType *LHSPtr = LHS->getType()->getAsPointerType())
+    LHSPointee = LHSPtr->getPointeeType();
+  if (const PointerType *RHSPtr = RHS->getType()->getAsPointerType())
+    RHSPointee = RHSPtr->getPointeeType();
+
+  // C++ [expr.rel]p2:
+  //   [...] If one operand is a null pointer constant, the composite
+  //   pointer type is the type of the other operand.
+  if (LHSIsNull && !RHSPointee.isNull())
+    return RHS->getType();
+  if (RHSIsNull && !LHSPointee.isNull())
+    return LHS->getType();
+
+  // If neither LHS nor RHS has pointer type, we're done.
+  if (LHSPointee.isNull() && RHSPointee.isNull())
+    return QualType();
+
+  //  [...] Otherwise, if one of the operands has type "pointer to cv1
+  //  void", then the other has type "pointer to cv2 T" and the
+  //  composite pointer type is "pointer to cv12 void", where cv12 is
+  //  the union of cv1 and cv2.
+  QualType LHSPointeeCanon = Context.getCanonicalType(LHSPointee);
+  QualType RHSPointeeCanon = Context.getCanonicalType(RHSPointee);
+  unsigned CVQuals = 
+    (LHSPointeeCanon.getCVRQualifiers() | RHSPointeeCanon.getCVRQualifiers());
+  if (LHSPointeeCanon->isVoidType() || RHSPointeeCanon->isVoidType())
+    return Context.getPointerType(Context.VoidTy.getQualifiedType(CVQuals));
+
+  // [...] Otherwise, the composite pointer type is a pointer type
+  // similar (4.4) to the type of one of the operands, with a
+  // cv-qualification signature (4.4) that is the union of the
+  // cv-qualification signatures of the operand types.
+  QualType FullyQualifiedLHSType
+    = Context.getPointerType(LHSPointee.getQualifiedType(CVQuals));
+  QualType CompositePointerType;
+  bool IncompatibleObjC = false;
+  if (IsPointerConversion(RHS, RHS->getType(), FullyQualifiedLHSType,
+                          CompositePointerType, IncompatibleObjC))
+    return CompositePointerType;
+  QualType FullyQualifiedRHSType
+    = Context.getPointerType(RHSPointee.getQualifiedType(CVQuals));
+  if (IsPointerConversion(LHS, LHS->getType(), FullyQualifiedRHSType,
+                          CompositePointerType, IncompatibleObjC))
+    return CompositePointerType;
+  
+  return QualType();
+}
+
 /// PerformImplicitConversion - Perform an implicit conversion of the
 /// expression From to the type ToType. Returns true if there was an
 /// error, false otherwise. The expression From is replaced with the
