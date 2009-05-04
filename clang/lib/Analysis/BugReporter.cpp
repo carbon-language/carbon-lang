@@ -955,7 +955,8 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
     // Is the top location context the same as the one for the new location?
     if (TopContextLoc == CLoc) {
       if (alwaysAdd) {
-        if (IsConsumedExpr(TopContextLoc))
+        if (IsConsumedExpr(TopContextLoc) &&
+            !IsControlFlowExpr(TopContextLoc.asStmt()))
             TopContextLoc.markDead();
 
         rawAddEdge(NewLoc);
@@ -968,7 +969,7 @@ void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
       if (alwaysAdd) {
         rawAddEdge(NewLoc);
         
-        if (IsConsumedExpr(CLoc)) {
+        if (IsConsumedExpr(CLoc) && !IsControlFlowExpr(CLoc.asStmt())) {
           CLocs.push_back(ContextLocation(CLoc, true));
           return;
         }
