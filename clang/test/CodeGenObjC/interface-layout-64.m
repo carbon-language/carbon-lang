@@ -7,6 +7,8 @@
 // RUN: grep '@"OBJC_IVAR_$_I5._iv5" = global i64 24, section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep '@"OBJC_IVAR_$_I5._iv6_synth" = global i64 28, section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep '@"OBJC_IVAR_$_I5._iv7_synth" = global i64 32, section "__DATA, __objc_const", align 8' %t &&
+// RUN: grep '_OBJC_CLASS_RO_$_I6" = internal global .* { i32 2, i32 0, i32 1, .*' %t &&
+// RUN: grep '_OBJC_CLASS_RO_$_I8" = internal global .* { i32 0, i32 8, i32 16, .*' %t &&
 
 // RUN: true
 
@@ -54,3 +56,24 @@ struct s0 {
 @synthesize prop1 = _iv7_synth;
 @synthesize prop2 = _iv5;
 @end
+
+// The size rounds up to the next available byte.
+@interface I6 {
+  unsigned iv0 : 2;
+}
+@end
+@implementation I6
+@end
+
+// The start of the subclass includes padding for its own alignment.
+@interface I7 {
+  char a;
+}
+@end
+@interface I8 : I7 {
+  double b;
+}
+@end
+@implementation I8
+@end
+

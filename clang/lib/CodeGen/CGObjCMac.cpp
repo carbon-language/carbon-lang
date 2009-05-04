@@ -4219,35 +4219,16 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
-  // Find first and last (non-padding) ivars in this interface.
-
-  // FIXME: Use iterator.
-  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  GetNamedIvarList(OID->getClassInterface(), OIvars);
-
-  if (OIvars.empty()) {
+  const ASTRecordLayout &RL = 
+    CGM.getContext().getASTObjCImplementationLayout(OID);
+  
+  if (!RL.getFieldCount()) {
     InstanceStart = InstanceSize = 0;
     return;
   }
 
-  const ObjCIvarDecl *First = OIvars.front();
-  const ObjCIvarDecl *Last = OIvars.back();
-
-  InstanceStart = ComputeIvarBaseOffset(CGM, OID, First);
-  const llvm::Type *FieldTy =
-    CGM.getTypes().ConvertTypeForMem(Last->getType());
-  unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
-// FIXME. This breaks compatibility with llvm-gcc-4.2 (but makes it compatible
-// with gcc-4.2). We postpone this for now.
-#if 0
-  if (Last->isBitField()) {
-    Expr *BitWidth = Last->getBitWidth();
-    uint64_t BitFieldSize =
-      BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
-    Size = (BitFieldSize / 8) + ((BitFieldSize % 8) != 0);
-  }
-#endif
-  InstanceSize = ComputeIvarBaseOffset(CGM, OID, Last) + Size;
+  InstanceStart = RL.getFieldOffset(0) / 8;
+  InstanceSize = llvm::RoundUpToAlignment(RL.getNextOffset(), 8) / 8;
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
