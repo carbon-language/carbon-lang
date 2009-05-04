@@ -61,7 +61,6 @@ public:
     ObjCNSObject,
     CFOwnershipRelease,       // Clang/Checker-specific.
     CFOwnershipRetain,        // Clang/Checker-specific.
-    NSOwnershipMakeCollectable, // Clang/Checker-specific.
     NSOwnershipRelease,         // Clang/Checker-specific.
     NSOwnershipRetain,          // Clang/Checker-specific.
     NSOwnershipReturns,         // Clang/Checker-specific.
@@ -470,7 +469,6 @@ DEF_SIMPLE_ATTR(CFOwnershipRelease);
 DEF_SIMPLE_ATTR(NSOwnershipRelease);
 DEF_SIMPLE_ATTR(CFOwnershipRetain);
 DEF_SIMPLE_ATTR(NSOwnershipRetain);
-DEF_SIMPLE_ATTR(NSOwnershipMakeCollectable);
 DEF_SIMPLE_ATTR(NSOwnershipReturns);
 
 #undef DEF_SIMPLE_ATTR

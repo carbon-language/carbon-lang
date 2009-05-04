@@ -1573,8 +1573,6 @@ static void HandleNSOwnershipAttr(Decl *d, const AttributeList &Attr,
         name = "cf_ownership_release"; break;
       case AttributeList::AT_cf_ownership_retain:
         name = "cf_ownership_retain"; break;
-      case AttributeList::AT_ns_ownership_make_collectable:
-        name = "ns_ownership_make_collectable"; break;
       case AttributeList::AT_ns_ownership_release:
         name = "ns_ownership_release"; break;
       case AttributeList::AT_ns_ownership_retain:
@@ -1595,8 +1593,6 @@ static void HandleNSOwnershipAttr(Decl *d, const AttributeList &Attr,
       d->addAttr(::new (S.Context) CFOwnershipReleaseAttr()); return;      
     case AttributeList::AT_cf_ownership_retain:
       d->addAttr(::new (S.Context) CFOwnershipRetainAttr()); return;
-    case AttributeList::AT_ns_ownership_make_collectable:
-      d->addAttr(::new (S.Context) NSOwnershipMakeCollectableAttr()); return;
     case AttributeList::AT_ns_ownership_release:
       d->addAttr(::new (S.Context) NSOwnershipReleaseAttr());   return;
     case AttributeList::AT_ns_ownership_retain:
@@ -1645,7 +1641,6 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_cf_ownership_release:     
   case AttributeList::AT_cf_ownership_retain:
       HandleNSOwnershipAttr(D, Attr, S); break;
-  case AttributeList::AT_ns_ownership_make_collectable:
   case AttributeList::AT_ns_ownership_release:
   case AttributeList::AT_ns_ownership_retain:
       HandleNSOwnershipAttr(D, Attr, S, true); break;

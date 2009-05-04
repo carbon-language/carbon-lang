@@ -78,7 +78,6 @@ public:
     AT_objc_exception,
     AT_cf_ownership_release,        // Clang-specific.
     AT_cf_ownership_retain,         // Clang-specific.
-    AT_ns_ownership_make_collectable, // Clang-specific.
     AT_ns_ownership_release,          // Clang-specific.
     AT_ns_ownership_retain,           // Clang-specific.
     AT_ns_ownership_returns,          // Clang-specific.

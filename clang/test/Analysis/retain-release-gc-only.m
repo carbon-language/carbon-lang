@@ -134,7 +134,6 @@ void f3() {
 - (void) myCFRetain:(id)__attribute__((cf_ownership_retain))obj;
 - (void) myRelease:(id)__attribute__((ns_ownership_release))obj;
 - (void) myCFRelease:(id)__attribute__((cf_ownership_release))obj;
-- (void) makeCollectable:(id)__attribute__((ns_ownership_make_collectable))obj;
 @end
 
 void test_attr_1(TestOwnershipAttr *X) {
@@ -189,7 +188,7 @@ void test_attr_6a(TestOwnershipAttr *X) {
 
 void test_attr_6b(TestOwnershipAttr *X) {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
-  [X makeCollectable:(id)A];
+  CFMakeCollectable(A);
 }
 
 

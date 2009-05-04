@@ -151,10 +151,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
     break;
-  case 29:
-    if (!memcmp(Str, "ns_ownership_make_collectable", 29))
-      return AT_ns_ownership_make_collectable;
-    break;
   }  
   return UnknownAttribute;
 }

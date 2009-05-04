@@ -1113,8 +1113,6 @@ RetainSummaryManager::updateSummaryArgEffFromAnnotations(RetainSummary &Summ,
     Summ.setArgEffect(AF, i, DecRefMsg);
   else if (PD->getAttr<CFOwnershipReleaseAttr>())
     Summ.setArgEffect(AF, i, DecRef);
-  else if (PD->getAttr<NSOwnershipMakeCollectableAttr>())
-    Summ.setArgEffect(AF, i, MakeCollectable);  
 }
 
 void
