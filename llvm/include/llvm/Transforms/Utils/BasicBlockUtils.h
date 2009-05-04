@@ -89,7 +89,14 @@ Value *FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                 BasicBlock::iterator &ScanFrom,
                                 unsigned MaxInstsToScan = 6,
                                 AliasAnalysis *AA = 0);
-    
+
+/// FindFunctionBackedges - Analyze the specified function to find all of the
+/// loop backedges in the function and return them.  This is a relatively cheap
+/// (compared to computing dominators and loop info) analysis.
+///
+/// The output is added to Result, as pairs of <from,to> edge info.
+void FindFunctionBackedges(const Function &F,
+      SmallVectorImpl<std::pair<const BasicBlock*,const BasicBlock*> > &Result);
   
 
 // RemoveSuccessor - Change the specified terminator instruction such that its

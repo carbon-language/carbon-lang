@@ -442,6 +442,56 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   return NewBB;
 }
 
+/// FindFunctionBackedges - Analyze the specified function to find all of the
+/// loop backedges in the function and return them.  This is a relatively cheap
+/// (compared to computing dominators and loop info) analysis.
+///
+/// The output is added to Result, as pairs of <from,to> edge info.
+void llvm::FindFunctionBackedges(const Function &F,
+     SmallVectorImpl<std::pair<const BasicBlock*,const BasicBlock*> > &Result) {
+  const BasicBlock *BB = &F.getEntryBlock();
+  if (succ_begin(BB) == succ_end(BB))
+    return;
+  
+  SmallPtrSet<const BasicBlock*, 8> Visited;
+  SmallVector<std::pair<const BasicBlock*, succ_const_iterator>, 8> VisitStack;
+  SmallPtrSet<const BasicBlock*, 8> InStack;
+  
+  Visited.insert(BB);
+  VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
+  InStack.insert(BB);
+  do {
+    std::pair<const BasicBlock*, succ_const_iterator> &Top = VisitStack.back();
+    const BasicBlock *ParentBB = Top.first;
+    succ_const_iterator &I = Top.second;
+    
+    bool FoundNew = false;
+    while (I != succ_end(ParentBB)) {
+      BB = *I++;
+      if (Visited.insert(BB)) {
+        FoundNew = true;
+        break;
+      }
+      // Successor is in VisitStack, it's a back edge.
+      if (InStack.count(BB))
+        Result.push_back(std::make_pair(ParentBB, BB));
+    }
+    
+    if (FoundNew) {
+      // Go down one level if there is a unvisited successor.
+      InStack.insert(BB);
+      VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
+    } else {
+      // Go up one level.
+      InStack.erase(VisitStack.pop_back_val().first);
+    }
+  } while (!VisitStack.empty());
+  
+  
+}
+
+
+
 /// AreEquivalentAddressValues - Test if A and B will obviously have the same
 /// value. This includes recognizing that %t0 and %t1 will have the same
 /// value in code like this:

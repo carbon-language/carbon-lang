@@ -52,7 +52,7 @@ namespace {
 
     /// BackEdges - Keep a set of all the loop back edges.
     ///
-    SmallSet<std::pair<BasicBlock*,BasicBlock*>, 8> BackEdges;
+    SmallSet<std::pair<const BasicBlock*, const BasicBlock*>, 8> BackEdges;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit CodeGenPrepare(const TargetLowering *tli = 0)
@@ -69,7 +69,7 @@ namespace {
     bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
                                DenseMap<Value*,Value*> &SunkAddrs);
     bool OptimizeExtUses(Instruction *I);
-    void findLoopBackEdges(Function &F);
+    void findLoopBackEdges(const Function &F);
   };
 }
 
@@ -83,45 +83,11 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
 
 /// findLoopBackEdges - Do a DFS walk to find loop back edges.
 ///
-void CodeGenPrepare::findLoopBackEdges(Function &F) {
-  SmallPtrSet<BasicBlock*, 8> Visited;
-  SmallVector<std::pair<BasicBlock*, succ_iterator>, 8> VisitStack;
-  SmallPtrSet<BasicBlock*, 8> InStack;
-
-  BasicBlock *BB = &F.getEntryBlock();
-  if (succ_begin(BB) == succ_end(BB))
-    return;
-  Visited.insert(BB);
-  VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
-  InStack.insert(BB);
-  do {
-    std::pair<BasicBlock*, succ_iterator> &Top = VisitStack.back();
-    BasicBlock *ParentBB = Top.first;
-    succ_iterator &I = Top.second;
-
-    bool FoundNew = false;
-    while (I != succ_end(ParentBB)) {
-      BB = *I++;
-      if (Visited.insert(BB)) {
-        FoundNew = true;
-        break;
-      }
-      // Successor is in VisitStack, it's a back edge.
-      if (InStack.count(BB))
-        BackEdges.insert(std::make_pair(ParentBB, BB));
-    }
-
-    if (FoundNew) {
-      // Go down one level if there is a unvisited successor.
-      InStack.insert(BB);
-      VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
-    } else {
-      // Go up one level.
-      std::pair<BasicBlock*, succ_iterator> &Pop = VisitStack.back();
-      InStack.erase(Pop.first);
-      VisitStack.pop_back();
-    }
-  } while (!VisitStack.empty());
+void CodeGenPrepare::findLoopBackEdges(const Function &F) {
+  SmallVector<std::pair<const BasicBlock*,const BasicBlock*>, 32> Edges;
+  FindFunctionBackedges(F, Edges);
+  
+  BackEdges.insert(Edges.begin(), Edges.end());
 }
 
 
@@ -328,7 +294,8 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
 /// predecessor of the succ that is empty (and thus has no phi nodes), use it
 /// instead of introducing a new block.
 static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
-                     SmallSet<std::pair<BasicBlock*,BasicBlock*>, 8> &BackEdges,
+                     SmallSet<std::pair<const BasicBlock*,
+                                        const BasicBlock*>, 8> &BackEdges,
                              Pass *P) {
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *Dest = TI->getSuccessor(SuccNum);
