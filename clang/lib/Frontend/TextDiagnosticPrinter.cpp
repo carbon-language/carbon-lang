@@ -113,11 +113,19 @@ static inline bool isClosingDelimiter(char c) {
   return c == ')' || c == ']' || c == '}';
 }
 
+/// \brief Determine whether this character is part of an identifier.
+static inline bool isIdentifierChar(char c) {
+  return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
+    (c >= 'A' && c <= 'Z') || c == '_';
+    
+}
+
 /// \brief When the source code line we want to print is too long for
 /// the terminal, select the "interesting" region.
 static void SelectInterestingSourceRegion(std::string &SourceLine,
                                           std::string &CaretLine,
                                           std::string &FixItInsertionLine,
+                                          unsigned EndOfCaretToken,
                                           unsigned Columns) {
   if (CaretLine.size() > SourceLine.size())
     SourceLine.resize(CaretLine.size(), ' ');
@@ -132,7 +140,12 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   for (; CaretEnd != CaretStart; --CaretEnd)
     if (!isspace(CaretLine[CaretEnd - 1]))
       break;
-   
+
+  // Make sure we don't chop the string shorter than the caret token
+  // itself.
+  if (CaretEnd < EndOfCaretToken)
+    CaretEnd = EndOfCaretToken;
+
   // If we have a fix-it line, make sure the slice includes all of the
   // fix-it information.
   if (!FixItInsertionLine.empty()) {
@@ -208,7 +221,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
           // the middle of or at the end of an expression. In these
           // cases, we either keep bringing in more "interesting" text
           // to try to get to a somewhat-complete slice of the code.
-          BadStart = ispunct(SourceLine[NewStart]);
+          BadStart = !isIdentifierChar(SourceLine[NewStart]);
         }
       } while (BadStart);
 
@@ -314,7 +327,9 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   const char *BufStart = BufferInfo.first;
 
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
-  
+  unsigned CaretEndColNo 
+    = ColNo + Lexer::MeasureTokenLength(Loc, SM, *LangOpts);
+
   // Rewind from the current position to the start of the line.
   const char *TokPtr = BufStart+FileOffset;
   const char *LineStart = TokPtr-ColNo+1; // Column # is 1-based.
@@ -408,7 +423,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // "interesting" source region within that line.
   if (Columns && SourceLine.size() > Columns)
     SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
-                                  Columns);    
+                                  CaretEndColNo, Columns);
 
   // AvoidColumn tells us which column we should avoid when printing
   // the source line. If the source line would start at or near that
