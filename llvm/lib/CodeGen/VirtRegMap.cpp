@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -51,6 +52,7 @@ X("virtregmap", "Virtual Register Map");
 
 bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   TII = mf.getTarget().getInstrInfo();
+  TRI = mf.getTarget().getRegisterInfo();
   MF = &mf;
   
   ReMatId = MAX_STACK_SLOT+1;
@@ -73,6 +75,13 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   SpillSlotToUsesMap.resize(8);
   ImplicitDefed.resize(MF->getRegInfo().getLastVirtReg()+1-
                        TargetRegisterInfo::FirstVirtualRegister);
+
+  allocatableRCRegs.clear();
+  for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
+         E = TRI->regclass_end(); I != E; ++I)
+    allocatableRCRegs.insert(std::make_pair(*I,
+                                            TRI->getAllocatableSet(mf, *I)));
+
   grow();
   
   return false;

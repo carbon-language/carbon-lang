@@ -32,6 +32,7 @@ namespace llvm {
   class MachineInstr;
   class MachineFunction;
   class TargetInstrInfo;
+  class TargetRegisterInfo;
 
   class VirtRegMap : public MachineFunctionPass {
   public:
@@ -47,8 +48,11 @@ namespace llvm {
 
   private:
     const TargetInstrInfo *TII;
-
+    const TargetRegisterInfo *TRI;
     MachineFunction *MF;
+
+    DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs;
+
     /// Virt2PhysMap - This is a virtual to physical register
     /// mapping. Each virtual register is required to have an entry in
     /// it; even spilled virtual registers (the register mapped to a
@@ -466,7 +470,7 @@ namespace llvm {
     unsigned getFirstUnusedRegister(const TargetRegisterClass *RC) {
       int Reg = UnusedRegs.find_first();
       while (Reg != -1) {
-        if (RC->contains(Reg))
+        if (allocatableRCRegs[RC][Reg])
           return (unsigned)Reg;
         Reg = UnusedRegs.find_next(Reg);
       }
