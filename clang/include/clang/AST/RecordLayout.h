@@ -72,14 +72,24 @@ class ASTRecordLayout {
   void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
 public:
   
+  /// getAlignment - Get the record alignment in bits.
   unsigned getAlignment() const { return Alignment; }
+
+  /// getSize - Get the record size in bits.
   uint64_t getSize() const { return Size; }
   
+  /// getFieldOffset - Get the offset of the given field index, in
+  /// bits.
   uint64_t getFieldOffset(unsigned FieldNo) const {
     assert (FieldNo < FieldCount && "Invalid Field No");
     return FieldOffsets[FieldNo];
   }
     
+  /// getNextOffset - Get the next available (unused) offset in the
+  /// structure, in bits.
+  uint64_t getNextOffset() const {
+    return NextOffset;
+  }
 };
 
 }  // end namespace clang
