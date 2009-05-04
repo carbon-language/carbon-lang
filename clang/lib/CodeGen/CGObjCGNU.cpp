@@ -309,15 +309,15 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   if (IsClassMessage)  {
     if (!MetaClassPtrAlias) {
       MetaClassPtrAlias = new llvm::GlobalAlias(IdTy,
-          llvm::GlobalValue::InternalLinkage, ".objc_metaclass_ref" + Class->getNameAsString(), NULL,
-          &TheModule);
+          llvm::GlobalValue::InternalLinkage, ".objc_metaclass_ref" +
+          Class->getNameAsString(), NULL, &TheModule);
     }
     ReceiverClass = MetaClassPtrAlias;
   } else {
     if (!ClassPtrAlias) {
       ClassPtrAlias = new llvm::GlobalAlias(IdTy,
-          llvm::GlobalValue::InternalLinkage, ".objc_class_ref" + Class->getNameAsString(), NULL,
-          &TheModule);
+          llvm::GlobalValue::InternalLinkage, ".objc_class_ref" +
+          Class->getNameAsString(), NULL, &TheModule);
     }
     ReceiverClass = ClassPtrAlias;
   }
