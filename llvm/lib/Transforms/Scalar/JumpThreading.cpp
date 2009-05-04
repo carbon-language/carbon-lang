@@ -120,8 +120,8 @@ bool JumpThreading::runOnFunction(Function &F) {
           BB != &BB->getParent()->getEntryBlock()) {
         DOUT << "  JT: Deleting dead block '" << BB->getNameStart()
              << "' with terminator: " << *BB->getTerminator();
-        DeleteDeadBlock(BB);
         LoopHeaders.erase(BB);
+        DeleteDeadBlock(BB);
         Changed = true;
       }
     }
@@ -133,7 +133,7 @@ bool JumpThreading::runOnFunction(Function &F) {
   return EverChanged;
 }
 
-/// FindLoopHeaders - We do not wan jump threading to turn proper loop
+/// FindLoopHeaders - We do not want jump threading to turn proper loop
 /// structures into irreducible loops.  Doing this breaks up the loop nesting
 /// hierarchy and pessimizes later transformations.  To prevent this from
 /// happening, we first have to find the loop headers.  Here we approximate this
