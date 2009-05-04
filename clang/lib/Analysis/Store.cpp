@@ -23,7 +23,7 @@ StoreManager::StoreManager(GRStateManager &stateMgr)
 
 StoreManager::CastResult
 StoreManager::CastRegion(const GRState* state, const MemRegion* R,
-                               QualType CastToTy) {
+                         QualType CastToTy) {
   
   ASTContext& Ctx = StateMgr.getContext();
 
@@ -38,10 +38,11 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
       return CastResult(state, R);
   }
   
-  // Check if we are casting to 'void*'.
-  // FIXME: Handle arbitrary upcasts.
-  if (const PointerType* PTy = dyn_cast<PointerType>(ToTy.getTypePtr()))
-    if (PTy->getPointeeType()->isVoidType()) {
+  if (const PointerType* PTy = dyn_cast<PointerType>(ToTy.getTypePtr())) {
+    // Check if we are casting to 'void*'.
+    // FIXME: Handle arbitrary upcasts.
+    QualType Pointee = PTy->getPointeeType();
+    if (Pointee->isVoidType()) {
 
       // Casts to void* only removes TypedViewRegion. If there is no
       // TypedViewRegion, leave the region untouched. This happens when:
@@ -58,6 +59,20 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
       
       return CastResult(state, R);
     }
+    else if (Pointee->isIntegerType()) {
+      // FIXME: At some point, it stands to reason that this 'dyn_cast' should
+      //  become a 'cast' and that 'R' will always be a TypedRegion.
+      if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
+        // Check if we are casting to a region with an integer type.  We now
+        // the types aren't the same, so we construct an ElementRegion.
+        // FIXME: We should have a standard query function to get the size
+        //  of the array index.
+        SVal Idx = ValMgr.makeZeroVal(ValMgr.getContext().VoidPtrTy);
+        ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, TR);
+        return CastResult(state, ER);
+      }
+    }
+  }
 
   // FIXME: Need to handle arbitrary downcasts.
   // FIXME: Handle the case where a TypedViewRegion (layering a SymbolicRegion
