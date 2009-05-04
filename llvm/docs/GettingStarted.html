@@ -545,6 +545,9 @@ to miscompile parts of LLVM 2.4. One symptom is ValueSymbolTable complaining
 about symbols remaining in the table on destruction.</p>
 <p><b>GCC 4.1.2 20071124 (Red Hat 4.1.2-42)</b>: Suffers from the same symptoms
 as the previous one. It appears to work with ENABLE_OPTIMIZED=0 (the default).</p>
+<p><b>Cygwin GCC 4.3.2 20080827 (beta) 2</b>:
+  Users <a href="http://llvm.org/PR4145">reported</a> various problems related
+  with link errors when using this GCC version.</p>
 
 <p><b>GNU ld 2.16.X</b>. Some 2.16.X versions of the ld linker will produce very
 long warning messages complaining that some ".gnu.linkonce.t.*" symbol was
