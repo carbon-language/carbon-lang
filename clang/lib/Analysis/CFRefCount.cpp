@@ -779,6 +779,9 @@ public:
   RetainSummary* getCommonMethodSummary(const ObjCMethodDecl* MD,
                                         Selector S, QualType RetTy);
 
+  void updateSummaryArgEffFromAnnotations(RetainSummary &Summ, unsigned i,
+                                          const ParmVarDecl *PD);
+
   void updateSummaryFromAnnotations(RetainSummary &Summ,
                                     const ObjCMethodDecl *MD);
   
@@ -1092,6 +1095,22 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
 
 
 void
+RetainSummaryManager::updateSummaryArgEffFromAnnotations(RetainSummary &Summ,
+                                                         unsigned i,
+                                                         const ParmVarDecl *PD){
+  if (PD->getAttr<ObjCOwnershipRetainAttr>())
+    Summ.setArgEffect(AF, i, IncRefMsg);
+  else if (PD->getAttr<ObjCOwnershipCFRetainAttr>())
+    Summ.setArgEffect(AF, i, IncRef);
+  else if (PD->getAttr<ObjCOwnershipReleaseAttr>())
+    Summ.setArgEffect(AF, i, DecRefMsg);
+  else if (PD->getAttr<ObjCOwnershipCFReleaseAttr>())
+    Summ.setArgEffect(AF, i, DecRef);
+  else if (PD->getAttr<ObjCOwnershipMakeCollectableAttr>())
+    Summ.setArgEffect(AF, i, MakeCollectable);  
+}
+
+void
 RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
                                                    const ObjCMethodDecl *MD) {
   if (!MD)
@@ -1109,18 +1128,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   // Determine if there are any arguments with a specific ArgEffect.
   unsigned i = 0;
   for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
-       E = MD->param_end(); I != E; ++I, ++i) {
-    if ((*I)->getAttr<ObjCOwnershipRetainAttr>())
-      Summ.setArgEffect(AF, i, IncRefMsg);
-    else if ((*I)->getAttr<ObjCOwnershipCFRetainAttr>())
-      Summ.setArgEffect(AF, i, IncRef);
-    else if ((*I)->getAttr<ObjCOwnershipReleaseAttr>())
-      Summ.setArgEffect(AF, i, DecRefMsg);
-    else if ((*I)->getAttr<ObjCOwnershipCFReleaseAttr>())
-      Summ.setArgEffect(AF, i, DecRef);
-    else if ((*I)->getAttr<ObjCOwnershipMakeCollectableAttr>())
-      Summ.setArgEffect(AF, i, MakeCollectable);
-  }
+       E = MD->param_end(); I != E; ++I, ++i)
+    updateSummaryArgEffFromAnnotations(Summ, i, *I);
   
   // Determine any effects on the receiver.
   if (MD->getAttr<ObjCOwnershipRetainAttr>())
