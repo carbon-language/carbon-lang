@@ -466,6 +466,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc);
   // FIXME: Should we remove this?
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_nonfragile_abi);
+  Args.AddLastArg(CmdArgs, options::OPT_fobjc_tight_layout);
   Args.AddLastArg(CmdArgs, options::OPT_fprint_source_range_info);
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_print_source_range_info);
   Args.AddLastArg(CmdArgs, options::OPT_ftime_report);

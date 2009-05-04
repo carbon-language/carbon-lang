@@ -29,13 +29,14 @@ namespace clang {
 /// These objects are managed by ASTContext.
 class ASTRecordLayout {
   uint64_t Size;        // Size of record in bits.
+  uint64_t *FieldOffsets;
   unsigned Alignment;   // Alignment of record in bits.
   unsigned FieldCount;  // Number of fields
-  uint64_t *FieldOffsets;
+  unsigned NextOffset;  // Next available offset
   friend class ASTContext;
 
   ASTRecordLayout(uint64_t S = 0, unsigned A = 8) 
-    : Size(S), Alignment(A), FieldCount(0) {}
+    : Size(S), Alignment(A), FieldCount(0), NextOffset(0) {}
   ~ASTRecordLayout() {
     delete [] FieldOffsets;
   }
