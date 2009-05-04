@@ -28,8 +28,6 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include <queue>
-#include <set>
 using namespace llvm;
 
 /// MSP430DAGToDAGISel - MSP430 specific code to select MSP430 machine
