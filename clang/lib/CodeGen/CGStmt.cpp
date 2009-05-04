@@ -726,7 +726,7 @@ SimplifyConstraint(const char *Constraint, TargetInfo &Target,
 }
 
 llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
-                                           TargetInfo::ConstraintInfo Info, 
+                                         const TargetInfo::ConstraintInfo &Info,
                                            const Expr *InputExpr,
                                            std::string &ConstraintStr) {
   llvm::Value *Arg;

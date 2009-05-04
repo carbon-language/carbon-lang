@@ -801,7 +801,8 @@ private:
   void ExpandTypeToArgs(QualType Ty, RValue Src,
                         llvm::SmallVector<llvm::Value*, 16> &Args);
 
-  llvm::Value* EmitAsmInput(const AsmStmt &S, TargetInfo::ConstraintInfo Info,
+  llvm::Value* EmitAsmInput(const AsmStmt &S, 
+                            const TargetInfo::ConstraintInfo &Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
 
   /// EmitCleanupBlock - emits a single cleanup block.
