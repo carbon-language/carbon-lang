@@ -406,8 +406,8 @@ Value *Value::DoPHITranslation(const BasicBlock *CurBB,
 typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
 static ManagedStatic<ValueHandlesTy> ValueHandles;
 
-/// AddToUseList - Add this ValueHandle to the use list for VP, where List is
-/// known to point into the existing use list.
+/// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
+/// List is known to point into the existing use list.
 void ValueHandleBase::AddToExistingUseList(ValueHandleBase **List) {
   assert(List && "Handle list is null?");
   
@@ -443,7 +443,7 @@ void ValueHandleBase::AddToUseList() {
   ValueHandleBase *&Entry = Handles[VP];
   assert(Entry == 0 && "Value really did already have handles?");
   AddToExistingUseList(&Entry);
-  VP->HasValueHandle = 1;
+  VP->HasValueHandle = true;
   
   // If reallocation didn't happen or if this was the first insertion, don't
   // walk the table.
