@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 namespace {
@@ -1113,6 +1114,11 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   if (CC != CallingConv::C &&
       CC != CallingConv::Fast &&
       CC != CallingConv::X86_FastCall)
+    return false;
+
+  // On X86, -tailcallopt changes the fastcc ABI. FastISel doesn't
+  // handle this for now.
+  if (CC == CallingConv::Fast && PerformTailCallOpt)
     return false;
 
   // Let SDISel handle vararg functions.
