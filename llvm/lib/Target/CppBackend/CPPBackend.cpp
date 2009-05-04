@@ -1092,9 +1092,9 @@ namespace {
       const BranchInst* br = cast<BranchInst>(I);
       Out << "BranchInst::Create(" ;
       if (br->getNumOperands() == 3 ) {
-        Out << opNames[0] << ", "
+        Out << opNames[2] << ", "
             << opNames[1] << ", "
-            << opNames[2] << ", ";
+            << opNames[0] << ", ";
 
       } else if (br->getNumOperands() == 1) {
         Out << opNames[0] << ", ";
