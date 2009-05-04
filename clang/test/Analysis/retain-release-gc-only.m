@@ -131,9 +131,9 @@ void f3() {
 @interface TestOwnershipAttr : NSObject
 - (NSString*) returnsAnOwnedString __attribute__((objc_ownership_returns));
 - (void) myRetain:(id)__attribute__((objc_ownership_retain))obj;
-- (void) myCFRetain:(id)__attribute__((objc_ownership_cfretain))obj;
+- (void) myCFRetain:(id)__attribute__((cf_ownership_retain))obj;
 - (void) myRelease:(id)__attribute__((objc_ownership_release))obj;
-- (void) myCFRelease:(id)__attribute__((objc_ownership_cfrelease))obj;
+- (void) myCFRelease:(id)__attribute__((cf_ownership_release))obj;
 - (void) makeCollectable:(id)__attribute__((objc_ownership_make_collectable))obj;
 @end
 

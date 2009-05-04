@@ -59,8 +59,8 @@ public:
     NonNull,
     ObjCException,
     ObjCNSObject,
-    ObjCOwnershipCFRelease,       // Clang/Checker-specific.
-    ObjCOwnershipCFRetain,        // Clang/Checker-specific.
+    CFOwnershipRelease,       // Clang/Checker-specific.
+    CFOwnershipRetain,        // Clang/Checker-specific.
     ObjCOwnershipMakeCollectable, // Clang/Checker-specific.
     ObjCOwnershipRelease,         // Clang/Checker-specific.
     ObjCOwnershipRetain,          // Clang/Checker-specific.
@@ -466,9 +466,9 @@ public:
 };
 
 // Checker-specific attributes.
-DEF_SIMPLE_ATTR(ObjCOwnershipCFRelease);
+DEF_SIMPLE_ATTR(CFOwnershipRelease);
 DEF_SIMPLE_ATTR(ObjCOwnershipRelease);
-DEF_SIMPLE_ATTR(ObjCOwnershipCFRetain);
+DEF_SIMPLE_ATTR(CFOwnershipRetain);
 DEF_SIMPLE_ATTR(ObjCOwnershipRetain);
 DEF_SIMPLE_ATTR(ObjCOwnershipMakeCollectable);
 DEF_SIMPLE_ATTR(ObjCOwnershipReturns);

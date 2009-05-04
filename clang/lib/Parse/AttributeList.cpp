@@ -133,6 +133,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 18:
     if (!memcmp(Str, "warn_unused_result", 18)) return AT_warn_unused_result;
     break;
+  case 19:
+    if (!memcmp(Str, "cf_ownership_retain", 19))
+      return AT_cf_ownership_retain;
+    break;      
+  case 20:
+    if (!memcmp(Str, "cf_ownership_release", 20))
+      return AT_cf_ownership_release;
+    break;            
   case 21:
     if (!memcmp(Str, "objc_ownership_retain", 21))
       return AT_objc_ownership_retain;      
@@ -145,14 +153,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
     break;
-  case 23:
-    if (!memcmp(Str, "objc_ownership_cfretain", 23))
-      return AT_objc_ownership_cfretain;
-    break;
-  case 24:
-    if (!memcmp(Str, "objc_ownership_cfrelease", 24))
-      return AT_objc_ownership_cfrelease;
-    break;      
   case 31:
     if (!memcmp(Str, "objc_ownership_make_collectable", 31))
       return AT_objc_ownership_make_collectable;

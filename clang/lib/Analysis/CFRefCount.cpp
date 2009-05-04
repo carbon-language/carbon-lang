@@ -1107,11 +1107,11 @@ RetainSummaryManager::updateSummaryArgEffFromAnnotations(RetainSummary &Summ,
                                                          const ParmVarDecl *PD){
   if (PD->getAttr<ObjCOwnershipRetainAttr>())
     Summ.setArgEffect(AF, i, IncRefMsg);
-  else if (PD->getAttr<ObjCOwnershipCFRetainAttr>())
+  else if (PD->getAttr<CFOwnershipRetainAttr>())
     Summ.setArgEffect(AF, i, IncRef);
   else if (PD->getAttr<ObjCOwnershipReleaseAttr>())
     Summ.setArgEffect(AF, i, DecRefMsg);
-  else if (PD->getAttr<ObjCOwnershipCFReleaseAttr>())
+  else if (PD->getAttr<CFOwnershipReleaseAttr>())
     Summ.setArgEffect(AF, i, DecRef);
   else if (PD->getAttr<ObjCOwnershipMakeCollectableAttr>())
     Summ.setArgEffect(AF, i, MakeCollectable);  

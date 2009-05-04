@@ -1569,10 +1569,10 @@ static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &Attr,
       default:
         assert(0 && "invalid ownership attribute");
         return;
-      case AttributeList::AT_objc_ownership_cfrelease:
-        name = "objc_ownership_cfrelease"; break;
-      case AttributeList::AT_objc_ownership_cfretain:
-        name = "objc_ownership_cfretain"; break;
+      case AttributeList::AT_cf_ownership_release:
+        name = "cf_ownership_release"; break;
+      case AttributeList::AT_cf_ownership_retain:
+        name = "cf_ownership_retain"; break;
       case AttributeList::AT_objc_ownership_make_collectable:
         name = "objc_ownership_make_collectable"; break;
       case AttributeList::AT_objc_ownership_release:
@@ -1591,10 +1591,10 @@ static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &Attr,
     default:
       assert(0 && "invalid ownership attribute");
       return;
-    case AttributeList::AT_objc_ownership_cfrelease:
-      d->addAttr(::new (S.Context) ObjCOwnershipCFReleaseAttr()); return;      
-    case AttributeList::AT_objc_ownership_cfretain:
-      d->addAttr(::new (S.Context) ObjCOwnershipCFRetainAttr()); return;
+    case AttributeList::AT_cf_ownership_release:
+      d->addAttr(::new (S.Context) CFOwnershipReleaseAttr()); return;      
+    case AttributeList::AT_cf_ownership_retain:
+      d->addAttr(::new (S.Context) CFOwnershipRetainAttr()); return;
     case AttributeList::AT_objc_ownership_make_collectable:
       d->addAttr(::new (S.Context) ObjCOwnershipMakeCollectableAttr()); return;
     case AttributeList::AT_objc_ownership_release:
@@ -1642,8 +1642,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
 
   // Checker-specific.
-  case AttributeList::AT_objc_ownership_cfrelease:     
-  case AttributeList::AT_objc_ownership_cfretain:
+  case AttributeList::AT_cf_ownership_release:     
+  case AttributeList::AT_cf_ownership_retain:
       HandleObjCOwnershipAttr(D, Attr, S); break;
   case AttributeList::AT_objc_ownership_make_collectable:
   case AttributeList::AT_objc_ownership_release:
