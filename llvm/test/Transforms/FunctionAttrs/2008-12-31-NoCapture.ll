@@ -39,6 +39,16 @@ define i1 @c5(i32* %q, i32 %bitno) {
 	ret i1 %val
 }
 
+declare void @throw_if_bit_set(i8*, i8) readonly
+define i1 @c6(i8* %q, i8 %bit) {
+	invoke void @throw_if_bit_set(i8* %q, i8 %bit)
+		to label %ret0 unwind label %ret1
+ret0:
+	ret i1 0
+ret1:
+	ret i1 1
+}
+
 define i32 @nc1(i32* %q, i32* %p, i1 %b) {
 e:
 	br label %l
@@ -63,14 +73,20 @@ define void @nc3(void ()* %p) {
 	ret void
 }
 
-declare void @external(i8*) readonly
+declare void @external(i8*) readonly nounwind
 define void @nc4(i8* %p) {
 	call void @external(i8* %p)
 	ret void
 }
 
-define void @nc5(void (i8*)* %f, i8* %p) {
-	call void %f(i8* %p) readonly
-	call void %f(i8* nocapture %p)
+define void @nc5(void (i8*)* %p, i8* %r) {
+	call void %p(i8* %r)
+	call void %p(i8* nocapture %r)
+	ret void
+}
+
+declare i8* @external_identity(i8*) readonly nounwind
+define void @nc6(i8* %p) {
+	call i8* @external_identity(i8* %p)
 	ret void
 }
