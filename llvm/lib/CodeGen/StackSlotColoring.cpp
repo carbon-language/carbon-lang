@@ -232,61 +232,54 @@ StackSlotColoring::ColorSlotsWithFreeRegs(SmallVector<int, 16> &SlotMapping,
     int SS = li->getStackSlotIndex();
     if (!UsedColors[SS])
       continue;
-    // Get the largest common sub- register class of all the stack slots that
-    // are colored to this stack slot.
-    const TargetRegisterClass *RC = 0;
-    for (unsigned j = 0, ee = RevMap[SS].size(); j != ee; ++j) {
-      int RSS = RevMap[SS][j];
-      const TargetRegisterClass *RRC = LS->getIntervalRegClass(RSS);
-      if (!RC)
-        RC = RRC;
-      else
-        RC = getCommonSubClass(RC, RRC);
-    }
 
-    // If it's not colored to another stack slot, try coloring it
-    // to a "free" register.
-    if (!RC)
-      continue;
-    unsigned Reg = VRM->getFirstUnusedRegister(RC);
-    if (!Reg)
-      continue;
-    bool IsSafe = true;
+    // These slots allow to share the same registers.
+    bool AllColored = true;
+    SmallVector<unsigned, 4> ColoredRegs;
     for (unsigned j = 0, ee = RevMap[SS].size(); j != ee; ++j) {
       int RSS = RevMap[SS][j];
+      const TargetRegisterClass *RC = LS->getIntervalRegClass(RSS);
+      // If it's not colored to another stack slot, try coloring it
+      // to a "free" register.
+      if (!RC) {
+        AllColored = false;
+        continue;
+      }
+      unsigned Reg = VRM->getFirstUnusedRegister(RC);
+      if (!Reg) {
+        AllColored = false;
+        continue;
+      }
       if (!AllMemRefsCanBeUnfolded(RSS)) {
-        IsSafe = false;
-        break;
+        AllColored = false;
+        continue;
+      } else {
+        DOUT << "Assigning fi#" << RSS << " to " << TRI->getName(Reg) << '\n';
+        ColoredRegs.push_back(Reg);
+        SlotMapping[RSS] = Reg;
+        SlotIsReg.set(RSS);
+        Changed = true;
       }
     }
-    if (!IsSafe)
-      // Try color the next spill slot.
-      continue;
 
-    DOUT << "Assigning fi#" << SS << " to " << TRI->getName(Reg)
-         << ", which in turn means...\n";
     // Register and its sub-registers are no longer free.
-    VRM->setRegisterUsed(Reg);
-    // If reg is a callee-saved register, it will have to be spilled in
-    // the prologue.
-    MRI->setPhysRegUsed(Reg);
-    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
-      VRM->setRegisterUsed(*AS);
-      MRI->setPhysRegUsed(*AS);
+    while (!ColoredRegs.empty()) {
+      unsigned Reg = ColoredRegs.back();
+      ColoredRegs.pop_back();
+      VRM->setRegisterUsed(Reg);
+      // If reg is a callee-saved register, it will have to be spilled in
+      // the prologue.
+      MRI->setPhysRegUsed(Reg);
+      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+        VRM->setRegisterUsed(*AS);
+        MRI->setPhysRegUsed(*AS);
+      }
     }
     // This spill slot is dead after the rewrites
-    MFI->RemoveStackObject(SS);
-
-    // Remember all these FI references will have to be unfolded.
-    for (unsigned j = 0, ee = RevMap[SS].size(); j != ee; ++j) {
-      int RSS = RevMap[SS][j];
-      DOUT << "  Assigning fi#" << RSS << " to " << TRI->getName(Reg) << '\n';
-      SlotMapping[RSS] = Reg;
-      SlotIsReg.set(RSS);
+    if (AllColored) {
+      MFI->RemoveStackObject(SS);
+      ++NumEliminated;
     }
-
-    ++NumEliminated;
-    Changed = true;
   }
   DOUT << '\n';
 
