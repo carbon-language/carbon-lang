@@ -19,7 +19,7 @@ SUBST=$1
 FILEDIR=`dirname $TESTNAME`
 
 # Make diagnostic printing more determinstic.
-export COLUMNS=999
+export COLUMNS=0
 
 OUTPUT=Output/$1.out
 
