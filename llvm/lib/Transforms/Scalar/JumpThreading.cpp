@@ -15,17 +15,19 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/ValueHandle.h"
 using namespace llvm;
 
 STATISTIC(NumThreads, "Number of jumps threaded");
@@ -55,6 +57,11 @@ namespace {
   ///
   class VISIBILITY_HIDDEN JumpThreading : public FunctionPass {
     TargetData *TD;
+#ifdef NDEBUG
+    SmallPtrSet<BasicBlock*, 16> LoopHeaders;
+#else
+    SmallSet<AssertingVH<BasicBlock>, 16> LoopHeaders;
+#endif
   public:
     static char ID; // Pass identification
     JumpThreading() : FunctionPass(&ID) {}
@@ -64,8 +71,11 @@ namespace {
     }
 
     bool runOnFunction(Function &F);
+    void FindLoopHeaders(Function &F);
+    
     bool ProcessBlock(BasicBlock *BB);
-    void ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
+    bool ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB,
+                    unsigned JumpThreadCost);
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Constant *CstVal);
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
@@ -91,6 +101,8 @@ bool JumpThreading::runOnFunction(Function &F) {
   DOUT << "Jump threading on function '" << F.getNameStart() << "'\n";
   TD = &getAnalysis<TargetData>();
   
+  FindLoopHeaders(F);
+  
   bool AnotherIteration = true, EverChanged = false;
   while (AnotherIteration) {
     AnotherIteration = false;
@@ -109,14 +121,41 @@ bool JumpThreading::runOnFunction(Function &F) {
         DOUT << "  JT: Deleting dead block '" << BB->getNameStart()
              << "' with terminator: " << *BB->getTerminator();
         DeleteDeadBlock(BB);
+        LoopHeaders.erase(BB);
         Changed = true;
       }
     }
     AnotherIteration = Changed;
     EverChanged |= Changed;
   }
+  
+  LoopHeaders.clear();
   return EverChanged;
 }
+
+/// FindLoopHeaders - We do not wan jump threading to turn proper loop
+/// structures into irreducible loops.  Doing this breaks up the loop nesting
+/// hierarchy and pessimizes later transformations.  To prevent this from
+/// happening, we first have to find the loop headers.  Here we approximate this
+/// by finding targets of backedges in the CFG.
+///
+/// Note that there definitely are cases when we want to allow threading of
+/// edges across a loop header.  For example, threading a jump from outside the
+/// loop (the preheader) to an exit block of the loop is definitely profitable.
+/// It is also almost always profitable to thread backedges from within the loop
+/// to exit blocks, and is often profitable to thread backedges to other blocks
+/// within the loop (forming a nested loop).  This simple analysis is not rich
+/// enough to track all of these properties and keep it up-to-date as the CFG
+/// mutates, so we don't allow any of these transformations.
+///
+void JumpThreading::FindLoopHeaders(Function &F) {
+  SmallVector<std::pair<const BasicBlock*,const BasicBlock*>, 32> Edges;
+  FindFunctionBackedges(F, Edges);
+  
+  for (unsigned i = 0, e = Edges.size(); i != e; ++i)
+    LoopHeaders.insert(const_cast<BasicBlock*>(Edges[i].second));
+}
+
 
 /// FactorCommonPHIPreds - If there are multiple preds with the same incoming
 /// value for the PHI, factor them together so we get one block to thread for
@@ -191,6 +230,10 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   if (BasicBlock *SinglePred = BB->getSinglePredecessor())
     if (SinglePred->getTerminator()->getNumSuccessors() == 1 &&
         SinglePred != BB) {
+      // If SinglePred was a loop header, BB becomes one.
+      if (LoopHeaders.erase(SinglePred))
+        LoopHeaders.insert(BB);
+      
       // Remember if SinglePred was the entry block of the function.  If so, we
       // will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
@@ -389,22 +432,8 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
   // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB = DestBI->getSuccessor(!BranchDir);
   
-  // If threading to the same block as we come from, we would infinite loop.
-  if (SuccBB == BB) {
-    DOUT << "  Not threading BB '" << BB->getNameStart()
-         << "' - would thread to self!\n";
-    return false;
-  }
-  
-  // And finally, do it!
-  DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
-       << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
-       << ", across block:\n    "
-       << *BB << "\n";
-  
-  ThreadEdge(BB, PredBB, SuccBB);
-  ++NumThreads;
-  return true;
+  // Ok, try to thread it!
+  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
 }
 
 /// ProcessSwitchOnDuplicateCond - We found a block and a predecessor of that
@@ -675,22 +704,8 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
   }
   
-  // If threading to the same block as we come from, we would infinite loop.
-  if (SuccBB == BB) {
-    DOUT << "  Not threading BB '" << BB->getNameStart()
-         << "' - would thread to self!\n";
-    return false;
-  }
-  
-  // And finally, do it!
-  DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
-       << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
-       << ", across block:\n    "
-       << *BB << "\n";
-       
-  ThreadEdge(BB, PredBB, SuccBB);
-  ++NumThreads;
-  return true;
+  // Ok, try to thread it!
+  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
 }
 
 /// ProcessJumpOnLogicalPHI - PN's basic block contains a conditional branch
@@ -751,22 +766,8 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // 'true' block.
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(isAnd);
   
-  // If threading to the same block as we come from, we would infinite loop.
-  if (SuccBB == BB) {
-    DOUT << "  Not threading BB '" << BB->getNameStart()
-    << "' - would thread to self!\n";
-    return false;
-  }
-  
-  // And finally, do it!
-  DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
-       << "' to '" << SuccBB->getNameStart() << "' with cost: "
-       << JumpThreadCost << ", across block:\n    "
-       << *BB << "\n";
-  
-  ThreadEdge(BB, PredBB, SuccBB);
-  ++NumThreads;
-  return true;
+  // Ok, try to thread it!
+  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
 }
 
 /// ProcessBranchOnCompare - We found a branch on a comparison between a phi
@@ -829,32 +830,40 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   // Next, get our successor.
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(!TrueDirection);
   
-  // If threading to the same block as we come from, we would infinite loop.
-  if (SuccBB == BB) {
-    DOUT << "  Not threading BB '" << BB->getNameStart()
-    << "' - would thread to self!\n";
-    return false;
-  }
-  
-  
-  // And finally, do it!
-  DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
-       << "' to '" << SuccBB->getNameStart() << "' with cost: "
-       << JumpThreadCost << ", across block:\n    "
-       << *BB << "\n";
-  
-  ThreadEdge(BB, PredBB, SuccBB);
-  ++NumThreads;
-  return true;
+  // Ok, try to thread it!
+  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
 }
 
 
 /// ThreadEdge - We have decided that it is safe and profitable to thread an
 /// edge from PredBB to SuccBB across BB.  Transform the IR to reflect this
 /// change.
-void JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, 
-                               BasicBlock *SuccBB) {
+bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, 
+                               BasicBlock *SuccBB, unsigned JumpThreadCost) {
 
+  // If threading to the same block as we come from, we would infinite loop.
+  if (SuccBB == BB) {
+    DOUT << "  Not threading across BB '" << BB->getNameStart()
+         << "' - would thread to self!\n";
+    return false;
+  }
+  
+  // If threading this would thread across a loop header, don't thread the edge.
+  // See the comments above FindLoopHeaders for justifications and caveats.
+  if (LoopHeaders.count(BB)) {
+    DOUT << "  Not threading from '" << PredBB->getNameStart()
+         << "' across loop header BB '" << BB->getNameStart()
+         << "' to dest BB '" << SuccBB->getNameStart()
+         << "' - it might create an irreducible loop!\n";
+    return false;
+  }
+
+  // And finally, do it!
+  DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
+       << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
+       << ", across block:\n    "
+       << *BB << "\n";
+  
   // Jump Threading can not update SSA properties correctly if the values
   // defined in the duplicated block are used outside of the block itself.  For
   // this reason, we spill all values that are used outside of BB to the stack.
@@ -938,4 +947,8 @@ void JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     
     RecursivelyDeleteTriviallyDeadInstructions(Inst);
   }
+  
+  // Threaded an edge!
+  ++NumThreads;
+  return true;
 }
