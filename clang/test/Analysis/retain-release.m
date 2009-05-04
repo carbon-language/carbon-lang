@@ -431,11 +431,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 //===----------------------------------------------------------------------===//
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*)  __attribute__((objc_ownership_returns)) returnsAnOwnedString;
-// Soon we won't accept __attribute__((objc_ownership_returns)) at the end
-// of a method decl.
-- (NSString*) returnsAnOwnedString2 __attribute__((objc_ownership_returns));
-
+- (NSString*) returnsAnOwnedString  __attribute__((objc_ownership_returns));
 - (void) myRetain:(id)__attribute__((objc_ownership_retain))obj;
 - (void) myCFRetain:(id)__attribute__((objc_ownership_cfretain))obj;
 - (void) myRelease:(id)__attribute__((objc_ownership_release))obj;

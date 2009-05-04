@@ -677,12 +677,6 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName(DSRet);
   
-  // Parse attributes that can appear before the selector.
-  AttributeList *ReturnAttrs = 0;
-
-  if (getLang().ObjC2 && Tok.is(tok::kw___attribute)) 
-    ReturnAttrs = ParseAttributes();  
-  
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(selLoc);
 
@@ -705,8 +699,8 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
-                                          0, CargNames, ReturnAttrs, 
-                                          MethodAttrs, MethodImplKind);
+                                          0, CargNames, MethodAttrs,
+                                          MethodImplKind);
   }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
@@ -779,8 +773,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                                    &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel, 
-                                        &ArgInfos[0], CargNames, ReturnAttrs,
-                                        MethodAttrs,
+                                        &ArgInfos[0], CargNames, MethodAttrs,
                                         MethodImplKind, isVariadic);
 }
 

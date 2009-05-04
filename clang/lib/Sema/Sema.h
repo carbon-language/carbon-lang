@@ -1098,9 +1098,6 @@ public:
   // Decl attributes - this routine is the top level dispatcher. 
   void ProcessDeclAttributes(Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
-  
-  void ProcessObjCMethDeclReturnAttributeList(ObjCMethodDecl *D,
-                                              const AttributeList *AttrList);
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
@@ -2227,7 +2224,6 @@ public:
     // from the Sel.getNumArgs().
     ObjCArgInfo *ArgInfo,
     llvm::SmallVectorImpl<Declarator> &Cdecls,
-    AttributeList *ReturnAttrList,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
     bool isVariadic = false);
 
