@@ -3262,6 +3262,8 @@ public:
     // Assumes in correct section after the entry point.
     EmitLabel("func_begin", ++SubprogramCount);
 
+    // Emit label for the implicitly defined dbg.stoppoint at the start of
+    // the function.
     DebugLoc FDL = MF->getDefaultDebugLoc();
     if (!FDL.isUnknown()) {
       DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
