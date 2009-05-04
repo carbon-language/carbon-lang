@@ -817,8 +817,6 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
     TargetInfo::ConstraintInfo &Info = OutputConstraintInfos[i];
-    
-    OutputConstraintInfos.push_back(Info);
 
     // Simplify the output constraint.
     std::string OutputConstraint(S.getOutputConstraint(i));
