@@ -43,10 +43,14 @@ namespace {
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
 
-  cl::opt<bool> Fast("fast", 
-                     cl::desc("Generate code quickly, "
-                              "potentially sacrificing code quality"),
-                     cl::init(false));
+  // Determine optimization level.
+  cl::opt<char>
+  OptLevel("O",
+           cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
+                    "(default = '-O2')"),
+           cl::Prefix,
+           cl::ZeroOrMore,
+           cl::init(' '));
 
   cl::opt<std::string>
   TargetTriple("mtriple", cl::desc("Override target triple for module"));
@@ -122,9 +126,19 @@ int main(int argc, char **argv, char * const *envp) {
   if (!TargetTriple.empty())
     Mod->setTargetTriple(TargetTriple);
 
-  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg,
-                               Fast ?
-                                 CodeGenOpt::None : CodeGenOpt::Aggressive);
+  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
+  switch (OptLevel) {
+  default:
+    std::cerr << argv[0] << ": invalid optimization level.\n";
+    return 1;
+  case ' ': break;
+  case '0': OLvl = CodeGenOpt::None; break;
+  case '1':
+  case '2': OLvl = CodeGenOpt::Default; break;
+  case '3': OLvl = CodeGenOpt::Aggressive; break;
+  }
+
+  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, OLvl);
   if (!EE && !ErrorMsg.empty()) {
     std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
     exit(1);

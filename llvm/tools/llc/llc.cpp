@@ -55,10 +55,11 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-// Determine optimization level. Level -O0 is equivalent to "fast" code gen.
+// Determine optimization level.
 static cl::opt<char>
 OptLevel("O",
-         cl::desc("Optimization level. [-O0, -O1, -O2, or -O3]"),
+         cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
+                  "(default = '-O2')"),
          cl::Prefix,
          cl::ZeroOrMore,
          cl::init(' '));
@@ -253,8 +254,7 @@ int main(int argc, char **argv) {
   raw_ostream *Out = GetOutputStream(argv[0]);
   if (Out == 0) return 1;
 
-  CodeGenOpt::Level OLvl = CodeGenOpt::Aggressive;
-
+  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
   default:
     std::cerr << argv[0] << ": invalid optimization level.\n";
