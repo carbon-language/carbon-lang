@@ -520,8 +520,12 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
 
   
   // Size and align of the type.
-  uint64_t Size = M->getContext().getTypeSize(Ty);
-  unsigned Align = M->getContext().getTypeAlign(Ty);
+  uint64_t Size = 0;
+  unsigned Align = 0;
+  if (!Ty->isIncompleteType()) {
+    Size = M->getContext().getTypeSize(Ty);
+    Align = M->getContext().getTypeAlign(Ty);
+  }
   
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
                                           Unit, EnumName, DefUnit, Line,

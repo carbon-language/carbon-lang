@@ -28,3 +28,10 @@ struct foo {
 	void *ptrs[];
 };
 struct foo bar;
+
+// PR4143
+struct foo2 {
+        enum bar *bar;
+};
+
+struct foo2 foo2;
