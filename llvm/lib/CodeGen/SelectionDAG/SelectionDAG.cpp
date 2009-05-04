@@ -1273,11 +1273,12 @@ SDValue SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getDbgStopPoint(SDValue Root,
+SDValue SelectionDAG::getDbgStopPoint(DebugLoc DL, SDValue Root,
                                       unsigned Line, unsigned Col,
                                       Value *CU) {
   SDNode *N = NodeAllocator.Allocate<DbgStopPointSDNode>();
   new (N) DbgStopPointSDNode(Root, Line, Col, CU);
+  N->setDebugLoc(DL);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }

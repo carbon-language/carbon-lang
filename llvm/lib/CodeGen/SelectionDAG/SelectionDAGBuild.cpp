@@ -3889,15 +3889,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
     if (DIDescriptor::ValidDebugInfo(SPI.getContext(), OptLevel)) {
       MachineFunction &MF = DAG.getMachineFunction();
+      DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
+      DebugLoc Loc = DebugLoc::get(MF.getOrCreateDebugLocID(CU.getGV(),
+                                              SPI.getLine(), SPI.getColumn()));
+      setCurDebugLoc(Loc);
+      
       if (OptLevel == CodeGenOpt::None)
-        DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
+        DAG.setRoot(DAG.getDbgStopPoint(Loc, getRoot(),
                                         SPI.getLine(),
                                         SPI.getColumn(),
                                         SPI.getContext()));
-      DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
-      unsigned idx = MF.getOrCreateDebugLocID(CU.getGV(),
-                                              SPI.getLine(), SPI.getColumn());
-      setCurDebugLoc(DebugLoc::get(idx));
     }
     return 0;
   }

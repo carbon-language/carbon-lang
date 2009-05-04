@@ -302,8 +302,8 @@ public:
   SDValue getArgFlags(ISD::ArgFlagsTy Flags);
   SDValue getValueType(MVT);
   SDValue getRegister(unsigned Reg, MVT VT);
-  SDValue getDbgStopPoint(SDValue Root, unsigned Line, unsigned Col,
-                          Value *CU);
+  SDValue getDbgStopPoint(DebugLoc DL, SDValue Root, 
+                          unsigned Line, unsigned Col, Value *CU);
   SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root,
                    unsigned LabelID);
 
