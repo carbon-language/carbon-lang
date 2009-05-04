@@ -1552,7 +1552,7 @@ static void HandleNSOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
 
   if (!isa<ObjCMethodDecl>(d) && !isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      "ns_ownership_returns" << 3 /* function or method */;
+      "ns_returns_ownership" << 3 /* function or method */;
     return;
   }
   
@@ -1644,7 +1644,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_ns_ownership_release:
   case AttributeList::AT_ns_ownership_retain:
       HandleNSOwnershipAttr(D, Attr, S, true); break;
-  case AttributeList::AT_ns_ownership_returns:
+  case AttributeList::AT_ns_returns_ownership:
     HandleNSOwnershipReturnsAttr(D, Attr, S); break;
 
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;

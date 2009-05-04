@@ -144,8 +144,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
       return AT_cf_ownership_release;
     if (!memcmp(Str, "ns_ownership_release", 20))
       return AT_ns_ownership_release;
-    if (!memcmp(Str, "ns_ownership_returns", 20))
-      return AT_ns_ownership_returns;
+    if (!memcmp(Str, "ns_returns_ownership", 20))
+      return AT_ns_returns_ownership;
     break;
   case 22:
     if (!memcmp(Str, "no_instrument_function", 22))

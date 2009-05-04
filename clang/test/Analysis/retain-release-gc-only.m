@@ -129,7 +129,7 @@ void f3() {
 //===----------------------------------------------------------------------===//
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString __attribute__((ns_ownership_returns));
+- (NSString*) returnsAnOwnedString __attribute__((ns_returns_ownership));
 - (void) myRetain:(id)__attribute__((ns_ownership_retain))obj;
 - (void) myCFRetain:(id)__attribute__((cf_ownership_retain))obj;
 - (void) myRelease:(id)__attribute__((ns_ownership_release))obj;

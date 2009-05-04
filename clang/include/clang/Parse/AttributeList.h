@@ -80,7 +80,7 @@ public:
     AT_cf_ownership_retain,         // Clang-specific.
     AT_ns_ownership_release,          // Clang-specific.
     AT_ns_ownership_retain,           // Clang-specific.
-    AT_ns_ownership_returns,          // Clang-specific.
+    AT_ns_returns_ownership,          // Clang-specific.
     AT_objc_gc,
     AT_overloadable,            // Clang-specific.
     AT_packed,

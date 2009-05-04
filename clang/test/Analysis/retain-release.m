@@ -431,7 +431,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 //===----------------------------------------------------------------------===//
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString  __attribute__((ns_ownership_returns));
+- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_ownership));
 - (void) myRetain:(id)__attribute__((ns_ownership_retain))obj;
 - (void) myCFRetain:(id)__attribute__((cf_ownership_retain))obj;
 - (void) myRelease:(id)__attribute__((ns_ownership_release))obj;
@@ -443,7 +443,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 
 @interface TestAttrHelper : NSObject
 - (NSString*) createString:(TestOwnershipAttr*)X;
-- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((ns_ownership_returns));
+- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((ns_returns_ownership));
 @end
 
 @implementation TestAttrHelper
