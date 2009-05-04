@@ -108,18 +108,6 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaretLine[i] = '~';
 }
 
-/// \brief Whether this is a closing delimiter such as ')' or ']'.
-static inline bool isClosingDelimiter(char c) {
-  return c == ')' || c == ']' || c == '}';
-}
-
-/// \brief Determine whether this character is part of an identifier.
-static inline bool isIdentifierChar(char c) {
-  return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
-    (c >= 'A' && c <= 'Z') || c == '_';
-    
-}
-
 /// \brief When the source code line we want to print is too long for
 /// the terminal, select the "interesting" region.
 static void SelectInterestingSourceRegion(std::string &SourceLine,
@@ -176,58 +164,31 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 
   unsigned TargetColumns = Columns - 8; // Give us extra room for the ellipses.
   unsigned SourceLength = SourceLine.size();
-  bool StartIsFixed = false;
-  while (CaretEnd - CaretStart < TargetColumns) {
+  while ((CaretEnd - CaretStart) < TargetColumns) {
     bool ExpandedRegion = false;
     // Move the start of the interesting region left until we've
     // pulled in something else interesting.
-    if (CaretStart && !StartIsFixed) {
-      unsigned NewStart = CaretStart;
+    if (CaretStart == 1)
+      CaretStart = 0;
+    else if (CaretStart > 1) {
+      unsigned NewStart = CaretStart - 1;
         
-      bool BadStart = false;
-      do {
-        // Skip over any whitespace we see here; we're looking for
-        // another bit of interesting text.
-        if (NewStart)
-          --NewStart;
-        while (NewStart && isspace(SourceLine[NewStart]))
-          --NewStart;
-          
-        // Skip over this bit of "interesting" text.
-        while (NewStart && !isspace(SourceLine[NewStart])) {
-          if (isClosingDelimiter(SourceLine[NewStart]))
-            StartIsFixed = true;
-          --NewStart;
-        }
-
-        // Move up to the non-whitespace character we just saw.
-        if (!StartIsFixed && 
-            isspace(SourceLine[NewStart]) &&
-            !isspace(SourceLine[NewStart + 1]))
-          ++NewStart;
-
-        // Never go back past closing delimeters, because
-        // they're unlikely to be important (and they result in
-        // weird slices). Instead, move forward to the next
-        // non-whitespace character.
-        BadStart = false;
-        if (StartIsFixed) {
-          ++NewStart;
-          while (NewStart != CaretEnd && isspace(SourceLine[NewStart]))
-            ++NewStart;
-        } else if (NewStart) {
-          // There are some characters that always signal that we've
-          // found a bad stopping place, because they always occur in
-          // the middle of or at the end of an expression. In these
-          // cases, we either keep bringing in more "interesting" text
-          // to try to get to a somewhat-complete slice of the code.
-          BadStart = !isIdentifierChar(SourceLine[NewStart]);
-        }
-      } while (BadStart);
+      // Skip over any whitespace we see here; we're looking for
+      // another bit of interesting text.
+      while (NewStart && isspace(SourceLine[NewStart]))
+        --NewStart;
+      
+      // Skip over this bit of "interesting" text.
+      while (NewStart && !isspace(SourceLine[NewStart]))
+        --NewStart;
+      
+      // Move up to the non-whitespace character we just saw.
+      if (NewStart)
+        ++NewStart;
 
       // If we're still within our limit, update the starting
       // position within the source/caret line.
-      if (CaretEnd - NewStart <= TargetColumns && !StartIsFixed) {
+      if (CaretEnd - NewStart <= TargetColumns) {
         CaretStart = NewStart;
         ExpandedRegion = true;
       }
