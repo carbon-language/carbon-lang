@@ -1224,7 +1224,8 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   return Result;
 }
 
-SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
+                                        const SCEVHandle &RHS) {
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                            // X udiv 1 --> x
