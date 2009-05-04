@@ -1547,19 +1547,19 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 // Checker-specific attribute handlers.
 //===----------------------------------------------------------------------===//
 
-static void HandleObjCOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
+static void HandleNSOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
                                            Sema &S) {
 
   if (!isa<ObjCMethodDecl>(d) && !isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      "objc_ownership_returns" << 3 /* function or method */;
+      "ns_ownership_returns" << 3 /* function or method */;
     return;
   }
   
-  d->addAttr(::new (S.Context) ObjCOwnershipReturnsAttr());
+  d->addAttr(::new (S.Context) NSOwnershipReturnsAttr());
 }
 
-static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &Attr,
+static void HandleNSOwnershipAttr(Decl *d, const AttributeList &Attr,
                                     Sema &S, bool attachToMethodDecl = false) {
   
   if (!isa<ParmVarDecl>(d) && (!attachToMethodDecl || !isa<ObjCMethodDecl>(d))){
@@ -1573,12 +1573,12 @@ static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &Attr,
         name = "cf_ownership_release"; break;
       case AttributeList::AT_cf_ownership_retain:
         name = "cf_ownership_retain"; break;
-      case AttributeList::AT_objc_ownership_make_collectable:
-        name = "objc_ownership_make_collectable"; break;
-      case AttributeList::AT_objc_ownership_release:
-        name = "objc_ownership_release"; break;
-      case AttributeList::AT_objc_ownership_retain:
-        name = "objc_ownership_retain"; break;
+      case AttributeList::AT_ns_ownership_make_collectable:
+        name = "ns_ownership_make_collectable"; break;
+      case AttributeList::AT_ns_ownership_release:
+        name = "ns_ownership_release"; break;
+      case AttributeList::AT_ns_ownership_retain:
+        name = "ns_ownership_retain"; break;
     };
 
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) << name
@@ -1595,12 +1595,12 @@ static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &Attr,
       d->addAttr(::new (S.Context) CFOwnershipReleaseAttr()); return;      
     case AttributeList::AT_cf_ownership_retain:
       d->addAttr(::new (S.Context) CFOwnershipRetainAttr()); return;
-    case AttributeList::AT_objc_ownership_make_collectable:
-      d->addAttr(::new (S.Context) ObjCOwnershipMakeCollectableAttr()); return;
-    case AttributeList::AT_objc_ownership_release:
-      d->addAttr(::new (S.Context) ObjCOwnershipReleaseAttr());   return;
-    case AttributeList::AT_objc_ownership_retain:
-      d->addAttr(::new (S.Context) ObjCOwnershipRetainAttr());   return;
+    case AttributeList::AT_ns_ownership_make_collectable:
+      d->addAttr(::new (S.Context) NSOwnershipMakeCollectableAttr()); return;
+    case AttributeList::AT_ns_ownership_release:
+      d->addAttr(::new (S.Context) NSOwnershipReleaseAttr());   return;
+    case AttributeList::AT_ns_ownership_retain:
+      d->addAttr(::new (S.Context) NSOwnershipRetainAttr());   return;
   }
 }
 
@@ -1644,13 +1644,13 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   // Checker-specific.
   case AttributeList::AT_cf_ownership_release:     
   case AttributeList::AT_cf_ownership_retain:
-      HandleObjCOwnershipAttr(D, Attr, S); break;
-  case AttributeList::AT_objc_ownership_make_collectable:
-  case AttributeList::AT_objc_ownership_release:
-  case AttributeList::AT_objc_ownership_retain:
-      HandleObjCOwnershipAttr(D, Attr, S, true); break;
-  case AttributeList::AT_objc_ownership_returns:
-    HandleObjCOwnershipReturnsAttr(D, Attr, S); break;
+      HandleNSOwnershipAttr(D, Attr, S); break;
+  case AttributeList::AT_ns_ownership_make_collectable:
+  case AttributeList::AT_ns_ownership_release:
+  case AttributeList::AT_ns_ownership_retain:
+      HandleNSOwnershipAttr(D, Attr, S, true); break;
+  case AttributeList::AT_ns_ownership_returns:
+    HandleNSOwnershipReturnsAttr(D, Attr, S); break;
 
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;

@@ -1551,10 +1551,10 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::ObjCNSObject:
     case Attr::CFOwnershipRelease:
     case Attr::CFOwnershipRetain:
-    case Attr::ObjCOwnershipMakeCollectable:
-    case Attr::ObjCOwnershipRelease:
-    case Attr::ObjCOwnershipRetain:
-    case Attr::ObjCOwnershipReturns:
+    case Attr::NSOwnershipMakeCollectable:
+    case Attr::NSOwnershipRelease:
+    case Attr::NSOwnershipRetain:
+    case Attr::NSOwnershipReturns:
     case Attr::Overloadable:
       break;
 

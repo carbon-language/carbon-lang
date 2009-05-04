@@ -1105,15 +1105,15 @@ void
 RetainSummaryManager::updateSummaryArgEffFromAnnotations(RetainSummary &Summ,
                                                          unsigned i,
                                                          const ParmVarDecl *PD){
-  if (PD->getAttr<ObjCOwnershipRetainAttr>())
+  if (PD->getAttr<NSOwnershipRetainAttr>())
     Summ.setArgEffect(AF, i, IncRefMsg);
   else if (PD->getAttr<CFOwnershipRetainAttr>())
     Summ.setArgEffect(AF, i, IncRef);
-  else if (PD->getAttr<ObjCOwnershipReleaseAttr>())
+  else if (PD->getAttr<NSOwnershipReleaseAttr>())
     Summ.setArgEffect(AF, i, DecRefMsg);
   else if (PD->getAttr<CFOwnershipReleaseAttr>())
     Summ.setArgEffect(AF, i, DecRef);
-  else if (PD->getAttr<ObjCOwnershipMakeCollectableAttr>())
+  else if (PD->getAttr<NSOwnershipMakeCollectableAttr>())
     Summ.setArgEffect(AF, i, MakeCollectable);  
 }
 
@@ -1125,7 +1125,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(FD->getResultType())) {
-    if (FD->getAttr<ObjCOwnershipReturnsAttr>()) {
+    if (FD->getAttr<NSOwnershipReturnsAttr>()) {
       Summ.setRetEffect(isGCEnabled()
                         ? RetEffect::MakeGCNotOwned()
                         : RetEffect::MakeOwned(RetEffect::ObjC, true));
@@ -1147,7 +1147,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(MD->getResultType())) {
-    if (MD->getAttr<ObjCOwnershipReturnsAttr>()) {
+    if (MD->getAttr<NSOwnershipReturnsAttr>()) {
       Summ.setRetEffect(isGCEnabled()
                         ? RetEffect::MakeGCNotOwned()
                         : RetEffect::MakeOwned(RetEffect::ObjC, true));
@@ -1161,9 +1161,9 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
     updateSummaryArgEffFromAnnotations(Summ, i, *I);
   
   // Determine any effects on the receiver.
-  if (MD->getAttr<ObjCOwnershipRetainAttr>())
+  if (MD->getAttr<NSOwnershipRetainAttr>())
     Summ.setReceiverEffect(IncRefMsg);
-  else if (MD->getAttr<ObjCOwnershipReleaseAttr>())
+  else if (MD->getAttr<NSOwnershipReleaseAttr>())
     Summ.setReceiverEffect(DecRefMsg);
 }
 

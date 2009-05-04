@@ -431,19 +431,19 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 //===----------------------------------------------------------------------===//
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString  __attribute__((objc_ownership_returns));
-- (void) myRetain:(id)__attribute__((objc_ownership_retain))obj;
+- (NSString*) returnsAnOwnedString  __attribute__((ns_ownership_returns));
+- (void) myRetain:(id)__attribute__((ns_ownership_retain))obj;
 - (void) myCFRetain:(id)__attribute__((cf_ownership_retain))obj;
-- (void) myRelease:(id)__attribute__((objc_ownership_release))obj;
+- (void) myRelease:(id)__attribute__((ns_ownership_release))obj;
 - (void) myCFRelease:(id)__attribute__((cf_ownership_release))obj;
 
-- (void) myRetain __attribute__((objc_ownership_retain));
-- (void) myRelease __attribute__((objc_ownership_release));
+- (void) myRetain __attribute__((ns_ownership_retain));
+- (void) myRelease __attribute__((ns_ownership_release));
 @end
 
 @interface TestAttrHelper : NSObject
 - (NSString*) createString:(TestOwnershipAttr*)X;
-- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((objc_ownership_returns));
+- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((ns_ownership_returns));
 @end
 
 @implementation TestAttrHelper

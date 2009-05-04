@@ -136,26 +136,24 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 19:
     if (!memcmp(Str, "cf_ownership_retain", 19))
       return AT_cf_ownership_retain;
+    if (!memcmp(Str, "ns_ownership_retain", 19))
+      return AT_ns_ownership_retain;      
     break;      
   case 20:
     if (!memcmp(Str, "cf_ownership_release", 20))
       return AT_cf_ownership_release;
-    break;            
-  case 21:
-    if (!memcmp(Str, "objc_ownership_retain", 21))
-      return AT_objc_ownership_retain;      
+    if (!memcmp(Str, "ns_ownership_release", 20))
+      return AT_ns_ownership_release;
+    if (!memcmp(Str, "ns_ownership_returns", 20))
+      return AT_ns_ownership_returns;
     break;
   case 22:
-    if (!memcmp(Str, "objc_ownership_returns", 22))
-      return AT_objc_ownership_returns;
-    if (!memcmp(Str, "objc_ownership_release", 22))
-      return AT_objc_ownership_release;
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
     break;
-  case 31:
-    if (!memcmp(Str, "objc_ownership_make_collectable", 31))
-      return AT_objc_ownership_make_collectable;
+  case 29:
+    if (!memcmp(Str, "ns_ownership_make_collectable", 29))
+      return AT_ns_ownership_make_collectable;
     break;
   }  
   return UnknownAttribute;
