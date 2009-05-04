@@ -249,15 +249,11 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
                              Loc L, Loc R) {
   
   switch (Op) {
-
     default:
-      return UnknownVal();
-      
+      return UnknownVal();      
     case BinaryOperator::EQ:
-      return EvalEQ(Eng, L, R);
-      
     case BinaryOperator::NE:
-      return EvalNE(Eng, L, R);      
+      return EvalEquality(Eng, L, R, Op == BinaryOperator::EQ);
   }
 }
 
@@ -286,14 +282,14 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
 // FIXME: All this logic will be revamped when we have MemRegion::getLocation()
 // implemented.
 
-SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
+SVal GRSimpleVals::EvalEquality(GRExprEngine& Eng, Loc L, Loc R, bool isEqual) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
 
   switch (L.getSubKind()) {
 
     default:
-      assert(false && "EQ not implemented for this Loc.");
+      assert(false && "EQ/NE not implemented for this Loc.");
       return UnknownVal();
       
     case loc::ConcreteIntKind:
@@ -302,7 +298,20 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
         bool b = cast<loc::ConcreteInt>(L).getValue() ==
                  cast<loc::ConcreteInt>(R).getValue();
         
+        // Are we computing '!='?  Flip the result.
+        if (!isEqual)
+          b = !b;
+        
         return NonLoc::MakeIntTruthVal(BasicVals, b);
+      }
+      else if (SymbolRef Sym = R.getAsSymbol()) {
+        const SymIntExpr * SE =
+        Eng.getSymbolManager().getSymIntExpr(Sym,
+                                             isEqual ? BinaryOperator::EQ
+                                                     : BinaryOperator::NE,
+                                             cast<loc::ConcreteInt>(L).getValue(),
+                                             Eng.getContext().IntTy);
+        return nonloc::SymExprVal(SE);
       }
       
       break;
@@ -311,7 +320,9 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
       if (SymbolRef LSym = L.getAsLocSymbol()) {
         if (isa<loc::ConcreteInt>(R)) {
           const SymIntExpr *SE =
-            Eng.getSymbolManager().getSymIntExpr(LSym, BinaryOperator::EQ,
+            Eng.getSymbolManager().getSymIntExpr(LSym,
+                                           isEqual ? BinaryOperator::EQ
+                                                   : BinaryOperator::NE,
                                            cast<loc::ConcreteInt>(R).getValue(),
                                            Eng.getContext().IntTy);
         
@@ -323,58 +334,10 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
     // Fall-through.
       
     case loc::GotoLabelKind:
-      return NonLoc::MakeIntTruthVal(BasicVals, L == R);
+      return NonLoc::MakeIntTruthVal(BasicVals, isEqual ? L == R : L != R);
   }
   
-  return NonLoc::MakeIntTruthVal(BasicVals, false);
-}
-
-SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
-  
-  BasicValueFactory& BasicVals = Eng.getBasicVals();
-
-  switch (L.getSubKind()) {
-
-    default:
-      assert(false && "NE not implemented for this Loc.");
-      return UnknownVal();
-      
-    case loc::ConcreteIntKind:
-      
-      if (isa<loc::ConcreteInt>(R)) {
-        bool b = cast<loc::ConcreteInt>(L).getValue() !=
-                 cast<loc::ConcreteInt>(R).getValue();
-        
-        return NonLoc::MakeIntTruthVal(BasicVals, b);
-      }
-      else if (SymbolRef Sym = R.getAsSymbol()) {
-        const SymIntExpr * SE =
-          Eng.getSymbolManager().getSymIntExpr(Sym, BinaryOperator::NE,
-                                           cast<loc::ConcreteInt>(L).getValue(),
-                                             Eng.getContext().IntTy);
-        return nonloc::SymExprVal(SE);
-      }
-      
-      break;
-
-    case loc::MemRegionKind: {
-      if (SymbolRef LSym = L.getAsLocSymbol()) {
-        if (isa<loc::ConcreteInt>(R)) {
-          const SymIntExpr* SE =
-            Eng.getSymbolManager().getSymIntExpr(LSym, BinaryOperator::NE,
-                                          cast<loc::ConcreteInt>(R).getValue(),
-                                                 Eng.getContext().IntTy);
-          return nonloc::SymExprVal(SE);
-        }
-      }
-      // Fall through:
-    }
-      
-    case loc::GotoLabelKind:
-      return NonLoc::MakeIntTruthVal(BasicVals, L != R);
-  }
-  
-  return NonLoc::MakeIntTruthVal(BasicVals, true);
+  return NonLoc::MakeIntTruthVal(BasicVals, isEqual ? false : true);
 }
 
 //===----------------------------------------------------------------------===//

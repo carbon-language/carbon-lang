@@ -77,10 +77,8 @@ public:
   
 protected:
   
-  // Equality operators for Locs.
-  
-  SVal EvalEQ(GRExprEngine& Engine, Loc L, Loc R);
-  SVal EvalNE(GRExprEngine& Engine, Loc L, Loc R);
+  // Equality (==, !=) operators for Locs.  
+  SVal EvalEquality(GRExprEngine& Engine, Loc L, Loc R, bool isEqual);
 };
   
 } // end clang namespace

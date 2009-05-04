@@ -139,9 +139,9 @@ int* f7c(int *x) {
   
   if (((void*)0) != x)
     return x;
-    
-  // THIS IS WRONG.  THIS NEEDS TO BE FIXED.
-  *p = 1; // expected-warning{{null}}
+
+  // If we reach here then 'p' is not null.
+  *p = 1; // no-warning
   return x;
 }
 
