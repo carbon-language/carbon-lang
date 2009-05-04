@@ -569,6 +569,7 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   /// ScratchArgs - A holding buffer for construct ArgEffects.
   ArgEffects ScratchArgs;
   
+  RetainSummary DefaultSummary;
   RetainSummary* StopSummary;
   
   //==-----------------------------------------------------------------==//
@@ -582,6 +583,8 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
   
 public:
+  RetainSummary *getDefaultSummary() { return &DefaultSummary; }
+  
   RetainSummary* getUnarySummary(const FunctionType* FT, UnaryFuncKind func);
   
   RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
@@ -698,6 +701,10 @@ public:
    : Ctx(ctx),
      CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled), AF(BPAlloc), ScratchArgs(AF.GetEmptyMap()),
+     DefaultSummary(AF.GetEmptyMap() /* per-argument effects (none) */,
+                    RetEffect::MakeNoRet() /* return effect */,
+                    DoNothing /* receiver effect */,
+                    MayEscape /* default argument effect */),
      StopSummary(0) {
 
     InitializeClassMethodSummaries();
@@ -991,7 +998,7 @@ RetainSummaryManager::getCFCreateGetRuleSummary(FunctionDecl* FD,
   if (strstr(FName, "Get"))
     return getCFSummaryGetRule(FD);
   
-  return 0;
+  return getDefaultSummary();
 }
 
 RetainSummary*
@@ -1026,7 +1033,7 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
       
     default:
       assert (false && "Not a supported unary function.");
-      return 0;
+      return getDefaultSummary();
   }
 }
 
@@ -1064,7 +1071,7 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
 RetainSummary*
 RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   if (!MD)
-    return 0;
+    return getDefaultSummary();
   
   assert(ScratchArgs.isEmpty());
   
@@ -1122,7 +1129,7 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   }  
   
   if (!hasEffect)
-    return 0;
+    return getDefaultSummary();
 
   return getPersistentSummary(RE, ReceiverEff);
 }
@@ -1185,7 +1192,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   }
   
   if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
-    return 0;
+    return getDefaultSummary();
   
   return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff,
                               MayEscape);
@@ -1707,7 +1714,7 @@ public:
                    GRStmtNodeBuilder<GRState>& Builder,
                    Expr* Ex,
                    Expr* Receiver,
-                   RetainSummary* Summ,
+                   const RetainSummary& Summ,
                    ExprIterator arg_beg, ExprIterator arg_end,                             
                    ExplodedNode<GRState>* Pred);
     
@@ -2475,23 +2482,6 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
 // Main checker logic.
 //===----------------------------------------------------------------------===//
 
-static inline ArgEffect GetArgE(RetainSummary* Summ, unsigned idx) {
-  return Summ ? Summ->getArg(idx) : MayEscape;
-}
-
-static inline RetEffect GetRetEffect(RetainSummary* Summ) {
-  return Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
-}
-
-static inline ArgEffect GetReceiverE(RetainSummary* Summ) {
-  return Summ ? Summ->getReceiverEffect() : DoNothing;
-}
-
-static inline bool IsEndPath(RetainSummary* Summ) {
-  return Summ ? Summ->isEndPath() : false;
-}
-
-
 /// GetReturnType - Used to get the return type of a message expression or
 ///  function call with the intention of affixing that type to a tracked symbol.
 ///  While the the return type can be queried directly from RetEx, when
@@ -2530,7 +2520,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                              GRStmtNodeBuilder<GRState>& Builder,
                              Expr* Ex,
                              Expr* Receiver,
-                             RetainSummary* Summ,
+                             const RetainSummary& Summ,
                              ExprIterator arg_beg, ExprIterator arg_end,
                              ExplodedNode<GRState>* Pred) {
   
@@ -2550,7 +2540,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
 
     if (Sym)
       if (RefBindings::data_type* T = state.get<RefBindings>(Sym)) {
-        state = Update(state, Sym, *T, GetArgE(Summ, idx), hasErr);
+        state = Update(state, Sym, *T, Summ.getArg(idx), hasErr);
         if (hasErr) {
           ErrorExpr = *I;
           ErrorSym = Sym;
@@ -2561,7 +2551,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
 
     if (isa<Loc>(V)) {
       if (loc::MemRegionVal* MR = dyn_cast<loc::MemRegionVal>(&V)) {
-        if (GetArgE(Summ, idx) == DoNothingByRef)
+        if (Summ.getArg(idx) == DoNothingByRef)
           continue;
         
         // Invalidate the value of the variable passed by reference.
@@ -2648,7 +2638,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     SymbolRef Sym = state.GetSValAsScalarOrLoc(Receiver).getAsLocSymbol();
     if (Sym) {
       if (const RefVal* T = state.get<RefBindings>(Sym)) {
-        state = Update(state, Sym, *T, GetReceiverE(Summ), hasErr);
+        state = Update(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
         if (hasErr) {
           ErrorExpr = Receiver;
           ErrorSym = Sym;
@@ -2665,7 +2655,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   }
   
   // Consult the summary for the return value.  
-  RetEffect RE = GetRetEffect(Summ);
+  RetEffect RE = Summ.getRetEffect();
   
   switch (RE.getKind()) {
     default:
@@ -2746,13 +2736,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   
   // Generate a sink node if we are at the end of a path.
   GRExprEngine::NodeTy *NewNode =
-    IsEndPath(Summ) ? Builder.MakeSinkNode(Dst, Ex, Pred, state)
-                    : Builder.MakeNode(Dst, Ex, Pred, state);
+    Summ.isEndPath() ? Builder.MakeSinkNode(Dst, Ex, Pred, state)
+                     : Builder.MakeNode(Dst, Ex, Pred, state);
   
   // Annotate the edge with summary we used.
-  // FIXME: This assumes that we always use the same summary when generating
-  //  this node.
-  if (NewNode) SummaryLog[NewNode] = Summ;
+  if (NewNode) SummaryLog[NewNode] = &Summ;
 }
 
 
@@ -2762,10 +2750,11 @@ void CFRefCount::EvalCall(ExplodedNodeSet<GRState>& Dst,
                           CallExpr* CE, SVal L,
                           ExplodedNode<GRState>* Pred) {
   const FunctionDecl* FD = L.getAsFunctionDecl();
-  RetainSummary* Summ = !FD ? 0 
+  RetainSummary* Summ = !FD ? Summaries.getDefaultSummary() 
                         : Summaries.getSummary(const_cast<FunctionDecl*>(FD));
   
-  EvalSummary(Dst, Eng, Builder, CE, 0, Summ,
+  assert(Summ);
+  EvalSummary(Dst, Eng, Builder, CE, 0, *Summ,
               CE->arg_begin(), CE->arg_end(), Pred);
 }
 
@@ -2774,7 +2763,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
                                      GRStmtNodeBuilder<GRState>& Builder,
                                      ObjCMessageExpr* ME,
                                      ExplodedNode<GRState>* Pred) {  
-  RetainSummary* Summ;
+  RetainSummary* Summ = 0;
   
   if (Expr* Receiver = ME->getReceiver()) {
     // We need the type-information of the tracked receiver object
@@ -2829,8 +2818,10 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
   else
     Summ = Summaries.getClassMethodSummary(ME);
 
+  if (!Summ)
+    Summ = Summaries.getDefaultSummary();
 
-  EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), Summ,
+  EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), *Summ,
               ME->arg_begin(), ME->arg_end(), Pred);
 }
 
@@ -2972,8 +2963,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
     const Decl *CD = &Eng.getStateManager().getCodeDecl();
     
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {      
-      RetainSummary *Summ = Summaries.getMethodSummary(MD);
-      if (!GetRetEffect(Summ).isOwned()) {
+      const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
+      if (!Summ.getRetEffect().isOwned()) {
         static int ReturnOwnLeakTag = 0;
         state = state.set<RefBindings>(Sym, X ^ RefVal::ErrorLeakReturned);
         // Generate an error node.
