@@ -530,9 +530,6 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   //  Typedefs.
   //==-----------------------------------------------------------------==//
   
-  typedef llvm::FoldingSet<RetainSummary>
-          SummarySetTy;
-  
   typedef llvm::DenseMap<FunctionDecl*, RetainSummary*>
           FuncSummariesTy;
   
@@ -551,10 +548,7 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   
   /// GCEnabled - Records whether or not the analyzed code runs in GC mode.
   const bool GCEnabled;
-  
-  /// SummarySet - A FoldingSet of uniqued summaries.
-  SummarySetTy SummarySet;
-  
+    
   /// FuncSummaries - A map from FunctionDecls to summaries.
   FuncSummariesTy FuncSummaries; 
   
@@ -782,25 +776,10 @@ RetainSummary*
 RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                            ArgEffect ReceiverEff,
                                            ArgEffect DefaultEff,
-                                           bool isEndPath) {
-  
-  // Generate a profile for the summary.
-  llvm::FoldingSetNodeID profile;
-  RetainSummary::Profile(profile, AE, RetEff, DefaultEff, ReceiverEff,
-                         isEndPath);
-  
-  // Look up the uniqued summary, or create one if it doesn't exist.
-  void* InsertPos;  
-  RetainSummary* Summ = SummarySet.FindNodeOrInsertPos(profile, InsertPos);
-  
-  if (Summ)
-    return Summ;
-  
+                                           bool isEndPath) {  
   // Create the summary and return it.
-  Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
+  RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
   new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff, isEndPath);
-  SummarySet.InsertNode(Summ, InsertPos);
-  
   return Summ;
 }
 
