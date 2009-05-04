@@ -130,6 +130,35 @@ int* f7b(int *x) {
   return x;
 }
 
+int* f7c(int *x) {
+  
+  int* p = 0;
+  
+  if (((void*)0) == x)
+    p = qux();
+  
+  if (((void*)0) != x)
+    return x;
+    
+  // THIS IS WRONG.  THIS NEEDS TO BE FIXED.
+  *p = 1; // expected-warning{{null}}
+  return x;
+}
+
+int* f7c2(int *x) {
+  
+  int* p = 0;
+  
+  if (((void*)0) == x)
+    p = qux();
+  
+  if (((void*)0) == x)
+    return x;
+    
+  *p = 1; // expected-warning{{null}}
+  return x;
+}
+
 
 int f8(int *p, int *q) {
   if (!p)
