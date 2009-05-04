@@ -213,11 +213,10 @@ SVal BasicStoreManager::getLValueElement(const GRState* St,
       const MemRegion *R = cast<loc::MemRegionVal>(BaseL).getRegion();
       
       if (isa<ElementRegion>(R)) {
-        // Basic example:
-        //   char buf[100];
-        //   char *q = &buf[1];  // p points to ElementRegion(buf,Unknown)
-        //   &q[10]
-        //assert(cast<ElementRegion>(R)->getIndex().isUnknown());
+        // int x;
+        // char* y = (char*) &x;
+        // 'y' => ElementRegion(0, VarRegion('x'))
+        // y[0] = 'a';
         return Base;
       }
       

@@ -67,7 +67,7 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
         // the types aren't the same, so we construct an ElementRegion.
         // FIXME: We should have a standard query function to get the size
         //  of the array index.
-        SVal Idx = ValMgr.makeZeroVal(ValMgr.getContext().VoidPtrTy);
+        SVal Idx = ValMgr.makeZeroIndex();
         
         // If the super region is an element region, strip it away.
         // FIXME: Is this the right thing to do in all cases?

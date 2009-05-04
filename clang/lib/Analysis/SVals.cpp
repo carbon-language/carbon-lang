@@ -227,6 +227,10 @@ SVal ValueManager::makeZeroVal(QualType T) {
   return UnknownVal();  
 }
 
+SVal ValueManager::makeZeroIndex() {
+  return nonloc::ConcreteInt(BasicVals.getZeroWithPtrWidth(false));
+}
+
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-Locs.
 //===----------------------------------------------------------------------===//
