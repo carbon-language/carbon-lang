@@ -785,6 +785,9 @@ public:
   void updateSummaryFromAnnotations(RetainSummary &Summ,
                                     const ObjCMethodDecl *MD);
   
+  void updateSummaryFromAnnotations(RetainSummary &Summ,
+                                    const FunctionDecl *FD);
+  
   bool isGCEnabled() const { return GCEnabled; }
   
   RetainSummary *copySummary(RetainSummary *OldSumm) {
@@ -1009,6 +1012,10 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
   if (!S)
     S = getDefaultSummary();
 
+  // Annotations override defaults.
+  assert(S);
+  updateSummaryFromAnnotations(*S, FD);
+
   FuncSummaries[FD] = S;
   return S;  
 }
@@ -1110,6 +1117,28 @@ RetainSummaryManager::updateSummaryArgEffFromAnnotations(RetainSummary &Summ,
     Summ.setArgEffect(AF, i, MakeCollectable);  
 }
 
+void
+RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
+                                                   const FunctionDecl *FD) {
+  if (!FD)
+    return;
+  
+  // Determine if there is a special return effect for this method.
+  if (isTrackedObjCObjectType(FD->getResultType())) {
+    if (FD->getAttr<ObjCOwnershipReturnsAttr>()) {
+      Summ.setRetEffect(isGCEnabled()
+                        ? RetEffect::MakeGCNotOwned()
+                        : RetEffect::MakeOwned(RetEffect::ObjC, true));
+    }
+  }
+  
+  // Determine if there are any arguments with a specific ArgEffect.
+  unsigned i = 0;
+  for (FunctionDecl::param_const_iterator I = FD->param_begin(),
+       E = FD->param_end(); I != E; ++I, ++i)
+    updateSummaryArgEffFromAnnotations(Summ, i, *I);
+}
+  
 void
 RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
                                                    const ObjCMethodDecl *MD) {
