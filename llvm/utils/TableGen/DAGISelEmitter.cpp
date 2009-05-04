@@ -2102,7 +2102,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
 
   OS << "// Include standard, target-independent definitions and methods used\n"
      << "// by the instruction selector.\n";
-  OS << "#include <llvm/CodeGen/DAGISelHeader.h>\n\n";
+  OS << "#include \"llvm/CodeGen/DAGISelHeader.h\"\n\n";
   
   EmitNodeTransforms(OS);
   EmitPredicateFunctions(OS);
