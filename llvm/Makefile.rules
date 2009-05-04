@@ -361,6 +361,15 @@ ifeq ($(ARCH),Alpha)
   LD.Flags += -Wl,--no-relax
 endif
 
+ifeq ($(OS),MingW)
+  ifeq ($(LLVM_CROSS_COMPILING),1)
+    # Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=525016
+    ifdef TOOLNAME
+      LD.Flags += -Wl,--allow-multiple-definition
+    endif
+  endif
+endif
+
 #--------------------------------------------------------------------
 # Directory locations
 #--------------------------------------------------------------------
