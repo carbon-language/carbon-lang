@@ -52,6 +52,8 @@ private:
   const llvm::PointerType *PtrTy;
   const llvm::IntegerType *LongTy;
   const llvm::PointerType *PtrToIntTy;
+  llvm::GlobalAlias *ClassPtrAlias;
+  llvm::GlobalAlias *MetaClassPtrAlias;
   std::vector<llvm::Constant*> Classes;
   std::vector<llvm::Constant*> Categories;
   std::vector<llvm::Constant*> ConstantStrings;
@@ -169,7 +171,8 @@ static std::string SymbolNameForMethod(const std::string &ClassName, const
 }
 
 CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
-  : CGM(cgm), TheModule(CGM.getModule()) {
+  : CGM(cgm), TheModule(CGM.getModule()), ClassPtrAlias(0),
+    MetaClassPtrAlias(0) {
   IntTy = cast<llvm::IntegerType>(
       CGM.getTypes().ConvertType(CGM.getContext().IntTy));
   LongTy = cast<llvm::IntegerType>(
@@ -297,23 +300,42 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
 
 
-  const ObjCInterfaceDecl *SuperClass = Class->getSuperClass();
-  // TODO: This should be cached, not looked up every time.
-  llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
-  if (IsClassMessage)
-  {
-    ReceiverClass = CGF.Builder.CreateBitCast(ReceiverClass, 
-      llvm::PointerType::getUnqual(IdTy));
-    ReceiverClass = CGF.Builder.CreateBitCast(CGF.Builder.CreateLoad(
-      ReceiverClass), IdTy);
+  // Set up global aliases for the metaclass or class pointer if they do not
+  // already exist.  These will are forward-references which will be set to
+  // pointers to the class and metaclass structure created for the runtime load
+  // function.  To send a message to super, we look up the value of the
+  // super_class pointer from either the class or metaclass structure.
+  llvm::Value *ReceiverClass = 0;
+  if (IsClassMessage)  {
+    if (!MetaClassPtrAlias) {
+      MetaClassPtrAlias = new llvm::GlobalAlias(IdTy,
+          llvm::GlobalValue::InternalLinkage, ".objc_metaclass_ref" + Class->getNameAsString(), NULL,
+          &TheModule);
+    }
+    ReceiverClass = MetaClassPtrAlias;
+  } else {
+    if (!ClassPtrAlias) {
+      ClassPtrAlias = new llvm::GlobalAlias(IdTy,
+          llvm::GlobalValue::InternalLinkage, ".objc_class_ref" + Class->getNameAsString(), NULL,
+          &TheModule);
+    }
+    ReceiverClass = ClassPtrAlias;
   }
+  // Cast the pointer to a simplified version of the class structure
+  ReceiverClass = CGF.Builder.CreateBitCast(ReceiverClass, 
+      llvm::PointerType::getUnqual(llvm::StructType::get(IdTy, IdTy, NULL)));
+  // Get the superclass pointer
+  ReceiverClass = CGF.Builder.CreateStructGEP(ReceiverClass, 1);
+  // Load the superclass pointer
+  ReceiverClass = CGF.Builder.CreateLoad(ReceiverClass);
   // Construct the structure used to look up the IMP
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(Receiver->getType(),
       IdTy, NULL);
   llvm::Value *ObjCSuper = CGF.Builder.CreateAlloca(ObjCSuperTy);
 
   CGF.Builder.CreateStore(Receiver, CGF.Builder.CreateStructGEP(ObjCSuper, 0));
-  CGF.Builder.CreateStore(ReceiverClass, CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+  CGF.Builder.CreateStore(ReceiverClass,
+      CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
   // Get the IMP
   std::vector<const llvm::Type*> Params;
@@ -819,12 +841,26 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
       NULLPtr, 0x2L, /*name*/"", 0, Zeros[0], GenerateIvarList(
         empty, empty, empty), ClassMethodList, NULLPtr);
+
   // Generate the class structure
   llvm::Constant *ClassStruct =
     GenerateClassStructure(MetaClassStruct, SuperClass, 0x1L,
                            ClassName.c_str(), 0,
       llvm::ConstantInt::get(LongTy, instanceSize), IvarList,
       MethodList, GenerateProtocolList(Protocols));
+
+  // Resolve the class aliases, if they exist.
+  if (ClassPtrAlias) {
+    ClassPtrAlias->setAliasee(
+        llvm::ConstantExpr::getBitCast(ClassStruct, IdTy));
+    ClassPtrAlias = 0;
+  }
+  if (MetaClassPtrAlias) {
+    MetaClassPtrAlias->setAliasee(
+        llvm::ConstantExpr::getBitCast(MetaClassStruct, IdTy));
+    MetaClassPtrAlias = 0;
+  }
+
   // Add class structure to list to be added to the symtab later
   ClassStruct = llvm::ConstantExpr::getBitCast(ClassStruct, PtrToInt8Ty);
   Classes.push_back(ClassStruct);
