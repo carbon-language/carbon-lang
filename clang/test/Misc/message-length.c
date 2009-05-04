@@ -2,8 +2,8 @@
 
 // RUN: grep -A4 "FILE:23" %t > %t.msg &&
 // FIXME: This diagnostic is getting truncated very poorly.
-// RUN: grep -e '^  ... ' %t.msg &&
-// RUN: grep -e '^     \^' %t.msg &&
+// RUN: grep -e '^  ...// some long comment text and a brace, eh {} ' %t.msg &&
+// RUN: grep -e '^                                                 \^' %t.msg &&
 
 // RUN: true
 
