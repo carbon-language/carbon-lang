@@ -442,7 +442,10 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     else
       CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
 #endif
-    CGM.getObjCRuntime().EmitObjCStrongCastAssign(*this, src, LvalueDst);
+    if (Dst.isGlobalObjCRef())
+      CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
+    else
+      CGM.getObjCRuntime().EmitObjCStrongCastAssign(*this, src, LvalueDst);
     return;
   }
   
@@ -666,6 +669,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                                  E->getType().getCVRQualifiers(),
                                  getContext().getObjCGCAttrKind(E->getType()));
+    if (LV.isObjCStrong())
+      LV.SetGlobalObjCRef(LV, true);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),

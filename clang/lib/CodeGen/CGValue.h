@@ -149,8 +149,12 @@ class LValue {
   // variable.
   bool NonGC: 1;
 
+  // Lvalue is a global reference of an objective-c object
+  bool GlobalObjCRef : 1;
+
   // objective-c's gc attributes
   unsigned ObjCType : 2;  
+
   
 
 private:
@@ -160,7 +164,7 @@ private:
     // FIXME: Convenient place to set objc flags to 0. This
     // should really be done in a user-defined constructor instead.
     R.ObjCType = None;
-    R.Ivar = R.NonGC = false;
+    R.Ivar = R.NonGC = R.GlobalObjCRef = false;
   }
   
 public:
@@ -180,11 +184,16 @@ public:
   
   bool isObjCIvar() const { return Ivar; }
   bool isNonGC () const { return NonGC; }
+  bool isGlobalObjCRef() const { return GlobalObjCRef; }
   bool isObjCWeak() const { return ObjCType == Weak; }
   bool isObjCStrong() const { return ObjCType == Strong; }
   
   static void SetObjCIvar(LValue& R, bool iValue) {
     R.Ivar = iValue;
+  }
+
+  static void SetGlobalObjCRef(LValue& R, bool iValue) {
+    R.GlobalObjCRef = iValue;
   }
   
   static void SetObjCNonGC(LValue& R, bool iValue) {
