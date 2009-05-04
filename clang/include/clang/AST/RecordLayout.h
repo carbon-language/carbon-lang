@@ -36,7 +36,7 @@ class ASTRecordLayout {
   friend class ASTContext;
 
   ASTRecordLayout(uint64_t S = 0, unsigned A = 8) 
-    : Size(S), Alignment(A), FieldCount(0), NextOffset(0) {}
+    : Size(S), Alignment(A), FieldCount(0), NextOffset(S) {}
   ~ASTRecordLayout() {
     delete [] FieldOffsets;
   }
