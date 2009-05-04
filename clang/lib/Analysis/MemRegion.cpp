@@ -96,15 +96,17 @@ void SymbolicRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   SymbolicRegion::ProfileRegion(ID, sym);
 }
 
-void ElementRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
+void ElementRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                  QualType ElementType, SVal Idx, 
                                   const MemRegion* superRegion) {
   ID.AddInteger(MemRegion::ElementRegionKind);
+  ID.Add(ElementType);
   ID.AddPointer(superRegion);
   Idx.Profile(ID);
 }
 
 void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
-  ElementRegion::ProfileRegion(ID, Index, superRegion);
+  ElementRegion::ProfileRegion(ID, ElementType, Index, superRegion);
 }
 
 void CodeTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const void* data,
@@ -121,18 +123,6 @@ void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 //===----------------------------------------------------------------------===//
 // getLValueType() and getRValueType()
 //===----------------------------------------------------------------------===//
-
-QualType ElementRegion::getRValueType(ASTContext& C) const {
-  // Strip off typedefs from the ArrayRegion's RvalueType.
-  QualType T = getArrayRegion()->getRValueType(C)->getDesugaredType();
-
-  if (ArrayType* AT = dyn_cast<ArrayType>(T.getTypePtr()))
-    return AT->getElementType();
-
-  // If the RValueType of the array region isn't an ArrayType, then essentially
-  // the element's  
-  return T;
-}
 
 QualType StringRegion::getRValueType(ASTContext& C) const {
   return Str->getType();
@@ -313,10 +303,11 @@ MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
 }
 
 ElementRegion*
-MemRegionManager::getElementRegion(SVal Idx, const TypedRegion* superRegion){
+MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
+                                   const TypedRegion* superRegion){
 
   llvm::FoldingSetNodeID ID;
-  ElementRegion::ProfileRegion(ID, Idx, superRegion);
+  ElementRegion::ProfileRegion(ID, elementType, Idx, superRegion);
 
   void* InsertPos;
   MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
@@ -324,7 +315,7 @@ MemRegionManager::getElementRegion(SVal Idx, const TypedRegion* superRegion){
 
   if (!R) {
     R = (ElementRegion*) A.Allocate<ElementRegion>();
-    new (R) ElementRegion(Idx, superRegion);
+    new (R) ElementRegion(elementType, Idx, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
 

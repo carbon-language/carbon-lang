@@ -495,29 +495,30 @@ public:
 class ElementRegion : public TypedRegion {
   friend class MemRegionManager;
 
+  QualType ElementType;
   SVal Index;
 
-  ElementRegion(SVal Idx, const MemRegion* sReg)
-    : TypedRegion(sReg, ElementRegionKind), Index(Idx) {
+  ElementRegion(QualType elementType, SVal Idx, const MemRegion* sReg)
+    : TypedRegion(sReg, ElementRegionKind),
+      ElementType(elementType), Index(Idx) {
     assert((!isa<nonloc::ConcreteInt>(&Idx) ||
            cast<nonloc::ConcreteInt>(&Idx)->getValue().isSigned()) &&
            "The index must be signed");
   }
   
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
-                            const MemRegion* superRegion);
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType elementType,
+                            SVal Idx, const MemRegion* superRegion);
 
 public:
 
   SVal getIndex() const { return Index; }
 
-  QualType getRValueType(ASTContext&) const;
-
-  /// getArrayRegion - Return the region of the enclosing array.  This is
-  ///  the same as getSuperRegion() except that this returns a TypedRegion*
-  ///  instead of a MemRegion*.
-  const TypedRegion* getArrayRegion() const {
-    return cast<TypedRegion>(getSuperRegion());
+  QualType getRValueType(ASTContext&) const {
+    return ElementType;
+  }
+  
+  QualType getElementType() const {
+    return ElementType;
   }
   
   void print(llvm::raw_ostream& os) const;
@@ -615,7 +616,10 @@ public:
   ///  a specified VarDecl.
   VarRegion* getVarRegion(const VarDecl* vd);
   
-  ElementRegion* getElementRegion(SVal Idx, const TypedRegion* superRegion);
+  /// getElementRegion - Retrieve the memory region associated with the
+  ///  associated element type, index, and super region.
+  ElementRegion* getElementRegion(QualType elementType, SVal Idx,
+                                  const TypedRegion* superRegion);
 
   /// getFieldRegion - Retrieve or create the memory region associated with
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing

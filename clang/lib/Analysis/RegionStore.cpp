@@ -186,7 +186,8 @@ public:
   
   SVal getLValueFieldOrIvar(const GRState* St, SVal Base, const Decl* D);
 
-  SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
+  SVal getLValueElement(const GRState* St, QualType elementType,
+                        SVal Base, SVal Offset);
 
   SVal getSizeInElements(const GRState* St, const MemRegion* R);
 
@@ -383,7 +384,8 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
   return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
 }
 
-SVal RegionStoreManager::getLValueElement(const GRState* St, 
+SVal RegionStoreManager::getLValueElement(const GRState* St,
+                                          QualType elementType,
                                           SVal Base, SVal Offset) {
 
   // If the base is an unknown or undefined value, just return it back.
@@ -430,7 +432,8 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
         Offset = NonLoc::MakeVal(getBasicVals(), Tmp);
       }
     }
-    return loc::MemRegionVal(MRMgr.getElementRegion(Offset, BaseRegion));
+    return loc::MemRegionVal(MRMgr.getElementRegion(elementType, Offset,
+                                                    BaseRegion));
   }
   
   SVal BaseIdx = ElemR->getIndex();
@@ -447,7 +450,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   // can't we need to put a comment here.  If it can, we should handle it.
   assert(BaseIdxI.getBitWidth() >= OffI.getBitWidth());
 
-  const TypedRegion *ArrayR = ElemR->getArrayRegion();
+  const TypedRegion *ArrayR = cast<TypedRegion>(ElemR->getSuperRegion());
   SVal NewIdx;
   
   if (OffI.isUnsigned() || OffI.getBitWidth() < BaseIdxI.getBitWidth()) {
@@ -465,7 +468,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   else
     NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(BaseIdxI + OffI));
 
-  return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, ArrayR));
+  return loc::MemRegionVal(MRMgr.getElementRegion(elementType, NewIdx, ArrayR));
 }
 
 SVal RegionStoreManager::getSizeInElements(const GRState* St,
@@ -568,8 +571,13 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   if (!ArrayR)
     return UnknownVal();
   
+  // Strip off typedefs from the ArrayRegion's RvalueType.
+  QualType T = ArrayR->getRValueType(getContext())->getDesugaredType();
+  ArrayType *AT = cast<ArrayType>(T);
+  T = AT->getElementType();
+  
   nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-  ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
+  ElementRegion* ER = MRMgr.getElementRegion(T, Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
 }
@@ -584,7 +592,6 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
     return UnknownVal();
 
   const TypedRegion* TR = cast<TypedRegion>(MR);
-
   const ElementRegion* ER = dyn_cast<ElementRegion>(TR);
   
   if (!ER) {
@@ -594,7 +601,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
     // p += 3;
     // Note that p binds to a TypedViewRegion(SymbolicRegion).
     nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-    ER = MRMgr.getElementRegion(Idx, TR);
+    ER = MRMgr.getElementRegion(TR->getRValueType(getContext()), Idx, TR);
   }
 
   SVal Idx = ER->getIndex();
@@ -613,8 +620,9 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
     nonloc::ConcreteInt OffConverted(getBasicVals().Convert(Base->getValue(),
                                                            Offset->getValue()));
     SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffConverted);
-    const MemRegion* NewER = MRMgr.getElementRegion(NewIdx, 
-                                                    ER->getArrayRegion());
+    const MemRegion* NewER =
+      MRMgr.getElementRegion(ER->getElementType(), NewIdx, 
+                             cast<TypedRegion>(ER->getSuperRegion()));
     return Loc::MakeVal(NewER);
 
   }
@@ -769,15 +777,15 @@ SVal RegionStoreManager::RetrieveArray(const GRState* St, const TypedRegion* R){
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
   llvm::ImmutableList<SVal> ArrayVal = getBasicVals().getEmptySValList();
-
   llvm::APSInt Size(CAT->getSize(), false);
   llvm::APSInt i = getBasicVals().getValue(0, Size.getBitWidth(), 
 					   Size.isUnsigned());
 
   for (; i < Size; ++i) {
     SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-    ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
-    QualType ETy = ER->getRValueType(getContext());
+    ElementRegion* ER = MRMgr.getElementRegion(R->getRValueType(getContext()),
+                                               Idx, R);
+    QualType ETy = ER->getElementType();
     SVal ElementVal = Retrieve(St, loc::MemRegionVal(ER), ETy);
     ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
   }
@@ -1059,7 +1067,9 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
         break;
 
       SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-      ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
+      ElementRegion* ER =
+        MRMgr.getElementRegion(cast<ArrayType>(T)->getElementType(),
+                               Idx, R);
 
       SVal V = NonLoc::MakeVal(getBasicVals(), str[j], sizeof(char)*8, true);
       St = Bind(St, loc::MemRegionVal(ER), V);
@@ -1068,9 +1078,7 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
     return St;
   }
 
-
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
-
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
 
   for (; i < Size; ++i, ++VI) {
@@ -1079,7 +1087,9 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
       break;
 
     SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-    ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
+    ElementRegion* ER =
+      MRMgr.getElementRegion(cast<ArrayType>(T)->getElementType(),
+                             Idx, R);
 
     if (CAT->getElementType()->isStructureType())
       St = BindStruct(St, ER, *VI);

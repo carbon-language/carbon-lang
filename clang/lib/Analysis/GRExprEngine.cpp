@@ -1011,7 +1011,8 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
       
     for (NodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end(); I2!=E2; ++I2) {
       const GRState* state = GetState(*I2);
-      SVal V = StateMgr.GetLValue(state, GetSVal(state, Base),
+      SVal V = StateMgr.GetLValue(state, A->getType(),
+                                  GetSVal(state, Base),
                                   GetSVal(state, Idx));
 
       if (asLValue)

@@ -416,8 +416,8 @@ public:
   }
   
   // Get the lvalue for an array index.
-  SVal GetLValue(const GRState* St, SVal Base, SVal Idx) {
-    return StoreMgr->getLValueElement(St, Base, Idx);
+  SVal GetLValue(const GRState* St, QualType ElementType, SVal Base, SVal Idx) {
+    return StoreMgr->getLValueElement(St, ElementType, Base, Idx);
   }  
 
   // Methods that query & manipulate the Environment.

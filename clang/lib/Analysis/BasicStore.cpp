@@ -79,7 +79,8 @@ public:
                                 const CompoundLiteralExpr* CL);
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);  
-  SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
+  SVal getLValueElement(const GRState* St, QualType elementType,
+                        SVal Base, SVal Offset);
 
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
@@ -193,8 +194,9 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
   return Loc::MakeVal(MRMgr.getFieldRegion(D, BaseR));
 }
 
-SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
-                                         SVal Offset) {
+SVal BasicStoreManager::getLValueElement(const GRState* St,
+                                         QualType elementType,
+                                         SVal Base, SVal Offset) {
 
   if (Base.isUnknownOrUndef())
     return Base;
@@ -246,7 +248,8 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
   }
   
   if (BaseR)  
-    return Loc::MakeVal(MRMgr.getElementRegion(UnknownVal(), BaseR));
+    return Loc::MakeVal(MRMgr.getElementRegion(elementType, UnknownVal(),
+                                               BaseR));
   else
     return UnknownVal();
 }
