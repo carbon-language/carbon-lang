@@ -3095,6 +3095,14 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   const ObjCInterfaceDecl *OI = OMD->getClassInterface();
   CGM.getContext().CollectObjCIvars(OI, RecFields);
+
+  // Add this implementations synthesized ivars.
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(CGM.getContext()),
+         E = OI->prop_end(CGM.getContext()); I != E; ++I) {
+    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
+      RecFields.push_back(cast<FieldDecl>(IV));
+  }
+
   if (RecFields.empty())
     return llvm::Constant::getNullValue(PtrTy);
   

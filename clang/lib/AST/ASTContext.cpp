@@ -667,15 +667,6 @@ static void CollectLocalObjCIvars(ASTContext *Ctx,
     if (!IVDecl->isInvalidDecl())
       Fields.push_back(cast<FieldDecl>(IVDecl));
   }
-  // Look into properties.
-  //
-  // FIXME: This needs to go away, synthesized ivars shouldn't be
-  // accessible from the interface decl.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*Ctx),
-       E = OI->prop_end(*Ctx); I != E; ++I) {
-    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
-      Fields.push_back(cast<FieldDecl>(IV));
-  }
 }
 
 void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,

@@ -11,6 +11,7 @@ Here is a handy command for looking at llvm-gcc's output:
 llvm-gcc -m64 -fobjc-gc -emit-llvm -S -o - ivar-layout-64.m | \
   grep 'OBJC_CLASS_NAME.* =.*global' | \
   sed -e 's#, section.*# ...#' | \
+  sed -e 's#_[0-9]*"#_NNN#' | \
   sort
 
 */
@@ -32,14 +33,34 @@ __weak B *f2;
 }
 @end
 
+@interface C : A
+@property int p3;
+@end
+
+@implementation C
+@synthesize p3 = _p3;
+@end
+
 @interface A()
 @property int p0;
 @property (assign) __strong id p1;
 @property (assign) __weak id p2;
 @end
 
+// FIXME: Check layout for this class, once it is clear what the right
+// answer is.
 @implementation A
-@synthesize p0;
-@synthesize p1;
-@synthesize p2;
+@synthesize p0 = _p0;
+@synthesize p1 = _p1;
+@synthesize p2 = _p2;
+@end
+
+@interface D : A
+@property int p3;
+@end
+
+// FIXME: Check layout for this class, once it is clear what the right
+// answer is.
+@implementation D
+@synthesize p3 = _p3;
 @end
