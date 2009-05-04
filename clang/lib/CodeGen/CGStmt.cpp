@@ -126,7 +126,10 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   if (DI) {
     EnsureInsertPoint();
     DI->setLocation(S.getLBracLoc());
-    DI->EmitRegionStart(CurFn, Builder);
+    // FIXME: The llvm backend is currently not ready to deal with region_end
+    // for block scoping.  In the presence of always_inline functions it gets so
+    // confused that it doesn't emit any debug info.  Just disable this for now.
+    //DI->EmitRegionStart(CurFn, Builder);
   }
 
   // Keep track of the current cleanup stack depth.
@@ -141,7 +144,11 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   if (DI) {
     EnsureInsertPoint();
     DI->setLocation(S.getRBracLoc());
-    DI->EmitRegionEnd(CurFn, Builder);
+    
+    // FIXME: The llvm backend is currently not ready to deal with region_end
+    // for block scoping.  In the presence of always_inline functions it gets so
+    // confused that it doesn't emit any debug info.  Just disable this for now.
+    //DI->EmitRegionEnd(CurFn, Builder);
   }
 
   RValue RV;
