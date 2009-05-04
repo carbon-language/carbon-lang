@@ -217,7 +217,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St,
         //   char buf[100];
         //   char *q = &buf[1];  // p points to ElementRegion(buf,Unknown)
         //   &q[10]
-        assert(cast<ElementRegion>(R)->getIndex().isUnknown());
+        //assert(cast<ElementRegion>(R)->getIndex().isUnknown());
         return Base;
       }
       
@@ -287,18 +287,18 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
     case loc::MemRegionKind: {
       const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
       
-      if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
+      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
         // Just support void**, void***, intptr_t*, intptr_t**, etc., for now.
         // This is needed to handle OSCompareAndSwapPtr() and friends.
         ASTContext &Ctx = StateMgr.getContext();
-        QualType T = TR->getLValueType(Ctx);
+        QualType T = ER->getLValueType(Ctx);
 
         if (!isHigherOrderRawPtr(T, Ctx))
           return UnknownVal();
         
-        // Otherwise, strip the views.
-        // FIXME: Should we layer a TypedView on the result?
-        R = TR->removeViews();
+        // FIXME: Should check for element 0.
+        // Otherwise, strip the element region.
+        R = ER->getSuperRegion();
       }
       
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
@@ -333,11 +333,12 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
       // a cast to intXX_t*, void*, etc.  This is needed to handle
       // OSCompareAndSwap32Barrier/OSCompareAndSwap64Barrier.
       if (isa<Loc>(V) || isa<nonloc::LocAsInteger>(V))
-        if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
-          QualType T = TR->getLValueType(C);
+        if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+          // FIXME: Should check for index 0.
+          QualType T = ER->getLValueType(C);
         
           if (isHigherOrderRawPtr(T, C))
-            R = TR->removeViews();
+            R = ER->getSuperRegion();
         }      
       
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))

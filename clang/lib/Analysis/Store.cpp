@@ -68,7 +68,12 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
         // FIXME: We should have a standard query function to get the size
         //  of the array index.
         SVal Idx = ValMgr.makeZeroVal(ValMgr.getContext().VoidPtrTy);
-        ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, TR);
+        
+        // If the super region is an element region, strip it away.
+        // FIXME: Is this the right thing to do in all cases?
+        const TypedRegion *Base = isa<ElementRegion>(TR) ?
+                                  cast<TypedRegion>(TR->getSuperRegion()) : TR;
+        ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, Base);
         return CastResult(state, ER);
       }
     }
