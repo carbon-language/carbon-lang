@@ -321,7 +321,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   // for a nested AddRecExpr.
   if (const SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(SH)) {
     for (unsigned i = 0, e = AE->getNumOperands(); i != e; ++i)
-      if (SCEVAddRecExpr *AddRec =
+      if (const SCEVAddRecExpr *AddRec =
              dyn_cast<SCEVAddRecExpr>(AE->getOperand(i))) {
         if (AddRec->getLoop() == L)
           TheAddRec = SE->getAddExpr(AddRec, TheAddRec);
@@ -1400,8 +1400,8 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
   // Iterate through the uses to find conditions that automatically rule out
   // full-lsr mode.
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ) {
-    SCEV *Base = UsersToProcess[i].Base;
-    SCEV *Imm = UsersToProcess[i].Imm;
+    const SCEV *Base = UsersToProcess[i].Base;
+    const SCEV *Imm = UsersToProcess[i].Imm;
     // If any users have a loop-variant component, they can't be fully
     // strength-reduced.
     if (Imm && !Imm->isLoopInvariant(L))
@@ -1410,7 +1410,7 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
     // the two Imm values can't be folded into the address, full
     // strength reduction would increase register pressure.
     do {
-      SCEV *CurImm = UsersToProcess[i].Imm;
+      const SCEV *CurImm = UsersToProcess[i].Imm;
       if ((CurImm || Imm) && CurImm != Imm) {
         if (!CurImm) CurImm = SE->getIntegerSCEV(0, Stride->getType());
         if (!Imm)       Imm = SE->getIntegerSCEV(0, Stride->getType());
