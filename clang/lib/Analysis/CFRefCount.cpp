@@ -301,7 +301,7 @@ public:
 };
   
   
-class VISIBILITY_HIDDEN RetainSummary : public llvm::FoldingSetNode {
+class VISIBILITY_HIDDEN RetainSummary {
   /// Args - an ordered vector of (index, ArgEffect) pairs, where index
   ///  specifies the argument (starting from 0).  This can be sparsely
   ///  populated; arguments with no entry in Args use 'DefaultArgEffect'.
@@ -339,8 +339,21 @@ public:
     return DefaultArgEffect;
   }
   
+  /// setDefaultArgEffect - Set the default argument effect.
+  void setDefaultArgEffect(ArgEffect E) {
+    DefaultArgEffect = E;
+  }
+  
+  /// setArg - Set the argument effect on the argument specified by idx.
+  void setArgEffect(ArgEffects::Factory& AF, unsigned idx, ArgEffect E) {
+    Args = AF.Add(Args, idx, E);
+  }
+  
   /// getRetEffect - Returns the effect on the return value of the call.
   RetEffect getRetEffect() const { return Ret; }
+  
+  /// setRetEffect - Set the effect of the return value of the call.
+  void setRetEffect(RetEffect E) { Ret = E; }
   
   /// isEndPath - Returns true if executing the given method/function should
   ///  terminate the path.
@@ -349,6 +362,9 @@ public:
   /// getReceiverEffect - Returns the effect on the receiver of the call.
   ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
   ArgEffect getReceiverEffect() const { return Receiver; }
+  
+  /// setReceiverEffect - Set the effect on the receiver of the call.
+  void setReceiverEffect(ArgEffect E) { Receiver = E; }
   
   typedef ArgEffects::iterator ExprIterator;
   
@@ -583,7 +599,10 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
   
 public:
-  RetainSummary *getDefaultSummary() { return &DefaultSummary; }
+  RetainSummary *getDefaultSummary() {
+    RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
+    return new (Summ) RetainSummary(DefaultSummary);
+  }
   
   RetainSummary* getUnarySummary(const FunctionType* FT, UnaryFuncKind func);
   
@@ -760,9 +779,16 @@ public:
   RetainSummary* getCommonMethodSummary(const ObjCMethodDecl* MD,
                                         Selector S, QualType RetTy);
 
-  RetainSummary* getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD);
+  void updateSummaryFromAnnotations(RetainSummary &Summ,
+                                    const ObjCMethodDecl *MD);
   
   bool isGCEnabled() const { return GCEnabled; }
+  
+  RetainSummary *copySummary(RetainSummary *OldSumm) {
+    RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
+    new (Summ) RetainSummary(*OldSumm);
+    return Summ;
+  }  
 };
   
 } // end anonymous namespace
@@ -848,7 +874,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
   SourceLocation Loc = FD->getLocation();
   
   if (!Loc.isFileID())
-    return NULL;
+    return getDefaultSummary();
   
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
@@ -983,6 +1009,9 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     }
   }
   while (0);
+  
+  if (!S)
+    S = getDefaultSummary();
 
   FuncSummaries[FD] = S;
   return S;  
@@ -1068,26 +1097,19 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
                               : RetEffect::MakeNoRet());  
 }
 
-RetainSummary*
-RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
+
+void
+RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
+                                                   const ObjCMethodDecl *MD) {
   if (!MD)
-    return getDefaultSummary();
-  
-  assert(ScratchArgs.isEmpty());
+    return;
   
   // Determine if there is a special return effect for this method.
-  bool hasEffect = false;
-  RetEffect RE = RetEffect::MakeNoRet();
-  
   if (isTrackedObjCObjectType(MD->getResultType())) {
     if (MD->getAttr<ObjCOwnershipReturnsAttr>()) {
-      RE = isGCEnabled() ? RetEffect::MakeGCNotOwned()
-                         : RetEffect::MakeOwned(RetEffect::ObjC, true);
-      hasEffect = true;
-    }
-    else {
-      // Default to 'not owned'.
-      RE = RetEffect::MakeNotOwned(RetEffect::ObjC);
+      Summ.setRetEffect(isGCEnabled()
+                        ? RetEffect::MakeGCNotOwned()
+                        : RetEffect::MakeOwned(RetEffect::ObjC, true));
     }
   }
   
@@ -1095,43 +1117,23 @@ RetainSummaryManager::getMethodSummaryFromAnnotations(const ObjCMethodDecl *MD){
   unsigned i = 0;
   for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
        E = MD->param_end(); I != E; ++I, ++i) {
-    if ((*I)->getAttr<ObjCOwnershipRetainAttr>()) {
-      ScratchArgs = AF.Add(ScratchArgs, i, IncRefMsg);
-      hasEffect = true;
-    }
-    else if ((*I)->getAttr<ObjCOwnershipCFRetainAttr>()) {
-      ScratchArgs = AF.Add(ScratchArgs, i, IncRef);
-      hasEffect = true;
-    }
-    else if ((*I)->getAttr<ObjCOwnershipReleaseAttr>()) {
-      ScratchArgs = AF.Add(ScratchArgs, i, DecRefMsg);
-      hasEffect = true;
-    }
-    else if ((*I)->getAttr<ObjCOwnershipCFReleaseAttr>()) {
-      ScratchArgs = AF.Add(ScratchArgs, i, DecRef);
-      hasEffect = true;
-    }
-    else if ((*I)->getAttr<ObjCOwnershipMakeCollectableAttr>()) {
-      ScratchArgs = AF.Add(ScratchArgs, i, MakeCollectable);
-      hasEffect = true;
-    }    
+    if ((*I)->getAttr<ObjCOwnershipRetainAttr>())
+      Summ.setArgEffect(AF, i, IncRefMsg);
+    else if ((*I)->getAttr<ObjCOwnershipCFRetainAttr>())
+      Summ.setArgEffect(AF, i, IncRef);
+    else if ((*I)->getAttr<ObjCOwnershipReleaseAttr>())
+      Summ.setArgEffect(AF, i, DecRefMsg);
+    else if ((*I)->getAttr<ObjCOwnershipCFReleaseAttr>())
+      Summ.setArgEffect(AF, i, DecRef);
+    else if ((*I)->getAttr<ObjCOwnershipMakeCollectableAttr>())
+      Summ.setArgEffect(AF, i, MakeCollectable);
   }
   
   // Determine any effects on the receiver.
-  ArgEffect ReceiverEff = DoNothing;
-  if (MD->getAttr<ObjCOwnershipRetainAttr>()) {
-    ReceiverEff = IncRefMsg;
-    hasEffect = true;
-  }
-  else if (MD->getAttr<ObjCOwnershipReleaseAttr>()) {
-    ReceiverEff = DecRefMsg;
-    hasEffect = true;
-  }  
-  
-  if (!hasEffect)
-    return getDefaultSummary();
-
-  return getPersistentSummary(RE, ReceiverEff);
+  if (MD->getAttr<ObjCOwnershipRetainAttr>())
+    Summ.setReceiverEffect(IncRefMsg);
+  else if (MD->getAttr<ObjCOwnershipReleaseAttr>())
+    Summ.setReceiverEffect(DecRefMsg);
 }
 
 RetainSummary*
@@ -1165,13 +1167,11 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
     assert(!str.empty());
     if (CStrInCStrNoCase(&str[0], "delegate:")) ReceiverEff = StopTracking;
   }
-
   
   // Look for methods that return an owned object.
   if (isTrackedObjCObjectType(RetTy)) {    
     // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
     //  by instance methods.
-    
     RetEffect E =
       followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
       ? (isGCEnabled() ? RetEffect::MakeGCNotOwned()
@@ -1194,8 +1194,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
     return getDefaultSummary();
   
-  return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff,
-                              MayEscape);
+  return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff, MayEscape);
 }
 
 RetainSummary*
@@ -1212,20 +1211,19 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
     return I->second;
 
   assert(ScratchArgs.isEmpty());
-
-  // Annotations take precedence over all other ways to derive
-  // summaries.
-  RetainSummary *Summ = getMethodSummaryFromAnnotations(MD);
+  RetainSummary *Summ = 0;
   
-  if (!Summ) {      
-    // "initXXX": pass-through for receiver.
-    if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
-        == InitRule)
-      Summ = getInitMethodSummary(RetTy);
-    else
-      Summ = getCommonMethodSummary(MD, S, RetTy);
-  }
+  // "initXXX": pass-through for receiver.
+  if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
+      == InitRule)
+    Summ = getInitMethodSummary(RetTy);
+  else
+    Summ = getCommonMethodSummary(MD, S, RetTy);
+  
+  // Annotations override defaults.
+  updateSummaryFromAnnotations(*Summ, MD);
 
+  // Memoize the summary.
   ObjCMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
 }
@@ -1242,14 +1240,13 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
   
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
+    
+  RetainSummary *Summ = getCommonMethodSummary(MD, S, RetTy);
+
+  // Annotations override defaults.
+  updateSummaryFromAnnotations(*Summ, MD);
   
-  // Annotations take precedence over all other ways to derive
-  // summaries.
-  RetainSummary *Summ = getMethodSummaryFromAnnotations(MD);
-  
-  if (!Summ)
-    Summ = getCommonMethodSummary(MD, S, RetTy);
-  
+  // Memoize the summary.
   ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
 }
@@ -2797,21 +2794,16 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
 
     // Special-case: are we sending a mesage to "self"?
     //  This is a hack.  When we have full-IP this should be removed.
-    if (!Summ) {
-      ObjCMethodDecl* MD = 
-        dyn_cast<ObjCMethodDecl>(&Eng.getGraph().getCodeDecl());
-      
-      if (MD) {
-        if (Expr* Receiver = ME->getReceiver()) {
-          SVal X = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
-          if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
-            if (L->getRegion() == Eng.getStateManager().getSelfRegion(St)) {
-              // Create a summmary where all of the arguments "StopTracking".
-              Summ = Summaries.getPersistentSummary(RetEffect::MakeNoRet(),
-                                                    DoNothing,
-                                                    StopTracking);
-            }
-        }
+    if (isa<ObjCMethodDecl>(&Eng.getGraph().getCodeDecl())) {      
+      if (Expr* Receiver = ME->getReceiver()) {
+        SVal X = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
+        if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
+          if (L->getRegion() == Eng.getStateManager().getSelfRegion(St)) {
+            // Update the summary to make the default argument effect
+            // 'StopTracking'.
+            Summ = Summaries.copySummary(Summ);
+            Summ->setDefaultArgEffect(StopTracking);
+          }
       }
     }
   }
