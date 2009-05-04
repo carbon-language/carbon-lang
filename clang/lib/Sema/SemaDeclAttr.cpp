@@ -775,8 +775,8 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     isDef = (!VD->hasExternalStorage() || VD->getInit());
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     isDef = FD->getBody(S.Context);
-  } else if (isa<ObjCPropertyDecl>(D)) {
-    // We ignore weak import on properties
+  } else if (isa<ObjCPropertyDecl>(D) || isa<ObjCMethodDecl>(D)) {
+    // We ignore weak import on properties and methods
     return;
   } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
