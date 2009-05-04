@@ -12,7 +12,7 @@ import webbrowser
 
 # How long to wait for server to start.
 kSleepTimeout = .05
-kMaxSleeps = 100
+kMaxSleeps = int(60 / kSleepTimeout)
 
 # Default server parameters
 
