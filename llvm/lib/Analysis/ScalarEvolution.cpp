@@ -1544,7 +1544,7 @@ SCEVHandle ScalarEvolution::getCouldNotCompute() {
   return UnknownValue;
 }
 
-// hasSCEV - Return true if the SCEV for this value has already been
+/// hasSCEV - Return true if the SCEV for this value has already been
 /// computed.
 bool ScalarEvolution::hasSCEV(Value *V) const {
   return Scalars.count(V);
