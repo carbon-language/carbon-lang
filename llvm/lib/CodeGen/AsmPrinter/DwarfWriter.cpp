@@ -3262,11 +3262,12 @@ public:
     // Assumes in correct section after the entry point.
     EmitLabel("func_begin", ++SubprogramCount);
 
-    // Emit label for the implicitly defined dbg.stoppoint at the start of
-    // the function.
-    if (!Lines.empty()) {
-      const SrcLineInfo &LineInfo = Lines[0];
-      Asm->printLabel(LineInfo.getLabelID());
+    DebugLoc FDL = MF->getDefaultDebugLoc();
+    if (!FDL.isUnknown()) {
+      DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
+      unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col,
+                                          DICompileUnit(DLT.CompileUnit));
+      Asm->printLabel(LabelID);
     }
 
     if (TimePassesIsEnabled)

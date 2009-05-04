@@ -333,11 +333,6 @@ bool FastISel::SelectCall(User *I) {
       unsigned Col = SPI->getColumn();
       unsigned Idx = MF.getOrCreateDebugLocID(CU.getGV(), Line, Col);
       setCurDebugLoc(DebugLoc::get(Idx));
-      if (DW && DW->ShouldEmitDwarfDebug()) {
-        unsigned ID = DW->RecordSourceLine(Line, Col, CU);
-        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        BuildMI(MBB, DL, II).addImm(ID);
-      }
     }
     return true;
   }
@@ -402,7 +397,7 @@ bool FastISel::SelectCall(User *I) {
                                               CompileUnit.getGV(), Line, 0)));
 
       if (DW && DW->ShouldEmitDwarfDebug()) {
-        unsigned LabelID = DW->RecordSourceLine(Line, 0, CompileUnit);
+        unsigned LabelID = MMI->NextLabelID();
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         BuildMI(MBB, DL, II).addImm(LabelID);
         DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
@@ -414,10 +409,9 @@ bool FastISel::SelectCall(User *I) {
     } else {
       // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
-      setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
+      MF.setDefaultDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
                                               CompileUnit.getGV(), Line, 0)));
       if (DW && DW->ShouldEmitDwarfDebug()) {
-        DW->RecordSourceLine(Line, 0, CompileUnit);
         // llvm.dbg.func_start also defines beginning of function scope.
         DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
       }
