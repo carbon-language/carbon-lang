@@ -1,4 +1,4 @@
-// RUN: llvm-gcc -S -m32 -mregparm=3 %s -emit-llvm -o - | grep {inreg %action}
+// RUN: %llvmgcc -S -m32 -mregparm=3 %s -emit-llvm -o - | grep {inreg %action}
 // XTARGET: x86
 // PR3967
 
