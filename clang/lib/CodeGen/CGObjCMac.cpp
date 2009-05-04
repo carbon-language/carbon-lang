@@ -4222,13 +4222,14 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
   const ASTRecordLayout &RL = 
     CGM.getContext().getASTObjCImplementationLayout(OID);
   
-  if (!RL.getFieldCount()) {
-    InstanceStart = InstanceSize = 0;
-    return;
-  }
-
-  InstanceStart = RL.getFieldOffset(0) / 8;
+  // InstanceSize is really instance end.
   InstanceSize = llvm::RoundUpToAlignment(RL.getNextOffset(), 8) / 8;
+
+  // If there are no fields, the start is the same as the end.
+  if (!RL.getFieldCount())
+    InstanceStart = InstanceSize;
+  else
+    InstanceStart = RL.getFieldOffset(0) / 8;
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {

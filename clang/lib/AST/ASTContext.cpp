@@ -713,10 +713,6 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   ASTRecordLayout *NewEntry = NULL;
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
-    // FIXME: This increment of FieldCount is wrong, we don't actually
-    // count the super class as a member (see the field index passed
-    // to LayoutField below).
-    FieldCount++;
     const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
     unsigned Alignment = SL.getAlignment();
     uint64_t Size = SL.getSize();
@@ -729,8 +725,6 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
     ObjCLayouts[Key] = NewEntry = new ASTRecordLayout(Size, Alignment);
     NewEntry->InitializeLayout(FieldCount);
-    // Super class is at the beginning of the layout.
-    NewEntry->SetFieldOffset(0, 0);
   } else {
     ObjCLayouts[Key] = NewEntry = new ASTRecordLayout();
     NewEntry->InitializeLayout(FieldCount);
