@@ -50,40 +50,17 @@ bool ConstantFoldTerminator(BasicBlock *BB);
 ///
 bool isInstructionTriviallyDead(Instruction *I);
 
-/// ValueDeletionListener - A simple abstract interface for delivering
-/// notifications when Values are deleted.
-///
-/// @todo Consider whether ValueDeletionListener can be made obsolete by
-///       requiring clients to use CallbackVH instead.
-class ValueDeletionListener {
-public:
-  /// ValueWillBeDeleted - This method is called shortly before the specified
-  /// value will be deleted.
-  virtual void ValueWillBeDeleted(Value *V) = 0;
-
-protected:
-  virtual ~ValueDeletionListener();
-};
-
 /// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
 /// trivially dead instruction, delete it.  If that makes any of its operands
 /// trivially dead, delete them too, recursively.
-///
-/// If a ValueDeletionListener is specified, it is notified of instructions that
-/// are actually deleted (before they are actually deleted).
-void RecursivelyDeleteTriviallyDeadInstructions(Value *V,
-                                                ValueDeletionListener *VDL = 0);
+void RecursivelyDeleteTriviallyDeadInstructions(Value *V);
 
 /// RecursivelyDeleteDeadPHINode - If the specified value is an effectively
 /// dead PHI node, due to being a def-use chain of single-use nodes that
 /// either forms a cycle or is terminated by a trivially dead instruction,
 /// delete it.  If that makes any of its operands trivially dead, delete them
 /// too, recursively.
-///
-/// If a ValueDeletionListener is specified, it is notified of instructions that
-/// are actually deleted (before they are actually deleted).
-void RecursivelyDeleteDeadPHINode(PHINode *PN,
-                                  ValueDeletionListener *VDL = 0);
+void RecursivelyDeleteDeadPHINode(PHINode *PN);
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring.

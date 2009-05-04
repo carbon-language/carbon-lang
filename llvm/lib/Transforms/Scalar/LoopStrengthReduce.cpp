@@ -253,8 +253,6 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
     if (I == 0 || !isInstructionTriviallyDead(I))
       continue;
 
-    SE->deleteValueFromRecords(I);
-
     for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI) {
       if (Instruction *U = dyn_cast<Instruction>(*OI)) {
         *OI = 0;
@@ -2130,7 +2128,6 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
     // Remove the old compare instruction. The old indvar is probably dead too.
     DeadInsts.push_back(cast<Instruction>(CondUse->OperandValToReplace));
-    SE->deleteValueFromRecords(OldCond);
     OldCond->replaceAllUsesWith(Cond);
     OldCond->eraseFromParent();
 
@@ -2214,7 +2211,7 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
   SCEVHandle IterationCount = SE->getAddExpr(BackedgeTakenCount, One);
 
   // Check for a max calculation that matches the pattern.
-  SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(IterationCount);
+  const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(IterationCount);
   if (!SMax || SMax != SE->getSCEV(Sel)) return Cond;
 
   SCEVHandle SMaxLHS = SMax->getOperand(0);
@@ -2251,16 +2248,12 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
                  Cond->getOperand(0), NewRHS, "scmp", Cond);
 
   // Delete the max calculation instructions.
-  SE->deleteValueFromRecords(Cond);
   Cond->replaceAllUsesWith(NewCond);
   Cond->eraseFromParent();
   Instruction *Cmp = cast<Instruction>(Sel->getOperand(0));
-  SE->deleteValueFromRecords(Sel);
   Sel->eraseFromParent();
-  if (Cmp->use_empty()) {
-    SE->deleteValueFromRecords(Cmp);
+  if (Cmp->use_empty())
     Cmp->eraseFromParent();
-  }
   CondUse->User = NewCond;
   return NewCond;
 }
@@ -2367,7 +2360,6 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       NewPH->addIncoming(NewIncr, PH->getIncomingBlock(Latch));
 
       /* Remove cast operation */
-      SE->deleteValueFromRecords(ShadowUse);
       ShadowUse->replaceAllUsesWith(NewPH);
       ShadowUse->eraseFromParent();
       SI->second.Users.erase(CandidateUI);
@@ -2507,17 +2499,8 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     DeleteTriviallyDeadInstructions();
 
   // At this point, it is worth checking to see if any recurrence PHIs are also
-  // dead, so that we can remove them as well. To keep ScalarEvolution
-  // current, use a ValueDeletionListener class.
-  struct LSRListener : public ValueDeletionListener {
-    ScalarEvolution &SE;
-    explicit LSRListener(ScalarEvolution &se) : SE(se) {}
-
-    virtual void ValueWillBeDeleted(Value *V) {
-      SE.deleteValueFromRecords(V);
-    }
-  } VDL(*SE);
-  DeleteDeadPHIs(L->getHeader(), &VDL);
+  // dead, so that we can remove them as well.
+  DeleteDeadPHIs(L->getHeader());
 
   return Changed;
 }

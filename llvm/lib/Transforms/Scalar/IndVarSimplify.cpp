@@ -124,7 +124,6 @@ DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*, 16> &Insts) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
           Insts.insert(U);
-      SE->deleteValueFromRecords(I);
       DOUT << "INDVARS: Deleting: " << *I;
       I->eraseFromParent();
       Changed = true;
@@ -308,7 +307,6 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // the PHI entirely.  This is safe, because the NewVal won't be variant
         // in the loop, so we don't need an LCSSA phi node anymore.
         if (NumPreds == 1) {
-          SE->deleteValueFromRecords(PN);
           PN->replaceAllUsesWith(ExitVal);
           PN->eraseFromParent();
           break;

@@ -24,6 +24,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ValueHandle.h"
 #include <iosfwd>
 
 namespace llvm {
@@ -140,13 +141,23 @@ namespace llvm {
     static bool classof(const SCEV *S);
   };
 
+  /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
+  /// notified whenever a Value is deleted.
+  class SCEVCallbackVH : public CallbackVH {
+    ScalarEvolution *SE;
+    virtual void deleted();
+    virtual void allUsesReplacedWith(Value *New);
+  public:
+    SCEVCallbackVH(Value *V, ScalarEvolution *SE = 0);
+  };
+
   /// SCEVHandle - This class is used to maintain the SCEV object's refcounts,
   /// freeing the objects when the last reference is dropped.
   class SCEVHandle {
-    SCEV *S;
+    const SCEV *S;
     SCEVHandle();  // DO NOT IMPLEMENT
   public:
-    SCEVHandle(const SCEV *s) : S(const_cast<SCEV*>(s)) {
+    SCEVHandle(const SCEV *s) : S(s) {
       assert(S && "Cannot create a handle to a null SCEV!");
       S->addRef();
     }
@@ -155,13 +166,13 @@ namespace llvm {
     }
     ~SCEVHandle() { S->dropRef(); }
 
-    operator SCEV*() const { return S; }
+    operator const SCEV*() const { return S; }
 
-    SCEV &operator*() const { return *S; }
-    SCEV *operator->() const { return S; }
+    const SCEV &operator*() const { return *S; }
+    const SCEV *operator->() const { return S; }
 
-    bool operator==(SCEV *RHS) const { return S == RHS; }
-    bool operator!=(SCEV *RHS) const { return S != RHS; }
+    bool operator==(const SCEV *RHS) const { return S == RHS; }
+    bool operator!=(const SCEV *RHS) const { return S != RHS; }
 
     const SCEVHandle &operator=(SCEV *RHS) {
       if (S != RHS) {
@@ -184,7 +195,7 @@ namespace llvm {
 
   template<typename From> struct simplify_type;
   template<> struct simplify_type<const SCEVHandle> {
-    typedef SCEV* SimpleType;
+    typedef const SCEV* SimpleType;
     static SimpleType getSimplifiedValue(const SCEVHandle &Node) {
       return Node;
     }
@@ -197,6 +208,8 @@ namespace llvm {
   /// they must ask this class for services.
   ///
   class ScalarEvolution : public FunctionPass {
+    friend class SCEVCallbackVH;
+
     /// F - The function we are analyzing.
     ///
     Function *F;
@@ -215,7 +228,7 @@ namespace llvm {
 
     /// Scalars - This is a cache of the scalars we have analyzed so far.
     ///
-    std::map<Value*, SCEVHandle> Scalars;
+    std::map<SCEVCallbackVH, SCEVHandle> Scalars;
 
     /// BackedgeTakenInfo - Information about the backedge-taken count
     /// of a loop. This currently inclues an exact count and a maximum count.
@@ -232,7 +245,7 @@ namespace llvm {
       /*implicit*/ BackedgeTakenInfo(SCEVHandle exact) :
         Exact(exact), Max(exact) {}
 
-      /*implicit*/ BackedgeTakenInfo(SCEV *exact) :
+      /*implicit*/ BackedgeTakenInfo(const SCEV *exact) :
         Exact(exact), Max(exact) {}
 
       BackedgeTakenInfo(SCEVHandle exact, SCEVHandle max) :
@@ -302,18 +315,18 @@ namespace llvm {
     /// HowFarToZero - Return the number of times a backedge comparing the
     /// specified value to zero will execute.  If not computable, return
     /// UnknownValue.
-    SCEVHandle HowFarToZero(SCEV *V, const Loop *L);
+    SCEVHandle HowFarToZero(const SCEV *V, const Loop *L);
 
     /// HowFarToNonZero - Return the number of times a backedge checking the
     /// specified value for nonzero will execute.  If not computable, return
     /// UnknownValue.
-    SCEVHandle HowFarToNonZero(SCEV *V, const Loop *L);
+    SCEVHandle HowFarToNonZero(const SCEV *V, const Loop *L);
 
     /// HowManyLessThans - Return the number of times a backedge containing the
     /// specified less-than comparison will execute.  If not computable, return
     /// UnknownValue. isSigned specifies whether the less-than is signed.
-    BackedgeTakenInfo HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
-                                       bool isSigned);
+    BackedgeTakenInfo HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
+                                       const Loop *L, bool isSigned);
 
     /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
     /// (which may not be an immediate predecessor) which has exactly one
@@ -331,7 +344,7 @@ namespace llvm {
     /// getSCEVAtScope - Compute the value of the specified expression within
     /// the indicated loop (which may be null to indicate in no loop).  If the
     /// expression cannot be evaluated, return UnknownValue itself.
-    SCEVHandle getSCEVAtScope(SCEV *S, const Loop *L);
+    SCEVHandle getSCEVAtScope(const SCEV *S, const Loop *L);
 
     /// forgetLoopPHIs - Delete the memoized SCEVs associated with the
     /// PHI nodes in the given loop. This is used when the trip count of
@@ -457,7 +470,7 @@ namespace llvm {
     /// a conditional between LHS and RHS.  This is used to help avoid max
     /// expressions in loop trip counts.
     bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
-                             SCEV *LHS, SCEV *RHS);
+                             const SCEV *LHS, const SCEV *RHS);
 
     /// getBackedgeTakenCount - If the specified loop has a predictable
     /// backedge-taken count, return it, otherwise return a SCEVCouldNotCompute
@@ -486,11 +499,6 @@ namespace llvm {
     /// ScalarEvolution's ability to compute a trip count, or if the loop
     /// is deleted.
     void forgetLoopBackedgeTakenCount(const Loop *L);
-
-    /// deleteValueFromRecords - This method should be called by the
-    /// client before it removes a Value from the program, to make sure
-    /// that no dangling references are left around.
-    void deleteValueFromRecords(Value *V);
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
