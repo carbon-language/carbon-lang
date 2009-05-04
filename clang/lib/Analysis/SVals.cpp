@@ -227,7 +227,7 @@ SVal ValueManager::makeZeroVal(QualType T) {
   return UnknownVal();  
 }
 
-SVal ValueManager::makeZeroIndex() {
+SVal ValueManager::makeZeroArrayIndex() {
   return nonloc::ConcreteInt(BasicVals.getZeroWithPtrWidth(false));
 }
 

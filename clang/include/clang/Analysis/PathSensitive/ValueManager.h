@@ -76,9 +76,9 @@ public:
   
   /// makeZeroVal - Construct an SVal representing '0' for the specified type.
   SVal makeZeroVal(QualType T);
-  /// makeZeroIndex - Construct an SVal representing '0' index for array
+  /// makeZeroArrayIndex - Construct an SVal representing '0' index for array
   /// elements.
-  SVal makeZeroIndex();
+  SVal makeZeroArrayIndex();
 
   /// GetRValueSymbolVal - make a unique symbol for value of R.
   SVal getRValueSymbolVal(const MemRegion* R);

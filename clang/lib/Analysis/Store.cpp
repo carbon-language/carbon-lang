@@ -65,7 +65,7 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
       if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
         // Check if we are casting to a region with an integer type.  We now
         // the types aren't the same, so we construct an ElementRegion.
-        SVal Idx = ValMgr.makeZeroIndex();
+        SVal Idx = ValMgr.makeZeroArrayIndex();
         
         // If the super region is an element region, strip it away.
         // FIXME: Is this the right thing to do in all cases?
