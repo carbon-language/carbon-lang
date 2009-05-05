@@ -275,9 +275,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // Get overall information about the record type for the debug info.
   std::string Name = Decl->getNameAsString();
 
-  llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
-  unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();  
+  llvm::DICompileUnit DefUnit;
+  unsigned Line = 0;
+  if (!PLoc.isInvalid()) {
+    DefUnit = getOrCreateCompileUnit(Decl->getLocation());
+    Line = PLoc.getLine();
+  }
   
   // Records and classes and unions can all be recursive.  To handle them, we
   // first generate a debug descriptor for the struct as a forward declaration.
@@ -317,10 +321,14 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
     // Get the location for the field.
     SourceLocation FieldDefLoc = Field->getLocation();
-    llvm::DICompileUnit FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
     PresumedLoc PLoc = SM.getPresumedLoc(FieldDefLoc);
-    unsigned FieldLine = PLoc.isInvalid() ? 0 : PLoc.getLine();
-
+    llvm::DICompileUnit FieldDefUnit;
+    unsigned FieldLine = 0;
+    
+    if (!PLoc.isInvalid()) {
+      FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
+      FieldLine = PLoc.getLine();
+    }
 
     QualType FType = Field->getType();
     uint64_t FieldSize = 0;
