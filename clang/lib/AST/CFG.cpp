@@ -937,7 +937,18 @@ CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
   // FIXME: Add locking 'primitives' to CFG for @synchronized.
   
   // Inline the body.
-  Visit(S->getSynchBody());
+  CFGBlock *SyncBlock = Visit(S->getSynchBody());
+  
+  // The sync body starts its own basic block.  This makes it a little easier
+  // for diagnostic clients.
+  if (SyncBlock) {
+    if (!FinishBlock(SyncBlock))
+      return 0;
+    
+    Block = 0;
+  }
+    
+  Succ = SyncBlock;
   
   // Inline the sync expression.
   return Visit(S->getSynchExpr());
