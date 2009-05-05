@@ -1174,8 +1174,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     // Fallthrough edge can't be transferred.
     if (Succ == FallThrough)
       continue;
-    if (!ToBBI.BB->isSuccessor(Succ))
-      ToBBI.BB->addSuccessor(Succ);
+    ToBBI.BB->addSuccessor(Succ);
   }
 
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
@@ -1215,12 +1214,11 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
     if (Succ == FallThrough)
       continue;
     FromBBI.BB->removeSuccessor(Succ);
-    if (!ToBBI.BB->isSuccessor(Succ))
-      ToBBI.BB->addSuccessor(Succ);
+    ToBBI.BB->addSuccessor(Succ);
   }
 
   // Now FromBBI always fall through to the next block!
-  if (NBB && !FromBBI.BB->isSuccessor(NBB))
+  if (NBB)
     FromBBI.BB->addSuccessor(NBB);
 
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),

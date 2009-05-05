@@ -305,11 +305,9 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
         I->getOperand(i).setMBB(New);
   }
 
-  // Update the successor information.  If New was already a successor, just
-  // remove the link to Old instead of creating another one.  PR 1444.
+  // Update the successor information.
   removeSuccessor(Old);
-  if (!isSuccessor(New))
-    addSuccessor(New);
+  addSuccessor(New);
 }
 
 /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
