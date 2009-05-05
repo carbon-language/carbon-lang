@@ -28,20 +28,6 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
-/// getInstrOperandRegClass - Return register class of the operand of an
-/// instruction of the specified TargetInstrDesc.
-static const TargetRegisterClass*
-getInstrOperandRegClass(const TargetRegisterInfo *TRI, 
-                        const TargetInstrDesc &II, unsigned Op) {
-  if (Op >= II.getNumOperands()) {
-    assert(II.isVariadic() && "Invalid operand # of instruction");
-    return NULL;
-  }
-  if (II.OpInfo[Op].isLookupPtrRegClass())
-    return TRI->getPointerRegClass();
-  return TRI->getRegClass(II.OpInfo[Op].RegClass);
-}
-
 /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
 /// implicit physical register output.
 void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,

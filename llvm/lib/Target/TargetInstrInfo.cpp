@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
@@ -34,4 +35,16 @@ bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   if (!TID.isPredicable())
     return true;
   return !isPredicated(MI);
+}
+
+/// getInstrOperandRegClass - Return register class of the operand of an
+/// instruction of the specified TargetInstrDesc.
+const TargetRegisterClass*
+llvm::getInstrOperandRegClass(const TargetRegisterInfo *TRI,
+                        const TargetInstrDesc &II, unsigned Op) {
+  if (Op >= II.getNumOperands())
+    return NULL;
+  if (II.OpInfo[Op].isLookupPtrRegClass())
+    return TRI->getPointerRegClass();
+  return TRI->getRegClass(II.OpInfo[Op].RegClass);
 }

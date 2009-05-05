@@ -20,6 +20,7 @@
 namespace llvm {
 
 class TargetRegisterClass;
+class TargetRegisterInfo;
 class LiveVariables;
 class CalleeSavedInfo;
 class SDNode;
@@ -504,6 +505,12 @@ public:
                              const MachineInstr *Orig) const;
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 };
+
+/// getInstrOperandRegClass - Return register class of the operand of an
+/// instruction of the specified TargetInstrDesc.
+const TargetRegisterClass*
+getInstrOperandRegClass(const TargetRegisterInfo *TRI,
+                        const TargetInstrDesc &II, unsigned Op);
 
 } // End llvm namespace
 

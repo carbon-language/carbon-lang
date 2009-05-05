@@ -418,18 +418,6 @@ void SchedulePostRATDList::FinishBlock() {
   ScheduleDAGInstrs::FinishBlock();
 }
 
-/// getInstrOperandRegClass - Return register class of the operand of an
-/// instruction of the specified TargetInstrDesc.
-static const TargetRegisterClass*
-getInstrOperandRegClass(const TargetRegisterInfo *TRI,
-                         const TargetInstrDesc &II, unsigned Op) {
-  if (Op >= II.getNumOperands())
-    return NULL;
-  if (II.OpInfo[Op].isLookupPtrRegClass())
-    return TRI->getPointerRegClass();
-  return TRI->getRegClass(II.OpInfo[Op].RegClass);
-}
-
 /// CriticalPathStep - Return the next SUnit after SU on the bottom-up
 /// critical path.
 static SDep *CriticalPathStep(SUnit *SU) {
