@@ -106,7 +106,8 @@ public:
                       Selector Sel,
                       llvm::Value *Receiver,
                       bool IsClassMessage,
-                      const CallArgList &CallArgs);
+                      const CallArgList &CallArgs,
+                      const ObjCMethodDecl *Method);
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                            QualType ResultType,
@@ -119,6 +120,8 @@ public:
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *OID);
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
+      *Method);
   
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD, 
                                          const ObjCContainerDecl *CD);
@@ -160,7 +163,7 @@ public:
 
 
 static std::string SymbolNameForClass(const std::string &ClassName) {
-  return ".objc_class_" + ClassName;
+  return "___objc_class_name_" + ClassName;
 }
 
 static std::string SymbolNameForMethod(const std::string &ClassName, const
@@ -218,9 +221,7 @@ llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
   return Builder.CreateCall(ClassLookupFn, ClassName);
 }
 
-/// GetSelector - Return the pointer to the unique'd string for this selector.
 llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
-  // FIXME: uniquing on the string is wasteful, unique on Sel instead!
   llvm::GlobalAlias *&US = UntypedSelectors[Sel.getAsString()];
   if (US == 0)
     US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
@@ -229,7 +230,32 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
                                NULL, &TheModule);
   
   return Builder.CreateLoad(US);
-  
+}
+
+llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
+    *Method) {
+
+  std::string SelName = Method->getSelector().getAsString();
+  std::string SelTypes;
+  CGM.getContext().getObjCEncodingForMethodDecl(Method, SelTypes);
+  // Typed selectors
+  TypedSelector Selector = TypedSelector(SelName,
+          SelTypes);
+
+  // If it's already cached, return it.
+  if (TypedSelectors[Selector])
+  {
+      return Builder.CreateLoad(TypedSelectors[Selector]);
+  }
+
+  // If it isn't, cache it.
+  llvm::GlobalAlias *Sel = new llvm::GlobalAlias(
+          llvm::PointerType::getUnqual(SelectorTy),
+          llvm::GlobalValue::InternalLinkage, SelName,
+          NULL, &TheModule);
+  TypedSelectors[Selector] = Sel;
+
+  return Builder.CreateLoad(Sel);
 }
 
 llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
@@ -360,8 +386,13 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                Selector Sel,
                                llvm::Value *Receiver,
                                bool IsClassMessage,
-                               const CallArgList &CallArgs) {
-  llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
+                               const CallArgList &CallArgs,
+                               const ObjCMethodDecl *Method) {
+  llvm::Value *cmd;
+  if (Method)
+    cmd = GetSelector(CGF.Builder, Method);
+  else
+    cmd = GetSelector(CGF.Builder, Sel);
   CallArgList ActualArgs;
 
   ActualArgs.push_back(

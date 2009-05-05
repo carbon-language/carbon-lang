@@ -95,7 +95,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
                                             Args);
   }
   return Runtime.GenerateMessageSend(*this, E->getType(), E->getSelector(), 
-                                     Receiver, isClassMessage, Args);
+                                     Receiver, isClassMessage, Args,
+                                     E->getMethodDecl());
 }
 
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates

@@ -17,6 +17,7 @@
 #define CLANG_CODEGEN_OBCJRUNTIME_H
 #include "clang/Basic/IdentifierTable.h" // Selector
 #include "llvm/ADT/SmallVector.h"
+#include "clang/AST/DeclObjC.h"
 #include <string>
 
 #include "CGBuilder.h"
@@ -100,6 +101,10 @@ public:
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
                                    Selector Sel) = 0;
 
+  /// Get a typed selector.  
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
+                                   const ObjCMethodDecl *Method) = 0;
+
   /// Generate a constant string object.
   virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *) = 0;
 
@@ -110,14 +115,15 @@ public:
   /// Generate a class stucture for this class.
   virtual void GenerateClass(const ObjCImplementationDecl *OID) = 0;
   
-  /// Generate an Objective-C message send operation.
+  /// Generate an Objective-C message send operation. 
   virtual CodeGen::RValue 
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                       QualType ResultType,
                       Selector Sel,
                       llvm::Value *Receiver,
                       bool IsClassMessage,
-                      const CallArgList &CallArgs) = 0;
+                      const CallArgList &CallArgs,
+                      const ObjCMethodDecl *Method=0) = 0;
 
   /// Generate an Objective-C message send operation to the super
   /// class initiated in a method for Class and with the given Self

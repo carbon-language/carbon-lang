@@ -1016,7 +1016,8 @@ private:
                                               Selector Sel,
                                               llvm::Value *Receiver,
                                               bool IsClassMessage,
-                                              const CallArgList &CallArgs);
+                                              const CallArgList &CallArgs,
+                                              const ObjCMethodDecl *Method);
 
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
@@ -1032,7 +1033,12 @@ private:
                                 const ObjCInterfaceDecl *ID);
 
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
-  
+
+  /// The NeXT/Apple runtimes do not support typed selectors; just emit an
+  /// untyped one.
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
+                                   const ObjCMethodDecl *Method);
+
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
@@ -1200,7 +1206,8 @@ public:
                                               Selector Sel,
                                               llvm::Value *Receiver,
                                               bool IsClassMessage,
-                                              const CallArgList &CallArgs);
+                                              const CallArgList &CallArgs,
+                                              const ObjCMethodDecl *Method);
   
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
@@ -1217,6 +1224,12 @@ public:
   
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel)
     { return EmitSelector(Builder, Sel); }
+
+  /// The NeXT/Apple runtimes do not support typed selectors; just emit an
+  /// untyped one.
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
+                                   const ObjCMethodDecl *Method)
+    { return EmitSelector(Builder, Method->getSelector()); }
   
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   
@@ -1303,6 +1316,10 @@ llvm::Value *CGObjCMac::GetClass(CGBuilderTy &Builder,
 llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel) {
   return EmitSelector(Builder, Sel);
 }
+llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
+    *Method) {
+  return EmitSelector(Builder, Method->getSelector());
+}
 
 /// Generate a constant CFString object.
 /* 
@@ -1382,7 +1399,8 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                Selector Sel,
                                                llvm::Value *Receiver,
                                                bool IsClassMessage,
-                                               const CallArgList &CallArgs) {
+                                               const CallArgList &CallArgs,
+                                               const ObjCMethodDecl *Method) {
   return EmitMessageSend(CGF, ResultType, Sel,
                          Receiver, CGF.getContext().getObjCIdType(),
                          false, CallArgs);
@@ -4983,7 +5001,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
                                                Selector Sel,
                                                llvm::Value *Receiver,
                                                bool IsClassMessage,
-                                               const CallArgList &CallArgs) {
+                                               const CallArgList &CallArgs,
+                                               const ObjCMethodDecl *Method) {
   return EmitMessageSend(CGF, ResultType, Sel,
                          Receiver, CGF.getContext().getObjCIdType(),
                          false, CallArgs);
