@@ -477,6 +477,7 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
     bool FoundDef = false;  // Not counting 2address def.
     bool FoundUse = false;
     bool FoundKill = false;
+    const TargetInstrDesc &TID = MII->getDesc();
     for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MII->getOperand(i);
       if (!MO.isReg())
@@ -485,6 +486,10 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
       if (Reg == 0)
         continue;
       if (Reg == OldReg) {
+        const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
+        if (RC && !RC->contains(NewReg))
+          return false;
+
         if (MO.isUse()) {
           FoundUse = true;
           if (MO.isKill())
@@ -521,6 +526,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
   while (++MII != MBB->end()) {
     bool FoundUse = false;
     bool FoundKill = false;
+    const TargetInstrDesc &TID = MII->getDesc();
     for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MII->getOperand(i);
       if (!MO.isReg())
@@ -530,6 +536,10 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
         continue;
       if (Reg == OldReg) {
         if (MO.isDef())
+          return false;
+
+        const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
+        if (RC && !RC->contains(NewReg))
           return false;
         FoundUse = true;
         if (MO.isKill())
@@ -558,6 +568,8 @@ void StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
   MachineBasicBlock *MBB = MI->getParent();
   if (unsigned DstReg = TII->isLoadFromStackSlot(MI, OldFI)) {
     if (PropagateForward(MI, MBB, DstReg, Reg)) {
+      DOUT << "Eliminated load: ";
+      DEBUG(MI->dump());
       ++NumLoadElim;
     } else {
       TII->copyRegToReg(*MBB, MI, DstReg, Reg, RC, RC);
@@ -565,6 +577,8 @@ void StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
     }
   } else if (unsigned SrcReg = TII->isStoreToStackSlot(MI, OldFI)) {
     if (MI->killsRegister(SrcReg) && PropagateBackward(MI, MBB, SrcReg, Reg)) {
+      DOUT << "Eliminated store: ";
+      DEBUG(MI->dump());
       ++NumStoreElim;
     } else {
       TII->copyRegToReg(*MBB, MI, Reg, SrcReg, RC, RC);
