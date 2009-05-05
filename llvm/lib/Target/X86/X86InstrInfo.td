@@ -345,6 +345,13 @@ def gsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   return false;
 }]>;
 
+def fsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      return PT->getAddressSpace() == 257;
+  return false;
+}]>;
+
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr)), [{
   if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
     if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
@@ -3003,6 +3010,11 @@ let AddedComplexity = 5 in
 def GS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                    "movl\t%gs:$src, $dst",
                    [(set GR32:$dst, (gsload addr:$src))]>, SegGS;
+
+let AddedComplexity = 5 in
+def FS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+                   "movl\t%fs:$src, $dst",
+                   [(set GR32:$dst, (fsload addr:$src))]>, SegFS;
 
 //===----------------------------------------------------------------------===//
 // DWARF Pseudo Instructions

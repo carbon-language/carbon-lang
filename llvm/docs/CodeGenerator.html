@@ -1844,11 +1844,13 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm
    segment.  LLVM address space 0 is the default address space, which includes
    the stack, and any unqualified memory accesses in a program.  Address spaces
    1-255 are currently reserved for user-defined code.  The GS-segment is
-   represented by address space 256.  Other x86 segments have yet to be
-   allocated address space numbers.</p>
+   represented by address space 256, while the FS-segment is represented by 
+   address space 257. Other x86 segments have yet to be allocated address space
+   numbers.</p>
 
-<p>Some operating systems use the GS-segment to implement TLS, so care should be
-   taken when reading and writing to address space 256 on these platforms.</p>
+<p>Some operating systems use the FS/GS-segment to implement TLS, so care 
+   should be taken when reading and writing to address space 256/257 on these
+   platforms.</p>
 
 </div>
 
