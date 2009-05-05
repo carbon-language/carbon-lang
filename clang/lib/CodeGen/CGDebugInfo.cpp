@@ -413,7 +413,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       getOrCreateType(M->getContext().getObjCInterfaceType(SClass), Unit);
     llvm::DIType InhTag = 
       DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_inheritance,
-                                     Unit, "", Unit, 0, 0, 0,
+                                     Unit, "", llvm::DICompileUnit(), 0, 0, 0,
                                      0 /* offset */, 0, SClassTy);
     EltTys.push_back(InhTag);
   }
