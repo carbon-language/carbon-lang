@@ -295,7 +295,7 @@ bool DIGlobalVariable::Verify() const {
     return false;
 
   DICompileUnit CU = getCompileUnit();
-  if (!CU.Verify()) 
+  if (!CU.isNull() && !CU.Verify()) 
     return false;
 
   DIType Ty = getType();
@@ -319,7 +319,6 @@ bool DIVariable::Verify() const {
   DIType Ty = getType();
   if (!Ty.Verify())
     return false;
-
 
   return true;
 }

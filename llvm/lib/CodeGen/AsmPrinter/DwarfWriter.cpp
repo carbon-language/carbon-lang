@@ -1524,11 +1524,13 @@ private:
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
   void AddSourceLine(DIE *Die, const DIVariable *V) {
-    unsigned FileID = 0;
+    // If there is no compile unit specified, don't add a line #.
+    if (V->getCompileUnit().isNull())
+      return;
+
     unsigned Line = V->getLineNumber();
-    CompileUnit *Unit = FindCompileUnit(V->getCompileUnit());
-    FileID = Unit->getID();
-    assert (FileID && "Invalid file id");
+    unsigned FileID = FindCompileUnit(V->getCompileUnit()).getID();
+    assert(FileID && "Invalid file id");
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
@@ -1536,24 +1538,25 @@ private:
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
   void AddSourceLine(DIE *Die, const DIGlobal *G) {
-    unsigned FileID = 0;
+    // If there is no compile unit specified, don't add a line #.
+    if (G->getCompileUnit().isNull())
+      return;
     unsigned Line = G->getLineNumber();
-    CompileUnit *Unit = FindCompileUnit(G->getCompileUnit());
-    FileID = Unit->getID();
-    assert (FileID && "Invalid file id");
+    unsigned FileID = FindCompileUnit(G->getCompileUnit()).getID();
+    assert(FileID && "Invalid file id");
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
 
   void AddSourceLine(DIE *Die, const DIType *Ty) {
-    unsigned FileID = 0;
-    unsigned Line = Ty->getLineNumber();
+    // If there is no compile unit specified, don't add a line #.
     DICompileUnit CU = Ty->getCompileUnit();
     if (CU.isNull())
       return;
-    CompileUnit *Unit = FindCompileUnit(CU);
-    FileID = Unit->getID();
-    assert (FileID && "Invalid file id");
+    
+    unsigned Line = Ty->getLineNumber();
+    unsigned FileID = FindCompileUnit(CU).getID();
+    assert(FileID && "Invalid file id");
     AddUInt(Die, DW_AT_decl_file, 0, FileID);
     AddUInt(Die, DW_AT_decl_line, 0, Line);
   }
@@ -1953,10 +1956,11 @@ private:
 
   /// FindCompileUnit - Get the compile unit for the given descriptor. 
   ///
-  CompileUnit *FindCompileUnit(DICompileUnit Unit) {
-    CompileUnit *DW_Unit = CompileUnitMap[Unit.getGV()];
-    assert(DW_Unit && "Missing compile unit.");
-    return DW_Unit;
+  CompileUnit &FindCompileUnit(DICompileUnit Unit) const {
+    DenseMap<Value *, CompileUnit *>::const_iterator I = 
+      CompileUnitMap.find(Unit.getGV());
+    assert(I != CompileUnitMap.end() && "Missing compile unit.");
+    return *I->second;
   }
 
   /// NewDbgScopeVariable - Create a new scope variable.
@@ -2118,7 +2122,7 @@ private:
     // Get the compile unit context.
     CompileUnit *Unit = MainCU;
     if (!Unit)
-      Unit = FindCompileUnit(SPD.getCompileUnit());
+      Unit = &FindCompileUnit(SPD.getCompileUnit());
 
     // Get the subprogram die.
     DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
@@ -2984,7 +2988,7 @@ private:
     DIGlobalVariable DI_GV(GV);
     CompileUnit *DW_Unit = MainCU;
     if (!DW_Unit)
-      DW_Unit = FindCompileUnit(DI_GV.getCompileUnit());
+      DW_Unit = &FindCompileUnit(DI_GV.getCompileUnit());
 
     // Check for pre-existence.
     DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV.getGV());
@@ -3040,7 +3044,7 @@ private:
     DISubprogram SP(GV);
     CompileUnit *Unit = MainCU;
     if (!Unit)
-      Unit = FindCompileUnit(SP.getCompileUnit());
+      Unit = &FindCompileUnit(SP.getCompileUnit());
 
     // Check for pre-existence.
     DIE *&Slot = Unit->getDieMapSlotFor(GV);
