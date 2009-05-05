@@ -935,6 +935,8 @@ bool Expr::isOBJCGCCandidate() const {
     return cast<ParenExpr>(this)->getSubExpr()->isOBJCGCCandidate();
   case ImplicitCastExprClass:
     return cast<ImplicitCastExpr>(this)->getSubExpr()->isOBJCGCCandidate();
+  case CStyleCastExprClass:
+    return cast<CStyleCastExpr>(this)->getSubExpr()->isOBJCGCCandidate();
   case DeclRefExprClass:
   case QualifiedDeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
@@ -944,7 +946,7 @@ bool Expr::isOBJCGCCandidate() const {
   }
   case MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
-    return !M->isArrow() && M->getBase()->isOBJCGCCandidate();
+    return M->getBase()->isOBJCGCCandidate();
   }
   case ArraySubscriptExprClass:
     return cast<ArraySubscriptExpr>(this)->getBase()->isOBJCGCCandidate();
