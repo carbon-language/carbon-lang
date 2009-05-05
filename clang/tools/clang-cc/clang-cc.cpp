@@ -849,8 +849,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (ObjCNonFragileABI)
     Options.ObjCNonFragileABI = 1;
   
-  if (ObjCTightLayout)
-    Options.ObjCTightLayout = 1;
+  Options.ObjCTightLayout = 1;
 
   if (EmitAllDecls)
     Options.EmitAllDecls = 1;
