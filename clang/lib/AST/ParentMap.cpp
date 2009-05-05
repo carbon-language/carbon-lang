@@ -51,7 +51,7 @@ bool ParentMap::isConsumedExpr(Expr* E) const {
   Stmt *DirectChild = E;
   
   // Ignore parents that are parentheses or casts.
-  while (P && (isa<ParenExpr>(E) || isa<CastExpr>(E))) {
+  while (P && (isa<ParenExpr>(P) || isa<CastExpr>(P))) {
     DirectChild = P;
     P = getParent(P);
   }
