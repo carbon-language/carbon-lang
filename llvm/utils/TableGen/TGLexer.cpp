@@ -98,7 +98,7 @@ tgtok::TokKind TGLexer::LexToken() {
   switch (CurChar) {
   default:
     // Handle letters: [a-zA-Z_]
-    if (isalpha(CurChar) || CurChar == '_')
+    if (isalpha(CurChar) || CurChar == '_' || CurChar == '#')
       return LexIdentifier();
       
     // Unknown character, emit an error.
@@ -220,8 +220,20 @@ tgtok::TokKind TGLexer::LexIdentifier() {
   const char *IdentStart = TokStart;
   
   // Match the rest of the identifier regex: [0-9a-zA-Z_]*
-  while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_')
-    ++CurPtr;
+  while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_'
+         || *CurPtr == '#') {
+    // If this contains a '#', make sure it's value
+    if (*CurPtr == '#') {
+      if (strncmp(CurPtr, "#NAME#", 6) != 0) {
+        return tgtok::Error;
+      }
+      CurPtr += 6;
+    }
+    else {
+      ++CurPtr;
+    }
+  }
+  
   
   // Check to see if this identifier is a keyword.
   unsigned Len = CurPtr-IdentStart;

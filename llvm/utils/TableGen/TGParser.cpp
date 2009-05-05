@@ -1609,9 +1609,18 @@ bool TGParser::ParseDefm() {
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
       Record *DefProto = MC->DefPrototypes[i];
 
-      // Add the suffix to the defm name to get the new name.
-      Record *CurRec = new Record(DefmPrefix + DefProto->getName(),
-                                  DefmPrefixLoc);
+      // Add in the defm name
+      std::string DefName = DefProto->getName();
+      std::string::size_type idx = DefName.find("#NAME#");
+      if (idx != std::string::npos) {
+        DefName.replace(idx, 6, DefmPrefix);
+      }
+      else {
+        // Add the suffix to the defm name to get the new name.
+        DefName = DefmPrefix + DefName;
+      }
+
+      Record *CurRec = new Record(DefName, DefmPrefixLoc);
 
       SubClassReference Ref;
       Ref.RefLoc = DefmPrefixLoc;
