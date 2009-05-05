@@ -463,6 +463,22 @@ void test_attr_1b(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
 }
 
+__attribute__((ns_returns_owned))
+NSString* test_attr_1c(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+  return str;
+}
+
+void test_attr_1d_helper(NSString* str __attribute__((ns_retains)));
+
+__attribute__((ns_returns_owned))
+NSString* test_attr_1d(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+  test_attr_1d_helper(str);
+  return str;
+}
+
+
 void test_attr_2(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
   [X myRetain:str];
