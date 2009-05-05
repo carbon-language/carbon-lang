@@ -62,6 +62,7 @@ public:
     CFOwnershipRelease,       // Clang/Checker-specific.
     CFOwnershipRetain,        // Clang/Checker-specific.
     CFOwnershipReturns,       // Clang/Checker-specific.
+    NSOwnershipAutorelease,   // Clang/Checker-specific.
     NSOwnershipRelease,         // Clang/Checker-specific.
     NSOwnershipRetain,          // Clang/Checker-specific.
     NSOwnershipReturns,         // Clang/Checker-specific.
@@ -471,6 +472,7 @@ DEF_SIMPLE_ATTR(CFOwnershipRetain);
 DEF_SIMPLE_ATTR(CFOwnershipReturns);
 DEF_SIMPLE_ATTR(NSOwnershipRelease);
 DEF_SIMPLE_ATTR(NSOwnershipRetain);
+DEF_SIMPLE_ATTR(NSOwnershipAutorelease);
 DEF_SIMPLE_ATTR(NSOwnershipReturns);
 
 #undef DEF_SIMPLE_ATTR

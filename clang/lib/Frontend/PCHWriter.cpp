@@ -1552,6 +1552,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::CFOwnershipRelease:
     case Attr::CFOwnershipRetain:
     case Attr::CFOwnershipReturns:
+    case Attr::NSOwnershipAutorelease:
     case Attr::NSOwnershipRelease:
     case Attr::NSOwnershipRetain:
     case Attr::NSOwnershipReturns:

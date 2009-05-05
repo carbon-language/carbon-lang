@@ -1595,6 +1595,8 @@ static void HandleNSOwnershipAttr(Decl *d, const AttributeList &Attr,
         name = "cf_releases"; break;
       case AttributeList::AT_cf_retains:
         name = "cf_retains"; break;
+      case AttributeList::AT_ns_autoreleases:
+        name = "ns_autoreleases"; break;
       case AttributeList::AT_ns_releases:
         name = "ns_releases"; break;
       case AttributeList::AT_ns_retains:
@@ -1617,6 +1619,9 @@ static void HandleNSOwnershipAttr(Decl *d, const AttributeList &Attr,
     case AttributeList::AT_cf_retains:
       d->addAttr(::new (S.Context) CFOwnershipRetainAttr());
       return;
+    case AttributeList::AT_ns_autoreleases:
+      d->addAttr(::new (S.Context) NSOwnershipAutoreleaseAttr());
+      return;            
     case AttributeList::AT_ns_releases:
       d->addAttr(::new (S.Context) NSOwnershipReleaseAttr());
       return;
@@ -1667,6 +1672,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_cf_releases:     
   case AttributeList::AT_cf_retains:
       HandleNSOwnershipAttr(D, Attr, S); break;
+  case AttributeList::AT_ns_autoreleases:
   case AttributeList::AT_ns_releases:
   case AttributeList::AT_ns_retains:
       HandleNSOwnershipAttr(D, Attr, S, true); break;

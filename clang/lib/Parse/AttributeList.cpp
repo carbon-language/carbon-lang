@@ -129,6 +129,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 15:
     if (!memcmp(Str, "ext_vector_type", 15)) return AT_ext_vector_type;
+    if (!memcmp(Str, "ns_autoreleases", 15)) return AT_ns_autoreleases;
     break;
   case 16:
     if (!memcmp(Str, "ns_returns_owned", 16)) return AT_ns_returns_owned;
