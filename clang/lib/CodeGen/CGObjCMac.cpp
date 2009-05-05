@@ -43,8 +43,6 @@ static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
                                                   const ObjCInterfaceDecl *OID,
                                                   const ObjCIvarDecl *OIVD,
                                                   unsigned &Index) {
-  const ObjCInterfaceDecl *Super = OID->getSuperClass();
-
   // FIXME: The index here is closely tied to how
   // ASTContext::getObjCLayout is implemented. This should be fixed to
   // get the information from the layout directly.
@@ -65,7 +63,7 @@ static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
   }
 
   // Otherwise check in the super class.
-  if (Super)
+  if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
     return FindIvarInterface(Context, Super, OIVD, Index);
     
   return 0;
@@ -2059,35 +2057,6 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   return CreateMetadataVar("\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
                            Init, "__OBJC,__class_ext,regular,no_dead_strip", 
                            4, true);
-}
-
-/// getInterfaceDeclForIvar - Get the interface declaration node where
-/// this ivar is declared in.
-/// FIXME. Ideally, this info should be in the ivar node. But currently 
-/// it is not and prevailing wisdom is that ASTs should not have more
-/// info than is absolutely needed, even though this info reflects the
-/// source language. 
-///
-static const ObjCInterfaceDecl *getInterfaceDeclForIvar(
-                                  const ObjCInterfaceDecl *OI,
-                                  const ObjCIvarDecl *IVD,
-                                  ASTContext &Context) {
-  if (!OI)
-    return 0;
-  assert(isa<ObjCInterfaceDecl>(OI) && "OI is not an interface");
-  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-       E = OI->ivar_end(); I != E; ++I)
-    if ((*I)->getIdentifier() == IVD->getIdentifier())
-      return OI;
-  // look into properties.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(Context),
-       E = OI->prop_end(Context); I != E; ++I) {
-    ObjCPropertyDecl *PDecl = (*I);
-    if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
-      if (IV->getIdentifier() == IVD->getIdentifier())
-        return OI;
-  }
-  return getInterfaceDeclForIvar(OI->getSuperClass(), IVD, Context);
 }
 
 /*
@@ -4511,12 +4480,15 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
 
 /// ObjCIvarOffsetVariable - Returns the ivar offset variable for
 /// the given ivar.
-///
 llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
                               const ObjCInterfaceDecl *ID,
                               const ObjCIvarDecl *Ivar) {
-  std::string Name = "OBJC_IVAR_$_" + 
-    getInterfaceDeclForIvar(ID, Ivar, CGM.getContext())->getNameAsString() + 
+  // FIXME: We shouldn't need to do this lookup.
+  unsigned Index;
+  const ObjCInterfaceDecl *Container = 
+    FindIvarInterface(CGM.getContext(), ID, Ivar, Index);
+  assert(Container && "Unable to find ivar container!");
+  std::string Name = "OBJC_IVAR_$_" + Container->getNameAsString() +
     '.' + Ivar->getNameAsString();
   llvm::GlobalVariable *IvarOffsetGV = 
     CGM.getModule().getGlobalVariable(Name);
