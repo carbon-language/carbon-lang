@@ -823,7 +823,7 @@ public:
         PrevLoc = PD.begin()->getLocation();
         
         if (const Stmt *S = PrevLoc.asStmt())
-          addContext(PDB.getEnclosingStmtLocation(S).asStmt());
+          addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
       }
   }
 
@@ -851,6 +851,7 @@ public:
   void rawAddEdge(PathDiagnosticLocation NewLoc);
   
   void addContext(const Stmt *S);
+  void addExtendedContext(const Stmt *S);
 };  
 } // end anonymous namespace
 
@@ -992,6 +993,31 @@ bool EdgeBuilder::IsConsumedExpr(const PathDiagnosticLocation &L) {
   return false;
 }
   
+void EdgeBuilder::addExtendedContext(const Stmt *S) {
+  if (!S)
+    return;
+  
+  const Stmt *Parent = PDB.getParent(S);  
+  while (Parent) {
+    if (isa<CompoundStmt>(Parent))
+      Parent = PDB.getParent(Parent);
+    else
+      break;
+  }
+
+  if (Parent) {
+    switch (Parent->getStmtClass()) {
+      case Stmt::DoStmtClass:
+      case Stmt::ObjCAtSynchronizedStmtClass:
+        addContext(Parent);
+      default:
+        break;
+    }
+  }
+  
+  addContext(S);
+}
+  
 void EdgeBuilder::addContext(const Stmt *S) {
   if (!S)
     return;
@@ -1073,7 +1099,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
          EB.addContext(S);
        }
        else
-         EB.addContext(PDB.getEnclosingStmtLocation(S).asStmt());
+         EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
       }
 
       continue;
@@ -1088,7 +1114,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       EB.addEdge(Loc, true);
       PD.push_front(p);
       if (const Stmt *S = Loc.asStmt())
-        EB.addContext(PDB.getEnclosingStmtLocation(S).asStmt());      
+        EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());      
     }
   }
 }
