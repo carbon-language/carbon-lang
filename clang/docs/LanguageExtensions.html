@@ -257,9 +257,10 @@ the number of indices specified.
 <!-- ======================================================================= -->
 
 <p>Annotating a pointer with address space #256 causes it to  be code generated
-relative to the X86 GS segment register.  
-Note that this is a very very low-level feature that should only be used if you
-know what you're doing (for example in an OS kernel).</p>
+relative to the X86 GS segment register, and address space #257 causes it to be
+relative to the X86 FS segment.  Note that this is a very very low-level
+feature that should only be used if you know what you're doing (for example in
+an OS kernel).</p>
 
 <p>Here is an example:</p>
 
