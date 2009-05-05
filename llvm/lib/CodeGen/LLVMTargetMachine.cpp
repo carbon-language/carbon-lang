@@ -193,7 +193,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Perform stack slot coloring.
   if (OptLevel != CodeGenOpt::None)
-    PM.add(createStackSlotColoringPass());
+    PM.add(createStackSlotColoringPass(OptLevel >= CodeGenOpt::Aggressive));
 
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createMachineFunctionPrinterPass(cerr));
