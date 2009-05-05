@@ -14,6 +14,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include <algorithm>
@@ -245,37 +246,40 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 unsigned AvoidColumn,
                                                 unsigned Columns) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
-  
-  // We always emit diagnostics about the instantiation points, not the spelling
-  // points.  This more closely correlates to what the user writes.
+
+  // If this is a macro ID, first emit information about where this was
+  // instantiated (recursively) then emit information about where. the token was
+  // spelled from.
   if (!Loc.isFileID()) {
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
+    // FIXME: Map ranges?
     EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, AvoidColumn,
                         Columns);
-    
-    // Map the location through the macro.
-    Loc = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(Loc));
 
+    Loc = SM.getImmediateSpellingLoc(Loc);
+    
     // Map the ranges.
     for (unsigned i = 0; i != NumRanges; ++i) {
       SourceLocation S = Ranges[i].getBegin(), E = Ranges[i].getEnd();
-      if (S.isMacroID())
-        S = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(S));
-      if (E.isMacroID())
-        E = SM.getInstantiationLoc(SM.getImmediateSpellingLoc(E));
+      if (S.isMacroID()) S = SM.getImmediateSpellingLoc(S);
+      if (E.isMacroID()) E = SM.getImmediateSpellingLoc(E);
       Ranges[i] = SourceRange(S, E);
     }
     
     if (ShowLocation) {
+      std::pair<FileID, unsigned> IInfo = SM.getDecomposedInstantiationLoc(Loc);
+      
       // Emit the file/line/column that this expansion came from.
-      OS << SM.getBufferName(Loc) << ':' << SM.getInstantiationLineNumber(Loc)
-         << ':';
+      OS << SM.getBuffer(IInfo.first)->getBufferIdentifier() << ':'
+         << SM.getLineNumber(IInfo.first, IInfo.second) << ':';
       if (ShowColumn)
-        OS << SM.getInstantiationColumnNumber(Loc) << ':';
+        OS << SM.getColumnNumber(IInfo.first, IInfo.second) << ':';
       OS << ' ';
     }
     OS << "note: instantiated from:\n";
-    AvoidColumn = 0;
+    
+    EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, Hints, NumHints, 0,Columns);
+    return;
   }
   
   // Decompose the location into a FID/Offset pair.
