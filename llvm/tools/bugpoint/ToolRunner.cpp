@@ -140,9 +140,6 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
     throw ToolExecutionError("LLI currently does not support "
                              "loading shared libraries.");
 
-  if (!GCCArgs.empty())
-    throw ToolExecutionError("LLI currently does not support "
-                             "GCC Arguments.");
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
   LLIArgs.push_back("-force-interpreter=true");
@@ -409,8 +406,6 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout,
                         unsigned MemoryLimit) {
-  if (!GCCArgs.empty())
-    throw ToolExecutionError("JIT does not support GCC Arguments.");
   // Construct a vector of parameters, incorporating those from the command-line
   std::vector<const char*> JITArgs;
   JITArgs.push_back(LLIPath.c_str());
