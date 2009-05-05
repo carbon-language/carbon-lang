@@ -1128,6 +1128,9 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
                         ? RetEffect::MakeGCNotOwned()
                         : RetEffect::MakeOwned(RetEffect::ObjC, true));
     }
+    else if (FD->getAttr<CFOwnershipReturnsAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+    }
   }
   
   // Determine if there are any arguments with a specific ArgEffect.
@@ -1150,6 +1153,9 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
                         ? RetEffect::MakeGCNotOwned()
                         : RetEffect::MakeOwned(RetEffect::ObjC, true));
     }
+    else if (MD->getAttr<CFOwnershipReturnsAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+    }    
   }
   
   // Determine if there are any arguments with a specific ArgEffect.

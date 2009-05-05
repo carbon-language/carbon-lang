@@ -61,6 +61,7 @@ public:
     ObjCNSObject,
     CFOwnershipRelease,       // Clang/Checker-specific.
     CFOwnershipRetain,        // Clang/Checker-specific.
+    CFOwnershipReturns,       // Clang/Checker-specific.
     NSOwnershipRelease,         // Clang/Checker-specific.
     NSOwnershipRetain,          // Clang/Checker-specific.
     NSOwnershipReturns,         // Clang/Checker-specific.
@@ -135,7 +136,7 @@ public:
 class ATTR##Attr : public Attr {                                        \
 public:                                                                 \
   ATTR##Attr() : Attr(ATTR) {}                                          \
-  virtual Attr *clone(ASTContext &C) const { return ::new (C) ATTR##Attr; }                \
+  virtual Attr *clone(ASTContext &C) const { return ::new (C) ATTR##Attr; }\
   static bool classof(const Attr *A) { return A->getKind() == ATTR; }   \
   static bool classof(const ATTR##Attr *A) { return true; }             \
 }
@@ -466,8 +467,9 @@ public:
 
 // Checker-specific attributes.
 DEF_SIMPLE_ATTR(CFOwnershipRelease);
-DEF_SIMPLE_ATTR(NSOwnershipRelease);
 DEF_SIMPLE_ATTR(CFOwnershipRetain);
+DEF_SIMPLE_ATTR(CFOwnershipReturns);
+DEF_SIMPLE_ATTR(NSOwnershipRelease);
 DEF_SIMPLE_ATTR(NSOwnershipRetain);
 DEF_SIMPLE_ATTR(NSOwnershipReturns);
 

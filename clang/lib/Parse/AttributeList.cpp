@@ -132,6 +132,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 16:
     if (!memcmp(Str, "ns_returns_owned", 16)) return AT_ns_returns_owned;
+    if (!memcmp(Str, "cf_returns_owned", 16)) return AT_cf_returns_owned;
     break;      
   case 17:
     if (!memcmp(Str, "transparent_union", 17)) return AT_transparent_union;
