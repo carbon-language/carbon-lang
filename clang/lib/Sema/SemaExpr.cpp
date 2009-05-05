@@ -3771,7 +3771,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       //
       // C++ [expr.eq]p2 uses the same notion for (in)equality
       // comparisons of pointers.
-      QualType T = CompositePointerType(lex, rex, LHSIsNull, RHSIsNull);
+      QualType T = FindCompositePointerType(lex, rex);
       if (T.isNull()) {
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
