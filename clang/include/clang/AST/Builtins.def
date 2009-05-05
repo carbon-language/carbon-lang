@@ -201,25 +201,29 @@ BUILTIN(__builtin_alloca, "v*z"   , "n")
 // FIXME: These should be overloaded for i8, i16, i32, and i64.
 BUILTIN(__sync_fetch_and_add,"ii*i", "n")
 BUILTIN(__sync_fetch_and_sub,"ii*i", "n")
+BUILTIN(__sync_fetch_and_or,"ii*i", "n")
+BUILTIN(__sync_fetch_and_and,"ii*i", "n")
+BUILTIN(__sync_fetch_and_xor,"ii*i", "n")
+BUILTIN(__sync_fetch_and_nand,"ii*i", "n")
+
+// GCC does not support these, they are a Clang extension.
 BUILTIN(__sync_fetch_and_min,"ii*i", "n")
 BUILTIN(__sync_fetch_and_max,"ii*i", "n")
 BUILTIN(__sync_fetch_and_umin,"UiUi*Ui", "n")
 BUILTIN(__sync_fetch_and_umax,"UiUi*Ui", "n")
-BUILTIN(__sync_fetch_and_and,"ii*i", "n")
-BUILTIN(__sync_fetch_and_or,"ii*i", "n")
-BUILTIN(__sync_fetch_and_xor,"ii*i", "n")
+
 BUILTIN(__sync_add_and_fetch,"ii*i", "n")
 BUILTIN(__sync_sub_and_fetch,"ii*i", "n")
-BUILTIN(__sync_min_and_fetch,"ii*i", "n")
-BUILTIN(__sync_max_and_fetch,"ii*i", "n")
-BUILTIN(__sync_umin_and_fetch,"UiUi*Ui", "n")
-BUILTIN(__sync_umax_and_fetch,"UiUi*Ui", "n")
-BUILTIN(__sync_and_and_fetch,"ii*i", "n")
 BUILTIN(__sync_or_and_fetch,"ii*i", "n")
+BUILTIN(__sync_and_and_fetch,"ii*i", "n")
 BUILTIN(__sync_xor_and_fetch,"ii*i", "n")
-BUILTIN(__sync_lock_test_and_set,"ii*i", "n")
+BUILTIN(__sync_nand_and_fetch,"ii*i", "n")
+
 BUILTIN(__sync_bool_compare_and_swap,"ii*ii", "n")
 BUILTIN(__sync_val_compare_and_swap,"ii*ii", "n")
+BUILTIN(__sync_lock_test_and_set,"ii*i", "n")
+BUILTIN(__sync_lock_release,"ii*i", "n")
+BUILTIN(__sync_synchronize, "v.", "n")
 
 // LLVM instruction builtin
 BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
