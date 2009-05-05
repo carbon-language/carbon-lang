@@ -74,6 +74,8 @@ namespace llvm {
     /// ValidDebugInfo - Return true if V represents valid debug info value.
     static bool ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel);
 
+    /// dump - print descriptor.
+    void dump() const;
   };
 
   /// DIAnchor - A wrapper for various anchor descriptors.
