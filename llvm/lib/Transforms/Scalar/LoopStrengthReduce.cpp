@@ -2464,7 +2464,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     // computation of some other indvar to decide when to terminate the loop.
     OptimizeIndvars(L);
 
-    // FIXME: We can widen overlarge IV's here.  e.g. if the code has
+    // FIXME: We can shrink overlarge IV's here.  e.g. if the code has
     // computation in i64 values and the target doesn't support i64, demote
     // the computation to 32-bit if safe.
 
