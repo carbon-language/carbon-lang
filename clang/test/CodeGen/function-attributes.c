@@ -47,4 +47,23 @@ int f12(int arg) {
 void f13(void) __attribute__((pure)) __attribute__((const));
 void f13(void){}
 
+
+// Ensure that these get inlined: rdar://6853279
+// RUN: not grep '@ai_' %t &&
+static __inline__ __attribute__((always_inline))
+int ai_1() {  return 4; }
+
+static __inline__ __attribute__((always_inline))
+struct {
+  int a, b, c, d, e;
+} ai_2() { }
+
+
+int foo() {
+  ai_2();
+  return ai_1();
+}
+
+
+
 // RUN: true

@@ -851,6 +851,69 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
 }
 
+/// ReplaceUsesOfNonProtoTypeWithRealFunction - This function is called when we
+/// implement a function with no prototype, e.g. "int foo() {}".  If there are
+/// existing call uses of the old function in the module, this adjusts them to
+/// call the new function directly.
+///
+/// This is not just a cleanup: the always_inline pass requires direct calls to
+/// functions to be able to inline them.  If there is a bitcast in the way, it
+/// won't inline them.  Instcombine normally deletes these calls, but it isn't
+/// run at -O0.
+static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
+                                                      llvm::Function *NewFn) {
+  // If we're redefining a global as a function, don't transform it.
+  llvm::Function *OldFn = dyn_cast<llvm::Function>(Old);
+  if (OldFn == 0) return;
+  
+  const llvm::Type *NewRetTy = NewFn->getReturnType();
+  llvm::SmallVector<llvm::Value*, 4> ArgList;
+
+  for (llvm::Value::use_iterator UI = OldFn->use_begin(), E = OldFn->use_end();
+       UI != E; ) {
+    // TODO: Do invokes ever occur in C code?  If so, we should handle them too.
+    llvm::CallInst *CI = dyn_cast<llvm::CallInst>(*UI++);
+    if (!CI) continue;
+    
+    // If the return types don't match exactly, and if the call isn't dead, then
+    // we can't transform this call.
+    if (CI->getType() != NewRetTy && !CI->use_empty())
+      continue;
+
+    // If the function was passed too few arguments, don't transform.  If extra
+    // arguments were passed, we silently drop them.  If any of the types
+    // mismatch, we don't transform.
+    unsigned ArgNo = 0;
+    bool DontTransform = false;
+    for (llvm::Function::arg_iterator AI = NewFn->arg_begin(),
+         E = NewFn->arg_end(); AI != E; ++AI, ++ArgNo) {
+      if (CI->getNumOperands()-1 == ArgNo ||
+          CI->getOperand(ArgNo+1)->getType() != AI->getType()) {
+        DontTransform = true;
+        break;
+      }
+    }
+    if (DontTransform)
+      continue;
+    
+    // Okay, we can transform this.  Create the new call instruction and copy
+    // over the required information.
+    ArgList.append(CI->op_begin()+1, CI->op_begin()+1+ArgNo);
+    llvm::CallInst *NewCall = llvm::CallInst::Create(NewFn, ArgList.begin(),
+                                                     ArgList.end(), "", CI);
+    ArgList.clear();
+    if (NewCall->getType() != llvm::Type::VoidTy)
+      NewCall->takeName(CI);
+    NewCall->setCallingConv(CI->getCallingConv());
+    NewCall->setAttributes(CI->getAttributes());
+
+    // Finally, remove the old call, replacing any uses with the new one.
+    if (!CI->use_empty())
+      CI->replaceAllUsesWith(NewCall);
+    CI->eraseFromParent();
+  }
+}
+
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   const llvm::FunctionType *Ty;
@@ -886,8 +949,10 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   
   
   if (cast<llvm::GlobalValue>(Entry)->getType()->getElementType() != Ty) {
+    llvm::GlobalValue *OldFn = cast<llvm::GlobalValue>(Entry);
+    
     // If the types mismatch then we have to rewrite the definition.
-    assert(cast<llvm::GlobalValue>(Entry)->isDeclaration() &&
+    assert(OldFn->isDeclaration() &&
            "Shouldn't replace non-declaration");
 
     // F is the Function* for the one with the wrong type, we must make a new
@@ -900,15 +965,23 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     // correct type, RAUW, then steal the name.
     GlobalDeclMap.erase(getMangledName(D));
     llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(D, Ty));
-    NewFn->takeName(cast<llvm::GlobalValue>(Entry));
+    NewFn->takeName(OldFn);
+    
+    // If this is an implementation of a function without a prototype, try to
+    // replace any existing uses of the function (which may be calls) with uses
+    // of the new function
+    if (D->getType()->isFunctionNoProtoType())
+      ReplaceUsesOfNonProtoTypeWithRealFunction(OldFn, NewFn);
     
     // Replace uses of F with the Function we will endow with a body.
-    llvm::Constant *NewPtrForOldDecl = 
-      llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
-    Entry->replaceAllUsesWith(NewPtrForOldDecl);
+    if (!Entry->use_empty()) {
+      llvm::Constant *NewPtrForOldDecl = 
+        llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
+      Entry->replaceAllUsesWith(NewPtrForOldDecl);
+    }
     
     // Ok, delete the old function now, which is dead.
-    cast<llvm::GlobalValue>(Entry)->eraseFromParent();
+    OldFn->eraseFromParent();
     
     Entry = NewFn;
   }

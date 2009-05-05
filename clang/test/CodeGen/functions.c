@@ -23,7 +23,7 @@ int a() {return 1;}
 void f0() {}
 
 void f1();
-// RUN: grep 'call void (...)\* bitcast (void ()\* @f1' %t &&
+// RUN: grep 'call void @f1()' %t &&
 void f2(void) {
   f1(1, 2, 3);
 }
