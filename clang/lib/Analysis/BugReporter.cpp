@@ -215,9 +215,9 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
 PathDiagnosticLocation
 PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt* passed to getEnclosingStmtLocation");
-  ParentMap &P = getParentMap();
+  ParentMap &P = getParentMap(); 
     
-  while (isa<DeclStmt>(S) || isa<Expr>(S)) {
+  while (isa<Expr>(S) && P.isConsumedExpr(cast<Expr>(S))) {
     const Stmt *Parent = P.getParent(S);
     
     if (!Parent)
@@ -797,8 +797,6 @@ class VISIBILITY_HIDDEN EdgeBuilder {
             S = CE->getCond();
           else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
             S = BE->getLHS();
-          else if (const DoStmt *DS = dyn_cast<DoStmt>(S))
-            S = DS->getCond();
           else
             break;
         }
@@ -1038,11 +1036,11 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       const CFGBlock &Blk = *BE->getSrc();
       const Stmt *Term = Blk.getTerminator();
       
-      if (Term && !isa<DoStmt>(Term))
+      if (Term)
         EB.addContext(Term);
 
       // Are we jumping to the head of a loop?  Add a special diagnostic.
-      if (const Stmt *Loop = BE->getDst()->getLoopTarget()) {
+      if (const Stmt *Loop = BE->getSrc()->getLoopTarget()) {
         
         PathDiagnosticLocation L(Loop, PDB.getSourceManager());
         PathDiagnosticEventPiece *p =
@@ -1086,8 +1084,11 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                 PDB.getBugReporter(), PDB.getNodeMapClosure());
     
     if (p) {
-      EB.addEdge(p->getLocation(), true);
+      const PathDiagnosticLocation &Loc = p->getLocation();
+      EB.addEdge(Loc, true);
       PD.push_front(p);
+      if (const Stmt *S = Loc.asStmt())
+        EB.addContext(PDB.getEnclosingStmtLocation(S).asStmt());      
     }
   }
 }
