@@ -1265,7 +1265,6 @@ StrVector::const_iterator SubstituteSpecialCommands
   assert(Leftover.at(0) == ')');
   if (Leftover.size() != 1)
     O << " + std::string(\"" << (Leftover.c_str() + 1) << "\")";
-  O << ')';
 
   return Pos;
 }
