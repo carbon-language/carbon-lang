@@ -212,7 +212,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St,
     case loc::MemRegionKind: {
       const MemRegion *R = cast<loc::MemRegionVal>(BaseL).getRegion();
       
-      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+      if (isa<ElementRegion>(R)) {
         // int x;
         // char* y = (char*) &x;
         // 'y' => ElementRegion(0, VarRegion('x'))
