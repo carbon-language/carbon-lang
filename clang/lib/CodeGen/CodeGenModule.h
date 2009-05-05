@@ -16,6 +16,7 @@
 
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/DeclCXX.h"
 #include "CGBlocks.h"
 #include "CGCall.h"
 #include "CGCXX.h"
@@ -108,16 +109,48 @@ class CodeGenModule : public BlockModule {
   /// has one).
   llvm::StringSet<> MangledNames;
 
+  /// GlobalDecl - represents a global declaration. This can either be a
+  /// CXXConstructorDecl and the constructor type (Base, Complete).
+  /// a CXXDestructorDecl and the destructor type (Base, Complete) or
+  // a regular VarDecl or a FunctionDecl.
+  class GlobalDecl {
+    llvm::PointerIntPair<const ValueDecl*, 2> Value;
+    
+  public:
+    GlobalDecl() {}
+    
+    explicit GlobalDecl(const ValueDecl *VD) : Value(VD, 0) {
+      assert(!isa<CXXConstructorDecl>(VD) && "Use other ctor with ctor decls!");
+      assert(!isa<CXXDestructorDecl>(VD) && "Use other ctor with dtor decls!");
+    }
+    GlobalDecl(const CXXConstructorDecl *D, CXXCtorType Type) 
+      : Value(D, Type) {}
+    GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)
+      : Value(D, Type) {}
+    
+    const ValueDecl *getDecl() const { return Value.getPointer(); }
+    
+    CXXCtorType getCtorType() const {
+      assert(isa<CXXConstructorDecl>(getDecl()) && "Decl is not a ctor!");
+      return static_cast<CXXCtorType>(Value.getInt());
+    }
+    
+    CXXDtorType getDtorType() const {
+      assert(isa<CXXDestructorDecl>(getDecl()) && "Decl is not a dtor!");
+      return static_cast<CXXDtorType>(Value.getInt());
+    }
+  };
+  
   /// DeferredDecls - This contains all the decls which have definitions but
   /// which are deferred for emission and therefore should only be output if
   /// they are actually used.  If a decl is in this, then it is known to have
   /// not been referenced yet.  The key to this map is a uniqued mangled name.
-  llvm::DenseMap<const char*, const ValueDecl*> DeferredDecls;
+  llvm::DenseMap<const char*, GlobalDecl> DeferredDecls;
 
   /// DeferredDeclsToEmit - This is a list of deferred decls which we have seen
   /// that *are* actually referenced.  These get code generated when the module
   /// is done.
-  std::vector<const ValueDecl*> DeferredDeclsToEmit;
+  std::vector<GlobalDecl> DeferredDeclsToEmit;
 
   /// LLVMUsed - List of global values which are required to be
   /// present in the object file; bitcast to i8*. This is used for
@@ -326,6 +359,8 @@ public:
                               const Decl *TargetDecl,
                               AttributeListType &PAL);
 
+  const char *getMangledName(const GlobalDecl &D);
+
   const char *getMangledName(const NamedDecl *ND);
   const char *getMangledCXXCtorName(const CXXConstructorDecl *D, 
                                     CXXCtorType Type);
@@ -371,9 +406,9 @@ private:
 
   /// EmitGlobal - Emit code for a singal global function or var decl. Forward
   /// declarations are emitted lazily.
-  void EmitGlobal(const ValueDecl *D);
+  void EmitGlobal(const GlobalDecl& D);
 
-  void EmitGlobalDefinition(const ValueDecl *D);
+  void EmitGlobalDefinition(const GlobalDecl& D);
 
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);

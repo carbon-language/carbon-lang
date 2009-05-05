@@ -176,8 +176,8 @@ void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
     return;
   }
 
-  EmitCXXConstructor(D, Ctor_Complete);
-  EmitCXXConstructor(D, Ctor_Base);
+  EmitGlobal(GlobalDecl(D, Ctor_Complete));
+  EmitGlobal(GlobalDecl(D, Ctor_Base));
 }
 
 void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D, 

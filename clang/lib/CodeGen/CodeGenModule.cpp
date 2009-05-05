@@ -135,6 +135,17 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
   }
 }
 
+const char *CodeGenModule::getMangledName(const GlobalDecl &GD) {
+  const NamedDecl *ND = GD.getDecl();
+  
+  if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
+    return getMangledCXXCtorName(D, GD.getCtorType());
+  if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
+    return getMangledCXXDtorName(D, GD.getDtorType());
+  
+  return getMangledName(ND);
+}
+
 /// \brief Retrieves the mangled name for the given declaration.
 ///
 /// If the given declaration requires a mangled name, returns an
@@ -411,7 +422,7 @@ void CodeGenModule::EmitDeferred() {
   // previously unused static decl may become used during the generation of code
   // for a static function, iterate until no  changes are made.
   while (!DeferredDeclsToEmit.empty()) {
-    const ValueDecl *D = DeferredDeclsToEmit.back();
+    GlobalDecl D = DeferredDeclsToEmit.back();
     DeferredDeclsToEmit.pop_back();
 
     // The mangled name for the decl must have been emitted in GlobalDeclMap.
@@ -502,7 +513,9 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   return VD->getStorageClass() == VarDecl::Static;
 }
 
-void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
+void CodeGenModule::EmitGlobal(const GlobalDecl &GD) {
+  const ValueDecl *Global = GD.getDecl();
+  
   // If this is an alias definition (which otherwise looks like a declaration)
   // emit it now.
   if (Global->hasAttr<AliasAttr>())
@@ -532,28 +545,32 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
   if (MayDeferGeneration(Global)) {
     // If the value has already been used, add it directly to the
     // DeferredDeclsToEmit list.
-    const char *MangledName = getMangledName(Global);
+    const char *MangledName = getMangledName(GD);
     if (GlobalDeclMap.count(MangledName))
-      DeferredDeclsToEmit.push_back(Global);
+      DeferredDeclsToEmit.push_back(GD);
     else {
       // Otherwise, remember that we saw a deferred decl with this name.  The
       // first use of the mangled name will cause it to move into
       // DeferredDeclsToEmit.
-      DeferredDecls[MangledName] = Global;
+      DeferredDecls[MangledName] = GD;
     }
     return;
   }
 
   // Otherwise emit the definition.
-  EmitGlobalDefinition(Global);
+  EmitGlobalDefinition(GD);
 }
 
-void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+void CodeGenModule::EmitGlobalDefinition(const GlobalDecl &GD) {
+  const ValueDecl *D = GD.getDecl();
+  
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
+    EmitCXXConstructor(CD, GD.getCtorType());
+  else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     EmitGlobalFunctionDefinition(FD);
-  } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+  else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     EmitGlobalVarDefinition(VD);
-  } else {
+  else {
     assert(0 && "Invalid argument to EmitGlobalDefinition()");
   }
 }
@@ -582,7 +599,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
-  llvm::DenseMap<const char*, const ValueDecl*>::iterator DDI = 
+  llvm::DenseMap<const char*, GlobalDecl>::iterator DDI = 
   DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
@@ -654,7 +671,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
-  llvm::DenseMap<const char*, const ValueDecl*>::iterator DDI = 
+  llvm::DenseMap<const char*, GlobalDecl>::iterator DDI = 
     DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
@@ -725,7 +742,7 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
     // later.
     const char *MangledName = getMangledName(D);
     if (GlobalDeclMap.count(MangledName) == 0) {
-      DeferredDecls[MangledName] = D;
+      DeferredDecls[MangledName] = GlobalDecl(D);
       return;
     }
   }
@@ -1356,7 +1373,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::CXXMethod:
   case Decl::Function:
   case Decl::Var:
-    EmitGlobal(cast<ValueDecl>(D));
+    EmitGlobal(GlobalDecl(cast<ValueDecl>(D)));
     break;
 
   // C++ Decls
