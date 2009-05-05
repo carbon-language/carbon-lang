@@ -217,9 +217,6 @@ SVal BasicStoreManager::getLValueElement(const GRState* St,
         // char* y = (char*) &x;
         // 'y' => ElementRegion(0, VarRegion('x'))
         // y[0] = 'a';
-        assert(ER->getIndex().isUnknown() ||
-               cast<nonloc::ConcreteInt>(ER->getIndex()).getValue() == 0);
-        ER = ER; // silence 'unused' warning in release modes.
         return Base;
       }
       
