@@ -53,7 +53,8 @@ private:
   ValueHandleBase *Next;
   Value *VP;
 public:
-  ValueHandleBase(HandleBaseKind Kind) : PrevPair(0, Kind), Next(0), VP(0) {}
+  explicit ValueHandleBase(HandleBaseKind Kind)
+    : PrevPair(0, Kind), Next(0), VP(0) {}
   ValueHandleBase(HandleBaseKind Kind, Value *V)
     : PrevPair(0, Kind), Next(0), VP(V) {
     if (V)
