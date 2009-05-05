@@ -31,8 +31,8 @@ static std::string MangleLetter(unsigned char C) {
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
-std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
-  std::string Result;
+std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
+                                    const char *PrivatePrefix) {
   if (X.empty()) return X;  // Empty names are uniqued by the caller.
   
   // If PreserveAsmNames is set, names with asm identifiers are not modified. 
@@ -40,12 +40,15 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
     return X;
   
   if (!UseQuotes) {
+    std::string Result;
+
     // If X does not start with (char)1, add the prefix.
+    bool NeedPrefix = true;
     std::string::const_iterator I = X.begin();
-    if (*I != 1)
-      Result = Prefix;
-    else
+    if (*I == 1) {
+      NeedPrefix = false;
       ++I;  // Skip over the marker.
+    }
     
     // Mangle the first letter specially, don't allow numbers.
     if (*I >= '0' && *I <= '9')
@@ -57,53 +60,71 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
       else
         Result += *I;
     }
-  } else {
-    bool NeedsQuotes = false;
-    
-    std::string::const_iterator I = X.begin();
-    if (*I == 1)
-      ++I;  // Skip over the marker.
 
-    // If the first character is a number, we need quotes.
-    if (*I >= '0' && *I <= '9')
-      NeedsQuotes = true;
-    
-    // Do an initial scan of the string, checking to see if we need quotes or
-    // to escape a '"' or not.
-    if (!NeedsQuotes)
-      for (std::string::const_iterator E = X.end(); I != E; ++I)
-        if (!isCharAcceptable(*I)) {
-          NeedsQuotes = true;
-          break;
-        }
-    
-    // In the common case, we don't need quotes.  Handle this quickly.
-    if (!NeedsQuotes) {
-      if (*X.begin() != 1)
-        return Prefix+X;
-      else
-        return X.substr(1);
+    if (NeedPrefix) {
+      if (Prefix)
+        Result = Prefix + Result;
+      if (PrivatePrefix)
+        Result = PrivatePrefix + Result;
     }
-    
-    // Otherwise, construct the string the expensive way.
-    I = X.begin();
-    
-    // If X does not start with (char)1, add the prefix.
-    if (*I != 1)
-      Result = Prefix;
-    else
-      ++I;   // Skip the marker if present.
-      
-    for (std::string::const_iterator E = X.end(); I != E; ++I) {
-      if (*I == '"')
-        Result += "_QQ_";
-      else if (*I == '\n')
-        Result += "_NL_";
-      else
-        Result += *I;
-    }
-    Result = '"' + Result + '"';
+    return Result;
   }
+
+  bool NeedPrefix = true;
+  bool NeedQuotes = false;
+  std::string Result;    
+  std::string::const_iterator I = X.begin();
+  if (*I == 1) {
+    NeedPrefix = false;
+    ++I;  // Skip over the marker.
+  }
+
+  // If the first character is a number, we need quotes.
+  if (*I >= '0' && *I <= '9')
+    NeedQuotes = true;
+    
+  // Do an initial scan of the string, checking to see if we need quotes or
+  // to escape a '"' or not.
+  if (!NeedQuotes)
+    for (std::string::const_iterator E = X.end(); I != E; ++I)
+      if (!isCharAcceptable(*I)) {
+        NeedQuotes = true;
+        break;
+      }
+    
+  // In the common case, we don't need quotes.  Handle this quickly.
+  if (!NeedQuotes) {
+    if (NeedPrefix) {
+      if (Prefix)
+        Result = Prefix + X;
+      else
+        Result = X;
+      if (PrivatePrefix)
+        Result = PrivatePrefix + Result;
+      return Result;
+    } else
+      return X.substr(1);
+  }
+    
+  // Otherwise, construct the string the expensive way.
+  for (std::string::const_iterator E = X.end(); I != E; ++I) {
+    if (*I == '"')
+      Result += "_QQ_";
+    else if (*I == '\n')
+      Result += "_NL_";
+    else
+      Result += *I;
+  }
+
+  if (NeedPrefix) {
+    if (Prefix)
+      Result = Prefix + X;
+    else
+      Result = X;
+    if (PrivatePrefix)
+      Result = PrivatePrefix + Result;
+  }
+  Result = '"' + Result + '"';
   return Result;
 }
 
@@ -146,13 +167,10 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
     static unsigned GlobalID = 0;
     Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(GlobalID++);
   } else {
-    Name = makeNameProper(GV->getName() + Suffix, Prefix);
-    std::string prefix;
     if (GV->hasPrivateLinkage())
-      prefix = PrivatePrefix;
+      Name = makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
     else
-      prefix = "";
-    Name = prefix + Name;
+      Name = makeNameProper(GV->getName() + Suffix, Prefix);
   }
 
   return Name;

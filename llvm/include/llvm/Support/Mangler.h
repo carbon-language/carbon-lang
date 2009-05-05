@@ -29,7 +29,10 @@ class Mangler {
   /// symbol is marked as not needing this prefix.
   const char *Prefix;
 
+  /// PrivatePrefix - This string is emitted before each symbol with private
+  /// linkage.
   const char *PrivatePrefix;
+
   /// UseQuotes - If this is set, the target accepts global names in quotes,
   /// e.g. "foo bar" is a legal name.  This syntax is used instead of escaping
   /// the space character.  By default, this is false.
@@ -95,7 +98,8 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   ///
-  std::string makeNameProper(const std::string &x, const char *Prefix = "");
+  std::string makeNameProper(const std::string &x, const char *Prefix = 0,
+                             const char *PrivatePrefix = 0);
 
 private:
   /// getTypeID - Return a unique ID for the specified LLVM type.
