@@ -2027,10 +2027,9 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       Scale = SSInt / CmpSSInt;
       int64_t NewCmpVal = CmpVal * Scale;
-      APInt Mul = APInt(BitWidth*2, CmpVal);
-      Mul = Mul * APInt(BitWidth*2, Scale);
+      APInt Mul = APInt(BitWidth, NewCmpVal);
       // Check for overflow.
-      if (!Mul.isSignedIntN(BitWidth))
+      if (Mul.getSExtValue() != NewCmpVal)
         continue;
 
       // Watch out for overflow.
