@@ -1096,6 +1096,8 @@ def ext_freestanding_complex : Extension<
 
 
 // Obj-c expressions
+def warn_root_inst_method_not_found : Warning<
+  "instance method %0 is being used on 'Class' which is not in the root class">;
 def warn_class_method_not_found : Warning<
   "method %objcclass0 not found (return type defaults to 'id')">;
 def warn_inst_method_not_found : Warning<

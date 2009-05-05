@@ -529,8 +529,17 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (!isSelfExpr(RExpr)) {
         Method = LookupFactoryMethodInGlobalPool(Sel, SourceRange(lbrac,rbrac));
         if (!Method) {
+          // If no class (factory) method was found, check if an _instance_
+          // method of the same name exists in the root class only.
           Method = LookupInstanceMethodInGlobalPool(
                                    Sel, SourceRange(lbrac,rbrac));
+          if (Method)
+              if (const ObjCInterfaceDecl *ID =
+                dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext())) {
+              if (ID->getSuperClass())
+                Diag(lbrac, diag::warn_root_inst_method_not_found)
+                  << Sel << SourceRange(lbrac, rbrac);
+            }
         }
       }
     }
