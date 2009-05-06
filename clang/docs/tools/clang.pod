@@ -54,13 +54,13 @@ This stage translates an AST into low-level intermediate code or machine code
 the generated code and handling target-specfic code generation.  The output of
 this stage is typically called a ".s" file.
 
-=item B<Assembly>
+=item B<Assembler>
 
 This stage runs the target assembler to translate the output of the compiler
 into a target object file.  The output of this stage is typically called a ".o"
 file.
 
-=item B<Linking>
+=item B<Linker>
 
 This stage runs the target linker to merge multiple object files into an
 executable or dynamic library.  The output of this stage is typically called an
@@ -69,56 +69,68 @@ executable or dynamic library.  The output of this stage is typically called an
 =back
 
 The Clang compiler supports a large number of options to control each of these
-stages.
+stages.  In addition to compilation of code, Clang also supports other tools.
+
+B<Clang Static Analyzer>
+
+The Clang Static Analyzer is a tool that scans source code to try to find bugs
+though code analysis.  This tool uses many parts of Clang and is built into the
+same driver.
+
 
 =head1 OPTIONS
-
 
 =head2 Stage Selection Options
 
 =over
 
-=item B<--help>
-
-Display available options.
-
-
-=item B<-###>
-
-Print the commands to run for this compilation.
-
-
 =item B<-E>
 
-Only run the preprocessor.
+Run the preprocessor stage.
 
-=item B<-S>
+=item B<-fsyntax-only>
 
-Only run preprocess and compilation steps.
-
-=item B<-c>
-
-Only run preprocess, compile, and assemble steps.
+Run the preprocessor, parser and type checking stages.
 
 =item B<-emit-llvm>
 
-Use the LLVM representation for assembler and object files.
+Run the preprocessor, parser, type checking stages, LLVM generation and
+optimization stages.
 
+=item B<-S>
 
+Run all of the above, plus target-specific code generation, producing an
+assembly file.
 
+=item B<-c>
+
+Run all of the above, plus the assembler, generating a target ".o" object file.
+
+=item B<no stage selection option>
+
+If no stage selection option is specified, all stages above are run, and the
+linker is run to combine the results into an executable or shared library.
+
+=item B<--analyze>
+
+Run the Clang Static Analyzer.
 
 =back
 
 
 
-
-
+=head2 Driver Options
 
 =over
 
-=item B<--analyze>
+=item B<-###>
 
-Run the static analyzer.
+Print the commands to run for this compilation.
+
+=item B<--help>
+
+Display available options.
+
 =item B<-ObjC++>
 
 Treat source input files as Objective-C++ inputs.
@@ -169,6 +181,7 @@ Write output to I<file>.
 
 =item B<-pipe>
 
+FIXME: WHY DOCUMENT THIS.
 Use pipes between commands, when possible.
 
 =item B<-print-file-name>=I<file>
@@ -203,19 +216,65 @@ Show commands to run and use verbose output.
 
 Treat subsequent input files as having type I<language>.
 
+
 =back
+
+
+
+
+
+=head2 Preprocessor Options
+
+=over
+
+=back
+
+
+
+
+=head2 Parser and Semantic Analysis Options
+
+=over
+
+=back
+
+
+
+=head2 Code Generation and Optimization Options
+
+=over
+
+=back
+
+
+=head2 Assembler Options
+
+=over
+
+=back
+
+
+=head2 Linker Options
+
+=over
+
+=back
+
 
 =head1 ENVIRONMENT
 
-FIXME: Fill in environment.
+No environment variables read.
 
 =head1 BUGS
 
-It is inconceivable that Clang may have a bug.
+Clang currently does not have C++ support, and this manual page is incomplete.
+To report bugs, please visit L<http://llvm.org/bugs/>.  Most bug reports should
+include preprocessed source files (use the B<-E> option) along with information
+to reproduce.
 
 =head1 SEE ALSO
 
-FIXME: See also?
+as(1), ld(1)
 
 =head1 AUTHOR
 
