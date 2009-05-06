@@ -638,13 +638,6 @@ static llvm::cl::opt<bool>
 EmitAllDecls("femit-all-decls",
               llvm::cl::desc("Emit all declarations, even if unused"));
 
-// FIXME: This (and all GCC -f options) really come in -f... and
-// -fno-... forms, and additionally support automagic behavior when
-// they are not defined. For example, -fexceptions defaults to on or
-// off depending on the language. We should support this behavior in
-// some form (perhaps just add a facility for distinguishing when an
-// has its default value from when it has been set to its default
-// value).
 static llvm::cl::opt<bool>
 Exceptions("fexceptions",
            llvm::cl::desc("Enable support for exception handling"));
@@ -847,7 +840,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.PICLevel = PICLevel;
 
   Options.GNUInline = !Options.C99;
-  // FIXME: This is affected by other options (-fno-inline). 
+  // FIXME: This is effected by other options (-fno-inline). 
   Options.NoInline = !OptSize && !OptLevel;
 
   Options.Static = StaticDefine;
@@ -1113,7 +1106,7 @@ ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
 // preprocessor searches for header files.  At root, however, the Preprocessor
 // object takes a very simple interface: a list of directories to search for
 // 
-// FIXME: -nostdinc,-nostdinc++
+// FIXME: -nostdinc++
 // FIXME: -imultilib
 //
 
@@ -1242,12 +1235,10 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
     MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
 
-    // Get foo/lib/clang/1.0/include    
-    // 
-    // FIXME: Don't embed version here.
+    // Get foo/lib/clang/<version>/include    
     MainExecutablePath.appendComponent("lib");
     MainExecutablePath.appendComponent("clang");
-    MainExecutablePath.appendComponent("1.0");
+    MainExecutablePath.appendComponent(CLANG_VERSION_STRING);
     MainExecutablePath.appendComponent("include");
     
     // We pass true to ignore sysroot so that we *always* look for clang headers
