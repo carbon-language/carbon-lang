@@ -72,7 +72,7 @@ h3, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
 
 /* It is preferrable to use <pre class="doc_code"> everywhere instead of the
  * <div class="doc_code"><pre>...</ptr></div> construct.
- * 
+ *
  * Once all docs use <pre> for code regions, this style can  be merged with the
  * one above, and we can drop the [pre] qualifier.
  */
@@ -95,6 +95,6 @@ th.layout       { border: none; font-weight: bold; font-size: 105%;
 
 /* ReST-specific */
 .title { margin-top: 0 }
-#contents { display: none }
+.topic-title{ display: none }
 div.contents ul { list-style-type: decimal }
 .toc-backref    { color: black; text-decoration: none; }
