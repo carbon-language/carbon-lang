@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s >& %t &&
+// RUN: clang-cc -fsyntax-only %s > %t 2>&1 &&
 
 #define M1(x) x
 
