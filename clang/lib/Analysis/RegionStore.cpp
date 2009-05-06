@@ -639,14 +639,6 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
       || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
     // FIXME: create an ElementRegion when the size of the pointee type is
     // smaller than the region.
-    //unsigned PointeeSize = getSizeInBits(PointeeTy);
-    //unsigned RegionSize = getSizeInBits(R);
-//     if (PointeeSize < RegionSize) {
-//       SVal Idx = ValMgr.makeZeroArrayIndex();
-//       ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, R);
-//       return CastResult(state, ER);
-//     }
-//     else
     return CastResult(state, R);
   }
 
