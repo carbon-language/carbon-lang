@@ -2,38 +2,123 @@
 
 =head1 NAME
 
-clang - the clang C and Objective-C compiler
+clang - the Clang C and Objective-C compiler
 
 =head1 SYNOPSIS
 
-B<clang> [I<options>] I<filenames...>
-
-FIXME: Fill in synposis and options.
+B<clang> [B<-c>|B<-S>|B<-E>] B<-std=>I<standard> B<-g>
+  [B<-O0>|B<-O1>|B<-O2>|B<-Os>|B<-O3>|B<-O4>]
+  B<-W>I<warnings...> B<-pedantic>
+  B<-I>I<dir...> B<-L>I<dir...>
+  B<-D>I<macro[=defn]>
+  B<-f>I<feature-option...>
+  B<-m>I<machine-option...>
+  B<-o> I<output-file>
+  I<input-filenames>
 
 =head1 DESCRIPTION
 
-FIXME: Fill in description.
-
-=head1 OPTIONS
+B<clang> is a C and Objective-C compiler which encompasses preprocessing,
+parsing, optimization, code generation, assembly, and linking.  Depending on
+which high-level mode setting is passed, Clang will stop before doing a full
+link.  While Clang is highly integrated, it is important to understand the
+stages of compilation, to understand how to invoke it.  These stages are:
 
 =over
 
-=item B<-###>
+=item B<Driver>
 
-Print the commands to run for this compilation.
+The B<clang> executable is actually a small driver which controls the overall
+execution of other tools such as the compiler, assembler and linker.  Typically
+you do not need to interact with the driver, but you transparently use it to run
+the other tools.
 
-=item B<--analyze>
+=item B<Preprocessing>
 
-Run the static analyzer.
+This stage handles tokenization of the input source file, macro expansion,
+#include expansion and handling of other preprocessor directives.  The output of
+this stage is typically called a ".i" (for C) or ".mi" (for Objective-C) file.
+
+=item B<Parsing and Semantic Analysis>
+
+This stage parses the input file, translating preprocessor tokens into a parse
+tree.  Once in the form of a parser tree, it applies semantic analysis to compute
+types for expressions as well and determine whether the code is well formed. This
+stage is responsible for generating most of the compiler warnings as well as
+parse errors.  The output of this stage is an "Abstract Syntax Tree" (AST).
+
+=item B<Code Generation and Optimization>
+
+This stage translates an AST into low-level intermediate code or machine code
+(depending on the optimization level).  This phase is responsible for optimizing
+the generated code and handling target-specfic code generation.  The output of
+this stage is typically called a ".s" file.
+
+=item B<Assembly>
+
+This stage runs the target assembler to translate the output of the compiler
+into a target object file.  The output of this stage is typically called a ".o"
+file.
+
+=item B<Linking>
+
+This stage runs the target linker to merge multiple object files into an
+executable or dynamic library.  The output of this stage is typically called an
+"a.out", ".dylib" or ".so" file.
+
+=back
+
+The Clang compiler supports a large number of options to control each of these
+stages.
+
+=head1 OPTIONS
+
+
+=head2 Stage Selection Options
+
+=over
 
 =item B<--help>
 
 Display available options.
 
+
+=item B<-###>
+
+Print the commands to run for this compilation.
+
+
 =item B<-E>
 
 Only run the preprocessor.
 
+=item B<-S>
+
+Only run preprocess and compilation steps.
+
+=item B<-c>
+
+Only run preprocess, compile, and assemble steps.
+
+=item B<-emit-llvm>
+
+Use the LLVM representation for assembler and object files.
+
+
+
+
+=back
+
+
+
+
+
+
+=over
+
+=item B<--analyze>
+
+Run the static analyzer.
 =item B<-ObjC++>
 
 Treat source input files as Objective-C++ inputs.
@@ -45,10 +130,6 @@ Treat source input files as Objective-C inputs.
 =item B<-Qunused-arguments>
 
 Don't emit warning for unused driver arguments.
-
-=item B<-S>
-
-Only run preprocess and compilation steps.
 
 =item B<-Wa,>I<args>
 
@@ -81,14 +162,6 @@ Pass I<arg> to the linker.
 =item B<-Xpreprocessor> I<arg>
 
 Pass I<arg> to the preprocessor.
-
-=item B<-c>
-
-Only run preprocess, compile, and assemble steps.
-
-=item B<-emit-llvm>
-
-Use the LLVM representation for assembler and object files.
 
 =item B<-o> I<file>               
 
@@ -138,7 +211,7 @@ FIXME: Fill in environment.
 
 =head1 BUGS
 
-FIXME: Bugs?
+It is inconceivable that Clang may have a bug.
 
 =head1 SEE ALSO
 
