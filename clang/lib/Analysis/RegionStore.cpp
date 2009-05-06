@@ -48,6 +48,17 @@ namespace clang {
   };
 }
 
+// RegionCasts records the current cast type of a region.
+namespace { class VISIBILITY_HIDDEN RegionCasts {}; }
+static int RegionCastsIndex = 0;
+namespace clang {
+  template<> struct GRStateTrait<RegionCasts>
+    : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*, 
+                                                    QualType> > {
+    static void* GDMIndex() { return &RegionCastsIndex; }
+  };
+}
+
 //===----------------------------------------------------------------------===//
 // Region "Extents"
 //===----------------------------------------------------------------------===//
@@ -253,6 +264,7 @@ public:
   }
 
   const GRState* setExtent(const GRState* St, const MemRegion* R, SVal Extent);
+  const GRState* setCastType(const GRState* St, const MemRegion* R, QualType T);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
@@ -488,6 +500,9 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
       // return the size as signed integer.
       return NonLoc::MakeVal(getBasicVals(), CAT->getSize(), false);
     }
+
+    // If the VarRegion is cast to other type, compute the size with respect to
+    // that type.
     
     // Clients can use ordinary variables as if they were arrays.  These
     // essentially are arrays of size 1.
@@ -650,9 +665,11 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
       || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
     if (isSmallerThan(PointeeTy, 
                       cast<TypedRegion>(R)->getRValueType(getContext()))) {
+      // Record the cast type of the region.
+      state = setCastType(state, R, ToTy);
+
       SVal Idx = ValMgr.makeZeroArrayIndex();
-      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx, 
-                                                 cast<TypedRegion>(R));
+      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx, R);
       return CastResult(state, ER);
     } else
       return CastResult(state, R);
@@ -1294,4 +1311,10 @@ const GRState* RegionStoreManager::RemoveRegionView(const GRState* St,
   V = RVFactory.Remove(V, View);
 
   return state.set<RegionViewMap>(Base, V);
+}
+
+const GRState* RegionStoreManager::setCastType(const GRState* St,
+                                               const MemRegion* R, QualType T) {
+  GRStateRef state(St, StateMgr);
+  return state.set<RegionCasts>(R, T);
 }
