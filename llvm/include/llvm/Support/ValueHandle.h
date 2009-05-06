@@ -126,8 +126,19 @@ public:
   operator Value*() const {
     return getValPtr();
   }
-};  
-  
+};
+
+// Specialize simplify_type to allow WeakVH to participate in
+// dyn_cast, isa, etc.
+template<typename From> struct simplify_type;
+template<> struct simplify_type<const WeakVH> {
+  typedef Value* SimpleType;
+  static SimpleType getSimplifiedValue(const WeakVH &WVH) {
+    return static_cast<Value *>(WVH);
+  }
+};
+template<> struct simplify_type<WeakVH> : public simplify_type<const WeakVH> {};
+
 /// AssertingVH - This is a Value Handle that points to a value and asserts out
 /// if the value is destroyed while the handle is still live.  This is very
 /// useful for catching dangling pointer bugs and other things which can be
@@ -188,6 +199,18 @@ public:
   ValueTy &operator*() const { return *getValPtr(); }
 };
 
+// Specialize simplify_type to allow AssertingVH to participate in
+// dyn_cast, isa, etc.
+template<typename From> struct simplify_type;
+template<> struct simplify_type<const AssertingVH<Value> > {
+  typedef Value* SimpleType;
+  static SimpleType getSimplifiedValue(const AssertingVH<Value> &AVH) {
+    return static_cast<Value *>(AVH);
+  }
+};
+template<> struct simplify_type<AssertingVH<Value> >
+  : public simplify_type<const AssertingVH<Value> > {};
+
 /// CallbackVH - This is a value handle that allows subclasses to define
 /// callbacks that run when the underlying Value has RAUW called on it or is
 /// destroyed.  This class can be used as the key of a map, as long as the user
@@ -231,6 +254,18 @@ public:
   /// setValPtr(new_value).  AssertingVH would do nothing in this method.
   virtual void allUsesReplacedWith(Value *new_value) {}
 };
+
+// Specialize simplify_type to allow CallbackVH to participate in
+// dyn_cast, isa, etc.
+template<typename From> struct simplify_type;
+template<> struct simplify_type<const CallbackVH> {
+  typedef Value* SimpleType;
+  static SimpleType getSimplifiedValue(const CallbackVH &CVH) {
+    return static_cast<Value *>(CVH);
+  }
+};
+template<> struct simplify_type<CallbackVH>
+  : public simplify_type<const CallbackVH> {};
 
 } // End llvm namespace
 
