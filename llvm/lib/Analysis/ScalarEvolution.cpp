@@ -472,7 +472,7 @@ static void GroupByComplexity(std::vector<SCEVHandle> &Ops) {
   }
 
   // Do the rough sort by complexity.
-  std::sort(Ops.begin(), Ops.end(), SCEVComplexityCompare());
+  std::stable_sort(Ops.begin(), Ops.end(), SCEVComplexityCompare());
 
   // Now that we are sorted by complexity, group elements of the same
   // complexity.  Note that this is, at worst, N^2, but the vector is likely to
