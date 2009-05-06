@@ -289,14 +289,12 @@ public:
   /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
   ///
   QualType getFunctionNoProtoType(QualType ResultTy);
-
+  
   /// getFunctionType - Return a normal function type with a typed argument
   /// list.  isVariadic indicates whether the argument list includes '...'.
   QualType getFunctionType(QualType ResultTy, const QualType *ArgArray,
                            unsigned NumArgs, bool isVariadic,
-                           unsigned TypeQuals, bool hasExceptionSpec = false,
-                           bool hasAnyExceptionSpec = false,
-                           unsigned NumExs = 0, const QualType *ExArray = 0);
+                           unsigned TypeQuals);
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.

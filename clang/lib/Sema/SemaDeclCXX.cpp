@@ -995,9 +995,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   QualType ClassType = Context.getTypeDeclType(ClassDecl);
   ClassType = Context.getCanonicalType(ClassType);
 
-  // FIXME: Implicit declarations have exception specifications, which are
-  // the union of the specifications of the implicitly called functions.
-
   if (!ClassDecl->hasUserDeclaredConstructor()) {
     // C++ [class.ctor]p5:
     //   A default constructor for a class X is a constructor of class X
