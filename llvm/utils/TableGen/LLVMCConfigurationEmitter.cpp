@@ -1444,7 +1444,7 @@ class EmitActionHandler {
     else if (ActionName == "forward_as") {
       checkNumberOfArguments(&Dag, 2);
       const std::string& Name = InitPtrToString(Dag.getArg(0));
-      const std::string& NewName = InitPtrToString(Dag.getArg(0));
+      const std::string& NewName = InitPtrToString(Dag.getArg(1));
       EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
                                             IndentLevel, NewName, O);
     }

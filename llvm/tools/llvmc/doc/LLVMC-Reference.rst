@@ -529,7 +529,7 @@ The list of all possible actions follows.
 
    - ``forward_as`` - Change the name of an option, but forward the
      argument unchanged.
-     Example: ``(forward_as "O0" "--disable-optimization")``.
+     Example: ``(forward_as "O0", "--disable-optimization")``.
 
    - ``output_suffix`` - modify the output suffix of this
      tool.
