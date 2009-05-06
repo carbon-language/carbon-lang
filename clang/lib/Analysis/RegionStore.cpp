@@ -18,6 +18,7 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Basic/TargetInfo.h"
 
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -296,6 +297,7 @@ private:
   // Utility methods.
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
   ASTContext& getContext() { return StateMgr.getContext(); }
+  TargetInfo& getTargetInfo() { return getContext().getTargetInfo(); }
   SymbolManager& getSymbolManager() { return StateMgr.getSymbolManager(); }
 
   const GRState* AddRegionView(const GRState* St,
@@ -308,6 +310,45 @@ private:
 
 StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
+}
+
+// getTypeWidth - compute the width of the type. Should pass in
+// canonical type.
+static unsigned getTypeWidth(ASTContext& Ctx, QualType T) {
+  TargetInfo& Target = Ctx.getTargetInfo();
+  QualType CanT = Ctx.getCanonicalType(T);
+
+  if (CanT->isPointerType())
+    return Target.getPointerWidth(0);
+
+  if (CanT->isCharType())
+    return Target.getCharWidth();
+
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanT)) {
+    switch (BT->getKind()) {
+    case BuiltinType::Char_U:
+    case BuiltinType::UChar:
+    case BuiltinType::Char_S:
+    case BuiltinType::SChar:
+      return Target.getCharWidth();
+
+    case BuiltinType::UShort:
+    case BuiltinType::Short:
+      return Target.getShortWidth();
+
+    case BuiltinType::UInt:
+    case BuiltinType::Int:
+      return Target.getIntWidth();
+
+    case BuiltinType::ULong:
+    case BuiltinType::Long:
+      return Target.getLongWidth();
+    default:
+      assert(0 && "Unprocessed builtin type.");
+    }
+  }
+
+  assert(0 && "Unprocessed type.");
 }
 
 SubRegionMap* RegionStoreManager::getSubRegionMap(const GRState *state) {
@@ -503,7 +544,17 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
 
     // If the VarRegion is cast to other type, compute the size with respect to
     // that type.
-    
+    GRStateRef state(St, StateMgr);
+    const QualType* CastTy = state.get<RegionCasts>(VR);
+
+    if (CastTy) {
+      QualType EleTy =cast<PointerType>(CastTy->getTypePtr())->getPointeeType();
+      QualType VarTy = VR->getRValueType(getContext());
+      unsigned EleWidth = getTypeWidth(getContext(), EleTy);
+      unsigned VarWidth = getTypeWidth(getContext(), VarTy);
+      return NonLoc::MakeIntVal(getBasicVals(), VarWidth / EleWidth, false);
+    }
+
     // Clients can use ordinary variables as if they were arrays.  These
     // essentially are arrays of size 1.
     return NonLoc::MakeIntVal(getBasicVals(), 1, false);
@@ -613,7 +664,7 @@ static bool isSmallerThan(QualType T1, QualType T2) {
 
 RegionStoreManager::CastResult
 RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
-                         QualType CastToTy) {
+                               QualType CastToTy) {
   
   ASTContext& Ctx = StateMgr.getContext();
 

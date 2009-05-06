@@ -1,5 +1,5 @@
 // RUN: clang-cc -checker-cfref -analyze -analyzer-store=region -verify %s 
-// XFAIL
+
 void f() {
   long x = 0;
   char *y = (char*) &x;
