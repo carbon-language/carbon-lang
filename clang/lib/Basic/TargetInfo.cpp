@@ -264,8 +264,16 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       // FIXME: Fail if % is used with the last operand.
       break;
     case 'i': // immediate integer.
-    case 'I':
     case 'n': // immediate integer with a known value.
+      break;
+    case 'I':  // Various constant constraints with target-specific meanings.
+    case 'J':
+    case 'K':
+    case 'L':
+    case 'M':
+    case 'N':
+    case 'O':
+    case 'P':
       break;
     case 'r': // general register.
       Info.setAllowsRegister();
