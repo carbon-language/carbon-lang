@@ -304,7 +304,7 @@ MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
 
 ElementRegion*
 MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
-                                   const TypedRegion* superRegion){
+                                   const MemRegion* superRegion){
 
   llvm::FoldingSetNodeID ID;
   ElementRegion::ProfileRegion(ID, elementType, Idx, superRegion);
