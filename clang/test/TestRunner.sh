@@ -18,9 +18,6 @@ TESTNAME=$1
 SUBST=$1
 FILEDIR=`dirname $TESTNAME`
 
-# Make diagnostic printing more determinstic.
-export COLUMNS=0
-
 OUTPUT=Output/$1.out
 
 # create the output directory if it does not already exist
