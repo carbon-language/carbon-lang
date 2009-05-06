@@ -86,8 +86,8 @@ const DagInit& InitPtrToDag(const Init* ptr) {
 // less than or equal to min_arguments, otherwise throw an exception.
 void checkNumberOfArguments (const DagInit* d, unsigned min_arguments) {
   if (!d || d->getNumArgs() < min_arguments)
-    throw "Property " + d->getOperator()->getAsString()
-      + " has too few arguments!";
+    throw d->getOperator()->getAsString()
+      + ": too few arguments!";
 }
 
 // isDagEmpty - is this DAG marked with an empty marker?
