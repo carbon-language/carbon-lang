@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include <iosfwd>
 #include <cassert>
+#include <string>
 
 namespace llvm {
   class PIC16TargetMachine;
@@ -39,6 +40,94 @@ namespace PIC16CC {
     UGE
   };
 }
+  // A Central object to manage all ABI naming conventions.
+  class PIC16ABINames {
+    public:
+    // Map the name of the symbol to its section name.
+    // Current ABI:
+    // ------------------------------------------------------
+    // Global variables do not have any '.' in their names.
+    // they are prefixed with @
+    // These are maily function names and global variable names.
+    // -------------------------------------------------------
+    // Functions and auto variables.
+    // Names are mangled as <prefix><funcname>.<id>.<varname>
+    // Where prefix is a special char '@' and id is any one of
+    // the following
+    // .auto. - an automatic var of a function.
+    // .temp. - temproray data of a function.
+    // .ret.  - return value label for a function.
+    // .frame. - Frame label for a function where retval, args
+    //           and temps are stored.
+    // .args. - Label used to pass arguments to a direct call.
+    // Example - Function name:   @foo
+    //           Its frame:       @foo.frame.
+    //           Its retval:      @foo.ret.
+    //           Its local vars:  @foo.auto.a
+    //           Its temp data:   @foo.temp.
+    //           Its arg passing: @foo.args.
+    //----------------------------------------------
+    // Libcall - compiler generated libcall names must have a .lib.
+    //           This id will be used to emit extern decls for libcalls.
+    // Example - libcall name:   @sra_i8.lib.
+    //           To pass args:   @sra_i8.args.
+    //           To return val:  @sra_i8.ret.
+    //----------------------------------------------
+    
+    enum IDs {
+      PREFIX_SYMBOL,
+
+      FUNC_AUTOS,
+      FUNC_FRAME,
+      FUNC_RET,
+      FUNC_ARGS,
+      FUNC_TEMPS,
+      
+      LIBCALL,
+      
+      FRAME_SECTION,
+      AUTOS_SECTION
+   };
+
+  };
+
+  inline static const char *getIDName(PIC16ABINames::IDs id) {
+    switch (id) {
+    default: assert(0 && "Unknown id");
+    case PIC16ABINames::PREFIX_SYMBOL:    return "@";
+    case PIC16ABINames::FUNC_AUTOS:       return ".auto.";
+    case PIC16ABINames::FUNC_FRAME:       return ".frame.";
+    case PIC16ABINames::FUNC_TEMPS:       return ".temp.";
+    case PIC16ABINames::FUNC_ARGS:       return ".args.";
+    case PIC16ABINames::FUNC_RET:       return ".ret.";
+    case PIC16ABINames::FRAME_SECTION:       return "fpdata";
+    case PIC16ABINames::AUTOS_SECTION:       return "fadata";
+    }
+  }
+
+  inline static PIC16ABINames::IDs getID(const std::string &Sym) {
+    if (Sym.find(getIDName(PIC16ABINames::FUNC_TEMPS)))
+     return PIC16ABINames::FUNC_TEMPS;
+
+    if (Sym.find(getIDName(PIC16ABINames::FUNC_FRAME)))
+     return PIC16ABINames::FUNC_FRAME;
+
+    if (Sym.find(getIDName(PIC16ABINames::FUNC_RET)))
+     return PIC16ABINames::FUNC_RET;
+
+    if (Sym.find(getIDName(PIC16ABINames::FUNC_ARGS)))
+     return PIC16ABINames::FUNC_ARGS;
+
+    if (Sym.find(getIDName(PIC16ABINames::FUNC_AUTOS)))
+     return PIC16ABINames::FUNC_AUTOS;
+
+    if (Sym.find(getIDName(PIC16ABINames::LIBCALL)))
+     return PIC16ABINames::LIBCALL;
+
+    // It does not have any ID. So its a global.
+    assert (0 && "Could not determine ID symbol type");
+  }
+
 
   inline static const char *PIC16CondCodeToString(PIC16CC::CondCodes CC) {
     switch (CC) {
@@ -73,11 +162,15 @@ namespace PIC16CC {
   }
 
 
+
   FunctionPass *createPIC16ISelDag(PIC16TargetMachine &TM);
   FunctionPass *createPIC16CodePrinterPass(raw_ostream &OS, 
                                            PIC16TargetMachine &TM,
                                            CodeGenOpt::Level OptLevel,
                                            bool Verbose);
+  // Banksel optimzer pass.
+  FunctionPass *createPIC16MemSelOptimizerPass();
+  std::string getSectionNameForSym(const std::string &Sym);
 } // end namespace llvm;
 
 // Defines symbolic names for PIC16 registers.  This defines a mapping from

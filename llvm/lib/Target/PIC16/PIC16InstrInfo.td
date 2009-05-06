@@ -470,13 +470,18 @@ let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
 
 
 // Banksel.
-let isReMaterializable = 1 in {
 def banksel : 
-  Pseudo<(outs BSR:$dst),
+  Pseudo<(outs),
          (ins i8mem:$ptr),
          "banksel $ptr",
-         [(set BSR:$dst, (Banksel tglobaladdr:$ptr))]>;
-}
+         []>;
+
+def pagesel : 
+  Pseudo<(outs),
+         (ins i8mem:$ptr),
+         "movlp $ptr",
+         []>;
+
 
 // Return insn.
 def Return : 

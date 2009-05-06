@@ -64,6 +64,23 @@ public:
                            unsigned &SrcReg, unsigned &DstReg,
                            unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 
+  static inline bool hasNoMemOperand (const MachineInstr &MI) {
+
+    if (MI.getNumOperands() == 0) return true;
+
+    switch (MI.getOpcode()) {
+    default: return false;  // Beware
+    case PIC16::movlw_lo_1:
+    case PIC16::movlw_hi_1:
+    case PIC16::movlw_lo_2:
+    case PIC16::movlw_hi_2:
+      return true;
+    }
+  }
+       
+   
+    
+
 };
 
 } // namespace llvm

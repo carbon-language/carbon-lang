@@ -70,4 +70,10 @@ addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
   return false;
 }
 
+bool PIC16TargetMachine::addPostRegAlloc(PassManagerBase &PM, 
+                                         CodeGenOpt::Level OptLevel) {
+  PM.add(createPIC16MemSelOptimizerPass());
+  return true;  // -print-machineinstr should print after this.
+}
+
 

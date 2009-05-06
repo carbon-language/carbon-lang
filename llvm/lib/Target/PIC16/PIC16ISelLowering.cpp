@@ -531,7 +531,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   unsigned FIndex = FR->getIndex();
   char *tmpName = new char [strlen(Name.c_str()) +  8];
   if (FIndex < ReservedFrameCount) {
-    sprintf(tmpName, "%s.frame", Name.c_str());
+    sprintf(tmpName, "%s.frame.", Name.c_str());
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = 0;
     for (unsigned i=0; i<FIndex ; ++i) {
@@ -539,7 +539,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
     }
   } else {
    // FrameIndex has been made for some temporary storage 
-    sprintf(tmpName, "%s.tmp", Name.c_str());
+    sprintf(tmpName, "%s.temp.", Name.c_str());
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
   }
@@ -850,7 +850,7 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
   // Put the value on stack.
   // Get a stack slot index and convert to es.
   int FI = MF.getFrameInfo()->CreateStackObject(1, 1);
-  sprintf(tmpName, "%s.tmp", FuncName.c_str());
+  sprintf(tmpName, "%s.temp.", FuncName.c_str());
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Store the value to ES.
@@ -1065,7 +1065,7 @@ SDValue PIC16TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   std::string FuncName = F->getName();
 
   char *tmpName = new char [strlen(FuncName.c_str()) +  8];
-  sprintf(tmpName, "%s.frame", FuncName.c_str());
+  sprintf(tmpName, "%s.frame.", FuncName.c_str());
   SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
   SDValue BS = DAG.getConstant(1, MVT::i8);
@@ -1250,12 +1250,12 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
        // Label for argument passing
        char *argFrame = new char [strlen(Name.c_str()) +  8];
-       sprintf(argFrame, "%s.args", Name.c_str());
+       sprintf(argFrame, "%s.args.", Name.c_str());
        ArgLabel = DAG.getTargetExternalSymbol(argFrame, MVT::i8);
 
        // Label for reading return value
        char *retName = new char [strlen(Name.c_str()) +  8];
-       sprintf(retName, "%s.retval", Name.c_str());
+       sprintf(retName, "%s.ret.", Name.c_str());
        RetLabel = DAG.getTargetExternalSymbol(retName, MVT::i8);
     } else {
        // if indirect call
@@ -1451,8 +1451,8 @@ SDValue PIC16TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   InitReservedFrameCount(F);
 
   // Create the <fname>.args external symbol.
-  char *tmpName = new char [strlen(FuncName.c_str()) +  6];
-  sprintf(tmpName, "%s.args", FuncName.c_str());
+  char *tmpName = new char [strlen(FuncName.c_str()) +  8];
+  sprintf(tmpName, "%s.args.", FuncName.c_str());
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Load arg values from the label + offset.

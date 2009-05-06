@@ -45,51 +45,6 @@ inline static bool isLocalName (std::string &Name) {
 }
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  std::string NewBank = "";
-  unsigned Operands = MI->getNumOperands();
-  if (Operands > 1) {
-    // If we have a Global address or external symbol then we need to print 
-    // banksel for it. 
-    unsigned BankSelVar = 0;
-    MachineOperand Op = MI->getOperand(BankSelVar);
-    while (BankSelVar < Operands-1) {
-      Op = MI->getOperand(BankSelVar);
-      if ((Op.getType() ==  MachineOperand::MO_GlobalAddress) ||
-          (Op.getType() ==  MachineOperand::MO_ExternalSymbol))
-        break;
-      BankSelVar++;
-    }
-    if (BankSelVar < Operands-1) {
-      unsigned OpType = Op.getType();
-      if (OpType == MachineOperand::MO_GlobalAddress ) 
-        NewBank = Op.getGlobal()->getSection(); 
-      else {
-        // External Symbol is generated for temp data and arguments. They are 
-        // in fpdata.<functionname>.# section.
-        std::string ESName = Op.getSymbolName();
-        int index = ESName.find_first_of(".");
-        std::string FnName = ESName.substr(0,index);
-        NewBank = "fpdata." + FnName +".#";
-      }
-      // Operand after global address or external symbol should be  banksel.
-      // Value 1 for this operand means we need to generate banksel else do not
-      // generate banksel.
-      const MachineOperand &BS = MI->getOperand(BankSelVar+1);
-      // If Section names are same then the variables are in same section.
-      // This is not true for external variables as section names for global
-      // variables in all files are same at this time. For eg. initialized 
-      // data in put in idata.# section in all files. 
-      if ((BS.getType() == MachineOperand::MO_Immediate 
-          && (int)BS.getImm() == 1) 
-          && ((Op.isGlobal() && Op.getGlobal()->hasExternalLinkage()) ||
-           (NewBank.compare(CurBank) != 0))) { 
-        O << "\tbanksel ";
-        printOperand(MI, BankSelVar);
-        O << "\n";
-        CurBank = NewBank;
-      }
-    }
-  }
   printInstruction(MI);
   return true;
 }
@@ -118,8 +73,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToSection (fCodeSection);
 
   // Emit the frame address of the function at the beginning of code.
-  O << "    retlw  low(" << FunctionLabelBegin<< CurrentFnName << ".frame)\n";
-  O << "    retlw  high(" << FunctionLabelBegin<< CurrentFnName << ".frame)\n"; 
+  O << "    retlw  low(" << FunctionLabelBegin<< CurrentFnName << ".frame.)\n";
+  O << "    retlw  high(" << FunctionLabelBegin<< CurrentFnName << ".frame.)\n"; 
   O << CurrentFnName << ":\n";
 
 
@@ -131,7 +86,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }
-    CurBank = "";
     
     // For emitting line directives, we need to keep track of the current
     // source line. When it changes then only emit the line directive.
@@ -225,8 +179,7 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
   DW->BeginModule(&M, MMI, O, this, TAI);
 
   EmitExternsAndGlobals (M);
-  EmitInitData (M);
-  EmitUnInitData(M);
+  EmitGlobalData(M);
   EmitRomData(M);
   return Result;
 }
@@ -245,13 +198,13 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
 
     if (I->isDeclaration()) {
       O << "\textern " <<Name << "\n";
-      O << "\textern "  << FunctionLabelBegin << Name << ".retval\n";
-      O << "\textern " << FunctionLabelBegin << Name << ".args\n";
+      O << "\textern "  << FunctionLabelBegin << Name << ".ret.\n";
+      O << "\textern " << FunctionLabelBegin << Name << ".args.\n";
     }
     else if (I->hasExternalLinkage()) {
       O << "\tglobal " << Name << "\n";
-      O << "\tglobal " << FunctionLabelBegin << Name << ".retval\n";
-      O << "\tglobal " << FunctionLabelBegin<< Name << ".args\n";
+      O << "\tglobal " << FunctionLabelBegin << Name << ".ret.\n";
+      O << "\tglobal " << FunctionLabelBegin<< Name << ".args.\n";
     }
   }
 
@@ -271,35 +224,6 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
       O << "\textern "<< Name << "\n";
     else if (I->hasCommonLinkage() || I->hasExternalLinkage())
       O << "\tglobal "<< Name << "\n";
-  }
-}
-
-void PIC16AsmPrinter::EmitInitData (Module &M) {
-  SwitchToSection(TAI->getDataSection());
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasInitializer())   // External global require no code.
-      continue;
-
-    Constant *C = I->getInitializer();
-    const PointerType *PtrTy = I->getType();
-    int AddrSpace = PtrTy->getAddressSpace();
-
-    if ((!C->isNullValue()) && (AddrSpace == PIC16ISD::RAM_SPACE)) {
-    
-      if (EmitSpecialLLVMGlobal(I)) 
-        continue;
-
-      // Any variables reaching here with "." in its name is a local scope
-      // variable and should not be printed in global data section.
-      std::string Name = Mang->getValueName(I);
-      if (isLocalName(Name))
-        continue;
-
-      I->setSection(TAI->getDataSection()->getName());
-      O << Name;
-      EmitGlobalConstant(C, AddrSpace);
-    }
   }
 }
 
@@ -335,39 +259,6 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
   IsRomData = false;
 }
 
-void PIC16AsmPrinter::EmitUnInitData (Module &M)
-{
-  SwitchToSection(TAI->getBSSSection_());
-  const TargetData *TD = TM.getTargetData();
-
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasInitializer())   // External global require no code.
-      continue;
-
-    Constant *C = I->getInitializer();
-    if (C->isNullValue()) {
-
-      if (EmitSpecialLLVMGlobal(I))
-        continue;
-
-      // Any variables reaching here with "." in its name is a local scope
-      // variable and should not be printed in global data section.
-      std::string name = Mang->getValueName(I);
-      if (name.find(".") != std::string::npos)
-        continue;
-
-      I->setSection(TAI->getBSSSection_()->getName());
-
-      const Type *Ty = C->getType();
-      unsigned Size = TD->getTypePaddedSize(Ty);
-
-      O << name << " " <<"RES"<< " " << Size ;
-      O << "\n";
-    }
-  }
-}
-
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   O << "\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
@@ -390,7 +281,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   
 
   // Emit function frame label
-  O << FunctionLabelBegin << CurrentFnName << ".frame:\n";
+  O << FunctionLabelBegin << CurrentFnName << ".frame.:\n";
 
   const Type *RetType = F->getReturnType();
   unsigned RetSize = 0; 
@@ -399,10 +290,10 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   
   //Emit function return value space
   if(RetSize > 0)
-     O << FunctionLabelBegin << CurrentFnName << ".retval    RES  " << RetSize 
+     O << FunctionLabelBegin << CurrentFnName << ".ret.    RES  " << RetSize 
        << "\n";
   else
-     O << FunctionLabelBegin << CurrentFnName << ".retval:\n";
+     O << FunctionLabelBegin << CurrentFnName << ".ret.:\n";
    
   // Emit variable to hold the space for function arguments 
   unsigned ArgSize = 0;
@@ -411,13 +302,13 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     const Type *Ty = argi->getType();
     ArgSize += TD->getTypePaddedSize(Ty);
    }
-  O << FunctionLabelBegin << CurrentFnName << ".args      RES  " << ArgSize 
+  O << FunctionLabelBegin << CurrentFnName << ".args.      RES  " << ArgSize 
     << "\n";
 
   // Emit temporary space
   int TempSize = PTLI->GetTmpSize();
   if (TempSize > 0 )
-    O << FunctionLabelBegin << CurrentFnName << ".tmp       RES  " << TempSize 
+    O << FunctionLabelBegin << CurrentFnName << ".temp.       RES  " << TempSize 
       <<"\n";
 
   // Emit the section name for local variables.
@@ -454,5 +345,40 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     // Emit memory reserve directive.
     O << FunctionLabelBegin << VarName << "  RES  " << Size << "\n";
   }
-
 }
+
+void PIC16AsmPrinter::EmitGlobalData (Module &M)
+{
+  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
+  const_cast<PIC16TargetAsmInfo *>(PTAI)->SetSectionForGVs(M);
+  const TargetData *TD = TM.getTargetData();
+
+  std::vector <PIC16Section *>IDATASections = PTAI->getIDATASections();
+  for (unsigned i = 0; i < IDATASections.size(); i++) {
+    SwitchToSection(IDATASections[i]->S_);
+    std::vector<const GlobalVariable*> Items = IDATASections[i]->Items;
+    for (unsigned j = 0; j < Items.size(); j++) {
+      std::string Name = Mang->getValueName(Items[j]);
+      Constant *C = Items[j]->getInitializer();
+      int AddrSpace = Items[j]->getType()->getAddressSpace();
+      O << Name;
+      EmitGlobalConstant(C, AddrSpace);
+    }
+  }
+
+  std::vector <PIC16Section *>BSSSections = PTAI->getBSSSections();
+  for (unsigned i = 0; i < BSSSections.size(); i++) {
+    SwitchToSection(BSSSections[i]->S_);
+    std::vector<const GlobalVariable*> Items = BSSSections[i]->Items;
+    for (unsigned j = 0; j < Items.size(); j++) {
+      std::string Name = Mang->getValueName(Items[j]);
+      Constant *C = Items[j]->getInitializer();
+      const Type *Ty = C->getType();
+      unsigned Size = TD->getTypePaddedSize(Ty);
+
+      O << Name << " " <<"RES"<< " " << Size ;
+      O << "\n";
+    }
+  }
+}
+
