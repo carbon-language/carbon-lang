@@ -276,6 +276,9 @@
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
 
+/* Have pthread.h */
+#cmakedefine HAVE_PTHREAD_H ${HAVE_PTHREAD_H}
+
 /* Have pthread_mutex_lock */
 #cmakedefine HAVE_PTHREAD_MUTEX_LOCK ${HAVE_PTHREAD_MUTEX_LOCK}
 
