@@ -164,17 +164,15 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
 
   // We don't want debug info removed by anything this general.
   if (isa<DbgInfoIntrinsic>(I)) return false;
-    
-  if (!I->mayWriteToMemory())
-    return true;
 
-  // Special case intrinsics that "may write to memory" but can be deleted when
-  // dead.
+  if (!I->mayHaveSideEffects()) return true;
+
+  // Special case intrinsics that "may have side effects" but can be deleted
+  // when dead.
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
     // Safe to delete llvm.stacksave if dead.
     if (II->getIntrinsicID() == Intrinsic::stacksave)
       return true;
-  
   return false;
 }
 
@@ -230,7 +228,7 @@ llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
   SmallPtrSet<PHINode *, 4> PHIs;
   PHIs.insert(PN);
   for (Instruction *J = cast<Instruction>(*PN->use_begin());
-       J->hasOneUse() && !J->mayWriteToMemory();
+       J->hasOneUse() && !J->mayHaveSideEffects();
        J = cast<Instruction>(*J->use_begin()))
     // If we find a PHI more than once, we're on a cycle that
     // won't prove fruitful.

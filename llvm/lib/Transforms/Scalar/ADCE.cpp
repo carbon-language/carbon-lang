@@ -57,7 +57,7 @@ bool ADCE::runOnFunction(Function& F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isa<TerminatorInst>(I.getInstructionIterator()) ||
         isa<DbgInfoIntrinsic>(I.getInstructionIterator()) ||
-        I->mayWriteToMemory()) {
+        I->mayHaveSideEffects()) {
       alive.insert(I.getInstructionIterator());
       worklist.push_back(I.getInstructionIterator());
     }

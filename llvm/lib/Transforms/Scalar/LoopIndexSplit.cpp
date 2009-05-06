@@ -1148,7 +1148,7 @@ bool LoopIndexSplit::cleanBlock(BasicBlock *BB) {
         || isa<DbgInfoIntrinsic>(I))
       continue;
 
-    if (I->mayWriteToMemory())
+    if (I->mayHaveSideEffects())
       return false;
 
     // I is used only inside this block then it is OK.

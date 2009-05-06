@@ -40,14 +40,6 @@ public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();
   
-  /// mayWriteToMemory - Return true if this instruction may modify memory.
-  ///
-  bool mayWriteToMemory() const;
-
-  /// mayReadFromMemory - Return true if this instruction may read memory.
-  ///
-  bool mayReadFromMemory() const;
-  
   /// clone() - Create a copy of 'this' instruction that is identical in all
   /// ways except the following:
   ///   * The instruction has no parent
@@ -180,6 +172,24 @@ public:
     return isTrapping(getOpcode());
   }
   static bool isTrapping(unsigned op);
+
+  /// mayWriteToMemory - Return true if this instruction may modify memory.
+  ///
+  bool mayWriteToMemory() const;
+
+  /// mayReadFromMemory - Return true if this instruction may read memory.
+  ///
+  bool mayReadFromMemory() const;
+
+  /// mayThrow - Return true if this instruction may throw an exception.
+  ///
+  bool mayThrow() const;
+
+  /// mayHaveSideEffects - Return true if the instruction may have side effects.
+  ///
+  bool mayHaveSideEffects() const {
+    return mayWriteToMemory() || mayThrow();
+  }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *) { return true; }

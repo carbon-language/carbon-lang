@@ -320,6 +320,14 @@ bool Instruction::mayWriteToMemory() const {
   }
 }
 
+/// mayThrow - Return true if this instruction may throw an exception.
+///
+bool Instruction::mayThrow() const {
+  if (const CallInst *CI = dyn_cast<CallInst>(this))
+    return !CI->doesNotThrow();
+  return false;
+}
+
 /// isAssociative - Return true if the instruction is associative:
 ///
 ///   Associative operators satisfy:  x op (y op z) === (x op y) op z)

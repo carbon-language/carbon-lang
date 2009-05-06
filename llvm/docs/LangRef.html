@@ -1061,23 +1061,24 @@ unwind or exceptional control flow.  If the function does unwind, its runtime
 behavior is undefined.</dd>
 
 <dt><tt>readnone</tt></dt>
-<dd>This attribute indicates that the function computes its result (or the
-exception it throws) based strictly on its arguments, without dereferencing any
+<dd>This attribute indicates that the function computes its result (or decides to
+unwind an exception) based strictly on its arguments, without dereferencing any
 pointer arguments or otherwise accessing any mutable state (e.g. memory, control
 registers, etc) visible to caller functions.  It does not write through any
 pointer arguments (including <tt><a href="#byval">byval</a></tt> arguments) and
-never changes any state visible to callers.  readnone functions may not throw
-an exception that escapes into the caller.</dd>
+never changes any state visible to callers.  This means that it cannot unwind
+exceptions by calling the <tt>C++</tt> exception throwing methods, but could
+use the <tt>unwind</tt> instruction.</dd>
 
 <dt><tt><a name="readonly">readonly</a></tt></dt>
 <dd>This attribute indicates that the function does not write through any
 pointer arguments (including <tt><a href="#byval">byval</a></tt> arguments)
 or otherwise modify any state (e.g. memory, control registers, etc) visible to
 caller functions.  It may dereference pointer arguments and read state that may
-be set in the caller.  A readonly function always returns the same value when
-called with the same set of arguments and global
-state.  readonly functions may not throw an exception that escapes into the
-caller.</dd>
+be set in the caller.  A readonly function always returns the same value (or
+unwinds an exception identically) when called with the same set of arguments
+and global state.  It cannot unwind an exception by calling the <tt>C++</tt>
+exception throwing methods, but may use the <tt>unwind</tt> instruction.</dd>
 
 <dt><tt><a name="ssp">ssp</a></tt></dt>
 <dd>This attribute indicates that the function should emit a stack smashing

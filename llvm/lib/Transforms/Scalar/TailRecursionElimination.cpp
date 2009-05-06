@@ -201,7 +201,7 @@ bool TailCallElim::runOnFunction(Function &F) {
 bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
   // FIXME: We can move load/store/call/free instructions above the call if the
   // call does not mod/ref the memory location being processed.
-  if (I->mayWriteToMemory() || isa<LoadInst>(I))
+  if (I->mayHaveSideEffects() || isa<LoadInst>(I))
     return false;
 
   // Otherwise, if this is a side-effect free instruction, check to make sure

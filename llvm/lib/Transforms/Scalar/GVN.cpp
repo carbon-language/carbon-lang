@@ -1479,13 +1479,13 @@ bool GVN::performPRE(Function& F) {
     for (BasicBlock::iterator BI = CurrentBlock->begin(),
          BE = CurrentBlock->end(); BI != BE; ) {
       Instruction *CurInst = BI++;
-      
+
       if (isa<AllocationInst>(CurInst) || isa<TerminatorInst>(CurInst) ||
           isa<PHINode>(CurInst) || (CurInst->getType() == Type::VoidTy) ||
-          CurInst->mayReadFromMemory() || CurInst->mayWriteToMemory() ||
+          CurInst->mayReadFromMemory() || CurInst->mayHaveSideEffects() ||
           isa<DbgInfoIntrinsic>(CurInst))
         continue;
-      
+
       uint32_t valno = VN.lookup(CurInst);
       
       // Look for the predecessors for PRE opportunities.  We're

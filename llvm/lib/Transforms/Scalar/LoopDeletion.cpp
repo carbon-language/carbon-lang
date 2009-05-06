@@ -136,11 +136,8 @@ bool LoopDeletion::IsLoopDead(Loop* L,
        LI != LE; ++LI) {
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
          BI != BE; ++BI) {
-      if (BI->mayWriteToMemory())
+      if (BI->mayHaveSideEffects())
         return false;
-      else if (LoadInst* L = dyn_cast<LoadInst>(BI))
-        if (L->isVolatile())
-          return false;
     }
   }
   

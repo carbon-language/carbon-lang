@@ -258,7 +258,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
     while (!isa<TerminatorInst>(BBI)) {
       Instruction *I = BBI++;
 
-      bool CanHoist = !I->isTrapping() && !I->mayWriteToMemory();
+      bool CanHoist = !I->isTrapping() && !I->mayHaveSideEffects();
       if (CanHoist) {
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
           if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(op)))

@@ -300,7 +300,7 @@ static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
   // Okay, everything after this looks good, check to make sure that this block
   // doesn't include any side effects.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (I->mayWriteToMemory())
+    if (I->mayHaveSideEffects())
       return false;
   
   return true;
@@ -383,7 +383,7 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
   // part of the loop that the code *would* execute.  We already checked the
   // tail, check the header now.
   for (BasicBlock::iterator I = Header->begin(), E = Header->end(); I != E; ++I)
-    if (I->mayWriteToMemory())
+    if (I->mayHaveSideEffects())
       return false;
   return true;
 }
