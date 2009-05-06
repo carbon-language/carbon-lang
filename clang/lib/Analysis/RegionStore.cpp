@@ -554,6 +554,10 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     return UnknownVal();
   }
 
+  if (isa<ElementRegion>(R)) {
+    return UnknownVal();
+  }
+
   assert(0 && "Other regions are not supported yet.");
   return UnknownVal();
 }
@@ -583,6 +587,13 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   ElementRegion* ER = MRMgr.getElementRegion(T, Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
+}
+
+static bool isSmallerThan(QualType T1, QualType T2) {
+  if (T1->isCharType())
+    return true;
+  else
+    return false;
 }
 
 RegionStoreManager::CastResult
@@ -637,9 +648,14 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   // VarRegion.
   if (isa<VarRegion>(R) || isa<ElementRegion>(R) || isa<FieldRegion>(R)
       || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
-    // FIXME: create an ElementRegion when the size of the pointee type is
-    // smaller than the region.
-    return CastResult(state, R);
+    if (isSmallerThan(PointeeTy, 
+                      cast<TypedRegion>(R)->getRValueType(getContext()))) {
+      SVal Idx = ValMgr.makeZeroArrayIndex();
+      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx, 
+                                                 cast<TypedRegion>(R));
+      return CastResult(state, ER);
+    } else
+      return CastResult(state, R);
   }
 
   if (isa<TypedViewRegion>(R)) {

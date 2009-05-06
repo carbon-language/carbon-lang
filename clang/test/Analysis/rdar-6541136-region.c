@@ -13,5 +13,7 @@ void foo( void )
   struct load_wine *cmd = (void*) &wonky[1];
   cmd = cmd;
   char *p = (void*) &wonky[1];
-  *p = 1; // expected-warning{{Load or store into an out-of-bound memory}}
+  *p = 1; 
+  kernel_tea_cheese_t *q = &wonky[1];
+  kernel_tea_cheese_t r = *q; // expected-warning{{out-of-bound memory position}}
 }
