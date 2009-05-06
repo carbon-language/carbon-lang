@@ -562,16 +562,41 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
   if (PointerWidth == 64)
     Features["sse2"] = Features["sse"] = Features["mmx"] = true;
 
-  // FIXME: LLVM says core2 has SSSE3, but gcc doesn't define
-  // __SSSE3__ with it? What else is going on here?
-  if (CPU == "core2")
-    Features["ssse3"] = Features["sse3"] = Features["sse2"] = Features["sse"] =
-      Features["mmx"] = true;
-  else if (CPU == "yonah")
-    Features["sse3"] = Features["sse2"] = Features["sse"] = 
-      Features["mmx"] = true;
-  else if (CPU == "pentium4")
-    Features["sse2"] = Features["sse"] = Features["mmx"] = true;
+  if (CPU == "generic" || CPU == "i386" || CPU == "i486" || CPU == "i586" ||
+      CPU == "pentium" || CPU == "i686" || CPU == "pentiumpro")
+    ;
+  else if (CPU == "pentium-mmx" || CPU == "pentium2")
+    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "pentium3")
+    setFeatureEnabled(Features, "sse", true);
+  else if (CPU == "pentium-m" || CPU == "pentium4" || CPU == "x86-64")
+    setFeatureEnabled(Features, "sse2", true);
+  else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona")
+    setFeatureEnabled(Features, "sse3", true);
+  else if (CPU == "core2")
+    setFeatureEnabled(Features, "ssse3", true);
+  else if (CPU == "penryn") {
+    setFeatureEnabled(Features, "sse4", true);
+    Features["sse42"] = false;
+  } else if (CPU == "atom")
+    setFeatureEnabled(Features, "sse3", true);
+  else if (CPU == "corei7")
+    setFeatureEnabled(Features, "sse4", true);
+  else if (CPU == "k6" || CPU == "winchip-c6")
+    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" || 
+           CPU == "athlon-tbird" || CPU == "winchip2" || CPU == "c3") {
+    setFeatureEnabled(Features, "mmx", true);
+    setFeatureEnabled(Features, "3dnow", true);
+  } else if (CPU == "athlon-4" || CPU == "athlon-xp" || CPU == "athlon-mp") {
+    setFeatureEnabled(Features, "sse", true);
+    setFeatureEnabled(Features, "3dnowa", true);
+  } else if (CPU == "k8" || CPU == "opteron" || CPU == "athlon64" ||
+           CPU == "athlon-fx") {
+    setFeatureEnabled(Features, "sse2", true); 
+    setFeatureEnabled(Features, "3dnowa", true);
+  } else if (CPU == "c3-2")
+    setFeatureEnabled(Features, "sse", true);
 }
 
 bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
