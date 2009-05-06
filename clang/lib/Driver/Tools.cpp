@@ -31,6 +31,13 @@
 using namespace clang::driver;
 using namespace clang::driver::tools;
 
+static const char *MakeFormattedString(const ArgList &Args,
+                                       const llvm::format_object_base &Fmt) {
+  std::string Str;
+  llvm::raw_string_ostream(Str) << Fmt;
+  return Args.MakeArgString(Str.c_str());
+}
+
 void Clang::AddPreprocessingOptions(const Driver &D, 
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
@@ -318,52 +325,48 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("--soft-float");
 
-  // FIXME: Need target hooks.
-  if (memcmp(getToolChain().getPlatform().c_str(), "darwin", 6) == 0) {
-    if (getToolChain().getArchName() == "x86_64")
-      CmdArgs.push_back("--mcpu=core2");
-    else if (getToolChain().getArchName() == "i386")
-      CmdArgs.push_back("--mcpu=yonah");
-  }
+  // FIXME: Handle -mtune=.
+  (void) Args.hasArg(options::OPT_mtune_EQ);
 
-  // FIXME: Ignores ordering. Also, we need to find a realistic
-  // solution for this.
-  static const struct {
-    options::ID Pos, Neg;
-    const char *Name;
-  } FeatureOptions[] = {
-    { options::OPT_mmmx, options::OPT_mno_mmx, "mmx" },
-    { options::OPT_msse, options::OPT_mno_sse, "sse" },
-    { options::OPT_msse2, options::OPT_mno_sse2, "sse2" },
-    { options::OPT_msse3, options::OPT_mno_sse3, "sse3" },
-    { options::OPT_mssse3, options::OPT_mno_ssse3, "ssse3" },
-    { options::OPT_msse41, options::OPT_mno_sse41, "sse41" },
-    { options::OPT_msse42, options::OPT_mno_sse42, "sse42" },
-    { options::OPT_msse4a, options::OPT_mno_sse4a, "sse4a" },
-    { options::OPT_m3dnow, options::OPT_mno_3dnow, "3dnow" },
-    { options::OPT_m3dnowa, options::OPT_mno_3dnowa, "3dnowa" }
-  };
-  const unsigned NumFeatureOptions =
-    sizeof(FeatureOptions)/sizeof(FeatureOptions[0]);
-
-  // FIXME: Avoid std::string
-  std::string Attrs;
-  for (unsigned i=0; i < NumFeatureOptions; ++i) {
-    if (Args.hasArg(FeatureOptions[i].Pos)) {
-      if (!Attrs.empty())
-        Attrs += ',';
-      Attrs += '+';
-      Attrs += FeatureOptions[i].Name;
-    } else if (Args.hasArg(FeatureOptions[i].Neg)) {
-      if (!Attrs.empty())
-        Attrs += ',';
-      Attrs += '-';
-      Attrs += FeatureOptions[i].Name;
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    // FIXME: We made need some translation here from the options gcc
+    // takes to names the LLVM backend understand?
+    CmdArgs.push_back("-mcpu");
+    CmdArgs.push_back(A->getValue(Args));
+  } else {
+    // Select default CPU.
+    
+    // FIXME: Need target hooks.
+    if (memcmp(getToolChain().getOS().c_str(), "darwin", 6) == 0) {
+      if (getToolChain().getArchName() == "x86_64")
+        CmdArgs.push_back("--mcpu=core2");
+      else if (getToolChain().getArchName() == "i386")
+        CmdArgs.push_back("--mcpu=pentium4");
     }
   }
-  if (!Attrs.empty()) {
-    CmdArgs.push_back("--mattr");
-    CmdArgs.push_back(Args.MakeArgString(Attrs.c_str()));
+
+  // FIXME: Use iterator.
+  for (ArgList::const_iterator
+         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(options::OPT_m_x86_Features_Group)) {
+      const char *Name = A->getOption().getName();
+
+      // Skip over "-m".
+      assert(Name[0] == '-' && Name[1] == 'm' && "Invalid feature name.");
+      Name += 2;
+      
+      bool IsNegative = memcmp(Name, "no-", 3) == 0;
+      if (IsNegative)
+        Name += 3;
+
+      A->claim();
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back(MakeFormattedString(Args,
+                                            llvm::format("%c%s", 
+                                                         IsNegative ? '-' : '+',
+                                                         Name)));
+    }
   }
 
   if (Args.hasFlag(options::OPT_fmath_errno,
@@ -1213,13 +1216,6 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as").c_str());
   Dest.addCommand(new Command(Exec, CmdArgs));
-}
-
-static const char *MakeFormattedString(const ArgList &Args,
-                                       const llvm::format_object_base &Fmt) {
-  std::string Str;
-  llvm::raw_string_ostream(Str) << Fmt;
-  return Args.MakeArgString(Str.c_str());
 }
 
 /// Helper routine for seeing if we should use dsymutil; this is a

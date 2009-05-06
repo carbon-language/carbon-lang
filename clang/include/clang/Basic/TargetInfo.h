@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
+// FIXME: Daniel isn't smart enough to use a prototype for this.
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
@@ -334,22 +336,16 @@ public:
   /// options. 
   virtual void getDefaultLangOptions(LangOptions &Opts) {}
 
-  /// HandleTargetFeatures - Handle target-specific options like -mattr=+sse2
-  /// and friends.  An array of arguments is passed in: if they are all valid,
-  /// this should handle them and return -1.  If there is an error, the index of
-  /// the invalid argument should be returned along with an optional error
-  /// string.
-  ///
-  /// Note that the driver should have already consolidated all the
-  /// target-feature settings and passed them to us in the -mattr list.  The
-  /// -mattr list is treated by the code generator as a diff against the -mcpu
-  /// setting, but the driver should pass all enabled options as "+" settings.
-  /// This means that the target should only look at + settings.
-  virtual int HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
-                                   std::string &ErrorReason) {
-    if (NumStrs == 0)
-      return -1;
-    return 0;
+  /// getDefaultFeatures - Get the default set of target features for
+  /// the \args CPU; this should include all legal feature strings on
+  /// the target.
+  virtual void getDefaultFeatures(const std::string &CPU, 
+                                  llvm::StringMap<bool> &Features) {
+  }
+
+  /// HandleTargetOptions - Perform initialization based on the user
+  /// configured set of features.
+  virtual void HandleTargetFeatures(const llvm::StringMap<bool> &Features) {
   }
 
   // getRegParmMax - Returns maximal number of args passed in registers.

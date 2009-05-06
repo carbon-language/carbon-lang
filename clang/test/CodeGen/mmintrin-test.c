@@ -1,6 +1,6 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm -o %t %s && 
+// RUN: clang-cc -triple i386-apple-darwin9 -mcpu=pentium4 -emit-llvm -o %t %s && 
 // RUN: grep define %t | count 1 &&
-// RUN: clang-cc -triple i386-apple-darwin9 -g -emit-llvm -o %t %s && 
+// RUN: clang-cc -triple i386-apple-darwin9 -mcpu=pentium4 -g -emit-llvm -o %t %s && 
 // RUN: grep define %t | count 1
 
 #include <mmintrin.h>

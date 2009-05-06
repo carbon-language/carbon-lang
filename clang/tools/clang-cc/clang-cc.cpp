@@ -50,6 +50,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
@@ -663,10 +664,6 @@ NeXTRuntime("fnext-runtime",
 static llvm::cl::opt<bool>
 Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences"));
 
-static llvm::cl::list<std::string>
-TargetFeatures("mattr", llvm::cl::CommaSeparated,
-        llvm::cl::desc("Target specific attributes (-mattr=help for details)"));
-
 static llvm::cl::opt<unsigned>
 TemplateDepth("ftemplate-depth", llvm::cl::init(99),
               llvm::cl::desc("Maximum depth of recursive template "
@@ -711,30 +708,14 @@ static llvm::cl::opt<bool>
 StaticDefine("static-define", llvm::cl::desc("Should __STATIC__ be defined"));
 
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
-                                       TargetInfo *Target) {
+                                       TargetInfo *Target,
+                                       const llvm::StringMap<bool> &Features) {
   // Allow the target to set the default the langauge options as it sees fit.
   Target->getDefaultLangOptions(Options);
-  
-  // If there are any -mattr options, pass them to the target for validation and
-  // processing.  The driver should have already consolidated all the
-  // target-feature settings and passed them to us in the -mattr list.  The
-  // -mattr list is treated by the code generator as a diff against the -mcpu
-  // setting, but the driver should pass all enabled options as "+" settings.
-  // This means that the target should only look at + settings.
-  if (!TargetFeatures.empty()) {
-    std::string ErrorStr;
-    int Opt = Target->HandleTargetFeatures(&TargetFeatures[0],
-                                           TargetFeatures.size(), ErrorStr);
-    if (Opt != -1) {
-      if (ErrorStr.empty())
-        fprintf(stderr, "invalid feature '%s'\n",
-                TargetFeatures[Opt].c_str());
-      else
-        fprintf(stderr, "feature '%s': %s\n",
-                TargetFeatures[Opt].c_str(), ErrorStr.c_str());
-      exit(1);
-    }
-  }
+
+  // Pass the map of target features to the target for validation and
+  // processing.
+  Target->HandleTargetFeatures(Features);
   
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
@@ -1429,8 +1410,47 @@ static llvm::cl::opt<std::string>
 TargetCPU("mcpu",
          llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
 
+static llvm::cl::list<std::string>
+TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+
+/// ComputeTargetFeatures - Recompute the target feature list to only
+/// be the list of things that are enabled, based on the target cpu
+/// and feature list.
+static void ComputeFeatureMap(TargetInfo *Target,
+                              llvm::StringMap<bool> &Features) {
+  assert(Features.empty() && "invalid map"); 
+
+  // Initialize the feature map based on the target.
+  Target->getDefaultFeatures(TargetCPU, Features);
+
+  // Apply the user specified deltas.
+  for (llvm::cl::list<std::string>::iterator it = TargetFeatures.begin(), 
+         ie = TargetFeatures.end(); it != ie; ++it) {
+    const char *Name = it->c_str();
+    
+    // FIXME: Don't handle errors like this.
+    if (Name[0] != '-' && Name[0] != '+') {
+      fprintf(stderr, "error: clang-cc: invalid target feature string: %s\n", 
+              Name);
+      exit(1);
+    }
+
+    llvm::StringMap<bool>::iterator it = Features.find(Name + 1);
+    if (it == Features.end()) {
+      fprintf(stderr, "error: clang-cc: invalid target feature string: %s\n", 
+              Name);
+      exit(1);
+    }
+
+    // FIXME: Actually, we need to apply all the features implied by
+    // this feature.
+    it->second = (Name[0] == '+');
+  }
+}
+
 static void InitializeCompileOptions(CompileOptions &Opts,
-                                     const LangOptions &LangOpts) {
+                                     const LangOptions &LangOpts,
+                                     const llvm::StringMap<bool> &Features) {
   Opts.OptimizeSize = OptSize;
   Opts.DebugInfo = GenerateDebugInfo;
   if (OptSize) {
@@ -1451,8 +1471,15 @@ static void InitializeCompileOptions(CompileOptions &Opts,
 #endif
 
   Opts.CPU = TargetCPU;
-  Opts.Features.insert(Opts.Features.end(),
-                       TargetFeatures.begin(), TargetFeatures.end());
+  Opts.Features.clear();
+  for (llvm::StringMap<bool>::const_iterator it = Features.begin(), 
+         ie = Features.end(); it != ie; ++it) {
+    // FIXME: If we are completely confident that we have the right
+    // set, we only need to pass the minuses.
+    std::string Name(it->second ? "+" : "-");
+    Name += it->first();
+    Opts.Features.push_back(Name);
+  }
   
   Opts.NoCommon = NoCommon | LangOpts.CPlusPlus;
   
@@ -1556,6 +1583,7 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
 static ASTConsumer *CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts,
+                                      const llvm::StringMap<bool>& Features,
                                       Preprocessor *PP,
                                       PreprocessorFactory *PPF) {
   switch (ProgAction) {
@@ -1598,7 +1626,7 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
       Act = Backend_EmitBC;
     
     CompileOptions Opts;
-    InitializeCompileOptions(Opts, LangOpts);
+    InitializeCompileOptions(Opts, LangOpts, Features);
     return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
                                  InFile, OutputFile);
   }
@@ -1620,7 +1648,8 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
-                             const std::string &InFile, ProgActions PA) {
+                             const std::string &InFile, ProgActions PA,
+                             const llvm::StringMap<bool> &Features) {
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
   FixItRewriter *FixItRewrite = 0;
@@ -1630,7 +1659,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   default:
     Consumer.reset(CreateASTConsumer(InFile, PP.getDiagnostics(),
                                      PP.getFileManager(), PP.getLangOptions(),
-                                     &PP, &PPF));
+                                     Features, &PP, &PPF));
     
     if (!Consumer) {      
       fprintf(stderr, "Unexpected program action!\n");
@@ -1999,6 +2028,10 @@ int main(int argc, char **argv) {
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
 
+  // Compute the feature set, unfortunately this effects the language!
+  llvm::StringMap<bool> Features;
+  ComputeFeatureMap(Target.get(), Features);
+
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     
@@ -2016,7 +2049,7 @@ int main(int argc, char **argv) {
     InitializeBaseLanguage();
     LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
-    InitializeLanguageStandard(LangInfo, LK, Target.get());
+    InitializeLanguageStandard(LangInfo, LK, Target.get(), Features);
           
     // Process the -I options and set them in the HeaderInfo.
     HeaderSearch HeaderInfo(FileMgr);
@@ -2041,7 +2074,7 @@ int main(int argc, char **argv) {
       ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());
 
     // Process the source file.
-    ProcessInputFile(*PP, PPFactory, InFile, ProgAction);
+    ProcessInputFile(*PP, PPFactory, InFile, ProgAction, Features);
     
     HeaderInfo.ClearFileInfo();
     DiagClient->setLangOptions(0);

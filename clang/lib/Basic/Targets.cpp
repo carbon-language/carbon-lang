@@ -503,10 +503,7 @@ class X86TargetInfo : public TargetInfo {
   } SSELevel;
 public:
   X86TargetInfo(const std::string& triple)
-    : TargetInfo(triple),
-      // FIXME: hard coding to SSE2 for now.  This should change to NoMMXSSE so
-      // that the driver controls this.
-      SSELevel(SSE2) {
+    : TargetInfo(triple), SSELevel(NoMMXSSE) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -536,49 +533,59 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const;
 
-  virtual int HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
-                                   std::string &ErrorReason);
+  virtual void getDefaultFeatures(const std::string &CPU, 
+                                  llvm::StringMap<bool> &Features);
+  virtual void HandleTargetFeatures(const llvm::StringMap<bool> &Features);
 };
 
-/// HandleTargetOptions - Handle target-specific options like -msse2 and
-/// friends.  An array of arguments is passed in: if they are all valid, this
-/// should handle them and return -1.  If there is an error, the index of the
-/// invalid argument should be returned along with an optional error string.
-int X86TargetInfo::HandleTargetFeatures(std::string *StrArray, unsigned NumStrs,
-                                        std::string &ErrorReason) {
-  for (unsigned i = 0; i != NumStrs; ++i) {
-    const std::string &Feature = StrArray[i];
-    if (Feature.size() < 2) return i;
-    // Ignore explicitly disabled features.
-    if (Feature[0] == '-') continue;
+void X86TargetInfo::getDefaultFeatures(const std::string &CPU, 
+                                       llvm::StringMap<bool> &Features) {
+  // FIXME: This should not be here.
+  Features["3dnow"] = false;
+  Features["3dnowa"] = false;
+  Features["mmx"] = false;
+  Features["sse"] = false;
+  Features["sse2"] = false;
+  Features["sse3"] = false;
+  Features["ssse3"] = false;
+  Features["sse41"] = false;
+  Features["sse42"] = false;
 
-    // Feature strings are of the form "+feature".
-    if (Feature[0] != '+') return i;
+  // LLVM does not currently recognize this.
+  // Features["sse4a"] = false;
 
-    // The set of supported subtarget features is defined in
-    // lib/Target/X86/X86.td.  Here we recognize and map onto our internal
-    // state.
-    if (Feature == "+mmx")
-      SSELevel = std::max(SSELevel, MMX);
-    else if (Feature == "+sse")
-      SSELevel = std::max(SSELevel, SSE1);
-    else if (Feature == "+sse2")
-      SSELevel = std::max(SSELevel, SSE2);
-    else if (Feature == "+sse3")
-      SSELevel = std::max(SSELevel, SSE3);
-    else if (Feature == "+ssse3")
-      SSELevel = std::max(SSELevel, SSSE3);
-    else if (Feature == "+sse41")
-      SSELevel = std::max(SSELevel, SSE41);
-    else if (Feature == "+sse42")
-      SSELevel = std::max(SSELevel, SSE42);
-    else if (Feature == "+64bit" || Feature == "+slow-bt-mem")
-      // Ignore these features.
-      continue;
-    else
-      return i;
-  }
-  return -1;
+  // FIXME: This *really* should not be here.
+
+  // X86_64 always has SSE2.
+  if (PointerWidth == 64)
+    Features["sse2"] = Features["sse"] = Features["mmx"] = true;
+
+  // FIXME: LLVM says core2 has SSSE3, but gcc doesn't define
+  // __SSSE3__ with it? What else is going on here?
+  if (CPU == "core2")
+    Features["ssse3"] = Features["sse3"] = Features["sse2"] = Features["sse"] =
+      Features["mmx"] = true;
+  else if (CPU == "pentium4")
+    Features["sse2"] = Features["sse"] = Features["mmx"] = true;
+}
+
+/// HandleTargetOptions - Perform initialization based on the user
+/// configured set of features.
+void X86TargetInfo::HandleTargetFeatures(const llvm::StringMap<bool>&Features) {
+  if (Features.lookup("sse42"))
+    SSELevel = SSE42;
+  else if (Features.lookup("sse41"))
+    SSELevel = SSE41;
+  else if (Features.lookup("ssse3"))
+    SSELevel = SSSE3;
+  else if (Features.lookup("sse3"))
+    SSELevel = SSE3;
+  else if (Features.lookup("sse2"))
+    SSELevel = SSE2;
+  else if (Features.lookup("sse"))
+    SSELevel = SSE1;
+  else if (Features.lookup("mmx"))
+    SSELevel = MMX;
 }
 
 /// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines
