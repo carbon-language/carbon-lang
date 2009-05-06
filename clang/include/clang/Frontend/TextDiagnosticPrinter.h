@@ -74,7 +74,6 @@ public:
                            SourceManager &SM,
                            const CodeModificationHint *Hints,
                            unsigned NumHints,
-                           unsigned AvoidColumn,
                            unsigned Columns);
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,

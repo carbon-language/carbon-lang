@@ -243,7 +243,6 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 SourceManager &SM,
                                           const CodeModificationHint *Hints,
                                                 unsigned NumHints,
-                                                unsigned AvoidColumn,
                                                 unsigned Columns) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
 
@@ -253,8 +252,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   if (!Loc.isFileID()) {
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
     // FIXME: Map ranges?
-    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, AvoidColumn,
-                        Columns);
+    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, Columns);
 
     Loc = SM.getImmediateSpellingLoc(Loc);
     
@@ -278,7 +276,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     }
     OS << "note: instantiated from:\n";
     
-    EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, Hints, NumHints, 0,Columns);
+    EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, Hints, NumHints, Columns);
     return;
   }
   
@@ -389,20 +387,6 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   if (Columns && SourceLine.size() > Columns)
     SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
                                   CaretEndColNo, Columns);
-
-  // AvoidColumn tells us which column we should avoid when printing
-  // the source line. If the source line would start at or near that
-  // column, add another line of whitespace before printing the source
-  // line. Otherwise, the source line and the diagnostic text can get
-  // jumbled together.
-  unsigned StartCol = 0;
-  for (unsigned N = SourceLine.size(); StartCol != N; ++StartCol)
-    if (!isspace(SourceLine[StartCol]))
-      break;
-  
-  if (StartCol != SourceLine.size() &&
-      abs((int)StartCol - (int)AvoidColumn) <= 2)
-    OS << '\n';
 
   // Finally, remove any blank spaces from the end of CaretLine.
   while (CaretLine[CaretLine.size()-1] == ' ')
@@ -673,13 +657,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       OutStr += ']';
     }
   
-  bool WordWrapped = false;
   if (MessageLength) {
     // We will be word-wrapping the error message, so compute the
     // column number where we currently are (after printing the
     // location information).
     unsigned Column = OS.tell() - StartOfLocationInfo;
-    WordWrapped = PrintWordWrapped(OS, OutStr, MessageLength, Column);
+    PrintWordWrapped(OS, OutStr, MessageLength, Column);
   } else {
     OS.write(OutStr.begin(), OutStr.size());
   }
@@ -718,7 +701,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getCodeModificationHints(),
                         Info.getNumCodeModificationHints(),
-                        WordWrapped? WordWrapIndentation : 0,
                         MessageLength);
   }
   
