@@ -205,6 +205,8 @@ public:
   /// with this AST context, if any.
   ExternalASTSource *getExternalSource() const { return ExternalSource.get(); }
 
+  TargetInfo& getTargetInfo() const { return Target; }
+
   void PrintStats() const;
   const std::vector<Type*>& getTypes() const { return Types; }
   
