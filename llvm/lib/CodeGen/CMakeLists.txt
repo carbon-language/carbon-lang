@@ -47,7 +47,6 @@ add_llvm_library(LLVMCodeGen
   ScheduleDAGPrinter.cpp
   ShadowStackGC.cpp
   SimpleRegisterCoalescing.cpp
-  Spiller.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
   StrongPHIElimination.cpp
@@ -55,4 +54,5 @@ add_llvm_library(LLVMCodeGen
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp
   VirtRegMap.cpp
+  VirtRegRewriter.cpp
   )
