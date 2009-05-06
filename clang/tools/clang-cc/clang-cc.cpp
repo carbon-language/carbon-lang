@@ -1426,17 +1426,11 @@ static void ComputeFeatureMap(TargetInfo *Target,
               Name);
       exit(1);
     }
-
-    llvm::StringMap<bool>::iterator it = Features.find(Name + 1);
-    if (it == Features.end()) {
-      fprintf(stderr, "error: clang-cc: invalid target feature string: %s\n", 
-              Name);
+    if (!Target->setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
+      fprintf(stderr, "error: clang-cc: invalid target feature name: %s\n", 
+              Name + 1);
       exit(1);
     }
-
-    // FIXME: Actually, we need to apply all the features implied by
-    // this feature.
-    it->second = (Name[0] == '+');
   }
 }
 

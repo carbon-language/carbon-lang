@@ -340,7 +340,17 @@ public:
   /// the \args CPU; this should include all legal feature strings on
   /// the target.
   virtual void getDefaultFeatures(const std::string &CPU, 
-                                  llvm::StringMap<bool> &Features) {
+                                  llvm::StringMap<bool> &Features) const {
+  }
+
+  /// setFeatureEnabled - Enable or disable a specific target feature,
+  /// the feature name must be valid.
+  ///
+  /// \return - False on error (invalid feature name).
+  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                 const std::string &Name,
+                                 bool Enabled) const {
+    return false;
   }
 
   /// HandleTargetOptions - Perform initialization based on the user

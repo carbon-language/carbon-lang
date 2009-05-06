@@ -532,14 +532,16 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const;
-
+  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                 const std::string &Name,
+                                 bool Enabled) const;
   virtual void getDefaultFeatures(const std::string &CPU, 
-                                  llvm::StringMap<bool> &Features);
+                                  llvm::StringMap<bool> &Features) const;
   virtual void HandleTargetFeatures(const llvm::StringMap<bool> &Features);
 };
 
 void X86TargetInfo::getDefaultFeatures(const std::string &CPU, 
-                                       llvm::StringMap<bool> &Features) {
+                                       llvm::StringMap<bool> &Features) const {
   // FIXME: This should not be here.
   Features["3dnow"] = false;
   Features["3dnowa"] = false;
@@ -570,6 +572,59 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
       Features["mmx"] = true;
   else if (CPU == "pentium4")
     Features["sse2"] = Features["sse"] = Features["mmx"] = true;
+}
+
+bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                      const std::string &Name, 
+                                      bool Enabled) const {
+  // FIXME: This *really* should not be here.
+  if (!Features.count(Name) && Name != "sse4")
+    return false;
+
+  if (Enabled) {
+    if (Name == "mmx")
+      Features["mmx"] = true;
+    else if (Name == "sse")
+      Features["mmx"] = Features["sse"] = true;
+    else if (Name == "sse2")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = true;
+    else if (Name == "sse3")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = 
+        Features["sse3"] = true;
+    else if (Name == "ssse3")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] = 
+        Features["ssse3"] = true;
+    else if (Name == "sse4")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] = 
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
+    else if (Name == "3dnow")
+      Features["3dnowa"] = true;
+    else if (Name == "3dnowa")
+      Features["3dnow"] = Features["3dnowa"] = true;
+  } else {
+    if (Name == "mmx")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] = 
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
+    else if (Name == "sse")
+      Features["sse"] = Features["sse2"] = Features["sse3"] = 
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
+    else if (Name == "sse2")
+      Features["sse2"] = Features["sse3"] = Features["ssse3"] = 
+        Features["sse41"] = Features["sse42"] = false;
+    else if (Name == "sse3")
+      Features["sse3"] = Features["ssse3"] = Features["sse41"] = 
+        Features["sse42"] = false;
+    else if (Name == "ssse3")
+      Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
+    else if (Name == "sse4")
+      Features["sse41"] = Features["sse42"] = false;
+    else if (Name == "3dnow")
+      Features["3dnow"] = Features["3dnowa"] = false;
+    else if (Name == "3dnowa")
+      Features["3dnowa"] = false;
+  }
+
+  return true;
 }
 
 /// HandleTargetOptions - Perform initialization based on the user
@@ -603,7 +658,6 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Define(Defs, "__amd64");
     Define(Defs, "__x86_64");
     Define(Defs, "__x86_64__");
-    Define(Defs, "__SSE3__");
   } else {
     DefineStd(Defs, "i386", Opts);
   }
