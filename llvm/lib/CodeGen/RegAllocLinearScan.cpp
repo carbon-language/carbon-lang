@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "VirtRegMap.h"
-#include "Spiller.h"
+#include "VirtRegRewriter.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
@@ -125,7 +125,7 @@ namespace {
     /// vrm_ - Tracks register assignments.
     VirtRegMap* vrm_;
 
-    std::auto_ptr<Spiller> spiller_;
+    std::auto_ptr<VirtRegRewriter> rewriter_;
 
   public:
     virtual const char* getPassName() const {
@@ -404,14 +404,14 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   initRegUses();
 
   vrm_ = &getAnalysis<VirtRegMap>();
-  if (!spiller_.get()) spiller_.reset(createSpiller());
+  if (!rewriter_.get()) rewriter_.reset(createVirtRegRewriter());
 
   initIntervalSets();
 
   linearScan();
 
   // Rewrite spill code and update the PhysRegsUsed set.
-  spiller_->runOnMachineFunction(*mf_, *vrm_, li_);
+  rewriter_->runOnMachineFunction(*mf_, *vrm_, li_);
 
   assert(unhandled_.empty() && "Unhandled live intervals remain!");
 

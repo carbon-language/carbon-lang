@@ -33,7 +33,7 @@
 
 #include "PBQP.h"
 #include "VirtRegMap.h"
-#include "Spiller.h"
+#include "VirtRegRewriter.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -850,9 +850,10 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
 
   DOUT << "Post alloc VirtRegMap:\n" << *vrm << "\n";
 
-  // Run spiller
-  std::auto_ptr<Spiller> spiller(createSpiller());
-  spiller->runOnMachineFunction(*mf, *vrm, lis);
+  // Run rewriter
+  std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
+
+  rewriter->runOnMachineFunction(*mf, *vrm, lis);
 
   return true;
 }
