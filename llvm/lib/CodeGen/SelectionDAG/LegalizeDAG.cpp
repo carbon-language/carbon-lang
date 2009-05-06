@@ -3268,8 +3268,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           OpToUse = ISD::UMUL_LOHI;
         }
         if (OpToUse) {
-          Result = SDValue(DAG.getNode(OpToUse, dl, VTs, Tmp1, Tmp2).getNode(),
-                           0);
+          Result = DAG.getNode(OpToUse, dl, VTs, Tmp1, Tmp2);
           break;
         }
       }
@@ -3289,16 +3288,21 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       }
       if (Node->getOpcode() == ISD::SDIV &&
           TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SDIVREM, dl,
-                                     VTs, Tmp1, Tmp2).getNode(),
-                         0);
+        Result = DAG.getNode(ISD::SDIVREM, dl, VTs, Tmp1, Tmp2);
         break;
       }
       if (Node->getOpcode() == ISD::UDIV &&
           TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UDIVREM, dl,
-                                     VTs, Tmp1, Tmp2).getNode(),
-                         0);
+        Result = DAG.getNode(ISD::UDIVREM, dl, VTs, Tmp1, Tmp2);
+        break;
+      }
+      if (Node->getOpcode() == ISD::SUB &&
+          TLI.isOperationLegalOrCustom(ISD::ADD, VT) &&
+          TLI.isOperationLegalOrCustom(ISD::XOR, VT)) {
+        Tmp2 = DAG.getNode(ISD::XOR, dl, VT, Tmp2,
+               DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT));
+        Tmp2 = DAG.getNode(ISD::ADD, dl, VT, Tmp2, DAG.getConstant(1, VT));
+        Result = DAG.getNode(ISD::ADD, dl, VT, Tmp1, Tmp2);
         break;
       }
 
