@@ -841,7 +841,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.PICLevel = PICLevel;
 
   Options.GNUInline = !Options.C99;
-  // FIXME: This is effected by other options (-fno-inline). 
+  // FIXME: This is affected by other options (-fno-inline). 
   Options.NoInline = !OptSize && !OptLevel;
 
   Options.Static = StaticDefine;
