@@ -1145,8 +1145,29 @@ public:
   virtual unsigned getLine()   { assert ( 0 && "Unexpected scope!"); return 0; }
   virtual unsigned getColumn() { assert ( 0 && "Unexpected scope!"); return 0; }
   virtual unsigned getFile()   { assert ( 0 && "Unexpected scope!"); return 0; }
+
+#ifndef NDEBUG
+  void dump() const;
+#endif
 };
 
+#ifndef NDEBUG
+void DbgScope::dump() const {
+  static unsigned IndentLevel = 0;
+  std::string Indent(IndentLevel, ' ');
+
+  cerr << Indent; Desc.dump();
+  cerr << " [" << StartLabelID << ", " << EndLabelID << "]\n";
+
+  IndentLevel += 2;
+
+  for (unsigned i = 0, e = Scopes.size(); i != e; ++i)
+    if (Scopes[i] != this)
+      Scopes[i]->dump();
+
+  IndentLevel -= 2;
+}
+#endif
 
 //===----------------------------------------------------------------------===//
 /// DbgInlinedSubroutineScope - This class is used to track inlined subroutine
@@ -1713,12 +1734,13 @@ private:
       break;
     case DW_TAG_subroutine_type: 
       {
-        // Add prototype flag.
-        AddUInt(&Buffer, DW_AT_prototyped, DW_FORM_flag, 1);
-        DIArray Elements = CTy.getTypeArray();
         // Add return type.
+        DIArray Elements = CTy.getTypeArray();
         DIDescriptor RTy = Elements.getElement(0);
         AddType(DW_Unit, &Buffer, DIType(RTy.getGV()));
+
+        // Add prototype flag.
+        AddUInt(&Buffer, DW_AT_prototyped, DW_FORM_flag, 1);
 
         // Add arguments.
         for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
@@ -1901,21 +1923,29 @@ private:
 
   /// CreateSubprogramDIE - Create new DIE using SP.
   DIE *CreateSubprogramDIE(CompileUnit *DW_Unit,
-                           const  DISubprogram &SP,
+                           const DISubprogram &SP,
                            bool IsConstructor = false) {
     DIE *SPDie = new DIE(DW_TAG_subprogram);
+
     std::string Name;
     SP.getName(Name);
     AddString(SPDie, DW_AT_name, DW_FORM_string, Name);
+
     std::string LinkageName;
     SP.getLinkageName(LinkageName);
+
     if (!LinkageName.empty())
-      AddString(SPDie, DW_AT_MIPS_linkage_name, DW_FORM_string, 
-                LinkageName);
+      AddString(SPDie, DW_AT_MIPS_linkage_name, DW_FORM_string, LinkageName);
+
     AddSourceLine(SPDie, &SP);
 
     DICompositeType SPTy = SP.getType();
     DIArray Args = SPTy.getTypeArray();
+
+    // Add prototyped tag, if C or ObjC.
+    unsigned Lang = SP.getCompileUnit().getLanguage();
+    if (Lang == DW_LANG_C99 || Lang == DW_LANG_C89 || Lang == DW_LANG_ObjC)
+      AddUInt(SPDie, DW_AT_prototyped, DW_FORM_flag, 1);
     
     // Add Return Type.
     unsigned SPTag = SPTy.getTag();
@@ -1928,26 +1958,20 @@ private:
 
     if (!SP.isDefinition()) {
       AddUInt(SPDie, DW_AT_declaration, DW_FORM_flag, 1);    
-      // Add arguments.
-      // Do not add arguments for subprogram definition. They will be
-      // handled through RecordVariable.
+      // Add arguments. Do not add arguments for subprogram definition. They
+      // will be handled through RecordVariable.
       if (SPTag == DW_TAG_subroutine_type)
         for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
           DIE *Arg = new DIE(DW_TAG_formal_parameter);
           AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
-          AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ???
+          AddUInt(Arg, DW_AT_artificial, DW_FORM_flag, 1); // ??
           SPDie->AddChild(Arg);
         }
     }
 
-    unsigned Lang = SP.getCompileUnit().getLanguage();
-    if (Lang == DW_LANG_C99 || Lang == DW_LANG_C89 
-        || Lang == DW_LANG_ObjC)
-      AddUInt(SPDie, DW_AT_prototyped, DW_FORM_flag, 1);
-
     if (!SP.isLocalToUnit())
       AddUInt(SPDie, DW_AT_external, DW_FORM_flag, 1);
-    
+
     // DW_TAG_inlined_subroutine may refer to this DIE.
     DIE *&Slot = DW_Unit->getDieMapSlotFor(SP.getGV());
     Slot = SPDie;
@@ -2008,11 +2032,13 @@ private:
 
     DbgScope *Parent = NULL;
     DIBlock Block(V);
+
     if (!Block.isNull()) {
       DIDescriptor ParentDesc = Block.getContext();
       Parent = 
         ParentDesc.isNull() ?  NULL : getOrCreateScope(ParentDesc.getGV());
     }
+
     Slot = new DbgScope(Parent, DIDescriptor(V));
 
     if (Parent)
@@ -3007,8 +3033,10 @@ private:
 
     // Add to map.
     Slot = VariableDie;
+
     // Add to context owner.
     DW_Unit->getDie()->AddChild(VariableDie);
+
     // Expose as global. FIXME - need to check external flag.
     std::string Name;
     DW_Unit->AddGlobal(DI_GV.getName(Name), VariableDie);
@@ -3033,10 +3061,9 @@ private:
     for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
          UI != UE; ++UI)
       for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-           UUI != UUE; ++UUI) {
-        GlobalVariable *GV = cast<GlobalVariable>(*UUI);
-        Result |= ConstructGlobalVariableDIE(GV);
-      }
+           UUI != UUE; ++UUI)
+        Result |= ConstructGlobalVariableDIE(cast<GlobalVariable>(*UUI));
+
     return Result;
   }
 
@@ -3085,10 +3112,9 @@ private:
     for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
          UI != UE; ++UI)
       for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-           UUI != UUE; ++UUI) {
-        GlobalVariable *GV = cast<GlobalVariable>(*UUI);
-        Result |= ConstructSubprogram(GV);
-      }
+           UUI != UUE; ++UUI)
+        Result |= ConstructSubprogram(cast<GlobalVariable>(*UUI));
+
     return Result;
   }
 
@@ -3441,6 +3467,7 @@ public:
     } else {
       DenseMap<const MachineInstr *, DbgScope *>::iterator 
         SI = InlinedVariableScopes.find(MI);
+
       if (SI != InlinedVariableScopes.end())  {
         // or GV is an inlined local variable.
         Scope = SI->second;
@@ -3506,6 +3533,7 @@ public:
     GlobalVariable *GV = SP.getGV();
     DenseMap<GlobalVariable *, SmallVector<DbgScope *, 2> >::iterator
       I = DbgInlinedScopeMap.find(GV);
+
     if (I == DbgInlinedScopeMap.end()) {
       if (TimePassesIsEnabled)
         DebugTimer->stopTimer();
@@ -3517,6 +3545,7 @@ public:
     assert(!Scopes.empty() && "We should have at least one debug scope!");
     DbgScope *Scope = Scopes.back(); Scopes.pop_back();
     unsigned ID = MMI->NextLabelID();
+
     MMI->RecordUsedDbgLabel(ID);
     Scope->setEndLabelID(ID);
 
