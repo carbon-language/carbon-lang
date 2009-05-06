@@ -341,6 +341,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       if (getToolChain().getArchName() == "x86_64")
         CmdArgs.push_back("--mcpu=core2");
       else if (getToolChain().getArchName() == "i386")
+        CmdArgs.push_back("--mcpu=yonah");
+    } else {
+      if (getToolChain().getArchName() == "x86_64")
+        CmdArgs.push_back("--mcpu=x86-64");
+      else if (getToolChain().getArchName() == "i386")
         CmdArgs.push_back("--mcpu=pentium4");
     }
   }

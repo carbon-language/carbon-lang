@@ -565,6 +565,9 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
   if (CPU == "core2")
     Features["ssse3"] = Features["sse3"] = Features["sse2"] = Features["sse"] =
       Features["mmx"] = true;
+  else if (CPU == "yonah")
+    Features["sse3"] = Features["sse2"] = Features["sse"] = 
+      Features["mmx"] = true;
   else if (CPU == "pentium4")
     Features["sse2"] = Features["sse"] = Features["mmx"] = true;
 }
