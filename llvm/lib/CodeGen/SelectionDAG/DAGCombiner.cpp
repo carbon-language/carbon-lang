@@ -4536,7 +4536,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
 
   // Check #1.  Preinc'ing a frame index would require copying the stack pointer
   // (plus the implicit offset) to a register to preinc anyway.
-  if (isa<FrameIndexSDNode>(BasePtr))
+  if (isa<FrameIndexSDNode>(BasePtr) || isa<RegisterSDNode>(BasePtr))
     return false;
 
   // Check #2.
@@ -4662,6 +4662,9 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
       // 2) Op must be independent of N, i.e. Op is neither a predecessor
       //    nor a successor of N. Otherwise, if Op is folded that would
       //    create a cycle.
+
+      if (isa<FrameIndexSDNode>(BasePtr) || isa<RegisterSDNode>(BasePtr))
+        continue;
 
       // Check for #1.
       bool TryNext = false;
