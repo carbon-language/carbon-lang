@@ -994,7 +994,6 @@ let test_builder () =
     insist (not (is_tail_call ci));
     set_tail_call true ci;
     insist (is_tail_call ci);
-    add_instruction_param_attr ci 0 Attribute.Nounwind;
     add_instruction_param_attr ci 1 Attribute.Sext;
     add_instruction_param_attr ci 2 Attribute.Noalias;
     remove_instruction_param_attr ci 2 Attribute.Noalias;
