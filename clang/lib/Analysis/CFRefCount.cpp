@@ -2606,7 +2606,29 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
 
-        if (R) {          
+        if (R) {
+          // Are we dealing with an ElementRegion?  If the element type is
+          // a basic integer type (e.g., char, int) and the underying region
+          // is also typed then strip off the ElementRegion.
+          // FIXME: We really need to think about this for the general case
+          //   as sometimes we are reasoning about arrays and other times
+          //   about (char*), etc., is just a form of passing raw bytes.
+          //   e.g., void *p = alloca(); foo((char*)p);
+          if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+            // Checking for 'integral type' is probably too promiscuous, but
+            // we'll leave it in for now until we have a systematic way of
+            // handling all of these cases.  Eventually we need to come up
+            // with an interface to StoreManager so that this logic can be
+            // approriately delegated to the respective StoreManagers while
+            // still allowing us to do checker-specific logic (e.g.,
+            // invalidating reference counts), probably via callbacks.            
+            if (ER->getElementType()->isIntegralType())
+              if (const TypedRegion *superReg =
+                  dyn_cast<TypedRegion>(ER->getSuperRegion()))
+                R = superReg;
+            // FIXME: What about layers of ElementRegions?
+          }
+          
           // Is the invalidated variable something that we were tracking?
           SymbolRef Sym = state.GetSValAsScalarOrLoc(R).getAsLocSymbol();
           

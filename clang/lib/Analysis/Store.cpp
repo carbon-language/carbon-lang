@@ -44,18 +44,37 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
     QualType Pointee = PTy->getPointeeType();
     if (Pointee->isVoidType()) {
 
-      // Casts to void* only removes TypedViewRegion. If there is no
-      // TypedViewRegion, leave the region untouched. This happens when:
-      //
-      // void foo(void*);
-      // ...
-      // void bar() {
-      //   int x;
-      //   foo(&x);
-      // }
-
-      if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R))
-        R = TR->removeViews();
+      do {
+        if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
+          // Casts to void* removes TypedViewRegion. This happens when:
+          //
+          // void foo(void*);
+          // ...
+          // void bar() {
+          //   int x;
+          //   foo(&x);
+          // }
+          //
+          R = TR->removeViews();
+          continue;
+        }
+        else if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+          // Casts to void* also removes ElementRegions. This happens when:
+          //
+          // void foo(void*);
+          // ...
+          // void bar() {
+          //   int x;
+          //   foo((char*)&x);
+          // }                
+          //
+          R = ER->getSuperRegion();
+          continue;
+        }
+        else
+          break;
+      }
+      while (0);
       
       return CastResult(state, R);
     }
