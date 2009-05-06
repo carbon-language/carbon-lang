@@ -709,7 +709,8 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
     intptr_t PCAdj = (CurOp + X86AddrNumOperands != NumOps) ?
-      (MI.getOperand(CurOp+4).isImm() ? X86InstrInfo::sizeOfImm(Desc) : 4) : 0;
+      (MI.getOperand(CurOp+X86AddrNumOperands).isImm() ? 
+          X86InstrInfo::sizeOfImm(Desc) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, (Desc->TSFlags & X86II::FormMask)-X86II::MRM0m,
