@@ -127,6 +127,7 @@ OPTION("-###", _HASH_HASH_HASH, Flag, INVALID, INVALID, "d", 0,
 OPTION("--CLASSPATH=", _CLASSPATH_EQ, Joined, INVALID, fclasspath_EQ, "", 0, 0, 0)
 OPTION("--CLASSPATH", _CLASSPATH, Separate, INVALID, fclasspath_EQ, "J", 0, 0, 0)
 OPTION("--all-warnings", _all_warnings, Flag, INVALID, Wall, "", 0, 0, 0)
+OPTION("--analyze-auto", _analyze_auto, Flag, INVALID, INVALID, "d", 0, 0, 0)
 OPTION("--analyze", _analyze, Flag, INVALID, INVALID, "d", 0, 
        "Run the static analyzer", 0)
 OPTION("--ansi", _ansi, Flag, INVALID, ansi, "", 0, 0, 0)

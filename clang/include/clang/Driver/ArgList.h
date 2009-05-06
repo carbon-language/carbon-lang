@@ -74,6 +74,9 @@ namespace driver {
     bool hasArg(options::ID Id, bool Claim=true) const { 
       return getLastArg(Id, Claim) != 0;
     }
+    bool hasArg(options::ID Id0, options::ID Id1, bool Claim=true) const { 
+      return getLastArg(Id0, Id1, Claim) != 0;
+    }
 
     /// getLastArg - Return the last argument matching \arg Id, or null.
     ///

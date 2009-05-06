@@ -661,7 +661,8 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
     
     // -{fsyntax-only,-analyze,emit-llvm,S} only run up to the compiler.
   } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT__analyze)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT__analyze,
+                                              options::OPT__analyze_auto)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Compile;
 
@@ -762,7 +763,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   case phases::Compile: {
     if (Args.hasArg(options::OPT_fsyntax_only)) {
       return new CompileJobAction(Input, types::TY_Nothing);
-    } else if (Args.hasArg(options::OPT__analyze)) {
+    } else if (Args.hasArg(options::OPT__analyze, options::OPT__analyze_auto)) {
       return new AnalyzeJobAction(Input, types::TY_Plist);
     } else if (Args.hasArg(options::OPT_emit_llvm) ||
                Args.hasArg(options::OPT_flto) ||
