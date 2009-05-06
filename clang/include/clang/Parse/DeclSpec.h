@@ -123,6 +123,9 @@ private:
   bool FS_virtual_specified : 1;
   bool FS_explicit_specified : 1;
   
+  // friend-specifier
+  bool Friend_specified : 1;
+  
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
   /// these.
@@ -145,6 +148,7 @@ private:
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
+  SourceLocation FriendLoc;
   
   bool BadSpecifier(TST T, const char *&PrevSpec);
   bool BadSpecifier(TQ T, const char *&PrevSpec);
@@ -168,6 +172,7 @@ public:
       FS_inline_specified(false),
       FS_virtual_specified(false),
       FS_explicit_specified(false),
+      Friend_specified(false),
       TypeRep(0),
       AttrList(0),
       ProtocolQualifiers(0),
@@ -276,6 +281,8 @@ public:
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
   bool SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec);
   bool SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec);
+  
+  bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec);
   
   /// AddAttributes - contatenates two attribute lists. 
   /// The GCC attribute syntax allows for the following:

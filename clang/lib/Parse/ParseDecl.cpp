@@ -597,6 +597,8 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 /// [C99]   'inline'
 /// [C++]   'virtual'
 /// [C++]   'explicit'
+///       'friend': [C++ dcl.friend]
+
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         TemplateParameterLists *TemplateParams,
@@ -846,6 +848,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetFunctionSpecExplicit(Loc, PrevSpec);
       break;
 
+    // friend
+    case tok::kw_friend:
+      isInvalid = DS.SetFriendSpec(Loc, PrevSpec);
+      break;
+          
     // type-specifier
     case tok::kw_short:
       isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);

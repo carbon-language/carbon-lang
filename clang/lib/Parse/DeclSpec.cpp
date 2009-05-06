@@ -294,6 +294,16 @@ bool DeclSpec::SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec
   return false;
 }
 
+bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec) {
+  if (Friend_specified) {
+    PrevSpec = "friend";
+    return true;
+  }
+  
+  Friend_specified = true;
+  FriendLoc = Loc;
+  return false;
+}
 
 /// Finish - This does final analysis of the declspec, rejecting things like
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
