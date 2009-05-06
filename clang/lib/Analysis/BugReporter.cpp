@@ -30,6 +30,12 @@
 
 using namespace clang;
 
+BugReporterVisitor::~BugReporterVisitor() {}
+BugReporterContext::~BugReporterContext() {
+  for (visitor_iterator I = visitor_begin(), E = visitor_end(); I != E; ++I)
+    if ((*I)->isOwnedByReporterContext()) delete *I;
+}
+
 //===----------------------------------------------------------------------===//
 // Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//
@@ -118,21 +124,20 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN PathDiagnosticBuilder {
-  GRBugReporter &BR;
-  SourceManager &SMgr;
-  ExplodedGraph<GRState> *ReportGraph;
+class VISIBILITY_HIDDEN PathDiagnosticBuilder : public BugReporterContext {
   BugReport *R;
-  const Decl& CodeDecl;
   PathDiagnosticClient *PDC;
   llvm::OwningPtr<ParentMap> PM;
   NodeMapClosure NMC;
 public:  
-  PathDiagnosticBuilder(GRBugReporter &br, ExplodedGraph<GRState> *reportGraph,
+  PathDiagnosticBuilder(GRBugReporter &br,
                         BugReport *r, NodeBackMap *Backmap, 
-                        const Decl& codedecl, PathDiagnosticClient *pdc)
-    : BR(br), SMgr(BR.getSourceManager()), ReportGraph(reportGraph), R(r),
-      CodeDecl(codedecl), PDC(pdc), NMC(Backmap) {}
+                        PathDiagnosticClient *pdc)
+    : BugReporterContext(br),
+      R(r), PDC(pdc), NMC(Backmap)
+  {
+    addVisitor(R);
+  }
   
   PathDiagnosticLocation ExecutionContinues(const ExplodedNode<GRState>* N);
   
@@ -140,29 +145,17 @@ public:
                                             const ExplodedNode<GRState>* N);
   
   ParentMap& getParentMap() {
-    if (PM.get() == 0) PM.reset(new ParentMap(CodeDecl.getBody(getContext())));
+    if (PM.get() == 0)
+      PM.reset(new ParentMap(getCodeDecl().getBody(getASTContext())));
     return *PM.get();
   }
   
   const Stmt *getParent(const Stmt *S) {
     return getParentMap().getParent(S);
   }
-  
-  const CFG& getCFG() {
-    return *BR.getCFG();
-  }
-  
-  const Decl& getCodeDecl() {
-    return BR.getStateManager().getCodeDecl();
-  }
-  
-  ExplodedGraph<GRState>& getGraph() { return *ReportGraph; }
-  NodeMapClosure& getNodeMapClosure() { return NMC; }
-  ASTContext& getContext() { return BR.getContext(); }
-  SourceManager& getSourceManager() { return SMgr; }
+      
+  virtual NodeMapClosure& getNodeResolver() { return NMC; }
   BugReport& getReport() { return *R; }
-  GRBugReporter& getBugReporter() { return BR; }
-  GRStateManager& getStateManager() { return BR.getStateManager(); }
 
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
   
@@ -187,9 +180,10 @@ public:
 PathDiagnosticLocation
 PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
   if (Stmt *S = GetNextStmt(N))
-    return PathDiagnosticLocation(S, SMgr);
+    return PathDiagnosticLocation(S, getSourceManager());
 
-  return FullSourceLoc(CodeDecl.getBodyRBrace(getContext()), SMgr);
+  return FullSourceLoc(getCodeDecl().getBodyRBrace(getASTContext()),
+                       getSourceManager());
 }
   
 PathDiagnosticLocation
@@ -204,10 +198,11 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
   
   if (Loc.asStmt())
     os << "Execution continues on line "
-       << SMgr.getInstantiationLineNumber(Loc.asLocation()) << '.';
+       << getSourceManager().getInstantiationLineNumber(Loc.asLocation())
+       << '.';
   else
     os << "Execution jumps to the end of the "
-       << (isa<ObjCMethodDecl>(CodeDecl) ? "method" : "function") << '.';
+       << (isa<ObjCMethodDecl>(getCodeDecl()) ? "method" : "function") << '.';
   
   return Loc;
 }
@@ -216,6 +211,7 @@ PathDiagnosticLocation
 PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt* passed to getEnclosingStmtLocation");
   ParentMap &P = getParentMap(); 
+  SourceManager &SMgr = getSourceManager();
     
   while (isa<Expr>(S) && P.isConsumedExpr(cast<Expr>(S))) {
     const Stmt *Parent = P.getParent(S);
@@ -459,7 +455,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM);
 static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
                                           const ExplodedNode<GRState> *N) {
-  ASTContext& Ctx = PDB.getContext();
+
   SourceManager& SMgr = PDB.getSourceManager();
   const ExplodedNode<GRState>* NextNode = N->pred_empty() 
                                         ? NULL : *(N->pred_begin());
@@ -541,7 +537,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                 }
 
                 if (GetRawInt)
-                  os << LHS->EvaluateAsInt(Ctx);
+                  os << LHS->EvaluateAsInt(PDB.getASTContext());
 
                 os << ":'  at line "
                 << End.asLocation().getInstantiationLineNumber();
@@ -714,12 +710,11 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       }
     }
     
-    if (PathDiagnosticPiece* p =
-        PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
-                                  PDB.getBugReporter(),
-                                  PDB.getNodeMapClosure())) {
-          PD.push_front(p);
-        }
+    for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
+         E = PDB.visitor_end(); I!=E; ++I) {
+      if (PathDiagnosticPiece* p = (*I)->VisitNode(N, NextNode, PDB))
+        PD.push_front(p);
+    }
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
       // Scan the region bindings, and see if a "notable" symbol has a new
@@ -834,7 +829,7 @@ public:
     // statement (if it doesn't already exist).
     // FIXME: Should handle CXXTryStmt if analyser starts supporting C++.
     if (const CompoundStmt *CS =
-          PDB.getCodeDecl().getCompoundBody(PDB.getContext()))
+          PDB.getCodeDecl().getCompoundBody(PDB.getASTContext()))
       if (!CS->body_empty()) {
         SourceLocation Loc = (*CS->body_begin())->getLocStart();
         rawAddEdge(PathDiagnosticLocation(Loc, PDB.getSourceManager()));
@@ -1105,17 +1100,16 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       continue;
     }
     
-    PathDiagnosticPiece* p =
-      PDB.getReport().VisitNode(N, NextNode, PDB.getGraph(),
-                                PDB.getBugReporter(), PDB.getNodeMapClosure());
-    
-    if (p) {
-      const PathDiagnosticLocation &Loc = p->getLocation();
-      EB.addEdge(Loc, true);
-      PD.push_front(p);
-      if (const Stmt *S = Loc.asStmt())
-        EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());      
-    }
+    for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
+         E = PDB.visitor_end(); I!=E; ++I) {
+      if (PathDiagnosticPiece* p = (*I)->VisitNode(N, NextNode, PDB)) {
+        const PathDiagnosticLocation &Loc = p->getLocation();
+        EB.addEdge(Loc, true);
+        PD.push_front(p);
+        if (const Stmt *S = Loc.asStmt())
+          EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());      
+      }
+    }  
   }
 }
 
@@ -1144,19 +1138,19 @@ Stmt* BugReport::getStmt(BugReporter& BR) const {
 }
 
 PathDiagnosticPiece*
-BugReport::getEndPath(BugReporter& BR,
+BugReport::getEndPath(BugReporterContext& BRC,
                       const ExplodedNode<GRState>* EndPathNode) {
   
-  Stmt* S = getStmt(BR);
+  Stmt* S = getStmt(BRC.getBugReporter());
   
   if (!S)
     return NULL;
   
-  FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());
+  FullSourceLoc L(S->getLocStart(), BRC.getSourceManager());
   PathDiagnosticPiece* P = new PathDiagnosticEventPiece(L, getDescription());
   
   const SourceRange *Beg, *End;
-  getRanges(BR, Beg, End);  
+  getRanges(BRC.getBugReporter(), Beg, End);
   
   for (; Beg != End; ++Beg)
     P->addRange(*Beg);
@@ -1192,9 +1186,7 @@ SourceLocation BugReport::getLocation() const {
 
 PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
                                           const ExplodedNode<GRState>* PrevN,
-                                          const ExplodedGraph<GRState>& G,
-                                          BugReporter& BR,
-                                          NodeResolver &NR) {
+                                          BugReporterContext &BRC) {
   return NULL;
 }
 
@@ -1203,7 +1195,7 @@ PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
 //===----------------------------------------------------------------------===//
 
 BugReportEquivClass::~BugReportEquivClass() {
-  for (iterator I=begin(), E=end(); I!=E; ++I) delete *I;  
+  for (iterator I=begin(), E=end(); I!=E; ++I) delete *I;
 }
 
 GRBugReporter::~GRBugReporter() { FlushReports(); }
@@ -1477,7 +1469,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 }
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                          BugReportEquivClass& EQ) {
+                                           BugReportEquivClass& EQ) {
  
   std::vector<const ExplodedNode<GRState>*> Nodes;
   
@@ -1507,19 +1499,18 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   llvm::OwningPtr<NodeBackMap> BackMap(GPair.first.second);
   const ExplodedNode<GRState> *N = GPair.second.first;
  
-  // Start building the path diagnostic...  
-  if (PathDiagnosticPiece* Piece = R->getEndPath(*this, N))
+  // Start building the path diagnostic... 
+  PathDiagnosticBuilder PDB(*this, R, BackMap.get(), getPathDiagnosticClient());
+  
+  if (PathDiagnosticPiece* Piece = R->getEndPath(PDB, N))
     PD.push_back(Piece);
   else
     return;
 
-  PathDiagnosticBuilder PDB(*this, ReportGraph.get(), R, BackMap.get(),
-                            getStateManager().getCodeDecl(),
-                            getPathDiagnosticClient());
   
   switch (PDB.getGenerationScheme()) {
     case PathDiagnosticClient::Extensive:
-      GenerateExtensivePathDiagnostic(PD,PDB, N);
+      GenerateExtensivePathDiagnostic(PD, PDB, N);
       break;
     case PathDiagnosticClient::Minimal:
       GenerateMinimalPathDiagnostic(PD, PDB, N);

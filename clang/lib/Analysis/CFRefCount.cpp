@@ -22,7 +22,7 @@
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
-#include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclObjC.h"   
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
@@ -1975,16 +1975,14 @@ namespace {
     
     SymbolRef getSymbol() const { return Sym; }
     
-    PathDiagnosticPiece* getEndPath(BugReporter& BR,
+    PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
                                     const ExplodedNode<GRState>* N);
     
     std::pair<const char**,const char**> getExtraDescriptiveText();
     
     PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                    const ExplodedNode<GRState>* PrevN,
-                                   const ExplodedGraph<GRState>& G,
-                                   BugReporter& BR,
-                                   NodeResolver& NR);
+                                   BugReporterContext& BRC);
   };
   
   class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
@@ -1995,7 +1993,7 @@ namespace {
                     ExplodedNode<GRState> *n, SymbolRef sym,
                     GRExprEngine& Eng);
     
-    PathDiagnosticPiece* getEndPath(BugReporter& BR,
+    PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
                                     const ExplodedNode<GRState>* N);
     
     SourceLocation getLocation() const { return AllocSite; }
@@ -2096,12 +2094,10 @@ static inline bool contains(const llvm::SmallVectorImpl<ArgEffect>& V,
 
 PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
                                             const ExplodedNode<GRState>* PrevN,
-                                            const ExplodedGraph<GRState>& G,
-                                            BugReporter& BR,
-                                            NodeResolver& NR) {
+                                            BugReporterContext& BRC) {
   
-  // Check if the type state has changed.  
-  GRStateManager &StMgr = cast<GRBugReporter>(BR).getStateManager();
+  // Check if the type state has changed.
+  GRStateManager &StMgr = BRC.getStateManager();
   GRStateRef PrevSt(PrevN->getState(), StMgr);
   GRStateRef CurrSt(N->getState(), StMgr);
   
@@ -2156,7 +2152,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       os << "+0 retain count (non-owning reference).";
     }
     
-    PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
+    PathDiagnosticLocation Pos(S, BRC.getSourceManager());
     return new PathDiagnosticEventPiece(Pos, os.str());
   }
   
@@ -2164,7 +2160,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   // program point
   llvm::SmallVector<ArgEffect, 2> AEffects;
   
-  if (const RetainSummary *Summ = TF.getSummaryOfNode(NR.getOriginalNode(N))) {
+  if (const RetainSummary *Summ =
+        TF.getSummaryOfNode(BRC.getNodeResolver().getOriginalNode(N))) {
     // We only have summaries attached to nodes after evaluating CallExpr and
     // ObjCMessageExprs.
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
@@ -2313,7 +2310,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     return 0; // We have nothing to say!
   
   Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
-  PathDiagnosticLocation Pos(S, BR.getContext().getSourceManager());
+  PathDiagnosticLocation Pos(S, BRC.getSourceManager());
   PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
   
   // Add the range by scanning the children of the statement for any bindings
@@ -2388,21 +2385,21 @@ GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode<GRState>* N,
 }
 
 PathDiagnosticPiece*
-CFRefReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN) {
-  // Tell the BugReporter to report cases when the tracked symbol is
+CFRefReport::getEndPath(BugReporterContext& BRC,
+                        const ExplodedNode<GRState>* EndN) {
+  // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
-  GRBugReporter& BR = cast<GRBugReporter>(br);
-  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
-  return RangedBugReport::getEndPath(BR, EndN);
+  BRC.addNotableSymbol(Sym);
+  return RangedBugReport::getEndPath(BRC, EndN);
 }
 
 PathDiagnosticPiece*
-CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
+CFRefLeakReport::getEndPath(BugReporterContext& BRC,
+                            const ExplodedNode<GRState>* EndN){
   
-  GRBugReporter& BR = cast<GRBugReporter>(br);
-  // Tell the BugReporter to report cases when the tracked symbol is
+  // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
-  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
+  BRC.addNotableSymbol(Sym);
   
   // We are reporting a leak.  Walk up the graph to get to the first node where
   // the symbol appeared, and also get the first VarDecl that tracked object
@@ -2411,13 +2408,13 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   const MemRegion* FirstBinding = 0;
   
   llvm::tie(AllocNode, FirstBinding) =
-  GetAllocationSite(BR.getStateManager(), EndN, Sym);
+  GetAllocationSite(BRC.getStateManager(), EndN, Sym);
   
   // Get the allocate site.  
   assert(AllocNode);
   Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
   
-  SourceManager& SMgr = BR.getContext().getSourceManager();
+  SourceManager& SMgr = BRC.getSourceManager();
   unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
   
   // Compute an actual location for the leak.  Sometimes a leak doesn't
@@ -2444,8 +2441,8 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
   }
   
   if (!L.isValid()) {
-    const Decl &D = BR.getStateManager().getCodeDecl();
-    L = PathDiagnosticLocation(D.getBodyRBrace(BR.getContext()), SMgr);
+    const Decl &D = BRC.getCodeDecl();
+    L = PathDiagnosticLocation(D.getBodyRBrace(BRC.getASTContext()), SMgr);
   }
   
   std::string sbuf;
@@ -2463,7 +2460,7 @@ CFRefLeakReport::getEndPath(BugReporter& br, const ExplodedNode<GRState>* EndN){
     // FIXME: Per comments in rdar://6320065, "create" only applies to CF
     // ojbects.  Only "copy", "alloc", "retain" and "new" transfer ownership
     // to the caller for NS objects.
-    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
+    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BRC.getCodeDecl());
     os << " is returned from a method whose name ('"
        << MD.getSelector().getAsString()
     << "') does not contain 'copy' or otherwise starts with"

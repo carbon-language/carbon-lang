@@ -34,6 +34,7 @@ class PathDiagnosticClient;
 class ASTContext;
 class Diagnostic;
 class BugReporter;
+class BugReporterContext;
 class GRExprEngine;
 class GRState;
 class Stmt;
@@ -43,9 +44,19 @@ class ParentMap;
 //===----------------------------------------------------------------------===//
 // Interface for individual bug reports.
 //===----------------------------------------------------------------------===//
+
+class BugReporterVisitor {
+public:
+  virtual ~BugReporterVisitor();
+  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
+                                         const ExplodedNode<GRState>* PrevN,
+                                         BugReporterContext& BR) = 0;
+  
+  virtual bool isOwnedByReporterContext() { return true; }
+};
   
 // FIXME: Combine this with RangedBugReport and remove RangedBugReport.
-class BugReport {
+class BugReport : public BugReporterVisitor {
 protected:
   BugType& BT;
   std::string ShortDescription;
@@ -76,8 +87,9 @@ public:
             const ExplodedNode<GRState> *n)
   : BT(bt), ShortDescription(shortDesc), Description(desc), EndNode(n) {}
 
-
   virtual ~BugReport();
+  
+  virtual bool isOwnedByReporterContext() { return false; }
 
   const BugType& getBugType() const { return BT; }
   BugType& getBugType() { return BT; }
@@ -87,6 +99,8 @@ public:
   
   // FIXME: Do we need this?  Maybe getLocation() should return a ProgramPoint
   // object.
+  // FIXME: If we do need it, we can probably just make it private to
+  // BugReporter.
   Stmt* getStmt(BugReporter& BR) const;
   
   const std::string& getDescription() const { return Description; }
@@ -101,7 +115,7 @@ public:
   }
   
   // FIXME: Perhaps move this into a subclass.
-  virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
+  virtual PathDiagnosticPiece* getEndPath(BugReporterContext& BR,
                                           const ExplodedNode<GRState>* N);
   
   /// getLocation - Return the "definitive" location of the reported bug.
@@ -114,12 +128,17 @@ public:
   virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
                          const SourceRange*& end);
 
-  // FIXME: Perhaps this should be moved into a subclass?
+  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
+                                         const ExplodedNode<GRState>* PrevN,
+                                         BugReporterContext& BR);  
+
+  /*
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                          const ExplodedNode<GRState>* PrevN,
                                          const ExplodedGraph<GRState>& G,
-                                         BugReporter& BR,
+                                         BugReporterContext& BR,
                                          NodeResolver& NR);
+   */
 };
 
 //===----------------------------------------------------------------------===//
@@ -332,7 +351,7 @@ public:
   
   static bool classof(const BugReporter* R) { return true; }
 };
-  
+
 // FIXME: Get rid of GRBugReporter.  It's the wrong abstraction.
 class GRBugReporter : public BugReporter {
   GRExprEngine& Eng;
@@ -370,6 +389,58 @@ public:
   static bool classof(const BugReporter* R) {
     return R->getKind() == GRBugReporterKind;
   }
+};
+  
+class BugReporterContext {
+  GRBugReporter &BR;
+  std::vector<BugReporterVisitor*> Callbacks;
+public:
+  BugReporterContext(GRBugReporter& br) : BR(br) {}
+  virtual ~BugReporterContext();
+  
+  void addVisitor(BugReporterVisitor* visitor) {
+    if (visitor) Callbacks.push_back(visitor);
+  }
+  
+  typedef std::vector<BugReporterVisitor*>::iterator visitor_iterator;
+  visitor_iterator visitor_begin() { return Callbacks.begin(); }
+  visitor_iterator visitor_end() { return Callbacks.end(); }  
+  
+  GRBugReporter& getBugReporter() { return BR; }  
+  
+  ExplodedGraph<GRState>& getGraph() { return BR.getGraph(); }
+  
+  void addNotableSymbol(SymbolRef Sym) {
+    // FIXME: For now forward to GRBugReporter.
+    BR.addNotableSymbol(Sym);
+  }
+  
+  bool isNotable(SymbolRef Sym) const {
+    // FIXME: For now forward to GRBugReporter.
+    return BR.isNotable(Sym);
+  }
+  
+  GRStateManager& getStateManager() {
+    return BR.getStateManager();
+  }
+  
+  ASTContext& getASTContext() {
+    return BR.getContext();
+  }
+  
+  SourceManager& getSourceManager() {
+    return BR.getSourceManager();
+  }
+  
+  const Decl& getCodeDecl() {
+    return getStateManager().getCodeDecl();
+  }
+  
+  const CFG& getCFG() {
+    return *BR.getCFG();
+  }
+  
+  virtual BugReport::NodeResolver& getNodeResolver() = 0;  
 };
 
 class DiagBugReport : public RangedBugReport {
