@@ -504,6 +504,8 @@ unsigned LLVMGetFunctionCallConv(LLVMValueRef Fn);
 void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC);
 const char *LLVMGetGC(LLVMValueRef Fn);
 void LLVMSetGC(LLVMValueRef Fn, const char *Name);
+void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
+void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
 
 /* Operations on parameters */
 unsigned LLVMCountParams(LLVMValueRef Fn);

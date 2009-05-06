@@ -626,7 +626,13 @@ let test_params () =
     let p2 = param f 1 in
     set_value_name "One" p1;
     set_value_name "Two" p2;
-    
+    add_param_attr p1 Attribute.Sext;
+    add_param_attr p2 Attribute.Noalias;
+    remove_param_attr p2 Attribute.Noalias;
+    add_function_attr f Attribute.Nounwind;
+    add_function_attr f Attribute.Noreturn;
+    remove_function_attr f Attribute.Noreturn;
+
     insist (Before p1 = param_begin f);
     insist (Before p2 = param_succ p1);
     insist (At_end f = param_succ p2);
@@ -988,6 +994,10 @@ let test_builder () =
     insist (not (is_tail_call ci));
     set_tail_call true ci;
     insist (is_tail_call ci);
+    add_instruction_param_attr ci 0 Attribute.Nounwind;
+    add_instruction_param_attr ci 1 Attribute.Sext;
+    add_instruction_param_attr ci 2 Attribute.Noalias;
+    remove_instruction_param_attr ci 2 Attribute.Noalias;
     
     let inst46 = build_icmp Icmp.Eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);

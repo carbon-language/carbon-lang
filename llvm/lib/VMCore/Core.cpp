@@ -776,6 +776,20 @@ void LLVMSetGC(LLVMValueRef Fn, const char *GC) {
     F->clearGC();
 }
 
+void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
+  Function *Func = unwrap<Function>(Fn);
+  const AttrListPtr PAL = Func->getAttributes();
+  const AttrListPtr PALnew = PAL.addAttr(0, PA);
+  Func->setAttributes(PALnew);
+}
+
+void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
+  Function *Func = unwrap<Function>(Fn);
+  const AttrListPtr PAL = Func->getAttributes();
+  const AttrListPtr PALnew = PAL.removeAttr(0, PA);
+  Func->setAttributes(PALnew);
+}
+
 /*--.. Operations on parameters ............................................--*/
 
 unsigned LLVMCountParams(LLVMValueRef FnRef) {
