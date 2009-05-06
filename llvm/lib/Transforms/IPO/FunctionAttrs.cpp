@@ -152,6 +152,11 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
       if (I->mayWriteToMemory())
         // Writes memory.  Just give up.
         return false;
+
+      if (isa<MallocInst>(I))
+        // MallocInst claims not to write memory!  PR3754.
+        return false;
+
       // If this instruction may read memory, remember that.
       ReadsMemory |= I->mayReadFromMemory();
     }
