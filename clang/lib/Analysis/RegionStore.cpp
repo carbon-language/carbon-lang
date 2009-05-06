@@ -199,6 +199,9 @@ public:
   ///  casts from arrays to pointers.
   SVal ArrayToPointer(Loc Array);
 
+  CastResult CastRegion(const GRState* state, const MemRegion* R,
+                        QualType CastToTy);
+
   SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R);
 
   /// The high level logic for this method is this:
@@ -580,6 +583,83 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   ElementRegion* ER = MRMgr.getElementRegion(T, Idx, ArrayR);
   
   return loc::MemRegionVal(ER);                    
+}
+
+RegionStoreManager::CastResult
+RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
+                         QualType CastToTy) {
+  
+  ASTContext& Ctx = StateMgr.getContext();
+
+  // We need to know the real type of CastToTy.
+  QualType ToTy = Ctx.getCanonicalType(CastToTy);
+
+  // Check cast to ObjCQualifiedID type.
+  if (isa<ObjCQualifiedIdType>(ToTy)) {
+    // FIXME: Record the type information aside.
+    return CastResult(state, R);
+  }
+
+  // CodeTextRegion should be cast to only function pointer type.
+  if (isa<CodeTextRegion>(R)) {
+    assert(CastToTy->isFunctionPointerType() || CastToTy->isBlockPointerType());
+    return CastResult(state, R);
+  }
+
+  // Assume we are casting from pointer to pointer. Other cases are handled
+  // elsewhere.
+  QualType PointeeTy = cast<PointerType>(ToTy.getTypePtr())->getPointeeType();
+
+  // Return the same region if the region types are compatible.
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
+    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
+
+    if (Ta == ToTy)
+      return CastResult(state, R);
+  }
+
+  // Process region cast according to the kind of the region being cast.
+  
+
+  // FIXME: Need to handle arbitrary downcasts.
+  // FIXME: Handle the case where a TypedViewRegion (layering a SymbolicRegion
+  //         or an AllocaRegion is cast to another view, thus causing the memory
+  //         to be re-used for a different purpose.
+
+  if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
+    const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
+    return CastResult(AddRegionView(state, ViewR, R), ViewR);
+  }
+
+  // VarRegion, ElementRegion, and FieldRegion has an inherent type. Normally
+  // they should not be cast. We only layer an ElementRegion when the cast-to
+  // pointee type is of smaller size. In other cases, we return the original
+  // VarRegion.
+  if (isa<VarRegion>(R) || isa<ElementRegion>(R) || isa<FieldRegion>(R)
+      || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
+    // FIXME: create an ElementRegion when the size of the pointee type is
+    // smaller than the region.
+    //unsigned PointeeSize = getSizeInBits(PointeeTy);
+    //unsigned RegionSize = getSizeInBits(R);
+//     if (PointeeSize < RegionSize) {
+//       SVal Idx = ValMgr.makeZeroArrayIndex();
+//       ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, R);
+//       return CastResult(state, ER);
+//     }
+//     else
+    return CastResult(state, R);
+  }
+
+  if (isa<TypedViewRegion>(R)) {
+    const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
+    return CastResult(state, ViewR);
+  }
+
+  if (isa<ObjCObjectRegion>(R)) {
+    return CastResult(state, R);
+  }
+
+  assert(0 && "Unprocessed region.");
 }
 
 SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {

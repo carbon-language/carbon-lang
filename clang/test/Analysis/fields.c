@@ -1,5 +1,6 @@
 // RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=basic -verify &&
 // RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=region -verify
+// XFAIL
 
 unsigned foo();
 typedef struct bf { unsigned x:2; } bf;

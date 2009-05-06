@@ -133,8 +133,8 @@ public:
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
-  CastResult CastRegion(const GRState* state, const MemRegion* R,
-                        QualType CastToTy);
+  virtual CastResult CastRegion(const GRState* state, const MemRegion* R,
+                                QualType CastToTy);
 
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
