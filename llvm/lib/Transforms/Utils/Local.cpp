@@ -188,8 +188,7 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
   DeadInsts.push_back(I);
   
   while (!DeadInsts.empty()) {
-    I = DeadInsts.back();
-    DeadInsts.pop_back();
+    I = DeadInsts.pop_back_val();
 
     // Null out all of the instruction's operands to see if any operand becomes
     // dead as we go.

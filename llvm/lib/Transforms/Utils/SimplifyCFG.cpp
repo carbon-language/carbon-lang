@@ -742,8 +742,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
 
   SmallVector<BasicBlock*, 16> Preds(pred_begin(BB), pred_end(BB));
   while (!Preds.empty()) {
-    BasicBlock *Pred = Preds.back();
-    Preds.pop_back();
+    BasicBlock *Pred = Preds.pop_back_val();
 
     // See if the predecessor is a comparison with the same value.
     TerminatorInst *PTI = Pred->getTerminator();
@@ -1805,10 +1804,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // If we found some, do the transformation!
       if (!UncondBranchPreds.empty()) {
         while (!UncondBranchPreds.empty()) {
-          BasicBlock *Pred = UncondBranchPreds.back();
+          BasicBlock *Pred = UncondBranchPreds.pop_back_val();
           DOUT << "FOLDING: " << *BB
                << "INTO UNCOND BRANCH PRED: " << *Pred;
-          UncondBranchPreds.pop_back();
           Instruction *UncondBranch = Pred->getTerminator();
           // Clone the return and add it to the end of the predecessor.
           Instruction *NewRet = RI->clone();
@@ -1847,8 +1845,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // instruction.  If any of them just select between returns, change the
       // branch itself into a select/return pair.
       while (!CondBranchPreds.empty()) {
-        BranchInst *BI = CondBranchPreds.back();
-        CondBranchPreds.pop_back();
+        BranchInst *BI = CondBranchPreds.pop_back_val();
 
         // Check to see if the non-BB successor is also a return block.
         if (isa<ReturnInst>(BI->getSuccessor(0)->getTerminator()) &&

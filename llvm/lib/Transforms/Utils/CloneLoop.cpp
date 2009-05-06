@@ -92,8 +92,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
 
   Loop *NewParentLoop = NULL;
   while (!LoopNest.empty()) {
-    Loop *L = LoopNest.back();
-    LoopNest.pop_back();
+    Loop *L = LoopNest.pop_back_val();
     Loop *NewLoop = new Loop();
 
     if (!NewParentLoop)

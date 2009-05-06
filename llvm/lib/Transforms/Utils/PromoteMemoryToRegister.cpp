@@ -616,8 +616,7 @@ ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info,
   // Now that we have a set of blocks where the phi is live-in, recursively add
   // their predecessors until we find the full region the value is live.
   while (!LiveInBlockWorklist.empty()) {
-    BasicBlock *BB = LiveInBlockWorklist.back();
-    LiveInBlockWorklist.pop_back();
+    BasicBlock *BB = LiveInBlockWorklist.pop_back_val();
     
     // The block really is live in here, insert it into the set.  If already in
     // the set, then it has already been processed.
