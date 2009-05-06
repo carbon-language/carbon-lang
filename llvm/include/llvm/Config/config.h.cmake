@@ -194,7 +194,7 @@
 #cmakedefine HAVE_LIBPSAPI ${HAVE_LIBPSAPI}
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-#undef HAVE_LIBPTHREAD
+#cmakedefine HAVE_LIBPTHREAD ${HAVE_LIBPTHREAD}
 
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 #undef HAVE_LIBUDIS86

@@ -37,6 +37,10 @@ check_include_file(unistd.h HAVE_UNISTD_H)
 check_include_file(utime.h HAVE_UTIME_H)
 check_include_file(windows.h HAVE_WINDOWS_H)
 
+# library checks
+include(CheckLibraryExists)
+check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
+
 # function checks
 include(CheckSymbolExists)
 check_symbol_exists(getpagesize unistd.h HAVE_GETPAGESIZE)
