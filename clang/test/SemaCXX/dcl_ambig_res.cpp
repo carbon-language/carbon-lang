@@ -1,0 +1,66 @@
+// RUN: clang-cc -fsyntax-only -pedantic -verify %s
+
+// [dcl.ambig.res]p1:
+struct S { 
+  S(int); 
+  void bar();
+}; 
+
+int returns_an_int();
+
+void foo(double a) 
+{ 
+  S w(int(a)); // expected-warning{{disambiguated}}
+  w(17);
+  S x(int()); // expected-warning{{disambiguated}}
+  x(&returns_an_int);
+  S y((int)a); 
+  y.bar();
+  S z = int(a);
+  z.bar();
+} 
+
+// [dcl.ambig.res]p3:
+char *p; 
+void *operator new(__SIZE_TYPE__, int); 
+void foo3() { 
+  const int x = 63; 
+  new (int(*p)) int; //new-placement expression 
+  new (int(*[x])); //new type-id 
+} 
+
+// [dcl.ambig.res]p4:
+template <class T>  // expected-note{{here}}
+struct S4 { 
+  T *p; 
+}; 
+S4<int()> x; //type-id 
+S4<int(1)> y; // expected-error{{must be a type}}
+
+// [dcl.ambig.res]p5:
+void foo5() 
+{ 
+  (void)sizeof(int(1)); //expression 
+  // FIXME: should we make this an error rather than a warning? 
+  // (It affects SFINAE)
+  (void)sizeof(int()); // expected-warning{{function type}}
+}
+
+// [dcl.ambig.res]p6:
+void foo6() 
+{ 
+  (void)(int(1)); //expression 
+  (void)(int())1; // expected-error{{used type}}
+} 
+
+// [dcl.ambig.res]p7:
+class C7 { }; 
+void f7(int(C7)) { } // expected-note{{candidate}}
+int g7(C7); 
+void foo7() { 
+  f7(1); // expected-error{{no matching function}}
+  f7(g7); //OK 
+} 
+
+void h7(int *(C7[10])) { } // expected-note{{previous}}
+void h7(int *(*_fp)(C7 _parm[10])) { } // expected-error{{redefinition}}
