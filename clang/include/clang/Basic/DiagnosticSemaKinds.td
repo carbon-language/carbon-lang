@@ -194,6 +194,9 @@ def warn_objc_property_default_assign_on_object : Warning<
   "default property attribute 'assign' not appropriate for non-gc object">;
 def warn_property_attr_mismatch : Warning<
   "property attribute in continuation class does not match the primary class">;
+def warn_objc_property_copy_missing_on_block : Warning<
+    "'copy' attribute must be specified for the block property "
+    "when -fobjc-gc-only is specified">;
 def err_use_continuation_class : Error<
   "attribute of property in continuation class of %0 can only  be 'readwrite'">;
 def err_continuation_class : Error<"continuation class has no primary class">;

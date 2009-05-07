@@ -1750,6 +1750,11 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
     // <rdar://5168496&4855821&5607453&5096644&4947311&5698469&4947014&5168496>
     // (please trim this list while you are at it).
   }
+
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_copy)
+      && getLangOptions().getGCMode() == LangOptions::GCOnly
+      && PropertyTy->isBlockPointerType())
+    Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
 }
 
 Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc, 
