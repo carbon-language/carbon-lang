@@ -18,7 +18,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetMachine.h"
 #include <set>
@@ -342,6 +341,10 @@ namespace llvm {
     void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
 
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
+
+    /// processDebugLoc - Processes the debug information of each machine
+    /// instruction's DebugLoc.
+    void processDebugLoc(DebugLoc DL);
     
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.

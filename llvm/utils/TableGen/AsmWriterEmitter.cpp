@@ -649,18 +649,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   }
   O << "\";\n\n";
 
-  O << "  if (TAI->doesSupportDebugInformation() &&\n"
-    << "      DW->ShouldEmitDwarfDebug()) {\n"
-    << "    DebugLoc CurDL = MI->getDebugLoc();\n\n"
-    << "    if (!CurDL.isUnknown()) {\n"
-    << "      static DebugLocTuple PrevDLT(0, ~0U, ~0U);\n"
-    << "      DebugLocTuple CurDLT = MF->getDebugLocTuple(CurDL);\n\n"
-    << "      if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT)\n"
-    << "        printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,\n"
-    << "                               DICompileUnit(CurDLT.CompileUnit)));\n\n"
-    << "      PrevDLT = CurDLT;\n"
-    << "    }\n"
-    << "  }\n\n";
+  O << "  processDebugLoc(MI->getDebugLoc());\n\n";
 
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
     << "    O << \"\\t\";\n"

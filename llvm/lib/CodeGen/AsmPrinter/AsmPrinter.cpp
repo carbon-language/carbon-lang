@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1305,6 +1306,22 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
   }    
 }
 
+/// processDebugLoc - Processes the debug information of each machine
+/// instruction's DebugLoc.
+void AsmPrinter::processDebugLoc(DebugLoc DL) {
+  if (TAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
+    if (!DL.isUnknown()) {
+      static DebugLocTuple PrevDLT(0, ~0U, ~0U);
+      DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
+
+      if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT)
+        printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
+                                        DICompileUnit(CurDLT.CompileUnit)));
+
+      PrevDLT = CurDLT;
+    }
+  }
+}
 
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
