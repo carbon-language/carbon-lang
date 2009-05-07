@@ -585,6 +585,10 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   /// ScratchArgs - A holding buffer for construct ArgEffects.
   ArgEffects ScratchArgs;
   
+  /// ObjCAllocRetE - Default return effect for methods returning Objective-C
+  ///  objects.
+  RetEffect ObjCAllocRetE;
+  
   RetainSummary DefaultSummary;
   RetainSummary* StopSummary;
   
@@ -720,6 +724,8 @@ public:
    : Ctx(ctx),
      CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled), AF(BPAlloc), ScratchArgs(AF.GetEmptyMap()),
+     ObjCAllocRetE(gcenabled ? RetEffect::MakeGCNotOwned()
+                             : RetEffect::MakeOwned(RetEffect::ObjC, true)),
      DefaultSummary(AF.GetEmptyMap() /* per-argument effects (none) */,
                     RetEffect::MakeNoRet() /* return effect */,
                     DoNothing /* receiver effect */,
@@ -1134,9 +1140,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(FD->getResultType())) {
     if (FD->getAttr<NSOwnershipReturnsAttr>()) {
-      Summ.setRetEffect(isGCEnabled()
-                        ? RetEffect::MakeGCNotOwned()
-                        : RetEffect::MakeOwned(RetEffect::ObjC, true));
+      Summ.setRetEffect(ObjCAllocRetE);
     }
     else if (FD->getAttr<CFOwnershipReturnsAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
@@ -1159,9 +1163,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(MD->getResultType())) {
     if (MD->getAttr<NSOwnershipReturnsAttr>()) {
-      Summ.setRetEffect(isGCEnabled()
-                        ? RetEffect::MakeGCNotOwned()
-                        : RetEffect::MakeOwned(RetEffect::ObjC, true));
+      Summ.setRetEffect(ObjCAllocRetE);
     }
     else if (MD->getAttr<CFOwnershipReturnsAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
@@ -1216,9 +1218,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
     //  by instance methods.
     RetEffect E =
       followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
-      ? (isGCEnabled() ? RetEffect::MakeGCNotOwned()
-         : RetEffect::MakeOwned(RetEffect::ObjC, true))
-      : RetEffect::MakeNotOwned(RetEffect::ObjC);
+        ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
     
     return getPersistentSummary(E, ReceiverEff, MayEscape);    
   }
@@ -1293,14 +1293,9 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
   return Summ;
 }
 
-void RetainSummaryManager::InitializeClassMethodSummaries() {
-  
-  assert (ScratchArgs.isEmpty());
-  
-  RetEffect E = isGCEnabled() ? RetEffect::MakeGCNotOwned()
-                              : RetEffect::MakeOwned(RetEffect::ObjC, true);  
-  
-  RetainSummary* Summ = getPersistentSummary(E);
+void RetainSummaryManager::InitializeClassMethodSummaries() {  
+  assert(ScratchArgs.isEmpty());
+  RetainSummary* Summ = getPersistentSummary(ObjCAllocRetE);
   
   // Create the summaries for "alloc", "new", and "allocWithZone:" for
   // NSObject and its derivatives.
@@ -1354,10 +1349,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
   
   // The next methods are allocators.
-  RetEffect E = isGCEnabled() ? RetEffect::MakeGCNotOwned()
-                              : RetEffect::MakeOwned(RetEffect::ObjC, true);
-  
-  RetainSummary* Summ = getPersistentSummary(E);  
+  RetainSummary* Summ = getPersistentSummary(ObjCAllocRetE);  
   
   // Create the "copy" selector.  
   addNSObjectMethSummary(GetNullarySelector("copy", Ctx), Summ);  
@@ -1366,7 +1358,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("mutableCopy", Ctx), Summ);
   
   // Create the "retain" selector.
-  E = RetEffect::MakeReceiverAlias();
+  RetEffect E = RetEffect::MakeReceiverAlias();
   Summ = getPersistentSummary(E, IncRefMsg);
   addNSObjectMethSummary(GetNullarySelector("retain", Ctx), Summ);
   
