@@ -981,10 +981,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
     }
     
-    // Finally, if this is a noop copy instruction, zap it.
+    // Finally, if this is a noop copy instruction, zap it.  (Except that if
+    // the copy is dead, it must be kept to avoid messing up liveness info for
+    // the register scavenger.  See pr4100.)
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-        SrcReg == DstReg)
+        SrcReg == DstReg && DeadDefs.empty())
       MBB.erase(MI);
   }
 
