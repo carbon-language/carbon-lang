@@ -156,3 +156,19 @@ void test16(__block int i) { // expected-error {{__block attribute not allowed, 
   __block int a[size]; // expected-error {{__block attribute not allowed on declaration with a variably modified type}}
   __block int (*ap)[size]; // expected-error {{__block attribute not allowed on declaration with a variably modified type}}
 }
+
+void test17() {
+  void (^bp)(int);
+  void (*rp)(int);
+  void (^bp1)();
+  void *vp = bp;
+
+  f(1 ? bp : vp);
+  f(1 ? vp : bp);
+  f(1 ? bp : bp1); // expected-error {{incompatible operand types ('void (^)(int)' and 'void (^)()')}}
+  (void)(bp > rp); // expected-error {{invalid operands}}
+  (void)(bp > 0); // expected-error {{invalid operands}}
+  (void)(bp > bp); // expected-error {{invalid operands}}
+  (void)(bp > vp); // expected-error {{invalid operands}}
+  f(1 ? bp : rp); // expected-error {{incompatible operand types ('void (^)(int)' and 'void (*)(int)')}}
+}

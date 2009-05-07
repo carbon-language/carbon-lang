@@ -2786,99 +2786,113 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     return RHSTy;
   }
 
+  const PointerType *LHSPT = LHSTy->getAsPointerType();
+  const PointerType *RHSPT = RHSTy->getAsPointerType();
+  const BlockPointerType *LHSBPT = LHSTy->getAsBlockPointerType();
+  const BlockPointerType *RHSBPT = RHSTy->getAsBlockPointerType();
+
   // Handle the case where both operands are pointers before we handle null
   // pointer constants in case both operands are null pointer constants.
-  if (const PointerType *LHSPT = LHSTy->getAsPointerType()) { // C99 6.5.15p3,6
-    if (const PointerType *RHSPT = RHSTy->getAsPointerType()) {
-      // get the "pointed to" types
-      QualType lhptee = LHSPT->getPointeeType();
-      QualType rhptee = RHSPT->getPointeeType();
+  if ((LHSPT || LHSBPT) && (RHSPT || RHSBPT)) { // C99 6.5.15p3,6
+    // get the "pointed to" types
+    QualType lhptee = LHSPT ? LHSPT->getPointeeType() : LHSBPT->getPointeeType();
+    QualType rhptee = RHSPT ? RHSPT->getPointeeType() : RHSBPT->getPointeeType();
 
-      // ignore qualifiers on void (C99 6.5.15p3, clause 6)
-      if (lhptee->isVoidType() &&
-          rhptee->isIncompleteOrObjectType()) {
-        // Figure out necessary qualifiers (C99 6.5.15p6)
-        QualType destPointee=lhptee.getQualifiedType(rhptee.getCVRQualifiers());
-        QualType destType = Context.getPointerType(destPointee);
-        ImpCastExprToType(LHS, destType); // add qualifiers if necessary
-        ImpCastExprToType(RHS, destType); // promote to void*
-        return destType;
-      }
-      if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
-        QualType destPointee=rhptee.getQualifiedType(lhptee.getCVRQualifiers());
-        QualType destType = Context.getPointerType(destPointee);
-        ImpCastExprToType(LHS, destType); // add qualifiers if necessary
-        ImpCastExprToType(RHS, destType); // promote to void*
-        return destType;
-      }
+    // ignore qualifiers on void (C99 6.5.15p3, clause 6)
+    if (lhptee->isVoidType()
+        && (RHSBPT || rhptee->isIncompleteOrObjectType())) {
+      // Figure out necessary qualifiers (C99 6.5.15p6)
+      QualType destPointee=lhptee.getQualifiedType(rhptee.getCVRQualifiers());
+      QualType destType = Context.getPointerType(destPointee);
+      ImpCastExprToType(LHS, destType); // add qualifiers if necessary
+      ImpCastExprToType(RHS, destType); // promote to void*
+      return destType;
+    }
+    if (rhptee->isVoidType()
+        && (LHSBPT || lhptee->isIncompleteOrObjectType())) {
+      QualType destPointee=rhptee.getQualifiedType(lhptee.getCVRQualifiers());
+      QualType destType = Context.getPointerType(destPointee);
+      ImpCastExprToType(LHS, destType); // add qualifiers if necessary
+      ImpCastExprToType(RHS, destType); // promote to void*
+      return destType;
+    }
 
-      if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
-        // Two identical pointer types are always compatible.
-        return LHSTy;
-      }
+    bool sameKind = (LHSPT && RHSPT) || (LHSBPT && RHSBPT);
+    if (sameKind
+        && Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
+      // Two identical pointer types are always compatible.
+      return LHSTy;
+    }
 
-      QualType compositeType = LHSTy;
+    QualType compositeType = LHSTy;
 
-      // If either type is an Objective-C object type then check
-      // compatibility according to Objective-C.
-      if (Context.isObjCObjectPointerType(LHSTy) ||
-          Context.isObjCObjectPointerType(RHSTy)) {
-        // If both operands are interfaces and either operand can be
-        // assigned to the other, use that type as the composite
-        // type. This allows
-        //   xxx ? (A*) a : (B*) b
-        // where B is a subclass of A.
-        //
-        // Additionally, as for assignment, if either type is 'id'
-        // allow silent coercion. Finally, if the types are
-        // incompatible then make sure to use 'id' as the composite
-        // type so the result is acceptable for sending messages to.
+    // If either type is an Objective-C object type then check
+    // compatibility according to Objective-C.
+    if (Context.isObjCObjectPointerType(LHSTy) ||
+        Context.isObjCObjectPointerType(RHSTy)) {
+      // If both operands are interfaces and either operand can be
+      // assigned to the other, use that type as the composite
+      // type. This allows
+      //   xxx ? (A*) a : (B*) b
+      // where B is a subclass of A.
+      //
+      // Additionally, as for assignment, if either type is 'id'
+      // allow silent coercion. Finally, if the types are
+      // incompatible then make sure to use 'id' as the composite
+      // type so the result is acceptable for sending messages to.
 
-        // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
-        // It could return the composite type.
-        const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
-        const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
-        if (LHSIface && RHSIface &&
-            Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
-          compositeType = LHSTy;
-        } else if (LHSIface && RHSIface &&
-                   Context.canAssignObjCInterfaces(RHSIface, LHSIface)) {
-          compositeType = RHSTy;
-        } else if (Context.isObjCIdStructType(lhptee) ||
-                   Context.isObjCIdStructType(rhptee)) {
-          compositeType = Context.getObjCIdType();
-        } else {
-          Diag(QuestionLoc, diag::ext_typecheck_comparison_of_distinct_pointers)
-               << LHSTy << RHSTy
-               << LHS->getSourceRange() << RHS->getSourceRange();
-          QualType incompatTy = Context.getObjCIdType();
-          ImpCastExprToType(LHS, incompatTy);
-          ImpCastExprToType(RHS, incompatTy);
-          return incompatTy;
-        }
-      } else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),
-                                             rhptee.getUnqualifiedType())) {
-        Diag(QuestionLoc, diag::warn_typecheck_cond_incompatible_pointers)
-          << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
-        // In this situation, we assume void* type. No especially good
-        // reason, but this is what gcc does, and we do have to pick
-        // to get a consistent AST.
-        QualType incompatTy = Context.getPointerType(Context.VoidTy);
+      // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
+      // It could return the composite type.
+      const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
+      const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
+      if (LHSIface && RHSIface &&
+          Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
+        compositeType = LHSTy;
+      } else if (LHSIface && RHSIface &&
+                 Context.canAssignObjCInterfaces(RHSIface, LHSIface)) {
+        compositeType = RHSTy;
+      } else if (Context.isObjCIdStructType(lhptee) ||
+                 Context.isObjCIdStructType(rhptee)) {
+        compositeType = Context.getObjCIdType();
+      } else if (LHSBPT || RHSBPT) {
+        if (!sameKind
+            || !Context.typesAreBlockCompatible(lhptee.getUnqualifiedType(),
+                                                rhptee.getUnqualifiedType()))
+          Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
+            << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+        return QualType();
+      } else {
+        Diag(QuestionLoc, diag::ext_typecheck_cond_incompatible_operands)
+          << LHSTy << RHSTy
+          << LHS->getSourceRange() << RHS->getSourceRange();
+        QualType incompatTy = Context.getObjCIdType();
         ImpCastExprToType(LHS, incompatTy);
         ImpCastExprToType(RHS, incompatTy);
         return incompatTy;
       }
-      // The pointer types are compatible.
-      // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
-      // differently qualified versions of compatible types, the result type is
-      // a pointer to an appropriately qualified version of the *composite*
-      // type.
-      // FIXME: Need to calculate the composite type.
-      // FIXME: Need to add qualifiers
-      ImpCastExprToType(LHS, compositeType);
-      ImpCastExprToType(RHS, compositeType);
-      return compositeType;
+    } else if (!sameKind
+               || !Context.typesAreCompatible(lhptee.getUnqualifiedType(),
+                                              rhptee.getUnqualifiedType())) {
+      Diag(QuestionLoc, diag::warn_typecheck_cond_incompatible_pointers)
+        << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+      // In this situation, we assume void* type. No especially good
+      // reason, but this is what gcc does, and we do have to pick
+      // to get a consistent AST.
+      QualType incompatTy = Context.getPointerType(Context.VoidTy);
+      ImpCastExprToType(LHS, incompatTy);
+      ImpCastExprToType(RHS, incompatTy);
+      return incompatTy;
     }
+    // The pointer types are compatible.
+    // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
+    // differently qualified versions of compatible types, the result type is
+    // a pointer to an appropriately qualified version of the *composite*
+    // type.
+    // FIXME: Need to calculate the composite type.
+    // FIXME: Need to add qualifiers
+    ImpCastExprToType(LHS, compositeType);
+    ImpCastExprToType(RHS, compositeType);
+    return compositeType;
   }
 
   // GCC compatibility: soften pointer/integer mismatch.
@@ -2894,11 +2908,6 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(RHS, LHSTy); // promote the integer to a pointer.
     return LHSTy;
   }
-
-  // Selection between block pointer types is ok as long as they are the same.
-  if (LHSTy->isBlockPointerType() && RHSTy->isBlockPointerType() &&
-      Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy))
-    return LHSTy;
 
   // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
   // evaluates to "struct objc_object *" (and is handled above when comparing
@@ -3671,7 +3680,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
-  if (!lType->isFloatingType()) {
+  if (!lType->isFloatingType() && !(lType->isBlockPointerType() && isRelational)) {
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
@@ -3795,7 +3804,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     return ResultTy;
   }
   // Handle block pointer types.
-  if (lType->isBlockPointerType() && rType->isBlockPointerType()) {
+  if (!isRelational && lType->isBlockPointerType() && rType->isBlockPointerType()) {
     QualType lpointee = lType->getAsBlockPointerType()->getPointeeType();
     QualType rpointee = rType->getAsBlockPointerType()->getPointeeType();
 
@@ -3808,11 +3817,16 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     return ResultTy;
   }
   // Allow block pointers to be compared with null pointer constants.
-  if ((lType->isBlockPointerType() && rType->isPointerType()) ||
-      (lType->isPointerType() && rType->isBlockPointerType())) {
+  if (!isRelational
+      && ((lType->isBlockPointerType() && rType->isPointerType())
+          || (lType->isPointerType() && rType->isBlockPointerType()))) {
     if (!LHSIsNull && !RHSIsNull) {
-      Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      if (!((rType->isPointerType() && rType->getAsPointerType()
+             ->getPointeeType()->isVoidType())
+            || (lType->isPointerType() && lType->getAsPointerType()
+                ->getPointeeType()->isVoidType())))
+        Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
@@ -3867,14 +3881,20 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   }
   // Handle block pointers.
   if (lType->isBlockPointerType() && rType->isIntegerType()) {
-    if (!RHSIsNull)
+    if (isRelational)
+      Diag(Loc, diag::err_typecheck_invalid_operands)
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+    else if (!RHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return ResultTy;
   }
   if (lType->isIntegerType() && rType->isBlockPointerType()) {
-    if (!LHSIsNull)
+    if (isRelational)
+      Diag(Loc, diag::err_typecheck_invalid_operands)
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+    else if (!LHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer
