@@ -100,7 +100,8 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
                                   Builtin::Context::GetBuiltinTypeError &Error,
                                   bool AllowTypeModifiers = true) {
   // Modifiers.
-  bool Long = false, LongLong = false, Signed = false, Unsigned = false;
+  int HowLong = 0;
+  bool Signed = false, Unsigned = false;
   
   // Read the modifiers first.
   bool Done = false;
@@ -118,11 +119,8 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
       Unsigned = true;
       break;
     case 'L':
-      assert(!LongLong && "Can't have LLL modifier");
-      if (Long) 
-        LongLong = true;
-      else
-        Long = true;
+      assert(HowLong <= 2 && "Can't have LLLL modifier");
+      ++HowLong;
       break;
     }
   }
@@ -133,39 +131,42 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   switch (*Str++) {
   default: assert(0 && "Unknown builtin type letter!");
   case 'v':
-    assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'v'!");
+    assert(HowLong == 0 && !Signed && !Unsigned &&
+           "Bad modifiers used with 'v'!");
     Type = Context.VoidTy;
     break;
   case 'f':
-    assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'f'!");
+    assert(HowLong == 0 && !Signed && !Unsigned &&
+           "Bad modifiers used with 'f'!");
     Type = Context.FloatTy;
     break;
   case 'd':
-    assert(!LongLong && !Signed && !Unsigned && "Bad modifiers used with 'd'!");
-    if (Long)
+    assert(HowLong < 2 && !Signed && !Unsigned &&
+           "Bad modifiers used with 'd'!");
+    if (HowLong)
       Type = Context.LongDoubleTy;
     else
       Type = Context.DoubleTy;
     break;
   case 's':
-    assert(!LongLong && "Bad modifiers used with 's'!");
+    assert(HowLong == 0 && "Bad modifiers used with 's'!");
     if (Unsigned)
       Type = Context.UnsignedShortTy;
     else
       Type = Context.ShortTy;
-      break;
+    break;
   case 'i':
-    if (LongLong)
+    if (HowLong == 3)
+      Type = Unsigned ? Context.UnsignedInt128Ty : Context.Int128Ty;
+    else if (HowLong == 2)
       Type = Unsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
-    else if (Long)
+    else if (HowLong == 1)
       Type = Unsigned ? Context.UnsignedLongTy : Context.LongTy;
-    else if (Unsigned)
-      Type = Context.UnsignedIntTy;
-    else 
-      Type = Context.IntTy; // default is signed.
+    else
+      Type = Unsigned ? Context.UnsignedIntTy : Context.IntTy;
     break;
   case 'c':
-    assert(!Long && !LongLong && "Bad modifiers used with 'c'!");
+    assert(HowLong == 0 && "Bad modifiers used with 'c'!");
     if (Signed)
       Type = Context.SignedCharTy;
     else if (Unsigned)
@@ -174,11 +175,11 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
       Type = Context.CharTy;
     break;
   case 'b': // boolean
-    assert(!Long && !Signed && !Unsigned && "Bad modifiers for 'b'!");
+    assert(HowLong == 0 && !Signed && !Unsigned && "Bad modifiers for 'b'!");
     Type = Context.BoolTy;
     break;
   case 'z':  // size_t.
-    assert(!Long && !Signed && !Unsigned && "Bad modifiers for 'z'!");
+    assert(HowLong == 0 && !Signed && !Unsigned && "Bad modifiers for 'z'!");
     Type = Context.getSizeType();
     break;
   case 'F':
