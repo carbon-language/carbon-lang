@@ -176,7 +176,7 @@ public:
   /// basic block can be found by using the MBB::getBlockNumber method, this
   /// method provides the inverse mapping.
   ///
-  MachineBasicBlock *getBlockNumbered(unsigned N) {
+  MachineBasicBlock *getBlockNumbered(unsigned N) const {
     assert(N < MBBNumbering.size() && "Illegal block number");
     assert(MBBNumbering[N] && "Block was removed from the machine function!");
     return MBBNumbering[N];
