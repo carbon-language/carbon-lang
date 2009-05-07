@@ -340,14 +340,13 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs.get();
+  const RecordType *RT;
   unsigned NumConsArgs = ConstructorArgs.size();
   if (AllocType->isDependentType()) {
     // Skip all the checks.
   }
-  // FIXME: Should check for primitive/aggregate here, not record.
-  else if (const RecordType *RT = AllocType->getAsRecordType()) {
-    // FIXME: This is incorrect for when there is an empty initializer and
-    // no user-defined constructor. Must zero-initialize, not default-construct.
+  else if ((RT = AllocType->getAsRecordType()) &&
+            !AllocType->isAggregateType()) {
     Constructor = PerformInitializationByConstructor(
                       AllocType, ConsArgs, NumConsArgs,
                       D.getSourceRange().getBegin(),
@@ -367,7 +366,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       // Object is value-initialized. Do nothing.
     } else if (NumConsArgs == 1) {
       // Object is direct-initialized.
-      // FIXME: WHAT DeclarationName do we pass in here?
+      // FIXME: What DeclarationName do we pass in here?
       if (CheckInitializerTypes(ConsArgs[0], AllocType, StartLoc,
                                 DeclarationName() /*AllocType.getAsString()*/,
                                 /*DirectInit=*/true))
