@@ -70,8 +70,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConstantRange.h"
@@ -84,7 +82,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include <ostream>
 #include <algorithm>
-#include <cmath>
 using namespace llvm;
 
 STATISTIC(NumArrayLenItCounts,
