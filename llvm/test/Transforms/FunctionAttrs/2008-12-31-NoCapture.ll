@@ -49,6 +49,21 @@ ret1:
 	ret i1 1
 }
 
+define i1* @lookup_bit(i32* %q, i32 %bitno) readnone nounwind {
+	%tmp = ptrtoint i32* %q to i32
+	%tmp2 = lshr i32 %tmp, %bitno
+	%bit = and i32 %tmp2, 1
+	%lookup = getelementptr [2 x i1]* @lookup_table, i32 0, i32 %bit
+	ret i1* %lookup
+}
+
+define i1 @c7(i32* %q, i32 %bitno) {
+	%ptr = call i1* @lookup_bit(i32* %q, i32 %bitno)
+	%val = load i1* %ptr
+	ret i1 %val
+}
+
+
 define i32 @nc1(i32* %q, i32* %p, i1 %b) {
 e:
 	br label %l
@@ -79,14 +94,8 @@ define void @nc4(i8* %p) {
 	ret void
 }
 
-define void @nc5(void (i8*)* %p, i8* %r) {
-	call void %p(i8* %r)
-	call void %p(i8* nocapture %r)
-	ret void
-}
-
-declare i8* @external_identity(i8*) readonly nounwind
-define void @nc6(i8* %p) {
-	call i8* @external_identity(i8* %p)
+define void @nc5(void (i8*)* %f, i8* %p) {
+	call void %f(i8* %p) readonly nounwind
+	call void %f(i8* nocapture %p)
 	ret void
 }

@@ -49,7 +49,13 @@ bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
     switch (I->getOpcode()) {
     case Instruction::Call:
     case Instruction::Invoke: {
-      CallSite CS(I);
+      CallSite CS = CallSite::get(I);
+      // Not captured if the callee is readonly, doesn't return a copy through
+      // its return value and doesn't unwind (a readonly function can leak bits
+      // by throwing an exception or not depending on the input value).
+      if (CS.onlyReadsMemory() && CS.doesNotThrow() &&
+          I->getType() == Type::VoidTy)
+        break;
 
       // Not captured if only passed via 'nocapture' arguments.  Note that
       // calling a function pointer does not in itself cause the pointer to
@@ -58,69 +64,46 @@ bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
       // that loading a value from a pointer does not cause the pointer to be
       // captured, even though the loaded value might be the pointer itself
       // (think of self-referential objects).
-      bool MayBeCaptured = false;
       CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
       for (CallSite::arg_iterator A = B; A != E; ++A)
-        if (A->get() == V && !CS.paramHasAttr(A-B+1, Attribute::NoCapture)) {
-          // The parameter is not marked 'nocapture' - handled by generic code
-          // below.
-          MayBeCaptured = true;
-          break;
-        }
-      if (!MayBeCaptured)
-        // Only passed via 'nocapture' arguments, or is the called function -
-        // not captured.
-        continue;
-      if (!CS.doesNotThrow())
-        // Even a readonly function can leak bits by throwing an exception or
-        // not depending on the input value.
-        return true;
-      // Fall through to the generic code.
+        if (A->get() == V && !CS.paramHasAttr(A - B + 1, Attribute::NoCapture))
+          // The parameter is not marked 'nocapture' - captured.
+          return true;
+      // Only passed via 'nocapture' arguments, or is the called function - not
+      // captured.
       break;
     }
     case Instruction::Free:
       // Freeing a pointer does not cause it to be captured.
-      continue;
+      break;
     case Instruction::Load:
       // Loading from a pointer does not cause it to be captured.
-      continue;
+      break;
     case Instruction::Ret:
       if (ReturnCaptures)
         return true;
-      continue;
+      break;
     case Instruction::Store:
       if (V == I->getOperand(0))
         // Stored the pointer - it may be captured.
         return true;
       // Storing to the pointee does not cause the pointer to be captured.
-      continue;
-    }
-
-    // If it may write to memory and isn't one of the special cases above,
-    // be conservative and assume the pointer is captured.
-    if (I->mayWriteToMemory())
+      break;
+    case Instruction::BitCast:
+    case Instruction::GetElementPtr:
+    case Instruction::PHI:
+    case Instruction::Select:
+      // The original value is not captured via this if the new value isn't.
+      for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
+           UI != UE; ++UI) {
+        Use *U = &UI.getUse();
+        if (Visited.insert(U))
+          Worklist.push_back(U);
+      }
+      break;
+    default:
+      // Something else - be conservative and say it is captured.
       return true;
-
-    // If the instruction doesn't write memory, it can only capture by
-    // having its own value depend on the input value.
-    const Type* Ty = I->getType();
-    if (Ty == Type::VoidTy)
-      // The value of an instruction can't be a copy if it can't contain any
-      // information.
-      continue;
-    if (!isa<PointerType>(Ty))
-      // At the moment, we don't track non-pointer values, so be conservative
-      // and assume the pointer is captured.
-      // FIXME: Track these too.  This would need to be done very carefully as
-      // it is easy to leak bits via control flow if integer values are allowed.
-      return true;
-
-    // The original value is not captured via this if the new value isn't.
-    for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
-         UI != UE; ++UI) {
-      Use *U = &UI.getUse();
-      if (Visited.insert(U))
-        Worklist.push_back(U);
     }
   }
 
