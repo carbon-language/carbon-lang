@@ -715,13 +715,10 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
     const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
     unsigned Alignment = SL.getAlignment();
-    uint64_t Size = SL.getSize();
 
-    // If we are using tight interface packing, then we start laying
-    // out ivars not at the end of the superclass structure, but at
-    // the next byte following the last field.
-    if (getLangOptions().ObjCTightLayout)
-      Size = llvm::RoundUpToAlignment(SL.NextOffset, 8);
+    // We start laying out ivars not at the end of the superclass
+    // structure, but at the next byte following the last field.
+    uint64_t Size = llvm::RoundUpToAlignment(SL.NextOffset, 8);
 
     ObjCLayouts[Key] = NewEntry = new ASTRecordLayout(Size, Alignment);
     NewEntry->InitializeLayout(FieldCount);

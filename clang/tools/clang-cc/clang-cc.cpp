@@ -632,10 +632,6 @@ ObjCNonFragileABI("fobjc-nonfragile-abi",
 
 
 static llvm::cl::opt<bool>
-ObjCTightLayout("fobjc-tight-layout",
-                  llvm::cl::desc("enable tight objective-c interface layout"));
-
-static llvm::cl::opt<bool>
 EmitAllDecls("femit-all-decls",
               llvm::cl::desc("Emit all declarations, even if unused"));
 
@@ -824,8 +820,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (ObjCNonFragileABI)
     Options.ObjCNonFragileABI = 1;
   
-  Options.ObjCTightLayout = 1;
-
   if (EmitAllDecls)
     Options.EmitAllDecls = 1;
 

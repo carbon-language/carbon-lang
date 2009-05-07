@@ -1,4 +1,4 @@
-// RUN: clang-cc -fobjc-tight-layout -triple x86_64-apple-darwin9 -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -o %t %s &&
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
 
 // RUN: grep '@"OBJC_IVAR_$_I3._iv2" = global i64 8, section "__DATA, __objc_const", align 8' %t &&
