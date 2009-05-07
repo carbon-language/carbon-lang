@@ -87,7 +87,7 @@ PIC16TargetAsmInfo::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   // No BSS section spacious enough was found. Crate a new one.
   if (! FoundBSS) {
     char *name = new char[32];
-    sprintf (name, "udata.%d.# UDATA", BSSSections.size());
+    sprintf (name, "udata.%d.# UDATA", (int)BSSSections.size());
     const Section *NewSection = getNamedSection (name);
 
     FoundBSS = new PIC16Section(NewSection);
@@ -133,7 +133,7 @@ PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
   // No IDATA section spacious enough was found. Crate a new one.
   if (! FoundIDATA) {
     char *name = new char[32];
-    sprintf (name, "idata.%d.# IDATA", IDATASections.size());
+    sprintf (name, "idata.%d.# IDATA", (int)IDATASections.size());
     const Section *NewSection = getNamedSection (name);
 
     FoundIDATA = new PIC16Section(NewSection);
