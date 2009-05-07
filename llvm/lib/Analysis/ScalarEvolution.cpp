@@ -502,6 +502,20 @@ namespace {
         return LC->getNumOperands() < RC->getNumOperands();
       }
 
+      // Lexicographically compare udiv expressions.
+      if (const SCEVUDivExpr *LC = dyn_cast<SCEVUDivExpr>(LHS)) {
+        const SCEVUDivExpr *RC = cast<SCEVUDivExpr>(RHS);
+        if (operator()(LC->getLHS(), RC->getLHS()))
+          return true;
+        if (operator()(RC->getLHS(), LC->getLHS()))
+          return false;
+        if (operator()(LC->getRHS(), RC->getRHS()))
+          return true;
+        if (operator()(RC->getRHS(), LC->getRHS()))
+          return false;
+        return false;
+      }
+
       // Compare cast expressions by operand.
       if (const SCEVCastExpr *LC = dyn_cast<SCEVCastExpr>(LHS)) {
         const SCEVCastExpr *RC = cast<SCEVCastExpr>(RHS);
