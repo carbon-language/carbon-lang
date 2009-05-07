@@ -131,10 +131,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "ext_vector_type", 15)) return AT_ext_vector_type;
     if (!memcmp(Str, "ns_autoreleases", 15)) return AT_ns_autoreleases;
     break;
-  case 16:
-    if (!memcmp(Str, "ns_returns_owned", 16)) return AT_ns_returns_owned;
-    if (!memcmp(Str, "cf_returns_owned", 16)) return AT_cf_returns_owned;
-    break;      
   case 17:
     if (!memcmp(Str, "transparent_union", 17)) return AT_transparent_union;
     if (!memcmp(Str, "analyzer_noreturn", 17)) return AT_analyzer_noreturn;
@@ -142,6 +138,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 18:
     if (!memcmp(Str, "warn_unused_result", 18)) return AT_warn_unused_result;
     break;
+  case 19:
+    if (!memcmp(Str, "ns_returns_retained", 19)) return AT_ns_returns_retained;
+    if (!memcmp(Str, "cf_returns_retained", 19)) return AT_cf_returns_retained;
+    break;            
   case 22:
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;

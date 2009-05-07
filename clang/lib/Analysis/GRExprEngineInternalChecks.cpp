@@ -525,6 +525,65 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
+#if 0
+class VISIBILITY_HIDDEN TrackValueBRVisitor : public BugReporterVisitor {
+  SVal V;
+  Stmt *S;
+  const MemRegion *R;
+public:
+  TrackValueBRVisitor(SVal v, Stmt *s) : V(v), S(s), R(0) {}
+  
+  PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState> *N,
+                                 const ExplodedNode<GRState> *PrevN,
+                                 BugReporterContext& BRC) {
+    
+    // Not at a expression?
+    if (!isa<PostStmt>(N->getLocation())) {
+      S = 0;
+      return NULL;
+    }
+    
+    if (S)
+      return VisitNodeExpr(N, PrevN, BRC);
+    else if (R)
+      return VisitNodeRegion(N, PrevN, BRC);
+    
+    return NULL;
+  }
+  
+  PathDiagnosticPiece* VisitNodeExpr(const ExplodedNode<GRState> *N,
+                                     const ExplodedNode<GRState> *PrevN,
+                                     BugReporterContext& BRC) {
+    
+    assert(S);
+    PostStmt P = cast<PostStmt>(N->getLocation());
+    Stmt *X = P.getStmt();
+    
+    // Generate the subexpression path.
+    llvm::SmallVector<Stmt*, 4> SubExprPath;
+    ParentMap &PM = BRC.getParentMap();
+    
+    for ( ; X && X != S ; X = X.getParent(X)) {
+      if (isa<ParenExpr>(X))
+        continue;
+      
+      SubExprPath.push_back(L);
+    }
+     
+    // Lost track?  (X is not a subexpression of S).
+    if (X != S) {
+      S = NULL;
+      return NULL;
+    }
+
+    // Now go down the subexpression path!
+    
+    
+    
+  }  
+};
+#endif
+  
 class VISIBILITY_HIDDEN TrackConstraintBRVisitor : public BugReporterVisitor {
   SVal Constraint;
   const bool Assumption;
@@ -533,8 +592,8 @@ public:
   TrackConstraintBRVisitor(SVal constraint, bool assumption)
     : Constraint(constraint), Assumption(assumption), isSatisfied(false) {}
     
-  PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
-                                 const ExplodedNode<GRState>* PrevN,
+  PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState> *N,
+                                 const ExplodedNode<GRState> *PrevN,
                                  BugReporterContext& BRC) {
     if (isSatisfied)
       return NULL;
@@ -624,7 +683,7 @@ static void registerTrackNullValue(BugReporterContext& BRC,
   // base value that was dereferenced.
   // assert(!V.isUnknownOrUndef());
   
-  // For now just track when a symbolic value became null.
+  // Is it a symbolic value?
   if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
     const SubRegion *R = cast<SubRegion>(L->getRegion());
     while (R && !isa<SymbolicRegion>(R)) {
@@ -634,8 +693,13 @@ static void registerTrackNullValue(BugReporterContext& BRC,
     if (R) {
       assert(isa<SymbolicRegion>(R));
       registerTrackConstraint(BRC, loc::MemRegionVal(R), false);
+//      registerTrackValue(BRC, S, V, N);
     }
   }
+  
+  // Was it a hard integer?
+//  if (isa<nonloc::ConcreteInt>(V))
+//    registerTrackValue(BRC, S, V, N);  
 }
 
 //===----------------------------------------------------------------------===//

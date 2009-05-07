@@ -1557,10 +1557,10 @@ static void HandleNSOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
       default:
         assert(0 && "invalid ownership attribute");
         return;
-      case AttributeList::AT_cf_returns_owned:
-        name = "cf_returns_owned"; break;
-      case AttributeList::AT_ns_returns_owned:
-        name = "ns_returns_owned"; break;
+      case AttributeList::AT_cf_returns_retained:
+        name = "cf_returns_retained"; break;
+      case AttributeList::AT_ns_returns_retained:
+        name = "ns_returns_retained"; break;
     };
 
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
@@ -1572,10 +1572,10 @@ static void HandleNSOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
     default:
       assert(0 && "invalid ownership attribute");
       return;
-    case AttributeList::AT_cf_returns_owned:
+    case AttributeList::AT_cf_returns_retained:
       d->addAttr(::new (S.Context) CFOwnershipReturnsAttr());
       return;
-    case AttributeList::AT_ns_returns_owned:
+    case AttributeList::AT_ns_returns_retained:
       d->addAttr(::new (S.Context) NSOwnershipReturnsAttr());
       return;
   };
@@ -1676,8 +1676,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_ns_releases:
   case AttributeList::AT_ns_retains:
       HandleNSOwnershipAttr(D, Attr, S, true); break;
-  case AttributeList::AT_ns_returns_owned:
-  case AttributeList::AT_cf_returns_owned:
+  case AttributeList::AT_ns_returns_retained:
+  case AttributeList::AT_cf_returns_retained:
     HandleNSOwnershipReturnsAttr(D, Attr, S); break;
 
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;

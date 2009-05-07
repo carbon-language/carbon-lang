@@ -431,8 +431,8 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 //===----------------------------------------------------------------------===//
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_owned));
-- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_owned));
+- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_retained));
+- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_retained));
 - (void) myRetain:(id)__attribute__((ns_retains))obj;
 - (void) myCFRetain:(id)__attribute__((cf_retains))obj;
 - (void) myRelease:(id)__attribute__((ns_releases))obj;
@@ -445,7 +445,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 
 @interface TestAttrHelper : NSObject
 - (NSString*) createString:(TestOwnershipAttr*)X;
-- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((ns_returns_owned));
+- (NSString*) createStringAttr:(TestOwnershipAttr*)X __attribute__((ns_returns_retained));
 @end
 
 @implementation TestAttrHelper
@@ -465,7 +465,7 @@ void test_attr_1b(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
 }
 
-__attribute__((ns_returns_owned))
+__attribute__((ns_returns_retained))
 NSString* test_attr_1c(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // no-warning
   return str;
@@ -473,7 +473,7 @@ NSString* test_attr_1c(TestOwnershipAttr *X) {
 
 void test_attr_1d_helper(NSString* str __attribute__((ns_retains)));
 
-__attribute__((ns_returns_owned))
+__attribute__((ns_returns_retained))
 NSString* test_attr_1d(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
   test_attr_1d_helper(str);
