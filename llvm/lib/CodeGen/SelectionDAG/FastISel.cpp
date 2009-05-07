@@ -365,8 +365,7 @@ bool FastISel::SelectCall(User *I) {
           BuildMI(MBB, DL, II).addImm(ID);
       } else {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        ID =  DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()),
-                                  Subprogram);
+        ID =  DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
         BuildMI(MBB, DL, II).addImm(ID);
       }
     }
@@ -392,7 +391,6 @@ bool FastISel::SelectCall(User *I) {
       // FIXME : Why DebugLoc is reset at the beginning of each block ?
       if (PrevLoc.isUnknown())
         return true;
-
       // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
       setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
@@ -412,10 +410,10 @@ bool FastISel::SelectCall(User *I) {
       unsigned Line = Subprogram.getLineNumber();
       MF.setDefaultDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
                                               CompileUnit.getGV(), Line, 0)));
-
-      if (DW && DW->ShouldEmitDwarfDebug())
+      if (DW && DW->ShouldEmitDwarfDebug()) {
         // llvm.dbg.func_start also defines beginning of function scope.
         DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
+      }
     }
 
     return true;

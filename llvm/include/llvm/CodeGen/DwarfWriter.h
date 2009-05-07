@@ -91,7 +91,7 @@ public:
   unsigned RecordRegionStart(GlobalVariable *V);
 
   /// RecordRegionEnd - Indicate the end of a region.
-  unsigned RecordRegionEnd(GlobalVariable *V, DISubprogram &SP);
+  unsigned RecordRegionEnd(GlobalVariable *V);
 
   /// getRecordSourceLineCount - Count source lines.
   unsigned getRecordSourceLineCount();

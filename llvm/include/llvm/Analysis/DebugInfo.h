@@ -321,19 +321,6 @@ namespace llvm {
     bool describes(const Function *F);
   };
 
-  /// DIInlinedSubprogram - This is a wrapper for an inlined subprogram.
-  class DIInlinedSubprogram : public DIGlobal {
-  public:
-    explicit DIInlinedSubprogram(GlobalVariable *GV = 0);
-    DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
-
-    /// Verify - Verify that an inlined subprogram descriptor is well formed.
-    bool Verify() const;
-
-    /// dump - print inlined subprogram.
-    void dump() const;
-  };
-
   /// DIGlobalVariable - This is a wrapper for a global variable.
   class DIGlobalVariable : public DIGlobal {
   public:
@@ -376,7 +363,6 @@ namespace llvm {
   public:
     explicit DIBlock(GlobalVariable *GV = 0);
     
-    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(1); }
     DIDescriptor getContext() const { return getDescriptorField(1); }
   };
 

@@ -3944,8 +3944,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       }
 
       unsigned LabelID =
-        DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()),
-                            Subprogram);
+        DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
       DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                getRoot(), LabelID));
     }
