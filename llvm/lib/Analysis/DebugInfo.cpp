@@ -59,6 +59,9 @@ bool DIDescriptor::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
   case DW_TAG_subprogram:
     assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
     break;
+  case DW_TAG_inlined_subroutine:
+    assert(DIInlinedSubprogram(GV).Verify() && "Invalid DebugInfo value");
+    break;
   case DW_TAG_lexical_block:
     /// FIXME. This interfers with the quality of generated code when
     /// during optimization.
@@ -146,6 +149,8 @@ DIBasicType::DIBasicType(GlobalVariable *GV)
   : DIType(GV, dwarf::DW_TAG_base_type) {}
 DISubprogram::DISubprogram(GlobalVariable *GV)
   : DIGlobal(GV, dwarf::DW_TAG_subprogram) {}
+DIInlinedSubprogram::DIInlinedSubprogram(GlobalVariable *GV)
+  : DIGlobal(GV, dwarf::DW_TAG_inlined_subroutine) {}
 DIGlobalVariable::DIGlobalVariable(GlobalVariable *GV)
   : DIGlobal(GV, dwarf::DW_TAG_variable) {}
 DIBlock::DIBlock(GlobalVariable *GV)
@@ -283,6 +288,25 @@ bool DISubprogram::Verify() const {
   DICompositeType Ty = getType();
   if (!Ty.isNull() && !Ty.Verify())
     return false;
+  return true;
+}
+
+/// Verify - Verify that an inlined subprogram descriptor is well formed.
+bool DIInlinedSubprogram::Verify() const {
+  if (isNull())
+    return false;
+  
+  if (getContext().isNull())
+    return false;
+
+  DICompileUnit CU = getCompileUnit();
+  if (!CU.Verify()) 
+    return false;
+
+  DICompositeType Ty = getType();
+  if (!Ty.isNull() && !Ty.Verify())
+    return false;
+
   return true;
 }
 
@@ -983,7 +1007,8 @@ namespace llvm {
 
 /// dump - print descriptor.
 void DIDescriptor::dump() const {
-  cerr << " [" << dwarf::TagString(getTag()) << "]\n";
+  cerr << "[" << dwarf::TagString(getTag()) << "] ";
+  cerr << std::hex << "[GV:" << GV << "]" << std::dec;
 }
 
 /// dump - print compile unit.
@@ -1082,6 +1107,11 @@ void DIGlobal::dump() const {
 
 /// dump - print subprogram.
 void DISubprogram::dump() const {
+  DIGlobal::dump();
+}
+
+/// dump - print subprogram.
+void DIInlinedSubprogram::dump() const {
   DIGlobal::dump();
 }
 
