@@ -1,5 +1,6 @@
 add_llvm_library(LLVMCodeGen
   BranchFolding.cpp
+  CodePlacementOpt.cpp
   DeadMachineInstructionElim.cpp
   ELFWriter.cpp
   GCMetadata.cpp
@@ -13,7 +14,6 @@ add_llvm_library(LLVMCodeGen
   LiveIntervalAnalysis.cpp
   LiveStackAnalysis.cpp
   LiveVariables.cpp
-  LoopAligner.cpp
   LowerSubregs.cpp
   MachOWriter.cpp
   MachineBasicBlock.cpp

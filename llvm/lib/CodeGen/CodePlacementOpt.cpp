@@ -1,4 +1,4 @@
-//===-- LoopAligner.cpp - Loop aligner pass. ------------------------------===//
+//===-- CodePlacementOpt.cpp - Code Placement pass. -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the pass that align loop headers to target specific
-// alignment boundary.
+// This file implements the pass that optimize code placement and align loop
+// headers to target specific alignment boundary.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loopalign"
+#define DEBUG_TYPE "code-placement"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/Passes.h"
@@ -23,13 +23,15 @@
 using namespace llvm;
 
 namespace {
-  class LoopAligner : public MachineFunctionPass {
+  class CodePlacementOpt : public MachineFunctionPass {
   public:
     static char ID;
-    LoopAligner() : MachineFunctionPass(&ID) {}
+    CodePlacementOpt() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char *getPassName() const { return "Loop aligner"; }
+    virtual const char *getPassName() const {
+      return "Code Placement Optimizater";
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineLoopInfo>();
@@ -39,12 +41,14 @@ namespace {
     }
   };
 
-  char LoopAligner::ID = 0;
+  char CodePlacementOpt::ID = 0;
 } // end anonymous namespace
 
-FunctionPass *llvm::createLoopAlignerPass() { return new LoopAligner(); }
+FunctionPass *llvm::createCodePlacementOptPass() {
+  return new CodePlacementOpt();
+}
 
-bool LoopAligner::runOnMachineFunction(MachineFunction &MF) {
+bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
   const MachineLoopInfo *MLI = &getAnalysis<MachineLoopInfo>();
 
   if (MLI->empty())

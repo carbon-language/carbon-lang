@@ -70,7 +70,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   if (OptLevel != CodeGenOpt::None)
-    PM.add(createLoopAlignerPass());
+    PM.add(createCodePlacementOptPass());
 
   switch (FileType) {
   default:
