@@ -397,14 +397,13 @@ bool FastISel::SelectCall(User *I) {
                                               CompileUnit.getGV(), Line, 0)));
 
       if (DW && DW->ShouldEmitDwarfDebug()) {
-        unsigned LabelID = MMI->NextLabelID();
+        DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
+        unsigned LabelID = DW->RecordInlinedFnStart(Subprogram,
+                                          DICompileUnit(PrevLocTpl.CompileUnit),
+                                          PrevLocTpl.Line,
+                                          PrevLocTpl.Col);
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         BuildMI(MBB, DL, II).addImm(LabelID);
-        DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-        DW->RecordInlinedFnStart(FSI, Subprogram, LabelID,
-                                 DICompileUnit(PrevLocTpl.CompileUnit),
-                                 PrevLocTpl.Line,
-                                 PrevLocTpl.Col);
       }
     } else {
       // Record the source line.

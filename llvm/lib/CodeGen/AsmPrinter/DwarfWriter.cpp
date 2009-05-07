@@ -3487,10 +3487,12 @@ public:
   }
 
   //// RecordInlinedFnStart - Indicate the start of inlined subroutine.
-  void RecordInlinedFnStart(Instruction *FSI, DISubprogram &SP, unsigned LabelID,
-                            DICompileUnit CU, unsigned Line, unsigned Col) {
+  unsigned RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
+                                unsigned Line, unsigned Col) {
+    unsigned LabelID = MMI->NextLabelID();
+
     if (!TAI->doesDwarfUsesInlineInfoSection())
-      return;
+      return LabelID;
 
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
@@ -3520,6 +3522,8 @@ public:
 
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
+
+    return LabelID;
   }
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
@@ -4749,14 +4753,13 @@ bool DwarfWriter::ShouldEmitDwarfDebug() const {
 
 //// RecordInlinedFnStart - Global variable GV is inlined at the location marked
 //// by LabelID label.
-void DwarfWriter::RecordInlinedFnStart(Instruction *I, DISubprogram &SP, 
-                                       unsigned LabelID, DICompileUnit CU,
-                                       unsigned Line, unsigned Col) {
-  DD->RecordInlinedFnStart(I, SP, LabelID, CU, Line, Col);
+unsigned DwarfWriter::RecordInlinedFnStart(DISubprogram SP, DICompileUnit CU,
+                                           unsigned Line, unsigned Col) {
+  return DD->RecordInlinedFnStart(SP, CU, Line, Col);
 }
 
 /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
-unsigned DwarfWriter::RecordInlinedFnEnd(DISubprogram &SP) {
+unsigned DwarfWriter::RecordInlinedFnEnd(DISubprogram SP) {
   return DD->RecordInlinedFnEnd(SP);
 }
 

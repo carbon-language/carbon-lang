@@ -3981,14 +3981,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                      MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
 
         if (DW && DW->ShouldEmitDwarfDebug()) {
-          unsigned LabelID = DAG.getMachineModuleInfo()->NextLabelID();
+          DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
+          unsigned LabelID = DW->RecordInlinedFnStart(Subprogram,
+                                          DICompileUnit(PrevLocTpl.CompileUnit),
+                                          PrevLocTpl.Line,
+                                          PrevLocTpl.Col);
           DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                    getRoot(), LabelID));
-          DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-          DW->RecordInlinedFnStart(&FSI, Subprogram, LabelID,
-                                   DICompileUnit(PrevLocTpl.CompileUnit),
-                                   PrevLocTpl.Line,
-                                   PrevLocTpl.Col);
         }
       } else {
         // Record the source line.

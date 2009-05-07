@@ -106,11 +106,11 @@ public:
   bool ShouldEmitDwarfDebug() const;
 
   //// RecordInlinedFnStart - Indicate the start of a inlined function.
-  void RecordInlinedFnStart(Instruction *I, DISubprogram &SP, unsigned LabelID,
-                            DICompileUnit CU, unsigned Line, unsigned Col);
+  unsigned RecordInlinedFnStart(DISubprogram SP, DICompileUnit CU,
+                                unsigned Line, unsigned Col);
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
-  unsigned RecordInlinedFnEnd(DISubprogram &SP);
+  unsigned RecordInlinedFnEnd(DISubprogram SP);
 
   /// RecordVariableScope - Record scope for the variable declared by
   /// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE.
