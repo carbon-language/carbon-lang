@@ -2795,8 +2795,10 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // pointer constants in case both operands are null pointer constants.
   if ((LHSPT || LHSBPT) && (RHSPT || RHSBPT)) { // C99 6.5.15p3,6
     // get the "pointed to" types
-    QualType lhptee = LHSPT ? LHSPT->getPointeeType() : LHSBPT->getPointeeType();
-    QualType rhptee = RHSPT ? RHSPT->getPointeeType() : RHSBPT->getPointeeType();
+    QualType lhptee = (LHSPT ? LHSPT->getPointeeType()
+                       : LHSBPT->getPointeeType());
+      QualType rhptee = (RHSPT ? RHSPT->getPointeeType()
+                         : RHSBPT->getPointeeType());
 
     // ignore qualifiers on void (C99 6.5.15p3, clause 6)
     if (lhptee->isVoidType()
@@ -3518,7 +3520,8 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
   // Enforce type constraints: C99 6.5.6p3.
 
   // Handle the common case first (both operands are arithmetic).
-  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType()) {
+  if (lex->getType()->isArithmeticType()
+      && rex->getType()->isArithmeticType()) {
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
@@ -3680,7 +3683,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
-  if (!lType->isFloatingType() && !(lType->isBlockPointerType() && isRelational)) {
+  if (!lType->isFloatingType()
+      && !(lType->isBlockPointerType() && isRelational)) {
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
@@ -3880,23 +3884,13 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     return ResultTy;
   }
   // Handle block pointers.
-  if (lType->isBlockPointerType() && rType->isIntegerType()) {
-    if (isRelational)
-      Diag(Loc, diag::err_typecheck_invalid_operands)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-    else if (!RHSIsNull)
-      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+  if (!isRelational && RHSIsNull
+      && lType->isBlockPointerType() && rType->isIntegerType()) {
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return ResultTy;
   }
-  if (lType->isIntegerType() && rType->isBlockPointerType()) {
-    if (isRelational)
-      Diag(Loc, diag::err_typecheck_invalid_operands)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-    else if (!LHSIsNull)
-      Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+  if (!isRelational && LHSIsNull
+      && lType->isIntegerType() && rType->isBlockPointerType()) {
     ImpCastExprToType(lex, rType); // promote the integer to pointer
     return ResultTy;
   }
@@ -4931,7 +4925,7 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
 }
 
 void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
-  assert(ParamInfo.getIdentifier() == 0 && "block-id should have no identifier!");
+  assert(ParamInfo.getIdentifier()==0 && "block-id should have no identifier!");
 
   ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
 

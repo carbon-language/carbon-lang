@@ -171,4 +171,12 @@ void test17() {
   (void)(bp > bp); // expected-error {{invalid operands}}
   (void)(bp > vp); // expected-error {{invalid operands}}
   f(1 ? bp : rp); // expected-error {{incompatible operand types ('void (^)(int)' and 'void (*)(int)')}}
+  (void)(bp == 1); // expected-error {{invalid operands to binary expression}}
+  (void)(bp == 0);
+  (void)(1 == bp); // expected-error {{invalid operands to binary expression}}
+  (void)(0 == bp);
+  (void)(bp < 1); // expected-error {{invalid operands to binary expression}}
+  (void)(bp < 0); // expected-error {{invalid operands to binary expression}}
+  (void)(1 < bp); // expected-error {{invalid operands to binary expression}}
+  (void)(0 < bp); // expected-error {{invalid operands to binary expression}}
 }
