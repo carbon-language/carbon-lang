@@ -39,8 +39,9 @@ public:
               PostStoreKind = 0x9,
               PostPurgeDeadSymbolsKind = 0x10,
               PostStmtCustomKind = 0x11,
+              PostLValueKind = 0x12,
               MinPostStmtKind = PostStmtKind,
-              MaxPostStmtKind = PostStmtCustomKind };
+              MaxPostStmtKind = PostLValueKind };
 
 private:
   enum { TwoPointers = 0x1, Custom = 0x2, Mask = 0x3 };
@@ -269,6 +270,16 @@ public:
     return Location->getKind() == PostStoreKind;
   }
 };
+
+class PostLValue : public PostStmt {
+public:
+  PostLValue(const Stmt* S, const void *tag = 0)
+  : PostStmt(S, PostLValueKind, tag) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostLValueKind;
+  }
+};  
   
 class PostPurgeDeadSymbols : public PostStmt {
 public:

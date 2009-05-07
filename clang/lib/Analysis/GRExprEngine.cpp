@@ -963,7 +963,8 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
     SVal V = StateMgr.GetLValue(state, VD);
 
     if (asLValue)
-      MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V));
+      MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V),
+               ProgramPoint::PostLValueKind);
     else
       EvalLoad(Dst, Ex, Pred, state, V);
     return;
@@ -979,7 +980,8 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
     assert(asLValue);
     SVal V = ValMgr.getFunctionPointer(FD);
-    MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V));
+    MakeNode(Dst, Ex, Pred, BindExpr(state, Ex, V),
+             ProgramPoint::PostLValueKind);
     return;
   }
   
@@ -1016,7 +1018,8 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
                                   GetSVal(state, Idx));
 
       if (asLValue)
-        MakeNode(Dst, A, *I2, BindExpr(state, A, V));
+        MakeNode(Dst, A, *I2, BindExpr(state, A, V),
+                 ProgramPoint::PostLValueKind);
       else
         EvalLoad(Dst, A, *I2, state, V);
     }
@@ -1047,7 +1050,8 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
     SVal L = StateMgr.GetLValue(state, GetSVal(state, Base), Field);
 
     if (asLValue)
-      MakeNode(Dst, M, *I, BindExpr(state, M, L));
+      MakeNode(Dst, M, *I, BindExpr(state, M, L),
+               ProgramPoint::PostLValueKind);
     else
       EvalLoad(Dst, M, *I, state, L);
   }
@@ -2464,7 +2468,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         SVal location = GetSVal(state, Ex);
         
         if (asLValue)
-          MakeNode(Dst, U, *I, BindExpr(state, U, location));
+          MakeNode(Dst, U, *I, BindExpr(state, U, location),
+                   ProgramPoint::PostLValueKind);
         else
           EvalLoad(Dst, U, *I, state, location);
       } 
@@ -3240,6 +3245,17 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
               << GraphPrintSourceManager->getInstantiationColumnNumber(SLoc)
               << "\\l";
           }
+          
+          if (isa<PostLoad>(Loc))
+            Out << "\\lPostLoad\\l;";
+          else if (isa<PostStore>(Loc))
+            Out << "\\lPostStore\\l";
+          else if (isa<PostLValue>(Loc))
+            Out << "\\lPostLValue\\l";
+          else if (isa<PostLocationChecksSucceed>(Loc))
+            Out << "\\lPostLocationChecksSucceed\\l";
+          else if (isa<PostNullCheckFailed>(Loc))
+            Out << "\\lPostNullCheckFailed\\l";
           
           if (GraphPrintCheckerState->isImplicitNullDeref(N))
             Out << "\\|Implicit-Null Dereference.\\l";
