@@ -784,9 +784,10 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     CanonicalizeTemplateArguments(TemplateArgs, NumTemplateArgs,
                                   CanonicalTemplateArgs, Context);
 
-    // FIXME: Get the canonical template-name
+    TemplateName CanonName = Context.getCanonicalTemplateName(Name);
     QualType CanonType
-      = Context.getTemplateSpecializationType(Name, &CanonicalTemplateArgs[0],
+      = Context.getTemplateSpecializationType(CanonName, 
+                                              &CanonicalTemplateArgs[0],
                                               CanonicalTemplateArgs.size());
 
     // Build the dependent template-id type.
