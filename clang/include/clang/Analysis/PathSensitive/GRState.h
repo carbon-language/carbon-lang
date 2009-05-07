@@ -641,13 +641,19 @@ public:
 
   const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
                            bool& isFeasible) {
-    return ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
+    const GRState *state =
+      ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
+    assert(!isFeasible || state);
+    return isFeasible ? state : NULL;
   }
 
   const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
                                bool Assumption, bool& isFeasible) {
-    return ConstraintMgr->AssumeInBound(St, Idx, UpperBound, Assumption, 
-                                        isFeasible);
+    const GRState *state =
+      ConstraintMgr->AssumeInBound(St, Idx, UpperBound, Assumption, 
+                                   isFeasible);
+    assert(!isFeasible || state);
+    return isFeasible ? state : NULL;
   }
 
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) {
