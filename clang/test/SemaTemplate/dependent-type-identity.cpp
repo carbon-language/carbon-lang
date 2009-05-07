@@ -1,5 +1,12 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+// This test concerns the identity of dependent types within the
+// canonical type system. This corresponds to C++ [temp.type], which
+// specifies type equivalence within a template.
+//
+// FIXME: template template parameters
+// FIXME: members of the current instantiation
+
 namespace N {
   template<typename T>
   struct X2 {
