@@ -283,7 +283,8 @@ public:
   bool SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec);
   
   bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec);
-  
+  bool isFriendSpecified() const { return Friend_specified; }
+
   /// AddAttributes - contatenates two attribute lists. 
   /// The GCC attribute syntax allows for the following:
   ///
