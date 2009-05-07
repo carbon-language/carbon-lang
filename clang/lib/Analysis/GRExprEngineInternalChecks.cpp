@@ -14,6 +14,7 @@
 
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -35,10 +36,28 @@ ExplodedNode<GRState>* GetNode(GRExprEngine::undef_arg_iterator I) {
 }
 
 //===----------------------------------------------------------------------===//
+// Forward declarations for bug reporter visitors.
+//===----------------------------------------------------------------------===//
+
+static void registerTrackNullValue(BugReporterContext& BRC,
+                                   const ExplodedNode<GRState>* N);
+
+//===----------------------------------------------------------------------===//
 // Bug Descriptions.
 //===----------------------------------------------------------------------===//
 
 namespace {
+
+class VISIBILITY_HIDDEN BuiltinBugReport : public BugReport {
+public:
+  BuiltinBugReport(BugType& bt, const char* desc,
+                   const ExplodedNode<GRState> *n)
+  : BugReport(bt, desc, n) {}
+  
+  void registerInitialVisitors(BugReporterContext& BRC,
+                               const ExplodedNode<GRState>* N);
+};  
+  
 class VISIBILITY_HIDDEN BuiltinBug : public BugType {
   GRExprEngine &Eng;
 protected:
@@ -54,12 +73,24 @@ public:
 
   void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, Eng); }
   
-  template <typename ITER>
-  void Emit(BugReporter& BR, ITER I, ITER E) {
-    for (; I != E; ++I) BR.EmitReport(new BugReport(*this, desc.c_str(),
-                                                     GetNode(I)));
-  }  
+  virtual void registerInitialVisitors(BugReporterContext& BRC,
+                                       const ExplodedNode<GRState>* N,
+                                       BuiltinBugReport *R) {}
+  
+  template <typename ITER> void Emit(BugReporter& BR, ITER I, ITER E);
 };
+  
+  
+template <typename ITER>
+void BuiltinBug::Emit(BugReporter& BR, ITER I, ITER E) {
+  for (; I != E; ++I) BR.EmitReport(new BuiltinBugReport(*this, desc.c_str(),
+                                                         GetNode(I)));
+}  
+
+void BuiltinBugReport::registerInitialVisitors(BugReporterContext& BRC,
+                                               const ExplodedNode<GRState>* N) {
+  static_cast<BuiltinBug&>(getBugType()).registerInitialVisitors(BRC, N, this);
+}  
   
 class VISIBILITY_HIDDEN NullDeref : public BuiltinBug {
 public:
@@ -68,6 +99,12 @@ public:
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.null_derefs_begin(), Eng.null_derefs_end());
+  }
+  
+  void registerInitialVisitors(BugReporterContext& BRC,
+                               const ExplodedNode<GRState>* N,
+                               BuiltinBugReport *R) {
+    registerTrackNullValue(BRC, N);
   }
 };
   
@@ -482,6 +519,124 @@ public:
   }
 };
 } // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// Definitions for bug reporter visitors.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN TrackConstraintBRVisitor : public BugReporterVisitor {
+  SVal Constraint;
+  const bool Assumption;
+  bool isSatisfied;
+public:
+  TrackConstraintBRVisitor(SVal constraint, bool assumption)
+    : Constraint(constraint), Assumption(assumption), isSatisfied(false) {}
+    
+  PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
+                                 const ExplodedNode<GRState>* PrevN,
+                                 BugReporterContext& BRC) {
+    if (isSatisfied)
+      return NULL;
+    
+    // Check if in the previous state it was feasible for this constraint
+    // to *not* be true.
+    
+    GRStateManager &StateMgr = BRC.getStateManager();
+    bool isFeasible = false;    
+    if (StateMgr.Assume(PrevN->getState(), Constraint, !Assumption,
+                        isFeasible)) {
+      assert(isFeasible); // Eventually we don't need 'isFeasible'.
+
+      isSatisfied = true;
+      
+      // As a sanity check, make sure that the negation of the constraint
+      // was infeasible in the current state.  If it is feasible, we somehow
+      // missed the transition point.
+      isFeasible = false;
+      if (StateMgr.Assume(N->getState(), Constraint, !Assumption,
+                          isFeasible)) {
+        assert(isFeasible);
+        return NULL;
+      }
+      
+      // We found the transition point for the constraint.  We now need to
+      // pretty-print the constraint. (work-in-progress)      
+      std::string sbuf;
+      llvm::raw_string_ostream os(sbuf);
+      
+      if (isa<Loc>(Constraint)) {
+        os << "Assuming pointer value is ";
+        os << (Assumption ? "non-NULL" : "NULL");
+      }
+      
+      if (os.str().empty())
+        return NULL;
+      
+      // FIXME: Refactor this into BugReporterContext.
+      Stmt *S = 0;      
+      ProgramPoint P = N->getLocation();
+      
+      if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+        CFGBlock *BSrc = BE->getSrc();
+        S = BSrc->getTerminatorCondition();
+      }
+      else if (PostStmt *PS = dyn_cast<PostStmt>(&P)) {
+        S = PS->getStmt();
+      }
+       
+      if (!S)
+        return NULL;
+      
+      // Construct a new PathDiagnosticPiece.
+      PathDiagnosticLocation L(S, BRC.getSourceManager());
+      return new PathDiagnosticEventPiece(L, os.str());
+    }
+    
+    return NULL;
+  }  
+};
+} // end anonymous namespace
+
+static void registerTrackConstraint(BugReporterContext& BRC, SVal Constraint,
+                                    bool Assumption) {
+  BRC.addVisitor(new TrackConstraintBRVisitor(Constraint, Assumption));  
+}
+
+static void registerTrackNullValue(BugReporterContext& BRC,
+                                   const ExplodedNode<GRState>* N) {
+  
+  ProgramPoint P = N->getLocation();
+  PostStmt *PS = dyn_cast<PostStmt>(&P);
+
+  if (!PS)
+    return;
+  
+  Stmt *S = PS->getStmt();
+  
+  if (ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
+    S = AE->getBase();
+  }
+  
+  SVal V = BRC.getStateManager().GetSValAsScalarOrLoc(N->getState(), S);
+  
+  // Uncomment this to find cases where we aren't properly getting the
+  // base value that was dereferenced.
+  // assert(!V.isUnknownOrUndef());
+  
+  // For now just track when a symbolic value became null.
+  if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
+    const SubRegion *R = cast<SubRegion>(L->getRegion());
+    while (R && !isa<SymbolicRegion>(R)) {
+      R = dyn_cast<SubRegion>(R->getSuperRegion());
+    }
+    
+    if (R) {
+      assert(isa<SymbolicRegion>(R));
+      registerTrackConstraint(BRC, loc::MemRegionVal(R), false);
+    }
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Check registration.

@@ -50,7 +50,7 @@ public:
   virtual ~BugReporterVisitor();
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                          const ExplodedNode<GRState>* PrevN,
-                                         BugReporterContext& BR) = 0;
+                                         BugReporterContext& BRC) = 0;
   
   virtual bool isOwnedByReporterContext() { return true; }
 };
@@ -115,7 +115,7 @@ public:
   }
   
   // FIXME: Perhaps move this into a subclass.
-  virtual PathDiagnosticPiece* getEndPath(BugReporterContext& BR,
+  virtual PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
                                           const ExplodedNode<GRState>* N);
   
   /// getLocation - Return the "definitive" location of the reported bug.
@@ -130,15 +130,10 @@ public:
 
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
                                          const ExplodedNode<GRState>* PrevN,
-                                         BugReporterContext& BR);  
-
-  /*
-  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
-                                         const ExplodedNode<GRState>* PrevN,
-                                         const ExplodedGraph<GRState>& G,
-                                         BugReporterContext& BR,
-                                         NodeResolver& NR);
-   */
+                                         BugReporterContext& BR);
+  
+  virtual void registerInitialVisitors(BugReporterContext& BRC,
+                                       const ExplodedNode<GRState>* N) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -422,6 +417,10 @@ public:
   
   GRStateManager& getStateManager() {
     return BR.getStateManager();
+  }
+  
+  ValueManager& getValueManager() {
+    return getStateManager().getValueManager();
   }
   
   ASTContext& getASTContext() {

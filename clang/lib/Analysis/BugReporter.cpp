@@ -710,10 +710,12 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       }
     }
     
-    for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
-         E = PDB.visitor_end(); I!=E; ++I) {
-      if (PathDiagnosticPiece* p = (*I)->VisitNode(N, NextNode, PDB))
-        PD.push_front(p);
+    if (NextNode) {
+      for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
+           E = PDB.visitor_end(); I!=E; ++I) {
+        if (PathDiagnosticPiece* p = (*I)->VisitNode(N, NextNode, PDB))
+          PD.push_front(p);
+      }
     }
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
@@ -1052,53 +1054,58 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     NextNode = GetPredecessorNode(N);
     ProgramPoint P = N->getLocation();
 
-    // Block edges.
-    if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      const CFGBlock &Blk = *BE->getSrc();
-      const Stmt *Term = Blk.getTerminator();
-      
-      if (Term)
-        EB.addContext(Term);
+    do {
+      // Block edges.
+      if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+        const CFGBlock &Blk = *BE->getSrc();
+        const Stmt *Term = Blk.getTerminator();
+        
+        if (Term)
+          EB.addContext(Term);
 
-      // Are we jumping to the head of a loop?  Add a special diagnostic.
-      if (const Stmt *Loop = BE->getSrc()->getLoopTarget()) {
-        
-        PathDiagnosticLocation L(Loop, PDB.getSourceManager());
-        PathDiagnosticEventPiece *p =
-          new PathDiagnosticEventPiece(L,
-                                       "Looping back to the head of the loop");
-        
-        EB.addEdge(p->getLocation(), true);
-        PD.push_front(p);
-        
-        if (!Term) {
-          const CompoundStmt *CS = NULL;
-          if (const ForStmt *FS = dyn_cast<ForStmt>(Loop))
-            CS = dyn_cast<CompoundStmt>(FS->getBody());
-          else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
-            CS = dyn_cast<CompoundStmt>(WS->getBody());
-                   
-          if (CS)
-            EB.rawAddEdge(PathDiagnosticLocation(CS->getRBracLoc(),
-                                                 PDB.getSourceManager()));
+        // Are we jumping to the head of a loop?  Add a special diagnostic.
+        if (const Stmt *Loop = BE->getSrc()->getLoopTarget()) {
+          
+          PathDiagnosticLocation L(Loop, PDB.getSourceManager());
+          PathDiagnosticEventPiece *p =
+            new PathDiagnosticEventPiece(L,
+                                         "Looping back to the head of the loop");
+          
+          EB.addEdge(p->getLocation(), true);
+          PD.push_front(p);
+          
+          if (!Term) {
+            const CompoundStmt *CS = NULL;
+            if (const ForStmt *FS = dyn_cast<ForStmt>(Loop))
+              CS = dyn_cast<CompoundStmt>(FS->getBody());
+            else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
+              CS = dyn_cast<CompoundStmt>(WS->getBody());
+                     
+            if (CS)
+              EB.rawAddEdge(PathDiagnosticLocation(CS->getRBracLoc(),
+                                                   PDB.getSourceManager()));
+          }
         }
-      }
-            
-      continue;
-    }
-
-    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {      
-      if (const Stmt* S = BE->getFirstStmt()) {
-       if (IsControlFlowExpr(S)) {
-         // Add the proper context for '&&', '||', and '?'.
-         EB.addContext(S);
-       }
-       else
-         EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
+              
+        break;
       }
 
+      if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {      
+        if (const Stmt* S = BE->getFirstStmt()) {
+         if (IsControlFlowExpr(S)) {
+           // Add the proper context for '&&', '||', and '?'.
+           EB.addContext(S);
+         }
+         else
+           EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
+        }
+
+        break;
+      }
+    } while (0);
+    
+    if (!NextNode)
       continue;
-    }
     
     for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
          E = PDB.visitor_end(); I!=E; ++I) {
@@ -1506,7 +1513,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     PD.push_back(Piece);
   else
     return;
-
+  
+  R->registerInitialVisitors(PDB, N);
   
   switch (PDB.getGenerationScheme()) {
     case PathDiagnosticClient::Extensive:
