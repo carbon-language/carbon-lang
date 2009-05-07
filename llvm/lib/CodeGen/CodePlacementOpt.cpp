@@ -24,6 +24,8 @@ using namespace llvm;
 
 namespace {
   class CodePlacementOpt : public MachineFunctionPass {
+    const MachineLoopInfo *MLI;
+
   public:
     static char ID;
     CodePlacementOpt() : MachineFunctionPass(&ID) {}
@@ -39,6 +41,9 @@ namespace {
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
+
+  private:
+    bool AlignLoops(MachineFunction &MF);
   };
 
   char CodePlacementOpt::ID = 0;
@@ -48,12 +53,9 @@ FunctionPass *llvm::createCodePlacementOptPass() {
   return new CodePlacementOpt();
 }
 
-bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
-  const MachineLoopInfo *MLI = &getAnalysis<MachineLoopInfo>();
-
-  if (MLI->empty())
-    return false;  // No loops.
-
+/// AlignLoops - Align loop headers to target preferred alignments.
+///
+bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
   const TargetLowering *TLI = MF.getTarget().getTargetLowering();
   if (!TLI)
     return false;
@@ -66,6 +68,7 @@ bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
   if (F->hasFnAttr(Attribute::OptimizeForSize))
     return false;
 
+  bool Changed = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = I;
     if (MLI->isLoopHeader(MBB)) {
@@ -75,8 +78,20 @@ bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
         // to prevent adding noop's inside a loop.
         continue;
       MBB->setAlignment(Align);
+      Changed = true;
     }
   }
 
-  return true;
+  return Changed;
+}
+
+bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
+  MLI = &getAnalysis<MachineLoopInfo>();
+  if (MLI->empty())
+    return false;  // No loops.
+
+  bool Changed = false;
+  Changed |= AlignLoops(MF);
+
+  return Changed;
 }
