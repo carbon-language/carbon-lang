@@ -1,7 +1,21 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+namespace N {
+  template<typename T>
+  struct X2 {
+    template<typename U>
+    struct apply {
+      typedef U* type;
+    };
+  };
+}
+
+namespace Nalias = N;
+
 template<typename T>
 struct X0 { };
+
+using namespace N;
 
 template<typename T, typename U>
 struct X1 {
@@ -34,4 +48,19 @@ struct X1 {
   void f5(typename U::template apply<T>::type*);
   void f5(typename type::template apply<T>::type*);
   void f5(typename type::template apply<U_type>::type*); // expected-error{{redeclar}}
+
+  void f6(typename N::X2<T>::template apply<U> *); // expected-note{{previous}}
+  void f6(typename N::X2<U>::template apply<U> *);
+  void f6(typename N::X2<U>::template apply<T> *);
+  void f6(typename ::N::X2<type>::template apply<U_type> *); // expected-error{{redeclar}}
+
+  void f7(typename N::X2<T>::template apply<U> *); // expected-note{{previous}}
+  void f7(typename N::X2<U>::template apply<U> *);
+  void f7(typename N::X2<U>::template apply<T> *);
+  void f7(typename X2<type>::template apply<U_type> *); // expected-error{{redeclar}}
+
+  void f8(typename N::X2<T>::template apply<U> *); // expected-note{{previous}}
+  void f8(typename N::X2<U>::template apply<U> *);
+  void f8(typename N::X2<U>::template apply<T> *);
+  void f8(typename ::Nalias::X2<type>::template apply<U_type> *); // expected-error{{redeclar}}
 };
