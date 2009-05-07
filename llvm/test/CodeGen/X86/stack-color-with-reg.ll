@@ -1,6 +1,7 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10 -relocation-model=pic -disable-fp-elim -O3 -stats -info-output-file - > %t
 ; RUN:   grep stackcoloring %t | grep "loads eliminated" 
 ; RUN:   grep stackcoloring %t | grep "stores eliminated"
+; XFAIL: *
 
 	type { [62 x %struct.Bitvec*] }		; type %0
 	type { i8* }		; type %1

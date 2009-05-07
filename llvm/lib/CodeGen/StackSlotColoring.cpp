@@ -37,22 +37,21 @@ DisableSharing("no-stack-slot-sharing",
              cl::desc("Suppress slot sharing during stack coloring"));
 
 static cl::opt<bool>
-ColorWithRegsOpt("color-ss-with-regs",
-                 cl::init(false), cl::Hidden,
-                 cl::desc("Color stack slots with free registers"));
+ColorWithRegs("color-ss-with-regs",
+             cl::init(false), cl::Hidden,
+             cl::desc("Color stack slots with free registers"));
 
 
 static cl::opt<int> DCELimit("ssc-dce-limit", cl::init(-1), cl::Hidden);
 
 STATISTIC(NumEliminated, "Number of stack slots eliminated due to coloring");
 STATISTIC(NumRegRepl,    "Number of stack slot refs replaced with reg refs");
-STATISTIC(NumLoadElim,   "Number of loads eliminated");
+STATISTIC(NumLoadElim,   "Number of load eliminated");
 STATISTIC(NumStoreElim,  "Number of stores eliminated");
 STATISTIC(NumDead,       "Number of trivially dead stack accesses eliminated");
 
 namespace {
   class VISIBILITY_HIDDEN StackSlotColoring : public MachineFunctionPass {
-    bool ColorWithRegs;
     LiveStacks* LS;
     VirtRegMap* VRM;
     MachineFrameInfo *MFI;
@@ -90,10 +89,7 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    StackSlotColoring() :
-      MachineFunctionPass(&ID), ColorWithRegs(false), NextColor(-1) {}
-    StackSlotColoring(bool RegColor) :
-      MachineFunctionPass(&ID), ColorWithRegs(RegColor), NextColor(-1) {}
+    StackSlotColoring() : MachineFunctionPass(&ID), NextColor(-1) {}
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveStacks>();
@@ -140,8 +136,8 @@ char StackSlotColoring::ID = 0;
 static RegisterPass<StackSlotColoring>
 X("stack-slot-coloring", "Stack Slot Coloring");
 
-FunctionPass *llvm::createStackSlotColoringPass(bool RegColor) {
-  return new StackSlotColoring(RegColor);
+FunctionPass *llvm::createStackSlotColoringPass() {
+  return new StackSlotColoring();
 }
 
 namespace {
@@ -235,7 +231,7 @@ bool
 StackSlotColoring::ColorSlotsWithFreeRegs(SmallVector<int, 16> &SlotMapping,
                                    SmallVector<SmallVector<int, 4>, 16> &RevMap,
                                    BitVector &SlotIsReg) {
-  if (!(ColorWithRegs || ColorWithRegsOpt) || !VRM->HasUnusedRegisters())
+  if (!ColorWithRegs || !VRM->HasUnusedRegisters())
     return false;
 
   bool Changed = false;
@@ -243,9 +239,7 @@ StackSlotColoring::ColorSlotsWithFreeRegs(SmallVector<int, 16> &SlotMapping,
   for (unsigned i = 0, e = SSIntervals.size(); i != e; ++i) {
     LiveInterval *li = SSIntervals[i];
     int SS = li->getStackSlotIndex();
-    if (!UsedColors[SS] || li->weight < 20)
-      // If the weight is < 20, i.e. two references in a loop with depth 1,
-      // don't bother with it.
+    if (!UsedColors[SS])
       continue;
 
     // These slots allow to share the same registers.
@@ -478,9 +472,6 @@ void StackSlotColoring::RewriteInstruction(MachineInstr *MI, int OldFI,
 bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
                                           MachineBasicBlock *MBB,
                                           unsigned OldReg, unsigned NewReg) {
-  if (MII == MBB->begin())
-    return false;
-
   SmallVector<MachineOperand*, 4> Refs;
   while (--MII != MBB->begin()) {
     bool FoundDef = false;  // Not counting 2address def.
@@ -531,9 +522,6 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
 bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
                                          MachineBasicBlock *MBB,
                                          unsigned OldReg, unsigned NewReg) {
-  if (MII == MBB->end())
-    return false;
-
   SmallVector<MachineOperand*, 4> Uses;
   while (++MII != MBB->end()) {
     bool FoundUse = false;
