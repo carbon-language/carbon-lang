@@ -226,7 +226,7 @@ namespace {
     unsigned getReg(MachineBasicBlock &MBB, MachineInstr *MI,
                     unsigned VirtReg, bool NoFree = false);
 
-    /// reloadVirtReg - This method transforms the specified specified virtual
+    /// reloadVirtReg - This method transforms the specified virtual
     /// register use to refer to a physical register.  This method may do this
     /// in one of several ways: if the register is available in a physical
     /// register already, it uses that physical register.  If the value is not
