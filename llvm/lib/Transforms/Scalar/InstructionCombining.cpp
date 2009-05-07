@@ -12770,7 +12770,9 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       continue;
     }
 
-    if (TD && I->getType()->getTypeID() == Type::VoidTyID) {
+    if (TD &&
+        (I->getType()->getTypeID() == Type::VoidTyID ||
+         I->isTrapping())) {
       // See if we can constant fold its operands.
       for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
         if (ConstantExpr *CE = dyn_cast<ConstantExpr>(i))
