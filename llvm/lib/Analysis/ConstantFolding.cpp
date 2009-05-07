@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/SmallVector.h"
@@ -383,12 +384,43 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
     // the int size is >= the ptr size.  This requires knowing the width of a
     // pointer, so it can't be done in ConstantExpr::getCast.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
-      if (TD && CE->getOpcode() == Instruction::PtrToInt &&
+      if (TD &&
           TD->getPointerSizeInBits() <=
           CE->getType()->getPrimitiveSizeInBits()) {
-        Constant *Input = CE->getOperand(0);
-        Constant *C = FoldBitCast(Input, DestTy, *TD);
-        return C ? C : ConstantExpr::getBitCast(Input, DestTy);
+        if (CE->getOpcode() == Instruction::PtrToInt) {
+          Constant *Input = CE->getOperand(0);
+          Constant *C = FoldBitCast(Input, DestTy, *TD);
+          return C ? C : ConstantExpr::getBitCast(Input, DestTy);
+        }
+        // If there's a constant offset added to the integer value before
+        // it is casted back to a pointer, see if the expression can be
+        // converted into a GEP.
+        if (CE->getOpcode() == Instruction::Add)
+          if (ConstantInt *L = dyn_cast<ConstantInt>(CE->getOperand(0)))
+            if (ConstantExpr *R = dyn_cast<ConstantExpr>(CE->getOperand(1)))
+              if (R->getOpcode() == Instruction::PtrToInt)
+                if (GlobalVariable *GV =
+                      dyn_cast<GlobalVariable>(R->getOperand(0))) {
+                  const PointerType *GVTy = cast<PointerType>(GV->getType());
+                  if (const ArrayType *AT =
+                        dyn_cast<ArrayType>(GVTy->getElementType())) {
+                    const Type *ElTy = AT->getElementType();
+                    uint64_t PaddedSize = TD->getTypePaddedSize(ElTy);
+                    APInt PSA(L->getValue().getBitWidth(), PaddedSize);
+                    if (ElTy == cast<PointerType>(DestTy)->getElementType() &&
+                        L->getValue().urem(PSA) == 0) {
+                      APInt ElemIdx = L->getValue().udiv(PSA);
+                      if (ElemIdx.ult(APInt(ElemIdx.getBitWidth(),
+                                            AT->getNumElements()))) {
+                        Constant *Index[] = {
+                          Constant::getNullValue(CE->getType()),
+                          ConstantInt::get(ElemIdx)
+                        };
+                        return ConstantExpr::getGetElementPtr(GV, &Index[0], 2);
+                      }
+                    }
+                  }
+                }
       }
     }
     return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
