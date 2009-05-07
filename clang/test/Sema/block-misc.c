@@ -180,3 +180,8 @@ void test17() {
   (void)(1 < bp); // expected-error {{invalid operands to binary expression}}
   (void)(0 < bp); // expected-error {{invalid operands to binary expression}}
 }
+
+void test18() {
+  void (^const  blockA)(void) = ^{ };
+  blockA = ^{ }; // expected-error {{read-only variable is not assignable}}
+}

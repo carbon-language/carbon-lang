@@ -666,12 +666,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       if (!LangOpts.Blocks)
         Diag(DeclType.Loc, diag::err_blocks_disable);
         
-      if (DeclType.Cls.TypeQuals)
-        Diag(D.getIdentifierLoc(), diag::err_qualified_block_pointer_type);
       if (!T.getTypePtr()->isFunctionType())
         Diag(D.getIdentifierLoc(), diag::err_nonfunction_block_type);
       else
-        T = Context.getBlockPointerType(T);
+        T = (Context.getBlockPointerType(T)
+             .getQualifiedType(DeclType.Cls.TypeQuals));
       break;
     case DeclaratorChunk::Pointer:
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
