@@ -275,7 +275,7 @@ public:
 
     if (curField->isBitField()) {
       // Create a dummy struct for bit-field insertion
-      unsigned NumElts = CGM.getTargetData().getTypePaddedSize(Ty) / 8;
+      unsigned NumElts = CGM.getTargetData().getTypePaddedSize(Ty);
       llvm::Constant* NV = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
       std::vector<llvm::Constant*> Elts(NumElts, NV);
 
