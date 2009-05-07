@@ -1075,6 +1075,13 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
         Diag(AtClassLoc, diag::err_redefinition_different_kind) << IdentList[i];
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
       }
+      else if (TDD) {
+        // a forward class declaration matching a typedef name of a class
+        // refers to the underlying class.
+        if (ObjCInterfaceType * OI = 
+              dyn_cast<ObjCInterfaceType>(TDD->getUnderlyingType()))
+          PrevDecl = OI->getDecl();
+      }
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
