@@ -316,7 +316,7 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
   return this;
 }
 
-bool SCEVCommutativeExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (!getOperand(i)->dominates(BB, DT))
       return false;
@@ -358,15 +358,6 @@ SCEVAddRecExpr::~SCEVAddRecExpr() {
   std::vector<const SCEV*> SCEVOps(Operands.begin(), Operands.end());
   SCEVAddRecExprs->erase(std::make_pair(L, SCEVOps));
 }
-
-bool SCEVAddRecExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (!getOperand(i)->dominates(BB, DT))
-      return false;
-  }
-  return true;
-}
-
 
 SCEVHandle SCEVAddRecExpr::
 replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,

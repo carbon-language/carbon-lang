@@ -194,20 +194,13 @@ namespace llvm {
   };
 
 
-  //===--------------------------------------------------------------------===//
-  /// SCEVCommutativeExpr - This node is the base class for n'ary commutative
-  /// operators.
-  ///
-  class SCEVCommutativeExpr : public SCEV {
+  class SCEVNAryExpr : public SCEV {
+  protected:
     std::vector<SCEVHandle> Operands;
 
-  protected:
-    SCEVCommutativeExpr(enum SCEVTypes T, const std::vector<SCEVHandle> &ops)
-      : SCEV(T) {
-      Operands.reserve(ops.size());
-      Operands.insert(Operands.end(), ops.begin(), ops.end());
-    }
-    ~SCEVCommutativeExpr();
+    SCEVNAryExpr(enum SCEVTypes T, const std::vector<SCEVHandle> &ops)
+      : SCEV(T), Operands(ops) {}
+    virtual ~SCEVNAryExpr() {}
 
   public:
     unsigned getNumOperands() const { return (unsigned)Operands.size(); }
@@ -220,7 +213,6 @@ namespace llvm {
     typedef std::vector<SCEVHandle>::const_iterator op_iterator;
     op_iterator op_begin() const { return Operands.begin(); }
     op_iterator op_end() const { return Operands.end(); }
-
 
     virtual bool isLoopInvariant(const Loop *L) const {
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
@@ -243,15 +235,38 @@ namespace llvm {
       return HasVarying;
     }
 
+    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
+
+    virtual const Type *getType() const { return getOperand(0)->getType(); }
+
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const SCEVNAryExpr *S) { return true; }
+    static inline bool classof(const SCEV *S) {
+      return S->getSCEVType() == scAddExpr ||
+             S->getSCEVType() == scMulExpr ||
+             S->getSCEVType() == scSMaxExpr ||
+             S->getSCEVType() == scUMaxExpr ||
+             S->getSCEVType() == scAddRecExpr;
+    }
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// SCEVCommutativeExpr - This node is the base class for n'ary commutative
+  /// operators.
+  ///
+  class SCEVCommutativeExpr : public SCEVNAryExpr {
+  protected:
+    SCEVCommutativeExpr(enum SCEVTypes T, const std::vector<SCEVHandle> &ops)
+      : SCEVNAryExpr(T, ops) {}
+    ~SCEVCommutativeExpr();
+
+  public:
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
                                                  ScalarEvolution &SE) const;
 
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
-
     virtual const char *getOperationStr() const = 0;
 
-    virtual const Type *getType() const { return getOperand(0)->getType(); }
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -364,29 +379,22 @@ namespace llvm {
   ///
   /// All operands of an AddRec are required to be loop invariant.
   ///
-  class SCEVAddRecExpr : public SCEV {
+  class SCEVAddRecExpr : public SCEVNAryExpr {
     friend class ScalarEvolution;
 
-    std::vector<SCEVHandle> Operands;
     const Loop *L;
 
     SCEVAddRecExpr(const std::vector<SCEVHandle> &ops, const Loop *l)
-      : SCEV(scAddRecExpr), Operands(ops), L(l) {
+      : SCEVNAryExpr(scAddRecExpr, ops), L(l) {
       for (size_t i = 0, e = Operands.size(); i != e; ++i)
         assert(Operands[i]->isLoopInvariant(l) &&
                "Operands of AddRec must be loop-invariant!");
     }
     ~SCEVAddRecExpr();
-  public:
-    typedef std::vector<SCEVHandle>::const_iterator op_iterator;
-    op_iterator op_begin() const { return Operands.begin(); }
-    op_iterator op_end() const { return Operands.end(); }
 
-    unsigned getNumOperands() const { return (unsigned)Operands.size(); }
-    const SCEVHandle &getOperand(unsigned i) const { return Operands[i]; }
+  public:
     const SCEVHandle &getStart() const { return Operands[0]; }
     const Loop *getLoop() const { return L; }
-
 
     /// getStepRecurrence - This method constructs and returns the recurrence
     /// indicating how much this expression steps by.  If this is a polynomial
@@ -403,8 +411,6 @@ namespace llvm {
     }
 
     virtual bool isLoopInvariant(const Loop *QueryLoop) const;
-
-    virtual const Type *getType() const { return Operands[0]->getType(); }
 
     /// isAffine - Return true if this is an affine AddRec (i.e., it represents
     /// an expressions A+B*x where A and B are loop invariant values.
@@ -437,8 +443,6 @@ namespace llvm {
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
                                                  ScalarEvolution &SE) const;
-
-    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual void print(raw_ostream &OS) const;
 
