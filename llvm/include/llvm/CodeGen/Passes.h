@@ -191,7 +191,7 @@ namespace llvm {
   FunctionPass *createMachineSinkingPass();
 
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
-  FunctionPass *createStackSlotColoringPass();
+  FunctionPass *createStackSlotColoringPass(bool);
 
   /// createStackProtectorPass - This pass adds stack protectors to functions.
   FunctionPass *createStackProtectorPass(const TargetLowering *tli);
