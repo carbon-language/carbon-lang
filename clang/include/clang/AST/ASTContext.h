@@ -604,6 +604,26 @@ public:
   NestedNameSpecifier *
   getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS);
 
+  /// \brief Retrieves the "canonical" template name that refers to a
+  /// given template.
+  ///
+  /// The canonical template name is the simplest expression that can
+  /// be used to refer to a given template. For most templates, this
+  /// expression is just the template declaration itself. For example,
+  /// the template std::vector can be referred to via a variety of
+  /// names---std::vector, ::std::vector, vector (if vector is in
+  /// scope), etc.---but all of these names map down to the same
+  /// TemplateDecl, which is used to form the canonical template name.
+  ///
+  /// Dependent template names are more interesting. Here, the
+  /// template name could be something like T::template apply or
+  /// std::allocator<T>::template rebind, where the nested name
+  /// specifier itself is dependent. In this case, the canonical
+  /// template name uses the shortest form of the dependent
+  /// nested-name-specifier, which itself contains all canonical
+  /// types, values, and templates.
+  TemplateName getCanonicalTemplateName(TemplateName Name);
+
   /// Type Query functions.  If the type is an instance of the specified class,
   /// return the Type pointer for the underlying maximally pretty type.  This
   /// is a member of ASTContext because this may need to do some amount of

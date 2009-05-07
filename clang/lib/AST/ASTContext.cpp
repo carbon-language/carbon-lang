@@ -1700,6 +1700,17 @@ QualType ASTContext::getCanonicalType(QualType T) {
                               VAT->getIndexTypeQualifier());
 }
 
+TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
+  // If this template name refers to a template, the canonical
+  // template name merely stores the template itself.
+  if (TemplateDecl *Template = Name.getAsTemplateDecl())
+    return TemplateName(Template);
+
+  DependentTemplateName *DTN = Name.getAsDependentTemplateName();
+  assert(DTN && "Non-dependent template names must refer to template decls.");
+  return DTN->CanonicalTemplateName;
+}
+
 NestedNameSpecifier *
 ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
   if (!NNS) 

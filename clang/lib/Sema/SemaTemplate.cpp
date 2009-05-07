@@ -818,8 +818,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     // A<T, T> have identical types when A is declared as:
     //
     //   template<typename T, typename U = T> struct A;
-
-    CanonType = Context.getTemplateSpecializationType(Name, 
+    TemplateName CanonName = Context.getCanonicalTemplateName(Name);
+    CanonType = Context.getTemplateSpecializationType(CanonName, 
                                                     &ConvertedTemplateArgs[0],
                                                 ConvertedTemplateArgs.size());
   } else if (ClassTemplateDecl *ClassTemplate 
