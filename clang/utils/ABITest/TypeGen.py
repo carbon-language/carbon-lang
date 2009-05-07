@@ -4,7 +4,7 @@ from Enumeration import *
 
 # TODO:
 
-#  - struct improvements (bitfields, flexible arrays, packed &
+#  - struct improvements (flexible arrays, packed &
 #    unpacked, alignment)
 #  - objective-c qualified id
 #  - anonymous / transparent unions
@@ -17,10 +17,28 @@ from Enumeration import *
 ###
 # Actual type types
 
-class BuiltinType:
-    def __init__(self, name, size):
+class Type:
+    def isBitField(self):
+        return False
+
+    def isPaddingBitField(self):
+        return False
+
+class BuiltinType(Type):
+    def __init__(self, name, size, bitFieldSize=None):
         self.name = name
         self.size = size
+        self.bitFieldSize = bitFieldSize
+
+    def isBitField(self):
+        return self.bitFieldSize is not None
+
+    def isPaddingBitField(self):
+        return self.bitFieldSize is 0
+
+    def getBitFieldSize(self):
+        assert self.isBitField()
+        return self.bitFieldSize
 
     def sizeof(self):
         return self.size
@@ -28,24 +46,39 @@ class BuiltinType:
     def __str__(self):
         return self.name
 
-class RecordType:
+class RecordType(Type):
     def __init__(self, index, isUnion, fields):
         self.index = index
         self.isUnion = isUnion
         self.fields = fields
         self.name = None
 
-    def __str__(self):        
+    def __str__(self):
+        def getField(t):
+            if t.isBitField():
+                return "%s : %d;" % (t, t.getBitFieldSize())
+            else:
+                return "%s;" % t
+
         return '%s { %s }'%(('struct','union')[self.isUnion],
-                            ' '.join(['%s;'%f for f in self.fields]))
+                            ' '.join(map(getField, self.fields)))
 
     def getTypedefDef(self, name, printer):
-        fields = ['%s field%d;'%(printer.getTypeName(t),i) for i,t in enumerate(self.fields)]
+        def getField((i, t)):
+            if t.isBitField():
+                if t.isPaddingBitField():
+                    return '%s : 0;'%(printer.getTypeName(t),)
+                else:
+                    return '%s field%d : %d;'%(printer.getTypeName(t),i,
+                                               t.getBitFieldSize())
+            else:
+                return '%s field%d;'%(printer.getTypeName(t),i)
+        fields = map(getField, enumerate(self.fields))
         # Name the struct for more readable LLVM IR.
         return 'typedef %s %s { %s } %s;'%(('struct','union')[self.isUnion],
                                            name, ' '.join(fields), name)
                                            
-class ArrayType:
+class ArrayType(Type):
     def __init__(self, index, isVector, elementType, size):
         if isVector:
             # Note that for vectors, this is the size in bytes.
@@ -84,7 +117,7 @@ class ArrayType:
                 sizeStr = str(self.size)
             return 'typedef %s %s[%s];'%(elementName, name, sizeStr)
 
-class ComplexType:
+class ComplexType(Type):
     def __init__(self, index, elementType):
         self.index = index
         self.elementType = elementType
@@ -95,7 +128,7 @@ class ComplexType:
     def getTypedefDef(self, name, printer):
         return 'typedef _Complex %s %s;'%(printer.getTypeName(self.elementType), name)
 
-class FunctionType:
+class FunctionType(Type):
     def __init__(self, index, returnType, argTypes):
         self.index = index
         self.returnType = returnType
@@ -317,17 +350,31 @@ class AnyTypeGenerator(TypeGenerator):
         return self.generators[index].get(M)
 
 def test():
+    fbtg = FixedTypeGenerator([BuiltinType('char', 4),
+                               BuiltinType('char', 4, 0),
+                               BuiltinType('int',  4, 5)])
+
+    fields1 = AnyTypeGenerator()
+    fields1.addGenerator( fbtg )
+
+    fields0 = AnyTypeGenerator()
+    fields0.addGenerator( fbtg )
+#    fields0.addGenerator( RecordTypeGenerator(fields1, False, 4) )
+
+    btg = FixedTypeGenerator([BuiltinType('char', 4),
+                              BuiltinType('int',  4)])
+    
     atg = AnyTypeGenerator()
-    btg = FixedTypeGenerator([BuiltinType('int',4),
-                              BuiltinType('float',4)])
     atg.addGenerator( btg )
-    atg.addGenerator( ComplexTypeGenerator(btg) )
-    atg.addGenerator( RecordTypeGenerator(atg, True, 2) )
-    atg.addGenerator( VectorTypeGenerator(btg, (4,8)) )
-    atg.addGenerator( ArrayTypeGenerator(btg, 4) )
-    atg.addGenerator( FunctionTypeGenerator(btg, False, 2) )
+    atg.addGenerator( RecordTypeGenerator(fields0, False, 4) )
     print 'Cardinality:',atg.cardinality
     for i in range(100):
+        if i == atg.cardinality:
+            try:
+                atg.get(i)
+                raise RuntimeError,"Cardinality was wrong"
+            except AssertionError:
+                break
         print '%4d: %s'%(i, atg.get(i))
 
 if __name__ == '__main__':
