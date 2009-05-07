@@ -654,6 +654,9 @@ ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
 #include "Analyses.def"
       default: break;
     }
+  
+  // Last, disable the effects of '-Werror' when using the AnalysisConsumer.
+  diags.setWarningsAsErrors(false);
 
   return C.take();
 }
