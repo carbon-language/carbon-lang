@@ -453,7 +453,7 @@ public:
   }
   
   GRStateManager& getStateManager() { return StateMgr; }
-  const GRStateManager& getStateManger() const { return StateMgr; }
+  const GRStateManager& getStateManager() const { return StateMgr; }
 
   StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }
   
