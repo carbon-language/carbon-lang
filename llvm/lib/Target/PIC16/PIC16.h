@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include <iosfwd>
 #include <cassert>
+#include <cstring>
 #include <string>
 
 namespace llvm {
