@@ -120,10 +120,13 @@ struct { struct {} a; struct { float a[1]; } b; } f25(void) {}
 // Small structures are handled recursively
 // RUN: grep -F 'i32 @f26()' %t &&
 // RUN: grep 'void @f27(%.truct.s27\* noalias sret %agg.result)' %t &&
-struct s26 { struct { char a, b; } a; struct { char a, b } b; } f26(void) {}
-struct s27 { struct { char a, b, c; } a; struct { char a } b; } f27(void) {}
+struct s26 { struct { char a, b; } a; struct { char a, b; } b; } f26(void) {}
+struct s27 { struct { char a, b, c; } a; struct { char a; } b; } f27(void) {}
 
 // RUN: grep 'void @f28(%.truct.s28\* noalias sret %agg.result)' %t &&
-struct s28 { int a; int b[] } f28(void) {}
+struct s28 { int a; int b[]; } f28(void) {}
+
+// RUN: grep 'define i16 @f29()' %t &&
+struct s29 { struct { } a[1]; char b; char c; } f29(void) {}
 
 // RUN: true

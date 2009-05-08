@@ -350,6 +350,13 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
     if (isEmptyRecord(Context, FD->getType()))
       continue;
 
+    // As are arrays of empty structures, but not generally, so we
+    // can't add this test higher in this routine.
+    if (const ConstantArrayType *AT = 
+        Context.getAsConstantArrayType(FD->getType()))
+      if (isEmptyRecord(Context, AT->getElementType()))
+        continue;
+
     // Check fields recursively.
     if (!shouldReturnTypeInRegister(FD->getType(), Context))
       return false;
