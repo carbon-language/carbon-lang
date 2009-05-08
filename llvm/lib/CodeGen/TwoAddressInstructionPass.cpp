@@ -935,6 +935,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             ++NumReMats;
           } else {
             bool Emitted = TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+            (void)Emitted;
             assert(Emitted && "Unable to issue a copy instruction!\n");
           }
 
