@@ -88,10 +88,8 @@ public:
   /// U can be folded during instruction selection that starts at Root and
   /// folding N is profitable.
   virtual
-  bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U, SDNode *Root) const {
-    return true;
-  }
-  
+  bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U, SDNode *Root) const;
+
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
   virtual ScheduleHazardRecognizer *CreateTargetHazardRecognizer();

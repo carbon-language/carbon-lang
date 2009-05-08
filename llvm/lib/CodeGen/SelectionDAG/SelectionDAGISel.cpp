@@ -1203,4 +1203,120 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
     Ops.push_back(InOps.back());
 }
 
+/// findFlagUse - Return use of MVT::Flag value produced by the specified
+/// SDNode.
+///
+static SDNode *findFlagUse(SDNode *N) {
+  unsigned FlagResNo = N->getNumValues()-1;
+  for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
+    SDUse &Use = I.getUse();
+    if (Use.getResNo() == FlagResNo)
+      return Use.getUser();
+  }
+  return NULL;
+}
+
+/// findNonImmUse - Return true if "Use" is a non-immediate use of "Def".
+/// This function recursively traverses up the operand chain, ignoring
+/// certain nodes.
+static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
+                          SDNode *Root,
+                          SmallPtrSet<SDNode*, 16> &Visited) {
+  if (Use->getNodeId() < Def->getNodeId() ||
+      !Visited.insert(Use))
+    return false;
+
+  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
+    SDNode *N = Use->getOperand(i).getNode();
+    if (N == Def) {
+      if (Use == ImmedUse || Use == Root)
+        continue;  // We are not looking for immediate use.
+      assert(N != Root);
+      return true;
+    }
+
+    // Traverse up the operand chain.
+    if (findNonImmUse(N, Def, ImmedUse, Root, Visited))
+      return true;
+  }
+  return false;
+}
+
+/// isNonImmUse - Start searching from Root up the DAG to check is Def can
+/// be reached. Return true if that's the case. However, ignore direct uses
+/// by ImmedUse (which would be U in the example illustrated in
+/// IsLegalAndProfitableToFold) and by Root (which can happen in the store
+/// case).
+/// FIXME: to be really generic, we should allow direct use by any node
+/// that is being folded. But realisticly since we only fold loads which
+/// have one non-chain use, we only need to watch out for load/op/store
+/// and load/op/cmp case where the root (store / cmp) may reach the load via
+/// its chain operand.
+static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
+  SmallPtrSet<SDNode*, 16> Visited;
+  return findNonImmUse(Root, Def, ImmedUse, Root, Visited);
+}
+
+/// IsLegalAndProfitableToFold - Returns true if the specific operand node N of
+/// U can be folded during instruction selection that starts at Root and
+/// folding N is profitable.
+bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
+                                                  SDNode *Root) const {
+  if (OptLevel == CodeGenOpt::None) return false;
+
+  // If Root use can somehow reach N through a path that that doesn't contain
+  // U then folding N would create a cycle. e.g. In the following
+  // diagram, Root can reach N through X. If N is folded into into Root, then
+  // X is both a predecessor and a successor of U.
+  //
+  //          [N*]           //
+  //         ^   ^           //
+  //        /     \          //
+  //      [U*]    [X]?       //
+  //        ^     ^          //
+  //         \   /           //
+  //          \ /            //
+  //         [Root*]         //
+  //
+  // * indicates nodes to be folded together.
+  //
+  // If Root produces a flag, then it gets (even more) interesting. Since it
+  // will be "glued" together with its flag use in the scheduler, we need to
+  // check if it might reach N.
+  //
+  //          [N*]           //
+  //         ^   ^           //
+  //        /     \          //
+  //      [U*]    [X]?       //
+  //        ^       ^        //
+  //         \       \       //
+  //          \      |       //
+  //         [Root*] |       //
+  //          ^      |       //
+  //          f      |       //
+  //          |      /       //
+  //         [Y]    /        //
+  //           ^   /         //
+  //           f  /          //
+  //           | /           //
+  //          [FU]           //
+  //
+  // If FU (flag use) indirectly reaches N (the load), and Root folds N
+  // (call it Fold), then X is a predecessor of FU and a successor of
+  // Fold. But since Fold and FU are flagged together, this will create
+  // a cycle in the scheduling graph.
+
+  MVT VT = Root->getValueType(Root->getNumValues()-1);
+  while (VT == MVT::Flag) {
+    SDNode *FU = findFlagUse(Root);
+    if (FU == NULL)
+      break;
+    Root = FU;
+    VT = Root->getValueType(Root->getNumValues()-1);
+  }
+
+  return !isNonImmUse(Root, N, U);
+}
+
+
 char SelectionDAGISel::ID = 0;
