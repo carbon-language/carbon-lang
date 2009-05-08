@@ -17,16 +17,20 @@
 #include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
+
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
+
 #include <map>
 
 
@@ -1109,12 +1113,235 @@ llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
 
 void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                           const Stmt &S) {
-  CGF.ErrorUnsupported(&S, "@try/@synchronized statement");
+  // Pointer to the personality function
+  llvm::Constant *Personality =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+          std::vector<const llvm::Type*>(), true),
+        "__gnu_objc_personality_v0");
+  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrTy);
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(PtrTy);
+  llvm::Value *RethrowFn =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+          Params, false), "_Unwind_Resume_or_Rethrow");
+
+  bool isTry = isa<ObjCAtTryStmt>(S);
+  llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
+  llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
+  llvm::BasicBlock *TryHandler = CGF.createBasicBlock("try.handler");
+  llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
+  llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
+  llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
+
+  // GNU runtime does not currently support @synchronized()
+  if (!isTry) {
+    CGF.ErrorUnsupported(&S, "@synchronized statement");
+  }
+
+  // Push an EH context entry, used for handling rethrows and jumps
+  // through finally.
+  CGF.PushCleanupBlock(FinallyBlock);
+
+  // Emit the statements in the @try {} block
+  CGF.setInvokeDest(TryHandler);
+
+  CGF.EmitBlock(TryBlock);
+  CGF.EmitStmt(isTry ? cast<ObjCAtTryStmt>(S).getTryBody() 
+                     : cast<ObjCAtSynchronizedStmt>(S).getSynchBody());
+
+  // Jump to @finally if there is no exception
+  CGF.EmitBranchThroughCleanup(FinallyEnd);
+
+  // Emit the handlers
+  CGF.EmitBlock(TryHandler);
+
+  llvm::Value *llvm_eh_exception = 
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *llvm_eh_selector_i64 = 
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i32);
+  llvm::Value *llvm_eh_typeid_for_i64 = 
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i32);
+
+  // Exception object
+  llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(Exc->getType(), "_rethrow");
+
+  llvm::SmallVector<llvm::Value*, 8> ESelArgs;
+  llvm::SmallVector<std::pair<const ParmVarDecl*, const Stmt*>, 8> Handlers;
+
+  ESelArgs.push_back(Exc);
+  ESelArgs.push_back(Personality);
+
+  bool HasCatchAll = false;
+  // Only @try blocks are allowed @catch blocks, but both can have @finally
+  if (isTry) {
+    if (const ObjCAtCatchStmt* CatchStmt =
+      cast<ObjCAtTryStmt>(S).getCatchStmts())  {
+
+      for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
+        const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
+        Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
+
+        // @catch() and @catch(id) both catch any ObjC exception
+        if (!CatchDecl || CGF.getContext().isObjCIdType(CatchDecl->getType())
+            || CatchDecl->getType()->isObjCQualifiedIdType()) {
+          // Use i8* null here to signal this is a catch all, not a cleanup.
+          ESelArgs.push_back(NULLPtr);
+          HasCatchAll = true;
+          // No further catches after this one will ever by reached
+          break;
+        } 
+
+        // All other types should be Objective-C interface pointer types.
+        const PointerType *PT = CatchDecl->getType()->getAsPointerType();
+        assert(PT && "Invalid @catch type.");
+        const ObjCInterfaceType *IT = 
+          PT->getPointeeType()->getAsObjCInterfaceType();
+        assert(IT && "Invalid @catch type.");
+        CGF.ErrorUnsupported(&S, "@catch block with non-id argument  statement");
+        // FIXME: This should be the Class for the corresponding interface
+        llvm::Value *EHType = NULLPtr;
+        ESelArgs.push_back(EHType);
+      }
+    }
+  }
+
+  // We use a cleanup unless there was already a catch all.
+  if (!HasCatchAll) {
+    ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    Handlers.push_back(std::make_pair((const ParmVarDecl*) 0, (const Stmt*) 0));
+  }
+
+  // Find which handler was matched.
+  llvm::Value *ESelector = CGF.Builder.CreateCall(llvm_eh_selector_i64,
+      ESelArgs.begin(), ESelArgs.end(), "selector");
+
+  for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
+    const ParmVarDecl *CatchParam = Handlers[i].first;
+    const Stmt *CatchBody = Handlers[i].second;
+
+    llvm::BasicBlock *Next = 0;
+
+    // The last handler always matches.
+    if (i + 1 != e) {
+      assert(CatchParam && "Only last handler can be a catch all.");
+
+      // Test whether this block matches the type for the selector and branch
+      // to Match if it does, or to the next BB if it doesn't.
+      llvm::BasicBlock *Match = CGF.createBasicBlock("match");
+      Next = CGF.createBasicBlock("catch.next");
+      llvm::Value *Id = CGF.Builder.CreateCall(llvm_eh_typeid_for_i64,
+          CGF.Builder.CreateBitCast(ESelArgs[i+2], PtrTy));
+      CGF.Builder.CreateCondBr(CGF.Builder.CreateICmpEQ(ESelector, Id), Match,
+          Next);
+
+      CGF.EmitBlock(Match);
+    }
+    
+    if (CatchBody) {
+      //FIXME: Do we need to reset the invoke destination here?  Exceptions in
+      //@catch {} blocks should unwind higher up.
+      
+      //FIXME: This may not be right.  The exception object is returned in
+      //__builtin_eh_return_data_regno(0), but I am not sure how to get at
+      //this in LLVM
+      llvm::Value *ExcObject = CGF.Builder.CreateBitCast(Exc,
+          CGF.ConvertType(CatchParam->getType()));
+      
+      // Bind the catch parameter if it exists.
+      if (CatchParam) {
+        // CatchParam is a ParmVarDecl because of the grammar
+        // construction used to handle this, but for codegen purposes
+        // we treat this as a local decl.
+        CGF.EmitLocalBlockVarDecl(*CatchParam);
+        CGF.Builder.CreateStore(ExcObject, CGF.GetAddrOfLocalVar(CatchParam));
+      }
+
+      CGF.ObjCEHValueStack.push_back(ExcObject);
+      CGF.EmitStmt(CatchBody);
+      CGF.ObjCEHValueStack.pop_back();
+
+      CGF.EmitBranchThroughCleanup(FinallyEnd);
+
+      if (Next)
+        CGF.EmitBlock(Next);
+    } else {
+      assert(!Next && "catchup should be last handler.");
+
+      CGF.Builder.CreateStore(Exc, RethrowPtr);
+      CGF.EmitBranchThroughCleanup(FinallyRethrow);
+    }
+  }
+  CodeGenFunction::CleanupBlockInfo Info = CGF.PopCleanupBlock();
+
+  CGF.setInvokeDest(PrevLandingPad);
+
+  CGF.EmitBlock(FinallyBlock);
+
+  if (isTry) {
+    if (const ObjCAtFinallyStmt* FinallyStmt = 
+        cast<ObjCAtTryStmt>(S).getFinallyStmt())
+      CGF.EmitStmt(FinallyStmt->getFinallyBody());
+  } else {
+    // TODO: Emit 'objc_sync_exit(expr)' as finally's sole statement for
+    // @synchronized.
+  }
+
+  if (Info.SwitchBlock)
+    CGF.EmitBlock(Info.SwitchBlock);
+  if (Info.EndBlock)
+    CGF.EmitBlock(Info.EndBlock);
+
+  // Branch around the rethrow code.
+  CGF.EmitBranch(FinallyEnd);
+
+  CGF.EmitBlock(FinallyRethrow);
+  CGF.Builder.CreateCall(RethrowFn, CGF.Builder.CreateLoad(RethrowPtr));
+  CGF.Builder.CreateUnreachable();
+  
+  CGF.EmitBlock(FinallyEnd);
+
 }
 
 void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                               const ObjCAtThrowStmt &S) {
-  CGF.ErrorUnsupported(&S, "@throw statement");
+  llvm::Value *ExceptionAsObject;
+
+  std::vector<const llvm::Type*> Args(1, IdTy);
+  llvm::FunctionType *FTy =
+    llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+  llvm::Value *ThrowFn = 
+    CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
+  
+  if (const Expr *ThrowExpr = S.getThrowExpr()) {
+    llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    ExceptionAsObject = 
+      CGF.Builder.CreateBitCast(Exception, IdTy, "tmp");
+  } else {
+    assert((!CGF.ObjCEHValueStack.empty() && CGF.ObjCEHValueStack.back()) && 
+           "Unexpected rethrow outside @catch block.");
+    ExceptionAsObject = CGF.ObjCEHValueStack.back();
+  }
+  
+  // Note: This may have to be an invoke, if we want to support constructs like:
+  // @try {
+  //  @throw(obj);
+  // }
+  // @catch(id) ...
+  //
+  // This is effectively turning @throw into an incredibly-expensive goto, but
+  // it may happen as a result of inlining followed by missed optimizations, or
+  // as a result of stupidity.
+  llvm::BasicBlock *UnwindBB = CGF.getInvokeDest();
+  if (!UnwindBB) {
+    CGF.Builder.CreateCall(ThrowFn, ExceptionAsObject);
+    CGF.Builder.CreateUnreachable();
+  } else {
+    CGF.Builder.CreateInvoke(ThrowFn, UnwindBB, UnwindBB, &ExceptionAsObject,
+        &ExceptionAsObject+1);
+  }
+  // Clear the insertion point to indicate we are in unreachable code.
+  CGF.Builder.ClearInsertionPoint();
 }
 
 llvm::Value * CGObjCGNU::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
