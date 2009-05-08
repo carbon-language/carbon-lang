@@ -293,6 +293,25 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
             << 0 << TheCall->getCallee()->getSourceRange();
   
+  
+  // Get the decl for the concrete builtin from this, we can tell what the
+  // concrete integer type we should convert to is.
+  unsigned NewBuiltinID = BuiltinIndices[BuiltinIndex][SizeIndex];
+  const char *NewBuiltinName = Context.BuiltinInfo.GetName(NewBuiltinID);
+  IdentifierInfo *NewBuiltinII = PP.getIdentifierInfo(NewBuiltinName);
+  FunctionDecl *NewBuiltinDecl = 
+    cast<FunctionDecl>(LazilyCreateBuiltin(NewBuiltinII, NewBuiltinID,
+                                           TUScope, false, DRE->getLocStart()));
+  const FunctionProtoType *BuiltinFT =
+    NewBuiltinDecl->getType()->getAsFunctionProtoType();
+  ValType = BuiltinFT->getArgType(0)->getAsPointerType()->getPointeeType();
+  
+  // If the first type needs to be converted (e.g. void** -> int*), do it now.
+  if (BuiltinFT->getArgType(0) != FirstArg->getType()) {
+    ImpCastExprToType(FirstArg, BuiltinFT->getArgType(0), false);
+    TheCall->setArg(0, FirstArg);
+  }
+  
   // Next, walk the valid ones promoting to the right type.
   for (unsigned i = 0; i != NumFixed; ++i) {
     Expr *Arg = TheCall->getArg(i+1);
@@ -321,14 +340,6 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     TheCall->setArg(i+1, Arg);
   }
   
-  // Okay, if we get here, everything is good.  Get the decl for the concrete
-  // builtin.
-  unsigned NewBuiltinID = BuiltinIndices[BuiltinIndex][SizeIndex];
-  const char *NewBuiltinName = Context.BuiltinInfo.GetName(NewBuiltinID);
-  IdentifierInfo *NewBuiltinII = PP.getIdentifierInfo(NewBuiltinName);
-  FunctionDecl *NewBuiltinDecl = 
-    cast<FunctionDecl>(LazilyCreateBuiltin(NewBuiltinII, NewBuiltinID,
-                                           TUScope, false, DRE->getLocStart()));
   // Switch the DeclRefExpr to refer to the new decl.
   DRE->setDecl(NewBuiltinDecl);
   DRE->setType(NewBuiltinDecl->getType());

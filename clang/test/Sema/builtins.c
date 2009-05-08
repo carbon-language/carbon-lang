@@ -48,5 +48,5 @@ unsigned char test9(short v) {
   
   old = __sync_fetch_and_add();  // expected-error {{too few arguments to function call}}
   old = __sync_fetch_and_add(&old);  // expected-error {{too few arguments to function call}}
-  old = __sync_fetch_and_add((int**)0, 42i); // expected-error {{operand of type '_Complex int' cannot be cast to a pointer type}} expected-warning {{imaginary constants are an extension}}
+  old = __sync_fetch_and_add((int**)0, 42i); // expected-warning {{imaginary constants are an extension}}
 }

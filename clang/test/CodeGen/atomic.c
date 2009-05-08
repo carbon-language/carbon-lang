@@ -6,7 +6,7 @@
 // RUN: grep @llvm.atomic.load.umin.i32 %t1 &&
 // RUN: grep @llvm.atomic.load.umax.i32 %t1 &&
 // RUN: grep @llvm.atomic.swap.i32 %t1 &&
-// RUN: grep @llvm.atomic.cmp.swap.i32 %t1 | count 3 &&
+// RUN: grep @llvm.atomic.cmp.swap.i32 %t1 | count 4 &&
 // RUN: grep @llvm.atomic.load.and.i32 %t1 | count 2 &&
 // RUN: grep @llvm.atomic.load.or.i8 %t1  &&
 // RUN: grep @llvm.atomic.load.xor.i8 %t1
@@ -39,6 +39,9 @@ int atomic(void)
   old = __sync_and_and_fetch(&valc, 3);
   old = __sync_or_and_fetch(&valc, 4);
   old = __sync_xor_and_fetch(&valc, 5);
+
+  
+  __sync_val_compare_and_swap((void **)0, (void *)0, (void *)0);
 
   return old;
 }
