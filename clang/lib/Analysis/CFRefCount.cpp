@@ -1361,21 +1361,24 @@ private:
   Kind kind;
   RetEffect::ObjKind okind;
   unsigned Cnt;
+  unsigned ACnt;
   QualType T;
 
-  RefVal(Kind k, RetEffect::ObjKind o, unsigned cnt, QualType t)
-    : kind(k), okind(o), Cnt(cnt), T(t) {}
+  RefVal(Kind k, RetEffect::ObjKind o, unsigned cnt, unsigned acnt, QualType t)
+    : kind(k), okind(o), Cnt(cnt), ACnt(acnt), T(t) {}
 
   RefVal(Kind k, unsigned cnt = 0)
-    : kind(k), okind(RetEffect::AnyObj), Cnt(cnt) {}
+    : kind(k), okind(RetEffect::AnyObj), Cnt(cnt), ACnt(0) {}
 
 public:    
   Kind getKind() const { return kind; }
   
   RetEffect::ObjKind getObjKind() const { return okind; }
 
-  unsigned getCount() const { return Cnt; }    
-  void clearCounts() { Cnt = 0; }
+  unsigned getCount() const { return Cnt; }
+  unsigned getAutoreleaseCount() const { return ACnt; }
+  unsigned getCombinedCounts() const { return Cnt + ACnt; }
+  void clearCounts() { Cnt = 0; ACnt = 0; }
   
   QualType getType() const { return T; }
   
@@ -1408,12 +1411,12 @@ public:
   
   static RefVal makeOwned(RetEffect::ObjKind o, QualType t,
                           unsigned Count = 1) {
-    return RefVal(Owned, o, Count, t);
+    return RefVal(Owned, o, Count, 0, t);
   }
   
   static RefVal makeNotOwned(RetEffect::ObjKind o, QualType t,
                              unsigned Count = 0) {
-    return RefVal(NotOwned, o, Count, t);
+    return RefVal(NotOwned, o, Count, 0, t);
   }
 
   static RefVal makeReturnedOwned(unsigned Count) {
@@ -1431,20 +1434,29 @@ public:
   }
   
   RefVal operator-(size_t i) const {
-    return RefVal(getKind(), getObjKind(), getCount() - i, getType());
+    return RefVal(getKind(), getObjKind(), getCount() - i,
+                  getAutoreleaseCount(), getType());
   }
   
   RefVal operator+(size_t i) const {
-    return RefVal(getKind(), getObjKind(), getCount() + i, getType());
+    return RefVal(getKind(), getObjKind(), getCount() + i,
+                  getAutoreleaseCount(), getType());
   }
   
   RefVal operator^(Kind k) const {
-    return RefVal(k, getObjKind(), getCount(), getType());
+    return RefVal(k, getObjKind(), getCount(), getAutoreleaseCount(),
+                  getType());
+  }
+  
+  RefVal autorelease() const {
+    return RefVal(getKind(), getObjKind(), getCount(), getAutoreleaseCount()+1,
+                  getType());
   }
     
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) kind);
     ID.AddInteger(Cnt);
+    ID.AddInteger(ACnt);
     ID.Add(T);
   }
 
@@ -1512,6 +1524,10 @@ void RefVal::print(std::ostream& Out) const {
     case ErrorReleaseNotOwned:
       Out << "Release of Not-Owned [ERROR]";
       break;
+  }
+  
+  if (ACnt) {
+    Out << " [ARC +" << ACnt << ']';
   }
 }
   
@@ -2102,7 +2118,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
       // We may not have transitioned to 'release' if we hit an error.
       // This case is handled elsewhere.
       if (CurrV.getKind() == RefVal::Released) {
-        assert(CurrV.getCount() == 0);
+        assert(CurrV.getCombinedCounts() == 0);
         os << "Object released by directly sending the '-dealloc' message";
         break;
       }
@@ -2148,8 +2164,15 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         case RefVal::Owned:
         case RefVal::NotOwned:
           
-          if (PrevV.getCount() == CurrV.getCount())
-            return 0;
+          if (PrevV.getCount() == CurrV.getCount()) {
+            // Did an autorelease message get sent?
+            if (PrevV.getAutoreleaseCount() == CurrV.getAutoreleaseCount())
+              return 0;
+            
+            assert(PrevV.getAutoreleaseCount() < CurrV.getAutoreleaseCount());            
+            os << "Object added to autorelease pool.";
+            break;
+          }
           
           if (PrevV.getCount() > CurrV.getCount())
             os << "Reference count decremented.";
@@ -3040,8 +3063,7 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
       
       // Update the autorelease counts.
       state = SendAutorelease(state, ARCountFactory, sym);
-
-      // Fall-through.
+      V = V.autorelease();
       
     case StopTracking:
       return state.remove<RefBindings>(sym);
