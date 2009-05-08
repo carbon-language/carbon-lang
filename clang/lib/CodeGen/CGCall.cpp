@@ -342,10 +342,6 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
          e = RT->getDecl()->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
     
-    // FIXME: Reject bit-fields wholesale for now; this is incorrect.
-    if (FD->isBitField())
-      return false;
-
     // Empty structures are ignored.
     if (isEmptyRecord(Context, FD->getType()))
       continue;
