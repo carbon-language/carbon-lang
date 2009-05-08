@@ -26,8 +26,7 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
       GetterMethod->getResultType() != property->getType()) {
     AssignConvertType result = Incompatible;
     if (Context.isObjCObjectPointerType(property->getType()))
-      result = CheckAssignmentConstraints(property->getType(), 
-                                          GetterMethod->getResultType());
+      result = CheckAssignmentConstraints(GetterMethod->getResultType(), property->getType());
     if (result != Compatible) {
       Diag(Loc, diag::warn_accessor_property_type_mismatch) 
         << property->getDeclName()
