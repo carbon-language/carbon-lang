@@ -424,10 +424,11 @@ Sema::ExprResult Sema::ActOnClassMessage(
   QualType returnType;
   if (ClassDecl->isForwardDecl()) {
     // A forward class used in messaging is tread as a 'Class'
+    Diag(lbrac, diag::warn_receiver_forward_class) << ClassDecl->getDeclName();
     Method = LookupFactoryMethodInGlobalPool(Sel, SourceRange(lbrac,rbrac));
     if (Method)
-      Diag(lbrac, diag::warn_receiver_forward_class) 
-        << ClassDecl->getDeclName();
+      Diag(Method->getLocation(), diag::note_method_sent_forward_class) 
+        << Method->getDeclName();
   }
   if (!Method)
     Method = ClassDecl->lookupClassMethod(Context, Sel);

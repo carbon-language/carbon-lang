@@ -1,7 +1,7 @@
 // RUN: clang-cc  -fsyntax-only -verify %s
 
 @interface I
-+ new;
++ new; // expected-note {{method 'new' is used for the forward class}}
 @end
 Class isa;
 

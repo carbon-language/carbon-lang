@@ -22,7 +22,7 @@ typedef struct {} TazVersion;
 @implementation FooBazController
 - (NSArray *)excitingStuff:(FooBaz *)options {
   BugsBunnyType matchType = options.matchType;
-  NSPredicate *isSearchablePredicate = [NSPredicate predicateWithFormat:@"isSearchable == YES"]; // expected-warning{{return type defaults to 'id'}}
+  NSPredicate *isSearchablePredicate = [NSPredicate predicateWithFormat:@"isSearchable == YES"]; // expected-warning{{receiver 'NSPredicate' is a forward class and corresponding}} // expected-warning{{return type defaults to 'id'}}
   for (TazGuttenberg *Guttenberg in options.papyrus) {
     NSArray *GuttenbergNodes = [Guttenberg nodes]; // expected-warning{{return type defaults to 'id'}}
     NSArray *searchableNodes = [GuttenbergNodes filteredArrayUsingPredicate:isSearchablePredicate]; // expected-warning{{return type defaults to 'id'}}
