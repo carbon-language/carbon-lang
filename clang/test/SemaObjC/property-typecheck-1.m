@@ -2,7 +2,7 @@
 
 @interface A
 -(float) x;	// expected-note {{declared at}}
-@property int x; // expected-error {{type of property 'x' does not match type of accessor 'x'}}
+@property int x; // expected-warning {{type of property 'x' does not match type of accessor 'x'}}
 @end
 
 @interface A (Cat)
@@ -28,4 +28,74 @@ typedef void (F)(void);
 
 @end
 
+
+@class SSyncSet;
+
+@interface SPeer
+  @property(nonatomic,readonly,retain) SSyncSet* syncSet;
+@end
+
+@class SSyncSet_iDisk;
+
+@interface SPeer_iDisk_remote1 : SPeer
+- (SSyncSet_iDisk*) syncSet; // expected-note {{declared at}}
+@end
+
+@interface SPeer_iDisk_local
+- (SSyncSet_iDisk*) syncSet;
+@end
+
+@interface SSyncSet
+@end
+
+@interface SSyncSet_iDisk
+@property(nonatomic,readonly,retain) SPeer_iDisk_local* localPeer;
+@end
+
+@interface SPeer_iDisk_remote1 (protected)
+@end
+
+@implementation SPeer_iDisk_remote1 (protected)
+- (id) preferredSource1
+{
+  return self.syncSet.localPeer; // expected-warning {{type of property 'syncSet' does not match type of accessor 'syncSet'}}
+}
+@end
+
+@interface NSArray @end
+
+@interface NSMutableArray : NSArray
+@end
+
+@interface Class1 
+{
+ NSMutableArray* pieces;
+ NSArray* first;
+}
+
+@property (readonly) NSArray* pieces;
+@property (readonly) NSMutableArray* first; // expected-warning {{type of property 'first' does not match type of accessor 'first'}}
+
+- (NSMutableArray*) pieces;
+- (NSArray*) first;	// expected-note {{declared at}}  // expected-note {{declared at}}
+@end
+
+@interface Class2  {
+ Class1* container;
+}
+
+@end
+
+@implementation Class2
+
+- (id) lastPiece
+{
+ return container.pieces;
+}
+
+- (id)firstPeice
+{
+  return container.first; // expected-warning {{type of property 'first' does not match type of accessor 'first'}}
+}
+@end
 

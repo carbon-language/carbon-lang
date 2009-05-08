@@ -2096,8 +2096,21 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // Check whether we can reference this property.
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
-
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+      QualType ResTy = PD->getType();
+      Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+      ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Context, Sel);
+      if (Getter) {
+        AssignConvertType result =
+          CheckAssignmentConstraints(PD->getType(), Getter->getResultType());
+        if (result != Compatible) {
+          Diag(MemberLoc, diag::warn_accessor_property_type_mismatch) 
+            << PD->getDeclName() << Sel;
+          Diag(Getter->getLocation(), diag::note_declared_at);
+          ResTy = Getter->getResultType();
+        }
+      }
+      
+      return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
                                                      MemberLoc, BaseExpr));
     }
 

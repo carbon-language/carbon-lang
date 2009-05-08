@@ -174,7 +174,7 @@ def warn_conflicting_param_types : Warning<
   "conflicting parameter types in implementation of %0: %1 vs %2">;
 
 def warn_multiple_method_decl : Warning<"multiple methods named %0 found">;
-def err_accessor_property_type_mismatch : Error<
+def warn_accessor_property_type_mismatch : Warning<
   "type of property %0 does not match type of accessor %1">;
 def note_declared_at : Note<"declared at">;
 def err_setter_type_void : Error<"type of setter must be void">;

@@ -1315,11 +1315,17 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   
   if (GetterMethod &&
       GetterMethod->getResultType() != property->getType()) {
-    Diag(property->getLocation(), 
-         diag::err_accessor_property_type_mismatch) 
-      << property->getDeclName()
-      << GetterMethod->getSelector();
-    Diag(GetterMethod->getLocation(), diag::note_declared_at);
+    AssignConvertType result = Incompatible;
+    if (Context.isObjCObjectPointerType(property->getType()))
+      result = CheckAssignmentConstraints(property->getType(), 
+                                          GetterMethod->getResultType());
+    if (result != Compatible) {
+      Diag(property->getLocation(), 
+           diag::warn_accessor_property_type_mismatch) 
+        << property->getDeclName()
+        << GetterMethod->getSelector();
+      Diag(GetterMethod->getLocation(), diag::note_declared_at);
+    }
   }
   
   if (SetterMethod) {
@@ -1329,7 +1335,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     if (SetterMethod->param_size() != 1 ||
         ((*SetterMethod->param_begin())->getType() != property->getType())) {
       Diag(property->getLocation(), 
-           diag::err_accessor_property_type_mismatch) 
+           diag::warn_accessor_property_type_mismatch) 
         << property->getDeclName()
         << SetterMethod->getSelector();
       Diag(SetterMethod->getLocation(), diag::note_declared_at);
