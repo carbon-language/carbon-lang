@@ -3928,29 +3928,26 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         DW && DW->ShouldEmitDwarfDebug()) {
       MachineFunction &MF = DAG.getMachineFunction();
       DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
-      std::string SPName;
-      Subprogram.getLinkageName(SPName);
-      if (!SPName.empty() 
-          && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
-          // This is end of inlined function. Debugging information for
-          // inlined function is not handled yet (only supported by FastISel).
+
+      if (Subprogram.isNull() || Subprogram.describes(MF.getFunction())) {
+        unsigned LabelID =
+          DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
+      } else {
+        // This is end of inlined function. Debugging information for inlined
+        // function is not handled yet (only supported by FastISel).
         if (OptLevel == CodeGenOpt::None) {
           unsigned ID = DW->RecordInlinedFnEnd(Subprogram);
           if (ID != 0)
             // Returned ID is 0 if this is unbalanced "end of inlined
-            // scope". This could happen if optimizer eats dbg intrinsics
-            // or "beginning of inlined scope" is not recoginized due to
-            // missing location info. In such cases, do ignore this region.end.
+            // scope". This could happen if optimizer eats dbg intrinsics or
+            // "beginning of inlined scope" is not recoginized due to missing
+            // location info. In such cases, do ignore this region.end.
             DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(), 
                                      getRoot(), ID));
         }
-        return 0;
       }
-
-      unsigned LabelID =
-        DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
     }
 
     return 0;
