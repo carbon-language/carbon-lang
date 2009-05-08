@@ -8519,40 +8519,39 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
     // If we are in non-pic codegen mode, we allow the address of a global (with
     // an optional displacement) to be used with 'i'.
-    GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
+    GlobalAddressSDNode *GA = 0;
     int64_t Offset = 0;
 
-    // Match either (GA) or (GA+C)
-    if (GA) {
-      Offset = GA->getOffset();
-    } else if (Op.getOpcode() == ISD::ADD) {
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
-      GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
-      if (C && GA) {
-        Offset = GA->getOffset()+C->getZExtValue();
-      } else {
-        C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
-        GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
-        if (C && GA)
-          Offset = GA->getOffset()+C->getZExtValue();
-        else
-          C = 0, GA = 0;
+    // Match either (GA), (GA+C), (GA+C1+C2), etc.
+    while (1) {
+      if ((GA = dyn_cast<GlobalAddressSDNode>(Op))) {
+        Offset += GA->getOffset();
+        break;
+      } else if (Op.getOpcode() == ISD::ADD) {
+        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+          Offset += C->getZExtValue();
+          Op = Op.getOperand(0);
+          continue;
+        }
+      } else if (Op.getOpcode() == ISD::SUB) {
+        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+          Offset += -C->getZExtValue();
+          Op = Op.getOperand(0);
+          continue;
+        }
       }
+      
+      // Otherwise, this isn't something we can handle, reject it.
+      return;
     }
 
-    if (GA) {
-      if (hasMemory)
-        Op = LowerGlobalAddress(GA->getGlobal(), Op.getDebugLoc(),
-                                Offset, DAG);
-      else
-        Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
-                                        Offset);
-      Result = Op;
-      break;
-    }
-
-    // Otherwise, not valid for this mode.
-    return;
+    if (hasMemory)
+      Op = LowerGlobalAddress(GA->getGlobal(), Op.getDebugLoc(), Offset, DAG);
+    else
+      Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
+                                      Offset);
+    Result = Op;
+    break;
   }
   }
 
