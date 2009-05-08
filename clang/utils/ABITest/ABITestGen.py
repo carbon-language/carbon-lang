@@ -44,12 +44,17 @@ class TypePrinter:
         if self.outputDriver:
             print >>self.outputDriver, '#include <stdio.h>\n'
             print >>self.outputDriver, 'int main(int argc, char **argv) {'
+            print >>self.outputDriver, '  int index = -1;'
+            print >>self.outputDriver, '  if (argc > 1) index = atoi(argv[1]);'
             
     def finish(self):
         if self.layoutTests:
             print >>self.output, 'int main(int argc, char **argv) {'
-            for f in self.layoutTests:
-                print >>self.output, '  %s();' % f
+            print >>self.output, '  int index = -1;'
+            print >>self.output, '  if (argc > 1) index = atoi(argv[1]);'
+            for i,f in self.layoutTests:
+                print >>self.output, '  if (index == -1 || index == %d)' % i
+                print >>self.output, '    %s();' % f
             print >>self.output, '  return 0;'
             print >>self.output, '}' 
 
@@ -87,7 +92,7 @@ class TypePrinter:
         print >>self.output,'}'
         print >>self.output
         
-        self.layoutTests.append(fnName)
+        self.layoutTests.append((i,fnName))
         
     def writeFunction(self, i, FT):
         args = ', '.join(['%s arg%d'%(self.getTypeName(t),i) for i,t in enumerate(FT.argTypes)])
@@ -123,7 +128,10 @@ class TypePrinter:
         print >>self.output
 
         if self.outputDriver:
-            print >>self.outputDriver, '  { extern void test_%s(void); test_%s(); }\n'%(fnName,fnName,)
+            print >>self.outputDriver, '  if (index == -1 || index == %d) {' % i
+            print >>self.outputDriver, '    extern void test_%s(void);' % fnName
+            print >>self.outputDriver, '    test_%s();' % fnName
+            print >>self.outputDriver, '   }'
             
         if self.outputTests:
             if self.outputHeader:
