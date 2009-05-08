@@ -71,10 +71,9 @@ ifeq ($(MAKECMDGOALS),unittests)
   OPTIONAL_DIRS :=
 endif
 
-# Don't install utils, examples, or projects they are only used to
-# build LLVM.
+# Use NO_INSTALL define of the Makefile of each directory for deciding
+# if the directory is installed or not
 ifeq ($(MAKECMDGOALS),install)
-  DIRS := $(filter-out utils, $(DIRS))
   OPTIONAL_DIRS := $(filter bindings, $(OPTIONAL_DIRS))
 endif
 

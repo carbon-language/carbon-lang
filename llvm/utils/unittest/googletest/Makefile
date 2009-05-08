@@ -22,4 +22,6 @@ ifeq ($(OS),MingW)
   CPP.Flags += -DGTEST_OS_WINDOWS=1
 endif
 
+NO_INSTALL = 1
+
 include $(LEVEL)/Makefile.common
