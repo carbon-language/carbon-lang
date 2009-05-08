@@ -1270,6 +1270,9 @@ public:
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc);
+  bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD, 
+                                        ObjCMethodDecl *Getter,
+                                        SourceLocation Loc);
 
   // Primary Expressions.
   virtual SourceRange getExprRange(ExprTy *E) const;

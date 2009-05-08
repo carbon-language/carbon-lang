@@ -19,6 +19,26 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
+bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
+                                            ObjCMethodDecl *GetterMethod,
+                                            SourceLocation Loc) {
+  if (GetterMethod &&
+      GetterMethod->getResultType() != property->getType()) {
+    AssignConvertType result = Incompatible;
+    if (Context.isObjCObjectPointerType(property->getType()))
+      result = CheckAssignmentConstraints(property->getType(), 
+                                          GetterMethod->getResultType());
+    if (result != Compatible) {
+      Diag(Loc, diag::warn_accessor_property_type_mismatch) 
+        << property->getDeclName()
+        << GetterMethod->getSelector();
+      Diag(GetterMethod->getLocation(), diag::note_declared_at);
+      return true;
+    }
+  }
+  return false;
+}
+
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
@@ -1312,22 +1332,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
   
   GetterMethod = CD->getInstanceMethod(Context, property->getGetterName());  
   SetterMethod = CD->getInstanceMethod(Context, property->getSetterName());
-  
-  if (GetterMethod &&
-      GetterMethod->getResultType() != property->getType()) {
-    AssignConvertType result = Incompatible;
-    if (Context.isObjCObjectPointerType(property->getType()))
-      result = CheckAssignmentConstraints(property->getType(), 
-                                          GetterMethod->getResultType());
-    if (result != Compatible) {
-      Diag(property->getLocation(), 
-           diag::warn_accessor_property_type_mismatch) 
-        << property->getDeclName()
-        << GetterMethod->getSelector();
-      Diag(GetterMethod->getLocation(), diag::note_declared_at);
-    }
-  }
-  
+  DiagnosePropertyAccessorMismatch(property, GetterMethod, 
+                                   property->getLocation());
+    
   if (SetterMethod) {
     if (Context.getCanonicalType(SetterMethod->getResultType()) 
         != Context.VoidTy)
