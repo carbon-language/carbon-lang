@@ -203,7 +203,7 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
       if (SuccMBB->isLayoutSuccessor(SSMBB))
         // This will become a jmp.
         ++Cost;
-      else if (MBB->isLayoutSuccessor(SSMBB))
+      else if (MBB->isLayoutSuccessor(SSMBB)) {
         // One of the successor will become the new fallthrough.
         if (SSMBB == FBB) {
           FBB = 0;
@@ -216,6 +216,7 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
           FBB = 0;
           --Cost;
         }
+      }
     }
     if (Cost)
       continue;
