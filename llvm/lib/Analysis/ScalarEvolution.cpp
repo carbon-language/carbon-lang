@@ -1863,6 +1863,44 @@ SCEVHandle ScalarEvolution::createNodeForPHI(PHINode *PN) {
   return getUnknown(PN);
 }
 
+/// createNodeForGEP - Expand GEP instructions into add and multiply
+/// operations. This allows them to be analyzed by regular SCEV code.
+///
+SCEVHandle ScalarEvolution::createNodeForGEP(GetElementPtrInst *GEP) {
+
+  const Type *IntPtrTy = TD->getIntPtrType();
+  Value *Base = U->getOperand(0);
+  SCEVHandle TotalOffset = getIntegerSCEV(0, IntPtrTy);
+  gep_type_iterator GTI = gep_type_begin(U);
+  for (GetElementPtrInst::op_iterator I = next(U->op_begin()),
+                                      E = U->op_end();
+       I != E; ++I) {
+    Value *Index = *I;
+    // Compute the (potentially symbolic) offset in bytes for this index.
+    if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
+      // For a struct, add the member offset.
+      const StructLayout &SL = *TD->getStructLayout(STy);
+      unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
+      uint64_t Offset = SL.getElementOffset(FieldNo);
+      TotalOffset = getAddExpr(TotalOffset,
+                                  getIntegerSCEV(Offset, IntPtrTy));
+    } else {
+      // For an array, add the element offset, explicitly scaled.
+      SCEVHandle LocalOffset = getSCEV(Index);
+      if (!isa<PointerType>(LocalOffset->getType()))
+        // Getelementptr indicies are signed.
+        LocalOffset = getTruncateOrSignExtend(LocalOffset,
+                                              IntPtrTy);
+      LocalOffset =
+        getMulExpr(LocalOffset,
+                   getIntegerSCEV(TD->getTypePaddedSize(*GTI),
+                                  IntPtrTy));
+      TotalOffset = getAddExpr(TotalOffset, LocalOffset);
+    }
+  }
+  return getAddExpr(getSCEV(Base), TotalOffset);
+}
+
 /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
 /// guaranteed to end in (at every loop iteration).  It is, at the same time,
 /// the minimum number of times S is divisible by 2.  For example, given {4,+,8}
@@ -2073,40 +2111,9 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
     return getTruncateOrZeroExtend(getSCEV(U->getOperand(0)),
                                    U->getType());
 
-  case Instruction::GetElementPtr: {
+  case Instruction::GetElementPtr:
     if (!TD) break; // Without TD we can't analyze pointers.
-    const Type *IntPtrTy = TD->getIntPtrType();
-    Value *Base = U->getOperand(0);
-    SCEVHandle TotalOffset = getIntegerSCEV(0, IntPtrTy);
-    gep_type_iterator GTI = gep_type_begin(U);
-    for (GetElementPtrInst::op_iterator I = next(U->op_begin()),
-                                        E = U->op_end();
-         I != E; ++I) {
-      Value *Index = *I;
-      // Compute the (potentially symbolic) offset in bytes for this index.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
-        // For a struct, add the member offset.
-        const StructLayout &SL = *TD->getStructLayout(STy);
-        unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
-        uint64_t Offset = SL.getElementOffset(FieldNo);
-        TotalOffset = getAddExpr(TotalOffset,
-                                    getIntegerSCEV(Offset, IntPtrTy));
-      } else {
-        // For an array, add the element offset, explicitly scaled.
-        SCEVHandle LocalOffset = getSCEV(Index);
-        if (!isa<PointerType>(LocalOffset->getType()))
-          // Getelementptr indicies are signed.
-          LocalOffset = getTruncateOrSignExtend(LocalOffset,
-                                                IntPtrTy);
-        LocalOffset =
-          getMulExpr(LocalOffset,
-                     getIntegerSCEV(TD->getTypePaddedSize(*GTI),
-                                    IntPtrTy));
-        TotalOffset = getAddExpr(TotalOffset, LocalOffset);
-      }
-    }
-    return getAddExpr(getSCEV(Base), TotalOffset);
-  }
+    return createNodeForGEP(cast<GetElementPtrInst>(U));
 
   case Instruction::PHI:
     return createNodeForPHI(cast<PHINode>(U));

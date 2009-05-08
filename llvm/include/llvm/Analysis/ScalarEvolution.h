@@ -279,6 +279,10 @@ namespace llvm {
     /// SCEVs.
     SCEVHandle createNodeForPHI(PHINode *PN);
 
+    /// createNodeForGEP - Provide the special handling we need to analyze GEP
+    /// SCEVs.
+    SCEVHandle createNodeForGEP(GetElementPtrInst *GEP);
+
     /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value
     /// for the specified instruction and replaces any references to the
     /// symbolic value SymName with the specified value.  This is used during
