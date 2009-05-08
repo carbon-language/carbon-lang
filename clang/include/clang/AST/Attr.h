@@ -59,13 +59,6 @@ public:
     NonNull,
     ObjCException,
     ObjCNSObject,
-    CFOwnershipRelease,       // Clang/Checker-specific.
-    CFOwnershipRetain,        // Clang/Checker-specific.
-    CFOwnershipReturns,       // Clang/Checker-specific.
-    NSOwnershipAutorelease,   // Clang/Checker-specific.
-    NSOwnershipRelease,         // Clang/Checker-specific.
-    NSOwnershipRetain,          // Clang/Checker-specific.
-    NSOwnershipReturns,         // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
     Pure,
@@ -465,15 +458,6 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == Regparm; }
   static bool classof(const RegparmAttr *A) { return true; }
 };
-
-// Checker-specific attributes.
-DEF_SIMPLE_ATTR(CFOwnershipRelease);
-DEF_SIMPLE_ATTR(CFOwnershipRetain);
-DEF_SIMPLE_ATTR(CFOwnershipReturns);
-DEF_SIMPLE_ATTR(NSOwnershipRelease);
-DEF_SIMPLE_ATTR(NSOwnershipRetain);
-DEF_SIMPLE_ATTR(NSOwnershipAutorelease);
-DEF_SIMPLE_ATTR(NSOwnershipReturns);
 
 #undef DEF_SIMPLE_ATTR
   

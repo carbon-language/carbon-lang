@@ -785,15 +785,6 @@ public:
   RetainSummary* getCommonMethodSummary(const ObjCMethodDecl* MD,
                                         Selector S, QualType RetTy);
 
-  void updateSummaryArgEffFromAnnotations(RetainSummary &Summ, const Decl *D,
-                                          unsigned argIdx = 0);
-
-  void updateSummaryFromAnnotations(RetainSummary &Summ,
-                                    const ObjCMethodDecl *MD);
-  
-  void updateSummaryFromAnnotations(RetainSummary &Summ,
-                                    const FunctionDecl *FD);
-  
   bool isGCEnabled() const { return GCEnabled; }
   
   RetainSummary *copySummary(RetainSummary *OldSumm) {
@@ -1018,10 +1009,6 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
   if (!S)
     S = getDefaultSummary();
 
-  // Annotations override defaults.
-  assert(S);
-  updateSummaryFromAnnotations(*S, FD);
-
   FuncSummaries[FD] = S;
   return S;  
 }
@@ -1105,81 +1092,7 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
                               ? RetEffect::MakeReceiverAlias()
                               : RetEffect::MakeNoRet());
 }
-
-void
-RetainSummaryManager::updateSummaryArgEffFromAnnotations(RetainSummary &Summ,
-                                                         const Decl *D,
-                                                         unsigned i) {
-  ArgEffect E = DoNothing;
   
-  if (D->getAttr<NSOwnershipRetainAttr>())
-    E = IncRefMsg;
-  else if (D->getAttr<CFOwnershipRetainAttr>())
-    E = IncRef;
-  else if (D->getAttr<NSOwnershipReleaseAttr>())
-    E = DecRefMsg;
-  else if (D->getAttr<CFOwnershipReleaseAttr>())
-    E = DecRef;
-  else if (D->getAttr<NSOwnershipAutoreleaseAttr>())
-    E = Autorelease;
-  else
-    return;
-  
-  if (isa<ParmVarDecl>(D))
-    Summ.setArgEffect(AF, i, E);
-  else
-    Summ.setReceiverEffect(E);
-}
-
-void
-RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
-                                                   const FunctionDecl *FD) {
-  if (!FD)
-    return;
-  
-  // Determine if there is a special return effect for this method.
-  if (isTrackedObjCObjectType(FD->getResultType())) {
-    if (FD->getAttr<NSOwnershipReturnsAttr>()) {
-      Summ.setRetEffect(ObjCAllocRetE);
-    }
-    else if (FD->getAttr<CFOwnershipReturnsAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    }
-  }
-  
-  // Determine if there are any arguments with a specific ArgEffect.
-  unsigned i = 0;
-  for (FunctionDecl::param_const_iterator I = FD->param_begin(),
-       E = FD->param_end(); I != E; ++I, ++i)
-    updateSummaryArgEffFromAnnotations(Summ, *I, i);
-}
-  
-void
-RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
-                                                   const ObjCMethodDecl *MD) {
-  if (!MD)
-    return;
-  
-  // Determine if there is a special return effect for this method.
-  if (isTrackedObjCObjectType(MD->getResultType())) {
-    if (MD->getAttr<NSOwnershipReturnsAttr>()) {
-      Summ.setRetEffect(ObjCAllocRetE);
-    }
-    else if (MD->getAttr<CFOwnershipReturnsAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    }    
-  }
-  
-  // Determine if there are any arguments with a specific ArgEffect.
-  unsigned i = 0;
-  for (ObjCMethodDecl::param_iterator I = MD->param_begin(),
-       E = MD->param_end(); I != E; ++I, ++i)
-    updateSummaryArgEffFromAnnotations(Summ, *I, i);
-  
-  // Determine any effects on the receiver.
-  updateSummaryArgEffFromAnnotations(Summ, MD);
-}
-
 RetainSummary*
 RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
                                              Selector S, QualType RetTy) {
@@ -1262,9 +1175,6 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   else
     Summ = getCommonMethodSummary(MD, S, RetTy);
   
-  // Annotations override defaults.
-  updateSummaryFromAnnotations(*Summ, MD);
-
   // Memoize the summary.
   ObjCMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
@@ -1285,9 +1195,6 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
     
   RetainSummary *Summ = getCommonMethodSummary(MD, S, RetTy);
 
-  // Annotations override defaults.
-  updateSummaryFromAnnotations(*Summ, MD);
-  
   // Memoize the summary.
   ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;

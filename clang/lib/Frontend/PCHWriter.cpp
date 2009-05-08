@@ -1544,13 +1544,6 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
 
     case Attr::ObjCException:
     case Attr::ObjCNSObject:
-    case Attr::CFOwnershipRelease:
-    case Attr::CFOwnershipRetain:
-    case Attr::CFOwnershipReturns:
-    case Attr::NSOwnershipAutorelease:
-    case Attr::NSOwnershipRelease:
-    case Attr::NSOwnershipRetain:
-    case Attr::NSOwnershipReturns:
     case Attr::Overloadable:
       break;
 

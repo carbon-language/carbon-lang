@@ -1544,94 +1544,6 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 //===----------------------------------------------------------------------===//
-// Checker-specific attribute handlers.
-//===----------------------------------------------------------------------===//
-
-static void HandleNSOwnershipReturnsAttr(Decl *d, const AttributeList &Attr,
-                                         Sema &S) {
-
-  if (!isa<ObjCMethodDecl>(d) && !isa<FunctionDecl>(d)) {
-    const char *name;
-    
-    switch (Attr.getKind()) {
-      default:
-        assert(0 && "invalid ownership attribute");
-        return;
-      case AttributeList::AT_cf_returns_retained:
-        name = "cf_returns_retained"; break;
-      case AttributeList::AT_ns_returns_retained:
-        name = "ns_returns_retained"; break;
-    };
-
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      name << 3 /* function or method */;
-    return;
-  }
-  
-  switch (Attr.getKind()) {
-    default:
-      assert(0 && "invalid ownership attribute");
-      return;
-    case AttributeList::AT_cf_returns_retained:
-      d->addAttr(::new (S.Context) CFOwnershipReturnsAttr());
-      return;
-    case AttributeList::AT_ns_returns_retained:
-      d->addAttr(::new (S.Context) NSOwnershipReturnsAttr());
-      return;
-  };
-}
-
-static void HandleNSOwnershipAttr(Decl *d, const AttributeList &Attr,
-                                    Sema &S, bool attachToMethodDecl = false) {
-  
-  if (!isa<ParmVarDecl>(d) && (!attachToMethodDecl || !isa<ObjCMethodDecl>(d))){
-    const char *name;
-    
-    switch (Attr.getKind()) {
-      default:
-        assert(0 && "invalid ownership attribute");
-        return;
-      case AttributeList::AT_cf_releases:
-        name = "cf_releases"; break;
-      case AttributeList::AT_cf_retains:
-        name = "cf_retains"; break;
-      case AttributeList::AT_ns_autoreleases:
-        name = "ns_autoreleases"; break;
-      case AttributeList::AT_ns_releases:
-        name = "ns_releases"; break;
-      case AttributeList::AT_ns_retains:
-        name = "ns_retains"; break;
-    };
-
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
-      name << (attachToMethodDecl ? 5 /* parameter or method decl */ 
-                                  : 4 /* parameter */);
-    return;
-  }
-  
-  switch (Attr.getKind()) {
-    default:
-      assert(0 && "invalid ownership attribute");
-      return;
-    case AttributeList::AT_cf_releases:
-      d->addAttr(::new (S.Context) CFOwnershipReleaseAttr());
-      return;
-    case AttributeList::AT_cf_retains:
-      d->addAttr(::new (S.Context) CFOwnershipRetainAttr());
-      return;
-    case AttributeList::AT_ns_autoreleases:
-      d->addAttr(::new (S.Context) NSOwnershipAutoreleaseAttr());
-      return;            
-    case AttributeList::AT_ns_releases:
-      d->addAttr(::new (S.Context) NSOwnershipReleaseAttr());
-      return;
-    case AttributeList::AT_ns_retains:
-      d->addAttr(::new (S.Context) NSOwnershipRetainAttr());
-      return;
-  }
-}
-
-//===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
@@ -1667,19 +1579,6 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
-
-  // Checker-specific.
-  case AttributeList::AT_cf_releases:     
-  case AttributeList::AT_cf_retains:
-      HandleNSOwnershipAttr(D, Attr, S); break;
-  case AttributeList::AT_ns_autoreleases:
-  case AttributeList::AT_ns_releases:
-  case AttributeList::AT_ns_retains:
-      HandleNSOwnershipAttr(D, Attr, S, true); break;
-  case AttributeList::AT_ns_returns_retained:
-  case AttributeList::AT_cf_returns_retained:
-    HandleNSOwnershipReturnsAttr(D, Attr, S); break;
-
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;
   case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
