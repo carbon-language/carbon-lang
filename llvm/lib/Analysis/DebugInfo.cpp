@@ -983,7 +983,8 @@ namespace llvm {
 
 /// dump - print descriptor.
 void DIDescriptor::dump() const {
-  cerr << " [" << dwarf::TagString(getTag()) << "]\n";
+  cerr << "[" << dwarf::TagString(getTag()) << "] ";
+  cerr << std::hex << "[GV:" << GV << "]" << std::dec;
 }
 
 /// dump - print compile unit.
