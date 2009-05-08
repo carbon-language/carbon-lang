@@ -1063,10 +1063,10 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
 
       // Get the current set of subregions for SuperR.
       const SubRegionsTy* SRptr = SubRegMap.lookup(SuperR);
-      SubRegionsTy SR = SRptr ? *SRptr : SubRegF.GetEmptySet();
+      SubRegionsTy SRs = SRptr ? *SRptr : SubRegF.GetEmptySet();
 
       // Add R to the subregions of SuperR.
-      SubRegMap = SubRegMapF.Add(SubRegMap, SuperR, SubRegF.Add(SR, R));
+      SubRegMap = SubRegMapF.Add(SubRegMap, SuperR, SubRegF.Add(SRs, R));
 
       // Super region may be VarRegion or subregion of another VarRegion. Add it
       // to the work list.
