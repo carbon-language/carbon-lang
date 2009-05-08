@@ -267,10 +267,15 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
   // FIXME: Are all locations guaranteed to have pointer width?
   if (BinaryOperator::isEqualityOp(Op)) {
     if (nonloc::ConcreteInt *RInt = dyn_cast<nonloc::ConcreteInt>(&R)) {
-      const llvm::APSInt &X = RInt->getValue();
+      const llvm::APSInt *X = &RInt->getValue();
       ASTContext &C = Eng.getContext();
-      if (C.getTypeSize(C.VoidPtrTy) == X.getBitWidth())
-        return EvalBinOp(Eng, Op, L, loc::ConcreteInt(X));
+      if (C.getTypeSize(C.VoidPtrTy) == X->getBitWidth()) {
+        // Convert the signedness of the integer (if necessary).
+        if (X->isSigned())
+          X = &Eng.getBasicVals().getValue(*X, true);          
+        
+        return EvalBinOp(Eng, Op, L, loc::ConcreteInt(*X));
+      }
     }
   }
   
