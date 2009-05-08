@@ -1306,15 +1306,67 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                            // X udiv 1 --> x
+    if (RHSC->isZero())
+      return getIntegerSCEV(0, LHS->getType()); // value is undefined
 
+    // Determine if the division can be folded into the operands of
+    // its operands.
+    // TODO: Generalize this to non-constants by using known-bits information.
+    const Type *Ty = LHS->getType();
+    unsigned LZ = RHSC->getValue()->getValue().countLeadingZeros();
+    unsigned MaxShiftAmt = getTypeSizeInBits(Ty) - LZ;
+    // For non-power-of-two values, effectively round the value up to the
+    // nearest power of two.
+    if (!RHSC->getValue()->getValue().isPowerOf2())
+      ++MaxShiftAmt;
+    const IntegerType *ExtTy =
+      IntegerType::get(getTypeSizeInBits(Ty) + MaxShiftAmt);
+    // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
+    if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
+      if (const SCEVConstant *Step =
+            dyn_cast<SCEVConstant>(AR->getStepRecurrence(*this)))
+        if (!Step->getValue()->getValue()
+              .urem(RHSC->getValue()->getValue()) &&
+            getTruncateExpr(getZeroExtendExpr(AR, ExtTy), Ty) == AR) {
+          std::vector<SCEVHandle> Operands;
+          for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i)
+            Operands.push_back(getUDivExpr(AR->getOperand(i), RHS));
+          return getAddRecExpr(Operands, AR->getLoop());
+        }
+    // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
+    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS))
+      if (getTruncateExpr(getZeroExtendExpr(M, ExtTy), Ty) == M)
+        // Find an operand that's safely divisible.
+        for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
+          SCEVHandle Op = M->getOperand(i);
+          SCEVHandle Div = getUDivExpr(Op, RHSC);
+          if (!isa<SCEVUDivExpr>(Div) && getMulExpr(Div, RHSC) == Op) {
+            std::vector<SCEVHandle> Operands = M->getOperands();
+            Operands[i] = Div;
+            return getMulExpr(Operands);
+          }
+        }
+    // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
+    if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS))
+      if (getTruncateExpr(getZeroExtendExpr(A, ExtTy), Ty) == A) {
+        std::vector<SCEVHandle> Operands;
+        for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
+          SCEVHandle Op = getUDivExpr(A->getOperand(i), RHS);
+          if (isa<SCEVUDivExpr>(Op) || getMulExpr(Op, RHS) != A->getOperand(i))
+            break;
+          Operands.push_back(Op);
+        }
+        if (Operands.size() == A->getNumOperands())
+          return getAddExpr(Operands);
+      }
+
+    // Fold if both operands are constant.
     if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
       return getUnknown(ConstantExpr::getUDiv(LHSCV, RHSCV));
     }
   }
-
-  // FIXME: implement folding of (X*4)/4 when we know X*4 doesn't overflow.
 
   SCEVUDivExpr *&Result = (*SCEVUDivs)[std::make_pair(LHS, RHS)];
   if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS);
