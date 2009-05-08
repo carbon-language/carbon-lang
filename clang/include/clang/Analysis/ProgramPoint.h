@@ -131,7 +131,8 @@ public:
                
 class BlockEntrance : public ProgramPoint {
 public:
-  BlockEntrance(const CFGBlock* B) : ProgramPoint(B, BlockEntranceKind) {}
+  BlockEntrance(const CFGBlock* B, const void *tag = 0)
+    : ProgramPoint(B, BlockEntranceKind, tag) {}
     
   CFGBlock* getBlock() const {
     return reinterpret_cast<CFGBlock*>(getData1NoMask());
