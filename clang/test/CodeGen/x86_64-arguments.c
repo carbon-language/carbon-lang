@@ -9,7 +9,7 @@
 // RUN: grep 'define void @f7(i32 %a0)' %t &&
 // RUN: grep 'type { i64, double }.*type .0' %t &&
 // RUN: grep 'define .0 @f8_1()' %t &&
-// RUN: grep 'define void @f8_2(.0)' %t
+// RUN: grep 'define void @f8_2(.0)' %t &&
 
 char f0(void) {
 }
@@ -44,3 +44,12 @@ union u8 {
 };
 union u8 f8_1() {}
 void f8_2(union u8 a0) {}
+
+// RUN: grep 'define i64 @f9()' %t &&
+struct s9 { int a; int b; int : 0; } f9(void) {}
+
+// RUN: grep 'define void @f10(i64)' %t &&
+struct s10 { int a; int b; int : 0; };
+void f10(struct s10 a0) {}
+
+// RUN: true

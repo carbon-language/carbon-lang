@@ -205,8 +205,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
         FT = AT->getElementType();
 
     // Ignore empty records and padding bit-fields.
-    if (isEmptyRecord(Context, FT) || 
-        (FD->isBitField() && !FD->getIdentifier()))
+    if (isEmptyRecord(Context, FT) || FD->isUnnamedBitfield())
       continue;
 
     if (Found)
@@ -803,6 +802,10 @@ void X86_64ABIInfo::classify(QualType Ty,
       // structure to be passed in memory even if unaligned, and
       // therefore they can straddle an eightbyte.
       if (BitField) {
+        // Ignore padding bit-fields.
+        if (i->isUnnamedBitfield())
+          continue;
+
         uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
         uint64_t Size = i->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
 
