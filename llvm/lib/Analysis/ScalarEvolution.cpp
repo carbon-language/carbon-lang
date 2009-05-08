@@ -1869,11 +1869,11 @@ SCEVHandle ScalarEvolution::createNodeForPHI(PHINode *PN) {
 SCEVHandle ScalarEvolution::createNodeForGEP(GetElementPtrInst *GEP) {
 
   const Type *IntPtrTy = TD->getIntPtrType();
-  Value *Base = U->getOperand(0);
+  Value *Base = GEP->getOperand(0);
   SCEVHandle TotalOffset = getIntegerSCEV(0, IntPtrTy);
-  gep_type_iterator GTI = gep_type_begin(U);
-  for (GetElementPtrInst::op_iterator I = next(U->op_begin()),
-                                      E = U->op_end();
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (GetElementPtrInst::op_iterator I = next(GEP->op_begin()),
+                                      E = GEP->op_end();
        I != E; ++I) {
     Value *Index = *I;
     // Compute the (potentially symbolic) offset in bytes for this index.
