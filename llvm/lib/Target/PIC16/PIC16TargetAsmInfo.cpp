@@ -192,7 +192,7 @@ void PIC16TargetAsmInfo::SetSectionForGVs(Module &M) {
     // variable and should not be printed in global data section.
     std::string name = I->getName();
     if (name.find(".auto.") != std::string::npos
-      || name.find(".arg.") != std::string::npos)
+      || name.find(".args.") != std::string::npos)
       continue;
     int AddrSpace = I->getType()->getAddressSpace();
 
@@ -201,58 +201,6 @@ void PIC16TargetAsmInfo::SetSectionForGVs(Module &M) {
   }
 }
 
-
-// Helper routine.
-// Func name starts after prefix and followed by a .
-static std::string getFuncNameForSym(const std::string &Sym, 
-                                      PIC16ABINames::IDs PrefixType) {
-
-  const char *prefix = getIDName (PIC16ABINames::PREFIX_SYMBOL);
-
-  // This name may or may not start with prefix;
-  // Func names start after prfix in that case.
-  size_t func_name_start = 0;
-  if (Sym.find(prefix, 0, strlen(prefix)) != std::string::npos)
-    func_name_start = strlen(prefix);
-
-  // Position of the . after func name.
-  size_t func_name_end = Sym.find ('.', func_name_start);
-
-  return Sym.substr (func_name_start, func_name_end);
-}
-
-// Helper routine to create a section name given the section prefix
-// and func name.
-static std::string
-getSectionNameForFunc (const std::string &Fname,
-                       const PIC16ABINames::IDs sec_id) {
-  std::string sec_id_string = getIDName (sec_id);
-  return sec_id_string + "." + Fname + ".#";
-}
-
-
-// Get the section for the given external symbol names.
-// This function is meant for only mangled external symbol names.
-std::string 
-llvm::getSectionNameForSym(const std::string &Sym) {
-  std::string SectionName;
-
-  PIC16ABINames::IDs id = getID (Sym);
-  std::string Fname = getFuncNameForSym (Sym, id);
-
-  switch (id) {
-    default : assert (0 && "Could not determine external symbol type");
-    case PIC16ABINames::FUNC_FRAME: 
-    case PIC16ABINames::FUNC_RET: 
-    case PIC16ABINames::FUNC_TEMPS: 
-    case PIC16ABINames::FUNC_ARGS:  {
-      return getSectionNameForFunc (Fname, PIC16ABINames::FRAME_SECTION);
-    }
-    case PIC16ABINames::FUNC_AUTOS: { 
-      return getSectionNameForFunc (Fname, PIC16ABINames::AUTOS_SECTION);
-    }
-  }
-}
 
 PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
   

@@ -87,46 +87,93 @@ namespace PIC16CC {
       
       FRAME_SECTION,
       AUTOS_SECTION
-   };
+    };
 
-  };
-
-  inline static const char *getIDName(PIC16ABINames::IDs id) {
-    switch (id) {
-    default: assert(0 && "Unknown id");
-    case PIC16ABINames::PREFIX_SYMBOL:    return "@";
-    case PIC16ABINames::FUNC_AUTOS:       return ".auto.";
-    case PIC16ABINames::FUNC_FRAME:       return ".frame.";
-    case PIC16ABINames::FUNC_TEMPS:       return ".temp.";
-    case PIC16ABINames::FUNC_ARGS:       return ".args.";
-    case PIC16ABINames::FUNC_RET:       return ".ret.";
-    case PIC16ABINames::FRAME_SECTION:       return "fpdata";
-    case PIC16ABINames::AUTOS_SECTION:       return "fadata";
+    inline static const char *getIDName(IDs id) {
+      switch (id) {
+      default: assert(0 && "Unknown id");
+      case PREFIX_SYMBOL:    return "@";
+      case FUNC_AUTOS:       return ".auto.";
+      case FUNC_FRAME:       return ".frame.";
+      case FUNC_TEMPS:       return ".temp.";
+      case FUNC_ARGS:       return ".args.";
+      case FUNC_RET:       return ".ret.";
+      case FRAME_SECTION:       return "fpdata";
+      case AUTOS_SECTION:       return "fadata";
+      }
     }
-  }
 
-  inline static PIC16ABINames::IDs getID(const std::string &Sym) {
-    if (Sym.find(getIDName(PIC16ABINames::FUNC_TEMPS)))
-     return PIC16ABINames::FUNC_TEMPS;
+    inline static IDs getID(const std::string &Sym) {
+      if (Sym.find(getIDName(FUNC_TEMPS)))
+        return FUNC_TEMPS;
 
-    if (Sym.find(getIDName(PIC16ABINames::FUNC_FRAME)))
-     return PIC16ABINames::FUNC_FRAME;
+      if (Sym.find(getIDName(FUNC_FRAME)))
+        return FUNC_FRAME;
 
-    if (Sym.find(getIDName(PIC16ABINames::FUNC_RET)))
-     return PIC16ABINames::FUNC_RET;
+      if (Sym.find(getIDName(FUNC_RET)))
+        return FUNC_RET;
 
-    if (Sym.find(getIDName(PIC16ABINames::FUNC_ARGS)))
-     return PIC16ABINames::FUNC_ARGS;
+      if (Sym.find(getIDName(FUNC_ARGS)))
+        return FUNC_ARGS;
 
-    if (Sym.find(getIDName(PIC16ABINames::FUNC_AUTOS)))
-     return PIC16ABINames::FUNC_AUTOS;
+      if (Sym.find(getIDName(FUNC_AUTOS)))
+        return FUNC_AUTOS;
 
-    if (Sym.find(getIDName(PIC16ABINames::LIBCALL)))
-     return PIC16ABINames::LIBCALL;
+      if (Sym.find(getIDName(LIBCALL)))
+        return LIBCALL;
 
-    // It does not have any ID. So its a global.
-    assert (0 && "Could not determine ID symbol type");
-  }
+      // It does not have any ID. So its a global.
+      assert (0 && "Could not determine ID symbol type");
+    }
+
+    // Get func name from a mangled name.
+    // In all cases func name is the first component before a '.'.
+    static inline std::string getFuncNameForSym(const std::string &Sym) {
+      const char *prefix = getIDName (PREFIX_SYMBOL);
+
+      // If this name has a prefix, func name start after prfix in that case.
+      size_t func_name_start = 0;
+      if (Sym.find(prefix, 0, strlen(prefix)) != std::string::npos)
+        func_name_start = strlen(prefix);
+
+      // Position of the . after func name. That's where func name ends.
+      size_t func_name_end = Sym.find ('.', func_name_start);
+
+      return Sym.substr (func_name_start, func_name_end);
+    }
+
+    // Form a section name given the section type and func name.
+    static std::string
+    getSectionNameForFunc (const std::string &Fname, const IDs sec_id) {
+      std::string sec_id_string = getIDName(sec_id);
+      return sec_id_string + "." + Fname + ".#";
+    }
+
+    // Get the section for the given external symbol names.
+    // This tries to find the type (ID) of the symbol from its mangled name
+    // and return appropriate section name for it.
+    static inline std::string getSectionNameForSym(const std::string &Sym) {
+      std::string SectionName;
+ 
+      IDs id = getID (Sym);
+      std::string Fname = getFuncNameForSym (Sym);
+
+      switch (id) {
+        default : assert (0 && "Could not determine external symbol type");
+        case FUNC_FRAME:
+        case FUNC_RET:
+        case FUNC_TEMPS:
+        case FUNC_ARGS:  {
+          return getSectionNameForFunc (Fname, FRAME_SECTION);
+        }
+        case FUNC_AUTOS: {
+          return getSectionNameForFunc (Fname, AUTOS_SECTION);
+        }
+      }
+    }
+  }; // class PIC16ABINames.
+
+
 
 
   inline static const char *PIC16CondCodeToString(PIC16CC::CondCodes CC) {
