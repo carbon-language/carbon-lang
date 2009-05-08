@@ -204,11 +204,15 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
       if (AT->getSize().getZExtValue() == 1)
         FT = AT->getElementType();
 
-    if (isEmptyRecord(Context, FT)) {
-      // Ignore
-    } else if (Found) {
+    // Ignore empty records and padding bit-fields.
+    if (isEmptyRecord(Context, FT) || 
+        (FD->isBitField() && !FD->getIdentifier()))
+      continue;
+
+    if (Found)
       return 0;
-    } else if (!CodeGenFunction::hasAggregateLLVMType(FT)) {
+
+    if (!CodeGenFunction::hasAggregateLLVMType(FT)) {
       Found = FT.getTypePtr();
     } else {
       Found = isSingleElementStruct(FT, Context);
