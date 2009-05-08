@@ -297,7 +297,7 @@ private:
   // Utility methods.
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
   ASTContext& getContext() { return StateMgr.getContext(); }
-  TargetInfo& getTargetInfo() { return getContext().getTargetInfo(); }
+
   SymbolManager& getSymbolManager() { return StateMgr.getSymbolManager(); }
 
   const GRState* AddRegionView(const GRState* St,
@@ -315,7 +315,7 @@ StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
 // getTypeWidth - compute the width of the type. Should pass in
 // canonical type.
 static unsigned getTypeWidth(ASTContext& Ctx, QualType T) {
-  TargetInfo& Target = Ctx.getTargetInfo();
+  TargetInfo& Target = Ctx.Target;
   QualType CanT = Ctx.getCanonicalType(T);
 
   if (CanT->isPointerType())
