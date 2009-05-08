@@ -329,27 +329,41 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
   const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
 
-
-  // Set up global aliases for the metaclass or class pointer if they do not
-  // already exist.  These will are forward-references which will be set to
-  // pointers to the class and metaclass structure created for the runtime load
-  // function.  To send a message to super, we look up the value of the
-  // super_class pointer from either the class or metaclass structure.
   llvm::Value *ReceiverClass = 0;
-  if (IsClassMessage)  {
-    if (!MetaClassPtrAlias) {
-      MetaClassPtrAlias = new llvm::GlobalAlias(IdTy,
-          llvm::GlobalValue::InternalLinkage, ".objc_metaclass_ref" +
-          Class->getNameAsString(), NULL, &TheModule);
+  if (isCategoryImpl) {
+    llvm::Constant *classLookupFunction = 0;
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(PtrTy);
+    if (IsClassMessage)  {
+      classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+            IdTy, Params, true), "objc_get_meta_class");
+    } else {
+      classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+            IdTy, Params, true), "objc_get_class");
     }
-    ReceiverClass = MetaClassPtrAlias;
+    ReceiverClass = CGF.Builder.CreateCall(classLookupFunction,
+        MakeConstantString(Class->getNameAsString()));
   } else {
-    if (!ClassPtrAlias) {
-      ClassPtrAlias = new llvm::GlobalAlias(IdTy,
-          llvm::GlobalValue::InternalLinkage, ".objc_class_ref" +
-          Class->getNameAsString(), NULL, &TheModule);
+    // Set up global aliases for the metaclass or class pointer if they do not
+    // already exist.  These will are forward-references which will be set to
+    // pointers to the class and metaclass structure created for the runtime load
+    // function.  To send a message to super, we look up the value of the
+    // super_class pointer from either the class or metaclass structure.
+    if (IsClassMessage)  {
+      if (!MetaClassPtrAlias) {
+        MetaClassPtrAlias = new llvm::GlobalAlias(IdTy,
+            llvm::GlobalValue::InternalLinkage, ".objc_metaclass_ref" +
+            Class->getNameAsString(), NULL, &TheModule);
+      }
+      ReceiverClass = MetaClassPtrAlias;
+    } else {
+      if (!ClassPtrAlias) {
+        ClassPtrAlias = new llvm::GlobalAlias(IdTy,
+            llvm::GlobalValue::InternalLinkage, ".objc_class_ref" +
+            Class->getNameAsString(), NULL, &TheModule);
+      }
+      ReceiverClass = ClassPtrAlias;
     }
-    ReceiverClass = ClassPtrAlias;
   }
   // Cast the pointer to a simplified version of the class structure
   ReceiverClass = CGF.Builder.CreateBitCast(ReceiverClass, 
