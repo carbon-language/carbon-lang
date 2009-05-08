@@ -199,31 +199,27 @@ class TypePrinter:
                 yield '(%s) -1'%(t.name,)
                 yield '(%s) 1'%(t.name,)
         elif isinstance(t, RecordType):
-            if not t.fields:
+            nonPadding = [f for f in t.fields 
+                          if not f.isPaddingBitField()]
+
+            if not nonPadding:
                 yield '{ }'
                 return
+
             # FIXME: Use designated initializers to access non-first
             # fields of unions.
             if t.isUnion:
-                firstNonPadding = None
-                for t in t.fields:
-                    if not t.isPaddingBitField():
-                        firstNonPadding = t
-                        break
-                if firstNonPadding:
-                    for v in self.getTestValues(firstNonPadding):
-                        yield '{ %s }' % v
-                else:
-                    yield '{ }'
+                for v in self.getTestValues(nonPadding[0]):
+                    yield '{ %s }' % v
                 return
-            fieldValues = [list(self.getTestValues(f)) 
-                           for f in t.fields
-                           if not f.isPaddingBitField()]
+
+            fieldValues = map(list, map(self.getTestValues, nonPadding))
             for i,values in enumerate(fieldValues):
                 for v in values:
                     elements = map(random.choice,fieldValues)
                     elements[i] = v
                     yield '{ %s }'%(', '.join(elements))
+
         elif isinstance(t, ComplexType):
             for t in self.getTestValues(t.elementType):
                 yield '%s + %s * 1i'%(t,t)
