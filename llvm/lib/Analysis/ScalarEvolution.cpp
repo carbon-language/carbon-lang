@@ -1381,29 +1381,39 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
             dyn_cast<SCEVConstant>(AR->getStepRecurrence(*this)))
         if (!Step->getValue()->getValue()
               .urem(RHSC->getValue()->getValue()) &&
-            getTruncateExpr(getZeroExtendExpr(AR, ExtTy), Ty) == AR) {
+            getZeroExtendExpr(AR, ExtTy) ==
+            getAddRecExpr(getZeroExtendExpr(AR->getStart(), ExtTy),
+                          getZeroExtendExpr(Step, ExtTy),
+                          AR->getLoop())) {
           std::vector<SCEVHandle> Operands;
           for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i)
             Operands.push_back(getUDivExpr(AR->getOperand(i), RHS));
           return getAddRecExpr(Operands, AR->getLoop());
         }
     // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
-    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS))
-      if (getTruncateExpr(getZeroExtendExpr(M, ExtTy), Ty) == M)
+    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS)) {
+      std::vector<SCEVHandle> Operands;
+      for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i)
+        Operands.push_back(getZeroExtendExpr(M->getOperand(i), ExtTy));
+      if (getZeroExtendExpr(M, ExtTy) == getMulExpr(Operands))
         // Find an operand that's safely divisible.
         for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
           SCEVHandle Op = M->getOperand(i);
           SCEVHandle Div = getUDivExpr(Op, RHSC);
           if (!isa<SCEVUDivExpr>(Div) && getMulExpr(Div, RHSC) == Op) {
-            std::vector<SCEVHandle> Operands = M->getOperands();
+            Operands = M->getOperands();
             Operands[i] = Div;
             return getMulExpr(Operands);
           }
         }
+    }
     // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
-    if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS))
-      if (getTruncateExpr(getZeroExtendExpr(A, ExtTy), Ty) == A) {
-        std::vector<SCEVHandle> Operands;
+    if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS)) {
+      std::vector<SCEVHandle> Operands;
+      for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i)
+        Operands.push_back(getZeroExtendExpr(A->getOperand(i), ExtTy));
+      if (getZeroExtendExpr(A, ExtTy) == getAddExpr(Operands)) {
+        Operands.clear();
         for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
           SCEVHandle Op = getUDivExpr(A->getOperand(i), RHS);
           if (isa<SCEVUDivExpr>(Op) || getMulExpr(Op, RHS) != A->getOperand(i))
@@ -1413,6 +1423,7 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
         if (Operands.size() == A->getNumOperands())
           return getAddExpr(Operands);
       }
+    }
 
     // Fold if both operands are constant.
     if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
