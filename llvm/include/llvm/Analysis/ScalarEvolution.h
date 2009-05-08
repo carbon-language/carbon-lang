@@ -271,6 +271,11 @@ namespace llvm {
     /// exit value.
     std::map<PHINode*, Constant*> ConstantEvolutionLoopExitValue;
 
+    /// ValuesAtScopes - This map contains entries for all the instructions
+    /// that we attempt to compute getSCEVAtScope information for without
+    /// using SCEV techniques, which can be expensive.
+    std::map<Instruction *, std::map<const Loop *, Constant *> > ValuesAtScopes;
+
     /// createSCEV - We know that there is no SCEV for the specified value.
     /// Analyze the expression.
     SCEVHandle createSCEV(Value *V);
