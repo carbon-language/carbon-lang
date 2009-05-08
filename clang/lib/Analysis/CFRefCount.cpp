@@ -1734,7 +1734,11 @@ public:
                                ExplodedNode<GRState>* Pred,
                                Stmt* S, const GRState* state,
                                SymbolReaper& SymReaper);
-
+  
+  std::pair<ExplodedNode<GRState>*, GRStateRef>
+  HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
+                          ExplodedNode<GRState>* Pred,
+                          SymbolRef Sym, RefVal V);
   // Return statements.
   
   virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,
@@ -2359,7 +2363,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   const MemRegion* FirstBinding = 0;
   
   llvm::tie(AllocNode, FirstBinding) =
-  GetAllocationSite(BRC.getStateManager(), EndN, Sym);
+    GetAllocationSite(BRC.getStateManager(), EndN, Sym);
   
   // Get the allocate site.  
   assert(AllocNode);
@@ -2443,7 +2447,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   const ExplodedNode<GRState>* AllocNode = 0;
   
   llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
-  GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
+    GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
   
   // Get the SourceLocation for the allocation site.
   ProgramPoint P = AllocNode->getLocation();
@@ -2901,12 +2905,21 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   
   if (!Sym)
     return;
-
+  
   // Get the reference count binding (if any).
   const RefVal* T = state.get<RefBindings>(Sym);
   
   if (!T)
     return;
+  
+  // Update the autorelease counts.
+  static unsigned autoreleasetag = 0;
+  GenericNodeBuilder Bd(Builder, S, &autoreleasetag);
+  llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Sym, *T);
+
+  // Get the updated binding.
+  T = state.get<RefBindings>(Sym);
+  assert(T);
   
   // Change the reference count.  
   RefVal X = *T;  
@@ -3132,6 +3145,13 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
 // Handle dead symbols and end-of-path.
 //===----------------------------------------------------------------------===//
 
+std::pair<ExplodedNode<GRState>*, GRStateRef>
+CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
+                                    ExplodedNode<GRState>* Pred,
+                                    SymbolRef Sym, RefVal V) {
+ 
+  return std::make_pair(Pred, state);
+}
 
 GRStateRef
 CFRefCount::HandleSymbolDeath(GRStateRef state, SymbolRef sid, RefVal V,
@@ -3157,6 +3177,7 @@ CFRefCount::ProcessLeaks(GRStateRef state,
   if (Leaked.empty())
     return Pred;
   
+  // Generate an intermediate node representing the leak point.
   ExplodedNode<GRState> *N = Builder.MakeNode(state, Pred);  
   
   if (N) {
@@ -3178,14 +3199,23 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder<GRState>& Builder) {
   
   GRStateRef state(Builder.getState(), Eng.getStateManager());
+  GenericNodeBuilder Bd(Builder);
   RefBindings B = state.get<RefBindings>();  
+  ExplodedNode<GRState> *Pred = 0;
+
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+      llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred,
+                                                       (*I).first,
+                                                       (*I).second);   
+  }
+  
+  B = state.get<RefBindings>();  
   llvm::SmallVector<SymbolRef, 10> Leaked;  
   
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
     state = HandleSymbolDeath(state, (*I).first, (*I).second, Leaked);
 
-  GenericNodeBuilder Bd(Builder);
-  ProcessLeaks(state, Leaked, Bd, Eng, NULL);
+  ProcessLeaks(state, Leaked, Bd, Eng, Pred);
 }
 
 void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
@@ -3197,7 +3227,22 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
                                  SymbolReaper& SymReaper) {
 
   GRStateRef state(St, Eng.getStateManager());
-  RefBindings B = St->get<RefBindings>();
+  RefBindings B = state.get<RefBindings>();
+  
+  // Update counts from autorelease pools
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+       E = SymReaper.dead_end(); I != E; ++I) {
+    SymbolRef Sym = *I;
+    if (const RefVal* T = B.lookup(Sym)){
+      // Use the symbol as the tag.
+      // FIXME: This might not be as unique as we would like.
+      GenericNodeBuilder Bd(Builder, S, Sym);
+      llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Sym,
+                                                       *T);
+    }
+  }
+  
+  B = state.get<RefBindings>();
   llvm::SmallVector<SymbolRef, 10> Leaked;
   
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
@@ -3207,8 +3252,10 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
   }    
   
   static unsigned LeakPPTag = 0;
-  GenericNodeBuilder Bd(Builder, S, &LeakPPTag);
-  Pred = ProcessLeaks(state, Leaked, Bd, Eng, Pred);
+  {
+    GenericNodeBuilder Bd(Builder, S, &LeakPPTag);
+    Pred = ProcessLeaks(state, Leaked, Bd, Eng, Pred);
+  }
   
   // Did we cache out?
   if (!Pred)
