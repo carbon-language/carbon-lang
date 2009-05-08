@@ -220,9 +220,13 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (LastInst->getOpcode() == PPC::B) {
+      if (!LastInst->getOperand(0).isMBB())
+        return true;
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     } else if (LastInst->getOpcode() == PPC::BCC) {
+      if (!LastInst->getOperand(2).isMBB())
+        return true;
       // Block ends with fall-through condbranch.
       TBB = LastInst->getOperand(2).getMBB();
       Cond.push_back(LastInst->getOperand(0));
@@ -244,6 +248,9 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // If the block ends with PPC::B and PPC:BCC, handle it.
   if (SecondLastInst->getOpcode() == PPC::BCC && 
       LastInst->getOpcode() == PPC::B) {
+    if (!SecondLastInst->getOperand(2).isMBB() ||
+        !LastInst->getOperand(0).isMBB())
+      return true;
     TBB =  SecondLastInst->getOperand(2).getMBB();
     Cond.push_back(SecondLastInst->getOperand(0));
     Cond.push_back(SecondLastInst->getOperand(1));
@@ -255,6 +262,8 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // executed, so remove it.
   if (SecondLastInst->getOpcode() == PPC::B && 
       LastInst->getOpcode() == PPC::B) {
+    if (!SecondLastInst->getOperand(0).isMBB())
+      return true;
     TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     if (AllowModify)
