@@ -1345,7 +1345,7 @@ namespace {
     }
     virtual const char *getVAListDeclaration() const {
       // FIXME: implement
-      return "";
+      return "typedef char* __builtin_va_list;";
    }
   };
 
