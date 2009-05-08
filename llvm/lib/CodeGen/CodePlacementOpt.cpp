@@ -19,16 +19,10 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
-
-static cl::opt<bool>
-OptLoopBBPlacement("opt-loop-bb-placement",
-                   cl::init(false), cl::Hidden,
-                   cl::desc("Optimize block placements in loops"));
 
 STATISTIC(NumHeaderAligned, "Number of loop header aligned");
 STATISTIC(NumIntraElim,     "Number of intra loop branches eliminated");
@@ -108,9 +102,6 @@ FunctionPass *llvm::createCodePlacementOptPass() {
 ///       jcc <cond> C, [exit]
 ///
 bool CodePlacementOpt::OptimizeIntraLoopEdges() {
-  if (!OptLoopBBPlacement)
-    return false;
-
   bool Changed = false;
   for (unsigned i = 0, e = UncondJmpMBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = UncondJmpMBBs[i].first;

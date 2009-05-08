@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -opt-loop-bb-placement | %prcontext jmp 1 | grep align
+; RUN: llvm-as < %s | llc -march=x86 | %prcontext jmp 1 | grep align
 
 @Te0 = external global [256 x i32]		; <[256 x i32]*> [#uses=5]
 @Te1 = external global [256 x i32]		; <[256 x i32]*> [#uses=4]
