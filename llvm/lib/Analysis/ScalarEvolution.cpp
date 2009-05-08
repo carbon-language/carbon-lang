@@ -748,13 +748,8 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op,
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
     std::vector<SCEVHandle> Operands;
     for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i)
-      // FIXME: This should allow truncation of other expression types!
-      if (isa<SCEVConstant>(AddRec->getOperand(i)))
-        Operands.push_back(getTruncateExpr(AddRec->getOperand(i), Ty));
-      else
-        break;
-    if (Operands.size() == AddRec->getNumOperands())
-      return getAddRecExpr(Operands, AddRec->getLoop());
+      Operands.push_back(getTruncateExpr(AddRec->getOperand(i), Ty));
+    return getAddRecExpr(Operands, AddRec->getLoop());
   }
 
   SCEVTruncateExpr *&Result = (*SCEVTruncates)[std::make_pair(Op, Ty)];
@@ -966,7 +961,66 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
       return getAddExpr(Ops);
     }
 
-  // Now we know the first non-constant operand.  Skip past any cast SCEVs.
+  // Check for truncates. If all the operands are truncated from the same
+  // type, see if factoring out the truncate would permit the result to be
+  // folded. eg., trunc(x) + m*trunc(n) --> trunc(x + trunc(m)*n)
+  // if the contents of the resulting outer trunc fold to something simple.
+  for (; Idx < Ops.size() && isa<SCEVTruncateExpr>(Ops[Idx]); ++Idx) {
+    const SCEVTruncateExpr *Trunc = cast<SCEVTruncateExpr>(Ops[Idx]);
+    const Type *DstType = Trunc->getType();
+    const Type *SrcType = Trunc->getOperand()->getType();
+    std::vector<SCEVHandle> LargeOps;
+    bool Ok = true;
+    // Check all the operands to see if they can be represented in the
+    // source type of the truncate.
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      if (const SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(Ops[i])) {
+        if (T->getOperand()->getType() != SrcType) {
+          Ok = false;
+          break;
+        }
+        LargeOps.push_back(T->getOperand());
+      } else if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i])) {
+        // This could be either sign or zero extension, but sign extension
+        // is much more likely to be foldable here.
+        LargeOps.push_back(getSignExtendExpr(C, SrcType));
+      } else if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(Ops[i])) {
+        std::vector<SCEVHandle> LargeMulOps;
+        for (unsigned j = 0, f = M->getNumOperands(); j != f && Ok; ++j) {
+          if (const SCEVTruncateExpr *T =
+                dyn_cast<SCEVTruncateExpr>(M->getOperand(j))) {
+            if (T->getOperand()->getType() != SrcType) {
+              Ok = false;
+              break;
+            }
+            LargeMulOps.push_back(T->getOperand());
+          } else if (const SCEVConstant *C =
+                       dyn_cast<SCEVConstant>(M->getOperand(j))) {
+            // This could be either sign or zero extension, but sign extension
+            // is much more likely to be foldable here.
+            LargeMulOps.push_back(getSignExtendExpr(C, SrcType));
+          } else {
+            Ok = false;
+            break;
+          }
+        }
+        if (Ok)
+          LargeOps.push_back(getMulExpr(LargeMulOps));
+      } else {
+        Ok = false;
+        break;
+      }
+    }
+    if (Ok) {
+      // Evaluate the expression in the larger type.
+      SCEVHandle Fold = getAddExpr(LargeOps);
+      // If it folds to something simple, use it. Otherwise, don't.
+      if (isa<SCEVConstant>(Fold) || isa<SCEVUnknown>(Fold))
+        return getTruncateExpr(Fold, DstType);
+    }
+  }
+
+  // Skip past any other cast SCEVs.
   while (Idx < Ops.size() && Ops[Idx]->getSCEVType() < scAddExpr)
     ++Idx;
 
