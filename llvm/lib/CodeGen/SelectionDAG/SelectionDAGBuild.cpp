@@ -1923,6 +1923,10 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
   // inserting any additional MBBs necessary to represent the switch.
   MachineFunction *CurMF = CurMBB->getParent();
 
+  // If target does not have legal shift left, do not emit bit tests at all.
+  if (!TLI.isOperationLegal(ISD::SHL, TLI.getPointerTy()))
+    return false;
+
   size_t numCmps = 0;
   for (CaseItr I = CR.Range.first, E = CR.Range.second;
        I!=E; ++I) {
