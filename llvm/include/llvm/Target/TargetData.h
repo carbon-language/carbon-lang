@@ -155,6 +155,23 @@ public:
   /// Target pointer size, in bits
   unsigned char getPointerSizeInBits()   const { return 8*PointerMemSize; }
 
+  /// Size examples:
+  ///
+  /// Type        SizeInBits  StoreSizeInBits  PaddedSizeInBits[*]
+  /// ----        ----------  ---------------  ----------------
+  ///  i1            1           8                8
+  ///  i8            8           8                8
+  ///  i19          19          24               32
+  ///  i32          32          32               32
+  ///  i100        100         104              128
+  ///  i128        128         128              128
+  ///  Float        32          32               32
+  ///  Double       64          64               64
+  ///  X86_FP80     80          80               96
+  ///
+  /// [*] The padded size depends on the alignment, and thus on the target.
+  ///     These values are for x86-32 linux.
+
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
   /// specified type.  For example, returns 36 for i36 and 80 for x86_fp80.
   uint64_t getTypeSizeInBits(const Type* Ty) const;
