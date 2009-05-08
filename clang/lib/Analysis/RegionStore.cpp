@@ -616,13 +616,6 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   return loc::MemRegionVal(ER);                    
 }
 
-static bool isSmallerThan(QualType T1, QualType T2) {
-  if (T1->isCharType())
-    return true;
-  else
-    return false;
-}
-
 RegionStoreManager::CastResult
 RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
                                QualType CastToTy) {
@@ -675,8 +668,11 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   // VarRegion.
   if (isa<VarRegion>(R) || isa<ElementRegion>(R) || isa<FieldRegion>(R)
       || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
-    if (isSmallerThan(PointeeTy, 
-                      cast<TypedRegion>(R)->getRValueType(getContext()))) {
+    QualType ObjTy = cast<TypedRegion>(R)->getRValueType(getContext());
+    uint64_t PointeeTySize = getContext().getTypeSize(PointeeTy);
+    uint64_t ObjTySize = getContext().getTypeSize(ObjTy);
+
+    if (PointeeTySize > 0 && PointeeTySize < ObjTySize) {
       // Record the cast type of the region.
       state = setCastType(state, R, ToTy);
 
