@@ -24,7 +24,7 @@ int test6(float a, long double b) {
 
 
 #define CFSTR __builtin___CFStringMakeConstantString
-void cfstring() {
+void test7() {
   CFSTR("\242");
   CFSTR("\0"); // expected-warning {{ CFString literal contains NUL character }}
   CFSTR(242); // expected-error {{ CFString literal is not a string constant }} expected-warning {{incompatible integer to pointer conversion}}
@@ -35,8 +35,18 @@ void cfstring() {
 typedef __attribute__(( ext_vector_type(16) )) unsigned char uchar16;
 
 // rdar://5905347
-unsigned char foo( short v ) {
+unsigned char test8( short v ) {
   uchar16 c;
   return __builtin_ia32_vec_ext_v4si( c );  // expected-error {{too few arguments to function}}
 }
 
+
+// atomics.
+
+unsigned char test9(short v) {
+  unsigned i, old;
+  
+  old = __sync_fetch_and_add();  // expected-error {{too few arguments to function call}}
+  old = __sync_fetch_and_add(&old);  // expected-error {{too few arguments to function call}}
+  old = __sync_fetch_and_add((int**)0, 42i); // expected-error {{operand of type '_Complex int' cannot be cast to a pointer type}} expected-warning {{imaginary constants are an extension}}
+}

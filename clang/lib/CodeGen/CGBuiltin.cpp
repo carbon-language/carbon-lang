@@ -315,9 +315,52 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(EmitScalarExpr(E->getArg(0)));
   }
   case Builtin::BI__sync_fetch_and_add:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_add, E);
   case Builtin::BI__sync_fetch_and_sub:
+  case Builtin::BI__sync_fetch_and_or:
+  case Builtin::BI__sync_fetch_and_and:
+  case Builtin::BI__sync_fetch_and_xor:
+  case Builtin::BI__sync_add_and_fetch:
+  case Builtin::BI__sync_sub_and_fetch:
+  case Builtin::BI__sync_and_and_fetch:
+  case Builtin::BI__sync_or_and_fetch:
+  case Builtin::BI__sync_xor_and_fetch:
+  case Builtin::BI__sync_val_compare_and_swap:
+  case Builtin::BI__sync_bool_compare_and_swap:
+  case Builtin::BI__sync_lock_test_and_set:
+  case Builtin::BI__sync_lock_release:
+    assert(0 && "Shouldn't make it through sema");
+  case Builtin::BI__sync_fetch_and_add_1:
+  case Builtin::BI__sync_fetch_and_add_2:
+  case Builtin::BI__sync_fetch_and_add_4:
+  case Builtin::BI__sync_fetch_and_add_8:
+  case Builtin::BI__sync_fetch_and_add_16:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_add, E);
+  case Builtin::BI__sync_fetch_and_sub_1:
+  case Builtin::BI__sync_fetch_and_sub_2:
+  case Builtin::BI__sync_fetch_and_sub_4:
+  case Builtin::BI__sync_fetch_and_sub_8:
+  case Builtin::BI__sync_fetch_and_sub_16:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_sub, E);
+  case Builtin::BI__sync_fetch_and_or_1:
+  case Builtin::BI__sync_fetch_and_or_2:
+  case Builtin::BI__sync_fetch_and_or_4:
+  case Builtin::BI__sync_fetch_and_or_8:
+  case Builtin::BI__sync_fetch_and_or_16:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_or, E);
+  case Builtin::BI__sync_fetch_and_and_1:
+  case Builtin::BI__sync_fetch_and_and_2:
+  case Builtin::BI__sync_fetch_and_and_4:
+  case Builtin::BI__sync_fetch_and_and_8:
+  case Builtin::BI__sync_fetch_and_and_16:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_and, E);
+  case Builtin::BI__sync_fetch_and_xor_1:
+  case Builtin::BI__sync_fetch_and_xor_2:
+  case Builtin::BI__sync_fetch_and_xor_4:
+  case Builtin::BI__sync_fetch_and_xor_8:
+  case Builtin::BI__sync_fetch_and_xor_16:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
+  
+  // Clang extensions: not overloaded yet.
   case Builtin::BI__sync_fetch_and_min:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_min, E);
   case Builtin::BI__sync_fetch_and_max:
@@ -326,30 +369,49 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_umin, E);
   case Builtin::BI__sync_fetch_and_umax:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_umax, E);
-  case Builtin::BI__sync_fetch_and_and:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_and, E);
-  case Builtin::BI__sync_fetch_and_or:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_or, E);
-  case Builtin::BI__sync_fetch_and_xor:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
 
-  case Builtin::BI__sync_add_and_fetch:
+  case Builtin::BI__sync_add_and_fetch_1:
+  case Builtin::BI__sync_add_and_fetch_2:
+  case Builtin::BI__sync_add_and_fetch_4:
+  case Builtin::BI__sync_add_and_fetch_8:
+  case Builtin::BI__sync_add_and_fetch_16:
     return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_add, E, 
                                 llvm::Instruction::Add);
-  case Builtin::BI__sync_sub_and_fetch:
+  case Builtin::BI__sync_sub_and_fetch_1:
+  case Builtin::BI__sync_sub_and_fetch_2:
+  case Builtin::BI__sync_sub_and_fetch_4:
+  case Builtin::BI__sync_sub_and_fetch_8:
+  case Builtin::BI__sync_sub_and_fetch_16:
     return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_sub, E,
                                 llvm::Instruction::Sub);
-  case Builtin::BI__sync_and_and_fetch:
+  case Builtin::BI__sync_and_and_fetch_1:
+  case Builtin::BI__sync_and_and_fetch_2:
+  case Builtin::BI__sync_and_and_fetch_4:
+  case Builtin::BI__sync_and_and_fetch_8:
+  case Builtin::BI__sync_and_and_fetch_16:
     return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_and, E,
                                 llvm::Instruction::And);
-  case Builtin::BI__sync_or_and_fetch:
+  case Builtin::BI__sync_or_and_fetch_1:
+  case Builtin::BI__sync_or_and_fetch_2:
+  case Builtin::BI__sync_or_and_fetch_4:
+  case Builtin::BI__sync_or_and_fetch_8:
+  case Builtin::BI__sync_or_and_fetch_16:
     return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_or, E,
                                 llvm::Instruction::Or);
-  case Builtin::BI__sync_xor_and_fetch:
+  case Builtin::BI__sync_xor_and_fetch_1:
+  case Builtin::BI__sync_xor_and_fetch_2:
+  case Builtin::BI__sync_xor_and_fetch_4:
+  case Builtin::BI__sync_xor_and_fetch_8:
+  case Builtin::BI__sync_xor_and_fetch_16:
     return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_xor, E,
                                 llvm::Instruction::Xor);
 
-  case Builtin::BI__sync_val_compare_and_swap: {
+  case Builtin::BI__sync_val_compare_and_swap_1:
+  case Builtin::BI__sync_val_compare_and_swap_2:
+  case Builtin::BI__sync_val_compare_and_swap_4:
+  case Builtin::BI__sync_val_compare_and_swap_8:
+  case Builtin::BI__sync_val_compare_and_swap_16:
+  {
     const llvm::Type *ResType[2];
     ResType[0]= ConvertType(E->getType());
     ResType[1] = ConvertType(E->getArg(0)->getType());
@@ -360,10 +422,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                            EmitScalarExpr(E->getArg(2))));
   }
 
-  case Builtin::BI__sync_bool_compare_and_swap: {
+  case Builtin::BI__sync_bool_compare_and_swap_1:
+  case Builtin::BI__sync_bool_compare_and_swap_2:
+  case Builtin::BI__sync_bool_compare_and_swap_4:
+  case Builtin::BI__sync_bool_compare_and_swap_8:
+  case Builtin::BI__sync_bool_compare_and_swap_16:
+  {
     const llvm::Type *ResType[2];
-    ResType[0]= ConvertType(E->getType());
-    ResType[1] = ConvertType(E->getArg(0)->getType());
+    ResType[0]= ConvertType(E->getArg(1)->getType());
+    ResType[1] = llvm::PointerType::getUnqual(ResType[0]);
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
     Value *OldVal = EmitScalarExpr(E->getArg(1));
     Value *PrevVal = Builder.CreateCall3(AtomF, 
@@ -375,9 +442,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateZExt(Result, ConvertType(E->getType())));
   }
 
-  case Builtin::BI__sync_lock_test_and_set:
+  case Builtin::BI__sync_lock_test_and_set_1:
+  case Builtin::BI__sync_lock_test_and_set_2:
+  case Builtin::BI__sync_lock_test_and_set_4:
+  case Builtin::BI__sync_lock_test_and_set_8:
+  case Builtin::BI__sync_lock_test_and_set_16:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
-
+  case Builtin::BI__sync_lock_release_1:
+  case Builtin::BI__sync_lock_release_2:
+  case Builtin::BI__sync_lock_release_4:
+  case Builtin::BI__sync_lock_release_8:
+  case Builtin::BI__sync_lock_release_16:
+    assert(0 && "FIXME: Implement");
 
     // Library functions with special handling.
 

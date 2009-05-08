@@ -139,6 +139,23 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     if (SemaBuiltinLongjmp(TheCall))
       return ExprError();
     return move(TheCallResult);
+  case Builtin::BI__sync_fetch_and_add:
+  case Builtin::BI__sync_fetch_and_sub:
+  case Builtin::BI__sync_fetch_and_or:
+  case Builtin::BI__sync_fetch_and_and:
+  case Builtin::BI__sync_fetch_and_xor:
+  case Builtin::BI__sync_add_and_fetch:
+  case Builtin::BI__sync_sub_and_fetch:
+  case Builtin::BI__sync_and_and_fetch:
+  case Builtin::BI__sync_or_and_fetch:
+  case Builtin::BI__sync_xor_and_fetch:
+  case Builtin::BI__sync_val_compare_and_swap:
+  case Builtin::BI__sync_bool_compare_and_swap:
+  case Builtin::BI__sync_lock_test_and_set:
+  case Builtin::BI__sync_lock_release:
+    if (SemaBuiltinAtomicOverloaded(TheCall))
+      return ExprError();
+    return move(TheCallResult);
   }
 
   // FIXME: This mechanism should be abstracted to be less fragile and
@@ -161,6 +178,173 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
 
   return move(TheCallResult);
 }
+
+/// SemaBuiltinAtomicOverloaded - We have a call to a function like
+/// __sync_fetch_and_add, which is an overloaded function based on the pointer
+/// type of its first argument.  The main ActOnCallExpr routines have already
+/// promoted the types of arguments because all of these calls are prototyped as
+/// void(...).
+///
+/// This function goes through and does final semantic checking for these
+/// builtins,
+bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
+  DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
+  FunctionDecl *FDecl = cast<FunctionDecl>(DRE->getDecl());
+
+  // Ensure that we have at least one argument to do type inference from.
+  if (TheCall->getNumArgs() < 1)
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+              << 0 << TheCall->getCallee()->getSourceRange();
+  
+  // Inspect the first argument of the atomic builtin.  This should always be
+  // a pointer type, whose element is an integral scalar or pointer type.
+  // Because it is a pointer type, we don't have to worry about any implicit
+  // casts here.
+  Expr *FirstArg = TheCall->getArg(0);
+  if (!FirstArg->getType()->isPointerType())
+    return Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
+             << FirstArg->getType() << FirstArg->getSourceRange();
+  
+  QualType ValType = FirstArg->getType()->getAsPointerType()->getPointeeType();
+  if (!ValType->isIntegerType() && !ValType->isPointerType() && 
+      !ValType->isBlockPointerType())
+    return Diag(DRE->getLocStart(),
+                diag::err_atomic_builtin_must_be_pointer_intptr)
+             << FirstArg->getType() << FirstArg->getSourceRange();
+
+  // We need to figure out which concrete builtin this maps onto.  For example,
+  // __sync_fetch_and_add with a 2 byte object turns into
+  // __sync_fetch_and_add_2.
+#define BUILTIN_ROW(x) \
+  { Builtin::BI##x##_1, Builtin::BI##x##_2, Builtin::BI##x##_4, \
+    Builtin::BI##x##_8, Builtin::BI##x##_16 }
+  
+  static const unsigned BuiltinIndices[][5] = {
+    BUILTIN_ROW(__sync_fetch_and_add),
+    BUILTIN_ROW(__sync_fetch_and_sub),
+    BUILTIN_ROW(__sync_fetch_and_or),
+    BUILTIN_ROW(__sync_fetch_and_and),
+    BUILTIN_ROW(__sync_fetch_and_xor),
+    
+    BUILTIN_ROW(__sync_add_and_fetch),
+    BUILTIN_ROW(__sync_sub_and_fetch),
+    BUILTIN_ROW(__sync_and_and_fetch),
+    BUILTIN_ROW(__sync_or_and_fetch),
+    BUILTIN_ROW(__sync_xor_and_fetch),
+    
+    BUILTIN_ROW(__sync_val_compare_and_swap),
+    BUILTIN_ROW(__sync_bool_compare_and_swap),
+    BUILTIN_ROW(__sync_lock_test_and_set),
+    BUILTIN_ROW(__sync_lock_release)
+  };
+#undef BUILTIN_ROW  
+  
+  // Determine the index of the size.
+  unsigned SizeIndex;
+  switch (Context.getTypeSize(ValType)/8) {
+  case 1: SizeIndex = 0; break;
+  case 2: SizeIndex = 1; break;
+  case 4: SizeIndex = 2; break;
+  case 8: SizeIndex = 3; break;
+  case 16: SizeIndex = 4; break;
+  default:
+    return Diag(DRE->getLocStart(), diag::err_atomic_builtin_pointer_size)
+             << FirstArg->getType() << FirstArg->getSourceRange();
+  }
+  
+  // Each of these builtins has one pointer argument, followed by some number of
+  // values (0, 1 or 2) followed by a potentially empty varags list of stuff
+  // that we ignore.  Find out which row of BuiltinIndices to read from as well
+  // as the number of fixed args.
+  unsigned BuiltinID = FDecl->getBuiltinID(Context);
+  unsigned BuiltinIndex, NumFixed = 1;
+  switch (BuiltinID) {
+  default: assert(0 && "Unknown overloaded atomic builtin!");
+  case Builtin::BI__sync_fetch_and_add: BuiltinIndex = 0; break;
+  case Builtin::BI__sync_fetch_and_sub: BuiltinIndex = 1; break;
+  case Builtin::BI__sync_fetch_and_or:  BuiltinIndex = 2; break;
+  case Builtin::BI__sync_fetch_and_and: BuiltinIndex = 3; break;
+  case Builtin::BI__sync_fetch_and_xor: BuiltinIndex = 4; break;
+      
+  case Builtin::BI__sync_add_and_fetch: BuiltinIndex = 5; break;
+  case Builtin::BI__sync_sub_and_fetch: BuiltinIndex = 6; break;
+  case Builtin::BI__sync_and_and_fetch: BuiltinIndex = 7; break;
+  case Builtin::BI__sync_or_and_fetch:  BuiltinIndex = 8; break;
+  case Builtin::BI__sync_xor_and_fetch: BuiltinIndex = 9; break;
+      
+  case Builtin::BI__sync_val_compare_and_swap:
+    BuiltinIndex = 10;
+    NumFixed = 2;
+    break;
+  case Builtin::BI__sync_bool_compare_and_swap:
+    BuiltinIndex = 11;
+    NumFixed = 2;
+    break;
+  case Builtin::BI__sync_lock_test_and_set: BuiltinIndex = 12; break;
+  case Builtin::BI__sync_lock_release:
+    BuiltinIndex = 13;
+    NumFixed = 0;
+    break;
+  }
+  
+  // Now that we know how many fixed arguments we expect, first check that we
+  // have at least that many.
+  if (TheCall->getNumArgs() < 1+NumFixed)
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+            << 0 << TheCall->getCallee()->getSourceRange();
+  
+  // Next, walk the valid ones promoting to the right type.
+  for (unsigned i = 0; i != NumFixed; ++i) {
+    Expr *Arg = TheCall->getArg(i+1);
+    
+    // If the argument is an implicit cast, then there was a promotion due to
+    // "...", just remove it now.
+    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+      Arg = ICE->getSubExpr();
+      ICE->setSubExpr(0);
+      ICE->Destroy(Context);
+      TheCall->setArg(i+1, Arg);
+    }
+    
+    // GCC does an implicit conversion to the pointer or integer ValType.  This
+    // can fail in some cases (1i -> int**), check for this error case now.
+    if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg))
+      return true;
+    
+    // Okay, we have something that *can* be converted to the right type.  Check
+    // to see if there is a potentially weird extension going on here.  This can
+    // happen when you do an atomic operation on something like an char* and
+    // pass in 42.  The 42 gets converted to char.  This is even more strange
+    // for things like 45.123 -> char, etc.
+    // FIXME: Do this check.  
+    ImpCastExprToType(Arg, ValType, false);
+    TheCall->setArg(i+1, Arg);
+  }
+  
+  // Okay, if we get here, everything is good.  Get the decl for the concrete
+  // builtin.
+  unsigned NewBuiltinID = BuiltinIndices[BuiltinIndex][SizeIndex];
+  const char *NewBuiltinName = Context.BuiltinInfo.GetName(NewBuiltinID);
+  IdentifierInfo *NewBuiltinII = PP.getIdentifierInfo(NewBuiltinName);
+  FunctionDecl *NewBuiltinDecl = 
+    cast<FunctionDecl>(LazilyCreateBuiltin(NewBuiltinII, NewBuiltinID,
+                                           TUScope, false, DRE->getLocStart()));
+  // Switch the DeclRefExpr to refer to the new decl.
+  DRE->setDecl(NewBuiltinDecl);
+  DRE->setType(NewBuiltinDecl->getType());
+  
+  // Set the callee in the CallExpr.
+  // FIXME: This leaks the original parens and implicit casts.
+  Expr *PromotedCall = DRE;
+  UsualUnaryConversions(PromotedCall);
+  TheCall->setCallee(PromotedCall);
+  
+
+  // Change the result type of the call to match the result type of the decl.
+  TheCall->setType(NewBuiltinDecl->getResultType());
+  return false;
+}
+
 
 /// CheckObjCString - Checks that the argument to the builtin
 /// CFString constructor is correct

@@ -39,10 +39,11 @@
 //  . -> "...".  This may only occur at the end of the function list.
 //
 // Types maybe prefixed with the following modifiers:
-//  L  -> long (e.g. Li for 'long int')
-//  LL -> long long
-//  S  -> signed
-//  U  -> unsigned
+//  L   -> long (e.g. Li for 'long int')
+//  LL  -> long long
+//  LLL -> __int128_t (e.g. LLLi)
+//  S   -> signed
+//  U   -> unsigned
 //
 // Types may be postfixed with the following modifiers:
 // * -> pointer
@@ -196,37 +197,139 @@ BUILTIN(__builtin_shufflevector, "v."   , "nc")
 
 BUILTIN(__builtin_alloca, "v*z"   , "n")
 
-// Atomic operators builtin.
+// "Overloaded" Atomic operator builtins.  These are overloaded to support data
+// types of i8, i16, i32, i64, and i128.  The front-end sees calls to the
+// non-suffixed version of these (which has a bogus type) and transforms them to
+// the right overloaded version in Sema (plus casts).
 
-// FIXME: These should be overloaded for i8, i16, i32, and i64.
-BUILTIN(__sync_fetch_and_add,"ii*i", "n")
-BUILTIN(__sync_fetch_and_sub,"ii*i", "n")
-BUILTIN(__sync_fetch_and_or,"ii*i", "n")
-BUILTIN(__sync_fetch_and_and,"ii*i", "n")
-BUILTIN(__sync_fetch_and_xor,"ii*i", "n")
-BUILTIN(__sync_fetch_and_nand,"ii*i", "n")
+// FIXME: These assume that char -> i8, short -> i16, int -> i32,
+// long long -> i64.
 
-// GCC does not support these, they are a Clang extension.
-BUILTIN(__sync_fetch_and_min,"ii*i", "n")
-BUILTIN(__sync_fetch_and_max,"ii*i", "n")
-BUILTIN(__sync_fetch_and_umin,"UiUi*Ui", "n")
-BUILTIN(__sync_fetch_and_umax,"UiUi*Ui", "n")
+BUILTIN(__sync_fetch_and_add, "v.", "")
+BUILTIN(__sync_fetch_and_add_1, "cc*c.", "n")
+BUILTIN(__sync_fetch_and_add_2, "ss*s.", "n")
+BUILTIN(__sync_fetch_and_add_4, "ii*i.", "n")
+BUILTIN(__sync_fetch_and_add_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_fetch_and_add_16, "LLLiLLLi*LLLi.", "n")
 
-BUILTIN(__sync_add_and_fetch,"ii*i", "n")
-BUILTIN(__sync_sub_and_fetch,"ii*i", "n")
-BUILTIN(__sync_or_and_fetch,"ii*i", "n")
-BUILTIN(__sync_and_and_fetch,"ii*i", "n")
-BUILTIN(__sync_xor_and_fetch,"ii*i", "n")
-BUILTIN(__sync_nand_and_fetch,"ii*i", "n")
+BUILTIN(__sync_fetch_and_sub, "v.", "")
+BUILTIN(__sync_fetch_and_sub_1, "cc*c.", "n")
+BUILTIN(__sync_fetch_and_sub_2, "ss*s.", "n")
+BUILTIN(__sync_fetch_and_sub_4, "ii*i.", "n")
+BUILTIN(__sync_fetch_and_sub_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_fetch_and_sub_16, "LLLiLLLi*LLLi.", "n")
 
-BUILTIN(__sync_bool_compare_and_swap,"ii*ii", "n")
-BUILTIN(__sync_val_compare_and_swap,"ii*ii", "n")
-BUILTIN(__sync_lock_test_and_set,"ii*i", "n")
-BUILTIN(__sync_lock_release,"ii*i", "n")
+BUILTIN(__sync_fetch_and_or, "v.", "")
+BUILTIN(__sync_fetch_and_or_1, "cc*c.", "n")
+BUILTIN(__sync_fetch_and_or_2, "ss*s.", "n")
+BUILTIN(__sync_fetch_and_or_4, "ii*i.", "n")
+BUILTIN(__sync_fetch_and_or_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_fetch_and_or_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_fetch_and_and, "v.", "")
+BUILTIN(__sync_fetch_and_and_1, "cc*c.", "n")
+BUILTIN(__sync_fetch_and_and_2, "ss*s.", "n")
+BUILTIN(__sync_fetch_and_and_4, "ii*i.", "n")
+BUILTIN(__sync_fetch_and_and_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_fetch_and_and_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_fetch_and_xor, "v.", "")
+BUILTIN(__sync_fetch_and_xor_1, "cc*c.", "n")
+BUILTIN(__sync_fetch_and_xor_2, "ss*s.", "n")
+BUILTIN(__sync_fetch_and_xor_4, "ii*i.", "n")
+BUILTIN(__sync_fetch_and_xor_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_fetch_and_xor_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_fetch_and_nand, "v.", "")
+BUILTIN(__sync_fetch_and_nand_1, "cc*c.", "n")
+BUILTIN(__sync_fetch_and_nand_2, "ss*s.", "n")
+BUILTIN(__sync_fetch_and_nand_4, "ii*i.", "n")
+BUILTIN(__sync_fetch_and_nand_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_fetch_and_nand_16, "LLLiLLLi*LLLi.", "n")
+
+
+BUILTIN(__sync_add_and_fetch, "v.", "")
+BUILTIN(__sync_add_and_fetch_1, "cc*c.", "n")
+BUILTIN(__sync_add_and_fetch_2, "ss*s.", "n")
+BUILTIN(__sync_add_and_fetch_4, "ii*i.", "n")
+BUILTIN(__sync_add_and_fetch_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_add_and_fetch_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_sub_and_fetch, "v.", "")
+BUILTIN(__sync_sub_and_fetch_1, "cc*c.", "n")
+BUILTIN(__sync_sub_and_fetch_2, "ss*s.", "n")
+BUILTIN(__sync_sub_and_fetch_4, "ii*i.", "n")
+BUILTIN(__sync_sub_and_fetch_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_sub_and_fetch_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_or_and_fetch, "v.", "")
+BUILTIN(__sync_or_and_fetch_1, "cc*c.", "n")
+BUILTIN(__sync_or_and_fetch_2, "ss*s.", "n")
+BUILTIN(__sync_or_and_fetch_4, "ii*i.", "n")
+BUILTIN(__sync_or_and_fetch_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_or_and_fetch_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_and_and_fetch, "v.", "")
+BUILTIN(__sync_and_and_fetch_1, "cc*c.", "n")
+BUILTIN(__sync_and_and_fetch_2, "ss*s.", "n")
+BUILTIN(__sync_and_and_fetch_4, "ii*i.", "n")
+BUILTIN(__sync_and_and_fetch_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_and_and_fetch_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_xor_and_fetch, "v.", "")
+BUILTIN(__sync_xor_and_fetch_1, "cc*c.", "n")
+BUILTIN(__sync_xor_and_fetch_2, "ss*s.", "n")
+BUILTIN(__sync_xor_and_fetch_4, "ii*i.", "n")
+BUILTIN(__sync_xor_and_fetch_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_xor_and_fetch_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_nand_and_fetch, "v.", "")
+BUILTIN(__sync_nand_and_fetch_1, "cc*c.", "n")
+BUILTIN(__sync_nand_and_fetch_2, "ss*s.", "n")
+BUILTIN(__sync_nand_and_fetch_4, "ii*i.", "n")
+BUILTIN(__sync_nand_and_fetch_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_nand_and_fetch_16, "LLLiLLLi*LLLi.", "n")
+
+
+BUILTIN(__sync_bool_compare_and_swap, "v.", "")
+BUILTIN(__sync_bool_compare_and_swap_1, "bc*cc.", "n")
+BUILTIN(__sync_bool_compare_and_swap_2, "bs*ss.", "n")
+BUILTIN(__sync_bool_compare_and_swap_4, "bi*ii.", "n")
+BUILTIN(__sync_bool_compare_and_swap_8, "bLLi*LLi.", "n")
+BUILTIN(__sync_bool_compare_and_swap_16, "bLLLi*LLLiLLLi.", "n")
+
+BUILTIN(__sync_val_compare_and_swap, "v.", "")
+BUILTIN(__sync_val_compare_and_swap_1, "cc*cc.", "n")
+BUILTIN(__sync_val_compare_and_swap_2, "ss*ss.", "n")
+BUILTIN(__sync_val_compare_and_swap_4, "ii*ii.", "n")
+BUILTIN(__sync_val_compare_and_swap_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_val_compare_and_swap_16, "LLLiLLLi*LLLiLLLi.", "n")
+
+BUILTIN(__sync_lock_test_and_set, "v.", "")
+BUILTIN(__sync_lock_test_and_set_1, "cc*c.", "n")
+BUILTIN(__sync_lock_test_and_set_2, "ss*s.", "n")
+BUILTIN(__sync_lock_test_and_set_4, "ii*i.", "n")
+BUILTIN(__sync_lock_test_and_set_8, "LLiLLi*LLi.", "n")
+BUILTIN(__sync_lock_test_and_set_16, "LLLiLLLi*LLLi.", "n")
+
+BUILTIN(__sync_lock_release, "v.", "")
+BUILTIN(__sync_lock_release_1, "vc*.", "n")
+BUILTIN(__sync_lock_release_2, "vs*.", "n")
+BUILTIN(__sync_lock_release_4, "vi*.", "n")
+BUILTIN(__sync_lock_release_8, "vLLi*.", "n")
+BUILTIN(__sync_lock_release_16, "vLLLi*.", "n")
+
+
+
+// Non-overloaded atomic builtins.
 BUILTIN(__sync_synchronize, "v.", "n")
-
-// LLVM instruction builtin
+// LLVM instruction builtin [Clang extension].
 BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
+// GCC does not support these, they are a Clang extension.
+BUILTIN(__sync_fetch_and_min, "ii*i", "n")
+BUILTIN(__sync_fetch_and_max, "ii*i", "n")
+BUILTIN(__sync_fetch_and_umin, "UiUi*Ui", "n")
+BUILTIN(__sync_fetch_and_umax, "UiUi*Ui", "n")
 
 // Builtin library functions
 LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h")
