@@ -610,7 +610,8 @@ MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                   MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
-  assert((MI->getOpcode() == MSP430::Select16) &&
+  assert((MI->getOpcode() == MSP430::Select16 ||
+          MI->getOpcode() == MSP430::Select8) &&
          "Unexpected instr type to insert");
 
   // To "insert" a SELECT instruction, we actually have to insert the diamond
