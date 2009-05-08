@@ -1508,7 +1508,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     if (I->getOpcode() == X86::JMP) {
       if (!AllowModify) {
         TBB = I->getOperand(0).getMBB();
-        return false;
+        continue;
       }
 
       // If the block has any instructions after a JMP, delete them.
