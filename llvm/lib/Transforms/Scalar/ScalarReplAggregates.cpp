@@ -903,9 +903,10 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   
   // If this isn't a store of an integer to the whole alloca, it may be a store
   // to the first element.  Just ignore the store in this case and normal SROA
-  // will handle it.
+  // will handle it.  We don't handle types here that have tail padding, like
+  // an alloca of type {i1}.
   if (!isa<IntegerType>(SrcVal->getType()) ||
-      TD->getTypePaddedSizeInBits(SrcVal->getType()) != AllocaSizeBits)
+      TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     return;
 
   DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
@@ -1015,9 +1016,10 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
   
   // If this isn't a load of the whole alloca to an integer, it may be a load
   // of the first element.  Just ignore the load in this case and normal SROA
-  // will handle it.
+  // will handle it.  We don't handle types here that have tail padding, like
+  // an alloca of type {i1}.
   if (!isa<IntegerType>(LI->getType()) ||
-      TD->getTypePaddedSizeInBits(LI->getType()) != AllocaSizeBits)
+      TD->getTypeSizeInBits(LI->getType()) != AllocaSizeBits)
     return;
   
   DOUT << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << *LI;
