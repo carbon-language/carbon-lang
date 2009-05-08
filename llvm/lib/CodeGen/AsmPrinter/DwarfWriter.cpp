@@ -224,7 +224,7 @@ protected:
 
 public:
   explicit DIE(unsigned Tag)
-    : Abbrev(Tag, DW_CHILDREN_no), Offset(0), Size(0), Children(), Values() {}
+    : Abbrev(Tag, DW_CHILDREN_no), Offset(0), Size(0) {}
   virtual ~DIE();
 
   // Accessors.
@@ -594,6 +594,7 @@ class DIEntry : public DIEValue {
 public:
   explicit DIEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
 
+  DIE *getEntry() const { return Entry; }
   void setEntry(DIE *E) { Entry = E; }
 
   // Implement isa/cast/dyncast.
@@ -1116,7 +1117,7 @@ class DbgScope {
   SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
 public:
   DbgScope(DbgScope *P, DIDescriptor D)
-  : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), Scopes(), Variables()
+    : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0)
   {}
   virtual ~DbgScope() {
     for (unsigned i = 0, N = Scopes.size(); i < N; ++i) delete Scopes[i];
@@ -2211,7 +2212,6 @@ private:
     // with their unmangled counterparts. See PR2885. Don't do this assert.
     assert(0 && "Couldn't find DIE for machine function!");
 #endif
-    return;
   }
 
   /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
@@ -2302,9 +2302,8 @@ private:
     if (Abbrev->getChildrenFlag() == DW_CHILDREN_yes) {
       const std::vector<DIE *> &Children = Die->getChildren();
 
-      for (unsigned j = 0, M = Children.size(); j < M; ++j) {
+      for (unsigned j = 0, M = Children.size(); j < M; ++j)
         EmitDIE(Children[j]);
-      }
 
       Asm->EmitInt8(0); Asm->EOL("End Of Children Mark");
     }
