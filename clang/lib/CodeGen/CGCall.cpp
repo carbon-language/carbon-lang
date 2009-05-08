@@ -404,15 +404,19 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
     // Classify "single element" structs as their element type.
     if (const Type *SeltTy = isSingleElementStruct(RetTy, Context)) {
       if (const BuiltinType *BT = SeltTy->getAsBuiltinType()) {
-        // FIXME: This is gross, it would be nice if we could just
-        // pass back SeltTy and have clients deal with it. Is it worth
-        // supporting coerce to both LLVM and clang Types?
         if (BT->isIntegerType()) {
-          uint64_t Size = Context.getTypeSize(SeltTy);
+          // We need to use the size of the structure, padding
+          // bit-fields can adjust that to be larger than the single
+          // element type.
+          uint64_t Size = Context.getTypeSize(RetTy);
           return ABIArgInfo::getCoerce(llvm::IntegerType::get((unsigned) Size));
         } else if (BT->getKind() == BuiltinType::Float) {
+          assert(Context.getTypeSize(RetTy) == Context.getTypeSize(SeltTy) &&
+                 "Unexpect single element structure size!");
           return ABIArgInfo::getCoerce(llvm::Type::FloatTy);
         } else if (BT->getKind() == BuiltinType::Double) {
+          assert(Context.getTypeSize(RetTy) == Context.getTypeSize(SeltTy) &&
+                 "Unexpect single element structure size!");
           return ABIArgInfo::getCoerce(llvm::Type::DoubleTy);
         }
       } else if (SeltTy->isPointerType()) {
