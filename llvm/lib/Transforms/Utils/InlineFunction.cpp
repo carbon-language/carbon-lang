@@ -516,7 +516,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // uses of the returned value.
     if (!TheCall->use_empty()) {
       ReturnInst *R = Returns[0];
-      TheCall->replaceAllUsesWith(R->getReturnValue());
+      if (TheCall == R->getReturnValue())
+        TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
+      else
+        TheCall->replaceAllUsesWith(R->getReturnValue());
     }
     // Since we are now done with the Call/Invoke, we can delete it.
     TheCall->eraseFromParent();
@@ -605,8 +608,12 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   } else if (!Returns.empty()) {
     // Otherwise, if there is exactly one return value, just replace anything
     // using the return value of the call with the computed value.
-    if (!TheCall->use_empty())
-      TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
+    if (!TheCall->use_empty()) {
+      if (TheCall == Returns[0]->getReturnValue())
+        TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
+      else
+        TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
+    }
 
     // Splice the code from the return block into the block that it will return
     // to, which contains the code that was after the call.
