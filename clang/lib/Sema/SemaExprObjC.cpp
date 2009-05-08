@@ -422,7 +422,15 @@ Sema::ExprResult Sema::ActOnClassMessage(
   assert(ClassDecl && "missing interface declaration");
   ObjCMethodDecl *Method = 0;
   QualType returnType;
-  Method = ClassDecl->lookupClassMethod(Context, Sel);
+  if (ClassDecl->isForwardDecl()) {
+    // A forward class used in messaging is tread as a 'Class'
+    Method = LookupFactoryMethodInGlobalPool(Sel, SourceRange(lbrac,rbrac));
+    if (Method)
+      Diag(lbrac, diag::warn_receiver_forward_class) 
+        << ClassDecl->getDeclName();
+  }
+  if (!Method)
+    Method = ClassDecl->lookupClassMethod(Context, Sel);
   
   // If we have an implementation in scope, check "private" methods.
   if (!Method)

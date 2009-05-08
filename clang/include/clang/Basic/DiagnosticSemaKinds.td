@@ -1690,6 +1690,8 @@ def err_collection_expr_type : Error<
 
 // Type
 def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
+def warn_receiver_forward_class : Warning<
+    "receiver %0 is a forward class and corresponding @interface may not exist">;
 def warn_missing_declspec : Warning<
   "declaration specifier missing, defaulting to 'int'">;
 def warn_missing_type_specifier : Warning<
