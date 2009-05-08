@@ -211,7 +211,8 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
         } else if (!FBB && SSMBB == TBB && Cond.empty()) {
           TBB = 0;
           --Cost;
-        } else if (!TII->ReverseBranchCondition(Cond)) {
+        } else if (!Cond.empty() && !TII->ReverseBranchCondition(Cond)) {
+          assert(SSMBB == TBB);
           TBB = FBB;
           FBB = 0;
           --Cost;
