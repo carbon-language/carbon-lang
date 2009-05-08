@@ -1289,6 +1289,11 @@ class DwarfDebug : public Dwarf {
   /// variables.
   DenseMap<const MachineInstr *, DbgScope *> InlinedVariableScopes;
 
+  /// CompileUnitOffsets - A vector of the offsets of the compile units. This is
+  /// used when calculating the "origin" of a concrete instance of an inlined
+  /// function.
+  DenseMap<CompileUnit *, unsigned> CompileUnitOffsets;
+
   /// DebugTimer - Timer for the Dwarf debug writer.
   Timer *DebugTimer;
   
@@ -2360,24 +2365,28 @@ private:
   /// SizeAndOffsets - Compute the size and offset of all the DIEs.
   ///
   void SizeAndOffsets() {
+    // Compute size of compile unit header.
+    static unsigned Offset =
+      sizeof(int32_t) + // Length of Compilation Unit Info
+      sizeof(int16_t) + // DWARF version number
+      sizeof(int32_t) + // Offset Into Abbrev. Section
+      sizeof(int8_t);   // Pointer Size (in bytes)
+
     // Process base compile unit.
     if (MainCU) {
-      // Compute size of compile unit header
-      unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
-        sizeof(int16_t) + // DWARF version number
-        sizeof(int32_t) + // Offset Into Abbrev. Section
-        sizeof(int8_t);   // Pointer Size (in bytes)
       SizeAndOffsetDie(MainCU->getDie(), Offset, true);
+      CompileUnitOffsets[MainCU] = 0;
       return;
     }
+
+    // Process all compile units.
+    unsigned PrevOffset = 0;
+
     for (unsigned i = 0, e = CompileUnits.size(); i != e; ++i) {
       CompileUnit *Unit = CompileUnits[i];
-      // Compute size of compile unit header
-      unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
-        sizeof(int16_t) + // DWARF version number
-        sizeof(int32_t) + // Offset Into Abbrev. Section
-        sizeof(int8_t);   // Pointer Size (in bytes)
-      SizeAndOffsetDie(Unit->getDie(), Offset, true);
+      CompileUnitOffsets[Unit] = PrevOffset;
+      PrevOffset += SizeAndOffsetDie(Unit->getDie(), Offset, true)
+        + sizeof(int32_t);  // FIXME - extra pad for gdb bug.
     }
   }
 
