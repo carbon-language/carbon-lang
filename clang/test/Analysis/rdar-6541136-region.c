@@ -1,5 +1,4 @@
 // RUN: clang-cc -verify -analyze -checker-cfref -analyzer-store=region %s
-// XFAIL
 
 struct tea_cheese { unsigned magic; };
 typedef struct tea_cheese kernel_tea_cheese_t;

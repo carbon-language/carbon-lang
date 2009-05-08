@@ -668,6 +668,14 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   // VarRegion.
   if (isa<VarRegion>(R) || isa<ElementRegion>(R) || isa<FieldRegion>(R)
       || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
+    // If the pointee type is incomplete, do not compute its size, and return
+    // the original region.
+    if (const RecordType *RT = dyn_cast<RecordType>(PointeeTy.getTypePtr())) {
+      const RecordDecl *D = RT->getDecl();
+      if (!D->getDefinition(getContext()))
+        return CastResult(state, R);
+    }
+
     QualType ObjTy = cast<TypedRegion>(R)->getRValueType(getContext());
     uint64_t PointeeTySize = getContext().getTypeSize(PointeeTy);
     uint64_t ObjTySize = getContext().getTypeSize(ObjTy);
