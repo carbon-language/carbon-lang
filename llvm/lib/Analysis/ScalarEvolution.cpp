@@ -1866,7 +1866,7 @@ SCEVHandle ScalarEvolution::createNodeForPHI(PHINode *PN) {
 /// createNodeForGEP - Expand GEP instructions into add and multiply
 /// operations. This allows them to be analyzed by regular SCEV code.
 ///
-SCEVHandle ScalarEvolution::createNodeForGEP(GetElementPtrInst *GEP) {
+SCEVHandle ScalarEvolution::createNodeForGEP(User *GEP) {
 
   const Type *IntPtrTy = TD->getIntPtrType();
   Value *Base = GEP->getOperand(0);
@@ -2113,7 +2113,7 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
 
   case Instruction::GetElementPtr:
     if (!TD) break; // Without TD we can't analyze pointers.
-    return createNodeForGEP(cast<GetElementPtrInst>(U));
+    return createNodeForGEP(U);
 
   case Instruction::PHI:
     return createNodeForPHI(cast<PHINode>(U));
