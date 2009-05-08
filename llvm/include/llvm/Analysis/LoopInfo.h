@@ -213,6 +213,16 @@ public:
           ExitBlocks.push_back(*I);
   }
 
+  /// getExitBlock - If getExitBlocks would return exactly one block,
+  /// return that block. Otherwise return null.
+  BlockT *getExitBlock() const {
+    SmallVector<BlockT*, 8> ExitBlocks;
+    getExitBlocks(ExitBlocks);
+    if (ExitBlocks.size() == 1)
+      return ExitBlocks[0];
+    return 0;
+  }
+
   /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
   /// These are the blocks _outside of the current loop_ which are branched to.
   /// This assumes that loop is in canonical form.
