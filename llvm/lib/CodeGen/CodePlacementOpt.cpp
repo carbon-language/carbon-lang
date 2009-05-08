@@ -249,6 +249,20 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
   return Changed;
 }
 
+/// HeaderShouldBeAligned - Return true if the specified loop header block
+/// should be aligned. For now, we will not align it if all the predcessors
+/// (i.e. loop back edges) are laid out above the header. FIXME: Do not
+/// align small loops.
+static bool HeaderShouldBeAligned(MachineBasicBlock *MBB) {
+  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+    MachineBasicBlock *PredMBB = *PI;
+    if (PredMBB->getNumber() > MBB->getNumber())
+      return true;
+  }
+  return false;
+}
+
 /// AlignLoops - Align loop headers to target preferred alignments.
 ///
 bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
@@ -267,9 +281,11 @@ bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
   for (unsigned i = 0, e = LoopHeaders.size(); i != e; ++i) {
     MachineBasicBlock *HeaderMBB = LoopHeaders[i];
     MachineBasicBlock *PredMBB = prior(MachineFunction::iterator(HeaderMBB));
-    if (MLI->getLoopFor(HeaderMBB) != MLI->getLoopFor(PredMBB)) {
+    if (MLI->getLoopFor(HeaderMBB) == MLI->getLoopFor(PredMBB))
       // If previously BB is in the same loop, don't align this BB. We want
       // to prevent adding noop's inside a loop.
+      continue;
+    if (HeaderShouldBeAligned(HeaderMBB)) {
       HeaderMBB->setAlignment(Align);
       Changed = true;
       ++NumHeaderAligned;
