@@ -159,6 +159,31 @@ ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD, ASTContext &Context) {
          : ID->lookupClassMethod(Context, MD->getSelector());
 }
 
+namespace {
+class VISIBILITY_HIDDEN GenericNodeBuilder {
+  GRStmtNodeBuilder<GRState> *SNB;
+  Stmt *S;
+  const void *tag;
+  GREndPathNodeBuilder<GRState> *ENB;
+public:
+  GenericNodeBuilder(GRStmtNodeBuilder<GRState> &snb, Stmt *s,
+                     const void *t)
+  : SNB(&snb), S(s), tag(t), ENB(0) {}
+  GenericNodeBuilder(GREndPathNodeBuilder<GRState> &enb)
+  : SNB(0), S(0), tag(0), ENB(&enb) {}
+  
+  ExplodedNode<GRState> *MakeNode(const GRState *state,
+                                  ExplodedNode<GRState> *Pred) {
+    if (SNB)
+      return SNB->generateNode(PostStmt(S, tag), state,
+                               Pred);
+    
+    assert(ENB);
+    return ENB->MakeNode(state, Pred);
+  }
+};
+} // end anonymous namespace
+
 //===----------------------------------------------------------------------===//
 // Selector creation functions.
 //===----------------------------------------------------------------------===//
@@ -1539,7 +1564,6 @@ void RefVal::print(std::ostream& Out) const {
   
 typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
 static int RefBIndex = 0;
-static std::pair<const void*, const void*> LeakProgramPointTag(&RefBIndex, 0);
 
 namespace clang {
   template<>
@@ -1634,9 +1658,14 @@ private:
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolRef Sym);
   
-  std::pair<GRStateRef, bool>
-  HandleSymbolDeath(GRStateManager& VMgr, const GRState* St,
-                    const Decl* CD, SymbolRef sid, RefVal V, bool& hasLeak);
+  GRStateRef HandleSymbolDeath(GRStateRef state, SymbolRef sid, RefVal V,
+                               llvm::SmallVectorImpl<SymbolRef> &Leaked);
+    
+  ExplodedNode<GRState>* ProcessLeaks(GRStateRef state,
+                                      llvm::SmallVectorImpl<SymbolRef> &Leaked,
+                                      GenericNodeBuilder &Builder,
+                                      GRExprEngine &Eng,
+                                      ExplodedNode<GRState> *Pred = 0);
   
 public:  
   CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
@@ -2854,30 +2883,6 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
   B.MakeNode(state.scanReachableSymbols<StopTrackingCallback>(val).getState());
 }
 
-std::pair<GRStateRef,bool>
-CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
-                              const GRState* St, const Decl* CD,
-                              SymbolRef sid,
-                              RefVal V, bool& hasLeak) {
-
-  // Any remaining leaks?
-  hasLeak = V.isOwned() || 
-            ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
-
-  GRStateRef state(St, VMgr);
-  
-  if (!hasLeak)
-    return std::make_pair(state.remove<RefBindings>(sid), false);
-  
-  return std::make_pair(state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak),
-                        false);
-}
-
-
-
-// Dead symbols.
-
-
 
  // Return statements.
 
@@ -2932,7 +2937,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   // Did we cache out?
   if (!Pred)
     return;
-  
+    
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
     const Decl *CD = &Eng.getStateManager().getCodeDecl();
@@ -2953,6 +2958,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
       }
     }
   }
+  
+
 }
 
 // Assumptions.
@@ -3125,43 +3132,60 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
 // Handle dead symbols and end-of-path.
 //===----------------------------------------------------------------------===//
 
+
+GRStateRef
+CFRefCount::HandleSymbolDeath(GRStateRef state, SymbolRef sid, RefVal V,
+                              llvm::SmallVectorImpl<SymbolRef> &Leaked) {
+  
+  bool hasLeak = V.isOwned() || 
+  ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
+  
+  if (!hasLeak)
+    return state.remove<RefBindings>(sid);
+  
+  Leaked.push_back(sid);
+  return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak);
+}
+
+ExplodedNode<GRState>*
+CFRefCount::ProcessLeaks(GRStateRef state,
+                         llvm::SmallVectorImpl<SymbolRef> &Leaked,
+                         GenericNodeBuilder &Builder,
+                         GRExprEngine& Eng,
+                         ExplodedNode<GRState> *Pred) {
+  
+  if (Leaked.empty())
+    return Pred;
+  
+  ExplodedNode<GRState> *N = Builder.MakeNode(state, Pred);  
+  
+  if (N) {
+    for (llvm::SmallVectorImpl<SymbolRef>::iterator
+         I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
+      
+      CFRefBug *BT = static_cast<CFRefBug*>(Pred ? leakWithinFunction 
+                                                 : leakAtReturn);
+      assert(BT && "BugType not initialized.");
+      CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, *I, Eng);
+      BR->EmitReport(report);
+    }
+  }
+  
+  return N;
+}
+
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder<GRState>& Builder) {
   
-  const GRState* St = Builder.getState();
-  RefBindings B = St->get<RefBindings>();
+  GRStateRef state(Builder.getState(), Eng.getStateManager());
+  RefBindings B = state.get<RefBindings>();  
+  llvm::SmallVector<SymbolRef, 10> Leaked;  
   
-  llvm::SmallVector<std::pair<SymbolRef, bool>, 10> Leaked;
-  const Decl* CodeDecl = &Eng.getGraph().getCodeDecl();
-  
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    bool hasLeak = false;
-    
-    std::pair<GRStateRef, bool> X =
-      HandleSymbolDeath(Eng.getStateManager(), St, CodeDecl,
-                        (*I).first, (*I).second, hasLeak);
-    
-    St = X.first;
-    if (hasLeak) Leaked.push_back(std::make_pair((*I).first, X.second));
-  }
-  
-  if (Leaked.empty())
-    return;
-  
-  ExplodedNode<GRState>* N = Builder.MakeNode(St);  
-  
-  if (!N)
-    return;
-  
-  for (llvm::SmallVector<std::pair<SymbolRef,bool>, 10>::iterator
-       I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
-    
-    CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
-                                                    : leakWithinFunction);
-    assert(BT && "BugType not initialized.");
-    CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, I->first, Eng);
-    BR->EmitReport(report);
-  }
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
+    state = HandleSymbolDeath(state, (*I).first, (*I).second, Leaked);
+
+  GenericNodeBuilder Bd(Builder);
+  ProcessLeaks(state, Leaked, Bd, Eng, NULL);
 }
 
 void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
@@ -3171,65 +3195,31 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
                                  Stmt* S,
                                  const GRState* St,
                                  SymbolReaper& SymReaper) {
-  
-  // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.  
+
+  GRStateRef state(St, Eng.getStateManager());
   RefBindings B = St->get<RefBindings>();
-  llvm::SmallVector<std::pair<SymbolRef,bool>, 10> Leaked;
+  llvm::SmallVector<SymbolRef, 10> Leaked;
   
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-       E = SymReaper.dead_end(); I != E; ++I) {
-    
-    const RefVal* T = B.lookup(*I);
-    if (!T) continue;
-    
-    bool hasLeak = false;
-    
-    std::pair<GRStateRef, bool> X
-      = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
-    
-    St = X.first;
-    
-    if (hasLeak)
-      Leaked.push_back(std::make_pair(*I,X.second));    
-  }
+       E = SymReaper.dead_end(); I != E; ++I) {    
+      if (const RefVal* T = B.lookup(*I))
+        state = HandleSymbolDeath(state, *I, *T, Leaked);
+  }    
   
-  if (!Leaked.empty()) {
-    // Create a new intermediate node representing the leak point.  We
-    // use a special program point that represents this checker-specific
-    // transition.  We use the address of RefBIndex as a unique tag for this
-    // checker.  We will create another node (if we don't cache out) that
-    // removes the retain-count bindings from the state.
-    // NOTE: We use 'generateNode' so that it does interplay with the
-    // auto-transition logic.
-    ExplodedNode<GRState>* N =
-      Builder.generateNode(PostStmtCustom(S, &LeakProgramPointTag), St, Pred);
+  static unsigned LeakPPTag = 0;
+  GenericNodeBuilder Bd(Builder, S, &LeakPPTag);
+  Pred = ProcessLeaks(state, Leaked, Bd, Eng, Pred);
   
-    if (!N)
-      return;
-
-    // Generate the bug reports.
-    for (llvm::SmallVectorImpl<std::pair<SymbolRef,bool> >::iterator
-         I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
-      
-      CFRefBug *BT = static_cast<CFRefBug*>(I->second ? leakAtReturn 
-                                            : leakWithinFunction);
-      assert(BT && "BugType not initialized.");
-      CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N,
-                                                    I->first, Eng);
-      BR->EmitReport(report);
-    }
-    
-    Pred = N;
-  }
+  // Did we cache out?
+  if (!Pred)
+    return;
   
   // Now generate a new node that nukes the old bindings.
-  GRStateRef state(St, Eng.getStateManager());
   RefBindings::Factory& F = state.get_context<RefBindings>();
-
+  
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-        E = SymReaper.dead_end(); I!=E; ++I)
-       B = F.Remove(B, *I);
-
+       E = SymReaper.dead_end(); I!=E; ++I) B = F.Remove(B, *I);
+  
   state = state.set<RefBindings>(B);
   Builder.MakeNode(Dst, S, Pred, state);
 }
