@@ -312,45 +312,6 @@ StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
 }
 
-// getTypeWidth - compute the width of the type. Should pass in
-// canonical type.
-static unsigned getTypeWidth(ASTContext& Ctx, QualType T) {
-  TargetInfo& Target = Ctx.Target;
-  QualType CanT = Ctx.getCanonicalType(T);
-
-  if (CanT->isPointerType())
-    return Target.getPointerWidth(0);
-
-  if (CanT->isCharType())
-    return Target.getCharWidth();
-
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanT)) {
-    switch (BT->getKind()) {
-    case BuiltinType::Char_U:
-    case BuiltinType::UChar:
-    case BuiltinType::Char_S:
-    case BuiltinType::SChar:
-      return Target.getCharWidth();
-
-    case BuiltinType::UShort:
-    case BuiltinType::Short:
-      return Target.getShortWidth();
-
-    case BuiltinType::UInt:
-    case BuiltinType::Int:
-      return Target.getIntWidth();
-
-    case BuiltinType::ULong:
-    case BuiltinType::Long:
-      return Target.getLongWidth();
-    default:
-      assert(0 && "Unprocessed builtin type.");
-    }
-  }
-
-  assert(0 && "Unprocessed type.");
-}
-
 SubRegionMap* RegionStoreManager::getSubRegionMap(const GRState *state) {
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionStoreSubRegionMap *M = new RegionStoreSubRegionMap();
@@ -542,17 +503,17 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
       return NonLoc::MakeVal(getBasicVals(), CAT->getSize(), false);
     }
 
-    // If the VarRegion is cast to other type, compute the size with respect to
-    // that type.
     GRStateRef state(St, StateMgr);
     const QualType* CastTy = state.get<RegionCasts>(VR);
 
+    // If the VarRegion is cast to other type, compute the size with respect to
+    // that type.
     if (CastTy) {
       QualType EleTy =cast<PointerType>(CastTy->getTypePtr())->getPointeeType();
       QualType VarTy = VR->getRValueType(getContext());
-      unsigned EleWidth = getTypeWidth(getContext(), EleTy);
-      unsigned VarWidth = getTypeWidth(getContext(), VarTy);
-      return NonLoc::MakeIntVal(getBasicVals(), VarWidth / EleWidth, false);
+      uint64_t EleSize = getContext().getTypeSize(EleTy);
+      uint64_t VarSize = getContext().getTypeSize(VarTy);
+      return NonLoc::MakeIntVal(getBasicVals(), VarSize / EleSize, false);
     }
 
     // Clients can use ordinary variables as if they were arrays.  These
