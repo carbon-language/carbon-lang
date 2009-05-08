@@ -21,4 +21,4 @@ CC_CFLAGS := -m32
 
 include ../Makefile.test.common
 
-TESTARGS += --max-args 0
+TESTARGS += --no-function-return --max-args 1

@@ -4,7 +4,6 @@
 # file, and TESTARGS is used to change the type generation. Make sure
 # to 'make clean' after changing either of these parameters.
 
-TESTARGS := --max-args 0 --no-unsigned --no-bit-field
 COUNT := 1
 TIMEOUT := 5
 
@@ -21,3 +20,5 @@ Y_CFLAGS := -m64
 CC_CFLAGS := -m64
 
 include ../Makefile.test.common
+
+TESTARGS += --max-args 0

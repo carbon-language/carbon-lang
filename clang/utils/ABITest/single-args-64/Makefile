@@ -15,10 +15,10 @@ Y_COMPILER := clang
 Y_LL_CFLAGS := -emit-llvm -S
 CC := gcc
 
-X_CFLAGS := -m32
-Y_CFLAGS := -m32
-CC_CFLAGS := -m32
+X_CFLAGS := -m64
+Y_CFLAGS := -m64
+CC_CFLAGS := -m64
 
 include ../Makefile.test.common
 
-TESTARGS += --max-args 0
+TESTARGS += --no-function-return --max-args 1

@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 
+TESTARGS := --no-unsigned --no-vector --no-complex --no-bool --no-bit-field
+
 ABITESTGEN := ../ABITestGen.py
 
 ifndef VERBOSE
