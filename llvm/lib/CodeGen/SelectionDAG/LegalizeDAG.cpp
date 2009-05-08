@@ -3564,36 +3564,47 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         break;
       }
 
-      if (VT.isInteger()) {
-        if (TLI.getOperationAction(DivOpc, VT) ==
-            TargetLowering::Legal) {
-          // X % Y -> X-X/Y*Y
-          Result = DAG.getNode(DivOpc, dl, VT, Tmp1, Tmp2);
-          Result = DAG.getNode(ISD::MUL, dl, VT, Result, Tmp2);
-          Result = DAG.getNode(ISD::SUB, dl, VT, Tmp1, Result);
-        } else if (VT.isVector()) {
-          Result = LegalizeOp(UnrollVectorOp(Op));
-        } else {
-          assert(VT == MVT::i32 &&
-                 "Cannot expand this binary operator!");
-          RTLIB::Libcall LC = Node->getOpcode() == ISD::UREM
-            ? RTLIB::UREM_I32 : RTLIB::SREM_I32;
-          SDValue Dummy;
-          Result = ExpandLibCall(LC, Node, isSigned, Dummy);
-        }
-      } else {
-        assert(VT.isFloatingPoint() &&
-               "remainder op must have integer or floating-point type");
-        if (VT.isVector()) {
-          Result = LegalizeOp(UnrollVectorOp(Op));
-        } else {
-          // Floating point mod -> fmod libcall.
-          RTLIB::Libcall LC = GetFPLibCall(VT, RTLIB::REM_F32, RTLIB::REM_F64,
-                                           RTLIB::REM_F80, RTLIB::REM_PPCF128);
-          SDValue Dummy;
-          Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
-        }
+      if (VT.isInteger() &&
+          TLI.getOperationAction(DivOpc, VT) == TargetLowering::Legal) {
+        // X % Y -> X-X/Y*Y
+        Result = DAG.getNode(DivOpc, dl, VT, Tmp1, Tmp2);
+        Result = DAG.getNode(ISD::MUL, dl, VT, Result, Tmp2);
+        Result = DAG.getNode(ISD::SUB, dl, VT, Tmp1, Result);
+        break;
       }
+
+      // Check to see if we have a libcall for this operator.
+      RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+      switch (Node->getOpcode()) {
+      default: break;
+      case ISD::UREM:
+      case ISD::SREM:
+       if (VT == MVT::i16)
+         LC = (isSigned ? RTLIB::SREM_I16  : RTLIB::UREM_I16);
+       else if (VT == MVT::i32)
+         LC = (isSigned ? RTLIB::SREM_I32  : RTLIB::UREM_I32);
+       else if (VT == MVT::i64)
+         LC = (isSigned ? RTLIB::SREM_I64  : RTLIB::UREM_I64);
+       else if (VT == MVT::i128)
+         LC = (isSigned ? RTLIB::SREM_I128 : RTLIB::UREM_I128);
+       break;
+       case ISD::FREM:
+        // Floating point mod -> fmod libcall.
+        LC = GetFPLibCall(VT, RTLIB::REM_F32, RTLIB::REM_F64,
+                          RTLIB::REM_F80, RTLIB::REM_PPCF128);
+        break;
+      }
+
+      if (LC != RTLIB::UNKNOWN_LIBCALL) {
+        SDValue Dummy;
+        Result = ExpandLibCall(LC, Node, isSigned, Dummy);
+        break;
+      }
+
+      assert(VT.isVector() &&
+             "Cannot expand this binary operator!");
+      // Expand the operation into a bunch of nasty scalar code.
+      Result = LegalizeOp(UnrollVectorOp(Op));
       break;
     }
     }
