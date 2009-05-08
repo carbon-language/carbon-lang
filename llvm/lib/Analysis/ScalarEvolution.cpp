@@ -2721,9 +2721,16 @@ ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen)
   return UnknownValue;
 }
 
-/// getSCEVAtScope - Compute the value of the specified expression within the
-/// indicated loop (which may be null to indicate in no loop).  If the
-/// expression cannot be evaluated, return UnknownValue.
+/// getSCEVAtScope - Return a SCEV expression handle for the specified value
+/// at the specified scope in the program.  The L value specifies a loop
+/// nest to evaluate the expression at, where null is the top-level or a
+/// specified loop is immediately inside of the loop.
+///
+/// This method can be used to compute the exit value for a variable defined
+/// in a loop by querying what the value will hold in the parent loop.
+///
+/// If this value is not computable at this scope, a SCEVCouldNotCompute
+/// object is returned.
 SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
   // FIXME: this should be turned into a virtual method on SCEV!
 
@@ -2897,16 +2904,8 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
   assert(0 && "Unknown SCEV type!");
 }
 
-/// getSCEVAtScope - Return a SCEV expression handle for the specified value
-/// at the specified scope in the program.  The L value specifies a loop
-/// nest to evaluate the expression at, where null is the top-level or a
-/// specified loop is immediately inside of the loop.
-///
-/// This method can be used to compute the exit value for a variable defined
-/// in a loop by querying what the value will hold in the parent loop.
-///
-/// If this value is not computable at this scope, a SCEVCouldNotCompute
-/// object is returned.
+/// getSCEVAtScope - This is a convenience function which does
+/// getSCEVAtScope(getSCEV(V), L).
 SCEVHandle ScalarEvolution::getSCEVAtScope(Value *V, const Loop *L) {
   return getSCEVAtScope(getSCEV(V), L);
 }

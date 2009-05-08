@@ -345,11 +345,6 @@ namespace llvm {
     Constant *getConstantEvolutionLoopExitValue(PHINode *PN, const APInt& BEs,
                                                 const Loop *L);
 
-    /// getSCEVAtScope - Compute the value of the specified expression within
-    /// the indicated loop (which may be null to indicate in no loop).  If the
-    /// expression cannot be evaluated, return UnknownValue itself.
-    SCEVHandle getSCEVAtScope(const SCEV *S, const Loop *L);
-
     /// forgetLoopPHIs - Delete the memoized SCEVs associated with the
     /// PHI nodes in the given loop. This is used when the trip count of
     /// the loop may have changed.
@@ -468,6 +463,10 @@ namespace llvm {
     ///
     /// If this value is not computable at this scope, a SCEVCouldNotCompute
     /// object is returned.
+    SCEVHandle getSCEVAtScope(const SCEV *S, const Loop *L);
+
+    /// getSCEVAtScope - This is a convenience function which does
+    /// getSCEVAtScope(getSCEV(V), L).
     SCEVHandle getSCEVAtScope(Value *V, const Loop *L);
 
     /// isLoopGuardedByCond - Test whether entry to the loop is protected by
