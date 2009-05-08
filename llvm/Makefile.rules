@@ -338,6 +338,11 @@ ifeq ($(ENABLE_PIC),1)
       C.Flags   += -fPIC
     endif
   endif
+else
+  ifeq ($(OS),Darwin)
+      CXX.Flags += -mdynamic-no-pic
+      C.Flags   += -mdynamic-no-pic
+  endif
 endif
 
 CXX.Flags     += $(CXXFLAGS) -Woverloaded-virtual
