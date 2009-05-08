@@ -1169,12 +1169,19 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // Emit the handlers
   CGF.EmitBlock(TryHandler);
 
+  // Get the correct versions of the exception handling intrinsics
+  llvm::TargetData td = llvm::TargetData::TargetData(&TheModule);
+  int PointerWidth = td.getTypeSizeInBits(PtrTy);
+  assert((PointerWidth == 32 || PointerWidth == 64) &&
+    "Can't yet handle exceptions if pointers are not 32 or 64 bits");
   llvm::Value *llvm_eh_exception = 
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
-  llvm::Value *llvm_eh_selector_i64 = 
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i32);
-  llvm::Value *llvm_eh_typeid_for_i64 = 
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i32);
+  llvm::Value *llvm_eh_selector = PointerWidth == 32 ?
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i32) :
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i64);
+  llvm::Value *llvm_eh_typeid_for = PointerWidth == 32 ?
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i32) :
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i64);
 
   // Exception object
   llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
@@ -1212,9 +1219,8 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         const ObjCInterfaceType *IT = 
           PT->getPointeeType()->getAsObjCInterfaceType();
         assert(IT && "Invalid @catch type.");
-        CGF.ErrorUnsupported(&S, "@catch block with non-id argument  statement");
-        // FIXME: This should be the Class for the corresponding interface
-        llvm::Value *EHType = NULLPtr;
+        llvm::Value *EHType =
+          MakeConstantString(IT->getDecl()->getNameAsString());
         ESelArgs.push_back(EHType);
       }
     }
@@ -1227,7 +1233,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   }
 
   // Find which handler was matched.
-  llvm::Value *ESelector = CGF.Builder.CreateCall(llvm_eh_selector_i64,
+  llvm::Value *ESelector = CGF.Builder.CreateCall(llvm_eh_selector,
       ESelArgs.begin(), ESelArgs.end(), "selector");
 
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
@@ -1244,7 +1250,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // to Match if it does, or to the next BB if it doesn't.
       llvm::BasicBlock *Match = CGF.createBasicBlock("match");
       Next = CGF.createBasicBlock("catch.next");
-      llvm::Value *Id = CGF.Builder.CreateCall(llvm_eh_typeid_for_i64,
+      llvm::Value *Id = CGF.Builder.CreateCall(llvm_eh_typeid_for,
           CGF.Builder.CreateBitCast(ESelArgs[i+2], PtrTy));
       CGF.Builder.CreateCondBr(CGF.Builder.CreateICmpEQ(ESelector, Id), Match,
           Next);
@@ -1253,12 +1259,6 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     }
     
     if (CatchBody) {
-      //FIXME: Do we need to reset the invoke destination here?  Exceptions in
-      //@catch {} blocks should unwind higher up.
-      
-      //FIXME: This may not be right.  The exception object is returned in
-      //__builtin_eh_return_data_regno(0), but I am not sure how to get at
-      //this in LLVM
       llvm::Value *ExcObject = CGF.Builder.CreateBitCast(Exc,
           CGF.ConvertType(CatchParam->getType()));
       
