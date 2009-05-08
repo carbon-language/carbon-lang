@@ -71,7 +71,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SDIV_I32] = "__divsi3";
   Names[RTLIB::SDIV_I64] = "__divdi3";
   Names[RTLIB::SDIV_I128] = "__divti3";
-  Names[RTLIB::UDIV_I32] = "__udivhi3";
+  Names[RTLIB::UDIV_I16] = "__udivhi3";
   Names[RTLIB::UDIV_I32] = "__udivsi3";
   Names[RTLIB::UDIV_I64] = "__udivdi3";
   Names[RTLIB::UDIV_I128] = "__udivti3";
