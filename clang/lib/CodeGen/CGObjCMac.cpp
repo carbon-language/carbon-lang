@@ -1601,7 +1601,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
                                  const ConstantVector &OptInstanceMethods,
                                  const ConstantVector &OptClassMethods) {
   uint64_t Size = 
-    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ProtocolExtensionTy);
+    CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolExtensionTy);
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[1] = 
@@ -1702,7 +1702,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
     return llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
 
   unsigned PropertySize = 
-    CGM.getTargetData().getTypePaddedSize(ObjCTypes.PropertyTy);
+    CGM.getTargetData().getTypeAllocSize(ObjCTypes.PropertyTy);
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, PropertySize);
   Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Properties.size());
@@ -1767,7 +1767,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   };
  */
 void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
-  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.CategoryTy);
+  unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.CategoryTy);
 
   // FIXME: This is poor design, the OCD should have a pointer to the
   // category decl. Additionally, note that Category can be null for
@@ -1956,7 +1956,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          llvm::Constant *Protocols,
                                          const ConstantVector &Methods) {
   unsigned Flags = eClassFlags_Meta;
-  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassTy);
+  unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.ClassTy);
 
   if (CGM.getDeclVisibilityMode(ID->getClassInterface()) == LangOptions::Hidden)
     Flags |= eClassFlags_Hidden;
@@ -2058,7 +2058,7 @@ llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {
 llvm::Constant *
 CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   uint64_t Size = 
-    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassExtensionTy);
+    CGM.getTargetData().getTypeAllocSize(ObjCTypes.ClassExtensionTy);
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
@@ -2602,7 +2602,7 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
     : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
@@ -2623,7 +2623,7 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
     : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
@@ -2644,7 +2644,7 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
     : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
@@ -2665,7 +2665,7 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4) ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
                       : CGF.Builder.CreateBitCast(src, ObjCTypes.LongLongTy);
@@ -2767,7 +2767,7 @@ void CGObjCMac::EmitImageInfo() {
 static const int ModuleVersion = 7;
 
 void CGObjCMac::EmitModuleInfo() {
-  uint64_t Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.ModuleTy);
+  uint64_t Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.ModuleTy);
   
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ModuleVersion);
@@ -3110,7 +3110,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   // Build the string of skip/scan nibbles
   llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
   unsigned int WordSize = 
-    CGM.getTypes().getTargetData().getTypePaddedSize(PtrTy);
+    CGM.getTypes().getTargetData().getTypeAllocSize(PtrTy);
   if (IvarsInfo[0].ivar_bytepos == 0) {
     WordsToSkip = 0;
     WordsToScan = IvarsInfo[0].ivar_size;
@@ -4242,7 +4242,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
          "CGObjCNonFragileABIMac::GenerateClass - class is 0");
   // FIXME: Is this correct (that meta class size is never computed)?
   uint32_t InstanceStart = 
-    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ClassnfABITy);
+    CGM.getTargetData().getTypeAllocSize(ObjCTypes.ClassnfABITy);
   uint32_t InstanceSize = InstanceStart;
   uint32_t flags = CLS_META;
   std::string ObjCMetaClassName(getMetaclassSymbolPrefix());
@@ -4473,7 +4473,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   
   std::vector<llvm::Constant*> Values(3);
   // sizeof(struct _objc_method)
-  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.MethodTy);
+  unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.MethodTy);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   // method_count
   Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
@@ -4599,7 +4599,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     Ivar[2] = GetMethodVarType(IVD);
     const llvm::Type *FieldTy =
       CGM.getTypes().ConvertTypeForMem(IVD->getType());
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(FieldTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(FieldTy);
     unsigned Align = CGM.getContext().getPreferredTypeAlign(
                        IVD->getType().getTypePtr()) >> 3;
     Align = llvm::Log2_32(Align);
@@ -4616,7 +4616,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   if (Ivars.empty())
     return llvm::Constant::getNullValue(ObjCTypes.IvarListnfABIPtrTy);
   std::vector<llvm::Constant*> Values(3);
-  unsigned Size = CGM.getTargetData().getTypePaddedSize(ObjCTypes.IvarnfABITy);
+  unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.IvarnfABITy);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Ivars.size());
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.IvarnfABITy,
@@ -4744,7 +4744,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   Values[7] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + PD->getNameAsString(),
                                0, PD, ObjCTypes);
   uint32_t Size = 
-    CGM.getTargetData().getTypePaddedSize(ObjCTypes.ProtocolnfABITy);
+    CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolnfABITy);
   Values[8] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[9] = llvm::Constant::getNullValue(ObjCTypes.IntTy);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolnfABITy,
@@ -5181,7 +5181,7 @@ void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
            : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
@@ -5203,7 +5203,7 @@ void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
                      : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
@@ -5240,7 +5240,7 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
            : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));
@@ -5261,7 +5261,7 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
-    unsigned Size = CGM.getTargetData().getTypePaddedSize(SrcTy);
+    unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
     src = (Size == 4 ? CGF.Builder.CreateBitCast(src, ObjCTypes.IntTy)
            : CGF.Builder.CreateBitCast(src, ObjCTypes.LongTy));

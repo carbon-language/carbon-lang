@@ -530,7 +530,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
        Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeForMemRecursive(Field->getType());
-    uint64_t size = CGT.getTargetData().getTypePaddedSizeInBits(Ty);
+    uint64_t size = CGT.getTargetData().getTypeAllocSizeInBits(Ty);
 
     if (Field->isBitField()) {
       uint64_t BitFieldSize =
@@ -563,7 +563,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   }
 
   STy = llvm::StructType::get(LLVMFields, true);
-  assert(CGT.getTargetData().getTypePaddedSizeInBits(STy) == RL.getSize());
+  assert(CGT.getTargetData().getTypeAllocSizeInBits(STy) == RL.getSize());
 }
 
 /// layoutUnionFields - Do the actual work and lay out all fields. Create
@@ -603,5 +603,5 @@ void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
   LLVMFields.push_back(llvm::ArrayType::get(llvm::Type::Int8Ty,
                                             RL.getSize() / 8));
   STy = llvm::StructType::get(LLVMFields, true);
-  assert(CGT.getTargetData().getTypePaddedSizeInBits(STy) == RL.getSize());
+  assert(CGT.getTargetData().getTypeAllocSizeInBits(STy) == RL.getSize());
 }

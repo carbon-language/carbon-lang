@@ -136,7 +136,7 @@ public:
     // Calculate information about the relevant field
     const llvm::Type* Ty = CI->getType();
     const llvm::TargetData &TD = CGM.getTypes().getTargetData();
-    unsigned size = TD.getTypePaddedSizeInBits(Ty);
+    unsigned size = TD.getTypeAllocSizeInBits(Ty);
     unsigned fieldOffset = CGM.getTypes().getLLVMFieldNo(Field) * size;
     CodeGenTypes::BitFieldInfo bitFieldInfo =
         CGM.getTypes().getBitFieldInfo(Field);
@@ -147,11 +147,11 @@ public:
     // FIXME: This won't work if the struct isn't completely packed!
     unsigned offset = 0, i = 0;
     while (offset < (fieldOffset & -8))
-      offset += TD.getTypePaddedSizeInBits(Elts[i++]->getType());
+      offset += TD.getTypeAllocSizeInBits(Elts[i++]->getType());
 
     // Advance over 0 sized elements (must terminate in bounds since
     // the bitfield must have a size).
-    while (TD.getTypePaddedSizeInBits(Elts[i]->getType()) == 0)
+    while (TD.getTypeAllocSizeInBits(Elts[i]->getType()) == 0)
       ++i;
 
     // Promote the size of V if necessary
@@ -241,8 +241,8 @@ public:
     std::vector<const llvm::Type*> Types;
     Elts.push_back(C);
     Types.push_back(C->getType());
-    unsigned CurSize = CGM.getTargetData().getTypePaddedSize(C->getType());
-    unsigned TotalSize = CGM.getTargetData().getTypePaddedSize(Ty);
+    unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
+    unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
     while (CurSize < TotalSize) {
       Elts.push_back(llvm::Constant::getNullValue(llvm::Type::Int8Ty));
       Types.push_back(llvm::Type::Int8Ty);
@@ -275,7 +275,7 @@ public:
 
     if (curField->isBitField()) {
       // Create a dummy struct for bit-field insertion
-      unsigned NumElts = CGM.getTargetData().getTypePaddedSize(Ty);
+      unsigned NumElts = CGM.getTargetData().getTypeAllocSize(Ty);
       llvm::Constant* NV = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
       std::vector<llvm::Constant*> Elts(NumElts, NV);
 

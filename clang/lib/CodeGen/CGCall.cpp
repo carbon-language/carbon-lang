@@ -1569,8 +1569,8 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
                                       CodeGenFunction &CGF) {
   const llvm::Type *SrcTy = 
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
-  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(Ty);
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
 
   // If load is legal, just bitcast the src pointer.
   if (SrcSize == DstSize) {
@@ -1608,8 +1608,8 @@ static void CreateCoercedStore(llvm::Value *Src,
   const llvm::Type *DstTy = 
     cast<llvm::PointerType>(DstPtr->getType())->getElementType();
 
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypePaddedSize(SrcTy);
-  uint64_t DstSize = CGF.CGM.getTargetData().getTypePaddedSize(DstTy);
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(DstTy);
 
   // If store is legal, just bitcast the src pointer.
   if (SrcSize == DstSize) {
