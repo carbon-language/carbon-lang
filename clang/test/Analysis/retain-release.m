@@ -284,9 +284,31 @@ void f12() {
 }
 
 void f13_autorelease() {
-  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
   [(id) A autorelease]; // no-warning
 }
+
+void f13_autorelease_b() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  [(id) A autorelease];
+  [(id) A autorelease]; // expected-warning{{Object will be sent more -release messages from its containing autorelease pools than it has retain counts}}
+}
+
+CFMutableArrayRef f13_autorelease_c() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  [(id) A autorelease];
+  [(id) A autorelease]; 
+  return A; // expected-warning{{Object will be sent more -release messages from its containing autorelease pools than it has retain counts}}
+}
+
+CFMutableArrayRef f13_autorelease_d() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
+  [(id) A autorelease];
+  [(id) A autorelease]; 
+  CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{Object will be sent more -release messages}}
+  CFRelease(B); // no-warning
+}
+
 
 // This case exercises the logic where the leak site is the same as the allocation site.
 void f14_leakimmediately() {

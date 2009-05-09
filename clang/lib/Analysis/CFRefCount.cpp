@@ -175,8 +175,7 @@ public:
   ExplodedNode<GRState> *MakeNode(const GRState *state,
                                   ExplodedNode<GRState> *Pred) {
     if (SNB)
-      return SNB->generateNode(PostStmt(S, tag), state,
-                               Pred);
+      return SNB->generateNode(PostStmt(S, tag), state, Pred);
     
     assert(ENB);
     return ENB->generateNode(state, Pred);
@@ -3111,6 +3110,7 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
       // Update the autorelease counts.
       state = SendAutorelease(state, ARCountFactory, sym);
       V = V.autorelease();
+      break;
 
     case StopTracking:
       return state.remove<RefBindings>(sym);
@@ -3245,7 +3245,7 @@ CFRefCount::ProcessLeaks(GRStateRef state,
     return Pred;
   
   // Generate an intermediate node representing the leak point.
-  ExplodedNode<GRState> *N = Builder.MakeNode(state, Pred);  
+  ExplodedNode<GRState> *N = Builder.MakeNode(state, Pred);
   
   if (N) {
     for (llvm::SmallVectorImpl<SymbolRef>::iterator
@@ -3354,7 +3354,8 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
   Builder.BuildSinks = true;
   GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
   
-  if (!N) return;
+  if (!N)
+    return;
   
   CFRefBug *BT = 0;
   
