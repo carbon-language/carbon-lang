@@ -809,6 +809,12 @@ public:
   RetainSummary* getCommonMethodSummary(const ObjCMethodDecl* MD,
                                         Selector S, QualType RetTy);
 
+  void updateSummaryFromAnnotations(RetainSummary &Summ,
+                                    const ObjCMethodDecl *MD);
+
+  void updateSummaryFromAnnotations(RetainSummary &Summ,
+                                    const FunctionDecl *FD);
+
   bool isGCEnabled() const { return GCEnabled; }
   
   RetainSummary *copySummary(RetainSummary *OldSumm) {
@@ -1033,6 +1039,10 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
   if (!S)
     S = getDefaultSummary();
 
+  // Annotations override defaults.
+  assert(S);
+  updateSummaryFromAnnotations(*S, FD);
+  
   FuncSummaries[FD] = S;
   return S;  
 }
@@ -1116,7 +1126,41 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
                               ? RetEffect::MakeReceiverAlias()
                               : RetEffect::MakeNoRet());
 }
-  
+
+void
+RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
+                                                   const FunctionDecl *FD) {
+  if (!FD)
+    return;
+
+  // Determine if there is a special return effect for this method.
+  if (isTrackedObjCObjectType(FD->getResultType())) {
+    if (FD->getAttr<NSReturnsRetainedAttr>()) {
+      Summ.setRetEffect(ObjCAllocRetE);
+    }
+    else if (FD->getAttr<CFReturnsRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+    }
+  }
+}
+
+void
+RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
+                                                  const ObjCMethodDecl *MD) {
+  if (!MD)
+    return;
+
+  // Determine if there is a special return effect for this method.
+  if (isTrackedObjCObjectType(MD->getResultType())) {
+    if (MD->getAttr<NSReturnsRetainedAttr>()) {
+      Summ.setRetEffect(ObjCAllocRetE);
+    }
+    else if (MD->getAttr<CFReturnsRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+    }
+  }
+}
+
 RetainSummary*
 RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
                                              Selector S, QualType RetTy) {
@@ -1199,6 +1243,9 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   else
     Summ = getCommonMethodSummary(MD, S, RetTy);
   
+  // Annotations override defaults.
+  updateSummaryFromAnnotations(*Summ, MD);
+  
   // Memoize the summary.
   ObjCMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
   return Summ;
@@ -1218,6 +1265,9 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
     return I->second;
     
   RetainSummary *Summ = getCommonMethodSummary(MD, S, RetTy);
+  
+  // Annotations override defaults.
+  updateSummaryFromAnnotations(*Summ, MD);
 
   // Memoize the summary.
   ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
