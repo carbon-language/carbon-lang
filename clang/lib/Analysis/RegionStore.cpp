@@ -492,7 +492,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
                                            const MemRegion* R) {
   if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
     // Get the type of the variable.
-    QualType T = VR->getDesugaredRValueType(getContext());
+    QualType T = VR->getDesugaredObjectType(getContext());
 
     // FIXME: Handle variable-length arrays.
     if (isa<VariableArrayType>(T))
@@ -510,7 +510,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     // that type.
     if (CastTy) {
       QualType EleTy =cast<PointerType>(CastTy->getTypePtr())->getPointeeType();
-      QualType VarTy = VR->getRValueType(getContext());
+      QualType VarTy = VR->getObjectType(getContext());
       uint64_t EleSize = getContext().getTypeSize(EleTy);
       uint64_t VarSize = getContext().getTypeSize(VarTy);
       return NonLoc::MakeIntVal(getBasicVals(), VarSize / EleSize, false);
@@ -545,7 +545,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     llvm::APSInt SSize = cast<nonloc::ConcreteInt>(*Extent).getValue();
 
     // Get the size of the element in bits.
-    QualType LvT = ATR->getLValueType(getContext());
+    QualType LvT = ATR->getLocationType(getContext());
     QualType ElemTy = cast<PointerType>(LvT.getTypePtr())->getPointeeType();
 
     uint64_t X = getContext().getTypeSize(ElemTy);
@@ -605,8 +605,8 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   if (!ArrayR)
     return UnknownVal();
   
-  // Strip off typedefs from the ArrayRegion's RvalueType.
-  QualType T = ArrayR->getRValueType(getContext())->getDesugaredType();
+  // Strip off typedefs from the ArrayRegion's ObjectType.
+  QualType T = ArrayR->getObjectType(getContext())->getDesugaredType();
   ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
   
@@ -643,7 +643,7 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
 
   // Return the same region if the region types are compatible.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
+    QualType Ta = Ctx.getCanonicalType(TR->getLocationType(Ctx));
 
     if (Ta == ToTy)
       return CastResult(state, R);
@@ -676,7 +676,7 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
         return CastResult(state, R);
     }
 
-    QualType ObjTy = cast<TypedRegion>(R)->getRValueType(getContext());
+    QualType ObjTy = cast<TypedRegion>(R)->getObjectType(getContext());
     uint64_t PointeeTySize = getContext().getTypeSize(PointeeTy);
     uint64_t ObjTySize = getContext().getTypeSize(ObjTy);
 
@@ -722,7 +722,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
     // p += 3;
     // Note that p binds to a TypedViewRegion(SymbolicRegion).
     nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-    ER = MRMgr.getElementRegion(TR->getRValueType(getContext()), Idx, TR);
+    ER = MRMgr.getElementRegion(TR->getObjectType(getContext()), Idx, TR);
   }
 
   SVal Idx = ER->getIndex();
@@ -782,7 +782,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   //
   // Such funny addressing will occur due to layering of regions.
 
-  QualType RTy = R->getRValueType(getContext());
+  QualType RTy = R->getObjectType(getContext());
 
   if (RTy->isStructureType())
     return RetrieveStruct(St, R);
@@ -868,8 +868,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 }
 
 SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
-  // FIXME: Verify we want getRValueType instead of getLValueType.
-  QualType T = R->getRValueType(getContext());
+  QualType T = R->getObjectType(getContext());
   assert(T->isStructureType());
 
   const RecordType* RT = cast<RecordType>(T.getTypePtr());
@@ -894,7 +893,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
 }
 
 SVal RegionStoreManager::RetrieveArray(const GRState* St, const TypedRegion* R){
-  QualType T = R->getRValueType(getContext());
+  QualType T = R->getObjectType(getContext());
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
   llvm::ImmutableList<SVal> ArrayVal = getBasicVals().getEmptySValList();
@@ -904,7 +903,7 @@ SVal RegionStoreManager::RetrieveArray(const GRState* St, const TypedRegion* R){
 
   for (; i < Size; ++i) {
     SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-    ElementRegion* ER = MRMgr.getElementRegion(R->getRValueType(getContext()),
+    ElementRegion* ER = MRMgr.getElementRegion(R->getObjectType(getContext()),
                                                Idx, R);
     QualType ETy = ER->getElementType();
     SVal ElementVal = Retrieve(St, loc::MemRegionVal(ER), ETy);
@@ -921,8 +920,7 @@ const GRState* RegionStoreManager::Bind(const GRState* St, Loc L, SVal V) {
 
   // Check if the region is a struct region.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    // FIXME: Verify we want getRValueType().
-    if (TR->getRValueType(getContext())->isStructureType())
+    if (TR->getObjectType(getContext())->isStructureType())
       return BindStruct(St, TR, V);
 
   Store store = St->getStore();
@@ -1156,9 +1154,7 @@ void RegionStoreManager::print(Store store, std::ostream& Out,
 
 const GRState* RegionStoreManager::BindArray(const GRState* St, 
                                              const TypedRegion* R, SVal Init) {
-  
-  // FIXME: Verify we should use getLValueType or getRValueType.
-  QualType T = R->getRValueType(getContext());
+  QualType T = R->getObjectType(getContext());
   assert(T->isArrayType());
 
   // When we are binding the whole array, it always has default value 0.
@@ -1223,8 +1219,7 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
 
 const GRState*
 RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
-  // FIXME: Verify that we should use getRValueType or getLValueType.
-  QualType T = R->getRValueType(getContext());
+  QualType T = R->getObjectType(getContext());
   assert(T->isStructureType());
 
   const RecordType* RT = T->getAsRecordType();

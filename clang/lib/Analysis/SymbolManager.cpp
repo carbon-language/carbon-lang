@@ -167,7 +167,7 @@ QualType SymbolConjured::getType(ASTContext&) const {
 
 QualType SymbolRegionRValue::getType(ASTContext& C) const {
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    return TR->getRValueType(C);
+    return TR->getObjectType(C);
   
   return QualType();
 }

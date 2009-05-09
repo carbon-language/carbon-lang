@@ -32,7 +32,7 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
 
   // Return the same region if the region types are compatible.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    QualType Ta = Ctx.getCanonicalType(TR->getLValueType(Ctx));
+    QualType Ta = Ctx.getCanonicalType(TR->getLocationType(Ctx));
 
     if (Ta == ToTy)
       return CastResult(state, R);

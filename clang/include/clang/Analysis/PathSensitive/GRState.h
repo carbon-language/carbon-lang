@@ -513,7 +513,7 @@ public:
       return UnknownVal();
     
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-      QualType T = TR->getRValueType(getContext());
+      QualType T = TR->getObjectType(getContext());
       if (Loc::IsLocType(T) || T->isIntegerType())
         return GetSVal(state, R);
     }

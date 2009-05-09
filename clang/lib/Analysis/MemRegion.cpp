@@ -121,14 +121,6 @@ void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 //===----------------------------------------------------------------------===//
-// getLValueType() and getRValueType()
-//===----------------------------------------------------------------------===//
-
-QualType StringRegion::getRValueType(ASTContext& C) const {
-  return Str->getType();
-}
-
-//===----------------------------------------------------------------------===//
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
 

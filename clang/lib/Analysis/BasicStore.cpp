@@ -290,7 +290,7 @@ SVal BasicStoreManager::Retrieve(const GRState* state, Loc loc, QualType T) {
         // Just support void**, void***, intptr_t*, intptr_t**, etc., for now.
         // This is needed to handle OSCompareAndSwapPtr() and friends.
         ASTContext &Ctx = StateMgr.getContext();
-        QualType T = ER->getLValueType(Ctx);
+        QualType T = ER->getLocationType(Ctx);
 
         if (!isHigherOrderRawPtr(T, Ctx))
           return UnknownVal();
@@ -334,7 +334,7 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
       if (isa<Loc>(V) || isa<nonloc::LocAsInteger>(V))
         if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
           // FIXME: Should check for index 0.
-          QualType T = ER->getLValueType(C);
+          QualType T = ER->getLocationType(C);
         
           if (isHigherOrderRawPtr(T, C))
             R = ER->getSuperRegion();
@@ -357,7 +357,7 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
         // elsewhere. Food for thought.
         if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
           if (TyR->isBoundable(C) &&
-              Loc::IsLocType(TyR->getRValueType(C)))              
+              Loc::IsLocType(TyR->getObjectType(C)))              
             V = X->getLoc();
         }
       }

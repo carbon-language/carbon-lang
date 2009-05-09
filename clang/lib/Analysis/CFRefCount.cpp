@@ -2612,7 +2612,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           if (R->isBoundable(Ctx)) {
             // Set the value of the variable to be a conjured symbol.
             unsigned Count = Builder.getCurrentBlockCount();
-            QualType T = R->getRValueType(Ctx);
+            QualType T = R->getObjectType(Ctx);
           
             if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
               ValueManager &ValMgr = Eng.getValueManager();
