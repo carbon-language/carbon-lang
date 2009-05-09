@@ -148,15 +148,15 @@ protected:
   TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
   
 public:
-  virtual QualType getObjectType(ASTContext &C) const = 0;
+  virtual QualType getValueType(ASTContext &C) const = 0;
   
   virtual QualType getLocationType(ASTContext& C) const {
     // FIXME: We can possibly optimize this later to cache this value.
-    return C.getPointerType(getObjectType(C));
+    return C.getPointerType(getValueType(C));
   }
   
-  QualType getDesugaredObjectType(ASTContext& C) const {
-    QualType T = getObjectType(C);
+  QualType getDesugaredValueType(ASTContext& C) const {
+    QualType T = getValueType(C);
     return T.getTypePtr() ? T->getDesugaredType() : T;
   }
   
@@ -165,7 +165,7 @@ public:
   }
 
   bool isBoundable(ASTContext &C) const {
-    return !getObjectType(C).isNull();
+    return !getValueType(C).isNull();
   }
 
   static bool classof(const MemRegion* R) {
@@ -206,7 +206,7 @@ public:
       Data(sym),
       LocationType(t) {}
 
-  QualType getObjectType(ASTContext &C) const {
+  QualType getValueType(ASTContext &C) const {
     // Do not get the object type of a CodeTextRegion.
     assert(0);
     return QualType();
@@ -287,7 +287,7 @@ public:
 
   const StringLiteral* getStringLiteral() const { return Str; }
     
-  QualType getObjectType(ASTContext& C) const {
+  QualType getValueType(ASTContext& C) const {
     return Str->getType();
   }
 
@@ -320,7 +320,7 @@ public:
     return LValueType;
   }
 
-  QualType getObjectType(ASTContext&) const {
+  QualType getValueType(ASTContext&) const {
     const PointerType* PTy = LValueType->getAsPointerType();
     assert(PTy);
     return PTy->getPointeeType();
@@ -357,7 +357,7 @@ private:
                             const CompoundLiteralExpr* CL,
                             const MemRegion* superRegion);
 public:
-  QualType getObjectType(ASTContext& C) const {
+  QualType getValueType(ASTContext& C) const {
     return C.getCanonicalType(CL->getType());
   }
   
@@ -406,7 +406,7 @@ class VarRegion : public DeclRegion {
 public:  
   const VarDecl* getDecl() const { return cast<VarDecl>(D); }  
   
-  QualType getObjectType(ASTContext& C) const { 
+  QualType getValueType(ASTContext& C) const { 
     // FIXME: We can cache this if needed.
     return C.getCanonicalType(getDecl()->getType());
   }    
@@ -430,7 +430,7 @@ public:
   
   const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
     
-  QualType getObjectType(ASTContext& C) const { 
+  QualType getValueType(ASTContext& C) const { 
     // FIXME: We can cache this if needed.
     return C.getCanonicalType(getDecl()->getType());
   }    
@@ -462,7 +462,7 @@ public:
     return cast<ObjCInterfaceDecl>(D);
   }
   
-  QualType getObjectType(ASTContext& C) const {
+  QualType getValueType(ASTContext& C) const {
     return C.getObjCInterfaceType(getInterface());
   }
   
@@ -485,7 +485,7 @@ class ObjCIvarRegion : public DeclRegion {
   
 public:
   const ObjCIvarDecl* getDecl() const { return cast<ObjCIvarDecl>(D); }
-  QualType getObjectType(ASTContext&) const { return getDecl()->getType(); }
+  QualType getValueType(ASTContext&) const { return getDecl()->getType(); }
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == ObjCIvarRegionKind;
@@ -513,7 +513,7 @@ public:
 
   SVal getIndex() const { return Index; }
 
-  QualType getObjectType(ASTContext&) const {
+  QualType getValueType(ASTContext&) const {
     return ElementType;
   }
   

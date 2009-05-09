@@ -301,7 +301,7 @@ SVal ValueManager::getRValueSymbolVal(const MemRegion* R) {
   SymbolRef sym = SymMgr.getRegionRValueSymbol(R);
                                 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    QualType T = TR->getObjectType(SymMgr.getContext());
+    QualType T = TR->getValueType(SymMgr.getContext());
 
     // If T is of function pointer type, create a CodeTextRegion wrapping a
     // symbol.

@@ -357,7 +357,7 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
         // elsewhere. Food for thought.
         if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
           if (TyR->isBoundable(C) &&
-              Loc::IsLocType(TyR->getObjectType(C)))              
+              Loc::IsLocType(TyR->getValueType(C)))              
             V = X->getLoc();
         }
       }

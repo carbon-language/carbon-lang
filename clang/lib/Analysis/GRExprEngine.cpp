@@ -1785,7 +1785,7 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
       // FIXME: The proper thing to do is to really iterate over the
       //  container.  We will do this with dispatch logic to the store.
       //  For now, just 'conjure' up a symbolic value.
-      QualType T = R->getObjectType(getContext());
+      QualType T = R->getValueType(getContext());
       assert (Loc::IsLocType(T));
       unsigned Count = Builder->getCurrentBlockCount();
       SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
