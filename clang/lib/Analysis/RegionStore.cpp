@@ -371,10 +371,6 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState* St, SVal Base,
   switch (BaseL.getSubKind()) {
   case loc::MemRegionKind:
     BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
-    if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(BaseR)) {
-      SymbolRef Sym = SR->getSymbol();
-      BaseR = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-    }
     break;
 
   case loc::GotoLabelKind:
