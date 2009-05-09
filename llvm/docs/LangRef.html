@@ -2240,7 +2240,7 @@ argument is evaluated.  If the value is <tt>true</tt>, control flows
 to the '<tt>iftrue</tt>' <tt>label</tt> argument.  If "cond" is <tt>false</tt>,
 control flows to the '<tt>iffalse</tt>' <tt>label</tt> argument.</p>
 <h5>Example:</h5>
-<pre>Test:<br>  %cond = <a href="#i_icmp">icmp</a> eq, i32 %a, %b<br>  br i1 %cond, label %IfEqual, label %IfUnequal<br>IfEqual:<br>  <a
+<pre>Test:<br>  %cond = <a href="#i_icmp">icmp</a> eq i32 %a, %b<br>  br i1 %cond, label %IfEqual, label %IfUnequal<br>IfEqual:<br>  <a
  href="#i_ret">ret</a> i32 1<br>IfUnequal:<br>  <a href="#i_ret">ret</a> i32 0<br></pre>
 </div>
 <!-- _______________________________________________________________________ -->
