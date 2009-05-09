@@ -210,7 +210,7 @@ bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
     return false;
   
   const Type *Ty = GV->getType()->getElementType();
-  unsigned Size = TD->getTypePaddedSize(Ty);
+  unsigned Size = TD->getTypeAllocSize(Ty);
 
   // if this is a internal constant string, there is a special
   // section for it, but not in small data/bss.
@@ -551,7 +551,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   // hacking it. This feature should come soon so we can uncomment the 
   // stuff below.
   //if (!Subtarget->hasABICall() &&  
-  //    IsInSmallSection(getTargetData()->getTypePaddedSize(C->getType()))) {
+  //    IsInSmallSection(getTargetData()->getTypeAllocSize(C->getType()))) {
   //  SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
   //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 

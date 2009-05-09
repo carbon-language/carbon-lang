@@ -157,8 +157,8 @@ public:
 
   /// Size examples:
   ///
-  /// Type        SizeInBits  StoreSizeInBits  PaddedSizeInBits[*]
-  /// ----        ----------  ---------------  ----------------
+  /// Type        SizeInBits  StoreSizeInBits  AllocSizeInBits[*]
+  /// ----        ----------  ---------------  ---------------
   ///  i1            1           8                8
   ///  i8            8           8                8
   ///  i19          19          24               32
@@ -169,7 +169,7 @@ public:
   ///  Double       64          64               64
   ///  X86_FP80     80          80               96
   ///
-  /// [*] The padded size depends on the alignment, and thus on the target.
+  /// [*] The alloc size depends on the alignment, and thus on the target.
   ///     These values are for x86-32 linux.
 
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
@@ -190,21 +190,21 @@ public:
     return 8*getTypeStoreSize(Ty);
   }
 
-  /// getTypePaddedSize - Return the offset in bytes between successive objects
+  /// getTypeAllocSize - Return the offset in bytes between successive objects
   /// of the specified type, including alignment padding.  This is the amount
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
-  uint64_t getTypePaddedSize(const Type* Ty) const {
+  uint64_t getTypeAllocSize(const Type* Ty) const {
     // Round up to the next alignment boundary.
     return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
 
-  /// getTypePaddedSizeInBits - Return the offset in bits between successive
+  /// getTypeAllocSizeInBits - Return the offset in bits between successive
   /// objects of the specified type, including alignment padding; always a
   /// multiple of 8.  This is the amount that alloca reserves for this type.
   /// For example, returns 96 or 128 for x86_fp80, depending on alignment.
-  uint64_t getTypePaddedSizeInBits(const Type* Ty) const {
-    return 8*getTypePaddedSize(Ty);
+  uint64_t getTypeAllocSizeInBits(const Type* Ty) const {
+    return 8*getTypeAllocSize(Ty);
   }
 
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the

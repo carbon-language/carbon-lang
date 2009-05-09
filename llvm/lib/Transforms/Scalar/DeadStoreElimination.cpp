@@ -305,11 +305,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
           if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
             pointerSize = C->getZExtValue() *
-                          TD.getTypePaddedSize(A->getAllocatedType());
+                          TD.getTypeAllocSize(A->getAllocatedType());
         } else {
           const PointerType* PT = cast<PointerType>(
                                                  cast<Argument>(*I)->getType());
-          pointerSize = TD.getTypePaddedSize(PT->getElementType());
+          pointerSize = TD.getTypeAllocSize(PT->getElementType());
         }
 
         // See if the call site touches it
@@ -382,10 +382,10 @@ bool DSE::RemoveUndeadPointers(Value* killPointer, uint64_t killPointerSize,
     if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
       if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
         pointerSize = C->getZExtValue() *
-                      TD.getTypePaddedSize(A->getAllocatedType());
+                      TD.getTypeAllocSize(A->getAllocatedType());
     } else {
       const PointerType* PT = cast<PointerType>(cast<Argument>(*I)->getType());
-      pointerSize = TD.getTypePaddedSize(PT->getElementType());
+      pointerSize = TD.getTypeAllocSize(PT->getElementType());
     }
 
     // See if this pointer could alias it

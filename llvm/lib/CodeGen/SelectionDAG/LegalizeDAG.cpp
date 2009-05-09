@@ -3638,7 +3638,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // Increment the pointer, VAList, to the next vaarg
       Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
                          DAG.getConstant(TLI.getTargetData()->
-                                         getTypePaddedSize(VT.getTypeForMVT()),
+                                         getTypeAllocSize(VT.getTypeForMVT()),
                                          TLI.getPointerTy()));
       // Store the incremented VAList to the legalized pointer
       Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Tmp2, V, 0);

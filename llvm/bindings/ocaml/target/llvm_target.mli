@@ -70,7 +70,7 @@ external size_in_bits : TargetData.t -> Llvm.lltype -> Int64.t
 external store_size : TargetData.t -> Llvm.lltype -> Int64.t = "llvm_store_size"
 
 (** Computes the ABI size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypePaddedSize. *)
+    See the method llvm::TargetData::getTypeAllocSize. *)
 external abi_size : TargetData.t -> Llvm.lltype -> Int64.t = "llvm_abi_size"
 
 (** Computes the ABI alignment of a type in bytes for a target.

@@ -5202,7 +5202,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
        ++i, ++GTI) {
     Value *Op = *i;
-    uint64_t Size = TD.getTypePaddedSize(GTI.getIndexedType()) & PtrSizeMask;
+    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
     if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
       if (OpC->isZero()) continue;
       
@@ -5294,7 +5294,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
       if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
         Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
       } else {
-        uint64_t Size = TD.getTypePaddedSize(GTI.getIndexedType());
+        uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
         Offset += Size*CI->getSExtValue();
       }
     } else {
@@ -5310,7 +5310,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
   Value *VariableIdx = GEP->getOperand(i);
   // Determine the scale factor of the variable element.  For example, this is
   // 4 if the variable index is into an array of i32.
-  uint64_t VariableScale = TD.getTypePaddedSize(GTI.getIndexedType());
+  uint64_t VariableScale = TD.getTypeAllocSize(GTI.getIndexedType());
   
   // Verify that there are no other variable indices.  If so, emit the hard way.
   for (++i, ++GTI; i != e; ++i, ++GTI) {
@@ -5324,7 +5324,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
     if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
       Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
     } else {
-      uint64_t Size = TD.getTypePaddedSize(GTI.getIndexedType());
+      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
       Offset += Size*CI->getSExtValue();
     }
   }
@@ -7606,8 +7606,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   if (!AI.hasOneUse() && !hasOneUsePlusDeclare(&AI) &&
       CastElTyAlign == AllocElTyAlign) return 0;
 
-  uint64_t AllocElTySize = TD->getTypePaddedSize(AllocElTy);
-  uint64_t CastElTySize = TD->getTypePaddedSize(CastElTy);
+  uint64_t AllocElTySize = TD->getTypeAllocSize(AllocElTy);
+  uint64_t CastElTySize = TD->getTypeAllocSize(CastElTy);
   if (CastElTySize == 0 || AllocElTySize == 0) return 0;
 
   // See if we can satisfy the modulus by pulling a scale out of the array
@@ -7905,7 +7905,7 @@ static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset,
   // is something like [0 x {int, int}]
   const Type *IntPtrTy = TD->getIntPtrType();
   int64_t FirstIdx = 0;
-  if (int64_t TySize = TD->getTypePaddedSize(Ty)) {
+  if (int64_t TySize = TD->getTypeAllocSize(Ty)) {
     FirstIdx = Offset/TySize;
     Offset -= FirstIdx*TySize;
     
@@ -7937,7 +7937,7 @@ static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset,
       Offset -= SL->getElementOffset(Elt);
       Ty = STy->getElementType(Elt);
     } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
-      uint64_t EltSize = TD->getTypePaddedSize(AT->getElementType());
+      uint64_t EltSize = TD->getTypeAllocSize(AT->getElementType());
       assert(EltSize && "Cannot index into a zero-sized array");
       NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
       Offset %= EltSize;
@@ -8687,7 +8687,7 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
     // is a single-index GEP.
     if (X->getType() == CI.getType()) {
       // Get the size of the pointee type.
-      uint64_t Size = TD->getTypePaddedSize(DestPointee);
+      uint64_t Size = TD->getTypeAllocSize(DestPointee);
 
       // Convert the constant to intptr type.
       APInt Offset = Cst->getValue();
@@ -8707,7 +8707,7 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
     // "inttoptr+GEP" instead of "add+intptr".
     
     // Get the size of the pointee type.
-    uint64_t Size = TD->getTypePaddedSize(DestPointee);
+    uint64_t Size = TD->getTypeAllocSize(DestPointee);
     
     // Convert the constant to intptr type.
     APInt Offset = Cst->getValue();
@@ -9811,7 +9811,7 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   const Type* DstTy = cast<PointerType>(CI->getType())->getElementType();
   if (!SrcTy->isSized() || !DstTy->isSized())
     return false;
-  if (TD->getTypePaddedSize(SrcTy) != TD->getTypePaddedSize(DstTy))
+  if (TD->getTypeAllocSize(SrcTy) != TD->getTypeAllocSize(DstTy))
     return false;
   return true;
 }
@@ -10966,8 +10966,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
       if (isa<ArrayType>(SrcElTy) &&
-          TD->getTypePaddedSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
-          TD->getTypePaddedSize(ResElTy)) {
+          TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
+          TD->getTypeAllocSize(ResElTy)) {
         Value *Idx[2];
         Idx[0] = Constant::getNullValue(Type::Int32Ty);
         Idx[1] = GEP.getOperand(1);
@@ -10984,7 +10984,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       
       if (isa<ArrayType>(SrcElTy) && ResElTy == Type::Int8Ty) {
         uint64_t ArrayEltSize =
-            TD->getTypePaddedSize(cast<ArrayType>(SrcElTy)->getElementType());
+            TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
         
         // Check to see if "tmp" is a scale by a multiple of ArrayEltSize.  We
         // allow either a mul, shift, or constant here.
@@ -11137,7 +11137,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
     // If alloca'ing a zero byte object, replace the alloca with a null pointer.
     // Note that we only do this for alloca's, because malloc should allocate
     // and return a unique pointer, even for a zero byte allocation.
-    if (TD->getTypePaddedSize(AI.getAllocatedType()) == 0)
+    if (TD->getTypeAllocSize(AI.getAllocatedType()) == 0)
       return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
 
     // If the alignment is 0 (unspecified), assign it the preferred alignment.

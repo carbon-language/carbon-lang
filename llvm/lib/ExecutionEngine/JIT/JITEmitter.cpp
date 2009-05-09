@@ -809,7 +809,7 @@ static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
     unsigned AlignMask = CPE.getAlignment() - 1;
     Size = (Size + AlignMask) & ~AlignMask;
     const Type *Ty = CPE.getType();
-    Size += TD->getTypePaddedSize(Ty);
+    Size += TD->getTypeAllocSize(Ty);
   }
   return Size;
 }
@@ -838,7 +838,7 @@ static uintptr_t RoundUpToAlign(uintptr_t Size, unsigned Alignment) {
 
 unsigned JITEmitter::addSizeOfGlobal(const GlobalVariable *GV, unsigned Size) {
   const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)TheJIT->getTargetData()->getTypePaddedSize(ElTy);
+  size_t GVSize = (size_t)TheJIT->getTargetData()->getTypeAllocSize(ElTy);
   size_t GVAlign = 
       (size_t)TheJIT->getTargetData()->getPreferredAlignment(GV);
   DOUT << "JIT: Adding in size " << GVSize << " alignment " << GVAlign;
@@ -1322,7 +1322,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
          << std::hex << CAddr << std::dec << "]\n";
 
     const Type *Ty = CPE.Val.ConstVal->getType();
-    Offset += TheJIT->getTargetData()->getTypePaddedSize(Ty);
+    Offset += TheJIT->getTargetData()->getTypeAllocSize(Ty);
   }
 }
 

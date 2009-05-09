@@ -70,7 +70,7 @@ unsigned long long LLVMSizeOfTypeInBits(LLVMTargetDataRef, LLVMTypeRef);
 unsigned long long LLVMStoreSizeOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the ABI size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypePaddedSize. */
+    See the method llvm::TargetData::getTypeAllocSize. */
 unsigned long long LLVMABISizeOfType(LLVMTargetDataRef, LLVMTypeRef);
 
 /** Computes the ABI alignment of a type in bytes for a target.

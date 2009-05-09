@@ -295,7 +295,7 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
       Align = TM.getTargetData()->getPrefTypeAlignment(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
-        Align = TM.getTargetData()->getTypePaddedSize(Type);
+        Align = TM.getTargetData()->getTypeAllocSize(Type);
       }
     }
     

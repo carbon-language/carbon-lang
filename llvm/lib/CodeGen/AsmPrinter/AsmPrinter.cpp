@@ -313,7 +313,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       EmitZeros(NewOffset - Offset);
 
       const Type *Ty = CPE.getType();
-      Offset = NewOffset + TM.getTargetData()->getTypePaddedSize(Ty);
+      Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
 
       O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
         << CPI << ":\t\t\t\t\t";
@@ -889,12 +889,12 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
 
       // We can emit the pointer value into this slot if the slot is an
       // integer slot greater or equal to the size of the pointer.
-      if (TD->getTypePaddedSize(Ty) >= TD->getTypePaddedSize(Op->getType()))
+      if (TD->getTypeAllocSize(Ty) >= TD->getTypeAllocSize(Op->getType()))
         return EmitConstantValueOnly(Op);
 
       O << "((";
       EmitConstantValueOnly(Op);
-      APInt ptrMask = APInt::getAllOnesValue(TD->getTypePaddedSizeInBits(Ty));
+      APInt ptrMask = APInt::getAllOnesValue(TD->getTypeAllocSizeInBits(Ty));
       
       SmallString<40> S;
       ptrMask.toStringUnsigned(S);
@@ -992,14 +992,14 @@ void AsmPrinter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
                                           unsigned AddrSpace) {
   // Print the fields in successive locations. Pad to align if needed!
   const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getTypePaddedSize(CVS->getType());
+  unsigned Size = TD->getTypeAllocSize(CVS->getType());
   const StructLayout *cvsLayout = TD->getStructLayout(CVS->getType());
   uint64_t sizeSoFar = 0;
   for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
     const Constant* field = CVS->getOperand(i);
 
     // Check if padding is needed and insert one or more 0s.
-    uint64_t fieldSize = TD->getTypePaddedSize(field->getType());
+    uint64_t fieldSize = TD->getTypeAllocSize(field->getType());
     uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
                         - cvsLayout->getElementOffset(i)) - fieldSize;
     sizeSoFar += fieldSize + padSize;
@@ -1123,7 +1123,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
           << " long double most significant halfword";
       O << '\n';
     }
-    EmitZeros(TD->getTypePaddedSize(Type::X86_FP80Ty) -
+    EmitZeros(TD->getTypeAllocSize(Type::X86_FP80Ty) -
               TD->getTypeStoreSize(Type::X86_FP80Ty), AddrSpace);
     return;
   } else if (CFP->getType() == Type::PPC_FP128Ty) {
@@ -1228,7 +1228,7 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
 void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   const TargetData *TD = TM.getTargetData();
   const Type *type = CV->getType();
-  unsigned Size = TD->getTypePaddedSize(type);
+  unsigned Size = TD->getTypeAllocSize(type);
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
     EmitZeros(Size, AddrSpace);

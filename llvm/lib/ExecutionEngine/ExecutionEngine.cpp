@@ -55,7 +55,7 @@ ExecutionEngine::~ExecutionEngine() {
 
 char* ExecutionEngine::getMemoryForGV(const GlobalVariable* GV) {
   const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getTypePaddedSize(ElTy);
+  size_t GVSize = (size_t)getTargetData()->getTypeAllocSize(ElTy);
   return new char[GVSize];
 }
 
@@ -848,16 +848,16 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {
     unsigned ElementSize =
-      getTargetData()->getTypePaddedSize(CP->getType()->getElementType());
+      getTargetData()->getTypeAllocSize(CP->getType()->getElementType());
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
     return;
   } else if (isa<ConstantAggregateZero>(Init)) {
-    memset(Addr, 0, (size_t)getTargetData()->getTypePaddedSize(Init->getType()));
+    memset(Addr, 0, (size_t)getTargetData()->getTypeAllocSize(Init->getType()));
     return;
   } else if (const ConstantArray *CPA = dyn_cast<ConstantArray>(Init)) {
     unsigned ElementSize =
-      getTargetData()->getTypePaddedSize(CPA->getType()->getElementType());
+      getTargetData()->getTypeAllocSize(CPA->getType()->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -1004,7 +1004,7 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
     InitializeMemory(GV->getInitializer(), GA);
   
   const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getTypePaddedSize(ElTy);
+  size_t GVSize = (size_t)getTargetData()->getTypeAllocSize(ElTy);
   NumInitBytes += (unsigned)GVSize;
   ++NumGlobals;
 }

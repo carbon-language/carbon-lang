@@ -687,7 +687,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
-  unsigned Size = TD->getTypePaddedSize(Type);
+  unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   SwitchToSection(TAI->SectionForGlobal(GVar));
@@ -927,7 +927,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
-  unsigned Size = TD->getTypePaddedSize(Type);
+  unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   SwitchToSection(TAI->SectionForGlobal(GVar));

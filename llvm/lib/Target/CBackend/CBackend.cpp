@@ -497,7 +497,7 @@ CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
     const VectorType *VTy = cast<VectorType>(Ty);
     return printSimpleType(Out, VTy->getElementType(), isSigned,
                      " __attribute__((vector_size(" +
-                     utostr(TD->getTypePaddedSize(VTy)) + " ))) " + NameSoFar);
+                     utostr(TD->getTypeAllocSize(VTy)) + " ))) " + NameSoFar);
   }
     
   default:
@@ -542,7 +542,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
     const VectorType *VTy = cast<VectorType>(Ty);
     return printSimpleType(Out, VTy->getElementType(), isSigned,
                      " __attribute__((vector_size(" +
-                     utostr(TD->getTypePaddedSize(VTy)) + " ))) " + NameSoFar);
+                     utostr(TD->getTypeAllocSize(VTy)) + " ))) " + NameSoFar);
   }
     
   default:

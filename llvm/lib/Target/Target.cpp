@@ -53,7 +53,7 @@ unsigned long long LLVMStoreSizeOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {
 }
 
 unsigned long long LLVMABISizeOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {
-  return unwrap(TD)->getTypePaddedSize(unwrap(Ty));
+  return unwrap(TD)->getTypeAllocSize(unwrap(Ty));
 }
 
 unsigned LLVMABIAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {

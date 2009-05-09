@@ -484,7 +484,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *CTy = C->getType();
-  unsigned Size = TD->getTypePaddedSize(CTy);
+  unsigned Size = TD->getTypeAllocSize(CTy);
   const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
   bool printSizeAndType = true;
 

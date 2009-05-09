@@ -286,7 +286,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   const Type *RetType = F->getReturnType();
   unsigned RetSize = 0; 
   if (RetType->getTypeID() != Type::VoidTyID) 
-    RetSize = TD->getTypePaddedSize(RetType);
+    RetSize = TD->getTypeAllocSize(RetType);
   
   //Emit function return value space
   if(RetSize > 0)
@@ -300,7 +300,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   for (Function::const_arg_iterator argi = F->arg_begin(),
            arge = F->arg_end(); argi != arge ; ++argi) {
     const Type *Ty = argi->getType();
-    ArgSize += TD->getTypePaddedSize(Ty);
+    ArgSize += TD->getTypeAllocSize(Ty);
    }
   O << FunctionLabelBegin << CurrentFnName << ".args.      RES  " << ArgSize 
     << "\n";
@@ -340,7 +340,7 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     I->setSection("fadata." + CurrentFnName + ".#");
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
-    unsigned Size = TD->getTypePaddedSize(Ty);
+    unsigned Size = TD->getTypeAllocSize(Ty);
     FrameSize += Size; 
     // Emit memory reserve directive.
     O << FunctionLabelBegin << VarName << "  RES  " << Size << "\n";
@@ -374,7 +374,7 @@ void PIC16AsmPrinter::EmitGlobalData (Module &M)
       std::string Name = Mang->getValueName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       const Type *Ty = C->getType();
-      unsigned Size = TD->getTypePaddedSize(Ty);
+      unsigned Size = TD->getTypeAllocSize(Ty);
 
       O << Name << " " <<"RES"<< " " << Size ;
       O << "\n";

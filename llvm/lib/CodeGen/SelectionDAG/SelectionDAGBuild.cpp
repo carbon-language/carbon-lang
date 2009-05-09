@@ -128,7 +128,7 @@ static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
   // Given an array type, recursively traverse the elements.
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     const Type *EltTy = ATy->getElementType();
-    uint64_t EltSize = TLI.getTargetData()->getTypePaddedSize(EltTy);
+    uint64_t EltSize = TLI.getTargetData()->getTypeAllocSize(EltTy);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
       ComputeValueVTs(TLI, EltTy, ValueVTs, Offsets,
                       StartingOffset + i * EltSize);
@@ -294,7 +294,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         const Type *Ty = AI->getAllocatedType();
-        uint64_t TySize = TLI.getTargetData()->getTypePaddedSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
         unsigned Align =
           std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
                    AI->getAlignment());
@@ -2700,7 +2700,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs =
-            TD->getTypePaddedSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
+            TD->getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         SDValue OffsVal;
         unsigned PtrBits = TLI.getPointerTy().getSizeInBits();
         if (PtrBits < 64) {
@@ -2715,7 +2715,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       }
 
       // N = N + Idx * ElementSize;
-      uint64_t ElementSize = TD->getTypePaddedSize(Ty);
+      uint64_t ElementSize = TD->getTypeAllocSize(Ty);
       SDValue IdxN = getValue(Idx);
 
       // If the index is smaller or larger than intptr_t, truncate or extend
@@ -2756,7 +2756,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
     return;   // getValue will auto-populate this.
 
   const Type *Ty = I.getAllocatedType();
-  uint64_t TySize = TLI.getTargetData()->getTypePaddedSize(Ty);
+  uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
   unsigned Align =
     std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
              I.getAlignment());
@@ -5199,7 +5199,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         // Otherwise, create a stack slot and emit a store to it before the
         // asm.
         const Type *Ty = OpVal->getType();
-        uint64_t TySize = TLI.getTargetData()->getTypePaddedSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
         unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
@@ -5500,7 +5500,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   // i32-ness of the optimizer: we do not want to promote to i64 and then
   // multiply on 64-bit targets.
   // FIXME: Malloc inst should go away: PR715.
-  uint64_t ElementSize = TD->getTypePaddedSize(I.getType()->getElementType());
+  uint64_t ElementSize = TD->getTypeAllocSize(I.getType()->getElementType());
   if (ElementSize != 1)
     Src = DAG.getNode(ISD::MUL, getCurDebugLoc(), Src.getValueType(),
                       Src, DAG.getConstant(ElementSize, Src.getValueType()));
@@ -5614,7 +5614,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
         const PointerType *Ty = cast<PointerType>(I->getType());
         const Type *ElementTy = Ty->getElementType();
         unsigned FrameAlign = getByValTypeAlignment(ElementTy);
-        unsigned FrameSize  = getTargetData()->getTypePaddedSize(ElementTy);
+        unsigned FrameSize  = getTargetData()->getTypeAllocSize(ElementTy);
         // For ByVal, alignment should be passed from FE.  BE will guess if
         // this info is not there but there are cases it cannot get right.
         if (F.getParamAlignment(j))
@@ -5747,7 +5747,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
         const PointerType *Ty = cast<PointerType>(Args[i].Ty);
         const Type *ElementTy = Ty->getElementType();
         unsigned FrameAlign = getByValTypeAlignment(ElementTy);
-        unsigned FrameSize  = getTargetData()->getTypePaddedSize(ElementTy);
+        unsigned FrameSize  = getTargetData()->getTypeAllocSize(ElementTy);
         // For ByVal, alignment should come from FE.  BE will guess if this
         // info is not there but there are cases it cannot get right.
         if (Args[i].Alignment)

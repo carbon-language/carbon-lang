@@ -59,7 +59,7 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
       Ty = cast<PointerType>(Ty)->getElementType();
 
     // Size should be aligned to DWORD boundary
-    Size += ((TD->getTypePaddedSize(Ty) + 3)/4)*4;
+    Size += ((TD->getTypeAllocSize(Ty) + 3)/4)*4;
   }
 
   // We're not supporting tooooo huge arguments :)

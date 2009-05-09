@@ -270,7 +270,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   }
   SDValue base = getGlobalAddressWrapper(GA, GV, DAG);
   const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getTypePaddedSize(Ty);
+  unsigned Size = TD->getTypeAllocSize(Ty);
   SDValue offset = DAG.getNode(ISD::MUL, dl, MVT::i32, BuildGetId(DAG, dl),
                        DAG.getConstant(Size, MVT::i32));
   return DAG.getNode(ISD::ADD, dl, MVT::i32, base, offset);

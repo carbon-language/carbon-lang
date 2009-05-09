@@ -123,7 +123,7 @@ static bool isObjectSmallerThan(const Value *V, unsigned Size,
   }
   
   if (AccessTy->isSized())
-    return TD.getTypePaddedSize(AccessTy) < Size;
+    return TD.getTypeAllocSize(AccessTy) < Size;
   return false;
 }
 

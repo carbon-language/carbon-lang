@@ -72,7 +72,7 @@ PIC16TargetAsmInfo::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   // Find how much space this global needs.
   const TargetData *TD = TM.getTargetData();
   const Type *Ty = C->getType(); 
-  unsigned ValSize = TD->getTypePaddedSize(Ty);
+  unsigned ValSize = TD->getTypeAllocSize(Ty);
  
   // Go through all BSS Sections and assign this variable
   // to the first available section having enough space.
@@ -118,7 +118,7 @@ PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
   // Find how much space this global needs.
   const TargetData *TD = TM.getTargetData();
   const Type *Ty = C->getType(); 
-  unsigned ValSize = TD->getTypePaddedSize(Ty);
+  unsigned ValSize = TD->getTypeAllocSize(Ty);
  
   // Go through all IDATA Sections and assign this variable
   // to the first available section having enough space.

@@ -114,7 +114,7 @@ bool StackProtector::RequiresStackProtector() const {
         if (const ArrayType *AT = dyn_cast<ArrayType>(AI->getAllocatedType()))
           // If an array has more than SSPBufferSize bytes of allocated space,
           // then we emit stack protectors.
-          if (SSPBufferSize <= TD->getTypePaddedSize(AT))
+          if (SSPBufferSize <= TD->getTypeAllocSize(AT))
             return true;
       }
   }

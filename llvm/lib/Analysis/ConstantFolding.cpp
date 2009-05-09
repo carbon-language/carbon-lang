@@ -77,7 +77,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
         Offset += TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue());
       } else {
         const SequentialType *SQT = cast<SequentialType>(*GTI);
-        Offset += TD.getTypePaddedSize(SQT->getElementType())*CI->getSExtValue();
+        Offset += TD.getTypeAllocSize(SQT->getElementType())*CI->getSExtValue();
       }
     }
     return true;
@@ -405,8 +405,8 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                   if (const ArrayType *AT =
                         dyn_cast<ArrayType>(GVTy->getElementType())) {
                     const Type *ElTy = AT->getElementType();
-                    uint64_t PaddedSize = TD->getTypePaddedSize(ElTy);
-                    APInt PSA(L->getValue().getBitWidth(), PaddedSize);
+                    uint64_t AllocSize = TD->getTypeAllocSize(ElTy);
+                    APInt PSA(L->getValue().getBitWidth(), AllocSize);
                     if (ElTy == cast<PointerType>(DestTy)->getElementType() &&
                         L->getValue().urem(PSA) == 0) {
                       APInt ElemIdx = L->getValue().udiv(PSA);

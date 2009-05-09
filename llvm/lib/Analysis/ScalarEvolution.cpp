@@ -1961,7 +1961,7 @@ SCEVHandle ScalarEvolution::createNodeForGEP(User *GEP) {
                                               IntPtrTy);
       LocalOffset =
         getMulExpr(LocalOffset,
-                   getIntegerSCEV(TD->getTypePaddedSize(*GTI),
+                   getIntegerSCEV(TD->getTypeAllocSize(*GTI),
                                   IntPtrTy));
       TotalOffset = getAddExpr(TotalOffset, LocalOffset);
     }

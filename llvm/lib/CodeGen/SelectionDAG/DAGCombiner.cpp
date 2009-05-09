@@ -5694,7 +5694,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         // Get the offsets to the 0 and 1 element of the array so that we can
         // select between them.
         SDValue Zero = DAG.getIntPtrConstant(0);
-        unsigned EltSize = (unsigned)TD.getTypePaddedSize(Elts[0]->getType());
+        unsigned EltSize = (unsigned)TD.getTypeAllocSize(Elts[0]->getType());
         SDValue One = DAG.getIntPtrConstant(EltSize);
         
         SDValue Cond = DAG.getSetCC(DL,
