@@ -1378,8 +1378,9 @@ public:
     ErrorReleaseNotOwned, // Release of an object that was not owned.
     ERROR_LEAK_START,
     ErrorLeak,  // A memory leak due to excessive reference counts.
-    ErrorLeakReturned // A memory leak due to the returning method not having
-                      // the correct naming conventions.            
+    ErrorLeakReturned, // A memory leak due to the returning method not having
+                      // the correct naming conventions.
+    ErrorOverAutorelease
   };
 
 private:  
@@ -1404,6 +1405,8 @@ public:
   unsigned getAutoreleaseCount() const { return ACnt; }
   unsigned getCombinedCounts() const { return Cnt + ACnt; }
   void clearCounts() { Cnt = 0; ACnt = 0; }
+  void setCount(unsigned i) { Cnt = i; }
+  void setAutoreleaseCount(unsigned i) { ACnt = i; }
   
   QualType getType() const { return T; }
   
@@ -1646,6 +1649,7 @@ private:
   BugType *useAfterRelease, *releaseNotOwned;
   BugType *deallocGC, *deallocNotOwned;
   BugType *leakWithinFunction, *leakAtReturn;
+  BugType *overAutorelease;
   BugReporter *BR;
   
   GRStateRef Update(GRStateRef state, SymbolRef sym, RefVal V, ArgEffect E,
@@ -1672,7 +1676,7 @@ public:
     : Summaries(Ctx, gcenabled),
       LOpts(lopts), useAfterRelease(0), releaseNotOwned(0),
       deallocGC(0), deallocNotOwned(0),
-      leakWithinFunction(0), leakAtReturn(0), BR(0) {}
+      leakWithinFunction(0), leakAtReturn(0), overAutorelease(0), BR(0) {}
   
   virtual ~CFRefCount() {}
   
@@ -1737,8 +1741,8 @@ public:
   
   std::pair<ExplodedNode<GRState>*, GRStateRef>
   HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
-                          ExplodedNode<GRState>* Pred,
-                          SymbolRef Sym, RefVal V);
+                          ExplodedNode<GRState>* Pred, GRExprEngine &Eng,
+                          SymbolRef Sym, RefVal V, bool &stop);
   // Return statements.
   
   virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,
@@ -1848,23 +1852,34 @@ namespace {
   
   class VISIBILITY_HIDDEN DeallocGC : public CFRefBug {
   public:
-    DeallocGC(CFRefCount *tf) : CFRefBug(tf,
-                                         "-dealloc called while using GC") {}
+    DeallocGC(CFRefCount *tf)
+      : CFRefBug(tf, "-dealloc called while using garbage collection") {}
     
     const char *getDescription() const {
-      return "-dealloc called while using GC";
+      return "-dealloc called while using garbage collection";
     }
   };
   
   class VISIBILITY_HIDDEN DeallocNotOwned : public CFRefBug {
   public:
-    DeallocNotOwned(CFRefCount *tf) : CFRefBug(tf,
-                                               "-dealloc sent to non-exclusively owned object") {}
+    DeallocNotOwned(CFRefCount *tf)
+      : CFRefBug(tf, "-dealloc sent to non-exclusively owned object") {}
     
     const char *getDescription() const {
       return "-dealloc sent to object that may be referenced elsewhere";
     }
   };  
+  
+  class VISIBILITY_HIDDEN OverAutorelease : public CFRefBug {
+  public:
+    OverAutorelease(CFRefCount *tf) : 
+      CFRefBug(tf, "Object sent -autorelease too many times") {}
+    
+    const char *getDescription() const {
+      return "Object will be sent more -release messages from its containing "
+             "autorelease pools than it has retain counts";
+    }
+  };
   
   class VISIBILITY_HIDDEN Leak : public CFRefBug {
     const bool isReturn;
@@ -1960,6 +1975,9 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
   
   deallocNotOwned = new DeallocNotOwned(this);
   BR.Register(deallocNotOwned);
+  
+  overAutorelease = new OverAutorelease(this);
+  BR.Register(overAutorelease);
   
   // First register "return" leaks.
   const char* name = 0;
@@ -2915,7 +2933,12 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   // Update the autorelease counts.
   static unsigned autoreleasetag = 0;
   GenericNodeBuilder Bd(Builder, S, &autoreleasetag);
-  llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Sym, *T);
+  bool stop = false;
+  llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Eng, Sym,
+                                                   *T, stop);
+  
+  if (stop)
+    return;
 
   // Get the updated binding.
   T = state.get<RefBindings>(Sym);
@@ -3084,7 +3107,7 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
       // Update the autorelease counts.
       state = SendAutorelease(state, ARCountFactory, sym);
       V = V.autorelease();
-      
+
     case StopTracking:
       return state.remove<RefBindings>(sym);
 
@@ -3148,9 +3171,42 @@ GRStateRef CFRefCount::Update(GRStateRef state, SymbolRef sym,
 std::pair<ExplodedNode<GRState>*, GRStateRef>
 CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
                                     ExplodedNode<GRState>* Pred,
-                                    SymbolRef Sym, RefVal V) {
+                                    GRExprEngine &Eng,
+                                    SymbolRef Sym, RefVal V, bool &stop) {
  
-  return std::make_pair(Pred, state);
+  unsigned ACnt = V.getAutoreleaseCount();
+  stop = false;
+
+  // No autorelease counts?  Nothing to be done.
+  if (!ACnt)
+    return std::make_pair(Pred, state);
+  
+  assert(!isGCEnabled() && "Autorelease counts in GC mode?");  
+  unsigned Cnt = V.getCount();
+  
+  if (ACnt <= Cnt) {
+    V.setCount(Cnt - ACnt);
+    V.setAutoreleaseCount(0);
+    state = state.set<RefBindings>(Sym, V);
+    ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred);
+    stop = (N == 0);
+    return std::make_pair(N, state);
+  }    
+
+  // Woah!  More autorelease counts then retain counts left.
+  // Emit hard error.
+  stop = true;
+  V = V ^ RefVal::ErrorOverAutorelease;
+  state = state.set<RefBindings>(Sym, V);
+
+  if (ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred)) {
+    CFRefReport *report =
+      new CFRefReport(*static_cast<CFRefBug*>(overAutorelease),
+                      *this, N, Sym);
+    BR->EmitReport(report);
+  }
+  
+  return std::make_pair((ExplodedNode<GRState>*)0, state);
 }
 
 GRStateRef
@@ -3204,9 +3260,13 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   ExplodedNode<GRState> *Pred = 0;
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-      llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred,
-                                                       (*I).first,
-                                                       (*I).second);   
+    bool stop = false;
+    llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                     (*I).first,
+                                                     (*I).second, stop);   
+
+    if (stop)
+      return;
   }
   
   B = state.get<RefBindings>();  
@@ -3237,8 +3297,11 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
       // Use the symbol as the tag.
       // FIXME: This might not be as unique as we would like.
       GenericNodeBuilder Bd(Builder, S, Sym);
-      llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Sym,
-                                                       *T);
+      bool stop = false;
+      llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                       Sym, *T, stop);
+      if (stop)
+        return;
     }
   }
   
