@@ -909,23 +909,6 @@ multiply hi's into a comparison against the mullo.
 
 //===---------------------------------------------------------------------===//
 
-SROA is not promoting the union on the stack in this example, we should end
-up with no allocas.
-
-union vec2d {
-    double e[2];
-    double v __attribute__((vector_size(16)));
-};
-typedef union vec2d vec2d;
-
-static vec2d a={{1,2}}, b={{3,4}};
-    
-vec2d foo () {
-    return (vec2d){ .v = a.v + b.v * (vec2d){{5,5}}.v };
-}
-
-//===---------------------------------------------------------------------===//
-
 Better mod/ref analysis for scanf would allow us to eliminate the vtable and a
 bunch of other stuff from this example (see PR1604): 
 
@@ -1725,3 +1708,12 @@ The arg promotion pass should make use of nocapture to make its alias analysis
 stuff much more precise.
 
 //===---------------------------------------------------------------------===//
+
+The following functions should be optimized to use a select instead of a
+branch (from gcc PR40072):
+
+char char_int(int m) {if(m>7) return 0; return m;}
+int int_char(char m) {if(m>7) return 0; return m;}
+
+//===---------------------------------------------------------------------===//
+
