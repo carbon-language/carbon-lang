@@ -616,7 +616,8 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
     uint64_t PointeeTySize = getContext().getTypeSize(PointeeTy);
     uint64_t ObjTySize = getContext().getTypeSize(ObjTy);
 
-    if (PointeeTySize > 0 && PointeeTySize < ObjTySize) {
+    if ((PointeeTySize > 0 && PointeeTySize < ObjTySize) ||
+        (ObjTy->isAggregateType() && PointeeTy->isScalarType())) {
       // Record the cast type of the region.
       state = setCastType(state, R, ToTy);
 
