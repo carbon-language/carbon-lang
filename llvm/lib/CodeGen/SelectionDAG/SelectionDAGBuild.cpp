@@ -3960,70 +3960,46 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0;
 
     MachineFunction &MF = DAG.getMachineFunction();
-    if (OptLevel == CodeGenOpt::None) {
-      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
-      // (most?) gdb expects.
-      DebugLoc PrevLoc = CurDebugLoc;
-      DISubprogram Subprogram(cast<GlobalVariable>(SP));
-      DICompileUnit CompileUnit = Subprogram.getCompileUnit();
 
-      if (!Subprogram.describes(MF.getFunction())) {
-        // This is a beginning of an inlined function.
+    // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
+    // (most?) gdb expects.
+    DebugLoc PrevLoc = CurDebugLoc;
+    DISubprogram Subprogram(cast<GlobalVariable>(SP));
+    DICompileUnit CompileUnit = Subprogram.getCompileUnit();
 
-        // If llvm.dbg.func.start is seen in a new block before any
-        // llvm.dbg.stoppoint intrinsic then the location info is unknown.
-        // FIXME : Why DebugLoc is reset at the beginning of each block ?
-        if (PrevLoc.isUnknown())
-          return 0;
+    if (!Subprogram.describes(MF.getFunction())) {
+      // This is a beginning of an inlined function.
 
-        // Record the source line.
-        unsigned Line = Subprogram.getLineNumber();
-        setCurDebugLoc(DebugLoc::get(
-                     MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
-
-        if (DW && DW->ShouldEmitDwarfDebug()) {
-          DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-          unsigned LabelID = DW->RecordInlinedFnStart(Subprogram,
-                                          DICompileUnit(PrevLocTpl.CompileUnit),
-                                          PrevLocTpl.Line,
-                                          PrevLocTpl.Col);
-          DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                                   getRoot(), LabelID));
-        }
-      } else {
-        // Record the source line.
-        unsigned Line = Subprogram.getLineNumber();
-        MF.setDefaultDebugLoc(DebugLoc::get(
-                     MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
-        if (DW && DW->ShouldEmitDwarfDebug()) {
-          // llvm.dbg.func_start also defines beginning of function scope.
-          DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
-        }
-      }
-    } else {
-      DISubprogram Subprogram(cast<GlobalVariable>(SP));
-
-      std::string SPName;
-      Subprogram.getLinkageName(SPName);
-      if (!SPName.empty()
-          && strcmp(SPName.c_str(), MF.getFunction()->getNameStart())) {
-        // This is beginning of inlined function. Debugging information for
-        // inlined function is not handled yet (only supported by FastISel).
+      // If llvm.dbg.func.start is seen in a new block before any
+      // llvm.dbg.stoppoint intrinsic then the location info is unknown.
+      // FIXME : Why DebugLoc is reset at the beginning of each block ?
+      if (PrevLoc.isUnknown())
         return 0;
-      }
 
-      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
-      // what (most?) gdb expects.
-      DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-
-      // Record the source line but does not create a label for the normal
-      // function start. It will be emitted at asm emission time. However,
-      // create a label if this is a beginning of inlined function.
+      // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
       setCurDebugLoc(DebugLoc::get(
                      MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
-      // FIXME -  Start new region because llvm.dbg.func_start also defines
-      // beginning of function scope.
+
+      if (DW && DW->ShouldEmitDwarfDebug()) {
+        DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
+        unsigned LabelID =
+          DW->RecordInlinedFnStart(Subprogram,
+                                   DICompileUnit(PrevLocTpl.CompileUnit),
+                                   PrevLocTpl.Line,
+                                   PrevLocTpl.Col);
+        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                                 getRoot(), LabelID));
+      }
+    } else {
+      // Record the source line.
+      unsigned Line = Subprogram.getLineNumber();
+      MF.setDefaultDebugLoc(DebugLoc::get(
+                       MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
+      if (DW && DW->ShouldEmitDwarfDebug()) {
+        // llvm.dbg.func_start also defines beginning of function scope.
+        DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
+      }
     }
 
     return 0;
