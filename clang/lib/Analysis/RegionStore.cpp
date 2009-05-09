@@ -688,26 +688,24 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
 }
 
 SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
-  // Assume the base location is MemRegionVal(ElementRegion).
+  // Assume the base location is MemRegionVal.
   if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
 
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
-  if (isa<SymbolicRegion>(MR))
-    return UnknownVal();
+  const ElementRegion *ER = 0;
+  // If the operand is a symbolic region, we convert it to the first element
+  // region implicitly.
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR)) {
+    // Get symbol's type. It should be a pointer type.
+    SymbolRef Sym = SR->getSymbol();
+    QualType T = Sym->getType(getContext());
+    QualType EleTy = cast<PointerType>(T.getTypePtr())->getPointeeType();
 
-  const TypedRegion* TR = cast<TypedRegion>(MR);
-  const ElementRegion* ER = dyn_cast<ElementRegion>(TR);
-  
-  if (!ER) {
-    // If the region is not element region, create one with index 0. This can
-    // happen in the following example:
-    // char *p = foo();
-    // p += 3;
-    // Note that p binds to a TypedViewRegion(SymbolicRegion).
-    nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-    ER = MRMgr.getElementRegion(TR->getValueType(getContext()), Idx, TR);
-  }
+    SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR);
+  } else
+    ER = cast<ElementRegion>(MR);
 
   SVal Idx = ER->getIndex();
 
@@ -726,8 +724,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
                                                            Offset->getValue()));
     SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffConverted);
     const MemRegion* NewER =
-      MRMgr.getElementRegion(ER->getElementType(), NewIdx, 
-                             cast<TypedRegion>(ER->getSuperRegion()));
+      MRMgr.getElementRegion(ER->getElementType(), NewIdx,ER->getSuperRegion());
     return Loc::MakeVal(NewER);
 
   }
