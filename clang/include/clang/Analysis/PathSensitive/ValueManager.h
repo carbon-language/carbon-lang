@@ -80,8 +80,8 @@ public:
   /// elements.
   SVal makeZeroArrayIndex();
 
-  /// GetRValueSymbolVal - make a unique symbol for value of R.
-  SVal getRValueSymbolVal(const MemRegion* R);
+  /// GetRegionValueSymbolVal - make a unique symbol for value of R.
+  SVal getRegionValueSymbolVal(const MemRegion* R);
   
   SVal getConjuredSymbolVal(const Expr *E, unsigned Count);  
   SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);

@@ -297,8 +297,8 @@ NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
   return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
 }
 
-SVal ValueManager::getRValueSymbolVal(const MemRegion* R) {
-  SymbolRef sym = SymMgr.getRegionRValueSymbol(R);
+SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R) {
+  SymbolRef sym = SymMgr.getRegionValueSymbol(R);
                                 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
     QualType T = TR->getValueType(SymMgr.getContext());

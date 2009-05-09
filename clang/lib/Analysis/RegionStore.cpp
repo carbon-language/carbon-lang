@@ -824,7 +824,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
     if (SR == SelfRegion) {
       // FIXME: Do we need to handle the case where the super region
       // has a view?  We want to canonicalize the bindings.
-      return ValMgr.getRValueSymbolVal(R);
+      return ValMgr.getRegionValueSymbolVal(R);
     }
     
     // Otherwise, we need a new symbol.  For now return Unknown.
@@ -846,7 +846,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
         VD->hasGlobalStorage()) {
       QualType VTy = VD->getType();
       if (Loc::IsLocType(VTy) || VTy->isIntegerType())
-        return ValMgr.getRValueSymbolVal(VR);
+        return ValMgr.getRegionValueSymbolVal(VR);
       else
         return UnknownVal();
     }
@@ -862,7 +862,7 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   // All other integer values are symbolic.
   if (Loc::IsLocType(RTy) || RTy->isIntegerType())
-    return ValMgr.getRValueSymbolVal(R);
+    return ValMgr.getRegionValueSymbolVal(R);
   else
     return UnknownVal();
 }

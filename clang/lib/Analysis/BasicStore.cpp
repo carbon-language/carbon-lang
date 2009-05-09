@@ -487,7 +487,7 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
         if (DR->getDecl() == SelfDecl) {
           const MemRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
                                                          SelfRegion);          
-          SVal X = ValMgr.getRValueSymbolVal(IVR);          
+          SVal X = ValMgr.getRegionValueSymbolVal(IVR);          
           St = BindInternal(St, Loc::MakeVal(IVR), X);
         }
       }
@@ -543,7 +543,7 @@ Store BasicStoreManager::getInitialStore() {
       const MemRegion *R = StateMgr.getRegion(VD);
       SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                 isa<ImplicitParamDecl>(VD))
-            ? ValMgr.getRValueSymbolVal(R)
+            ? ValMgr.getRegionValueSymbolVal(R)
             : UndefinedVal();
 
       St = BindInternal(St, Loc::MakeVal(R), X);
