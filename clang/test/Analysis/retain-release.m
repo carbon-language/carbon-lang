@@ -475,3 +475,20 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 }
 @end
 
+//===----------------------------------------------------------------------===//
+// Tests of ownership attributes.
+//===----------------------------------------------------------------------===//
+
+@interface TestOwnershipAttr : NSObject
+- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_retained));
+- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_retained));
+@end
+
+void test_attr_1(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
+}
+
+void test_attr_1b(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
+}
+

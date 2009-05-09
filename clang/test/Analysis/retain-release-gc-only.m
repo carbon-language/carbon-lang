@@ -124,3 +124,20 @@ void f3() {
   CFRetain(A);
 }
 
+//===----------------------------------------------------------------------===//
+// Tests of ownership attributes.
+//===----------------------------------------------------------------------===//
+
+@interface TestOwnershipAttr : NSObject
+- (NSString*) returnsAnOwnedString __attribute__((ns_returns_retained));
+- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_retained));
+@end
+
+void test_attr_1(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedString]; // no-warning
+}
+
+void test_attr_1b(TestOwnershipAttr *X) {
+  NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
+}
+
