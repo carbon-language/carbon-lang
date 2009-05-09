@@ -206,6 +206,7 @@ public:
   }
   
   NodeTy* generateNode(PostStmt PP, const StateTy* St, NodeTy* Pred) {
+    HasGeneratedNode = true;
     return static_cast<NodeTy*>(NB.generateNodeImpl(PP, St, Pred));
   }
   
