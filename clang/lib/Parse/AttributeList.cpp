@@ -133,6 +133,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 18:
     if (!memcmp(Str, "warn_unused_result", 18)) return AT_warn_unused_result;
     break;
+  case 19:
+    if (!memcmp(Str, "ns_returns_retained", 19)) return AT_ns_returns_retained;
+    if (!memcmp(Str, "cf_returns_retained", 19)) return AT_cf_returns_retained;
+    break;            
   case 22:
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
