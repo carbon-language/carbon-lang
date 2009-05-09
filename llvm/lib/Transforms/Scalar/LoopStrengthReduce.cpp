@@ -164,7 +164,10 @@ namespace {
     ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                   IVStrideUse* &CondUse,
                                   const SCEVHandle* &CondStride);
+
     void OptimizeIndvars(Loop *L);
+
+    void OptimizeLoopTermCond(Loop *L);
 
     /// OptimizeShadowIV - If IV is used in a int-to-float cast
     /// inside the loop then try to eliminate the cast opeation.
@@ -2378,6 +2381,12 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
 
   OptimizeShadowIV(L);
 
+  OptimizeLoopTermCond(L);
+}
+
+/// OptimizeLoopTermCond - Change loop terminating condition to use the 
+/// postinc iv when possible.
+void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   // Finally, get the terminating condition for the loop if possible.  If we
   // can, we want to change it to use a post-incremented version of its
   // induction variable, to allow coalescing the live ranges for the IV into
