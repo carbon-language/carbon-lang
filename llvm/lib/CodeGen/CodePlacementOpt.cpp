@@ -248,7 +248,7 @@ static bool HeaderShouldBeAligned(MachineBasicBlock *MBB) {
   for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
     MachineBasicBlock *PredMBB = *PI;
-    if (PredMBB->getNumber() > MBB->getNumber())
+    if (PredMBB == MBB || PredMBB->getNumber() > MBB->getNumber())
       return true;
   }
   return false;
