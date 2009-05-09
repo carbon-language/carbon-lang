@@ -1151,10 +1151,14 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
 
    SDValue Data_Lo, Data_Hi;
    SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Other, MVT::Flag);
-   Hi = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, Hi);
-   // Subtract 2 from Lo to get the Lower part of DataAddress. 
-   Data_Lo = DAG.getNode(ISD::SUB, dl, MVT::i8, Lo, DAG.getConstant(2, MVT::i8));
-   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Data_Lo, Hi);
+   // Subtract 2 from Address to get the Lower part of DataAddress.
+   SDVTList VTList = DAG.getVTList(MVT::i8, MVT::Flag);
+   Data_Lo = DAG.getNode(ISD::SUBC, dl, VTList, Lo, 
+                         DAG.getConstant(2, MVT::i8));
+   SDValue Ops[3] = { Hi, DAG.getConstant(0, MVT::i8), Data_Lo.getValue(1)};
+   Data_Hi = DAG.getNode(ISD::SUBE, dl, VTList, Ops, 3);
+   SDValue PCLATH = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, Data_Hi);
+   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Data_Lo, PCLATH);
    SDValue Call = DAG.getNode(PIC16ISD::CALLW, dl, Tys, Chain, Callee,
                               OperFlag);
    Chain = getChain(Call);
@@ -1172,10 +1176,15 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
    Chain = getChain(SeqStart);
    OperFlag = getOutFlag(SeqStart); // To manage the data dependency
 
-   // Subtract 1 to Lo part for the second code word.
-   Data_Lo = DAG.getNode(ISD::SUB, dl, MVT::i8, Lo, DAG.getConstant(1, MVT::i8));
+   // Subtract 1 from Address to get high part of data address.
+   Data_Lo = DAG.getNode(ISD::SUBC, dl, VTList, Lo, 
+                         DAG.getConstant(1, MVT::i8));
+   SDValue HiOps[3] = { Hi, DAG.getConstant(0, MVT::i8), Data_Lo.getValue(1)};
+   Data_Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps, 3);
+   PCLATH = DAG.getNode(PIC16ISD::MTPCLATH, dl, MVT::i8, Data_Hi);
+
    // Use new Lo to make another CALLW
-   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Data_Lo, Hi);
+   Callee = DAG.getNode(PIC16ISD::PIC16Connect, dl, MVT::i8, Data_Lo, PCLATH);
    Call = DAG.getNode(PIC16ISD::CALLW, dl, Tys, Chain, Callee, OperFlag);
    Chain = getChain(Call);
    OperFlag = getOutFlag(Call);
