@@ -637,17 +637,9 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
     return CastResult(state, R);
   }
 
-  // Assume we are casting from pointer to pointer. Other cases are handled
-  // elsewhere.
+  // Now assume we are casting from pointer to pointer. Other cases should
+  // already be handled.
   QualType PointeeTy = cast<PointerType>(ToTy.getTypePtr())->getPointeeType();
-
-  // Return the same region if the region types are compatible.
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    QualType Ta = Ctx.getCanonicalType(TR->getLocationType(Ctx));
-
-    if (Ta == ToTy)
-      return CastResult(state, R);
-  }
 
   // Process region cast according to the kind of the region being cast.
   
