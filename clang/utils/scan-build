@@ -82,26 +82,42 @@ sub DieDiag {
 ##----------------------------------------------------------------------------##
 
 # First, look for 'clang-cc' in libexec.
-my $ClangSB = Cwd::realpath("$RealBin/libexec/clang-cc");
+my $ClangCCSB = Cwd::realpath("$RealBin/libexec/clang-cc");
 # Second, look for 'clang-cc' in the same directory as scan-build.
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = Cwd::realpath("$RealBin/clang-cc");
+if (!defined $ClangCCSB || ! -x $ClangCCSB) {
+  $ClangCCSB = Cwd::realpath("$RealBin/clang-cc");
 }
 # Third, look for 'clang-cc' in ../libexec
+if (!defined $ClangCCSB || ! -x $ClangCCSB) {
+  $ClangCCSB = Cwd::realpath("$RealBin/../libexec/clang-cc");
+}
+# Finally, default to looking for 'clang-cc' in the path.
+if (!defined $ClangCCSB || ! -x $ClangCCSB) {
+  $ClangCCSB = "clang-cc";
+}
+my $ClangCC = $ClangCCSB;
+
+# Now find 'clang'
+my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
 if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = Cwd::realpath("$RealBin/../libexec/clang-cc");
+  $ClangSB = Cwd::realpath("$RealBin/clang");
+}
+# Third, look for 'clang' in ../bin
+if (!defined $ClangSB || ! -x $ClangSB) {
+  $ClangSB = Cwd::realpath("$RealBin/../bin/clang");
 }
 # Finally, default to looking for 'clang-cc' in the path.
 if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = "clang-cc";
+  $ClangSB = "clang";
 }
 my $Clang = $ClangSB;
+
 
 my %AvailableAnalyses;
 
 # Query clang for analysis options.
-open(PIPE, "-|", $Clang, "--help") or
-  DieDiag("Cannot execute '$Clang'\n");
+open(PIPE, "-|", $ClangCC, "--help") or
+  DieDiag("Cannot execute '$ClangCC'\n");
 
 my $FoundAnalysis = 0;
 
@@ -1167,9 +1183,13 @@ if (!defined $Cmd || ! -x $Cmd) {
   DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n") if(! -x $Cmd);
 }
 
-if (!defined $ClangSB || ! -x $ClangSB) {
+if (!defined $ClangCCSB || ! -x $ClangCCSB) {
   Diag("'clang-cc' executable not found in '$RealBin/libexec'.\n");
   Diag("Using 'clang-cc' from path.\n");
+}
+if (!defined $ClangSB || ! -x $ClangSB) {
+  Diag("'clang' executable not found in '$RealBin/bin'.\n");
+  Diag("Using 'clang' from path.\n");
 }
 
 if (defined $CXX) {
@@ -1181,6 +1201,7 @@ else {
 }
   
 $ENV{'CC'} = $Cmd;
+$ENV{'CLANG_CC'} = $ClangCC;
 $ENV{'CLANG'} = $Clang;
 
 if ($Verbose >= 2) {
