@@ -416,15 +416,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   if (!isa<nonloc::ConcreteInt>(Offset))
     return UnknownVal();
 
-  const TypedRegion* BaseRegion = 0;
-
-  const MemRegion* R = cast<loc::MemRegionVal>(Base).getRegion();
-  if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
-    SymbolRef Sym = SR->getSymbol();
-    BaseRegion = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
-  }
-  else
-    BaseRegion = cast<TypedRegion>(R);
+  const MemRegion* BaseRegion = cast<loc::MemRegionVal>(Base).getRegion();
 
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
@@ -437,7 +429,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
     //   char *p = __builtin_alloc(10);
     //   p[1] = 8;
     //
-    //  Observe that 'p' binds to an TypedViewRegion<AllocaRegion>.
+    //  Observe that 'p' binds to an AllocaRegion.
     //
 
     // Offset might be unsigned. We have to convert it to signed ConcreteInt.
@@ -467,7 +459,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   // can't we need to put a comment here.  If it can, we should handle it.
   assert(BaseIdxI.getBitWidth() >= OffI.getBitWidth());
 
-  const TypedRegion *ArrayR = cast<TypedRegion>(ElemR->getSuperRegion());
+  const MemRegion *ArrayR = ElemR->getSuperRegion();
   SVal NewIdx;
   
   if (OffI.isUnsigned() || OffI.getBitWidth() < BaseIdxI.getBitWidth()) {
@@ -581,6 +573,10 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     return UnknownVal();
   }
 
+  if (isa<AllocaRegion>(R)) {
+    return UnknownVal();
+  }
+
   if (isa<ElementRegion>(R)) {
     return UnknownVal();
   }
@@ -650,8 +646,8 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   //         to be re-used for a different purpose.
 
   if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
-    const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
-    return CastResult(AddRegionView(state, ViewR, R), ViewR);
+    state = setCastType(state, R, ToTy);
+    return CastResult(state, R);
   }
 
   // VarRegion, ElementRegion, and FieldRegion has an inherent type. Normally
