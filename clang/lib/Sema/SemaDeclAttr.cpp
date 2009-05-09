@@ -1544,6 +1544,44 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 //===----------------------------------------------------------------------===//
+// Checker-specific attribute handlers.
+//===----------------------------------------------------------------------===//
+
+static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
+                                        Sema &S) {
+
+  if (!isa<ObjCMethodDecl>(d) && !isa<FunctionDecl>(d)) {
+    const char *name;
+    
+    switch (Attr.getKind()) {
+      default:
+        assert(0 && "invalid ownership attribute");
+        return;
+      case AttributeList::AT_cf_returns_retained:
+        name = "cf_returns_retained"; break;
+      case AttributeList::AT_ns_returns_retained:
+        name = "ns_returns_retained"; break;
+    };
+
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) <<
+      name << 3 /* function or method */;
+    return;
+  }
+  
+  switch (Attr.getKind()) {
+    default:
+      assert(0 && "invalid ownership attribute");
+      return;
+    case AttributeList::AT_cf_returns_retained:
+      d->addAttr(::new (S.Context) CFReturnsRetainedAttr());
+      return;
+    case AttributeList::AT_ns_returns_retained:
+      d->addAttr(::new (S.Context) NSReturnsRetainedAttr());
+      return;
+  };
+}
+
+//===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
@@ -1579,6 +1617,12 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
+
+  // Checker-specific.
+  case AttributeList::AT_ns_returns_retained:
+  case AttributeList::AT_cf_returns_retained:
+    HandleNSReturnsRetainedAttr(D, Attr, S); break;
+
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;
   case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;

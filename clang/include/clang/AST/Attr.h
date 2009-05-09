@@ -59,6 +59,8 @@ public:
     NonNull,
     ObjCException,
     ObjCNSObject,
+    CFReturnsRetained,   // Clang/Checker-specific.
+    NSReturnsRetained,   // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
     Pure,
@@ -458,6 +460,10 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == Regparm; }
   static bool classof(const RegparmAttr *A) { return true; }
 };
+
+// Checker-specific attributes.
+DEF_SIMPLE_ATTR(CFReturnsRetained);
+DEF_SIMPLE_ATTR(NSReturnsRetained);
 
 #undef DEF_SIMPLE_ATTR
   

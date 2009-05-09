@@ -475,6 +475,8 @@ Attr *PCHReader::ReadAttributes() {
 
     SIMPLE_ATTR(ObjCException);
     SIMPLE_ATTR(ObjCNSObject);
+    SIMPLE_ATTR(CFReturnsRetained);
+    SIMPLE_ATTR(NSReturnsRetained);
     SIMPLE_ATTR(Overloadable);
     UNSIGNED_ATTR(Packed);
     SIMPLE_ATTR(Pure);
