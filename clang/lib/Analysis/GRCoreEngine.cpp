@@ -568,7 +568,6 @@ GREndPathNodeBuilderImpl::generateNodeImpl(const void* State,
   Node->addPredecessor(P ? P : Pred);
   
   if (IsNew) {
-    Node->markAsSink();
     Eng.G->addEndOfPath(Node);
     return Node;
   }

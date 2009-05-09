@@ -179,7 +179,7 @@ public:
                                Pred);
     
     assert(ENB);
-    return ENB->MakeNode(state, Pred);
+    return ENB->generateNode(state, Pred);
   }
 };
 } // end anonymous namespace
@@ -1551,6 +1551,10 @@ void RefVal::print(std::ostream& Out) const {
       
     case ErrorReleaseNotOwned:
       Out << "Release of Not-Owned [ERROR]";
+      break;
+      
+    case RefVal::ErrorOverAutorelease:
+      Out << "Over autoreleased";
       break;
   }
   
@@ -3185,8 +3189,14 @@ CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
   unsigned Cnt = V.getCount();
   
   if (ACnt <= Cnt) {
-    V.setCount(Cnt - ACnt);
-    V.setAutoreleaseCount(0);
+    if (ACnt == Cnt) {
+      V.clearCounts();
+      V = V ^ RefVal::NotOwned;
+    }
+    else {      
+      V.setCount(Cnt - ACnt);
+      V.setAutoreleaseCount(0);
+    }
     state = state.set<RefBindings>(Sym, V);
     ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred);
     stop = (N == 0);
@@ -3200,6 +3210,7 @@ CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
   state = state.set<RefBindings>(Sym, V);
 
   if (ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred)) {
+    N->markAsSink();
     CFRefReport *report =
       new CFRefReport(*static_cast<CFRefBug*>(overAutorelease),
                       *this, N, Sym);
