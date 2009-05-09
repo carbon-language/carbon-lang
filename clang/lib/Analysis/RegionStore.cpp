@@ -516,49 +516,6 @@ SVal RegionStoreManager::getSizeInElements(const GRState* St,
     return NonLoc::MakeIntVal(getBasicVals(), Str->getByteLength()+1, false);
   }
 
-  if (const TypedViewRegion* ATR = dyn_cast<TypedViewRegion>(R)) {
-#if 0
-    // FIXME: This logic doesn't really work, as we can have all sorts of
-    // weird cases.  For example, this crashes on test case 'rdar-6442306-1.m'.
-    // The weird cases come in when arbitrary casting comes into play, violating
-    // any type-safe programming.
-    
-    GRStateRef state(St, StateMgr);
-
-    // Get the size of the super region in bytes.
-    const SVal* Extent = state.get<RegionExtents>(ATR->getSuperRegion());
-    assert(Extent && "region extent not exist");
-
-    // Assume it's ConcreteInt for now.
-    llvm::APSInt SSize = cast<nonloc::ConcreteInt>(*Extent).getValue();
-
-    // Get the size of the element in bits.
-    QualType LvT = ATR->getLocationType(getContext());
-    QualType ElemTy = cast<PointerType>(LvT.getTypePtr())->getPointeeType();
-
-    uint64_t X = getContext().getTypeSize(ElemTy);
-
-    const llvm::APSInt& ESize = getBasicVals().getValue(X, SSize.getBitWidth(),
-                                                        false);
-
-    // Calculate the number of elements. 
-
-    // FIXME: What do we do with signed-ness problem? Shall we make all APSInts
-    // signed?
-    if (SSize.isUnsigned())
-      SSize.setIsSigned(true);
-
-    // FIXME: move this operation into BasicVals.
-    const llvm::APSInt S = 
-      (SSize * getBasicVals().getValue(8, SSize.getBitWidth(), false)) / ESize;
-
-    return NonLoc::MakeVal(getBasicVals(), S);
-#else
-    ATR = ATR;
-    return UnknownVal();
-#endif
-  }
-
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R)) {
     // FIXME: Unsupported yet.
     FR = 0;
@@ -635,12 +592,7 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
 
   // Process region cast according to the kind of the region being cast.
   
-
   // FIXME: Need to handle arbitrary downcasts.
-  // FIXME: Handle the case where a TypedViewRegion (layering a SymbolicRegion
-  //         or an AllocaRegion is cast to another view, thus causing the memory
-  //         to be re-used for a different purpose.
-
   if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
     state = setCastType(state, R, ToTy);
     return CastResult(state, R);
@@ -673,11 +625,6 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
       return CastResult(state, ER);
     } else
       return CastResult(state, R);
-  }
-
-  if (isa<TypedViewRegion>(R)) {
-    const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
-    return CastResult(state, ViewR);
   }
 
   if (isa<ObjCObjectRegion>(R)) {
