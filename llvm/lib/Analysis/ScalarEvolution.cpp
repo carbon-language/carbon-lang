@@ -2372,10 +2372,8 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   
   ICmpInst *ExitCond = dyn_cast<ICmpInst>(ExitBr->getCondition());
 
-  // If it's not an integer comparison then compute it the hard way. 
-  // Note that ICmpInst deals with pointer comparisons too so we must check
-  // the type of the operand.
-  if (ExitCond == 0 || isa<PointerType>(ExitCond->getOperand(0)->getType()))
+  // If it's not an integer or pointer comparison then compute it the hard way.
+  if (ExitCond == 0)
     return ComputeBackedgeTakenCountExhaustively(L, ExitBr->getCondition(),
                                           ExitBr->getSuccessor(0) == ExitBlock);
 
@@ -2416,21 +2414,12 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS))
     if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(LHS))
       if (AddRec->getLoop() == L) {
-        // Form the comparison range using the constant of the correct type so
-        // that the ConstantRange class knows to do a signed or unsigned
-        // comparison.
-        ConstantInt *CompVal = RHSC->getValue();
-        const Type *RealTy = ExitCond->getOperand(0)->getType();
-        CompVal = dyn_cast<ConstantInt>(
-          ConstantExpr::getBitCast(CompVal, RealTy));
-        if (CompVal) {
-          // Form the constant range.
-          ConstantRange CompRange(
-              ICmpInst::makeConstantRange(Cond, CompVal->getValue()));
+        // Form the constant range.
+        ConstantRange CompRange(
+            ICmpInst::makeConstantRange(Cond, RHSC->getValue()->getValue()));
 
-          SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, *this);
-          if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
-        }
+        SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, *this);
+        if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
       }
 
   switch (Cond) {
