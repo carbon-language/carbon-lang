@@ -1935,6 +1935,9 @@ SCEVHandle ScalarEvolution::createNodeForGEP(User *GEP) {
 
   const Type *IntPtrTy = TD->getIntPtrType();
   Value *Base = GEP->getOperand(0);
+  // Don't attempt to analyze GEPs over unsized objects.
+  if (!cast<PointerType>(Base->getType())->getElementType()->isSized())
+    return getUnknown(GEP);
   SCEVHandle TotalOffset = getIntegerSCEV(0, IntPtrTy);
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (GetElementPtrInst::op_iterator I = next(GEP->op_begin()),
