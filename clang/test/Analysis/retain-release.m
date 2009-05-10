@@ -291,21 +291,21 @@ void f13_autorelease() {
 void f13_autorelease_b() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
-  [(id) A autorelease]; // expected-warning{{Object will be sent more -release messages from its containing autorelease pools than it has retain counts}}
+  [(id) A autorelease]; // expected-warning{{Object sent -autorelease too many times}}
 }
 
 CFMutableArrayRef f13_autorelease_c() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
   [(id) A autorelease]; 
-  return A; // expected-warning{{Object will be sent more -release messages from its containing autorelease pools than it has retain counts}}
+  return A; // expected-warning{{Object sent -autorelease too many times}}
 }
 
 CFMutableArrayRef f13_autorelease_d() {
   CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks);
   [(id) A autorelease];
   [(id) A autorelease]; 
-  CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{Object will be sent more -release messages}}
+  CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{Object sent -autorelease too many times}}
   CFRelease(B); // no-warning
 }
 

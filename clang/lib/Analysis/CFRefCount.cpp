@@ -1495,19 +1495,11 @@ public:
                              unsigned Count = 0) {
     return RefVal(NotOwned, o, Count, 0, t);
   }
-
-  static RefVal makeReturnedOwned(unsigned Count) {
-    return RefVal(ReturnedOwned, Count);
-  }
-  
-  static RefVal makeReturnedNotOwned() {
-    return RefVal(ReturnedNotOwned);
-  }
   
   // Comparison, profiling, and pretty-printing.
   
   bool operator==(const RefVal& X) const {
-    return kind == X.kind && Cnt == X.Cnt && T == X.T;
+    return kind == X.kind && Cnt == X.Cnt && T == X.T && ACnt == X.ACnt;
   }
   
   RefVal operator-(size_t i) const {
@@ -1929,8 +1921,7 @@ namespace {
       CFRefBug(tf, "Object sent -autorelease too many times") {}
     
     const char *getDescription() const {
-      return "Object will be sent more -release messages from its containing "
-             "autorelease pools than it has retain counts";
+      return "Object sent -autorelease too many times";
     }
   };
   
@@ -1969,7 +1960,11 @@ namespace {
   public:
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode<GRState> *n, SymbolRef sym)
-    : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
+      : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
+
+    CFRefReport(CFRefBug& D, const CFRefCount &tf,
+                ExplodedNode<GRState> *n, SymbolRef sym, const char* endText)
+      : RangedBugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}    
     
     virtual ~CFRefReport() {}
     
@@ -2000,7 +1995,7 @@ namespace {
                                    const ExplodedNode<GRState>* PrevN,
                                    BugReporterContext& BRC);
   };
-  
+
   class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
     SourceLocation AllocSite;
     const MemRegion* AllocBinding;
@@ -2274,7 +2269,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
               return 0;
             
             assert(PrevV.getAutoreleaseCount() < CurrV.getAutoreleaseCount());            
-            os << "Object added to autorelease pool.";
+            os << "Object sent -autorelease message";
             break;
           }
           
@@ -2499,7 +2494,6 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   
   return new PathDiagnosticEventPiece(L, os.str());
 }
-
 
 CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
                                  ExplodedNode<GRState> *n,
@@ -2983,20 +2977,6 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   if (!T)
     return;
   
-  // Update the autorelease counts.
-  static unsigned autoreleasetag = 0;
-  GenericNodeBuilder Bd(Builder, S, &autoreleasetag);
-  bool stop = false;
-  llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Eng, Sym,
-                                                   *T, stop);
-  
-  if (stop)
-    return;
-
-  // Get the updated binding.
-  T = state.get<RefBindings>(Sym);
-  assert(T);
-  
   // Change the reference count.  
   RefVal X = *T;  
   
@@ -3004,14 +2984,20 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
     case RefVal::Owned: { 
       unsigned cnt = X.getCount();
       assert (cnt > 0);
-      X = RefVal::makeReturnedOwned(cnt - 1);
+      X.setCount(cnt - 1);
+      X = X ^ RefVal::ReturnedOwned;
       break;
     }
       
     case RefVal::NotOwned: {
       unsigned cnt = X.getCount();
-      X = cnt ? RefVal::makeReturnedOwned(cnt - 1)
-              : RefVal::makeReturnedNotOwned();
+      if (cnt) {
+        X.setCount(cnt - 1);
+        X = X ^ RefVal::ReturnedOwned;
+      }
+      else {
+        X = X ^ RefVal::ReturnedNotOwned;
+      }
       break;
     }
       
@@ -3026,6 +3012,22 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   // Did we cache out?
   if (!Pred)
     return;
+  
+  // Update the autorelease counts.
+  static unsigned autoreleasetag = 0;
+  GenericNodeBuilder Bd(Builder, S, &autoreleasetag);
+  bool stop = false;
+  llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Eng, Sym,
+                                                   X, stop);
+  
+  // Did we cache out?
+  if (!Pred || stop)
+    return;
+  
+  // Get the updated binding.
+  T = state.get<RefBindings>(Sym);
+  assert(T);
+  X = *T;
     
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
@@ -3261,9 +3263,22 @@ CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
 
   if (ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred)) {
     N->markAsSink();
+    
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
+    os << "Object over-autoreleased: object was sent -autorelease " ;
+    if (V.getAutoreleaseCount() > 1)
+      os << V.getAutoreleaseCount() << " times";
+    os << " but the object has ";
+    if (V.getCount() == 0)
+      os << "zero (locally visible)";
+    else
+      os << "+" << V.getCount();
+    os << " retain counts";
+    
     CFRefReport *report =
       new CFRefReport(*static_cast<CFRefBug*>(overAutorelease),
-                      *this, N, Sym);
+                      *this, N, Sym, os.str().c_str());
     BR->EmitReport(report);
   }
   

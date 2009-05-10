@@ -453,8 +453,8 @@ public:
       std::string shortBuf;
       llvm::raw_string_ostream os_short(shortBuf);
       os_short << "Variable-length array '" << VD->getNameAsString() << "' "
-               << (isUndefined ? " garbage value for array size"
-                   : " has zero elements (undefined behavior)");
+               << (isUndefined ? "garbage value for array size"
+                   : "has zero elements (undefined behavior)");
 
       RangedBugReport *report = new RangedBugReport(*this,
                                                     os_short.str().c_str(),
