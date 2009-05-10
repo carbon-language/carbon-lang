@@ -341,6 +341,19 @@ void f15() {
 }
 @end
 
+// Test return of non-owned objects in contexts where an owned object
+// is expected.
+@interface TestReturnNotOwnedWhenExpectedOwned
+- (NSString*)newString;
+@end
+
+@implementation TestReturnNotOwnedWhenExpectedOwned
+- (NSString*)newString {
+  NSString *s = [NSString stringWithUTF8String:"hello"];
+  return s; // expected-warning{{Object with +0 retain counts returned to caller where a +1 (owning) retain count is expected}}
+}
+@end
+
 // <rdar://problem/6659160>
 int isFoo(char c);
 

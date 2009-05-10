@@ -296,7 +296,7 @@ public:
   bool isOwned() const {
     return K == OwnedSymbol || K == OwnedAllocatedSymbol;
   }
-  
+    
   static RetEffect MakeAlias(unsigned Idx) {
     return RetEffect(Alias, Idx);
   }
@@ -1429,7 +1429,9 @@ public:
     ErrorLeak,  // A memory leak due to excessive reference counts.
     ErrorLeakReturned, // A memory leak due to the returning method not having
                       // the correct naming conventions.
-    ErrorOverAutorelease
+    ErrorGCLeakReturned,
+    ErrorOverAutorelease,
+    ErrorReturnedNotOwned
   };
 
 private:  
@@ -1586,6 +1588,10 @@ void RefVal::print(std::ostream& Out) const {
       Out << "Leaked (Bad naming)";
       break;
       
+    case ErrorGCLeakReturned:
+      Out << "Leaked (GC-ed at return)";
+      break;
+
     case ErrorUseAfterRelease:
       Out << "Use-After-Release [ERROR]";
       break;
@@ -1596,6 +1602,10 @@ void RefVal::print(std::ostream& Out) const {
       
     case RefVal::ErrorOverAutorelease:
       Out << "Over autoreleased";
+      break;
+      
+    case RefVal::ErrorReturnedNotOwned:
+      Out << "Non-owned object returned instead of owned";
       break;
   }
   
@@ -1695,6 +1705,7 @@ private:
   BugType *deallocGC, *deallocNotOwned;
   BugType *leakWithinFunction, *leakAtReturn;
   BugType *overAutorelease;
+  BugType *returnNotOwnedForOwned;
   BugReporter *BR;
   
   GRStateRef Update(GRStateRef state, SymbolRef sym, RefVal V, ArgEffect E,
@@ -1721,7 +1732,8 @@ public:
     : Summaries(Ctx, gcenabled),
       LOpts(lopts), useAfterRelease(0), releaseNotOwned(0),
       deallocGC(0), deallocNotOwned(0),
-      leakWithinFunction(0), leakAtReturn(0), overAutorelease(0), BR(0) {}
+      leakWithinFunction(0), leakAtReturn(0), overAutorelease(0),
+      returnNotOwnedForOwned(0), BR(0) {}
   
   virtual ~CFRefCount() {}
   
@@ -1925,6 +1937,17 @@ namespace {
     }
   };
   
+  class VISIBILITY_HIDDEN ReturnedNotOwnedForOwned : public CFRefBug {
+  public:
+    ReturnedNotOwnedForOwned(CFRefCount *tf) :
+      CFRefBug(tf, "Method should return an owned object") {}
+    
+    const char *getDescription() const {
+      return "Object with +0 retain counts returned to caller where a +1 "
+             "(owning) retain count is expected";
+    }
+  };
+  
   class VISIBILITY_HIDDEN Leak : public CFRefBug {
     const bool isReturn;
   protected:
@@ -2026,6 +2049,9 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
   
   overAutorelease = new OverAutorelease(this);
   BR.Register(overAutorelease);
+  
+  returnNotOwnedForOwned = new ReturnedNotOwnedForOwned(this);
+  BR.Register(returnNotOwnedForOwned);
   
   // First register "return" leaks.
   const char* name = 0;
@@ -2487,6 +2513,13 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
     << "') does not contain 'copy' or otherwise starts with"
     " 'new' or 'alloc'.  This violates the naming convention rules given"
     " in the Memory Management Guide for Cocoa (object leaked)";
+  }
+  else if (RV->getKind() == RefVal::ErrorGCLeakReturned) {
+    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BRC.getCodeDecl());
+    os << " and returned from method '" << MD.getSelector().getAsString()
+       << "' is potentially leaked when using garbage collection.  Callers"
+          " of this method do not expect a +1 retain count since the return"
+          " type is an Objective-C object reference";
   }
   else
     os << " is no longer referenced after this point and has a retain count of"
@@ -3031,26 +3064,65 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
     
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
-    const Decl *CD = &Eng.getStateManager().getCodeDecl();
-    
+    const Decl *CD = &Eng.getStateManager().getCodeDecl();    
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {      
       const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
-      if (!Summ.getRetEffect().isOwned()) {
-        static int ReturnOwnLeakTag = 0;
-        state = state.set<RefBindings>(Sym, X ^ RefVal::ErrorLeakReturned);
+      RetEffect RE = Summ.getRetEffect();
+      bool hasError = false;
+
+      if (isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
+        // Things are more complicated with garbage collection.  If the
+        // returned object is suppose to be an Objective-C object, we have
+        // a leak (as the caller expects a GC'ed object).        
+        X = X ^ RefVal::ErrorGCLeakReturned;
+        
+        // Keep this false until this is properly tested.
+        hasError = false;
+      }
+      else if (!RE.isOwned()) {
+        // Either we are using GC and the returned object is a CF type
+        // or we aren't using GC.  In either case, we expect that the
+        // enclosing method is expected to return ownership.        
+        hasError = true;
+        X = X ^ RefVal::ErrorLeakReturned;
+      }
+      
+      if (hasError) {        
         // Generate an error node.
-        if (ExplodedNode<GRState> *N =
-            Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred)) {
-          CFRefLeakReport *report =
+        static int ReturnOwnLeakTag = 0;
+        state = state.set<RefBindings>(Sym, X);
+        ExplodedNode<GRState> *N =
+          Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred);
+        if (N) {
+          CFRefReport *report =
             new CFRefLeakReport(*static_cast<CFRefBug*>(leakAtReturn), *this,
                                 N, Sym, Eng);
           BR->EmitReport(report);
         }
       }
+    } 
+  }
+  else if (X.isReturnedNotOwned()) {
+    const Decl *CD = &Eng.getStateManager().getCodeDecl();    
+    if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
+      const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
+      if (Summ.getRetEffect().isOwned()) {
+        // Trying to return a not owned object to a caller expecting an
+        // owned object.
+        
+        static int ReturnNotOwnedForOwnedTag = 0;
+        state = state.set<RefBindings>(Sym, X ^ RefVal::ErrorReturnedNotOwned);
+        if (ExplodedNode<GRState> *N =
+              Builder.generateNode(PostStmt(S, &ReturnNotOwnedForOwnedTag),
+                                   state, Pred)) {
+            CFRefReport *report =
+                new CFRefReport(*static_cast<CFRefBug*>(returnNotOwnedForOwned),
+                                *this, N, Sym);
+            BR->EmitReport(report);
+        }
+      }
     }
   }
-  
-
 }
 
 // Assumptions.

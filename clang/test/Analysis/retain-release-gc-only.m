@@ -124,6 +124,20 @@ void f3() {
   CFRetain(A);
 }
 
+// Test return of non-owned objects in contexts where an owned object
+// is expected.
+@interface TestReturnNotOwnedWhenExpectedOwned
+- (NSString*)newString;
+@end
+
+@implementation TestReturnNotOwnedWhenExpectedOwned
+- (NSString*)newString {
+  NSString *s = [NSString stringWithUTF8String:"hello"];  
+  // FIXME: Should this be an error anyway?
+  return s; // no-warning
+}
+@end
+
 //===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
