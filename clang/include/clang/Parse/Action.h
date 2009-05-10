@@ -963,7 +963,12 @@ public:
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   virtual OwningExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
-                                         tok::TokenKind Kind) {
+                                               tok::TokenKind Kind) {
+    return ExprEmpty();
+  }
+
+  /// ActOnCXXNullPtrLiteral - Parse 'nullptr'.
+  virtual OwningExprResult ActOnCXXNullPtrLiteral(SourceLocation Loc) {
     return ExprEmpty();
   }
 

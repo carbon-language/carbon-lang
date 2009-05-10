@@ -1676,6 +1676,7 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     case pch::PREDEF_TYPE_LONGDOUBLE_ID: T = Context->LongDoubleTy;       break;
     case pch::PREDEF_TYPE_OVERLOAD_ID:   T = Context->OverloadTy;         break;
     case pch::PREDEF_TYPE_DEPENDENT_ID:  T = Context->DependentTy;        break;
+    case pch::PREDEF_TYPE_NULLPTR_ID:    T = Context->NullPtrTy;          break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

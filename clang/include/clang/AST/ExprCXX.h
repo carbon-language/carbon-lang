@@ -222,6 +222,24 @@ public:
   virtual child_iterator child_end();
 };
 
+/// CXXNullPtrLiteralExpr - [C++0x 2.14.7] C++ Pointer Literal
+class CXXNullPtrLiteralExpr : public Expr {
+  SourceLocation Loc;
+public:
+  CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
+    Expr(CXXNullPtrLiteralExprClass, Ty), Loc(l) {}
+
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXNullPtrLiteralExprClass;
+  }
+  static bool classof(const CXXNullPtrLiteralExpr *) { return true; }
+
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 /// CXXTypeidExpr - A C++ @c typeid expression (C++ [expr.typeid]), which gets
 /// the type_info that corresponds to the supplied type, or the (possibly
 /// dynamic) type of the supplied expression.

@@ -1377,6 +1377,10 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const
     return true;
   }
 
+  // C++0x nullptr_t is always a null pointer constant.
+  if (getType()->isNullPtrType())
+    return true;
+
   // This expression must be an integer type.
   if (!getType()->isIntegerType())
     return false;

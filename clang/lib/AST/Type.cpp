@@ -889,6 +889,12 @@ bool Type::isPromotableIntegerType() const {
   return false;
 }
 
+bool Type::isNullPtrType() const {
+  if (const BuiltinType *BT = getAsBuiltinType())
+    return BT->getKind() == BuiltinType::NullPtr;
+  return false;
+}
+
 const char *BuiltinType::getName() const {
   switch (getKind()) {
   default: assert(0 && "Unknown builtin type!");
@@ -912,6 +918,7 @@ const char *BuiltinType::getName() const {
   case Double:            return "double";
   case LongDouble:        return "long double";
   case WChar:             return "wchar_t";
+  case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
   case Dependent:         return "<dependent type>";
   }

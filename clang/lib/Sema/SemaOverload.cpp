@@ -621,7 +621,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
             FromType->isEnumeralType() ||
             FromType->isPointerType() ||
             FromType->isBlockPointerType() ||
-            FromType->isMemberPointerType())) {
+            FromType->isMemberPointerType() ||
+            FromType->isNullPtrType())) {
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
   }
@@ -894,6 +895,13 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // Blocks: A null pointer constant can be converted to a block
   // pointer type.
   if (ToType->isBlockPointerType() && From->isNullPointerConstant(Context)) {
+    ConvertedType = ToType;
+    return true;
+  }
+
+  // If the left-hand-side is nullptr_t, the right side can be a null
+  // pointer constant.
+  if (ToType->isNullPtrType() && From->isNullPointerConstant(Context)) {
     ConvertedType = ToType;
     return true;
   }

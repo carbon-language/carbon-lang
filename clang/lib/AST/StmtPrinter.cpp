@@ -996,6 +996,10 @@ void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }
 
+void StmtPrinter::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *Node) {
+  OS << "nullptr";
+}
+
 void StmtPrinter::VisitCXXThisExpr(CXXThisExpr *Node) {
   OS << "this";
 }

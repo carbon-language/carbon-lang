@@ -499,6 +499,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   // UNSUPPORTED:    ::= Di # char32_t
   // UNSUPPORTED:    ::= Ds # char16_t
   //                 ::= u <source-name>    # vendor extended type
+  // From our point of view, std::nullptr_t is a builtin, but as far as mangling
+  // is concerned, it's a type called std::nullptr_t.
   switch (T->getKind()) {
   case BuiltinType::Void: Out << 'v'; break;
   case BuiltinType::Bool: Out << 'b'; break;
@@ -519,6 +521,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Float: Out << 'f'; break;
   case BuiltinType::Double: Out << 'd'; break;
   case BuiltinType::LongDouble: Out << 'e'; break;
+  case BuiltinType::NullPtr: Out << "St9nullptr_t"; break;
 
   case BuiltinType::Overload:
   case BuiltinType::Dependent:

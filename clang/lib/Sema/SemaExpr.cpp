@@ -3811,6 +3811,20 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
   }
+  // C++ allows comparison of pointers with null pointer constants.
+  if (getLangOptions().CPlusPlus) {
+    if (lType->isPointerType() && RHSIsNull) {
+      ImpCastExprToType(rex, lType);
+      return ResultTy;
+    }
+    if (rType->isPointerType() && LHSIsNull) {
+      ImpCastExprToType(lex, rType);
+      return ResultTy;
+    }
+    // And comparison of nullptr_t with itself.
+    if (lType->isNullPtrType() && rType->isNullPtrType())
+      return ResultTy;
+  }
   // Handle block pointer types.
   if (!isRelational && lType->isBlockPointerType() && rType->isBlockPointerType()) {
     QualType lpointee = lType->getAsBlockPointerType()->getPointeeType();

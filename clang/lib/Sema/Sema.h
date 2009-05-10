@@ -1534,6 +1534,9 @@ public:
   virtual OwningExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                                tok::TokenKind Kind);
 
+  /// ActOnCXXNullPtrLiteral - Parse 'nullptr'.
+  virtual OwningExprResult ActOnCXXNullPtrLiteral(SourceLocation Loc);
+
   //// ActOnCXXThrow -  Parse throw expressions.
   virtual OwningExprResult ActOnCXXThrow(SourceLocation OpLoc,
                                          ExprArg expr);

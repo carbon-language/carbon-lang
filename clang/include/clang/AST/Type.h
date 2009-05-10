@@ -394,6 +394,7 @@ public:
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
   bool isTemplateTypeParmType() const;          // C++ template type parameter
+  bool isNullPtrType() const;                   // C++0x nullptr_t
 
   /// isDependentType - Whether this type is a dependent type, meaning
   /// that its definition somehow depends on a template parameter 
@@ -404,7 +405,7 @@ public:
   /// hasPointerRepresentation - Whether this type is represented
   /// natively as a pointer; this includes pointers, references, block
   /// pointers, and Objective-C interface, qualified id, and qualified
-  /// interface types.
+  /// interface types, as well as nullptr_t.
   bool hasPointerRepresentation() const;
 
   /// hasObjCPointerRepresentation - Whether this type can represent
@@ -558,6 +559,8 @@ public:
     Int128,   // __int128_t
     
     Float, Double, LongDouble,
+
+    NullPtr,  // This is the type of C++0x 'nullptr'.
 
     Overload,  // This represents the type of an overloaded function declaration.
     Dependent  // This represents the type of a type-dependent expression.
@@ -1926,7 +1929,7 @@ inline bool Type::isOverloadableType() const {
 inline bool Type::hasPointerRepresentation() const {
   return (isPointerType() || isReferenceType() || isBlockPointerType() ||
           isObjCInterfaceType() || isObjCQualifiedIdType() || 
-          isObjCQualifiedInterfaceType());
+          isObjCQualifiedInterfaceType() || isNullPtrType());
 }
 
 inline bool Type::hasObjCPointerRepresentation() const {

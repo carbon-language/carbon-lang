@@ -319,7 +319,9 @@ namespace clang {
       /// \brief The '__uint128_t' type.
       PREDEF_TYPE_UINT128_ID    = 21,
       /// \brief The '__int128_t' type.
-      PREDEF_TYPE_INT128_ID     = 22
+      PREDEF_TYPE_INT128_ID     = 22,
+      /// \brief The type of 'nullptr'.
+      PREDEF_TYPE_NULLPTR_ID    = 23
     };
 
     /// \brief The number of predefined type IDs that are reserved for

@@ -276,6 +276,9 @@ void ASTContext::InitBuiltinTypes() {
   
   // void * type
   VoidPtrTy = getPointerType(VoidTy);
+
+  // nullptr type (C++0x 2.14.7)
+  InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -431,6 +434,9 @@ ASTContext::getTypeInfo(const Type *T) {
       Width = Target.getLongDoubleWidth();
       Align = Target.getLongDoubleAlign();
       break;
+    case BuiltinType::NullPtr:
+      Width = Target.getPointerWidth(0); // C++ 3.9.1p11: sizeof(nullptr_t)
+      Align = Target.getPointerAlign(0); //   == sizeof(void*)
     }
     break;
   case Type::FixedWidthInt:

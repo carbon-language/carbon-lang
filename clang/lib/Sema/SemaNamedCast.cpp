@@ -279,12 +279,26 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
+  // See below for the enumeral issue.
+  if (SrcType->isNullPtrType() && DestType->isIntegralType() &&
+      !DestType->isEnumeralType()) {
+    // C++0x 5.2.10p4: A pointer can be explicitly converted to any integral
+    //   type large enough to hold it. A value of std::nullptr_t can be
+    //   converted to an integral type; the conversion has the same meaning
+    //   and validity as a conversion of (void*)0 to the integral type.
+    if (Self.Context.getTypeSize(SrcType) >
+        Self.Context.getTypeSize(DestType)) {
+      Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_small_int)
+        << OrigDestType << DestRange;
+    }
+    return;
+  }
+
   bool destIsPtr = DestType->isPointerType();
   bool srcIsPtr = SrcType->isPointerType();
   if (!destIsPtr && !srcIsPtr) {
-    // Except for std::nullptr_t->integer, which is not supported yet, and
-    // lvalue->reference, which is handled above, at least one of the two
-    // arguments must be a pointer.
+    // Except for std::nullptr_t->integer and lvalue->reference, which are
+    // handled above, at least one of the two arguments must be a pointer.
     Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
       << "reinterpret_cast" << OrigDestType << OrigSrcType << OpRange;
     return;

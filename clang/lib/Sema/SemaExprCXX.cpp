@@ -85,6 +85,12 @@ Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
                                                 Context.BoolTy, OpLoc));
 }
 
+/// ActOnCXXNullPtrLiteral - Parse 'nullptr'.
+Action::OwningExprResult
+Sema::ActOnCXXNullPtrLiteral(SourceLocation Loc) {
+  return Owned(new (Context) CXXNullPtrLiteralExpr(Context.NullPtrTy, Loc));
+}
+
 /// ActOnCXXThrow - Parse throw expressions.
 Action::OwningExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprArg E) {

@@ -174,7 +174,7 @@ public:
   QualType UnsignedLongLongTy, UnsignedInt128Ty;
   QualType FloatTy, DoubleTy, LongDoubleTy;
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
-  QualType VoidPtrTy;
+  QualType VoidPtrTy, NullPtrTy;
   QualType OverloadTy;
   QualType DependentTy;
 

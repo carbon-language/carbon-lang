@@ -430,6 +430,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 ///         constant
 ///         string-literal
 /// [C++]   boolean-literal  [C++ 2.13.5]
+/// [C++0x] 'nullptr'        [C++0x 2.14.7]
 ///         '(' expression ')'
 ///         '__func__'        [C99 6.4.2.2]
 /// [GNU]   '__FUNCTION__'
@@ -568,6 +569,9 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_true:
   case tok::kw_false:
     return ParseCXXBoolLiteral();
+
+  case tok::kw_nullptr:
+    return Actions.ActOnCXXNullPtrLiteral(ConsumeToken());
 
   case tok::identifier: {      // primary-expression: identifier
                                // unqualified-id: identifier

@@ -1198,6 +1198,10 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
   if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
     Arg = Cast->getSubExpr();
 
+  // C++0x allows nullptr, and there's no further checking to be done for that.
+  if (Arg->getType()->isNullPtrType())
+    return false;
+
   // C++ [temp.arg.nontype]p1:
   // 
   //   A template-argument for a non-type, non-template
@@ -1295,6 +1299,10 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
   // See through any implicit casts we added to fix the type.
   if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
     Arg = Cast->getSubExpr();
+
+  // C++0x allows nullptr, and there's no further checking to be done for that.
+  if (Arg->getType()->isNullPtrType())
+    return false;
 
   // C++ [temp.arg.nontype]p1:
   // 
@@ -1485,6 +1493,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       //    applied. If the template-argument represents a set of
       //    overloaded functions (or a pointer to such), the matching
       //    function is selected from the set (13.4).
+      // In C++0x, any std::nullptr_t value can be converted.
       (ParamType->isPointerType() &&
        ParamType->getAsPointerType()->getPointeeType()->isFunctionType()) ||
       // -- For a non-type template-parameter of type reference to
@@ -1498,12 +1507,17 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       //    template-argument represents a set of overloaded member
       //    functions, the matching member function is selected from
       //    the set (13.4).
+      // Again, C++0x allows a std::nullptr_t value.
       (ParamType->isMemberPointerType() &&
        ParamType->getAsMemberPointerType()->getPointeeType()
          ->isFunctionType())) {
     if (Context.hasSameUnqualifiedType(ArgType, 
                                        ParamType.getNonReferenceType())) {
       // We don't have to do anything: the types already match.
+    } else if (ArgType->isNullPtrType() && (ParamType->isPointerType() ||
+                 ParamType->isMemberPointerType())) {
+      ArgType = ParamType;
+      ImpCastExprToType(Arg, ParamType);
     } else if (ArgType->isFunctionType() && ParamType->isPointerType()) {
       ArgType = Context.getPointerType(ArgType);
       ImpCastExprToType(Arg, ArgType);
@@ -1554,14 +1568,18 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //   -- for a non-type template-parameter of type pointer to
     //      object, qualification conversions (4.4) and the
     //      array-to-pointer conversion (4.2) are applied.
+    // C++0x also allows a value of std::nullptr_t.
     assert(ParamType->getAsPointerType()->getPointeeType()->isObjectType() &&
            "Only object pointers allowed here");
 
-    if (ArgType->isArrayType()) {
+    if (ArgType->isNullPtrType()) {
+      ArgType = ParamType;
+      ImpCastExprToType(Arg, ParamType);
+    } else if (ArgType->isArrayType()) {
       ArgType = Context.getArrayDecayedType(ArgType);
       ImpCastExprToType(Arg, ArgType);
     }
-    
+
     if (IsQualificationConversion(ArgType, ParamType)) {
       ArgType = ParamType;
       ImpCastExprToType(Arg, ParamType);
@@ -1630,10 +1648,13 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
   //     -- For a non-type template-parameter of type pointer to data
   //        member, qualification conversions (4.4) are applied.
+  // C++0x allows std::nullptr_t values.
   assert(ParamType->isMemberPointerType() && "Only pointers to members remain");
 
   if (Context.hasSameUnqualifiedType(ParamType, ArgType)) {
     // Types match exactly: nothing more to do here.
+  } else if (ArgType->isNullPtrType()) {
+    ImpCastExprToType(Arg, ParamType);
   } else if (IsQualificationConversion(ArgType, ParamType)) {
     ImpCastExprToType(Arg, ParamType);
   } else {

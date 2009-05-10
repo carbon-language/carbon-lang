@@ -1837,6 +1837,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     case BuiltinType::Float:      ID = pch::PREDEF_TYPE_FLOAT_ID;      break;
     case BuiltinType::Double:     ID = pch::PREDEF_TYPE_DOUBLE_ID;     break;
     case BuiltinType::LongDouble: ID = pch::PREDEF_TYPE_LONGDOUBLE_ID; break;
+    case BuiltinType::NullPtr:    ID = pch::PREDEF_TYPE_NULLPTR_ID;    break;
     case BuiltinType::Overload:   ID = pch::PREDEF_TYPE_OVERLOAD_ID;   break;
     case BuiltinType::Dependent:  ID = pch::PREDEF_TYPE_DEPENDENT_ID;  break;
     }

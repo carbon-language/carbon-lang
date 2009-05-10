@@ -44,6 +44,14 @@ Stmt::child_iterator CXXBoolLiteralExpr::child_end() {
   return child_iterator();
 }
 
+// CXXNullPtrLiteralExpr
+Stmt::child_iterator CXXNullPtrLiteralExpr::child_begin() { 
+  return child_iterator();
+}
+Stmt::child_iterator CXXNullPtrLiteralExpr::child_end() {
+  return child_iterator();
+}
+
 // CXXThisExpr
 Stmt::child_iterator CXXThisExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator CXXThisExpr::child_end() { return child_iterator(); }

@@ -299,7 +299,9 @@ public:
       { return APValue((Expr*)0, 0); }
   APValue VisitConditionalOperator(ConditionalOperator *E);
   APValue VisitChooseExpr(ChooseExpr *E)
-    { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+      { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+  APValue VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E)
+      { return APValue((Expr*)0, 0); }
   // FIXME: Missing: @protocol, @selector
 };
 } // end anonymous namespace
