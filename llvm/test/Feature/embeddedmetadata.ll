@@ -2,7 +2,7 @@
 
 declare i8 @llvm.something({ } %a)
 
-@llvm.foo = internal constant { } !{i17 123, { } !"foobar"}
+@llvm.foo = internal constant { } !{i17 123, null, { } !"foobar"}
 
 define void @foo() {
   %x = call i8 @llvm.something({ } !{{ } !"f\00oa", i42 123})

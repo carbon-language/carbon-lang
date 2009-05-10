@@ -2061,6 +2061,10 @@ the two digit hex code.  For example: "<tt>!"test\00"</tt>".
 exclamation point).  For example: "<tt>!{ { } !"test\00", i32 10}</tt>".
 </p>
 
+<p>A metadata node will attempt to track changes to the values it holds. In
+the event that a value is deleted, it will be replaced with a typeless
+"<tt>null</tt>", such as "<tt>{ } !{null, i32 0}</tt>".</p> 
+
 <p>Optimizations may rely on metadata to provide additional information about
 the program that isn't available in the instructions, or that isn't easily
 computable. Similarly, the code generator may expect a certain metadata format

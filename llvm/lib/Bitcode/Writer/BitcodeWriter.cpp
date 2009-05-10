@@ -19,6 +19,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
@@ -706,9 +707,14 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       }
     } else if (const MDNode *N = dyn_cast<MDNode>(C)) {
       Code = bitc::CST_CODE_MDNODE;
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-        Record.push_back(VE.getTypeID(N->getOperand(i)->getType()));
-        Record.push_back(VE.getValueID(N->getOperand(i)));
+      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+        if (N->getElement(i)) {
+          Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
+          Record.push_back(VE.getValueID(N->getElement(i)));
+        } else {
+          Record.push_back(VE.getTypeID(Type::VoidTy));
+          Record.push_back(0);
+        }
       }
     } else {
       assert(0 && "Unknown constant!");

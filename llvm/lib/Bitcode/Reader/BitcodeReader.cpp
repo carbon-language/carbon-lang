@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/AutoUpgrade.h"
 #include "llvm/ADT/SmallString.h"
@@ -287,12 +288,10 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
                                    UserCS->getType()->isPacked());
       } else if (isa<ConstantVector>(UserC)) {
         NewC = ConstantVector::get(&NewOps[0], NewOps.size());
-      } else if (isa<ConstantExpr>(UserC)) {
+      } else {
+        assert(isa<ConstantExpr>(UserC) && "Must be a ConstantExpr.");
         NewC = cast<ConstantExpr>(UserC)->getWithOperands(&NewOps[0],
                                                           NewOps.size());
-      } else {
-        assert(isa<MDNode>(UserC) && "Must be a metadata node.");
-        NewC = MDNode::get(&NewOps[0], NewOps.size());
       }
       
       UserC->replaceAllUsesWith(NewC);
@@ -300,6 +299,8 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
       NewOps.clear();
     }
     
+    // Update all ValueHandles, they should be the only users at this point.
+    Placeholder->replaceAllUsesWith(RealVal);
     delete Placeholder;
   }
 }
@@ -1017,10 +1018,13 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid CST_MDNODE record");
       
       unsigned Size = Record.size();
-      SmallVector<Constant*, 8> Elts;
+      SmallVector<Value*, 8> Elts;
       for (unsigned i = 0; i != Size; i += 2) {
         const Type *Ty = getTypeByID(Record[i], false);
-        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], Ty));
+        if (Ty != Type::VoidTy)
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], Ty));
+        else
+          Elts.push_back(NULL);
       }
       V = MDNode::get(&Elts[0], Elts.size());
       break;

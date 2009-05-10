@@ -9,6 +9,10 @@
 
 #include "gtest/gtest.h"
 #include "llvm/Constants.h"
+#include "llvm/Instructions.h"
+#include "llvm/MDNode.h"
+#include "llvm/Type.h"
+#include "llvm/Support/ValueHandle.h"
 #include <sstream>
 
 using namespace llvm;
@@ -59,7 +63,7 @@ TEST(MDStringTest, PrintingComplex) {
 }
 
 // Test the two constructors, and containing other Constants.
-TEST(MDNodeTest, Everything) {
+TEST(MDNodeTest, Simple) {
   char x[3] = { 'a', 'b', 'c' };
   char y[3] = { '1', '2', '3' };
 
@@ -67,25 +71,25 @@ TEST(MDNodeTest, Everything) {
   MDString *s2 = MDString::get(&y[0], &y[3]);
   ConstantInt *CI = ConstantInt::get(APInt(8, 0));
 
-  std::vector<Constant *> V;
+  std::vector<Value *> V;
   V.push_back(s1);
   V.push_back(CI);
   V.push_back(s2);
 
   MDNode *n1 = MDNode::get(&V[0], 3);
-  Constant *const c1 = n1;
+  Value *const c1 = n1;
   MDNode *n2 = MDNode::get(&c1, 1);
   MDNode *n3 = MDNode::get(&V[0], 3);
   EXPECT_NE(n1, n2);
   EXPECT_EQ(n1, n3);
 
-  EXPECT_EQ(3u, n1->getNumOperands());
-  EXPECT_EQ(s1, n1->getOperand(0));
-  EXPECT_EQ(CI, n1->getOperand(1));
-  EXPECT_EQ(s2, n1->getOperand(2));
+  EXPECT_EQ(3u, n1->getNumElements());
+  EXPECT_EQ(s1, n1->getElement(0));
+  EXPECT_EQ(CI, n1->getElement(1));
+  EXPECT_EQ(s2, n1->getElement(2));
 
-  EXPECT_EQ(1u, n2->getNumOperands());
-  EXPECT_EQ(n1, n2->getOperand(0));
+  EXPECT_EQ(1u, n2->getNumElements());
+  EXPECT_EQ(n1, n2->getElement(0));
 
   std::ostringstream oss1, oss2;
   n1->print(oss1);
@@ -93,5 +97,41 @@ TEST(MDNodeTest, Everything) {
   EXPECT_STREQ("{ } !{{ } !\"abc\", i8 0, { } !\"123\"}", oss1.str().c_str());
   EXPECT_STREQ("{ } !{{ } !{{ } !\"abc\", i8 0, { } !\"123\"}}",
                oss2.str().c_str());
+}
+
+TEST(MDNodeTest, RAUW) {
+  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
+  Instruction *I = new BitCastInst(C, Type::Int32Ty);
+
+  Value *const V1 = I;
+  MDNode *n1 = MDNode::get(&V1, 1);
+  WeakVH wn1 = n1;
+
+  Value *const V2 = C;
+  MDNode *n2 = MDNode::get(&V2, 1);
+  WeakVH wn2 = n2;
+
+  EXPECT_NE(wn1, wn2);
+
+  I->replaceAllUsesWith(C);
+
+  EXPECT_EQ(wn1, wn2);
+}
+
+TEST(MDNodeTest, Delete) {
+  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
+  Instruction *I = new BitCastInst(C, Type::Int32Ty);
+
+  Value *const V = I;
+  MDNode *n = MDNode::get(&V, 1);
+  WeakVH wvh = n;
+
+  EXPECT_EQ(n, wvh);
+
+  delete I;
+
+  std::ostringstream oss;
+  wvh->print(oss);
+  EXPECT_STREQ("{ } !{null}", oss.str().c_str());
 }
 }

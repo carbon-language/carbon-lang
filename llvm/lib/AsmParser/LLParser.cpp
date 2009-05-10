@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1571,13 +1572,11 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.Kind = ValID::t_Constant;
     Lex.Lex();
     if (Lex.getKind() == lltok::lbrace) {
-      // MDNode:
-      //  ::= '!' '{' TypeAndValue (',' TypeAndValue)* '}'
-      SmallVector<Constant*, 16> Elts;
+      SmallVector<Value*, 16> Elts;
       if (ParseMDNodeVector(Elts) ||
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
-    
+
       ID.ConstantVal = MDNode::get(&Elts[0], Elts.size());
       return false;
     }
@@ -3257,14 +3256,23 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 //===----------------------------------------------------------------------===//
 
 /// ParseMDNodeVector
-///   ::= TypeAndValue (',' TypeAndValue)*
-bool LLParser::ParseMDNodeVector(SmallVectorImpl<Constant*> &Elts) {
+///   ::= Element (',' Element)*
+/// Element
+///   ::= 'null' | TypeAndValue
+bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
   assert(Lex.getKind() == lltok::lbrace);
   Lex.Lex();
   do {
-    Constant *C;
-    if (ParseGlobalTypeAndValue(C)) return true;
-    Elts.push_back(C);
+    Value *V;
+    if (Lex.getKind() == lltok::kw_null) {
+      Lex.Lex();
+      V = 0;
+    } else {
+      Constant *C;
+      if (ParseGlobalTypeAndValue(C)) return true;
+      V = C;
+    }
+    Elts.push_back(V);
   } while (EatIfPresent(lltok::comma));
 
   return false;

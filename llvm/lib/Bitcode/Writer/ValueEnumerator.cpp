@@ -14,6 +14,7 @@
 #include "ValueEnumerator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
@@ -203,6 +204,18 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       Values.push_back(std::make_pair(V, 1U));
       ValueMap[V] = Values.size();
       return;
+    } else if (const MDNode *N = dyn_cast<MDNode>(C)) {
+      for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
+           I != E; ++I) {
+        if (*I)
+          EnumerateValue(*I);
+        else
+          EnumerateType(Type::VoidTy);
+      }
+
+      Values.push_back(std::make_pair(V, 1U));
+      ValueMap[V] = Values.size();
+      return;
     }
   }
   
@@ -244,6 +257,11 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
     // them.
     for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
       EnumerateOperandType(C->getOperand(i));
+
+    if (const MDNode *N = dyn_cast<MDNode>(V)) {
+      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
+        EnumerateOperandType(N->getElement(i));
+    }
   }
 }
 

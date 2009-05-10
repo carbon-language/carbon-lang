@@ -23,6 +23,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
+#include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
@@ -945,10 +946,16 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 
   if (const MDNode *N = dyn_cast<MDNode>(CV)) {
     Out << "!{";
-    for (MDNode::const_op_iterator I = N->op_begin(), E = N->op_end(); I != E;){
-      TypePrinter.print((*I)->getType(), Out);
-      Out << ' ';
-      WriteAsOperandInternal(Out, *I, TypePrinter, Machine);
+    for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
+         I != E;) {
+      if (!*I) {
+        Out << "null";
+      } else {
+        TypePrinter.print((*I)->getType(), Out);
+        Out << ' ';
+        WriteAsOperandInternal(Out, *I, TypePrinter, Machine);
+      }
+
       if (++I != E)
         Out << ", ";
     }

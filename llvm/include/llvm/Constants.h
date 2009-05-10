@@ -26,7 +26,6 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -876,55 +875,6 @@ public:
     return V->getValueID() == MDStringVal;
   }
 };
-
-//===----------------------------------------------------------------------===//
-/// MDNode - a tuple of other values.
-/// These contain a list of the Constants that represent the metadata.
-///
-class MDNode : public Constant, public FoldingSetNode {
-  MDNode(const MDNode &);      // DO NOT IMPLEMENT
-protected:
-  explicit MDNode(Constant*const* Vals, unsigned NumVals);
-public:
-  /// get() - Static factory methods - Return objects of the specified value.
-  ///
-  static MDNode *get(Constant*const* Vals, unsigned NumVals);
-
-  // Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
-
-  /// getType() specialization - Type is always an empty struct.
-  ///
-  inline const Type *getType() const {
-    return Type::EmptyStructTy;
-  }
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because getNullValue will never
-  /// produce metadata.
-  virtual bool isNullValue() const {
-    return false;
-  }
-
-  /// Profile - calculate a unique identifier for this MDNode to collapse
-  /// duplicates
-  void Profile(FoldingSetNodeID &ID);
-
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
-
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MDNode *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueID() == MDNodeVal;
-  }
-};
-
-template <>
-struct OperandTraits<MDNode> : VariadicOperandTraits<> {
-};
-
-DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(MDNode, Constant)
 
 } // End llvm namespace
 
