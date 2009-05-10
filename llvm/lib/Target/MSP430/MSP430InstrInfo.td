@@ -708,6 +708,20 @@ def CMP16rr : Pseudo<(outs), (ins GR16:$src1, GR16:$src2),
                      "cmp.w\t{$src1, $src2}",
                      [(MSP430cmp GR16:$src1, GR16:$src2), (implicit SRW)]>;
 
+def CMP8ir  : Pseudo<(outs), (ins i8imm:$src1, GR8:$src2),
+                   "cmp.b\t{$src1, $src2}",
+                   [(MSP430cmp imm:$src1, GR8:$src2), (implicit SRW)]>;
+def CMP16ir : Pseudo<(outs), (ins i16imm:$src1, GR16:$src2),
+                     "cmp.w\t{$src1, $src2}",
+                     [(MSP430cmp imm:$src1, GR16:$src2), (implicit SRW)]>;
+
+def CMP8im  : Pseudo<(outs), (ins i8imm:$src1, memsrc:$src2),
+                     "cmp.b\t{$src1, $src2}",
+                      [(MSP430cmp (i8 imm:$src1), (load addr:$src2)), (implicit SRW)]>;
+def CMP16im : Pseudo<(outs), (ins i16imm:$src1, memsrc:$src2),
+                     "cmp.w\t{$src1, $src2}",
+                      [(MSP430cmp (i16 imm:$src1), (load addr:$src2)), (implicit SRW)]>;
+
 // FIXME: imm is allowed only on src operand, not on dst.
 
 //def CMP8ri  : Pseudo<(outs), (ins GR8:$src1, i8imm:$src2),
