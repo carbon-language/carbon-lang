@@ -1703,11 +1703,39 @@ QualType ASTContext::getCanonicalType(QualType T) {
                               VAT->getIndexTypeQualifier());
 }
 
+Decl *ASTContext::getCanonicalDecl(Decl *D) {
+  if (TagDecl *Tag = dyn_cast<TagDecl>(D)) {
+    QualType T = getTagDeclType(Tag);
+    return cast<TagDecl>(cast<TagType>(T.getTypePtr()->CanonicalType)
+                         ->getDecl());
+  }
+
+  if (ClassTemplateDecl *Template = dyn_cast<ClassTemplateDecl>(D)) {
+    while (Template->getPreviousDeclaration())
+      Template = Template->getPreviousDeclaration();
+    return Template;
+  }
+
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    while (Function->getPreviousDeclaration())
+      Function = Function->getPreviousDeclaration();
+    return const_cast<FunctionDecl *>(Function);
+  }
+
+  if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    while (Var->getPreviousDeclaration())
+      Var = Var->getPreviousDeclaration();
+    return const_cast<VarDecl *>(Var);
+  }
+
+  return D;
+}
+
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   // If this template name refers to a template, the canonical
   // template name merely stores the template itself.
   if (TemplateDecl *Template = Name.getAsTemplateDecl())
-    return TemplateName(Template);
+    return TemplateName(cast<TemplateDecl>(getCanonicalDecl(Template)));
 
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
   assert(DTN && "Non-dependent template names must refer to template decls.");

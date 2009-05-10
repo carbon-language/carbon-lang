@@ -1000,6 +1000,9 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
+TagType::TagType(TypeClass TC, TagDecl *D, QualType can) 
+  : Type(TC, can, D->isDependentType()), decl(D, 0) {}
+
 bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());
 }

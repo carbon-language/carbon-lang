@@ -674,6 +674,9 @@ protected:
     /// \brief The class template specializations for this class
     /// template, including explicit specializations and instantiations.
     llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+
+    /// \brief The injected-class-name type for this class template.
+    QualType InjectedClassNameType;
   };
 
   /// \brief Previous declaration of this class template.
@@ -700,6 +703,11 @@ public:
     return static_cast<CXXRecordDecl *>(TemplatedDecl);
   }
 
+  /// \brief Retrieve the previous declaration of this template.
+  ClassTemplateDecl *getPreviousDeclaration() const {
+    return PreviousDeclaration;
+  }
+
   /// Create a class template node.
   static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L,
@@ -712,6 +720,22 @@ public:
   llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
     return CommonPtr->Specializations;
   }
+
+  /// \brief Retrieve the type of the injected-class-name for this
+  /// class template.
+  ///
+  /// The injected-class-name for a class template \c X is \c
+  /// X<template-args>, where \c template-args is formed from the
+  /// template arguments that correspond to the template parameters of
+  /// \c X. For example:
+  ///
+  /// \code
+  /// template<typename T, int N>
+  /// struct array {
+  ///   typedef array this_type; // "array" is equivalent to "array<T, N>"
+  /// };
+  /// \endcode
+  QualType getInjectedClassNameType(ASTContext &Context);
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D)

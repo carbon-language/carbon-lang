@@ -503,7 +503,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
             PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0))
     Invalid = true;
     
-  // If we had a scope specifier, we better have a previous template
+  // FIXME: If we had a scope specifier, we better have a previous template
   // declaration!
 
   CXXRecordDecl *NewClass = 
@@ -749,8 +749,9 @@ static void CanonicalizeTemplateArguments(const TemplateArgument *TemplateArgs,
       break;
 
     case TemplateArgument::Declaration:
-      Canonical.push_back(TemplateArgument(SourceLocation(),
-                                           TemplateArgs[Idx].getAsDecl()));
+      Canonical.push_back(
+                 TemplateArgument(SourceLocation(),
+                    Context.getCanonicalDecl(TemplateArgs[Idx].getAsDecl())));
       break;
 
     case TemplateArgument::Integral:
@@ -1124,10 +1125,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
             Invalid = true;
           
           // Add the converted template argument.
-          // FIXME: Need the "canonical" template declaration!
-          Converted.push_back(
-                    TemplateArgument(Arg.getLocation(),
-                                     cast<DeclRefExpr>(ArgExpr)->getDecl()));
+          Decl *D 
+            = Context.getCanonicalDecl(cast<DeclRefExpr>(ArgExpr)->getDecl());
+          Converted.push_back(TemplateArgument(Arg.getLocation(), D));
           continue;
         }
       }
@@ -1549,8 +1549,10 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       if (CheckTemplateArgumentPointerToMember(Arg, Member))
         return true;
 
-      if (Converted)
+      if (Converted) {
+        Member = cast<NamedDecl>(Context.getCanonicalDecl(Member));
         Converted->push_back(TemplateArgument(StartLoc, Member));
+      }
 
       return false;
     }
@@ -1559,8 +1561,10 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Converted)
+    if (Converted) {
+      Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
       Converted->push_back(TemplateArgument(StartLoc, Entity));
+    }
     return false;
   }
 
@@ -1598,8 +1602,10 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Converted)
+    if (Converted) {
+      Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
       Converted->push_back(TemplateArgument(StartLoc, Entity));
+    }
 
     return false;
   }
@@ -1640,8 +1646,10 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Converted)
+    if (Converted) {
+      Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
       Converted->push_back(TemplateArgument(StartLoc, Entity));
+    }
 
     return false;
   }
@@ -1670,9 +1678,11 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (CheckTemplateArgumentPointerToMember(Arg, Member))
     return true;
   
-  if (Converted)
+  if (Converted) {
+    Member = cast<NamedDecl>(Context.getCanonicalDecl(Member));
     Converted->push_back(TemplateArgument(StartLoc, Member));
-  
+  }
+
   return false;
 }
 

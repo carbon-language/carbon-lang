@@ -123,8 +123,23 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
       // Check whether we can use this type
       (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
-      
-      T = Context.getTypeDeclType(TD);
+  
+      if (getLangOptions().CPlusPlus) {
+        // C++ [temp.local]p2:
+        //   Within the scope of a class template specialization or
+        //   partial specialization, when the injected-class-name is
+        //   not followed by a <, it is equivalent to the
+        //   injected-class-name followed by the template-argument s
+        //   of the class template specialization or partial
+        //   specialization enclosed in <>.
+        if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD))
+          if (RD->isInjectedClassName())
+            if (ClassTemplateDecl *Template = RD->getDescribedClassTemplate())
+              T = Template->getInjectedClassNameType(Context);
+      }
+
+      if (T.isNull())
+        T = Context.getTypeDeclType(TD);
     } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
       // Check whether we can use this interface.
       (void)DiagnoseUseOfDecl(IIDecl, NameLoc);

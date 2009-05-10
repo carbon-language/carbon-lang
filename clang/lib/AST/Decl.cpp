@@ -14,6 +14,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
@@ -504,6 +505,18 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 //===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
+
+bool TagDecl::isDependentType() const {
+  if (isa<TemplateDecl>(this))
+    return true;
+
+  if (const TagDecl *TD = dyn_cast_or_null<TagDecl>(getDeclContext()))
+    return TD->isDependentType();
+
+  // FIXME: Tag types declared function templates are dependent types.
+  // FIXME: Look through block scopes.
+  return false;
+}
 
 void TagDecl::startDefinition() {
   TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());

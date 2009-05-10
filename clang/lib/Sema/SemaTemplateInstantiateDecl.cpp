@@ -273,11 +273,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
                             D->getLocation(), D->getIdentifier(), PrevDecl);
   Record->setImplicit(D->isImplicit());
   Record->setAccess(D->getAccess());
-
   if (!D->isInjectedClassName())
     Record->setInstantiationOfMemberClass(D);
-  else
-    Record->setDescribedClassTemplate(D->getDescribedClassTemplate());
 
   Owner->addDecl(SemaRef.Context, Record);
   return Record;

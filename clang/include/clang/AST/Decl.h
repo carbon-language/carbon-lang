@@ -902,7 +902,12 @@ public:
   bool isDefinition() const {
     return IsDefinition;
   }
-  
+
+  /// \brief Whether this declaration declares a type that is
+  /// dependent, i.e., a type that somehow depends on template
+  /// parameters.
+  bool isDependentType() const;
+
   /// @brief Starts the definition of this tag declaration.
   /// 
   /// This method should be invoked at the beginning of the definition

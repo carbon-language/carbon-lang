@@ -1281,11 +1281,7 @@ class TagType : public Type {
   friend class TagDecl;
 
 protected:
-  // FIXME: We'll need the user to pass in information about whether
-  // this type is dependent or not, because we don't have enough
-  // information to compute it here.
-  TagType(TypeClass TC, TagDecl *D, QualType can) 
-    : Type(TC, can, /*Dependent=*/false), decl(D, 0) {}
+  TagType(TypeClass TC, TagDecl *D, QualType can);
 
 public:   
   TagDecl *getDecl() const { return decl.getPointer(); }
