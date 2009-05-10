@@ -22,6 +22,7 @@
 #define LLVM_MDNODE_H
 
 #include "llvm/Constant.h"
+#include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ValueHandle.h"
