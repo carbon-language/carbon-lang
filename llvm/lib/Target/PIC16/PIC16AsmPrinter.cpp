@@ -175,8 +175,8 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
     if (Name.find("llvm.") != std::string::npos)
       continue;
 
-    assert ((I->isDeclaration() || I->hasExternalLinkage())
-            && "Not an extern function declaration or definition");
+    if (! (I->isDeclaration() || I->hasExternalLinkage()))
+      continue;
 
     const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
                                                  TAI->getGlobalDirective();
