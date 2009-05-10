@@ -1550,7 +1550,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
         return true;
 
       if (Converted) {
-        Member = cast<NamedDecl>(Context.getCanonicalDecl(Member));
+        Member = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Member));
         Converted->push_back(TemplateArgument(StartLoc, Member));
       }
 
@@ -1562,7 +1562,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
 
     if (Converted) {
-      Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
+      Entity = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Entity));
       Converted->push_back(TemplateArgument(StartLoc, Entity));
     }
     return false;
@@ -1603,7 +1603,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
 
     if (Converted) {
-      Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
+      Entity = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Entity));
       Converted->push_back(TemplateArgument(StartLoc, Entity));
     }
 
@@ -1679,7 +1679,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return true;
   
   if (Converted) {
-    Member = cast<NamedDecl>(Context.getCanonicalDecl(Member));
+    Member = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Member));
     Converted->push_back(TemplateArgument(StartLoc, Member));
   }
 
