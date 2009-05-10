@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include <iosfwd>
 #include <cassert>
+#include <sstream>
 #include <cstring>
 #include <string>
 
@@ -41,19 +42,22 @@ namespace PIC16CC {
     UGE
   };
 }
-  // A Central object to manage all ABI naming conventions.
-  class PIC16ABINames {
+  // A Central class to manage all ABI naming conventions.
+  // PAN - [P]ic16 [A]BI [N]ames
+  class PAN {
     public:
     // Map the name of the symbol to its section name.
     // Current ABI:
+    // -----------------------------------------------------
+    // ALL Names are prefixed with the symobl '@'.
     // ------------------------------------------------------
     // Global variables do not have any '.' in their names.
-    // they are prefixed with @
     // These are maily function names and global variable names.
+    // Example - @foo,  @i
     // -------------------------------------------------------
     // Functions and auto variables.
-    // Names are mangled as <prefix><funcname>.<id>.<varname>
-    // Where prefix is a special char '@' and id is any one of
+    // Names are mangled as <prefix><funcname>.<tag>.<varname>
+    // Where <prefix> is '@' and <tag> is any one of
     // the following
     // .auto. - an automatic var of a function.
     // .temp. - temproray data of a function.
@@ -74,106 +78,218 @@ namespace PIC16CC {
     //           To pass args:   @sra_i8.args.
     //           To return val:  @sra_i8.ret.
     //----------------------------------------------
+    // SECTION Names
+    // uninitialized globals - @udata.<num>.#
+    // initialized globals - @idata.<num>.#
+    // Function frame - @<func>.frame_section.
+    // Function autos - @<func>.autos_section.
+    // Declarations - @section.0
+    //----------------------------------------------------------
     
-    enum IDs {
+    // Tags used to mangle different names. 
+    enum TAGS {
       PREFIX_SYMBOL,
-
-      FUNC_AUTOS,
-      FUNC_FRAME,
-      FUNC_RET,
-      FUNC_ARGS,
-      FUNC_TEMPS,
+      GLOBAL,
+      STATIC_LOCAL,
+      AUTOS_LABEL,
+      FRAME_LABEL,
+      RET_LABEL,
+      ARGS_LABEL,
+      TEMPS_LABEL,
       
       LIBCALL,
       
       FRAME_SECTION,
-      AUTOS_SECTION
+      AUTOS_SECTION,
+      CODE_SECTION
     };
 
-    inline static const char *getIDName(IDs id) {
-      switch (id) {
-      default: assert(0 && "Unknown id");
+    // Textual names of the tags.
+    inline static const char *getTagName(TAGS tag) {
+      switch (tag) {
+      default: return "";
       case PREFIX_SYMBOL:    return "@";
-      case FUNC_AUTOS:       return ".auto.";
-      case FUNC_FRAME:       return ".frame.";
-      case FUNC_TEMPS:       return ".temp.";
-      case FUNC_ARGS:       return ".args.";
-      case FUNC_RET:       return ".ret.";
-      case FRAME_SECTION:       return "fpdata";
-      case AUTOS_SECTION:       return "fadata";
+      case AUTOS_LABEL:       return ".auto.";
+      case FRAME_LABEL:       return ".frame.";
+      case TEMPS_LABEL:       return ".temp.";
+      case ARGS_LABEL:       return ".args.";
+      case RET_LABEL:       return ".ret.";
+      case LIBCALL:       return ".lib.";
+      case FRAME_SECTION:       return ".fpdata.";
+      case AUTOS_SECTION:       return ".fadata.";
+      case CODE_SECTION:       return "code";
       }
     }
 
-    inline static IDs getID(const std::string &Sym) {
-      if (Sym.find(getIDName(FUNC_TEMPS)))
-        return FUNC_TEMPS;
+    // Get tag type for the Symbol.
+    inline static TAGS getSymbolTag(const std::string &Sym) {
+      if (Sym.find(getTagName(TEMPS_LABEL)) != std::string::npos)
+        return TEMPS_LABEL;
 
-      if (Sym.find(getIDName(FUNC_FRAME)))
-        return FUNC_FRAME;
+      if (Sym.find(getTagName(FRAME_LABEL)) != std::string::npos)
+        return FRAME_LABEL;
 
-      if (Sym.find(getIDName(FUNC_RET)))
-        return FUNC_RET;
+      if (Sym.find(getTagName(RET_LABEL)) != std::string::npos)
+        return RET_LABEL;
 
-      if (Sym.find(getIDName(FUNC_ARGS)))
-        return FUNC_ARGS;
+      if (Sym.find(getTagName(ARGS_LABEL)) != std::string::npos)
+        return ARGS_LABEL;
 
-      if (Sym.find(getIDName(FUNC_AUTOS)))
-        return FUNC_AUTOS;
+      if (Sym.find(getTagName(AUTOS_LABEL)) != std::string::npos)
+        return AUTOS_LABEL;
 
-      if (Sym.find(getIDName(LIBCALL)))
+      if (Sym.find(getTagName(LIBCALL)) != std::string::npos)
         return LIBCALL;
 
-      // It does not have any ID. So its a global.
-      assert (0 && "Could not determine ID symbol type");
+      // It does not have any Tag. So its a true global or static local.
+      if (Sym.find(".") == std::string::npos) 
+        return GLOBAL;
+      
+      // If a . is there, then it may be static local.
+      // We should mangle these as well in clang.
+      if (Sym.find(".") != std::string::npos) 
+        return STATIC_LOCAL;
+ 
+      assert (0 && "Could not determine Symbol's tag");
     }
 
-    // Get func name from a mangled name.
-    // In all cases func name is the first component before a '.'.
-    static inline std::string getFuncNameForSym(const std::string &Sym) {
-      const char *prefix = getIDName (PREFIX_SYMBOL);
+    // addPrefix - add prefix symbol to a name if there isn't one already.
+    inline static std::string addPrefix (const std::string &Name) {
+      std::string prefix = getTagName (PREFIX_SYMBOL);
 
-      // If this name has a prefix, func name start after prfix in that case.
-      size_t func_name_start = 0;
-      if (Sym.find(prefix, 0, strlen(prefix)) != std::string::npos)
-        func_name_start = strlen(prefix);
+      // If this name already has a prefix, nothing to do.
+      if (Name.compare(0, prefix.size(), prefix) == 0)
+        return Name;
+
+      return prefix + Name;
+    }
+
+    // Get mangled func name from a mangled sym name.
+    // In all cases func name is the first component before a '.'.
+    static inline std::string getFuncNameForSym(const std::string &Sym1) {
+      assert (getSymbolTag(Sym1) != GLOBAL && "not belongs to a function");
+
+      std::string Sym = addPrefix(Sym1);
 
       // Position of the . after func name. That's where func name ends.
-      size_t func_name_end = Sym.find ('.', func_name_start);
+      size_t func_name_end = Sym.find ('.');
 
-      return Sym.substr (func_name_start, func_name_end);
+      return Sym.substr (0, func_name_end);
     }
 
-    // Form a section name given the section type and func name.
-    static std::string
-    getSectionNameForFunc (const std::string &Fname, const IDs sec_id) {
-      std::string sec_id_string = getIDName(sec_id);
-      return sec_id_string + "." + Fname + ".#";
+    // Get Frame start label for a func.
+    static std::string getFrameLabel(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(FRAME_LABEL);
+      return Func1 + tag;
     }
+
+    static std::string getRetvalLabel(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(RET_LABEL);
+      return Func1 + tag;
+    }
+
+    static std::string getArgsLabel(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(ARGS_LABEL);
+      return Func1 + tag;
+    }
+
+    static std::string getTempdataLabel(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(TEMPS_LABEL);
+      return Func1 + tag;
+    }
+
+    static std::string getFrameSectionName(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(FRAME_SECTION);
+      return Func1 + tag + " UDATA_OVR";
+    }
+
+    static std::string getAutosSectionName(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(AUTOS_SECTION);
+      return Func1 + tag + " UDATA_OVR";
+    }
+
+    static std::string getCodeSectionName(const std::string &Func) {
+      std::string Func1 = addPrefix(Func);
+      std::string tag = getTagName(CODE_SECTION);
+      return Func1 + tag + " CODE";
+    }
+
+    // udata and idata section names are generated by a given number.
+    // @udata.<num>.# 
+    static std::string getUdataSectionName(unsigned num) {
+       std::ostringstream o;
+       o << getTagName(PREFIX_SYMBOL) << "udata." << num << ".# UDATA"; 
+       return o.str(); 
+    }
+
+    static std::string getIdataSectionName(unsigned num) {
+       std::ostringstream o;
+       o << getTagName(PREFIX_SYMBOL) << "idata." << num << ".# IDATA"; 
+       return o.str(); 
+    }
+
+    inline static bool isLocalName (const std::string &Name) {
+      if (getSymbolTag(Name) == AUTOS_LABEL)
+        return true;
+
+      return false;
+    }
+
+    inline static bool isLocalToFunc (std::string &Func, std::string &Var) {
+      if (! isLocalName(Var)) return false;
+
+      std::string Func1 = addPrefix(Func);
+      // Extract func name of the varilable.
+      const std::string &fname = getFuncNameForSym(Var);
+
+      if (fname.compare(Func1) == 0)
+        return true;
+
+      return false;
+    }
+
 
     // Get the section for the given external symbol names.
-    // This tries to find the type (ID) of the symbol from its mangled name
+    // This tries to find the type (Tag) of the symbol from its mangled name
     // and return appropriate section name for it.
-    static inline std::string getSectionNameForSym(const std::string &Sym) {
+    static inline std::string getSectionNameForSym(const std::string &Sym1) {
+      std::string Sym = addPrefix(Sym1);
+
       std::string SectionName;
  
-      IDs id = getID (Sym);
       std::string Fname = getFuncNameForSym (Sym);
+      TAGS id = getSymbolTag (Sym);
 
       switch (id) {
         default : assert (0 && "Could not determine external symbol type");
-        case FUNC_FRAME:
-        case FUNC_RET:
-        case FUNC_TEMPS:
-        case FUNC_ARGS:  {
-          return getSectionNameForFunc (Fname, FRAME_SECTION);
+        case FRAME_LABEL:
+        case RET_LABEL:
+        case TEMPS_LABEL:
+        case ARGS_LABEL:  {
+          return getFrameSectionName(Fname);
         }
-        case FUNC_AUTOS: {
-          return getSectionNameForFunc (Fname, AUTOS_SECTION);
+        case AUTOS_LABEL: {
+          return getAutosSectionName(Fname);
         }
       }
     }
-  }; // class PIC16ABINames.
 
+  }; // class PAN.
+
+
+  // External symbol names require memory to live till the program end.
+  // So we have to allocate it and keep.
+  inline static const char *createESName (const std::string &name) {
+    char *tmpName = new char[name.size() + 1];
+    strcpy (tmpName, name.c_str());
+    return tmpName;
+  }
 
 
 
@@ -218,7 +334,6 @@ namespace PIC16CC {
                                            bool Verbose);
   // Banksel optimzer pass.
   FunctionPass *createPIC16MemSelOptimizerPass();
-  std::string getSectionNameForSym(const std::string &Sym);
 } // end namespace llvm;
 
 // Defines symbolic names for PIC16 registers.  This defines a mapping from

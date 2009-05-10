@@ -28,22 +28,6 @@ using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
 
-inline static bool isLocalToFunc (std::string &FuncName, std::string &VarName) {
-  if (VarName.find(FuncName + ".auto.") != std::string::npos 
-      || VarName.find(FuncName + ".arg.") != std::string::npos)
-    return true;
-
-  return false;
-}
-
-inline static bool isLocalName (std::string &Name) {
-  if (Name.find(".auto.") != std::string::npos 
-      || Name.find(".arg.") != std::string::npos) 
-    return true;
-
-  return false;
-}
-
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   printInstruction(MI);
   return true;
@@ -65,18 +49,20 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit the function variables.
   emitFunctionData(MF);
-  std::string codeSection;
-  codeSection = "code." + CurrentFnName + ".# " + "CODE";
-  const Section *fCodeSection = TAI->getNamedSection(codeSection.c_str(),
-                                               SectionFlags::Code);
+  const char *codeSection = PAN::getCodeSectionName(CurrentFnName).c_str();
+ 
+  const Section *fCodeSection = TAI->getNamedSection(codeSection,
+                                                     SectionFlags::Code);
   O <<  "\n";
+  // Start the Code Section.
   SwitchToSection (fCodeSection);
 
   // Emit the frame address of the function at the beginning of code.
-  O << "    retlw  low(" << FunctionLabelBegin<< CurrentFnName << ".frame.)\n";
-  O << "    retlw  high(" << FunctionLabelBegin<< CurrentFnName << ".frame.)\n"; 
-  O << CurrentFnName << ":\n";
+  O << "\tretlw  low(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
+  O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
 
+  // Emit function start label.
+  O << CurrentFnName << ":\n";
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -136,19 +122,12 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     case MachineOperand::MO_GlobalAddress: {
-      std::string Name = Mang->getValueName(MO.getGlobal());
-      if (isLocalName(Name)) 
-        O << FunctionLabelBegin << Mang->getValueName(MO.getGlobal());
-      else
-         O << Mang->getValueName(MO.getGlobal());
+      O << Mang->getValueName(MO.getGlobal());
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
       std::string Name = MO.getSymbolName(); 
-      if (Name.find("__intrinsics.") != std::string::npos)
-        O  << MO.getSymbolName();
-      else
-        O << FunctionLabelBegin << MO.getSymbolName();
+      O  << MO.getSymbolName();
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
@@ -189,41 +168,44 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
   O << "section.0" <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
     std::string Name = Mang->getValueName(I);
-    if (Name.compare("abort") == 0)
+    if (Name.compare("@abort") == 0)
       continue;
     
     // If it is llvm intrinsic call then don't emit
     if (Name.find("llvm.") != std::string::npos)
       continue;
 
-    if (I->isDeclaration()) {
-      O << "\textern " <<Name << "\n";
-      O << "\textern "  << FunctionLabelBegin << Name << ".ret.\n";
-      O << "\textern " << FunctionLabelBegin << Name << ".args.\n";
-    }
-    else if (I->hasExternalLinkage()) {
-      O << "\tglobal " << Name << "\n";
-      O << "\tglobal " << FunctionLabelBegin << Name << ".ret.\n";
-      O << "\tglobal " << FunctionLabelBegin<< Name << ".args.\n";
-    }
+    assert ((I->isDeclaration() || I->hasExternalLinkage())
+            && "Not an extern function declaration or definition");
+
+    const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
+                                                 TAI->getGlobalDirective();
+      
+    O << directive << Name << "\n";
+    O << directive << PAN::getRetvalLabel(Name) << "\n";
+    O << directive << PAN::getArgsLabel(Name) << "\n";
   }
 
   // Emit header file to include declaration of library functions
+  // FIXME: find out libcall names.
   O << "\t#include C16IntrinsicCalls.INC\n";
 
-  // Emit declarations for external globals.
+  // Emit declarations for external variable declarations and definitions.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; I++) {
     // Any variables reaching here with ".auto." in its name is a local scope
     // variable and should not be printed in global data section.
     std::string Name = Mang->getValueName(I);
-    if (isLocalName (Name))
+    if (PAN::isLocalName(Name))
       continue;
 
-    if (I->isDeclaration())
-      O << "\textern "<< Name << "\n";
-    else if (I->hasCommonLinkage() || I->hasExternalLinkage())
-      O << "\tglobal "<< Name << "\n";
+    if (!(I->isDeclaration() || I->hasExternalLinkage() || 
+          I->hasCommonLinkage()))
+      continue;
+
+    const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
+                                                 TAI->getGlobalDirective();
+    O << directive << Name << "\n";
   }
 }
 
@@ -247,7 +229,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
       // Any variables reaching here with "." in its name is a local scope
       // variable and should not be printed in global data section.
       std::string name = Mang->getValueName(I);
-      if (name.find(".") != std::string::npos)
+      if (PAN::isLocalName(name))
         continue;
 
       I->setSection(TAI->getReadOnlySection()->getName());
@@ -273,15 +255,14 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   unsigned FrameSize = 0;
   // Emit the data section name.
   O << "\n"; 
-  std::string SectionName = "fpdata." + CurrentFnName + ".# " + "UDATA_OVR";
+  const char *SectionName = PAN::getFrameSectionName(CurrentFnName).c_str();
 
-  const Section *fPDataSection = TAI->getNamedSection(SectionName.c_str(),
+  const Section *fPDataSection = TAI->getNamedSection(SectionName,
                                                       SectionFlags::Writeable);
   SwitchToSection(fPDataSection);
   
-
   // Emit function frame label
-  O << FunctionLabelBegin << CurrentFnName << ".frame.:\n";
+  O << PAN::getFrameLabel(CurrentFnName) << ":\n";
 
   const Type *RetType = F->getReturnType();
   unsigned RetSize = 0; 
@@ -289,11 +270,13 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     RetSize = TD->getTypeAllocSize(RetType);
   
   //Emit function return value space
+  // FIXME: Do not emit RetvalLable when retsize is zero. To do this
+  // we will need to avoid printing a global directive for Retval label
+  // in emitExternandGloblas.
   if(RetSize > 0)
-     O << FunctionLabelBegin << CurrentFnName << ".ret.    RES  " << RetSize 
-       << "\n";
+     O << PAN::getRetvalLabel(CurrentFnName) << " RES " << RetSize << "\n";
   else
-     O << FunctionLabelBegin << CurrentFnName << ".ret.:\n";
+     O << PAN::getRetvalLabel(CurrentFnName) << ": \n";
    
   // Emit variable to hold the space for function arguments 
   unsigned ArgSize = 0;
@@ -302,20 +285,19 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     const Type *Ty = argi->getType();
     ArgSize += TD->getTypeAllocSize(Ty);
    }
-  O << FunctionLabelBegin << CurrentFnName << ".args.      RES  " << ArgSize 
-    << "\n";
+
+  O << PAN::getArgsLabel(CurrentFnName) << " RES " << ArgSize << "\n";
 
   // Emit temporary space
   int TempSize = PTLI->GetTmpSize();
   if (TempSize > 0 )
-    O << FunctionLabelBegin << CurrentFnName << ".temp.       RES  " << TempSize 
-      <<"\n";
+    O << PAN::getTempdataLabel(CurrentFnName) << " RES  " << TempSize <<"\n";
 
   // Emit the section name for local variables.
   O << "\n";
-  std::string SecNameLocals = "fadata." + CurrentFnName + ".# " + "UDATA_OVR";
+  const char* SecNameLocals = PAN::getAutosSectionName(CurrentFnName).c_str() ;
 
-  const Section *fADataSection = TAI->getNamedSection(SecNameLocals.c_str(),
+  const Section *fADataSection = TAI->getNamedSection(SecNameLocals,
                                                       SectionFlags::Writeable);
   SwitchToSection(fADataSection);
 
@@ -334,26 +316,32 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
     // Static local varilabes of a function does not have .auto. in their
     // name. They are not printed as part of function data but module
     // level global data.
-    if (! isLocalToFunc(FuncName, VarName))
+    if (! PAN::isLocalToFunc(FuncName, VarName))
      continue;
 
-    I->setSection("fadata." + CurrentFnName + ".#");
+    I->setSection(TAI->SectionForGlobal(I)->getName());
     Constant *C = I->getInitializer();
     const Type *Ty = C->getType();
     unsigned Size = TD->getTypeAllocSize(Ty);
     FrameSize += Size; 
     // Emit memory reserve directive.
-    O << FunctionLabelBegin << VarName << "  RES  " << Size << "\n";
+    O << VarName << "  RES  " << Size << "\n";
   }
 }
 
 void PIC16AsmPrinter::EmitGlobalData (Module &M)
 {
+  // Set the section names for all globals.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    I->setSection(TAI->SectionForGlobal(I)->getName());
+  }
+
   const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
-  const_cast<PIC16TargetAsmInfo *>(PTAI)->SetSectionForGVs(M);
   const TargetData *TD = TM.getTargetData();
 
-  std::vector <PIC16Section *>IDATASections = PTAI->getIDATASections();
+  // Now print all IDATA sections.
+  std::vector <PIC16Section *>IDATASections = PTAI->IDATASections;
   for (unsigned i = 0; i < IDATASections.size(); i++) {
     SwitchToSection(IDATASections[i]->S_);
     std::vector<const GlobalVariable*> Items = IDATASections[i]->Items;
@@ -366,7 +354,8 @@ void PIC16AsmPrinter::EmitGlobalData (Module &M)
     }
   }
 
-  std::vector <PIC16Section *>BSSSections = PTAI->getBSSSections();
+  // Now print all BSS sections.
+  std::vector <PIC16Section *>BSSSections = PTAI->BSSSections;
   for (unsigned i = 0; i < BSSSections.size(); i++) {
     SwitchToSection(BSSSections[i]->S_);
     std::vector<const GlobalVariable*> Items = BSSSections[i]->Items;

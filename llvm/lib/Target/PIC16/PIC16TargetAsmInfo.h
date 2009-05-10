@@ -41,11 +41,11 @@ namespace llvm {
   struct PIC16TargetAsmInfo : public TargetAsmInfo {
     std::string getSectionNameForSym(const std::string &Sym) const;
     PIC16TargetAsmInfo(const PIC16TargetMachine &TM);
-    virtual ~PIC16TargetAsmInfo();
-    private:
     mutable std::vector<PIC16Section *> BSSSections;
     mutable std::vector<PIC16Section *> IDATASections;
-    
+    virtual ~PIC16TargetAsmInfo();
+
+    private:
     const char *RomData8bitsDirective;
     const char *RomData16bitsDirective;
     const char *RomData32bitsDirective;

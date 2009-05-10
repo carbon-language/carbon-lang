@@ -23,11 +23,9 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include <cstdio>
 
 
 using namespace llvm;
-
 
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
@@ -41,24 +39,24 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setShiftAmountFlavor(Extend);
 
   // SRA library call names
-  setPIC16LibcallName(PIC16ISD::SRA_I8, "__intrinsics.sra.i8");
-  setLibcallName(RTLIB::SRA_I16, "__intrinsics.sra.i16");
-  setLibcallName(RTLIB::SRA_I32, "__intrinsics.sra.i32");
+  setPIC16LibcallName(PIC16ISD::SRA_I8, "@__intrinsics.sra.i8");
+  setLibcallName(RTLIB::SRA_I16, "@__intrinsics.sra.i16");
+  setLibcallName(RTLIB::SRA_I32, "@__intrinsics.sra.i32");
 
   // SHL library call names
-  setPIC16LibcallName(PIC16ISD::SLL_I8, "__intrinsics.sll.i8");
-  setLibcallName(RTLIB::SHL_I16, "__intrinsics.sll.i16");
-  setLibcallName(RTLIB::SHL_I32, "__intrinsics.sll.i32");
+  setPIC16LibcallName(PIC16ISD::SLL_I8, "@__intrinsics.sll.i8");
+  setLibcallName(RTLIB::SHL_I16, "@__intrinsics.sll.i16");
+  setLibcallName(RTLIB::SHL_I32, "@__intrinsics.sll.i32");
 
   // SRL library call names
-  setPIC16LibcallName(PIC16ISD::SRL_I8, "__intrinsics.srl.i8");
-  setLibcallName(RTLIB::SRL_I16, "__intrinsics.srl.i16");
-  setLibcallName(RTLIB::SRL_I32, "__intrinsics.srl.i32");
+  setPIC16LibcallName(PIC16ISD::SRL_I8, "@__intrinsics.srl.i8");
+  setLibcallName(RTLIB::SRL_I16, "@__intrinsics.srl.i16");
+  setLibcallName(RTLIB::SRL_I32, "@__intrinsics.srl.i32");
 
   // MUL Library call names
-  setPIC16LibcallName(PIC16ISD::MUL_I8, "__intrinsics.mul.i8");
-  setLibcallName(RTLIB::MUL_I16, "__intrinsics.mul.i16");
-  setLibcallName(RTLIB::MUL_I32, "__intrinsics.mul.i32");
+  setPIC16LibcallName(PIC16ISD::MUL_I8, "@__intrinsics.mul.i8");
+  setLibcallName(RTLIB::MUL_I16, "@__intrinsics.mul.i16");
+  setLibcallName(RTLIB::MUL_I32, "@__intrinsics.mul.i32");
 
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i16, Custom);
@@ -529,9 +527,9 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
   // with, we need to traverse all the FrameIndices available earlier in 
   // the list and add their requested size.
   unsigned FIndex = FR->getIndex();
-  char *tmpName = new char [strlen(Name.c_str()) +  8];
+  const char *tmpName;
   if (FIndex < ReservedFrameCount) {
-    sprintf(tmpName, "%s.frame.", Name.c_str());
+    tmpName = createESName(PAN::getFrameLabel(Name));
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = 0;
     for (unsigned i=0; i<FIndex ; ++i) {
@@ -539,7 +537,7 @@ PIC16TargetLowering::LegalizeFrameIndex(SDValue Op, SelectionDAG &DAG,
     }
   } else {
    // FrameIndex has been made for some temporary storage 
-    sprintf(tmpName, "%s.temp.", Name.c_str());
+    tmpName = createESName(PAN::getTempdataLabel(Name));
     ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
     Offset = GetTmpOffsetForFI(FIndex, MFI->getObjectSize(FIndex));
   }
@@ -845,12 +843,11 @@ SDValue PIC16TargetLowering::ConvertToMemOperand(SDValue Op,
   const Function *Func = MF.getFunction();
   const std::string FuncName = Func->getName();
 
-  char *tmpName = new char [strlen(FuncName.c_str()) +  8];
 
   // Put the value on stack.
   // Get a stack slot index and convert to es.
   int FI = MF.getFrameInfo()->CreateStackObject(1, 1);
-  sprintf(tmpName, "%s.temp.", FuncName.c_str());
+  const char *tmpName = createESName(PAN::getTempdataLabel(FuncName));
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Store the value to ES.
@@ -1064,8 +1061,7 @@ SDValue PIC16TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   const Function *F = MF.getFunction();
   std::string FuncName = F->getName();
 
-  char *tmpName = new char [strlen(FuncName.c_str()) +  8];
-  sprintf(tmpName, "%s.frame.", FuncName.c_str());
+  const char *tmpName = createESName(PAN::getFrameLabel(FuncName));
   SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
   SDValue BS = DAG.getConstant(1, MVT::i8);
@@ -1258,13 +1254,11 @@ SDValue PIC16TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
        }
 
        // Label for argument passing
-       char *argFrame = new char [strlen(Name.c_str()) +  8];
-       sprintf(argFrame, "%s.args.", Name.c_str());
+       const char *argFrame = createESName(PAN::getArgsLabel(Name));
        ArgLabel = DAG.getTargetExternalSymbol(argFrame, MVT::i8);
 
        // Label for reading return value
-       char *retName = new char [strlen(Name.c_str()) +  8];
-       sprintf(retName, "%s.ret.", Name.c_str());
+       const char *retName = createESName(PAN::getRetvalLabel(Name));
        RetLabel = DAG.getTargetExternalSymbol(retName, MVT::i8);
     } else {
        // if indirect call
@@ -1460,8 +1454,7 @@ SDValue PIC16TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   InitReservedFrameCount(F);
 
   // Create the <fname>.args external symbol.
-  char *tmpName = new char [strlen(FuncName.c_str()) +  8];
-  sprintf(tmpName, "%s.args.", FuncName.c_str());
+  const char *tmpName = createESName(PAN::getArgsLabel(FuncName));
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
 
   // Load arg values from the label + offset.

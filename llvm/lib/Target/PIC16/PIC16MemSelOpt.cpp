@@ -145,7 +145,7 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
     // External Symbol is generated for temp data and arguments. They are
     // in fpdata.<functionname>.# section.
     std::string Sym = Op.getSymbolName();
-    NewBank = PIC16ABINames::getSectionNameForSym(Sym);
+    NewBank = PAN::getSectionNameForSym(Sym);
   }
  
   // If the previous and new section names are same, we don't need to

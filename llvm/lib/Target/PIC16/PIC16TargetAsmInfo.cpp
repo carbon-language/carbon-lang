@@ -23,6 +23,10 @@ PIC16TargetAsmInfo::
 PIC16TargetAsmInfo(const PIC16TargetMachine &TM) 
   : TargetAsmInfo(TM) {
   CommentString = ";";
+  GlobalPrefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
+  GlobalDirective = "\tglobal\t";
+  ExternDirective = "\textern\t";
+
   Data8bitsDirective = " db ";
   Data16bitsDirective = " dw ";
   Data32bitsDirective = " dl ";
@@ -86,9 +90,8 @@ PIC16TargetAsmInfo::getBSSSectionForGlobal(const GlobalVariable *GV) const {
 
   // No BSS section spacious enough was found. Crate a new one.
   if (! FoundBSS) {
-    char *name = new char[32];
-    sprintf (name, "udata.%d.# UDATA", (int)BSSSections.size());
-    const Section *NewSection = getNamedSection (name);
+    std::string name = PAN::getUdataSectionName(BSSSections.size());
+    const Section *NewSection = getNamedSection (name.c_str());
 
     FoundBSS = new PIC16Section(NewSection);
 
@@ -132,9 +135,8 @@ PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
 
   // No IDATA section spacious enough was found. Crate a new one.
   if (! FoundIDATA) {
-    char *name = new char[32];
-    sprintf (name, "idata.%d.# IDATA", (int)IDATASections.size());
-    const Section *NewSection = getNamedSection (name);
+    std::string name = PAN::getIdataSectionName(IDATASections.size());
+    const Section *NewSection = getNamedSection (name.c_str());
 
     FoundIDATA = new PIC16Section(NewSection);
 
@@ -158,19 +160,20 @@ const Section*
 PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
-  if (!isa<GlobalVariable>(GV1))
+  const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
+  if (!GV1 || ! GV->hasInitializer())
     return TargetAsmInfo::SelectSectionForGlobal(GV1);
 
-  const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
-  // We are only dealing with true globals here. So names with a "."
-  // are local globals. Also declarations are not entertained.
-  std::string name = GV->getName();
-  if (name.find(".auto.") != std::string::npos
-      || name.find(".arg.") != std::string::npos || !GV->hasInitializer())
-    return TargetAsmInfo::SelectSectionForGlobal(GV);
+  // First, if this is an automatic variable for a function, get the section
+  // name for it and return.
+  const std::string name = GV->getName();
+  if (PAN::isLocalName(name)) {
+    const std::string Sec_Name = PAN::getSectionNameForSym(name);
+    return getNamedSection(Sec_Name.c_str());
+  }
 
-  const Constant *C = GV->getInitializer();
   // See if this is an uninitialized global.
+  const Constant *C = GV->getInitializer();
   if (C->isNullValue()) 
     return getBSSSectionForGlobal(GV); 
 
@@ -178,29 +181,10 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
   if (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE) 
     return getIDATASectionForGlobal(GV);
 
+    
   // Else let the default implementation take care of it.
   return TargetAsmInfo::SelectSectionForGlobal(GV);
 }
-
-void PIC16TargetAsmInfo::SetSectionForGVs(Module &M) {
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasInitializer())   // External global require no code.
-      continue;
-
-    // Any variables reaching here with "." in its name is a local scope
-    // variable and should not be printed in global data section.
-    std::string name = I->getName();
-    if (name.find(".auto.") != std::string::npos
-      || name.find(".args.") != std::string::npos)
-      continue;
-    int AddrSpace = I->getType()->getAddressSpace();
-
-    if (AddrSpace == PIC16ISD::RAM_SPACE)
-      I->setSection(SectionForGlobal(I)->getName());
-  }
-}
-
 
 PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
   
