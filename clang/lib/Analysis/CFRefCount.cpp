@@ -2517,9 +2517,10 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   else if (RV->getKind() == RefVal::ErrorGCLeakReturned) {
     ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BRC.getCodeDecl());
     os << " and returned from method '" << MD.getSelector().getAsString()
-       << "' is potentially leaked when using garbage collection.  Callers"
-          " of this method do not expect a +1 retain count since the return"
-          " type is an Objective-C object reference";
+       << "' is potentially leaked when using garbage collection.  Callers "
+          "of this method do not expect a returned object with a +1 retain "
+          "count since they expect the object to be managed by the garbage "
+          "collector";
   }
   else
     os << " is no longer referenced after this point and has a retain count of"
@@ -3073,11 +3074,12 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
       if (isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
         // Things are more complicated with garbage collection.  If the
         // returned object is suppose to be an Objective-C object, we have
-        // a leak (as the caller expects a GC'ed object).        
+        // a leak (as the caller expects a GC'ed object) because no
+        // method should return ownership unless it returns a CF object.
         X = X ^ RefVal::ErrorGCLeakReturned;
         
         // Keep this false until this is properly tested.
-        hasError = false;
+        hasError = true;
       }
       else if (!RE.isOwned()) {
         // Either we are using GC and the returned object is a CF type

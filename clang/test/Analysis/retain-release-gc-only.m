@@ -128,13 +128,17 @@ void f3() {
 // is expected.
 @interface TestReturnNotOwnedWhenExpectedOwned
 - (NSString*)newString;
+- (CFMutableArrayRef)newArray;
 @end
 
 @implementation TestReturnNotOwnedWhenExpectedOwned
 - (NSString*)newString {
-  NSString *s = [NSString stringWithUTF8String:"hello"];  
-  // FIXME: Should this be an error anyway?
-  return s; // no-warning
+  NSString *s = [NSString stringWithUTF8String:"hello"]; // expected-warning{{Potential leak (when using garbage collection) of an object allocated on line 136 and stored into 's'}}
+  CFRetain(s);
+  return s;
+}
+- (CFMutableArrayRef)newArray{
+   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
 }
 @end
 
