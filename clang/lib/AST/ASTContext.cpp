@@ -1704,6 +1704,9 @@ QualType ASTContext::getCanonicalType(QualType T) {
 }
 
 Decl *ASTContext::getCanonicalDecl(Decl *D) {
+  if (!D)
+    return 0;
+
   if (TagDecl *Tag = dyn_cast<TagDecl>(D)) {
     QualType T = getTagDeclType(Tag);
     return cast<TagDecl>(cast<TagType>(T.getTypePtr()->CanonicalType)
