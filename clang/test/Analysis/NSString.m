@@ -36,6 +36,7 @@ typedef struct _NSZone NSZone;
 - (BOOL)isEqual:(id)object;
 - (oneway void)release;
 - (id)retain;
+- (id)autorelease;
 @end
 @protocol NSCopying
 - (id)copyWithZone:(NSZone *)zone;
@@ -172,6 +173,17 @@ void f13(void) {
   CFRelease(ref);
   CFRelease(ref); // expected-warning{{Reference-counted object is used after it is released}}
 }
+
+// Test regular use of -autorelease
+@interface TestAutorelease
+-(NSString*) getString;
+@end
+@implementation TestAutorelease
+-(NSString*) getString {
+  NSString *str = [[NSString alloc] init];
+  return [str autorelease]; // no-warning
+}
+@end
 
 @interface C1 : NSObject {}
 - (NSString*) getShared;

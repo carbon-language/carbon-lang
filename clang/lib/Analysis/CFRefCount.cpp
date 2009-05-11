@@ -3314,12 +3314,20 @@ CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
   assert(!isGCEnabled() && "Autorelease counts in GC mode?");  
   unsigned Cnt = V.getCount();
   
+  // FIXME: Handle sending 'autorelease' to already released object.
+
+  if (V.getKind() == RefVal::ReturnedOwned)
+    ++Cnt;
+  
   if (ACnt <= Cnt) {
     if (ACnt == Cnt) {
       V.clearCounts();
-      V = V ^ RefVal::NotOwned;
+      if (V.getKind() == RefVal::ReturnedOwned)
+        V = V ^ RefVal::ReturnedNotOwned;
+      else
+        V = V ^ RefVal::NotOwned;
     }
-    else {      
+    else {
       V.setCount(Cnt - ACnt);
       V.setAutoreleaseCount(0);
     }
