@@ -125,8 +125,7 @@ specific vector types are target dependent.
 
 //===---------------------------------------------------------------------===//
 
-We should add 'unaligned load/store' nodes, and produce them from code like
-this:
+We should and produce and unaligned load from code like this:
 
 v4sf example(float *P) {
   return (v4sf){P[0], P[1], P[2], P[3] };
