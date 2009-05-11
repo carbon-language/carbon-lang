@@ -145,4 +145,10 @@ struct s34 { struct { int : 0 } a; float b; } f34(void) {}
 // RUN: grep 'define i16 @f35()' %t &&
 struct s35 { struct { int : 0 } a; char b; char c; } f35(void) {}
 
+// RUN: grep 'define i16 @f36()' %t &&
+struct s36 { struct { int : 0 } a[2][10]; char b; char c; } f36(void) {}
+
+// RUN: grep 'define float @f37()' %t &&
+struct s37 { float c[1][1]; } f37(void) {}
+
 // RUN: true

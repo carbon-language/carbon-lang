@@ -166,10 +166,9 @@ static bool isEmptyField(ASTContext &Context, const FieldDecl *FD) {
     return true;
 
   QualType FT = FD->getType();
-  // Arrays of empty records count as empty.
-  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
-    if (isEmptyRecord(Context, AT->getElementType()))
-      return true;
+  // Constant arrays of empty records count as empty, strip them off.
+  while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
+    FT = AT->getElementType();
   
   return isEmptyRecord(Context, FT);
 }
@@ -218,13 +217,17 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     if (isEmptyField(Context, FD))
       continue;
 
-    // Treat single element arrays as the element
-    if (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
-      if (AT->getSize().getZExtValue() == 1)
-        FT = AT->getElementType();
-
+    // If we already found an element then this isn't a single-element
+    // struct.
     if (Found)
       return 0;
+
+    // Treat single element arrays as the element.
+    while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT)) {
+      if (AT->getSize().getZExtValue() != 1)
+        break;
+      FT = AT->getElementType();
+    }
 
     if (!CodeGenFunction::hasAggregateLLVMType(FT)) {
       Found = FT.getTypePtr();
