@@ -157,8 +157,25 @@ void ABIArgInfo::dump() const {
 
 /***/
 
-/// isEmptyRecord - Return true iff a structure has no non-empty
-/// members. Note that a structure with a flexible array member is not
+static bool isEmptyRecord(ASTContext &Context, QualType T);
+
+/// isEmptyField - Return true iff a the field is "empty", that is it
+/// is an unnamed bit-field or an (array of) empty record(s).
+static bool isEmptyField(ASTContext &Context, const FieldDecl *FD) {
+  if (FD->isUnnamedBitfield())
+    return true;
+
+  QualType FT = FD->getType();
+  // Arrays of empty records count as empty.
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
+    if (isEmptyRecord(Context, AT->getElementType()))
+      return true;
+  
+  return isEmptyRecord(Context, FT);
+}
+
+/// isEmptyRecord - Return true iff a structure contains only empty
+/// fields. Note that a structure with a flexible array member is not
 /// considered empty.
 static bool isEmptyRecord(ASTContext &Context, QualType T) {
   const RecordType *RT = T->getAsRecordType();
@@ -168,11 +185,9 @@ static bool isEmptyRecord(ASTContext &Context, QualType T) {
   if (RD->hasFlexibleArrayMember())
     return false;
   for (RecordDecl::field_iterator i = RD->field_begin(Context), 
-         e = RD->field_end(Context); i != e; ++i) {
-    const FieldDecl *FD = *i;
-    if (!isEmptyRecord(Context, FD->getType()))
+         e = RD->field_end(Context); i != e; ++i)
+    if (!isEmptyField(Context, *i))
       return false;
-  }
   return true;
 }
 
@@ -199,14 +214,14 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     const FieldDecl *FD = *i;
     QualType FT = FD->getType();
 
+    // Ignore empty fields.
+    if (isEmptyField(Context, FD))
+      continue;
+
     // Treat single element arrays as the element
     if (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
       if (AT->getSize().getZExtValue() == 1)
         FT = AT->getElementType();
-
-    // Ignore empty records and padding bit-fields.
-    if (isEmptyRecord(Context, FT) || FD->isUnnamedBitfield())
-      continue;
 
     if (Found)
       return 0;
@@ -345,16 +360,9 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
          e = RT->getDecl()->field_end(Context); i != e; ++i) {
     const FieldDecl *FD = *i;
     
-    // Empty structures are ignored.
-    if (isEmptyRecord(Context, FD->getType()))
+    // Empty fields are ignored.
+    if (isEmptyField(Context, FD))
       continue;
-
-    // As are arrays of empty structures, but not generally, so we
-    // can't add this test higher in this routine.
-    if (const ConstantArrayType *AT = 
-        Context.getAsConstantArrayType(FD->getType()))
-      if (isEmptyRecord(Context, AT->getElementType()))
-        continue;
 
     // Check fields recursively.
     if (!shouldReturnTypeInRegister(FD->getType(), Context))
