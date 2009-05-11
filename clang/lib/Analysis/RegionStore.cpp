@@ -736,6 +736,24 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
   if (state.contains<RegionKills>(R))
     return UnknownVal();
 
+  // Check if the region is an element region of a string literal.
+  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+    if (const StringRegion *StrR=dyn_cast<StringRegion>(ER->getSuperRegion())) {
+      const StringLiteral *Str = StrR->getStringLiteral();
+      SVal Idx = ER->getIndex();
+      if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
+        int64_t i = CI->getValue().getSExtValue();
+        char c;
+        if (i == Str->getByteLength())
+          c = '\0';
+        else
+          c = Str->getStrData()[i];
+        const llvm::APSInt &V = getBasicVals().getValue(c, getContext().CharTy);
+        return nonloc::ConcreteInt(V);
+      }
+    }
+  }
+
   // If the region is an element or field, it may have a default value.
   if (isa<ElementRegion>(R) || isa<FieldRegion>(R)) {
     const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
