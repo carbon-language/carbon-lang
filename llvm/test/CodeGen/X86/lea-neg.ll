@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 > %t
 ; RUN: grep negl %t | count 1
-; RUN: not grep sub %t
+; RUN: not grep {sub\[bwlq\]} %t
 ; RUN: grep mov %t | count 1
 ; RUN: grep {leal	-4(} %t | count 1
 
