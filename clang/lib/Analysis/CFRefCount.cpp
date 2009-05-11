@@ -2673,10 +2673,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             // approriately delegated to the respective StoreManagers while
             // still allowing us to do checker-specific logic (e.g.,
             // invalidating reference counts), probably via callbacks.            
-            if (ER->getElementType()->isIntegralType())
-              if (const VarRegion *superReg =
-                  dyn_cast<VarRegion>(ER->getSuperRegion()))
-                R = superReg;
+            if (ER->getElementType()->isIntegralType()) {
+              const MemRegion *superReg = ER->getSuperRegion();
+              if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
+                  isa<ObjCIvarRegion>(superReg))
+                R = cast<TypedRegion>(superReg);
+            }
+
             // FIXME: What about layers of ElementRegions?
           }
           
