@@ -18,6 +18,7 @@ use Cwd qw/ getcwd abs_path /;
 use File::Temp qw/ tempfile /;
 use File::Path qw / mkpath /;
 use File::Basename;
+use Text::ParseWords;
 
 my $CC = $ENV{'CCC_CC'};
 if (!defined $CC) { $CC = "gcc"; }
@@ -115,15 +116,11 @@ sub GetCCArgs {
   close(FROM_CHILD);
   
   die "could not find clang-cc line\n" if (!defined $line);
-  my @items = ($line =~ /(".*?"|\S+)/g);
+  # Strip the newline and initial whitspace
+  chomp $line;  
+  $line =~ s/^\s+//;
   
-  for (my $i = 0; $i < scalar(@items); ++$i) {
-    my $x = $items[$i];
-    $x =~ s/^"//;
-    $x =~ s/"$//;
-    $items[$i] = $x;
-  }
-
+  my @items = quotewords('\s+', 0, $line);
   my $cmd = shift @items;
   die "cannot find 'clang-cc' in 'clang' command\n" if (!($cmd =~ /clang-cc/));
   return \@items;
