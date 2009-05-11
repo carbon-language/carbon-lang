@@ -1381,6 +1381,8 @@ public:
   
   /// isLegalAddressingMode - Return true if the addressing mode represented by
   /// AM is legal for this target, for a load/store of the specified type.
+  /// The type may be VoidTy, in which case only return true if the addressing
+  /// mode is legal for a load/store of any legal type.
   /// TODO: Handle pre/postinc as well.
   virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty) const;
 
