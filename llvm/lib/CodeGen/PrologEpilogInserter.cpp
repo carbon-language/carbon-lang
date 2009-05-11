@@ -337,7 +337,9 @@ void PEI::clearAllSets() {
 void PEI::initShrinkWrappingInfo() {
   clearAllSets();
   EntryBlock = 0;
+#ifndef NDEBUG
   HasFastExitPath = false;
+#endif
   ShrinkWrapThisFunction = ShrinkWrapping;
   // DEBUG: enable or disable shrink wrapping for the current function
   // via --shrink-wrap-func=<funcname>.
@@ -1656,7 +1658,9 @@ void PEI::findFastExitPath() {
     MachineBasicBlock* SUCC = *SI;
 
     // Assume positive, disprove existence of fast path.
+#ifndef NDEBUG
     HasFastExitPath = true;
+#endif
 
     // Check the immediate successors.
     if (isReturnBlock(SUCC)) {
@@ -1672,17 +1676,21 @@ void PEI::findFastExitPath() {
       MachineBasicBlock* SBB = *BI;
       // Reject paths with branch nodes.
       if (SBB->succ_size() > 1) {
+#ifndef NDEBUG
         HasFastExitPath = false;
+#endif
         break;
       }
       exitPath += "->" + getBasicBlockName(SBB);
     }
+#ifndef NDEBUG
     if (HasFastExitPath) {
       if (ShrinkWrapDebugging >= BasicInfo)
         DOUT << "Fast exit path: " << getBasicBlockName(EntryBlock)
              << "->" << exitPath << "\n";
       break;
     }
+#endif
   }
 }
 
