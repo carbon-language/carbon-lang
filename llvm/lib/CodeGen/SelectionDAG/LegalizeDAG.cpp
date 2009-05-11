@@ -7961,7 +7961,8 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
     break;
   case ISD::BIT_CONVERT: {
     SDValue Op0 = Op.getOperand(0);
-    if (Op0.getValueType().getVectorNumElements() == 1)
+    if (Op0.getValueType().isVector() &&
+        Op0.getValueType().getVectorNumElements() == 1)
       Op0 = ScalarizeVectorOp(Op0);
     Result = DAG.getNode(ISD::BIT_CONVERT, dl, NewVT, Op0);
     break;
