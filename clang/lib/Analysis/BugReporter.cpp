@@ -212,7 +212,7 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt* passed to getEnclosingStmtLocation");
   ParentMap &P = getParentMap(); 
   SourceManager &SMgr = getSourceManager();
-    
+
   while (isa<Expr>(S) && P.isConsumedExpr(cast<Expr>(S))) {
     const Stmt *Parent = P.getParentIgnoreParens(S);
     
@@ -269,6 +269,31 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   }
   
   assert(S && "Cannot have null Stmt for PathDiagnosticLocation");
+
+  // Special case: DeclStmts can appear in for statement declarations, in which
+  //  case the ForStmt is the context.
+  if (isa<DeclStmt>(S)) {
+    if (const Stmt *Parent = P.getParent(S)) {
+      switch (Parent->getStmtClass()) {
+        case Stmt::ForStmtClass:
+        case Stmt::ObjCForCollectionStmtClass:
+          return PathDiagnosticLocation(Parent, SMgr);
+        default:
+          break;
+      }      
+    }    
+  }
+  else if (isa<BinaryOperator>(S)) {
+    // Special case: the binary operator represents the initialization
+    // code in a for statement (this can happen when the variable being
+    // initialized is an old variable.
+    if (const ForStmt *FS =
+          dyn_cast_or_null<ForStmt>(P.getParentIgnoreParens(S))) {
+      if (FS->getInit() == S)
+        return PathDiagnosticLocation(FS, SMgr);
+    }
+  }
+
   return PathDiagnosticLocation(S, SMgr);
 }
 
