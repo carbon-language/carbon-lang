@@ -641,8 +641,8 @@ public:
     return changed;
   }
 
-  // Intersect our bitmap with the complement of the RHS and return true if ours
-  // changed.
+  // Intersect our bitmap with the complement of the RHS and return true
+  // if ours changed.
   bool intersectWithComplement(const SparseBitVector &RHS) {
     bool changed = false;
     ElementListIter Iter1 = Elements.begin();
@@ -685,8 +685,8 @@ public:
   }
 
 
-  //  Three argument version of intersectWithComplement.  Result of RHS1 & ~RHS2
-  //  is stored into this bitmap.
+  //  Three argument version of intersectWithComplement.
+  //  Result of RHS1 & ~RHS2 is stored into this bitmap.
   void intersectWithComplement(const SparseBitVector<ElementSize> &RHS1,
                                const SparseBitVector<ElementSize> &RHS2)
   {
@@ -773,6 +773,14 @@ public:
       }
     }
     return false;
+  }
+
+  // Return true iff all bits set in this SparseBitVector are
+  // also set in RHS.
+  bool contains(const SparseBitVector<ElementSize> &RHS) const {
+    SparseBitVector<ElementSize> Result(*this);
+    Result &= RHS;
+    return (Result == RHS);
   }
 
   // Return the first set bit in the bitmap.  Return -1 if no bits are set.
@@ -873,6 +881,8 @@ operator-(const SparseBitVector<ElementSize> &LHS,
   Result.intersectWithComplement(LHS, RHS);
   return Result;
 }
+
+
 
 
 // Dump a SparseBitVector to a stream

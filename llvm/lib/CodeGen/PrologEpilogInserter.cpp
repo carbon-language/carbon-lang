@@ -60,15 +60,41 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include <climits>
 #include <sstream>
 
 using namespace llvm;
 
+STATISTIC(numSRReduced, "Number of CSR spills+restores reduced.");
+
 // Shrink Wrapping:
 static cl::opt<bool>
 ShrinkWrapping("shrink-wrap",
-  cl::desc("Apply shrink wrapping to callee-saved register spills/restores"));
+               cl::desc("Shrink wrap callee-saved register spills/restores"));
+
+// Shrink wrap only the specified function, a debugging aid.
+static cl::opt<std::string>
+ShrinkWrapFunc("shrink-wrap-func", cl::Hidden,
+               cl::desc("Shrink wrap the specified function"),
+               cl::value_desc("funcname"),
+               cl::init(""));
+
+// Debugging level for shrink wrapping.
+enum ShrinkWrapDebugLevel {
+  None, BasicInfo, Iterations, Details
+};
+
+static cl::opt<enum ShrinkWrapDebugLevel>
+ShrinkWrapDebugging("shrink-wrap-dbg", cl::Hidden,
+  cl::desc("Print shrink wrapping debugging information"),
+  cl::values(
+    clEnumVal(None      , "disable debug output"),
+    clEnumVal(BasicInfo , "print basic DF sets"),
+    clEnumVal(Iterations, "print SR sets for each iteration"),
+    clEnumVal(Details   , "print all DF sets"),
+    clEnumValEnd));
+
 
 namespace {
   struct VISIBILITY_HIDDEN PEI : public MachineFunctionPass {
@@ -81,7 +107,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
-      if (ShrinkWrapping) {
+      if (ShrinkWrapping || ShrinkWrapFunc != "") {
         AU.addRequired<MachineLoopInfo>();
         AU.addRequired<MachineDominatorTree>();
       }
@@ -96,6 +122,8 @@ namespace {
     bool runOnMachineFunction(MachineFunction &Fn) {
       const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
       RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
+
+      DEBUG(MF = &Fn);
 
       // Get MachineModuleInfo so that we can track the construction of the
       // frame.
@@ -127,7 +155,7 @@ namespace {
       // before the frame layout is finalized.
       TRI->processFunctionBeforeFrameFinalized(Fn);
 
-      // Calculate actual frame offsets for all of the abstract stack objects...
+      // Calculate actual frame offsets for all abstract stack objects...
       calculateFrameObjectOffsets(Fn);
 
       // Add prolog and epilog code to the function.  This function is required
@@ -143,6 +171,7 @@ namespace {
       replaceFrameIndices(Fn);
 
       delete RS;
+      clearAllSets();
       return true;
     }
 
@@ -172,7 +201,6 @@ namespace {
     //  available in a basic block (Avail{In,Out})
     //  to be spilled at the entry to a basic block (CSRSave)
     //  to be restored at the end of a basic block (CSRRestore)
-
     CSRegSet UsedCSRegs;
     CSRegBlockMap CSRUsed;
     CSRegBlockMap AnticIn, AnticOut;
@@ -184,22 +212,37 @@ namespace {
     MachineBasicBlock* EntryBlock;
     SmallVector<MachineBasicBlock*, 4> ReturnBlocks;
 
+    // Map of MBBs to top level MachineLoops.
+    DenseMap<MachineBasicBlock*, MachineLoop*> TLLoops;
+
     // Flag to control shrink wrapping per-function:
     // may choose to skip shrink wrapping for certain
     // functions.
     bool ShrinkWrapThisFunction;
 
+#ifndef NDEBUG
+    // Machine function handle.
+    MachineFunction* MF;
+
+    // Flag indicating that the current function
+    // has at least one "short" path in the machine
+    // CFG from the entry block to an exit block.
+    bool HasFastExitPath;
+#endif
+
     bool calculateSets(MachineFunction &Fn);
+    bool calcAnticInOut(MachineBasicBlock* MBB);
+    bool calcAvailInOut(MachineBasicBlock* MBB);
     void calculateAnticAvail(MachineFunction &Fn);
-    MachineBasicBlock* moveSpillsOutOfLoops(MachineFunction &Fn,
-                                            MachineBasicBlock* MBB);
-    void addRestoresForSBranchBlock(MachineFunction &Fn,
-                                    MachineBasicBlock* MBB);
-    void moveRestoresOutOfLoops(MachineFunction& Fn,
-                                MachineBasicBlock* MBB,
-                                std::vector<MachineBasicBlock*>& SBLKS);
-    void addSavesForRJoinBlocks(MachineFunction& Fn,
-                                std::vector<MachineBasicBlock*>& SBLKS);
+    bool addUsesForMEMERegion(MachineBasicBlock* MBB,
+                              SmallVector<MachineBasicBlock*, 4>& blks);
+    bool addUsesForTopLevelLoops(SmallVector<MachineBasicBlock*, 4>& blks);
+    bool calcSpillPlacements(MachineBasicBlock* MBB,
+                             SmallVector<MachineBasicBlock*, 4> &blks,
+                             CSRegBlockMap &prevSpills);
+    bool calcRestorePlacements(MachineBasicBlock* MBB,
+                               SmallVector<MachineBasicBlock*, 4> &blks,
+                               CSRegBlockMap &prevRestores);
     void placeSpillsAndRestores(MachineFunction &Fn);
     void placeCSRSpillsAndRestores(MachineFunction &Fn);
     void calculateCalleeSavedRegisters(MachineFunction &Fn);
@@ -208,21 +251,13 @@ namespace {
     void replaceFrameIndices(MachineFunction &Fn);
     void insertPrologEpilogCode(MachineFunction &Fn);
 
+    // Initialize DFA sets, called before iterations.
+    void clearAnticAvailSets();
+    // Clear all sets constructed by shrink wrapping.
+    void clearAllSets();
+
     // Initialize all shrink wrapping data.
-    void initShrinkWrappingInfo() {
-      UsedCSRegs.clear();
-      CSRUsed.clear();
-      AnticIn.clear();
-      AnticOut.clear();
-      AvailIn.clear();
-      AvailOut.clear();
-      CSRSave.clear();
-      CSRRestore.clear();
-      EntryBlock = 0;
-      if (! ReturnBlocks.empty())
-        ReturnBlocks.clear();
-      ShrinkWrapThisFunction = ShrinkWrapping;
-    }
+    void initShrinkWrappingInfo();
 
     // Convienences for dealing with machine loops.
     MachineBasicBlock* getTopLevelLoopPreheader(MachineLoop* LP) {
@@ -247,59 +282,78 @@ namespace {
       return LP;
     }
 
+    // Propgate CSRs used in MBB to all MBBs of loop LP.
+    void propagateUsesAroundLoop(MachineBasicBlock* MBB, MachineLoop* LP);
+
+    // Convenience for recognizing return blocks.
+    bool isReturnBlock(MachineBasicBlock* MBB) {
+      return (MBB && !MBB->empty() && MBB->back().getDesc().isReturn());
+    }
+
 #ifndef NDEBUG
     // Debugging methods.
-    static std::string getBasicBlockName(const MachineBasicBlock* MBB) {
-      std::ostringstream name;
-      if (MBB) {
-        if (MBB->getBasicBlock())
-          name << MBB->getBasicBlock()->getName();
-        else
-          name << "_MBB_" << MBB->getNumber();
-      }
-      return name.str();
-    }
 
-    static std::string stringifyCSRegSet(const CSRegSet& s,
-                                         MachineFunction &Fn) {
-      const TargetRegisterInfo* TRI = Fn.getTarget().getRegisterInfo();
-      const std::vector<CalleeSavedInfo> CSI =
-        Fn.getFrameInfo()->getCalleeSavedInfo();
+    // Mark this function as having fast exit paths.
+    void findFastExitPath();
 
-      std::ostringstream srep;
-      if (CSI.size() == 0) {
-        srep << "[]";
-        return srep.str();
-      }
-      srep << "[";
-      CSRegSet::iterator I = s.begin(), E = s.end();
-      if (I != E) {
-        unsigned reg = CSI[*I].getReg();
-        srep << TRI->getName(reg);
-        for (++I; I != E; ++I) {
-          reg = CSI[*I].getReg();
-          srep << ",";
-          srep << TRI->getName(reg);
-        }
-      }
-      srep << "]";
-      return srep.str();
-    }
+    // Verify placement of spills/restores.
+    void verifySpillRestorePlacement();
 
-    static void dumpSet(const CSRegSet& s, MachineFunction &Fn) {
-      DOUT << stringifyCSRegSet(s, Fn) << "\n";
-    }
+    std::string getBasicBlockName(const MachineBasicBlock* MBB);
+    std::string stringifyCSRegSet(const CSRegSet& s);
+    void dumpSet(const CSRegSet& s);
+    void dumpUsed(MachineBasicBlock* MBB);
+    void dumpAllUsed();
+    void dumpSets(MachineBasicBlock* MBB);
+    void dumpSets1(MachineBasicBlock* MBB);
+    void dumpAllSets();
+    void dumpSRSets();
 #endif
 
   };
   char PEI::ID = 0;
 }
 
+// Initialize shrink wrapping DFA sets, called before iterations.
+void PEI::clearAnticAvailSets() {
+  AnticIn.clear();
+  AnticOut.clear();
+  AvailIn.clear();
+  AvailOut.clear();
+}
+
+// Clear all sets constructed by shrink wrapping.
+void PEI::clearAllSets() {
+  ReturnBlocks.clear();
+  clearAnticAvailSets();
+  UsedCSRegs.clear();
+  CSRUsed.clear();
+  TLLoops.clear();
+  CSRSave.clear();
+  CSRRestore.clear();
+}
+
+// Initialize all shrink wrapping data.
+void PEI::initShrinkWrappingInfo() {
+  clearAllSets();
+  EntryBlock = 0;
+  HasFastExitPath = false;
+  ShrinkWrapThisFunction = ShrinkWrapping;
+  // DEBUG: enable or disable shrink wrapping for the current function
+  // via --shrink-wrap-func=<funcname>.
+#ifndef NDEBUG
+  if (ShrinkWrapFunc != "") {
+    std::string MFName = MF->getFunction()->getName();
+    ShrinkWrapThisFunction = (MFName == ShrinkWrapFunc);
+  }
+#endif
+}
+
+
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
 ///
 FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
-
 
 /// placeCSRSpillsAndRestores - determine which MBBs of the function
 /// need save, restore code for callee-saved registers by doing a DF analysis
@@ -316,167 +370,222 @@ FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 ///
 void PEI::placeCSRSpillsAndRestores(MachineFunction &Fn) {
 
-#ifndef NDEBUG
-  DOUT << "Place CSR spills/restores for "
-       << Fn.getFunction()->getName() << "\n";
-#endif
-
   initShrinkWrappingInfo();
+
+  DEBUG(if (ShrinkWrapThisFunction) {
+      DOUT << "Place CSR spills/restores for "
+           << MF->getFunction()->getName() << "\n";
+    });
 
   if (calculateSets(Fn))
     placeSpillsAndRestores(Fn);
 }
 
-/// calculateAnticAvail - helper for computing the data flow
-/// sets required for determining spill/restore placements.
+/// calcAnticInOut - calculate the anticipated in/out reg sets
+/// for the given MBB by looking forward in the MCFG at MBB's
+/// successors.
+///
+bool PEI::calcAnticInOut(MachineBasicBlock* MBB) {
+  bool changed = false;
+
+  // AnticOut[MBB] = INTERSECT(AnticIn[S] for S in SUCCESSORS(MBB))
+  SmallVector<MachineBasicBlock*, 4> successors;
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+    MachineBasicBlock* SUCC = *SI;
+    if (SUCC != MBB)
+      successors.push_back(SUCC);
+  }
+
+  unsigned i = 0, e = successors.size();
+  if (i != e) {
+    CSRegSet prevAnticOut = AnticOut[MBB];
+    MachineBasicBlock* SUCC = successors[i];
+
+    AnticOut[MBB] = AnticIn[SUCC];
+    for (++i; i != e; ++i) {
+      SUCC = successors[i];
+      AnticOut[MBB] &= AnticIn[SUCC];
+    }
+    if (prevAnticOut != AnticOut[MBB])
+      changed = true;
+  }
+
+  // AnticIn[MBB] = UNION(CSRUsed[MBB], AnticOut[MBB]);
+  CSRegSet prevAnticIn = AnticIn[MBB];
+  AnticIn[MBB] = CSRUsed[MBB] | AnticOut[MBB];
+  if (prevAnticIn |= AnticIn[MBB])
+    changed = true;
+  return changed;
+}
+
+/// calcAvailInOut - calculate the available in/out reg sets
+/// for the given MBB by looking backward in the MCFG at MBB's
+/// predecessors.
+///
+bool PEI::calcAvailInOut(MachineBasicBlock* MBB) {
+  bool changed = false;
+
+  // AvailIn[MBB] = INTERSECT(AvailOut[P] for P in PREDECESSORS(MBB))
+  SmallVector<MachineBasicBlock*, 4> predecessors;
+  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+    MachineBasicBlock* PRED = *PI;
+    if (PRED != MBB)
+      predecessors.push_back(PRED);
+  }
+
+  unsigned i = 0, e = predecessors.size();
+  if (i != e) {
+    CSRegSet prevAvailIn = AvailIn[MBB];
+    MachineBasicBlock* PRED = predecessors[i];
+
+    AvailIn[MBB] = AvailOut[PRED];
+    for (++i; i != e; ++i) {
+      PRED = predecessors[i];
+      AvailIn[MBB] &= AvailOut[PRED];
+    }
+    if (prevAvailIn != AvailIn[MBB])
+      changed = true;
+  }
+
+  // AvailOut[MBB] = UNION(CSRUsed[MBB], AvailIn[MBB]);
+  CSRegSet prevAvailOut = AvailOut[MBB];
+  AvailOut[MBB] = CSRUsed[MBB] | AvailIn[MBB];
+  if (prevAvailOut |= AvailOut[MBB])
+    changed = true;
+  return changed;
+}
+
+/// calculateAnticAvail - build the sets anticipated and available
+/// registers in the MCFG of the current function iteratively,
+/// doing a combined forward and backward analysis.
 ///
 void PEI::calculateAnticAvail(MachineFunction &Fn) {
+  // Initialize data flow sets.
+  clearAnticAvailSets();
 
   // Calulate Antic{In,Out} and Avail{In,Out} iteratively on the MCFG.
   bool changed = true;
   unsigned iterations = 0;
   while (changed) {
     changed = false;
+    ++iterations;
     for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
          MBBI != MBBE; ++MBBI) {
       MachineBasicBlock* MBB = MBBI;
 
-      // AnticOut[MBB] = INTERSECT(AnticIn[S] for S in SUCC(MBB))
-      MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-        SE = MBB->succ_end();
-      if (SI != SE) {
-        CSRegSet prevAnticOut = AnticOut[MBB];
-        MachineBasicBlock* SUCC = *SI;
-        AnticOut[MBB] = AnticIn[SUCC];
-        for (++SI; SI != SE; ++SI) {
-          SUCC = *SI;
-          AnticOut[MBB] &= AnticIn[SUCC];
-        }
-        if (prevAnticOut != AnticOut[MBB])
-          changed = true;
-      }
-      // AnticIn[MBB] = CSRUsed[MBB] | AnticOut[MBB];
-      CSRegSet prevAnticIn = AnticIn[MBB];
-      AnticIn[MBB] = CSRUsed[MBB] | AnticOut[MBB];
-      if (prevAnticIn |= AnticIn[MBB])
-        changed = true;
+      // Calculate anticipated in, out regs at MBB from
+      // anticipated at successors of MBB.
+      changed |= calcAnticInOut(MBB);
 
-      // AvailIn[MBB] = INTERSECT(AvailOut[S] for S in PRED(MBB))
-      MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-        PE = MBB->pred_end();
-      if (PI != PE) {
-        CSRegSet prevAvailIn = AvailIn[MBB];
-        MachineBasicBlock* PRED = *PI;
-        AvailIn[MBB] = AvailOut[PRED];
-        for (++PI; PI != PE; ++PI) {
-          PRED = *PI;
-          AvailIn[MBB] &= AvailOut[PRED];
-        }
-        if (prevAvailIn != AvailIn[MBB])
-          changed = true;
-      }
-      // AvailOut[MBB] = CSRUsed[MBB] | AvailIn[MBB];
-      CSRegSet prevAvailOut = AvailOut[MBB];
-      AvailOut[MBB] = CSRUsed[MBB] | AvailIn[MBB];
-      if (prevAvailOut |= AvailOut[MBB])
-        changed = true;
+      // Calculate available in, out regs at MBB from
+      // available at predecessors of MBB.
+      changed |= calcAvailInOut(MBB);
     }
-    ++iterations;
   }
 
-  // EXP
-  AnticIn[EntryBlock].clear();
-  AnticOut[EntryBlock].clear();
-
-#ifndef NDEBUG
-  DOUT << "-----------------------------------------------------------\n";
-  DOUT << "iterations = " << iterations << "\n";
-  DOUT << "-----------------------------------------------------------\n";
-  DOUT << "MBB | ANTIC_IN | ANTIC_OUT | AVAIL_IN | AVAIL_OUT\n";
-  DOUT << "-----------------------------------------------------------\n";
-  for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
-       MBBI != MBBE; ++MBBI) {
-    MachineBasicBlock* MBB = MBBI;
-
-    DOUT << getBasicBlockName(MBB) << " | "
-         << stringifyCSRegSet(AnticIn[MBB], Fn)
-         << " | "
-         << stringifyCSRegSet(AnticOut[MBB], Fn)
-         << " | "
-         << stringifyCSRegSet(AvailIn[MBB], Fn)
-         << " | "
-         << stringifyCSRegSet(AvailOut[MBB], Fn)
-         << "\n";
-  }
-#endif
+  DEBUG(if (ShrinkWrapDebugging >= Details) {
+      DOUT << "-----------------------------------------------------------\n";
+      DOUT << " Antic/Avail Sets:\n";
+      DOUT << "-----------------------------------------------------------\n";
+      DOUT << "iterations = " << iterations << "\n";
+      DOUT << "-----------------------------------------------------------\n";
+      DOUT << "MBB | USED | ANTIC_IN | ANTIC_OUT | AVAIL_IN | AVAIL_OUT\n";
+      DOUT << "-----------------------------------------------------------\n";
+      for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
+           MBBI != MBBE; ++MBBI) {
+        MachineBasicBlock* MBB = MBBI;
+        dumpSets(MBB);
+      }
+      DOUT << "-----------------------------------------------------------\n";
+    });
 }
 
-/// calculateSets - helper function for placeCSRSpillsAndRestores,
-/// collect the CSRs used in this function, develop the DF sets that
-/// describe the minimal regions in the Machine CFG around which spills,
-/// restores must be placed.
+/// propagateUsesAroundLoop - copy used register info from MBB to all blocks
+/// of the loop given by LP and its parent loops. This prevents spills/restores
+/// from being placed in the bodies of loops.
 ///
-/// This function decides if shrink wrapping should actually be done:
-///   if all CSR uses are in the entry block, no shrink wrapping is possible,
-///   so ShrinkWrapping is turned off (for the current function) and the
-///   function returns false.
+void PEI::propagateUsesAroundLoop(MachineBasicBlock* MBB, MachineLoop* LP) {
+  if (! MBB || !LP)
+    return;
+
+  std::vector<MachineBasicBlock*> loopBlocks = LP->getBlocks();
+  for (unsigned i = 0, e = loopBlocks.size(); i != e; ++i) {
+    MachineBasicBlock* LBB = loopBlocks[i];
+    if (LBB == MBB)
+      continue;
+    if (CSRUsed[LBB].contains(CSRUsed[MBB]))
+      continue;
+    CSRUsed[LBB] |= CSRUsed[MBB];
+  }
+}
+
+/// calculateSets - collect the CSRs used in this function, compute
+/// the DF sets that describe the initial minimal regions in the
+/// Machine CFG around which CSR spills and restores must be placed.
+///
+/// Additionally, this function decides if shrink wrapping should
+/// be disabled for the current function, checking the following:
+///  1. the current function has more than 500 MBBs: heuristic limit
+///     on function size to reduce compile time impact of the current
+///     iterative algorithm.
+///  2. all CSRs are used in the entry block.
+///  3. all CSRs are used in all immediate successors of the entry block.
+///  4. all CSRs are used in a subset of blocks, each of which dominates
+///     all return blocks. These blocks, taken as a subgraph of the MCFG,
+///     are equivalent to the entry block since all execution paths pass
+///     through them.
 ///
 bool PEI::calculateSets(MachineFunction &Fn) {
-
   // Sets used to compute spill, restore placement sets.
   const std::vector<CalleeSavedInfo> CSI =
     Fn.getFrameInfo()->getCalleeSavedInfo();
 
   // If no CSRs used, we are done.
   if (CSI.empty()) {
-#ifndef NDEBUG
-    DOUT << Fn.getFunction()->getName()
-         << " uses no callee-saved registers.\n";
-#endif
+    DEBUG(if (ShrinkWrapThisFunction)
+            DOUT << "DISABLED: " << Fn.getFunction()->getName()
+                 << ": uses no callee-saved registers\n");
     return false;
   }
 
-#ifndef NDEBUG
-  DOUT << "-----------------------------------------------------------\n";
-#endif
-
-  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
-  bool allCSRUsesInEntryBlock = true;
-
-  // Initialize UsedCSRegs set, CSRUsed map.
-  // At the same time, put entry block directly into
-  // CSRSave, CSRRestore sets if any CSRs are used.
-  //
-  // Quick exit option (not implemented):
-  //   Given N CSR uses in entry block,
-  //   revert to default behavior, skip the placement
-  //   step and put all saves in entry, restores in
-  //   return blocks.
-
-  // Set up entry and return blocks.
+  // Save refs to entry and return blocks.
   EntryBlock = Fn.begin();
   for (MachineFunction::iterator MBB = Fn.begin(), E = Fn.end();
        MBB != E; ++MBB)
-    if (!MBB->empty() && MBB->back().getDesc().isReturn())
+    if (isReturnBlock(MBB))
       ReturnBlocks.push_back(MBB);
 
-  // TODO -- check for a use of a CSR in each imm. successor of EntryBlock,
-  // do not shrink wrap this function if this is the case.
+  // Determine if this function has fast exit paths.
+  DEBUG(if (ShrinkWrapThisFunction)
+          findFastExitPath());
 
-  // If not shrink wrapping (this function) at this point, set bits in
-  // CSR{Save,Restore}[] and UsedCSRegs, then return.
-  if (! ShrinkWrapThisFunction) {
-    for (unsigned inx = 0, e = CSI.size(); inx != e; ++inx) {
-      UsedCSRegs.set(inx);
-      CSRSave[EntryBlock].set(inx);
-      for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri)
-        CSRRestore[ReturnBlocks[ri]].set(inx);
-    }
-    return false;
+  // Limit shrink wrapping via the current iterative bit vector
+  // implementation to functions with <= 500 MBBs.
+  if (Fn.size() > 500) {
+    DEBUG(if (ShrinkWrapThisFunction)
+            DOUT << "DISABLED: " << Fn.getFunction()->getName()
+                 << ": too large (" << Fn.size() << " MBBs)\n");
+    ShrinkWrapThisFunction = false;
   }
 
-  // Walk instructions in all MBBs, create basic sets, choose
+  // Return now if not shrink wrapping.
+  if (! ShrinkWrapThisFunction)
+    return false;
+
+  // Collect set of used CSRs.
+  for (unsigned inx = 0, e = CSI.size(); inx != e; ++inx) {
+    UsedCSRegs.set(inx);
+  }
+
+  // Walk instructions in all MBBs, create CSRUsed[] sets, choose
   // whether or not to shrink wrap this function.
+  MachineLoopInfo &LI = getAnalysis<MachineLoopInfo>();
+  MachineDominatorTree &DT = getAnalysis<MachineDominatorTree>();
+  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
+
+  bool allCSRUsesInEntryBlock = true;
   for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
        MBBI != MBBE; ++MBBI) {
     MachineBasicBlock* MBB = MBBI;
@@ -496,357 +605,453 @@ bool PEI::calculateSets(MachineFunction &Fn) {
           if (MOReg == Reg ||
               (TargetRegisterInfo::isPhysicalRegister(MOReg) &&
                TargetRegisterInfo::isPhysicalRegister(Reg) &&
-               TRI->isSubRegister(MOReg, Reg))) {
+               TRI->isSubRegister(Reg, MOReg))) {
             // CSR Reg is defined/used in block MBB.
-            UsedCSRegs.set(inx);
             CSRUsed[MBB].set(inx);
-            // Short-circuit analysis for entry, return blocks:
-            // if a CSR is used in the entry block, add it directly
-            // to CSRSave[EntryBlock] and to CSRRestore[R] for R
-            // in ReturnBlocks. Note CSR uses in non-entry blocks.
-            if (ShrinkWrapThisFunction) {
-              if (MBB == EntryBlock) {
-                CSRSave[MBB].set(inx);
-                for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri)
-                  CSRRestore[ReturnBlocks[ri]].set(inx);
-              } else
-                allCSRUsesInEntryBlock = false;
-            } else {
-              // Not shrink wrapping => ensure saves/restores are correctly
-              // added for entry, return blocks.
-              CSRSave[EntryBlock].set(inx);
-              for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri)
-                CSRRestore[ReturnBlocks[ri]].set(inx);
-            }
+            // Check for uses in EntryBlock.
+            if (MBB != EntryBlock)
+              allCSRUsesInEntryBlock = false;
           }
         }
       }
     }
-#ifndef NDEBUG
-    DOUT << "CSRUsed[" << getBasicBlockName(MBB) << "] = "
-         << stringifyCSRegSet(CSRUsed[MBB], Fn) << "\n";
-#endif
+
+    if (CSRUsed[MBB].empty())
+      continue;
+
+    // Propagate CSRUsed[MBB] in loops
+    if (MachineLoop* LP = LI.getLoopFor(MBB)) {
+      // Add top level loop to work list.
+      MachineBasicBlock* HDR = getTopLevelLoopPreheader(LP);
+      MachineLoop* PLP = getTopLevelLoopParent(LP);
+
+      if (! HDR) {
+        HDR = PLP->getHeader();
+        assert(HDR->pred_size() > 0 && "Loop header has no predecessors?");
+        MachineBasicBlock::pred_iterator PI = HDR->pred_begin();
+        HDR = *PI;
+      }
+      TLLoops[HDR] = PLP;
+
+      // Push uses from inside loop to its parent loops,
+      // or to all other MBBs in its loop.
+      if (LP->getLoopDepth() > 1) {
+        for (MachineLoop* PLP = LP->getParentLoop(); PLP;
+             PLP = PLP->getParentLoop()) {
+          propagateUsesAroundLoop(MBB, PLP);
+        }
+      } else {
+        propagateUsesAroundLoop(MBB, LP);
+      }
+    }
   }
 
-#ifndef NDEBUG
-  DOUT << "UsedCSRegs = " << stringifyCSRegSet(UsedCSRegs, Fn) << "\n";
-#endif
+  if (allCSRUsesInEntryBlock) {
+    DEBUG(DOUT << "DISABLED: " << Fn.getFunction()->getName()
+          << ": all CSRs used in EntryBlock\n");
+    ShrinkWrapThisFunction = false;
+  } else {
+    bool allCSRsUsedInEntryFanout = true;
+    for (MachineBasicBlock::succ_iterator SI = EntryBlock->succ_begin(),
+           SE = EntryBlock->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock* SUCC = *SI;
+      if (CSRUsed[SUCC] != UsedCSRegs)
+        allCSRsUsedInEntryFanout = false;
+    }
+    if (allCSRsUsedInEntryFanout) {
+      DEBUG(DOUT << "DISABLED: " << Fn.getFunction()->getName()
+            << ": all CSRs used in imm successors of EntryBlock\n");
+      ShrinkWrapThisFunction = false;
+    }
+  }
 
-  // Early exit:
-  // 1. Not asked to do shrink wrapping => just "place" all spills(restores)
-  //    in the entry(return) block(s), already done above.
-  // 2. All CSR uses in entry block => same as case 1, but say we will
-  //    not shrink wrap the current function.
-  ShrinkWrapThisFunction = (ShrinkWrapping &&
-                            ShrinkWrapThisFunction &&
-                            ! allCSRUsesInEntryBlock);
-  if (! ShrinkWrapThisFunction) {
+  if (ShrinkWrapThisFunction) {
+    // Check if MBB uses CSRs and dominates all exit nodes.
+    // Such nodes are equiv. to the entry node w.r.t.
+    // CSR uses: every path through the function must
+    // pass through this node. If each CSR is used at least
+    // once by these nodes, shrink wrapping is disabled.
+    CSRegSet CSRUsedInChokePoints;
+    for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
+         MBBI != MBBE; ++MBBI) {
+      MachineBasicBlock* MBB = MBBI;
+      if (MBB == EntryBlock || CSRUsed[MBB].empty() || MBB->succ_size() < 1)
+        continue;
+      bool dominatesExitNodes = true;
+      for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri)
+        if (! DT.dominates(MBB, ReturnBlocks[ri])) {
+          dominatesExitNodes = false;
+          break;
+        }
+      if (dominatesExitNodes) {
+        CSRUsedInChokePoints |= CSRUsed[MBB];
+        if (CSRUsedInChokePoints == UsedCSRegs) {
+          DEBUG(DOUT << "DISABLED: " << Fn.getFunction()->getName()
+                << ": all CSRs used in choke point(s) at "
+                << getBasicBlockName(MBB) << "\n");
+          ShrinkWrapThisFunction = false;
+          break;
+        }
+      }
+    }
+  }
+
+  // Return now if we have decided not to apply shrink wrapping
+  // to the current function.
+  if (! ShrinkWrapThisFunction)
     return false;
-  }
 
+  DEBUG({
+      DOUT << "ENABLED: " << Fn.getFunction()->getName();
+      if (HasFastExitPath)
+        DOUT << " (fast exit path)";
+      DOUT << "\n";
+      if (ShrinkWrapDebugging >= BasicInfo) {
+        DOUT << "------------------------------"
+             << "-----------------------------\n";
+        DOUT << "UsedCSRegs = " << stringifyCSRegSet(UsedCSRegs) << "\n";
+        if (ShrinkWrapDebugging >= Details) {
+          DOUT << "------------------------------"
+               << "-----------------------------\n";
+          dumpAllUsed();
+        }
+      }
+    });
+
+  // Build initial DF sets to determine minimal regions in the
+  // Machine CFG around which CSRs must be spilled and restored.
   calculateAnticAvail(Fn);
 
   return true;
 }
 
-/// moveSpillsOutOfLoops - helper for placeSpillsAndRestores() which
-/// relocates a spill from a subgraph in a loop to the loop preheader.
-/// Returns the MBB to which saves have been moved, or the given MBB
-/// if it is a branch point.
+/// addUsesForMEMERegion - add uses of CSRs spilled or restored in
+/// multi-entry, multi-exit (MEME) regions so spill and restore
+/// placement will not break code that enters or leaves a
+/// shrink-wrapped region by inducing spills with no matching
+/// restores or restores with no matching spills. A MEME region
+/// is a subgraph of the MCFG with multiple entry edges, multiple
+/// exit edges, or both. This code propagates use information
+/// through the MCFG until all paths requiring spills and restores
+/// _outside_ the computed minimal placement regions have been covered.
 ///
-MachineBasicBlock* PEI::moveSpillsOutOfLoops(MachineFunction &Fn,
-                                             MachineBasicBlock* MBB) {
-  if (MBB == 0 || CSRSave[MBB].empty())
-    return 0;
-
-  // Block to which saves are moved.
-  MachineBasicBlock* DEST = 0;
-  MachineLoopInfo &LI = getAnalysis<MachineLoopInfo>();
-
-  if (MachineLoop* LP = LI.getLoopFor(MBB)) {
-    MachineBasicBlock* LPH = getTopLevelLoopPreheader(LP);
-    assert(LPH && "Loop has no top level preheader?");
-
-#ifndef NDEBUG
-    DOUT << "Moving saves of "
-         << stringifyCSRegSet(CSRSave[MBB], Fn)
-         << " from " << getBasicBlockName(MBB)
-         << " to " << getBasicBlockName(LPH) << "\n";
-#endif
-    // Add CSRegSet from MBB to LPH, empty out MBB's CSRegSet.
-    CSRSave[LPH] |= CSRSave[MBB];
-    // If saves moved to entry block, add restores to returns.
-    if (LPH == EntryBlock) {
-      for (unsigned i = 0, e = ReturnBlocks.size(); i != e; ++i)
-        CSRRestore[ReturnBlocks[i]] |= CSRSave[MBB];
-    } else {
-      // Remember where we moved the save so we can add
-      // restores on successor paths if necessary.
-      if (LPH->succ_size() > 1)
-        DEST = LPH;
-    }
-    CSRSave[MBB].clear();
-  } else if (MBB->succ_size() > 1)
-    DEST = MBB;
-  return DEST;
-}
-
-/// addRestoresForSBranchBlock - helper for placeSpillsAndRestores() which
-/// adds restores of CSRs saved in branch point MBBs to the front of any
-/// successor blocks connected to regions with no uses of the saved CSRs.
-///
-void PEI::addRestoresForSBranchBlock(MachineFunction &Fn,
-                                     MachineBasicBlock* MBB) {
-
-  if (MBB == 0 || CSRSave[MBB].empty() || MBB->succ_size() < 2)
-    return;
-
-  // Add restores of CSRs saved in branch point MBBs to the
-  // front of any succ blocks flowing into regions that
-  // have no uses of MBB's CSRs.
-  bool hasCSRUses = false;
-  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-         SE = MBB->succ_end(); SI != SE; ++SI) {
-    MachineBasicBlock* SUCC = *SI;
-    bool needsRestore = false;
-    if (CSRUsed[SUCC].intersects(CSRSave[MBB])) {
-      hasCSRUses = true;
-      continue;
-    }
-    needsRestore = true;
-    for (df_iterator<MachineBasicBlock*> BI = df_begin(SUCC),
-           BE = df_end(SUCC); BI != BE; ++BI) {
-      MachineBasicBlock* SBB = *BI;
-      if (CSRUsed[SBB].intersects(CSRSave[MBB])) {
-        hasCSRUses = true;
-        needsRestore = false;
+bool PEI::addUsesForMEMERegion(MachineBasicBlock* MBB,
+                               SmallVector<MachineBasicBlock*, 4>& blks) {
+  if (MBB->succ_size() < 2 && MBB->pred_size() < 2) {
+    bool processThisBlock = false;
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+           SE = MBB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock* SUCC = *SI;
+      if (SUCC->pred_size() > 1) {
+        processThisBlock = true;
         break;
       }
     }
-    // Additional restores are needed for SUCC iff there is at least
-    // one CSR use reachable from the successors of MBB and there
-    // are no uses in or below SUCC.
-    if (needsRestore && hasCSRUses) {
-#ifndef NDEBUG
-      DOUT << "MBB " << getBasicBlockName(MBB)
-           << " needs a restore on path to successor "
-           << getBasicBlockName(SUCC) << "\n";
-#endif
-      // Add restores to SUCC for all CSRs saved in MBB...
-      CSRRestore[SUCC] = CSRSave[MBB];
-    }
-  }
-}
-
-/// moveRestoresOutOfLoops - helper for placeSpillsAndRestores() which
-/// relocates restores from a subgraph in a loop to the loop exit blocks.
-/// This function records the MBBs to which restores have been moved in
-/// SBLKS. If no restores are moved, SBLKS contains the input MBB if it
-/// is a join point in the Machine CFG.
-///
-void PEI::moveRestoresOutOfLoops(MachineFunction& Fn,
-                                 MachineBasicBlock* MBB,
-                                 std::vector<MachineBasicBlock*>& SBLKS) {
-
-  SBLKS.clear();
-  if (MBB == 0 || CSRRestore[MBB].empty())
-    return;
-
-  MachineLoopInfo &LI = getAnalysis<MachineLoopInfo>();
-
-  if (MachineLoop* LP = LI.getLoopFor(MBB)) {
-    LP = getTopLevelLoopParent(LP);
-    assert(LP && "Loop with no top level parent?");
-
-    SmallVector<MachineBasicBlock*, 4> exitBlocks;
-
-    LP->getExitBlocks(exitBlocks);
-    assert(exitBlocks.size() > 0 &&
-           "Loop has no top level exit blocks?");
-    for (unsigned i = 0, e = exitBlocks.size(); i != e; ++i) {
-      MachineBasicBlock* EXB = exitBlocks[i];
-
-#ifndef NDEBUG
-      DOUT << "Moving restores of "
-           << stringifyCSRegSet(CSRRestore[MBB], Fn)
-           << " from " << getBasicBlockName(MBB)
-           << " to " << getBasicBlockName(EXB) << "\n";
-#endif
-
-      // Add CSRegSet from MBB to LPE, empty out MBB's CSRegSet.
-      CSRRestore[EXB] |= CSRRestore[MBB];
-      if (EXB->pred_size() > 1)
-        SBLKS.push_back(EXB);
-    }
-    CSRRestore[MBB].clear();
-  } else if (MBB->pred_size() > 1)
-    SBLKS.push_back(MBB);
-}
-
-/// addSavesForRJoinBlocks - Add saves of CSRs restored in join point MBBs
-/// to the ends of any pred blocks that flow into MBB from regions that
-/// have no uses of MBB's CSRs.
-///
-void PEI::addSavesForRJoinBlocks(MachineFunction& Fn,
-                                 std::vector<MachineBasicBlock*>& SBLKS) {
-
-  if (SBLKS.empty())
-    return;
-
-  for (unsigned i = 0, e = SBLKS.size(); i != e; ++i) {
-    MachineBasicBlock* MBB = SBLKS[i];
-    if (MBB->pred_size() > 1) {
-      bool needsSave = false;
+    if (!CSRRestore[MBB].empty() && MBB->succ_size() > 0) {
       for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
              PE = MBB->pred_end(); PI != PE; ++PI) {
         MachineBasicBlock* PRED = *PI;
-
-        // Walk back up in the CFG from the preds of MBB, look for
-        // a block that uses any CSR that is restored in MBB.
-        if (CSRUsed[PRED].intersects(CSRRestore[MBB]))
-          continue;
-        needsSave = true;
-        for (idf_iterator<MachineBasicBlock*> PPI = idf_begin(PRED),
-               PPE = idf_end(PRED); PPI != PPE; ++PPI) {
-          MachineBasicBlock* PBB = *PPI;
-          if (CSRUsed[PBB].intersects(CSRRestore[MBB])) {
-            needsSave = false;
-            break;
-          }
-        }
-        if (needsSave) {
-          // Add saves to PRED for all CSRs restored in MBB...
-#ifndef NDEBUG
-          DOUT << "MBB " << getBasicBlockName(MBB)
-               << " needs a save on path from predecessor "
-               << getBasicBlockName(PRED) << "\n";
-#endif
-          CSRSave[PRED] = CSRRestore[MBB];
+        if (PRED->succ_size() > 1) {
+          processThisBlock = true;
+          break;
         }
       }
     }
+    if (! processThisBlock)
+      return false;
   }
+
+  CSRegSet prop;
+  if (!CSRSave[MBB].empty())
+    prop = CSRSave[MBB];
+  else if (!CSRRestore[MBB].empty())
+    prop = CSRRestore[MBB];
+  else
+    prop = CSRUsed[MBB];
+  if (prop.empty())
+    return false;
+
+  // Propagate selected bits to successors, predecessors of MBB.
+  bool addedUses = false;
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+    MachineBasicBlock* SUCC = *SI;
+    // Self-loop
+    if (SUCC == MBB)
+      continue;
+    if (! CSRUsed[SUCC].contains(prop)) {
+      CSRUsed[SUCC] |= prop;
+      addedUses = true;
+      blks.push_back(SUCC);
+      DEBUG(if (ShrinkWrapDebugging >= Iterations)
+              DOUT << getBasicBlockName(MBB)
+                   << "(" << stringifyCSRegSet(prop) << ")->"
+                   << "successor " << getBasicBlockName(SUCC) << "\n");
+    }
+  }
+  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+    MachineBasicBlock* PRED = *PI;
+    // Self-loop
+    if (PRED == MBB)
+      continue;
+    if (! CSRUsed[PRED].contains(prop)) {
+      CSRUsed[PRED] |= prop;
+      addedUses = true;
+      blks.push_back(PRED);
+      DEBUG(if (ShrinkWrapDebugging >= Iterations)
+              DOUT << getBasicBlockName(MBB)
+                   << "(" << stringifyCSRegSet(prop) << ")->"
+                   << "predecessor " << getBasicBlockName(PRED) << "\n");
+    }
+  }
+  return addedUses;
 }
 
-/// placeSpillsAndRestores - decide which MBBs need spills, restores
-/// of CSRs.
+/// addUsesForTopLevelLoops - add uses for CSRs used inside top
+/// level loops to the exit blocks of those loops.
 ///
-void PEI::placeSpillsAndRestores(MachineFunction &Fn) {
+bool PEI::addUsesForTopLevelLoops(SmallVector<MachineBasicBlock*, 4>& blks) {
+  bool addedUses = false;
 
-#ifndef NDEBUG
-  DOUT << "-----------------------------------------------------------\n";
-#endif
+  // Place restores for top level loops where needed.
+  for (DenseMap<MachineBasicBlock*, MachineLoop*>::iterator
+         I = TLLoops.begin(), E = TLLoops.end(); I != E; ++I) {
+    MachineBasicBlock* MBB = I->first;
+    MachineLoop* LP = I->second;
+    MachineBasicBlock* HDR = LP->getHeader();
+    SmallVector<MachineBasicBlock*, 4> exitBlocks;
+    CSRegSet loopSpills;
 
-  // Calculate CSR{Save,Restore} using Antic, Avail on the Machine-CFG.
-  for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
-       MBBI != MBBE; ++MBBI) {
-    MachineBasicBlock* MBB = MBBI;
-    // Entry block saves are recorded in UsedCSRegs pass above.
-    if (MBB != EntryBlock) {
-      // Intersect (CSRegs - AnticIn[P]) for all predecessors P of MBB
-      CSRegSet anticInPreds;
-      MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-        PE = MBB->pred_end();
-      if (PI != PE) {
-        MachineBasicBlock* PRED = *PI;
-        anticInPreds = UsedCSRegs - AnticIn[PRED];
-        for (++PI; PI != PE; ++PI) {
-          PRED = *PI;
-          // Handle self loop.
-          if (PRED != MBB)
-            anticInPreds &= (UsedCSRegs - AnticIn[PRED]);
-        }
-      }
-      // CSRSave[MBB] = (AnticIn[MBB] - AvailIn[MBB]) & anticInPreds
-      CSRSave[MBB] = (AnticIn[MBB] - AvailIn[MBB]) & anticInPreds;
-
-      // Remove the CSRs that are saved in the entry block
-      if (! CSRSave[MBB].empty() && ! CSRSave[EntryBlock].empty())
-        CSRSave[MBB] = CSRSave[MBB] - CSRSave[EntryBlock];
-
-      // Move saves inside loops to the preheaders of the outermost
-      // containing loops, add restores to blocks reached by saves
-      // placed at branch points where necessary.
-      if (MachineBasicBlock* DESTBB = moveSpillsOutOfLoops(Fn, MBB)) {
-        // Add restores to blocks reached by saves placed at branch
-        // points where necessary.
-        addRestoresForSBranchBlock(Fn, DESTBB);
-      }
-    }
-
-#ifndef NDEBUG
-    if (! CSRSave[MBB].empty())
-      DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(CSRSave[MBB], Fn) << "\n";
-#endif
-
-    // Compute CSRRestore, which may already be set for return blocks.
-    if (! CSRRestore[MBB].empty() || MBB->pred_size() == 0)
+    loopSpills = CSRSave[MBB];
+    if (CSRSave[MBB].empty()) {
+      loopSpills = CSRUsed[HDR];
+      assert(!loopSpills.empty() && "No CSRs used in loop?");
+    } else if (CSRRestore[MBB].contains(CSRSave[MBB]))
       continue;
 
-    // Intersect (CSRegs - AvailOut[S]) for all successors S of MBB
-    CSRegSet availOutSucc;
-    MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-      SE = MBB->succ_end();
-    if (SI != SE) {
-      MachineBasicBlock* SUCC = *SI;
-      availOutSucc = UsedCSRegs - AvailOut[SUCC];
-      for (++SI; SI != SE; ++SI) {
-        SUCC = *SI;
-        // Handle self loop.
-        if (SUCC != MBB)
-          availOutSucc &= (UsedCSRegs - AvailOut[SUCC]);
+    LP->getExitBlocks(exitBlocks);
+    assert(exitBlocks.size() > 0 && "Loop has no top level exit blocks?");
+    for (unsigned i = 0, e = exitBlocks.size(); i != e; ++i) {
+      MachineBasicBlock* EXB = exitBlocks[i];
+      if (! CSRUsed[EXB].contains(loopSpills)) {
+        CSRUsed[EXB] |= loopSpills;
+        addedUses = true;
+        DEBUG(if (ShrinkWrapDebugging >= Iterations)
+                DOUT << "LOOP " << getBasicBlockName(MBB)
+                     << "(" << stringifyCSRegSet(loopSpills) << ")->"
+                     << getBasicBlockName(EXB) << "\n");
+        if (EXB->succ_size() > 1 || EXB->pred_size() > 1)
+          blks.push_back(EXB);
       }
-    } else if (! CSRUsed[MBB].empty()) {
-      // Take care of uses in return blocks (which have no successors).
+    }
+  }
+  return addedUses;
+}
+
+/// calcSpillPlacements - determine which CSRs should be spilled
+/// in MBB using AnticIn sets of MBB's predecessors, keeping track
+/// of changes to spilled reg sets. Add MBB to the set of blocks
+/// that need to be processed for propagating use info to cover
+/// multi-entry/exit regions.
+///
+bool PEI::calcSpillPlacements(MachineBasicBlock* MBB,
+                              SmallVector<MachineBasicBlock*, 4> &blks,
+                              CSRegBlockMap &prevSpills) {
+  bool placedSpills = false;
+  // Intersect (CSRegs - AnticIn[P]) for P in Predecessors(MBB)
+  CSRegSet anticInPreds;
+  SmallVector<MachineBasicBlock*, 4> predecessors;
+  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+    MachineBasicBlock* PRED = *PI;
+    if (PRED != MBB)
+      predecessors.push_back(PRED);
+  }
+  unsigned i = 0, e = predecessors.size();
+  if (i != e) {
+    MachineBasicBlock* PRED = predecessors[i];
+    anticInPreds = UsedCSRegs - AnticIn[PRED];
+    for (++i; i != e; ++i) {
+      PRED = predecessors[i];
+      anticInPreds &= (UsedCSRegs - AnticIn[PRED]);
+    }
+  } else {
+    // Handle uses in entry blocks (which have no predecessors).
+    // This is necessary because the DFA formulation assumes the
+    // entry and (multiple) exit nodes cannot have CSR uses, which
+    // is not the case in the real world.
+    anticInPreds = UsedCSRegs;
+  }
+  // Compute spills required at MBB:
+  CSRSave[MBB] |= (AnticIn[MBB] - AvailIn[MBB]) & anticInPreds;
+
+  if (! CSRSave[MBB].empty()) {
+    if (MBB == EntryBlock) {
+      for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri)
+        CSRRestore[ReturnBlocks[ri]] |= CSRSave[MBB];
+    } else {
+      // Reset all regs spilled in MBB that are also spilled in EntryBlock.
+      if (CSRSave[EntryBlock].intersects(CSRSave[MBB])) {
+        CSRSave[MBB] = CSRSave[MBB] - CSRSave[EntryBlock];
+      }
+    }
+  }
+  placedSpills = (CSRSave[MBB] != prevSpills[MBB]);
+  prevSpills[MBB] = CSRSave[MBB];
+  // Remember this block for adding restores to successor
+  // blocks for multi-entry region.
+  if (placedSpills)
+    blks.push_back(MBB);
+
+  DEBUG(if (! CSRSave[MBB].empty() && ShrinkWrapDebugging >= Iterations)
+          DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
+               << stringifyCSRegSet(CSRSave[MBB]) << "\n");
+
+  return placedSpills;
+}
+
+/// calcRestorePlacements - determine which CSRs should be restored
+/// in MBB using AvailOut sets of MBB's succcessors, keeping track
+/// of changes to restored reg sets. Add MBB to the set of blocks
+/// that need to be processed for propagating use info to cover
+/// multi-entry/exit regions.
+///
+bool PEI::calcRestorePlacements(MachineBasicBlock* MBB,
+                                SmallVector<MachineBasicBlock*, 4> &blks,
+                                CSRegBlockMap &prevRestores) {
+  bool placedRestores = false;
+  // Intersect (CSRegs - AvailOut[S]) for S in Successors(MBB)
+  CSRegSet availOutSucc;
+  SmallVector<MachineBasicBlock*, 4> successors;
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+    MachineBasicBlock* SUCC = *SI;
+    if (SUCC != MBB)
+      successors.push_back(SUCC);
+  }
+  unsigned i = 0, e = successors.size();
+  if (i != e) {
+    MachineBasicBlock* SUCC = successors[i];
+    availOutSucc = UsedCSRegs - AvailOut[SUCC];
+    for (++i; i != e; ++i) {
+      SUCC = successors[i];
+      availOutSucc &= (UsedCSRegs - AvailOut[SUCC]);
+    }
+  } else {
+    if (! CSRUsed[MBB].empty() || ! AvailOut[MBB].empty()) {
+      // Handle uses in return blocks (which have no successors).
+      // This is necessary because the DFA formulation assumes the
+      // entry and (multiple) exit nodes cannot have CSR uses, which
+      // is not the case in the real world.
       availOutSucc = UsedCSRegs;
     }
-    // CSRRestore[MBB] = (AvailOut[MBB] - AnticOut[MBB]) & availOutSucc
-    CSRRestore[MBB] = (AvailOut[MBB] - AnticOut[MBB]) & availOutSucc;
+  }
+  // Compute restores required at MBB:
+  CSRRestore[MBB] |= (AvailOut[MBB] - AnticOut[MBB]) & availOutSucc;
 
-    // Remove the CSRs that are restored in the return blocks.
-    // Lest this be confusing, note that:
-    // CSRSave[EntryBlock] == CSRRestore[B] for all B in ReturnBlocks.
-    if (! CSRRestore[MBB].empty() && ! CSRSave[EntryBlock].empty())
+  // Postprocess restore placements at MBB.
+  // Remove the CSRs that are restored in the return blocks.
+  // Lest this be confusing, note that:
+  // CSRSave[EntryBlock] == CSRRestore[B] for all B in ReturnBlocks.
+  if (MBB->succ_size() && ! CSRRestore[MBB].empty()) {
+    if (! CSRSave[EntryBlock].empty())
       CSRRestore[MBB] = CSRRestore[MBB] - CSRSave[EntryBlock];
+  }
+  placedRestores = (CSRRestore[MBB] != prevRestores[MBB]);
+  prevRestores[MBB] = CSRRestore[MBB];
+  // Remember this block for adding saves to predecessor
+  // blocks for multi-entry region.
+  if (placedRestores)
+    blks.push_back(MBB);
 
-    // Move restores inside loops to the exits of the outermost (top level)
-    // containing loops.
-    std::vector<MachineBasicBlock*> saveBlocks;
-    moveRestoresOutOfLoops(Fn, MBB, saveBlocks);
+  DEBUG(if (! CSRRestore[MBB].empty() && ShrinkWrapDebugging >= Iterations)
+          DOUT << "RESTORE[" << getBasicBlockName(MBB) << "] = "
+               << stringifyCSRegSet(CSRRestore[MBB]) << "\n");
 
-    // Add saves of CSRs restored in join point MBBs to the ends
-    // of any pred blocks that flow into MBB from regions that
-    // have no uses of MBB's CSRs.
-    addSavesForRJoinBlocks(Fn, saveBlocks);
+  return placedRestores;
+}
 
-#ifndef NDEBUG
-    if (! CSRRestore[MBB].empty())
-      DOUT << "RESTORE[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(CSRRestore[MBB], Fn) << "\n";
-#endif
+/// placeSpillsAndRestores - place spills and restores of CSRs
+/// used in MBBs in minimal regions that contain the uses.
+///
+void PEI::placeSpillsAndRestores(MachineFunction &Fn) {
+  CSRegBlockMap prevCSRSave;
+  CSRegBlockMap prevCSRRestore;
+  SmallVector<MachineBasicBlock*, 4> cvBlocks, ncvBlocks;
+  bool changed = true;
+  unsigned iterations = 0;
+
+  // Iterate computation of spill and restore placements in the MCFG until:
+  //   1. CSR use info has been fully propagated around the MCFG, and
+  //   2. computation of CSRSave[], CSRRestore[] reach fixed points.
+  while (changed) {
+    changed = false;
+    ++iterations;
+
+    DEBUG(if (ShrinkWrapDebugging >= Iterations)
+            DOUT << "iter " << iterations
+                 << " --------------------------------------------------\n");
+
+    // Calculate CSR{Save,Restore} sets using Antic, Avail on the MCFG,
+    // which determines the placements of spills and restores.
+    // Keep track of changes to spills, restores in each iteration to
+    // minimize the total iterations.
+    bool SRChanged = false;
+    for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
+         MBBI != MBBE; ++MBBI) {
+      MachineBasicBlock* MBB = MBBI;
+
+      // Place spills for CSRs in MBB.
+      SRChanged |= calcSpillPlacements(MBB, cvBlocks, prevCSRSave);
+
+      // Place restores for CSRs in MBB.
+      SRChanged |= calcRestorePlacements(MBB, cvBlocks, prevCSRRestore);
+    }
+
+    // Add uses of CSRs used inside loops where needed.
+    changed |= addUsesForTopLevelLoops(cvBlocks);
+
+    // Add uses for CSRs spilled or restored at branch, join points.
+    if (changed || SRChanged) {
+      while (! cvBlocks.empty()) {
+        MachineBasicBlock* MBB = cvBlocks.pop_back_val();
+        changed |= addUsesForMEMERegion(MBB, ncvBlocks);
+      }
+      if (! ncvBlocks.empty()) {
+        cvBlocks = ncvBlocks;
+        ncvBlocks.clear();
+      }
+    }
+
+    if (changed) {
+      calculateAnticAvail(Fn);
+      CSRSave.clear();
+      CSRRestore.clear();
+    }
   }
 
-#ifndef NDEBUG
-  DOUT << "-----------------------------------------------------------\n";
-  DOUT << "Final SAVE, RESTORE:\n";
-  DOUT << "-----------------------------------------------------------\n";
-  for (MachineFunction::iterator MBB = Fn.begin(), E = Fn.end();
-       MBB != E; ++MBB) {
-    if (! CSRSave[MBB].empty()) {
-      DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(CSRSave[MBB], Fn);
-      if (CSRRestore[MBB].empty())
-        DOUT << "\n";
-    }
-    if (! CSRRestore[MBB].empty()) {
-      if (! CSRSave[MBB].empty())
-        DOUT << "    ";
-      DOUT << "RESTORE[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(CSRRestore[MBB], Fn) << "\n";
-    }
-  }
-#endif
+  // Check for effectiveness:
+  //  SR0 = {r | r in CSRSave[EntryBlock], CSRRestore[RB], RB in ReturnBlocks}
+  //  numSRReduced = |(UsedCSRegs - SR0)|, approx. SR0 by CSRSave[EntryBlock]
+  // Gives a measure of how many CSR spills have been moved from EntryBlock
+  // to minimal regions enclosing their uses.
+  CSRegSet notSpilledInEntryBlock = (UsedCSRegs - CSRSave[EntryBlock]);
+  unsigned numSRReducedThisFunc = notSpilledInEntryBlock.count();
+  numSRReduced += numSRReducedThisFunc;
+  DEBUG(if (ShrinkWrapDebugging >= BasicInfo) {
+      DOUT << "-----------------------------------------------------------\n";
+      DOUT << "total iterations = " << iterations << " ( "
+           << Fn.getFunction()->getName()
+           << " " << numSRReducedThisFunc
+           << " " << Fn.size()
+           << " )\n";
+      DOUT << "-----------------------------------------------------------\n";
+      dumpSRSets();
+      DOUT << "-----------------------------------------------------------\n";
+      if (numSRReducedThisFunc)
+        verifySpillRestorePlacement();
+    });
 }
 
 /// calculateCalleeSavedRegisters - Scan the function for modified callee saved
@@ -982,90 +1187,29 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
 
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   MachineBasicBlock::iterator I;
-  std::vector<CalleeSavedInfo> blockCSI;
 
-#ifndef NDEBUG
-  DOUT << "Inserting spill/restore code for CSRs in function "
-       << Fn.getFunction()->getName() << "\n";
-#endif
+  DEBUG(if (ShrinkWrapThisFunction && ShrinkWrapDebugging >= Details)
+          DOUT << "Inserting CSR spills/restores in function "
+               << Fn.getFunction()->getName() << "\n");
 
-  // Insert spills.
-  for (CSRegBlockMap::iterator
-         BI = CSRSave.begin(), BE = CSRSave.end(); BI != BE; ++BI) {
-    MachineBasicBlock* MBB = BI->first;
-    CSRegSet save = BI->second;
-
-    if (save.empty())
-      continue;
-
-    if (! ShrinkWrapThisFunction) {
-      // Spill using target interface.
-      I = MBB->begin();
-      if (!TII.spillCalleeSavedRegisters(*MBB, I, CSI)) {
-        for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-          // Add the callee-saved register as live-in. It's killed at the spill.
-          MBB->addLiveIn(CSI[i].getReg());
-
-          // Insert the spill to the stack frame.
-          TII.storeRegToStackSlot(*MBB, I, CSI[i].getReg(), true,
-                                  CSI[i].getFrameIdx(), CSI[i].getRegClass());
-        }
-      }
-    } else {
-#ifndef NDEBUG
-      DOUT << "CSRSave[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(save, Fn) << "\n";
-#endif
-
-      blockCSI.clear();
-      for (CSRegSet::iterator RI = save.begin(),
-             RE = save.end(); RI != RE; ++RI) {
-        blockCSI.push_back(CSI[*RI]);
-      }
-      assert(blockCSI.size() > 0 &&
-             "Could not collect callee saved register info");
-
-      // If MBB has no uses of CSRs being saved, this means saves
-      // must be inserted at the _end_.
-      if (! MBB->empty() && ! CSRUsed[MBB].intersects(save)) {
-        I = MBB->end();
-        --I;
-        if (I->getDesc().isCall()) {
-          ++I;
-        } else {
-          MachineBasicBlock::iterator I2 = I;
-          while (I2 != MBB->begin() && (--I2)->getDesc().isTerminator())
-            I = I2;
-        }
-      } else {
-        I = MBB->begin();
-      }
-
-      // When shrink wrapping, use stack slot stores/loads.
-      for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
+  if (! ShrinkWrapThisFunction) {
+    // Spill using target interface.
+    I = EntryBlock->begin();
+    if (!TII.spillCalleeSavedRegisters(*EntryBlock, I, CSI)) {
+      for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
         // Add the callee-saved register as live-in.
         // It's killed at the spill.
-        MBB->addLiveIn(blockCSI[i].getReg());
+        EntryBlock->addLiveIn(CSI[i].getReg());
 
         // Insert the spill to the stack frame.
-        TII.storeRegToStackSlot(*MBB, I, blockCSI[i].getReg(),
-                                true,
-                                blockCSI[i].getFrameIdx(),
-                                blockCSI[i].getRegClass());
+        TII.storeRegToStackSlot(*EntryBlock, I, CSI[i].getReg(), true,
+                                CSI[i].getFrameIdx(), CSI[i].getRegClass());
       }
     }
-  }
-  // Use CSRRestore to add code to restore the callee-saved registers in
-  // each block.
-  for (CSRegBlockMap::iterator
-         BI = CSRRestore.begin(), BE = CSRRestore.end(); BI != BE; ++BI) {
-    MachineBasicBlock* MBB = BI->first;
-    CSRegSet restore = BI->second;
 
-    if (restore.empty())
-      continue;
-    if (! ShrinkWrapThisFunction) {
-      // Restore using target interface.
+    // Restore using target interface.
+    for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri) {
+      MachineBasicBlock* MBB = ReturnBlocks[ri];
       I = MBB->end(); --I;
 
       // Skip over all terminator instructions, which are part of the return
@@ -1098,79 +1242,117 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
           }
         }
       }
+    }
+    return;
+  }
+
+  // Insert spills.
+  std::vector<CalleeSavedInfo> blockCSI;
+  for (CSRegBlockMap::iterator BI = CSRSave.begin(),
+         BE = CSRSave.end(); BI != BE; ++BI) {
+    MachineBasicBlock* MBB = BI->first;
+    CSRegSet save = BI->second;
+
+    if (save.empty())
+      continue;
+
+    DEBUG(if (ShrinkWrapDebugging >= Details)
+            DOUT << "Spilling " << stringifyCSRegSet(save)
+                 << " in " << getBasicBlockName(MBB) << "\n");
+
+    blockCSI.clear();
+    for (CSRegSet::iterator RI = save.begin(),
+           RE = save.end(); RI != RE; ++RI) {
+      blockCSI.push_back(CSI[*RI]);
+    }
+    assert(blockCSI.size() > 0 &&
+           "Could not collect callee saved register info");
+
+    I = MBB->begin();
+
+    // When shrink wrapping, use stack slot stores/loads.
+    for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
+      // Add the callee-saved register as live-in.
+      // It's killed at the spill.
+      MBB->addLiveIn(blockCSI[i].getReg());
+
+      // Insert the spill to the stack frame.
+      TII.storeRegToStackSlot(*MBB, I, blockCSI[i].getReg(),
+                              true,
+                              blockCSI[i].getFrameIdx(),
+                              blockCSI[i].getRegClass());
+    }
+  }
+
+  DEBUG(if (ShrinkWrapDebugging >= Details)
+          DOUT << "------------------------------"
+               << "-----------------------------\n");
+
+  for (CSRegBlockMap::iterator BI = CSRRestore.begin(),
+         BE = CSRRestore.end(); BI != BE; ++BI) {
+    MachineBasicBlock* MBB = BI->first;
+    CSRegSet restore = BI->second;
+
+    if (restore.empty())
+      continue;
+
+    DEBUG(if (ShrinkWrapDebugging >= Details)
+            DOUT << "Restoring " << stringifyCSRegSet(restore)
+                 << " in " << getBasicBlockName(MBB) << "\n");
+
+    blockCSI.clear();
+    for (CSRegSet::iterator RI = restore.begin(),
+           RE = restore.end(); RI != RE; ++RI) {
+      blockCSI.push_back(CSI[*RI]);
+    }
+    assert(blockCSI.size() > 0 &&
+           "Could not find callee saved register info");
+
+    // If MBB is empty and needs restores, insert at the _beginning_.
+    if (MBB->empty()) {
+      I = MBB->begin();
     } else {
-#ifndef NDEBUG
-      DOUT << "CSRRestore[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(restore, Fn) << "\n";
-#endif
+      I = MBB->end();
+      --I;
 
-      blockCSI.clear();
-      for (CSRegSet::iterator RI = restore.begin(),
-             RE = restore.end(); RI != RE; ++RI) {
-        blockCSI.push_back(CSI[*RI]);
+      // Skip over all terminator instructions, which are part of the
+      // return sequence.
+      if (! I->getDesc().isTerminator()) {
+        ++I;
+      } else {
+        MachineBasicBlock::iterator I2 = I;
+        while (I2 != MBB->begin() && (--I2)->getDesc().isTerminator())
+          I = I2;
       }
-      assert(blockCSI.size() > 0 &&
-             "Could not find callee saved register info");
+    }
 
-      // If MBB uses no CSRs but has restores, this means
-      // it must have restores inserted at the _beginning_.
-      // N.B. -- not necessary if edge splitting done.
-      if (MBB->empty() || ! CSRUsed[MBB].intersects(restore)) {
+    bool AtStart = I == MBB->begin();
+    MachineBasicBlock::iterator BeforeI = I;
+    if (!AtStart)
+      --BeforeI;
+
+    // Restore all registers immediately before the return and any
+    // terminators that preceed it.
+    for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
+      TII.loadRegFromStackSlot(*MBB, I, blockCSI[i].getReg(),
+                               blockCSI[i].getFrameIdx(),
+                               blockCSI[i].getRegClass());
+      assert(I != MBB->begin() &&
+             "loadRegFromStackSlot didn't insert any code!");
+      // Insert in reverse order.  loadRegFromStackSlot can insert
+      // multiple instructions.
+      if (AtStart)
         I = MBB->begin();
-      } else {
-        I = MBB->end();
-        --I;
-
-        // EXP iff spill/restore implemented with push/pop:
-        // append restore to block unless it ends in a
-        // barrier terminator instruction.
-
-        // Skip over all terminator instructions, which are part of the
-        // return sequence.
-        if (I->getDesc().isCall()) {
-          ++I;
-        } else {
-          MachineBasicBlock::iterator I2 = I;
-          while (I2 != MBB->begin() && (--I2)->getDesc().isTerminator())
-            I = I2;
-        }
-      }
-
-      bool AtStart = I == MBB->begin();
-      MachineBasicBlock::iterator BeforeI = I;
-      if (!AtStart)
-        --BeforeI;
-
-#ifndef NDEBUG
-      if (! MBB->empty() && ! CSRUsed[MBB].intersects(restore)) {
-        MachineInstr* MI = BeforeI;
-        DOUT << "adding restore after ";
-        DEBUG(MI->dump());
-      } else {
-        DOUT << "adding restore to beginning of "
-             << getBasicBlockName(MBB) << "\n";
-      }
-#endif
-
-      // Restore all registers immediately before the return and any
-      // terminators that preceed it.
-      for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
-        TII.loadRegFromStackSlot(*MBB, I, blockCSI[i].getReg(),
-                                 blockCSI[i].getFrameIdx(),
-                                 blockCSI[i].getRegClass());
-        assert(I != MBB->begin() &&
-               "loadRegFromStackSlot didn't insert any code!");
-        // Insert in reverse order.  loadRegFromStackSlot can insert
-        // multiple instructions.
-        if (AtStart)
-          I = MBB->begin();
-        else {
-          I = BeforeI;
-          ++I;
-        }
+      else {
+        I = BeforeI;
+        ++I;
       }
     }
   }
+
+  DEBUG(if (ShrinkWrapDebugging >= Details)
+          DOUT << "------------------------------"
+               << "-----------------------------\n");
 }
 
 /// AdjustStackOffset - Helper function used to adjust the stack frame offset.
@@ -1451,3 +1633,277 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
     assert(SPAdj == 0 && "Unbalanced call frame setup / destroy pairs?");
   }
 }
+
+// Debugging methods for shrink wrapping.
+#ifndef NDEBUG
+/// findFastExitPath - debugging method used to detect functions
+/// with at least one path from the entry block to a return block
+/// directly or which has a very small number of edges.
+///
+void PEI::findFastExitPath() {
+  if (! EntryBlock)
+    return;
+  // Fina a path from EntryBlock to any return block that does not branch:
+  //        Entry
+  //          |     ...
+  //          v      |
+  //         B1<-----+
+  //          |
+  //          v
+  //       Return
+  for (MachineBasicBlock::succ_iterator SI = EntryBlock->succ_begin(),
+         SE = EntryBlock->succ_end(); SI != SE; ++SI) {
+    MachineBasicBlock* SUCC = *SI;
+
+    // Assume positive, disprove existence of fast path.
+    HasFastExitPath = true;
+
+    // Check the immediate successors.
+    if (isReturnBlock(SUCC)) {
+      if (ShrinkWrapDebugging >= BasicInfo)
+        DOUT << "Fast exit path: " << getBasicBlockName(EntryBlock)
+             << "->" << getBasicBlockName(SUCC) << "\n";
+      break;
+    }
+    // Traverse df from SUCC, look for a branch block.
+    std::string exitPath = getBasicBlockName(SUCC);
+    for (df_iterator<MachineBasicBlock*> BI = df_begin(SUCC),
+           BE = df_end(SUCC); BI != BE; ++BI) {
+      MachineBasicBlock* SBB = *BI;
+      // Reject paths with branch nodes.
+      if (SBB->succ_size() > 1) {
+        HasFastExitPath = false;
+        break;
+      }
+      exitPath += "->" + getBasicBlockName(SBB);
+    }
+    if (HasFastExitPath) {
+      if (ShrinkWrapDebugging >= BasicInfo)
+        DOUT << "Fast exit path: " << getBasicBlockName(EntryBlock)
+             << "->" << exitPath << "\n";
+      break;
+    }
+  }
+}
+
+/// verifySpillRestorePlacement - check the current spill/restore
+/// sets for safety. Attempt to find spills without restores or
+/// restores without spills.
+/// Spills: walk df from each MBB in spill set ensuring that
+///         all CSRs spilled at MMBB are restored on all paths
+///         from MBB to all exit blocks.
+/// Restores: walk idf from each MBB in restore set ensuring that
+///           all CSRs restored at MBB are spilled on all paths
+///           reaching MBB.
+///
+void PEI::verifySpillRestorePlacement() {
+  unsigned numReturnBlocks = 0;
+  for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
+       MBBI != MBBE; ++MBBI) {
+    MachineBasicBlock* MBB = MBBI;
+    if (isReturnBlock(MBB) || MBB->succ_size() == 0)
+      ++numReturnBlocks;
+  }
+  for (CSRegBlockMap::iterator BI = CSRSave.begin(),
+         BE = CSRSave.end(); BI != BE; ++BI) {
+    MachineBasicBlock* MBB = BI->first;
+    CSRegSet spilled = BI->second;
+    CSRegSet restored;
+
+    if (spilled.empty())
+      continue;
+
+    DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
+         << stringifyCSRegSet(spilled)
+         << "  RESTORE[" << getBasicBlockName(MBB) << "] = "
+         << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
+
+    if (CSRRestore[MBB].intersects(spilled)) {
+      restored |= (CSRRestore[MBB] & spilled);
+    }
+
+    // Walk depth first from MBB to find restores of all CSRs spilled at MBB:
+    // we must find restores for all spills w/no intervening spills on all
+    // paths from MBB to all return blocks.
+    for (df_iterator<MachineBasicBlock*> BI = df_begin(MBB),
+           BE = df_end(MBB); BI != BE; ++BI) {
+      MachineBasicBlock* SBB = *BI;
+      if (SBB == MBB)
+        continue;
+      // Stop when we encounter spills of any CSRs spilled at MBB that
+      // have not yet been seen to be restored.
+      if (CSRSave[SBB].intersects(spilled) &&
+          !restored.contains(CSRSave[SBB] & spilled))
+        break;
+      // Collect the CSRs spilled at MBB that are restored
+      // at this DF successor of MBB.
+      if (CSRRestore[SBB].intersects(spilled))
+        restored |= (CSRRestore[SBB] & spilled);
+      // If we are at a retun block, check that the restores
+      // we have seen so far exhaust the spills at MBB, then
+      // reset the restores.
+      if (isReturnBlock(SBB) || SBB->succ_size() == 0) {
+        if (restored != spilled) {
+          CSRegSet notRestored = (spilled - restored);
+          DOUT << MF->getFunction()->getName() << ": "
+               << stringifyCSRegSet(notRestored)
+               << " spilled at " << getBasicBlockName(MBB)
+               << " are never restored on path to return "
+               << getBasicBlockName(SBB) << "\n";
+        }
+        restored.clear();
+      }
+    }
+  }
+
+  // Check restore placements.
+  for (CSRegBlockMap::iterator BI = CSRRestore.begin(),
+         BE = CSRRestore.end(); BI != BE; ++BI) {
+    MachineBasicBlock* MBB = BI->first;
+    CSRegSet restored = BI->second;
+    CSRegSet spilled;
+
+    if (restored.empty())
+      continue;
+
+    DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
+         << stringifyCSRegSet(CSRSave[MBB])
+         << "  RESTORE[" << getBasicBlockName(MBB) << "] = "
+         << stringifyCSRegSet(restored) << "\n";
+
+    if (CSRSave[MBB].intersects(restored)) {
+      spilled |= (CSRSave[MBB] & restored);
+    }
+    // Walk inverse depth first from MBB to find spills of all
+    // CSRs restored at MBB:
+    for (idf_iterator<MachineBasicBlock*> BI = idf_begin(MBB),
+           BE = idf_end(MBB); BI != BE; ++BI) {
+      MachineBasicBlock* PBB = *BI;
+      if (PBB == MBB)
+        continue;
+      // Stop when we encounter restores of any CSRs restored at MBB that
+      // have not yet been seen to be spilled.
+      if (CSRRestore[PBB].intersects(restored) &&
+          !spilled.contains(CSRRestore[PBB] & restored))
+        break;
+      // Collect the CSRs restored at MBB that are spilled
+      // at this DF predecessor of MBB.
+      if (CSRSave[PBB].intersects(restored))
+        spilled |= (CSRSave[PBB] & restored);
+    }
+    if (spilled != restored) {
+      CSRegSet notSpilled = (restored - spilled);
+      DOUT << MF->getFunction()->getName() << ": "
+           << stringifyCSRegSet(notSpilled)
+           << " restored at " << getBasicBlockName(MBB)
+           << " are never spilled\n";
+    }
+  }
+}
+
+// Debugging print methods.
+std::string PEI::getBasicBlockName(const MachineBasicBlock* MBB) {
+  std::ostringstream name;
+  if (MBB) {
+    if (MBB->getBasicBlock())
+      name << MBB->getBasicBlock()->getName();
+    else
+      name << "_MBB_" << MBB->getNumber();
+  }
+  return name.str();
+}
+
+std::string PEI::stringifyCSRegSet(const CSRegSet& s) {
+  const TargetRegisterInfo* TRI = MF->getTarget().getRegisterInfo();
+  const std::vector<CalleeSavedInfo> CSI =
+    MF->getFrameInfo()->getCalleeSavedInfo();
+
+  std::ostringstream srep;
+  if (CSI.size() == 0) {
+    srep << "[]";
+    return srep.str();
+  }
+  srep << "[";
+  CSRegSet::iterator I = s.begin(), E = s.end();
+  if (I != E) {
+    unsigned reg = CSI[*I].getReg();
+    srep << TRI->getName(reg);
+    for (++I; I != E; ++I) {
+      reg = CSI[*I].getReg();
+      srep << ",";
+      srep << TRI->getName(reg);
+    }
+  }
+  srep << "]";
+  return srep.str();
+}
+
+void PEI::dumpSet(const CSRegSet& s) {
+  DOUT << stringifyCSRegSet(s) << "\n";
+}
+
+void PEI::dumpUsed(MachineBasicBlock* MBB) {
+  if (MBB) {
+    DOUT << "CSRUsed[" << getBasicBlockName(MBB) << "] = "
+         << stringifyCSRegSet(CSRUsed[MBB])  << "\n";
+  }
+}
+
+void PEI::dumpAllUsed() {
+    for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
+         MBBI != MBBE; ++MBBI) {
+      MachineBasicBlock* MBB = MBBI;
+      dumpUsed(MBB);
+    }
+}
+
+void PEI::dumpSets(MachineBasicBlock* MBB) {
+  if (MBB) {
+    DOUT << getBasicBlockName(MBB)           << " | "
+         << stringifyCSRegSet(CSRUsed[MBB])  << " | "
+         << stringifyCSRegSet(AnticIn[MBB])  << " | "
+         << stringifyCSRegSet(AnticOut[MBB]) << " | "
+         << stringifyCSRegSet(AvailIn[MBB])  << " | "
+         << stringifyCSRegSet(AvailOut[MBB]) << "\n";
+  }
+}
+
+void PEI::dumpSets1(MachineBasicBlock* MBB) {
+  if (MBB) {
+    DOUT << getBasicBlockName(MBB)             << " | "
+         << stringifyCSRegSet(CSRUsed[MBB])    << " | "
+         << stringifyCSRegSet(AnticIn[MBB])    << " | "
+         << stringifyCSRegSet(AnticOut[MBB])   << " | "
+         << stringifyCSRegSet(AvailIn[MBB])    << " | "
+         << stringifyCSRegSet(AvailOut[MBB])   << " | "
+         << stringifyCSRegSet(CSRSave[MBB])    << " | "
+         << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
+  }
+}
+
+void PEI::dumpAllSets() {
+    for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
+         MBBI != MBBE; ++MBBI) {
+      MachineBasicBlock* MBB = MBBI;
+      dumpSets1(MBB);
+    }
+}
+
+void PEI::dumpSRSets() {
+  for (MachineFunction::iterator MBB = MF->begin(), E = MF->end();
+       MBB != E; ++MBB) {
+    if (! CSRSave[MBB].empty()) {
+      DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
+           << stringifyCSRegSet(CSRSave[MBB]);
+      if (CSRRestore[MBB].empty())
+        DOUT << "\n";
+    }
+    if (! CSRRestore[MBB].empty()) {
+      if (! CSRSave[MBB].empty())
+        DOUT << "    ";
+      DOUT << "RESTORE[" << getBasicBlockName(MBB) << "] = "
+           << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
+    }
+  }
+}
+#endif
