@@ -131,6 +131,7 @@ sub GetCCArgs {
 
 sub Analyze {
   my ($ClangCC, $Args, $Lang, $Output, $Verbose, $HtmlDir, $file, $Analyses) = @_;
+  
   $Args = GetCCArgs($Args);
 
   # Skip anything related to C++.
@@ -343,6 +344,11 @@ my %UniqueOptions = (
   '-isysroot' => 0  
 );
 
+my %LangsAccepted = (
+  "objective-c" => 1,
+  "c" => 1
+);
+
 ##----------------------------------------------------------------------------##
 #  Main Logic.
 ##----------------------------------------------------------------------------##
@@ -551,6 +557,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
     }
     
     next if (!defined $FileLang);
+    next if (!defined $LangsAccepted{$FileLang});
     
     my @AnalyzeArgs;
     
