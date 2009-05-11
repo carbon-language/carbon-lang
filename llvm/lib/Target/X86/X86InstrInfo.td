@@ -217,7 +217,7 @@ def brtarget : Operand<OtherVT>;
 // Define X86 specific addressing mode.
 def addr      : ComplexPattern<iPTR, 5, "SelectAddr", [], []>;
 def lea32addr : ComplexPattern<i32, 4, "SelectLEAAddr",
-                               [add, mul, shl, or, frameindex], []>;
+                               [add, sub, mul, shl, or, frameindex], []>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.

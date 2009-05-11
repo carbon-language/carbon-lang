@@ -868,6 +868,76 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     }
     break;
 
+  case ISD::SUB: {
+    // Given A-B, if A can be completely folded into the address and
+    // the index field with the index field unused, use -B as the index.
+    // This is a win if a has multiple parts that can be folded into
+    // the address. Also, this saves a mov if the base register has
+    // other uses, since it avoids a two-address sub instruction, however
+    // it costs an additional mov if the index register has other uses.
+
+    // Test if the LHS of the sub can be folded.
+    X86ISelAddressMode Backup = AM;
+    if (MatchAddress(N.getNode()->getOperand(0), AM, Depth+1)) {
+      AM = Backup;
+      break;
+    }
+    // Test if the index field is free for use.
+    if (AM.IndexReg.getNode() || AM.isRIPRel) {
+      AM = Backup;
+      break;
+    }
+    int Cost = 0;
+    SDValue RHS = N.getNode()->getOperand(1);
+    // If the RHS involves a register with multiple uses, this
+    // transformation incurs an extra mov, due to the neg instruction
+    // clobbering its operand.
+    if (!RHS.getNode()->hasOneUse() ||
+        RHS.getNode()->getOpcode() == ISD::CopyFromReg ||
+        RHS.getNode()->getOpcode() == ISD::TRUNCATE ||
+        RHS.getNode()->getOpcode() == ISD::ANY_EXTEND ||
+        (RHS.getNode()->getOpcode() == ISD::ZERO_EXTEND &&
+         RHS.getNode()->getOperand(0).getValueType() == MVT::i32))
+      ++Cost;
+    // If the base is a register with multiple uses, this
+    // transformation may save a mov.
+    if ((AM.BaseType == X86ISelAddressMode::RegBase &&
+         AM.Base.Reg.getNode() &&
+         !AM.Base.Reg.getNode()->hasOneUse()) ||
+        AM.BaseType == X86ISelAddressMode::FrameIndexBase)
+      --Cost;
+    // If the folded LHS was interesting, this transformation saves
+    // address arithmetic.
+    if ((AM.hasSymbolicDisplacement() && !Backup.hasSymbolicDisplacement()) +
+        ((AM.Disp != 0) && (Backup.Disp == 0)) +
+        (AM.Segment.getNode() && !Backup.Segment.getNode()) >= 2)
+      --Cost;
+    // If it doesn't look like it may be an overall win, don't do it.
+    if (Cost >= 0) {
+      AM = Backup;
+      break;
+    }
+
+    // Ok, the transformation is legal and appears profitable. Go for it.
+    SDValue Zero = CurDAG->getConstant(0, N.getValueType());
+    SDValue Neg = CurDAG->getNode(ISD::SUB, dl, N.getValueType(), Zero, RHS);
+    AM.IndexReg = Neg;
+    AM.Scale = 1;
+
+    // Insert the new nodes into the topological ordering.
+    if (Zero.getNode()->getNodeId() == -1 ||
+        Zero.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+      CurDAG->RepositionNode(N.getNode(), Zero.getNode());
+      Zero.getNode()->setNodeId(N.getNode()->getNodeId());
+    }
+    if (Neg.getNode()->getNodeId() == -1 ||
+        Neg.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+      CurDAG->RepositionNode(N.getNode(), Neg.getNode());
+      Neg.getNode()->setNodeId(N.getNode()->getNodeId());
+    }
+    return false;
+  }
+
   case ISD::ADD: {
     X86ISelAddressMode Backup = AM;
     if (!MatchAddress(N.getNode()->getOperand(0), AM, Depth+1) &&
