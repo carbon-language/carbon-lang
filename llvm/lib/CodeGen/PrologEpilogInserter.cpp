@@ -1685,10 +1685,12 @@ void PEI::findFastExitPath() {
     }
 #ifndef NDEBUG
     if (HasFastExitPath) {
+#endif
       if (ShrinkWrapDebugging >= BasicInfo)
         DOUT << "Fast exit path: " << getBasicBlockName(EntryBlock)
              << "->" << exitPath << "\n";
       break;
+#ifndef NDEBUG
     }
 #endif
   }
