@@ -27,6 +27,38 @@
 
 using namespace llvm;
 
+static const char *getIntrinsicName(unsigned opcode) {
+  std::string Basename;
+  switch(opcode) {
+  default: assert (0 && "do not know intrinsic name");
+  case PIC16ISD::SRA_I8: Basename = "sra.i8"; break;
+  case RTLIB::SRA_I16: Basename = "sra.i16"; break;
+  case RTLIB::SRA_I32: Basename = "sra.i32"; break;
+
+  case PIC16ISD::SLL_I8: Basename = "sll.i8"; break;
+  case RTLIB::SHL_I16: Basename = "sll.i16"; break;
+  case RTLIB::SHL_I32: Basename = "sll.i32"; break;
+
+  case PIC16ISD::SRL_I8: Basename = "srl.i8"; break;
+  case RTLIB::SRL_I16: Basename = "srl.i16"; break;
+  case RTLIB::SRL_I32: Basename = "srl.i32"; break;
+
+  case PIC16ISD::MUL_I8: Basename = "mul.i8"; break;
+  case RTLIB::MUL_I16: Basename = "mul.i16"; break;
+  case RTLIB::MUL_I32: Basename = "mul.i32"; break;
+  }
+  
+  std::string prefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
+  std::string tagname = PAN::getTagName(PAN::LIBCALL);
+  std::string Fullname = prefix + tagname + Basename; 
+
+  // The name has to live through program life.
+  char *tmp = new char[Fullname.size() + 1];
+  strcpy (tmp, Fullname.c_str());
+  
+  return tmp;
+}
+
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   : TargetLowering(TM), TmpSize(0) {
@@ -39,24 +71,24 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setShiftAmountFlavor(Extend);
 
   // SRA library call names
-  setPIC16LibcallName(PIC16ISD::SRA_I8, "@__intrinsics.sra.i8");
-  setLibcallName(RTLIB::SRA_I16, "@__intrinsics.sra.i16");
-  setLibcallName(RTLIB::SRA_I32, "@__intrinsics.sra.i32");
+  setPIC16LibcallName(PIC16ISD::SRA_I8, getIntrinsicName(PIC16ISD::SRA_I8));
+  setLibcallName(RTLIB::SRA_I16, getIntrinsicName(RTLIB::SRA_I16));
+  setLibcallName(RTLIB::SRA_I32, getIntrinsicName(RTLIB::SRA_I32));
 
   // SHL library call names
-  setPIC16LibcallName(PIC16ISD::SLL_I8, "@__intrinsics.sll.i8");
-  setLibcallName(RTLIB::SHL_I16, "@__intrinsics.sll.i16");
-  setLibcallName(RTLIB::SHL_I32, "@__intrinsics.sll.i32");
+  setPIC16LibcallName(PIC16ISD::SLL_I8, getIntrinsicName(PIC16ISD::SLL_I8));
+  setLibcallName(RTLIB::SHL_I16, getIntrinsicName(RTLIB::SHL_I16));
+  setLibcallName(RTLIB::SHL_I32, getIntrinsicName(RTLIB::SHL_I32));
 
   // SRL library call names
-  setPIC16LibcallName(PIC16ISD::SRL_I8, "@__intrinsics.srl.i8");
-  setLibcallName(RTLIB::SRL_I16, "@__intrinsics.srl.i16");
-  setLibcallName(RTLIB::SRL_I32, "@__intrinsics.srl.i32");
+  setPIC16LibcallName(PIC16ISD::SRL_I8, getIntrinsicName(PIC16ISD::SRL_I8));
+  setLibcallName(RTLIB::SRL_I16, getIntrinsicName(RTLIB::SRL_I16));
+  setLibcallName(RTLIB::SRL_I32, getIntrinsicName(RTLIB::SRL_I32));
 
   // MUL Library call names
-  setPIC16LibcallName(PIC16ISD::MUL_I8, "@__intrinsics.mul.i8");
-  setLibcallName(RTLIB::MUL_I16, "@__intrinsics.mul.i16");
-  setLibcallName(RTLIB::MUL_I32, "@__intrinsics.mul.i32");
+  setPIC16LibcallName(PIC16ISD::MUL_I8, getIntrinsicName(PIC16ISD::MUL_I8));
+  setLibcallName(RTLIB::MUL_I16, getIntrinsicName(RTLIB::MUL_I16));
+  setLibcallName(RTLIB::MUL_I32, getIntrinsicName(RTLIB::MUL_I32));
 
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i16, Custom);

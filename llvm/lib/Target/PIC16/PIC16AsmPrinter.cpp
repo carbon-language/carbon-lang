@@ -157,7 +157,7 @@ void PIC16AsmPrinter::printDecls(void) {
   // If no libcalls used, return.
   if (Decls.empty()) return;
 
-  const Section *S = TAI->getNamedSection(PAN::getDeclSectionName().c_str());
+  const Section *S = TAI->getNamedSection(PAN::getLibDeclSectionName().c_str());
   SwitchToSection(S);
   // Remove duplicate entries.
   Decls.sort();
@@ -166,8 +166,8 @@ void PIC16AsmPrinter::printDecls(void) {
        I != Decls.end(); I++) {
     O << TAI->getExternDirective() << *I << "\n";
     // FIXME: Use PAN::getXXXLabel() funtions hrer.
-    O << TAI->getExternDirective() << *I << ".args." << "\n";
-    O << TAI->getExternDirective() << *I << ".ret." << "\n";
+    O << TAI->getExternDirective() << PAN::getArgsLabel(*I) << "\n";
+    O << TAI->getExternDirective() << PAN::getRetvalLabel(*I) << "\n";
   }
 }
 
@@ -191,7 +191,7 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
 
 void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
  // Emit declarations for external functions.
-  O << "section.0" <<"\n";
+  O << PAN::getDeclSectionName() <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
     std::string Name = Mang->getValueName(I);
     if (Name.compare("@abort") == 0)

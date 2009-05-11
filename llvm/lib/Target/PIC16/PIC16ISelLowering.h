@@ -61,7 +61,7 @@ namespace llvm {
       ROM_SPACE = 1    // ROM address space number is 1
     };
     enum PIC16Libcall {
-      MUL_I8,
+      MUL_I8 = RTLIB::UNKNOWN_LIBCALL + 1,
       SRA_I8,
       SLL_I8,
       SRL_I8,
