@@ -1143,14 +1143,23 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
   llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
   llvm::BasicBlock *TryHandler = CGF.createBasicBlock("try.handler");
+  llvm::BasicBlock *CatchInCatch = CGF.createBasicBlock("catch.rethrow");
   llvm::BasicBlock *FinallyBlock = CGF.createBasicBlock("finally");
   llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
   llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
 
   // GNU runtime does not currently support @synchronized()
   if (!isTry) {
-    CGF.ErrorUnsupported(&S, "@synchronized statement");
+    std::vector<const llvm::Type*> Args(1, IdTy);
+    llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    llvm::Value *SyncEnter = CGM.CreateRuntimeFunction(FTy, "objc_sync_enter");
+    llvm::Value *SyncArg = 
+      CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
+    SyncArg = CGF.Builder.CreateBitCast(SyncArg, IdTy);
+    CGF.Builder.CreateCall(SyncEnter, SyncArg);
   }
+
 
   // Push an EH context entry, used for handling rethrows and jumps
   // through finally.
@@ -1198,6 +1207,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   if (isTry) {
     if (const ObjCAtCatchStmt* CatchStmt =
       cast<ObjCAtTryStmt>(S).getCatchStmts())  {
+      CGF.setInvokeDest(CatchInCatch);
 
       for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
         const ParmVarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
@@ -1286,19 +1296,43 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
     }
   }
+  // The @finally block is a secondary landing pad for any exceptions thrown in
+  // @catch() blocks
+  CGF.EmitBlock(CatchInCatch);
+  Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+  ESelArgs.clear();
+  ESelArgs.push_back(Exc);
+  ESelArgs.push_back(Personality);
+  ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+  CGF.Builder.CreateCall(llvm_eh_selector, ESelArgs.begin(), ESelArgs.end(),
+      "selector");
+  CGF.Builder.CreateCall(llvm_eh_typeid_for,
+      CGF.Builder.CreateIntToPtr(ESelArgs[2], PtrTy));
+  CGF.Builder.CreateStore(Exc, RethrowPtr);
+  CGF.EmitBranchThroughCleanup(FinallyRethrow);
+
   CodeGenFunction::CleanupBlockInfo Info = CGF.PopCleanupBlock();
 
   CGF.setInvokeDest(PrevLandingPad);
 
   CGF.EmitBlock(FinallyBlock);
 
+
   if (isTry) {
     if (const ObjCAtFinallyStmt* FinallyStmt = 
         cast<ObjCAtTryStmt>(S).getFinallyStmt())
       CGF.EmitStmt(FinallyStmt->getFinallyBody());
   } else {
-    // TODO: Emit 'objc_sync_exit(expr)' as finally's sole statement for
+    // Emit 'objc_sync_exit(expr)' as finally's sole statement for
     // @synchronized.
+    std::vector<const llvm::Type*> Args(1, IdTy);
+    llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    llvm::Value *SyncExit = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
+    llvm::Value *SyncArg = 
+      CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
+    SyncArg = CGF.Builder.CreateBitCast(SyncArg, IdTy);
+    CGF.Builder.CreateCall(SyncExit, SyncArg);
   }
 
   if (Info.SwitchBlock)
