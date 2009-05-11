@@ -1717,3 +1717,38 @@ int int_char(char m) {if(m>7) return 0; return m;}
 
 //===---------------------------------------------------------------------===//
 
+InstCombine's "turn load from constant into constant" optimization should be
+more aggressive in the presence of bitcasts.  For example, because of unions,
+this code:
+
+union vec2d {
+    double e[2];
+    double v __attribute__((vector_size(16)));
+};
+typedef union vec2d vec2d;
+
+static vec2d a={{1,2}}, b={{3,4}};
+    
+vec2d foo () {
+    return (vec2d){ .v = a.v + b.v * (vec2d){{5,5}}.v };
+}
+
+Compiles into:
+
+@a = internal constant %0 { [2 x double] 
+           [double 1.000000e+00, double 2.000000e+00] }, align 16
+@b = internal constant %0 { [2 x double]
+           [double 3.000000e+00, double 4.000000e+00] }, align 16
+...
+define void @foo(%struct.vec2d* noalias nocapture sret %agg.result) nounwind {
+entry:
+	%0 = load <2 x double>* getelementptr (%struct.vec2d* 
+           bitcast (%0* @a to %struct.vec2d*), i32 0, i32 0), align 16
+	%1 = load <2 x double>* getelementptr (%struct.vec2d* 
+           bitcast (%0* @b to %struct.vec2d*), i32 0, i32 0), align 16
+
+
+Instcombine should be able to optimize away the loads (and thus the globals).
+
+
+//===---------------------------------------------------------------------===//
