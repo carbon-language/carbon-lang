@@ -23,13 +23,12 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/DerivedTypes.h"
 #include <string>
 
 namespace llvm {
 
 class Value;
-class Type;
-class StructType;
 class StructLayout;
 class GlobalVariable;
 
@@ -228,7 +227,7 @@ public:
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
   ///
-  const Type *getIntPtrType() const;
+  const IntegerType *getIntPtrType() const;
 
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
