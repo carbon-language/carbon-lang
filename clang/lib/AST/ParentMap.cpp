@@ -46,6 +46,11 @@ Stmt* ParentMap::getParent(Stmt* S) const {
   return I == M->end() ? 0 : I->second;
 }
 
+Stmt *ParentMap::getParentIgnoreParens(Stmt *S) const {
+  do { S = getParent(S); } while (S && isa<ParenExpr>(S));
+  return S;
+}
+
 bool ParentMap::isConsumedExpr(Expr* E) const {
   Stmt *P = getParent(E);
   Stmt *DirectChild = E;
