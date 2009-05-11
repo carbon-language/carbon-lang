@@ -77,38 +77,51 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
   EmitBlock(EndBlock);
 }
 
+RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
+                                          llvm::Value *Callee,
+                                          llvm::Value *This,
+                                          CallExpr::const_arg_iterator ArgBeg,
+                                          CallExpr::const_arg_iterator ArgEnd) {
+  assert(MD->isInstance() && 
+         "Trying to emit a member call expr on a static method!");
+
+  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  
+  CallArgList Args;
+  
+  // Push the this ptr.
+  Args.push_back(std::make_pair(RValue::get(This),
+                                MD->getThisType(getContext())));
+  
+  // And the rest of the call args
+  EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
+  
+  QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
+                  Callee, Args, MD);
+}
+
 RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   const MemberExpr *ME = cast<MemberExpr>(CE->getCallee());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
-  assert(MD->isInstance() && 
-         "Trying to emit a member call expr on a static method!");
-  
+
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
   const llvm::Type *Ty = 
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
                                    FPT->isVariadic());
   llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, Ty);
   
-  llvm::Value *BaseValue = 0;
+  llvm::Value *This;
   
   if (ME->isArrow())
-    BaseValue = EmitScalarExpr(ME->getBase());
+    This = EmitScalarExpr(ME->getBase());
   else {
     LValue BaseLV = EmitLValue(ME->getBase());
-    BaseValue = BaseLV.getAddress();
+    This = BaseLV.getAddress();
   }
   
-  CallArgList Args;
-  
-  // Push the 'this' pointer.
-  Args.push_back(std::make_pair(RValue::get(BaseValue), 
-                                MD->getThisType(getContext())));
-  
-  EmitCallArgs(Args, FPT, CE->arg_begin(), CE->arg_end());
-  
-  QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), 
-                  Callee, Args, MD);
+  return EmitCXXMemberCall(MD, Callee, This, 
+                           CE->arg_begin(), CE->arg_end());
 }
 
 llvm::Value *CodeGenFunction::LoadCXXThis() {
@@ -127,16 +140,9 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
-  CallArgList Args;
-  
-  // Push the 'this' pointer.
-  Args.push_back(std::make_pair(RValue::get(This), 
-                                D->getThisType(getContext())));
-  
-  EmitCallArgs(Args, D->getType()->getAsFunctionProtoType(), ArgBeg, ArgEnd);
-  
-  EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args), 
-           CGM.GetAddrOfCXXConstructor(D, Type), Args, D);
+  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
+
+  EmitCXXMemberCall(D, Callee, This, ArgBeg, ArgEnd);
 }
 
 void 
@@ -198,6 +204,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D), false);
   
   const char *Name = getMangledCXXCtorName(D, Type);
+  
   return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, D));
 }
 

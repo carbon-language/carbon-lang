@@ -668,6 +668,13 @@ public:
                   const Decl *TargetDecl = 0);
 
   RValue EmitCallExpr(const CallExpr *E);
+  
+  RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
+                           llvm::Value *Callee,
+                           llvm::Value *This,
+                           CallExpr::const_arg_iterator ArgBeg,
+                           CallExpr::const_arg_iterator ArgEnd);
+  
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E);
 
   RValue EmitCallExpr(llvm::Value *Callee, QualType FnType,
