@@ -1092,6 +1092,21 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
             } else {
               DidChange = true;
               PMBB->ReplaceUsesOfBlockWith(MBB, CurTBB);
+              // If this change resulted in PMBB ending in a conditional
+              // branch where both conditions go to the same destination,
+              // change this to an unconditional branch (and fix the CFG).
+              MachineBasicBlock *NewCurTBB = 0, *NewCurFBB = 0;
+              SmallVector<MachineOperand, 4> NewCurCond;
+              bool NewCurUnAnalyzable = TII->AnalyzeBranch(*PMBB, NewCurTBB,
+                      NewCurFBB, NewCurCond, true);
+              if (!NewCurUnAnalyzable && NewCurTBB && NewCurTBB == NewCurFBB) {
+                TII->RemoveBranch(*PMBB);
+                NewCurCond.clear(); 
+                TII->InsertBranch(*PMBB, NewCurTBB, 0, NewCurCond);
+                MadeChange = true;
+                ++NumBranchOpts;
+                PMBB->CorrectExtraCFGEdges(NewCurTBB, NewCurFBB, false);
+              }
             }
           }
 
