@@ -170,11 +170,11 @@ if anyone cared enough about sincos.
 Turn this into a single byte store with no load (the other 3 bytes are
 unmodified):
 
-void %test(uint* %P) {
-	%tmp = load uint* %P
-        %tmp14 = or uint %tmp, 3305111552
-        %tmp15 = and uint %tmp14, 3321888767
-        store uint %tmp15, uint* %P
+define void @test(i32* %P) {
+	%tmp = load i32* %P
+        %tmp14 = or i32 %tmp, 3305111552
+        %tmp15 = and i32 %tmp14, 3321888767
+        store i32 %tmp15, i32* %P
         ret void
 }
 
