@@ -21,6 +21,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include <list>
+#include <string>
 
 namespace llvm {
   struct VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
@@ -28,8 +30,6 @@ namespace llvm {
                              const TargetAsmInfo *T, CodeGenOpt::Level OL,
                              bool V)
       : AsmPrinter(O, TM, T, OL, V) {
-      FunctionLabelBegin = '@';
-      IsRomData = false;
       PTLI = TM.getTargetLowering();
     }
     private :
@@ -46,6 +46,7 @@ namespace llvm {
     void EmitGlobalData (Module &M);
     void EmitRomData (Module &M);
     void emitFunctionData(MachineFunction &MF);
+    void printDecls(void);
 
     protected:
     bool doInitialization(Module &M);
@@ -53,8 +54,7 @@ namespace llvm {
 
     private:
     PIC16TargetLowering *PTLI;
-    bool IsRomData;
-    char FunctionLabelBegin;
+    std::list<const char *> Decls; // List of extern decls.
   };
 } // end of namespace
 

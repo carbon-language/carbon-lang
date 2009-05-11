@@ -114,7 +114,7 @@ namespace PIC16CC {
       case TEMPS_LABEL:       return ".temp.";
       case ARGS_LABEL:       return ".args.";
       case RET_LABEL:       return ".ret.";
-      case LIBCALL:       return ".lib.";
+      case LIBCALL:       return "__intrinsics";
       case FRAME_SECTION:       return ".fpdata.";
       case AUTOS_SECTION:       return ".fadata.";
       case CODE_SECTION:       return "code";
@@ -232,6 +232,12 @@ namespace PIC16CC {
        std::ostringstream o;
        o << getTagName(PREFIX_SYMBOL) << "idata." << num << ".# IDATA"; 
        return o.str(); 
+    }
+
+    static std::string getDeclSectionName(void) {
+       std::string dsname = "decl_section.1";
+       dsname = addPrefix(dsname);
+       return dsname; 
     }
 
     inline static bool isLocalName (const std::string &Name) {

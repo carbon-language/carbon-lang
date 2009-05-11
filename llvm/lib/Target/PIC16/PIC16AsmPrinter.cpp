@@ -87,6 +87,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
           CurLine = line;
         }
       }
+        
       // Print the assembly for the instruction.
       printMachineInstruction(II);
     }
@@ -106,6 +107,8 @@ FunctionPass *llvm::createPIC16CodePrinterPass(raw_ostream &o,
   return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }
 
+
+// printOperand - print operand of insn.
 void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
 
@@ -126,8 +129,14 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
-      std::string Name = MO.getSymbolName(); 
-      O  << MO.getSymbolName();
+       const char *Sname = MO.getSymbolName();
+
+      // If its a libcall name, record it to decls section.
+      if (PAN::getSymbolTag(Sname) == PAN::LIBCALL) {
+        Decls.push_back(Sname);
+      }
+
+      O  << Sname;
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
@@ -144,6 +153,23 @@ void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
   O << PIC16CondCodeToString((PIC16CC::CondCodes)CC);
 }
 
+void PIC16AsmPrinter::printDecls(void) {
+  // If no libcalls used, return.
+  if (Decls.empty()) return;
+
+  const Section *S = TAI->getNamedSection(PAN::getDeclSectionName().c_str());
+  SwitchToSection(S);
+  // Remove duplicate entries.
+  Decls.sort();
+  Decls.unique();
+  for (std::list<const char*>::const_iterator I = Decls.begin(); 
+       I != Decls.end(); I++) {
+    O << TAI->getExternDirective() << *I << "\n";
+    // FIXME: Use PAN::getXXXLabel() funtions hrer.
+    O << TAI->getExternDirective() << *I << ".args." << "\n";
+    O << TAI->getExternDirective() << *I << ".ret." << "\n";
+  }
+}
 
 bool PIC16AsmPrinter::doInitialization (Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
@@ -188,7 +214,7 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
 
   // Emit header file to include declaration of library functions
   // FIXME: find out libcall names.
-  O << "\t#include C16IntrinsicCalls.INC\n";
+  // O << "\t#include C16IntrinsicCalls.INC\n";
 
   // Emit declarations for external variable declarations and definitions.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -212,7 +238,6 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
 void PIC16AsmPrinter::EmitRomData (Module &M)
 {
   SwitchToSection(TAI->getReadOnlySection());
-  IsRomData = true;
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer())   // External global require no code.
@@ -238,10 +263,10 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
       O << "\n";
     }
   }
-  IsRomData = false;
 }
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
+  printDecls();
   O << "\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
   return Result;

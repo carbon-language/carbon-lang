@@ -137,6 +137,8 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
   }
 
   // Get the section name(NewBank) for MemOp.
+  // This assumes that the section names for globals are laready set by
+  // AsmPrinter->doInitialization.
   std::string NewBank = CurBank;
   if (Op.getType() ==  MachineOperand::MO_GlobalAddress &&
       Op.getGlobal()->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE) {
