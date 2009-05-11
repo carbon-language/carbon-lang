@@ -777,36 +777,51 @@ class VISIBILITY_HIDDEN EdgeBuilder {
   
   PathDiagnosticLocation getContextLocation(const PathDiagnosticLocation &L);
   
-  PathDiagnosticLocation cleanUpLocation(const PathDiagnosticLocation &L) {
+  PathDiagnosticLocation cleanUpLocation(PathDiagnosticLocation L,
+                                         bool firstCharOnly = false) {
     if (const Stmt *S = L.asStmt()) {
+      const Stmt *Original = S;
       while (1) {
         // Adjust the location for some expressions that are best referenced
         // by one of their subexpressions.
-        if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
-          S = PE->IgnoreParens();
-        else if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S))
-          S = CO->getCond();
-        else if (const ChooseExpr *CE = dyn_cast<ChooseExpr>(S))
-          S = CE->getCond();
-        else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
-          S = BE->getLHS();
-        else
-          break;
+        switch (S->getStmtClass()) {
+          default:
+            break;
+          case Stmt::ParenExprClass:
+            S = cast<ParenExpr>(S)->IgnoreParens();
+            firstCharOnly = true;
+            continue;
+          case Stmt::ConditionalOperatorClass:
+            S = cast<ConditionalOperator>(S)->getCond();
+            firstCharOnly = true;
+            continue;
+          case Stmt::ChooseExprClass:
+            S = cast<ChooseExpr>(S)->getCond();
+            firstCharOnly = true;
+            continue;
+          case Stmt::BinaryOperatorClass:
+            S = cast<BinaryOperator>(S)->getLHS();
+            firstCharOnly = true;
+            continue;
+        }
+        
+        break;
       }
       
-      return PathDiagnosticLocation(S, L.getManager());
+      if (S != Original)
+        L = PathDiagnosticLocation(S, L.getManager());
     }
     
+    if (firstCharOnly)
+      L = PathDiagnosticLocation(L.asLocation());
+
     return L;
   }
   
   void popLocation() {
     if (!CLocs.back().isDead() && CLocs.back().asLocation().isFileID()) {
-      PathDiagnosticLocation L = cleanUpLocation(CLocs.back());
-      
       // For contexts, we only one the first character as the range.
-      L = PathDiagnosticLocation(L.asLocation(), L.getManager());      
-      rawAddEdge(L);
+      rawAddEdge( cleanUpLocation(CLocs.back(), true));
     }
     CLocs.pop_back();
   }
