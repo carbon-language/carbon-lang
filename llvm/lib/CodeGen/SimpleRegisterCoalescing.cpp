@@ -608,14 +608,29 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
 
   // If copy kills the source register, find the last use and propagate
   // kill.
+  bool checkForDeadDef = false;
   MachineBasicBlock *MBB = CopyMI->getParent();
   if (CopyMI->killsRegister(SrcInt.reg))
-    TrimLiveIntervalToLastUse(CopyIdx, MBB, SrcInt, SrcLR);
+    if (!TrimLiveIntervalToLastUse(CopyIdx, MBB, SrcInt, SrcLR)) {
+      checkForDeadDef = true;
+    }
 
   MachineBasicBlock::iterator MII = next(MachineBasicBlock::iterator(CopyMI));
   CopyMI->removeFromParent();
   tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
   MachineInstr *NewMI = prior(MII);
+
+  if (checkForDeadDef) {
+      // PR4090 fix: Trim interval failed because there was no use of the
+      // source interval in this MBB. If the def is in this MBB too then we
+      // should mark it dead:
+      if (DefMI->getParent() == MBB) {
+        DefMI->addRegisterDead(SrcInt.reg, tri_);
+        SrcLR->end = SrcLR->start + 1;
+      }
+ 
+  }
+
   // CopyMI may have implicit operands, transfer them over to the newly
   // rematerialized instruction. And update implicit def interval valnos.
   for (unsigned i = CopyMI->getDesc().getNumOperands(),
