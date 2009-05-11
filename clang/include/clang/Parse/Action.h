@@ -933,6 +933,13 @@ public:
     return DeclPtrTy();
   }
 
+  /// ActOnFriendDecl - This action is called when a friend declaration is
+  /// encountered. Returns false on success.
+  virtual bool ActOnFriendDecl(Scope *S, SourceLocation FriendLoc,
+                               DeclPtrTy Dcl) {
+    return false;
+  }
+  
 
   //===------------------------- C++ Expressions --------------------------===//
 

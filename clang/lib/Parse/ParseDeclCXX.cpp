@@ -525,10 +525,18 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   }
 
   const char *PrevSpec = 0;
-  if (TagOrTempResult.isInvalid())
+  if (TagOrTempResult.isInvalid()) {
     DS.SetTypeSpecError();
-  else if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
-                              TagOrTempResult.get().getAs<void>()))
+    return;
+  }
+  
+  if (DS.isFriendSpecified() && 
+      !Actions.ActOnFriendDecl(CurScope, DS.getFriendSpecLoc(), 
+                               TagOrTempResult.get()))
+    return;
+    
+  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
+                         TagOrTempResult.get().getAs<void>()))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 

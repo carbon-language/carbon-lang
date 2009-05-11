@@ -284,6 +284,7 @@ public:
   
   bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec);
   bool isFriendSpecified() const { return Friend_specified; }
+  SourceLocation getFriendSpecLoc() const { return FriendLoc; }
 
   /// AddAttributes - contatenates two attribute lists. 
   /// The GCC attribute syntax allows for the following:
