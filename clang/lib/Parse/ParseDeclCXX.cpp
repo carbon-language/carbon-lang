@@ -530,14 +530,13 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     return;
   }
   
-  if (DS.isFriendSpecified() && 
-      !Actions.ActOnFriendDecl(CurScope, DS.getFriendSpecLoc(), 
-                               TagOrTempResult.get()))
-    return;
-    
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
                          TagOrTempResult.get().getAs<void>()))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+  
+  if (DS.isFriendSpecified())
+    Actions.ActOnFriendDecl(CurScope, DS.getFriendSpecLoc(), 
+                            TagOrTempResult.get());
 }
 
 /// ParseBaseClause - Parse the base-clause of a C++ class [C++ class.derived]. 
