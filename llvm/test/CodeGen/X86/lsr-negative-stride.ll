@@ -16,7 +16,7 @@
 ;}
 
 
-define i32 @t(i32 %a, i32 %b) {
+define i32 @t(i32 %a, i32 %b) nounwind {
 entry:
 	%tmp1434 = icmp eq i32 %a, %b		; <i1> [#uses=1]
 	br i1 %tmp1434, label %bb17, label %bb.outer
