@@ -129,6 +129,17 @@ typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string );
 
+ @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
+ - (NSUInteger)count;
+ + (id)array;
+ @end
+ 
+@interface NSAutoreleasePool : NSObject {}
++ (void)addObject:(id)anObject;
+- (void)addObject:(id)anObject;
+- (void)drain;
+@end
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -487,6 +498,18 @@ void rdar6704930(unsigned char *s, unsigned int length) {
     [super dealloc];
 }
 @end
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6257780> clang checker fails to catch use-after-release
+//===----------------------------------------------------------------------===//
+                                 
+int rdar_6257780() {
+  NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+  NSArray *array = [NSArray array];
+  [array release]; // expected-warning{{Incorrect decrement of the reference count of an object is not owned at this point by the caller}}
+  [pool drain];
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
