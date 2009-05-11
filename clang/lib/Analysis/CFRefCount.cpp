@@ -2660,7 +2660,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         if (R) {
           // Are we dealing with an ElementRegion?  If the element type is
           // a basic integer type (e.g., char, int) and the underying region
-          // is also typed then strip off the ElementRegion.
+          // is a variable region then strip off the ElementRegion.
           // FIXME: We really need to think about this for the general case
           //   as sometimes we are reasoning about arrays and other times
           //   about (char*), etc., is just a form of passing raw bytes.
@@ -2674,8 +2674,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             // still allowing us to do checker-specific logic (e.g.,
             // invalidating reference counts), probably via callbacks.            
             if (ER->getElementType()->isIntegralType())
-              if (const TypedRegion *superReg =
-                  dyn_cast<TypedRegion>(ER->getSuperRegion()))
+              if (const VarRegion *superReg =
+                  dyn_cast<VarRegion>(ER->getSuperRegion()))
                 R = superReg;
             // FIXME: What about layers of ElementRegions?
           }
