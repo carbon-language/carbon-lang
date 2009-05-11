@@ -455,7 +455,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   Action::TagKind TK;
   if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon)))
     TK = Action::TK_Definition;
-  else if (Tok.is(tok::semi))
+  else if (Tok.is(tok::semi) && !DS.isFriendSpecified())
     TK = Action::TK_Declaration;
   else
     TK = Action::TK_Reference;
