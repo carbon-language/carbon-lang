@@ -1731,6 +1731,9 @@ public:
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr);
   
+  virtual bool ActOnFriendDecl(Scope *S, SourceLocation FriendLoc,
+                               DeclPtrTy Dcl);
+
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
                                       FunctionDecl::StorageClass& SC);
   void CheckConstructor(CXXConstructorDecl *Constructor);

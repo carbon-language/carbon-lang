@@ -243,6 +243,9 @@ def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;
 def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
 
+def err_friend_decl_outside_class : Error<
+  "'friend' used outside of class">;
+
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}1 type %0 is an abstract class">;
 def err_allocation_of_abstract_type : Error<

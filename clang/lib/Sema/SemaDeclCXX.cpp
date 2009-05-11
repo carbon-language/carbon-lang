@@ -2643,6 +2643,15 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   return DeclPtrTy::make(Decl);
 }
 
+bool Sema::ActOnFriendDecl(Scope *S, SourceLocation FriendLoc, DeclPtrTy Dcl) {
+  if (!(S->getFlags() & Scope::ClassScope)) {
+    Diag(FriendLoc, diag::err_friend_decl_outside_class);
+    return true;
+  }
+  
+  return false;
+}
+
 void Sema::SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc) {
   Decl *Dcl = dcl.getAs<Decl>();
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(Dcl);
