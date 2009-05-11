@@ -827,13 +827,11 @@ SVal RegionStoreManager::RetrieveArray(const GRState* St, const TypedRegion* R){
 
   llvm::ImmutableList<SVal> ArrayVal = getBasicVals().getEmptySValList();
   llvm::APSInt Size(CAT->getSize(), false);
-  llvm::APSInt i = getBasicVals().getValue(0, Size.getBitWidth(), 
-					   Size.isUnsigned());
+  llvm::APSInt i = getBasicVals().getZeroWithPtrWidth(false);
 
   for (; i < Size; ++i) {
     SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-    ElementRegion* ER = MRMgr.getElementRegion(R->getValueType(getContext()),
-                                               Idx, R);
+    ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R);
     QualType ETy = ER->getElementType();
     SVal ElementVal = Retrieve(St, loc::MemRegionVal(ER), ETy);
     ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
