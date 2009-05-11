@@ -145,6 +145,100 @@ namespace {
   // metadata, string concatenation is lame.
 
 class ObjCCommonTypesHelper {
+private:
+  llvm::Constant *getMessageSendFn() const {
+    // id objc_msgSend (id, SEL, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params, true),
+                              "objc_msgSend");
+  }
+  
+  llvm::Constant *getMessageSendStretFn() const {
+    // id objc_msgSend_stret (id, SEL, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params, true),
+                              "objc_msgSend_stret");
+    
+  }
+  
+  llvm::Constant *getMessageSendFpretFn() const {
+    // FIXME: This should be long double on x86_64?
+    // [double | long double] objc_msgSend_fpret(id self, SEL op, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSend_fpret");
+    
+  }
+  
+  llvm::Constant *getMessageSendSuperFn() const {
+    // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
+    const char *SuperName = "objc_msgSendSuper";
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     SuperName);
+  }
+  
+  llvm::Constant *getMessageSendSuperFn2() const {
+    // id objc_msgSendSuper2(struct objc_super *super, SEL op, ...)
+    const char *SuperName = "objc_msgSendSuper2";
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                             Params, true),
+                                     SuperName);
+  }
+  
+  llvm::Constant *getMessageSendSuperStretFn() const {
+    // void objc_msgSendSuper_stret(void * stretAddr, struct objc_super *super,
+    //                              SEL op, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(Int8PtrTy);
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, true),
+                                     "objc_msgSendSuper_stret");
+  }
+  
+  llvm::Constant *getMessageSendSuperStretFn2() const {
+    // void objc_msgSendSuper2_stret(void * stretAddr, struct objc_super *super,
+    //                               SEL op, ...)
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(Int8PtrTy);
+    Params.push_back(SuperPtrTy);
+    Params.push_back(SelectorPtrTy);
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                             Params, true),
+                                     "objc_msgSendSuper2_stret");
+  }
+  
+  llvm::Constant *getMessageSendSuperFpretFn() const {
+    // There is no objc_msgSendSuper_fpret? How can that work?
+    return getMessageSendSuperFn();
+  }
+  
+  llvm::Constant *getMessageSendSuperFpretFn2() const {
+    // There is no objc_msgSendSuper_fpret? How can that work?
+    return getMessageSendSuperFn2();
+  }
+  
 protected:
   CodeGen::CodeGenModule &CGM;
   
@@ -308,6 +402,30 @@ public:
     return CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
   }
   
+  llvm::Constant *getSendFn(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperFn() : getMessageSendFn();
+  }
+  
+  llvm::Constant *getSendFn2(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperFn2() : getMessageSendFn();
+  }
+  
+  llvm::Constant *getSendStretFn(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperStretFn() : getMessageSendStretFn();
+  }
+  
+  llvm::Constant *getSendStretFn2(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperStretFn2() : getMessageSendStretFn();
+  }
+  
+  llvm::Constant *getSendFpretFn(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperFpretFn() : getMessageSendFpretFn();
+  }
+  
+  llvm::Constant *getSendFpretFn2(bool IsSuper) const {
+    return IsSuper ? getMessageSendSuperFpretFn2() : getMessageSendFpretFn();
+  }
+  
   ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCCommonTypesHelper(){}
 };
@@ -315,71 +433,6 @@ public:
 /// ObjCTypesHelper - Helper class that encapsulates lazy
 /// construction of varies types used during ObjC generation.
 class ObjCTypesHelper : public ObjCCommonTypesHelper {
-private:
-  
-  llvm::Constant *getMessageSendFn() {
-    // id objc_msgSend (id, SEL, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(ObjectPtrTy);
-    Params.push_back(SelectorPtrTy);
-    return
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                        Params, true),
-                                "objc_msgSend");
-  }
-  
-  llvm::Constant *getMessageSendStretFn() {
-    // id objc_msgSend_stret (id, SEL, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(ObjectPtrTy);
-    Params.push_back(SelectorPtrTy);
-    return
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                        Params, true),
-                                "objc_msgSend_stret");
-    
-  }
-  
-  llvm::Constant *getMessageSendFpretFn() {
-    // FIXME: This should be long double on x86_64?
-    // [double | long double] objc_msgSend_fpret(id self, SEL op, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(ObjectPtrTy);
-    Params.push_back(SelectorPtrTy);
-    return
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
-                                                        Params,
-                                                        true),
-                                "objc_msgSend_fpret");
-    
-  }
-  
-  llvm::Constant *getMessageSendSuperFn() {
-    // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(SuperPtrTy);
-    Params.push_back(SelectorPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, true),
-                                     "objc_msgSendSuper");
-  }
-  llvm::Constant *getMessageSendSuperStretFn() {
-    // void objc_msgSendSuper_stret(void * stretAddr, struct objc_super *super, 
-    //                              SEL op, ...)
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(Int8PtrTy);
-    Params.push_back(SuperPtrTy);
-    Params.push_back(SelectorPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                             Params, true),
-                                     "objc_msgSendSuper_stret");
-  }
-  
-  llvm::Constant *getMessageSendSuperFpretFn() {
-    // There is no objc_msgSendSuper_fpret? How can that work?
-    return getMessageSendSuperFn();
-  }
-
 public:
   /// SymtabTy - LLVM type for struct objc_symtab.
   const llvm::StructType *SymtabTy;
@@ -488,19 +541,6 @@ public:
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper() {}
-
-
-  llvm::Constant *getSendFn(bool IsSuper) {
-    return IsSuper ? getMessageSendSuperFn() : getMessageSendFn();
-  }
-
-  llvm::Constant *getSendStretFn(bool IsSuper) {
-    return IsSuper ? getMessageSendSuperStretFn() : getMessageSendStretFn();
-  }
-
-  llvm::Constant *getSendFpretFn(bool IsSuper) {
-    return IsSuper ? getMessageSendSuperFpretFn() : getMessageSendFpretFn();
-  }
 };
 
 /// ObjCNonFragileABITypesHelper - will have all types needed by objective-c's
@@ -871,6 +911,15 @@ protected:
   /// ivars.
   void GetNamedIvarList(const ObjCInterfaceDecl *OID,
                         llvm::SmallVector<ObjCIvarDecl*, 16> &Res) const;
+  
+  CodeGen::RValue EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
+                                        QualType ResultType,
+                                        llvm::Value *Sel,
+                                        llvm::Value *Arg0,
+                                        QualType Arg0Ty,
+                                        bool IsSuper,
+                                        const CallArgList &CallArgs,
+                                        const ObjCCommonTypesHelper &ObjCTypes);
 
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
@@ -1089,6 +1138,14 @@ private:
 
   /// EHTypeReferences - uniqued class ehtype references.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> EHTypeReferences;
+  
+  /// NoneLegacyDispatchMethods - List of methods for which we do *not* generate
+  /// legacy messaging dispatch.
+  llvm::StringMap<bool> NoneLegacyDispatchMethods;
+  
+  /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
+  /// NoneLegacyDispatchMethods; flase otherwise.
+  bool LegacyDispatchedSelector(Selector Sel);
   
   /// FinishNonFragileABIModule - Write out global data structures at the end of
   /// processing a translation unit.
@@ -1387,10 +1444,10 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
   CGF.Builder.CreateStore(Target, 
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
-    
-  return EmitMessageSend(CGF, ResultType, Sel, 
-                         ObjCSuper, ObjCTypes.SuperPtrCTy,
-                         true, CallArgs);
+  return EmitLegacyMessageSend(CGF, ResultType, 
+                               EmitSelector(CGF.Builder, Sel),
+                               ObjCSuper, ObjCTypes.SuperPtrCTy,
+                               true, CallArgs, ObjCTypes);
 }
                                            
 /// Generate code for a message send expression.  
@@ -1401,42 +1458,56 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                bool IsClassMessage,
                                                const CallArgList &CallArgs,
                                                const ObjCMethodDecl *Method) {
-  return EmitMessageSend(CGF, ResultType, Sel,
-                         Receiver, CGF.getContext().getObjCIdType(),
-                         false, CallArgs);
+  return EmitLegacyMessageSend(CGF, ResultType,
+                               EmitSelector(CGF.Builder, Sel),
+                               Receiver, CGF.getContext().getObjCIdType(),
+                               false, CallArgs, ObjCTypes);
 }
 
-CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
-                                           QualType ResultType,
-                                           Selector Sel,
-                                           llvm::Value *Arg0,
-                                           QualType Arg0Ty,
-                                           bool IsSuper,
-                                           const CallArgList &CallArgs) {
+CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
+                                      CodeGen::CodeGenFunction &CGF,
+                                      QualType ResultType,
+                                      llvm::Value *Sel,
+                                      llvm::Value *Arg0,
+                                      QualType Arg0Ty,
+                                      bool IsSuper,
+                                      const CallArgList &CallArgs,
+                                      const ObjCCommonTypesHelper &ObjCTypes) {
   CallArgList ActualArgs;
   if (!IsSuper)
     Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
   ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
-  ActualArgs.push_back(std::make_pair(RValue::get(EmitSelector(CGF.Builder, 
-                                                               Sel)),
+  ActualArgs.push_back(std::make_pair(RValue::get(Sel),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-
+  
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
-  // FIXME. vararg flag must be true when this API is used for 64bit code gen.
-  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, false);
-
-  llvm::Constant *Fn;
+  // In 64bit ABI, type must be assumed VARARG. It 32bit abi, 
+  // it seems not to matter.
+  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, (ObjCABI == 2));
+  
+  llvm::Constant *Fn = NULL;
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
-    Fn = ObjCTypes.getSendStretFn(IsSuper);
+    Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
+    : ObjCTypes.getSendStretFn(IsSuper);
   } else if (ResultType->isFloatingType()) {
     // FIXME: Sadly, this is wrong. This actually depends on the
     // architecture. This happens to be right for x86-32 though.
-    Fn = ObjCTypes.getSendFpretFn(IsSuper);
+    if (ObjCABI == 2) {
+      if (const BuiltinType *BT = ResultType->getAsBuiltinType()) {
+        BuiltinType::Kind k = BT->getKind();
+        Fn = (k == BuiltinType::LongDouble) ? ObjCTypes.getSendFpretFn2(IsSuper)
+              : ObjCTypes.getSendFn2(IsSuper);
+      }
+    }
+    else
+      Fn = ObjCTypes.getSendFpretFn(IsSuper);
   } else {
-    Fn = ObjCTypes.getSendFn(IsSuper);
+    Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
+                        : ObjCTypes.getSendFn(IsSuper);
   }
+  assert(Fn && "EmitLegacyMessageSend - unknown API");
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(FnInfo, Fn, ActualArgs);
 }
@@ -4054,6 +4125,41 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   
 }
 
+/// LegacyDispatchedSelector - Returns true if SEL is not in the list of
+/// NoneLegacyDispatchMethods; flase otherwise. What this means is that
+/// except for the 19 selectors in the list, we generate 32bit-style 
+/// message dispatch call for all the rest.
+///
+bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
+  // FIXME! Lagcy API in Nonfragile ABI is for 10.6 on
+  if (NoneLegacyDispatchMethods.empty()) {
+    NoneLegacyDispatchMethods["allocWithZone:"] = true;
+    NoneLegacyDispatchMethods["alloc"] = true;
+    NoneLegacyDispatchMethods["class"] = true;
+    NoneLegacyDispatchMethods["self"] = true;
+    NoneLegacyDispatchMethods["isKindOfClass:"] = true;
+    NoneLegacyDispatchMethods["respondsToSelector:"] = true;
+    NoneLegacyDispatchMethods["isFlipped"] = true;
+    NoneLegacyDispatchMethods["length"] = true;
+    NoneLegacyDispatchMethods["objectForKey:"] = true;
+    NoneLegacyDispatchMethods["count"] = true;
+    NoneLegacyDispatchMethods["objectAtIndex:"] = true;
+    NoneLegacyDispatchMethods["isEqualToString:"] = true;
+    NoneLegacyDispatchMethods["isEqual:"] = true;
+    NoneLegacyDispatchMethods["retain"] = true;
+    NoneLegacyDispatchMethods["release"] = true;
+    NoneLegacyDispatchMethods["autorelease"] = true;
+    NoneLegacyDispatchMethods["hash"] = true;
+    NoneLegacyDispatchMethods["addObject:"] = true;
+    NoneLegacyDispatchMethods["countByEnumeratingWithState:objects:count:"] 
+      = true;
+  }
+  const char *name = Sel.getAsString().c_str();
+  if (NoneLegacyDispatchMethods[name])
+    return false;
+  return true;
+}
+
 // Metadata flags
 enum MetaDataDlags {
   CLS = 0x0,
@@ -5003,9 +5109,13 @@ CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
                                                bool IsClassMessage,
                                                const CallArgList &CallArgs,
                                                const ObjCMethodDecl *Method) {
-  return EmitMessageSend(CGF, ResultType, Sel,
-                         Receiver, CGF.getContext().getObjCIdType(),
-                         false, CallArgs);
+  return LegacyDispatchedSelector(Sel)
+  ? EmitLegacyMessageSend(CGF, ResultType, EmitSelector(CGF.Builder, Sel),
+                          Receiver, CGF.getContext().getObjCIdType(),
+                          false, CallArgs, ObjCTypes)
+  : EmitMessageSend(CGF, ResultType, Sel,
+                    Receiver, CGF.getContext().getObjCIdType(),
+                    false, CallArgs);
 }
 
 llvm::GlobalVariable *
@@ -5149,9 +5259,14 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateStore(Target,
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
   
-  return EmitMessageSend(CGF, ResultType, Sel,
-                         ObjCSuper, ObjCTypes.SuperPtrCTy,
-                         true, CallArgs);
+  return (LegacyDispatchedSelector(Sel))
+  ? EmitLegacyMessageSend(CGF, ResultType,EmitSelector(CGF.Builder, Sel),
+                          ObjCSuper, ObjCTypes.SuperPtrCTy,
+                          true, CallArgs,
+                          ObjCTypes)
+  : EmitMessageSend(CGF, ResultType, Sel,
+                    ObjCSuper, ObjCTypes.SuperPtrCTy,
+                    true, CallArgs);
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder, 
@@ -5167,7 +5282,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
                              llvm::GlobalValue::InternalLinkage,
                              Casted, "\01L_OBJC_SELECTOR_REFERENCES_",
                              &CGM.getModule());
-    Entry->setSection("__DATA,__objc_selrefs,literal_pointers,no_dead_strip");
+    Entry->setSection("__DATA, __objc_selrefs, literal_pointers, no_dead_strip");
     UsedGlobals.push_back(Entry);
   }
   

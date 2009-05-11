@@ -13,10 +13,7 @@
 // RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
 // RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
 // RUN: grep '@"\\01L_OBJC_PROP_NAME_ATTR_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
-
-// FIXME: clang is not currently using "optimized" message dispatch in 64-bit mode.
-// RUNX: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_[0-9]*" = internal global .* section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip", align 8' %t &&
-
+// RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_*" = internal global .* section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"' %t &&
 // RUN: grep '@"\\01l_OBJC_$_CATEGORY_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep '@"\\01l_OBJC_$_CATEGORY_CLASS_METHODS_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t &&
 // RUN: grep '@"\\01l_OBJC_$_CATEGORY_INSTANCE_METHODS_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t &&
@@ -35,7 +32,7 @@
 // RUN: grep '@_objc_empty_cache = external global' %t &&
 // RUN: grep '@_objc_empty_vtable = external global' %t &&
 // RUN: grep '@objc_msgSend_fixup(' %t &&
-// RUN: grep '@objc_msgSend_fpret_fixup(' %t &&
+// RUN: grep '@objc_msgSend_fpret(' %t &&
 
 // RUN: true
 
