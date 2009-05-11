@@ -752,8 +752,8 @@ public:
                              : RetEffect::MakeOwned(RetEffect::ObjC, true)),
      DefaultSummary(AF.GetEmptyMap() /* per-argument effects (none) */,
                     RetEffect::MakeNoRet() /* return effect */,
-                    DoNothing /* receiver effect */,
-                    MayEscape /* default argument effect */),
+                    MayEscape, /* default argument effect */
+                    DoNothing /* receiver effect */),
      StopSummary(0) {
 
     InitializeClassMethodSummaries();

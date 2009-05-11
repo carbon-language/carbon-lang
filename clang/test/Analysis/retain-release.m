@@ -476,7 +476,7 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 // <rdar://problem/6833332>
 // One build of the analyzer accidentally stopped tracking the allocated
 // object after the 'retain'.
-//===----------------------------------------------------------------------===//                             
+//===----------------------------------------------------------------------===//
 
 @interface rdar_6833332 : NSObject <NSApplicationDelegate> {
     NSWindow *window;
@@ -503,12 +503,29 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 // <rdar://problem/6257780> clang checker fails to catch use-after-release
 //===----------------------------------------------------------------------===//
                                  
-int rdar_6257780() {
+int rdar_6257780_Case1() {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   NSArray *array = [NSArray array];
   [array release]; // expected-warning{{Incorrect decrement of the reference count of an object is not owned at this point by the caller}}
   [pool drain];
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6866843> Checker should understand new/setObject:/release constructs
+//===----------------------------------------------------------------------===//
+
+void rdar_6866843() {
+ NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+ NSMutableDictionary* dictionary = [[NSMutableDictionary alloc] init];
+ NSArray* array = [[NSArray alloc] init];
+ [dictionary setObject:array forKey:@"key"];
+ [array release];
+ // Using 'array' here should be fine
+ NSLog(@"array = %@\n", array); // no-warning
+ // Now the array is released
+ [dictionary release];
+ [pool drain];
 }
 
 //===----------------------------------------------------------------------===//
