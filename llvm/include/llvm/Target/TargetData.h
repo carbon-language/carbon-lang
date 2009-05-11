@@ -23,12 +23,14 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DerivedTypes.h"
 #include <string>
 
 namespace llvm {
 
 class Value;
+class Type;
+class IntegerType;
+class StructType;
 class StructLayout;
 class GlobalVariable;
 

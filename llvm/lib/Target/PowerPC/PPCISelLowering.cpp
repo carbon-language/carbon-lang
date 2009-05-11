@@ -32,6 +32,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/DerivedTypes.h"
 using namespace llvm;
 
 static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc",
