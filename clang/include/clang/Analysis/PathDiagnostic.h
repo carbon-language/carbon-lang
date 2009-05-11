@@ -244,11 +244,12 @@ class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
 
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
-                           const std::string& s)
-    : PathDiagnosticSpotPiece(pos, s, Event) {}
+                           const std::string& s, bool addPosRange = true)
+    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange) {}
   
-  PathDiagnosticEventPiece(const PathDiagnosticLocation &pos, const char* s)
-    : PathDiagnosticSpotPiece(pos, s, Event) {}
+  PathDiagnosticEventPiece(const PathDiagnosticLocation &pos, const char* s,
+                           bool addPosRange = true)
+    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange) {}
   
   ~PathDiagnosticEventPiece();
 

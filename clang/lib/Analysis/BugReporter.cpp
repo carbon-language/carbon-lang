@@ -1198,13 +1198,16 @@ BugReport::getEndPath(BugReporterContext& BRC,
   
   if (!S)
     return NULL;
-  
-  FullSourceLoc L(S->getLocStart(), BRC.getSourceManager());
-  PathDiagnosticPiece* P = new PathDiagnosticEventPiece(L, getDescription());
-  
+
   const SourceRange *Beg, *End;
-  getRanges(BRC.getBugReporter(), Beg, End);
+  getRanges(BRC.getBugReporter(), Beg, End);  
+  PathDiagnosticLocation L(S, BRC.getSourceManager());
   
+  // Only add the statement itself as a range if we didn't specify any
+  // special ranges for this report.
+  PathDiagnosticPiece* P = new PathDiagnosticEventPiece(L, getDescription(),
+                                                        Beg == End);
+    
   for (; Beg != End; ++Beg)
     P->addRange(*Beg);
   
