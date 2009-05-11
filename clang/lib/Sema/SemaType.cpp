@@ -1115,9 +1115,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
              Parent && !Spec; Parent = Parent->getParent())
           Spec = dyn_cast<ClassTemplateSpecializationDecl>(Parent);
         assert(Spec && "Not a member of a class template specialization?");
-        return InstantiateClass(Loc, Rec, Pattern,
-                                Spec->getTemplateArgs(), 
-                                Spec->getNumTemplateArgs());
+        return InstantiateClass(Loc, Rec, Pattern, Spec->getTemplateArgs());
       }
     }
   }

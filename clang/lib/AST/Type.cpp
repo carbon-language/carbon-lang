@@ -1565,11 +1565,12 @@ void TagType::getAsStringInternal(std::string &InnerString,
   // arguments.
   if (ClassTemplateSpecializationDecl *Spec 
         = dyn_cast<ClassTemplateSpecializationDecl>(getDecl())) {
-    std::string TemplateArgs 
+    const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+    std::string TemplateArgsStr 
       = TemplateSpecializationType::PrintTemplateArgumentList(
-                                                  Spec->getTemplateArgs(),
-                                                  Spec->getNumTemplateArgs());
-    InnerString = TemplateArgs + InnerString;
+                                            TemplateArgs.getFlatArgumentList(),
+                                            TemplateArgs.flat_size());
+    InnerString = TemplateArgsStr + InnerString;
   }
 
   if (Kind) {
@@ -1584,11 +1585,12 @@ void TagType::getAsStringInternal(std::string &InnerString,
           MyPart = NS->getNameAsString();
       } else if (ClassTemplateSpecializationDecl *Spec 
                    = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
-        std::string TemplateArgs 
+        const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+        std::string TemplateArgsStr
           = TemplateSpecializationType::PrintTemplateArgumentList(
-                                                  Spec->getTemplateArgs(),
-                                                  Spec->getNumTemplateArgs());
-        MyPart = Spec->getIdentifier()->getName() + TemplateArgs;
+                                           TemplateArgs.getFlatArgumentList(),
+                                           TemplateArgs.flat_size());
+        MyPart = Spec->getIdentifier()->getName() + TemplateArgsStr;
       } else if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
         if (TypedefDecl *Typedef = Tag->getTypedefForAnonDecl())
           MyPart = Typedef->getIdentifier()->getName();

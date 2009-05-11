@@ -554,6 +554,64 @@ public:
   }
 };
 
+/// \brief A template argument list.
+///
+/// FIXME: In the future, this class will be extended to support
+/// variadic templates and member templates, which will make some of
+/// the function names below make more sense.
+class TemplateArgumentList {
+  /// \brief The template argument list.
+  ///
+  /// The integer value will be non-zero to indicate that this
+  /// template argument list does not own the pointer.
+  llvm::PointerIntPair<TemplateArgument *, 1> Arguments;
+
+  /// \brief The number of template arguments in this template
+  /// argument list.
+  unsigned NumArguments;
+
+
+public:
+  TemplateArgumentList(ASTContext &Context,
+                       TemplateArgument *TemplateArgs,
+                       unsigned NumTemplateArgs,
+                       bool CopyArgs);
+
+  ~TemplateArgumentList();
+
+  /// \brief Retrieve the template argument at a given index.
+  const TemplateArgument &get(unsigned Idx) const { 
+    assert(Idx < NumArguments && "Invalid template argument index");
+    return getFlatArgumentList()[Idx];
+  }
+
+  /// \brief Retrieve the template argument at a given index.
+  TemplateArgument &get(unsigned Idx) { 
+    assert(Idx < NumArguments && "Invalid template argument index");
+    return getFlatArgumentList()[Idx];
+  }
+
+  /// \brief Retrieve the template argument at a given index.
+        TemplateArgument &operator[](unsigned Idx)       { return get(Idx); }
+  const TemplateArgument &operator[](unsigned Idx) const { return get(Idx); }
+
+  /// \brief Retrieve the number of template arguments in this
+  /// template argument list.
+  unsigned size() const { return NumArguments; }
+
+  /// \brief Retrieve the number of template arguments in the
+  /// flattened template argument list.
+  unsigned flat_size() const { return NumArguments; }
+
+  /// \brief Retrieve the flattened template argument list.
+  TemplateArgument *getFlatArgumentList() { 
+    return Arguments.getPointer();
+  }
+  const TemplateArgument *getFlatArgumentList() const { 
+    return Arguments.getPointer();
+  }
+};
+
 // \brief Describes the kind of template specialization that a
 // particular template specialization declaration represents.
 enum TemplateSpecializationKind {
@@ -589,17 +647,17 @@ class ClassTemplateSpecializationDecl
   /// \brief The template that this specialization specializes
   ClassTemplateDecl *SpecializedTemplate;
 
-  /// \brief The number of template arguments. The actual arguments
-  /// are allocated after the ClassTemplateSpecializationDecl object.
-  unsigned NumTemplateArgs : 16;
+  /// \brief The template arguments used to describe this specialization.
+  TemplateArgumentList TemplateArgs;
 
   /// \brief The kind of specialization this declaration refers to.
   /// Really a value of type TemplateSpecializationKind.
   unsigned SpecializationKind : 2;
 
-  ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
+  ClassTemplateSpecializationDecl(ASTContext &Context,
+                                  DeclContext *DC, SourceLocation L,
                                   ClassTemplateDecl *SpecializedTemplate,
-                                  TemplateArgument *TemplateArgs, 
+                                  TemplateArgument *TemplateArgs,
                                   unsigned NumTemplateArgs);
                                   
 public:
@@ -614,20 +672,9 @@ public:
     return SpecializedTemplate; 
   }
 
-  typedef const TemplateArgument * template_arg_iterator;
-  template_arg_iterator template_arg_begin() const {
-    return reinterpret_cast<template_arg_iterator>(this + 1);
+  const TemplateArgumentList &getTemplateArgs() const { 
+    return TemplateArgs;
   }
-
-  template_arg_iterator template_arg_end() const {
-    return template_arg_begin() + NumTemplateArgs;
-  }
-
-  const TemplateArgument *getTemplateArgs() const { 
-    return template_arg_begin(); 
-  }
-
-  unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
 
   /// \brief Determine the kind of specialization that this
   /// declaration represents.
@@ -640,7 +687,7 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    Profile(ID, template_arg_begin(), getNumTemplateArgs());
+    Profile(ID, TemplateArgs.getFlatArgumentList(), TemplateArgs.flat_size());
   }
 
   /// \brief Sets the type of this specialization as it was written by

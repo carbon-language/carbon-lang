@@ -24,17 +24,14 @@ namespace {
   class VISIBILITY_HIDDEN TemplateExprInstantiator 
     : public StmtVisitor<TemplateExprInstantiator, Sema::OwningExprResult> {
     Sema &SemaRef;
-    const TemplateArgument *TemplateArgs;
-    unsigned NumTemplateArgs;
+    const TemplateArgumentList &TemplateArgs;
 
   public:
     typedef Sema::OwningExprResult OwningExprResult;
 
     TemplateExprInstantiator(Sema &SemaRef, 
-                             const TemplateArgument *TemplateArgs,
-                             unsigned NumTemplateArgs)
-      : SemaRef(SemaRef), TemplateArgs(TemplateArgs), 
-        NumTemplateArgs(NumTemplateArgs) { }
+                             const TemplateArgumentList &TemplateArgs)
+      : SemaRef(SemaRef), TemplateArgs(TemplateArgs) { }
 
     // FIXME: Once we get closer to completion, replace these
     // manually-written declarations with automatically-generated ones
@@ -294,7 +291,7 @@ TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   if (E->isArgumentType()) {
     QualType T = E->getArgumentType();
     if (T->isDependentType()) {
-      T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
+      T = SemaRef.InstantiateType(T, TemplateArgs, 
                                   /*FIXME*/E->getOperatorLoc(),
                                 &SemaRef.PP.getIdentifierTable().get("sizeof"));
       if (T.isNull())
@@ -324,7 +321,7 @@ TemplateExprInstantiator::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E) {
   NestedNameSpecifier *NNS 
     = SemaRef.InstantiateNestedNameSpecifier(E->getQualifier(), 
                                              E->getQualifierRange(),
-                                             TemplateArgs, NumTemplateArgs);
+                                             TemplateArgs);
   if (!NNS)
     return SemaRef.ExprError();
 
@@ -348,7 +345,7 @@ TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
                                                   CXXTemporaryObjectExpr *E) {
   QualType T = E->getType();
   if (T->isDependentType()) {
-    T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
+    T = SemaRef.InstantiateType(T, TemplateArgs,
                                 E->getTypeBeginLoc(), DeclarationName());
     if (T.isNull())
       return SemaRef.ExprError();
@@ -413,8 +410,7 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitImplicitCastExpr(
 }
 
 Sema::OwningExprResult 
-Sema::InstantiateExpr(Expr *E, const TemplateArgument *TemplateArgs,
-                      unsigned NumTemplateArgs) {
-  TemplateExprInstantiator Instantiator(*this, TemplateArgs, NumTemplateArgs);
+Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
+  TemplateExprInstantiator Instantiator(*this, TemplateArgs);
   return Instantiator.Visit(E);
 }

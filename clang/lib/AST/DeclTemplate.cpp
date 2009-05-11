@@ -236,12 +236,42 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
 }
 
 //===----------------------------------------------------------------------===//
+// TemplateArgumentList Implementation
+//===----------------------------------------------------------------------===//
+TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
+                                           TemplateArgument *TemplateArgs,
+                                           unsigned NumTemplateArgs,
+                                           bool CopyArgs)
+  : NumArguments(NumTemplateArgs) {
+  if (!CopyArgs) {
+    Arguments.setPointer(TemplateArgs);
+    Arguments.setInt(1);
+    return;
+  }
+
+  unsigned Size = sizeof(TemplateArgument) * NumTemplateArgs;
+  unsigned Align = llvm::AlignOf<TemplateArgument>::Alignment;
+  void *Mem = Context.Allocate(Size, Align);
+  Arguments.setPointer((TemplateArgument *)Mem);
+  Arguments.setInt(0);
+
+  TemplateArgument *Args = (TemplateArgument *)Mem;
+  for (unsigned I = 0; I != NumTemplateArgs; ++I)
+    new (Args + I) TemplateArgument(TemplateArgs[I]);
+}
+
+TemplateArgumentList::~TemplateArgumentList() {
+  // FIXME: Deallocate template arguments
+}
+
+//===----------------------------------------------------------------------===//
 // ClassTemplateSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
 ClassTemplateSpecializationDecl::
-ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
+ClassTemplateSpecializationDecl(ASTContext &Context,
+                                DeclContext *DC, SourceLocation L,
                                 ClassTemplateDecl *SpecializedTemplate,
-                                TemplateArgument *TemplateArgs, 
+                                TemplateArgument *TemplateArgs,
                                 unsigned NumTemplateArgs)
   : CXXRecordDecl(ClassTemplateSpecialization, 
                   SpecializedTemplate->getTemplatedDecl()->getTagKind(), 
@@ -250,10 +280,8 @@ ClassTemplateSpecializationDecl(DeclContext *DC, SourceLocation L,
                   // class template specializations?
                   SpecializedTemplate->getIdentifier()),
     SpecializedTemplate(SpecializedTemplate),
-    NumTemplateArgs(NumTemplateArgs), SpecializationKind(TSK_Undeclared) {
-  TemplateArgument *Arg = reinterpret_cast<TemplateArgument *>(this + 1);
-  for (unsigned ArgIdx = 0; ArgIdx < NumTemplateArgs; ++ArgIdx, ++Arg)
-    new (Arg) TemplateArgument(TemplateArgs[ArgIdx]);
+    TemplateArgs(Context, TemplateArgs, NumTemplateArgs, /*CopyArgs=*/true),
+    SpecializationKind(TSK_Undeclared) {
 }
                   
 ClassTemplateSpecializationDecl *
@@ -263,13 +291,11 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
                                         TemplateArgument *TemplateArgs, 
                                         unsigned NumTemplateArgs,
                                    ClassTemplateSpecializationDecl *PrevDecl) {
-  unsigned Size = sizeof(ClassTemplateSpecializationDecl) + 
-                  sizeof(TemplateArgument) * NumTemplateArgs;
-  unsigned Align = llvm::AlignOf<ClassTemplateSpecializationDecl>::Alignment;
-  void *Mem = Context.Allocate(Size, Align);
   ClassTemplateSpecializationDecl *Result
-    = new (Mem) ClassTemplateSpecializationDecl(DC, L, SpecializedTemplate,
-                                                TemplateArgs, NumTemplateArgs);
+    = new (Context)ClassTemplateSpecializationDecl(Context, DC, L, 
+                                                   SpecializedTemplate,
+                                                   TemplateArgs, 
+                                                   NumTemplateArgs);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }

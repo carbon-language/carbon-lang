@@ -993,7 +993,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                      Template, &Converted[0], 
                                      Converted.size(),
                                      SourceRange(TemplateLoc, RAngleLoc));
-          ArgType = InstantiateType(ArgType, &Converted[0], Converted.size(),
+
+          TemplateArgumentList TemplateArgs(Context, &Converted[0],
+                                            Converted.size(), 
+                                            /*CopyArgs=*/false);
+          ArgType = InstantiateType(ArgType, TemplateArgs,
                                     TTP->getDefaultArgumentLoc(),
                                     TTP->getDeclName());
         }
@@ -1061,8 +1065,10 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                    Converted.size(),
                                    SourceRange(TemplateLoc, RAngleLoc));
 
-        NTTPType = InstantiateType(NTTPType, 
-                                   &Converted[0], Converted.size(),
+        TemplateArgumentList TemplateArgs(Context, &Converted[0],
+                                          Converted.size(), 
+                                          /*CopyArgs=*/false);
+        NTTPType = InstantiateType(NTTPType, TemplateArgs,
                                    NTTP->getLocation(),
                                    NTTP->getDeclName());
         // If that worked, check the non-type template parameter type

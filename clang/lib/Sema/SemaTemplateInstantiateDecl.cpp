@@ -23,17 +23,14 @@ namespace {
     : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
     Sema &SemaRef;
     DeclContext *Owner;
-    const TemplateArgument *TemplateArgs;
-    unsigned NumTemplateArgs;
+    const TemplateArgumentList &TemplateArgs;
     
   public:
     typedef Sema::OwningExprResult OwningExprResult;
 
     TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
-                             const TemplateArgument *TemplateArgs,
-                             unsigned NumTemplateArgs)
-      : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs), 
-        NumTemplateArgs(NumTemplateArgs) { }
+                             const TemplateArgumentList &TemplateArgs)
+      : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
     
     // FIXME: Once we get closer to completion, replace these
     // manually-written declarations with automatically-generated ones
@@ -83,8 +80,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   bool Invalid = false;
   QualType T = D->getUnderlyingType();
   if (T->isDependentType()) {
-    T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
-                                D->getLocation(),
+    T = SemaRef.InstantiateType(T, TemplateArgs, D->getLocation(),
                                 D->getDeclName());
     if (T.isNull()) {
       Invalid = true;
@@ -106,7 +102,6 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
 Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Instantiate the type of the declaration
   QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
-                                       NumTemplateArgs, 
                                        D->getTypeSpecStartLoc(),
                                        D->getDeclName());
   if (T.isNull())
@@ -129,7 +124,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
   if (D->getInit()) {
     OwningExprResult Init 
-      = SemaRef.InstantiateExpr(D->getInit(), TemplateArgs, NumTemplateArgs);
+      = SemaRef.InstantiateExpr(D->getInit(), TemplateArgs);
     if (Init.isInvalid())
       Var->setInvalidDecl();
     else
@@ -144,8 +139,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
   QualType T = D->getType();
   if (T->isDependentType())  {
-    T = SemaRef.InstantiateType(T, TemplateArgs, NumTemplateArgs,
-                                D->getLocation(),
+    T = SemaRef.InstantiateType(T, TemplateArgs, D->getLocation(), 
                                 D->getDeclName());
     if (!T.isNull() && T->isFunctionType()) {
       // C++ [temp.arg.type]p3:
@@ -166,7 +160,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     BitWidth = 0;
   else if (BitWidth) {
     OwningExprResult InstantiatedBitWidth
-      = SemaRef.InstantiateExpr(BitWidth, TemplateArgs, NumTemplateArgs);
+      = SemaRef.InstantiateExpr(BitWidth, TemplateArgs);
     if (InstantiatedBitWidth.isInvalid()) {
       Invalid = true;
       BitWidth = 0;
@@ -195,7 +189,7 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   Expr *AssertExpr = D->getAssertExpr();
       
   OwningExprResult InstantiatedAssertExpr
-    = SemaRef.InstantiateExpr(AssertExpr, TemplateArgs, NumTemplateArgs);
+    = SemaRef.InstantiateExpr(AssertExpr, TemplateArgs);
   if (InstantiatedAssertExpr.isInvalid())
     return 0;
 
@@ -224,8 +218,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     // The specified value for the enumerator.
     OwningExprResult Value = SemaRef.Owned((Expr *)0);
     if (Expr *UninstValue = EC->getInitExpr())
-      Value = SemaRef.InstantiateExpr(UninstValue, 
-                                      TemplateArgs, NumTemplateArgs);
+      Value = SemaRef.InstantiateExpr(UninstValue, TemplateArgs);
 
     // Drop the initial value and continue.
     bool isInvalid = false;
@@ -425,8 +418,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   QualType OrigT = SemaRef.InstantiateType(D->getOriginalType(), TemplateArgs,
-                                           NumTemplateArgs, D->getLocation(),
-                                           D->getDeclName());
+                                           D->getLocation(), D->getDeclName());
   if (OrigT.isNull())
     return 0;
 
@@ -469,10 +461,8 @@ TemplateDeclInstantiator::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
 }
 
 Decl *Sema::InstantiateDecl(Decl *D, DeclContext *Owner,
-                            const TemplateArgument *TemplateArgs,
-                            unsigned NumTemplateArgs) {
-  TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs,
-                                        NumTemplateArgs);
+                            const TemplateArgumentList &TemplateArgs) {
+  TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);
   return Instantiator.Visit(D);
 }
 
@@ -491,8 +481,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
   bool InvalidDecl = false;
 
   // Instantiate the function parameters
-  TemplateDeclInstantiator ParamInstantiator(SemaRef, 0,
-                                             TemplateArgs, NumTemplateArgs);
+  TemplateDeclInstantiator ParamInstantiator(SemaRef, 0, TemplateArgs);
   llvm::SmallVector<QualType, 16> ParamTys;
   for (FunctionDecl::param_iterator P = D->param_begin(), 
                                  PEnd = D->param_end();
@@ -524,8 +513,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
   const FunctionProtoType *Proto = D->getType()->getAsFunctionProtoType();
   assert(Proto && "Missing prototype?");
   QualType ResultType 
-    = SemaRef.InstantiateType(Proto->getResultType(),
-                              TemplateArgs, NumTemplateArgs,
+    = SemaRef.InstantiateType(Proto->getResultType(), TemplateArgs, 
                               D->getLocation(), D->getDeclName());
   if (ResultType.isNull())
     return QualType();

@@ -65,6 +65,7 @@ namespace clang {
   class TypedefDecl;
   class TemplateDecl;
   class TemplateArgument;
+  class TemplateArgumentList;
   class TemplateParameterList;
   class TemplateTemplateParmDecl;
   class ClassTemplateDecl;
@@ -1974,7 +1975,7 @@ public:
     uintptr_t Entity;
 
     // \brief If this the instantiation of a default template
-    // argument, the list of tempalte arguments.
+    // argument, the list of template arguments.
     const TemplateArgument *TemplateArgs;
 
     /// \brief The number of template arguments in TemplateArgs.
@@ -2074,29 +2075,24 @@ public:
 
   void PrintInstantiationStack();
 
-  QualType InstantiateType(QualType T, const TemplateArgument *TemplateArgs,
-                           unsigned NumTemplateArgs,
+  QualType InstantiateType(QualType T, const TemplateArgumentList &TemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);
 
   OwningExprResult InstantiateExpr(Expr *E, 
-                                   const TemplateArgument *TemplateArgs,
-                                   unsigned NumTemplateArgs);
+                                   const TemplateArgumentList &TemplateArgs);
 
   Decl *InstantiateDecl(Decl *D, DeclContext *Owner,
-                        const TemplateArgument *TemplateArgs,
-                        unsigned NumTemplateArgs);
+                        const TemplateArgumentList &TemplateArgs);
 
   bool 
   InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
                             CXXRecordDecl *Pattern,
-                            const TemplateArgument *TemplateArgs,
-                            unsigned NumTemplateArgs);
+                            const TemplateArgumentList &TemplateArgs);
 
   bool
   InstantiateClass(SourceLocation PointOfInstantiation,
                    CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
-                   const TemplateArgument *TemplateArgs,
-                   unsigned NumTemplateArgs);
+                   const TemplateArgumentList &TemplateArgs);
 
   bool 
   InstantiateClassTemplateSpecialization(
@@ -2106,13 +2102,11 @@ public:
   NestedNameSpecifier *
   InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
                                  SourceRange Range,
-                                 const TemplateArgument *TemplateArgs,
-                                 unsigned NumTemplateArgs);
+                                 const TemplateArgumentList &TemplateArgs);
 
   TemplateName
   InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs);
+                          const TemplateArgumentList &TemplateArgs);
 
   // Simple function for cloning expressions.
   template<typename T> 
