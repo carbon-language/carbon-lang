@@ -1,15 +1,25 @@
-// RUN: clang-cc -emit-llvm %s -o %t &&
-// RUN: grep "store i32 0, i32\* %cleanup" %t | count 2
-void f(int n) {
-  int a[n];
+// RUN: clang-cc -triple i386-unknown-unknown -O3 -emit-llvm %s -o %t &&
+// RUN: grep "ret i32 9" %t
+
+struct s0 {
+  int *var;
+  int addend;
+};
+
+static void f0(struct s0 *p) {
+  *p->var += p->addend;
+}
+
+int f1(void) {
+  int var = 0;
   
   {
-    int b[n];
-    
-    if (n)
-      return;
+    struct s0 x __attribute__((cleanup(f0))) = { &var, 2 };  
+    struct s0 y __attribute__((cleanup(f0))) = { &var, 3 };
+    {
+      struct s0 y __attribute__((cleanup(f0))) = { &var, 4 };
+    }
   }
-  
-  if (n)
-    return;
+
+  return var;
 }
