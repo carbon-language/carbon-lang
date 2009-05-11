@@ -4,12 +4,13 @@
 ; RUN: not grep sar %t
 ; RUN: not grep shl %t
 ; RUN: grep add %t | count 6
-; RUN: grep inc %t | count 4
-; RUN: grep dec %t | count 2
+; RUN: grep inc %t | count 2
+; RUN: grep dec %t | count 4
 ; RUN: grep lea %t | count 2
 
 ; Optimize away zext-inreg and sext-inreg on the loop induction
 ; variable using trip-count information.
+; Also, the loop-reversal algorithm kicks in twice.
 
 define void @count_up(double* %d, i64 %n) nounwind {
 entry:

@@ -166,7 +166,7 @@ namespace {
                                   const SCEVHandle* &CondStride);
 
     void OptimizeIndvars(Loop *L);
-
+    void OptimizeLoopCountIV(Loop *L);
     void OptimizeLoopTermCond(Loop *L);
 
     /// OptimizeShadowIV - If IV is used in a int-to-float cast
@@ -1746,11 +1746,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     CommonBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, ReplacedTy,
                                                   PreInsertPt);
 
-    // If all uses are addresses, check if it is possible to reuse an IV with a
-    // stride that is a factor of this stride. And that the multiple is a number
-    // that can be encoded in the scale field of the target addressing mode. And
-    // that we will have a valid instruction after this substition, including
-    // the immediate field, if any.
+    // If all uses are addresses, check if it is possible to reuse an IV.  The
+    // new IV must have a stride that is a multiple of the old stride; the
+    // multiple must be a number that can be encoded in the scale field of the
+    // target addressing mode; and we must have a valid instruction after this 
+    // substitution, including the immediate field, if any.
     RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
                                     AllUsesAreOutsideLoop,
                                     Stride, ReuseIV, ReplacedTy,
@@ -2444,6 +2444,114 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   Changed = true;
 }
 
+// OptimizeLoopCountIV - If, after all sharing of IVs, the IV used for deciding
+// when to exit the loop is used only for that purpose, try to rearrange things
+// so it counts down to a test against zero.
+void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
+
+  // If the number of times the loop is executed isn't computable, give up.
+  SCEVHandle BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+  if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
+    return;
+
+  // Get the terminating condition for the loop if possible (this isn't
+  // necessarily in the latch, or a block that's a predecessor of the header).
+  SmallVector<BasicBlock*, 8> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+  if (ExitBlocks.size() != 1) return;
+
+  // Okay, there is one exit block.  Try to find the condition that causes the
+  // loop to be exited.
+  BasicBlock *ExitBlock = ExitBlocks[0];
+
+  BasicBlock *ExitingBlock = 0;
+  for (pred_iterator PI = pred_begin(ExitBlock), E = pred_end(ExitBlock);
+       PI != E; ++PI)
+    if (L->contains(*PI)) {
+      if (ExitingBlock == 0)
+        ExitingBlock = *PI;
+      else
+        return; // More than one block exiting!
+    }
+  assert(ExitingBlock && "No exits from loop, something is broken!");
+
+  // Okay, we've computed the exiting block.  See what condition causes us to
+  // exit.
+  //
+  // FIXME: we should be able to handle switch instructions (with a single exit)
+  BranchInst *TermBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
+  if (TermBr == 0) return;
+  assert(TermBr->isConditional() && "If unconditional, it can't be in loop!");
+  if (!isa<ICmpInst>(TermBr->getCondition()))
+    return;
+  ICmpInst *Cond = cast<ICmpInst>(TermBr->getCondition());
+
+  // Handle only tests for equality for the moment, and only stride 1.
+  if (Cond->getPredicate() != CmpInst::ICMP_EQ)
+    return;
+  SCEVHandle IV = SE->getSCEV(Cond->getOperand(0));
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(IV);
+  SCEVHandle One = SE->getIntegerSCEV(1, BackedgeTakenCount->getType());
+  if (!AR || !AR->isAffine() || AR->getStepRecurrence(*SE) != One)
+    return;
+
+  // Make sure the IV is only used for counting.  Value may be preinc or
+  // postinc; 2 uses in either case.
+  if (!Cond->getOperand(0)->hasNUses(2))
+    return;
+  PHINode *phi = dyn_cast<PHINode>(Cond->getOperand(0));
+  Instruction *incr;
+  if (phi && phi->getParent()==L->getHeader()) {
+    // value tested is preinc.  Find the increment.
+    // A CmpInst is not a BinaryOperator; we depend on this.
+    Instruction::use_iterator UI = phi->use_begin();
+    incr = dyn_cast<BinaryOperator>(UI);
+    if (!incr)
+      incr = dyn_cast<BinaryOperator>(++UI);
+    // 1 use for postinc value, the phi.  Unnecessarily conservative?
+    if (!incr || !incr->hasOneUse() || incr->getOpcode()!=Instruction::Add)
+      return;
+  } else {
+    // Value tested is postinc.  Find the phi node.
+    incr = dyn_cast<BinaryOperator>(Cond->getOperand(0));
+    if (!incr || incr->getOpcode()!=Instruction::Add)
+      return;
+
+    Instruction::use_iterator UI = Cond->getOperand(0)->use_begin();
+    phi = dyn_cast<PHINode>(UI);
+    if (!phi)
+      phi = dyn_cast<PHINode>(++UI);
+    // 1 use for preinc value, the increment.
+    if (!phi || phi->getParent()!=L->getHeader() || !phi->hasOneUse())
+      return;
+  }
+
+  // Replace the increment with a decrement.
+  BinaryOperator *decr = 
+    BinaryOperator::Create(Instruction::Sub, incr->getOperand(0),
+                           incr->getOperand(1), "tmp", incr);
+  incr->replaceAllUsesWith(decr);
+  incr->eraseFromParent();
+
+  // Substitute endval-startval for the original startval, and 0 for the
+  // original endval.  Since we're only testing for equality this is OK even 
+  // if the computation wraps around.
+  BasicBlock  *Preheader = L->getLoopPreheader();
+  Instruction *PreInsertPt = Preheader->getTerminator();
+  int inBlock = L->contains(phi->getIncomingBlock(0)) ? 1 : 0;
+  Value *startVal = phi->getIncomingValue(inBlock);
+  Value *endVal = Cond->getOperand(1);
+  // FIXME check for case where both are constant
+  ConstantInt* Zero = ConstantInt::get(Cond->getOperand(1)->getType(), 0);
+  BinaryOperator *NewStartVal = 
+    BinaryOperator::Create(Instruction::Sub, endVal, startVal,
+                           "tmp", PreInsertPt);
+  phi->setIncomingValue(inBlock, NewStartVal);
+  Cond->setOperand(1, Zero);
+
+  Changed = true;
+}
+
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   LI = &getAnalysis<LoopInfo>();
@@ -2499,6 +2607,10 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
       StrengthReduceStridedIVUsers(SI->first, SI->second, L);
     }
   }
+
+  // After all sharing is done, see if we can adjust the loop to test against
+  // zero instead of counting up to a maximum.  This is usually faster.
+  OptimizeLoopCountIV(L);
 
   // We're done analyzing this loop; release all the state we built up for it.
   IVUsesByStride.clear();

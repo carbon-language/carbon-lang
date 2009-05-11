@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& \
 ; RUN:   grep {1 .*folded into instructions}
+; Increment in loop bb.128.i adjusted to 2, to prevent loop reversal from
+; kicking in.
 
 declare fastcc void @rdft(i32, i32, double*, i32*, double*)
 
@@ -41,7 +43,7 @@ bb.i28.i:		; preds = %bb.i28.i, %cond_next36.i
 	%tmp1213.i23.i = sitofp i32 %x.0.i21.i to double		; <double> [#uses=1]
 	%tmp15.i24.i = sub double 0.000000e+00, %tmp1213.i23.i		; <double> [#uses=1]
 	%tmp16.i25.i = mul double 0.000000e+00, %tmp15.i24.i		; <double> [#uses=1]
-	%indvar.next39.i = add i32 %j.0.reg2mem.0.i16.i, 1		; <i32> [#uses=2]
+	%indvar.next39.i = add i32 %j.0.reg2mem.0.i16.i, 2		; <i32> [#uses=2]
 	%exitcond40.i = icmp eq i32 %indvar.next39.i, %tmp8.i14.i		; <i1> [#uses=1]
 	br i1 %exitcond40.i, label %mp_unexp_d2mp.exit29.i, label %bb.i28.i
 
