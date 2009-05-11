@@ -167,44 +167,6 @@ if anyone cared enough about sincos.
 
 //===---------------------------------------------------------------------===//
 
-Scalar Repl cannot currently promote this testcase to 'ret long cst':
-
-        %struct.X = type { i32, i32 }
-        %struct.Y = type { %struct.X }
-
-define i64 @bar() {
-        %retval = alloca %struct.Y, align 8
-        %tmp12 = getelementptr %struct.Y* %retval, i32 0, i32 0, i32 0
-        store i32 0, i32* %tmp12
-        %tmp15 = getelementptr %struct.Y* %retval, i32 0, i32 0, i32 1
-        store i32 1, i32* %tmp15
-        %retval.upgrd.1 = bitcast %struct.Y* %retval to i64*
-        %retval.upgrd.2 = load i64* %retval.upgrd.1
-        ret i64 %retval.upgrd.2
-}
-
-it should be extended to do so.
-
-//===---------------------------------------------------------------------===//
-
--scalarrepl should promote this to be a vector scalar.
-
-        %struct..0anon = type { <4 x float> }
-
-define void @test1(<4 x float> %V, float* %P) {
-        %u = alloca %struct..0anon, align 16
-        %tmp = getelementptr %struct..0anon* %u, i32 0, i32 0
-        store <4 x float> %V, <4 x float>* %tmp
-        %tmp1 = bitcast %struct..0anon* %u to [4 x float]*
-        %tmp.upgrd.1 = getelementptr [4 x float]* %tmp1, i32 0, i32 1
-        %tmp.upgrd.2 = load float* %tmp.upgrd.1
-        %tmp3 = mul float %tmp.upgrd.2, 2.000000e+00
-        store float %tmp3, float* %P
-        ret void
-}
-
-//===---------------------------------------------------------------------===//
-
 Turn this into a single byte store with no load (the other 3 bytes are
 unmodified):
 
@@ -631,32 +593,6 @@ define void @_Z9GetHotKeyv(%struct.THotKey* sret  %agg.result) nounwind  {
 Alternatively, we should use a small amount of base-offset alias analysis
 to make it so the scheduler doesn't need to hold all the loads in regs at
 once.
-
-//===---------------------------------------------------------------------===//
-
-We should extend parameter attributes to capture more information about
-pointer parameters for alias analysis.  Some ideas:
-
-1. Add a "nocapture" attribute, which indicates that the callee does not store
-   the address of the parameter into a global or any other memory location
-   visible to the callee.  This can be used to make basicaa and other analyses
-   more powerful.  It is true for things like memcpy, strcat, and many other
-   things, including structs passed by value, most C++ references, etc.
-2. Generalize readonly to be set on parameters.  This is important mod/ref 
-   info for the function, which is important for basicaa and others.  It can
-   also be used by the inliner to avoid inserting a memcpy for byval 
-   arguments when the function is inlined.
-
-These functions can be inferred by various analysis passes such as the 
-globalsmodrefaa pass.  Note that getting #2 right is actually really tricky.
-Consider this code:
-
-struct S;  S G;
-void caller(S byvalarg) { G.field = 1; ... }
-void callee() { caller(G); }
-
-The fact that the caller does not modify byval arg is not enough, we need
-to know that it doesn't modify G either.  This is very tricky.
 
 //===---------------------------------------------------------------------===//
 
@@ -1690,6 +1626,19 @@ foo:
 
 //===---------------------------------------------------------------------===//
 
+The arg promotion pass should make use of nocapture to make its alias analysis
+stuff much more precise.
+
+//===---------------------------------------------------------------------===//
+
+The following functions should be optimized to use a select instead of a
+branch (from gcc PR40072):
+
+char char_int(int m) {if(m>7) return 0; return m;}
+int int_char(char m) {if(m>7) return 0; return m;}
+
+//===---------------------------------------------------------------------===//
+
 Instcombine should replace the load with a constant in:
 
   static const char x[4] = {'a', 'b', 'c', 'd'};
@@ -1701,19 +1650,6 @@ Instcombine should replace the load with a constant in:
 It currently only does this transformation when the size of the constant 
 is the same as the size of the integer (so, try x[5]) and the last byte 
 is a null (making it a C string). There's no need for these restrictions.
-
-//===---------------------------------------------------------------------===//
-
-The arg promotion pass should make use of nocapture to make its alias analysis
-stuff much more precise.
-
-//===---------------------------------------------------------------------===//
-
-The following functions should be optimized to use a select instead of a
-branch (from gcc PR40072):
-
-char char_int(int m) {if(m>7) return 0; return m;}
-int int_char(char m) {if(m>7) return 0; return m;}
 
 //===---------------------------------------------------------------------===//
 
