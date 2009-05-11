@@ -17,7 +17,7 @@ RUN:           else \
 RUN:             cc_prog=gcc; \
 RUN:             output=%t1; \
 RUN:           fi; \
-RUN:           $cc_prog $arch $lang $opts -dM -E -x $input %s | sort > $output; \
+RUN:           $cc_prog $arch $lang $opts -march=core2 -dM -E -x $input %s | sort > $output; \
 RUN:          done; \
 RUN:          if (! diff %t0 %t1); then exit 1; fi; \
 RUN:       done; \
@@ -35,6 +35,11 @@ RUN: done;
 #define __pic__ 2
 #endif
 #endif
+
+/* Undefine things we don't expect to match. */
+#undef __core2
+#undef __core2__
+#undef __SSSE3__
 
 /* Undefine things we don't expect to match. */
 #undef __DEC_EVAL_METHOD__
