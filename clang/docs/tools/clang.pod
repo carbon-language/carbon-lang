@@ -49,16 +49,17 @@ parse errors.  The output of this stage is an "Abstract Syntax Tree" (AST).
 
 =item B<Code Generation and Optimization>
 
-This stage translates an AST into low-level intermediate code or machine code
-(depending on the optimization level).  This phase is responsible for optimizing
-the generated code and handling target-specfic code generation.  The output of
-this stage is typically called a ".s" file.
+This stage translates an AST into low-level intermediate code (known as "LLVM
+IR") and ultimately to machine code (depending on the optimization level).  This
+phase is responsible for optimizing the generated code and handling
+target-specfic code generation.  The output of this stage is typically called a
+".s" file or "assembly" file.
 
 =item B<Assembler>
 
 This stage runs the target assembler to translate the output of the compiler
 into a target object file.  The output of this stage is typically called a ".o"
-file.
+file or "object" file.
 
 =item B<Linker>
 
@@ -69,7 +70,7 @@ executable or dynamic library.  The output of this stage is typically called an
 =back
 
 The Clang compiler supports a large number of options to control each of these
-stages.  In addition to compilation of code, Clang also supports other tools.
+stages.  In addition to compilation of code, Clang also supports other tools:
 
 B<Clang Static Analyzer>
 
@@ -130,14 +131,6 @@ Print the commands to run for this compilation.
 =item B<--help>
 
 Display available options.
-
-=item B<-ObjC++>
-
-Treat source input files as Objective-C++ inputs.
-
-=item B<-ObjC>
-
-Treat source input files as Objective-C inputs.
 
 =item B<-Qunused-arguments>
 
@@ -203,24 +196,133 @@ Save intermediate compilation results.
 
 Time individual commands.
 
+=item B<-ftime-report>
+
+Print timing summary of each stage of compilation.
+
 =item B<-v>
 
 Show commands to run and use verbose output.
 
-=item B<-x> I<language>
+=back
 
-Treat subsequent input files as having type I<language>.
+
+
+=head2 Target Selection Options
+
+=over
+
+-triple
+-arch
+-mmacosx-version-min=10.3.9
+-miphoneos-version-min
 
 
 =back
 
 
 
+=head2 Language Selection and Mode Options
+
+=over
+
+=item B<-x> I<language>
+
+Treat subsequent input files as having type I<language>.
+
+=item B<-ObjC++>
+
+Treat source input files as Objective-C++ inputs.
+
+=item B<-ObjC>
+
+Treat source input files as Objective-C inputs.
+
+B<-std>=I<language>
+
+
+-ffreestanding
+-fno-builtin
+-fmath-errno
+-fobjc-gc-only
+-fobjc-gc
+-fpascal-strings
+-fms-extensions
+-fwritable-strings
+-fno-lax-vector-conversions
+-fblocks
+-trigraphs
+
+
+=back
+
+
+
+=head2 Code Generation Options
+
+=over
+
+-fexceptions
+-fobjc-nonfragile-abi
+-fgnu-runtime
+-fnext-runtime
+-ftrapv
+-fvisibility
+-Os, O0, O1, O2, O3, O4
+-fno-common
+-g
+-mcpu
+
+=back
+
+
+
+
+=head2 Diagnostics Options
+
+=over
+
+-fshow-column
+-fshow-source-location
+-fcaret-diagnostics
+-fdiagnostics-fixit-info
+-fdiagnostics-print-source-range-info
+-fprint-source-range-info
+-fdiagnostics-show-option
+-fmessage-length
+
+
+=back
 
 
 =head2 Preprocessor Options
 
 =over
+
+=item B<-xyz>
+
+Frob
+
+-D
+-U
+-include
+-imacros
+
+
+
+-nostdinc
+-F
+-I
+-idirafter
+-iquote
+-isystem
+-iprefix
+-iwithprefix
+-iwithprefixbefore
+-isysroot
+
+
+
 
 =back
 
@@ -235,11 +337,17 @@ Treat subsequent input files as having type I<language>.
 
 
 
+
+
 =head2 Code Generation and Optimization Options
 
 =over
 
 =back
+
+
+
+
 
 
 =head2 Assembler Options
@@ -249,11 +357,26 @@ Treat subsequent input files as having type I<language>.
 =back
 
 
+
+
+
+
 =head2 Linker Options
 
 =over
 
 =back
+
+
+
+
+
+=head2 Static Analyzer Options
+
+=over
+
+=back
+
 
 
 =head1 ENVIRONMENT
@@ -280,10 +403,11 @@ B<OBJCPLUS_INCLUDE_PATH>
 These environment variables specify additional paths, as for CPATH,
 which are only used when processing the appropriate language.
 
-=item B<MACOSX_DEPLOYMENT_TARGET> (Apple only)
+=item B<MACOSX_DEPLOYMENT_TARGET>
 
 If -mmacosx-version-min is unspecified, the default deployment target
-is read from this environment variable.
+is read from this environment variable.  This option only affects darwin
+targets.
 
 =back
 
@@ -296,7 +420,7 @@ the compiler, along with information to reproduce.
 
 =head1 SEE ALSO
 
-as(1), ld(1)
+ as(1), ld(1)
 
 =head1 AUTHOR
 
