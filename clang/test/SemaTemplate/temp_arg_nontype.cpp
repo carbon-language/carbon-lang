@@ -112,3 +112,13 @@ Overflow<256> *overflow2; // expected-error{{non-type template argument value '2
 template<unsigned> struct Signedness; // expected-note{{template parameter is declared here}}
 Signedness<10> *signedness1; // okay
 Signedness<-10> *signedness2; // expected-error{{non-type template argument provides negative value '-10' for unsigned template parameter of type 'unsigned int'}}
+
+// Check canonicalization of template arguments.
+template<int (*)(int, int)> struct FuncPtr0;
+int func0(int, int);
+extern FuncPtr0<&func0> *fp0;
+template<int (*)(int, int)> struct FuncPtr0;
+extern FuncPtr0<&func0> *fp0;
+int func0(int, int);
+extern FuncPtr0<&func0> *fp0;
+
