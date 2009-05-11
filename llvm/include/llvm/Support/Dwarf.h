@@ -225,6 +225,8 @@ enum dwarf_constants {
   // Apple extensions.
   DW_AT_APPLE_optimized = 0x3fe1,
   DW_AT_APPLE_flags = 0x3fe2,
+  DW_AT_APPLE_isa = 0x3fe3,
+  DW_AT_APPLE_block = 0x3fe4,
   DW_AT_APPLE_major_runtime_vers = 0x3fe5,
   DW_AT_APPLE_runtime_class = 0x3fe6,
 
