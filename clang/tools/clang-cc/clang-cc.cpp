@@ -67,7 +67,6 @@
 #include <cstdlib>
 #if HAVE_SYS_TYPES_H
 #  include <sys/types.h>
-#  include <sys/ioctl.h>
 #endif
 
 using namespace clang;
@@ -1883,40 +1882,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
-/// \brief Determine the width of the terminal we'll be printing to,
-/// if any.
-///
-/// \returns the width of the terminal (in characters), if there is a
-/// terminal. If there is no terminal, returns 0.
-static unsigned getTerminalWidth() {
-  // Is this a terminal? If not, don't wrap by default.
-  if (!llvm::sys::Process::StandardErrIsDisplayed())
-    return 0;
-
-  // If COLUMNS is defined in the environment, wrap to that many columns.
-  if (const char *ColumnsStr = std::getenv("COLUMNS")) {
-    int Columns = atoi(ColumnsStr);
-    if (Columns > 0)
-      return Columns;
-  }
-
-#if HAVE_SYS_TYPES_H
-  // Try to determine the width of the terminal.
-  struct winsize ws;
-  unsigned Columns = 80; // A guess, in case the ioctl fails.
-  if (ioctl(2, TIOCGWINSZ, &ws) == 0)
-    Columns = ws.ws_col;
-
-  // Give ourselves just a little extra room, since printing to the
-  // end of the terminal will make it wrap when we don't want it to.
-  if (Columns)
-    --Columns;
-  return Columns;
-#endif
-
-  return 0;
-}
-
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -1951,7 +1916,7 @@ int main(int argc, char **argv) {
     // is a terminal and, if so, implicitly define -fmessage-length
     // appropriately.
     if (MessageLength.getNumOccurrences() == 0)
-      MessageLength.setValue(getTerminalWidth());
+      MessageLength.setValue(llvm::sys::Process::StandardErrColumns());
 
     DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
