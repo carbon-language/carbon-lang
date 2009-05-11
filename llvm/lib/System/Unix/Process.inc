@@ -24,6 +24,9 @@
 #ifdef HAVE_MALLOC_MALLOC_H
 #include <malloc/malloc.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
+#endif
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only generic UNIX code that
@@ -189,4 +192,38 @@ bool Process::StandardErrIsDisplayed() {
 #endif
   // If we don't have isatty, just return false.
   return false;
+}
+
+static unsigned getColumns(int FileID) {
+  // If COLUMNS is defined in the environment, wrap to that many columns.
+  if (const char *ColumnsStr = std::getenv("COLUMNS")) {
+    int Columns = std::atoi(ColumnsStr);
+    if (Columns > 0)
+      return Columns;
+  }
+
+  unsigned Columns = 0;
+
+#ifdef HAVE_SYS_IOCTL_H
+  // Try to determine the width of the terminal.
+  struct winsize ws;
+  if (ioctl(FileID, TIOCGWINSZ, &ws) == 0)
+    Columns = ws.ws_col;
+#endif
+
+  return Columns;
+}
+
+unsigned Process::StandardOutColumns() {
+  if (!StandardOutIsDisplayed())
+    return 0;
+
+  return getColumns(1);
+}
+
+unsigned Process::StandardErrColumns() {
+  if (!StandardErrIsDisplayed())
+    return 0;
+
+  return getColumns(2);
 }

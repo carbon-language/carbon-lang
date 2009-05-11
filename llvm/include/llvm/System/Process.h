@@ -94,6 +94,19 @@ namespace sys {
       /// the user rather than being put on a pipe or stored in a file.
       static bool StandardErrIsDisplayed();
 
+      /// This function determines the number of columns in the window
+      /// if standard output is connected to a "tty" or "console"
+      /// window. If standard output is not connected to a tty or
+      /// console, or if the number of columns cannot be determined,
+      /// this routine returns zero.
+      static unsigned StandardOutColumns();
+
+      /// This function determines the number of columns in the window
+      /// if standard error is connected to a "tty" or "console"
+      /// window. If standard error is not connected to a tty or
+      /// console, or if the number of columns cannot be determined,
+      /// this routine returns zero.
+      static unsigned StandardErrColumns();
     /// @}
   };
 }

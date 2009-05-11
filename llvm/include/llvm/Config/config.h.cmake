@@ -164,7 +164,7 @@
 #cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
 
 /* Define to 1 if you have the `isatty' function. */
-#undef HAVE_ISATTY
+#cmakedefine HAVE_ISATTY 1
 
 /* Set to 1 if the isinf function is found in <cmath> */
 #cmakedefine HAVE_ISINF_IN_CMATH ${HAVE_ISINF_IN_CMATH}
@@ -387,6 +387,9 @@
 
 /* Define to 1 if you have the <sys/dl.h> header file. */
 #cmakedefine HAVE_SYS_DL_H ${HAVE_SYS_DL_H}
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#cmakedefine HAVE_SYS_IOCTL_H ${HAVE_SYS_IOCTL_H}
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #cmakedefine HAVE_SYS_MMAN_H ${}

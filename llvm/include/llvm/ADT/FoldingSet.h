@@ -19,6 +19,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
 #include <string>
+#include <iterator>
 
 namespace llvm {
   class APFloat;

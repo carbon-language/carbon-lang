@@ -131,4 +131,20 @@ bool Process::StandardErrIsDisplayed() {
   return GetFileType((HANDLE)_get_osfhandle(2)) == FILE_TYPE_CHAR;
 }
 
+unsigned Process::StandardOutColumns() {
+  unsigned Columns = 0;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    Columns = csbi.dwSize.X;
+  return Columns;
+}
+
+unsigned Process::StandardErrColumns() {
+  unsigned Columns = 0;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_ERROR_HANDLE), &csbi))
+    Columns = csbi.dwSize.X;
+  return Columns;
+}
+
 }
