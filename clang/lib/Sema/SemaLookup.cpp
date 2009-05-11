@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
@@ -1117,14 +1118,37 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
                        DeclarationName Name, LookupNameKind NameKind,
                        bool RedeclarationOnly, bool AllowBuiltinCreation,
                        SourceLocation Loc) {
-  if (SS) {
-    if (SS->isInvalid() || RequireCompleteDeclContext(*SS))
+  if (SS && (SS->isSet() || SS->isInvalid())) {
+    // If the scope specifier is invalid, don't even look for
+    // anything.
+    if (SS->isInvalid())
       return LookupResult::CreateLookupResult(Context, 0);
 
-    if (SS->isSet()) {
-      return LookupQualifiedName(computeDeclContext(*SS),
-                                 Name, NameKind, RedeclarationOnly);
+    assert(!isUnknownSpecialization(*SS) && "Can't lookup dependent types");
+
+    if (isDependentScopeSpecifier(*SS)) {
+      // Determine whether we are looking into the current
+      // instantiation. 
+      NestedNameSpecifier *NNS 
+        = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+      CXXRecordDecl *Current = getCurrentInstantiationOf(NNS);
+      assert(Current && "Bad dependent scope specifier");
+      
+      // We nested name specifier refers to the current instantiation,
+      // so now we will look for a member of the current instantiation
+      // (C++0x [temp.dep.type]).
+      unsigned IDNS = getIdentifierNamespacesFromLookupNameKind(NameKind, true);
+      DeclContext::lookup_iterator I, E;
+      for (llvm::tie(I, E) = Current->lookup(Context, Name); I != E; ++I)
+        if (isAcceptableLookupResult(*I, NameKind, IDNS))
+          return LookupResult::CreateLookupResult(Context, I, E);
     }
+
+    if (RequireCompleteDeclContext(*SS))
+      return LookupResult::CreateLookupResult(Context, 0);
+
+    return LookupQualifiedName(computeDeclContext(*SS),
+                               Name, NameKind, RedeclarationOnly);
   }
 
   return LookupName(S, Name, NameKind, RedeclarationOnly, 
@@ -1601,4 +1625,3 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     }
   }
 }
-

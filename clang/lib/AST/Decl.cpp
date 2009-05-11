@@ -507,9 +507,10 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 //===----------------------------------------------------------------------===//
 
 bool TagDecl::isDependentType() const {
-  if (isa<TemplateDecl>(this))
-    return true;
-
+  if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this))
+    if (Record->getDescribedClassTemplate())
+      return true;
+    
   if (const TagDecl *TD = dyn_cast_or_null<TagDecl>(getDeclContext()))
     return TD->isDependentType();
 

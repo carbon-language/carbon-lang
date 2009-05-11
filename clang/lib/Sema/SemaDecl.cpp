@@ -64,16 +64,15 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   //   qualified-id denotes a type, forming an
   //   elaborated-type-specifier (7.1.5.3).
   //
-  // We therefore do not perform any name lookup up SS is a dependent
-  // scope name. FIXME: we will need to perform a special kind of
-  // lookup if the scope specifier names a member of the current
-  // instantiation.
-  if (SS && isDependentScopeSpecifier(*SS))
+  // We therefore do not perform any name lookup if the result would
+  // refer to a member of an unknown specialization.
+  if (SS && isUnknownSpecialization(*SS))
     return 0;
 
+  LookupResult Result 
+    = LookupParsedName(S, SS, &II, LookupOrdinaryName, false, false);
+
   NamedDecl *IIDecl = 0;
-  LookupResult Result = LookupParsedName(S, SS, &II, LookupOrdinaryName, 
-                                         false, false);
   switch (Result.getKind()) {
   case LookupResult::NotFound:
   case LookupResult::FoundOverloaded:
@@ -3402,7 +3401,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     }
   } else if (TK == TK_Reference && SS.isEmpty() && Name &&
              (Kind != TagDecl::TK_enum || !getLangOptions().CPlusPlus)) {
-    // C.scope.pdecl]p5:
+    // C++ [basic.scope.pdecl]p5:
     //   -- for an elaborated-type-specifier of the form 
     //
     //          class-key identifier

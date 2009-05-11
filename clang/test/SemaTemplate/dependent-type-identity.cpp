@@ -5,7 +5,6 @@
 // specifies type equivalence within a template.
 //
 // FIXME: template template parameters
-// FIXME: members of the current instantiation
 
 namespace N {
   template<typename T>

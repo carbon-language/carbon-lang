@@ -408,7 +408,7 @@ public:
   /// the CXXRecordDecl X<T>::A. When a complete definition of
   /// X<int>::A is required, it will be instantiated from the
   /// declaration returned by getInstantiatedFromMemberClass().
-  CXXRecordDecl *getInstantiatedFromMemberClass() {
+  CXXRecordDecl *getInstantiatedFromMemberClass() const {
     return TemplateOrInstantiation.dyn_cast<CXXRecordDecl*>();
   }
 
@@ -429,7 +429,7 @@ public:
   /// CXXRecordDecl that from a ClassTemplateDecl, while
   /// getDescribedClassTemplate() retrieves the ClassTemplateDecl from
   /// a CXXRecordDecl.
-  ClassTemplateDecl *getDescribedClassTemplate() {
+  ClassTemplateDecl *getDescribedClassTemplate() const {
     return TemplateOrInstantiation.dyn_cast<ClassTemplateDecl*>();
   }
 

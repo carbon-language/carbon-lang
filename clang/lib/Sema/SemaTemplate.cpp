@@ -2170,16 +2170,29 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 QualType
 Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
                         SourceRange Range) {
-  if (NNS->isDependent()) // FIXME: member of the current instantiation!
-    return Context.getTypenameType(NNS, &II);
+  CXXRecordDecl *CurrentInstantiation = 0;
+  if (NNS->isDependent()) {
+    CurrentInstantiation = getCurrentInstantiationOf(NNS);
 
-  CXXScopeSpec SS;
-  SS.setScopeRep(NNS);
-  SS.setRange(Range);
-  if (RequireCompleteDeclContext(SS))
-    return QualType();
+    // If the nested-name-specifier does not refer to the current
+    // instantiation, then build a typename type.
+    if (!CurrentInstantiation)
+      return Context.getTypenameType(NNS, &II);
+  }
 
-  DeclContext *Ctx = computeDeclContext(SS);
+  DeclContext *Ctx = 0;
+
+  if (CurrentInstantiation)
+    Ctx = CurrentInstantiation;
+  else {
+    CXXScopeSpec SS;
+    SS.setScopeRep(NNS);
+    SS.setRange(Range);
+    if (RequireCompleteDeclContext(SS))
+      return QualType();
+
+    Ctx = computeDeclContext(SS);
+  }
   assert(Ctx && "No declaration context?");
 
   DeclarationName Name(&II);

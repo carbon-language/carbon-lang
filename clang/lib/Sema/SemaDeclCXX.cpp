@@ -941,7 +941,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclPtrTy TagDecl,
                                              SourceLocation LBrac,
                                              SourceLocation RBrac) {
-  TemplateDecl *Template = AdjustDeclIfTemplate(TagDecl);
+  AdjustDeclIfTemplate(TagDecl);
   ActOnFields(S, RLoc, TagDecl,
               (DeclPtrTy*)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
@@ -982,7 +982,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
     }
   }
       
-  if (!Template)
+  if (!RD->isDependentType())
     AddImplicitlyDeclaredMembersToClass(RD);
 }
 
