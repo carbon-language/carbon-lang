@@ -214,7 +214,7 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   SourceManager &SMgr = getSourceManager();
     
   while (isa<Expr>(S) && P.isConsumedExpr(cast<Expr>(S))) {
-    const Stmt *Parent = P.getParent(S);
+    const Stmt *Parent = P.getParentIgnoreParens(S);
     
     if (!Parent)
       break;
@@ -225,8 +225,7 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
         if (B->isLogicalOp())
           return PathDiagnosticLocation(S, SMgr);
         break;
-      }
-        
+      }        
       case Stmt::CompoundStmtClass:
       case Stmt::StmtExprClass:
         return PathDiagnosticLocation(S, SMgr);
@@ -778,28 +777,32 @@ class VISIBILITY_HIDDEN EdgeBuilder {
   
   PathDiagnosticLocation getContextLocation(const PathDiagnosticLocation &L);
   
+  PathDiagnosticLocation cleanUpLocation(const PathDiagnosticLocation &L) {
+    if (const Stmt *S = L.asStmt()) {
+      while (1) {
+        // Adjust the location for some expressions that are best referenced
+        // by one of their subexpressions.
+        if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
+          S = PE->IgnoreParens();
+        else if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S))
+          S = CO->getCond();
+        else if (const ChooseExpr *CE = dyn_cast<ChooseExpr>(S))
+          S = CE->getCond();
+        else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
+          S = BE->getLHS();
+        else
+          break;
+      }
+      
+      return PathDiagnosticLocation(S, L.getManager());
+    }
+    
+    return L;
+  }
+  
   void popLocation() {
     if (!CLocs.back().isDead() && CLocs.back().asLocation().isFileID()) {
-      PathDiagnosticLocation L = CLocs.back();
-      
-      if (const Stmt *S = L.asStmt()) {
-        while (1) {
-          // Adjust the location for some expressions that are best referenced
-          // by one of their subexpressions.
-          if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
-            S = PE->IgnoreParens();
-          else if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(S))
-            S = CO->getCond();
-          else if (const ChooseExpr *CE = dyn_cast<ChooseExpr>(S))
-            S = CE->getCond();
-          else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
-            S = BE->getLHS();
-          else
-            break;
-        }
-
-        L = PathDiagnosticLocation(S, L.getManager());        
-      }      
+      PathDiagnosticLocation L = cleanUpLocation(CLocs.back());
       
       // For contexts, we only one the first character as the range.
       L = PathDiagnosticLocation(L.asLocation(), L.getManager());      
@@ -926,16 +929,19 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
     return;
   }
   
-  if (NewLoc.asLocation() == PrevLoc.asLocation())
+  const PathDiagnosticLocation &NewLocClean = cleanUpLocation(NewLoc);
+  const PathDiagnosticLocation &PrevLocClean = cleanUpLocation(PrevLoc);
+  
+  if (NewLocClean.asLocation() == PrevLocClean.asLocation())
     return;
     
   // FIXME: Ignore intra-macro edges for now.
-  if (NewLoc.asLocation().getInstantiationLoc() ==
-      PrevLoc.asLocation().getInstantiationLoc())
+  if (NewLocClean.asLocation().getInstantiationLoc() ==
+      PrevLocClean.asLocation().getInstantiationLoc())
     return;
 
-  PD.push_front(new PathDiagnosticControlFlowPiece(NewLoc, PrevLoc));
-  PrevLoc = NewLoc;  
+  PD.push_front(new PathDiagnosticControlFlowPiece(NewLocClean, PrevLocClean));
+  PrevLoc = NewLoc;
 }
 
 void EdgeBuilder::addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd) {
