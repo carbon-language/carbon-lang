@@ -65,6 +65,38 @@ namespace CodeGen {
   class CGDebugInfo;
   class CGObjCRuntime;
 
+/// GlobalDecl - represents a global declaration. This can either be a
+/// CXXConstructorDecl and the constructor type (Base, Complete).
+/// a CXXDestructorDecl and the destructor type (Base, Complete) or
+// a regular VarDecl or a FunctionDecl.
+class GlobalDecl {
+  llvm::PointerIntPair<const ValueDecl*, 2> Value;
+  
+public:
+  GlobalDecl() {}
+  
+  explicit GlobalDecl(const ValueDecl *VD) : Value(VD, 0) {
+    assert(!isa<CXXConstructorDecl>(VD) && "Use other ctor with ctor decls!");
+    assert(!isa<CXXDestructorDecl>(VD) && "Use other ctor with dtor decls!");
+  }
+  GlobalDecl(const CXXConstructorDecl *D, CXXCtorType Type) 
+  : Value(D, Type) {}
+  GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)
+  : Value(D, Type) {}
+  
+  const ValueDecl *getDecl() const { return Value.getPointer(); }
+  
+  CXXCtorType getCtorType() const {
+    assert(isa<CXXConstructorDecl>(getDecl()) && "Decl is not a ctor!");
+    return static_cast<CXXCtorType>(Value.getInt());
+  }
+  
+  CXXDtorType getDtorType() const {
+    assert(isa<CXXDestructorDecl>(getDecl()) && "Decl is not a dtor!");
+    return static_cast<CXXDtorType>(Value.getInt());
+  }
+};
+  
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
 class CodeGenModule : public BlockModule {
@@ -109,38 +141,6 @@ class CodeGenModule : public BlockModule {
   /// has one).
   llvm::StringSet<> MangledNames;
 
-  /// GlobalDecl - represents a global declaration. This can either be a
-  /// CXXConstructorDecl and the constructor type (Base, Complete).
-  /// a CXXDestructorDecl and the destructor type (Base, Complete) or
-  // a regular VarDecl or a FunctionDecl.
-  class GlobalDecl {
-    llvm::PointerIntPair<const ValueDecl*, 2> Value;
-    
-  public:
-    GlobalDecl() {}
-    
-    explicit GlobalDecl(const ValueDecl *VD) : Value(VD, 0) {
-      assert(!isa<CXXConstructorDecl>(VD) && "Use other ctor with ctor decls!");
-      assert(!isa<CXXDestructorDecl>(VD) && "Use other ctor with dtor decls!");
-    }
-    GlobalDecl(const CXXConstructorDecl *D, CXXCtorType Type) 
-      : Value(D, Type) {}
-    GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)
-      : Value(D, Type) {}
-    
-    const ValueDecl *getDecl() const { return Value.getPointer(); }
-    
-    CXXCtorType getCtorType() const {
-      assert(isa<CXXConstructorDecl>(getDecl()) && "Decl is not a ctor!");
-      return static_cast<CXXCtorType>(Value.getInt());
-    }
-    
-    CXXDtorType getDtorType() const {
-      assert(isa<CXXDestructorDecl>(getDecl()) && "Decl is not a dtor!");
-      return static_cast<CXXDtorType>(Value.getInt());
-    }
-  };
-  
   /// DeferredDecls - This contains all the decls which have definitions but
   /// which are deferred for emission and therefore should only be output if
   /// they are actually used.  If a decl is in this, then it is known to have
@@ -220,7 +220,7 @@ public:
   /// GetAddrOfFunction - Return the address of the given function.  If Ty is
   /// non-null, then this function will use the specified type if it has to
   /// create it.
-  llvm::Constant *GetAddrOfFunction(const FunctionDecl *D,
+  llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
@@ -383,7 +383,7 @@ private:
   
   llvm::Constant *GetOrCreateLLVMFunction(const char *MangledName,
                                           const llvm::Type *Ty,
-                                          const FunctionDecl *D);
+                                          GlobalDecl D);
   llvm::Constant *GetOrCreateLLVMGlobal(const char *MangledName,
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D);
@@ -406,11 +406,11 @@ private:
 
   /// EmitGlobal - Emit code for a singal global function or var decl. Forward
   /// declarations are emitted lazily.
-  void EmitGlobal(const GlobalDecl& D);
+  void EmitGlobal(GlobalDecl D);
 
-  void EmitGlobalDefinition(const GlobalDecl& D);
+  void EmitGlobalDefinition(GlobalDecl D);
 
-  void EmitGlobalFunctionDefinition(const FunctionDecl *D);
+  void EmitGlobalFunctionDefinition(GlobalDecl GD);
   void EmitGlobalVarDefinition(const VarDecl *D);
   void EmitAliasDefinition(const ValueDecl *D);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
@@ -437,8 +437,8 @@ private:
   void EmitCXXDestructor(const CXXDestructorDecl *D, CXXDtorType Type);
   
   // FIXME: Hardcoding priority here is gross.
-  void AddGlobalCtor(llvm::Function * Ctor, int Priority=65535);
-  void AddGlobalDtor(llvm::Function * Dtor, int Priority=65535);
+  void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);
+  void AddGlobalDtor(llvm::Function *Dtor, int Priority=65535);
 
   /// EmitCtorList - Generates a global array of functions and priorities using
   /// the given list and name. This array will have appending linkage and is

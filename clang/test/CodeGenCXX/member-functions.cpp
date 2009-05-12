@@ -20,8 +20,10 @@ void test1() {
 
 
 struct S {
-  S() { }
-  ~S() { }
+  // RUN: grep "define linkonce_odr void @_ZN1SC1Ev" %t &&
+  inline S() { }
+  // RUN: grep "define linkonce_odr void @_ZN1SC1Ev" %t &&
+  inline ~S() { }
   
   
   void f_inline1() { }

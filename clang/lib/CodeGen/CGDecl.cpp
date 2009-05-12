@@ -400,7 +400,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   if (const CleanupAttr *CA = D.getAttr<CleanupAttr>()) {
     const FunctionDecl *FD = CA->getFunctionDecl();
     
-    llvm::Constant* F = CGM.GetAddrOfFunction(FD);
+    llvm::Constant* F = CGM.GetAddrOfFunction(GlobalDecl(FD));
     assert(F && "Could not find function!");
   
     CleanupScope scope(*this);

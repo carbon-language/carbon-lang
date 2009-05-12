@@ -513,7 +513,7 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   return VD->getStorageClass() == VarDecl::Static;
 }
 
-void CodeGenModule::EmitGlobal(const GlobalDecl &GD) {
+void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   const ValueDecl *Global = GD.getDecl();
   
   // If this is an alias definition (which otherwise looks like a declaration)
@@ -561,13 +561,13 @@ void CodeGenModule::EmitGlobal(const GlobalDecl &GD) {
   EmitGlobalDefinition(GD);
 }
 
-void CodeGenModule::EmitGlobalDefinition(const GlobalDecl &GD) {
+void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   const ValueDecl *D = GD.getDecl();
   
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());
-  else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    EmitGlobalFunctionDefinition(FD);
+  else if (isa<FunctionDecl>(D))
+    EmitGlobalFunctionDefinition(GD);
   else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     EmitGlobalVarDefinition(VD);
   else {
@@ -584,7 +584,7 @@ void CodeGenModule::EmitGlobalDefinition(const GlobalDecl &GD) {
 /// to set the attributes on the function when it is first created.
 llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
                                                        const llvm::Type *Ty,
-                                                       const FunctionDecl *D) {
+                                                       GlobalDecl D) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   if (Entry) {
@@ -606,15 +606,12 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     // list, and remove it from DeferredDecls (since we don't need it anymore).
     DeferredDeclsToEmit.push_back(DDI->second);
     DeferredDecls.erase(DDI);
-  } else if (D && D->isThisDeclarationADefinition() && MayDeferGeneration(D)) {
+  } else if (const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl())) {
     // If this the first reference to a C++ inline function in a class, queue up
     // the deferred function body for emission.  These are not seen as
     // top-level declarations.
-    // FIXME: Make this work for ctor/dtors.  We need to pass down a full
-    // GlobalDecl instead of just a FunctionDecl.
-    if (!isa<CXXConstructorDecl>(D) &&
-        !isa<CXXDestructorDecl>(D))
-    DeferredDeclsToEmit.push_back(GlobalDecl(D));
+    if (FD->isThisDeclarationADefinition() && MayDeferGeneration(FD))
+      DeferredDeclsToEmit.push_back(D);
   }
   
   // This function doesn't have a complete type (for example, the return
@@ -630,8 +627,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
                                              llvm::Function::ExternalLinkage,
                                              "", &getModule());
   F->setName(MangledName);
-  if (D && ShouldSetAttributes)
-    SetFunctionAttributes(D, F);
+  if (D.getDecl() && ShouldSetAttributes)
+    SetFunctionAttributes(cast<FunctionDecl>(D.getDecl()), F);
   Entry = F;
   return F;
 }
@@ -639,12 +636,12 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
 /// GetAddrOfFunction - Return the address of the given function.  If Ty is
 /// non-null, then this function will use the specified type if it has to
 /// create it (this occurs when we see a definition of the function).
-llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D,
+llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
                                                  const llvm::Type *Ty) {
   // If there was no specific requested type, just convert it now.
   if (!Ty)
-    Ty = getTypes().ConvertType(D->getType());
-  return GetOrCreateLLVMFunction(getMangledName(D), Ty, D);
+    Ty = getTypes().ConvertType(GD.getDecl()->getType());
+  return GetOrCreateLLVMFunction(getMangledName(GD.getDecl()), Ty, GD);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified
@@ -654,7 +651,7 @@ CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
                                      const char *Name) {
   // Convert Name to be a uniqued string from the IdentifierInfo table.
   Name = getContext().Idents.get(Name).getName();
-  return GetOrCreateLLVMFunction(Name, FTy, 0);
+  return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl());
 }
 
 /// GetOrCreateLLVMGlobal - If the specified mangled name is not in the module,
@@ -924,9 +921,10 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 }
 
 
-void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
+void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const llvm::FunctionType *Ty;
-
+  const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
+  
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     bool isVariadic = D->getType()->getAsFunctionProtoType()->isVariadic();
     
@@ -948,7 +946,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   }
 
   // Get or create the prototype for the function.
-  llvm::Constant *Entry = GetAddrOfFunction(D, Ty);
+  llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
   
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
@@ -973,7 +971,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     // (e.g. "int f(int x)").  Start by making a new function of the
     // correct type, RAUW, then steal the name.
     GlobalDeclMap.erase(getMangledName(D));
-    llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(D, Ty));
+    llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(GD, Ty));
     NewFn->takeName(OldFn);
     
     // If this is an implementation of a function without a prototype, try to
@@ -1024,7 +1022,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   // if a deferred decl.
   llvm::Constant *Aliasee;
   if (isa<llvm::FunctionType>(DeclTy))
-    Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, 0);
+    Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, GlobalDecl());
   else
     Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
                                     llvm::PointerType::getUnqual(DeclTy), 0);
@@ -1105,7 +1103,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   // Unique the name through the identifier table.
   Name = getContext().Idents.get(Name).getName();
   // FIXME: param attributes for sext/zext etc.
-  return GetOrCreateLLVMFunction(Name, Ty, 0);
+  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,

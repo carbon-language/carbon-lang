@@ -406,7 +406,7 @@ public:
     case Expr::QualifiedDeclRefExprClass: {
       NamedDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
-        return CGM.GetAddrOfFunction(FD);
+        return CGM.GetAddrOfFunction(GlobalDecl(FD));
       if (const VarDecl* VD = dyn_cast<VarDecl>(Decl)) {
         // We can never refer to a variable with local storage.
         if (!VD->hasLocalStorage()) {          
