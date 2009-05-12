@@ -70,6 +70,10 @@ class MachineFunction : private Annotation {
   const Function *Fn;
   const TargetMachine &Target;
 
+  // HasBuiltinSetjmp - true if the function uses builtin_setjmp. Used to
+  // adjust callee-saved register tracking.
+  bool HasBuiltinSetjmp;
+
   // RegInfo - Information about each register in use in the function.
   MachineRegisterInfo *RegInfo;
 
@@ -122,6 +126,14 @@ public:
   /// getTarget - Return the target machine this machine code is compiled with
   ///
   const TargetMachine &getTarget() const { return Target; }
+
+  /// doesHaveBuiltinSetjmp - Return whether this function uses builtin_setjmp
+  ///
+  bool doesHaveBuiltinSetjmp() const { return HasBuiltinSetjmp; }
+
+  /// setHasBuiltinSetjmp - Mark whether this function uses builtin_setjmp
+  ///
+  void setHasBuiltinSetjmp (bool flag) { HasBuiltinSetjmp = flag; }
 
   /// getRegInfo - Return information about the registers currently in use.
   ///

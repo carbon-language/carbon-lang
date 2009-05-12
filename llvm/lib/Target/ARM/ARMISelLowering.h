@@ -64,6 +64,9 @@ namespace llvm {
       FMRRD,        // double to two gprs.
       FMDRR,         // Two gprs to double.
 
+      BUILTIN_SETJMP,   // exception handling setjmp
+      BUILTIN_LONGJMP,  // exception handling longjmp
+
       THREAD_POINTER
     };
   }
@@ -154,6 +157,7 @@ namespace llvm {
     SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressDarwin(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG);
@@ -165,6 +169,7 @@ namespace llvm {
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
 
     SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                       SDValue Chain,

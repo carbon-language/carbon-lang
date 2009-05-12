@@ -1035,14 +1035,19 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
   return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
 }
 
-static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
+SDValue
+ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  DebugLoc dl = Op.getDebugLoc();
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
   case Intrinsic::arm_thread_pointer:
-      return DAG.getNode(ARMISD::THREAD_POINTER, DebugLoc::getUnknownLoc(),
-                         PtrVT);
+      return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
+  case Intrinsic::builtinsetjmp:
+      SDValue Res = DAG.getNode(ARMISD::BUILTIN_SETJMP, dl, MVT::i32,
+                         Op.getOperand(1));
+      return Res;
   }
 }
 
@@ -1431,6 +1436,20 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::CNEG, dl, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
 }
 
+SDValue ARMTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setFrameAddressIsTaken(true);
+  MVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();  // FIXME probably not meaningful
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  unsigned FrameReg = (Subtarget->isThumb() || Subtarget->useThumbBacktraces())
+    ? ARM::R7 : ARM::R11;
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
+  while (Depth--)
+    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr, NULL, 0);
+  return FrameAddr;
+}
+
 SDValue
 ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                            SDValue Chain,
@@ -1612,7 +1631,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FCOPYSIGN:     return LowerFCOPYSIGN(Op, DAG);
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::RETURNADDR:    break;
-  case ISD::FRAMEADDR:     break;
+  case ISD::FRAMEADDR:     return LowerFRAMEADDR(Op, DAG);
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::BIT_CONVERT:   return ExpandBIT_CONVERT(Op.getNode(), DAG);
