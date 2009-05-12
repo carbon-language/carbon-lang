@@ -480,7 +480,7 @@ Parser::DeclGroupPtrTy
 Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS, 0, AS);
+  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'

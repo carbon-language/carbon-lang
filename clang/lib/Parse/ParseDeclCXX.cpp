@@ -392,7 +392,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
 ///         'union'
 void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  SourceLocation StartLoc, DeclSpec &DS,
-                                 TemplateParameterLists *TemplateParams,
+                                 const ParsedTemplateInfo &TemplateInfo,
                                  AccessSpecifier AS) {
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
@@ -475,15 +475,72 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   // Create the tag portion of the class or class template.
   Action::DeclResult TagOrTempResult;
+  TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
+
+  // FIXME: When TK == TK_Reference and we have a template-id, we need
+  // to turn that template-id into a type.
+
   if (TemplateId && TK != Action::TK_Reference) {
-    // Explicit specialization or class template partial
-    // specialization. Let semantic analysis decide.
+    // Explicit specialization, class template partial specialization,
+    // or explicit instantiation.
     ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
                                        TemplateId->getTemplateArgs(),
                                        TemplateId->getTemplateArgIsType(),
                                        TemplateId->NumArgs);
-    TagOrTempResult
-      = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
+    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
+        TK == Action::TK_Declaration) {
+      // This is an explicit instantiation of a class template.
+      TagOrTempResult
+        = Actions.ActOnExplicitInstantiation(CurScope, 
+                                             TemplateInfo.TemplateLoc, 
+                                             TagType,
+                                             StartLoc, 
+                                             SS,
+                                     TemplateTy::make(TemplateId->Template), 
+                                             TemplateId->TemplateNameLoc, 
+                                             TemplateId->LAngleLoc, 
+                                             TemplateArgsPtr,
+                                      TemplateId->getTemplateArgLocations(),
+                                             TemplateId->RAngleLoc, 
+                                             Attr);
+    } else {
+      // This is an explicit specialization or a class template
+      // partial specialization.
+      TemplateParameterLists FakedParamLists;
+
+      if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation) {
+        // This looks like an explicit instantiation, because we have
+        // something like
+        //
+        //   template class Foo<X>
+        //
+        // but it is actually a declaration. Most likely, this was
+        // meant to be an explicit specialization, but the user forgot
+        // the '<>' after 'template'.
+        assert(TK == Action::TK_Definition && "Can only get a definition here");
+
+        SourceLocation LAngleLoc 
+          = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
+        Diag(TemplateId->TemplateNameLoc, 
+             diag::err_explicit_instantiation_with_definition)
+          << SourceRange(TemplateInfo.TemplateLoc)
+          << CodeModificationHint::CreateInsertion(LAngleLoc, "<>");
+
+        // Create a fake template parameter list that contains only
+        // "template<>", so that we treat this construct as a class
+        // template specialization.
+        FakedParamLists.push_back(
+          Actions.ActOnTemplateParameterList(0, SourceLocation(), 
+                                             TemplateInfo.TemplateLoc,
+                                             LAngleLoc, 
+                                             0, 0, 
+                                             LAngleLoc));
+        TemplateParams = &FakedParamLists;
+      }
+
+      // Build the class template specialization.
+      TagOrTempResult
+        = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
                        StartLoc, SS,
                        TemplateTy::make(TemplateId->Template), 
                        TemplateId->TemplateNameLoc, 
@@ -495,6 +552,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                        Action::MultiTemplateParamsArg(Actions, 
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                  TemplateParams? TemplateParams->size() : 0));
+    }
     TemplateId->Destroy();
   } else if (TemplateParams && TK != Action::TK_Reference)
     TagOrTempResult = Actions.ActOnClassTemplate(CurScope, TagType, TK, 
@@ -691,8 +749,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
       
   if (Tok.is(tok::kw_template)) {
     SourceLocation DeclEnd;
-    ParseTemplateDeclarationOrSpecialization(Declarator::MemberContext, DeclEnd,
-                                             AS);
+    ParseDeclarationStartingWithTemplate(Declarator::MemberContext, DeclEnd, 
+                                         AS);
     return;
   }
 
@@ -708,7 +766,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS, 0, AS);
+  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();

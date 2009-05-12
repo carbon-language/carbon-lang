@@ -234,14 +234,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::kw_template:
-    if (NextToken().isNot(tok::less)) {
-      SingleDecl = ParseExplicitInstantiation(DeclEnd);
-      break;
-    }
-    // Fall through for template declarations and specializations
-
   case tok::kw_export:
-    SingleDecl = ParseTemplateDeclarationOrSpecialization(Context, DeclEnd);
+    SingleDecl = ParseDeclarationStartingWithTemplate(Context, DeclEnd);
     break;
   case tok::kw_namespace:
     SingleDecl = ParseNamespace(Context, DeclEnd);
@@ -521,7 +515,7 @@ static bool isValidAfterIdentifierInDeclarator(const Token &T) {
 /// other pieces of declspec after it, it returns true.
 ///
 bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
-                              TemplateParameterLists *TemplateParams,
+                              const ParsedTemplateInfo &TemplateInfo,
                               AccessSpecifier AS) {
   assert(Tok.is(tok::identifier) && "should have identifier");
   
@@ -576,7 +570,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       if (TagKind == tok::kw_enum)
         ParseEnumSpecifier(Loc, DS, AS);
       else
-        ParseClassSpecifier(TagKind, Loc, DS, TemplateParams, AS);
+        ParseClassSpecifier(TagKind, Loc, DS, TemplateInfo, AS);
       return true;
     }
   }
@@ -622,7 +616,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
-                                        TemplateParameterLists *TemplateParams,
+                                        const ParsedTemplateInfo &TemplateInfo,
                                         AccessSpecifier AS) {
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
@@ -686,7 +680,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // typename.  
       if (TypeRep == 0) {
         ConsumeToken();   // Eat the scope spec so the identifier is current.
-        if (ParseImplicitInt(DS, &SS, TemplateParams, AS)) continue;
+        if (ParseImplicitInt(DS, &SS, TemplateInfo, AS)) continue;
         goto DoneWithDeclSpec;
       }
       
@@ -748,7 +742,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
       if (TypeRep == 0) {
-        if (ParseImplicitInt(DS, 0, TemplateParams, AS)) continue;
+        if (ParseImplicitInt(DS, 0, TemplateInfo, AS)) continue;
         goto DoneWithDeclSpec;
       }
 
@@ -934,7 +928,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_union: {
       tok::TokenKind Kind = Tok.getKind();
       ConsumeToken();
-      ParseClassSpecifier(Kind, Loc, DS, TemplateParams, AS);
+      ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS);
       continue;
     }
 
@@ -1047,7 +1041,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 /// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
 bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
                                         const char *&PrevSpec,
-                                        TemplateParameterLists *TemplateParams){
+                                      const ParsedTemplateInfo &TemplateInfo) {
   SourceLocation Loc = Tok.getLocation();
 
   switch (Tok.getKind()) {
@@ -1056,7 +1050,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
-      return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec,TemplateParams);
+      return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, TemplateInfo);
     // Otherwise, not a type specifier.
     return false;
   case tok::coloncolon:   // ::foo::bar
@@ -1067,7 +1061,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
-      return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec,TemplateParams);
+      return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, TemplateInfo);
     // Otherwise, not a type specifier.
     return false;
       
@@ -1156,7 +1150,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
   case tok::kw_union: {
     tok::TokenKind Kind = Tok.getKind();
     ConsumeToken();
-    ParseClassSpecifier(Kind, Loc, DS, TemplateParams);
+    ParseClassSpecifier(Kind, Loc, DS, TemplateInfo);
     return true;
   }
 

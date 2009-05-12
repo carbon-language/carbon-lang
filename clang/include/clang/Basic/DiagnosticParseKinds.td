@@ -241,8 +241,13 @@ def warn_cxx0x_right_shift_in_template_arg : Warning<
   "use of right-shift operator ('>>') in template argument will require "
   "parentheses in C++0x">;
 def err_multiple_template_declarators : Error<
-    "%select{a template declaration|an explicit template instantiation}0 can "
-    "only %select{declare|instante}0 a single entity">;
+    "%select{|a template declaration|an explicit template specialization|"
+    "an explicit template instantiation}0 can "
+    "only %select{|declare|declare|instantiate}0 a single entity">;
+def err_explicit_instantiation_with_definition : Error<
+    "explicit template instantiation cannot have a definition; if this "
+    "definition is meant to be an explicit specialization, add '<>' after the "
+    "'template' keyword">;
 
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;

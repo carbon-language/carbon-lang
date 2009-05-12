@@ -547,6 +547,43 @@ private:
                             tok::TokenKind EarlyAbortIf = tok::unknown,
                             bool ConsumeFinalToken = true);
 
+  /// \brief Contains information about any template-specific
+  /// information that has been parsed prior to parsing declaration
+  /// specifiers.
+  struct ParsedTemplateInfo {
+    ParsedTemplateInfo() 
+      : Kind(NonTemplate), TemplateParams(0), TemplateLoc() { }
+
+    ParsedTemplateInfo(TemplateParameterLists *TemplateParams,
+                       bool isSpecialization)
+      : Kind(isSpecialization? ExplicitSpecialization : Template),
+        TemplateParams(TemplateParams) { }
+
+    explicit ParsedTemplateInfo(SourceLocation TemplateLoc)
+      : Kind(ExplicitInstantiation), 
+        TemplateLoc(TemplateLoc) { }
+
+    /// \brief The kind of template we are parsing.
+    enum {
+      /// \brief We are not parsing a template at all.
+      NonTemplate = 0,
+      /// \brief We are parsing a template declaration.
+      Template,
+      /// \brief We are parsing an explicit specialization.
+      ExplicitSpecialization,
+      /// \brief We are parsing an explicit instantiation.
+      ExplicitInstantiation
+    } Kind;
+
+    /// \brief The template parameter lists, for template declarations
+    /// and explicit specializations.
+    TemplateParameterLists *TemplateParams;
+
+    /// \brief The location of the 'template' keyword, for an explicit
+    /// instantiation.
+    SourceLocation TemplateLoc;
+  };
+
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   DeclGroupPtrTy ParseExternalDeclaration();
@@ -823,14 +860,15 @@ private:
   DeclPtrTy ParseFunctionTryBlock(DeclPtrTy Decl);
 
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
-                        TemplateParameterLists *TemplateParams,
+                        const ParsedTemplateInfo &TemplateInfo,
                         AccessSpecifier AS);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
-                                  TemplateParameterLists *TemplateParams = 0,
+                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                   AccessSpecifier AS = AS_none);
   bool ParseOptionalTypeSpecifier(DeclSpec &DS, int &isInvalid, 
                                   const char *&PrevSpec,
-                                  TemplateParameterLists *TemplateParams = 0);
+               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
+
   void ParseSpecifierQualifierList(DeclSpec &DS);
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
@@ -1025,7 +1063,7 @@ private:
                             const CXXScopeSpec *SS = 0);
   void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
                            DeclSpec &DS, 
-                           TemplateParameterLists *TemplateParams = 0,
+                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                            AccessSpecifier AS = AS_none);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclPtrTy TagDecl);
@@ -1051,13 +1089,15 @@ private:
   typedef llvm::SmallVector<DeclPtrTy, 4> TemplateParameterList;
 
   // C++ 14.1: Template Parameters [temp.param]
+  DeclPtrTy ParseDeclarationStartingWithTemplate(unsigned Context,
+                                                 SourceLocation &DeclEnd,
+                                                 AccessSpecifier AS = AS_none);
   DeclPtrTy ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                                      SourceLocation &DeclEnd,
-                                                   AccessSpecifier AS=AS_none);
+                                                     AccessSpecifier AS);
   DeclPtrTy ParseSingleDeclarationAfterTemplate(
                                        unsigned Context,
-                                       TemplateParameterLists *TemplateParams,
-                                       SourceLocation TemplateLoc,
+                                       const ParsedTemplateInfo &TemplateInfo,
                                        SourceLocation &DeclEnd,
                                        AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth, 
@@ -1094,7 +1134,8 @@ private:
                                  TemplateArgIsTypeList &TemplateArgIsType,
                                  TemplateArgLocationList &TemplateArgLocations);
   void *ParseTemplateArgument(bool &ArgIsType);
-  DeclPtrTy ParseExplicitInstantiation(SourceLocation &DeclEnd);
+  DeclPtrTy ParseExplicitInstantiation(SourceLocation TemplateLoc, 
+                                       SourceLocation &DeclEnd);
 
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]

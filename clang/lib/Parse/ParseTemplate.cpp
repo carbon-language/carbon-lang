@@ -18,6 +18,18 @@
 #include "AstGuard.h"
 using namespace clang;
 
+/// \brief Parse a template declaration, explicit instantiation, or
+/// explicit specialization.
+Parser::DeclPtrTy
+Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
+                                             SourceLocation &DeclEnd,
+                                             AccessSpecifier AS) {
+  if (Tok.is(tok::kw_template) && NextToken().isNot(tok::less))
+    return ParseExplicitInstantiation(ConsumeToken(), DeclEnd);
+
+  return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS);
+}
+
 /// \brief Parse a template declaration or an explicit specialization.
 ///
 /// Template declarations include one or more template parameter lists
@@ -64,6 +76,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // defining A<T>::B receives just the inner template parameter list
   // (and retrieves the outer template parameter list from its
   // context).
+  bool isSpecialiation = true;
   TemplateParameterLists ParamLists;
   do {
     // Consume the 'export', if any.
@@ -87,6 +100,9 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     ParseTemplateParameters(ParamLists.size(), TemplateParams, LAngleLoc, 
                             RAngleLoc);
 
+    if (!TemplateParams.empty())
+      isSpecialiation = false;
+
     ParamLists.push_back(
       Actions.ActOnTemplateParameterList(ParamLists.size(), ExportLoc, 
                                          TemplateLoc, LAngleLoc, 
@@ -95,8 +111,9 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
   // Parse the actual template declaration.
-  return ParseSingleDeclarationAfterTemplate(Context, &ParamLists,
-                                             SourceLocation(),
+  return ParseSingleDeclarationAfterTemplate(Context, 
+                                             ParsedTemplateInfo(&ParamLists,
+                                                             isSpecialiation),
                                              DeclEnd, AS);
 }
 
@@ -123,14 +140,16 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
 Parser::DeclPtrTy 
 Parser::ParseSingleDeclarationAfterTemplate(
                                        unsigned Context,
-                                       TemplateParameterLists *TemplateParams,
-                                       SourceLocation TemplateLoc,
+                                       const ParsedTemplateInfo &TemplateInfo,
                                        SourceLocation &DeclEnd,
                                        AccessSpecifier AS) {
+  assert(TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
+         "Template information required");
+
   // Parse the declaration specifiers.
   DeclSpec DS;
   // FIXME: Pass TemplateLoc through for explicit template instantiations
-  ParseDeclarationSpecifiers(DS, TemplateParams, AS);
+  ParseDeclarationSpecifiers(DS, TemplateInfo, AS);
 
   if (Tok.is(tok::semi)) {
     DeclEnd = ConsumeToken();
@@ -156,7 +175,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
     if (Tok.is(tok::comma)) {
       Diag(Tok, diag::err_multiple_template_declarators)
-        << (TemplateParams == 0);
+        << (int)TemplateInfo.Kind;
       SkipUntil(tok::semi, true, false);
       return ThisDecl;
     }
@@ -785,11 +804,10 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
 ///
 ///       explicit-instantiation:
 ///         'template' declaration
-Parser::DeclPtrTy Parser::ParseExplicitInstantiation(SourceLocation &DeclEnd) {
-  assert(Tok.is(tok::kw_template) && NextToken().isNot(tok::less) &&
-	 "Token does not start an explicit instantiation.");
-  
-  SourceLocation TemplateLoc = ConsumeToken();
-  return ParseSingleDeclarationAfterTemplate(Declarator::FileContext, 0, 
-                                             TemplateLoc, DeclEnd, AS_none);
+Parser::DeclPtrTy 
+Parser::ParseExplicitInstantiation(SourceLocation TemplateLoc,
+                                   SourceLocation &DeclEnd) {
+  return ParseSingleDeclarationAfterTemplate(Declarator::FileContext, 
+                                             ParsedTemplateInfo(TemplateLoc),
+                                             DeclEnd, AS_none);
 }

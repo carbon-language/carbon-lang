@@ -1017,13 +1017,16 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   // FIXME: Warn on useless const/volatile
   // FIXME: Warn on useless static/extern/typedef/private_extern/mutable
   // FIXME: Warn on useless attributes
-
   TagDecl *Tag = 0;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
       DS.getTypeSpecType() == DeclSpec::TST_struct ||
       DS.getTypeSpecType() == DeclSpec::TST_union ||
-      DS.getTypeSpecType() == DeclSpec::TST_enum)
+      DS.getTypeSpecType() == DeclSpec::TST_enum) {
+    if (!DS.getTypeRep()) // We probably had an error
+      return DeclPtrTy();
+
     Tag = dyn_cast<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+  }
 
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     if (!Record->getDeclName() && Record->isDefinition() &&
