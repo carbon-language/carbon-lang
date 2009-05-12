@@ -62,6 +62,8 @@ namespace {
 
   private:
     bool OptimizeIntraLoopEdges();
+    bool HeaderShouldBeAligned(MachineBasicBlock *MBB, MachineLoop *L,
+                               SmallPtrSet<MachineBasicBlock*, 4> &DoNotAlign);
     bool AlignLoops(MachineFunction &MF);
   };
 
@@ -244,14 +246,37 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
 /// should be aligned. For now, we will not align it if all the predcessors
 /// (i.e. loop back edges) are laid out above the header. FIXME: Do not
 /// align small loops.
-static bool HeaderShouldBeAligned(MachineBasicBlock *MBB) {
+bool
+CodePlacementOpt::HeaderShouldBeAligned(MachineBasicBlock *MBB, MachineLoop *L,
+                               SmallPtrSet<MachineBasicBlock*, 4> &DoNotAlign) {
+  if (DoNotAlign.count(MBB))
+    return false;
+
+  bool BackEdgeBelow = false;
   for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
     MachineBasicBlock *PredMBB = *PI;
-    if (PredMBB == MBB || PredMBB->getNumber() > MBB->getNumber())
-      return true;
+    if (PredMBB == MBB || PredMBB->getNumber() > MBB->getNumber()) {
+      BackEdgeBelow = true;
+      break;
+    }
   }
-  return false;
+
+  if (!BackEdgeBelow)
+    return false;
+
+  // Ok, we are going to align this loop header. If it's an inner loop,
+  // do not align its outer loop.
+  MachineBasicBlock *PreHeader = L->getLoopPreheader();
+  if (PreHeader) {
+    MachineLoop *L = MLI->getLoopFor(PreHeader);
+    if (L) {
+      MachineBasicBlock *HeaderBlock = L->getHeader();
+      HeaderBlock->setAlignment(0);
+      DoNotAlign.insert(HeaderBlock);
+    }
+  }
+  return true;
 }
 
 /// AlignLoops - Align loop headers to target preferred alignments.
@@ -269,14 +294,16 @@ bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
   MF.RenumberBlocks();
 
   bool Changed = false;
+  SmallPtrSet<MachineBasicBlock*, 4> DoNotAlign;
   for (unsigned i = 0, e = LoopHeaders.size(); i != e; ++i) {
     MachineBasicBlock *HeaderMBB = LoopHeaders[i];
     MachineBasicBlock *PredMBB = prior(MachineFunction::iterator(HeaderMBB));
-    if (MLI->getLoopFor(HeaderMBB) == MLI->getLoopFor(PredMBB))
+    MachineLoop *L = MLI->getLoopFor(HeaderMBB);
+    if (L == MLI->getLoopFor(PredMBB))
       // If previously BB is in the same loop, don't align this BB. We want
       // to prevent adding noop's inside a loop.
       continue;
-    if (HeaderShouldBeAligned(HeaderMBB)) {
+    if (HeaderShouldBeAligned(HeaderMBB, L, DoNotAlign)) {
       HeaderMBB->setAlignment(Align);
       Changed = true;
       ++NumHeaderAligned;
