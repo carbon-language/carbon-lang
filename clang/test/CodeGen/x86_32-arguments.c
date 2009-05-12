@@ -151,4 +151,7 @@ struct s36 { struct { int : 0 } a[2][10]; char b; char c; } f36(void) {}
 // RUN: grep 'define float @f37()' %t &&
 struct s37 { float c[1][1]; } f37(void) {}
 
+// RUN: grep 'define void @f38(.struct.s38. noalias sret .agg.result)' %t &&
+struct s38 { char a[3]; short b; } f38(void) {}
+
 // RUN: true

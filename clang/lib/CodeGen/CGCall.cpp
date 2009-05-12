@@ -446,18 +446,11 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
       }
     }
 
-    uint64_t Size = Context.getTypeSize(RetTy);
-    if (isRegisterSize(Size)) {
-      // Always return in register for unions for now.
-      // FIXME: This is wrong, but better than treating as a
-      // structure.
-      if (RetTy->isUnionType())
-        return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
-
-      // Small structures which are register sized are generally returned
-      // in a register.
-      if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, Context))
-        return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+    // Small structures which are register sized are generally returned
+    // in a register.
+    if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, Context)) {
+      uint64_t Size = Context.getTypeSize(RetTy);
+      return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
     }
 
     return ABIArgInfo::getIndirect(0);
