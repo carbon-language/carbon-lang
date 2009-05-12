@@ -245,7 +245,7 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   if (FD->getStorageClass() == FunctionDecl::Static)
     return CodeGenModule::GVA_Internal;
 
-  if (!FD->isInline())
+  if (!FD->isInline() && !isa<CXXMethodDecl>(FD))
     return CodeGenModule::GVA_StrongExternal;
   
   // If the inline function explicitly has the GNU inline attribute on it, or if
@@ -600,12 +600,20 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
   llvm::DenseMap<const char*, GlobalDecl>::iterator DDI = 
-  DeferredDecls.find(MangledName);
+    DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
     DeferredDeclsToEmit.push_back(DDI->second);
     DeferredDecls.erase(DDI);
+  } else
+    if (MayDeferGeneration(D)) {
+    // If this the first reference to a C++ inline function in a class, queue up
+    // the deferred function body for emission.  These are not seen as
+    // top-level declarations.
+    if (!isa<CXXConstructorDecl>(D) &&
+        !isa<CXXDestructorDecl>(D))
+    DeferredDeclsToEmit.push_back(GlobalDecl(D));
   }
   
   // This function doesn't have a complete type (for example, the return
