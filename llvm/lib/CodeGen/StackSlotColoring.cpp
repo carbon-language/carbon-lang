@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include <vector>
@@ -129,6 +130,7 @@ namespace {
                           unsigned OldReg, unsigned NewReg);
     void UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
                                     unsigned Reg, const TargetRegisterClass *RC,
+                                    SmallSet<unsigned, 4> &Defs,
                                     MachineFunction &MF);
     bool AllMemRefsCanBeUnfolded(int SS);
     bool RemoveDeadStores(MachineBasicBlock* MBB);
@@ -391,20 +393,23 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
     return false;
 
   // Rewrite all MO_FrameIndex operands.
+  SmallVector<SmallSet<unsigned, 4>, 4> NewDefs(MF.getNumBlockIDs());
   for (unsigned SS = 0, SE = SSRefs.size(); SS != SE; ++SS) {
     bool isReg = SlotIsReg[SS];
     int NewFI = SlotMapping[SS];
     if (NewFI == -1 || (NewFI == (int)SS && !isReg))
       continue;
 
+    const TargetRegisterClass *RC = LS->getIntervalRegClass(SS);
     SmallVector<MachineInstr*, 8> &RefMIs = SSRefs[SS];
     for (unsigned i = 0, e = RefMIs.size(); i != e; ++i)
       if (!isReg)
         RewriteInstruction(RefMIs[i], SS, NewFI, MF);
       else {
         // Rewrite to use a register instead.
-        const TargetRegisterClass *RC = LS->getIntervalRegClass(SS);
-        UnfoldAndRewriteInstruction(RefMIs[i], SS, NewFI, RC, MF);
+        unsigned MBBId = RefMIs[i]->getParent()->getNumber();
+        SmallSet<unsigned, 4> &Defs = NewDefs[MBBId];
+        UnfoldAndRewriteInstruction(RefMIs[i], SS, NewFI, RC, Defs, MF);
       }
   }
 
@@ -481,11 +486,12 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
   if (MII == MBB->begin())
     return false;
 
+  SmallVector<MachineOperand*, 4> Uses;
   SmallVector<MachineOperand*, 4> Refs;
   while (--MII != MBB->begin()) {
     bool FoundDef = false;  // Not counting 2address def.
-    bool FoundUse = false;
-    bool FoundKill = false;
+
+    Uses.clear();
     const TargetInstrDesc &TID = MII->getDesc();
     for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MII->getOperand(i);
@@ -495,15 +501,14 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
       if (Reg == 0)
         continue;
       if (Reg == OldReg) {
+        if (MO.isImplicit())
+          return false;
         const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
         if (RC && !RC->contains(NewReg))
           return false;
 
         if (MO.isUse()) {
-          FoundUse = true;
-          if (MO.isKill())
-            FoundKill = true;
-          Refs.push_back(&MO);
+          Uses.push_back(&MO);
         } else {
           Refs.push_back(&MO);
           if (!MII->isRegTiedToUseOperand(i))
@@ -516,11 +521,17 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
           return false;
       }
     }
+
     if (FoundDef) {
+      // Found non-two-address def. Stop here.
       for (unsigned i = 0, e = Refs.size(); i != e; ++i)
         Refs[i]->setReg(NewReg);
       return true;
     }
+
+    // Two-address uses must be updated as well.
+    for (unsigned i = 0, e = Uses.size(); i != e; ++i)
+      Refs.push_back(Uses[i]);
   }
   return false;
 }
@@ -547,7 +558,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
       if (Reg == 0)
         continue;
       if (Reg == OldReg) {
-        if (MO.isDef())
+        if (MO.isDef() || MO.isImplicit())
           return false;
 
         const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
@@ -573,10 +584,12 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
 /// UnfoldAndRewriteInstruction - Rewrite specified instruction by unfolding
 /// folded memory references and replacing those references with register
 /// references instead.
-void StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
-                                                  unsigned Reg,
-                                                  const TargetRegisterClass *RC,
-                                                  MachineFunction &MF) {
+void
+StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
+                                               unsigned Reg,
+                                               const TargetRegisterClass *RC,
+                                               SmallSet<unsigned, 4> &Defs,
+                                               MachineFunction &MF) {
   MachineBasicBlock *MBB = MI->getParent();
   if (unsigned DstReg = TII->isLoadFromStackSlot(MI, OldFI)) {
     if (PropagateForward(MI, MBB, DstReg, Reg)) {
@@ -587,6 +600,13 @@ void StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
       TII->copyRegToReg(*MBB, MI, DstReg, Reg, RC, RC);
       ++NumRegRepl;
     }
+
+    if (!Defs.count(Reg)) {
+      // If this is the first use of Reg in this MBB and it wasn't previously
+      // defined in MBB, add it to livein.
+      MBB->addLiveIn(Reg);
+      Defs.insert(Reg);
+    }
   } else if (unsigned SrcReg = TII->isStoreToStackSlot(MI, OldFI)) {
     if (MI->killsRegister(SrcReg) && PropagateBackward(MI, MBB, SrcReg, Reg)) {
       DOUT << "Eliminated store: ";
@@ -596,13 +616,25 @@ void StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
       TII->copyRegToReg(*MBB, MI, Reg, SrcReg, RC, RC);
       ++NumRegRepl;
     }
+
+    // Remember reg has been defined in MBB.
+    Defs.insert(Reg);
   } else {
     SmallVector<MachineInstr*, 4> NewMIs;
     bool Success = TII->unfoldMemoryOperand(MF, MI, Reg, false, false, NewMIs);
     Success = Success; // Silence compiler warning.
     assert(Success && "Failed to unfold!");
-    MBB->insert(MI, NewMIs[0]);
+    MachineInstr *NewMI = NewMIs[0];
+    MBB->insert(MI, NewMI);
     ++NumRegRepl;
+
+    if (NewMI->readsRegister(Reg)) {
+      if (!Defs.count(Reg))
+        // If this is the first use of Reg in this MBB and it wasn't previously
+        // defined in MBB, add it to livein.
+        MBB->addLiveIn(Reg);
+      Defs.insert(Reg);
+    }
   }
   MBB->erase(MI);
 }
