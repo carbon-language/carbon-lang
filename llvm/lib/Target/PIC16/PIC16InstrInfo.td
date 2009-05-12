@@ -132,7 +132,7 @@ include "PIC16InstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 // W = W Op F : Load the value from F and do Op to W.
-let isTwoAddress = 1 in
+let isTwoAddress = 1, mayLoad = 1 in
 class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs GPR:$dst),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -145,6 +145,7 @@ class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
 // This insn class is not marked as TwoAddress because the reg is
 // being used as a source operand only. (Remember a TwoAddress insn
 // needs a copyRegToReg.)
+let mayStore = 1 in
 class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -266,6 +267,7 @@ def restore_fsr1: RESTORE_FSR<"restore_fsr1">;
 
 // Direct store.
 // Input operands are: val = W, ptrlo = GA, offset = offset, ptrhi = banksel.
+let mayStore = 1 in
 class MOVWF_INSN<bits<6> OpCode, SDNode OpNodeDest, SDNode Op>:
   ByteFormat<0, (outs), 
              (ins GPR:$val, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -297,6 +299,7 @@ def store_indirect :
 // Direct load.
 // Input Operands are: ptrlo = GA, offset = offset, ptrhi = banksel.
 // Output: dst = W
+let mayLoad = 1 in
 class MOVF_INSN<bits<6> OpCode, SDNode OpNodeSrc, SDNode Op>:
   ByteFormat<0, (outs GPR:$dst), 
              (ins i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -357,7 +360,7 @@ def addwfc: BinOpWF<0, "addwfc", adde>;  // With Carry.
 }
 
 // W -= [F] ; load from F and sub the value from W.
-let isTwoAddress = 1 in
+let isTwoAddress = 1, mayLoad = 1 in
 class SUBFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs GPR:$dst),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -376,6 +379,7 @@ def subfw_cc: SUBFW<0, "subwf", PIC16Subcc>;
 }
 
 // [F] -= W ; 
+let mayStore = 1 in
 class SUBWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),

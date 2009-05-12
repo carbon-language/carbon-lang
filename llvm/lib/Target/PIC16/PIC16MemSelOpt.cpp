@@ -104,9 +104,13 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
   bool Changed = false;
 
   unsigned NumOperands = MI->getNumOperands();
-  // If this insn has only one operand, probably it is not going to
-  // access any data memory.
-  if (PIC16InstrInfo::hasNoMemOperand(*MI)) return Changed;
+  if (NumOperands == 0) return false;
+
+
+  // If this insn is not going to access any memory, return.
+  const TargetInstrDesc &TID = TII->get(MI->getOpcode());
+  if (! (TID.isCall() || TID.mayLoad() || TID.mayStore()))
+    return false;
 
   // Scan for the memory address operand.
   // FIXME: Should we use standard interfaces like memoperands_iterator,
