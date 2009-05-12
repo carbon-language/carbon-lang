@@ -276,7 +276,7 @@ public:
   void iterBindings(Store store, BindingsHandler& f) {
     // FIXME: Implement.
   }
-
+  const GRState* setDefaultValue(const GRState* St, const MemRegion* R, SVal V);
 private:
   const GRState* BindArray(const GRState* St, const TypedRegion* R, SVal V);
 
@@ -759,8 +759,13 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
     const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
     GRStateTrait<RegionDefaultValue>::lookup_type D = 
       state.get<RegionDefaultValue>(SuperR);
-    if (D)
-      return *D;
+    if (D) {
+      // If the default value is symbolic, we need to create a new symbol.
+      if (D->hasConjuredSymbol())
+        return ValMgr.getRegionValueSymbolVal(R);
+      else
+        return *D;
+    }
   }
   
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
@@ -1273,4 +1278,10 @@ const GRState* RegionStoreManager::setCastType(const GRState* St,
                                                const MemRegion* R, QualType T) {
   GRStateRef state(St, StateMgr);
   return state.set<RegionCasts>(R, T);
+}
+
+const GRState* RegionStoreManager::setDefaultValue(const GRState* St,
+                                                   const MemRegion* R, SVal V) {
+  GRStateRef state(St, StateMgr);
+  return state.set<RegionDefaultValue>(R, V);
 }

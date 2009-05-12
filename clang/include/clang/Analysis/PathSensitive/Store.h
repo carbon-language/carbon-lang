@@ -161,6 +161,11 @@ public:
     return St;
   }
 
+  virtual const GRState* setDefaultValue(const GRState* St,
+                                         const MemRegion* R, SVal V) {
+    return St;
+  }
+
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;
       

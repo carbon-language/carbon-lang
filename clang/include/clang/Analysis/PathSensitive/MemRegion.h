@@ -217,6 +217,7 @@ public:
   }
 
   bool isDeclared() const { return codekind == Declared; }
+  bool isSymbolic() const { return codekind == Symbolic; }
 
   const FunctionDecl* getDecl() const {
     assert(codekind == Declared);

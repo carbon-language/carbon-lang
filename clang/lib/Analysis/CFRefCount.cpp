@@ -1721,7 +1721,7 @@ private:
 
   void ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
                            GRStmtNodeBuilder<GRState>& Builder,
-                           Expr* NodeExpr, Expr* ErrorExpr,                        
+                           Expr* NodeExpr, Expr* ErrorExpr,
                            ExplodedNode<GRState>* Pred,
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolRef Sym);
@@ -1767,7 +1767,7 @@ public:
                    Expr* Ex,
                    Expr* Receiver,
                    const RetainSummary& Summ,
-                   ExprIterator arg_beg, ExprIterator arg_end,                             
+                   ExprIterator arg_beg, ExprIterator arg_end,
                    ExplodedNode<GRState>* Pred);
     
   virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
@@ -1995,7 +1995,7 @@ namespace {
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode<GRState> *n, SymbolRef sym, const char* endText)
-      : RangedBugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}    
+      : RangedBugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}
     
     virtual ~CFRefReport() {}
     
@@ -2302,7 +2302,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
             if (PrevV.getAutoreleaseCount() == CurrV.getAutoreleaseCount())
               return 0;
             
-            assert(PrevV.getAutoreleaseCount() < CurrV.getAutoreleaseCount());            
+            assert(PrevV.getAutoreleaseCount() < CurrV.getAutoreleaseCount());
             os << "Object sent -autorelease message";
             break;
           }
@@ -2623,8 +2623,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                              ExplodedNode<GRState>* Pred) {
   
   // Get the state.
-  GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
-  ASTContext& Ctx = Eng.getStateManager().getContext();
+  GRStateManager& StateMgr = Eng.getStateManager();
+  GRStateRef state(Builder.GetState(Pred), StateMgr);
+  ASTContext& Ctx = StateMgr.getContext();
+  ValueManager &ValMgr = Eng.getValueManager();
 
   // Evaluate the effect of the arguments.
   RefVal::Kind hasErr = (RefVal::Kind) 0;
@@ -2680,7 +2682,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             // with an interface to StoreManager so that this logic can be
             // approriately delegated to the respective StoreManagers while
             // still allowing us to do checker-specific logic (e.g.,
-            // invalidating reference counts), probably via callbacks.            
+            // invalidating reference counts), probably via callbacks.
             if (ER->getElementType()->isIntegralType()) {
               const MemRegion *superReg = ER->getSuperRegion();
               if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
@@ -2730,15 +2732,21 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                 QualType FT = FD->getType();
                 
                 if (Loc::IsLocType(FT) || 
-                    (FT->isIntegerType() && FT->isScalarType())) {                  
+                    (FT->isIntegerType() && FT->isScalarType())) {
                   const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
-                  ValueManager &ValMgr = Eng.getValueManager();
+
                   SVal V = ValMgr.getConjuredSymbolVal(*I, FT, Count);
                   state = state.BindLoc(Loc::MakeVal(FR), V);
                 }                
               }
-            }
-            else {
+            } else if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
+              // Set the default value of the array to conjured symbol.
+              StoreManager& StoreMgr = Eng.getStateManager().getStoreManager();
+              SVal V = ValMgr.getConjuredSymbolVal(*I, AT->getElementType(),
+                                                   Count);
+              state = GRStateRef(StoreMgr.setDefaultValue(state, R, V), 
+                                 StateMgr);
+            } else {
               // Just blast away other values.
               state = state.BindLoc(*MR, UnknownVal());
             }

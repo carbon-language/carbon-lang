@@ -132,3 +132,13 @@ static struct s3 opt;
 void f14() {
   struct s3 my_opt = opt;
 }
+
+void bar(int*);
+
+// Test if the array is correctly invalidated.
+void f15() {
+  int a[10];
+  bar(a);
+  if (a[1]) // no-warning
+    1;
+}

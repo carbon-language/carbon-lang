@@ -30,6 +30,31 @@ using llvm::APSInt;
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
+bool SVal::hasConjuredSymbol() const {
+  if (const nonloc::SymbolVal* SV = dyn_cast<nonloc::SymbolVal>(this)) {
+    SymbolRef sym = SV->getSymbol();
+    if (isa<SymbolConjured>(sym))
+      return true;
+  }
+
+  if (const loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(this)) {
+    const MemRegion *R = RV->getRegion();
+    if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
+      SymbolRef sym = SR->getSymbol();
+      if (isa<SymbolConjured>(sym))
+        return true;
+    } else if (const CodeTextRegion *CTR = dyn_cast<CodeTextRegion>(R)) {
+      if (CTR->isSymbolic()) {
+        SymbolRef sym = CTR->getSymbol();
+        if (isa<SymbolConjured>(sym))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 const FunctionDecl* SVal::getAsFunctionDecl() const {
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion* R = X->getRegion();
