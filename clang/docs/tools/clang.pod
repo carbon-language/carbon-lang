@@ -401,84 +401,70 @@ and warnings).  Please see the Clang User's Manual for more information.
 
 =over
 
-=item B<-xyz>
+=item B<-D>I<macroname=value>
 
-Frob
+Adds an implicit #define into the predefines buffer which is read before the
+source file is preprocessed.
 
--D
--U
--include
--imacros
+=item B<-U>I<macroname>
 
+Adds an implicit #undef into the predefines buffer which is read before the
+source file is preprocessed.
 
+=item B<-include> I<filename>
 
--nostdinc
--F
--I
--idirafter
--iquote
--isystem
--iprefix
--iwithprefix
--iwithprefixbefore
--isysroot
+Adds an implicit #include into the predefines buffer which is read before the
+source file is preprocessed.
 
+=item B<-I>I<directory>
 
+Add the specified directory to the search path for include files.
+
+=item B<-F>I<directory>
+
+Add the specified directory to the search path for framework include files.
+
+=item B<-nostdinc>
+
+Do not search the standard system directories for include files.
+
+=cut
+
+## TODO, but do we really want people using this stuff?
+=item B<-idirafter>I<directory>
+=item B<-iquote>I<directory>
+=item B<-isystem>I<directory>
+=item B<-iprefix>I<directory>
+=item B<-iwithprefix>I<directory>
+=item B<-iwithprefixbefore>I<directory>
+=item B<-isysroot>
+=pod
 
 
 =back
 
 
 
+=cut
 
-=head2 Parser and Semantic Analysis Options
-
+### TODO someday.
+=head2 Warning Control Options
 =over
-
 =back
-
-
-
-
-
 =head2 Code Generation and Optimization Options
-
 =over
-
 =back
-
-
-
-
-
-
 =head2 Assembler Options
-
 =over
-
 =back
-
-
-
-
-
-
 =head2 Linker Options
-
 =over
-
 =back
-
-
-
-
-
 =head2 Static Analyzer Options
-
 =over
-
 =back
 
+=pod
 
 
 =head1 ENVIRONMENT
