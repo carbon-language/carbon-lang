@@ -104,3 +104,15 @@ void f7() {
 int f8() {
   return ({ foo(); }).Y;
 }
+
+// rdar://6880558
+struct S;
+struct C {
+  int i;
+  struct S *tab[];
+};
+struct S { struct C c; };
+void f9(struct S *x) {
+  foo(((void)1, x->c).tab[0]);
+}
+

@@ -1108,6 +1108,12 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
 }
 
 LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
+  // Comma expressions just emit their LHS then their RHS as an l-value.
+  if (E->getOpcode() == BinaryOperator::Comma) {
+    EmitAnyExpr(E->getLHS());
+    return EmitLValue(E->getRHS());
+  }
+  
   // Can only get l-value for binary operator expressions which are a
   // simple assignment of aggregate type.
   if (E->getOpcode() != BinaryOperator::Assign)
