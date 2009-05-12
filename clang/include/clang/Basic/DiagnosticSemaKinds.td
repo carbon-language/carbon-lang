@@ -280,7 +280,7 @@ def err_mutable_nonmember : Error<
 def err_virtual_non_function : Error<
   "'virtual' can only appear on non-static member functions">;
 def err_explicit_non_function : Error<
-  "'virtual' can only appear on non-static member functions">;
+  "'explicit' can only appear on non-static member functions">;
 def err_virtual_out_of_class : Error<
   "'virtual' can only be specified inside the class definition">;
 def err_static_not_bitfield : Error<"static member %0 cannot be a bit-field">;
