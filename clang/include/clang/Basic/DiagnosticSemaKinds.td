@@ -1720,5 +1720,8 @@ def error_ivar_use_in_class_method : Error<
 def error_private_ivar_access : Error<"instance variable %0 is private">;
 def error_protected_ivar_access : Error<"instance variable %0 is protected">;
 def warn_maynot_respond : Warning<"%0  may not respond to %1">;
+def warn_attribute_method_def : Warning<
+  "method attribute may be specified on method declarations only">;
+
 
 }

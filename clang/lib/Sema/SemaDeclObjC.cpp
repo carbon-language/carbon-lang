@@ -1671,6 +1671,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       PrevMethod = ImpDecl->getClassMethod(Context, Sel);
       ImpDecl->addClassMethod(Context, ObjCMethod);
     }
+    if (AttrList)
+      Diag(EndLoc, diag::warn_attribute_method_def);
   } 
   else if (ObjCCategoryImplDecl *CatImpDecl = 
             dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
@@ -1681,6 +1683,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       PrevMethod = CatImpDecl->getClassMethod(Context, Sel);
       CatImpDecl->addClassMethod(Context, ObjCMethod);
     }
+    if (AttrList)
+      Diag(EndLoc, diag::warn_attribute_method_def);
   }
   if (PrevMethod) {
     // You can never have two method definitions with the same name.
