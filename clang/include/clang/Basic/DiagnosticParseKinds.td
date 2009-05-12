@@ -240,6 +240,9 @@ def err_two_right_angle_brackets_need_space : Error<
 def warn_cxx0x_right_shift_in_template_arg : Warning<
   "use of right-shift operator ('>>') in template argument will require "
   "parentheses in C++0x">;
+def err_multiple_template_declarators : Error<
+    "%select{a template declaration|an explicit template instantiation}0 can "
+    "only %select{declare|instante}0 a single entity">;
 
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;

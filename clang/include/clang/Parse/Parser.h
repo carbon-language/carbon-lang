@@ -550,6 +550,8 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   DeclGroupPtrTy ParseExternalDeclaration();
+  bool isDeclarationAfterDeclarator();
+  bool isStartOfFunctionDefinition();
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
             TemplateParameterLists *TemplateParams = 0,
             AccessSpecifier AS = AS_none);
@@ -816,6 +818,7 @@ private:
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
                                         SourceLocation &DeclEnd,
                                         bool RequireSemi = true);
+  DeclPtrTy ParseDeclarationAfterDeclarator(Declarator &D);
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
   DeclPtrTy ParseFunctionTryBlock(DeclPtrTy Decl);
@@ -1052,6 +1055,12 @@ private:
   DeclPtrTy ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                                      SourceLocation &DeclEnd,
                                                    AccessSpecifier AS=AS_none);
+  DeclPtrTy ParseSingleDeclarationAfterTemplate(
+                                       unsigned Context,
+                                       TemplateParameterLists *TemplateParams,
+                                       SourceLocation TemplateLoc,
+                                       SourceLocation &DeclEnd,
+                                       AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth, 
                                TemplateParameterList &TemplateParams,
                                SourceLocation &LAngleLoc, 
@@ -1086,6 +1095,7 @@ private:
                                  TemplateArgIsTypeList &TemplateArgIsType,
                                  TemplateArgLocationList &TemplateArgLocations);
   void *ParseTemplateArgument(bool &ArgIsType);
+  DeclPtrTy ParseExplicitInstantiation(SourceLocation &DeclEnd);
 
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]

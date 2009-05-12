@@ -233,8 +233,14 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
                                                 SourceLocation &DeclEnd) {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
-  case tok::kw_export:
   case tok::kw_template:
+    if (NextToken().isNot(tok::less)) {
+      SingleDecl = ParseExplicitInstantiation(DeclEnd);
+      break;
+    }
+    // Fall through for template declarations and specializations
+
+  case tok::kw_export:
     SingleDecl = ParseTemplateDeclarationOrSpecialization(Context, DeclEnd);
     break;
   case tok::kw_namespace:
@@ -302,15 +308,11 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   return DG;
 }
 
-
-/// ParseInitDeclaratorListAfterFirstDeclarator - Parse 'declaration' after
-/// parsing 'declaration-specifiers declarator'.  This method is split out this
-/// way to handle the ambiguity between top-level function-definitions and
-/// declarations.
+/// \brief Parse 'declaration' after parsing 'declaration-specifiers
+/// declarator'. This method parses the remainder of the declaration
+/// (including any attributes or initializer, among other things) and
+/// finalizes the declaration.
 ///
-///       init-declarator-list: [C99 6.7]
-///         init-declarator
-///         init-declarator-list ',' init-declarator
 ///       init-declarator: [C99 6.7]
 ///         declarator
 ///         declarator '=' initializer
@@ -327,6 +329,81 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
 /// According to the standard grammar, =default and =delete are function
 /// definitions, but that definitely doesn't fit with the parser here.
 ///
+Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D) {
+  // If a simple-asm-expr is present, parse it.
+  if (Tok.is(tok::kw_asm)) {
+    SourceLocation Loc;
+    OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
+    if (AsmLabel.isInvalid()) {
+      SkipUntil(tok::semi, true, true);
+      return DeclPtrTy();
+    }
+    
+    D.setAsmLabel(AsmLabel.release());
+    D.SetRangeEnd(Loc);
+  }
+  
+  // If attributes are present, parse them.
+  if (Tok.is(tok::kw___attribute)) {
+    SourceLocation Loc;
+    AttributeList *AttrList = ParseAttributes(&Loc);
+    D.AddAttributes(AttrList, Loc);
+  }
+  
+  // Inform the current actions module that we just parsed this declarator.
+  DeclPtrTy ThisDecl = Actions.ActOnDeclarator(CurScope, D);
+  
+  // Parse declarator '=' initializer.
+  if (Tok.is(tok::equal)) {
+    ConsumeToken();
+    if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
+      SourceLocation DelLoc = ConsumeToken();
+      Actions.SetDeclDeleted(ThisDecl, DelLoc);
+    } else {
+      OwningExprResult Init(ParseInitializer());
+      if (Init.isInvalid()) {
+        SkipUntil(tok::semi, true, true);
+        return DeclPtrTy();
+      }
+      Actions.AddInitializerToDecl(ThisDecl, move(Init));
+    }
+  } else if (Tok.is(tok::l_paren)) {
+    // Parse C++ direct initializer: '(' expression-list ')'
+    SourceLocation LParenLoc = ConsumeParen();
+    ExprVector Exprs(Actions);
+    CommaLocsTy CommaLocs;
+
+    if (ParseExpressionList(Exprs, CommaLocs)) {
+      SkipUntil(tok::r_paren);
+    } else {
+      // Match the ')'.
+      SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+      assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
+             "Unexpected number of commas!");
+      Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
+                                            move_arg(Exprs),
+                                            &CommaLocs[0], RParenLoc);
+    }
+  } else {
+    Actions.ActOnUninitializedDecl(ThisDecl);
+  }
+
+  return ThisDecl;
+}
+
+/// ParseInitDeclaratorListAfterFirstDeclarator - Parse 'declaration' after
+/// parsing 'declaration-specifiers declarator'.  This method is split out this
+/// way to handle the ambiguity between top-level function-definitions and
+/// declarations.
+///
+///       init-declarator-list: [C99 6.7]
+///         init-declarator
+///         init-declarator-list ',' init-declarator
+///
+/// According to the standard grammar, =default and =delete are function
+/// definitions, but that definitely doesn't fit with the parser here.
+///
 Parser::DeclGroupPtrTy Parser::
 ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   // Declarators may be grouped together ("int X, *Y, Z();"). Remember the decls
@@ -336,65 +413,9 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
   while (1) {
-    // If a simple-asm-expr is present, parse it.
-    if (Tok.is(tok::kw_asm)) {
-      SourceLocation Loc;
-      OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
-      if (AsmLabel.isInvalid()) {
-        SkipUntil(tok::semi, true, true);
-        return DeclGroupPtrTy();
-      }
-
-      D.setAsmLabel(AsmLabel.release());
-      D.SetRangeEnd(Loc);
-    }
-    
-    // If attributes are present, parse them.
-    if (Tok.is(tok::kw___attribute)) {
-      SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
-      D.AddAttributes(AttrList, Loc);
-    }
-
-    // Inform the current actions module that we just parsed this declarator.
-    DeclPtrTy ThisDecl = Actions.ActOnDeclarator(CurScope, D);
-    DeclsInGroup.push_back(ThisDecl);
-
-    // Parse declarator '=' initializer.
-    if (Tok.is(tok::equal)) {
-      ConsumeToken();
-      if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
-        SourceLocation DelLoc = ConsumeToken();
-        Actions.SetDeclDeleted(ThisDecl, DelLoc);
-      } else {
-        OwningExprResult Init(ParseInitializer());
-        if (Init.isInvalid()) {
-          SkipUntil(tok::semi, true, true);
-          return DeclGroupPtrTy();
-        }
-        Actions.AddInitializerToDecl(ThisDecl, move(Init));
-      }
-    } else if (Tok.is(tok::l_paren)) {
-      // Parse C++ direct initializer: '(' expression-list ')'
-      SourceLocation LParenLoc = ConsumeParen();
-      ExprVector Exprs(Actions);
-      CommaLocsTy CommaLocs;
-
-      if (ParseExpressionList(Exprs, CommaLocs)) {
-        SkipUntil(tok::r_paren);
-      } else {
-        // Match the ')'.
-        SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-        assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
-               "Unexpected number of commas!");
-        Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
-                                              move_arg(Exprs),
-                                              &CommaLocs[0], RParenLoc);
-      }
-    } else {
-      Actions.ActOnUninitializedDecl(ThisDecl);
-    }
+    DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(D);
+    if (ThisDecl.get())
+      DeclsInGroup.push_back(ThisDecl);
     
     // If we don't have a comma, it is either the end of the list (a ';') or an
     // error, bail out.

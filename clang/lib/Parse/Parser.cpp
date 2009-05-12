@@ -437,6 +437,29 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
   return Actions.ConvertDeclToDeclGroup(SingleDecl);
 }
 
+/// \brief Determine whether the current token, if it occurs after a
+/// declarator, continues a declaration or declaration list.
+bool Parser::isDeclarationAfterDeclarator() {
+  return Tok.is(tok::equal) ||      // int X()=  -> not a function def
+    Tok.is(tok::comma) ||           // int X(),  -> not a function def
+    Tok.is(tok::semi)  ||           // int X();  -> not a function def
+    Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
+    Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
+    (getLang().CPlusPlus &&
+     Tok.is(tok::l_paren));         // int X(0) -> not a function def [C++]
+}
+
+/// \brief Determine whether the current token, if it occurs after a
+/// declarator, indicates the start of a function definition.
+bool Parser::isStartOfFunctionDefinition() {
+  return Tok.is(tok::l_brace) ||    // int X() {}
+    (!getLang().CPlusPlus && 
+     isDeclarationSpecifier()) ||   // int X(f) int f; {}
+    (getLang().CPlusPlus &&
+     (Tok.is(tok::colon) ||         // X() : Base() {} (used for ctors)
+      Tok.is(tok::kw_try)));        // X() try { ... }
+}
+
 /// ParseDeclarationOrFunctionDefinition - Parse either a function-definition or
 /// a declaration.  We can't tell which we have until we read up to the
 /// compound-statement in function-definition. TemplateParams, if
@@ -514,14 +537,8 @@ Parser::ParseDeclarationOrFunctionDefinition(
     return DeclGroupPtrTy();
   }
 
-  // If the declarator is the start of a function definition, handle it.
-  if (Tok.is(tok::equal) ||           // int X()=  -> not a function def
-      Tok.is(tok::comma) ||           // int X(),  -> not a function def
-      Tok.is(tok::semi)  ||           // int X();  -> not a function def
-      Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
-      Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
-      (getLang().CPlusPlus &&
-       Tok.is(tok::l_paren))) {       // int X(0) -> not a function def [C++]
+  // If we have a declaration or declarator list, handle it.
+  if (isDeclarationAfterDeclarator()) {
     // Parse the init-declarator-list for a normal declaration.
     DeclGroupPtrTy DG =
       ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
@@ -530,14 +547,8 @@ Parser::ParseDeclarationOrFunctionDefinition(
     return DG;
   }
   
-  
   if (DeclaratorInfo.isFunctionDeclarator() &&
-             (Tok.is(tok::l_brace) ||             // int X() {}
-              (!getLang().CPlusPlus &&
-               isDeclarationSpecifier()) ||   // int X(f) int f; {}
-              (getLang().CPlusPlus &&
-               (Tok.is(tok::colon) ||     // X() : Base() {} (used for ctors)
-                Tok.is(tok::kw_try))))) { // X() try { ... }
+      isStartOfFunctionDefinition()) {
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       Diag(Tok, diag::err_function_declared_typedef);
 

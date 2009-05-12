@@ -2,8 +2,7 @@
 
 // Errors
 export class foo { };   // expected-error {{expected template}}
-template  x;            // expected-error {{expected '<' after 'template'}} \
-// expected-error {{C++ requires a type specifier for all declarations}}
+template  x;            // expected-error {{C++ requires a type specifier for all declarations}}
 export template x;      // expected-error {{expected '<' after 'template'}} \
                         // expected-note {{exported templates are unsupported}} \
 // expected-error {{C++ requires a type specifier for all declarations}}
