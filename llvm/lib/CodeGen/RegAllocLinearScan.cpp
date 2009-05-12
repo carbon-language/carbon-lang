@@ -350,29 +350,44 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   if (!vni->def || vni->def == ~1U || vni->def == ~0U)
     return Reg;
   MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
-  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg, PhysReg;
   if (!CopyMI ||
       !tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg))
     return Reg;
+  PhysReg = SrcReg;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     if (!vrm_->isAssignedReg(SrcReg))
       return Reg;
-    else
-      SrcReg = vrm_->getPhys(SrcReg);
+    PhysReg = vrm_->getPhys(SrcReg);
   }
-  if (Reg == SrcReg)
+  if (Reg == PhysReg)
     return Reg;
 
   const TargetRegisterClass *RC = mri_->getRegClass(cur.reg);
-  if (!RC->contains(SrcReg))
+  if (!RC->contains(PhysReg))
     return Reg;
 
   // Try to coalesce.
-  if (!li_->conflictsWithPhysRegDef(cur, *vrm_, SrcReg)) {
-    DOUT << "Coalescing: " << cur << " -> " << tri_->getName(SrcReg)
+  if (!li_->conflictsWithPhysRegDef(cur, *vrm_, PhysReg)) {
+    DOUT << "Coalescing: " << cur << " -> " << tri_->getName(PhysReg)
          << '\n';
     vrm_->clearVirt(cur.reg);
-    vrm_->assignVirt2Phys(cur.reg, SrcReg);
+    vrm_->assignVirt2Phys(cur.reg, PhysReg);
+
+    // Remove unnecessary kills since a copy does not clobber the register.
+    if (li_->hasInterval(SrcReg)) {
+      LiveInterval &SrcLI = li_->getInterval(SrcReg);
+      for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(cur.reg),
+             E = mri_->reg_end(); I != E; ++I) {
+        MachineOperand &O = I.getOperand();
+        if (!O.isUse() || !O.isKill())
+          continue;
+        MachineInstr *MI = &*I;
+        if (SrcLI.liveAt(li_->getDefIndex(li_->getInstructionIndex(MI))))
+          O.setIsKill(false);
+      }
+    }
+
     ++NumCoalesce;
     return SrcReg;
   }

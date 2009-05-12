@@ -851,6 +851,14 @@ void AssignPhysToVirtReg(MachineInstr *MI, unsigned VirtReg, unsigned PhysReg) {
   }
 }
 
+namespace {
+  struct RefSorter {
+    bool operator()(const std::pair<MachineInstr*, int> &A,
+                    const std::pair<MachineInstr*, int> &B) {
+      return A.second < B.second;
+    }
+  };
+}
 
 // ***************************** //
 // Local Spiller Implementation  //
@@ -1313,9 +1321,10 @@ private:
   /// removed. Find the last def or use and mark it as dead / kill.
   void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
                         unsigned Reg, BitVector &RegKills,
-                        std::vector<MachineOperand*> &KillOps) {
-    int LastUDDist = -1;
-    MachineInstr *LastUDMI = NULL;
+                        std::vector<MachineOperand*> &KillOps,
+                        VirtRegMap &VRM) {
+    SmallPtrSet<MachineInstr*, 4> Seens;
+    SmallVector<std::pair<MachineInstr*, int>,8> Refs;
     for (MachineRegisterInfo::reg_iterator RI = RegInfo->reg_begin(Reg),
            RE = RegInfo->reg_end(); RI != RE; ++RI) {
       MachineInstr *UDMI = &*RI;
@@ -1324,13 +1333,18 @@ private:
       DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
       if (DI == DistanceMap.end() || DI->second > CurDist)
         continue;
-      if ((int)DI->second < LastUDDist)
-        continue;
-      LastUDDist = DI->second;
-      LastUDMI = UDMI;
+      if (Seens.insert(UDMI))
+        Refs.push_back(std::make_pair(UDMI, DI->second));
     }
 
-    if (LastUDMI) {
+    if (Refs.empty())
+      return;
+    std::sort(Refs.begin(), Refs.end(), RefSorter());
+
+    while (!Refs.empty()) {
+      MachineInstr *LastUDMI = Refs.back().first;
+      Refs.pop_back();
+
       MachineOperand *LastUD = NULL;
       for (unsigned i = 0, e = LastUDMI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = LastUDMI->getOperand(i);
@@ -1339,14 +1353,24 @@ private:
         if (!LastUD || (LastUD->isUse() && MO.isDef()))
           LastUD = &MO;
         if (LastUDMI->isRegTiedToDefOperand(i))
-          return;
+          break;
       }
-      if (LastUD->isDef())
-        LastUD->setIsDead();
-      else {
+      if (LastUD->isDef()) {
+        // If the instruction has no side effect, delete it and propagate
+        // backward further. Otherwise, mark is dead and we are done.
+        const TargetInstrDesc &TID = LastUDMI->getDesc();
+        if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
+            TID.hasUnmodeledSideEffects()) {
+          LastUD->setIsDead();
+          break;
+        }
+        VRM.RemoveMachineInstrFromMaps(LastUDMI);
+        MBB->erase(LastUDMI);
+      } else {
         LastUD->setIsKill();
         RegKills.set(Reg);
         KillOps[Reg] = LastUD;
+        break;
       }
     }
   }
@@ -2027,7 +2051,7 @@ private:
                      TRI->isSubRegister(KillRegs[0], Dst) ||
                      TRI->isSuperRegister(KillRegs[0], Dst));
               // Last def is now dead.
-              TransferDeadness(&MBB, Dist, Src, RegKills, KillOps);
+              TransferDeadness(&MBB, Dist, Src, RegKills, KillOps, VRM);
             }
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
