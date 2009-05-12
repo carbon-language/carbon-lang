@@ -1138,12 +1138,12 @@ private:
   /// EHTypeReferences - uniqued class ehtype references.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> EHTypeReferences;
   
-  /// NoneLegacyDispatchMethods - List of methods for which we do *not* generate
+  /// NonLegacyDispatchMethods - List of methods for which we do *not* generate
   /// legacy messaging dispatch.
-  llvm::StringMap<bool> NoneLegacyDispatchMethods;
+  llvm::DenseSet<Selector> NonLegacyDispatchMethods;
   
   /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
-  /// NoneLegacyDispatchMethods; flase otherwise.
+  /// NonLegacyDispatchMethods; false otherwise.
   bool LegacyDispatchedSelector(Selector Sel);
   
   /// FinishNonFragileABIModule - Write out global data structures at the end of
@@ -1251,6 +1251,17 @@ private:
   void GetClassSizeInfo(const ObjCImplementationDecl *OID,
                         uint32_t &InstanceStart,
                         uint32_t &InstanceSize);
+  
+  // Shamelessly stolen from Analysis/CFRefCount.cpp
+  Selector GetNullarySelector(const char* name) {
+    IdentifierInfo* II = &CGM.getContext().Idents.get(name);
+    return CGM.getContext().Selectors.getSelector(0, &II);
+  }
+  
+  Selector GetUnarySelector(const char* name) {
+    IdentifierInfo* II = &CGM.getContext().Idents.get(name);
+    return CGM.getContext().Selectors.getSelector(1, &II);
+  }
 
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -1482,7 +1493,7 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
   
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
-  // In 64bit ABI, type must be assumed VARARG. It 32bit abi, 
+  // In 64bit ABI, type must be assumed VARARG. In 32bit abi, 
   // it seems not to matter.
   const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, (ObjCABI == 2));
   
@@ -1491,8 +1502,6 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
     : ObjCTypes.getSendStretFn(IsSuper);
   } else if (ResultType->isFloatingType()) {
-    // FIXME: Sadly, this is wrong. This actually depends on the
-    // architecture. This happens to be right for x86-32 though.
     if (ObjCABI == 2) {
       if (const BuiltinType *BT = ResultType->getAsBuiltinType()) {
         BuiltinType::Kind k = BT->getKind();
@@ -1501,6 +1510,8 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
       }
     }
     else
+      // FIXME. This currently matches gcc's API for x86-32. May need
+      // to change for others if we have their API.
       Fn = ObjCTypes.getSendFpretFn(IsSuper);
   } else {
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
@@ -4124,38 +4135,41 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
 }
 
 /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
-/// NoneLegacyDispatchMethods; flase otherwise. What this means is that
+/// NonLegacyDispatchMethods; false otherwise. What this means is that
 /// except for the 19 selectors in the list, we generate 32bit-style 
 /// message dispatch call for all the rest.
 ///
 bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
-  // FIXME! Lagcy API in Nonfragile ABI is for 10.6 on
-  if (NoneLegacyDispatchMethods.empty()) {
-    NoneLegacyDispatchMethods["allocWithZone:"] = true;
-    NoneLegacyDispatchMethods["alloc"] = true;
-    NoneLegacyDispatchMethods["class"] = true;
-    NoneLegacyDispatchMethods["self"] = true;
-    NoneLegacyDispatchMethods["isKindOfClass:"] = true;
-    NoneLegacyDispatchMethods["respondsToSelector:"] = true;
-    NoneLegacyDispatchMethods["isFlipped"] = true;
-    NoneLegacyDispatchMethods["length"] = true;
-    NoneLegacyDispatchMethods["objectForKey:"] = true;
-    NoneLegacyDispatchMethods["count"] = true;
-    NoneLegacyDispatchMethods["objectAtIndex:"] = true;
-    NoneLegacyDispatchMethods["isEqualToString:"] = true;
-    NoneLegacyDispatchMethods["isEqual:"] = true;
-    NoneLegacyDispatchMethods["retain"] = true;
-    NoneLegacyDispatchMethods["release"] = true;
-    NoneLegacyDispatchMethods["autorelease"] = true;
-    NoneLegacyDispatchMethods["hash"] = true;
-    NoneLegacyDispatchMethods["addObject:"] = true;
-    NoneLegacyDispatchMethods["countByEnumeratingWithState:objects:count:"] 
-      = true;
+  if (NonLegacyDispatchMethods.empty()) {
+    NonLegacyDispatchMethods.insert(GetNullarySelector("alloc"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("class"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("self"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("isFlipped"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("length"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("count"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("retain"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("release"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("autorelease"));
+    NonLegacyDispatchMethods.insert(GetNullarySelector("hash"));
+    
+    NonLegacyDispatchMethods.insert(GetUnarySelector("allocWithZone"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("isKindOfClass"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("respondsToSelector"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("objectForKey"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("objectAtIndex"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("isEqualToString"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("isEqual"));
+    NonLegacyDispatchMethods.insert(GetUnarySelector("addObject"));
+    // "countByEnumeratingWithState:objects:count" auch!
+    llvm::SmallVector<IdentifierInfo *, 4> KeyIdents;
+    KeyIdents.push_back(
+                  &CGM.getContext().Idents.get("countByEnumeratingWithState"));
+    KeyIdents.push_back(&CGM.getContext().Idents.get("objects"));
+    KeyIdents.push_back(&CGM.getContext().Idents.get("count"));
+    NonLegacyDispatchMethods.insert(CGM.getContext().Selectors.getSelector(
+                                                             3, &KeyIdents[0]));
   }
-  const char *name = Sel.getAsString().c_str();
-  if (NoneLegacyDispatchMethods[name])
-    return false;
-  return true;
+  return (NonLegacyDispatchMethods.count(Sel) == 0);
 }
 
 // Metadata flags
