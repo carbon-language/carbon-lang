@@ -431,13 +431,9 @@ ifndef LUPGRADE
 LUPGRADE := $(LLVMToolDir)/llvm-upgrade$(EXEEXT)
 endif
 ifeq ($(LLVMGCC_MAJVERS),3)
-UPGRADE_MSG = $(Echo) "Upgrading $(1) assembly to latest."
-UPGRADE_LL  = $(Verb)$(LUPGRADE) $(1) -o $(1).up.tmp -f ; $(MV) $(1).up.tmp $(1)
 LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
 LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 else
-UPGRADE_MSG =
-UPGRADE_LL  =
 LLVMGCCWITHPATH  := $(LLVMGCC)
 LLVMGXXWITHPATH  := $(LLVMGXX)
 endif
@@ -1261,8 +1257,6 @@ $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
                               $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
-	$(call UPGRADE_MSG,$@)
-	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
@@ -1270,8 +1264,6 @@ $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
                               $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
-	$(call UPGRADE_MSG,$@)
-	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
@@ -1279,8 +1271,6 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
                             $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
-	$(call UPGRADE_MSG,$@)
-	$(call UPGRADE_LL,$@)
 
 # Provide alternate rule sets if dependencies are disabled
 else
@@ -1300,20 +1290,14 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
-	$(call UPGRADE_MSG,$@)
-	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
-	$(call UPGRADE_MSG,$@)
-	$(call UPGRADE_LL,$@)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@ -S -emit-llvm
-	$(call UPGRADE_MSG,@)
-	$(call UPGRADE_LL,@)
 
 endif
 
