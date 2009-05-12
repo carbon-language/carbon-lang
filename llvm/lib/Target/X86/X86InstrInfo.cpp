@@ -2811,7 +2811,8 @@ static unsigned getMemModRMByteSize(const MachineInstr &MI, unsigned Op,
   unsigned BaseReg = Base.getReg();
 
   // Is a SIB byte needed?
-  if ((!Is64BitMode || DispForReloc) && IndexReg.getReg() == 0 &&
+  if ((!Is64BitMode || DispForReloc || BaseReg != 0) &&
+      IndexReg.getReg() == 0 &&
       (BaseReg == 0 || X86RegisterInfo::getX86RegNum(BaseReg) != N86::ESP)) {      
     if (BaseReg == 0) {  // Just a displacement?
       // Emit special case [disp32] encoding
