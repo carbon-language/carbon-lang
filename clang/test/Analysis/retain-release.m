@@ -528,6 +528,27 @@ void rdar_6866843() {
  [pool drain];
 }
 
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6877235> Classes typedef-ed to CF objects should get the same treatment as CF objects
+//===----------------------------------------------------------------------===//
+
+typedef CFTypeRef OtherRef;
+
+@interface RDar6877235 : NSObject {}
+- (CFTypeRef)_copyCFTypeRef;
+- (OtherRef)_copyOtherRef;
+@end
+
+@implementation RDar6877235
+- (CFTypeRef)_copyCFTypeRef {
+  return [[NSString alloc] init]; // no-warning
+}
+- (OtherRef)_copyOtherRef {
+  return [[NSString alloc] init]; // no-warning
+}
+@end
+
 //===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//

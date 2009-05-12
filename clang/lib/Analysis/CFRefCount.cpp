@@ -225,9 +225,17 @@ static bool hasSuffix(const char* s, const char* suffix) {
 static bool isRefType(QualType RetTy, const char* prefix,
                       ASTContext* Ctx = 0, const char* name = 0) {
   
-  if (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
-    const char* TDName = TD->getDecl()->getIdentifier()->getName();
-    return hasPrefix(TDName, prefix) && hasSuffix(TDName, "Ref");
+  // Recursively walk the typedef stack, allowing typedefs of reference types.
+  while (1) {
+    if (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
+      const char* TDName = TD->getDecl()->getIdentifier()->getName();
+      if (hasPrefix(TDName, prefix) && hasSuffix(TDName, "Ref"))
+        return true;
+      
+      RetTy = TD->getDecl()->getUnderlyingType();
+      continue;
+    }
+    break;
   }
 
   if (!Ctx || !name)
