@@ -736,12 +736,14 @@ def MOVHPSmr : PSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 
 let Constraints = "$src1 = $dst" in {
 let AddedComplexity = 20 in {
-def MOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+def MOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst),
+                                     (ins VR128:$src1, VR128:$src2),
                     "movlhps\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
                       (v4f32 (movhp VR128:$src1, VR128:$src2)))]>;
 
-def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst),
+                                     (ins VR128:$src1, VR128:$src2),
                     "movhlps\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
                       (v4f32 (movhlps VR128:$src1, VR128:$src2)))]>;
