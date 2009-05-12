@@ -19,7 +19,7 @@
 
 namespace llvm {
   class LibCallInfo;
-  class LibCallFunctionInfo;
+  struct LibCallFunctionInfo;
   
   /// LibCallAliasAnalysis - Alias analysis driven from LibCallInfo.
   struct LibCallAliasAnalysis : public FunctionPass, AliasAnalysis {

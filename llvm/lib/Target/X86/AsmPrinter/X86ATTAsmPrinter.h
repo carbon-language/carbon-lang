@@ -26,7 +26,7 @@
 
 namespace llvm {
 
-struct MachineJumpTableInfo;
+class MachineJumpTableInfo;
 
 class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   DwarfWriter *DW;
