@@ -1067,7 +1067,7 @@ while (@ARGV) {
   if ($arg =~ /^--html-title(=(.+))?$/) {
     shift @ARGV;
 
-    if ($2 eq '') {
+    if (!defined $2 || $2 eq '') {
       if (!@ARGV) {
         DieDiag("'--html-title' option requires a string.\n");
       }
@@ -1090,7 +1090,7 @@ while (@ARGV) {
     shift @ARGV;
     my $cc;
     
-    if ($2 eq "") {
+    if (!defined $2 || $2 eq "") {
       if (!@ARGV) {
         DieDiag("'--use-cc' option requires a compiler executable name.\n");
       }
@@ -1107,7 +1107,7 @@ while (@ARGV) {
   if ($arg =~ /^--use-c\+\+(=(.+))?$/) {
     shift @ARGV;
     
-    if ($2 eq "") {
+    if (!defined $2 || $2 eq "") {
       if (!@ARGV) {
         DieDiag("'--use-c++' option requires a compiler executable name.\n");
       }
