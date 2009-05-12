@@ -477,12 +477,10 @@ bool Parser::isStartOfFunctionDefinition() {
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
 Parser::DeclGroupPtrTy
-Parser::ParseDeclarationOrFunctionDefinition(
-                                  TemplateParameterLists *TemplateParams,
-                                  AccessSpecifier AS) {
+Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS, TemplateParams, AS);
+  ParseDeclarationSpecifiers(DS, 0, AS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'

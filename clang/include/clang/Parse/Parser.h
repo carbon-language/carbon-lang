@@ -553,7 +553,6 @@ private:
   bool isDeclarationAfterDeclarator();
   bool isStartOfFunctionDefinition();
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
-            TemplateParameterLists *TemplateParams = 0,
             AccessSpecifier AS = AS_none);
                                                
   DeclPtrTy ParseFunctionDefinition(Declarator &D);
