@@ -234,20 +234,6 @@ namespace PIC16CC {
        return o.str(); 
     }
 
-    static std::string getDeclSectionName(void) {
-       std::string dsname = "section.0";
-       dsname = addPrefix(dsname);
-       return dsname; 
-    }
-
-    // FIXME: currently decls for libcalls are into a separate section.
-    // merge the rest of decls to one.
-    static std::string getLibDeclSectionName(void) {
-       std::string dsname = "lib_decls.0";
-       dsname = addPrefix(dsname);
-       return dsname; 
-    }
-
     inline static bool isLocalName (const std::string &Name) {
       if (getSymbolTag(Name) == AUTOS_LABEL)
         return true;

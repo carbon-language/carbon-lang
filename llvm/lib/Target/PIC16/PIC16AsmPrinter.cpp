@@ -157,8 +157,7 @@ void PIC16AsmPrinter::printDecls(void) {
   // If no libcalls used, return.
   if (Decls.empty()) return;
 
-  const Section *S = TAI->getNamedSection(PAN::getLibDeclSectionName().c_str());
-  SwitchToSection(S);
+  O << TAI->getCommentString() << "External decls for libcalls - BEGIN." <<"\n";
   // Remove duplicate entries.
   Decls.sort();
   Decls.unique();
@@ -169,6 +168,7 @@ void PIC16AsmPrinter::printDecls(void) {
     O << TAI->getExternDirective() << PAN::getArgsLabel(*I) << "\n";
     O << TAI->getExternDirective() << PAN::getRetvalLabel(*I) << "\n";
   }
+  O << TAI->getCommentString() << "External decls for libcalls - END." <<"\n";
 }
 
 bool PIC16AsmPrinter::doInitialization (Module &M) {
@@ -191,7 +191,7 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
 
 void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
  // Emit declarations for external functions.
-  O << PAN::getDeclSectionName() <<"\n";
+  O << TAI->getCommentString() << "External defs and decls - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
     std::string Name = Mang->getValueName(I);
     if (Name.compare("@abort") == 0)
@@ -233,6 +233,7 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
                                                  TAI->getGlobalDirective();
     O << directive << Name << "\n";
   }
+  O << TAI->getCommentString() << "External defs and decls - END." <<"\n";
 }
 
 void PIC16AsmPrinter::EmitRomData (Module &M)
