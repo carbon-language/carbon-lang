@@ -293,7 +293,7 @@ public:
     return StructAlignment;
   }
 
-  /// getElementContainingOffset - Given a valid offset into the structure,
+  /// getElementContainingOffset - Given a valid byte offset into the structure,
   /// return the structure index that contains it.
   ///
   unsigned getElementContainingOffset(uint64_t Offset) const;
