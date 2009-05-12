@@ -155,10 +155,10 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
         // A fallthrough.
         FtMBB = PredMBB;
         MachineLoop *PL = MLI->getLoopFor(PredMBB);
-        if (PL && (PL == L || PL->getLoopDepth() >= L->getLoopDepth())) {
+        if (PL && (PL == L || PL->getLoopDepth() >= L->getLoopDepth()))
           OkToMove = false;
-          break;
-        }
+
+        break;
       }
     }
 
