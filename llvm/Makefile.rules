@@ -1019,7 +1019,7 @@ else
 BytecodeDestDir := $(PROJ_libdir)
 endif
 
-DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).a
+DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).bca
 
 install-bytecode-local:: $(DestBytecodeLib)
 
