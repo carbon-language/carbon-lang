@@ -633,7 +633,8 @@ X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum,
     return Field;
   else if (Accum == Integer || Field == Integer) 
     return Integer;
-  else if (Field == X87 || Field == X87Up || Field == ComplexX87)
+  else if (Field == X87 || Field == X87Up || Field == ComplexX87 ||
+           Accum == X87 || Accum == X87Up)
     return Memory;
   else
     return SSE;

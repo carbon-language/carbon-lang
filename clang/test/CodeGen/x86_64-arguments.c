@@ -52,4 +52,7 @@ struct s9 { int a; int b; int : 0; } f9(void) {}
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
+// RUN: grep 'define void @f11(.union.anon. noalias sret .agg.result)' %t &&
+union { long double a; float b; } f11() {}
+
 // RUN: true
