@@ -2025,6 +2025,14 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       OpcodeVTMap.find(OpName);
     std::vector<std::string> &OpVTs = OpVTI->second;
     OS << "  case " << OpName << ": {\n";
+    // If we have only one variant and it's the default, elide the
+    // switch.  Marginally faster, and makes MSVC happier.
+    if (OpVTs.size()==1 && OpVTs[0].empty()) {
+      OS << "    return Select_" << getLegalCName(OpName) << "(N);\n";
+      OS << "    break;\n";
+      OS << "  }\n";
+      continue;
+    }
     // Keep track of whether we see a pattern that has an iPtr result.
     bool HasPtrPattern = false;
     bool HasDefaultPattern = false;
