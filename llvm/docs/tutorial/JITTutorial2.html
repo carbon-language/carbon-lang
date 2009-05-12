@@ -57,6 +57,7 @@ unsigned gcd(unsigned x, unsigned y) {
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -68,7 +69,7 @@ int main(int argc, char**argv) {
   verifyModule(*Mod, PrintMessageAction);
   
   PassManager PM;
-  PM.add(createPrintModulePass(&amp;llvm::cout));
+  PM.add(createPrintModulePass(&amp;outs()));
   PM.run(*Mod);
 
   delete Mod;  
