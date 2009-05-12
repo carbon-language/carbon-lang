@@ -53,15 +53,14 @@ static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
       return OID;
   
   // Also look in synthesized ivars.
-  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(Context),
-         E = OID->prop_end(Context); I != E; ++I) {
-    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl()) {
-      if (OIVD == Ivar)
-        return OID;
-      ++Index;
-    }
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  Context.CollectSynthesizedIvars(OID, Ivars);
+  for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
+    if (OIVD == Ivars[k])
+      return OID;
+    ++Index;
   }
-
+  
   // Otherwise check in the super class.
   if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
     return FindIvarInterface(Context, Super, OIVD, Index);
@@ -3153,14 +3152,13 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   const ObjCInterfaceDecl *OI = OMD->getClassInterface();
   CGM.getContext().CollectObjCIvars(OI, RecFields);
-
+  
   // Add this implementations synthesized ivars.
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(CGM.getContext()),
-         E = OI->prop_end(CGM.getContext()); I != E; ++I) {
-    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
-      RecFields.push_back(cast<FieldDecl>(IV));
-  }
-
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  CGM.getContext().CollectSynthesizedIvars(OI, Ivars);
+  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
+    RecFields.push_back(cast<FieldDecl>(Ivars[k]));
+  
   if (RecFields.empty())
     return llvm::Constant::getNullValue(PtrTy);
   
@@ -4677,10 +4675,12 @@ void CGObjCCommonMac::GetNamedIvarList(const ObjCInterfaceDecl *OID,
      Res.push_back(*I);
   }
   
-  for (ObjCInterfaceDecl::prop_iterator I = OID->prop_begin(CGM.getContext()),
-         E = OID->prop_end(CGM.getContext()); I != E; ++I)
-    if (ObjCIvarDecl *IV = (*I)->getPropertyIvarDecl())
-      Res.push_back(IV);
+  // Also save synthesize ivars.
+  // FIXME. Why can't we just use passed in Res small vector?
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  CGM.getContext().CollectSynthesizedIvars(OID, Ivars);
+  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
+    Res.push_back(Ivars[k]);
 }
 
 llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(

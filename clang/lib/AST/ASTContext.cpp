@@ -685,6 +685,38 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
   CollectLocalObjCIvars(this, OI, Fields);
 }
 
+void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
+                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
+  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(*this),
+       E = PD->prop_end(*this); I != E; ++I)
+    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
+      Ivars.push_back(Ivar);
+  
+  // Also look into nested protocols.
+  for (ObjCProtocolDecl::protocol_iterator P = PD->protocol_begin(),
+       E = PD->protocol_end(); P != E; ++P)
+    CollectProtocolSynthesizedIvars(*P, Ivars);
+}
+
+/// CollectSynthesizedIvars -
+/// This routine collect synthesized ivars for the designated class.
+///
+void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
+                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*this),
+       E = OI->prop_end(*this); I != E; ++I) {
+    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
+      Ivars.push_back(Ivar);
+  }
+  // Also look into interface's protocol list for properties declared
+  // in the protocol and whose ivars are synthesized.
+  for (ObjCInterfaceDecl::protocol_iterator P = OI->protocol_begin(),
+       PE = OI->protocol_end(); P != PE; ++P) {
+    ObjCProtocolDecl *PD = (*P);
+    CollectProtocolSynthesizedIvars(PD, Ivars);
+  }
+}
+
 /// getInterfaceLayoutImpl - Get or compute information about the
 /// layout of the given interface.
 ///
@@ -704,11 +736,9 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   unsigned FieldCount = D->ivar_size();
   // Add in synthesized ivar count if laying out an implementation.
   if (Impl) {
-    for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(*this),
-           E = D->prop_end(*this); I != E; ++I)
-      if ((*I)->getPropertyIvarDecl())
-        ++FieldCount;
-
+    llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+    CollectSynthesizedIvars(D, Ivars);
+    FieldCount += Ivars.size();
     // If there aren't any sythesized ivars then reuse the interface
     // entry. Note we can't cache this because we simply free all
     // entries later; however we shouldn't look up implementations
@@ -750,11 +780,11 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   }
   // And synthesized ivars, if this is an implementation.
   if (Impl) {
-    for (ObjCInterfaceDecl::prop_iterator I = D->prop_begin(*this),
-           E = D->prop_end(*this); I != E; ++I) {
-      if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
-        NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
-    }
+    // FIXME. Do we need to colltect twice?
+    llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+    CollectSynthesizedIvars(D, Ivars);
+    for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
+      NewEntry->LayoutField(Ivars[k], i++, false, StructPacking, *this);
   }
   
   // Finally, round the size of the total struct up to the alignment of the
