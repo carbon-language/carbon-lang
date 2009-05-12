@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin8 -mattr=+sse2
 
-define void @test() {
+define void @test() nounwind {
 test.exit:
 	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:0 [#uses=4]
 	load <4 x float>* null		; <<4 x float>>:1 [#uses=1]
