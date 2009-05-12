@@ -606,6 +606,15 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     // list, and remove it from DeferredDecls (since we don't need it anymore).
     DeferredDeclsToEmit.push_back(DDI->second);
     DeferredDecls.erase(DDI);
+  } else if (D && D->isThisDeclarationADefinition() && MayDeferGeneration(D)) {
+    // If this the first reference to a C++ inline function in a class, queue up
+    // the deferred function body for emission.  These are not seen as
+    // top-level declarations.
+    // FIXME: Make this work for ctor/dtors.  We need to pass down a full
+    // GlobalDecl instead of just a FunctionDecl.
+    if (!isa<CXXConstructorDecl>(D) &&
+        !isa<CXXDestructorDecl>(D))
+    DeferredDeclsToEmit.push_back(GlobalDecl(D));
   }
   
   // This function doesn't have a complete type (for example, the return
