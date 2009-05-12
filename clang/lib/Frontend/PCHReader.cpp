@@ -1218,6 +1218,10 @@ PCHReader::ReadPCHBlock() {
       }
       ObjCCategoryImpls.swap(Record);
       break;
+
+    case pch::ORIGINAL_FILE_NAME:
+      OriginalFileName.assign(BlobStart, BlobLen);
+      break;
     }
   }
   Error("premature end of bitstream in PCH file");
@@ -1362,6 +1366,87 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }
 
   return Success;
+}
+
+/// \brief Retrieve the name of the original source file name
+/// directly from the PCH file, without actually loading the PCH
+/// file.
+std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName) {
+  // Open the PCH file.
+  std::string ErrStr;
+  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+  Buffer.reset(llvm::MemoryBuffer::getFile(PCHFileName.c_str(), &ErrStr));
+  if (!Buffer) {
+    fprintf(stderr, "error: %s\n", ErrStr.c_str());
+    return std::string();
+  }
+
+  // Initialize the stream
+  llvm::BitstreamReader StreamFile;
+  llvm::BitstreamCursor Stream;
+  StreamFile.init((const unsigned char *)Buffer->getBufferStart(), 
+                  (const unsigned char *)Buffer->getBufferEnd());
+  Stream.init(StreamFile);
+
+  // Sniff for the signature.
+  if (Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'P' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'H') {
+    fprintf(stderr, 
+            "error: '%s' does not appear to be a precompiled header file\n",
+            PCHFileName.c_str());
+    return std::string();
+  }
+
+  RecordData Record;
+  while (!Stream.AtEndOfStream()) {
+    unsigned Code = Stream.ReadCode();
+    
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      unsigned BlockID = Stream.ReadSubBlockID();
+      
+      // We only know the PCH subblock ID.
+      switch (BlockID) {
+      case pch::PCH_BLOCK_ID:
+        if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
+          fprintf(stderr, "error: malformed block record in PCH file\n");
+          return std::string();
+        }
+        break;
+        
+      default:
+        if (Stream.SkipBlock()) {
+          fprintf(stderr, "error: malformed block record in PCH file\n");
+          return std::string();
+        }
+        break;
+      }
+      continue;
+    }
+
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd()) {
+        fprintf(stderr, "error: error at end of module block in PCH file\n");
+        return std::string();
+      }
+      continue;
+    }
+
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+
+    Record.clear();
+    const char *BlobStart = 0;
+    unsigned BlobLen = 0;
+    if (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen) 
+          == pch::ORIGINAL_FILE_NAME)
+      return std::string(BlobStart, BlobLen);
+  }  
+
+  return std::string();
 }
 
 /// \brief Parse the record that corresponds to a LangOptions data

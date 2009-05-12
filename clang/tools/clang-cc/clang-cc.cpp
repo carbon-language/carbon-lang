@@ -1267,7 +1267,8 @@ void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts)
   for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
     InitOpts.addMacroInclude(ImplicitMacroIncludes[i]);
 
-  if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty()) {
+  if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty() ||
+      (!ImplicitIncludePCH.empty() && ProgAction == PrintPreprocessedInput)) {
     // We want to add these paths to the predefines buffer in order, make a
     // temporary vector to sort by their occurrence.
     llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
@@ -1275,6 +1276,9 @@ void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts)
     if (!ImplicitIncludePTH.empty())
       OrderedPaths.push_back(std::make_pair(ImplicitIncludePTH.getPosition(),
                                             &ImplicitIncludePTH));
+    if (!ImplicitIncludePCH.empty() && ProgAction == PrintPreprocessedInput)
+      OrderedPaths.push_back(std::make_pair(ImplicitIncludePCH.getPosition(),
+                                            &ImplicitIncludePCH));
     for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
       OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
                                             &ImplicitIncludes[i]));
@@ -1288,9 +1292,18 @@ void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts)
           Ptr >= &ImplicitIncludes[0] &&
           Ptr <= &ImplicitIncludes[ImplicitIncludes.size()-1]) {
         InitOpts.addInclude(*Ptr, false);
-      } else {
-        assert(Ptr == &ImplicitIncludePTH);
+      } else if (Ptr == &ImplicitIncludePTH) {
         InitOpts.addInclude(*Ptr, true);
+      } else {
+        // We end up here when we're producing preprocessed output and
+        // we loaded a PCH file. In this case, just include the header
+        // file that was used to build the precompiled header.
+        assert(Ptr == &ImplicitIncludePCH);
+        std::string OriginalFile = PCHReader::getOriginalSourceFile(*Ptr);
+        if (!OriginalFile.empty()) {
+          InitOpts.addInclude(OriginalFile, false);
+          ImplicitIncludePCH.clear();
+        }
       }
     }
   }

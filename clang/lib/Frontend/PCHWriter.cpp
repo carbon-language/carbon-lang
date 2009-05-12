@@ -33,6 +33,7 @@
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/Path.h"
 #include <cstdio>
 using namespace clang;
 
@@ -442,16 +443,44 @@ void PCHWriter::WriteBlockInfoBlock() {
 
 
 /// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
-void PCHWriter::WriteMetadata(const TargetInfo &Target) {
+void PCHWriter::WriteMetadata(ASTContext &Context) {
   using namespace llvm;
-  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::METADATA));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
-  unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
+
+  // Original file name
+  SourceManager &SM = Context.getSourceManager();
+  if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
+    BitCodeAbbrev *FileAbbrev = new BitCodeAbbrev();
+    FileAbbrev->Add(BitCodeAbbrevOp(pch::ORIGINAL_FILE_NAME));
+    FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
+    unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
+
+    llvm::sys::Path MainFilePath(MainFile->getName());
+    std::string MainFileName;
+  
+    if (!MainFilePath.isAbsolute()) {
+      llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
+      P.appendComponent(MainFilePath.toString());
+      MainFileName = P.toString();
+    } else {
+      MainFileName = MainFilePath.toString();
+    }
+
+    RecordData Record;
+    Record.push_back(pch::ORIGINAL_FILE_NAME);
+    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileName.c_str(),
+                              MainFileName.size());
+  }
+
+  // Metadata
+  const TargetInfo &Target = Context.Target;
+  BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
+  MetaAbbrev->Add(BitCodeAbbrevOp(pch::METADATA));
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
+  unsigned MetaAbbrevCode = Stream.EmitAbbrev(MetaAbbrev);
 
   RecordData Record;
   Record.push_back(pch::METADATA);
@@ -460,7 +489,7 @@ void PCHWriter::WriteMetadata(const TargetInfo &Target) {
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
   const char *Triple = Target.getTargetTriple();
-  Stream.EmitRecordWithBlob(AbbrevCode, Record, Triple, strlen(Triple));
+  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, Triple, strlen(Triple));
 }
 
 /// \brief Write the LangOptions structure.
@@ -1672,7 +1701,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls) {
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
-  WriteMetadata(Context.Target);
+  WriteMetadata(Context);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls)
     WriteStatCache(*StatCalls);

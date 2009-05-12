@@ -216,6 +216,10 @@ private:
   /// the PCH file.
   llvm::SmallVector<uint64_t, 4> ObjCCategoryImpls;
 
+  /// \brief The original file name that was used to build the PCH
+  /// file.
+  std::string OriginalFileName;
+
   /// \brief Mapping from switch-case IDs in the PCH file to
   /// switch-case statements.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
@@ -327,7 +331,17 @@ public:
   explicit PCHReader(Preprocessor &PP, ASTContext *Context);
   ~PCHReader();
 
+  /// \brief Load the precompiled header designated by the given file
+  /// name.
   PCHReadResult ReadPCH(const std::string &FileName);
+
+  /// \brief Retrieve the name of the original source file name 
+  const std::string &getOriginalSourceFile() { return OriginalFileName; }
+
+  /// \brief Retrieve the name of the original source file name
+  /// directly from the PCH file, without actually loading the PCH
+  /// file.
+  static std::string getOriginalSourceFile(const std::string &PCHFileName);
 
   /// \brief Returns the suggested contents of the predefines buffer,
   /// which contains a (typically-empty) subset of the predefines

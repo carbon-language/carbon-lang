@@ -214,7 +214,11 @@ namespace clang {
 
       /// \brief Record code for the set of Objective-C category
       /// implementations.
-      OBJC_CATEGORY_IMPLEMENTATIONS = 19
+      OBJC_CATEGORY_IMPLEMENTATIONS = 19,
+
+      /// \brief Record code for the original file that was used to
+      /// generate the precompiled header.
+      ORIGINAL_FILE_NAME = 20
     };
 
     /// \brief Record types used within a source manager block.
