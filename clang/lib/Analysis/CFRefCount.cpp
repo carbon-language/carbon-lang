@@ -279,7 +279,8 @@ namespace {
 class VISIBILITY_HIDDEN RetEffect {
 public:
   enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
-              NotOwnedSymbol, GCNotOwnedSymbol, ReceiverAlias };
+              NotOwnedSymbol, GCNotOwnedSymbol, ReceiverAlias,
+              OwnedWhenTrackedReceiver };
     
   enum ObjKind { CF, ObjC, AnyObj };  
 
@@ -302,9 +303,14 @@ public:
   }
   
   bool isOwned() const {
-    return K == OwnedSymbol || K == OwnedAllocatedSymbol;
+    return K == OwnedSymbol || K == OwnedAllocatedSymbol ||
+           K == OwnedWhenTrackedReceiver;
   }
     
+  static RetEffect MakeOwnedWhenTrackedReceiver() {
+    return RetEffect(OwnedWhenTrackedReceiver, ObjC);
+  }
+  
   static RetEffect MakeAlias(unsigned Idx) {
     return RetEffect(Alias, Idx);
   }
@@ -635,6 +641,8 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
   
 public:
+  RetEffect getObjAllocRetEffect() const { return ObjCAllocRetE; }
+
   RetainSummary *getDefaultSummary() {
     RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
     return new (Summ) RetainSummary(DefaultSummary);
@@ -1127,12 +1135,14 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
 
 RetainSummary*
 RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
-  assert(ScratchArgs.isEmpty());
-    
-  // 'init' methods only return an alias if the return type is a location type.
-  return getPersistentSummary(Loc::IsLocType(RetTy)
-                              ? RetEffect::MakeReceiverAlias()
-                              : RetEffect::MakeNoRet());
+  assert(ScratchArgs.isEmpty());    
+  // 'init' methods conceptually return a newly allocated object and claim
+  // the receiver.  
+  if (isTrackedObjCObjectType(RetTy) || isTrackedCFObjectType(RetTy))
+    return getPersistentSummary(RetEffect::MakeOwnedWhenTrackedReceiver(),
+                                DecRefMsg);
+  
+  return getDefaultSummary();
 }
 
 void
@@ -1333,9 +1343,9 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
-  RetainSummary* InitSumm =
-    getPersistentSummary(RetEffect::MakeReceiverAlias());
-  addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
+  addNSObjectMethSummary(GetNullarySelector("init", Ctx),
+                 getPersistentSummary(RetEffect::MakeOwnedWhenTrackedReceiver(),
+                 DecRefMsg));
   
   // The next methods are allocators.
   RetainSummary* Summ = getPersistentSummary(ObjCAllocRetE);  
@@ -1378,33 +1388,33 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   //  Thus, we need to track an NSWindow's display status.
   //  This is tracked in <rdar://problem/6062711>.
   //  See also http://llvm.org/bugs/show_bug.cgi?id=3714.
-  RetainSummary *NoTrackYet = getPersistentSummary(RetEffect::MakeNoRet());
+  RetainSummary *NoTrackYet = getPersistentSummary(RetEffect::MakeNoRet(),
+                                                   StopTracking,
+                                                   StopTracking);
   
   addClassMethSummary("NSWindow", "alloc", NoTrackYet);
 
-
 #if 0
-  RetainSummary *NSWindowSumm =
-    getPersistentSummary(RetEffect::MakeReceiverAlias(), StopTracking);
-  
-  addInstMethSummary("NSWindow", NSWindowSumm, "initWithContentRect",
+  addInstMethSummary("NSWindow", NoTrackYet, "initWithContentRect",
                      "styleMask", "backing", "defer", NULL);
   
-  addInstMethSummary("NSWindow", NSWindowSumm, "initWithContentRect",
+  addInstMethSummary("NSWindow", NoTrackYet, "initWithContentRect",
                      "styleMask", "backing", "defer", "screen", NULL);
 #endif
-    
+  
   // For NSPanel (which subclasses NSWindow), allocated objects are not
   //  self-owned.
   // FIXME: For now we don't track NSPanels. object for the same reason
   //   as for NSWindow objects.
   addClassMethSummary("NSPanel", "alloc", NoTrackYet);
   
-  addInstMethSummary("NSPanel", InitSumm, "initWithContentRect",
+#if 0
+  addInstMethSummary("NSPanel", NoTrackYet, "initWithContentRect",
                      "styleMask", "backing", "defer", NULL);
   
-  addInstMethSummary("NSPanel", InitSumm, "initWithContentRect",
+  addInstMethSummary("NSPanel", NoTrackYet, "initWithContentRect",
                      "styleMask", "backing", "defer", "screen", NULL);
+#endif
 
   // Create NSAssertionHandler summaries.
   addPanicSummary("NSAssertionHandler", "handleFailureInFunction", "file",
@@ -2788,6 +2798,20 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   // Consult the summary for the return value.  
   RetEffect RE = Summ.getRetEffect();
   
+  if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
+    assert(Receiver);
+    SVal V = state.GetSValAsScalarOrLoc(Receiver);
+    bool found = false;
+    if (SymbolRef Sym = V.getAsLocSymbol())
+      if (state.get<RefBindings>(Sym)) {
+        found = true;
+        RE = Summaries.getObjAllocRetEffect();
+      }
+
+    if (!found)
+      RE = RetEffect::MakeNoRet();
+  } 
+  
   switch (RE.getKind()) {
     default:
       assert (false && "Unhandled RetEffect."); break;
@@ -3033,7 +3057,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   // Change the reference count.  
   RefVal X = *T;  
   
-  switch (X.getKind()) {      
+  switch (X.getKind()) { 
     case RefVal::Owned: { 
       unsigned cnt = X.getCount();
       assert (cnt > 0);

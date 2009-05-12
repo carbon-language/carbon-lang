@@ -550,6 +550,49 @@ typedef CFTypeRef OtherRef;
 @end
 
 //===----------------------------------------------------------------------===//
+//<rdar://problem/6320065> false positive - init method returns an object owned by caller
+//===----------------------------------------------------------------------===//
+
+@interface RDar6320065 : NSObject {
+  NSString *_foo;
+}
+- (id)initReturningNewClass;
+- (id)initReturningNewClassBad;
+- (id)initReturningNewClassBad2;
+@end
+
+@interface RDar6320065Subclass : RDar6320065
+@end
+
+@implementation RDar6320065
+- (id)initReturningNewClass {
+  [self release];
+  self = [[RDar6320065Subclass alloc] init]; // no-warning
+  return self;
+}
+- (id)initReturningNewClassBad {
+  [self release];
+  [[RDar6320065Subclass alloc] init]; // expected-warning {{leak}}
+  return self;
+}
+- (id)initReturningNewClassBad2 {
+  [self release];
+  self = [[RDar6320065Subclass alloc] init];
+  return [self autorelease]; // expected-warning{{Object with +0 retain counts returned to caller where a +1 (owning) retain count is expected}}
+}
+
+@end
+
+@implementation RDar6320065Subclass
+@end
+
+int RDar6320065_test() {
+  RDar6320065 *test = [[RDar6320065 alloc] init]; // no-warning
+  [test release];
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 
