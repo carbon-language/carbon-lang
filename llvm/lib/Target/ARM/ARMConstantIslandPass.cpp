@@ -996,7 +996,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
 }
 
 /// HandleConstantPoolUser - Analyze the specified user, checking to see if it
-/// is out-of-range.  If so, pick it up the constant pool value and move it some
+/// is out-of-range.  If so, pick up the constant pool value and move it some
 /// place in-range.  Return true if we changed any addresses (thus must run
 /// another pass of branch lengthening), false otherwise.
 bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
@@ -1008,7 +1008,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   unsigned Size = CPEMI->getOperand(2).getImm();
   MachineBasicBlock *NewMBB;
   // Compute this only once, it's expensive.  The 4 or 8 is the value the
-  //  hardware keeps in the PC (2 insns ahead of the reference).
+  // hardware keeps in the PC (2 insns ahead of the reference).
   unsigned UserOffset = GetOffsetOf(UserMI) + (isThumb ? 4 : 8);
 
   // Special case: tLEApcrel are two instructions MI's. The actual user is the
@@ -1024,7 +1024,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
 
   // No existing clone of this CPE is within range.
   // We will be generating a new clone.  Get a UID for it.
-  unsigned ID  = AFI->createConstPoolEntryUId();
+  unsigned ID = AFI->createConstPoolEntryUId();
 
   // Look for water where we can place this CPE.  We look for the farthest one
   // away that will work.  Forward references only for now (although later
@@ -1160,7 +1160,7 @@ bool ARMConstantIslands::FixUpImmediateBr(MachineFunction &Fn, ImmBranch &Br) {
 /// FixUpUnconditionalBr - Fix up an unconditional branch whose destination is
 /// too far away to fit in its displacement field. If the LR register has been
 /// spilled in the epilogue, then we can use BL to implement a far jump.
-/// Otherwise, add an intermediate branch instruction to to a branch.
+/// Otherwise, add an intermediate branch instruction to a branch.
 bool
 ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
@@ -1188,7 +1188,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *DestBB = MI->getOperand(0).getMBB();
 
-  // Add a unconditional branch to the destination and invert the branch
+  // Add an unconditional branch to the destination and invert the branch
   // condition to jump over it:
   // blt L1
   // =>
@@ -1210,7 +1210,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   if (BMI != MI) {
     if (next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
         BMI->getOpcode() == Br.UncondBr) {
-      // Last MI in the BB is a unconditional branch. Can we simply invert the
+      // Last MI in the BB is an unconditional branch. Can we simply invert the
       // condition and swap destinations:
       // beq L1
       // b   L2
@@ -1230,7 +1230,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
 
   if (NeedSplit) {
     SplitBlockBeforeInstr(MI);
-    // No need for the branch to the next block. We're adding a unconditional
+    // No need for the branch to the next block. We're adding an unconditional
     // branch to the destination.
     int delta = TII->GetInstSizeInBytes(&MBB->back());
     BBSizes[MBB->getNumber()] -= delta;
