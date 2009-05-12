@@ -120,6 +120,176 @@ Run the Clang Static Analyzer.
 
 
 
+=head2 Language Selection and Mode Options
+
+=over
+
+=item B<-x> I<language>
+
+Treat subsequent input files as having type I<language>.
+
+=item B<-std>=I<language>
+
+Specify the language standard to compile for.
+
+=item B<-ansi>
+
+Same as B<-std=c89>.
+
+=item B<-ObjC++>
+
+Treat subsequent source input files as Objective-C++ inputs.
+
+=item B<-ObjC>
+
+Treat subsequent source input files as Objective-C inputs.
+
+=item B<-trigraphs>
+
+Enable trigraphs.
+
+=item B<-ffreestanding>
+
+Indicate that the file should be compiled for a freestanding, not a hosted,
+environment.
+
+=item B<-fno-builtin>
+
+Disable special handling and optimizations of builtin functions like strlen and
+malloc.
+
+=item B<-fmath-errno>
+
+Indicate that math functions should be treated as updating errno.
+
+=item B<-fpascal-strings>
+
+Enable support for Pascal-style strings with "\pfoo".
+
+=item B<-fms-extensions>
+
+Enable support for Microsoft extensions.
+
+=item B<-fwritable-strings>
+
+Make all string literals default to writable.  This disables uniquing of
+strings and other optimizations.
+
+=item B<-flax-vector-conversions>
+
+Allow loose type checking rules for implicit vector conversions.
+
+=item B<-fblocks>
+
+Enable the "Blocks" language feature.
+
+
+=item B<-fobjc-gc-only>
+
+Indicate that Objective-C code should be compiled in GC-only mode, which only
+works when Objective-C Garbage Collection is enabled.
+
+=item B<-fobjc-gc>
+
+Indicate that Objective-C code should be compiled in hybrid-GC mode, which works
+with both GC and non-GC mode.
+
+=back
+
+
+
+=head2 Target Selection Options
+
+Clang fully supports cross compilation and an inherent part of its design.
+Depending on how your version of Clang is configured, it may have support for
+a number of cross compilers, or may just support a native target.
+
+=over
+
+=cut
+######
+######=item B<-triple>=I<target triple>
+######
+=pod
+
+
+=item B<-arch> I<architecture>
+
+Specify the architecture to build for.
+
+=item B<-mmacosx-version-min>=I<version>
+
+When building for Mac OS/X, specify the minimum version supported by your
+application.
+
+=item B<-miphoneos-version-min>
+
+When building for iPhone OS, specify the minimum version supported by your
+application.
+
+
+=item B<-march>=I<cpu>
+
+Specify that Clang should generate code for a specific processor family member
+and later.  For example, if you specify -march=i486, the compiler is allowed to
+generate instructions that are valid on i486 and later processors, but which
+may not exist on earlier ones.
+
+=back
+
+
+=head2 Code Generation Options
+
+=over
+
+=item B<-O0> B<-O1> B<-O2> B<-Os> B<-O3> B<-O4>
+
+Specify which optimization level to use.  B<-O0> means "no optimization": this
+level compiles the fastest and generates the most debuggable code.  B<-O2> is
+a moderate level of debugging which enables most optimizations.  B<-Os> is like
+B<-O2> but it does extra optimizations to reduce code size.  B<-O3> is like
+B<-O2>, except that it enables optimizations that take longer to perform or that
+may generate larger code (in an attempt to make the program run faster).  B<-O1>
+is somewhere between B<-O0> and B<-O1>.
+
+=item B<-g>
+
+Generate debug information.  Note that Clang debug information works best at
+B<-O0>.  At higher optimization levels, only line number information is
+currently available.
+
+=item B<-fexceptions>
+
+Enable generation of unwind information, this allows exceptions to be thrown
+through Clang compiled stack frames.  This is on by default in x86-64.
+
+=item B<-ftrapv>
+
+Generate code to catch integer overflow errors.  Signed integer overflow is
+undefined in C, with this flag, extra code is generated to detect this and abort
+when it happens.
+
+
+=item B<-fvisibility>
+
+This flag sets the default visibility level.
+
+=item B<-fcommon>
+
+This flag specifies that variables without initializers get common linkage.  It
+can be disabled with B<-fno-common>.
+
+=cut
+
+##=item B<-fnext-runtime> B<-fobjc-nonfragile-abi> B<-fgnu-runtime>
+##These options specify which Objective-C runtime the code generator should
+##target.  FIXME: we don't want people poking these generally.
+
+=pod
+
+=back
+
+
 =head2 Driver Options
 
 =over
@@ -207,90 +377,22 @@ Show commands to run and use verbose output.
 =back
 
 
-
-=head2 Target Selection Options
-
-=over
-
--triple
--arch
--mmacosx-version-min=10.3.9
--miphoneos-version-min
-
-
-=back
-
-
-
-=head2 Language Selection and Mode Options
-
-=over
-
-=item B<-x> I<language>
-
-Treat subsequent input files as having type I<language>.
-
-=item B<-ObjC++>
-
-Treat source input files as Objective-C++ inputs.
-
-=item B<-ObjC>
-
-Treat source input files as Objective-C inputs.
-
-B<-std>=I<language>
-
-
--ffreestanding
--fno-builtin
--fmath-errno
--fobjc-gc-only
--fobjc-gc
--fpascal-strings
--fms-extensions
--fwritable-strings
--fno-lax-vector-conversions
--fblocks
--trigraphs
-
-
-=back
-
-
-
-=head2 Code Generation Options
-
-=over
-
--fexceptions
--fobjc-nonfragile-abi
--fgnu-runtime
--fnext-runtime
--ftrapv
--fvisibility
--Os, O0, O1, O2, O3, O4
--fno-common
--g
--mcpu
-
-=back
-
-
-
-
 =head2 Diagnostics Options
 
 =over
 
--fshow-column
--fshow-source-location
--fcaret-diagnostics
--fdiagnostics-fixit-info
--fdiagnostics-print-source-range-info
--fprint-source-range-info
--fdiagnostics-show-option
--fmessage-length
+=item 
+B<-fshow-column>
+B<-fshow-source-location>
+B<-fcaret-diagnostics>
+B<-fdiagnostics-fixit-info>
+B<-fdiagnostics-print-source-range-info>
+B<-fprint-source-range-info>
+B<-fdiagnostics-show-option>
+B<-fmessage-length>
 
+These options control how Clang prints out information about diagnostics (errors
+and warnings).  Please see the Clang User's Manual for more information.
 
 =back
 
