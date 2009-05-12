@@ -749,16 +749,6 @@ be done safely if "b" isn't modified between the strlen and memcpy of course.
 
 //===---------------------------------------------------------------------===//
 
-We should be able to evaluate this loop:
-
-int test(int x_offs) {
-  while (x_offs > 4)
-     x_offs -= 4;
-  return x_offs;
-}
-
-//===---------------------------------------------------------------------===//
-
 Reassociate should turn things like:
 
 int factorial(int X) {

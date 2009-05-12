@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep mul | count 3
+; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep {mul.*%lsr.iv} | count 2
 ; The multiply in bb2 must not be reduced to an add, as the sext causes the
 ; %1 argument to become negative after a while.
 ; ModuleID = '<stdin>'

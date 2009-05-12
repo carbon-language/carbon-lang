@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep {sext}
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep {zext}
+; RUN: llvm-as < %s | opt -indvars -instcombine | llvm-dis | not grep {\[sz\]ext}
 ; ModuleID = '<stdin>'
 ;extern int *a, *b, *c, *d, *e, *f;  /* 64 bit */
 ;extern int K[256];
