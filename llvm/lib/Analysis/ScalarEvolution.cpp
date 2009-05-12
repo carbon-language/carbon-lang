@@ -2309,10 +2309,20 @@ void ScalarEvolution::forgetLoopBackedgeTakenCount(const Loop *L) {
 void ScalarEvolution::forgetLoopPHIs(const Loop *L) {
   BasicBlock *Header = L->getHeader();
 
+  // Push all Loop-header PHIs onto the Worklist stack, except those
+  // that are presently represented via a SCEVUnknown. SCEVUnknown for
+  // a PHI either means that it has an unrecognized structure, or it's
+  // a PHI that's in the progress of being computed by createNodeForPHI.
+  // In the former case, additional loop trip count information isn't
+  // going to change anything. In the later case, createNodeForPHI will
+  // perform the necessary updates on its own when it gets to that point.
   SmallVector<Instruction *, 16> Worklist;
   for (BasicBlock::iterator I = Header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I)
-    Worklist.push_back(PN);
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    std::map<SCEVCallbackVH, SCEVHandle>::iterator It = Scalars.find((Value*)I);
+    if (It != Scalars.end() && !isa<SCEVUnknown>(It->second))
+      Worklist.push_back(PN);
+  }
 
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
