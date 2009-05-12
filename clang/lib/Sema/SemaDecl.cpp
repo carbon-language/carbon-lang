@@ -1742,7 +1742,13 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // C99 6.9p2: The storage-class specifiers auto and register shall not
     // appear in the declaration specifiers in an external declaration.
     if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-      Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
+      
+      // If this is a register variable with an asm label specified, then this
+      // is a GNU extension.
+      if (SC == VarDecl::Register && D.getAsmLabel())
+        Diag(D.getIdentifierLoc(), diag::err_unsupported_global_register);
+      else
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope);
       D.setInvalidType();
     }
   }

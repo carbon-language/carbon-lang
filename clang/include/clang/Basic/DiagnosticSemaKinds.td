@@ -1023,6 +1023,8 @@ def warn_tentative_incomplete_array : Warning<
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
 def err_typecheck_sclass_fscope : Error<
   "illegal storage class on file-scoped variable">;
+def err_unsupported_global_register : Error<
+  "global register variables are not supported">;
 def err_typecheck_sclass_func : Error<"illegal storage class on function">;
 def err_static_block_func : Error<
   "function declared in block scope cannot have 'static' storage class">;
