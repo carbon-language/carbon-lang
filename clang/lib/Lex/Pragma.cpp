@@ -666,6 +666,8 @@ struct PragmaSTDC_UnknownHandler : public PragmaHandler {
 void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(0, new PragmaOnceHandler(getIdentifierInfo("once")));
   AddPragmaHandler(0, new PragmaMarkHandler(getIdentifierInfo("mark")));
+  
+  // #pragma GCC ...
   AddPragmaHandler("GCC", new PragmaPoisonHandler(getIdentifierInfo("poison")));
   AddPragmaHandler("GCC", new PragmaSystemHeaderHandler(
                                           getIdentifierInfo("system_header")));
@@ -673,7 +675,16 @@ void Preprocessor::RegisterBuiltinPragmas() {
                                           getIdentifierInfo("dependency")));
   AddPragmaHandler("GCC", new PragmaDiagnosticHandler(
                                               getIdentifierInfo("diagnostic")));
-  
+  // #pragma clang ...
+  AddPragmaHandler("clang", new PragmaPoisonHandler(
+                                          getIdentifierInfo("poison")));
+  AddPragmaHandler("clang", new PragmaSystemHeaderHandler(
+                                          getIdentifierInfo("system_header")));
+  AddPragmaHandler("clang", new PragmaDependencyHandler(
+                                          getIdentifierInfo("dependency")));
+  AddPragmaHandler("clang", new PragmaDiagnosticHandler(
+                                          getIdentifierInfo("diagnostic")));
+
   AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler(
                                              getIdentifierInfo("FP_CONTRACT")));
   AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler(

@@ -25,11 +25,11 @@ t',
 };
 
 
-#pragma GCC diagnostic ignored "-Wmultichar"
+#pragma clang diagnostic ignored "-Wmultichar"
 
 char d = 'df'; // no warning.
 char e = 'abcd';  // still warn: expected-warning {{multi-character character constant}}
 
-#pragma GCC diagnostic ignored "-Wfour-char-constants"
+#pragma clang diagnostic ignored "-Wfour-char-constants"
 
 char f = 'abcd';  // ignored.
