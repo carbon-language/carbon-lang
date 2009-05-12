@@ -1984,13 +1984,13 @@ static uint32_t GetMinTrailingZeros(SCEVHandle S, const ScalarEvolution &SE) {
   if (const SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S)) {
     uint32_t OpRes = GetMinTrailingZeros(E->getOperand(), SE);
     return OpRes == SE.getTypeSizeInBits(E->getOperand()->getType()) ?
-             SE.getTypeSizeInBits(E->getOperand()->getType()) : OpRes;
+             SE.getTypeSizeInBits(E->getType()) : OpRes;
   }
 
   if (const SCEVSignExtendExpr *E = dyn_cast<SCEVSignExtendExpr>(S)) {
     uint32_t OpRes = GetMinTrailingZeros(E->getOperand(), SE);
     return OpRes == SE.getTypeSizeInBits(E->getOperand()->getType()) ?
-             SE.getTypeSizeInBits(E->getOperand()->getType()) : OpRes;
+             SE.getTypeSizeInBits(E->getType()) : OpRes;
   }
 
   if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
