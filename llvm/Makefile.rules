@@ -515,7 +515,10 @@ endif
 # Options To Invoke Tools
 #----------------------------------------------------------
 
-CompileCommonOpts += -pedantic -Wall -W -Wwrite-strings -Wno-long-long \
+ifndef NO_PEDANTIC
+CompileCommonOpts += -pedantic
+endif
+CompileCommonOpts += -Wall -W -Wwrite-strings -Wno-long-long \
                      -Wunused -Wno-unused-parameter $(EXTRA_OPTIONS)
 
 ifeq ($(OS),HP-UX)
