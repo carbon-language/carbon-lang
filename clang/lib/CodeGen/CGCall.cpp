@@ -55,8 +55,9 @@ CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   llvm::SmallVector<QualType, 16> ArgTys;
-  // Add the 'this' pointer.
-  ArgTys.push_back(MD->getThisType(Context));
+  // Add the 'this' pointer unless this is a static method.
+  if (MD->isInstance())
+    ArgTys.push_back(MD->getThisType(Context));
   
   const FunctionProtoType *FTP = MD->getType()->getAsFunctionProtoType();
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
@@ -65,10 +66,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
     if (MD->isInstance())
       return getFunctionInfo(MD);
-  }
   
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
   if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FTy))
