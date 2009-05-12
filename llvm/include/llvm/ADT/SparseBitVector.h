@@ -55,7 +55,7 @@ private:
   unsigned ElementIndex;
   BitWord Bits[BITWORDS_PER_ELEMENT];
   // Needed for sentinels
-  friend class ilist_sentinel_traits<SparseBitVectorElement>;
+  friend struct ilist_sentinel_traits<SparseBitVectorElement>;
   SparseBitVectorElement() {
     ElementIndex = ~0U;
     memset(&Bits[0], 0, sizeof (BitWord) * BITWORDS_PER_ELEMENT);
