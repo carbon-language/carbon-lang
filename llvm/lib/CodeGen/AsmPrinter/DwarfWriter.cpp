@@ -3619,15 +3619,6 @@ public:
       // could be more elegant.
       AddUInt(SPDie, DW_AT_inline, 0, DW_INL_declared_not_inlined);
 
-      // Track the start label for this inlined function.
-      DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
-        I = InlineInfo.find(GV);
-
-      if (I == InlineInfo.end())
-        InlineInfo[GV].push_back(LabelID);
-      else
-        I->second.push_back(LabelID);
-
       AbstractInstanceRootMap[GV] = Scope;
       AbstractInstanceRootList.push_back(Scope);
     }
@@ -3646,6 +3637,7 @@ public:
 
     ConcreteScope->setDie(ScopeDie);
     ConcreteScope->setStartLabelID(LabelID);
+    MMI->RecordUsedDbgLabel(LabelID);
 
     LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
 
@@ -3657,6 +3649,15 @@ public:
       DbgConcreteScopeMap[GV].push_back(ConcreteScope);
     else
       SI->second.push_back(ConcreteScope);
+
+    // Track the start label for this inlined function.
+    DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
+      I = InlineInfo.find(GV);
+
+    if (I == InlineInfo.end())
+      InlineInfo[GV].push_back(LabelID);
+    else
+      I->second.push_back(LabelID);
 
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
@@ -3687,7 +3688,6 @@ public:
     assert(!Scopes.empty() && "We should have at least one debug scope!");
     DbgConcreteScope *Scope = Scopes.back(); Scopes.pop_back();
     unsigned ID = MMI->NextLabelID();
-
     MMI->RecordUsedDbgLabel(ID);
     Scope->setEndLabelID(ID);
 
