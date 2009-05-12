@@ -600,7 +600,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
   llvm::DenseMap<const char*, GlobalDecl>::iterator DDI = 
-  DeferredDecls.find(MangledName);
+    DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
@@ -938,7 +938,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     }
   }
 
-  // Get or create the prototype for teh function.
+  // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(D, Ty);
   
   // Strip off a bitcast if we got one back.
@@ -970,8 +970,10 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     // If this is an implementation of a function without a prototype, try to
     // replace any existing uses of the function (which may be calls) with uses
     // of the new function
-    if (D->getType()->isFunctionNoProtoType())
+    if (D->getType()->isFunctionNoProtoType()) {
       ReplaceUsesOfNonProtoTypeWithRealFunction(OldFn, NewFn);
+      OldFn->removeDeadConstantUsers();
+    }
     
     // Replace uses of F with the Function we will endow with a body.
     if (!Entry->use_empty()) {
