@@ -14,34 +14,12 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
-
-// Return the integer value Val zero-extended or truncated (if necessary) to
-// type ITy. Any new instructions are inserted at InsertBefore.
-template<typename InsertType>
-static Value *getZExtOrTrunc(Value *Val, const IntegerType *ITy,
-                             InsertType InsertPoint) {
-  const IntegerType *ValTy = cast<IntegerType>(Val->getType());
-  if (ValTy == ITy)
-    return Val;
-  Constant *CVal = dyn_cast<Constant>(Val);
-  if (ValTy->getBitWidth() < ITy->getBitWidth()) {
-    if (CVal)
-      return ConstantExpr::getZExt(CVal, ITy);
-    return new ZExtInst(Val, ITy, "", InsertPoint);
-  } else {
-    if (CVal)
-      return ConstantExpr::getTrunc(CVal, ITy);
-    return new TruncInst(Val, ITy, "", InsertPoint);
-  }
-}
 
 template <class ArgIt>
 static void EnsureFunctionExists(Module &M, const char *Name,
@@ -96,9 +74,10 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                     FunctionType::get(RetTy, ParamTys, false));
   }
 
+  IRBuilder<> Builder(CI->getParent(), CI);
   SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
-  CallInst *NewCI = CallInst::Create(FCache, Args.begin(), Args.end(),
-                                     CI->getName(), CI);
+  CallInst *NewCI = Builder.CreateCall(FCache, Args.begin(), Args.end());
+  NewCI->setName(CI->getName());
   if (!CI->use_empty())
     CI->replaceAllUsesWith(NewCI);
   return NewCI;
@@ -176,79 +155,80 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   
+  IRBuilder<> Builder(IP->getParent(), IP);
+
   switch(BitSize) {
   default: assert(0 && "Unhandled type size of value to byteswap!");
   case 16: {
-    Value *Tmp1 = BinaryOperator::CreateShl(V,
-                                ConstantInt::get(V->getType(),8),"bswap.2",IP);
-    Value *Tmp2 = BinaryOperator::CreateLShr(V,
-                                ConstantInt::get(V->getType(),8),"bswap.1",IP);
-    V = BinaryOperator::CreateOr(Tmp1, Tmp2, "bswap.i16", IP);
+    Value *Tmp1 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
+                                    "bswap.2");
+    Value *Tmp2 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
+                                     "bswap.1");
+    V = Builder.CreateOr(Tmp1, Tmp2, "bswap.i16");
     break;
   }
   case 32: {
-    Value *Tmp4 = BinaryOperator::CreateShl(V,
-                              ConstantInt::get(V->getType(),24),"bswap.4", IP);
-    Value *Tmp3 = BinaryOperator::CreateShl(V,
-                              ConstantInt::get(V->getType(),8),"bswap.3",IP);
-    Value *Tmp2 = BinaryOperator::CreateLShr(V,
-                              ConstantInt::get(V->getType(),8),"bswap.2",IP);
-    Value *Tmp1 = BinaryOperator::CreateLShr(V,
-                              ConstantInt::get(V->getType(),24),"bswap.1", IP);
-    Tmp3 = BinaryOperator::CreateAnd(Tmp3, 
-                                     ConstantInt::get(Type::Int32Ty, 0xFF0000),
-                                     "bswap.and3", IP);
-    Tmp2 = BinaryOperator::CreateAnd(Tmp2, 
-                                     ConstantInt::get(Type::Int32Ty, 0xFF00),
-                                     "bswap.and2", IP);
-    Tmp4 = BinaryOperator::CreateOr(Tmp4, Tmp3, "bswap.or1", IP);
-    Tmp2 = BinaryOperator::CreateOr(Tmp2, Tmp1, "bswap.or2", IP);
-    V = BinaryOperator::CreateOr(Tmp4, Tmp2, "bswap.i32", IP);
+    Value *Tmp4 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 24),
+                                    "bswap.4");
+    Value *Tmp3 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
+                                    "bswap.3");
+    Value *Tmp2 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
+                                     "bswap.2");
+    Value *Tmp1 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 24),
+                                     "bswap.1");
+    Tmp3 = Builder.CreateAnd(Tmp3, ConstantInt::get(Type::Int32Ty, 0xFF0000),
+                             "bswap.and3");
+    Tmp2 = Builder.CreateAnd(Tmp2, ConstantInt::get(Type::Int32Ty, 0xFF00),
+                             "bswap.and2");
+    Tmp4 = Builder.CreateOr(Tmp4, Tmp3, "bswap.or1");
+    Tmp2 = Builder.CreateOr(Tmp2, Tmp1, "bswap.or2");
+    V = Builder.CreateOr(Tmp4, Tmp2, "bswap.i32");
     break;
   }
   case 64: {
-    Value *Tmp8 = BinaryOperator::CreateShl(V,
-                              ConstantInt::get(V->getType(),56),"bswap.8", IP);
-    Value *Tmp7 = BinaryOperator::CreateShl(V,
-                              ConstantInt::get(V->getType(),40),"bswap.7", IP);
-    Value *Tmp6 = BinaryOperator::CreateShl(V,
-                              ConstantInt::get(V->getType(),24),"bswap.6", IP);
-    Value *Tmp5 = BinaryOperator::CreateShl(V,
-                              ConstantInt::get(V->getType(),8),"bswap.5", IP);
-    Value* Tmp4 = BinaryOperator::CreateLShr(V,
-                              ConstantInt::get(V->getType(),8),"bswap.4", IP);
-    Value* Tmp3 = BinaryOperator::CreateLShr(V,
-                              ConstantInt::get(V->getType(),24),"bswap.3", IP);
-    Value* Tmp2 = BinaryOperator::CreateLShr(V,
-                              ConstantInt::get(V->getType(),40),"bswap.2", IP);
-    Value* Tmp1 = BinaryOperator::CreateLShr(V,
-                              ConstantInt::get(V->getType(),56),"bswap.1", IP);
-    Tmp7 = BinaryOperator::CreateAnd(Tmp7,
-                             ConstantInt::get(Type::Int64Ty, 
-                               0xFF000000000000ULL),
-                             "bswap.and7", IP);
-    Tmp6 = BinaryOperator::CreateAnd(Tmp6,
-                             ConstantInt::get(Type::Int64Ty, 0xFF0000000000ULL),
-                             "bswap.and6", IP);
-    Tmp5 = BinaryOperator::CreateAnd(Tmp5,
+    Value *Tmp8 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 56),
+                                    "bswap.8");
+    Value *Tmp7 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 40),
+                                    "bswap.7");
+    Value *Tmp6 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 24),
+                                    "bswap.6");
+    Value *Tmp5 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
+                                    "bswap.5");
+    Value* Tmp4 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
+                                     "bswap.4");
+    Value* Tmp3 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 24),
+                                     "bswap.3");
+    Value* Tmp2 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 40),
+                                     "bswap.2");
+    Value* Tmp1 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 56),
+                                     "bswap.1");
+    Tmp7 = Builder.CreateAnd(Tmp7,
+                             ConstantInt::get(Type::Int64Ty,
+                                              0xFF000000000000ULL),
+                             "bswap.and7");
+    Tmp6 = Builder.CreateAnd(Tmp6,
+                             ConstantInt::get(Type::Int64Ty,
+                                              0xFF0000000000ULL),
+                             "bswap.and6");
+    Tmp5 = Builder.CreateAnd(Tmp5,
                              ConstantInt::get(Type::Int64Ty, 0xFF00000000ULL),
-                             "bswap.and5", IP);
-    Tmp4 = BinaryOperator::CreateAnd(Tmp4,
+                             "bswap.and5");
+    Tmp4 = Builder.CreateAnd(Tmp4,
                              ConstantInt::get(Type::Int64Ty, 0xFF000000ULL),
-                             "bswap.and4", IP);
-    Tmp3 = BinaryOperator::CreateAnd(Tmp3,
+                             "bswap.and4");
+    Tmp3 = Builder.CreateAnd(Tmp3,
                              ConstantInt::get(Type::Int64Ty, 0xFF0000ULL),
-                             "bswap.and3", IP);
-    Tmp2 = BinaryOperator::CreateAnd(Tmp2,
+                             "bswap.and3");
+    Tmp2 = Builder.CreateAnd(Tmp2,
                              ConstantInt::get(Type::Int64Ty, 0xFF00ULL),
-                             "bswap.and2", IP);
-    Tmp8 = BinaryOperator::CreateOr(Tmp8, Tmp7, "bswap.or1", IP);
-    Tmp6 = BinaryOperator::CreateOr(Tmp6, Tmp5, "bswap.or2", IP);
-    Tmp4 = BinaryOperator::CreateOr(Tmp4, Tmp3, "bswap.or3", IP);
-    Tmp2 = BinaryOperator::CreateOr(Tmp2, Tmp1, "bswap.or4", IP);
-    Tmp8 = BinaryOperator::CreateOr(Tmp8, Tmp6, "bswap.or5", IP);
-    Tmp4 = BinaryOperator::CreateOr(Tmp4, Tmp2, "bswap.or6", IP);
-    V = BinaryOperator::CreateOr(Tmp8, Tmp4, "bswap.i64", IP);
+                             "bswap.and2");
+    Tmp8 = Builder.CreateOr(Tmp8, Tmp7, "bswap.or1");
+    Tmp6 = Builder.CreateOr(Tmp6, Tmp5, "bswap.or2");
+    Tmp4 = Builder.CreateOr(Tmp4, Tmp3, "bswap.or3");
+    Tmp2 = Builder.CreateOr(Tmp2, Tmp1, "bswap.or4");
+    Tmp8 = Builder.CreateOr(Tmp8, Tmp6, "bswap.or5");
+    Tmp4 = Builder.CreateOr(Tmp4, Tmp2, "bswap.or6");
+    V = Builder.CreateOr(Tmp8, Tmp4, "bswap.i64");
     break;
   }
   }
@@ -266,6 +246,8 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
   };
 
+  IRBuilder<> Builder(IP->getParent(), IP);
+
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   unsigned WordSize = (BitSize + 63) / 64;
   Value *Count = ConstantInt::get(V->getType(), 0);
@@ -275,17 +257,17 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     for (unsigned i = 1, ct = 0; i < (BitSize>64 ? 64 : BitSize); 
          i <<= 1, ++ct) {
       Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
-      Value *LHS = BinaryOperator::CreateAnd(
-                     PartValue, MaskCst, "cppop.and1", IP);
-      Value *VShift = BinaryOperator::CreateLShr(PartValue,
-                        ConstantInt::get(V->getType(), i), "ctpop.sh", IP);
-      Value *RHS = BinaryOperator::CreateAnd(VShift, MaskCst, "cppop.and2", IP);
-      PartValue = BinaryOperator::CreateAdd(LHS, RHS, "ctpop.step", IP);
+      Value *LHS = Builder.CreateAnd(PartValue, MaskCst, "cppop.and1");
+      Value *VShift = Builder.CreateLShr(PartValue,
+                                         ConstantInt::get(V->getType(), i),
+                                         "ctpop.sh");
+      Value *RHS = Builder.CreateAnd(VShift, MaskCst, "cppop.and2");
+      PartValue = Builder.CreateAdd(LHS, RHS, "ctpop.step");
     }
-    Count = BinaryOperator::CreateAdd(PartValue, Count, "ctpop.part", IP);
+    Count = Builder.CreateAdd(PartValue, Count, "ctpop.part");
     if (BitSize > 64) {
-      V = BinaryOperator::CreateLShr(V, ConstantInt::get(V->getType(), 64), 
-                                     "ctpop.part.sh", IP);
+      V = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 64),
+                             "ctpop.part.sh");
       BitSize -= 64;
     }
   }
@@ -297,14 +279,16 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
 /// instruction IP.
 static Value *LowerCTLZ(Value *V, Instruction *IP) {
 
+  IRBuilder<> Builder(IP->getParent(), IP);
+
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i < BitSize; i <<= 1) {
     Value *ShVal = ConstantInt::get(V->getType(), i);
-    ShVal = BinaryOperator::CreateLShr(V, ShVal, "ctlz.sh", IP);
-    V = BinaryOperator::CreateOr(V, ShVal, "ctlz.step", IP);
+    ShVal = Builder.CreateLShr(V, ShVal, "ctlz.sh");
+    V = Builder.CreateOr(V, ShVal, "ctlz.step");
   }
 
-  V = BinaryOperator::CreateNot(V, "", IP);
+  V = Builder.CreateNot(V);
   return LowerCTPOP(V, IP);
 }
 
@@ -319,6 +303,8 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
 /// the bits are returned in inverse order. 
 /// @brief Lowering of llvm.part.select intrinsic.
 static Instruction *LowerPartSelect(CallInst *CI) {
+  IRBuilder<> Builder;
+
   // Make sure we're dealing with a part select intrinsic here
   Function *F = CI->getCalledFunction();
   const FunctionType *FT = F->getFunctionType();
@@ -359,13 +345,15 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     BasicBlock *Reverse = BasicBlock::Create("reverse", CurBB->getParent());
     BasicBlock *RsltBlk = BasicBlock::Create("result",  CurBB->getParent());
 
+    Builder.SetInsertPoint(CurBB);
+
     // Cast Hi and Lo to the size of Val so the widths are all the same
     if (Hi->getType() != Val->getType())
-      Hi = CastInst::CreateIntegerCast(Hi, Val->getType(), false, 
-                                         "tmp", CurBB);
+      Hi = Builder.CreateIntCast(Hi, Val->getType(), /* isSigned */ false,
+                                 "tmp");
     if (Lo->getType() != Val->getType())
-      Lo = CastInst::CreateIntegerCast(Lo, Val->getType(), false, 
-                                          "tmp", CurBB);
+      Lo = Builder.CreateIntCast(Lo, Val->getType(), /* isSigned */ false,
+                                 "tmp");
 
     // Compute a few things that both cases will need, up front.
     Constant* Zero = ConstantInt::get(Val->getType(), 0);
@@ -374,18 +362,18 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 
     // Compare the Hi and Lo bit positions. This is used to determine 
     // which case we have (forward or reverse)
-    ICmpInst *Cmp = new ICmpInst(ICmpInst::ICMP_ULT, Hi, Lo, "less",CurBB);
-    BranchInst::Create(RevSize, FwdSize, Cmp, CurBB);
+    Value *Cmp = Builder.CreateICmpULT(Hi, Lo, "less");
+    Builder.CreateCondBr(Cmp, RevSize, FwdSize);
 
-    // First, copmute the number of bits in the forward case.
-    Instruction* FBitSize = 
-      BinaryOperator::CreateSub(Hi, Lo,"fbits", FwdSize);
-    BranchInst::Create(Compute, FwdSize);
+    // First, compute the number of bits in the forward case.
+    Builder.SetInsertPoint(FwdSize);
+    Value* FBitSize = Builder.CreateSub(Hi, Lo, "fbits");
+    Builder.CreateBr(Compute);
 
     // Second, compute the number of bits in the reverse case.
-    Instruction* RBitSize = 
-      BinaryOperator::CreateSub(Lo, Hi, "rbits", RevSize);
-    BranchInst::Create(Compute, RevSize);
+    Builder.SetInsertPoint(RevSize);
+    Value* RBitSize = Builder.CreateSub(Lo, Hi, "rbits");
+    Builder.CreateBr(Compute);
 
     // Now, compute the bit range. Start by getting the bitsize and the shift
     // amount (either Hi or Lo) from PHI nodes. Then we compute a mask for 
@@ -393,94 +381,88 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     // least significant bits, apply the mask to zero out unwanted high bits, 
     // and we have computed the "forward" result. It may still need to be 
     // reversed.
+    Builder.SetInsertPoint(Compute);
 
     // Get the BitSize from one of the two subtractions
-    PHINode *BitSize = PHINode::Create(Val->getType(), "bits", Compute);
+    PHINode *BitSize = Builder.CreatePHI(Val->getType(), "bits");
     BitSize->reserveOperandSpace(2);
     BitSize->addIncoming(FBitSize, FwdSize);
     BitSize->addIncoming(RBitSize, RevSize);
 
     // Get the ShiftAmount as the smaller of Hi/Lo
-    PHINode *ShiftAmt = PHINode::Create(Val->getType(), "shiftamt", Compute);
+    PHINode *ShiftAmt = Builder.CreatePHI(Val->getType(), "shiftamt");
     ShiftAmt->reserveOperandSpace(2);
     ShiftAmt->addIncoming(Lo, FwdSize);
     ShiftAmt->addIncoming(Hi, RevSize);
 
     // Increment the bit size
-    Instruction *BitSizePlusOne = 
-      BinaryOperator::CreateAdd(BitSize, One, "bits", Compute);
+    Value *BitSizePlusOne = Builder.CreateAdd(BitSize, One, "bits");
 
     // Create a Mask to zero out the high order bits.
-    Instruction* Mask = 
-      BinaryOperator::CreateShl(AllOnes, BitSizePlusOne, "mask", Compute);
-    Mask = BinaryOperator::CreateNot(Mask, "mask", Compute);
+    Value* Mask = Builder.CreateShl(AllOnes, BitSizePlusOne, "mask");
+    Mask = Builder.CreateNot(Mask, "mask");
 
     // Shift the bits down and apply the mask
-    Instruction* FRes = 
-      BinaryOperator::CreateLShr(Val, ShiftAmt, "fres", Compute);
-    FRes = BinaryOperator::CreateAnd(FRes, Mask, "fres", Compute);
-    BranchInst::Create(Reverse, RsltBlk, Cmp, Compute);
+    Value* FRes = Builder.CreateLShr(Val, ShiftAmt, "fres");
+    FRes = Builder.CreateAnd(FRes, Mask, "fres");
+    Builder.CreateCondBr(Cmp, Reverse, RsltBlk);
 
     // In the Reverse block we have the mask already in FRes but we must reverse
     // it by shifting FRes bits right and putting them in RRes by shifting them 
     // in from left.
+    Builder.SetInsertPoint(Reverse);
 
     // First set up our loop counters
-    PHINode *Count = PHINode::Create(Val->getType(), "count", Reverse);
+    PHINode *Count = Builder.CreatePHI(Val->getType(), "count");
     Count->reserveOperandSpace(2);
     Count->addIncoming(BitSizePlusOne, Compute);
 
     // Next, get the value that we are shifting.
-    PHINode *BitsToShift = PHINode::Create(Val->getType(), "val", Reverse);
+    PHINode *BitsToShift = Builder.CreatePHI(Val->getType(), "val");
     BitsToShift->reserveOperandSpace(2);
     BitsToShift->addIncoming(FRes, Compute);
 
     // Finally, get the result of the last computation
-    PHINode *RRes = PHINode::Create(Val->getType(), "rres", Reverse);
+    PHINode *RRes = Builder.CreatePHI(Val->getType(), "rres");
     RRes->reserveOperandSpace(2);
     RRes->addIncoming(Zero, Compute);
 
     // Decrement the counter
-    Instruction *Decr = BinaryOperator::CreateSub(Count, One, "decr", Reverse);
+    Value *Decr = Builder.CreateSub(Count, One, "decr");
     Count->addIncoming(Decr, Reverse);
 
     // Compute the Bit that we want to move
-    Instruction *Bit = 
-      BinaryOperator::CreateAnd(BitsToShift, One, "bit", Reverse);
+    Value *Bit = Builder.CreateAnd(BitsToShift, One, "bit");
 
     // Compute the new value for next iteration.
-    Instruction *NewVal = 
-      BinaryOperator::CreateLShr(BitsToShift, One, "rshift", Reverse);
+    Value *NewVal = Builder.CreateLShr(BitsToShift, One, "rshift");
     BitsToShift->addIncoming(NewVal, Reverse);
 
     // Shift the bit into the low bits of the result.
-    Instruction *NewRes = 
-      BinaryOperator::CreateShl(RRes, One, "lshift", Reverse);
-    NewRes = BinaryOperator::CreateOr(NewRes, Bit, "addbit", Reverse);
+    Value *NewRes = Builder.CreateShl(RRes, One, "lshift");
+    NewRes = Builder.CreateOr(NewRes, Bit, "addbit");
     RRes->addIncoming(NewRes, Reverse);
     
     // Terminate loop if we've moved all the bits.
-    ICmpInst *Cond = 
-      new ICmpInst(ICmpInst::ICMP_EQ, Decr, Zero, "cond", Reverse);
-    BranchInst::Create(RsltBlk, Reverse, Cond, Reverse);
+    Value *Cond = Builder.CreateICmpEQ(Decr, Zero, "cond");
+    Builder.CreateCondBr(Cond, RsltBlk, Reverse);
 
     // Finally, in the result block, select one of the two results with a PHI
     // node and return the result;
-    CurBB = RsltBlk;
-    PHINode *BitSelect = PHINode::Create(Val->getType(), "part_select", CurBB);
+    Builder.SetInsertPoint(RsltBlk);
+    PHINode *BitSelect = Builder.CreatePHI(Val->getType(), "part_select");
     BitSelect->reserveOperandSpace(2);
     BitSelect->addIncoming(FRes, Compute);
     BitSelect->addIncoming(NewRes, Reverse);
-    ReturnInst::Create(BitSelect, CurBB);
+    Builder.CreateRet(BitSelect);
   }
 
   // Return a call to the implementation function
-  Value *Args[] = {
-    CI->getOperand(1),
-    CI->getOperand(2),
-    CI->getOperand(3)
-  };
-  return CallInst::Create(F, Args, array_endof(Args), CI->getName(), CI);
+  Builder.SetInsertPoint(CI->getParent(), CI);
+  CallInst *NewCI = Builder.CreateCall3(F, CI->getOperand(1),
+                                        CI->getOperand(2), CI->getOperand(3));
+  NewCI->setName(CI->getName());
+  return NewCI;
 }
 
 /// Convert the llvm.part.set.iX.iY.iZ intrinsic. This intrinsic takes 
@@ -492,6 +474,8 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 /// greater than %High then the inverse set of bits are replaced.
 /// @brief Lowering of llvm.bit.part.set intrinsic.
 static Instruction *LowerPartSet(CallInst *CI) {
+  IRBuilder<> Builder;
+
   // Make sure we're dealing with a part select intrinsic here
   Function *F = CI->getCalledFunction();
   const FunctionType *FT = F->getFunctionType();
@@ -543,101 +527,101 @@ static Instruction *LowerPartSet(CallInst *CI) {
     BasicBlock* result = BasicBlock::Create("result", F, 0);
 
     // BASIC BLOCK: entry
+    Builder.SetInsertPoint(entry);
     // First, get the number of bits that we're placing as an i32
-    ICmpInst* is_forward = 
-      new ICmpInst(ICmpInst::ICMP_ULT, Lo, Hi, "", entry);
-    SelectInst* Hi_pn = SelectInst::Create(is_forward, Hi, Lo, "", entry);
-    SelectInst* Lo_pn = SelectInst::Create(is_forward, Lo, Hi, "", entry);
-    BinaryOperator* NumBits = BinaryOperator::CreateSub(Hi_pn, Lo_pn, "",entry);
-    NumBits = BinaryOperator::CreateAdd(NumBits, One, "", entry);
+    Value* is_forward = Builder.CreateICmpULT(Lo, Hi);
+    Value* Hi_pn = Builder.CreateSelect(is_forward, Hi, Lo);
+    Value* Lo_pn = Builder.CreateSelect(is_forward, Lo, Hi);
+    Value* NumBits = Builder.CreateSub(Hi_pn, Lo_pn);
+    NumBits = Builder.CreateAdd(NumBits, One);
     // Now, convert Lo and Hi to ValTy bit width
-    Lo = getZExtOrTrunc(Lo_pn, ValTy, entry);
+    Lo = Builder.CreateIntCast(Lo_pn, ValTy, /* isSigned */ false);
     // Determine if the replacement bits are larger than the number of bits we
     // are replacing and deal with it.
-    ICmpInst* is_large = 
-      new ICmpInst(ICmpInst::ICMP_ULT, NumBits, RepBitWidth, "", entry);
-    BranchInst::Create(large, small, is_large, entry);
+    Value* is_large = Builder.CreateICmpULT(NumBits, RepBitWidth);
+    Builder.CreateCondBr(is_large, large, small);
 
     // BASIC BLOCK: large
-    Instruction* MaskBits = 
-      BinaryOperator::CreateSub(RepBitWidth, NumBits, "", large);
-    MaskBits = CastInst::CreateIntegerCast(MaskBits, RepMask->getType(), 
-                                           false, "", large);
-    BinaryOperator* Mask1 = 
-      BinaryOperator::CreateLShr(RepMask, MaskBits, "", large);
-    BinaryOperator* Rep2 = BinaryOperator::CreateAnd(Mask1, Rep, "", large);
-    BranchInst::Create(small, large);
+    Builder.SetInsertPoint(large);
+    Value* MaskBits = Builder.CreateSub(RepBitWidth, NumBits);
+    MaskBits = Builder.CreateIntCast(MaskBits, RepMask->getType(),
+                                     /* isSigned */ false);
+    Value* Mask1 = Builder.CreateLShr(RepMask, MaskBits);
+    Value* Rep2 = Builder.CreateAnd(Mask1, Rep);
+    Builder.CreateBr(small);
 
     // BASIC BLOCK: small
-    PHINode* Rep3 = PHINode::Create(RepTy, "", small);
+    Builder.SetInsertPoint(small);
+    PHINode* Rep3 = Builder.CreatePHI(RepTy);
     Rep3->reserveOperandSpace(2);
     Rep3->addIncoming(Rep2, large);
     Rep3->addIncoming(Rep, entry);
-    Value* Rep4 = getZExtOrTrunc(Rep3, ValTy, small);
-    BranchInst::Create(result, reverse, is_forward, small);
+    Value* Rep4 = Builder.CreateIntCast(Rep3, ValTy, /* isSigned */ false);
+    Builder.CreateCondBr(is_forward, result, reverse);
 
     // BASIC BLOCK: reverse (reverses the bits of the replacement)
+    Builder.SetInsertPoint(reverse);
     // Set up our loop counter as a PHI so we can decrement on each iteration.
     // We will loop for the number of bits in the replacement value.
-    PHINode *Count = PHINode::Create(Type::Int32Ty, "count", reverse);
+    PHINode *Count = Builder.CreatePHI(Type::Int32Ty, "count");
     Count->reserveOperandSpace(2);
     Count->addIncoming(NumBits, small);
 
     // Get the value that we are shifting bits out of as a PHI because
     // we'll change this with each iteration.
-    PHINode *BitsToShift = PHINode::Create(Val->getType(), "val", reverse);
+    PHINode *BitsToShift = Builder.CreatePHI(Val->getType(), "val");
     BitsToShift->reserveOperandSpace(2);
     BitsToShift->addIncoming(Rep4, small);
 
     // Get the result of the last computation or zero on first iteration
-    PHINode *RRes = PHINode::Create(Val->getType(), "rres", reverse);
+    PHINode *RRes = Builder.CreatePHI(Val->getType(), "rres");
     RRes->reserveOperandSpace(2);
     RRes->addIncoming(ValZero, small);
 
     // Decrement the loop counter by one
-    Instruction *Decr = BinaryOperator::CreateSub(Count, One, "", reverse);
+    Value *Decr = Builder.CreateSub(Count, One);
     Count->addIncoming(Decr, reverse);
 
     // Get the bit that we want to move into the result
-    Value *Bit = BinaryOperator::CreateAnd(BitsToShift, ValOne, "", reverse);
+    Value *Bit = Builder.CreateAnd(BitsToShift, ValOne);
 
     // Compute the new value of the bits to shift for the next iteration.
-    Value *NewVal = BinaryOperator::CreateLShr(BitsToShift, ValOne,"", reverse);
+    Value *NewVal = Builder.CreateLShr(BitsToShift, ValOne);
     BitsToShift->addIncoming(NewVal, reverse);
 
     // Shift the bit we extracted into the low bit of the result.
-    Instruction *NewRes = BinaryOperator::CreateShl(RRes, ValOne, "", reverse);
-    NewRes = BinaryOperator::CreateOr(NewRes, Bit, "", reverse);
+    Value *NewRes = Builder.CreateShl(RRes, ValOne);
+    NewRes = Builder.CreateOr(NewRes, Bit);
     RRes->addIncoming(NewRes, reverse);
     
     // Terminate loop if we've moved all the bits.
-    ICmpInst *Cond = new ICmpInst(ICmpInst::ICMP_EQ, Decr, Zero, "", reverse);
-    BranchInst::Create(result, reverse, Cond, reverse);
+    Value *Cond = Builder.CreateICmpEQ(Decr, Zero);
+    Builder.CreateCondBr(Cond, result, reverse);
 
     // BASIC BLOCK: result
-    PHINode *Rplcmnt = PHINode::Create(Val->getType(), "", result);
+    Builder.SetInsertPoint(result);
+    PHINode *Rplcmnt = Builder.CreatePHI(Val->getType());
     Rplcmnt->reserveOperandSpace(2);
     Rplcmnt->addIncoming(NewRes, reverse);
     Rplcmnt->addIncoming(Rep4, small);
-    Value* t0   = CastInst::CreateIntegerCast(NumBits,ValTy,false,"",result);
-    Value* t1   = BinaryOperator::CreateShl(ValMask, Lo, "", result);
-    Value* t2   = BinaryOperator::CreateNot(t1, "", result);
-    Value* t3   = BinaryOperator::CreateShl(t1, t0, "", result);
-    Value* t4   = BinaryOperator::CreateOr(t2, t3, "", result);
-    Value* t5   = BinaryOperator::CreateAnd(t4, Val, "", result);
-    Value* t6   = BinaryOperator::CreateShl(Rplcmnt, Lo, "", result);
-    Value* Rslt = BinaryOperator::CreateOr(t5, t6, "part_set", result);
-    ReturnInst::Create(Rslt, result);
+    Value* t0   = Builder.CreateIntCast(NumBits, ValTy, /* isSigned */ false);
+    Value* t1   = Builder.CreateShl(ValMask, Lo);
+    Value* t2   = Builder.CreateNot(t1);
+    Value* t3   = Builder.CreateShl(t1, t0);
+    Value* t4   = Builder.CreateOr(t2, t3);
+    Value* t5   = Builder.CreateAnd(t4, Val);
+    Value* t6   = Builder.CreateShl(Rplcmnt, Lo);
+    Value* Rslt = Builder.CreateOr(t5, t6, "part_set");
+    Builder.CreateRet(Rslt);
   }
 
   // Return a call to the implementation function
-  Value *Args[] = {
-    CI->getOperand(1),
-    CI->getOperand(2),
-    CI->getOperand(3),
-    CI->getOperand(4)
-  };
-  return CallInst::Create(F, Args, array_endof(Args), CI->getName(), CI);
+  Builder.SetInsertPoint(CI->getParent(), CI);
+  CallInst *NewCI = Builder.CreateCall4(F, CI->getOperand(1),
+                                        CI->getOperand(2), CI->getOperand(3),
+                                        CI->getOperand(4));
+  NewCI->setName(CI->getName());
+  return NewCI;
 }
 
 static void ReplaceFPIntrinsicWithCall(CallInst *CI, Constant *FCache,
@@ -647,23 +631,25 @@ static void ReplaceFPIntrinsicWithCall(CallInst *CI, Constant *FCache,
   switch (CI->getOperand(1)->getType()->getTypeID()) {
   default: assert(0 && "Invalid type in intrinsic"); abort();
   case Type::FloatTyID:
-    ReplaceCallWith(Fname, CI, CI->op_begin()+1, CI->op_end(),
+    ReplaceCallWith(Fname, CI, CI->op_begin() + 1, CI->op_end(),
                   Type::FloatTy, FCache);
     break;
   case Type::DoubleTyID:
-    ReplaceCallWith(Dname, CI, CI->op_begin()+1, CI->op_end(),
+    ReplaceCallWith(Dname, CI, CI->op_begin() + 1, CI->op_end(),
                   Type::DoubleTy, DCache);
     break;
   case Type::X86_FP80TyID:
   case Type::FP128TyID:
   case Type::PPC_FP128TyID:
-    ReplaceCallWith(LDname, CI, CI->op_begin()+1, CI->op_end(),
+    ReplaceCallWith(LDname, CI, CI->op_begin() + 1, CI->op_end(),
                   CI->getOperand(1)->getType(), LDCache);
     break;
   }
 }
 
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
+  IRBuilder<> Builder(CI->getParent(), CI);
+
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
 
@@ -683,7 +669,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp: {
     static Constant *SetjmpFCache = 0;
-    Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin()+1, CI->op_end(),
+    Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin() + 1, CI->op_end(),
                                Type::Int32Ty, SetjmpFCache);
     if (CI->getType() != Type::VoidTy)
       CI->replaceAllUsesWith(V);
@@ -696,7 +682,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::longjmp: {
     static Constant *LongjmpFCache = 0;
-    ReplaceCallWith("longjmp", CI, CI->op_begin()+1, CI->op_end(),
+    ReplaceCallWith("longjmp", CI, CI->op_begin() + 1, CI->op_end(),
                     Type::VoidTy, LongjmpFCache);
     break;
   }
@@ -723,10 +709,11 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::cttz: {
     // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
-    Value *NotSrc = BinaryOperator::CreateNot(Src, Src->getName()+".not", CI);
+    Value *NotSrc = Builder.CreateNot(Src);
+    NotSrc->setName(Src->getName() + ".not");
     Value *SrcM1 = ConstantInt::get(Src->getType(), 1);
-    SrcM1 = BinaryOperator::CreateSub(Src, SrcM1, "", CI);
-    Src = LowerCTPOP(BinaryOperator::CreateAnd(NotSrc, SrcM1, "", CI), CI);
+    SrcM1 = Builder.CreateSub(Src, SrcM1);
+    Src = LowerCTPOP(Builder.CreateAnd(NotSrc, SrcM1), CI);
     CI->replaceAllUsesWith(Src);
     break;
   }
@@ -798,7 +785,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::memcpy: {
     static Constant *MemcpyFCache = 0;
     const IntegerType *IntPtr = TD.getIntPtrType();
-    Value *Size = getZExtOrTrunc(CI->getOperand(3), IntPtr, CI);
+    Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
+                                        /* isSigned */ false);
     Value *Ops[3];
     Ops[0] = CI->getOperand(1);
     Ops[1] = CI->getOperand(2);
@@ -810,7 +798,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::memmove: {
     static Constant *MemmoveFCache = 0;
     const IntegerType *IntPtr = TD.getIntPtrType();
-    Value *Size = getZExtOrTrunc(CI->getOperand(3), IntPtr, CI);
+    Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
+                                        /* isSigned */ false);
     Value *Ops[3];
     Ops[0] = CI->getOperand(1);
     Ops[1] = CI->getOperand(2);
@@ -822,11 +811,13 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::memset: {
     static Constant *MemsetFCache = 0;
     const IntegerType *IntPtr = TD.getIntPtrType();
-    Value *Size = getZExtOrTrunc(CI->getOperand(3), IntPtr, CI);
+    Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
+                                        /* isSigned */ false);
     Value *Ops[3];
     Ops[0] = CI->getOperand(1);
     // Extend the amount to i32.
-    Ops[1] = getZExtOrTrunc(CI->getOperand(2), Type::Int32Ty, CI);
+    Ops[1] = Builder.CreateIntCast(CI->getOperand(2), Type::Int32Ty,
+                                   /* isSigned */ false);
     Ops[2] = Size;
     ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
                     MemsetFCache);
