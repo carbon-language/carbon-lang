@@ -43,6 +43,8 @@ namespace llvm {
     PIC16TargetAsmInfo(const PIC16TargetMachine &TM);
     mutable std::vector<PIC16Section *> BSSSections;
     mutable std::vector<PIC16Section *> IDATASections;
+    mutable std::vector<PIC16Section *> AutosSections;
+    mutable PIC16Section *ROSection;
     virtual ~PIC16TargetAsmInfo();
 
     private:
@@ -53,6 +55,7 @@ namespace llvm {
     virtual const char *getASDirective(unsigned size, unsigned AS) const;
     const Section *getBSSSectionForGlobal(const GlobalVariable *GV) const;
     const Section *getIDATASectionForGlobal(const GlobalVariable *GV) const;
+    const Section *getSectionForAuto(const GlobalVariable *GV) const;
     virtual const Section *SelectSectionForGlobal(const GlobalValue *GV) const;
     public:
     void SetSectionForGVs(Module &M);
@@ -61,6 +64,9 @@ namespace llvm {
     }
     std::vector<PIC16Section *> getIDATASections()  const {
       return IDATASections;
+    }
+    std::vector<PIC16Section *> getAutosSections()  const {
+      return AutosSections;
     }
   };
 

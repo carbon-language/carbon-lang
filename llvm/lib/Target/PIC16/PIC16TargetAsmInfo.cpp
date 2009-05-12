@@ -44,6 +44,7 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   // Need because otherwise a .text symbol is emitted by DwarfWriter
   // in BeginModule, and gpasm cribbs for that .text symbol.
   TextSection = getUnnamedSection("", SectionFlags::Code);
+  ROSection = new PIC16Section(getReadOnlySection());
 }
 
 const char *PIC16TargetAsmInfo::getRomDirective(unsigned size) const
@@ -154,6 +155,40 @@ PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
   return FoundIDATA->S_;
 } 
 
+// Get the section for an automatic variable of a function.
+// For PIC16 they are globals only with mangled names.
+const Section *
+PIC16TargetAsmInfo::getSectionForAuto(const GlobalVariable *GV) const {
+
+  const std::string name = PAN::getSectionNameForSym(GV->getName());
+
+  // Go through all Auto Sections and assign this variable
+  // to the appropriate section.
+  PIC16Section *FoundAutoSec = NULL;
+  for (unsigned i = 0; i < AutosSections.size(); i++) {
+    if ( AutosSections[i]->S_->getName() == name) {
+      FoundAutoSec = AutosSections[i];
+      break;
+    }
+  }
+
+  // No Auto section was found. Crate a new one.
+  if (! FoundAutoSec) {
+    const Section *NewSection = getNamedSection (name.c_str());
+
+    FoundAutoSec = new PIC16Section(NewSection);
+
+    // Add this newly created autos section to the list of AutosSections.
+    AutosSections.push_back(FoundAutoSec);
+  }
+
+  // Insert the auto into this section.
+  FoundAutoSec->Items.push_back(GV);
+
+  return FoundAutoSec->S_;
+}
+
+
 // Override default implementation to put the true globals into
 // multiple data sections if required.
 const Section*
@@ -168,8 +203,7 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
   // name for it and return.
   const std::string name = GV->getName();
   if (PAN::isLocalName(name)) {
-    const std::string Sec_Name = PAN::getSectionNameForSym(name);
-    return getNamedSection(Sec_Name.c_str());
+    return getSectionForAuto(GV);
   }
 
   // See if this is an uninitialized global.
@@ -177,11 +211,16 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
   if (C->isNullValue()) 
     return getBSSSectionForGlobal(GV); 
 
-  // This is initialized data. We only deal with initialized data in RAM.
+  // If this is initialized data in RAM. Put it in the correct IDATA section.
   if (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE) 
     return getIDATASectionForGlobal(GV);
 
-    
+  // This is initialized data in rom, put it in the readonly section.
+  if (GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE) {
+    ROSection->Items.push_back(GV);
+    return ROSection->S_;
+  }
+
   // Else let the default implementation take care of it.
   return TargetAsmInfo::SelectSectionForGlobal(GV);
 }
@@ -195,4 +234,10 @@ PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
   for (unsigned i = 0; i < IDATASections.size(); i++) {
       delete IDATASections[i]; 
   }
+
+  for (unsigned i = 0; i < AutosSections.size(); i++) {
+      delete AutosSections[i]; 
+  }
+
+  delete ROSection;
 }

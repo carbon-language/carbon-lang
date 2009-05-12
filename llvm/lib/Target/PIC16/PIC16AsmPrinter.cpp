@@ -164,7 +164,6 @@ void PIC16AsmPrinter::printDecls(void) {
   for (std::list<const char*>::const_iterator I = Decls.begin(); 
        I != Decls.end(); I++) {
     O << TAI->getExternDirective() << *I << "\n";
-    // FIXME: Use PAN::getXXXLabel() funtions hrer.
     O << TAI->getExternDirective() << PAN::getArgsLabel(*I) << "\n";
     O << TAI->getExternDirective() << PAN::getRetvalLabel(*I) << "\n";
   }
@@ -183,8 +182,16 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
   assert(DW && "Dwarf Writer is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
 
+  // Set the section names for all globals.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    I->setSection(TAI->SectionForGlobal(I)->getName());
+  }
+
   EmitExternsAndGlobals (M);
-  EmitGlobalData(M);
+  EmitIData(M);
+  EmitUData(M);
+  EmitAutos(M);
   EmitRomData(M);
   return Result;
 }
@@ -238,31 +245,19 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
 
 void PIC16AsmPrinter::EmitRomData (Module &M)
 {
-  SwitchToSection(TAI->getReadOnlySection());
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasInitializer())   // External global require no code.
-      continue;
+  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
 
-    Constant *C = I->getInitializer();
-    const PointerType *PtrTy = I->getType();
-    int AddrSpace = PtrTy->getAddressSpace();
-    if ((!C->isNullValue()) && (AddrSpace == PIC16ISD::ROM_SPACE)) {
+  std::vector<const GlobalVariable*> Items = PTAI->ROSection->Items;
+  if (! Items.size()) return;
 
-      if (EmitSpecialLLVMGlobal(I))
-        continue;
-
-      // Any variables reaching here with "." in its name is a local scope
-      // variable and should not be printed in global data section.
-      std::string name = Mang->getValueName(I);
-      if (PAN::isLocalName(name))
-        continue;
-
-      I->setSection(TAI->getReadOnlySection()->getName());
-      O << name;
-      EmitGlobalConstant(C, AddrSpace);
-      O << "\n";
-    }
+  // Print ROData ection.
+  O << "\n";
+  SwitchToSection(PTAI->ROSection->S_);
+  for (unsigned j = 0; j < Items.size(); j++) {
+    O << Mang->getValueName(Items[j]);
+    Constant *C = Items[j]->getInitializer();
+    int AddrSpace = Items[j]->getType()->getAddressSpace();
+    EmitGlobalConstant(C, AddrSpace);
   }
 }
 
@@ -276,9 +271,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
 void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   std::string FuncName = Mang->getValueName(F);
-  Module *M = const_cast<Module *>(F->getParent());
   const TargetData *TD = TM.getTargetData();
-  unsigned FrameSize = 0;
   // Emit the data section name.
   O << "\n"; 
   const char *SectionName = PAN::getFrameSectionName(CurrentFnName).c_str();
@@ -318,57 +311,15 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
   int TempSize = PTLI->GetTmpSize();
   if (TempSize > 0 )
     O << PAN::getTempdataLabel(CurrentFnName) << " RES  " << TempSize <<"\n";
-
-  // Emit the section name for local variables.
-  O << "\n";
-  const char* SecNameLocals = PAN::getAutosSectionName(CurrentFnName).c_str() ;
-
-  const Section *fADataSection = TAI->getNamedSection(SecNameLocals,
-                                                      SectionFlags::Writeable);
-  SwitchToSection(fADataSection);
-
-  // Emit the function variables. 
-   
-  // In PIC16 all the function arguments and local variables are global.
-  // Therefore to get the variable belonging to this function entire
-  // global list will be traversed and variables belonging to this function
-  // will be emitted in the current data section.
-  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I) {
-    std::string VarName = Mang->getValueName(I);
-    
-    // The variables of a function are of form FuncName.* . If this variable
-    // does not belong to this function then continue. 
-    // Static local varilabes of a function does not have .auto. in their
-    // name. They are not printed as part of function data but module
-    // level global data.
-    if (! PAN::isLocalToFunc(FuncName, VarName))
-     continue;
-
-    I->setSection(TAI->SectionForGlobal(I)->getName());
-    Constant *C = I->getInitializer();
-    const Type *Ty = C->getType();
-    unsigned Size = TD->getTypeAllocSize(Ty);
-    FrameSize += Size; 
-    // Emit memory reserve directive.
-    O << VarName << "  RES  " << Size << "\n";
-  }
 }
 
-void PIC16AsmPrinter::EmitGlobalData (Module &M)
-{
-  // Set the section names for all globals.
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    I->setSection(TAI->SectionForGlobal(I)->getName());
-  }
-
+void PIC16AsmPrinter::EmitIData (Module &M) {
   const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
-  const TargetData *TD = TM.getTargetData();
 
-  // Now print all IDATA sections.
+  // Print all IDATA sections.
   std::vector <PIC16Section *>IDATASections = PTAI->IDATASections;
   for (unsigned i = 0; i < IDATASections.size(); i++) {
+    O << "\n";
     SwitchToSection(IDATASections[i]->S_);
     std::vector<const GlobalVariable*> Items = IDATASections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
@@ -379,10 +330,16 @@ void PIC16AsmPrinter::EmitGlobalData (Module &M)
       EmitGlobalConstant(C, AddrSpace);
     }
   }
+}
 
-  // Now print all BSS sections.
+void PIC16AsmPrinter::EmitUData (Module &M) {
+  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
+  const TargetData *TD = TM.getTargetData();
+
+  // Print all BSS sections.
   std::vector <PIC16Section *>BSSSections = PTAI->BSSSections;
   for (unsigned i = 0; i < BSSSections.size(); i++) {
+    O << "\n";
     SwitchToSection(BSSSections[i]->S_);
     std::vector<const GlobalVariable*> Items = BSSSections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
@@ -397,3 +354,26 @@ void PIC16AsmPrinter::EmitGlobalData (Module &M)
   }
 }
 
+void PIC16AsmPrinter::EmitAutos (Module &M)
+{
+  // Section names for all globals are already set.
+
+  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
+  const TargetData *TD = TM.getTargetData();
+
+  // Now print all Autos sections.
+  std::vector <PIC16Section *>AutosSections = PTAI->AutosSections;
+  for (unsigned i = 0; i < AutosSections.size(); i++) {
+    O << "\n";
+    SwitchToSection(AutosSections[i]->S_);
+    std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
+    for (unsigned j = 0; j < Items.size(); j++) {
+      std::string VarName = Mang->getValueName(Items[j]);
+      Constant *C = Items[j]->getInitializer();
+      const Type *Ty = C->getType();
+      unsigned Size = TD->getTypeAllocSize(Ty);
+      // Emit memory reserve directive.
+      O << VarName << "  RES  " << Size << "\n";
+    }
+  }
+}
