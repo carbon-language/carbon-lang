@@ -583,6 +583,13 @@ is infrequently used, so it is unlikely to be implemented anytime soon.</li>
 complex code generator support that does not currently exist in LLVM, and there
 is very little demand, so it is unlikely to be implemented anytime soon.</li>
 
+<li>clang does not support global register variables, this is unlikely
+to be implemented soon.</li>
+
+<li>clang does not support static initialization of flexible array
+members. This appears to be a rarely used extension, but could be
+implemented pending user demand.</li>
+
 </ul>
 
 <p>This is not a complete list; if you find an unsupported extension
@@ -611,6 +618,9 @@ Microsoft Visual C++; to enable it, use the -fms-extensions command-line
 option.  Eventually, this will be the default for Windows targets.
 These extensions are not anywhere near complete, so please do not
 file bugs; patches are welcome, though.</p>
+
+<li>clang does not support the Microsoft extension where anonymous
+record members can be declared using user defined types.</li>
 
 <!-- ======================================================================= -->
 <h2 id="objc">Objective-C Language Features</h2>
