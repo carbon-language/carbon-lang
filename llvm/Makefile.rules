@@ -1227,8 +1227,8 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
          -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d"
 
-# If the build succeeded, move the dependency file over.  If it failed, put an
-# empty file there.
+# If the build succeeded, move the dependency file over, otherwise
+# remove it.
 DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
                   else $(RM) "$(ObjDir)/$*.d.tmp"; exit 1; fi
 
@@ -1251,26 +1251,31 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 # Create .bc files in the ObjDir directory from .cpp .cc and .c files...
 #---------------------------------------------------------
 
+BC_DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.bc.d.tmp" \
+	-MT "$(ObjDir)/$*.ll" -MT "$(ObjDir)/$*.bc.d"
+
+# If the build succeeded, move the dependency file over, otherwise
+# remove it.
+BC_DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.bc.d.tmp" "$(ObjDir)/$*.bc.d"; \
+                     else $(RM) "$(ObjDir)/$*.bc.d.tmp"; exit 1; fi
+
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" \
-                              $< -o $@ -S -emit-llvm ; \
-	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
+	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
+                              $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
+	        $(BC_DEPEND_MOVEFILE)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" \
-                              $< -o $@ -S -emit-llvm ; \
-	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
+	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
+                              $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
+	        $(BC_DEPEND_MOVEFILE)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" \
-                            $< -o $@ -S -emit-llvm ; \
-	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
+	$(Verb) if $(BCCompile.C) $(BC_DEPEND_OPTIONS) \
+                              $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
+	        $(BC_DEPEND_MOVEFILE)
 
 # Provide alternate rule sets if dependencies are disabled
 else
@@ -1521,8 +1526,13 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 ifndef IS_CLEANING_TARGET
 
 # Get the list of dependency files
-DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
-DependFiles := $(DependFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.d)
+DependSourceFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
+DependFiles := $(DependSourceFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.d)
+
+# Include bitcode dependency files if using bitcode libraries
+ifdef BYTECODE_LIBRARY
+DependFiles += $(DependSourceFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.bc.d)
+endif
 
 -include $(DependFiles) ""
 
