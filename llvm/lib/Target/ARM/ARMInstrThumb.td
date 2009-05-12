@@ -307,7 +307,7 @@ def tADDrPCi : TI<(outs tGPR:$dst), (ins i32imm:$rhs),
 def tADDrSPi : TI<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs),
                   "add $dst, $sp, $rhs * 4 @ addrspi", []>;
 
-def tADDspi : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
+def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
                   "add $dst, $rhs * 4", []>;
 
 def tAND : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
