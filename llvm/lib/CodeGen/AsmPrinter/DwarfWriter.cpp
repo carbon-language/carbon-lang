@@ -1286,9 +1286,14 @@ class DwarfDebug : public Dwarf {
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
 
-  /// DbgInlinedScopeMap - Tracks inlined scopes in the current function.
+  /// DbgAbstractScopeMap - Tracks abstract instance scopes in the current
+  /// function.
+  DenseMap<GlobalVariable *, DbgScope *> DbgAbstractScopeMap;
+
+  /// DbgConcreteScopeMap - Tracks concrete instance scopes in the current
+  /// function.
   DenseMap<GlobalVariable *,
-           SmallVector<DbgScope *, 8> > DbgInlinedScopeMap;
+           SmallVector<DbgScope *, 8> > DbgConcreteScopeMap;
 
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
@@ -3434,7 +3439,8 @@ public:
     if (FunctionDbgScope) {
       delete FunctionDbgScope;
       DbgScopeMap.clear();
-      DbgInlinedScopeMap.clear();
+      DbgAbstractScopeMap.clear();
+      DbgConcreteScopeMap.clear();
       InlinedVariableScopes.clear();
       FunctionDbgScope = NULL;
       LexicalScopeStack.clear();
@@ -3578,7 +3584,7 @@ public:
       }
     }
 
-    assert(Scope && "Unable to find variable' scope");
+    assert(Scope && "Unable to find the variable's scope");
     DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex);
     Scope->AddVariable(DV);
 
@@ -3619,14 +3625,8 @@ public:
       // could be more elegant.
       AddUInt(SPDie, DW_AT_inline, 0, DW_INL_declared_not_inlined);
 
-      // Keep track of the scope that's inlined into this function.
-      DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
-        SI = DbgInlinedScopeMap.find(GV);
-
-      if (SI == DbgInlinedScopeMap.end())
-        DbgInlinedScopeMap[GV].push_back(Scope);
-      else
-        SI->second.push_back(Scope);
+      // Keep track of the abstract scope for this function.
+      DbgAbstractScopeMap[GV] = Scope;
 
       AbstractInstanceRootMap[GV] = Scope;
       AbstractInstanceRootList.push_back(Scope);
@@ -3649,6 +3649,15 @@ public:
     MMI->RecordUsedDbgLabel(LabelID);
 
     LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
+
+    // Keep track of the concrete scope that's inlined into this function.
+    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+      SI = DbgConcreteScopeMap.find(GV);
+
+    if (SI == DbgConcreteScopeMap.end())
+      DbgConcreteScopeMap[GV].push_back(ConcreteScope);
+    else
+      SI->second.push_back(ConcreteScope);
 
     // Track the start label for this inlined function.
     DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
@@ -3675,9 +3684,9 @@ public:
 
     GlobalVariable *GV = SP.getGV();
     DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
-      I = DbgInlinedScopeMap.find(GV);
+      I = DbgConcreteScopeMap.find(GV);
 
-    if (I == DbgInlinedScopeMap.end()) {
+    if (I == DbgConcreteScopeMap.end()) {
       if (TimePassesIsEnabled)
         DebugTimer->stopTimer();
 
@@ -3698,9 +3707,9 @@ public:
   }
 
   /// RecordVariableScope - Record scope for the variable declared by
-  /// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE.
-  /// Record scopes for only inlined subroutine variables. Other
-  /// variables' scopes are determined during RecordVariable().
+  /// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE. Record scopes
+  /// for only inlined subroutine variables. Other variables's scopes are
+  /// determined during RecordVariable().
   void RecordVariableScope(DIVariable &DV, const MachineInstr *DeclareMI) {
     if (TimePassesIsEnabled)
       DebugTimer->startTimer();
@@ -3714,10 +3723,10 @@ public:
       return;
     }
 
-    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
-      I = DbgInlinedScopeMap.find(SP.getGV());
-    if (I != DbgInlinedScopeMap.end())
-      InlinedVariableScopes[DeclareMI] = I->second.back();
+    DenseMap<GlobalVariable *, DbgScope *>::iterator
+      I = DbgAbstractScopeMap.find(SP.getGV());
+    if (I != DbgAbstractScopeMap.end())
+      InlinedVariableScopes[DeclareMI] = I->second;
 
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
