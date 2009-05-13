@@ -19,6 +19,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Casting.h"
 #include <cassert>
 #include <utility>
 
@@ -182,8 +183,10 @@ public:
   PostStmt(const Stmt* S, const void *tag = 0)
     : ProgramPoint(S, PostStmtKind, tag) {}
 
-      
   Stmt* getStmt() const { return (Stmt*) getData1(); }
+  
+  template<typename T>
+  T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
 
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();
