@@ -1578,7 +1578,14 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
 
   // If load is legal, just bitcast the src pointer.
-  if (SrcSize == DstSize) {
+  if (SrcSize >= DstSize) {
+    // Generally SrcSize is never greater than DstSize, since this
+    // means we are losing bits. However, this can happen in cases
+    // where the structure has additional padding, for example due to
+    // a user specified alignment.
+    //
+    // FIXME: Assert that we aren't truncating non-padding bits when
+    // have access to that information.
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
     llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
@@ -1586,8 +1593,6 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
     Load->setAlignment(1);
     return Load;
   } else {
-    assert(SrcSize < DstSize && "Coercion is losing source bits!");
-
     // Otherwise do coercion through memory. This is stupid, but
     // simple.
     llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
@@ -1617,14 +1622,19 @@ static void CreateCoercedStore(llvm::Value *Src,
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(DstTy);
 
   // If store is legal, just bitcast the src pointer.
-  if (SrcSize == DstSize) {
+  if (SrcSize >= DstSize) {
+    // Generally SrcSize is never greater than DstSize, since this
+    // means we are losing bits. However, this can happen in cases
+    // where the structure has additional padding, for example due to
+    // a user specified alignment.
+    //
+    // FIXME: Assert that we aren't truncating non-padding bits when
+    // have access to that information.
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
     // FIXME: Use better alignment / avoid requiring aligned store.
     CGF.Builder.CreateStore(Src, Casted)->setAlignment(1);
   } else {
-    assert(SrcSize > DstSize && "Coercion is missing bits!");
-    
     // Otherwise do coercion through memory. This is stupid, but
     // simple.
     llvm::Value *Tmp = CGF.CreateTempAlloca(SrcTy);

@@ -55,4 +55,10 @@ void f10(struct s10 a0) {}
 // RUN: grep 'define void @f11(.union.anon. noalias sret .agg.result)' %t &&
 union { long double a; float b; } f11() {}
 
+// RUN: grep 'define i64 @f12_0()' %t &&
+// RUN: grep 'define void @f12_1(i64)' %t &&
+struct s12 { int a __attribute__((aligned(16))); };
+struct s12 f12_0(void) {}
+void f12_1(struct s12 a0) {}
+
 // RUN: true
