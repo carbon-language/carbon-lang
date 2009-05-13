@@ -152,13 +152,13 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == SP::IntRegsRegisterClass)
     BuildMI(MBB, I, DL, get(SP::STri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg, getKillRegState(isKill));
   else if (RC == SP::FPRegsRegisterClass)
     BuildMI(MBB, I, DL, get(SP::STFri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg,  getKillRegState(isKill));
   else if (RC == SP::DFPRegsRegisterClass)
     BuildMI(MBB, I, DL, get(SP::STDFri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg,  getKillRegState(isKill));
   else
     assert(0 && "Can't store this register to stack slot");
 }
@@ -181,7 +181,7 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
-  MIB.addReg(SrcReg, false, false, isKill);
+  MIB.addReg(SrcReg, getKillRegState(isKill));
   NewMIs.push_back(MIB);
   return;
 }
@@ -260,13 +260,13 @@ MachineInstr *SparcInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                       get(isFloat ? SP::STFri : SP::STDFri))
         .addFrameIndex(FI)
         .addImm(0)
-        .addReg(SrcReg, false, false, isKill);
+        .addReg(SrcReg, getKillRegState(isKill));
     } else {             // COPY -> LOAD
       unsigned DstReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
       NewMI = BuildMI(MF, MI->getDebugLoc(),
                       get(isFloat ? SP::LDFri : SP::LDDFri))
-        .addReg(DstReg, true, false, false, isDead)
+        .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
         .addFrameIndex(FI)
         .addImm(0);
     }

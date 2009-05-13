@@ -600,7 +600,7 @@ BuildMI(MBB, X86::JNE, 1).addMBB(&amp;MBB);
 
 <div class="doc_code">
 <pre>
-MI.addReg(Reg, MachineOperand::Def);
+MI.addReg(Reg, RegState::Define);
 </pre>
 </div>
 

@@ -175,9 +175,9 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     unsigned Reg0 = ChangeReg0 ? Reg2 : MI->getOperand(0).getReg();
     bool Reg0IsDead = MI->getOperand(0).isDead();
     return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
-      .addReg(Reg0, true, false, false, Reg0IsDead)
-      .addReg(Reg2, false, false, Reg2IsKill)
-      .addReg(Reg1, false, false, Reg1IsKill)
+      .addReg(Reg0, RegState::Define | getDeadRegState(Reg0IsDead))
+      .addReg(Reg2, getKillRegState(Reg2IsKill))
+      .addReg(Reg1, getKillRegState(Reg1IsKill))
       .addImm((ME+1) & 31)
       .addImm((MB-1) & 31);
   }
@@ -370,7 +370,8 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
-                                         .addReg(SrcReg, false, false, isKill),
+                                         .addReg(SrcReg,
+                                                 getKillRegState(isKill)),
                                          FrameIdx));
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
@@ -378,33 +379,43 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       // a hack.
       NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFLR), PPC::R11));
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
-                                         .addReg(PPC::R11, false, false, isKill),
+                                         .addReg(PPC::R11,
+                                                 getKillRegState(isKill)),
                                          FrameIdx));
     }
   } else if (RC == PPC::G8RCRegisterClass) {
     if (SrcReg != PPC::LR8) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
-                              .addReg(SrcReg, false, false, isKill), FrameIdx));
+                                         .addReg(SrcReg,
+                                                 getKillRegState(isKill)),
+                                         FrameIdx));
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
       NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFLR8), PPC::X11));
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
-                            .addReg(PPC::X11, false, false, isKill), FrameIdx));
+                                         .addReg(PPC::X11,
+                                                 getKillRegState(isKill)),
+                                         FrameIdx));
     }
   } else if (RC == PPC::F8RCRegisterClass) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STFD))
-                              .addReg(SrcReg, false, false, isKill), FrameIdx));
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
   } else if (RC == PPC::F4RCRegisterClass) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STFS))
-                              .addReg(SrcReg, false, false, isKill), FrameIdx));
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
   } else if (RC == PPC::CRRCRegisterClass) {
     if ((EnablePPC32RS && !TM.getSubtargetImpl()->isPPC64()) ||
         (EnablePPC64RS && TM.getSubtargetImpl()->isPPC64())) {
       // FIXME (64-bit): Enable
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::SPILL_CR))
-                                         .addReg(SrcReg, false, false, isKill),
+                                         .addReg(SrcReg,
+                                                 getKillRegState(isKill)),
                                          FrameIdx));
       return true;
     } else {
@@ -423,7 +434,8 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       }
     
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
-                                         .addReg(PPC::R0, false, false, isKill),
+                                         .addReg(PPC::R0,
+                                                 getKillRegState(isKill)),
                                          FrameIdx));
     }
   } else if (RC == PPC::CRBITRCRegisterClass) {
@@ -461,7 +473,9 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::ADDI), PPC::R0),
                                        FrameIdx, 0, 0));
     NewMIs.push_back(BuildMI(MF, DL, get(PPC::STVX))
-         .addReg(SrcReg, false, false, isKill).addReg(PPC::R0).addReg(PPC::R0));
+                     .addReg(SrcReg, getKillRegState(isKill))
+                     .addReg(PPC::R0)
+                     .addReg(PPC::R0));
   } else {
     assert(0 && "Unknown regclass!");
     abort();
@@ -519,7 +533,7 @@ void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     abort();
   }
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
-    .addReg(SrcReg, false, false, isKill);
+    .addReg(SrcReg, getKillRegState(isKill));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
@@ -678,13 +692,15 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::STW))
-                                .addReg(InReg, false, false, isKill),
+                                .addReg(InReg, getKillRegState(isKill)),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::LWZ))
-                                .addReg(OutReg, true, false, false, isDead),
+                                .addReg(OutReg,
+                                        RegState::Define |
+                                        getDeadRegState(isDead)),
                                 FrameIndex);
     }
   } else if ((Opc == PPC::OR8 &&
@@ -693,13 +709,15 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::STD))
-                                .addReg(InReg, false, false, isKill),
+                                .addReg(InReg, getKillRegState(isKill)),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::LD))
-                                .addReg(OutReg, true, false, false, isDead),
+                                .addReg(OutReg,
+                                        RegState::Define |
+                                        getDeadRegState(isDead)),
                                 FrameIndex);
     }
   } else if (Opc == PPC::FMRD) {
@@ -707,13 +725,15 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::STFD))
-                                .addReg(InReg, false, false, isKill),
+                                .addReg(InReg, getKillRegState(isKill)),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::LFD))
-                                .addReg(OutReg, true, false, false, isDead),
+                                .addReg(OutReg,
+                                        RegState::Define |
+                                        getDeadRegState(isDead)),
                                 FrameIndex);
     }
   } else if (Opc == PPC::FMRS) {
@@ -721,13 +741,15 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::STFS))
-                                .addReg(InReg, false, false, isKill),
+                                .addReg(InReg, getKillRegState(isKill)),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
       NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::LFS))
-                                .addReg(OutReg, true, false, false, isDead),
+                                .addReg(OutReg,
+                                        RegState::Define |
+                                        getDeadRegState(isDead)),
                                 FrameIndex);
     }
   }

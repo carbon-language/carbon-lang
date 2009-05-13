@@ -187,15 +187,15 @@ AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, DL, get(Alpha::STS))
-      .addReg(SrcReg, false, false, isKill)
+      .addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
     BuildMI(MBB, MI, DL, get(Alpha::STT))
-      .addReg(SrcReg, false, false, isKill)
+      .addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
     BuildMI(MBB, MI, DL, get(Alpha::STQ))
-      .addReg(SrcReg, false, false, isKill)
+      .addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
@@ -217,7 +217,7 @@ void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     abort();
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
-    BuildMI(MF, DL, get(Opc)).addReg(SrcReg, false, false, isKill);
+    BuildMI(MF, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
@@ -290,7 +290,7 @@ MachineInstr *AlphaInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
          Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
          NewMI = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-           .addReg(InReg, false, false, isKill)
+           .addReg(InReg, getKillRegState(isKill))
            .addFrameIndex(FrameIndex)
            .addReg(Alpha::F31);
        } else {           // load -> move
@@ -299,7 +299,7 @@ MachineInstr *AlphaInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
          Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
          NewMI = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-           .addReg(OutReg, true, false, false, isDead)
+           .addReg(OutReg, RegState::Define | getDeadRegState(isDead))
            .addFrameIndex(FrameIndex)
            .addReg(Alpha::F31);
        }

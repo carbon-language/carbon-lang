@@ -159,7 +159,7 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
       return false;  // Probably not worth it then.
 
     BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase)
-      .addReg(Base, false, false, BaseKill).addImm(ImmedOffset)
+      .addReg(Base, getKillRegState(BaseKill)).addImm(ImmedOffset)
       .addImm(Pred).addReg(PredReg).addReg(0);
     Base = NewBase;
     BaseKill = true;  // New base is always killed right its use.
@@ -170,14 +170,15 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
   Opcode = getLoadStoreMultipleOpcode(Opcode);
   MachineInstrBuilder MIB = (isAM4)
     ? BuildMI(MBB, MBBI, dl, TII->get(Opcode))
-        .addReg(Base, false, false, BaseKill)
+        .addReg(Base, getKillRegState(BaseKill))
         .addImm(ARM_AM::getAM4ModeImm(Mode)).addImm(Pred).addReg(PredReg)
     : BuildMI(MBB, MBBI, dl, TII->get(Opcode))
-        .addReg(Base, false, false, BaseKill)
+        .addReg(Base, getKillRegState(BaseKill))
         .addImm(ARM_AM::getAM5Opc(Mode, false, isDPR ? NumRegs<<1 : NumRegs))
         .addImm(Pred).addReg(PredReg);
   for (unsigned i = 0; i != NumRegs; ++i)
-    MIB = MIB.addReg(Regs[i].first, isDef, false, Regs[i].second);
+    MIB = MIB.addReg(Regs[i].first, getDefRegState(isDef)
+                     | getKillRegState(Regs[i].second));
 
   return true;
 }
@@ -516,26 +517,26 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     if (isAM2)
       // LDR_PRE, LDR_POST;
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc), MI->getOperand(0).getReg())
-        .addReg(Base, true)
+        .addReg(Base, RegState::Define)
         .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
     else
       // FLDMS, FLDMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
-        .addReg(Base, false, false, BaseKill)
+        .addReg(Base, getKillRegState(BaseKill))
         .addImm(Offset).addImm(Pred).addReg(PredReg)
-        .addReg(MI->getOperand(0).getReg(), true);
+        .addReg(MI->getOperand(0).getReg(), RegState::Define);
   } else {
     MachineOperand &MO = MI->getOperand(0);
     if (isAM2)
       // STR_PRE, STR_POST;
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
-        .addReg(MO.getReg(), false, false, MO.isKill())
+        .addReg(MO.getReg(), getKillRegState(BaseKill))
         .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
     else
       // FSTMS, FSTMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc)).addReg(Base).addImm(Offset)
         .addImm(Pred).addReg(PredReg)
-        .addReg(MO.getReg(), false, false, MO.isKill());
+        .addReg(MO.getReg(), getKillRegState(MO.isKill()));
   }
   MBB.erase(MBBI);
 

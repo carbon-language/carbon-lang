@@ -437,7 +437,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         BuildMI(MBB, MBBI, dl, TII.get(LISInstr), TmpReg)
           .addImm(CalleeAmt >> 16);
         BuildMI(MBB, MBBI, dl, TII.get(ORIInstr), TmpReg)
-          .addReg(TmpReg, false, false, true)
+          .addReg(TmpReg, RegState::Kill)
           .addImm(CalleeAmt & 0xFFFF);
         BuildMI(MBB, MBBI, dl, TII.get(ADDInstr))
           .addReg(StackReg)
@@ -537,12 +537,12 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   if (LP64) {
     if (EnableRegisterScavenging) // FIXME (64-bit): Use "true" part.
       BuildMI(MBB, II, dl, TII.get(PPC::STDUX))
-        .addReg(Reg, false, false, true)
+        .addReg(Reg, RegState::Kill)
         .addReg(PPC::X1)
         .addReg(MI.getOperand(1).getReg());
     else
       BuildMI(MBB, II, dl, TII.get(PPC::STDUX))
-        .addReg(PPC::X0, false, false, true)
+        .addReg(PPC::X0, RegState::Kill)
         .addReg(PPC::X1)
         .addReg(MI.getOperand(1).getReg());
 
@@ -555,10 +555,10 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
       BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
         .addReg(PPC::X1)
         .addImm(maxCallFrameSize)
-        .addReg(MI.getOperand(1).getReg(), false, true, true);
+        .addReg(MI.getOperand(1).getReg(), RegState::ImplicitKill);
   } else {
     BuildMI(MBB, II, dl, TII.get(PPC::STWUX))
-      .addReg(Reg, false, false, true)
+      .addReg(Reg, RegState::Kill)
       .addReg(PPC::R1)
       .addReg(MI.getOperand(1).getReg());
 
@@ -571,7 +571,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
       BuildMI(MBB, II, dl, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
         .addReg(PPC::R1)
         .addImm(maxCallFrameSize)
-        .addReg(MI.getOperand(1).getReg(), false, true, true);
+        .addReg(MI.getOperand(1).getReg(), RegState::ImplicitKill);
   }
   
   // Discard the DYNALLOC instruction.
@@ -607,7 +607,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   else
     // Implicitly kill the CR register.
     BuildMI(MBB, II, dl, TII.get(PPC::MFCR), Reg)
-      .addReg(MI.getOperand(0).getReg(), false, true, true);
+      .addReg(MI.getOperand(0).getReg(), RegState::ImplicitKill);
     
   // If the saved register wasn't CR0, shift the bits left so that they are in
   // CR0's slot.
@@ -615,13 +615,13 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   if (SrcReg != PPC::CR0)
     // rlwinm rA, rA, ShiftBits, 0, 31.
     BuildMI(MBB, II, dl, TII.get(PPC::RLWINM), Reg)
-      .addReg(Reg, false, false, true)
+      .addReg(Reg, RegState::Kill)
       .addImm(PPCRegisterInfo::getRegisterNumbering(SrcReg) * 4)
       .addImm(0)
       .addImm(31);
 
   addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::STW))
-                    .addReg(Reg, false, false, MI.getOperand(1).getImm()),
+                    .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
                     FrameIndex);
 
   // Discard the pseudo instruction.
@@ -735,7 +735,7 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   BuildMI(MBB, II, dl, TII.get(PPC::LIS), SReg)
     .addImm(Offset >> 16);
   BuildMI(MBB, II, dl, TII.get(PPC::ORI), SReg)
-    .addReg(SReg, false, false, true)
+    .addReg(SReg, RegState::Kill)
     .addImm(Offset);
 
   // Convert into indexed form of the instruction:
@@ -861,7 +861,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
         .addImm(UsedRegMask);
     else
       BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORI), DstReg)
-        .addReg(SrcReg, false, false, true)
+        .addReg(SrcReg, RegState::Kill)
         .addImm(UsedRegMask);
   } else if ((UsedRegMask & 0xFFFF0000) == UsedRegMask) {
     if (DstReg != SrcReg)
@@ -870,7 +870,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
         .addImm(UsedRegMask >> 16);
     else
       BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORIS), DstReg)
-        .addReg(SrcReg, false, false, true)
+        .addReg(SrcReg, RegState::Kill)
         .addImm(UsedRegMask >> 16);
   } else {
     if (DstReg != SrcReg)
@@ -879,11 +879,11 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
         .addImm(UsedRegMask >> 16);
     else
       BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORIS), DstReg)
-        .addReg(SrcReg, false, false, true)
+        .addReg(SrcReg, RegState::Kill)
         .addImm(UsedRegMask >> 16);
 
     BuildMI(*MI->getParent(), MI, dl, TII.get(PPC::ORI), DstReg)
-      .addReg(DstReg, false, false, true)
+      .addReg(DstReg, RegState::Kill)
       .addImm(UsedRegMask & 0xFFFF);
   }
   
@@ -1101,7 +1101,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addImm(32 - Log2_32(MaxAlign))
         .addImm(31);
       BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC) ,PPC::R0)
-        .addReg(PPC::R0, false, false, true)
+        .addReg(PPC::R0, RegState::Kill)
         .addImm(NegFrameSize);
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX))
         .addReg(PPC::R1)
@@ -1116,7 +1116,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
         .addImm(NegFrameSize >> 16);
       BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
-        .addReg(PPC::R0, false, false, true)
+        .addReg(PPC::R0, RegState::Kill)
         .addImm(NegFrameSize & 0xFFFF);
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX))
         .addReg(PPC::R1)
@@ -1148,7 +1148,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
         .addImm(NegFrameSize >> 16);
       BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
-        .addReg(PPC::X0, false, false, true)
+        .addReg(PPC::X0, RegState::Kill)
         .addImm(NegFrameSize & 0xFFFF);
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX))
         .addReg(PPC::X1)
@@ -1288,7 +1288,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
         BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
           .addImm(FrameSize >> 16);
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
-          .addReg(PPC::R0, false, false, true)
+          .addReg(PPC::R0, RegState::Kill)
           .addImm(FrameSize & 0xFFFF);
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD4))
           .addReg(PPC::R1)
@@ -1312,7 +1312,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
         BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
           .addImm(FrameSize >> 16);
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
-          .addReg(PPC::X0, false, false, true)
+          .addReg(PPC::X0, RegState::Kill)
           .addImm(FrameSize & 0xFFFF);
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD8))
           .addReg(PPC::X1)
@@ -1374,7 +1374,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
        BuildMI(MBB, MBBI, dl, TII.get(LISInstr), TmpReg)
           .addImm(CallerAllocatedAmt >> 16);
        BuildMI(MBB, MBBI, dl, TII.get(ORIInstr), TmpReg)
-          .addReg(TmpReg, false, false, true)
+          .addReg(TmpReg, RegState::Kill)
           .addImm(CallerAllocatedAmt & 0xFFFF);
        BuildMI(MBB, MBBI, dl, TII.get(ADDInstr))
           .addReg(StackReg)

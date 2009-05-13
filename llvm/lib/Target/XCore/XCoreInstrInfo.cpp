@@ -397,7 +397,7 @@ void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
   BuildMI(MBB, I, DL, get(XCore::STWFI))
-    .addReg(SrcReg, false, false, isKill)
+    .addReg(SrcReg, getKillRegState(isKill))
     .addFrameIndex(FrameIndex)
     .addImm(0);
 }

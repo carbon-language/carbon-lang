@@ -23,6 +23,18 @@ namespace llvm {
 
 class TargetInstrDesc;
 
+namespace RegState {
+  enum {
+    Define         = 0x2,
+    Implicit       = 0x4,
+    Kill           = 0x8,
+    Dead           = 0x10,
+    EarlyClobber   = 0x20,
+    ImplicitDefine = Implicit | Define,
+    ImplicitKill   = Implicit | Kill
+  };
+}
+
 class MachineInstrBuilder {
   MachineInstr *MI;
 public:
@@ -36,12 +48,17 @@ public:
   /// addReg - Add a new virtual register operand...
   ///
   const
-  MachineInstrBuilder &addReg(unsigned RegNo, bool isDef = false, 
-                              bool isImp = false, bool isKill = false, 
-                              bool isDead = false, unsigned SubReg = 0,
-                              bool isEarlyClobber = false) const {
-    MI->addOperand(MachineOperand::CreateReg(RegNo, isDef, isImp, isKill,
-                                             isDead, SubReg, isEarlyClobber));
+  MachineInstrBuilder &addReg(unsigned RegNo, unsigned flags = 0,
+                              unsigned SubReg = 0) const {
+    assert((flags & 0x1) == 0 &&
+           "Passing in 'true' to addReg is forbidden! Use enums instead.");
+    MI->addOperand(MachineOperand::CreateReg(RegNo,
+                                             flags & RegState::Define,
+                                             flags & RegState::Implicit,
+                                             flags & RegState::Kill,
+                                             flags & RegState::Dead,
+                                             SubReg,
+                                             flags & RegState::EarlyClobber));
     return *this;
   }
 
@@ -97,9 +114,13 @@ public:
 
   const MachineInstrBuilder &addOperand(const MachineOperand &MO) const {
     if (MO.isReg())
-      return addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
-                    MO.isKill(), MO.isDead(), MO.getSubReg(),
-                    MO.isEarlyClobber());
+      return addReg(MO.getReg(),
+                    (MO.isDef() ? RegState::Define : 0) |
+                    (MO.isImplicit() ? RegState::Implicit : 0) |
+                    (MO.isKill() ? RegState::Kill : 0) |
+                    (MO.isDead() ? RegState::Dead : 0) |
+                    (MO.isEarlyClobber() ? RegState::EarlyClobber : 0),
+                    MO.getSubReg());
     if (MO.isImm())
       return addImm(MO.getImm());
     if (MO.isFI())
@@ -135,7 +156,7 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    const TargetInstrDesc &TID,
                                    unsigned DestReg) {
   return MachineInstrBuilder(MF.CreateMachineInstr(TID, DL))
-           .addReg(DestReg, true);
+           .addReg(DestReg, RegState::Define);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
@@ -149,7 +170,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    unsigned DestReg) {
   MachineInstr *MI = BB.getParent()->CreateMachineInstr(TID, DL);
   BB.insert(I, MI);
-  return MachineInstrBuilder(MI).addReg(DestReg, true);
+  return MachineInstrBuilder(MI).addReg(DestReg, RegState::Define);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
@@ -184,6 +205,19 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    const TargetInstrDesc &TID,
                                    unsigned DestReg) {
   return BuildMI(*BB, BB->end(), DL, TID, DestReg);
+}
+
+inline unsigned getDefRegState(bool B) {
+  return B ? RegState::Define : 0;
+}
+inline unsigned getImplRegState(bool B) {
+  return B ? RegState::Implicit : 0;
+}
+inline unsigned getKillRegState(bool B) {
+  return B ? RegState::Kill : 0;
+}
+inline unsigned getDeadRegState(bool B) {
+  return B ? RegState::Dead : 0;
 }
 
 } // End llvm namespace

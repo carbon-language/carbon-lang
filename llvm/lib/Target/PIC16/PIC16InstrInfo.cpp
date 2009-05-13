@@ -83,7 +83,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     //MachineFunction &MF = *MBB.getParent();
     //MachineRegisterInfo &RI = MF.getRegInfo();
     BuildMI(MBB, I, DL, get(PIC16::movwf))
-      .addReg(SrcReg, false, false, isKill)
+      .addReg(SrcReg, getKillRegState(isKill))
       .addImm(PTLI->GetTmpOffsetForFI(FI, 1))
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.
@@ -98,7 +98,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     unsigned opcode = (SrcReg == PIC16::FSR0) ? PIC16::save_fsr0 
                                                  : PIC16::save_fsr1;
     BuildMI(MBB, I, DL, get(opcode))
-      .addReg(SrcReg, false, false, isKill)
+      .addReg(SrcReg, getKillRegState(isKill))
       .addImm(PTLI->GetTmpOffsetForFI(FI, 3))
       .addExternalSymbol(tmpName)
       .addImm(1); // Emit banksel for it.

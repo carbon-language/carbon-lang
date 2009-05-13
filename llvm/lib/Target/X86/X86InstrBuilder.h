@@ -83,13 +83,13 @@ inline const MachineInstrBuilder &addOffset(const MachineInstrBuilder &MIB,
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
                                                unsigned Reg, bool isKill,
                                                int Offset) {
-  return addOffset(MIB.addReg(Reg, false, false, isKill), Offset);
+  return addOffset(MIB.addReg(Reg, getKillRegState(isKill)), Offset);
 }
 
 inline const MachineInstrBuilder &addLeaRegOffset(const MachineInstrBuilder &MIB,
                                                   unsigned Reg, bool isKill,
                                                   int Offset) {
-  return addLeaOffset(MIB.addReg(Reg, false, false, isKill), Offset);
+  return addLeaOffset(MIB.addReg(Reg, getKillRegState(isKill)), Offset);
 }
 
 /// addRegReg - This function is used to add a memory reference of the form:
@@ -97,8 +97,8 @@ inline const MachineInstrBuilder &addLeaRegOffset(const MachineInstrBuilder &MIB
 inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
                                             unsigned Reg1, bool isKill1,
                                             unsigned Reg2, bool isKill2) {
-  return MIB.addReg(Reg1, false, false, isKill1).addImm(1)
-    .addReg(Reg2, false, false, isKill2).addImm(0);
+  return MIB.addReg(Reg1, getKillRegState(isKill1)).addImm(1)
+    .addReg(Reg2, getKillRegState(isKill2)).addImm(0);
 }
 
 inline const MachineInstrBuilder &addLeaAddress(const MachineInstrBuilder &MIB,

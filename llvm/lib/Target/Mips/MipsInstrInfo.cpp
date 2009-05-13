@@ -197,7 +197,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = Mips::SDC1;
   }
   
-  BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, false, false, isKill)
+  BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
           .addImm(0).addFrameIndex(FI);
 }
 
@@ -217,7 +217,7 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
-    .addReg(SrcReg, false, false, isKill);
+    .addReg(SrcReg, getKillRegState(isKill));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
   NewMIs.push_back(MIB);
@@ -285,13 +285,13 @@ foldMemoryOperandImpl(MachineFunction &MF,
         unsigned SrcReg = MI->getOperand(2).getReg();
         bool isKill = MI->getOperand(2).isKill();
         NewMI = BuildMI(MF, MI->getDebugLoc(), get(Mips::SW))
-          .addReg(SrcReg, false, false, isKill)
+          .addReg(SrcReg, getKillRegState(isKill))
           .addImm(0).addFrameIndex(FI);
       } else {              // COPY -> LOAD
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
         NewMI = BuildMI(MF, MI->getDebugLoc(), get(Mips::LW))
-          .addReg(DstReg, true, false, false, isDead)
+          .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
           .addImm(0).addFrameIndex(FI);
       }
     }
@@ -315,13 +315,13 @@ foldMemoryOperandImpl(MachineFunction &MF,
         unsigned SrcReg = MI->getOperand(1).getReg();
         bool isKill = MI->getOperand(1).isKill();
         NewMI = BuildMI(MF, MI->getDebugLoc(), get(StoreOpc))
-          .addReg(SrcReg, false, false, isKill)
+          .addReg(SrcReg, getKillRegState(isKill))
           .addImm(0).addFrameIndex(FI) ;
       } else {              // COPY -> LOAD
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
         NewMI = BuildMI(MF, MI->getDebugLoc(), get(LoadOpc))
-          .addReg(DstReg, true, false, false, isDead)
+          .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
           .addImm(0).addFrameIndex(FI);
       }
     }

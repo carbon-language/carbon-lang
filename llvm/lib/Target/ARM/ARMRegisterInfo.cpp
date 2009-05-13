@@ -368,7 +368,7 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     
     // Build the new ADD / SUB.
     BuildMI(MBB, MBBI, dl, TII.get(isSub ? ARM::SUBri : ARM::ADDri), DestReg)
-      .addReg(BaseReg, false, false, true).addImm(SOImmVal)
+      .addReg(BaseReg, RegState::Kill).addImm(SOImmVal)
       .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
     BaseReg = DestReg;
   }
@@ -426,7 +426,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
       assert(BaseReg == ARM::SP && "Unexpected!");
       LdReg = ARM::R3;
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
-        .addReg(ARM::R3, false, false, true);
+        .addReg(ARM::R3, RegState::Kill);
     }
 
     if (NumBytes <= 255 && NumBytes >= 0)
@@ -434,7 +434,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     else if (NumBytes < 0 && NumBytes >= -255) {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg).addImm(NumBytes);
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tNEG), LdReg)
-        .addReg(LdReg, false, false, true);
+        .addReg(LdReg, RegState::Kill);
     } else
       MRI.emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, ARMCC::AL, 0, &TII, 
                             true, dl);
@@ -444,12 +444,12 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     const MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, 
                                             TII.get(Opc), DestReg);
     if (DestReg == ARM::SP || isSub)
-      MIB.addReg(BaseReg).addReg(LdReg, false, false, true);
+      MIB.addReg(BaseReg).addReg(LdReg, RegState::Kill);
     else
-      MIB.addReg(LdReg).addReg(BaseReg, false, false, true);
+      MIB.addReg(LdReg).addReg(BaseReg, RegState::Kill);
     if (DestReg == ARM::SP)
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVhir2lor), ARM::R3)
-        .addReg(ARM::R12, false, false, true);
+        .addReg(ARM::R12, RegState::Kill);
 }
 
 /// emitThumbRegPlusImmediate - Emits a series of instructions to materialize
@@ -518,10 +518,10 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
       Bytes -= ThisVal;
       BuildMI(MBB, MBBI, dl,TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3), DestReg)
-        .addReg(BaseReg, false, false, true).addImm(ThisVal);
+        .addReg(BaseReg, RegState::Kill).addImm(ThisVal);
     } else {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
-        .addReg(BaseReg, false, false, true);
+        .addReg(BaseReg, RegState::Kill);
     }
     BaseReg = DestReg;
   }
@@ -538,7 +538,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     else {
       bool isKill = BaseReg != ARM::SP;
       BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
-        .addReg(BaseReg, false, false, isKill).addImm(ThisVal);
+        .addReg(BaseReg, getKillRegState(isKill)).addImm(ThisVal);
       BaseReg = DestReg;
 
       if (Opc == ARM::tADDrSPi) {
@@ -556,7 +556,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
 
   if (ExtraOpc)
     BuildMI(MBB, MBBI, dl, TII.get(ExtraOpc), DestReg)
-      .addReg(DestReg, false, false, true)
+      .addReg(DestReg, RegState::Kill)
       .addImm(((unsigned)NumBytes) & 3);
 }
 
@@ -631,7 +631,7 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
     emitThumbRegPlusImmediate(MBB, MBBI, DestReg, DestReg, Imm, TII, MRI, dl);
   if (isSub)
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tNEG), DestReg)
-      .addReg(DestReg, false, false, true);
+      .addReg(DestReg, RegState::Kill);
 }
 
 /// findScratchRegister - Find a 'free' ARM register. If register scavenger
@@ -918,12 +918,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       bool UseRR = false;
       if (ValReg == ARM::R3) {
         BuildMI(MBB, II, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
-          .addReg(ARM::R2, false, false, true);
+          .addReg(ARM::R2, RegState::Kill);
         TmpReg = ARM::R2;
       }
       if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
         BuildMI(MBB, II, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
-          .addReg(ARM::R3, false, false, true);
+          .addReg(ARM::R3, RegState::Kill);
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
           emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,
@@ -946,10 +946,10 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MachineBasicBlock::iterator NII = next(II);
       if (ValReg == ARM::R3)
         BuildMI(MBB, NII, dl, TII.get(ARM::tMOVhir2lor), ARM::R2)
-          .addReg(ARM::R12, false, false, true);
+          .addReg(ARM::R12, RegState::Kill);
       if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
         BuildMI(MBB, NII, dl, TII.get(ARM::tMOVhir2lor), ARM::R3)
-          .addReg(ARM::R12, false, false, true);
+          .addReg(ARM::R12, RegState::Kill);
     } else
       assert(false && "Unexpected opcode!");
   } else {

@@ -38,11 +38,11 @@ void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   if (RC == &MSP430::GR16RegClass)
     BuildMI(MBB, MI, DL, get(MSP430::MOV16mr))
       .addFrameIndex(FrameIdx).addImm(0)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg, getKillRegState(isKill));
   else if (RC == &MSP430::GR8RegClass)
     BuildMI(MBB, MI, DL, get(MSP430::MOV8mr))
       .addFrameIndex(FrameIdx).addImm(0)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg, getKillRegState(isKill));
   else
     assert(0 && "Cannot store this register to stack slot!");
 }
@@ -129,7 +129,7 @@ MSP430InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
     BuildMI(MBB, MI, DL, get(MSP430::PUSH16r))
-      .addReg(Reg, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
+      .addReg(Reg, RegState::Kill);
   }
   return true;
 }

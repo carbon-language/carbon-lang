@@ -320,7 +320,7 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
   addFrameReference(BuildMI(MBB, MI, DL, get(opc))
-                    .addReg(SrcReg, false, false, isKill), FrameIdx);
+                    .addReg(SrcReg, getKillRegState(isKill)), FrameIdx);
 }
 
 void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -353,7 +353,7 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     }
     DebugLoc DL = DebugLoc::getUnknownLoc();
     MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg, getKillRegState(isKill));
     for (unsigned i = 0, e = Addr.size(); i != e; ++i)
       MIB.addOperand(Addr[i]);
     NewMIs.push_back(MIB);
@@ -495,7 +495,7 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(),
                                           get(SPU::STQDr32));
 
-        MIB.addReg(InReg, false, false, isKill);
+        MIB.addReg(InReg, getKillRegState(isKill));
         NewMI = addFrameReference(MIB, FrameIndex);
       }
     } else {           // move -> load
@@ -503,7 +503,7 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       bool isDead = MI->getOperand(0).isDead();
       MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc));
 
-      MIB.addReg(OutReg, true, false, false, isDead);
+      MIB.addReg(OutReg, RegState::Define | getDeadRegState(isDead));
       Opc = (FrameIndex < SPUFrameInfo::maxFrameOffset())
         ? SPU::STQDr32 : SPU::STQXr32;
       NewMI = addFrameReference(MIB, FrameIndex);

@@ -237,18 +237,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       case XCore::LDWFI:
         New = BuildMI(MBB, II, dl, TII.get(XCore::LDW_3r), Reg)
               .addReg(FramePtr)
-              .addReg(ScratchReg, false, false, true);
+              .addReg(ScratchReg, RegState::Kill);
         break;
       case XCore::STWFI:
         New = BuildMI(MBB, II, dl, TII.get(XCore::STW_3r))
-              .addReg(Reg, false, false, isKill)
+              .addReg(Reg, getKillRegState(isKill))
               .addReg(FramePtr)
-              .addReg(ScratchReg, false, false, true);
+              .addReg(ScratchReg, RegState::Kill);
         break;
       case XCore::LDAWFI:
         New = BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l3r), Reg)
               .addReg(FramePtr)
-              .addReg(ScratchReg, false, false, true);
+              .addReg(ScratchReg, RegState::Kill);
         break;
       default:
         assert(0 && "Unexpected Opcode\n");
@@ -262,7 +262,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         break;
       case XCore::STWFI:
         New = BuildMI(MBB, II, dl, TII.get(XCore::STW_2rus))
-              .addReg(Reg, false, false, isKill)
+              .addReg(Reg, getKillRegState(isKill))
               .addReg(FramePtr)
               .addImm(Offset);
         break;
@@ -293,7 +293,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     case XCore::STWFI:
       NewOpcode = (isU6) ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
       BuildMI(MBB, II, dl, TII.get(NewOpcode))
-            .addReg(Reg, false, false, isKill)
+            .addReg(Reg, getKillRegState(isKill))
             .addImm(Offset);
       break;
     case XCore::LDAWFI:

@@ -241,7 +241,7 @@ void MSP430RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     // Save FPW into the appropriate stack slot...
     BuildMI(MBB, MBBI, DL, TII.get(MSP430::PUSH16r))
-      .addReg(MSP430::FPW, /*isDef=*/false, /*isImp=*/false, /*isKill=*/true);
+      .addReg(MSP430::FPW, RegState::Kill);
 
     // Update FPW with the new base value...
     BuildMI(MBB, MBBI, DL, TII.get(MSP430::MOV16rr), MSP430::FPW)

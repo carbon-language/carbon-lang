@@ -96,17 +96,17 @@ void IA64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   if (RC == IA64::FPRegisterClass) {
     BuildMI(MBB, MI, DL, get(IA64::STF_SPILL)).addFrameIndex(FrameIdx)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg, getKillRegState(isKill));
   } else if (RC == IA64::GRRegisterClass) {
     BuildMI(MBB, MI, DL, get(IA64::ST8)).addFrameIndex(FrameIdx)
-      .addReg(SrcReg, false, false, isKill);
+      .addReg(SrcReg, getKillRegState(isKill));
   } else if (RC == IA64::PRRegisterClass) {
     /* we use IA64::r2 as a temporary register for doing this hackery. */
     // first we load 0:
     BuildMI(MBB, MI, DL, get(IA64::MOV), IA64::r2).addReg(IA64::r0);
     // then conditionally add 1:
     BuildMI(MBB, MI, DL, get(IA64::CADDIMM22), IA64::r2).addReg(IA64::r2)
-      .addImm(1).addReg(SrcReg, false, false, isKill);
+      .addImm(1).addReg(SrcReg, getKillRegState(isKill));
     // and then store it to the stack
     BuildMI(MBB, MI, DL, get(IA64::ST8))
       .addFrameIndex(FrameIdx)
@@ -136,7 +136,7 @@ void IA64InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
-  MIB.addReg(SrcReg, false, false, isKill);
+  MIB.addReg(SrcReg, getKillRegState(isKill));
   NewMIs.push_back(MIB);
   return;
 
