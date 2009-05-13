@@ -669,6 +669,10 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
+  // Skip the asm prefix if it exists.
+  if (Name[0] == '\01')
+    ++Name;
+  
   // FIXME: Why is this using CurLoc???
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   SourceManager &SM = M->getContext().getSourceManager();
