@@ -95,6 +95,50 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
 void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                                  Expr **Args, unsigned NumArgs)
 {
+  const SentinelAttr *attr = D->getAttr<SentinelAttr>();
+  if (!attr) 
+    return;
+  ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
+  // FIXME: function calls for later.
+  if (!MD)
+    return;
+  int sentinelPos = attr->getSentinel();
+  int nullPos = attr->getNullPos();
+  // skip over named parameters.
+  ObjCMethodDecl::param_iterator P, E = MD->param_end();
+  unsigned int i = 0;
+  for (P = MD->param_begin(); (P != E && i < NumArgs); ++P) {
+    if (nullPos)
+      --nullPos;
+    else
+      ++i;
+  }
+  if (P != E || i >= NumArgs) {
+    Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
+    Diag(D->getLocation(), diag::note_sentinel_here);
+    return;
+  }
+  int sentinel = i;
+  while (sentinelPos > 0 && i < NumArgs-1) {
+    --sentinelPos;
+    ++i;
+  }
+  if (sentinelPos > 0) {
+    Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
+    Diag(D->getLocation(), diag::note_sentinel_here);
+    return;
+  }
+  while (i < NumArgs-1) {
+    ++i;
+    ++sentinel;
+  }
+  Expr *sentinelExpr = Args[sentinel];
+  if (sentinelExpr && (!sentinelExpr->getType()->isPointerType() ||
+                       !sentinelExpr->isNullPointerConstant(Context))) {
+    Diag(Loc, diag::warn_missing_sentinel);
+    Diag(D->getLocation(), diag::note_sentinel_here);
+  }
+  return;
 }
 
 SourceRange Sema::getExprRange(ExprTy *E) const {

@@ -725,8 +725,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << 3 /*function or method*/;
     return;
   }
-  
-  // FIXME: Actually create the attribute.
+  d->addAttr(::new (S.Context) SentinelAttr(sentinel, nullPos));
 }
 
 static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) {

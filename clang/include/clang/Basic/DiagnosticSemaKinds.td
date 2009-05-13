@@ -763,6 +763,12 @@ def warn_deprecated : Warning<"%0 is deprecated">,
 def warn_unavailable : Warning<"%0 is unavailable">;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;
+def warn_not_enough_argument : Warning<
+  "not enough variable arguments in %0 declaration to fit a sentinel">;
+def warn_missing_sentinel : Warning <
+  "missing sentinel in method dispatch">;
+def note_sentinel_here : Note<
+  "method has been explicitly marked sentinel here">;
 def warn_missing_prototype : Warning<
   "no previous prototype for function %0">,
   InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;
