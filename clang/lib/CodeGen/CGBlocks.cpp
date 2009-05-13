@@ -16,15 +16,9 @@
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
-
 #include <algorithm>
-
 using namespace clang;
 using namespace CodeGen;
-
-// Temporary code to enable testing of __block variables
-// #include "clang/Frontend/CompileOptions.h"
-#include "llvm/Support/CommandLine.h"
 
 llvm::Constant *CodeGenFunction::
 BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
@@ -63,34 +57,16 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
 }
 
 llvm::Constant *BlockModule::getNSConcreteGlobalBlock() {
-  if (NSConcreteGlobalBlock)
-    return NSConcreteGlobalBlock;
-
-  // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
-  // same thing as CreateRuntimeFunction if there's already a variable with the
-  // same name.
-  NSConcreteGlobalBlock
-    = new llvm::GlobalVariable(PtrToInt8Ty, false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0, "_NSConcreteGlobalBlock",
-                               &getModule());
-
+  if (NSConcreteGlobalBlock == 0)
+    NSConcreteGlobalBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty, 
+                                                      "_NSConcreteGlobalBlock");
   return NSConcreteGlobalBlock;
 }
 
 llvm::Constant *BlockModule::getNSConcreteStackBlock() {
-  if (NSConcreteStackBlock)
-    return NSConcreteStackBlock;
-
-  // FIXME: We should have a CodeGenModule::AddRuntimeVariable that does the
-  // same thing as CreateRuntimeFunction if there's already a variable with the
-  // same name.
-  NSConcreteStackBlock
-    = new llvm::GlobalVariable(PtrToInt8Ty, false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0, "_NSConcreteStackBlock",
-                               &getModule());
-
+  if (NSConcreteStackBlock == 0)
+    NSConcreteStackBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty, 
+                                                     "_NSConcreteStackBlock");
   return NSConcreteStackBlock;
 }
 
@@ -115,8 +91,7 @@ static void CollectBlockDeclRefInfo(const Stmt *S,
 
 /// CanBlockBeGlobal - Given a BlockInfo struct, determines if a block can be
 /// declared as a global variable instead of on the stack.
-static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info)
-{
+static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info) {
   return Info.ByRefDeclRefs.empty() && Info.ByCopyDeclRefs.empty();
 }
 

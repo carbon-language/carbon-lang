@@ -1231,8 +1231,8 @@
 				9063F2290F9E911F002F7251 /* SourceManagerInternals.h */,
 				DE46BF270AE0A82D00CC047C /* TargetInfo.h */,
 				9063F22A0F9E911F002F7251 /* TemplateKinds.h */,
-				DED7D7370A524295003AD0FB /* TokenKinds.def */,
 				DED7D7380A524295003AD0FB /* TokenKinds.h */,
+				DED7D7370A524295003AD0FB /* TokenKinds.def */,
 				DEB089EE0F12F1D900522C07 /* TypeTraits.h */,
 			);
 			name = Basic;
