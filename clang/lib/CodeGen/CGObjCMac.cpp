@@ -4160,14 +4160,14 @@ bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
     NonLegacyDispatchMethods.insert(GetUnarySelector("isEqualToString"));
     NonLegacyDispatchMethods.insert(GetUnarySelector("isEqual"));
     NonLegacyDispatchMethods.insert(GetUnarySelector("addObject"));
-    // "countByEnumeratingWithState:objects:count" auch!
-    llvm::SmallVector<IdentifierInfo *, 4> KeyIdents;
-    KeyIdents.push_back(
-                  &CGM.getContext().Idents.get("countByEnumeratingWithState"));
-    KeyIdents.push_back(&CGM.getContext().Idents.get("objects"));
-    KeyIdents.push_back(&CGM.getContext().Idents.get("count"));
-    NonLegacyDispatchMethods.insert(CGM.getContext().Selectors.getSelector(
-                                                             3, &KeyIdents[0]));
+    // "countByEnumeratingWithState:objects:count" 
+    IdentifierInfo *KeyIdents[] = {
+     &CGM.getContext().Idents.get("countByEnumeratingWithState"),
+     &CGM.getContext().Idents.get("objects"),
+     &CGM.getContext().Idents.get("count")
+    };
+    NonLegacyDispatchMethods.insert(
+      CGM.getContext().Selectors.getSelector(3, KeyIdents));
   }
   return (NonLegacyDispatchMethods.count(Sel) == 0);
 }
