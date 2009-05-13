@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -pedantic %s
 //
 // Tests explicit instantiation of templates.
 template<typename T, typename U = T> class X0 { };
@@ -24,13 +24,13 @@ template class X0<double> { }; // expected-error{{explicit specialization}}
 
 // Check for explicit instantiations that come after other kinds of
 // instantiations or declarations.
-template class X0<int, int>; // expected-error{{after}}
+template class X0<int, int>; // expected-error{{duplicate}}
 
 template<> class X0<char> { }; // expected-note{{previous}}
-template class X0<char>; // expected-error{{after}}
+template class X0<char>; // expected-warning{{ignored}}
 
-void foo(X0<short>) { } // expected-note{{previous}}
-template class X0<short>;  // expected-error{{after}}
+void foo(X0<short>) { }
+template class X0<short>;
 
 // Check that explicit instantiations actually produce definitions. We
 // determine whether this happens by placing semantic errors in the

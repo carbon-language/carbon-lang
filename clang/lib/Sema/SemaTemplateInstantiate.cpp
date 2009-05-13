@@ -247,10 +247,26 @@ InstantiateConstantArrayType(const ConstantArrayType *T,
   // Build a temporary integer literal to specify the size for
   // BuildArrayType. Since we have already checked the size as part of
   // creating the dependent array type in the first place, we know
-  // there aren't any errors.
-  // FIXME: Is IntTy big enough? Maybe not, but LongLongTy causes
-  // problems that I have yet to investigate.
-  IntegerLiteral ArraySize(T->getSize(), SemaRef.Context.IntTy, Loc);
+  // there aren't any errors. However, we do need to determine what
+  // C++ type to give the size expression.
+  llvm::APInt Size = T->getSize();
+  QualType Types[] = { 
+    SemaRef.Context.UnsignedCharTy, SemaRef.Context.UnsignedShortTy, 
+    SemaRef.Context.UnsignedIntTy, SemaRef.Context.UnsignedLongTy, 
+    SemaRef.Context.UnsignedLongLongTy, SemaRef.Context.UnsignedInt128Ty 
+  };
+  const unsigned NumTypes = sizeof(Types) / sizeof(QualType);
+  QualType SizeType;
+  for (unsigned I = 0; I != NumTypes; ++I)
+    if (Size.getBitWidth() == SemaRef.Context.getIntWidth(Types[I])) {
+      SizeType = Types[I];
+      break;
+    }
+
+  if (SizeType.isNull())
+    SizeType = SemaRef.Context.getFixedWidthIntType(Size.getBitWidth(), false);
+
+  IntegerLiteral ArraySize(Size, SizeType, Loc);
   return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
                                 &ArraySize, T->getIndexTypeQualifier(), 
                                 Loc, Entity);

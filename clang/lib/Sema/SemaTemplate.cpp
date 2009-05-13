@@ -1892,19 +1892,20 @@ Sema::CheckTemplateDeclScope(Scope *S,
     << TemplateRange;
 }
 
-/// \brief Check whether a class template specialization in the
-/// current context is well-formed.
+/// \brief Check whether a class template specialization or explicit
+/// instantiation in the current context is well-formed.
 ///
-/// This routine determines whether a class template specialization
-/// can be declared in the current context (C++ [temp.expl.spec]p2)
-/// and emits appropriate diagnostics if there was an error. It
-/// returns true if there was an error that we cannot recover from,
-/// and false otherwise.
+/// This routine determines whether a class template specialization or
+/// explicit instantiation can be declared in the current context 
+/// (C++ [temp.expl.spec]p2, C++0x [temp.explicit]p2) and emits 
+/// appropriate diagnostics if there was an error. It returns true if 
+// there was an error that we cannot recover from, and false otherwise.
 bool 
 Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
                                    ClassTemplateSpecializationDecl *PrevDecl,
                                             SourceLocation TemplateNameLoc,
-                                            SourceRange ScopeSpecifierRange) {
+                                            SourceRange ScopeSpecifierRange,
+                                            bool ExplicitInstantiation) {
   // C++ [temp.expl.spec]p2:
   //   An explicit specialization shall be declared in the namespace
   //   of which the template is a member, or, for member templates, in
@@ -1920,14 +1921,15 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
   //   declared.
   if (CurContext->getLookupContext()->isFunctionOrMethod()) {
     Diag(TemplateNameLoc, diag::err_template_spec_decl_function_scope)
-      << ClassTemplate;
+      << ExplicitInstantiation << ClassTemplate;
     return true;
   }
 
   DeclContext *DC = CurContext->getEnclosingNamespaceContext();
   DeclContext *TemplateContext 
     = ClassTemplate->getDeclContext()->getEnclosingNamespaceContext();
-  if (!PrevDecl || PrevDecl->getSpecializationKind() == TSK_Undeclared) {
+  if ((!PrevDecl || PrevDecl->getSpecializationKind() == TSK_Undeclared) &&
+      !ExplicitInstantiation) {
     // There is no prior declaration of this entity, so this
     // specialization must be in the same context as the template
     // itself.
@@ -1949,15 +1951,26 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
   // We have a previous declaration of this entity. Make sure that
   // this redeclaration (or definition) occurs in an enclosing namespace.
   if (!CurContext->Encloses(TemplateContext)) {
-    if (isa<TranslationUnitDecl>(TemplateContext))
-      Diag(TemplateNameLoc, diag::err_template_spec_redecl_global_scope)
-        << ClassTemplate << ScopeSpecifierRange;
-    else if (isa<NamespaceDecl>(TemplateContext))
-      Diag(TemplateNameLoc, diag::err_template_spec_redecl_out_of_scope)
-        << ClassTemplate << cast<NamedDecl>(TemplateContext) 
-        << ScopeSpecifierRange;
+    // FIXME: In C++98, we would like to turn these errors into
+    // warnings, dependent on a -Wc++0x flag.
+    bool SuppressedDiag = false;
+    if (isa<TranslationUnitDecl>(TemplateContext)) {
+      if (!ExplicitInstantiation || getLangOptions().CPlusPlus0x)
+        Diag(TemplateNameLoc, diag::err_template_spec_redecl_global_scope)
+          << ExplicitInstantiation << ClassTemplate << ScopeSpecifierRange;
+      else
+        SuppressedDiag = true;
+    } else if (isa<NamespaceDecl>(TemplateContext)) {
+      if (!ExplicitInstantiation || getLangOptions().CPlusPlus0x)
+        Diag(TemplateNameLoc, diag::err_template_spec_redecl_out_of_scope)
+          << ExplicitInstantiation << ClassTemplate
+          << cast<NamedDecl>(TemplateContext) << ScopeSpecifierRange;
+      else 
+        SuppressedDiag = true;
+    }
     
-    Diag(ClassTemplate->getLocation(), diag::note_template_decl_here);
+    if (!SuppressedDiag)
+      Diag(ClassTemplate->getLocation(), diag::note_template_decl_here);
   }
 
   return false;
@@ -2056,7 +2069,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // the current scope.
   if (CheckClassTemplateSpecializationScope(ClassTemplate, PrevDecl,
                                             TemplateNameLoc, 
-                                            SS.getRange()))
+                                            SS.getRange(),
+                                            /*ExplicitInstantiation=*/false))
     return true;
 
   if (PrevDecl && PrevDecl->getSpecializationKind() == TSK_Undeclared) {
@@ -2179,6 +2193,17 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
     Kind = ClassTemplate->getTemplatedDecl()->getTagKind();
   }
 
+  // C++0x [temp.explicit]p2:
+  //   [...] An explicit instantiation shall appear in an enclosing
+  //   namespace of its template. [...]
+  //
+  // This is C++ DR 275.
+  if (CheckClassTemplateSpecializationScope(ClassTemplate, 0,
+                                            TemplateNameLoc, 
+                                            SS.getRange(),
+                                            /*ExplicitInstantiation=*/true))
+    return true;
+
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
   translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
@@ -2206,17 +2231,54 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
 
   ClassTemplateSpecializationDecl *Specialization = 0;
 
+  bool SpecializationRequiresInstantiation = true;
   if (PrevDecl) {
-    if (PrevDecl->getSpecializationKind() != TSK_Undeclared) {
+    if (PrevDecl->getSpecializationKind() == TSK_ExplicitInstantiation) {
       // This particular specialization has already been declared or
       // instantiated. We cannot explicitly instantiate it.
-      Diag(TemplateNameLoc, diag::err_explicit_instantiation_redef)
-        << Context.getTypeDeclType(PrevDecl)
-        << (int)PrevDecl->getSpecializationKind();
-      Diag(PrevDecl->getLocation(), diag::note_previous_instantiation)
-        << (int)PrevDecl->getSpecializationKind();
+      Diag(TemplateNameLoc, diag::err_explicit_instantiation_duplicate)
+        << Context.getTypeDeclType(PrevDecl);
+      Diag(PrevDecl->getLocation(), 
+           diag::note_previous_explicit_instantiation);
       return DeclPtrTy::make(PrevDecl);
     }
+
+    if (PrevDecl->getSpecializationKind() == TSK_ExplicitSpecialization) {
+      // C++0x [temp.explicit]p4:
+      //   For a given set of template parameters, if an explicit
+      //   instantiation of a template appears after a declaration of
+      //   an explicit specialization for that template, the explicit
+      //   instantiation has no effect.
+      if (!getLangOptions().CPlusPlus0x) {
+        Diag(TemplateNameLoc, 
+             diag::ext_explicit_instantiation_after_specialization)
+          << Context.getTypeDeclType(PrevDecl);
+        Diag(PrevDecl->getLocation(), 
+             diag::note_previous_template_specialization);
+      }
+
+      // Create a new class template specialization declaration node
+      // for this explicit specialization. This node is only used to
+      // record the existence of this explicit instantiation for
+      // accurate reproduction of the source code; we don't actually
+      // use it for anything, since it is semantically irrelevant.
+      Specialization
+        = ClassTemplateSpecializationDecl::Create(Context, 
+                                             ClassTemplate->getDeclContext(),
+                                                  TemplateNameLoc,
+                                                  ClassTemplate,
+                                                  &ConvertedTemplateArgs[0],
+                                                  ConvertedTemplateArgs.size(),
+                                                  0);
+      Specialization->setLexicalDeclContext(CurContext);
+      CurContext->addDecl(Context, Specialization);
+      return DeclPtrTy::make(Specialization);
+    }
+
+    // If we have already (implicitly) instantiated this
+    // specialization, there is less work to do.
+    if (PrevDecl->getSpecializationKind() == TSK_ImplicitInstantiation)
+      SpecializationRequiresInstantiation = false;
 
     // Since the only prior class template specialization with these
     // arguments was referenced but not declared, reuse that
@@ -2263,15 +2325,18 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   CurContext->addDecl(Context, Specialization);
 
   // C++ [temp.explicit]p3:
-  //
   //   A definition of a class template or class member template
   //   shall be in scope at the point of the explicit instantiation of
   //   the class template or class member template.
   //
   // This check comes when we actually try to perform the
   // instantiation.
-  if (InstantiateClassTemplateSpecialization(Specialization, true))
+  if (SpecializationRequiresInstantiation &&
+      InstantiateClassTemplateSpecialization(Specialization, true))
     return true;
+
+  // FIXME: Instantiate all of the members of the template (that
+  // haven't already been instantiated!).
 
   return DeclPtrTy::make(Specialization);
 }

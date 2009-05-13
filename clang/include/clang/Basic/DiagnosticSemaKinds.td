@@ -694,11 +694,14 @@ def err_template_spec_decl_out_of_scope_global : Error<
 def err_template_spec_decl_out_of_scope : Error<
   "class template specialization of %0 not in namespace %1">;
 def err_template_spec_decl_function_scope : Error<
-  "class template specialization of %0 in function scope">;
+  "%select{class template specialization|explicit instantiation}0 of %1 "
+  "in function scope">;
 def err_template_spec_redecl_out_of_scope : Error<
-  "class template specialization of %0 not in a namespace enclosing %1">;
+  "%select{class template specialization|explicit instantiation}0 of %1 "
+  "not in a namespace enclosing %2">;
 def err_template_spec_redecl_global_scope : Error<
-  "class template specialization of %0 must occur in at global scope">;
+  "%select{class template specialization|explicit instantiation}0 of %1 must "
+  "occur at global scope">;
 
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
@@ -722,13 +725,15 @@ def err_nested_name_spec_non_tag : Error<
   "type %0 cannot be used prior to '::' because it has no members">;
 
 // C++ Explicit Instantiation
-def err_explicit_instantiation_redef : Error<
-    "explicit instantiation of %0 occurs after "
-    "%select{|explicit specialization|implicit instantiation|explicit "
-    "instantiation}1">;
-def note_previous_instantiation : Note<
-    "previous %select{|explicit specialization|implicit instantiation|explicit "
-    "instantiation}0 is here">;
+def err_explicit_instantiation_duplicate : Error<
+    "duplicate explicit instantiation of %0">;
+def note_previous_explicit_instantiation : Note<
+    "previous explicit instantiation is here">;
+def ext_explicit_instantiation_after_specialization : Extension<
+    "explicit instantiation of %0 that occurs after an explicit "
+    "specialization will be ignored (C++0x extension)">;
+def note_previous_template_specialization : Note<
+    "previous template specialization is here">;
 
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;

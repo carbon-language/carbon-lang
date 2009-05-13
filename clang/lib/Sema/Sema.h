@@ -1882,7 +1882,8 @@ public:
   bool CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
                                     ClassTemplateSpecializationDecl *PrevDecl,
                                              SourceLocation TemplateNameLoc,
-                                             SourceRange ScopeSpecifierRange);
+                                             SourceRange ScopeSpecifierRange,
+                                             bool ExplicitInstantiation);
 
   virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
