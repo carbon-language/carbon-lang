@@ -427,6 +427,11 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     Tok.setLocation(EndLoc);
     Tok.setLength(0);
     ArgTokens.push_back(Tok);
+
+    // If we expect two arguments, add both as empty.
+    if (NumActuals == 0 && MinArgsExpected == 2)
+      ArgTokens.push_back(Tok);
+    
   } else if (NumActuals > MinArgsExpected && !MI->isVariadic()) {
     // Emit the diagnostic at the macro name in case there is a missing ).
     // Emitting it at the , could be far away from the macro name.

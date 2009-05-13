@@ -14,3 +14,6 @@ A: X()()()
 B: f(f))
 C: for(for))
 
+// rdar://6880648
+#define f(x,y...) y
+f()

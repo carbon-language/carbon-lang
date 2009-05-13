@@ -72,6 +72,7 @@ const Token *MacroArgs::getUnexpArgument(unsigned Arg) const {
     if (Result->is(tok::eof))
       --Arg;
   }
+  assert(Result < Start+NumUnexpArgTokens && "Invalid arg #");
   return Result;
 }
 
