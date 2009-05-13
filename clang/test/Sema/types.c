@@ -30,3 +30,7 @@ int i[(short)1];
 enum e { e_1 };
 extern int j[sizeof(enum e)];  // expected-note {{previous definition}}
 int j[42];   // expected-error {{redefinition of 'j' with a different type}}
+
+// rdar://6880104
+_Decimal32 x;  // expected-error {{GNU decimal type extension not supported}}
+

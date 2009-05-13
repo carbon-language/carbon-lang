@@ -164,7 +164,10 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_decimal32:    // _Decimal32
   case DeclSpec::TST_decimal64:    // _Decimal64
   case DeclSpec::TST_decimal128:   // _Decimal128
-    assert(0 && "FIXME: GNU decimal extensions not supported yet!"); 
+    Diag(DS.getTypeSpecTypeLoc(), diag::err_decimal_unsupported);
+    Result = Context.IntTy;
+    isInvalid = true;
+    break;
   case DeclSpec::TST_class:
   case DeclSpec::TST_enum:
   case DeclSpec::TST_union:

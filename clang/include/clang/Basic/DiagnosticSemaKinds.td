@@ -1714,6 +1714,8 @@ def warn_missing_declspec : Warning<
 def warn_missing_type_specifier : Warning<
   "type specifier missing, defaults to 'int'">,
   InGroup<ImplicitInt>;
+def err_decimal_unsupported : Error<
+  "GNU decimal type extension not supported">;
 def err_missing_type_specifier : Error<
   "C++ requires a type specifier for all declarations">;
 def err_missing_param_declspec : Error<
