@@ -46,7 +46,9 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 /// CheckBaseClassAccess - Check that a derived class can access its base class
 /// and report an error if it can't. [class.access.base]
 bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base, 
-                                BasePaths& Paths, SourceLocation AccessLoc) {
+                                unsigned InaccessibleBaseID,
+                                BasePaths& Paths, SourceLocation AccessLoc,
+                                DeclarationName Name) {
   Base = Context.getCanonicalType(Base).getUnqualifiedType();
   assert(!Paths.isAmbiguous(Base) && 
          "Can't check base class access if set of paths is ambiguous");
@@ -101,8 +103,8 @@ bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
   }
 
   if (InacessibleBase) {
-    Diag(AccessLoc, diag::err_conv_to_inaccessible_base) 
-      << Derived << Base;
+    Diag(AccessLoc, InaccessibleBaseID) 
+      << Derived << Base << Name;
 
     AccessSpecifier AS = InacessibleBase->getAccessSpecifierAsWritten();
     

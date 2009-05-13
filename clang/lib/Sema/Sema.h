@@ -1773,6 +1773,12 @@ public:
                      BasePaths &Paths);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range);
+  bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
+                                    unsigned InaccessibleBaseID,
+                                    unsigned AmbigiousBaseConvID,
+                                    SourceLocation Loc, SourceRange Range,
+                                    DeclarationName Name);
+  
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
 
   //===--------------------------------------------------------------------===//
@@ -1784,7 +1790,9 @@ public:
                                 AccessSpecifier LexicalAS);
   
   bool CheckBaseClassAccess(QualType Derived, QualType Base, 
-                            BasePaths& Paths, SourceLocation AccessLoc);
+                            unsigned InaccessibleBaseID,
+                            BasePaths& Paths, SourceLocation AccessLoc,
+                            DeclarationName Name);
   
   
   enum AbstractDiagSelID {

@@ -236,9 +236,12 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
 /// otherwise. Loc is the location where this routine should point to
 /// if there is an error, and Range is the source range to highlight
 /// if there is an error.
-bool 
+bool
 Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
-                                   SourceLocation Loc, SourceRange Range) {
+                                   unsigned InaccessibleBaseID,
+                                   unsigned AmbigiousBaseConvID,
+                                   SourceLocation Loc, SourceRange Range,
+                                   DeclarationName Name) {
   // First, determine whether the path from Derived to Base is
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
@@ -252,7 +255,8 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
 
   if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
     // Check that the base class can be accessed.
-    return CheckBaseClassAccess(Derived, Base, Paths, Loc);
+    return CheckBaseClassAccess(Derived, Base, InaccessibleBaseID, Paths, Loc,
+                                Name);
   }
 
   // We know that the derived-to-base conversion is ambiguous, and
@@ -273,10 +277,20 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   // to each base class subobject.
   std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
   
-  Diag(Loc, diag::err_ambiguous_derived_to_base_conv)
-    << Derived << Base << PathDisplayStr << Range;
+  Diag(Loc, AmbigiousBaseConvID)
+    << Derived << Base << PathDisplayStr << Range << Name;
   return true;
 }
+
+bool 
+Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
+                                   SourceLocation Loc, SourceRange Range) {
+  return CheckDerivedToBaseConversion(Derived, Base, 
+                                      diag::err_conv_to_inaccessible_base,
+                                      diag::err_ambiguous_derived_to_base_conv,
+                                      Loc, Range, DeclarationName());
+}
+                                      
 
 /// @brief Builds a string representing ambiguous paths from a
 /// specific derived class to different subobjects of the same base
