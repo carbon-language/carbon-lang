@@ -1286,9 +1286,9 @@ class DwarfDebug : public Dwarf {
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
 
-  /// DbgConcreteScopeMap - Tracks inlined scopes in the current function.
+  /// DbgInlinedScopeMap - Tracks inlined scopes in the current function.
   DenseMap<GlobalVariable *,
-           SmallVector<DbgConcreteScope *, 8> > DbgConcreteScopeMap;
+           SmallVector<DbgScope *, 8> > DbgInlinedScopeMap;
 
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
@@ -3434,7 +3434,7 @@ public:
     if (FunctionDbgScope) {
       delete FunctionDbgScope;
       DbgScopeMap.clear();
-      DbgConcreteScopeMap.clear();
+      DbgInlinedScopeMap.clear();
       InlinedVariableScopes.clear();
       FunctionDbgScope = NULL;
       LexicalScopeStack.clear();
@@ -3619,6 +3619,15 @@ public:
       // could be more elegant.
       AddUInt(SPDie, DW_AT_inline, 0, DW_INL_declared_not_inlined);
 
+      // Keep track of the scope that's inlined into this function.
+      DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+        SI = DbgInlinedScopeMap.find(GV);
+
+      if (SI == DbgInlinedScopeMap.end())
+        DbgInlinedScopeMap[GV].push_back(Scope);
+      else
+        SI->second.push_back(Scope);
+
       AbstractInstanceRootMap[GV] = Scope;
       AbstractInstanceRootList.push_back(Scope);
     }
@@ -3640,15 +3649,6 @@ public:
     MMI->RecordUsedDbgLabel(LabelID);
 
     LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
-
-    // Keep track of the scope that's inlined into this function.
-    DenseMap<GlobalVariable *, SmallVector<DbgConcreteScope *, 8> >::iterator
-      SI = DbgConcreteScopeMap.find(GV);
-
-    if (SI == DbgConcreteScopeMap.end())
-      DbgConcreteScopeMap[GV].push_back(ConcreteScope);
-    else
-      SI->second.push_back(ConcreteScope);
 
     // Track the start label for this inlined function.
     DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
@@ -3674,19 +3674,19 @@ public:
       DebugTimer->startTimer();
 
     GlobalVariable *GV = SP.getGV();
-    DenseMap<GlobalVariable *, SmallVector<DbgConcreteScope *, 8> >::iterator
-      I = DbgConcreteScopeMap.find(GV);
+    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+      I = DbgInlinedScopeMap.find(GV);
 
-    if (I == DbgConcreteScopeMap.end()) {
+    if (I == DbgInlinedScopeMap.end()) {
       if (TimePassesIsEnabled)
         DebugTimer->stopTimer();
 
       return 0;
     }
 
-    SmallVector<DbgConcreteScope *, 8> &Scopes = I->second;
+    SmallVector<DbgScope *, 8> &Scopes = I->second;
     assert(!Scopes.empty() && "We should have at least one debug scope!");
-    DbgConcreteScope *Scope = Scopes.back(); Scopes.pop_back();
+    DbgScope *Scope = Scopes.back(); Scopes.pop_back();
     unsigned ID = MMI->NextLabelID();
     MMI->RecordUsedDbgLabel(ID);
     Scope->setEndLabelID(ID);
@@ -3714,9 +3714,9 @@ public:
       return;
     }
 
-    DenseMap<GlobalVariable *, SmallVector<DbgConcreteScope *, 8> >::iterator
-      I = DbgConcreteScopeMap.find(SP.getGV());
-    if (I != DbgConcreteScopeMap.end())
+    DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+      I = DbgInlinedScopeMap.find(SP.getGV());
+    if (I != DbgInlinedScopeMap.end())
       InlinedVariableScopes[DeclareMI] = I->second.back();
 
     if (TimePassesIsEnabled)
