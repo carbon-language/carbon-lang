@@ -221,8 +221,9 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
      canonType->isFunctionType());
      */
   }
-  // the base type must be integer or float.
-  if (!CurType->isIntegerType() && !CurType->isRealFloatingType()) {
+  // the base type must be integer or float, and can't already be a vector.
+  if (CurType->isVectorType() ||
+      (!CurType->isIntegerType() && !CurType->isRealFloatingType())) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
     return;
   }
