@@ -133,7 +133,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 
       // If its a libcall name, record it to decls section.
       if (PAN::getSymbolTag(Sname) == PAN::LIBCALL) {
-        Decls.push_back(Sname);
+        LibcallDecls.push_back(Sname);
       }
 
       O  << Sname;
@@ -153,16 +153,16 @@ void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
   O << PIC16CondCodeToString((PIC16CC::CondCodes)CC);
 }
 
-void PIC16AsmPrinter::printDecls(void) {
+void PIC16AsmPrinter::printLibcallDecls(void) {
   // If no libcalls used, return.
-  if (Decls.empty()) return;
+  if (LibcallDecls.empty()) return;
 
   O << TAI->getCommentString() << "External decls for libcalls - BEGIN." <<"\n";
   // Remove duplicate entries.
-  Decls.sort();
-  Decls.unique();
-  for (std::list<const char*>::const_iterator I = Decls.begin(); 
-       I != Decls.end(); I++) {
+  LibcallDecls.sort();
+  LibcallDecls.unique();
+  for (std::list<const char*>::const_iterator I = LibcallDecls.begin(); 
+       I != LibcallDecls.end(); I++) {
     O << TAI->getExternDirective() << *I << "\n";
     O << TAI->getExternDirective() << PAN::getArgsLabel(*I) << "\n";
     O << TAI->getExternDirective() << PAN::getRetvalLabel(*I) << "\n";
@@ -188,17 +188,22 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
     I->setSection(TAI->SectionForGlobal(I)->getName());
   }
 
-  EmitExternsAndGlobals (M);
+  EmitFunctionDecls(M);
+  EmitUndefinedVars(M);
+  EmitDefinedVars(M);
   EmitIData(M);
   EmitUData(M);
-  EmitAutos(M);
   EmitRomData(M);
+  EmitAutos(M);
   return Result;
 }
 
-void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
+// Emit extern decls for functions imported from other modules, and emit
+// global declarations for function defined in this module and which are
+// available to other modules.
+void PIC16AsmPrinter::EmitFunctionDecls (Module &M) {
  // Emit declarations for external functions.
-  O << TAI->getCommentString() << "External defs and decls - BEGIN." <<"\n";
+  O << TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
     std::string Name = Mang->getValueName(I);
     if (Name.compare("@abort") == 0)
@@ -219,33 +224,38 @@ void PIC16AsmPrinter::EmitExternsAndGlobals (Module &M) {
     O << directive << PAN::getArgsLabel(Name) << "\n";
   }
 
-  // Emit header file to include declaration of library functions
-  // FIXME: find out libcall names.
-  // O << "\t#include C16IntrinsicCalls.INC\n";
-
-  // Emit declarations for external variable declarations and definitions.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; I++) {
-    // Any variables reaching here with ".auto." in its name is a local scope
-    // variable and should not be printed in global data section.
-    std::string Name = Mang->getValueName(I);
-    if (PAN::isLocalName(Name))
-      continue;
-
-    if (!(I->isDeclaration() || I->hasExternalLinkage() || 
-          I->hasCommonLinkage()))
-      continue;
-
-    const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
-                                                 TAI->getGlobalDirective();
-    O << directive << Name << "\n";
-  }
-  O << TAI->getCommentString() << "External defs and decls - END." <<"\n";
+  O << TAI->getCommentString() << "Function Declarations - END." <<"\n";
 }
 
+// Emit variables imported from other Modules.
+void PIC16AsmPrinter::EmitUndefinedVars (Module &M)
+{
+  std::vector<const GlobalVariable*> Items = PTAI->ExternalVarDecls->Items;
+  if (! Items.size()) return;
+
+  O << "\n" << TAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
+  for (unsigned j = 0; j < Items.size(); j++) {
+    O << TAI->getExternDirective() << Mang->getValueName(Items[j]) << "\n";
+  }
+  O << TAI->getCommentString() << "Imported Variables - END" << "\n";
+}
+
+// Emit variables defined in this module and are available to other modules.
+void PIC16AsmPrinter::EmitDefinedVars (Module &M)
+{
+  std::vector<const GlobalVariable*> Items = PTAI->ExternalVarDefs->Items;
+  if (! Items.size()) return;
+
+  O << "\n" <<  TAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
+  for (unsigned j = 0; j < Items.size(); j++) {
+    O << TAI->getGlobalDirective() << Mang->getValueName(Items[j]) << "\n";
+  }
+  O <<  TAI->getCommentString() << "Exported Variables - END" << "\n";
+}
+
+// Emit initialized data placed in ROM.
 void PIC16AsmPrinter::EmitRomData (Module &M)
 {
-  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
 
   std::vector<const GlobalVariable*> Items = PTAI->ROSection->Items;
   if (! Items.size()) return;
@@ -262,7 +272,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 }
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
-  printDecls();
+  printLibcallDecls();
   O << "\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
   return Result;
@@ -314,7 +324,6 @@ void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
 }
 
 void PIC16AsmPrinter::EmitIData (Module &M) {
-  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
 
   // Print all IDATA sections.
   std::vector <PIC16Section *>IDATASections = PTAI->IDATASections;
@@ -333,7 +342,6 @@ void PIC16AsmPrinter::EmitIData (Module &M) {
 }
 
 void PIC16AsmPrinter::EmitUData (Module &M) {
-  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
   const TargetData *TD = TM.getTargetData();
 
   // Print all BSS sections.
@@ -358,7 +366,6 @@ void PIC16AsmPrinter::EmitAutos (Module &M)
 {
   // Section names for all globals are already set.
 
-  const PIC16TargetAsmInfo *PTAI = static_cast<const PIC16TargetAsmInfo *>(TAI);
   const TargetData *TD = TM.getTargetData();
 
   // Now print all Autos sections.

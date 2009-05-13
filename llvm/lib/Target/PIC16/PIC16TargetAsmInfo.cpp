@@ -45,6 +45,8 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   // in BeginModule, and gpasm cribbs for that .text symbol.
   TextSection = getUnnamedSection("", SectionFlags::Code);
   ROSection = new PIC16Section(getReadOnlySection());
+  ExternalVarDecls = new PIC16Section(getNamedSection("ExternalVarDecls"));
+  ExternalVarDefs = new PIC16Section(getNamedSection("ExternalVarDefs"));
 }
 
 const char *PIC16TargetAsmInfo::getRomDirective(unsigned size) const
@@ -196,14 +198,28 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
   const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
-  if (!GV1 || ! GV->hasInitializer())
+
+  if (!GV)
     return TargetAsmInfo::SelectSectionForGlobal(GV1);
+
+  // Record Exteranl Var Decls.
+  if (GV->isDeclaration()) {
+    ExternalVarDecls->Items.push_back(GV);
+    return ExternalVarDecls->S_;
+  }
+    
+  assert (GV->hasInitializer() && "A def without initializer?");
 
   // First, if this is an automatic variable for a function, get the section
   // name for it and return.
   const std::string name = GV->getName();
   if (PAN::isLocalName(name)) {
     return getSectionForAuto(GV);
+  }
+
+  // Record Exteranl Var Defs.
+  if (GV->hasExternalLinkage() || GV->hasCommonLinkage()) {
+    ExternalVarDefs->Items.push_back(GV);
   }
 
   // See if this is an uninitialized global.
@@ -240,4 +256,6 @@ PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
   }
 
   delete ROSection;
+  delete ExternalVarDecls;
+  delete ExternalVarDefs;
 }
