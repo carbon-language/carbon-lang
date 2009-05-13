@@ -917,36 +917,38 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
     case '*': {
       ++numConversions;
       
-      if (!HasVAListArg && numConversions > numDataArgs) {
-        SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
+      if (!HasVAListArg) {
+        if (numConversions > numDataArgs) {
+          SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
 
-        if (Str[StrIdx-1] == '.')
-          Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg)
-            << OrigFormatExpr->getSourceRange();
-        else
-          Diag(Loc, diag::warn_printf_asterisk_width_missing_arg)
-            << OrigFormatExpr->getSourceRange();
+          if (Str[StrIdx-1] == '.')
+            Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg)
+              << OrigFormatExpr->getSourceRange();
+          else
+            Diag(Loc, diag::warn_printf_asterisk_width_missing_arg)
+              << OrigFormatExpr->getSourceRange();
+          
+          // Don't do any more checking.  We'll just emit spurious errors.
+          return;
+        }
+      
+        // Perform type checking on width/precision specifier.
+        const Expr *E = TheCall->getArg(format_idx+numConversions);
+        if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
+          if (BT->getKind() == BuiltinType::Int)
+            break;
         
-        // Don't do any more checking.  We'll just emit spurious errors.
-        return;
+        SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
+        
+        if (Str[StrIdx-1] == '.')
+          Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type)
+          << E->getType() << E->getSourceRange();
+        else
+          Diag(Loc, diag::warn_printf_asterisk_width_wrong_type)
+          << E->getType() << E->getSourceRange();
+        
+        break;        
       }
-      
-      // Perform type checking on width/precision specifier.
-      const Expr *E = TheCall->getArg(format_idx+numConversions);
-      if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
-        if (BT->getKind() == BuiltinType::Int)
-          break;
-
-      SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
-      
-      if (Str[StrIdx-1] == '.')
-        Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type)
-          << E->getType() << E->getSourceRange();
-      else
-        Diag(Loc, diag::warn_printf_asterisk_width_wrong_type)
-          << E->getType() << E->getSourceRange();
-      
-      break;
     }
       
     // Characters which can terminate a format conversion

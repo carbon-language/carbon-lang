@@ -125,3 +125,8 @@ void test9(char *P) {
   printf(P, 42);
   printf("%n", &x); // expected-warning {{use of '%n' in format string discouraged }}
 }
+
+void torture(va_list v8) {
+  vprintf ("%*.*d", v8);  // no-warning
+}
+
