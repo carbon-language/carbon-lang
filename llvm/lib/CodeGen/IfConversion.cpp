@@ -1187,15 +1187,10 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
   ToBBI.BB->splice(ToBBI.BB->end(),
                    FromBBI.BB, FromBBI.BB->begin(), FromBBI.BB->end());
 
-  // Redirect all branches to FromBB to ToBB.
-  std::vector<MachineBasicBlock *> Preds(FromBBI.BB->pred_begin(),
-                                         FromBBI.BB->pred_end());
-  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-    MachineBasicBlock *Pred = Preds[i];
-    if (Pred == ToBBI.BB)
-      continue;
-    Pred->ReplaceUsesOfBlockWith(FromBBI.BB, ToBBI.BB);
-  }
+  // This only works when FromBBI has no predecessors except ToBBI.
+  assert(FromBBI.BB->pred_size() == 1 &&
+         *FromBBI.BB->pred_begin() == ToBBI.BB &&
+         "if-converter not merging block into its unique predecessor");
  
   std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
                                          FromBBI.BB->succ_end());
