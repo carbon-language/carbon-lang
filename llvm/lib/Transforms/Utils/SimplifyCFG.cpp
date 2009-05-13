@@ -348,6 +348,20 @@ static Value *GetIfCondition(BasicBlock *BB,
   return 0;
 }
 
+/// findGlobalVariableBase - Recurse into a ConstantExpr to find the underlying
+/// GlobalVariable, if there is one.
+static GlobalVariable* findGlobalVariableBase(ConstantExpr* CE) {
+  if (isa<GlobalVariable>(CE))
+    return dyn_cast<GlobalVariable>(CE);
+  if (CE->getOpcode()==Instruction::GetElementPtr ||
+      CE->getOpcode()==Instruction::BitCast) {
+    if (isa<GlobalVariable>(CE->getOperand(0)))
+      return dyn_cast<GlobalVariable>(CE->getOperand(0));
+    if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(CE->getOperand(0)))
+      return findGlobalVariableBase(CE2);
+  }
+  return NULL;
+}
 
 /// DominatesMergePoint - If we have a merge point of an "if condition" as
 /// accepted above, return true if the specified value dominates the block.  We
@@ -395,10 +409,14 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
             !isa<Constant>(I->getOperand(0)))
           return false;
         // External weak globals may have address 0, so we can't load them.
-        if (GlobalVariable* GV= dyn_cast<GlobalVariable>(I->getOperand(0))) {
-          if (GV->hasExternalWeakLinkage())
-            return false;
-        }
+        GlobalVariable* GV = dyn_cast<GlobalVariable>(I->getOperand(0));
+        if (GV && GV->hasExternalWeakLinkage())
+          return false;
+        // The global may be buried within a ConstantExpr.
+        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I->getOperand(0)))
+          GV = findGlobalVariableBase(CE);
+        if (GV && GV->hasExternalWeakLinkage())
+          return false;
 
         // Finally, we have to check to make sure there are no instructions
         // before the load in its basic block, as we are going to hoist the loop
