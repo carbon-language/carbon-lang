@@ -5,7 +5,7 @@
 @A = external global [1000 x i8], align 32
 @P = external global [1000 x i8], align 32
 
-define void @foo(i32 %m) {
+define void @foo(i32 %m) nounwind {
 entry:
 	%tmp1 = icmp sgt i32 %m, 0
 	br i1 %tmp1, label %bb, label %return
