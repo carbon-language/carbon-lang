@@ -27,13 +27,13 @@ namespace llvm {
   namespace ARMISD {
     // ARM Specific DAG Nodes
     enum NodeType {
-      // Start the numbering where the builting ops and target ops leave off.
+      // Start the numbering where the builtin ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       Wrapper,      // Wrapper - A wrapper node for TargetConstantPool,
                     // TargetExternalSymbol, and TargetGlobalAddress.
       WrapperJT,    // WrapperJT - A wrapper node for TargetJumpTable
-      
+
       CALL,         // Function call.
       CALL_PRED,    // Function call that's predicable.
       CALL_NOLINK,  // Function call with branch not branch-and-link.
@@ -51,7 +51,7 @@ namespace llvm {
       FMSTAT,       // ARM fmstat instruction.
       CMOV,         // ARM conditional move instructions.
       CNEG,         // ARM conditional negate instructions.
-      
+
       FTOSI,        // FP to sint within a FP register.
       FTOUI,        // FP to uint within a FP register.
       SITOF,        // sint to FP within a FP register.
@@ -60,7 +60,7 @@ namespace llvm {
       SRL_FLAG,     // V,Flag = srl_flag X -> srl X, 1 + save carry out.
       SRA_FLAG,     // V,Flag = sra_flag X -> sra X, 1 + save carry out.
       RRX,          // V = RRX X, Flag     -> srl X, 1 + shift in carry flag.
-      
+
       FMRRD,        // double to two gprs.
       FMDRR,         // Two gprs to double.
 
@@ -73,7 +73,7 @@ namespace llvm {
 
   //===----------------------------------------------------------------------===//
   //  ARMTargetLowering - ARM Implementation of the TargetLowering interface
-  
+
   class ARMTargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
   public:
@@ -88,7 +88,7 @@ namespace llvm {
                                     SelectionDAG &DAG);
 
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
-    
+
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
@@ -97,7 +97,7 @@ namespace llvm {
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
-    
+
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
     /// can be legally represented as pre-indexed load / store address.
@@ -116,12 +116,12 @@ namespace llvm {
 
     virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,
-                                                APInt &KnownZero, 
+                                                APInt &KnownZero,
                                                 APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth) const;
     ConstraintType getConstraintType(const std::string &Constraint) const;
-    std::pair<unsigned, const TargetRegisterClass*> 
+    std::pair<unsigned, const TargetRegisterClass*>
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT VT) const;
     std::vector<unsigned>
@@ -137,7 +137,7 @@ namespace llvm {
                                               bool hasMemory,
                                               std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
-    
+
     virtual const ARMSubtarget* getSubtarget() {
       return Subtarget;
     }
