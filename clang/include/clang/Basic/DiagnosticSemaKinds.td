@@ -415,7 +415,7 @@ def warn_attribute_weak_on_local : Warning<
 def warn_attribute_weak_import_invalid_on_definition : Warning<
   "'weak_import' attribute cannot be specified on a definition">;
 def warn_attribute_wrong_decl_type : Warning<
-  "'%0' attribute only applies to %select{function|union|"
+  "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|parameter or Objective-C method}1 types">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
@@ -491,6 +491,9 @@ def note_attribute_overloadable_prev_overload : Note<
   "previous overload of function is here">;
 def err_attribute_overloadable_no_prototype : Error<
   "'overloadable' function %0 must have a prototype">;
+def warn_ns_attribute_wrong_return_type : Warning<
+    "%0 attribute only applies to functions or methods that "
+    "return a pointer or Objective-C object">;
 
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;

@@ -596,10 +596,16 @@ int RDar6320065_test() {
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 
+typedef NSString* MyStringTy;
+
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_retained));
-- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_retained));
+- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_retained)); // no-warning
+- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_retained)); // no-warning
+- (MyStringTy) returnsAnOwnedTypedString __attribute__((ns_returns_retained)); // no-warning
+- (int) returnsAnOwnedInt __attribute__((ns_returns_retained)); // expected-warning{{'ns_returns_retained' attribute only applies to functions or methods that return a pointer or Objective-C object}}
 @end
+
+static int ownership_attribute_doesnt_go_here __attribute__((ns_returns_retained)); // expected-warning{{'ns_returns_retained' attribute only applies to function or method types}}
 
 void test_attr_1(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
