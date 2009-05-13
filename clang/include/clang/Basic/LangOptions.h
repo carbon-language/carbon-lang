@@ -75,6 +75,8 @@ public:
   unsigned ObjCGCBitmapPrint : 1; // Enable printing of gc's bitmap layout
                                   // for __weak/__strong ivars.
 
+  unsigned AccessControl     : 1; // Whether C++ access control should 
+                                  // be enabled.
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -115,6 +117,9 @@ public:
     EmitAllDecls = 0;
     MathErrno = 1;
 
+    // FIXME: The default should be 1.
+    AccessControl = 0;
+    
     OverflowChecking = 0;
     ObjCGCBitmapPrint = 0;
 

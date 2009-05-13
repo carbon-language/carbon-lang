@@ -669,6 +669,11 @@ static llvm::cl::opt<std::string>
 MainFileName("main-file-name",
              llvm::cl::desc("Main file name to use for debug info"));
 
+// FIXME: Also add an "-fno-access-control" option.
+static llvm::cl::opt<bool>
+AccessControl("faccess-control", 
+              llvm::cl::desc("Enable C++ access control"));
+
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
   bool parse(llvm::cl::Option &O, const char *ArgName,
@@ -801,6 +806,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (EnableHeinousExtensions)
     Options.HeinousExtensions = 1;
 
+  if (AccessControl)
+    Options.AccessControl = 1;
+  
   Options.MathErrno = MathErrno;
 
   Options.InstantiationDepth = TemplateDepth;

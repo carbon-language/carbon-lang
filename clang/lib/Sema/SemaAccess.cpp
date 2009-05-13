@@ -53,6 +53,9 @@ bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
   assert(Paths.isRecordingPaths() &&
          "Can't check base class access without recorded paths");
   
+  if (!getLangOptions().AccessControl)
+    return false;
+  
   const CXXBaseSpecifier *InacessibleBase = 0;
 
   const CXXRecordDecl* CurrentClassDecl = 0;

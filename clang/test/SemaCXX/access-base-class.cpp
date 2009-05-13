@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -faccess-control -verify %s
 namespace T1 {
   
 class A { };

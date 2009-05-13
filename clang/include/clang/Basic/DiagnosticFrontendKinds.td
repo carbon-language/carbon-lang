@@ -127,6 +127,10 @@ def warn_macro_name_used_in_pch : Error<
 def warn_pch_compiler_options_mismatch : Error<
     "compiler options used when building the precompiled header differ from "
     "the options used when using the precompiled header">;
+def warn_pch_access_control : Error<
+    "C++ access control was %select{disabled|enabled}0 in the PCH file but "
+    "is currently %select{disabled|enabled}1">;
+
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;
 }

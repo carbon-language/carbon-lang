@@ -1520,6 +1520,7 @@ bool PCHReader::ParseLanguageOptions(
   PARSE_LANGOPT_IMPORTANT(PICLevel, diag::warn_pch_pic_level);
   PARSE_LANGOPT_IMPORTANT(GNUInline, diag::warn_pch_gnu_inline);
   PARSE_LANGOPT_IMPORTANT(NoInline, diag::warn_pch_no_inline);
+  PARSE_LANGOPT_IMPORTANT(AccessControl, diag::warn_pch_access_control);
   if ((LangOpts.getGCMode() != 0) != (Record[Idx] != 0)) {
     Diag(diag::warn_pch_gc_mode) 
       << (unsigned)Record[Idx] << LangOpts.getGCMode();

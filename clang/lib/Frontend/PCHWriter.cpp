@@ -546,6 +546,8 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.GNUInline); // Should GNU inline semantics be
                                   // used (instead of C99 semantics).
   Record.push_back(LangOpts.NoInline); // Should __NO_INLINE__ be defined.
+  Record.push_back(LangOpts.AccessControl); // Whether C++ access control should
+                                            // be enabled.
   Record.push_back(LangOpts.getGCMode());
   Record.push_back(LangOpts.getVisibilityMode());
   Record.push_back(LangOpts.InstantiationDepth);
