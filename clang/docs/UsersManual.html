@@ -622,6 +622,11 @@ file bugs; patches are welcome, though.</p>
 <li>clang does not support the Microsoft extension where anonymous
 record members can be declared using user defined typedefs.</li>
 
+<li>clang supports the Microsoft "#pragma pack" feature for
+controlling record layout. GCC also contains support for this feature,
+however where MSVC and GCC are incompatible clang follows the MSVC
+definition.</li>
+
 <!-- ======================================================================= -->
 <h2 id="objc">Objective-C Language Features</h2>
 <!-- ======================================================================= -->
