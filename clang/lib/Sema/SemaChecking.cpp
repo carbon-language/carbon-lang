@@ -144,11 +144,13 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__sync_fetch_and_or:
   case Builtin::BI__sync_fetch_and_and:
   case Builtin::BI__sync_fetch_and_xor:
+  case Builtin::BI__sync_fetch_and_nand:
   case Builtin::BI__sync_add_and_fetch:
   case Builtin::BI__sync_sub_and_fetch:
   case Builtin::BI__sync_and_and_fetch:
   case Builtin::BI__sync_or_and_fetch:
   case Builtin::BI__sync_xor_and_fetch:
+  case Builtin::BI__sync_nand_and_fetch:
   case Builtin::BI__sync_val_compare_and_swap:
   case Builtin::BI__sync_bool_compare_and_swap:
   case Builtin::BI__sync_lock_test_and_set:
@@ -225,12 +227,14 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     BUILTIN_ROW(__sync_fetch_and_or),
     BUILTIN_ROW(__sync_fetch_and_and),
     BUILTIN_ROW(__sync_fetch_and_xor),
+    BUILTIN_ROW(__sync_fetch_and_nand),
     
     BUILTIN_ROW(__sync_add_and_fetch),
     BUILTIN_ROW(__sync_sub_and_fetch),
     BUILTIN_ROW(__sync_and_and_fetch),
     BUILTIN_ROW(__sync_or_and_fetch),
     BUILTIN_ROW(__sync_xor_and_fetch),
+    BUILTIN_ROW(__sync_nand_and_fetch),
     
     BUILTIN_ROW(__sync_val_compare_and_swap),
     BUILTIN_ROW(__sync_bool_compare_and_swap),
@@ -265,24 +269,26 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   case Builtin::BI__sync_fetch_and_or:  BuiltinIndex = 2; break;
   case Builtin::BI__sync_fetch_and_and: BuiltinIndex = 3; break;
   case Builtin::BI__sync_fetch_and_xor: BuiltinIndex = 4; break;
+  case Builtin::BI__sync_fetch_and_nand:BuiltinIndex = 5; break;
       
-  case Builtin::BI__sync_add_and_fetch: BuiltinIndex = 5; break;
-  case Builtin::BI__sync_sub_and_fetch: BuiltinIndex = 6; break;
-  case Builtin::BI__sync_and_and_fetch: BuiltinIndex = 7; break;
-  case Builtin::BI__sync_or_and_fetch:  BuiltinIndex = 8; break;
-  case Builtin::BI__sync_xor_and_fetch: BuiltinIndex = 9; break;
+  case Builtin::BI__sync_add_and_fetch: BuiltinIndex = 6; break;
+  case Builtin::BI__sync_sub_and_fetch: BuiltinIndex = 7; break;
+  case Builtin::BI__sync_and_and_fetch: BuiltinIndex = 8; break;
+  case Builtin::BI__sync_or_and_fetch:  BuiltinIndex = 9; break;
+  case Builtin::BI__sync_xor_and_fetch: BuiltinIndex =10; break;
+  case Builtin::BI__sync_nand_and_fetch:BuiltinIndex =11; break;
       
   case Builtin::BI__sync_val_compare_and_swap:
-    BuiltinIndex = 10;
+    BuiltinIndex = 12;
     NumFixed = 2;
     break;
   case Builtin::BI__sync_bool_compare_and_swap:
-    BuiltinIndex = 11;
+    BuiltinIndex = 13;
     NumFixed = 2;
     break;
-  case Builtin::BI__sync_lock_test_and_set: BuiltinIndex = 12; break;
+  case Builtin::BI__sync_lock_test_and_set: BuiltinIndex = 14; break;
   case Builtin::BI__sync_lock_release:
-    BuiltinIndex = 13;
+    BuiltinIndex = 15;
     NumFixed = 0;
     break;
   }
