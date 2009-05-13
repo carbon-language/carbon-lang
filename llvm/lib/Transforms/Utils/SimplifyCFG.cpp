@@ -18,6 +18,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -393,6 +394,11 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
         if (!isa<AllocaInst>(I->getOperand(0)) &&
             !isa<Constant>(I->getOperand(0)))
           return false;
+        // External weak globals may have address 0, so we can't load them.
+        if (GlobalVariable* GV= dyn_cast<GlobalVariable>(I->getOperand(0))) {
+          if (GV->hasExternalWeakLinkage())
+            return false;
+        }
 
         // Finally, we have to check to make sure there are no instructions
         // before the load in its basic block, as we are going to hoist the loop
