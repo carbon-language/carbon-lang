@@ -121,7 +121,6 @@ MachineFunction::MachineFunction(const Function *F,
                   MachineRegisterInfo(*TM.getRegisterInfo());
   else
     RegInfo = 0;
-  HasBuiltinSetjmp = false;
   MFInfo = 0;
   FrameInfo = new (Allocator.Allocate<MachineFrameInfo>())
                   MachineFrameInfo(*TM.getFrameInfo());

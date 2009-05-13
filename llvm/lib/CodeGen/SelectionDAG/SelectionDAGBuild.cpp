@@ -3849,12 +3849,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::longjmp:
     return "_longjmp"+!TLI.usesUnderscoreLongJmp();
     break;
-  case Intrinsic::builtinsetjmp:
-    // Mark this function has using builtin_setjmp so context gets preserved
-    DAG.getMachineFunction().setHasBuiltinSetjmp(true);
-    // Turn it into a target intrinsic node for the codegen
-    visitTargetIntrinsic(I, Intrinsic);
-    return 0;
   case Intrinsic::memcpy: {
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
