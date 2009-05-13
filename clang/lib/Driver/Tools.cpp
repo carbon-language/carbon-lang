@@ -391,7 +391,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Arg *Unsupported;
   if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
-      (Unsupported = Args.getLastArg(options::OPT_MQ)))
+      (Unsupported = Args.getLastArg(options::OPT_MQ)) ||
+      (Unsupported = Args.getLastArg(options::OPT_iframework)))
     D.Diag(clang::diag::err_drv_unsupported_opt)
       << Unsupported->getOption().getName();
 
