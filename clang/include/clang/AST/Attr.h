@@ -66,6 +66,7 @@ public:
     Pure,
     Regparm,
     Section,
+    Sentinel,
     StdCall,
     TransparentUnion,
     Unavailable,
@@ -357,6 +358,23 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) { return A->getKind() == Format; }
   static bool classof(const FormatAttr *A) { return true; }
+};
+
+class SentinelAttr : public Attr {
+  int sentinel, NullPos;
+public:
+  SentinelAttr(int sentinel_val, int nullPos) : Attr(Sentinel),
+               sentinel(sentinel_val), NullPos(nullPos) {}
+  int getSentinel() const { return sentinel; }
+  int getNullPos() const { return NullPos; }
+
+  virtual Attr *clone(ASTContext &C) const {
+    return ::new (C) SentinelAttr(sentinel, NullPos);
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == Sentinel; }
+  static bool classof(const SentinelAttr *A) { return true; }
 };
 
 class VisibilityAttr : public Attr {

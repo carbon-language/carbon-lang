@@ -626,6 +626,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     return true;
   }
   
+  if (Method)
+    DiagnoseSentinelCalls(Method, receiverLoc, ArgExprs, NumArgs);
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                 lbrac, rbrac, returnType))
     return true;

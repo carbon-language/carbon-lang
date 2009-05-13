@@ -452,6 +452,13 @@ Attr *PCHReader::ReadAttributes() {
       New = ::new (*Context) FormatAttr(Type, FormatIdx, FirstArg);
       break;
     }
+        
+    case Attr::Sentinel: {
+      int sentinel = Record[Idx++];
+      int nullPos = Record[Idx++];
+      New = ::new (*Context) SentinelAttr(sentinel, nullPos);
+      break;
+    }
 
     SIMPLE_ATTR(GNUInline);
     

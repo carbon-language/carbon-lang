@@ -88,6 +88,15 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   return false;
 }
 
+/// DiagnoseSentinelCalls - This routine checks on method dispatch calls
+/// (and other functions in future), which have been declared with sentinel 
+/// attribute. It warns if call does not have the sentinel argument.
+///
+void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
+                                 Expr **Args, unsigned NumArgs)
+{
+}
+
 SourceRange Sema::getExprRange(ExprTy *E) const {
   Expr *Ex = (Expr *)E;
   return Ex? Ex->getSourceRange() : SourceRange();

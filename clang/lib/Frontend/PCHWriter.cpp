@@ -1556,6 +1556,13 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       break;
     }
 
+    case Attr::Sentinel : {
+      const SentinelAttr *Sentinel = cast<SentinelAttr>(Attr);
+      Record.push_back(Sentinel->getSentinel());
+      Record.push_back(Sentinel->getNullPos());
+      break;
+    }
+        
     case Attr::GNUInline:
     case Attr::IBOutletKind:
     case Attr::NoReturn:

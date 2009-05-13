@@ -1274,6 +1274,8 @@ public:
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD, 
                                         ObjCMethodDecl *Getter,
                                         SourceLocation Loc);
+  void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
+                             Expr **Args, unsigned NumArgs);
 
   // Primary Expressions.
   virtual SourceRange getExprRange(ExprTy *E) const;
