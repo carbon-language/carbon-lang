@@ -439,6 +439,9 @@ public:
 
   ObjCSummaryKey(const ObjCInterfaceDecl* d, Selector s)
     : II(d ? d->getIdentifier() : 0), S(s) {}
+
+  ObjCSummaryKey(const ObjCInterfaceDecl* d, IdentifierInfo *ii, Selector s)
+    : II(d ? d->getIdentifier() : ii), S(s) {}
   
   ObjCSummaryKey(Selector s)
     : II(0), S(s) {}
@@ -1265,7 +1268,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   updateSummaryFromAnnotations(*Summ, MD);
   
   // Memoize the summary.
-  ObjCMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
+  ObjCMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
   return Summ;
 }
 
@@ -1288,7 +1291,7 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
   updateSummaryFromAnnotations(*Summ, MD);
 
   // Memoize the summary.
-  ObjCClassMethodSummaries[ObjCSummaryKey(ClsName, S)] = Summ;
+  ObjCClassMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
   return Summ;
 }
 
@@ -2926,7 +2929,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
   if (Expr* Receiver = ME->getReceiver()) {
     // We need the type-information of the tracked receiver object
     // Retrieve it from the state.
-    ObjCInterfaceDecl* ID = 0;
+    const ObjCInterfaceDecl* ID = 0;
 
     // FIXME: Wouldn't it be great if this code could be reduced?  It's just
     // a chain of lookups.
@@ -2948,7 +2951,16 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
         }
       }
     }
-    
+
+    // FIXME: this is a hack.  This may or may not be the actual method
+    //  that is called.
+    if (!ID) {
+      if (const PointerType *PT = Receiver->getType()->getAsPointerType())
+        if (const ObjCInterfaceType *p =
+            PT->getPointeeType()->getAsObjCInterfaceType())
+          ID = p->getDecl();
+    }
+
     // FIXME: The receiver could be a reference to a class, meaning that
     //  we should use the class method.
     Summ = Summaries.getInstanceMethodSummary(ME, ID);
