@@ -495,7 +495,7 @@ fi
 dnl Specify extra build options
 AC_ARG_WITH(extra-options,
   AS_HELP_STRING([--with-extra-options],
-                 [Specify addtional options to compile LLVM with]),,
+                 [Specify additional options to compile LLVM with]),,
                  withval=default)
 case "$withval" in
   default) EXTRA_OPTIONS= ;;

@@ -1569,7 +1569,7 @@ Optional Packages:
                           searches PATH)
   --with-llvmgxx          Specify location of llvm-g++ driver (default
                           searches PATH)
-  --with-extra-options    Specify addtional options to compile LLVM with
+  --with-extra-options    Specify additional options to compile LLVM with
   --with-ocaml-libdir     Specify install location for ocaml bindings (default
                           is stdlib)
   --with-binutils-include Specify path to binutils/include/ containing
