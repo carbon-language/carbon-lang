@@ -1116,7 +1116,7 @@ struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
     Value *F = Intrinsic::getDeclaration(Callee->getParent(),
                                          Intrinsic::cttz, &ArgType, 1);
     Value *V = B.CreateCall(F, Op, "cttz");
-    V = B.CreateAdd(V, ConstantInt::get(Type::Int32Ty, 1), "tmp");
+    V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1), "tmp");
     V = B.CreateIntCast(V, Type::Int32Ty, false, "tmp");
     
     Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType), "tmp");

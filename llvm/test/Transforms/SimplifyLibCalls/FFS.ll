@@ -28,3 +28,9 @@ define i32 @main() {
 	ret i32 %rslt5
 }
 
+
+; PR4206
+define i32 @a(i64) nounwind {
+        %2 = call i32 @ffsll(i64 %0)            ; <i32> [#uses=1]
+        ret i32 %2
+}
