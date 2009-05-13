@@ -553,7 +553,6 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   // Then scan all the instructions.
   BBI.NonPredSize = 0;
   BBI.ClobbersPred = false;
-  bool SeenCondBr = false;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
     const TargetInstrDesc &TID = I->getDesc();
@@ -579,8 +578,6 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
       // Predicate modification instruction should end the block (except for
       // already predicated instructions and end of block branches).
       if (isCondBr) {
-        SeenCondBr = true;
-
         // A conditional branch is not predicable, but it may be eliminated.
         continue;
       }
