@@ -1133,9 +1133,14 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls)
 /// getConstantArrayType - Return the unique reference to the type for an 
 /// array of the specified element type.
 QualType ASTContext::getConstantArrayType(QualType EltTy, 
-                                          const llvm::APInt &ArySize,
+                                          const llvm::APInt &ArySizeIn,
                                           ArrayType::ArraySizeModifier ASM,
                                           unsigned EltTypeQuals) {
+  // Convert the array size into a canonical width matching the pointer size for
+  // the target.
+  llvm::APInt ArySize(ArySizeIn);
+  ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
+  
   llvm::FoldingSetNodeID ID;
   ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, EltTypeQuals);
       
