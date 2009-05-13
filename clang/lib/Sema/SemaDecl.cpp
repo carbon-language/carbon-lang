@@ -2076,13 +2076,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
     
     // This is a C++ method declaration.
-    
-    // FIXME: All inline method declarations are semantically inline.  We
-    // should add a new bit to keep track of whether they were declared with an
-    // inline keyword as well.
-    if (CurContext == DC && IsFunctionDefinition)
-      isInline = true;
-    
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R,
                                   (SC == FunctionDecl::Static), isInline);
