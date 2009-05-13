@@ -61,7 +61,7 @@ int f5(void) {
 int ret_uninit() {
   int i;
   int *p = &i;
-  return *p;  // expected-warning{{Uninitialized or undefined return value returned to caller.}}
+  return *p;  // expected-warning{{Uninitialized or undefined value returned to caller.}}
 }
 
 // <rdar://problem/6451816>

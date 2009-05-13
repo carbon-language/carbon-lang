@@ -31,7 +31,8 @@ void createFoo2() {
 }
 
 void createFoo3() {
-  MyClass *obj = 0;  
+  MyClass *obj;
+  obj = 0;  
   
   long long ll = [obj longlongM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
 }
