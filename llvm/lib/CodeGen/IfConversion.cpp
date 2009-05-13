@@ -1212,7 +1212,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
   }
 
   // Now FromBBI always falls through to the next block!
-  if (NBB)
+  if (NBB && !FromBBI.BB->isSuccessor(NBB))
     FromBBI.BB->addSuccessor(NBB);
 
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
