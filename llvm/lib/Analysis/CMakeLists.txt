@@ -14,6 +14,7 @@ add_llvm_library(LLVMAnalysis
   InstCount.cpp
   Interval.cpp
   IntervalPartition.cpp
+  IVUsers.cpp
   LibCallAliasAnalysis.cpp
   LibCallSemantics.cpp
   LiveValues.cpp
