@@ -620,6 +620,13 @@ public:
     return allowUnalignedMemoryAccesses;
   }
 
+  /// This function returns true if the target would benefit from code placement
+  /// optimization.
+  /// @brief Determine if the target should perform code placement optimization.
+  bool shouldOptimizeCodePlacement() const {
+    return benefitFromCodePlacementOpt;
+  }
+
   /// getOptimalMemOpType - Returns the target specific optimal type for load
   /// and store operations as a result of memset, memcpy, and memmove lowering.
   /// It returns MVT::iAny if SelectionDAG should be responsible for
@@ -1652,6 +1659,10 @@ protected:
   /// operations when copying small arrays and other similar tasks.
   /// @brief Indicate whether the target permits unaligned memory accesses.
   bool allowUnalignedMemoryAccesses;
+
+  /// This field specifies whether the target can benefit from code placement
+  /// optimization.
+  bool benefitFromCodePlacementOpt;
 };
 } // end llvm namespace
 

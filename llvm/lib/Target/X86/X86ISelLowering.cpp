@@ -844,6 +844,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   maxStoresPerMemmove = 3; // For @llvm.memmove -> sequence of stores
   allowUnalignedMemoryAccesses = true; // x86 supports it!
   setPrefLoopAlignment(16);
+  benefitFromCodePlacementOpt = true;
 }
 
 

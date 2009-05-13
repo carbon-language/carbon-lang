@@ -104,6 +104,9 @@ FunctionPass *llvm::createCodePlacementOptPass() {
 ///       jcc <cond> C, [exit]
 ///
 bool CodePlacementOpt::OptimizeIntraLoopEdges() {
+  if (!TLI->shouldOptimizeCodePlacement())
+    return false;
+
   bool Changed = false;
   for (unsigned i = 0, e = UncondJmpMBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = UncondJmpMBBs[i].first;

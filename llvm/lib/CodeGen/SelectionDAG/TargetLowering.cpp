@@ -483,6 +483,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
   allowUnalignedMemoryAccesses = false;
+  benefitFromCodePlacementOpt = false;
   UseUnderscoreSetJmp = false;
   UseUnderscoreLongJmp = false;
   SelectIsExpensive = false;

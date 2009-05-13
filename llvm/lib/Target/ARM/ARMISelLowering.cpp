@@ -288,6 +288,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setIfCvtDupBlockSizeLimit(Subtarget->isThumb() ? 0 : 2);
 
   maxStoresPerMemcpy = 1;   //// temporary - rewrite interface to use type
+  benefitFromCodePlacementOpt = true;
 }
 
 const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
