@@ -218,7 +218,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   Loop *UseLoop = LI->getLoopFor(I->getParent());
   SCEVHandle Start = SE->getIntegerSCEV(0, ISE->getType());
   SCEVHandle Stride = Start;
-  bool isSigned;
+  bool isSigned = false; // Arbitrary initial value - pacifies compiler.
 
   if (!getSCEVStartAndStride(ISE, L, UseLoop, Start, Stride, isSigned, SE, DT))
     return false;  // Non-reducible symbolic expression, bail out.
