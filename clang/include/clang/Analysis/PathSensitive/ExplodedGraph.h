@@ -123,6 +123,9 @@ public:
   /// getLocation - Returns the edge associated with the given node.
   ProgramPoint getLocation() const { return Location; }
   
+  template <typename T>
+  const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }
+  
   unsigned succ_size() const { return Succs.size(); }
   unsigned pred_size() const { return Preds.size(); }
   bool succ_empty() const { return Succs.empty(); }
@@ -181,6 +184,14 @@ public:
   
   void addPredecessor(ExplodedNode* V) {
     ExplodedNodeImpl::addPredecessor(V);
+  }
+  
+  ExplodedNode* getFirstPred() {
+    return pred_empty() ? NULL : *(pred_begin());
+  }
+  
+  const ExplodedNode* getFirstPred() const {
+    return const_cast<ExplodedNode*>(this)->getFirstPred();
   }
   
   // Iterators over successor and predecessor vertices.
