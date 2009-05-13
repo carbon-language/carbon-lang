@@ -22,7 +22,7 @@ namespace dwarf {
 /// TagString - Return the string for the specified tag.
 ///
 const char *TagString(unsigned Tag) {
-  switch(Tag) {
+  switch (Tag) {
     case DW_TAG_array_type:                return "DW_TAG_array_type";
     case DW_TAG_class_type:                return "DW_TAG_class_type";
     case DW_TAG_entry_point:               return "DW_TAG_entry_point";
@@ -90,7 +90,7 @@ const char *TagString(unsigned Tag) {
 /// ChildrenString - Return the string for the specified children flag.
 ///
 const char *ChildrenString(unsigned Children) {
-  switch(Children) {
+  switch (Children) {
     case DW_CHILDREN_no:                   return "CHILDREN_no";
     case DW_CHILDREN_yes:                  return "CHILDREN_yes";
   }
@@ -101,7 +101,7 @@ const char *ChildrenString(unsigned Children) {
 /// AttributeString - Return the string for the specified attribute.
 ///
 const char *AttributeString(unsigned Attribute) {
-  switch(Attribute) {
+  switch (Attribute) {
     case DW_AT_sibling:                    return "DW_AT_sibling";
     case DW_AT_location:                   return "DW_AT_location";
     case DW_AT_name:                       return "DW_AT_name";
@@ -210,7 +210,7 @@ const char *AttributeString(unsigned Attribute) {
 /// FormEncodingString - Return the string for the specified form encoding.
 ///
 const char *FormEncodingString(unsigned Encoding) {
-  switch(Encoding) {
+  switch (Encoding) {
     case DW_FORM_addr:                     return "FORM_addr";
     case DW_FORM_block2:                   return "FORM_block2";
     case DW_FORM_block4:                   return "FORM_block4";
@@ -240,7 +240,7 @@ const char *FormEncodingString(unsigned Encoding) {
 /// OperationEncodingString - Return the string for the specified operation
 /// encoding.
 const char *OperationEncodingString(unsigned Encoding) {
-  switch(Encoding) {
+  switch (Encoding) {
     case DW_OP_addr:                       return "OP_addr";
     case DW_OP_deref:                      return "OP_deref";
     case DW_OP_const1u:                    return "OP_const1u";
@@ -315,7 +315,7 @@ const char *OperationEncodingString(unsigned Encoding) {
 /// AttributeEncodingString - Return the string for the specified attribute
 /// encoding.
 const char *AttributeEncodingString(unsigned Encoding) {
-  switch(Encoding) {
+  switch (Encoding) {
     case DW_ATE_address:                   return "ATE_address";
     case DW_ATE_boolean:                   return "ATE_boolean";
     case DW_ATE_complex_float:             return "ATE_complex_float";
@@ -341,7 +341,7 @@ const char *AttributeEncodingString(unsigned Encoding) {
 /// DecimalSignString - Return the string for the specified decimal sign
 /// attribute.
 const char *DecimalSignString(unsigned Sign) {
-  switch(Sign) {
+  switch (Sign) {
     case DW_DS_unsigned:                   return "DS_unsigned";
     case DW_DS_leading_overpunch:          return "DS_leading_overpunch";
     case DW_DS_trailing_overpunch:         return "DS_trailing_overpunch";
@@ -355,7 +355,7 @@ const char *DecimalSignString(unsigned Sign) {
 /// EndianityString - Return the string for the specified endianity.
 ///
 const char *EndianityString(unsigned Endian) {
-  switch(Endian) {
+  switch (Endian) {
     case DW_END_default:                   return "END_default";
     case DW_END_big:                       return "END_big";
     case DW_END_little:                    return "END_little";
@@ -369,7 +369,7 @@ const char *EndianityString(unsigned Endian) {
 /// AccessibilityString - Return the string for the specified accessibility.
 ///
 const char *AccessibilityString(unsigned Access) {
-  switch(Access) {
+  switch (Access) {
     // Accessibility codes
     case DW_ACCESS_public:                 return "ACCESS_public";
     case DW_ACCESS_protected:              return "ACCESS_protected";
@@ -382,7 +382,7 @@ const char *AccessibilityString(unsigned Access) {
 /// VisibilityString - Return the string for the specified visibility.
 ///
 const char *VisibilityString(unsigned Visibility) {
-  switch(Visibility) {
+  switch (Visibility) {
     case DW_VIS_local:                     return "VIS_local";
     case DW_VIS_exported:                  return "VIS_exported";
     case DW_VIS_qualified:                 return "VIS_qualified";
@@ -394,7 +394,7 @@ const char *VisibilityString(unsigned Visibility) {
 /// VirtualityString - Return the string for the specified virtuality.
 ///
 const char *VirtualityString(unsigned Virtuality) {
-  switch(Virtuality) {
+  switch (Virtuality) {
     case DW_VIRTUALITY_none:               return "VIRTUALITY_none";
     case DW_VIRTUALITY_virtual:            return "VIRTUALITY_virtual";
     case DW_VIRTUALITY_pure_virtual:       return "VIRTUALITY_pure_virtual";
@@ -406,7 +406,7 @@ const char *VirtualityString(unsigned Virtuality) {
 /// LanguageString - Return the string for the specified language.
 ///
 const char *LanguageString(unsigned Language) {
-  switch(Language) {
+  switch (Language) {
     case DW_LANG_C89:                      return "LANG_C89";
     case DW_LANG_C:                        return "LANG_C";
     case DW_LANG_Ada83:                    return "LANG_Ada83";
@@ -436,7 +436,7 @@ const char *LanguageString(unsigned Language) {
 /// CaseString - Return the string for the specified identifier case.
 ///
 const char *CaseString(unsigned Case) {
-   switch(Case) {
+   switch (Case) {
     case DW_ID_case_sensitive:             return "ID_case_sensitive";
     case DW_ID_up_case:                    return "ID_up_case";
     case DW_ID_down_case:                  return "ID_down_case";
@@ -449,7 +449,7 @@ const char *CaseString(unsigned Case) {
 /// ConventionString - Return the string for the specified calling convention.
 ///
 const char *ConventionString(unsigned Convention) {
-   switch(Convention) {
+   switch (Convention) {
     case DW_CC_normal:                     return "CC_normal";
     case DW_CC_program:                    return "CC_program";
     case DW_CC_nocall:                     return "CC_nocall";
@@ -463,7 +463,7 @@ const char *ConventionString(unsigned Convention) {
 /// InlineCodeString - Return the string for the specified inline code.
 ///
 const char *InlineCodeString(unsigned Code) {
-   switch(Code) {
+   switch (Code) {
     case DW_INL_not_inlined:               return "INL_not_inlined";
     case DW_INL_inlined:                   return "INL_inlined";
     case DW_INL_declared_not_inlined:      return "INL_declared_not_inlined";
@@ -476,7 +476,7 @@ const char *InlineCodeString(unsigned Code) {
 /// ArrayOrderString - Return the string for the specified array order.
 ///
 const char *ArrayOrderString(unsigned Order) {
-   switch(Order) {
+   switch (Order) {
     case DW_ORD_row_major:                 return "ORD_row_major";
     case DW_ORD_col_major:                 return "ORD_col_major";
   }
@@ -487,7 +487,7 @@ const char *ArrayOrderString(unsigned Order) {
 /// DiscriminantString - Return the string for the specified discriminant
 /// descriptor.
 const char *DiscriminantString(unsigned Discriminant) {
-   switch(Discriminant) {
+   switch (Discriminant) {
     case DW_DSC_label:                     return "DSC_label";
     case DW_DSC_range:                     return "DSC_range";
   }
@@ -498,7 +498,7 @@ const char *DiscriminantString(unsigned Discriminant) {
 /// LNStandardString - Return the string for the specified line number standard.
 ///
 const char *LNStandardString(unsigned Standard) {
-   switch(Standard) {
+   switch (Standard) {
     case DW_LNS_copy:                      return "LNS_copy";
     case DW_LNS_advance_pc:                return "LNS_advance_pc";
     case DW_LNS_advance_line:              return "LNS_advance_line";
@@ -519,7 +519,7 @@ const char *LNStandardString(unsigned Standard) {
 /// LNExtendedString - Return the string for the specified line number extended
 /// opcode encodings.
 const char *LNExtendedString(unsigned Encoding) {
-   switch(Encoding) {
+   switch (Encoding) {
     // Line Number Extended Opcode Encodings
     case DW_LNE_end_sequence:              return "LNE_end_sequence";
     case DW_LNE_set_address:               return "LNE_set_address";
@@ -534,7 +534,7 @@ const char *LNExtendedString(unsigned Encoding) {
 /// MacinfoString - Return the string for the specified macinfo type encodings.
 ///
 const char *MacinfoString(unsigned Encoding) {
-   switch(Encoding) {
+   switch (Encoding) {
     // Macinfo Type Encodings
     case DW_MACINFO_define:                return "MACINFO_define";
     case DW_MACINFO_undef:                 return "MACINFO_undef";
@@ -549,7 +549,7 @@ const char *MacinfoString(unsigned Encoding) {
 /// CallFrameString - Return the string for the specified call frame instruction
 /// encodings.
 const char *CallFrameString(unsigned Encoding) {
-   switch(Encoding) {
+   switch (Encoding) {
     case DW_CFA_advance_loc:               return "CFA_advance_loc";
     case DW_CFA_offset:                    return "CFA_offset";
     case DW_CFA_restore:                   return "CFA_restore";

@@ -1060,7 +1060,7 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
   /* Current callers never pass this so we don't handle it.  */
   assert(lost_fraction != lfExactlyZero);
 
-  switch(rounding_mode) {
+  switch (rounding_mode) {
   default:
     assert(0);
 
@@ -1199,7 +1199,7 @@ APFloat::normalize(roundingMode rounding_mode,
 APFloat::opStatus
 APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 {
-  switch(convolve(category, rhs.category)) {
+  switch (convolve(category, rhs.category)) {
   default:
     assert(0);
 
@@ -1323,7 +1323,7 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
 APFloat::opStatus
 APFloat::multiplySpecials(const APFloat &rhs)
 {
-  switch(convolve(category, rhs.category)) {
+  switch (convolve(category, rhs.category)) {
   default:
     assert(0);
 
@@ -1365,7 +1365,7 @@ APFloat::multiplySpecials(const APFloat &rhs)
 APFloat::opStatus
 APFloat::divideSpecials(const APFloat &rhs)
 {
-  switch(convolve(category, rhs.category)) {
+  switch (convolve(category, rhs.category)) {
   default:
     assert(0);
 
@@ -1407,7 +1407,7 @@ APFloat::divideSpecials(const APFloat &rhs)
 APFloat::opStatus
 APFloat::modSpecials(const APFloat &rhs)
 {
-  switch(convolve(category, rhs.category)) {
+  switch (convolve(category, rhs.category)) {
   default:
     assert(0);
 
@@ -1684,7 +1684,7 @@ APFloat::compare(const APFloat &rhs) const
   assertArithmeticOK(*semantics);
   assert(semantics == rhs.semantics);
 
-  switch(convolve(category, rhs.category)) {
+  switch (convolve(category, rhs.category)) {
   default:
     assert(0);
 
