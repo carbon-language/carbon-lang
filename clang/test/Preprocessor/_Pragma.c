@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E 2>&1 | grep 'system_header ignored in main file'
+// RUN: clang-cc %s -E -verify
 
-_Pragma ("GCC system_header")
+_Pragma ("GCC system_header")  // expected-warning {{system_header ignored in main file}}
 
