@@ -316,7 +316,7 @@ public:
   // indicates that there is potentially an incoming flag value (if Flag is not
   // null) and that there should be a flag result.
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N,
-                         SDValue Flag) {
+                       SDValue Flag) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
     return getNode(ISD::CopyToReg, dl, VTs, Ops, Flag.getNode() ? 4 : 3);
