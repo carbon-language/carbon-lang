@@ -9578,6 +9578,16 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 /// the heavy lifting.
 ///
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+  // If the caller function is nounwind, mark the call as nounwind, even if the
+  // callee isn't.
+  if (CI.getParent()->getParent()->doesNotThrow() &&
+      !CI.doesNotThrow()) {
+    CI.setDoesNotThrow();
+    return &CI;
+  }
+  
+  
+  
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(&CI);
   if (!II) return visitCallSite(&CI);
   
