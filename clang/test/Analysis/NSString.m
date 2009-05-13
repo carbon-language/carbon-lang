@@ -183,6 +183,33 @@ void f13(void) {
   NSString *str = [[NSString alloc] init];
   return [str autorelease]; // no-warning
 }
+- (void)m1
+{
+ NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+ [s retain];
+ [s autorelease];
+}
+- (void)m2
+{
+ NSString *s = [[[NSString alloc] init] autorelease]; // expected-warning{{leak}}
+ [s retain];
+}
+- (void)m3
+{
+ NSString *s = [[[NSString alloc] init] autorelease];
+ [s retain];
+ [s autorelease];
+}
+- (void)m4
+{
+ NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+ [s retain];
+}
+- (void)m5
+{
+ NSString *s = [[NSString alloc] init];
+ [s autorelease];
+}
 @end
 
 @interface C1 : NSObject {}
@@ -298,8 +325,6 @@ void test_isTrackedObjectType(void) {
   return CFStringCreateWithFormat(kCFAllocatorDefault, ((void*)0), ((CFStringRef) __builtin___CFStringMakeConstantString ("" "%d" "")), 100); // expected-warning{{leak}}
 }
 
-
-
 // Test @synchronized
 void test_synchronized(id x) {
   @synchronized(x) {
@@ -307,4 +332,4 @@ void test_synchronized(id x) {
   }
 }
 
-// Test return from method starting with 'new' or 'copy'
+

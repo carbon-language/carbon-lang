@@ -2154,6 +2154,9 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
                                             const ExplodedNode<GRState>* PrevN,
                                             BugReporterContext& BRC) {
   
+  if (!isa<PostStmt>(N->getLocation()))
+    return NULL;
+  
   // Check if the type state has changed.
   GRStateManager &StMgr = BRC.getStateManager();
   GRStateRef PrevSt(PrevN->getState(), StMgr);
@@ -2373,8 +2376,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   
   if (os.str().empty())
     return 0; // We have nothing to say!
-  
-  Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
+
+  Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
   PathDiagnosticLocation Pos(S, BRC.getSourceManager());
   PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
   
