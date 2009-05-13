@@ -446,6 +446,21 @@ namespace llvm {
     /// extended, it is sign extended.
     SCEVHandle getTruncateOrSignExtend(const SCEVHandle &V, const Type *Ty);
 
+    /// getNoopOrZeroExtend - Return a SCEV corresponding to a conversion of
+    /// the input value to the specified type.  If the type must be extended,
+    /// it is zero extended.  The conversion must not be narrowing.
+    SCEVHandle getNoopOrZeroExtend(const SCEVHandle &V, const Type *Ty);
+
+    /// getNoopOrSignExtend - Return a SCEV corresponding to a conversion of
+    /// the input value to the specified type.  If the type must be extended,
+    /// it is sign extended.  The conversion must not be narrowing.
+    SCEVHandle getNoopOrSignExtend(const SCEVHandle &V, const Type *Ty);
+
+    /// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
+    /// input value to the specified type.  The conversion must not be
+    /// widening.
+    SCEVHandle getTruncateOrNoop(const SCEVHandle &V, const Type *Ty);
+
     /// getIntegerSCEV - Given an integer or FP type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
     SCEVHandle getIntegerSCEV(int Val, const Type *Ty);

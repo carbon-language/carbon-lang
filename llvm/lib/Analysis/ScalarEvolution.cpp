@@ -1807,6 +1807,53 @@ ScalarEvolution::getTruncateOrSignExtend(const SCEVHandle &V,
   return getSignExtendExpr(V, Ty);
 }
 
+/// getNoopOrZeroExtend - Return a SCEV corresponding to a conversion of the
+/// input value to the specified type.  If the type must be extended, it is zero
+/// extended.  The conversion must not be narrowing.
+SCEVHandle
+ScalarEvolution::getNoopOrZeroExtend(const SCEVHandle &V, const Type *Ty) {
+  const Type *SrcTy = V->getType();
+  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
+         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+         "Cannot noop or zero extend with non-integer arguments!");
+  assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
+         "getNoopOrZeroExtend cannot truncate!");
+  if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
+    return V;  // No conversion
+  return getZeroExtendExpr(V, Ty);
+}
+
+/// getNoopOrSignExtend - Return a SCEV corresponding to a conversion of the
+/// input value to the specified type.  If the type must be extended, it is sign
+/// extended.  The conversion must not be narrowing.
+SCEVHandle
+ScalarEvolution::getNoopOrSignExtend(const SCEVHandle &V, const Type *Ty) {
+  const Type *SrcTy = V->getType();
+  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
+         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+         "Cannot noop or sign extend with non-integer arguments!");
+  assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
+         "getNoopOrSignExtend cannot truncate!");
+  if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
+    return V;  // No conversion
+  return getSignExtendExpr(V, Ty);
+}
+
+/// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
+/// input value to the specified type.  The conversion must not be widening.
+SCEVHandle
+ScalarEvolution::getTruncateOrNoop(const SCEVHandle &V, const Type *Ty) {
+  const Type *SrcTy = V->getType();
+  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
+         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+         "Cannot truncate or noop with non-integer arguments!");
+  assert(getTypeSizeInBits(SrcTy) >= getTypeSizeInBits(Ty) &&
+         "getTruncateOrNoop cannot extend!");
+  if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
+    return V;  // No conversion
+  return getTruncateExpr(V, Ty);
+}
+
 /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value for
 /// the specified instruction and replaces any references to the symbolic value
 /// SymName with the specified value.  This is used during PHI resolution.
