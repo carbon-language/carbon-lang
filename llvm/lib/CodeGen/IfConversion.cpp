@@ -947,9 +947,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     // Predicate the 'true' block after removing its branch.
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
     PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond);
-  }
 
-  if (!DupBB) {
     // Now merge the entry of the triangle with the true block.
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     MergeBlocks(BBI, *CvtBBI);
