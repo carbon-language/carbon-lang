@@ -1895,6 +1895,19 @@ public:
                                    AttributeList *Attr,
                                  MultiTemplateParamsArg TemplateParameterLists);
 
+  virtual DeclResult
+  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+                             unsigned TagSpec, 
+                             SourceLocation KWLoc,
+                             const CXXScopeSpec &SS,
+                             TemplateTy Template,
+                             SourceLocation TemplateNameLoc,
+                             SourceLocation LAngleLoc,
+                             ASTTemplateArgsPtr TemplateArgs,
+                             SourceLocation *TemplateArgLocs,
+                             SourceLocation RAngleLoc,
+                             AttributeList *Attr);
+
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,
@@ -2092,7 +2105,8 @@ public:
   bool
   InstantiateClass(SourceLocation PointOfInstantiation,
                    CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
-                   const TemplateArgumentList &TemplateArgs);
+                   const TemplateArgumentList &TemplateArgs,
+                   bool ExplicitInstantiation);
 
   bool 
   InstantiateClassTemplateSpecialization(

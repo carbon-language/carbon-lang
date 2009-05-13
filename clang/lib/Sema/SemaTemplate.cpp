@@ -2141,6 +2141,141 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   return DeclPtrTy::make(Specialization);
 }
 
+Sema::DeclResult
+Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+                                 unsigned TagSpec, 
+                                 SourceLocation KWLoc,
+                                 const CXXScopeSpec &SS,
+                                 TemplateTy TemplateD,
+                                 SourceLocation TemplateNameLoc,
+                                 SourceLocation LAngleLoc,
+                                 ASTTemplateArgsPtr TemplateArgsIn,
+                                 SourceLocation *TemplateArgLocs,
+                                 SourceLocation RAngleLoc,
+                                 AttributeList *Attr) {
+  // Find the class template we're specializing
+  TemplateName Name = TemplateD.getAsVal<TemplateName>();
+  ClassTemplateDecl *ClassTemplate 
+    = cast<ClassTemplateDecl>(Name.getAsTemplateDecl());
+
+  // Check that the specialization uses the same tag kind as the
+  // original template.
+  TagDecl::TagKind Kind;
+  switch (TagSpec) {
+  default: assert(0 && "Unknown tag type!");
+  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
+  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
+  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
+  }
+  if (!isAcceptableTagRedeclaration(
+                              ClassTemplate->getTemplatedDecl()->getTagKind(),
+                                    Kind)) {
+    Diag(KWLoc, diag::err_use_with_wrong_tag) 
+      << ClassTemplate
+      << CodeModificationHint::CreateReplacement(KWLoc, 
+                            ClassTemplate->getTemplatedDecl()->getKindName());
+    Diag(ClassTemplate->getTemplatedDecl()->getLocation(), 
+         diag::note_previous_use);
+    Kind = ClassTemplate->getTemplatedDecl()->getTagKind();
+  }
+
+  // Translate the parser's template argument list in our AST format.
+  llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
+  translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
+
+  // Check that the template argument list is well-formed for this
+  // template.
+  llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
+  if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
+                                &TemplateArgs[0], TemplateArgs.size(),
+                                RAngleLoc, ConvertedTemplateArgs))
+    return true;
+
+  assert((ConvertedTemplateArgs.size() == 
+            ClassTemplate->getTemplateParameters()->size()) &&
+         "Converted template argument list is too short!");
+  
+  // Find the class template specialization declaration that
+  // corresponds to these arguments.
+  llvm::FoldingSetNodeID ID;
+  ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
+                                           ConvertedTemplateArgs.size());
+  void *InsertPos = 0;
+  ClassTemplateSpecializationDecl *PrevDecl
+    = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+
+  ClassTemplateSpecializationDecl *Specialization = 0;
+
+  if (PrevDecl) {
+    if (PrevDecl->getSpecializationKind() != TSK_Undeclared) {
+      // This particular specialization has already been declared or
+      // instantiated. We cannot explicitly instantiate it.
+      Diag(TemplateNameLoc, diag::err_explicit_instantiation_redef)
+        << Context.getTypeDeclType(PrevDecl)
+        << (int)PrevDecl->getSpecializationKind();
+      Diag(PrevDecl->getLocation(), diag::note_previous_instantiation)
+        << (int)PrevDecl->getSpecializationKind();
+      return DeclPtrTy::make(PrevDecl);
+    }
+
+    // Since the only prior class template specialization with these
+    // arguments was referenced but not declared, reuse that
+    // declaration node as our own, updating its source location to
+    // reflect our new declaration.
+    Specialization = PrevDecl;
+    Specialization->setLocation(TemplateNameLoc);
+    PrevDecl = 0;
+  } else {
+    // Create a new class template specialization declaration node for
+    // this explicit specialization.
+    Specialization
+      = ClassTemplateSpecializationDecl::Create(Context, 
+                                             ClassTemplate->getDeclContext(),
+                                                TemplateNameLoc,
+                                                ClassTemplate,
+                                                &ConvertedTemplateArgs[0],
+                                                ConvertedTemplateArgs.size(),
+                                                0);
+
+    ClassTemplate->getSpecializations().InsertNode(Specialization, 
+                                                   InsertPos);
+  }
+
+  // Build the fully-sugared type for this explicit instantiation as
+  // the user wrote in the explicit instantiation itself. This means
+  // that we'll pretty-print the type retrieved from the
+  // specialization's declaration the way that the user actually wrote
+  // the explicit instantiation, rather than formatting the name based
+  // on the "canonical" representation used to store the template
+  // arguments in the specialization.
+  QualType WrittenTy 
+    = Context.getTemplateSpecializationType(Name, 
+                                            &TemplateArgs[0],
+                                            TemplateArgs.size(),
+                                  Context.getTypeDeclType(Specialization));
+  Specialization->setTypeAsWritten(WrittenTy);
+  TemplateArgsIn.release();
+
+  // Add the explicit instantiation into its lexical context. However,
+  // since explicit instantiations are never found by name lookup, we
+  // just put it into the declaration context directly.
+  Specialization->setLexicalDeclContext(CurContext);
+  CurContext->addDecl(Context, Specialization);
+
+  // C++ [temp.explicit]p3:
+  //
+  //   A definition of a class template or class member template
+  //   shall be in scope at the point of the explicit instantiation of
+  //   the class template or class member template.
+  //
+  // This check comes when we actually try to perform the
+  // instantiation.
+  if (InstantiateClassTemplateSpecialization(Specialization, true))
+    return true;
+
+  return DeclPtrTy::make(Specialization);
+}
+
 Sema::TypeResult
 Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                         const IdentifierInfo &II, SourceLocation IdLoc) {

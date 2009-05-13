@@ -704,8 +704,8 @@ def err_template_recursion_depth_exceeded : Error<
 def note_template_recursion_depth : Note<
   "use -ftemplate-depth-N to increase recursive template instantiation depth">;
 
-def err_template_implicit_instantiate_undefined : Error<
-  "implicit instantiation of undefined template %0">;
+def err_template_instantiate_undefined : Error<
+  "%select{implicit|explicit}0 instantiation of undefined template %1">;
 def err_implicit_instantiate_member_undefined : Error<
   "implicit instantiation of undefined member %0">;
 def note_template_class_instantiation_here : Note<
@@ -718,6 +718,15 @@ def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;
 def err_nested_name_spec_non_tag : Error<
   "type %0 cannot be used prior to '::' because it has no members">;
+
+// C++ Explicit Instantiation
+def err_explicit_instantiation_redef : Error<
+    "explicit instantiation of %0 occurs after "
+    "%select{|explicit specialization|implicit instantiation|explicit "
+    "instantiation}1">;
+def note_previous_instantiation : Note<
+    "previous %select{|explicit specialization|implicit instantiation|explicit "
+    "instantiation}0 is here">;
 
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;

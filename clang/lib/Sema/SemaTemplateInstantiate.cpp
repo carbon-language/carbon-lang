@@ -666,7 +666,8 @@ Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
 bool
 Sema::InstantiateClass(SourceLocation PointOfInstantiation,
                        CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
-                       const TemplateArgumentList &TemplateArgs) {
+                       const TemplateArgumentList &TemplateArgs,
+                       bool ExplicitInstantiation) {
   bool Invalid = false;
   
   CXXRecordDecl *PatternDef 
@@ -678,8 +679,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         << Context.getTypeDeclType(Instantiation);
       Diag(Pattern->getLocation(), diag::note_member_of_template_here);
     } else {
-      Diag(PointOfInstantiation, 
-           diag::err_template_implicit_instantiate_undefined)
+      Diag(PointOfInstantiation, diag::err_template_instantiate_undefined)
+        << ExplicitInstantiation
         << Context.getTypeDeclType(Instantiation);
       Diag(Pattern->getLocation(), diag::note_template_decl_here);
     }
@@ -766,7 +767,8 @@ Sema::InstantiateClassTemplateSpecialization(
 
   return InstantiateClass(ClassTemplateSpec->getLocation(),
                           ClassTemplateSpec, Pattern,
-                          ClassTemplateSpec->getTemplateArgs());
+                          ClassTemplateSpec->getTemplateArgs(),
+                          ExplicitInstantiation);
 }
 
 /// \brief Instantiate a nested-name-specifier.
