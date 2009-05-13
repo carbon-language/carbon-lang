@@ -69,7 +69,7 @@ def nearP2X : SDNodeXForm<imm, [{
 }]>;
 def nearP2RemX : SDNodeXForm<imm, [{
   uint64_t x =
-    abs(N->getZExtValue() - getNearPower2((uint64_t)N->getZExtValue()));
+    abs64(N->getZExtValue() - getNearPower2((uint64_t)N->getZExtValue()));
   return getI64Imm(Log2_64(x));
 }]>;
 
@@ -124,7 +124,7 @@ def immRemP2 : PatLeaf<(imm), [{
                          getNearPower2((uint64_t)N->getZExtValue()));
 }]>;
 def immUExt8ME : PatLeaf<(imm), [{ //use this imm for mulqi
-  int64_t d =  abs((int64_t)N->getZExtValue() -
+  int64_t d =  abs64((int64_t)N->getZExtValue() -
                (int64_t)getNearPower2((uint64_t)N->getZExtValue()));
   if (isPowerOf2_64(d)) return false;
   switch (d) {

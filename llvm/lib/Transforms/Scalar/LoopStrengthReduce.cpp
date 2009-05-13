@@ -1013,7 +1013,7 @@ SCEVHandle LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
         continue;
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
       if (SI->first != Stride &&
-          (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0))
+          (unsigned(abs64(SInt)) < SSInt || (SInt % SSInt) != 0))
         continue;
       int64_t Scale = SInt / SSInt;
       // Check that this stride is valid for all the types used for loads and
@@ -1900,7 +1900,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         continue;
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
       if (SSInt == CmpSSInt ||
-          abs(SSInt) < abs(CmpSSInt) ||
+          abs64(SSInt) < abs64(CmpSSInt) ||
           (SSInt % CmpSSInt) != 0)
         continue;
 
@@ -2336,7 +2336,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
           cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
         if (SSInt == SInt)
           return; // This can definitely be reused.
-        if (unsigned(abs(SSInt)) < SInt || (SSInt % SInt) != 0)
+        if (unsigned(abs64(SSInt)) < SInt || (SSInt % SInt) != 0)
           continue;
         int64_t Scale = SSInt / SInt;
         bool AllUsesAreAddresses = true;

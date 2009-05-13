@@ -425,6 +425,13 @@ inline uint64_t RoundUpToAlignment(uint64_t Value, uint64_t Align) {
   return ((Value + Align - 1) / Align) * Align;
 }
 
+/// abs64 - absolute value of a 64-bit int.  Not all environments support
+/// "abs" on whatever their name for the 64-bit int type is.  The absolute
+/// value of the largest negative number is undefined, as with "abs".
+inline int64_t abs64(int64_t x) {
+  return (x < 0) ? -x : x;
+}
+
 } // End llvm namespace
 
 #endif
