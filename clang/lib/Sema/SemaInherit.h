@@ -144,6 +144,7 @@ namespace clang {
 
   public:
     typedef std::list<BasePath>::const_iterator paths_iterator;
+    typedef NamedDecl **decl_iterator;
     
     /// BasePaths - Construct a new BasePaths structure to record the
     /// paths for a derived-to-base search.
@@ -163,8 +164,8 @@ namespace clang {
     BasePath&       front()       { return Paths.front(); }
     const BasePath& front() const { return Paths.front(); }
 
-    NamedDecl **found_decls_begin();
-    NamedDecl **found_decls_end();
+    decl_iterator found_decls_begin();
+    decl_iterator found_decls_end();
 
     bool isAmbiguous(QualType BaseType);
 

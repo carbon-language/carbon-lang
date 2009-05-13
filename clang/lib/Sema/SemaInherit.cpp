@@ -41,13 +41,13 @@ void BasePaths::ComputeDeclsFound() {
   std::copy(Decls.begin(), Decls.end(), DeclsFound);
 }
 
-NamedDecl **BasePaths::found_decls_begin() {
+BasePaths::decl_iterator BasePaths::found_decls_begin() {
   if (NumDeclsFound == 0)
     ComputeDeclsFound();
   return DeclsFound;
 }
 
-NamedDecl **BasePaths::found_decls_end() {
+BasePaths::decl_iterator BasePaths::found_decls_end() {
   if (NumDeclsFound == 0)
     ComputeDeclsFound();
   return DeclsFound + NumDeclsFound;
