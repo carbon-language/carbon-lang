@@ -1631,7 +1631,7 @@ LexNextToken:
         // it's actually the start of a preprocessing directive.  Callback to
         // the preprocessor to handle it.
         // FIXME: -fpreprocessed mode??
-        if (Result.isAtStartOfLine() && !LexingRawMode) {
+        if (Result.isAtStartOfLine() && !LexingRawMode && !Is_PragmaLexer) {
           FormTokenWithChars(Result, CurPtr, tok::hash);
           PP->HandleDirective(Result);
           
@@ -1762,7 +1762,7 @@ LexNextToken:
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
       // FIXME: -fpreprocessed mode??
-      if (Result.isAtStartOfLine() && !LexingRawMode) {
+      if (Result.isAtStartOfLine() && !LexingRawMode && !Is_PragmaLexer) {
         FormTokenWithChars(Result, CurPtr, tok::hash);
         PP->HandleDirective(Result);
         
