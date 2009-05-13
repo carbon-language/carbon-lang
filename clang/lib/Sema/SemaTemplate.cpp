@@ -2335,9 +2335,10 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
       InstantiateClassTemplateSpecialization(Specialization, true))
     return true;
 
-  // FIXME: Instantiate all of the members of the template (that
-  // haven't already been instantiated!).
-
+  // Instantiate the members of this class template specialization.
+  InstantiatingTemplate Inst(*this, TemplateLoc, Specialization);
+  InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization);
+  
   return DeclPtrTy::make(Specialization);
 }
 

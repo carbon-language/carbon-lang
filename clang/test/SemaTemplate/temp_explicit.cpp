@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -pedantic %s
+// RUN: clang-cc -fsyntax-only -pedantic -verify %s
 //
 // Tests explicit instantiation of templates.
 template<typename T, typename U = T> class X0 { };
@@ -46,3 +46,28 @@ struct X2 {
 
 template struct X2<int>; // okay
 template struct X2<int&>; // expected-note{{in instantiation of}}
+
+// Check that explicit instantiations instantiate member classes.
+template<typename T> struct X3 {
+  struct Inner { // expected-note{{here}}
+    void f(T*); // expected-error{{pointer to a reference}}
+  };
+};
+
+void f1(X3<int&>); // okay, Inner, not instantiated
+
+template struct X3<int&>; // expected-note{{instantiation}}
+
+template<typename T> struct X4 {
+  struct Inner { // expected-note 2{{here}}
+    struct VeryInner { // expected-note 2{{here}}
+      void f(T*); // expected-error 2{{pointer to a reference}}
+    };
+  };
+};
+
+void f2(X4<int&>); // okay, Inner, not instantiated
+void f3(X4<int&>::Inner); // okay, Inner::VeryInner, not instantiated
+
+template struct X4<int&>; // expected-note{{instantiation}}
+template struct X4<float&>; // expected-note{{instantiation}}

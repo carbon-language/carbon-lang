@@ -550,3 +550,20 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
   // FIXME: New needs a pointer to Tmpl
   return false;
 }
+
+/// \brief Instantiate the definition of the given function from its
+/// template.
+///
+/// \param Function the already-instantiated declaration of a
+/// function.
+void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
+  // FIXME: Implement this!
+}
+
+/// \brief Instantiate the definition of the given variable from its
+/// template.
+///
+/// \param Var the already-instantiated declaration of a variable.
+void Sema::InstantiateVariableDefinition(VarDecl *Var) {
+  // FIXME: Implement this!
+}

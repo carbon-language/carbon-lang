@@ -749,6 +749,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // Exit the scope of this instantiation.
   CurContext = PreviousContext;
 
+  // If this is an explicit instantiation, instantiate our members, too.
+  if (!Invalid && ExplicitInstantiation)
+    InstantiateClassMembers(PointOfInstantiation, Instantiation, TemplateArgs);
+
   return Invalid;
 }
 
@@ -785,6 +789,53 @@ Sema::InstantiateClassTemplateSpecialization(
                           ClassTemplateSpec, Pattern,
                           ClassTemplateSpec->getTemplateArgs(),
                           ExplicitInstantiation);
+}
+
+/// \brief Instantiate the definitions of all of the member of the
+/// given class, which is an instantiation of a class template or a
+/// member class of a template.
+void
+Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
+                              CXXRecordDecl *Instantiation,
+                              const TemplateArgumentList &TemplateArgs) {
+  for (DeclContext::decl_iterator D = Instantiation->decls_begin(Context),
+                               DEnd = Instantiation->decls_end(Context);
+       D != DEnd; ++D) {
+    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
+      if (!Function->getBody(Context))
+        InstantiateFunctionDefinition(Function);
+    } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
+      const VarDecl *Def = 0;
+      if (!Var->getDefinition(Def))
+        InstantiateVariableDefinition(Var);
+    } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
+      if (!Record->isInjectedClassName() && !Record->getDefinition(Context)) {
+        assert(Record->getInstantiatedFromMemberClass() && 
+               "Missing instantiated-from-template information");
+        InstantiateClass(Record->getLocation(), Record,
+                         Record->getInstantiatedFromMemberClass(),
+                         TemplateArgs, true);
+      }
+    }
+  }
+}
+
+/// \brief Instantiate the definitions of all of the members of the
+/// given class template specialization, which was named as part of an
+/// explicit instantiation.
+void Sema::InstantiateClassTemplateSpecializationMembers(
+                                           SourceLocation PointOfInstantiation,
+                          ClassTemplateSpecializationDecl *ClassTemplateSpec) {
+  // C++0x [temp.explicit]p7:
+  //   An explicit instantiation that names a class template
+  //   specialization is an explicit instantion of the same kind
+  //   (declaration or definition) of each of its members (not
+  //   including members inherited from base classes) that has not
+  //   been previously explicitly specialized in the translation unit
+  //   containing the explicit instantiation, except as described
+  //   below.
+  InstantiateClassMembers(PointOfInstantiation, ClassTemplateSpec,
+                          ClassTemplateSpec->getTemplateArgs());
 }
 
 /// \brief Instantiate a nested-name-specifier.

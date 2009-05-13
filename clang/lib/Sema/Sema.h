@@ -2116,6 +2116,14 @@ public:
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
                            bool ExplicitInstantiation);
 
+  void InstantiateClassMembers(SourceLocation PointOfInstantiation,
+                               CXXRecordDecl *Instantiation,
+                               const TemplateArgumentList &TemplateArgs);
+
+  void InstantiateClassTemplateSpecializationMembers(
+                                          SourceLocation PointOfInstantiation,
+                           ClassTemplateSpecializationDecl *ClassTemplateSpec);
+
   NestedNameSpecifier *
   InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
                                  SourceRange Range,
@@ -2124,6 +2132,9 @@ public:
   TemplateName
   InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
                           const TemplateArgumentList &TemplateArgs);
+
+  void InstantiateFunctionDefinition(FunctionDecl *Function);
+  void InstantiateVariableDefinition(VarDecl *Var);
 
   // Simple function for cloning expressions.
   template<typename T> 
