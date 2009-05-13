@@ -9,7 +9,7 @@
 
 @implementation A
 + (void)F __attribute__((deprecated))
-{	// expected-warning {{method attribute may be specified on method declarations only}}
+{	// expected-warning {{method attribute can only be specified on method declarations}}
   [self F]; // no warning, since the caller is also deprecated.
 }
 

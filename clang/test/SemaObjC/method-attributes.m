@@ -19,13 +19,13 @@
 @end
 
 @implementation INTF
-- (int) foo: (int)arg1  __attribute__((deprecated)){ // expected-warning {{method attribute may be specified}}
+- (int) foo: (int)arg1  __attribute__((deprecated)){ // expected-warning {{method attribute can only be specified}}
         return 10;
 }
 - (int) foo1: (int)arg1 {
         return 10;
 }
-- (int) foo2: (int)arg1 __attribute__((deprecated)) {  // expected-warning {{method attribute may be specified}}
+- (int) foo2: (int)arg1 __attribute__((deprecated)) {  // expected-warning {{method attribute can only be specified}}
         return 10;
 }
 @end
