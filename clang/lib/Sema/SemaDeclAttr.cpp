@@ -207,7 +207,8 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // vector arrays, and functions returning vectors.
   if (CurType->isPointerType() || CurType->isArrayType() ||
       CurType->isFunctionType()) {
-    assert(0 && "HandleVector(): Complex type construction unimplemented");
+    S.Diag(Attr.getLoc(), diag::err_unsupported_vector_size) << CurType;
+    return;
     /* FIXME: rebuild the type from the inside out, vectorizing the inner type.
      do {
      if (PointerType *PT = dyn_cast<PointerType>(canonType))
