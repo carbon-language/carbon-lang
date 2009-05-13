@@ -19,7 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PEI.h"
+#include "PrologEpilogInserter.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
