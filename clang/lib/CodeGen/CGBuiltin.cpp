@@ -470,11 +470,23 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_lock_release_2:
   case Builtin::BI__sync_lock_release_4:
   case Builtin::BI__sync_lock_release_8:
-  case Builtin::BI__sync_lock_release_16:
-    assert(0 && "FIXME: Implement");
+  case Builtin::BI__sync_lock_release_16: {
+    Value *Ptr = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *ElTy =
+      cast<llvm::PointerType>(Ptr->getType())->getElementType();
+    Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr, true);
+    return RValue();
+  }
 
+  case Builtin::BI__sync_synchronize: {
+    Value *C[5];
+    C[0] = C[1] = C[2] = C[3] = llvm::ConstantInt::get(llvm::Type::Int1Ty, 1);
+    C[4] = ConstantInt::get(llvm::Type::Int1Ty, 0);
+    Builder.CreateCall(CGM.getIntrinsic(Intrinsic::memory_barrier), C, C + 5);
+    return RValue();
+  }
+      
     // Library functions with special handling.
-
   case Builtin::BIsqrt:
   case Builtin::BIsqrtf:
   case Builtin::BIsqrtl: {

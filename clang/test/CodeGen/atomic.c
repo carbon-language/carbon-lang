@@ -33,15 +33,21 @@ int atomic(void)
   old = __sync_fetch_and_and(&val, 0x9);
   old = __sync_fetch_and_or(&val, 0xa);
   old = __sync_fetch_and_xor(&val, 0xb);
+  old = __sync_fetch_and_nand(&val, 0xb);
 
   old = __sync_add_and_fetch(&val, 1);
   old = __sync_sub_and_fetch(&val, 2);
   old = __sync_and_and_fetch(&valc, 3);
   old = __sync_or_and_fetch(&valc, 4);
   old = __sync_xor_and_fetch(&valc, 5);
+  old = __sync_nand_and_fetch(&valc, 5);
 
   
   __sync_val_compare_and_swap((void **)0, (void *)0, (void *)0);
+
+  
+  __sync_lock_release(&val);
+  __sync_synchronize ();
 
   return old;
 }
