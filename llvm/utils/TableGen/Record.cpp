@@ -639,8 +639,12 @@ Init *VarInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   RecordVal *RV = R.getValue(getName());
   assert(RV && "Reference to a non-existant variable?");
   ListInit *LI = dynamic_cast<ListInit*>(RV->getValue());
-  assert(LI && "Invalid list element!");
-
+  if (!LI) {
+    VarInit *VI = dynamic_cast<VarInit*>(RV->getValue());
+    assert(VI && "Invalid list element!");
+    return new VarListElementInit(VI, Elt);
+  }
+  
   if (Elt >= LI->getSize())
     return 0;  // Out of range reference.
   Init *E = LI->getElement(Elt);
