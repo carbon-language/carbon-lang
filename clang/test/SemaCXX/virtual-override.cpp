@@ -22,7 +22,7 @@ class A {
 };
 
 class B : A {
-  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrrides ('struct T2::b *' is not derived from 'struct T2::a *')}}
+  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrides ('struct T2::b *' is not derived from 'struct T2::a *')}}
 };
 
 }
