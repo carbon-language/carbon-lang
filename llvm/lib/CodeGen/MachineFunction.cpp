@@ -35,9 +35,6 @@
 #include <sstream>
 using namespace llvm;
 
-static AnnotationID MF_AID(
-  AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
-
 bool MachineFunctionPass::runOnFunction(Function &F) {
   // Do not codegen any 'available_externally' functions at all, they have
   // definitions outside the translation unit.
@@ -115,7 +112,8 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
-  : Annotation(MF_AID), Fn(F), Target(TM) {
+  : Annotation(AnnotationManager::getID("CodeGen::MachineCodeForFunction")),
+    Fn(F), Target(TM) {
   if (TM.getRegisterInfo())
     RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
                   MachineRegisterInfo(*TM.getRegisterInfo());
@@ -365,6 +363,8 @@ void MachineFunction::viewCFGOnly() const
 MachineFunction&
 MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 {
+  AnnotationID MF_AID =
+                    AnnotationManager::getID("CodeGen::MachineCodeForFunction");
   assert(Fn->getAnnotation(MF_AID) == 0 &&
          "Object already exists for this function!");
   MachineFunction* mcInfo = new MachineFunction(Fn, Tar);
@@ -373,6 +373,8 @@ MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 }
 
 void MachineFunction::destruct(const Function *Fn) {
+  AnnotationID MF_AID =
+                    AnnotationManager::getID("CodeGen::MachineCodeForFunction");
   bool Deleted = Fn->deleteAnnotation(MF_AID);
   assert(Deleted && "Machine code did not exist for function!"); 
   Deleted = Deleted; // silence warning when no assertions.
@@ -380,6 +382,8 @@ void MachineFunction::destruct(const Function *Fn) {
 
 MachineFunction& MachineFunction::get(const Function *F)
 {
+  AnnotationID MF_AID =
+                    AnnotationManager::getID("CodeGen::MachineCodeForFunction");
   MachineFunction *mc = (MachineFunction*)F->getAnnotation(MF_AID);
   assert(mc && "Call construct() method first to allocate the object");
   return *mc;
