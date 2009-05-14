@@ -316,7 +316,7 @@ bool TwoAddressInstructionPass::NoUseAfterLastDef(unsigned Reg,
 MachineInstr *TwoAddressInstructionPass::FindLastUseInMBB(unsigned Reg,
                                                          MachineBasicBlock *MBB,
                                                          unsigned Dist) {
-  unsigned LastUseDist = Dist;
+  unsigned LastUseDist = 0;
   MachineInstr *LastUse = 0;
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(Reg),
          E = MRI->reg_end(); I != E; ++I) {
@@ -327,7 +327,10 @@ MachineInstr *TwoAddressInstructionPass::FindLastUseInMBB(unsigned Reg,
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
     if (DI == DistanceMap.end())
       continue;
-    if (MO.isUse() && DI->second < LastUseDist) {
+    if (DI->second >= Dist)
+      continue;
+
+    if (MO.isUse() && DI->second > LastUseDist) {
       LastUse = DI->first;
       LastUseDist = DI->second;
     }
