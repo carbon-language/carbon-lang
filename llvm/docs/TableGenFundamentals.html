@@ -404,6 +404,9 @@ the symbol table.  If the type of 'a' does not match <em>type</em>, TableGen
 aborts with an error. </dd>
 <dt><tt>!nameconcat&lt;type&gt;(a, b)</tt></dt>
   <dd>Shorthand for !cast<type>(!strconcat(a, b))</dd>
+<dt><tt>!subst(a, b, c)</tt></dt>
+  <dd>If 'a' and 'b' are of string type or are symbol references, substitute 
+'b' for 'a' in 'c.'  This operation is analogous to $(subst) in GNU make.</dd>
 </dl>
 
 <p>Note that all of the values have rules specifying how they convert to values

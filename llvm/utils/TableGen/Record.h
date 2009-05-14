@@ -43,7 +43,7 @@ class CodeInit;
 class ListInit;
 class UnOpInit;
 class BinOpInit;
-  //class TernOpInit;
+class TernOpInit;
 class DefInit;
 class DagInit;
 class TypedInit;
@@ -85,9 +85,9 @@ public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue( BinOpInit *UI) {
     return convertValue((TypedInit*)UI);
   }
-//   virtual Init *convertValue( TernOpInit *UI) {
-//     return convertValue((TypedInit*)UI);
-//   }
+  virtual Init *convertValue( TernOpInit *UI) {
+    return convertValue((TypedInit*)UI);
+  }
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
@@ -135,7 +135,7 @@ public:
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
-  //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -179,7 +179,7 @@ public:
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
-  //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -219,7 +219,7 @@ public:
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
-  //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -253,7 +253,7 @@ public:
   virtual Init *convertValue(  ListInit *LI) { return 0; }
   virtual Init *convertValue( UnOpInit *BO);
   virtual Init *convertValue( BinOpInit *BO);
-  //virtual Init *convertValue( TernOpInit *BO) { return RecTy::convertValue(BO);}
+  virtual Init *convertValue( TernOpInit *BO) { return RecTy::convertValue(BO);}
 
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
@@ -303,7 +303,7 @@ public:
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
-  //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -342,7 +342,7 @@ public:
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
-  //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -377,7 +377,7 @@ public:
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue( UnOpInit *BO);
   virtual Init *convertValue( BinOpInit *BO);
-  //virtual Init *convertValue( TernOpInit *BO) { return RecTy::convertValue(BO);}
+  virtual Init *convertValue( TernOpInit *BO) { return RecTy::convertValue(BO);}
   virtual Init *convertValue(   DagInit *CI) { return (Init*)CI; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
@@ -420,7 +420,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
-  //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue(   DefInit *DI);
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( TypedInit *VI);
@@ -820,50 +820,50 @@ public:
 
 /// TernOpInit - !op (X, Y, Z) - Combine two inits.
 ///
-// class TernOpInit : public OpInit {
-// public:
-//   enum TernaryOp { SUBST, FOREACH };
-// private:
-//   TernaryOp Opc;
-//   Init *LHS, *MHS, *RHS;
-// public:
-//   TernOpInit(TernaryOp opc, Init *lhs, Init *mhs, Init *rhs, RecTy *Type) :
-//       OpInit(Type), Opc(opc), LHS(lhs), MHS(mhs), RHS(rhs) {
-//   }
+class TernOpInit : public OpInit {
+public:
+  enum TernaryOp { SUBST, FOREACH };
+private:
+  TernaryOp Opc;
+  Init *LHS, *MHS, *RHS;
+public:
+  TernOpInit(TernaryOp opc, Init *lhs, Init *mhs, Init *rhs, RecTy *Type) :
+      OpInit(Type), Opc(opc), LHS(lhs), MHS(mhs), RHS(rhs) {
+  }
   
-//   // Clone - Clone this operator, replacing arguments with the new list
-//   virtual OpInit *clone(std::vector<Init *> &Operands) {
-//     assert(Operands.size() == 3 && "Wrong number of operands for ternary operation");
-//     return new TernOpInit(getOpcode(), Operands[0], Operands[1], Operands[2], getType());
-//   }
+  // Clone - Clone this operator, replacing arguments with the new list
+  virtual OpInit *clone(std::vector<Init *> &Operands) {
+    assert(Operands.size() == 3 && "Wrong number of operands for ternary operation");
+    return new TernOpInit(getOpcode(), Operands[0], Operands[1], Operands[2], getType());
+  }
 
-//   int getNumOperands(void) const { return 3; }
-//   Init *getOperand(int i) {
-//     assert(i == 0 || i == 1 || i == 2 && "Invalid operand id for ternary operator");
-//     if (i == 0) {
-//       return getLHS();
-//     }
-//     else if (i == 1) {
-//       return getMHS();
-//     }
-//     else {
-//       return getRHS();
-//     }
-//   }
+  int getNumOperands(void) const { return 3; }
+  Init *getOperand(int i) {
+    assert(i == 0 || i == 1 || i == 2 && "Invalid operand id for ternary operator");
+    if (i == 0) {
+      return getLHS();
+    }
+    else if (i == 1) {
+      return getMHS();
+    }
+    else {
+      return getRHS();
+    }
+  }
 
-//   TernaryOp getOpcode() const { return Opc; }
-//   Init *getLHS() const { return LHS; }
-//   Init *getMHS() const { return MHS; }
-//   Init *getRHS() const { return RHS; }
+  TernaryOp getOpcode() const { return Opc; }
+  Init *getLHS() const { return LHS; }
+  Init *getMHS() const { return MHS; }
+  Init *getRHS() const { return RHS; }
 
-//   // Fold - If possible, fold this to a simpler init.  Return this if not
-//   // possible to fold.
-//   Init *Fold(Record *CurRec, MultiClass *CurMultiClass);
+  // Fold - If possible, fold this to a simpler init.  Return this if not
+  // possible to fold.
+  Init *Fold(Record *CurRec, MultiClass *CurMultiClass);
   
-//   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
   
-//   virtual std::string getAsString() const;
-// };
+  virtual std::string getAsString() const;
+};
 
 
 /// VarInit - 'Opcode' - Represent a reference to an entire variable object.

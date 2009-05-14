@@ -793,78 +793,78 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   }
 
 //   case tgtok::XForEach:
-//   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
-//     TernOpInit::TernaryOp Code;
-//     RecTy *Type = 0;
+  case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
+    TernOpInit::TernaryOp Code;
+    RecTy *Type = 0;
 
 
-//     tgtok::TokKind LexCode = Lex.getCode();
-//     Lex.Lex();  // eat the operation
-//     switch (LexCode) {
-//     default: assert(0 && "Unhandled code!");
-//     case tgtok::XForEach:
-//       Code = TernOpInit::FOREACH;
-//       break;
-//     case tgtok::XSubst:
-//       Code = TernOpInit::SUBST;
-//       break;
-//     }
-//     if (Lex.getCode() != tgtok::l_paren) {
-//       TokError("expected '(' after ternary operator");
-//       return 0;
-//     }
-//     Lex.Lex();  // eat the '('
+    tgtok::TokKind LexCode = Lex.getCode();
+    Lex.Lex();  // eat the operation
+    switch (LexCode) {
+    default: assert(0 && "Unhandled code!");
+      //case tgtok::XForEach:
+      //Code = TernOpInit::FOREACH;
+      //break;
+    case tgtok::XSubst:
+      Code = TernOpInit::SUBST;
+      break;
+    }
+    if (Lex.getCode() != tgtok::l_paren) {
+      TokError("expected '(' after ternary operator");
+      return 0;
+    }
+    Lex.Lex();  // eat the '('
 
-//     Init *LHS = ParseValue(CurRec);
-//     if (LHS == 0) return 0;
+    Init *LHS = ParseValue(CurRec);
+    if (LHS == 0) return 0;
 
-//     if (Lex.getCode() != tgtok::comma) {
-//       TokError("expected ',' in ternary operator");
-//       return 0;
-//     }
-//     Lex.Lex();  // eat the ','
+    if (Lex.getCode() != tgtok::comma) {
+      TokError("expected ',' in ternary operator");
+      return 0;
+    }
+    Lex.Lex();  // eat the ','
     
-//     Init *MHS = ParseValue(CurRec);
-//     if (MHS == 0) return 0;
+    Init *MHS = ParseValue(CurRec);
+    if (MHS == 0) return 0;
 
-//     if (Lex.getCode() != tgtok::comma) {
-//       TokError("expected ',' in ternary operator");
-//       return 0;
-//     }
-//     Lex.Lex();  // eat the ','
+    if (Lex.getCode() != tgtok::comma) {
+      TokError("expected ',' in ternary operator");
+      return 0;
+    }
+    Lex.Lex();  // eat the ','
     
-//     Init *RHS = ParseValue(CurRec);
-//     if (RHS == 0) return 0;
+    Init *RHS = ParseValue(CurRec);
+    if (RHS == 0) return 0;
 
-//     if (Lex.getCode() != tgtok::r_paren) {
-//       TokError("expected ')' in binary operator");
-//       return 0;
-//     }
-//     Lex.Lex();  // eat the ')'
+    if (Lex.getCode() != tgtok::r_paren) {
+      TokError("expected ')' in binary operator");
+      return 0;
+    }
+    Lex.Lex();  // eat the ')'
 
-//     switch (LexCode) {
-//     default: assert(0 && "Unhandled code!");
-//     case tgtok::XForEach: {
-//       TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
-//       if (MHSt == 0) {
-//         TokError("could not get type for !foreach");
-//         return 0;
-//       }
-//       Type = MHSt->getType();
-//       break;
-//     }
-//     case tgtok::XSubst: {
-//       TypedInit *RHSt = dynamic_cast<TypedInit *>(RHS);
-//       if (RHSt == 0) {
-//         TokError("could not get type for !subst");
-//         return 0;
-//       }
-//       Type = RHSt->getType();
-//       break;
-//     }
-//     }
-//     return (new TernOpInit(Code, LHS, MHS, RHS, Type))->Fold(CurRec, CurMultiClass);
-//   }
+    switch (LexCode) {
+    default: assert(0 && "Unhandled code!");
+      //case tgtok::XForEach: {
+      //TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
+      //if (MHSt == 0) {
+      //  TokError("could not get type for !foreach");
+      //  return 0;
+      //}
+      //Type = MHSt->getType();
+      //break;
+      //}
+    case tgtok::XSubst: {
+      TypedInit *RHSt = dynamic_cast<TypedInit *>(RHS);
+      if (RHSt == 0) {
+        TokError("could not get type for !subst");
+        return 0;
+      }
+      Type = RHSt->getType();
+      break;
+    }
+    }
+    return (new TernOpInit(Code, LHS, MHS, RHS, Type))->Fold(CurRec, CurMultiClass);
+  }
   }
   TokError("could not parse operation");
   return 0;
@@ -1078,9 +1078,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XStrConcat:
-  case tgtok::XNameConcat: {  // Value ::= !binop '(' Value ',' Value ')'
+  case tgtok::XNameConcat:  // Value ::= !binop '(' Value ',' Value ')'
     //  case tgtok::XForEach:
-    //  case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
+  case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     return ParseOperation(CurRec);
     break;
   }
