@@ -2125,7 +2125,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              SourceRange(D.getDeclSpec().getVirtualSpecLoc()));
     } else {
       // Okay: Add virtual to the method.
-      cast<CXXMethodDecl>(NewFD)->setVirtual();
+      cast<CXXMethodDecl>(NewFD)->setVirtualAsWritten(true);
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
       CurClass->setAggregate(false);
       CurClass->setPOD(false);
@@ -2151,6 +2151,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           OverloadedFunctionDecl::function_iterator MatchedDecl;
           // FIXME: Is this OK? Should it be done by LookupInBases?
           if (IsOverload(NewMD, OldMD, MatchedDecl))
+            continue;
+          if (!OldMD->isVirtual())
             continue;
          
           if (!CheckOverridingFunctionReturnType(NewMD, OldMD)) {
@@ -2490,7 +2492,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     Expr *Init = static_cast<Expr *>(init.get());
     if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
         Context.getCanonicalType(IL->getType()) == Context.IntTy) {
-      if (Method->isVirtual()) {
+      if (Method->isVirtualAsWritten()) {
         Method->setPure();
 
         // A class is abstract if at least one function is pure virtual.

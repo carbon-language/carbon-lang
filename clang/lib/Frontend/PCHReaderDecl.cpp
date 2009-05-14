@@ -149,7 +149,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
   FD->setInline(Record[Idx++]);
   FD->setC99InlineDefinition(Record[Idx++]);
-  FD->setVirtual(Record[Idx++]);
+  FD->setVirtualAsWritten(Record[Idx++]);
   FD->setPure(Record[Idx++]);
   FD->setHasInheritedPrototype(Record[Idx++]);
   FD->setHasWrittenPrototype(Record[Idx++]);

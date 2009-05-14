@@ -517,7 +517,7 @@ private:
   unsigned SClass : 2;
   bool IsInline : 1;
   bool C99InlineDefinition : 1;
-  bool IsVirtual : 1;
+  bool IsVirtualAsWritten : 1;
   bool IsPure : 1;
   bool HasInheritedPrototype : 1;
   bool HasWrittenPrototype : 1;
@@ -546,7 +546,7 @@ protected:
       DeclContext(DK),
       ParamInfo(0), Body(), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
-      IsVirtual(false), IsPure(false), HasInheritedPrototype(false), 
+      IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
       TemplateOrInstantiation() {}
 
@@ -590,10 +590,9 @@ public:
   void setBody(Stmt *B) { Body = B; }
   void setLazyBody(uint64_t Offset) { Body = Offset; }
 
-  /// Whether this function is virtual, either by explicit marking, or by
-  /// overriding a virtual function. Only valid on C++ member functions.
-  bool isVirtual() { return IsVirtual; }
-  void setVirtual(bool V = true) { IsVirtual = V; }
+  /// Whether this function is marked as virtual explicitly.
+  bool isVirtualAsWritten() const { return IsVirtualAsWritten; }
+  void setVirtualAsWritten(bool V) { IsVirtualAsWritten = V; }
 
   /// Whether this virtual function is pure, i.e. makes the containing class
   /// abstract.

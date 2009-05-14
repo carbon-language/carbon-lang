@@ -91,3 +91,16 @@ class B : A {
 };
 
 }
+
+namespace T7 {
+  struct a { };
+  struct b { };
+
+  class A {
+    a* f();
+  };
+
+  class B : A {
+    virtual b* f();
+  };
+}

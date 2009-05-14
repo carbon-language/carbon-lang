@@ -476,6 +476,11 @@ public:
     return getLexicalDeclContext() != getDeclContext();
   }
 
+  bool isVirtual() const { 
+    // FIXME: Check if it's inherited virtual as well.
+    return isVirtualAsWritten();
+  }
+  
   /// getParent - Returns the parent of this method declaration, which
   /// is the class in which this method is defined.
   const CXXRecordDecl *getParent() const { 

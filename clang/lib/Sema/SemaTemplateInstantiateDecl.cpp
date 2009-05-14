@@ -546,8 +546,8 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
                                                   CXXMethodDecl *Tmpl) {
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   New->setAccess(Tmpl->getAccess());
-  if (Tmpl->isVirtual()) {
-    New->setVirtual();
+  if (Tmpl->isVirtualAsWritten()) {
+    New->setVirtualAsWritten(true);
     Record->setAggregate(false);
     Record->setPOD(false);
     Record->setPolymorphic(true);
