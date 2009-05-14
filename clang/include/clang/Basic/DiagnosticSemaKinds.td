@@ -780,9 +780,9 @@ def note_unavailable_here : Note<
 def warn_not_enough_argument : Warning<
   "not enough variable arguments in %0 declaration to fit a sentinel">;
 def warn_missing_sentinel : Warning <
-  "missing sentinel in method dispatch">;
+  "missing sentinel in %select{function|method}0 %select{call|dispatch}1">;
 def note_sentinel_here : Note<
-  "method has been explicitly marked sentinel here">;
+  "%select{function|method}0 has been explicitly marked sentinel here">;
 def warn_missing_prototype : Warning<
   "no previous prototype for function %0">,
   InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;

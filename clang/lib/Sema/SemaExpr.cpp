@@ -98,24 +98,44 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   const SentinelAttr *attr = D->getAttr<SentinelAttr>();
   if (!attr) 
     return;
-  ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
-  // FIXME: function calls for later.
-  if (!MD)
-    return;
   int sentinelPos = attr->getSentinel();
   int nullPos = attr->getNullPos();
-  // skip over named parameters.
-  ObjCMethodDecl::param_iterator P, E = MD->param_end();
+  
+  // FIXME. ObjCMethodDecl and FunctionDecl need be derived from the
+  // same common base class. Then we won't be needing two versions of
+  // the same code.
   unsigned int i = 0;
-  for (P = MD->param_begin(); (P != E && i < NumArgs); ++P) {
-    if (nullPos)
-      --nullPos;
-    else
-      ++i;
+  bool warnNotEnoughArgs = false;
+  int isMethod = 0;
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    // skip over named parameters.
+    ObjCMethodDecl::param_iterator P, E = MD->param_end();
+    for (P = MD->param_begin(); (P != E && i < NumArgs); ++P) {
+      if (nullPos)
+        --nullPos;
+      else
+        ++i;
+    }
+    warnNotEnoughArgs = (P != E || i >= NumArgs);
+    isMethod = 1;
   }
-  if (P != E || i >= NumArgs) {
+  else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // skip over named parameters.
+    ObjCMethodDecl::param_iterator P, E = FD->param_end();
+    for (P = FD->param_begin(); (P != E && i < NumArgs); ++P) {
+      if (nullPos)
+        --nullPos;
+      else
+        ++i;
+    }
+    warnNotEnoughArgs = (P != E || i >= NumArgs);
+  }
+  else
+    return;
+
+  if (warnNotEnoughArgs) {
     Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
-    Diag(D->getLocation(), diag::note_sentinel_here);
+    Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
     return;
   }
   int sentinel = i;
@@ -125,7 +145,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   }
   if (sentinelPos > 0) {
     Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
-    Diag(D->getLocation(), diag::note_sentinel_here);
+    Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
     return;
   }
   while (i < NumArgs-1) {
@@ -135,8 +155,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   Expr *sentinelExpr = Args[sentinel];
   if (sentinelExpr && (!sentinelExpr->getType()->isPointerType() ||
                        !sentinelExpr->isNullPointerConstant(Context))) {
-    Diag(Loc, diag::warn_missing_sentinel);
-    Diag(D->getLocation(), diag::note_sentinel_here);
+    Diag(Loc, diag::warn_missing_sentinel) << isMethod << isMethod;
+    Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
   }
   return;
 }
@@ -2619,8 +2639,10 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
         << Fn->getSourceRange());
 
   // Do special checking on direct calls to functions.
-  if (FDecl)
+  if (FDecl) {
+    DiagnoseSentinelCalls(FDecl, LParenLoc, Args, NumArgs);
     return CheckFunctionCall(FDecl, TheCall.take());
+  }
 
   return Owned(TheCall.take());
 }
