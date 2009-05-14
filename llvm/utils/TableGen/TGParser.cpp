@@ -680,6 +680,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     TokError("unknown operation");
     return 0;
     break;
+  case tgtok::XCar:
+  case tgtok::XCdr:
+  case tgtok::XNull:
   case tgtok::XCast: {  // Value ::= !unop '(' Value ')'
     UnOpInit::UnaryOp Code;
     RecTy *Type = 0;
@@ -693,10 +696,23 @@ Init *TGParser::ParseOperation(Record *CurRec) {
       Type = ParseOperatorType();
 
       if (Type == 0) {
-        TokError("did not get type for binary operator");
+        TokError("did not get type for unary operator");
         return 0;
       }
 
+      break;
+    case tgtok::XCar:
+      Lex.Lex();  // eat the operation
+      Code = UnOpInit::CAR;
+      break;
+    case tgtok::XCdr:
+      Lex.Lex();  // eat the operation
+      Code = UnOpInit::CDR;
+      break;
+    case tgtok::XNull:
+      Lex.Lex();  // eat the operation
+      Code = UnOpInit::LNULL;
+      Type = new IntRecTy;
       break;
     }
     if (Lex.getCode() != tgtok::l_paren) {
@@ -707,6 +723,60 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
     Init *LHS = ParseValue(CurRec);
     if (LHS == 0) return 0;
+
+    if (Code == UnOpInit::CAR
+        || Code == UnOpInit::CDR
+        || Code == UnOpInit::LNULL) {
+      ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
+      TypedInit *LHSt = dynamic_cast<TypedInit*>(LHS);
+      if (LHSl == 0 && LHSt == 0) {
+        TokError("expected list type argument in unary operator");
+        return 0;
+      }
+      if (LHSt) {
+        ListRecTy *LType = dynamic_cast<ListRecTy*>(LHSt->getType());
+        if (LType == 0) {
+          TokError("expected list type argumnet in unary operator");
+          return 0;
+        }
+      }
+
+      if (Code == UnOpInit::CAR
+          || Code == UnOpInit::CDR) {
+        if (LHSl && LHSl->getSize() == 0) {
+          TokError("empty list argument in unary operator");
+          return 0;
+        }
+        if (LHSl) {
+          Init *Item = LHSl->getElement(0);
+          TypedInit *Itemt = dynamic_cast<TypedInit*>(Item);
+          if (Itemt == 0) {
+            TokError("untyped list element in unary operator");
+            return 0;
+          }
+          if (Code == UnOpInit::CAR) {
+            Type = Itemt->getType();
+          }
+          else {
+            Type = new ListRecTy(Itemt->getType());
+          }
+        }
+        else {
+          assert(LHSt && "expected list type argument in unary operator");
+          ListRecTy *LType = dynamic_cast<ListRecTy*>(LHSt->getType());
+          if (LType == 0) {
+            TokError("expected list type argumnet in unary operator");
+            return 0;
+          }
+          if (Code == UnOpInit::CAR) {
+            Type = LType->getElementType();
+          }
+          else {
+            Type = LType;
+          }
+        }
+      }
+    }
 
     if (Lex.getCode() != tgtok::r_paren) {
       TokError("expected ')' in unary operator");
@@ -1072,6 +1142,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     break;
   }
  
+  case tgtok::XCar:
+  case tgtok::XCdr:
+  case tgtok::XNull:
   case tgtok::XCast:  // Value ::= !unop '(' Value ')'
   case tgtok::XConcat:
   case tgtok::XSRA: 

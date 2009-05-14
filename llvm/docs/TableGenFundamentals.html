@@ -411,6 +411,12 @@ aborts with an error. </dd>
   <dd>For each member 'b' of dag or list 'a' apply operator 'c.'  'b' is a 
 dummy variable that should be declared as a member variable of an instantiated 
 class.  This operation is analogous to $(foreach) in GNU make.</dd>
+<dt><tt>!car(a)</tt></dt>
+  <dd>The first element of list 'a.'</dd>
+<dt><tt>!cdr(a)</tt></dt>
+  <dd>The 2nd-N elements of list 'a.'</dd>
+<dt><tt>!null(a)</tt></dt>
+  <dd>An integer {0,1} indicating whether list 'a' is empty.</dd>
 </dl>
 
 <p>Note that all of the values have rules specifying how they convert to values

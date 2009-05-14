@@ -520,6 +520,41 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
+  case CAR: {
+    ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
+    if (LHSl) {
+      if (LHSl->getSize() == 0) {
+        assert(0 && "Empty list in car");
+        return 0;
+      }
+      return LHSl->getElement(0);
+    }
+    break;
+  }
+  case CDR: {
+    ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
+    if (LHSl) {
+      if (LHSl->getSize() == 0) {
+        assert(0 && "Empty list in cdr");
+        return 0;
+      }
+      ListInit *Result = new ListInit(LHSl->begin()+1, LHSl->end());
+      return Result;
+    }
+    break;
+  }
+  case LNULL: {
+    ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
+    if (LHSl) {
+      if (LHSl->getSize() == 0) {
+        return new IntInit(1);
+      }
+      else {
+        return new IntInit(0);
+      }
+    }
+    break;
+  }
   }
   return this;
 }
@@ -536,6 +571,9 @@ std::string UnOpInit::getAsString() const {
   std::string Result;
   switch (Opc) {
   case CAST: Result = "!cast<" + getType()->getAsString() + ">"; break;
+  case CAR: Result = "!car"; break;
+  case CDR: Result = "!cdr"; break;
+  case LNULL: Result = "!null"; break;
   }
   return Result + "(" + LHS->getAsString() + ")";
 }

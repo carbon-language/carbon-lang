@@ -690,9 +690,14 @@ public:
 class ListInit : public Init {
   std::vector<Init*> Values;
 public:
+  typedef std::vector<Init*>::iterator       iterator;
+  typedef std::vector<Init*>::const_iterator const_iterator;
+
   explicit ListInit(std::vector<Init*> &Vs) {
     Values.swap(Vs);
   }
+  explicit ListInit(iterator Start, iterator End)
+    : Values(Start, End) {}
 
   unsigned getSize() const { return Values.size(); }
   Init *getElement(unsigned i) const {
@@ -716,9 +721,6 @@ public:
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual std::string getAsString() const;
-
-  typedef std::vector<Init*>::iterator       iterator;
-  typedef std::vector<Init*>::const_iterator const_iterator;
 
   inline iterator       begin()       { return Values.begin(); }
   inline const_iterator begin() const { return Values.begin(); }
@@ -761,7 +763,7 @@ public:
 ///
 class UnOpInit : public OpInit {
 public:
-  enum UnaryOp { CAST };
+  enum UnaryOp { CAST, CAR, CDR, LNULL };
 private:
   UnaryOp Opc;
   Init *LHS;

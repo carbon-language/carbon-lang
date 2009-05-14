@@ -450,6 +450,9 @@ tgtok::TokKind TGLexer::LexExclaim() {
   if (Len == 5 && !memcmp(Start, "subst", 5)) return tgtok::XSubst;
   if (Len == 7 && !memcmp(Start, "foreach", 7)) return tgtok::XForEach;
   if (Len == 4 && !memcmp(Start, "cast", 4)) return tgtok::XCast;
+  if (Len == 3 && !memcmp(Start, "car", 3)) return tgtok::XCar;
+  if (Len == 3 && !memcmp(Start, "cdr", 3)) return tgtok::XCdr;
+  if (Len == 4 && !memcmp(Start, "null", 4)) return tgtok::XNull;
 
   return ReturnError(Start-1, "Unknown operator");
 }
