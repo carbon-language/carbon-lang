@@ -120,3 +120,16 @@ namespace N7 {
   typedef Cond<true, int, double>::Type Type;
 }
 
+#if 0
+// FIXME: Unable to handle general declaration references at this point.
+template<typename T, unsigned long N> struct IntegralConstant { };
+
+template<typename T>
+struct X0 {
+  void f(T x, IntegralConstant<T, sizeof(x)>);
+};
+
+void test_X0(X0<int> x, IntegralConstant<int, sizeof(int)> ic) {
+  x.f(ic);
+}
+#endif

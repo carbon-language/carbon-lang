@@ -236,15 +236,16 @@ class CXXRecordDecl : public RecordDecl {
   /// CXXConversionDecl.
   OverloadedFunctionDecl Conversions;
 
-  /// \brief The template or declaration that is declaration is
-  /// instantiated from.
+  /// \brief The template or declaration that this declaration
+  /// describes or was instantiated from, respectively.
   /// 
   /// For non-templates, this value will be NULL. For record
   /// declarations that describe a class template, this will be a
   /// pointer to a ClassTemplateDecl. For member
   /// classes of class template specializations, this will be the
   /// RecordDecl from which the member class was instantiated.
-  llvm::PointerUnion<ClassTemplateDecl*, CXXRecordDecl*>TemplateOrInstantiation;
+  llvm::PointerUnion<ClassTemplateDecl*, CXXRecordDecl*>
+    TemplateOrInstantiation;
 
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,

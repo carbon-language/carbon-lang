@@ -20,6 +20,7 @@
 
 namespace clang {
 class Expr;
+class FunctionTemplateDecl;
 class Stmt;
 class CompoundStmt;
 class StringLiteral;
@@ -524,6 +525,18 @@ private:
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
+
+  /// \brief The template or declaration that this declaration
+  /// describes or was instantiated from, respectively.
+  /// 
+  /// For non-templates, this value will be NULL. For function
+  /// declarations that describe a function template, this will be a
+  /// pointer to a FunctionTemplateDecl. For member functions
+  /// of class template specializations, this will be the
+  /// FunctionDecl from which the member function was instantiated.
+  llvm::PointerUnion<FunctionTemplateDecl*, FunctionDecl*>
+    TemplateOrInstantiation;
+
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName N, QualType T,
@@ -534,7 +547,8 @@ protected:
       ParamInfo(0), Body(), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtual(false), IsPure(false), InheritedPrototype(false), 
-      HasPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL) {}
+      HasPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
+      TemplateOrInstantiation() {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -710,6 +724,57 @@ public:
   };
 
   OverloadedOperatorKind getOverloadedOperator() const;
+
+  /// \brief If this function is an instantiation of a member function
+  /// of a class template specialization, retrieves the function from
+  /// which it was instantiated.
+  ///
+  /// This routine will return non-NULL for (non-templated) member
+  /// functions of class templates and for instantiations of function
+  /// templates. For example, given:
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   void f(T);
+  /// };
+  /// \endcode
+  ///
+  /// The declaration for X<int>::f is a (non-templated) FunctionDecl
+  /// whose parent is the class template specialization X<int>. For
+  /// this declaration, getInstantiatedFromFunction() will return
+  /// the FunctionDecl X<T>::A. When a complete definition of
+  /// X<int>::A is required, it will be instantiated from the
+  /// declaration returned by getInstantiatedFromMemberFunction().
+  FunctionDecl *getInstantiatedFromMemberFunction() const {
+    return TemplateOrInstantiation.dyn_cast<FunctionDecl*>();
+  }
+
+  /// \brief Specify that this record is an instantiation of the
+  /// member function RD.
+  void setInstantiationOfMemberFunction(FunctionDecl *RD) { 
+    TemplateOrInstantiation = RD;
+  }
+
+  /// \brief Retrieves the function template that is described by this
+  /// function declaration.
+  ///
+  /// Every function template is represented as a FunctionTemplateDecl
+  /// and a FunctionDecl (or something derived from FunctionDecl). The
+  /// former contains template properties (such as the template
+  /// parameter lists) while the latter contains the actual
+  /// description of the template's
+  /// contents. FunctionTemplateDecl::getTemplatedDecl() retrieves the
+  /// FunctionDecl that describes the function template,
+  /// getDescribedFunctionTemplate() retrieves the
+  /// FunctionTemplateDecl from a FunctionDecl.
+  FunctionTemplateDecl *getDescribedFunctionTemplate() const {
+    return TemplateOrInstantiation.dyn_cast<FunctionTemplateDecl*>();
+  }
+
+  void setDescribedFunctionTemplate(FunctionTemplateDecl *Template) {
+    TemplateOrInstantiation = Template;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

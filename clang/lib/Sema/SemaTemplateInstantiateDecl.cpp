@@ -80,8 +80,8 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   bool Invalid = false;
   QualType T = D->getUnderlyingType();
   if (T->isDependentType()) {
-    T = SemaRef.InstantiateType(T, TemplateArgs, D->getLocation(),
-                                D->getDeclName());
+    T = SemaRef.InstantiateType(T, TemplateArgs, 
+                                D->getLocation(), D->getDeclName());
     if (T.isNull()) {
       Invalid = true;
       T = SemaRef.Context.IntTy;
@@ -139,8 +139,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
   QualType T = D->getType();
   if (T->isDependentType())  {
-    T = SemaRef.InstantiateType(T, TemplateArgs, D->getLocation(), 
-                                D->getDeclName());
+    T = SemaRef.InstantiateType(T, TemplateArgs,
+                                D->getLocation(), D->getDeclName());
     if (!T.isNull() && T->isFunctionType()) {
       // C++ [temp.arg.type]p3:
       //   If a declaration acquires a function type through a type
@@ -290,6 +290,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                             D->getDeclName(), T, D->isStatic(), 
                             D->isInline());
+  Method->setInstantiationOfMemberFunction(D);
 
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
@@ -333,6 +334,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
     = CXXConstructorDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                                  Name, T, D->isExplicit(), D->isInline(), 
                                  false);
+  Constructor->setInstantiationOfMemberFunction(D);
 
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
@@ -375,6 +377,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
                                 D->getLocation(),
              SemaRef.Context.DeclarationNames.getCXXDestructorName(ClassTy),
                                 T, D->isInline(), false);
+  Destructor->setInstantiationOfMemberFunction(D);
   if (InitMethodInstantiation(Destructor, D))
     Destructor->setInvalidDecl();
 
@@ -404,6 +407,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
                                 D->getLocation(),
          SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(ConvTy),
                                 T, D->isInline(), D->isExplicit());
+  Conversion->setInstantiationOfMemberFunction(D);
   if (InitMethodInstantiation(Conversion, D))
     Conversion->setInvalidDecl();
 
@@ -513,7 +517,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
   const FunctionProtoType *Proto = D->getType()->getAsFunctionProtoType();
   assert(Proto && "Missing prototype?");
   QualType ResultType 
-    = SemaRef.InstantiateType(Proto->getResultType(), TemplateArgs, 
+    = SemaRef.InstantiateType(Proto->getResultType(), TemplateArgs,
                               D->getLocation(), D->getDeclName());
   if (ResultType.isNull())
     return QualType();
@@ -557,7 +561,19 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 /// \param Function the already-instantiated declaration of a
 /// function.
 void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
-  // FIXME: Implement this!
+  // FIXME: make this work for function template specializations, too.
+
+  // Find the function body that we'll be substituting.
+  const FunctionDecl *PatternDecl 
+    = Function->getInstantiatedFromMemberFunction();
+  Stmt *Pattern = 0;
+  if (PatternDecl)
+    Pattern = PatternDecl->getBody(Context, PatternDecl);
+
+  if (!Pattern)
+    return;
+
+  // FIXME: instantiate the pattern  
 }
 
 /// \brief Instantiate the definition of the given variable from its

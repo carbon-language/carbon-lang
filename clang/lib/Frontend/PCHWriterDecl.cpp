@@ -155,6 +155,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->hasPrototype() && !D->inheritedPrototype());
   Record.push_back(D->isDeleted());
   Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
+  // FIXME: C++ TemplateOrInstantiation
   Record.push_back(D->param_size());
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
        P != PEnd; ++P)
