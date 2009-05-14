@@ -40,7 +40,7 @@ typedef NSUInteger XDSourceLanguage;
 @end  @class XDSCOperation;
 @interface XDSCClassFormatter : NSObject {
 }
-+ (NSUInteger) compartmentsForClassifier: (id <XDUMLClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec; // expected-note {{previous definition is here}}
++ (NSUInteger) compartmentsForClassifier: (id <XDUMLClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec; 
 @end  
 @class NSString;
 @implementation XDSCClassFormatter       
@@ -48,7 +48,6 @@ typedef NSUInteger XDSourceLanguage;
 + appendVisibility: (id <XDUMLNamedElement>) element withSpecification: (XDSCDisplaySpecification *) displaySpec to: (NSMutableAttributedString *) attributedString
 {
 }
-// GCC doesn't currently warn about this.
-+ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { // expected-warning {{conflicting parameter types in implementation of 'compartmentsForClassifier:withSpecification:': 'id<XDUMLClassifier>' vs 'id<XDSCClassifier>'}}
++ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { 
 }
 @end 

@@ -1082,6 +1082,7 @@ public:
                            bool &IncompleteImpl);
   void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
                                    ObjCMethodDecl *IntfMethod);
+  bool QualifiedIdConformsQualifiedId(QualType LHS, QualType RHS);
 
   NamespaceDecl *GetStdNamespace();
   

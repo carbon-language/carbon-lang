@@ -697,6 +697,15 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   return false;
 }
 
+/// QualifiedIdConformsQualifiedId - compare id<p,...> with id<p1,...>
+/// return true if lhs's protocols conform to rhs's protocol; false
+/// otherwise.
+bool Sema::QualifiedIdConformsQualifiedId(QualType lhs, QualType rhs) {
+  if (lhs->isObjCQualifiedIdType() && rhs->isObjCQualifiedIdType())
+    return ObjCQualifiedIdTypesAreCompatible(lhs, rhs, false);
+  return false;
+}
+
 /// ObjCQualifiedIdTypesAreCompatible - We know that one of lhs/rhs is an
 /// ObjCQualifiedIDType.
 /// FIXME: Move to ASTContext::typesAreCompatible() and friends.

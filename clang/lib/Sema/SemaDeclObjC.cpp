@@ -775,7 +775,9 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
   if (!Context.typesAreCompatible(IntfMethodDecl->getResultType(),
-                                  ImpMethodDecl->getResultType())) {
+                                  ImpMethodDecl->getResultType()) &&
+      !QualifiedIdConformsQualifiedId(IntfMethodDecl->getResultType(),
+                                      ImpMethodDecl->getResultType())) {
     Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types) 
       << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
       << ImpMethodDecl->getResultType();
@@ -785,7 +787,8 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
        IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
        IM != EM; ++IM, ++IF) {
-    if (Context.typesAreCompatible((*IF)->getType(), (*IM)->getType()))
+    if (Context.typesAreCompatible((*IF)->getType(), (*IM)->getType()) ||
+        QualifiedIdConformsQualifiedId((*IF)->getType(), (*IM)->getType()))
       continue;
     
     Diag((*IM)->getLocation(), diag::warn_conflicting_param_types) 
