@@ -678,6 +678,144 @@ std::string BinOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
 }
 
+static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
+                           Record *CurRec, MultiClass *CurMultiClass);
+
+static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
+                               RecTy *Type, Record *CurRec,
+                               MultiClass *CurMultiClass) {
+  std::vector<Init *> NewOperands;
+
+  TypedInit *TArg = dynamic_cast<TypedInit*>(Arg);
+
+  // If this is a dag, recurse
+  if (TArg && TArg->getType()->getAsString() == "dag") {
+    Init *Result = ForeachHelper(LHS, Arg, RHSo, Type,
+                                 CurRec, CurMultiClass);
+    if (Result != 0) {
+      return Result;
+    }
+    else {
+      return 0;
+    }
+  }
+
+  for (int i = 0; i < RHSo->getNumOperands(); ++i) {
+    OpInit *RHSoo = dynamic_cast<OpInit*>(RHSo->getOperand(i));
+
+    if (RHSoo) {
+      Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
+                                       Type, CurRec, CurMultiClass);
+      if (Result != 0) {
+        NewOperands.push_back(Result);
+      }
+      else {
+        NewOperands.push_back(Arg);
+      }
+    }
+    else if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
+      NewOperands.push_back(Arg);
+    }
+    else {
+      NewOperands.push_back(RHSo->getOperand(i));
+    }
+  }
+
+  // Now run the operator and use its result as the new leaf
+  OpInit *NewOp = RHSo->clone(NewOperands);
+  Init *NewVal = NewOp->Fold(CurRec, CurMultiClass);
+  if (NewVal != NewOp) {
+    delete NewOp;
+    return NewVal;
+  }
+  return 0;
+}
+
+static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
+                           Record *CurRec, MultiClass *CurMultiClass) {
+  DagInit *MHSd = dynamic_cast<DagInit*>(MHS);
+  ListInit *MHSl = dynamic_cast<ListInit*>(MHS);
+
+  DagRecTy *DagType = dynamic_cast<DagRecTy*>(Type);
+  ListRecTy *ListType = dynamic_cast<ListRecTy*>(Type);
+
+  OpInit *RHSo = dynamic_cast<OpInit*>(RHS);
+
+  if (!RHSo) {
+    cerr << "!foreach requires an operator\n";
+    assert(0 && "No operator for !foreach");
+  }
+
+  TypedInit *LHSt = dynamic_cast<TypedInit*>(LHS);
+
+  if (!LHSt) {
+    cerr << "!foreach requires typed variable\n";
+    assert(0 && "No typed variable for !foreach");
+  }
+
+  if (MHSd && DagType || MHSl && ListType) {
+    if (MHSd) {
+      Init *Val = MHSd->getOperator();
+      Init *Result = EvaluateOperation(RHSo, LHS, Val,
+                                       Type, CurRec, CurMultiClass);
+      if (Result != 0) {
+        Val = Result;
+      }
+
+      std::vector<std::pair<Init *, std::string> > args;
+      for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
+        Init *Arg;
+        std::string ArgName;
+        Arg = MHSd->getArg(i);
+        ArgName = MHSd->getArgName(i);
+
+        // Process args
+        Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
+                                         CurRec, CurMultiClass);
+        if (Result != 0) {
+          Arg = Result;
+        }
+
+        // TODO: Process arg names
+        args.push_back(std::make_pair(Arg, ArgName));
+      }
+
+      return new DagInit(Val, "", args);
+    }
+    if (MHSl) {
+      std::vector<Init *> NewOperands;
+      std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
+
+      for (ListInit::iterator li = NewList.begin(),
+             liend = NewList.end();
+           li != liend;
+           ++li) {
+        Init *Item = *li;
+        NewOperands.clear();
+        for(int i = 0; i < RHSo->getNumOperands(); ++i) {
+          // First, replace the foreach variable with the list item
+          if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
+            NewOperands.push_back(Item);
+          }
+          else {
+            NewOperands.push_back(RHSo->getOperand(i));
+          }
+        }
+
+        // Now run the operator and use its result as the new list item
+        OpInit *NewOp = RHSo->clone(NewOperands);
+        Init *NewItem = NewOp->Fold(CurRec, CurMultiClass);
+        if (NewItem != NewOp) {
+          *li = NewItem;
+          delete NewOp;
+        }
+      }
+      return new ListInit(NewList);
+    }
+  }
+  return 0;
+}
+
 Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   switch (getOpcode()) {
   default: assert(0 && "Unknown binop");
@@ -729,144 +867,10 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   }  
 
   case FOREACH: {
-    DagInit *MHSd = dynamic_cast<DagInit*>(MHS);
-    ListInit *MHSl = dynamic_cast<ListInit*>(MHS);
-
-    DagRecTy *DagType = dynamic_cast<DagRecTy*>(getType());
-    ListRecTy *ListType = dynamic_cast<ListRecTy*>(getType());
-
-    OpInit *RHSo = dynamic_cast<OpInit*>(RHS);
-
-    if (!RHSo) {
-      cerr << "!foreach requires an operator\n";
-      assert(0 && "No operator for !foreach");
-    }
-
-    TypedInit *LHSt = dynamic_cast<TypedInit*>(LHS);
-
-    if (!LHSt) {
-      cerr << "!foreach requires typed variable\n";
-      assert(0 && "No typed variable for !foreach");
-    }
-
-    if (MHSd && DagType || MHSl && ListType) {
-      std::vector<Init *> NewOperands;
-      if (MHSd) {
-        Init *Val = MHSd->getOperator();
-        TypedInit *TVal = dynamic_cast<TypedInit*>(Val);
-
-        if (TVal && TVal->getType()->typeIsConvertibleTo(LHSt->getType())) {
-          
-          // First, replace the foreach variable with the DAG leaf
-          for (int i = 0; i < RHSo->getNumOperands(); ++i) {
-            if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
-              NewOperands.push_back(Val);
-            }
-            else {
-              NewOperands.push_back(RHSo->getOperand(i));
-            }
-          }
-
-          // Now run the operator and use its result as the new leaf
-          OpInit *NewOp = RHSo->clone(NewOperands);
-          Val = NewOp->Fold(CurRec, CurMultiClass);
-          if (Val != NewOp) {
-            delete NewOp;
-          }
-        }
-
-        std::vector<std::pair<Init *, std::string> > args;
-        for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
-          Init *Arg;
-          std::string ArgName;
-          Arg = MHSd->getArg(i);
-          ArgName = MHSd->getArgName(i);
-
-          TypedInit *TArg = dynamic_cast<TypedInit*>(Arg);
-
-          if (TArg && TArg->getType()->typeIsConvertibleTo(LHSt->getType())) {
-            NewOperands.clear();
-
-            // First, replace the foreach variable with the DAG leaf
-            for (int i = 0; i < RHSo->getNumOperands(); ++i) {
-              if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
-                NewOperands.push_back(Arg);
-              }
-              else {
-                NewOperands.push_back(RHSo->getOperand(i));
-              }
-            }
-
-            // Now run the operator and use its result as the new leaf
-            OpInit *NewOp = RHSo->clone(NewOperands);
-            Arg = NewOp->Fold(CurRec, CurMultiClass);
-            if (Arg != NewOp) {
-              delete NewOp;
-            }
-          }
-         
-          if (LHSt->getType()->getAsString() == "string") {
-            NewOperands.clear();
-
-            // First, replace the foreach variable with the DAG leaf
-            for (int i = 0; i < RHSo->getNumOperands(); ++i) {
-              if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
-                NewOperands.push_back(new StringInit(ArgName));
-              }
-              else {
-                NewOperands.push_back(RHSo->getOperand(i));
-              }
-            }
-
-            // Now run the operator and use its result as the new leaf
-            OpInit *NewOp = RHSo->clone(NewOperands);
-            Init *ArgNameInit = NewOp->Fold(CurRec, CurMultiClass);
-            StringInit *SArgNameInit = dynamic_cast<StringInit*>(ArgNameInit);
-            if (SArgNameInit) {
-              ArgName = SArgNameInit->getValue();
-            }
-            if (ArgNameInit != NewOp) {
-              delete NewOp;
-            }
-            delete ArgNameInit;
-          }
-
-          args.push_back(std::make_pair(Arg, ArgName));
-        }
-
-        return new DagInit(Val, "", args);
-      }
-      if (MHSl) {
-        std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
-
-        for (ListInit::iterator li = NewList.begin(),
-               liend = NewList.end();
-             li != liend;
-             ++li) {
-          Init *Item = *li;
-          TypedInit *TItem = dynamic_cast<TypedInit*>(Item);
-          if (TItem && TItem->getType()->typeIsConvertibleTo(LHSt->getType())) {
-            // First, replace the foreach variable with the list item
-            for (int i = 0; i < RHSo->getNumOperands(); ++i) {
-              if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
-                NewOperands.push_back(Item);
-              }
-              else {
-                NewOperands.push_back(RHSo->getOperand(i));
-              }
-            }
-
-            // Now run the operator and use its result as the new list item
-            OpInit *NewOp = RHSo->clone(NewOperands);
-            *li = NewOp->Fold(CurRec, CurMultiClass);
-            if (*li != NewOp) {
-              delete NewOp;
-            }
-          }
-        }
-          
-        return new ListInit(NewList);
-      }
+    Init *Result = ForeachHelper(LHS, MHS, RHS, getType(),
+                                 CurRec, CurMultiClass);
+    if (Result != 0) {
+      return Result;
     }
     break;
   }

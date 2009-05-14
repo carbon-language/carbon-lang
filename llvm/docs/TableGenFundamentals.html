@@ -407,6 +407,10 @@ aborts with an error. </dd>
 <dt><tt>!subst(a, b, c)</tt></dt>
   <dd>If 'a' and 'b' are of string type or are symbol references, substitute 
 'b' for 'a' in 'c.'  This operation is analogous to $(subst) in GNU make.</dd>
+<dt><tt>!foreach(a, b, c)</tt></dt>
+  <dd>For each member 'b' of dag or list 'a' apply operator 'c.'  'b' is a 
+dummy variable that should be declared as a member variable of an instantiated 
+class.  This operation is analogous to $(foreach) in GNU make.</dd>
 </dl>
 
 <p>Note that all of the values have rules specifying how they convert to values

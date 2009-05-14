@@ -517,6 +517,33 @@ inline std::ostream &operator<<(std::ostream &OS, const Init &I) {
   I.print(OS); return OS;
 }
 
+/// TypedInit - This is the common super-class of types that have a specific,
+/// explicit, type.
+///
+class TypedInit : public Init {
+  RecTy *Ty;
+public:
+  explicit TypedInit(RecTy *T) : Ty(T) {}
+
+  RecTy *getType() const { return Ty; }
+
+  virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+  virtual Init *convertInitListSlice(const std::vector<unsigned> &Elements);
+
+  /// resolveBitReference - This method is used to implement
+  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
+  /// simply return the resolved value, otherwise we return null.
+  ///
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) = 0;
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt) = 0;
+};
+
 
 /// UnsetInit - ? - Represents an uninitialized value
 ///
@@ -609,10 +636,10 @@ public:
 
 /// StringInit - "foo" - Represent an initialization by a string value.
 ///
-class StringInit : public Init {
+class StringInit : public TypedInit {
   std::string Value;
 public:
-  explicit StringInit(const std::string &V) : Value(V) {}
+  explicit StringInit(const std::string &V) : TypedInit(new StringRecTy), Value(V) {}
 
   const std::string &getValue() const { return Value; }
 
@@ -621,6 +648,25 @@ public:
   }
 
   virtual std::string getAsString() const { return "\"" + Value + "\""; }
+
+  /// resolveBitReference - This method is used to implement
+  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
+  /// simply return the resolved value, otherwise we return null.
+  ///
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) {
+    assert(0 && "Illegal bit reference off string");
+    return 0;
+  }
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt) {
+    assert(0 && "Illegal element reference off string");
+    return 0;
+  }
 };
 
 /// CodeInit - "[{...}]" - Represent a code fragment.
@@ -683,33 +729,6 @@ public:
   inline bool           empty() const { return Values.empty(); }
 };
 
-
-/// TypedInit - This is the common super-class of types that have a specific,
-/// explicit, type.
-///
-class TypedInit : public Init {
-  RecTy *Ty;
-public:
-  explicit TypedInit(RecTy *T) : Ty(T) {}
-
-  RecTy *getType() const { return Ty; }
-
-  virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
-  virtual Init *convertInitListSlice(const std::vector<unsigned> &Elements);
-
-  /// resolveBitReference - This method is used to implement
-  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return null.
-  ///
-  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
-                                    unsigned Bit) = 0;
-
-  /// resolveListElementReference - This method is used to implement
-  /// VarListElementInit::resolveReferences.  If the list element is resolvable
-  /// now, we return the resolved value, otherwise we return null.
-  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
-                                            unsigned Elt) = 0;
-};
 
 /// OpInit - Base class for operators
 ///
@@ -957,10 +976,10 @@ public:
 
 /// DefInit - AL - Represent a reference to a 'def' in the description
 ///
-class DefInit : public Init {
+class DefInit : public TypedInit {
   Record *Def;
 public:
-  explicit DefInit(Record *D) : Def(D) {}
+  explicit DefInit(Record *D) : TypedInit(new RecordRecTy(D)), Def(D) {}
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
@@ -974,6 +993,25 @@ public:
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
 
   virtual std::string getAsString() const;
+
+  /// resolveBitReference - This method is used to implement
+  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
+  /// simply return the resolved value, otherwise we return null.
+  ///
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) {
+    assert(0 && "Illegal bit reference off def");
+    return 0;
+  }
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt) {
+    assert(0 && "Illegal element reference off def");
+    return 0;
+  }
 };
 
 
@@ -1008,7 +1046,7 @@ public:
 /// to have at least one value then a (possibly empty) list of arguments.  Each
 /// argument can have a name associated with it.
 ///
-class DagInit : public Init {
+class DagInit : public TypedInit {
   Init *Val;
   std::string ValName;
   std::vector<Init*> Args;
@@ -1016,7 +1054,7 @@ class DagInit : public Init {
 public:
   DagInit(Init *V, std::string VN, 
           const std::vector<std::pair<Init*, std::string> > &args)
-    : Val(V), ValName(VN) {
+    : TypedInit(new DagRecTy), Val(V), ValName(VN) {
     Args.reserve(args.size());
     ArgNames.reserve(args.size());
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
@@ -1026,7 +1064,7 @@ public:
   }
   DagInit(Init *V, std::string VN, const std::vector<Init*> &args, 
           const std::vector<std::string> &argNames)
-  : Val(V), ValName(VN), Args(args), ArgNames(argNames) {
+  : TypedInit(new DagRecTy), Val(V), ValName(VN), Args(args), ArgNames(argNames) {
   }
   
   virtual Init *convertInitializerTo(RecTy *Ty) {
@@ -1077,6 +1115,18 @@ public:
   inline size_t              name_size () const { return ArgNames.size();  }
   inline bool                name_empty() const { return ArgNames.empty(); }
 
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) {
+    assert(0 && "Illegal bit reference off dag");
+    return 0;
+  }
+  
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt) {
+    assert(0 && "Illegal element reference off dag");
+    return 0;
+  }
+  
 };
 
 //===----------------------------------------------------------------------===//

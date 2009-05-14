@@ -792,7 +792,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     return (new BinOpInit(Code, LHS, RHS, Type))->Fold(CurRec, CurMultiClass);
   }
 
-//   case tgtok::XForEach:
+  case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     TernOpInit::TernaryOp Code;
     RecTy *Type = 0;
@@ -802,9 +802,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     Lex.Lex();  // eat the operation
     switch (LexCode) {
     default: assert(0 && "Unhandled code!");
-      //case tgtok::XForEach:
-      //Code = TernOpInit::FOREACH;
-      //break;
+    case tgtok::XForEach:
+      Code = TernOpInit::FOREACH;
+      break;
     case tgtok::XSubst:
       Code = TernOpInit::SUBST;
       break;
@@ -844,15 +844,15 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
     switch (LexCode) {
     default: assert(0 && "Unhandled code!");
-      //case tgtok::XForEach: {
-      //TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
-      //if (MHSt == 0) {
-      //  TokError("could not get type for !foreach");
-      //  return 0;
-      //}
-      //Type = MHSt->getType();
-      //break;
-      //}
+    case tgtok::XForEach: {
+      TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
+      if (MHSt == 0) {
+        TokError("could not get type for !foreach");
+        return 0;
+      }
+      Type = MHSt->getType();
+      break;
+    }
     case tgtok::XSubst: {
       TypedInit *RHSt = dynamic_cast<TypedInit *>(RHS);
       if (RHSt == 0) {
@@ -1079,7 +1079,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   case tgtok::XSHL:
   case tgtok::XStrConcat:
   case tgtok::XNameConcat:  // Value ::= !binop '(' Value ',' Value ')'
-    //  case tgtok::XForEach:
+  case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     return ParseOperation(CurRec);
     break;
