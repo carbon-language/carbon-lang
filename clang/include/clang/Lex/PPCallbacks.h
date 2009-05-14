@@ -20,6 +20,7 @@
 
 namespace clang {
   class SourceLocation;
+  class Token;
   class IdentifierInfo;
   class MacroInfo;
     
