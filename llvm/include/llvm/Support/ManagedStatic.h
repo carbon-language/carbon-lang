@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_MANAGED_STATIC_H
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
+#include "llvm/System/Atomic.h"
+
 namespace llvm {
 
 /// object_deleter - Helper method for ManagedStatic.
@@ -26,6 +28,8 @@ void object_deleter(void *Ptr) {
 /// ManagedStaticBase - Common base class for ManagedStatic instances.
 class ManagedStaticBase {
 protected:
+  sys::cas_flag InitFlag;
+  
   // This should only be used as a static variable, which guarantees that this
   // will be zero initialized.
   mutable void *Ptr;
@@ -51,19 +55,47 @@ public:
 
   // Accessors.
   C &operator*() {
-    if (!Ptr) LazyInit();
+    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
+    if (OldFlag == 0) {
+      LazyInit();
+      sys::MemoryFence();
+      InitFlag = 2;
+    } else if (OldFlag == 1)
+      while (OldFlag == 1) ;
+      
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
-    if (!Ptr) LazyInit();
+    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
+    if (OldFlag == 0) {
+      LazyInit();
+      sys::MemoryFence();
+      InitFlag = 2;
+    } else if (OldFlag == 1)
+      while (OldFlag == 1) ;
+    
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
-    if (!Ptr) LazyInit();
+    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
+    if (OldFlag == 0) {
+      LazyInit();
+      sys::MemoryFence();
+      InitFlag = 2;
+    } else if (OldFlag == 1)
+      while (OldFlag == 1) ;
+    
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
-    if (!Ptr) LazyInit();
+    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
+    if (OldFlag == 0) {
+      LazyInit();
+      sys::MemoryFence();
+      InitFlag = 2;
+    } else if (OldFlag == 1)
+      while (OldFlag == 1) ;
+    
     return static_cast<C*>(Ptr);
   }
 
