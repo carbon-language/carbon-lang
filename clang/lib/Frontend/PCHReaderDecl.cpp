@@ -151,8 +151,8 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setC99InlineDefinition(Record[Idx++]);
   FD->setVirtual(Record[Idx++]);
   FD->setPure(Record[Idx++]);
-  FD->setInheritedPrototype(Record[Idx++]);
-  FD->setHasPrototype(Record[Idx++]);
+  FD->setHasInheritedPrototype(Record[Idx++]);
+  FD->setHasWrittenPrototype(Record[Idx++]);
   FD->setDeleted(Record[Idx++]);
   FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: C++ TemplateOrInstantiation

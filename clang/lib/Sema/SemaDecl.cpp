@@ -736,7 +736,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                          OldProto->isVariadic(),
                                          OldProto->getTypeQuals());
       New->setType(NewQType);
-      New->setInheritedPrototype();
+      New->setHasInheritedPrototype();
 
       // Synthesize a parameter for each argument type.
       llvm::SmallVector<ParmVarDecl*, 16> Params;

@@ -519,8 +519,8 @@ private:
   bool C99InlineDefinition : 1;
   bool IsVirtual : 1;
   bool IsPure : 1;
-  bool InheritedPrototype : 1;
-  bool HasPrototype : 1;
+  bool HasInheritedPrototype : 1;
+  bool HasWrittenPrototype : 1;
   bool IsDeleted : 1;
 
   // Move to DeclGroup when it is implemented.
@@ -546,8 +546,8 @@ protected:
       DeclContext(DK),
       ParamInfo(0), Body(), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
-      IsVirtual(false), IsPure(false), InheritedPrototype(false), 
-      HasPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
+      IsVirtual(false), IsPure(false), HasInheritedPrototype(false), 
+      HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
       TemplateOrInstantiation() {}
 
   virtual ~FunctionDecl() {}
@@ -557,7 +557,7 @@ public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T, 
                               StorageClass S = None, bool isInline = false,
-                              bool hasPrototype = true,
+                              bool hasWrittenPrototype = true,
                               SourceLocation TSStartLoc = SourceLocation());  
   
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
@@ -604,13 +604,17 @@ public:
   /// was explicitly written or because it was "inherited" by merging
   /// a declaration without a prototype with a declaration that has a
   /// prototype.
-  bool hasPrototype() const { return HasPrototype || InheritedPrototype; }
-  void setHasPrototype(bool P) { HasPrototype = P; }
+  bool hasPrototype() const { 
+    return HasWrittenPrototype || HasInheritedPrototype; 
+  }
+  
+  bool hasWrittenPrototype() const { return HasWrittenPrototype; }
+  void setHasWrittenPrototype(bool P) { HasWrittenPrototype = P; }
 
   /// \brief Whether this function inherited its prototype from a
   /// previous declaration.
-  bool inheritedPrototype() const { return InheritedPrototype; }
-  void setInheritedPrototype(bool P = true) { InheritedPrototype = P; }
+  bool hasInheritedPrototype() const { return HasInheritedPrototype; }
+  void setHasInheritedPrototype(bool P = true) { HasInheritedPrototype = P; }
 
   /// \brief Whether this function has been deleted.
   ///

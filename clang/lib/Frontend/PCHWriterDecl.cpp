@@ -151,8 +151,8 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->isC99InlineDefinition());
   Record.push_back(D->isVirtual());
   Record.push_back(D->isPure());
-  Record.push_back(D->inheritedPrototype());
-  Record.push_back(D->hasPrototype() && !D->inheritedPrototype());
+  Record.push_back(D->hasInheritedPrototype());
+  Record.push_back(D->hasWrittenPrototype());
   Record.push_back(D->isDeleted());
   Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   // FIXME: C++ TemplateOrInstantiation

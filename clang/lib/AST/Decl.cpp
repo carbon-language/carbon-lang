@@ -123,12 +123,12 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
                                    DeclarationName N, QualType T, 
                                    StorageClass S, bool isInline, 
-                                   bool hasPrototype,
+                                   bool hasWrittenPrototype,
                                    SourceLocation TypeSpecStartLoc) {
   FunctionDecl *New 
     = new (C) FunctionDecl(Function, DC, L, N, T, S, isInline, 
                            TypeSpecStartLoc);
-  New->HasPrototype = hasPrototype;
+  New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }
 
