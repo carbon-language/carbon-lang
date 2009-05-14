@@ -71,3 +71,41 @@ void f3(X4<int&>::Inner); // okay, Inner::VeryInner, not instantiated
 
 template struct X4<int&>; // expected-note{{instantiation}}
 template struct X4<float&>; // expected-note{{instantiation}}
+
+// Check explicit instantiation of member classes
+namespace N2 {
+
+template<typename T>
+struct X5 {
+  struct Inner1 {
+    void f(T&);
+  };
+
+  struct Inner2 {
+    struct VeryInner { // expected-note 2{{instantiation}}
+      void g(T*); // expected-error 2{{pointer to a reference}}
+    };
+  };
+};
+
+}
+
+template struct N2::X5<void>::Inner2;
+
+using namespace N2;
+template struct X5<int&>::Inner2; // expected-note{{instantiation}}
+
+void f4(X5<float&>::Inner2);
+template struct X5<float&>::Inner2; // expected-note{{instantiation}}
+
+namespace N3 {
+  template struct N2::X5<int>::Inner2;
+}
+
+struct X6 {
+  struct Inner { // expected-note{{here}}
+    void f();
+  };
+};
+
+template struct X6::Inner; // expected-error{{non-templated}}

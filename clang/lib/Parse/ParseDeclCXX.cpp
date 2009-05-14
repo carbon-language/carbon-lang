@@ -514,10 +514,10 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         //
         //   template class Foo<X>
         //
-        // but it is actually a declaration. Most likely, this was
+        // but it actually has a definition. Most likely, this was
         // meant to be an explicit specialization, but the user forgot
         // the '<>' after 'template'.
-        assert(TK == Action::TK_Definition && "Can only get a definition here");
+        assert(TK == Action::TK_Definition && "Expected a definition here");
 
         SourceLocation LAngleLoc 
           = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
@@ -554,7 +554,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  TemplateParams? TemplateParams->size() : 0));
     }
     TemplateId->Destroy();
-  } else if (TemplateParams && TK != Action::TK_Reference)
+  } else if (TemplateParams && TK != Action::TK_Reference) {
+    // Class template declaration or definition.
     TagOrTempResult = Actions.ActOnClassTemplate(CurScope, TagType, TK, 
                                                  StartLoc, SS, Name, NameLoc, 
                                                  Attr,
@@ -562,9 +563,28 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                                       &(*TemplateParams)[0],
                                                       TemplateParams->size()),
                                                  AS);
-  else
-    TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, Name, 
-                                       NameLoc, Attr, AS);
+  } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
+             TK == Action::TK_Declaration) {
+    // Explicit instantiation of a member of a class template
+    // specialization, e.g.,
+    //
+    //   template struct Outer<int>::Inner;
+    //
+    TagOrTempResult
+      = Actions.ActOnExplicitInstantiation(CurScope, 
+                                           TemplateInfo.TemplateLoc, 
+                                           TagType, StartLoc, SS, Name, 
+                                           NameLoc, Attr);
+  } else {
+    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
+        TK == Action::TK_Definition) {
+      // FIXME: Diagnose this particular error.
+    }
+
+    // Declaration or definition of a class type
+    TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, 
+                                       Name, NameLoc, Attr, AS);
+  }
 
   // Parse the optional base clause (C++ only).
   if (getLang().CPlusPlus && Tok.is(tok::colon))

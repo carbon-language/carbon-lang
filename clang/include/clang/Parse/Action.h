@@ -1373,7 +1373,56 @@ public:
     return DeclResult();
   }
                              
-                             
+  /// \brief Process the explicit instantiation of a member class of a
+  /// class template specialization.
+  ///
+  /// This routine is invoked when an explicit instantiation of a
+  /// member class of a class template specialization is
+  /// encountered. In the following example,
+  /// ActOnExplicitInstantiation will be invoked to force the
+  /// instantiation of X<int>::Inner:
+  ///
+  /// \code
+  /// template<typename T> class X { class Inner { /* ... */}; };
+  /// template class X<int>::Inner; // explicit instantiation
+  /// \endcode
+  ///
+  /// \param S the current scope
+  ///
+  /// \param TemplateLoc the location of the 'template' keyword that
+  /// specifies that this is an explicit instantiation.
+  ///
+  /// \param TagSpec whether this declares a class, struct, or union
+  /// (template).
+  ///
+  /// \param KWLoc the location of the 'class', 'struct', or 'union'
+  /// keyword.
+  ///
+  /// \param SS the scope specifier preceding the template-id.
+  ///
+  /// \param Template the declaration of the class template that we
+  /// are instantiation.
+  ///
+  /// \param LAngleLoc the location of the '<' token in the template-id.
+  ///
+  /// \param TemplateArgs the template arguments used to form the
+  /// template-id.
+  ///
+  /// \param TemplateArgLocs the locations of the template arguments.
+  ///
+  /// \param RAngleLoc the location of the '>' token in the template-id.
+  ///
+  /// \param Attr attributes that apply to this instantiation.
+  virtual DeclResult
+  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+                             unsigned TagSpec, 
+                             SourceLocation KWLoc,
+                             const CXXScopeSpec &SS,
+                             IdentifierInfo *Name,
+                             SourceLocation NameLoc,
+                             AttributeList *Attr) {
+    return DeclResult();
+  }
 
   /// \brief Called when the parser has parsed a C++ typename
   /// specifier that ends in an identifier, e.g., "typename T::type".

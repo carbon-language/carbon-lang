@@ -994,10 +994,7 @@ QualType Sema::CheckPointerToMemberOperands(
     Diag(Loc, diag::err_bad_memptr_rhs)
       << OpSpelling << RType << rex->getSourceRange();
     return QualType();
-  } else if (RequireCompleteType(Loc, QualType(MemPtr->getClass(), 0),
-                                 diag::err_memptr_rhs_incomplete,
-                                 rex->getSourceRange()))
-    return QualType();
+  } 
 
   QualType Class(MemPtr->getClass(), 0);
 

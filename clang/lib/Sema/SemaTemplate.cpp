@@ -2155,6 +2155,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   return DeclPtrTy::make(Specialization);
 }
 
+// Explicit instantiation of a class template specialization
 Sema::DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                  unsigned TagSpec, 
@@ -2244,7 +2245,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
     }
 
     if (PrevDecl->getSpecializationKind() == TSK_ExplicitSpecialization) {
-      // C++0x [temp.explicit]p4:
+      // C++ DR 259, C++0x [temp.explicit]p4:
       //   For a given set of template parameters, if an explicit
       //   instantiation of a template appears after a declaration of
       //   an explicit specialization for that template, the explicit
@@ -2340,6 +2341,84 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization);
   
   return DeclPtrTy::make(Specialization);
+}
+
+// Explicit instantiation of a member class of a class template.
+Sema::DeclResult
+Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+                                 unsigned TagSpec, 
+                                 SourceLocation KWLoc,
+                                 const CXXScopeSpec &SS,
+                                 IdentifierInfo *Name,
+                                 SourceLocation NameLoc,
+                                 AttributeList *Attr) {
+
+  DeclPtrTy TagD = ActOnTag(S, TagSpec, Action::TK_Reference,
+                            KWLoc, SS, Name, NameLoc, Attr, AS_none);
+  if (!TagD)
+    return true;
+
+  TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+  if (Tag->isEnum()) {
+    Diag(TemplateLoc, diag::err_explicit_instantiation_enum)
+      << Context.getTypeDeclType(Tag);
+    return true;
+  }
+
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(Tag);
+  CXXRecordDecl *Pattern = Record->getInstantiatedFromMemberClass();
+  if (!Pattern) {
+    Diag(TemplateLoc, diag::err_explicit_instantiation_nontemplate_type)
+      << Context.getTypeDeclType(Record);
+    Diag(Record->getLocation(), diag::note_nontemplate_decl_here);
+    return true;
+  }
+
+  // C++0x [temp.explicit]p2:
+  //   [...] An explicit instantiation shall appear in an enclosing
+  //   namespace of its template. [...]
+  //
+  // This is C++ DR 275.
+  if (getLangOptions().CPlusPlus0x) {
+    // FIXME: In C++98, we would like to turn these errors into
+    // warnings, dependent on a -Wc++0x flag.
+    DeclContext *PatternContext 
+      = Pattern->getDeclContext()->getEnclosingNamespaceContext();
+    if (!CurContext->Encloses(PatternContext)) {
+      Diag(TemplateLoc, diag::err_explicit_instantiation_out_of_scope)
+        << Record << cast<NamedDecl>(PatternContext) << SS.getRange();
+      Diag(Pattern->getLocation(), diag::note_previous_declaration);
+    }
+  }
+
+  // Find the enclosing template, because we need its template
+  // arguments to instantiate this class.
+  DeclContext *EnclosingTemplateCtx = Record->getDeclContext();
+  while (!isa<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx))
+    EnclosingTemplateCtx = EnclosingTemplateCtx->getParent();
+  ClassTemplateSpecializationDecl *EnclosingTemplate 
+    = cast<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx);
+  
+  if (!Record->getDefinition(Context)) {
+    // If the class has a definition, instantiate it (and all of its
+    // members, recursively).
+    Pattern = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
+    if (Pattern && InstantiateClass(TemplateLoc, Record, Pattern, 
+                                    EnclosingTemplate->getTemplateArgs(),
+                                    /*ExplicitInstantiation=*/true))
+      return true;
+  } else {
+    // Instantiate all of the members of class.
+    InstantiatingTemplate Inst(*this, TemplateLoc, Record);
+    InstantiateClassMembers(TemplateLoc, Record, 
+                            EnclosingTemplate->getTemplateArgs());
+  }
+
+  // FIXME: We don't have any representation for explicit
+  // instantiations of member classes. Such a representation is not
+  // needed for compilation, but it should be available for clients
+  // that want to see all of the declarations in the source code.
+  return TagD;
 }
 
 Sema::TypeResult

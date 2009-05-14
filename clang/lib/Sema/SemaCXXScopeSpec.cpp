@@ -273,8 +273,9 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation CCLoc) {
   NestedNameSpecifier *Prefix 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  QualType T = QualType::getFromOpaquePtr(Ty);
   return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
-                                QualType::getFromOpaquePtr(Ty).getTypePtr());
+                                     T.getTypePtr());
 }
 
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global

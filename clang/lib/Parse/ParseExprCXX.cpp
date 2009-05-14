@@ -149,7 +149,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       if (TemplateId->Kind == TNK_Type_template || 
           TemplateId->Kind == TNK_Dependent_template_name) {
         AnnotateTemplateIdTokenAsType(&SS);
-        SS.clear();
+        SS.setScopeRep(0);
 
         assert(Tok.is(tok::annot_typename) && 
                "AnnotateTemplateIdTokenAsType isn't working");

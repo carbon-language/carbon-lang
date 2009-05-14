@@ -1919,6 +1919,15 @@ public:
                              SourceLocation RAngleLoc,
                              AttributeList *Attr);
 
+  virtual DeclResult
+  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+                             unsigned TagSpec, 
+                             SourceLocation KWLoc,
+                             const CXXScopeSpec &SS,
+                             IdentifierInfo *Name,
+                             SourceLocation NameLoc,
+                             AttributeList *Attr);
+
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,

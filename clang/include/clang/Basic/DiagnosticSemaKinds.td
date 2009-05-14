@@ -737,6 +737,14 @@ def ext_explicit_instantiation_after_specialization : Extension<
     "specialization will be ignored (C++0x extension)">;
 def note_previous_template_specialization : Note<
     "previous template specialization is here">;
+def err_explicit_instantiation_enum : Error<
+    "explicit instantiation of enumeration type %0">;
+def err_explicit_instantiation_nontemplate_type : Error<
+    "explicit instantiation of non-templated type %0">;
+def note_nontemplate_decl_here : Note<
+    "non-templated declaration is here">;
+def err_explicit_instantiation_out_of_scope : Error<
+  "explicit instantiation of %0 not in a namespace enclosing %1">;
 
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;
@@ -1234,8 +1242,6 @@ def err_qualified_catch_declarator : Error<
 def err_early_catch_all : Error<"catch-all handler must come last">;
 def err_bad_memptr_rhs : Error<
   "right hand operand to %0 has non pointer-to-member type %1">;
-def err_memptr_rhs_incomplete : Error<
-  "right hand operand is a pointer to member of incomplete type %0">;
 def err_bad_memptr_lhs : Error<
   "left hand operand to %0 must be a %select{|pointer to }1class "
   "compatible with the right hand operand, but is %2">;

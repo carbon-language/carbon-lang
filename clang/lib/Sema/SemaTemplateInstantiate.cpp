@@ -863,7 +863,7 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
                                  ActOnCXXNestedNameSpecifier(0, SS,
                                                              Range.getEnd(),
                                                              Range.getEnd(),
-                                                   *NNS->getAsIdentifier()));
+                                                    *NNS->getAsIdentifier()));
     break;
   }
 

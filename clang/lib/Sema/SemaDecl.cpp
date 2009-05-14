@@ -3254,12 +3254,15 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       goto CreateNewDecl;
     }
 
-    // FIXME: RequireCompleteDeclContext(SS)?
+    if (RequireCompleteDeclContext(SS))
+      return DeclPtrTy::make((Decl *)0);
+
     DC = computeDeclContext(SS);
     SearchDC = DC;
     // Look-up name inside 'foo::'.
-    PrevDecl = dyn_cast_or_null<TagDecl>(
-                 LookupQualifiedName(DC, Name, LookupTagName, true).getAsDecl());
+    PrevDecl 
+      = dyn_cast_or_null<TagDecl>(
+               LookupQualifiedName(DC, Name, LookupTagName, true).getAsDecl());
 
     // A tag 'foo::bar' must already exist.
     if (PrevDecl == 0) {

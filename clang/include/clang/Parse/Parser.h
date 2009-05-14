@@ -560,7 +560,7 @@ private:
         TemplateParams(TemplateParams) { }
 
     explicit ParsedTemplateInfo(SourceLocation TemplateLoc)
-      : Kind(ExplicitInstantiation), 
+      : Kind(ExplicitInstantiation), TemplateParams(0), 
         TemplateLoc(TemplateLoc) { }
 
     /// \brief The kind of template we are parsing.
