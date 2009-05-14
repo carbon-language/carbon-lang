@@ -669,7 +669,11 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
+  const char *LinkageName = Name;
+  
   // Skip the asm prefix if it exists.
+  //
+  // FIXME: This should probably be the unmangled name?
   if (Name[0] == '\01')
     ++Name;
   
@@ -679,7 +683,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
   unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
   
   llvm::DISubprogram SP =
-    DebugFactory.CreateSubprogram(Unit, Name, Name, "", Unit, LineNo,
+    DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
                                   getOrCreateType(ReturnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
   
