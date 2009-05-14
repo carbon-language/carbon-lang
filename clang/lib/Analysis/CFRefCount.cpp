@@ -1338,6 +1338,15 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
                     "withObject", "waitUntilDone", "modes", NULL);
   addClsMethSummary(NSObjectII, Summ, "performSelectorInBackground",
                     "withObject", NULL);
+  
+  // Specially handle NSData.
+  RetainSummary *dataWithBytesNoCopySumm =
+    getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC), DoNothing,
+                         DoNothing);
+  addClsMethSummary("NSData", dataWithBytesNoCopySumm,
+                    "dataWithBytesNoCopy", "length", NULL);
+  addClsMethSummary("NSData", dataWithBytesNoCopySumm,
+                    "dataWithBytesNoCopy", "length", "freeWhenDone", NULL);
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {

@@ -140,6 +140,11 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 - (void)drain;
 @end
 
+@interface NSData : NSObject {}
++ (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
++ (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
+@end
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -590,6 +595,27 @@ int RDar6320065_test() {
   RDar6320065 *test = [[RDar6320065 alloc] init]; // no-warning
   [test release];
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6859457> [NSData dataWithBytesNoCopy] does not return a retained object
+//===----------------------------------------------------------------------===//
+
+@interface RDar6859457 : NSObject {}
+- (NSString*) NoCopyString;
+- (NSString*) noCopyString;
+@end
+
+@implementation RDar6859457 
+- (NSString*) NoCopyString { return [[NSString alloc] init]; } // no-warning
+- (NSString*) noCopyString { return [[NSString alloc] init]; } // no-warning
+@end
+
+void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
+  [x NoCopyString]; // expected-warning{{leak}}
+  [x noCopyString]; // expected-warning{{leak}}
+  [NSData dataWithBytesNoCopy:bytes length:dataLength];  // no-warning
+  [NSData dataWithBytesNoCopy:bytes length:dataLength freeWhenDone:1]; // no-warning
 }
 
 //===----------------------------------------------------------------------===//
