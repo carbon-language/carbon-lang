@@ -12,7 +12,7 @@ struct T; // expected-note{{forward declaration of 'struct T'}}
 struct U
 {
   // A special new, to verify that the global version isn't used.
-  void* operator new(size_t, S*);
+  void* operator new(size_t, S*); // expected-note {{candidate}}
 };
 struct V : U
 {
@@ -37,7 +37,7 @@ void good_news()
   ia4 *pai = new (int[3][4]);
   pi = ::new int;
   U *pu = new (ps) U;
-  // This is xfail. Inherited functions are not looked up currently.
+  // FIXME: Inherited functions are not looked up currently.
   //V *pv = new (ps) V;
 }
 
@@ -68,6 +68,8 @@ void bad_news(int *ip)
   (void)new (0L) int; // expected-error {{call to 'operator new' is ambiguous}}
   // This must fail, because the member version shouldn't be found.
   (void)::new ((S*)0) U; // expected-error {{no matching function for call to 'operator new'}}
+  // This must fail, because any member version hides all global versions.
+  (void)new U; // expected-error {{no matching function for call to 'operator new'}}
   (void)new (int[]); // expected-error {{array size must be specified in new expressions}}
   (void)new int&; // expected-error {{cannot allocate reference type 'int &' with new}}
   // Some lacking cases due to lack of sema support.

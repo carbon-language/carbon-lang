@@ -533,8 +533,6 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   }
 
   case OR_No_Viable_Function:
-    if (AllowMissing)
-      return false;
     Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
       << Name << Range;
     PrintOverloadCandidates(Candidates, /*OnlyViable=*/false);
