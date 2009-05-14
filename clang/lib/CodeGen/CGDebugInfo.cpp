@@ -34,7 +34,8 @@ using namespace clang;
 using namespace clang::CodeGen;
 
 CGDebugInfo::CGDebugInfo(CodeGenModule *m)
-  : M(m), isMainCompileUnitCreated(false), DebugFactory(M->getModule()) {
+  : M(m), isMainCompileUnitCreated(false), DebugFactory(M->getModule()),
+    BlockLiteralGenericSet(false) {
 }
 
 CGDebugInfo::~CGDebugInfo() {
@@ -208,6 +209,133 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
   return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
                                         "", llvm::DICompileUnit(),
                                         0, Size, Align, 0, 0, EltTy);
+}
+
+llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
+                                     llvm::DICompileUnit Unit) {
+  if (BlockLiteralGenericSet)
+    return BlockLiteralGeneric;
+
+  llvm::DICompileUnit DefUnit;
+  unsigned Tag = llvm::dwarf::DW_TAG_structure_type;
+
+  llvm::SmallVector<llvm::DIDescriptor, 5> EltTys;
+
+  llvm::DIType FieldTy;
+
+  QualType FType;
+  uint64_t FieldSize, FieldOffset;
+  unsigned FieldAlign;
+
+  llvm::DIArray Elements;
+  llvm::DIType EltTy, DescTy;
+
+  FieldOffset = 0;
+  FType = M->getContext().UnsignedLongTy;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = M->getContext().getTypeSize(FType);
+  FieldAlign = M->getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "reserved", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  FType = M->getContext().UnsignedLongTy;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = M->getContext().getTypeSize(FType);
+  FieldAlign = M->getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "Size", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  Elements = DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+  EltTys.clear();
+
+  EltTy = DebugFactory.CreateCompositeType(Tag, Unit, "__block_descriptor",
+                                           DefUnit, 0, FieldOffset, 0, 0, 0,
+                                           llvm::DIType(), Elements);
+  
+  // Bit size, align and offset of the type.
+  uint64_t Size = M->getContext().getTypeSize(Ty);
+  uint64_t Align = M->getContext().getTypeAlign(Ty);
+                                                                               
+  DescTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type,
+                                          Unit, "", llvm::DICompileUnit(),
+                                          0, Size, Align, 0, 0, EltTy);
+
+  FieldOffset = 0;
+  FType = M->getContext().getPointerType(M->getContext().VoidTy);
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = M->getContext().getTypeSize(FType);
+  FieldAlign = M->getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__isa", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  FType = M->getContext().IntTy;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = M->getContext().getTypeSize(FType);
+  FieldAlign = M->getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__flags", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  FType = M->getContext().IntTy;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = M->getContext().getTypeSize(FType);
+  FieldAlign = M->getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__reserved", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  FType = M->getContext().getPointerType(M->getContext().VoidTy);
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = M->getContext().getTypeSize(FType);
+  FieldAlign = M->getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__FuncPtr", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  FType = M->getContext().getPointerType(M->getContext().VoidTy);
+  FieldTy = DescTy;
+  FieldSize = M->getContext().getTypeSize(Ty);
+  FieldAlign = M->getContext().getTypeAlign(Ty);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__descriptor", DefUnit,
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+
+  FieldOffset += FieldSize;
+  Elements = DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+
+  EltTy = DebugFactory.CreateCompositeType(Tag, Unit, "__block_literal_generic",
+                                           DefUnit, 0, FieldOffset, 0, 0, 0,
+                                           llvm::DIType(), Elements);
+  
+  BlockLiteralGenericSet = true;
+  BlockLiteralGeneric
+    = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
+                                     "", llvm::DICompileUnit(),
+                                     0, Size, Align, 0, 0, EltTy);
+  return BlockLiteralGeneric;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
@@ -626,7 +754,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::ExtVector:
   case Type::ExtQual:
   case Type::FixedWidthInt:
-  case Type::BlockPointer:
   case Type::MemberPointer:
   case Type::TemplateSpecialization:
   case Type::QualifiedName:
@@ -641,6 +768,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::Builtin: return Slot = CreateType(cast<BuiltinType>(Ty), Unit);
   case Type::Complex: return Slot = CreateType(cast<ComplexType>(Ty), Unit);
   case Type::Pointer: return Slot = CreateType(cast<PointerType>(Ty), Unit);
+  case Type::BlockPointer:
+    return Slot = CreateType(cast<BlockPointerType>(Ty), Unit);
   case Type::Typedef: return Slot = CreateType(cast<TypedefType>(Ty), Unit);
   case Type::Record:
   case Type::Enum:

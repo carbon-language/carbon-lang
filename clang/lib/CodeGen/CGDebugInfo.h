@@ -46,6 +46,9 @@ class CGDebugInfo {
   // FIXME: Eliminate this map.  Be careful of iterator invalidation.
   std::map<void *, llvm::DIType> TypeCache;
   
+  bool BlockLiteralGenericSet;
+  llvm::DIType BlockLiteralGeneric;
+
   std::vector<llvm::DIDescriptor> RegionStack;
 
   /// Helper functions for getOrCreateType.
@@ -54,6 +57,7 @@ class CGDebugInfo {
   llvm::DIType CreateCVRType(QualType Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const TypedefType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const PointerType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const BlockPointerType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const TagType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const RecordType *Ty, llvm::DICompileUnit U);
