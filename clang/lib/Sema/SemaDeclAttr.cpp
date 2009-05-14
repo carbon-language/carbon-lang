@@ -725,7 +725,6 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     // will be issued by the caller.
     ;
   } else if (const VarDecl *V = dyn_cast<VarDecl>(d)) {
-    // FIXME: share code with case of BlockDecl.
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType()) {
       const BlockPointerType *BPT = Ty->getAsBlockPointerType();
@@ -739,12 +738,12 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
     else {
       S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 6 /*function, method or */;
+      << Attr.getName() << 6 /*function, method or block */;
       return;
     }
   } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 6 /*function, method or */;
+      << Attr.getName() << 6 /*function, method or block */;
     return;
   }
   d->addAttr(::new (S.Context) SentinelAttr(sentinel, nullPos));
