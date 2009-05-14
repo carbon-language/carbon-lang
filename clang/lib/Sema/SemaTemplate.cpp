@@ -2391,27 +2391,19 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
     }
   }
 
-  // Find the enclosing template, because we need its template
-  // arguments to instantiate this class.
-  DeclContext *EnclosingTemplateCtx = Record->getDeclContext();
-  while (!isa<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx))
-    EnclosingTemplateCtx = EnclosingTemplateCtx->getParent();
-  ClassTemplateSpecializationDecl *EnclosingTemplate 
-    = cast<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx);
-  
   if (!Record->getDefinition(Context)) {
     // If the class has a definition, instantiate it (and all of its
     // members, recursively).
     Pattern = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
     if (Pattern && InstantiateClass(TemplateLoc, Record, Pattern, 
-                                    EnclosingTemplate->getTemplateArgs(),
+                                    getTemplateInstantiationArgs(Record),
                                     /*ExplicitInstantiation=*/true))
       return true;
   } else {
     // Instantiate all of the members of class.
     InstantiatingTemplate Inst(*this, TemplateLoc, Record);
     InstantiateClassMembers(TemplateLoc, Record, 
-                            EnclosingTemplate->getTemplateArgs());
+                            getTemplateInstantiationArgs(Record));
   }
 
   // FIXME: We don't have any representation for explicit

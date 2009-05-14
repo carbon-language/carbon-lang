@@ -1970,6 +1970,8 @@ public:
   // C++ Template Instantiation
   //
 
+  const TemplateArgumentList &getTemplateInstantiationArgs(NamedDecl *D);
+
   /// \brief A template instantiation that is currently in progress.
   struct ActiveTemplateInstantiation {
     /// \brief The kind of template instantiation we are performing
@@ -2117,7 +2119,7 @@ public:
     /// when we instantiate add<int>, we will introduce a mapping from
     /// the ParmVarDecl for 'x' that occurs in the template to the
     /// instantiated ParmVarDecl for 'x'.
-    llvm::DenseMap<VarDecl *, VarDecl *> LocalDecls;
+    llvm::DenseMap<const VarDecl *, VarDecl *> LocalDecls;
 
     /// \brief The outer scope, in which contains local variable
     /// definitions from some other instantiation (that is not
@@ -2138,17 +2140,17 @@ public:
       SemaRef.CurrentInstantiationScope = Outer;
     }
 
-    VarDecl *getInstantiationOf(VarDecl *Var) {
+    VarDecl *getInstantiationOf(const VarDecl *Var) {
       VarDecl *Result = LocalDecls[Var];
       assert(Result && "Variable was not instantiated in this scope!");
       return Result;
     }
 
-    ParmVarDecl *getInstantiationOf(ParmVarDecl *Var) {
+    ParmVarDecl *getInstantiationOf(const ParmVarDecl *Var) {
       return cast<ParmVarDecl>(getInstantiationOf(cast<VarDecl>(Var)));
     }
 
-    void InstantiatedLocal(VarDecl *Var, VarDecl *VarInst) {
+    void InstantiatedLocal(const VarDecl *Var, VarDecl *VarInst) {
       VarDecl *&Stored = LocalDecls[Var];
       assert(!Stored && "Already instantiated this local variable");
       Stored = VarInst;
@@ -2163,6 +2165,9 @@ public:
                            SourceLocation Loc, DeclarationName Entity);
 
   OwningExprResult InstantiateExpr(Expr *E, 
+                                   const TemplateArgumentList &TemplateArgs);
+
+  OwningStmtResult InstantiateStmt(Stmt *S, 
                                    const TemplateArgumentList &TemplateArgs);
 
   Decl *InstantiateDecl(Decl *D, DeclContext *Owner,

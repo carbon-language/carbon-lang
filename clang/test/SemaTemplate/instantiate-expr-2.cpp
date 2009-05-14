@@ -116,7 +116,7 @@ namespace N7 {
 
   //Cond<true, int*, double> C; // Errors
   //int V(C.foo()); // Errors
-  //typedef Cond<true, int*, double>::Type Type; // Errors + CRASHES!
+  //typedef Cond<true, int*, double>::Type Type; // Errors
   typedef Cond<true, int, double>::Type Type;
 }
 
@@ -128,5 +128,5 @@ struct X0 {
 };
 
 void test_X0(X0<int> x, IntegralConstant<int, sizeof(int)> ic) {
-  x.f(5, ic);
+  x.f(5,ic);
 }

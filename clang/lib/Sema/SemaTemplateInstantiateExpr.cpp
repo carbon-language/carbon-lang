@@ -423,3 +423,73 @@ Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
   TemplateExprInstantiator Instantiator(*this, TemplateArgs);
   return Instantiator.Visit(E);
 }
+
+namespace {
+  class VISIBILITY_HIDDEN TemplateStmtInstantiator 
+    : public StmtVisitor<TemplateStmtInstantiator, Sema::OwningStmtResult> {
+    Sema &SemaRef;
+    const TemplateArgumentList &TemplateArgs;
+
+  public:
+    typedef Sema::OwningExprResult OwningExprResult;
+    typedef Sema::OwningStmtResult OwningStmtResult;
+
+    TemplateStmtInstantiator(Sema &SemaRef, 
+                             const TemplateArgumentList &TemplateArgs)
+      : SemaRef(SemaRef), TemplateArgs(TemplateArgs) { }
+
+    // FIXME: Once we get closer to completion, replace these
+    // manually-written declarations with automatically-generated ones
+    // from clang/AST/StmtNodes.def.
+    OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
+    OwningStmtResult VisitExpr(Expr *E);
+
+    // Base case. I'm supposed to ignore this.
+    OwningStmtResult VisitStmt(Stmt *S) { 
+      S->dump();
+      assert(false && "Cannot instantiate this kind of statement");
+      return SemaRef.StmtError(); 
+    }
+  };
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitCompoundStmt(CompoundStmt *S) {
+  // FIXME: We need an *easy* RAII way to delete these statements if
+  // something goes wrong.
+  llvm::SmallVector<Stmt *, 16> Statements;
+  
+  for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
+       B != BEnd; ++B) {
+    OwningStmtResult Result = Visit(*B);
+    if (Result.isInvalid()) {
+      // FIXME: This should be handled by an RAII destructor.
+      for (unsigned I = 0, N = Statements.size(); I != N; ++I)
+        Statements[I]->Destroy(SemaRef.Context);
+      return SemaRef.StmtError();
+    }
+
+    Statements.push_back(Result.takeAs<Stmt>());
+  }
+
+  return SemaRef.Owned(
+           new (SemaRef.Context) CompoundStmt(SemaRef.Context,
+                                              &Statements[0], 
+                                              Statements.size(),
+                                              S->getLBracLoc(),
+                                              S->getRBracLoc()));
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitExpr(Expr *E) {
+  Sema::OwningExprResult Result = SemaRef.InstantiateExpr(E, TemplateArgs);
+  if (Result.isInvalid())
+    return SemaRef.StmtError();
+  
+  return SemaRef.Owned(Result.takeAs<Stmt>());
+}
+
+Sema::OwningStmtResult 
+Sema::InstantiateStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
+  TemplateStmtInstantiator Instantiator(*this, TemplateArgs);
+  return Instantiator.Visit(S);
+}

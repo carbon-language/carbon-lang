@@ -572,6 +572,9 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
   // FIXME: make this work for function template specializations, too.
 
+  if (Function->isInvalidDecl())
+    return;
+
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl 
     = Function->getInstantiatedFromMemberFunction();
@@ -582,7 +585,23 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
   if (!Pattern)
     return;
 
-  // FIXME: instantiate the pattern  
+  // Introduce a new scope where local variable instantiations will be
+  // recorded.
+  LocalInstantiationScope Scope(*this);
+  
+  // Introduce the instantiated function parameters into the local
+  // instantiation scope.
+  for (unsigned I = 0, N = PatternDecl->getNumParams(); I != N; ++I)
+    Scope.InstantiatedLocal(PatternDecl->getParamDecl(I),
+                            Function->getParamDecl(I));
+
+  // Instantiate the function body.
+  OwningStmtResult Body 
+    = InstantiateStmt(Pattern, getTemplateInstantiationArgs(Function));
+  if (Body.isInvalid())
+    Function->setInvalidDecl(true);
+  else
+    Function->setBody(Body.takeAs<Stmt>());
 }
 
 /// \brief Instantiate the definition of the given variable from its

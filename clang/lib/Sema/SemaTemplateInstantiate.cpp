@@ -24,6 +24,26 @@ using namespace clang;
 // Template Instantiation Support
 //===----------------------------------------------------------------------===/
 
+/// \brief Retrieve the template argument list that should be used to
+/// instantiate the given declaration.
+const TemplateArgumentList &
+Sema::getTemplateInstantiationArgs(NamedDecl *D) {
+  if (ClassTemplateSpecializationDecl *Spec 
+        = dyn_cast<ClassTemplateSpecializationDecl>(D))
+    return Spec->getTemplateArgs();
+
+  DeclContext *EnclosingTemplateCtx = D->getDeclContext();
+  while (!isa<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx)) {
+    assert(!EnclosingTemplateCtx->isFileContext() &&
+           "Tried to get the instantiation arguments of a non-template");
+    EnclosingTemplateCtx = EnclosingTemplateCtx->getParent();
+  }
+
+  ClassTemplateSpecializationDecl *EnclosingTemplate 
+    = cast<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx);
+  return EnclosingTemplate->getTemplateArgs();
+}
+
 Sema::InstantiatingTemplate::
 InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                       CXXRecordDecl *Entity,
