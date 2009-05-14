@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines a bunch of datatypes that are useful for creating and
-// walking debug info in LLVM IR form.
+// walking debug info in LLVM IR form. They essentially provide wrappers around
+// the information in the global variables that's needed when constructing the
+// DWARF information.
 //
 //===----------------------------------------------------------------------===//
 
@@ -81,7 +83,8 @@ namespace llvm {
   /// DIAnchor - A wrapper for various anchor descriptors.
   class DIAnchor : public DIDescriptor {
   public:
-    explicit DIAnchor(GlobalVariable *GV = 0);
+    explicit DIAnchor(GlobalVariable *GV = 0)
+      : DIDescriptor(GV, dwarf::DW_TAG_anchor) {}
 
     unsigned getAnchorTag() const { return getUnsignedField(1); }
   };
@@ -89,7 +92,8 @@ namespace llvm {
   /// DISubrange - This is used to represent ranges, for array bounds.
   class DISubrange : public DIDescriptor {
   public:
-    explicit DISubrange(GlobalVariable *GV = 0);
+    explicit DISubrange(GlobalVariable *GV = 0)
+      : DIDescriptor(GV, dwarf::DW_TAG_subrange_type) {}
 
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
@@ -109,7 +113,8 @@ namespace llvm {
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIDescriptor {
   public:
-    explicit DICompileUnit(GlobalVariable *GV = 0);
+    explicit DICompileUnit(GlobalVariable *GV = 0)
+      : DIDescriptor(GV, dwarf::DW_TAG_compile_unit) {}
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
     const std::string &getFilename(std::string &F) const {
@@ -150,7 +155,8 @@ namespace llvm {
   /// type/precision or a file/line pair for location info.
   class DIEnumerator : public DIDescriptor {
   public:
-    explicit DIEnumerator(GlobalVariable *GV = 0);
+    explicit DIEnumerator(GlobalVariable *GV = 0)
+      : DIDescriptor(GV, dwarf::DW_TAG_enumerator) {}
 
     const std::string &getName(std::string &F) const {
       return getStringField(1, F);
@@ -220,7 +226,9 @@ namespace llvm {
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
   public:
-    explicit DIBasicType(GlobalVariable *GV);
+    explicit DIBasicType(GlobalVariable *GV)
+      : DIType(GV, dwarf::DW_TAG_base_type) {}
+
     unsigned getEncoding() const { return getUnsignedField(9); }
 
     /// dump - print basic type.
@@ -234,7 +242,12 @@ namespace llvm {
     explicit DIDerivedType(GlobalVariable *GV, bool, bool)
       : DIType(GV, true, true) {}
   public:
-    explicit DIDerivedType(GlobalVariable *GV);
+    explicit DIDerivedType(GlobalVariable *GV)
+      : DIType(GV, true, true) {
+      if (GV && !isDerivedType(getTag()))
+        GV = 0;
+    }
+
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
 
     /// getOriginalTypeSize - If this type is derived from a base type then
@@ -249,7 +262,12 @@ namespace llvm {
   /// FIXME: Why is this a DIDerivedType??
   class DICompositeType : public DIDerivedType {
   public:
-    explicit DICompositeType(GlobalVariable *GV);
+    explicit DICompositeType(GlobalVariable *GV)
+      : DIDerivedType(GV, true, true) {
+      if (GV && !isCompositeType(getTag()))
+        GV = 0;
+    }
+
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     unsigned getRunTimeLang() const { return getUnsignedField(11); }
 
@@ -307,7 +325,9 @@ namespace llvm {
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIGlobal {
   public:
-    explicit DISubprogram(GlobalVariable *GV = 0);
+    explicit DISubprogram(GlobalVariable *GV = 0)
+      : DIGlobal(GV, dwarf::DW_TAG_subprogram) {}
+
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
@@ -324,7 +344,9 @@ namespace llvm {
   /// DIGlobalVariable - This is a wrapper for a global variable.
   class DIGlobalVariable : public DIGlobal {
   public:
-    explicit DIGlobalVariable(GlobalVariable *GV = 0);
+    explicit DIGlobalVariable(GlobalVariable *GV = 0)
+      : DIGlobal(GV, dwarf::DW_TAG_variable) {}
+
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
 
     /// Verify - Verify that a global variable descriptor is well formed.
@@ -338,7 +360,11 @@ namespace llvm {
   /// global etc).
   class DIVariable : public DIDescriptor {
   public:
-    explicit DIVariable(GlobalVariable *GV = 0);
+    explicit DIVariable(GlobalVariable *gv = 0)
+      : DIDescriptor(gv) {
+      if (gv && !isVariable(getTag()))
+        GV = 0;
+    }
 
     DIDescriptor getContext() const { return getDescriptorField(1); }
     const std::string &getName(std::string &F) const {
@@ -361,8 +387,9 @@ namespace llvm {
   /// DIBlock - This is a wrapper for a block (e.g. a function, scope, etc).
   class DIBlock : public DIDescriptor {
   public:
-    explicit DIBlock(GlobalVariable *GV = 0);
-    
+    explicit DIBlock(GlobalVariable *GV = 0)
+      : DIDescriptor(GV, dwarf::DW_TAG_lexical_block) {}
+
     DIDescriptor getContext() const { return getDescriptorField(1); }
   };
 

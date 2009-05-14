@@ -22,6 +22,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Streams.h"
+
 using namespace llvm;
 using namespace llvm::dwarf;
 
@@ -60,10 +61,11 @@ bool DIDescriptor::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
     assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
     break;
   case DW_TAG_lexical_block:
-    /// FIXME. This interfers with the quality of generated code when
-    /// during optimization.
+    // FIXME: This interfers with the quality of generated code during
+    // optimization.
     if (OptLevel != CodeGenOpt::None)
       return false;
+    // FALLTHROUGH
   default:
     break;
   }
@@ -74,7 +76,7 @@ bool DIDescriptor::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
 DIDescriptor::DIDescriptor(GlobalVariable *gv, unsigned RequiredTag) {
   GV = gv;
   
-  // If this is non-null, check to see if the Tag matches.  If not, set to null.
+  // If this is non-null, check to see if the Tag matches. If not, set to null.
   if (GV && getTag() != RequiredTag)
     GV = 0;
 }
@@ -91,7 +93,7 @@ DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
     Result.clear();
     return Result;
   }
-  
+
   // Fills in the string if it succeeds
   if (!GetConstantStringInfo(C->getOperand(Elt), Result))
     Result.clear();
@@ -101,9 +103,11 @@ DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
   if (GV == 0) return 0;
+
   Constant *C = GV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
     return 0;
+
   if (ConstantInt *CI = dyn_cast<ConstantInt>(C->getOperand(Elt)))
     return CI->getZExtValue();
   return 0;
@@ -111,46 +115,31 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
 
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
   if (GV == 0) return DIDescriptor();
+
   Constant *C = GV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
     return DIDescriptor();
+
   C = C->getOperand(Elt);
   return DIDescriptor(dyn_cast<GlobalVariable>(C->stripPointerCasts()));
 }
 
 GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
   if (GV == 0) return 0;
+
   Constant *C = GV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
     return 0;
+
   C = C->getOperand(Elt);
-  
   return dyn_cast<GlobalVariable>(C->stripPointerCasts());
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-DIAnchor::DIAnchor(GlobalVariable *GV)
-  : DIDescriptor(GV, dwarf::DW_TAG_anchor) {}
-DIEnumerator::DIEnumerator(GlobalVariable *GV)
-  : DIDescriptor(GV, dwarf::DW_TAG_enumerator) {}
-DISubrange::DISubrange(GlobalVariable *GV)
-  : DIDescriptor(GV, dwarf::DW_TAG_subrange_type) {}
-DICompileUnit::DICompileUnit(GlobalVariable *GV)
-  : DIDescriptor(GV, dwarf::DW_TAG_compile_unit) {}
-DIBasicType::DIBasicType(GlobalVariable *GV)
-  : DIType(GV, dwarf::DW_TAG_base_type) {}
-DISubprogram::DISubprogram(GlobalVariable *GV)
-  : DIGlobal(GV, dwarf::DW_TAG_subprogram) {}
-DIGlobalVariable::DIGlobalVariable(GlobalVariable *GV)
-  : DIGlobal(GV, dwarf::DW_TAG_variable) {}
-DIBlock::DIBlock(GlobalVariable *GV)
-  : DIDescriptor(GV, dwarf::DW_TAG_lexical_block) {}
-// needed by DIVariable::getType()
+// Needed by DIVariable::getType().
 DIType::DIType(GlobalVariable *gv) : DIDescriptor(gv) {
   if (!gv) return;
   unsigned tag = getTag();
@@ -179,11 +168,6 @@ bool DIType::isDerivedType(unsigned Tag) {
   }
 }
 
-DIDerivedType::DIDerivedType(GlobalVariable *GV) : DIType(GV, true, true) {
-  if (GV && !isDerivedType(getTag()))
-    GV = 0;
-}
-
 /// isCompositeType - Return true if the specified tag is legal for
 /// DICompositeType.
 bool DIType::isCompositeType(unsigned TAG) {
@@ -201,12 +185,6 @@ bool DIType::isCompositeType(unsigned TAG) {
   }
 }
 
-DICompositeType::DICompositeType(GlobalVariable *GV)
-  : DIDerivedType(GV, true, true) {
-  if (GV && !isCompositeType(getTag()))
-    GV = 0;
-}
-
 /// isVariable - Return true if the specified tag is legal for DIVariable.
 bool DIVariable::isVariable(unsigned Tag) {
   switch (Tag) {
@@ -217,11 +195,6 @@ bool DIVariable::isVariable(unsigned Tag) {
   default:
     return false;
   }
-}
-
-DIVariable::DIVariable(GlobalVariable *gv) : DIDescriptor(gv) {
-  if (gv && !isVariable(getTag()))
-    GV = 0;
 }
 
 unsigned DIArray::getNumElements() const {
@@ -351,8 +324,9 @@ bool DISubprogram::describes(const Function *F) {
 // DIFactory: Basic Helpers
 //===----------------------------------------------------------------------===//
 
-DIFactory::DIFactory(Module &m) : M(m) {
-  StopPointFn = FuncStartFn = RegionStartFn = RegionEndFn = DeclareFn = 0;
+DIFactory::DIFactory(Module &m)
+  : M(m), StopPointFn(0), FuncStartFn(0), RegionStartFn(0), RegionEndFn(0),
+    DeclareFn(0) {
   EmptyStructPtr = PointerType::getUnqual(StructType::get(NULL, NULL));
 }
 
@@ -809,8 +783,7 @@ void DIFactory::InsertStopPoint(DICompileUnit CU, unsigned LineNo,
 void DIFactory::InsertSubprogramStart(DISubprogram SP, BasicBlock *BB) {
   // Lazily construct llvm.dbg.func.start.
   if (!FuncStartFn)
-    FuncStartFn = llvm::Intrinsic::getDeclaration(&M, 
-                                              llvm::Intrinsic::dbg_func_start);
+    FuncStartFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_func_start);
   
   // Call llvm.dbg.func.start which also implicitly sets a stoppoint.
   CallInst::Create(FuncStartFn, getCastToEmpty(SP), "", BB);
@@ -821,100 +794,99 @@ void DIFactory::InsertSubprogramStart(DISubprogram SP, BasicBlock *BB) {
 void DIFactory::InsertRegionStart(DIDescriptor D, BasicBlock *BB) {
   // Lazily construct llvm.dbg.region.start function.
   if (!RegionStartFn)
-    RegionStartFn = llvm::Intrinsic::getDeclaration(&M, 
-                                            llvm::Intrinsic::dbg_region_start);
+    RegionStartFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_region_start);
+
   // Call llvm.dbg.func.start.
   CallInst::Create(RegionStartFn, getCastToEmpty(D), "", BB);
 }
-
 
 /// InsertRegionEnd - Insert a new llvm.dbg.region.end intrinsic call to
 /// mark the end of a region for the specified scoping descriptor.
 void DIFactory::InsertRegionEnd(DIDescriptor D, BasicBlock *BB) {
   // Lazily construct llvm.dbg.region.end function.
   if (!RegionEndFn)
-    RegionEndFn = llvm::Intrinsic::getDeclaration(&M,
-                                               llvm::Intrinsic::dbg_region_end);
-  
+    RegionEndFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_region_end);
+
+  // Call llvm.dbg.region.end.
   CallInst::Create(RegionEndFn, getCastToEmpty(D), "", BB);
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-void DIFactory::InsertDeclare(llvm::Value *Storage, DIVariable D,
-                              BasicBlock *BB) {
+void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
-  Storage = new llvm::BitCastInst(Storage, EmptyStructPtr, "", BB);
+  Storage = new BitCastInst(Storage, EmptyStructPtr, "", BB);
   
   if (!DeclareFn)
-    DeclareFn = llvm::Intrinsic::getDeclaration(&M,
-                                                llvm::Intrinsic::dbg_declare);
+    DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
+
   Value *Args[] = { Storage, getCastToEmpty(D) };
   CallInst::Create(DeclareFn, Args, Args+2, "", BB);
 }
 
 namespace llvm {
-  /// Finds the stoppoint coressponding to this instruction, that is the
-  /// stoppoint that dominates this instruction 
-  const DbgStopPointInst *findStopPoint(const Instruction *Inst)
-  {
+  /// findStopPoint - Find the stoppoint coressponding to this instruction, that
+  /// is the stoppoint that dominates this instruction.
+  const DbgStopPointInst *findStopPoint(const Instruction *Inst) {
     if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(Inst))
       return DSI;
 
     const BasicBlock *BB = Inst->getParent();
     BasicBlock::const_iterator I = Inst, B;
-    do {
+    while (BB) {
       B = BB->begin();
+
       // A BB consisting only of a terminator can't have a stoppoint.
-      if (I != B) {
-        do {
-          --I;
-          if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
-            return DSI;
-        } while (I != B);
+      while (I != B) {
+        --I;
+        if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
+          return DSI;
       }
-      // This BB didn't have a stoppoint: if there is only one
-      // predecessor, look for a stoppoint there.
-      // We could use getIDom(), but that would require dominator info.
+
+      // This BB didn't have a stoppoint: if there is only one predecessor, look
+      // for a stoppoint there. We could use getIDom(), but that would require
+      // dominator info.
       BB = I->getParent()->getUniquePredecessor();
       if (BB)
         I = BB->getTerminator();
-    } while (BB != 0);
+    }
+
     return 0;
   }
 
-  /// Finds the stoppoint corresponding to first real (non-debug intrinsic) 
-  /// instruction in this Basic Block, and returns the stoppoint for it.
-  const DbgStopPointInst *findBBStopPoint(const BasicBlock *BB)
-  {
-    for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+  /// findBBStopPoint - Find the stoppoint corresponding to first real
+  /// (non-debug intrinsic) instruction in this Basic Block, and return the
+  /// stoppoint for it.
+  const DbgStopPointInst *findBBStopPoint(const BasicBlock *BB) {
+    for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
         return DSI;
-    }
-    // Fallback to looking for stoppoint of unique predecessor.
-    // Useful if this BB contains no stoppoints, but unique predecessor does.
+
+    // Fallback to looking for stoppoint of unique predecessor. Useful if this
+    // BB contains no stoppoints, but unique predecessor does.
     BB = BB->getUniquePredecessor();
     if (BB)
       return findStopPoint(BB->getTerminator());
+
     return 0;
   }
 
-  Value *findDbgGlobalDeclare(GlobalVariable *V)
-  {
+  Value *findDbgGlobalDeclare(GlobalVariable *V) {
     const Module *M = V->getParent();
     const Type *Ty = M->getTypeByName("llvm.dbg.global_variable.type");
-    if (!Ty)
-      return 0;
+    if (!Ty) return 0;
+
     Ty = PointerType::get(Ty, 0);
 
     Value *Val = V->stripPointerCasts();
-    for (Value::use_iterator I = Val->use_begin(), E =Val->use_end();
+    for (Value::use_iterator I = Val->use_begin(), E = Val->use_end();
          I != E; ++I) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I)) {
         if (CE->getOpcode() == Instruction::BitCast) {
           Value *VV = CE;
-          while (VV->hasOneUse()) {
+
+          while (VV->hasOneUse())
             VV = *VV->use_begin();
-          }
+
           if (VV->getType() == Ty)
             return VV;
         }
@@ -923,57 +895,60 @@ namespace llvm {
     
     if (Val->getType() == Ty)
       return Val;
+
     return 0;
   }
 
-  /// Finds the dbg.declare intrinsic corresponding to this value if any.
+  /// Finds the llvm.dbg.declare intrinsic corresponding to this value if any.
   /// It looks through pointer casts too.
-  const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts)
-  {
+  const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts) {
     if (stripCasts) {
       V = V->stripPointerCasts();
+
       // Look for the bitcast.
       for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
-            I != E; ++I) {
+            I != E; ++I)
         if (isa<BitCastInst>(I))
           return findDbgDeclare(*I, false);
-      }
+
       return 0;
     }
 
-    // Find dbg.declare among uses of the instruction.
+    // Find llvm.dbg.declare among uses of the instruction.
     for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
-          I != E; ++I) {
+          I != E; ++I)
       if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I))
         return DDI;
-    }
+
     return 0;
   }
 
-  bool getLocationInfo(const Value *V, std::string &DisplayName, std::string &Type,
-                       unsigned &LineNo, std::string &File, std::string &Dir)
-  {
+  bool getLocationInfo(const Value *V, std::string &DisplayName,
+                       std::string &Type, unsigned &LineNo, std::string &File,
+                       std::string &Dir) {
     DICompileUnit Unit;
     DIType TypeD;
+
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(const_cast<Value*>(V))) {
       Value *DIGV = findDbgGlobalDeclare(GV);
-      if (!DIGV)
-        return false;
+      if (!DIGV) return false;
       DIGlobalVariable Var(cast<GlobalVariable>(DIGV));
+
       Var.getDisplayName(DisplayName);
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
     } else {
       const DbgDeclareInst *DDI = findDbgDeclare(V);
-      if (!DDI)
-        return false;
+      if (!DDI) return false;
       DIVariable Var(cast<GlobalVariable>(DDI->getVariable()));
+
       Var.getName(DisplayName);
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
     }
+
     TypeD.getName(Type);
     Unit.getFilename(File);
     Unit.getDirectory(Dir);
@@ -981,13 +956,13 @@ namespace llvm {
   }
 }
 
-/// dump - print descriptor.
+/// dump - Print descriptor.
 void DIDescriptor::dump() const {
   cerr << "[" << dwarf::TagString(getTag()) << "] ";
   cerr << std::hex << "[GV:" << GV << "]" << std::dec;
 }
 
-/// dump - print compile unit.
+/// dump - Print compile unit.
 void DICompileUnit::dump() const {
   if (getLanguage())
     cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
@@ -996,7 +971,7 @@ void DICompileUnit::dump() const {
   cerr << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
 }
 
-/// dump - print type.
+/// dump - Print type.
 void DIType::dump() const {
   if (isNull()) return;
 
@@ -1038,17 +1013,17 @@ void DIType::dump() const {
   cerr << "\n";
 }
 
-/// dump - print basic type.
+/// dump - Print basic type.
 void DIBasicType::dump() const {
   cerr << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
 }
 
-/// dump - print derived type.
+/// dump - Print derived type.
 void DIDerivedType::dump() const {
   cerr << "\n\t Derived From: "; getTypeDerivedFrom().dump();
 }
 
-/// dump - print composite type.
+/// dump - Print composite type.
 void DICompositeType::dump() const {
   DIArray A = getTypeArray();
   if (A.isNull())
@@ -1056,7 +1031,7 @@ void DICompositeType::dump() const {
   cerr << " [" << A.getNumElements() << " elements]";
 }
 
-/// dump - print global.
+/// dump - Print global.
 void DIGlobal::dump() const {
   std::string Res;
   if (!getName(Res).empty())
@@ -1081,17 +1056,17 @@ void DIGlobal::dump() const {
   cerr << "\n";
 }
 
-/// dump - print subprogram.
+/// dump - Print subprogram.
 void DISubprogram::dump() const {
   DIGlobal::dump();
 }
 
-/// dump - print global variable.
+/// dump - Print global variable.
 void DIGlobalVariable::dump() const {
   cerr << " ["; getGlobal()->dump(); cerr << "] ";
 }
 
-/// dump - print variable.
+/// dump - Print variable.
 void DIVariable::dump() const {
   std::string Res;
   if (!getName(Res).empty())
