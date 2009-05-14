@@ -697,7 +697,7 @@ static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
 
   // If the iteration range can be handled by SIToFPInst then use it.
   APInt Max = APInt::getSignedMaxValue(32);
-  if (Max.getZExtValue() > static_cast<uint64_t>(abs(intEV - intIV)))
+  if (Max.getZExtValue() > static_cast<uint64_t>(abs64(intEV - intIV)))
     return true;
 
   return false;
