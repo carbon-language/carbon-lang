@@ -441,6 +441,7 @@ namespace {
     // FIXME: Once we get closer to completion, replace these
     // manually-written declarations with automatically-generated ones
     // from clang/AST/StmtNodes.def.
+    OwningStmtResult VisitNullStmt(NullStmt *S);
     OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
     OwningStmtResult VisitExpr(Expr *E);
 
@@ -451,6 +452,10 @@ namespace {
       return SemaRef.StmtError(); 
     }
   };
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitNullStmt(NullStmt *S) {
+  return SemaRef.Owned(new (SemaRef.Context) NullStmt(S->getSemiLoc()));
 }
 
 Sema::OwningStmtResult 

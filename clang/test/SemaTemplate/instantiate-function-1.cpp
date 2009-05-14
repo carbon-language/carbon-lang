@@ -12,3 +12,14 @@ struct X1 { };
 template struct X0<int, float>;
 template struct X0<int*, int>;
 template struct X0<int X1::*, int>; // expected-note{{instantiation of}}
+
+template<typename T>
+struct X2 {
+  void f(T);
+
+  T g(T x, T y) {
+    /* NullStmt */;
+  }
+};
+
+template struct X2<int>;
