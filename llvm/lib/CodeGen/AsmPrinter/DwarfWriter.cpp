@@ -1811,6 +1811,13 @@ private:
                                       DIDerivedType(Element.getGV()));
           Buffer.AddChild(ElemDie);
         }
+
+        // FIXME: We'd like an API to register additional attributes for the
+        // frontend to use while synthesizing, and then we'd use that api in
+        // clang instead of this.
+        if (Name == "__block_literal_generic")
+          AddUInt(&Buffer, DW_AT_APPLE_block, DW_FORM_flag, 1);
+
         unsigned RLang = CTy.getRunTimeLang();
         if (RLang) 
           AddUInt(&Buffer, DW_AT_APPLE_runtime_class, DW_FORM_data1, RLang);
