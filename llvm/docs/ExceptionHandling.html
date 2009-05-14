@@ -416,15 +416,15 @@ a reference to a type info.</p>
 for the current function and to store the address of the following instruction
 for use as a destination address by <a href="#llvm_eh_sjlj_setjmp">
 <tt>llvm.eh.sjlj.longjmp</tt></a>. The buffer format and the overall functioning
-of this intrinsic is compatible with the GCC <tt>__builtin_setjmp</tt> implementation,
-allowing code built with the two compilers to interoperate.</p>
+of this intrinsic is compatible with the GCC <tt>__builtin_setjmp</tt> 
+implementation, allowing code built with the two compilers to interoperate.</p>
 
 <p>The single parameter is a pointer to a five word buffer in which the
 calling context is saved. The front end places the frame pointer in the
 first word, and the target implementation of this intrinsic should place the
 destination address for a <a href="#llvm_eh_sjlj_longjmp"><tt>
-    llvm.eh.sjlj.longjmp</tt></a> in the second word. The following three words are available for use in a
-target-specific manner.</p>
+llvm.eh.sjlj.longjmp</tt></a> in the second word. The following three words
+are available for use in a target-specific manner.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_section">
