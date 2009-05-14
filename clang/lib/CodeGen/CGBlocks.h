@@ -140,7 +140,7 @@ public:
     /// BlockLiteralTy - The type of the block literal.
     const llvm::Type *BlockLiteralTy;
 
-    /// Name - the name of the function this block was created for, if any
+    /// Name - the name of the function this block was created for, if any.
     const char *Name;
 
     /// ByCopyDeclRefs - Variables from parent scopes that have been imported
@@ -152,7 +152,11 @@ public:
     llvm::SmallVector<const BlockDeclRefExpr *, 8> ByRefDeclRefs;
     
     BlockInfo(const llvm::Type *blt, const char *n)
-      : BlockLiteralTy(blt), Name(n) {}
+      : BlockLiteralTy(blt), Name(n) {
+      // Skip asm prefix, if any.
+      if (Name && Name[0] == '\01')
+        ++Name;
+    }
   };
 
   CGBuilderTy &Builder;
