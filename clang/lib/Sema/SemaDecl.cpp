@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInherit.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -2113,10 +2114,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   //   nonstatic class member functions that appear within a
   //   member-specification of a class declaration; see 10.3.
   //
-  // FIXME: Checking the 'virtual' specifier is not sufficient. A
-  // function is also virtual if it overrides an already virtual
-  // function. This is important to do here because it's part of the
-  // declaration.
   if (isVirtual && !NewFD->isInvalidDecl()) {
     if (!isVirtualOkay) {
        Diag(D.getDeclSpec().getVirtualSpecLoc(), 
@@ -2137,6 +2134,36 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
+  if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD)) {
+    // Look for virtual methods in base classes that this method might override.
+
+    BasePaths Paths;
+    // FIXME: This will not include hidden member functions.
+    if (LookupInBases(cast<CXXRecordDecl>(DC), 
+                      MemberLookupCriteria(Name, LookupMemberName, 
+                                           // FIXME: Shouldn't IDNS_Member be
+                                           // enough here?
+                                           Decl::IDNS_Member | 
+                                           Decl::IDNS_Ordinary), Paths)) {
+      for (BasePaths::decl_iterator I = Paths.found_decls_begin(), 
+           E = Paths.found_decls_end(); I != E; ++I) {
+        if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
+          OverloadedFunctionDecl::function_iterator MatchedDecl;
+          // FIXME: Is this OK? Should it be done by LookupInBases?
+          if (IsOverload(NewMD, OldMD, MatchedDecl))
+            continue;
+         
+          if (!CheckOverridingFunctionReturnType(NewMD, OldMD)) {
+            // FIXME: Add OldMD to the list of methods NewMD overrides.
+          }
+          
+        }
+      }
+                        
+    }
+    
+  }
+  
   if (SC == FunctionDecl::Static && isa<CXXMethodDecl>(NewFD) && 
       !CurContext->isRecord()) {
     // C++ [class.static]p1:

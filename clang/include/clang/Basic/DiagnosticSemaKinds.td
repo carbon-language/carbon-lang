@@ -301,6 +301,12 @@ def err_implicit_object_parameter_init : Error<
   "cannot initialize object parameter of type %0 with an expression "
   "of type %1">;
 
+def err_different_return_type_for_overriding_virtual_function : Error<
+  "virtual function %0 has a different return type (%1) than the "
+  "function it overrides (which has return type %2)">;
+def note_overridden_virtual_function : Note<
+  "overridden virtual function is here">;
+
 // C++ constructors
 def err_constructor_cannot_be : Error<"constructor cannot be declared '%0'">;
 def err_invalid_qualified_constructor : Error<

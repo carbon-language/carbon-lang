@@ -1780,6 +1780,12 @@ public:
                                     DeclarationName Name);
   
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
+  
+  /// CheckReturnTypeCovariance - Checks whether two types are covariant, 
+  /// according to C++ [class.virtual]p5.
+  bool CheckOverridingFunctionReturnType(const CXXMethodDecl *New, 
+                                         const CXXMethodDecl *Old);
+  
 
   //===--------------------------------------------------------------------===//
   // C++ Access Control

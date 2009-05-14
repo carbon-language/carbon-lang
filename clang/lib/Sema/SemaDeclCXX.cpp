@@ -2688,3 +2688,25 @@ void Sema::DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock) {
     SearchForReturnInStmt(*this, Handler);
   }
 }
+
+bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New, 
+                                             const CXXMethodDecl *Old) {
+  QualType NewTy = New->getType()->getAsFunctionType()->getResultType();
+  QualType OldTy = Old->getType()->getAsFunctionType()->getResultType();
+
+  QualType CNewTy = Context.getCanonicalType(NewTy);
+  QualType COldTy = Context.getCanonicalType(OldTy);
+
+  if (CNewTy == COldTy && 
+      CNewTy.getCVRQualifiers() == COldTy.getCVRQualifiers())
+    return false;
+  
+  // FIXME: Check covariance.
+
+  Diag(New->getLocation(), 
+       diag::err_different_return_type_for_overriding_virtual_function)
+    << New->getDeclName() << NewTy << OldTy;
+  Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+       
+  return true;
+}
