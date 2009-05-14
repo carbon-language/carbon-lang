@@ -307,6 +307,24 @@ def err_different_return_type_for_overriding_virtual_function : Error<
 def note_overridden_virtual_function : Note<
   "overridden virtual function is here">;
 
+def err_covariant_return_inaccessible_base : Error<
+  "return type of virtual function %2 is not covariant with the return type "
+  "of the function it overrides "
+  "(conversion from %0 to inaccessible base class %1)">;
+def err_covariant_return_ambiguous_derived_to_base_conv : Error<
+  "return type of virtual function %3 is not covariant with the return type of "
+  "the function it overrides (ambiguous conversion from derived class "
+  "%0 to base class %1:%2)">;
+def err_covariant_return_not_derived : Error<
+  "return type of virtual function %0 is not covariant with the return type of "
+  "the function it overrrides (%1 is not derived from %2)">;
+def err_covariant_return_type_different_qualifications : Error<
+  "return type of virtual function %0 is not covariant with the return type of "
+  "the function it overrides (%1 has different qualifiers than %2)">;
+def err_covariant_return_type_class_type_more_qualified : Error<
+  "return type of virtual function %0 is not covariant with the return type of "
+  "the function it overrides (class type %1 is more qualified than class "
+  "type %2">;
 // C++ constructors
 def err_constructor_cannot_be : Error<"constructor cannot be declared '%0'">;
 def err_invalid_qualified_constructor : Error<
