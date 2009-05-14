@@ -862,6 +862,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     return (new BinOpInit(Code, LHS, RHS, Type))->Fold(CurRec, CurMultiClass);
   }
 
+  case tgtok::XIf:
   case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     TernOpInit::TernaryOp Code;
@@ -872,6 +873,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     Lex.Lex();  // eat the operation
     switch (LexCode) {
     default: assert(0 && "Unhandled code!");
+    case tgtok::XIf:
+      Code = TernOpInit::IF;
+      break;
     case tgtok::XForEach:
       Code = TernOpInit::FOREACH;
       break;
@@ -914,6 +918,25 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
     switch (LexCode) {
     default: assert(0 && "Unhandled code!");
+    case tgtok::XIf: {
+      TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
+      TypedInit *RHSt = dynamic_cast<TypedInit *>(RHS);
+      if (MHSt == 0 || RHSt == 0) {
+        TokError("could not get type for !if");
+        return 0;
+      }
+      if (MHSt->getType()->typeIsConvertibleTo(RHSt->getType())) {
+        Type = RHSt->getType();
+      }
+      else if (RHSt->getType()->typeIsConvertibleTo(MHSt->getType())) {
+        Type = MHSt->getType();
+      }
+      else {
+        TokError("inconsistent types for !if");
+        return 0;
+      }
+      break;
+    }
     case tgtok::XForEach: {
       TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
       if (MHSt == 0) {
@@ -1152,6 +1175,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   case tgtok::XSHL:
   case tgtok::XStrConcat:
   case tgtok::XNameConcat:  // Value ::= !binop '(' Value ',' Value ')'
+  case tgtok::XIf:
   case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     return ParseOperation(CurRec);

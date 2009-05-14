@@ -843,7 +843,7 @@ public:
 ///
 class TernOpInit : public OpInit {
 public:
-  enum TernaryOp { SUBST, FOREACH };
+  enum TernaryOp { SUBST, FOREACH, IF };
 private:
   TernaryOp Opc;
   Init *LHS, *MHS, *RHS;

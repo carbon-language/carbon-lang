@@ -912,6 +912,19 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
+
+  case IF: {
+    IntInit *LHSi = dynamic_cast<IntInit*>(LHS);
+    if (LHSi) {
+      if (LHSi->getValue()) {
+        return MHS;
+      }
+      else {
+        return RHS;
+      }
+    }
+    break;
+  }
   }
 
   return this;
@@ -932,6 +945,7 @@ std::string TernOpInit::getAsString() const {
   switch (Opc) {
   case SUBST: Result = "!subst"; break;
   case FOREACH: Result = "!foreach"; break; 
+  case IF: Result = "!if"; break; 
  }
   return Result + "(" + LHS->getAsString() + ", " + MHS->getAsString() + ", " 
     + RHS->getAsString() + ")";

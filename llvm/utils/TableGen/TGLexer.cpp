@@ -453,6 +453,7 @@ tgtok::TokKind TGLexer::LexExclaim() {
   if (Len == 3 && !memcmp(Start, "car", 3)) return tgtok::XCar;
   if (Len == 3 && !memcmp(Start, "cdr", 3)) return tgtok::XCdr;
   if (Len == 4 && !memcmp(Start, "null", 4)) return tgtok::XNull;
+  if (Len == 2 && !memcmp(Start, "if", 2)) return tgtok::XIf;
 
   return ReturnError(Start-1, "Unknown operator");
 }

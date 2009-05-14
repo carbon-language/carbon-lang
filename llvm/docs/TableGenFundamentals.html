@@ -417,6 +417,8 @@ class.  This operation is analogous to $(foreach) in GNU make.</dd>
   <dd>The 2nd-N elements of list 'a.'</dd>
 <dt><tt>!null(a)</tt></dt>
   <dd>An integer {0,1} indicating whether list 'a' is empty.</dd>
+<dt><tt>!if(a,b,c)</tt></dt>
+  <dd>'b' if the result of integer operator 'a' is nonzero, 'c' otherwise.</dd>
 </dl>
 
 <p>Note that all of the values have rules specifying how they convert to values
