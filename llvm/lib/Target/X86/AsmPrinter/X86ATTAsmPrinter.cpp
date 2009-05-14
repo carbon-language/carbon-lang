@@ -952,8 +952,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     // If the global is a extern weak symbol, remember to emit the weak
     // reference!
-    // FIXME: This is rather hacky, since we'll emit references to ALL weak stuff,
-    // not used. But currently it's the only way to deal with extern weak
+    // FIXME: This is rather hacky, since we'll emit references to ALL weak
+    // stuff, not used. But currently it's the only way to deal with extern weak
     // initializers hidden deep inside constant expressions.
     if (I->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(I);
