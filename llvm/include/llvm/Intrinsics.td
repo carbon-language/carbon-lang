@@ -300,8 +300,8 @@ def int_eh_unwind_init: Intrinsic<[llvm_void_ty]>,
 def int_eh_dwarf_cfa  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty]>;
 
 let Properties = [IntrNoMem] in {
-def int_builtinsetjmp  : Intrinsic<[llvm_i32_ty],  [llvm_ptr_ty]>;
-def int_builtinlongjmp : Intrinsic<[llvm_void_ty], [llvm_ptr_ty, llvm_i32_ty]>;
+def int_eh_sjlj_setjmp  : Intrinsic<[llvm_i32_ty],  [llvm_ptr_ty]>;
+def int_eh_sjlj_longjmp : Intrinsic<[llvm_void_ty], [llvm_ptr_ty, llvm_i32_ty]>;
 }
 
 //===---------------- Generic Variable Attribute Intrinsics----------------===//

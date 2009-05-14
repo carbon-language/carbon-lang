@@ -31,6 +31,8 @@
   	<li><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a></li>
   	<li><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a></li>
   	<li><a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a></li>
+  	<li><a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a></li>
+  	<li><a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a></li>
   </ol></li>
   <li><a href="#asm">Asm Table Formats</a>
   <ol>
@@ -399,6 +401,30 @@ href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The single argument is
 a reference to a type info.</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>
+</div>
+
+<div class="doc_text">
+<pre>
+  i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
+</pre>
+
+<p>The SJLJ exception handling uses this intrinsic to force register saving
+for the current function and to store the address of the following instruction
+for use as a destination address by <a href="#llvm_eh_sjlj_setjmp">
+<tt>llvm.eh.sjlj.longjmp</tt></a>. The buffer format and the overall functioning
+of this intrinsic is compatible with the GCC <tt>__builtin_setjmp</tt> implementation,
+allowing code built with the two compilers to interoperate.</p>
+
+<p>The single parameter is a pointer to a five word buffer in which the
+calling context is saved. The front end places the frame pointer in the
+first word, and the target implementation of this intrinsic should place the
+destination address for a <a href="#llvm_eh_sjlj_longjmp"><tt>
+    llvm.eh.sjlj.longjmp</tt></a> in the second word. The following three words are available for use in a
+target-specific manner.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_section">

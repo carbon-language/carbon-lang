@@ -1045,8 +1045,8 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   default: return SDValue();    // Don't custom lower most intrinsics.
   case Intrinsic::arm_thread_pointer:
       return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
-  case Intrinsic::builtinsetjmp:
-      SDValue Res = DAG.getNode(ARMISD::BUILTIN_SETJMP, dl, MVT::i32,
+  case Intrinsic::eh_sjlj_setjmp:
+      SDValue Res = DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, MVT::i32,
                          Op.getOperand(1));
       return Res;
   }

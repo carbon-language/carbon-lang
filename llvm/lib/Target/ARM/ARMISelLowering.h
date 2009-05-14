@@ -64,8 +64,8 @@ namespace llvm {
       FMRRD,        // double to two gprs.
       FMDRR,         // Two gprs to double.
 
-      BUILTIN_SETJMP,   // exception handling setjmp
-      BUILTIN_LONGJMP,  // exception handling longjmp
+      EH_SJLJ_SETJMP,    // SjLj exception handling setjmp
+      EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp
 
       THREAD_POINTER
     };

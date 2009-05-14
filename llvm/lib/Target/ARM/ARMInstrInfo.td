@@ -40,7 +40,7 @@ def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisPtrTy<1>, SDTCisVT<2, i32>]>;
 
 def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
-def SDT_ARMBuiltinSetjmp : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>;
+def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>;
 
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
@@ -85,7 +85,7 @@ def ARMsra_flag      : SDNode<"ARMISD::SRA_FLAG", SDTIntUnaryOp, [SDNPOutFlag]>;
 def ARMrrx           : SDNode<"ARMISD::RRX"     , SDTIntUnaryOp, [SDNPInFlag ]>;
 
 def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
-def ARMbuiltin_setjmp: SDNode<"ARMISD::BUILTIN_SETJMP", SDT_ARMBuiltinSetjmp>;
+def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -1269,23 +1269,25 @@ let isCall = 1,
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
-//   setjmp() is a three instruction sequence to store the return address
-//   and save #0 in R0 for the non-longjmp case.
+//   eh_sjlj_setjmp() is a three instruction sequence to store the return 
+//   address and save #0 in R0 for the non-longjmp case.
 //   Since by its nature we may be coming from some other function to get
 //   here, and we're using the stack frame for the containing function to
 //   save/restore registers, we can't keep anything live in regs across
-//   the setjmp(), else it will almost certainly have been tromped upon
+//   the eh_sjlj_setjmp(), else it will almost certainly have been tromped upon
 //   when we get here from a longjmp(). We force everthing out of registers
-//   except for our own input by listing the relevant registers in Defs.
+//   except for our own input by listing the relevant registers in Defs. By
+//   doing so, we also cause the prologue/epilogue code to actively preserve
+//   all of the callee-saved resgisters, which is exactly what we want.
 let Defs = 
   [ R0, R1, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, LR,
     D0, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15 ] in {
-  def Int_builtin_setjmp : XI<(outs), (ins GPR:$src),
+  def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src),
                                AddrModeNone, SizeSpecial, IndexModeNone, Pseudo,
                                "add r0, pc, #4\n\t"
                                "str r0, [$src, #+4]\n\t"
-                               "mov r0, #0 @ setjmp", "",
-                               [(set R0, (ARMbuiltin_setjmp GPR:$src))]>;
+                               "mov r0, #0 @ eh_setjmp", "",
+                               [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
 }
 
 //===----------------------------------------------------------------------===//
