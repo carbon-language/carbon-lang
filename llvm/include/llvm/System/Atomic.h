@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #ifdef __APPLE__
-
+#include <libkern/OSAtomic.h>
 #elif LLVM_ON_WIN32
 #include <windows.h>
 #endif
