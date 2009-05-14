@@ -102,6 +102,8 @@ private:  // Parser methods.
   std::vector<unsigned> ParseRangeList();
   bool ParseRangePiece(std::vector<unsigned> &Ranges);
   RecTy *ParseType();
+  Init *ParseOperation(Record *CurRec);
+  RecTy *ParseOperatorType();
   std::string ParseObjectName();
   Record *ParseClassID();
   MultiClass *ParseMultiClassID();

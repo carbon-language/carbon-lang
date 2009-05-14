@@ -132,6 +132,18 @@ Init *IntRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
+// Init *StringRecTy::convertValue(UnOpInit *BO) {
+//   if (BO->getOpcode() == UnOpInit::CAST) {
+//     Init *L = BO->getOperand()->convertInitializerTo(this);
+//     if (L == 0) return 0;
+//     if (L != BO->getOperand())
+//       return new UnOpInit(UnOpInit::CAST, L, new StringRecTy);
+//     return BO;
+//   }
+
+//   return convertValue((TypedInit*)BO);
+// }
+
 Init *StringRecTy::convertValue(BinOpInit *BO) {
   if (BO->getOpcode() == BinOpInit::STRCONCAT) {
     Init *L = BO->getLHS()->convertInitializerTo(this);
@@ -199,6 +211,17 @@ Init *DagRecTy::convertValue(TypedInit *TI) {
     return TI;
   return 0;
 }
+
+// Init *DagRecTy::convertValue(UnOpInit *BO) {
+//   if (BO->getOpcode() == UnOpInit::CAST) {
+//     Init *L = BO->getOperand()->convertInitializerTo(this);
+//     if (L == 0) return 0;
+//     if (L != BO->getOperand())
+//       return new UnOpInit(UnOpInit::CAST, L, new DagRecTy);
+//     return BO;
+//   }
+//   return 0;
+// }
 
 Init *DagRecTy::convertValue(BinOpInit *BO) {
   if (BO->getOpcode() == BinOpInit::CONCAT) {
@@ -416,6 +439,107 @@ std::string ListInit::getAsString() const {
   return Result + "]";
 }
 
+Init *OpInit::resolveBitReference(Record &R, const RecordVal *IRV,
+                                   unsigned Bit) {
+  Init *Folded = Fold(&R, 0);
+
+  if (Folded != this) {
+    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
+    if (Typed) {
+      return Typed->resolveBitReference(R, IRV, Bit);
+    }    
+  }
+  
+  return 0;
+}
+
+Init *OpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
+                                           unsigned Elt) {
+  Init *Folded = Fold(&R, 0);
+
+  if (Folded != this) {
+    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
+    if (Typed) {
+      return Typed->resolveListElementReference(R, IRV, Elt);
+    }    
+  }
+  
+  return 0;
+}
+
+// Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
+//   switch (getOpcode()) {
+//   default: assert(0 && "Unknown unop");
+//   case CAST: {
+//     StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+//     if (LHSs) {
+//       std::string Name = LHSs->getValue();
+
+//       // From TGParser::ParseIDValue
+//       if (CurRec) {
+//         if (const RecordVal *RV = CurRec->getValue(Name)) {
+//           if (RV->getType() != getType()) {
+//             throw "type mismatch in nameconcat";
+//           }
+//           return new VarInit(Name, RV->getType());
+//         }
+        
+//         std::string TemplateArgName = CurRec->getName()+":"+Name;
+//         if (CurRec->isTemplateArg(TemplateArgName)) {
+//           const RecordVal *RV = CurRec->getValue(TemplateArgName);
+//           assert(RV && "Template arg doesn't exist??");
+
+//           if (RV->getType() != getType()) {
+//             throw "type mismatch in nameconcat";
+//           }
+
+//           return new VarInit(TemplateArgName, RV->getType());
+//         }
+//       }
+
+//       if (CurMultiClass) {
+//         std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
+//         if (CurMultiClass->Rec.isTemplateArg(MCName)) {
+//           const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
+//           assert(RV && "Template arg doesn't exist??");
+
+//           if (RV->getType() != getType()) {
+//             throw "type mismatch in nameconcat";
+//           }
+          
+//           return new VarInit(MCName, RV->getType());
+//         }
+//       }
+
+//       if (Record *D = Records.getDef(Name))
+//         return new DefInit(D);
+
+//       cerr << "Variable not defined: '" + Name + "'\n";
+//       assert(0 && "Variable not found");
+//       return 0;
+//     }
+//     break;
+//   }
+//   }
+//   return this;
+// }
+
+// Init *UnOpInit::resolveReferences(Record &R, const RecordVal *RV) {
+//   Init *lhs = LHS->resolveReferences(R, RV);
+  
+//   if (LHS != lhs)
+//     return (new UnOpInit(getOpcode(), lhs, getType()))->Fold(&R, 0);
+//   return Fold(&R, 0);
+// }
+
+// std::string UnOpInit::getAsString() const {
+//   std::string Result;
+//   switch (Opc) {
+//   case CAST: Result = "!cast<" + getType()->getAsString() + ">"; break;
+//   }
+//   return Result + "(" + LHS->getAsString() + ")";
+// }
+
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   switch (getOpcode()) {
   default: assert(0 && "Unknown binop");
@@ -554,33 +678,231 @@ std::string BinOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
 }
 
-Init *BinOpInit::resolveBitReference(Record &R, const RecordVal *IRV,
-                                   unsigned Bit) {
-  Init *Folded = Fold(&R, 0);
+// Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
+//   switch (getOpcode()) {
+//   default: assert(0 && "Unknown binop");
+//   case SUBST: {
+//     DefInit *LHSd = dynamic_cast<DefInit*>(LHS);
+//     VarInit *LHSv = dynamic_cast<VarInit*>(LHS);
+//     StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
 
-  if (Folded != this) {
-    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
-    if (Typed) {
-      return Typed->resolveBitReference(R, IRV, Bit);
-    }    
-  }
+//     DefInit *MHSd = dynamic_cast<DefInit*>(MHS);
+//     VarInit *MHSv = dynamic_cast<VarInit*>(MHS);
+//     StringInit *MHSs = dynamic_cast<StringInit*>(MHS);
+
+//     DagInit *RHSd = dynamic_cast<DagInit*>(RHS);
+//     ListInit *RHSl = dynamic_cast<ListInit*>(RHS);
+
+//     DagRecTy *DagType = dynamic_cast<DagRecTy*>(getType());
+//     ListRecTy *ListType = dynamic_cast<ListRecTy*>(getType());
+
+//     if ((DagType && RHSd || ListType && RHSl)
+//         && (LHSd && MHSd || LHSv && MHSv || LHSs && MHSs)) {
+//       if (RHSd) {
+//         Init *Val = RHSd->getOperator(); 
+//         if (Val->getAsString() == LHS->getAsString()) {
+//           Val = MHS;
+//         }
+//         std::vector<std::pair<Init *, std::string> > args;
+//         for (int i = 0; i < RHSd->getNumArgs(); ++i) {
+//           Init *Arg;
+//           std::string ArgName;
+//           Arg = RHSd->getArg(i);
+//           ArgName = RHSd->getArgName(i);
+//           if (Arg->getAsString() == LHS->getAsString()) {
+//             Arg = MHS;
+//           }
+//           if (ArgName == LHS->getAsString()) {
+//             ArgName = MHS->getAsString();
+//           }
+//           args.push_back(std::make_pair(Arg, ArgName));
+//         }
+
+//         return new DagInit(Val, args);
+//       }
+//       if (RHSl) {
+//         std::vector<Init *> NewList(RHSl->begin(), RHSl->end());
+
+//         for (ListInit::iterator i = NewList.begin(),
+//                iend = NewList.end();
+//              i != iend;
+//              ++i) {
+//           if ((*i)->getAsString() == LHS->getAsString()) {
+//             *i = MHS;
+//           }
+//         }
+//         return new ListInit(NewList);
+//       }
+//     }
+//     break;
+//   }  
+
+//   case FOREACH: {
+//     DagInit *MHSd = dynamic_cast<DagInit*>(MHS);
+//     ListInit *MHSl = dynamic_cast<ListInit*>(MHS);
+
+//     DagRecTy *DagType = dynamic_cast<DagRecTy*>(getType());
+//     ListRecTy *ListType = dynamic_cast<ListRecTy*>(getType());
+
+//     OpInit *RHSo = dynamic_cast<OpInit*>(RHS);
+
+//     if (!RHSo) {
+//       cerr << "!foreach requires an operator\n";
+//       assert(0 && "No operator for !foreach");
+//     }
+
+//     TypedInit *LHSt = dynamic_cast<TypedInit*>(LHS);
+
+//     if (!LHSt) {
+//       cerr << "!foreach requires typed variable\n";
+//       assert(0 && "No typed variable for !foreach");
+//     }
+
+//     if (MHSd && DagType || MHSl && ListType) {
+//       std::vector<Init *> NewOperands;
+//       if (MHSd) {
+//         Init *Val = MHSd->getOperator();
+//         TypedInit *TVal = dynamic_cast<TypedInit*>(Val);
+
+//         if (TVal && TVal->getType()->typeIsConvertibleTo(LHSt->getType())) {
+          
+//           // First, replace the foreach variable with the DAG leaf
+//           for (int i = 0; i < RHSo->getNumOperands(); ++i) {
+//             if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
+//               NewOperands.push_back(Val);
+//             }
+//             else {
+//               NewOperands.push_back(RHSo->getOperand(i));
+//             }
+//           }
+
+//           // Now run the operator and use its result as the new leaf
+//           OpInit *NewOp = RHSo->clone(NewOperands);
+//           Val = NewOp->Fold(CurRec, CurMultiClass);
+//           if (Val != NewOp) {
+//             delete NewOp;
+//           }
+//         }
+
+//         std::vector<std::pair<Init *, std::string> > args;
+//         for (int i = 0; i < MHSd->getNumArgs(); ++i) {
+//           Init *Arg;
+//           std::string ArgName;
+//           Arg = MHSd->getArg(i);
+//           ArgName = MHSd->getArgName(i);
+
+//           TypedInit *TArg = dynamic_cast<TypedInit*>(Arg);
+
+//           if (TArg && TArg->getType()->typeIsConvertibleTo(LHSt->getType())) {
+//             NewOperands.clear();
+
+//             // First, replace the foreach variable with the DAG leaf
+//             for (int i = 0; i < RHSo->getNumOperands(); ++i) {
+//               if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
+//                 NewOperands.push_back(Arg);
+//               }
+//               else {
+//                 NewOperands.push_back(RHSo->getOperand(i));
+//               }
+//             }
+
+//             // Now run the operator and use its result as the new leaf
+//             OpInit *NewOp = RHSo->clone(NewOperands);
+//             Arg = NewOp->Fold(CurRec, CurMultiClass);
+//             if (Arg != NewOp) {
+//               delete NewOp;
+//             }
+//           }
+         
+//           if (LHSt->getType()->getAsString() == "string") {
+//             NewOperands.clear();
+
+//             // First, replace the foreach variable with the DAG leaf
+//             for (int i = 0; i < RHSo->getNumOperands(); ++i) {
+//               if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
+//                 NewOperands.push_back(new StringInit(ArgName));
+//               }
+//               else {
+//                 NewOperands.push_back(RHSo->getOperand(i));
+//               }
+//             }
+
+//             // Now run the operator and use its result as the new leaf
+//             OpInit *NewOp = RHSo->clone(NewOperands);
+//             Init *ArgNameInit = NewOp->Fold(CurRec, CurMultiClass);
+//             StringInit *SArgNameInit = dynamic_cast<StringInit*>(ArgNameInit);
+//             if (SArgNameInit) {
+//               ArgName = SArgNameInit->getValue();
+//             }
+//             if (ArgNameInit != NewOp) {
+//               delete NewOp;
+//             }
+//             delete ArgNameInit;
+//           }
+
+//           args.push_back(std::make_pair(Arg, ArgName));
+//         }
+
+//         return new DagInit(Val, args);
+//       }
+//       if (MHSl) {
+//         std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
+
+//         for (ListInit::iterator li = NewList.begin(),
+//                liend = NewList.end();
+//              li != liend;
+//              ++li) {
+//           Init *Item = *li;
+//           TypedInit *TItem = dynamic_cast<TypedInit*>(Item);
+//           if (TItem && TItem->getType()->typeIsConvertibleTo(LHSt->getType())) {
+//             // First, replace the foreach variable with the list item
+//             for (int i = 0; i < RHSo->getNumOperands(); ++i) {
+//               if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
+//                 NewOperands.push_back(Item);
+//               }
+//               else {
+//                 NewOperands.push_back(RHSo->getOperand(i));
+//               }
+//             }
+
+//             // Now run the operator and use its result as the new list item
+//             OpInit *NewOp = RHSo->clone(NewOperands);
+//             *li = NewOp->Fold(CurRec, CurMultiClass);
+//             if (*li != NewOp) {
+//               delete NewOp;
+//             }
+//           }
+//         }
+          
+//         return new ListInit(NewList);
+//       }
+//     }
+//     break;
+//   }
+//   }
+
+//   return this;
+// }
+
+// Init *TernOpInit::resolveReferences(Record &R, const RecordVal *RV) {
+//   Init *lhs = LHS->resolveReferences(R, RV);
+//   Init *mhs = MHS->resolveReferences(R, RV);
+//   Init *rhs = RHS->resolveReferences(R, RV);
   
-  return 0;
-}
+//   if (LHS != lhs || MHS != mhs || RHS != rhs)
+//     return (new TernOpInit(getOpcode(), lhs, mhs, rhs, getType()))->Fold(&R, 0);
+//   return Fold(&R, 0);
+// }
 
-Init *BinOpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
-                                           unsigned Elt) {
-  Init *Folded = Fold(&R, 0);
-
-  if (Folded != this) {
-    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
-    if (Typed) {
-      return Typed->resolveListElementReference(R, IRV, Elt);
-    }    
-  }
-  
-  return 0;
-}
+// std::string TernOpInit::getAsString() const {
+//   std::string Result;
+//   switch (Opc) {
+//   case SUBST: Result = "!subst"; break;
+//   case FOREACH: Result = "!foreach"; break; 
+//  }
+//   return Result + "(" + LHS->getAsString() + ", " + MHS->getAsString() + ", " 
+//     + RHS->getAsString() + ")";
+// }
 
 Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsRecTy *T = dynamic_cast<BitsRecTy*>(getType());
