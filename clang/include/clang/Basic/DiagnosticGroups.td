@@ -86,6 +86,8 @@ def InvalidOffsetof : DiagGroup<"invalid-offsetof">;
 def : DiagGroup<"strict-prototypes">;
 def : DiagGroup<"strict-selector-match">;
 def Switch         : DiagGroup<"switch">;
+def MismatchedTags    : DiagGroup<"mismatched-tags">;
+
 def : DiagGroup<"type-limits">;
 def Uninitialized  : DiagGroup<"uninitialized">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
@@ -107,6 +109,7 @@ def Most : DiagGroup<"most", [
     Comment,
     Format,
     Implicit,
+    MismatchedTags,
     MultiChar,
     Switch,
     Trigraphs,

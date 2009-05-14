@@ -3245,6 +3245,51 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T) {
   return NewTD;
 }
 
+
+/// \brief Determine whether a tag with a given kind is acceptable
+/// as a redeclaration of the given tag declaration.
+///
+/// \returns true if the new tag kind is acceptable, false otherwise.
+bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous, 
+                                        TagDecl::TagKind NewTag,
+                                        SourceLocation NewTagLoc,
+                                        const IdentifierInfo &Name) {
+  // C++ [dcl.type.elab]p3:
+  //   The class-key or enum keyword present in the
+  //   elaborated-type-specifier shall agree in kind with the
+  //   declaration to which the name in theelaborated-type-specifier
+  //   refers. This rule also applies to the form of
+  //   elaborated-type-specifier that declares a class-name or
+  //   friend class since it can be construed as referring to the
+  //   definition of the class. Thus, in any
+  //   elaborated-type-specifier, the enum keyword shall be used to
+  //   refer to an enumeration (7.2), the union class-keyshall be
+  //   used to refer to a union (clause 9), and either the class or
+  //   struct class-key shall be used to refer to a class (clause 9)
+  //   declared using the class or struct class-key.
+  TagDecl::TagKind OldTag = Previous->getTagKind();
+  if (OldTag == NewTag)
+    return true;
+ 
+  if ((OldTag == TagDecl::TK_struct || OldTag == TagDecl::TK_class) &&
+      (NewTag == TagDecl::TK_struct || NewTag == TagDecl::TK_class)) {
+    // Warn about the struct/class tag mismatch.
+    bool isTemplate = false;
+    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Previous))
+      isTemplate = Record->getDescribedClassTemplate();
+
+    Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
+      << (NewTag == TagDecl::TK_class)
+      << isTemplate << &Name
+      << (OldTag == TagDecl::TK_class)
+      << CodeModificationHint::CreateReplacement(SourceRange(NewTagLoc),
+                              OldTag == TagDecl::TK_class? "class" : "struct");
+    Diag(Previous->getLocation(), diag::note_previous_use);
+    return true;
+  }
+  return false;
+}
+
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TK indicates whether this is a
@@ -3347,7 +3392,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       if (TK == TK_Reference || isDeclInScope(PrevDecl, SearchDC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
-        if (!isAcceptableTagRedeclaration(PrevTagDecl->getTagKind(), Kind)) {
+        if (!isAcceptableTagRedeclaration(PrevTagDecl, Kind, KWLoc, *Name)) {
           bool SafeToContinue 
             = (PrevTagDecl->getTagKind() != TagDecl::TK_enum &&
                Kind != TagDecl::TK_enum);

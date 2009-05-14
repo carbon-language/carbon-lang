@@ -430,32 +430,10 @@ public:
   virtual DeclPtrTy BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS, 
                                                 RecordDecl *Record);
 
-  /// \brief Determine whether a tag with a given kind is acceptable
-  /// for a redeclaration of a tag type declared with another tag.
-  ///
-  /// \p T1 and \p T2 are the tag kinds. Since the rules for
-  /// redeclaration of tags are symmetric, it does not matter which is
-  /// the previous declaration and which is the new declaration.
-  bool isAcceptableTagRedeclaration(TagDecl::TagKind T1, TagDecl::TagKind T2) {
-    // C++ [dcl.type.elab]p3:
-    //   The class-key ore num keyword present in the
-    //   elaborated-type-specifier shall agree in kind with the
-    //   declaration to which the name in theelaborated-type-specifier
-    //   refers. This rule also applies to the form of
-    //   elaborated-type-specifier that declares a class-name or
-    //   friend class since it can be construed as referring to the
-    //   definition of the class. Thus, in any
-    //   elaborated-type-specifier, the enum keyword shall be used to
-    //   refer to an enumeration (7.2), the union class-keyshall be
-    //   used to refer to a union (clause 9), and either the class or
-    //   struct class-key shall be used to refer to a class (clause 9)
-    //   declared using the class or struct class-key.
-    if (T1 == T2)
-      return true;
-
-    return (T1 == TagDecl::TK_struct || T1 == TagDecl::TK_class) &&
-           (T2 == TagDecl::TK_struct || T2 == TagDecl::TK_class);
-  }
+  bool isAcceptableTagRedeclaration(const TagDecl *Previous, 
+                                    TagDecl::TagKind NewTag,
+                                    SourceLocation NewTagLoc,
+                                    const IdentifierInfo &Name);
 
   virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
