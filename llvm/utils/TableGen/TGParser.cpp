@@ -680,41 +680,41 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     TokError("unknown operation");
     return 0;
     break;
-//   case tgtok::XCast: {  // Value ::= !unop '(' Value ')'
-//     UnOpInit::UnaryOp Code;
-//     RecTy *Type = 0;
+  case tgtok::XCast: {  // Value ::= !unop '(' Value ')'
+    UnOpInit::UnaryOp Code;
+    RecTy *Type = 0;
 
-//     switch (Lex.getCode()) {
-//     default: assert(0 && "Unhandled code!");
-//     case tgtok::XCast:
-//       Lex.Lex();  // eat the operation
-//       Code = UnOpInit::CAST;
+    switch (Lex.getCode()) {
+    default: assert(0 && "Unhandled code!");
+    case tgtok::XCast:
+      Lex.Lex();  // eat the operation
+      Code = UnOpInit::CAST;
 
-//       Type = ParseOperatorType();
+      Type = ParseOperatorType();
 
-//       if (Type == 0) {
-//         TokError("did not get type for binary operator");
-//         return 0;
-//       }
+      if (Type == 0) {
+        TokError("did not get type for binary operator");
+        return 0;
+      }
 
-//       break;
-//     }
-//     if (Lex.getCode() != tgtok::l_paren) {
-//       TokError("expected '(' after unary operator");
-//       return 0;
-//     }
-//     Lex.Lex();  // eat the '('
+      break;
+    }
+    if (Lex.getCode() != tgtok::l_paren) {
+      TokError("expected '(' after unary operator");
+      return 0;
+    }
+    Lex.Lex();  // eat the '('
 
-//     Init *LHS = ParseValue(CurRec);
-//     if (LHS == 0) return 0;
+    Init *LHS = ParseValue(CurRec);
+    if (LHS == 0) return 0;
 
-//     if (Lex.getCode() != tgtok::r_paren) {
-//       TokError("expected ')' in unary operator");
-//       return 0;
-//     }
-//     Lex.Lex();  // eat the ')'
-//     return (new UnOpInit(Code, LHS, Type))->Fold(CurRec, CurMultiClass);
-//   }
+    if (Lex.getCode() != tgtok::r_paren) {
+      TokError("expected ')' in unary operator");
+      return 0;
+    }
+    Lex.Lex();  // eat the ')'
+    return (new UnOpInit(Code, LHS, Type))->Fold(CurRec, CurMultiClass);
+  }
 
   case tgtok::XConcat:
   case tgtok::XSRA: 
@@ -1029,7 +1029,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   case tgtok::l_paren: {         // Value ::= '(' IDValue DagArgList ')'
     Lex.Lex();   // eat the '('
     if (Lex.getCode() != tgtok::Id
-        //        && Lex.getCode() != tgtok::XCast
+        && Lex.getCode() != tgtok::XCast
         && Lex.getCode() != tgtok::XNameConcat) {
       TokError("expected identifier in dag init");
       return 0;
@@ -1072,7 +1072,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     break;
   }
  
-    //  case tgtok::XCast:  // Value ::= !unop '(' Value ')'
+  case tgtok::XCast:  // Value ::= !unop '(' Value ')'
   case tgtok::XConcat:
   case tgtok::XSRA: 
   case tgtok::XSRL:

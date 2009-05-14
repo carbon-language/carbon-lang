@@ -132,17 +132,17 @@ Init *IntRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
-// Init *StringRecTy::convertValue(UnOpInit *BO) {
-//   if (BO->getOpcode() == UnOpInit::CAST) {
-//     Init *L = BO->getOperand()->convertInitializerTo(this);
-//     if (L == 0) return 0;
-//     if (L != BO->getOperand())
-//       return new UnOpInit(UnOpInit::CAST, L, new StringRecTy);
-//     return BO;
-//   }
+Init *StringRecTy::convertValue(UnOpInit *BO) {
+  if (BO->getOpcode() == UnOpInit::CAST) {
+    Init *L = BO->getOperand()->convertInitializerTo(this);
+    if (L == 0) return 0;
+    if (L != BO->getOperand())
+      return new UnOpInit(UnOpInit::CAST, L, new StringRecTy);
+    return BO;
+  }
 
-//   return convertValue((TypedInit*)BO);
-// }
+  return convertValue((TypedInit*)BO);
+}
 
 Init *StringRecTy::convertValue(BinOpInit *BO) {
   if (BO->getOpcode() == BinOpInit::STRCONCAT) {
@@ -212,16 +212,16 @@ Init *DagRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
-// Init *DagRecTy::convertValue(UnOpInit *BO) {
-//   if (BO->getOpcode() == UnOpInit::CAST) {
-//     Init *L = BO->getOperand()->convertInitializerTo(this);
-//     if (L == 0) return 0;
-//     if (L != BO->getOperand())
-//       return new UnOpInit(UnOpInit::CAST, L, new DagRecTy);
-//     return BO;
-//   }
-//   return 0;
-// }
+Init *DagRecTy::convertValue(UnOpInit *BO) {
+  if (BO->getOpcode() == UnOpInit::CAST) {
+    Init *L = BO->getOperand()->convertInitializerTo(this);
+    if (L == 0) return 0;
+    if (L != BO->getOperand())
+      return new UnOpInit(UnOpInit::CAST, L, new DagRecTy);
+    return BO;
+  }
+  return 0;
+}
 
 Init *DagRecTy::convertValue(BinOpInit *BO) {
   if (BO->getOpcode() == BinOpInit::CONCAT) {
@@ -467,78 +467,78 @@ Init *OpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   return 0;
 }
 
-// Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
-//   switch (getOpcode()) {
-//   default: assert(0 && "Unknown unop");
-//   case CAST: {
-//     StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
-//     if (LHSs) {
-//       std::string Name = LHSs->getValue();
+Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
+  switch (getOpcode()) {
+  default: assert(0 && "Unknown unop");
+  case CAST: {
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    if (LHSs) {
+      std::string Name = LHSs->getValue();
 
-//       // From TGParser::ParseIDValue
-//       if (CurRec) {
-//         if (const RecordVal *RV = CurRec->getValue(Name)) {
-//           if (RV->getType() != getType()) {
-//             throw "type mismatch in nameconcat";
-//           }
-//           return new VarInit(Name, RV->getType());
-//         }
+      // From TGParser::ParseIDValue
+      if (CurRec) {
+        if (const RecordVal *RV = CurRec->getValue(Name)) {
+          if (RV->getType() != getType()) {
+            throw "type mismatch in nameconcat";
+          }
+          return new VarInit(Name, RV->getType());
+        }
         
-//         std::string TemplateArgName = CurRec->getName()+":"+Name;
-//         if (CurRec->isTemplateArg(TemplateArgName)) {
-//           const RecordVal *RV = CurRec->getValue(TemplateArgName);
-//           assert(RV && "Template arg doesn't exist??");
+        std::string TemplateArgName = CurRec->getName()+":"+Name;
+        if (CurRec->isTemplateArg(TemplateArgName)) {
+          const RecordVal *RV = CurRec->getValue(TemplateArgName);
+          assert(RV && "Template arg doesn't exist??");
 
-//           if (RV->getType() != getType()) {
-//             throw "type mismatch in nameconcat";
-//           }
+          if (RV->getType() != getType()) {
+            throw "type mismatch in nameconcat";
+          }
 
-//           return new VarInit(TemplateArgName, RV->getType());
-//         }
-//       }
+          return new VarInit(TemplateArgName, RV->getType());
+        }
+      }
 
-//       if (CurMultiClass) {
-//         std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
-//         if (CurMultiClass->Rec.isTemplateArg(MCName)) {
-//           const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
-//           assert(RV && "Template arg doesn't exist??");
+      if (CurMultiClass) {
+        std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
+        if (CurMultiClass->Rec.isTemplateArg(MCName)) {
+          const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
+          assert(RV && "Template arg doesn't exist??");
 
-//           if (RV->getType() != getType()) {
-//             throw "type mismatch in nameconcat";
-//           }
+          if (RV->getType() != getType()) {
+            throw "type mismatch in nameconcat";
+          }
           
-//           return new VarInit(MCName, RV->getType());
-//         }
-//       }
+          return new VarInit(MCName, RV->getType());
+        }
+      }
 
-//       if (Record *D = Records.getDef(Name))
-//         return new DefInit(D);
+      if (Record *D = Records.getDef(Name))
+        return new DefInit(D);
 
-//       cerr << "Variable not defined: '" + Name + "'\n";
-//       assert(0 && "Variable not found");
-//       return 0;
-//     }
-//     break;
-//   }
-//   }
-//   return this;
-// }
+      cerr << "Variable not defined: '" + Name + "'\n";
+      assert(0 && "Variable not found");
+      return 0;
+    }
+    break;
+  }
+  }
+  return this;
+}
 
-// Init *UnOpInit::resolveReferences(Record &R, const RecordVal *RV) {
-//   Init *lhs = LHS->resolveReferences(R, RV);
+Init *UnOpInit::resolveReferences(Record &R, const RecordVal *RV) {
+  Init *lhs = LHS->resolveReferences(R, RV);
   
-//   if (LHS != lhs)
-//     return (new UnOpInit(getOpcode(), lhs, getType()))->Fold(&R, 0);
-//   return Fold(&R, 0);
-// }
+  if (LHS != lhs)
+    return (new UnOpInit(getOpcode(), lhs, getType()))->Fold(&R, 0);
+  return Fold(&R, 0);
+}
 
-// std::string UnOpInit::getAsString() const {
-//   std::string Result;
-//   switch (Opc) {
-//   case CAST: Result = "!cast<" + getType()->getAsString() + ">"; break;
-//   }
-//   return Result + "(" + LHS->getAsString() + ")";
-// }
+std::string UnOpInit::getAsString() const {
+  std::string Result;
+  switch (Opc) {
+  case CAST: Result = "!cast<" + getType()->getAsString() + ">"; break;
+  }
+  return Result + "(" + LHS->getAsString() + ")";
+}
 
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   switch (getOpcode()) {

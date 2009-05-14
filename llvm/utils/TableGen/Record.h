@@ -41,7 +41,7 @@ class IntInit;
 class StringInit;
 class CodeInit;
 class ListInit;
-  //class UnOpInit;
+class UnOpInit;
 class BinOpInit;
   //class TernOpInit;
 class DefInit;
@@ -79,9 +79,9 @@ public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue(   IntInit *II) { return 0; }
   virtual Init *convertValue(StringInit *SI) { return 0; }
   virtual Init *convertValue(  ListInit *LI) { return 0; }
-//   virtual Init *convertValue( UnOpInit *UI) {
-//     return convertValue((TypedInit*)UI);
-//   }
+  virtual Init *convertValue( UnOpInit *UI) {
+    return convertValue((TypedInit*)UI);
+  }
   virtual Init *convertValue( BinOpInit *UI) {
     return convertValue((TypedInit*)UI);
   }
@@ -133,7 +133,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
-  //  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
   //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
@@ -177,7 +177,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
-  //virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
   //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
@@ -217,7 +217,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
-  //virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
   //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
@@ -251,7 +251,7 @@ public:
   virtual Init *convertValue(   IntInit *II) { return 0; }
   virtual Init *convertValue(StringInit *SI) { return (Init*)SI; }
   virtual Init *convertValue(  ListInit *LI) { return 0; }
-  //virtual Init *convertValue( UnOpInit *BO);
+  virtual Init *convertValue( UnOpInit *BO);
   virtual Init *convertValue( BinOpInit *BO);
   //virtual Init *convertValue( TernOpInit *BO) { return RecTy::convertValue(BO);}
 
@@ -301,7 +301,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
-  //virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
   //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
@@ -340,7 +340,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
-  //virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
   //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( TypedInit *TI);
@@ -375,7 +375,7 @@ public:
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
-  //virtual Init *convertValue( UnOpInit *BO);
+  virtual Init *convertValue( UnOpInit *BO);
   virtual Init *convertValue( BinOpInit *BO);
   //virtual Init *convertValue( TernOpInit *BO) { return RecTy::convertValue(BO);}
   virtual Init *convertValue(   DagInit *CI) { return (Init*)CI; }
@@ -418,7 +418,7 @@ public:
   virtual Init *convertValue(  ListInit *LI) { return 0; }
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
-  //virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
+  virtual Init *convertValue( UnOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue( BinOpInit *UI) { return RecTy::convertValue(UI);}
   //virtual Init *convertValue( TernOpInit *UI) { return RecTy::convertValue(UI);}
   virtual Init *convertValue(   DefInit *DI);
@@ -740,40 +740,40 @@ public:
 
 /// UnOpInit - !op (X) - Transform an init.
 ///
-// class UnOpInit : public OpInit {
-// public:
-//   enum UnaryOp { CAST };
-// private:
-//   UnaryOp Opc;
-//   Init *LHS;
-// public:
-//   UnOpInit(UnaryOp opc, Init *lhs, RecTy *Type) :
-//       OpInit(Type), Opc(opc), LHS(lhs) {
-//   }
+class UnOpInit : public OpInit {
+public:
+  enum UnaryOp { CAST };
+private:
+  UnaryOp Opc;
+  Init *LHS;
+public:
+  UnOpInit(UnaryOp opc, Init *lhs, RecTy *Type) :
+      OpInit(Type), Opc(opc), LHS(lhs) {
+  }
 
-//   // Clone - Clone this operator, replacing arguments with the new list
-//   virtual OpInit *clone(std::vector<Init *> &Operands) {
-//     assert(Operands.size() == 1 && "Wrong number of operands for unary operation");
-//     return new UnOpInit(getOpcode(), *Operands.begin(), getType());
-//   }
+  // Clone - Clone this operator, replacing arguments with the new list
+  virtual OpInit *clone(std::vector<Init *> &Operands) {
+    assert(Operands.size() == 1 && "Wrong number of operands for unary operation");
+    return new UnOpInit(getOpcode(), *Operands.begin(), getType());
+  }
 
-//   int getNumOperands(void) const { return 1; }
-//   Init *getOperand(int i) {
-//     assert(i == 0 && "Invalid operand id for unary operator");
-//     return getOperand();
-//   }
+  int getNumOperands(void) const { return 1; }
+  Init *getOperand(int i) {
+    assert(i == 0 && "Invalid operand id for unary operator");
+    return getOperand();
+  }
   
-//   UnaryOp getOpcode() const { return Opc; }
-//   Init *getOperand() const { return LHS; }
+  UnaryOp getOpcode() const { return Opc; }
+  Init *getOperand() const { return LHS; }
 
-//   // Fold - If possible, fold this to a simpler init.  Return this if not
-//   // possible to fold.
-//   Init *Fold(Record *CurRec, MultiClass *CurMultiClass);
+  // Fold - If possible, fold this to a simpler init.  Return this if not
+  // possible to fold.
+  Init *Fold(Record *CurRec, MultiClass *CurMultiClass);
 
-//   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
   
-//   virtual std::string getAsString() const;
-// };
+  virtual std::string getAsString() const;
+};
 
 /// BinOpInit - !op (X, Y) - Combine two inits.
 ///
