@@ -2092,6 +2092,73 @@ public:
 
   void PrintInstantiationStack();
 
+  /// \brief A stack-allocated class that identifies which local
+  /// variable declaration instantiations are present in this scope.
+  ///
+  /// A new instance of this class type will be created whenever we
+  /// instantiate a new function declaration, which will have its own
+  /// set of parameter declarations.
+  class LocalInstantiationScope {
+    /// \brief Reference to the semantic analysis that is performing
+    /// this template instantiation.
+    Sema &SemaRef;
+
+    /// \brief A mapping from local variable declarations that occur
+    /// within a template to their instantiations.
+    ///
+    /// This mapping is used during instantiation to keep track of,
+    /// e.g., function parameter and variable declarations. For example,
+    /// given:
+    ///
+    /// \code
+    ///   template<typename T> T add(T x, T y) { return x + y; }
+    /// \endcode
+    ///
+    /// when we instantiate add<int>, we will introduce a mapping from
+    /// the ParmVarDecl for 'x' that occurs in the template to the
+    /// instantiated ParmVarDecl for 'x'.
+    llvm::DenseMap<VarDecl *, VarDecl *> LocalDecls;
+
+    /// \brief The outer scope, in which contains local variable
+    /// definitions from some other instantiation (that is not
+    /// relevant to this particular scope).
+    LocalInstantiationScope *Outer;
+
+    // This class is non-copyable
+    LocalInstantiationScope(const LocalInstantiationScope &);
+    LocalInstantiationScope &operator=(const LocalInstantiationScope &);
+
+  public:
+    LocalInstantiationScope(Sema &SemaRef)
+      : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope) { 
+      SemaRef.CurrentInstantiationScope = this;
+    }
+
+    ~LocalInstantiationScope() {
+      SemaRef.CurrentInstantiationScope = Outer;
+    }
+
+    VarDecl *getInstantiationOf(VarDecl *Var) {
+      VarDecl *Result = LocalDecls[Var];
+      assert(Result && "Variable was not instantiated in this scope!");
+      return Result;
+    }
+
+    ParmVarDecl *getInstantiationOf(ParmVarDecl *Var) {
+      return cast<ParmVarDecl>(getInstantiationOf(cast<VarDecl>(Var)));
+    }
+
+    void InstantiatedLocal(VarDecl *Var, VarDecl *VarInst) {
+      VarDecl *&Stored = LocalDecls[Var];
+      assert(!Stored && "Already instantiated this local variable");
+      Stored = VarInst;
+    }
+  };
+
+  /// \brief The current instantiation scope used to store local
+  /// variables.
+  LocalInstantiationScope *CurrentInstantiationScope;
+
   QualType InstantiateType(QualType T, const TemplateArgumentList &TemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);
 

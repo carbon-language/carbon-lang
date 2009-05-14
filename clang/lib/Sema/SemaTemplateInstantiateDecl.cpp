@@ -279,6 +279,8 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   if (D->getKind() != Decl::CXXMethod)
     return 0;
 
+  Sema::LocalInstantiationScope Scope(SemaRef);
+
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
@@ -320,6 +322,8 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
+  Sema::LocalInstantiationScope Scope(SemaRef);
+
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
@@ -363,6 +367,8 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
+  Sema::LocalInstantiationScope Scope(SemaRef);
+
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
@@ -391,6 +397,8 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
+  Sema::LocalInstantiationScope Scope(SemaRef);
+
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
@@ -452,6 +460,7 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   // Note: we don't try to instantiate function parameters until after
   // we've instantiated the function's type. Therefore, we don't have
   // to check for 'void' parameter types here.
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
   return Param;
 }
 

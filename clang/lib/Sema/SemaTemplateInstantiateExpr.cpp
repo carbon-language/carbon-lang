@@ -85,6 +85,15 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
                                                  *Arg.getAsIntegral(),
                                                  T, 
                                        E->getSourceRange().getBegin()));
+  } else if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
+    ParmVarDecl *ParmInst 
+      = SemaRef.CurrentInstantiationScope->getInstantiationOf(Parm);
+    QualType T = ParmInst->getType();
+    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(ParmInst,
+                                                      T.getNonReferenceType(),
+                                                           E->getLocation(),
+                                                        T->isDependentType(),
+                                                        T->isDependentType()));
   } else
     assert(false && "Can't handle arbitrary declaration references");
 
