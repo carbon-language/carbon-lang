@@ -719,10 +719,32 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     if (!MD->isVariadic()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
       return;
-    }    
+    }
+  } else if (isa<BlockDecl>(d)) {
+    // Note! BlockDecl is typeless. Variadic diagnostics
+    // will be issued by the caller.
+    ;
+  } else if (const VarDecl *V = dyn_cast<VarDecl>(d)) {
+    // FIXME: share code with case of BlockDecl.
+    QualType Ty = V->getType();
+    if (Ty->isBlockPointerType()) {
+      const BlockPointerType *BPT = Ty->getAsBlockPointerType();
+      QualType FnType = BPT->getPointeeType();
+      const FunctionType *FT = FnType->getAsFunctionType();
+      assert(FT && "Block has non-function type?");
+      if (!cast<FunctionProtoType>(FT)->isVariadic()) {
+        S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
+        return;
+      }
+    }
+    else {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 6 /*function, method or */;
+      return;
+    }
   } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 3 /*function or method*/;
+      << Attr.getName() << 6 /*function, method or */;
     return;
   }
   d->addAttr(::new (S.Context) SentinelAttr(sentinel, nullPos));

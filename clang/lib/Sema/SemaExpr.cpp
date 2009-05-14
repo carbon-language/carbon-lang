@@ -5038,7 +5038,12 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
     CurBlock->hasPrototype = true;
     CurBlock->isVariadic = false;
-    
+    // Check for a valid sentinel attribute on this block.
+    if (CurBlock->TheDecl->getAttr<SentinelAttr>()) {
+      Diag(ParamInfo.getAttributes()->getLoc(), 
+           diag::warn_attribute_sentinel_not_variadic);
+      // FIXME: remove the attribute.
+    }
     QualType RetTy = T.getTypePtr()->getAsFunctionType()->getResultType();
     
     // Do not allow returning a objc interface by-value.
@@ -5080,6 +5085,13 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     if ((*AI)->getIdentifier())
       PushOnScopeChains(*AI, CurBlock->TheScope);
 
+  // Check for a valid sentinel attribute on this block.
+  if (!CurBlock->isVariadic && CurBlock->TheDecl->getAttr<SentinelAttr>()) {
+    Diag(ParamInfo.getAttributes()->getLoc(), 
+         diag::warn_attribute_sentinel_not_variadic);
+    // FIXME: remove the attribute.
+  }
+  
   // Analyze the return type.
   QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
   QualType RetTy = T->getAsFunctionType()->getResultType();

@@ -440,7 +440,8 @@ def warn_attribute_weak_import_invalid_on_definition : Warning<
   "'weak_import' attribute cannot be specified on a definition">;
 def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{function|union|"
-  "variable and function|function or method|parameter|parameter or Objective-C method}1 types">;
+  "variable and function|function or method|parameter|parameter or Objective-C method |"
+  "function, method or block}1 types">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;
