@@ -51,51 +51,35 @@ public:
 ///
 template<class C>
 class ManagedStatic : public ManagedStaticBase {
+private:
+  void checkInit() {
+    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
+    if (OldFlag == 0) {
+      LazyInit();
+      sys::MemoryFence();
+      InitFlag = 2;
+    } else if (OldFlag == 1) {
+      while (InitFlag == 1) ;
+      sys::MemoryFence();
+    }
+  }
 public:
 
   // Accessors.
   C &operator*() {
-    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
-    if (OldFlag == 0) {
-      LazyInit();
-      sys::MemoryFence();
-      InitFlag = 2;
-    } else if (OldFlag == 1)
-      while (OldFlag == 1) ;
-      
+    checkInit();
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
-    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
-    if (OldFlag == 0) {
-      LazyInit();
-      sys::MemoryFence();
-      InitFlag = 2;
-    } else if (OldFlag == 1)
-      while (OldFlag == 1) ;
-    
+    checkInit();
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
-    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
-    if (OldFlag == 0) {
-      LazyInit();
-      sys::MemoryFence();
-      InitFlag = 2;
-    } else if (OldFlag == 1)
-      while (InitFlag == 1) ;
-    
+    checkInit();
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
-    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
-    if (OldFlag == 0) {
-      LazyInit();
-      sys::MemoryFence();
-      InitFlag = 2;
-    } else if (OldFlag == 1)
-      while (OldFlag == 1) ;
-    
+    checkInit();
     return static_cast<C*>(Ptr);
   }
 
