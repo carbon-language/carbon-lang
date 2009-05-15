@@ -503,7 +503,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEBlock - A block of values.  Primarily used for location expressions.
   //
-  class DIEBlock : public DIEValue, public DIE {
+  class VISIBILITY_HIDDEN DIEBlock : public DIEValue, public DIE {
     unsigned Size;                // Size in bytes excluding size header.
   public:
     DIEBlock()
