@@ -17,8 +17,10 @@
 #include "llvm/Config/config.h"
 #include <stdint.h>
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ == 0)
 #include <libkern/OSAtomic.h>
+#endif
 #elif LLVM_ON_WIN32
 #include <windows.h>
 #endif
