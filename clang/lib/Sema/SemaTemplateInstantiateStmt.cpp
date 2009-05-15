@@ -39,6 +39,7 @@ namespace {
     OwningStmtResult VisitDeclStmt(DeclStmt *S);
     OwningStmtResult VisitNullStmt(NullStmt *S);
     OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
+    OwningStmtResult VisitIfStmt(IfStmt *S);
     OwningStmtResult VisitExpr(Expr *E);
     OwningStmtResult VisitLabelStmt(LabelStmt *S);
     OwningStmtResult VisitGotoStmt(GotoStmt *S);
@@ -133,6 +134,26 @@ TemplateStmtInstantiator::VisitCompoundStmt(CompoundStmt *S) {
                                               Statements.size(),
                                               S->getLBracLoc(),
                                               S->getRBracLoc()));
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitIfStmt(IfStmt *S) {
+  // Instantiate the condition
+  OwningExprResult Cond = SemaRef.InstantiateExpr(S->getCond(), TemplateArgs);
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+
+  // Instantiate the "then" branch.
+  OwningStmtResult Then = SemaRef.InstantiateStmt(S->getThen(), TemplateArgs);
+  if (Then.isInvalid())
+    return SemaRef.StmtError();
+
+  // Instantiate the "else" branch.
+  OwningStmtResult Else = SemaRef.InstantiateStmt(S->getElse(), TemplateArgs);
+  if (Else.isInvalid())
+    return SemaRef.StmtError();
+
+  return SemaRef.ActOnIfStmt(S->getIfLoc(), move(Cond), move(Then),
+                             S->getElseLoc(), move(Else));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitExpr(Expr *E) {

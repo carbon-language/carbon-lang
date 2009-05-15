@@ -184,17 +184,20 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
 
   assert(condExpr && "ActOnIfStmt(): missing expression");
 
-  DefaultFunctionArrayConversion(condExpr);
-  // Take ownership again until we're past the error checking.
-  CondVal = condExpr;
-  QualType condType = condExpr->getType();
-
-  if (getLangOptions().CPlusPlus) {
-    if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-      return StmtError();
-  } else if (!condType->isScalarType()) // C99 6.8.4.1p1
-    return StmtError(Diag(IfLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType << condExpr->getSourceRange());
+  if (!condExpr->isTypeDependent()) {
+    DefaultFunctionArrayConversion(condExpr);
+    // Take ownership again until we're past the error checking.
+    CondVal = condExpr;
+    QualType condType = condExpr->getType();
+    
+    if (getLangOptions().CPlusPlus) {
+      if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
+        return StmtError();
+    } else if (!condType->isScalarType()) // C99 6.8.4.1p1
+      return StmtError(Diag(IfLoc, 
+                            diag::err_typecheck_statement_requires_scalar)
+                       << condType << condExpr->getSourceRange());
+  }
 
   Stmt *thenStmt = ThenVal.takeAs<Stmt>();
 
@@ -209,7 +212,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
 
   CondVal.release();
   return Owned(new (Context) IfStmt(IfLoc, condExpr, thenStmt,
-                                    ElseVal.takeAs<Stmt>()));
+                                    ElseLoc, ElseVal.takeAs<Stmt>()));
 }
 
 Action::OwningStmtResult

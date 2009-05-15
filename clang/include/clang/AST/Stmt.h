@@ -540,13 +540,16 @@ class IfStmt : public Stmt {
   enum { COND, THEN, ELSE, END_EXPR };
   Stmt* SubExprs[END_EXPR];
   SourceLocation IfLoc;
+  SourceLocation ElseLoc;
 public:
-  IfStmt(SourceLocation IL, Expr *cond, Stmt *then, Stmt *elsev = 0) 
+  IfStmt(SourceLocation IL, Expr *cond, Stmt *then, 
+         SourceLocation EL = SourceLocation(), Stmt *elsev = 0) 
     : Stmt(IfStmtClass)  {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[THEN] = then;
     SubExprs[ELSE] = elsev;
     IfLoc = IL;
+    ElseLoc = EL;
   }
   
   /// \brief Build an empty if/then/else statement
@@ -565,6 +568,8 @@ public:
 
   SourceLocation getIfLoc() const { return IfLoc; }
   void setIfLoc(SourceLocation L) { IfLoc = L; }
+  SourceLocation getElseLoc() const { return ElseLoc; }
+  void setElseLoc(SourceLocation L) { ElseLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     if (SubExprs[ELSE])

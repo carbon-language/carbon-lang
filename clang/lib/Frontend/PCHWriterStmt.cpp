@@ -165,6 +165,7 @@ void PCHStmtWriter::VisitIfStmt(IfStmt *S) {
   Writer.WriteSubStmt(S->getThen());
   Writer.WriteSubStmt(S->getElse());
   Writer.AddSourceLocation(S->getIfLoc(), Record);
+  Writer.AddSourceLocation(S->getElseLoc(), Record);
   Code = pch::STMT_IF;
 }
 

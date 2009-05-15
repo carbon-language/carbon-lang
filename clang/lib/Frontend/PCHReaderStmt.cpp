@@ -172,6 +172,7 @@ unsigned PCHStmtReader::VisitIfStmt(IfStmt *S) {
   S->setThen(StmtStack[StmtStack.size() - 2]);
   S->setElse(StmtStack[StmtStack.size() - 1]);
   S->setIfLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setElseLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 3;
 }
 

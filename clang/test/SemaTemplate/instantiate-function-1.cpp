@@ -58,3 +58,20 @@ template<typename T> struct X5 {
 void test_X5(X5<Incomplete> x5); // okay!
 
 template struct X5<Incomplete>; // expected-note{{instantiation}}
+
+template<typename T, typename U, typename V> struct X6 {
+  U f(T t, U u, V v) {
+    // IfStmt
+    if (t > 0)
+      return u;
+    else
+      return v; // expected-error{{incompatible type}}
+  }
+};
+
+struct ConvertibleToInt {
+  operator int() const;
+};
+
+template struct X6<ConvertibleToInt, float, char>;
+template struct X6<bool, int, int*>; // expected-note{{instantiation}}
