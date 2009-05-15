@@ -85,17 +85,6 @@ static bool hasFunctionProto(Decl *d) {
 static unsigned getFunctionOrMethodNumArgs(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getNumArgs();
-  else if (VarDecl *V = dyn_cast<VarDecl>(d)) {
-    QualType Ty = V->getType(); 
-    if (Ty->isBlockPointerType()) {
-      const FunctionType *FT = 
-        Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
-      if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
-        return Proto->getNumArgs();
-      
-    }
-    assert(false && "getFunctionOrMethodNumArgs - caused by block mishap");
-  }
   return cast<ObjCMethodDecl>(d)->param_size();
 }
 
