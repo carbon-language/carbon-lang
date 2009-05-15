@@ -87,3 +87,14 @@ template <typename T> struct X7 {
 };
 
 template struct X7<int>;
+
+template<typename T> struct While0 {
+  void f(T t) {
+    while (t) {
+    }
+
+    while (T t2 = T()) ;
+  }
+};
+
+template struct While0<float>;

@@ -42,6 +42,7 @@ namespace {
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
     OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
@@ -260,6 +261,21 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   First.release();
   Second.release();
   return move(Result);  
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
+  VarDecl *Var 
+    = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
+                                                    SemaRef.CurContext,
+                                                    TemplateArgs));
+  if (!Var)
+    return SemaRef.ExprError();
+
+  return SemaRef.Owned(new (SemaRef.Context) CXXConditionDeclExpr(
+                                                    E->getStartLoc(), 
+                                                    SourceLocation(),
+                                                    Var));
 }
 
 Sema::OwningExprResult

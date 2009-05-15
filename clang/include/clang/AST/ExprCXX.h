@@ -564,7 +564,10 @@ public:
   CXXConditionDeclExpr(SourceLocation startLoc,
                        SourceLocation eqLoc, VarDecl *var)
     : DeclRefExpr(CXXConditionDeclExprClass, var, 
-                  var->getType().getNonReferenceType(), startLoc) {}
+                  var->getType().getNonReferenceType(), startLoc,
+                  var->getType()->isDependentType(),
+                  /*FIXME:integral constant?*/
+                    var->getType()->isDependentType()) {}
 
   virtual void Destroy(ASTContext& Ctx);
 

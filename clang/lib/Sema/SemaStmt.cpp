@@ -520,17 +520,19 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond, StmtArg Body) {
   Expr *condExpr = Cond.takeAs<Expr>();
   assert(condExpr && "ActOnWhileStmt(): missing expression");
 
-  DefaultFunctionArrayConversion(condExpr);
-  Cond = condExpr;
-  QualType condType = condExpr->getType();
-
-  if (getLangOptions().CPlusPlus) {
-    if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-      return StmtError();
-  } else if (!condType->isScalarType()) // C99 6.8.5p2
-    return StmtError(Diag(WhileLoc,
-      diag::err_typecheck_statement_requires_scalar)
-      << condType << condExpr->getSourceRange());
+  if (!condExpr->isTypeDependent()) {
+    DefaultFunctionArrayConversion(condExpr);
+    Cond = condExpr;
+    QualType condType = condExpr->getType();
+    
+    if (getLangOptions().CPlusPlus) {
+      if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
+        return StmtError();
+    } else if (!condType->isScalarType()) // C99 6.8.5p2
+      return StmtError(Diag(WhileLoc,
+                            diag::err_typecheck_statement_requires_scalar)
+                       << condType << condExpr->getSourceRange());
+  }
 
   Cond.release();
   return Owned(new (Context) WhileStmt(condExpr, Body.takeAs<Stmt>(), 
