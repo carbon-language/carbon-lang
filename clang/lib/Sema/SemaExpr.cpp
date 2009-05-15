@@ -130,6 +130,30 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     }
     warnNotEnoughArgs = (P != E || i >= NumArgs);
   }
+  else if (VarDecl *V = dyn_cast<VarDecl>(D)) {
+    // block or function pointer call.
+    QualType Ty = V->getType();
+    if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
+      const FunctionType *FT = Ty->isFunctionPointerType() 
+      ? Ty->getAsPointerType()->getPointeeType()->getAsFunctionType()
+      : Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
+      if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT)) {
+        unsigned NumArgsInProto = Proto->getNumArgs();
+        unsigned k;
+        for (k = 0; (k != NumArgsInProto && i < NumArgs); k++) {
+          if (nullPos)
+            --nullPos;
+          else
+            ++i;
+        }
+        warnNotEnoughArgs = (k != NumArgsInProto || i >= NumArgs);
+      }
+      if (Ty->isBlockPointerType())
+        isMethod = 2;
+    }
+    else
+      return;
+  }
   else
     return;
 
@@ -155,7 +179,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   Expr *sentinelExpr = Args[sentinel];
   if (sentinelExpr && (!sentinelExpr->getType()->isPointerType() ||
                        !sentinelExpr->isNullPointerConstant(Context))) {
-    Diag(Loc, diag::warn_missing_sentinel) << isMethod << isMethod;
+    Diag(Loc, diag::warn_missing_sentinel) << isMethod;
     Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
   }
   return;
@@ -2466,6 +2490,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   Expr **Args = reinterpret_cast<Expr**>(args.release());
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
+  NamedDecl *NDecl = NULL;
   DeclarationName UnqualifiedName;
 
   if (getLangOptions().CPlusPlus) {
@@ -2531,6 +2556,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   if (DRExpr) {
     FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
     Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
+    NDecl = dyn_cast<NamedDecl>(DRExpr->getDecl());
   }
 
   if (Ovl || (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
@@ -2638,11 +2664,12 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       return ExprError(Diag(LParenLoc, diag::err_member_call_without_object)
         << Fn->getSourceRange());
 
+  // Check for sentinels
+  if (NDecl)
+    DiagnoseSentinelCalls(NDecl, LParenLoc, Args, NumArgs);
   // Do special checking on direct calls to functions.
-  if (FDecl) {
-    DiagnoseSentinelCalls(FDecl, LParenLoc, Args, NumArgs);
+  if (FDecl)
     return CheckFunctionCall(FDecl, TheCall.take());
-  }
 
   return Owned(TheCall.take());
 }

@@ -726,11 +726,9 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     ;
   } else if (const VarDecl *V = dyn_cast<VarDecl>(d)) {
     QualType Ty = V->getType();
-    if (Ty->isBlockPointerType()) {
-      const BlockPointerType *BPT = Ty->getAsBlockPointerType();
-      QualType FnType = BPT->getPointeeType();
-      const FunctionType *FT = FnType->getAsFunctionType();
-      assert(FT && "Block has non-function type?");
+    if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
+      const FunctionType *FT = Ty->isFunctionPointerType() ? getFunctionType(d) 
+        : Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
       if (!cast<FunctionProtoType>(FT)->isVariadic()) {
         S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
         return;
