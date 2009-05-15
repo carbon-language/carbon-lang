@@ -315,8 +315,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (isByRef) {
       llvm::Value *Loc;
       bool needsCopyDispose = BlockRequiresCopying(Ty);
-      // FIXME: I think we need to indirect through the forwarding pointer first
-      Loc = Builder.CreateStructGEP(DeclPtr, needsCopyDispose*2+4, "x");
+      Loc = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
+      Loc = Builder.CreateLoad(Loc, false);
+      Loc = Builder.CreateBitCast(Loc, DeclPtr->getType());
+      Loc = Builder.CreateStructGEP(Loc, needsCopyDispose*2+4, "x");
       DI->EmitDeclareOfAutoVariable(&D, Loc, Builder);
     } else
       DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
