@@ -712,12 +712,12 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
     
     if (!cast<FunctionProtoType>(FT)->isVariadic()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
+      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << 0;
       return;
     }    
   } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(d)) {
     if (!MD->isVariadic()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
+      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << 0;
       return;
     }
   } else if (isa<BlockDecl>(d)) {
@@ -730,7 +730,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       const FunctionType *FT = Ty->isFunctionPointerType() ? getFunctionType(d) 
         : Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
       if (!cast<FunctionProtoType>(FT)->isVariadic()) {
-        S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
+        int m = Ty->isFunctionPointerType() ? 0 : 1;
+        S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << m;
         return;
       }
     }

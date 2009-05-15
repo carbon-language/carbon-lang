@@ -5068,7 +5068,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     // Check for a valid sentinel attribute on this block.
     if (CurBlock->TheDecl->getAttr<SentinelAttr>()) {
       Diag(ParamInfo.getAttributes()->getLoc(), 
-           diag::warn_attribute_sentinel_not_variadic);
+           diag::warn_attribute_sentinel_not_variadic) << 1;
       // FIXME: remove the attribute.
     }
     QualType RetTy = T.getTypePtr()->getAsFunctionType()->getResultType();
@@ -5115,7 +5115,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   // Check for a valid sentinel attribute on this block.
   if (!CurBlock->isVariadic && CurBlock->TheDecl->getAttr<SentinelAttr>()) {
     Diag(ParamInfo.getAttributes()->getLoc(), 
-         diag::warn_attribute_sentinel_not_variadic);
+         diag::warn_attribute_sentinel_not_variadic) << 1;
     // FIXME: remove the attribute.
   }
   

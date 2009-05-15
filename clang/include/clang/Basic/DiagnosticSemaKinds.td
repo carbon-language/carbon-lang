@@ -483,7 +483,7 @@ def warn_transparent_union_nonpointer : Warning<
 def warn_attribute_sentinel_named_arguments : Warning<
   "'sentinel' attribute requires named arguments">;
 def warn_attribute_sentinel_not_variadic : Warning<
-  "'sentinel' attribute only supported for variadic functions">;
+  "'sentinel' attribute only supported for variadic %select{functions|blocks}0">;
 def err_attribute_sentinel_less_than_zero : Error<
   "'sentinel' parameter 1 less than zero">;
 def err_attribute_sentinel_not_zero_or_one : Error<
