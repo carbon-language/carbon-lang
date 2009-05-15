@@ -120,7 +120,11 @@ sub GetCCArgs {
   chomp $line;  
   $line =~ s/^\s+//;
   
-  my @items = quotewords('\s+', 0, $line);
+  my @items = quotewords('\s+', 1, $line);
+  for (my $i = 0 ; $ i < scalar(@items); ++$i) {
+    $items[$i] =~ s/^\"//;
+    $items[$i] =~ s/\"$//;
+  }
   my $cmd = shift @items;
   die "cannot find 'clang-cc' in 'clang' command\n" if (!($cmd =~ /clang-cc/));
   return \@items;
