@@ -2332,14 +2332,14 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   //
   // This check comes when we actually try to perform the
   // instantiation.
-  if (SpecializationRequiresInstantiation &&
-      InstantiateClassTemplateSpecialization(Specialization, true))
-    return true;
+  if (SpecializationRequiresInstantiation)
+    InstantiateClassTemplateSpecialization(Specialization, true);
+  else {
+    // Instantiate the members of this class template specialization.
+    InstantiatingTemplate Inst(*this, TemplateLoc, Specialization);
+    InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization);
+  }
 
-  // Instantiate the members of this class template specialization.
-  InstantiatingTemplate Inst(*this, TemplateLoc, Specialization);
-  InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization);
-  
   return DeclPtrTy::make(Specialization);
 }
 

@@ -3002,7 +3002,8 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
       Diag(FD->getLocation(), diag::warn_missing_prototype) << FD;
   }
 
-  PushDeclContext(FnBodyScope, FD);
+  if (FnBodyScope)
+    PushDeclContext(FnBodyScope, FD);
 
   // Check the validity of our function parameters
   CheckParmsForFunctionDef(FD);
@@ -3013,7 +3014,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
     Param->setOwningFunction(FD);
 
     // If this has an identifier, add it to the scope stack.
-    if (Param->getIdentifier())
+    if (Param->getIdentifier() && FnBodyScope)
       PushOnScopeChains(Param, FnBodyScope);
   }
 
@@ -3039,8 +3040,12 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   return DeclPtrTy::make(FD);
 }
 
-
 Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
+  return ActOnFinishFunctionBody(D, move(BodyArg), false);
+}
+
+Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
+                                              bool IsInstantiation) {
   Decl *dcl = D.getAs<Decl>();
   Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
@@ -3053,7 +3058,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg) {
     Body->Destroy(Context);
     return DeclPtrTy();
   }
-  PopDeclContext();
+  if (!IsInstantiation)
+    PopDeclContext();
+
   // Verify and clean out per-function state.
 
   assert(&getLabelMap() == &FunctionLabelMap && "Didn't pop block right?");

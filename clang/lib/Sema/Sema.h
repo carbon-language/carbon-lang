@@ -414,6 +414,8 @@ public:
   virtual void ActOnStartOfObjCMethodDef(Scope *S, DeclPtrTy D);
 
   virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body);
+  DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body,
+                                    bool IsInstantiation);
   void DiagnoseInvalidJumps(Stmt *Body);
   virtual DeclPtrTy ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 

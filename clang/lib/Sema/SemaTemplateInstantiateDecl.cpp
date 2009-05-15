@@ -587,6 +587,8 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
 
   // FIXME: add to the instantiation stack.
 
+  ActOnStartOfFunctionDef(0, DeclPtrTy::make(Function));
+
   // Introduce a new scope where local variable instantiations will be
   // recorded.
   LocalInstantiationScope Scope(*this);
@@ -605,10 +607,9 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
   // Instantiate the function body.
   OwningStmtResult Body 
     = InstantiateStmt(Pattern, getTemplateInstantiationArgs(Function));
-  if (Body.isInvalid())
-    Function->setInvalidDecl(true);
-  else
-    Function->setBody(Body.takeAs<Stmt>());
+
+  ActOnFinishFunctionBody(DeclPtrTy::make(Function), move(Body), 
+                          /*IsInstantiation=*/true);
 
   CurContext = PreviousContext;
 }
