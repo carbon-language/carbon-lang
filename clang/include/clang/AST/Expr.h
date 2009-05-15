@@ -1040,7 +1040,8 @@ class MemberExpr : public Expr {
 public:
   MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
              QualType ty) 
-    : Expr(MemberExprClass, ty),
+    : Expr(MemberExprClass, ty, 
+           base->isTypeDependent(), base->isValueDependent()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
 
   /// \brief Build an empty member reference expression.

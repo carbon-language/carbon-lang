@@ -417,6 +417,11 @@ Stmt *BlockExpr::getBody() {
 /// warning.
 bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
                                   SourceRange &R2) const {
+  // Don't warn if the expr is type dependent. The type could end up
+  // instantiating to void.
+  if (isTypeDependent())
+    return false;
+  
   switch (getStmtClass()) {
   default:
     Loc = getExprLoc();

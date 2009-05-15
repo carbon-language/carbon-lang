@@ -125,3 +125,18 @@ template<typename T> struct For0 {
 };
 
 template struct For0<int*>;
+
+template<typename T> struct Member0 {
+  void f(T t) {
+    t;
+    t.f;
+    t->f;
+    
+    T* tp;
+    tp.f; // expected-error{{member reference base type 'T *' is not a structure or union}}
+    tp->f;
+
+    this->f;
+    this.f; // expected-error{{member reference base type 'struct Member0 *const' is not a structure or union}}
+  }
+};

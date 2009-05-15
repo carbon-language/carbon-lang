@@ -2024,7 +2024,10 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
   // must have pointer type, and the accessed type is the pointee.
   if (OpKind == tok::arrow) {
-    if (const PointerType *PT = BaseType->getAsPointerType())
+    if (BaseType->isDependentType())
+      return Owned(new (Context) MemberExpr(BaseExpr, true, 0,
+                                            MemberLoc, Context.DependentTy));
+    else if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
     else if (getLangOptions().CPlusPlus && BaseType->isRecordType())
       return Owned(BuildOverloadedArrowExpr(S, BaseExpr, OpLoc,
@@ -2033,6 +2036,17 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return ExprError(Diag(MemberLoc,
                             diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr->getSourceRange());
+  } else {
+    // We use isTemplateTypeParmType directly here, instead of simply checking
+    // whether BaseType is dependent, because we want to report an error for
+    //
+    // T *t;
+    // t.foo;
+    //
+    //
+    if (BaseType->isTemplateTypeParmType()) 
+      return Owned(new (Context) MemberExpr(BaseExpr, false, 0,
+                                            MemberLoc, Context.DependentTy));
   }
 
   // Handle field access to simple records.  This also handles access to fields
