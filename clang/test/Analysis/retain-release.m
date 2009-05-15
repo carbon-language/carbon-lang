@@ -619,6 +619,19 @@ void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
 }
 
 //===----------------------------------------------------------------------===//
+// Method name that has a null IdentifierInfo* for its first selector slot.
+// This test just makes sure that we handle it.
+//===----------------------------------------------------------------------===//
+
+@interface TestNullIdentifier
+@end
+
+@implementation TestNullIdentifier
++ (id):(int)x, ... {
+  return [[NSString alloc] init]; // expected-warning{{leak}}
+}
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 

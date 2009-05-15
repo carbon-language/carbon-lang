@@ -76,7 +76,14 @@ static inline const char* parseWord(const char* s) {
   return s;
 }
 
-static NamingConvention deriveNamingConvention(const char* s) {
+static NamingConvention deriveNamingConvention(Selector S) {
+  IdentifierInfo *II = S.getIdentifierInfoForSlot(0);
+  
+  if (!II)
+    return NoConvention;
+  
+  const char *s = II->getName();
+  
   // A method/function name may contain a prefix.  We don't know it is there,
   // however, until we encounter the first '_'.
   bool InPossiblePrefix = true;
@@ -145,8 +152,8 @@ static NamingConvention deriveNamingConvention(const char* s) {
   return C;
 }
 
-static bool followsFundamentalRule(const char* s) {
-  return deriveNamingConvention(s) == CreateRule;
+static bool followsFundamentalRule(Selector S) {
+  return deriveNamingConvention(S) == CreateRule;
 }
 
 static const ObjCMethodDecl*
@@ -1218,19 +1225,17 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   if (isTrackedObjCObjectType(RetTy)) {    
     // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
     //  by instance methods.
-    RetEffect E =
-      followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
-        ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
+    RetEffect E = followsFundamentalRule(S)
+                  ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
     
     return getPersistentSummary(E, ReceiverEff, MayEscape);    
   }
   
   // Look for methods that return an owned core foundation object.
   if (isTrackedCFObjectType(RetTy)) {
-    RetEffect E =
-      followsFundamentalRule(S.getIdentifierInfoForSlot(0)->getName())
-    ? RetEffect::MakeOwned(RetEffect::CF, true)
-    : RetEffect::MakeNotOwned(RetEffect::CF);
+    RetEffect E = followsFundamentalRule(S)
+      ? RetEffect::MakeOwned(RetEffect::CF, true)
+      : RetEffect::MakeNotOwned(RetEffect::CF);
     
     return getPersistentSummary(E, ReceiverEff, MayEscape);
   }
@@ -1258,8 +1263,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   RetainSummary *Summ = 0;
   
   // "initXXX": pass-through for receiver.
-  if (deriveNamingConvention(S.getIdentifierInfoForSlot(0)->getName()) 
-      == InitRule)
+  if (deriveNamingConvention(S) == InitRule)
     Summ = getInitMethodSummary(RetTy);
   else
     Summ = getCommonMethodSummary(MD, S, RetTy);
