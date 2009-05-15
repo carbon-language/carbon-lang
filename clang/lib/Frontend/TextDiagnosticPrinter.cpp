@@ -160,10 +160,12 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 
   // If the end of the interesting region comes before we run out of
   // space in the terminal, start at the beginning of the line.
-  if (CaretEnd < Columns - 3)
+  if (Columns > 3 && CaretEnd < Columns - 3)
     CaretStart = 0;
 
-  unsigned TargetColumns = Columns - 8; // Give us extra room for the ellipses.
+  unsigned TargetColumns = Columns;
+  if (TargetColumns > 8)
+    TargetColumns -= 8; // Give us extra room for the ellipses.
   unsigned SourceLength = SourceLine.size();
   while ((CaretEnd - CaretStart) < TargetColumns) {
     bool ExpandedRegion = false;

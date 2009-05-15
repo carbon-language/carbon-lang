@@ -4,7 +4,7 @@
 // FIXME: This diagnostic is getting truncated very poorly.
 // RUN: grep -e '^  ...// some long comment text and a brace, eh {} ' %t.msg &&
 // RUN: grep -e '^                                                 \^' %t.msg &&
-
+// RUN: clang -fsyntax-only -fmessage-length=1 %s &&
 // RUN: true
 
 // Hack so we can check things better, force the file name and line.
