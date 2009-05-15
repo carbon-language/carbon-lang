@@ -166,6 +166,9 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitExpr(Expr *E) {
 
 Sema::OwningStmtResult 
 Sema::InstantiateStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
+  if (!S)
+    return Owned((Stmt *)0);
+
   TemplateStmtInstantiator Instantiator(*this, TemplateArgs);
   return Instantiator.Visit(S);
 }

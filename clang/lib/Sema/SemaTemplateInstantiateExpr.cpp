@@ -432,6 +432,9 @@ TemplateExprInstantiator::VisitCXXThisExpr(CXXThisExpr *E) {
 
 Sema::OwningExprResult 
 Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
+  if (!E)
+    return Owned((Expr *)0);
+
   TemplateExprInstantiator Instantiator(*this, TemplateArgs);
   return Instantiator.Visit(E);
 }
