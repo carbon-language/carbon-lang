@@ -28,7 +28,7 @@ void object_deleter(void *Ptr) {
 /// ManagedStaticBase - Common base class for ManagedStatic instances.
 class ManagedStaticBase {
 protected:
-  sys::cas_flag InitFlag;
+  mutable sys::cas_flag InitFlag;
   
   // This should only be used as a static variable, which guarantees that this
   // will be zero initialized.

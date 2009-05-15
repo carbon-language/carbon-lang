@@ -55,10 +55,10 @@ namespace llvm {
       OSMemoryBarrier();
     }
     
-    typedef volatile UInt32 cas_flag;
+    typedef volatile int32_t cas_flag;
     inline cas_flag CompareAndSwap(cas_flag* dest, cas_flag exc, cas_flag c) {
       cas_flag old = *dest;
-      OSCompareAndSwap(c, exc, dest);
+      OSAtomicCompareAndSwap32(c, exc, dest);
       return old;
     }
 #elif defined(LLVM_ON_WIN32)
