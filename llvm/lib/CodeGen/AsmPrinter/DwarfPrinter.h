@@ -11,8 +11,8 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef DWARFPRINTER_H__
-#define DWARFPRINTER_H__
+#ifndef CODEGEN_ASMPRINTER_DWARFPRINTER_H__
+#define CODEGEN_ASMPRINTER_DWARFPRINTER_H__
 
 #include "DwarfLabel.h"
 #include "llvm/CodeGen/MachineLocation.h"

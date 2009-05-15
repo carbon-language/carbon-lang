@@ -11,8 +11,8 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef DWARFLABEL_H__
-#define DWARFLABEL_H__
+#ifndef CODEGEN_ASMPRINTER_DWARFLABEL_H__
+#define CODEGEN_ASMPRINTER_DWARFLABEL_H__
 
 #include "llvm/Support/Compiler.h"
 #include <iosfwd>

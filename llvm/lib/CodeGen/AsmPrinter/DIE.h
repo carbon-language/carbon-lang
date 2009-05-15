@@ -11,8 +11,8 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef DIE_H__
-#define DIE_H__
+#ifndef CODEGEN_ASMPRINTER_DIE_H__
+#define CODEGEN_ASMPRINTER_DIE_H__
 
 #include "DwarfLabel.h"
 #include "llvm/ADT/FoldingSet.h"
