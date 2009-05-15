@@ -810,9 +810,15 @@ protected:
   
   /// DefinedClasses - List of defined classes.
   std::vector<llvm::GlobalValue*> DefinedClasses;
+
+  /// DefinedNonLazyClasses - List of defined "non-lazy" classes.
+  std::vector<llvm::GlobalValue*> DefinedNonLazyClasses;
   
   /// DefinedCategories - List of defined categories.
   std::vector<llvm::GlobalValue*> DefinedCategories;
+  
+  /// DefinedNonLazyCategories - List of defined "non-lazy" categories.
+  std::vector<llvm::GlobalValue*> DefinedNonLazyCategories;
   
   /// UsedGlobals - List of globals to pack into the llvm.used metadata
   /// to prevent them from being clobbered.
@@ -1259,15 +1265,19 @@ private:
                         uint32_t &InstanceSize);
   
   // Shamelessly stolen from Analysis/CFRefCount.cpp
-  Selector GetNullarySelector(const char* name) {
+  Selector GetNullarySelector(const char* name) const {
     IdentifierInfo* II = &CGM.getContext().Idents.get(name);
     return CGM.getContext().Selectors.getSelector(0, &II);
   }
   
-  Selector GetUnarySelector(const char* name) {
+  Selector GetUnarySelector(const char* name) const {
     IdentifierInfo* II = &CGM.getContext().Idents.get(name);
     return CGM.getContext().Selectors.getSelector(1, &II);
   }
+
+  /// ImplementationIsNonLazy - Check whether the given category or
+  /// class implementation is "non-lazy".
+  bool ImplementationIsNonLazy(const DeclContext *DC) const;
 
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -4075,21 +4085,21 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   
   // Build list of all implemented class addresses in array
   // L_OBJC_LABEL_CLASS_$.
-  // FIXME. Also generate in L_OBJC_LABEL_NONLAZY_CLASS_$
-  // list of 'nonlazy' implementations (defined as those with a +load{}
-  // method!!).
   AddModuleClassList(DefinedClasses, 
                      "\01L_OBJC_LABEL_CLASS_$",
                      "__DATA, __objc_classlist, regular, no_dead_strip");
+  AddModuleClassList(DefinedNonLazyClasses, 
+                     "\01L_OBJC_LABEL_NONLAZY_CLASS_$",
+                     "__DATA, __objc_nlclslist, regular, no_dead_strip");
   
   // Build list of all implemented category addresses in array
   // L_OBJC_LABEL_CATEGORY_$.
-  // FIXME. Also generate in L_OBJC_LABEL_NONLAZY_CATEGORY_$
-  // list of 'nonlazy' category implementations (defined as those with a +load{}
-  // method!!).
   AddModuleClassList(DefinedCategories, 
                      "\01L_OBJC_LABEL_CATEGORY_$",
                      "__DATA, __objc_catlist, regular, no_dead_strip");
+  AddModuleClassList(DefinedNonLazyCategories, 
+                     "\01L_OBJC_LABEL_NONLAZY_CATEGORY_$",
+                     "__DATA, __objc_nlcatlist, regular, no_dead_strip");
   
   //  static int L_OBJC_IMAGE_INFO[2] = { 0, flags };
   // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
@@ -4321,6 +4331,19 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   return GV;
 }
 
+bool 
+CGObjCNonFragileABIMac::ImplementationIsNonLazy(const DeclContext *DC) const {
+  DeclContext::lookup_const_result res = 
+    DC->lookup(CGM.getContext(), GetNullarySelector("load"));
+
+  for (; res.first != res.second; ++res.first)
+    if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(*res.first))
+      if (OMD->isClassMethod())
+        return true;
+  
+  return false;
+}
+
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
                                               uint32_t &InstanceStart,
                                               uint32_t &InstanceSize) {
@@ -4425,6 +4448,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                        classIsHidden);
   DefinedClasses.push_back(ClassMD);
 
+  // Determine if this class is also "non-lazy".
+  if (ImplementationIsNonLazy(ID))
+    DefinedNonLazyClasses.push_back(ClassMD);
+
   // Force the definition of the EHType if necessary.
   if (flags & CLS_EXCEPTION)
     GetInterfaceEHType(ID->getClassInterface(), true);
@@ -4475,8 +4502,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
 ///   const struct _prop_list_t * const properties;
 /// }
 ///
-void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) 
-{
+void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   const ObjCInterfaceDecl *Interface = OCD->getClassInterface();
   const char *Prefix = "\01l_OBJC_$_CATEGORY_";
   std::string ExtCatName(Prefix + Interface->getNameAsString()+ 
@@ -4553,6 +4579,10 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD)
   GCATV->setSection("__DATA, __objc_const");
   UsedGlobals.push_back(GCATV);
   DefinedCategories.push_back(GCATV);
+
+  // Determine if this category is also "non-lazy".
+  if (ImplementationIsNonLazy(OCD))
+    DefinedNonLazyCategories.push_back(GCATV);
 }
 
 /// GetMethodConstant - Return a struct objc_method constant for the
