@@ -3415,7 +3415,7 @@ CFRefCount::HandleAutoreleaseCounts(GRStateRef state, GenericNodeBuilder Bd,
     
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
-    os << "Object over-autoreleased: object was sent -autorelease " ;
+    os << "Object over-autoreleased: object was sent -autorelease";
     if (V.getAutoreleaseCount() > 1)
       os << V.getAutoreleaseCount() << " times";
     os << " but the object has ";
