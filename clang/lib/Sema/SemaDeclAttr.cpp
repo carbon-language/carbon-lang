@@ -37,6 +37,8 @@ static const FunctionType *getFunctionType(Decl *d) {
   
   if (Ty->isFunctionPointerType())
     Ty = Ty->getAsPointerType()->getPointeeType();
+  else if (Ty->isBlockPointerType())
+    Ty = Ty->getAsBlockPointerType()->getPointeeType();
 
   return Ty->getAsFunctionType();
 }
@@ -51,13 +53,27 @@ static bool isFunctionOrMethod(Decl *d) {
   return getFunctionType(d) || isa<ObjCMethodDecl>(d);
 }
 
+/// isFunctionOrMethodOrBlock - Return true if the given decl has function
+/// type (function or function-typed variable) or an Objective-C
+/// method or a block.
+static bool isFunctionOrMethodOrBlock(Decl *d) {
+  if (isFunctionOrMethod(d))
+    return true;
+  // check for block is more involved.
+  if (const VarDecl *V = dyn_cast<VarDecl>(d)) {
+    QualType Ty = V->getType();
+    return Ty->isBlockPointerType();
+  }
+  return false;
+}
+
 /// hasFunctionProto - Return true if the given decl has a argument
 /// information. This decl should have already passed
-/// isFunctionOrMethod.
+/// isFunctionOrMethod or isFunctionOrMethodOrBlock.
 static bool hasFunctionProto(Decl *d) {
-  if (const FunctionType *FnTy = getFunctionType(d)) {
+  if (const FunctionType *FnTy = getFunctionType(d))
     return isa<FunctionProtoType>(FnTy);
-  } else {
+  else {
     assert(isa<ObjCMethodDecl>(d));
     return true;
   }
@@ -69,12 +85,24 @@ static bool hasFunctionProto(Decl *d) {
 static unsigned getFunctionOrMethodNumArgs(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getNumArgs();
+  else if (VarDecl *V = dyn_cast<VarDecl>(d)) {
+    QualType Ty = V->getType(); 
+    if (Ty->isBlockPointerType()) {
+      const FunctionType *FT = 
+        Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
+      if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
+        return Proto->getNumArgs();
+      
+    }
+    assert(false && "getFunctionOrMethodNumArgs - caused by block mishap");
+  }
   return cast<ObjCMethodDecl>(d)->param_size();
 }
 
 static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getArgType(Idx);
+  
   
   return cast<ObjCMethodDecl>(d)->param_begin()[Idx]->getType();
 }
@@ -1062,7 +1090,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
+  if (!isFunctionOrMethodOrBlock(d) || !hasFunctionProto(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
     return;
