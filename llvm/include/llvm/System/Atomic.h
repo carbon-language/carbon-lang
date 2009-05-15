@@ -70,7 +70,7 @@ namespace llvm {
     
     typedef volatile long cas_flag;
     inline cas_flag CompareAndSwap(cas_flag* dest, cas_flag exc, cas_flag c) {
-      return _InterlockedCompareExchange(dest, exc, c);
+      return InterlockedCompareExchange(dest, exc, c);
     }
 #else
 #error No memory atomics implementation for your platform!
