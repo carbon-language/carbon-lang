@@ -98,10 +98,13 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitGotoStmt(GotoStmt *S) {
 
 Sema::OwningStmtResult
 TemplateStmtInstantiator::VisitReturnStmt(ReturnStmt *S) {
-  Sema::OwningExprResult Result = 
-        SemaRef.InstantiateExpr(S->getRetValue(), TemplateArgs);
-  if (Result.isInvalid())
-    return SemaRef.StmtError();
+  Sema::OwningExprResult Result = SemaRef.ExprEmpty();
+  if (Expr *E = S->getRetValue()) {
+    Result = SemaRef.InstantiateExpr(E, TemplateArgs);
+    
+    if (Result.isInvalid())
+      return SemaRef.StmtError();
+  }
   
   return SemaRef.ActOnReturnStmt(S->getReturnLoc(), move(Result));
 }
