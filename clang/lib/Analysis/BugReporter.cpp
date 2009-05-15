@@ -865,7 +865,7 @@ class VISIBILITY_HIDDEN EdgeBuilder {
   void popLocation() {
     if (!CLocs.back().isDead() && CLocs.back().asLocation().isFileID()) {
       // For contexts, we only one the first character as the range.
-      rawAddEdge( cleanUpLocation(CLocs.back(), true));
+      rawAddEdge(cleanUpLocation(CLocs.back(), true));
     }
     CLocs.pop_back();
   }
@@ -1139,14 +1139,16 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           
           PathDiagnosticEventPiece *p =
             new PathDiagnosticEventPiece(L,
-                                         "Looping back to the head of the loop");
+                                        "Looping back to the head of the loop");
           
           EB.addEdge(p->getLocation(), true);
           PD.push_front(p);
           
           if (CS) {
-            EB.addEdge(PathDiagnosticLocation(CS->getRBracLoc(),
-                                              PDB.getSourceManager()));                        
+            PathDiagnosticLocation BL(CS->getRBracLoc(),
+                                      PDB.getSourceManager());
+            BL = PathDiagnosticLocation(BL.asLocation());
+            EB.addEdge(BL);
           }
         }
         
