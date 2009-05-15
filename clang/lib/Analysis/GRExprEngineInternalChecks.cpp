@@ -631,22 +631,30 @@ static const Stmt *GetDerefExpr(const ExplodedNode<GRState> *N) {
 
 static const Stmt *GetReceiverExpr(const ExplodedNode<GRState> *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
-  return cast<ObjCMessageExpr>(S)->getReceiver();
+  if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S))
+    return ME->getReceiver();
+  return NULL;
 }
   
 static const Stmt *GetDenomExpr(const ExplodedNode<GRState> *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
-  return cast<BinaryOperator>(S)->getRHS();
+  if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
+    return BE->getRHS();
+  return NULL;
 }
   
 static const Stmt *GetCalleeExpr(const ExplodedNode<GRState> *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
-  return cast<CallExpr>(S)->getCallee();
+  if (const CallExpr *CE = dyn_cast<CallExpr>(S))
+    return CE->getCallee();
+  return NULL;
 }
   
 static const Stmt *GetRetValExpr(const ExplodedNode<GRState> *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
-  return cast<ReturnStmt>(S)->getRetValue();
+  if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(S))
+    return RS->getRetValue();
+  return NULL;
 }
 
 namespace {
