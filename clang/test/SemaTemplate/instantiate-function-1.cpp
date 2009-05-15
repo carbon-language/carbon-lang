@@ -18,8 +18,11 @@ struct X2 {
   void f(T);
 
   T g(T x, T y) {
+    /* DeclStmt */;
+    T *xp = &x, &yr = y; // expected-error{{pointer to a reference}}
     /* NullStmt */;
   }
 };
 
 template struct X2<int>;
+template struct X2<int&>; // expected-note{{instantiation of}}

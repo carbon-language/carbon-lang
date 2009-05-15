@@ -107,7 +107,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   if (T.isNull())
     return 0;
 
-  // Build the instantiataed declaration
+  // Build the instantiated declaration
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
                                  D->getLocation(), D->getIdentifier(),
                                  T, D->getStorageClass(),
@@ -585,6 +585,8 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
   if (!Pattern)
     return;
 
+  // FIXME: add to the instantiation stack.
+
   // Introduce a new scope where local variable instantiations will be
   // recorded.
   LocalInstantiationScope Scope(*this);
@@ -595,6 +597,11 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
     Scope.InstantiatedLocal(PatternDecl->getParamDecl(I),
                             Function->getParamDecl(I));
 
+  // Enter the scope of this instantiation. We don't use
+  // PushDeclContext because we don't have a scope.
+  DeclContext *PreviousContext = CurContext;
+  CurContext = Function;
+
   // Instantiate the function body.
   OwningStmtResult Body 
     = InstantiateStmt(Pattern, getTemplateInstantiationArgs(Function));
@@ -602,6 +609,8 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
     Function->setInvalidDecl(true);
   else
     Function->setBody(Body.takeAs<Stmt>());
+
+  CurContext = PreviousContext;
 }
 
 /// \brief Instantiate the definition of the given variable from its

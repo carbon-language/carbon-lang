@@ -1978,7 +1978,7 @@ public:
     /// \brief The kind of template instantiation we are performing
     enum {
       /// We are instantiating a template declaration. The entity is
-      /// the declaration we're instantiation (e.g., a CXXRecordDecl).
+      /// the declaration we're instantiating (e.g., a CXXRecordDecl).
       TemplateInstantiation,
 
       /// We are instantiating a default argument for a template

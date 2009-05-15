@@ -441,6 +441,7 @@ namespace {
     // FIXME: Once we get closer to completion, replace these
     // manually-written declarations with automatically-generated ones
     // from clang/AST/StmtNodes.def.
+    OwningStmtResult VisitDeclStmt(DeclStmt *S);
     OwningStmtResult VisitNullStmt(NullStmt *S);
     OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
     OwningStmtResult VisitExpr(Expr *E);
@@ -452,6 +453,28 @@ namespace {
       return SemaRef.StmtError(); 
     }
   };
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
+  llvm::SmallVector<Decl *, 8> Decls;
+  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+       D != DEnd; ++D) {
+    Decl *Instantiated = SemaRef.InstantiateDecl(*D, SemaRef.CurContext, 
+                                                 TemplateArgs);
+    if (!Instantiated)
+      return SemaRef.StmtError();
+
+    Decls.push_back(Instantiated);
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(cast<VarDecl>(*D),
+                                                  cast<VarDecl>(Instantiated));
+  }
+
+  return SemaRef.Owned(new (SemaRef.Context) DeclStmt(
+                                         DeclGroupRef::Create(SemaRef.Context,
+                                                              &Decls[0],
+                                                              Decls.size()),
+                                                      S->getStartLoc(),
+                                                      S->getEndLoc()));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitNullStmt(NullStmt *S) {
