@@ -14,6 +14,7 @@
 		1A376A2D0D4AED9B002A1C52 /* CGExprConstant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */; };
 		1A410F850FBCE51100351440 /* SemaTemplateInstantiateExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A410F840FBCE51100351440 /* SemaTemplateInstantiateExpr.cpp */; };
 		1A471AB50F437BC500753CE8 /* CGBlocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A471AB40F437BC500753CE8 /* CGBlocks.cpp */; };
+		1A5119C40FBDF71000A1FF22 /* SemaTemplateInstantiateStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A5119C30FBDF71000A1FF22 /* SemaTemplateInstantiateStmt.cpp */; };
 		1A5D5E580E5E81010023C059 /* CGCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D5E570E5E81010023C059 /* CGCXX.cpp */; };
 		1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */; };
 		1A7342480C7B57D500122F56 /* CGObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A7342470C7B57D500122F56 /* CGObjC.cpp */; };
@@ -325,6 +326,7 @@
 		1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprConstant.cpp; path = lib/CodeGen/CGExprConstant.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A410F840FBCE51100351440 /* SemaTemplateInstantiateExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiateExpr.cpp; path = lib/Sema/SemaTemplateInstantiateExpr.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A471AB40F437BC500753CE8 /* CGBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBlocks.cpp; path = lib/CodeGen/CGBlocks.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1A5119C30FBDF71000A1FF22 /* SemaTemplateInstantiateStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiateStmt.cpp; path = lib/Sema/SemaTemplateInstantiateStmt.cpp; sourceTree = "<group>"; };
 		1A5D5E570E5E81010023C059 /* CGCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXX.cpp; path = lib/CodeGen/CGCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A649E1D0F9599D9005B965E /* CGBlocks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGBlocks.h; path = lib/CodeGen/CGBlocks.h; sourceTree = "<group>"; };
 		1A649E1E0F9599DA005B965E /* CGCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGCXX.h; path = lib/CodeGen/CGCXX.h; sourceTree = "<group>"; };
@@ -1046,6 +1048,7 @@
 				35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */,
 				1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */,
 				1A410F840FBCE51100351440 /* SemaTemplateInstantiateExpr.cpp */,
+				1A5119C30FBDF71000A1FF22 /* SemaTemplateInstantiateStmt.cpp */,
 				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 			);
 			name = Sema;
@@ -1683,6 +1686,7 @@
 				DECB77F70FA5850200F5FBC7 /* PCHWriterDecl.cpp in Sources */,
 				DECB78170FA5882F00F5FBC7 /* PCHWriterStmt.cpp in Sources */,
 				1A410F850FBCE51100351440 /* SemaTemplateInstantiateExpr.cpp in Sources */,
+				1A5119C40FBDF71000A1FF22 /* SemaTemplateInstantiateStmt.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
