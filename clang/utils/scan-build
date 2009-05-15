@@ -859,6 +859,18 @@ sub RunBuildCommand {
   } 
   
   if ($Cmd eq "xcodebuild") {
+    # Check if using iPhone SDK 3.0 (simulator).  If so the compiler being
+    # used should be gcc-4.2.
+    if (!defined $ENV{"CCC_CC"}) {
+      for (my $i = 0 ; $i < scalar(@$Args); ++$i) {
+        if ($Args->[$i] eq "-sdk" && $i + 1 < scalar(@$Args)) {
+          if (@$Args[$i+1] =~ /^iphonesimulator3/) {
+            $ENV{"CCC_CC"} = "gcc-4.2";
+          }
+        }
+      }
+    }
+
     # Disable distributed builds for xcodebuild.
     AddIfNotPresent($Args,"-nodistribute");
 
