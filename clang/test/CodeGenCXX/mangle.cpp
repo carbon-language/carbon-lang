@@ -49,5 +49,31 @@ namespace N { int f(int, int) { static int b; return b; } }
 // RUN: grep "_ZGVZN1N1gEvE1a =" %t | count 1 &&
 namespace N { int h(); void g() { static int a = h(); } }
 
-// RUN: grep "_Z1fno" %t | count 1
+// RUN: grep "_Z1fno" %t | count 1 &&
 void f(__int128_t, __uint128_t) { } 
+
+template <typename T> struct S1 {};
+
+// RUN: grep "_Z1f2S1IiE" %t | count 1 &&
+void f(S1<int>) {}
+
+// RUN: grep "_Z1f2S1IdE" %t | count 1 &&
+void f(S1<double>) {}
+
+template <int N> struct S2 {};
+// RUN: grep "_Z1f2S2ILi100EE" %t | count 1 &&
+void f(S2<100>) {}
+
+// RUN: grep "_Z1f2S2ILin100EE" %t | count 1 &&
+void f(S2<-100>) {}
+
+template <bool B> struct S3 {};
+
+// RUN: grep "_Z1f2S3ILb1EE" %t | count 1 &&
+void f(S3<true>) {}
+
+// RUN: grep "_Z1f2S3ILb0EE" %t | count 1 &&
+void f(S3<false>) {}
+
+// RUN: grep "_Z2f22S3ILb1EE" %t | count 1 
+void f2(S3<100>) {}

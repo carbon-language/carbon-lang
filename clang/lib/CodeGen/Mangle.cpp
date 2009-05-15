@@ -19,6 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -67,6 +68,9 @@ namespace {
     void mangleExpression(Expr *E);
     void mangleCXXCtorType(CXXCtorType T);
     void mangleCXXDtorType(CXXDtorType T);
+    
+    void mangleTemplateArgumentList(const TemplateArgumentList &L);
+    void mangleTemplateArgument(const TemplateArgument &A);
   };
 }
 
@@ -290,8 +294,13 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
 
   if (const NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(DC))
     mangleSourceName(Namespace->getIdentifier());
-  else if (const RecordDecl *Record = dyn_cast<RecordDecl>(DC))
-    mangleSourceName(Record->getIdentifier());
+  else if (const RecordDecl *Record = dyn_cast<RecordDecl>(DC)) {
+    if (const ClassTemplateSpecializationDecl *D = 
+        dyn_cast<ClassTemplateSpecializationDecl>(Record)) {
+      mangleType(QualType(D->getTypeForDecl(), 0));
+    } else
+      mangleSourceName(Record->getIdentifier());
+  }
 }
 
 void 
@@ -571,6 +580,12 @@ void CXXNameMangler::mangleType(const TagType *T) {
     mangleName(T->getDecl()->getTypedefForAnonDecl());
   else
     mangleName(T->getDecl());
+  
+  // If this is a class template specialization, mangle the template
+  // arguments.
+  if (ClassTemplateSpecializationDecl *Spec 
+      = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl()))
+    mangleTemplateArgumentList(Spec->getTemplateArgs());
 }
 
 void CXXNameMangler::mangleType(const ArrayType *T) {
@@ -645,6 +660,53 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
     break;
   case Dtor_Base:
     Out << "D2";
+    break;
+  }
+}
+
+void CXXNameMangler::mangleTemplateArgumentList(const TemplateArgumentList &L) {
+  // <template-args> ::= I <template-arg>+ E
+  Out << "I";
+  
+  for (unsigned i = 0, e = L.size(); i != e; ++i) {
+    const TemplateArgument &A = L[i];
+  
+    mangleTemplateArgument(A);
+  }
+  
+  Out << "E";
+}
+
+void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
+  // <template-arg> ::= <type>			        # type or template
+  //                ::= X <expression> E    # expression
+  //                ::= <expr-primary>      # simple expressions
+  //                ::= I <template-arg>* E # argument pack
+  //                ::= sp <expression>     # pack expansion of (C++0x)
+  switch (A.getKind()) {
+  default:
+    assert(0 && "Unknown template argument kind!");
+  case TemplateArgument::Type:
+    mangleType(A.getAsType());
+    break;
+  case TemplateArgument::Integral:
+    //  <expr-primary> ::= L <type> <value number> E # integer literal
+
+    Out << 'L';
+    
+    mangleType(A.getIntegralType());
+    
+    const llvm::APSInt *Integral = A.getAsIntegral();
+    if (A.getIntegralType()->isBooleanType()) {
+      // Boolean values are encoded as 0/1.
+      Out << (Integral->getBoolValue() ? '1' : '0');
+    } else {
+      if (Integral->isNegative())
+        Out << 'n';
+      Integral->abs().print(Out, false);
+    }
+      
+    Out << 'E';
     break;
   }
 }
