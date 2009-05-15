@@ -102,6 +102,14 @@ NullStmt* NullStmt::Clone(ASTContext &C) const {
   return new (C) NullStmt(SemiLoc);
 }
 
+ContinueStmt* ContinueStmt::Clone(ASTContext &C) const {
+  return new (C) ContinueStmt(ContinueLoc);
+}
+
+BreakStmt* BreakStmt::Clone(ASTContext &C) const {
+  return new (C) BreakStmt(BreakLoc);
+}
+
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);

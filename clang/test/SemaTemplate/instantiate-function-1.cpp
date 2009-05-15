@@ -116,6 +116,10 @@ template struct Do0<NotConvertibleToBool>; // expected-note{{instantiation}}
 template<typename T> struct For0 {
   void f(T f, T l) {
     for (; f != l; ++f) {
+      if (*f)
+        continue;
+      else if (*f == 17)
+        break;
     }
   }
 };

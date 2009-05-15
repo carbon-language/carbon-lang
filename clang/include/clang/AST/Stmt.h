@@ -873,6 +873,9 @@ public:
   virtual SourceRange getSourceRange() const { 
     return SourceRange(ContinueLoc); 
   }
+
+  ContinueStmt* Clone(ASTContext &C) const;
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ContinueStmtClass; 
   }
@@ -897,6 +900,8 @@ public:
   void setBreakLoc(SourceLocation L) { BreakLoc = L; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(BreakLoc); }
+
+  BreakStmt* Clone(ASTContext &C) const;
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BreakStmtClass; 

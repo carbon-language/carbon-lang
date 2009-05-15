@@ -46,6 +46,8 @@ namespace {
     OwningStmtResult VisitExpr(Expr *E);
     OwningStmtResult VisitLabelStmt(LabelStmt *S);
     OwningStmtResult VisitGotoStmt(GotoStmt *S);
+    OwningStmtResult VisitBreakStmt(BreakStmt *S);
+    OwningStmtResult VisitContinueStmt(ContinueStmt *S);
     OwningStmtResult VisitReturnStmt(ReturnStmt *S);
 
     // Base case. I'm supposed to ignore this.
@@ -97,6 +99,15 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitLabelStmt(LabelStmt *S) {
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitGotoStmt(GotoStmt *S) {
   return SemaRef.ActOnGotoStmt(S->getGotoLoc(), S->getLabelLoc(), 
                                S->getLabel()->getID());
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitBreakStmt(BreakStmt *S) {
+  return SemaRef.Owned(S->Clone(SemaRef.Context));
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitContinueStmt(ContinueStmt *S) {
+  return SemaRef.Owned(S->Clone(SemaRef.Context));
 }
 
 Sema::OwningStmtResult
