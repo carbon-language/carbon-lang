@@ -32,6 +32,20 @@ static TimerGroup &getDwarfTimerGroup() {
   return DwarfTimerGroup;
 }
 
+DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
+                               const TargetAsmInfo *T)
+  : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
+    shouldEmitTableModule(false), shouldEmitMovesModule(false),
+    ExceptionTimer(0) {
+  if (TimePassesIsEnabled) 
+    ExceptionTimer = new Timer("Dwarf Exception Writer",
+                               getDwarfTimerGroup());
+}
+
+DwarfException::~DwarfException() {
+  delete ExceptionTimer;
+}
+
 void DwarfException::EmitCommonEHFrame(const Function *Personality,
                                        unsigned Index) {
   // Size and sign of stack growth.
@@ -610,23 +624,6 @@ void DwarfException::EmitExceptionTable() {
   }
 
   Asm->EmitAlignment(2, 0, 0, false);
-}
-
-  //===--------------------------------------------------------------------===//
-  // Main entry points.
-  //
-DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
-                               const TargetAsmInfo *T)
-  : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
-    shouldEmitTableModule(false), shouldEmitMovesModule(false),
-    ExceptionTimer(0) {
-  if (TimePassesIsEnabled) 
-    ExceptionTimer = new Timer("Dwarf Exception Writer",
-                               getDwarfTimerGroup());
-}
-
-DwarfException::~DwarfException() {
-  delete ExceptionTimer;
 }
 
 /// EndModule - Emit all exception information that should come after the
