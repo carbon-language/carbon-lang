@@ -791,7 +791,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
     assert(0 && "No typed variable for !foreach");
   }
 
-  if (MHSd && DagType || MHSl && ListType) {
+  if ((MHSd && DagType) || (MHSl && ListType)) {
     if (MHSd) {
       Init *Val = MHSd->getOperator();
       Init *Result = EvaluateOperation(RHSo, LHS, Val,
