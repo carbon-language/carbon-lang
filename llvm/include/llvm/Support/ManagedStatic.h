@@ -83,7 +83,7 @@ public:
       sys::MemoryFence();
       InitFlag = 2;
     } else if (OldFlag == 1)
-      while (OldFlag == 1) ;
+      while (InitFlag == 1) ;
     
     return *static_cast<C*>(Ptr);
   }
