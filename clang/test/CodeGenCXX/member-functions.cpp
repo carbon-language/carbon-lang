@@ -26,13 +26,20 @@ struct S {
   inline ~S() { }
   
   
+  // RUN: grep "define linkonce_odr void @_ZN1S9f_inline1Ev" %t &&
   void f_inline1() { }
   // RUN: grep "define linkonce_odr void @_ZN1S9f_inline2Ev" %t &&
   inline void f_inline2() { }
   
-  // RUN: grep "define internal void @_ZN1S1gEv" %t
+  // RUN: grep "define linkonce_odr void @_ZN1S1gEv" %t &&
   static void g() { }
+  
+  static void f();
 };
+
+// RUN: grep "define void @_ZN1S1fEv" %t
+void S::f() {
+}
 
 void test2() {
   S s;
