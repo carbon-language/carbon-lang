@@ -14,7 +14,6 @@
 #ifndef LLVM_SYSTEM_ATOMIC_H
 #define LLVM_SYSTEM_ATOMIC_H
 
-#include "llvm/Config/config.h"
 #include <stdint.h>
 
 #if defined(__APPLE__)
