@@ -75,3 +75,11 @@ struct ConvertibleToInt {
 
 template struct X6<ConvertibleToInt, float, char>;
 template struct X6<bool, int, int*>; // expected-note{{instantiation}}
+
+template <typename T> struct X7 {
+  void f() {
+    void *v = this;
+  }
+};
+
+template struct X7<int>;

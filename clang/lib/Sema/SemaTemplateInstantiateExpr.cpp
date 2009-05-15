@@ -47,6 +47,7 @@ namespace {
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
+    OwningExprResult VisitCXXThisExpr(CXXThisExpr *E);
       
     // Base case. I'm supposed to ignore this.
     Sema::OwningExprResult VisitStmt(Stmt *S) { 
@@ -416,6 +417,17 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitImplicitCastExpr(
                                            (Expr *)SubExpr.release(),
                                            E->isLvalueCast());
   return SemaRef.Owned(ICE);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitCXXThisExpr(CXXThisExpr *E) {
+  QualType ThisType = 
+    cast<CXXMethodDecl>(SemaRef.CurContext)->getThisType(SemaRef.Context);
+    
+  CXXThisExpr *TE = 
+    new (SemaRef.Context) CXXThisExpr(E->getLocStart(), ThisType);
+  
+  return SemaRef.Owned(TE);
 }
 
 Sema::OwningExprResult 
