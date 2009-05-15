@@ -509,13 +509,22 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   CXXRecordDecl *NewClass = 
     CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name,
                           PrevClassTemplate? 
-                            PrevClassTemplate->getTemplatedDecl() : 0);
+                            PrevClassTemplate->getTemplatedDecl() : 0,
+                          /*DelayTypeCreation=*/true);
 
   ClassTemplateDecl *NewTemplate
     = ClassTemplateDecl::Create(Context, SemanticContext, NameLoc,
                                 DeclarationName(Name), TemplateParams,
                                 NewClass, PrevClassTemplate);
   NewClass->setDescribedClassTemplate(NewTemplate);
+
+  // Build the type for the class template declaration now.
+  QualType T = 
+    Context.getTypeDeclType(NewClass, 
+                            PrevClassTemplate? 
+                              PrevClassTemplate->getTemplatedDecl() : 0);  
+  assert(T->isDependentType() && "Class template type is not dependent?");
+  (void)T;
 
   // Set the access specifier.
   SetMemberAccessSpecifier(NewTemplate, PrevClassTemplate, AS);

@@ -264,7 +264,8 @@ public:
 
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
-                               CXXRecordDecl* PrevDecl=0);
+                               CXXRecordDecl* PrevDecl=0,
+                               bool DelayTypeCreation = false);
   
   /// setBases - Sets the base classes of this struct or class.
   void setBases(CXXBaseSpecifier const * const *Bases, unsigned NumBases);

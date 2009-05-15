@@ -35,9 +35,11 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
-                                     CXXRecordDecl* PrevDecl) {
+                                     CXXRecordDecl* PrevDecl,
+                                     bool DelayTypeCreation) {
   CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, L, Id);
-  C.getTypeDeclType(R, PrevDecl);  
+  if (!DelayTypeCreation)
+    C.getTypeDeclType(R, PrevDecl);  
   return R;
 }
 
