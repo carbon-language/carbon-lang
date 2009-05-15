@@ -193,6 +193,7 @@ void PCHStmtWriter::VisitDoStmt(DoStmt *S) {
   Writer.WriteSubStmt(S->getCond());
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getDoLoc(), Record);
+  Writer.AddSourceLocation(S->getWhileLoc(), Record);
   Code = pch::STMT_DO;
 }
 

@@ -687,12 +687,15 @@ class DoStmt : public Stmt {
   enum { COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
   SourceLocation DoLoc;
+  SourceLocation WhileLoc;
+
 public:
-  DoStmt(Stmt *body, Expr *cond, SourceLocation DL) 
-    : Stmt(DoStmtClass), DoLoc(DL) {
+  DoStmt(Stmt *body, Expr *cond, SourceLocation DL, SourceLocation WL) 
+    : Stmt(DoStmtClass), DoLoc(DL), WhileLoc(WL) {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = body;
     DoLoc = DL;
+    WhileLoc = WL;
   }  
 
   /// \brief Build an empty do-while statement.
@@ -707,6 +710,8 @@ public:
 
   SourceLocation getDoLoc() const { return DoLoc; }
   void setDoLoc(SourceLocation L) { DoLoc = L; }
+  SourceLocation getWhileLoc() const { return WhileLoc; }
+  void setWhileLoc(SourceLocation L) { WhileLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(DoLoc, SubExprs[BODY]->getLocEnd()); 

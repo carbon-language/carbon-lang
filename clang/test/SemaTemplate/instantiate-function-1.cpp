@@ -98,3 +98,17 @@ template<typename T> struct While0 {
 };
 
 template struct While0<float>;
+
+template<typename T> struct Do0 {
+  void f(T t) {
+    do {
+    } while (t); // expected-error{{not contextually}}
+    
+    do {
+    } while (T t2 = T());
+  }
+};
+
+struct NotConvertibleToBool { };
+template struct Do0<ConvertibleToInt>;
+template struct Do0<NotConvertibleToBool>; // expected-note{{instantiation}}

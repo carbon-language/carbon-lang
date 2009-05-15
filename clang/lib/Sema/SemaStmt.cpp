@@ -545,19 +545,23 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
   Expr *condExpr = Cond.takeAs<Expr>();
   assert(condExpr && "ActOnDoStmt(): missing expression");
 
-  DefaultFunctionArrayConversion(condExpr);
-  Cond = condExpr;
-  QualType condType = condExpr->getType();
-
-  if (getLangOptions().CPlusPlus) {
-    if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-      return StmtError();
-  } else if (!condType->isScalarType()) // C99 6.8.5p2
-    return StmtError(Diag(DoLoc, diag::err_typecheck_statement_requires_scalar)
-      << condType << condExpr->getSourceRange());
+  if (!condExpr->isTypeDependent()) {
+    DefaultFunctionArrayConversion(condExpr);
+    Cond = condExpr;
+    QualType condType = condExpr->getType();
+    
+    if (getLangOptions().CPlusPlus) {
+      if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
+        return StmtError();
+    } else if (!condType->isScalarType()) // C99 6.8.5p2
+      return StmtError(Diag(DoLoc, 
+                            diag::err_typecheck_statement_requires_scalar)
+                       << condType << condExpr->getSourceRange());
+  }
 
   Cond.release();
-  return Owned(new (Context) DoStmt(Body.takeAs<Stmt>(), condExpr, DoLoc));
+  return Owned(new (Context) DoStmt(Body.takeAs<Stmt>(), condExpr, DoLoc,
+                                    WhileLoc));
 }
 
 Action::OwningStmtResult
