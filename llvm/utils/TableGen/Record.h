@@ -639,7 +639,8 @@ public:
 class StringInit : public TypedInit {
   std::string Value;
 public:
-  explicit StringInit(const std::string &V) : TypedInit(new StringRecTy), Value(V) {}
+  explicit StringInit(const std::string &V)
+    : TypedInit(new StringRecTy), Value(V) {}
 
   const std::string &getValue() const { return Value; }
 
@@ -774,7 +775,8 @@ public:
 
   // Clone - Clone this operator, replacing arguments with the new list
   virtual OpInit *clone(std::vector<Init *> &Operands) {
-    assert(Operands.size() == 1 && "Wrong number of operands for unary operation");
+    assert(Operands.size() == 1 &&
+           "Wrong number of operands for unary operation");
     return new UnOpInit(getOpcode(), *Operands.begin(), getType());
   }
 
@@ -811,13 +813,14 @@ public:
   
   // Clone - Clone this operator, replacing arguments with the new list
   virtual OpInit *clone(std::vector<Init *> &Operands) {
-    assert(Operands.size() == 2 && "Wrong number of operands for binary operation");
+    assert(Operands.size() == 2 &&
+           "Wrong number of operands for binary operation");
     return new BinOpInit(getOpcode(), Operands[0], Operands[1], getType());
   }
 
   int getNumOperands(void) const { return 2; }
   Init *getOperand(int i) {
-    assert(i == 0 || i == 1 && "Invalid operand id for binary operator");
+    assert((i == 0 || i == 1) && "Invalid operand id for binary operator");
     if (i == 0) {
       return getLHS();
     }
@@ -854,13 +857,16 @@ public:
   
   // Clone - Clone this operator, replacing arguments with the new list
   virtual OpInit *clone(std::vector<Init *> &Operands) {
-    assert(Operands.size() == 3 && "Wrong number of operands for ternary operation");
-    return new TernOpInit(getOpcode(), Operands[0], Operands[1], Operands[2], getType());
+    assert(Operands.size() == 3 &&
+           "Wrong number of operands for ternary operation");
+    return new TernOpInit(getOpcode(), Operands[0], Operands[1], Operands[2],
+                          getType());
   }
 
   int getNumOperands(void) const { return 3; }
   Init *getOperand(int i) {
-    assert(i == 0 || i == 1 || i == 2 && "Invalid operand id for ternary operator");
+    assert((i == 0 || i == 1 || i == 2) &&
+           "Invalid operand id for ternary operator");
     if (i == 0) {
       return getLHS();
     }
