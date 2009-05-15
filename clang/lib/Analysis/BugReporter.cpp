@@ -207,13 +207,32 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
   return Loc;
 }
 
+static bool IsNested(const Stmt *S, ParentMap &PM) {
+  if (isa<Expr>(S) && PM.isConsumedExpr(cast<Expr>(S)))
+    return true;
+  
+  const Stmt *Parent = PM.getParentIgnoreParens(S);
+  
+  if (Parent)
+    switch (Parent->getStmtClass()) {
+      case Stmt::ForStmtClass:
+      case Stmt::DoStmtClass:
+      case Stmt::WhileStmtClass:
+        return true;
+      default:
+        break;
+    }
+  
+  return false;  
+}
+
 PathDiagnosticLocation
 PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt* passed to getEnclosingStmtLocation");
   ParentMap &P = getParentMap(); 
   SourceManager &SMgr = getSourceManager();
 
-  while (isa<Expr>(S) && P.isConsumedExpr(cast<Expr>(S))) {
+  while (IsNested(S, P)) {
     const Stmt *Parent = P.getParentIgnoreParens(S);
     
     if (!Parent)
@@ -1106,13 +1125,18 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         const CFGBlock &Blk = *BE->getSrc();
         const Stmt *Term = Blk.getTerminator();
         
-        if (Term)
-          EB.addContext(Term);
-
         // Are we jumping to the head of a loop?  Add a special diagnostic.
-        if (const Stmt *Loop = BE->getSrc()->getLoopTarget()) {
-          
+        if (const Stmt *Loop = BE->getDst()->getLoopTarget()) {
           PathDiagnosticLocation L(Loop, PDB.getSourceManager());
+          const CompoundStmt *CS = NULL;
+          
+          if (!Term) {
+            if (const ForStmt *FS = dyn_cast<ForStmt>(Loop))
+              CS = dyn_cast<CompoundStmt>(FS->getBody());
+            else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
+              CS = dyn_cast<CompoundStmt>(WS->getBody());            
+          }
+          
           PathDiagnosticEventPiece *p =
             new PathDiagnosticEventPiece(L,
                                          "Looping back to the head of the loop");
@@ -1120,18 +1144,14 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           EB.addEdge(p->getLocation(), true);
           PD.push_front(p);
           
-          if (!Term) {
-            const CompoundStmt *CS = NULL;
-            if (const ForStmt *FS = dyn_cast<ForStmt>(Loop))
-              CS = dyn_cast<CompoundStmt>(FS->getBody());
-            else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
-              CS = dyn_cast<CompoundStmt>(WS->getBody());
-                     
-            if (CS)
-              EB.rawAddEdge(PathDiagnosticLocation(CS->getRBracLoc(),
-                                                   PDB.getSourceManager()));
+          if (CS) {
+            EB.addEdge(PathDiagnosticLocation(CS->getRBracLoc(),
+                                              PDB.getSourceManager()));                        
           }
         }
+        
+        if (Term)
+          EB.addContext(Term);
               
         break;
       }
