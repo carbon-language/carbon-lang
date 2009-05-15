@@ -1150,6 +1150,12 @@ private:
   /// processing a translation unit.
   void FinishNonFragileABIModule();
 
+  /// AddModuleClassList - Add the given list of class pointers to the
+  /// module with the provided symbol and section names.
+  void AddModuleClassList(const std::vector<llvm::GlobalValue*> &Container,
+                          const char *SymbolName,
+                          const char *SectionName);
+
   llvm::GlobalVariable * BuildClassRoTInitializer(unsigned flags, 
                                 unsigned InstanceStart,
                                 unsigned InstanceSize,
@@ -4034,62 +4040,56 @@ llvm::Function *CGObjCNonFragileABIMac::ModuleInitFunction() {
   return NULL;
 }
 
+void CGObjCNonFragileABIMac::AddModuleClassList(const 
+                                                std::vector<llvm::GlobalValue*> 
+                                                  &Container,
+                                                const char *SymbolName,
+                                                const char *SectionName) {
+  unsigned NumClasses = Container.size();
+  
+  if (!NumClasses)
+    return;
+  
+  std::vector<llvm::Constant*> Symbols(NumClasses);
+  for (unsigned i=0; i<NumClasses; i++)
+    Symbols[i] = llvm::ConstantExpr::getBitCast(Container[i],
+                                                ObjCTypes.Int8PtrTy);
+  llvm::Constant* Init = 
+    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
+                                                  NumClasses),
+                             Symbols);
+  
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(Init->getType(), false,
+                             llvm::GlobalValue::InternalLinkage,
+                             Init,
+                             SymbolName,
+                             &CGM.getModule());
+  GV->setAlignment(8);
+  GV->setSection(SectionName);
+  UsedGlobals.push_back(GV);
+}
+                                                
 void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   // nonfragile abi has no module definition.
   
-  // Build list of all implemented classe addresses in array
+  // Build list of all implemented class addresses in array
   // L_OBJC_LABEL_CLASS_$.
   // FIXME. Also generate in L_OBJC_LABEL_NONLAZY_CLASS_$
   // list of 'nonlazy' implementations (defined as those with a +load{}
   // method!!).
-  unsigned NumClasses = DefinedClasses.size();
-  if (NumClasses) {
-    std::vector<llvm::Constant*> Symbols(NumClasses);
-    for (unsigned i=0; i<NumClasses; i++)
-      Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedClasses[i],
-                                                  ObjCTypes.Int8PtrTy);
-    llvm::Constant* Init = 
-      llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
-                                                    NumClasses),
-                               Symbols);
-  
-    llvm::GlobalVariable *GV =
-      new llvm::GlobalVariable(Init->getType(), false,
-                               llvm::GlobalValue::InternalLinkage,
-                               Init,
-                               "\01L_OBJC_LABEL_CLASS_$",
-                               &CGM.getModule());
-    GV->setAlignment(8);
-    GV->setSection("__DATA, __objc_classlist, regular, no_dead_strip");
-    UsedGlobals.push_back(GV);
-  }
+  AddModuleClassList(DefinedClasses, 
+                     "\01L_OBJC_LABEL_CLASS_$",
+                     "__DATA, __objc_classlist, regular, no_dead_strip");
   
   // Build list of all implemented category addresses in array
   // L_OBJC_LABEL_CATEGORY_$.
   // FIXME. Also generate in L_OBJC_LABEL_NONLAZY_CATEGORY_$
   // list of 'nonlazy' category implementations (defined as those with a +load{}
   // method!!).
-  unsigned NumCategory = DefinedCategories.size();
-  if (NumCategory) {
-    std::vector<llvm::Constant*> Symbols(NumCategory);
-    for (unsigned i=0; i<NumCategory; i++)
-      Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedCategories[i],
-                                                  ObjCTypes.Int8PtrTy);
-    llvm::Constant* Init = 
-      llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
-                                                    NumCategory),
-                               Symbols);
-    
-    llvm::GlobalVariable *GV =
-      new llvm::GlobalVariable(Init->getType(), false,
-                               llvm::GlobalValue::InternalLinkage,
-                               Init,
-                               "\01L_OBJC_LABEL_CATEGORY_$",
-                               &CGM.getModule());
-    GV->setAlignment(8);
-    GV->setSection("__DATA, __objc_catlist, regular, no_dead_strip");
-    UsedGlobals.push_back(GV);
-  }
+  AddModuleClassList(DefinedCategories, 
+                     "\01L_OBJC_LABEL_CATEGORY_$",
+                     "__DATA, __objc_catlist, regular, no_dead_strip");
   
   //  static int L_OBJC_IMAGE_INFO[2] = { 0, flags };
   // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
