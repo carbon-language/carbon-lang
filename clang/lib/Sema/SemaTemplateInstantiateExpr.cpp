@@ -480,7 +480,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitNullStmt(NullStmt *S) {
-  return SemaRef.Owned(new (SemaRef.Context) NullStmt(S->getSemiLoc()));
+  return SemaRef.Owned(S->Clone(SemaRef.Context));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitLabelStmt(LabelStmt *S) {

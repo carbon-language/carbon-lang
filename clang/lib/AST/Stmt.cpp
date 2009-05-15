@@ -98,6 +98,10 @@ bool Stmt::CollectingStats(bool enable) {
   return StatSwitch;
 }
 
+NullStmt* NullStmt::Clone(ASTContext &C) const {
+  return new (C) NullStmt(SemiLoc);
+}
+
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);

@@ -290,6 +290,8 @@ public:
   /// \brief Build an empty null statement.
   explicit NullStmt(EmptyShell Empty) : Stmt(NullStmtClass, Empty) { }
 
+  NullStmt* Clone(ASTContext &C) const;
+
   SourceLocation getSemiLoc() const { return SemiLoc; }
   void setSemiLoc(SourceLocation L) { SemiLoc = L; }
 
