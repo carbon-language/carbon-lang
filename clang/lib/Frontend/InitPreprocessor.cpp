@@ -51,6 +51,16 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
   Buf.push_back('\n');
 }
 
+// Append a #undef line to Buf for Macro.  Macro should be of the form XXX
+// and we emit "#undef XXX".
+static void UndefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
+  // Push "macroname".
+  const char *Command = "#undef ";
+  Buf.insert(Buf.end(), Command, Command+strlen(Command));
+  Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
+  Buf.push_back('\n');
+}
+
 /// Add the quoted name of an implicit include file.
 static void AddQuotedIncludePath(std::vector<char> &Buf, 
                                  const std::string &File) {
@@ -441,7 +451,7 @@ bool InitializePreprocessor(Preprocessor &PP,
   for (PreprocessorInitOptions::macro_iterator I = InitOpts.macro_begin(),
        E = InitOpts.macro_end(); I != E; ++I) {
     if (I->second)  // isUndef
-      DefineBuiltinMacro(PredefineBuffer, I->first.c_str(), "#undef ");
+      UndefineBuiltinMacro(PredefineBuffer, I->first.c_str());
     else
       DefineBuiltinMacro(PredefineBuffer, I->first.c_str());
   }
