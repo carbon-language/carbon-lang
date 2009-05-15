@@ -131,7 +131,8 @@ sub GetCCArgs {
 }
 
 sub Analyze {
-  my ($ClangCC, $Args, $Lang, $Output, $Verbose, $HtmlDir, $file, $Analyses) = @_;
+  my ($ClangCC, $Args, $AnalyzeArgs, $Lang, $Output, $Verbose, $HtmlDir,
+      $file, $Analyses) = @_;
   
   $Args = GetCCArgs($Args);
 
@@ -162,6 +163,11 @@ sub Analyze {
     push @CmdArgs,"-analyzer-eagerly-assume";
     push @CmdArgs,(split /\s/,$Analyses);
     $RunAnalyzer = 1;
+  }
+  
+  # Add the analysis arguments passed down from scan-build.
+  foreach my $Arg (@$AnalyzeArgs) {
+    push @CmdArgs, $Arg;
   }
   
   my @PrintArgs;
@@ -560,11 +566,12 @@ if ($Action eq 'compile' or $Action eq 'link') {
     next if (!defined $FileLang);
     next if (!defined $LangsAccepted{$FileLang});
     
-    my @AnalyzeArgs;
+    my @CmdArgs;
+    my @AnalyzeArgs;    
     
     if ($FileLang ne 'unknown') {
-      push @AnalyzeArgs,'-x';
-      push @AnalyzeArgs,$FileLang;
+      push @CmdArgs,'-x';
+      push @CmdArgs,$FileLang;
     }
 
     if (defined $StoreModel) {
@@ -586,21 +593,21 @@ if ($Action eq 'compile' or $Action eq 'link') {
       }
     }
 
-    push @AnalyzeArgs,@CompileOpts;
-    push @AnalyzeArgs,$file;
+    push @CmdArgs,@CompileOpts;
+    push @CmdArgs,$file;
 
     if (scalar @Archs) {
       foreach my $arch (@Archs) {
         my @NewArgs;
         push @NewArgs, '-arch';
         push @NewArgs, $arch;
-        push @NewArgs, @AnalyzeArgs;
-        Analyze($ClangCC, \@NewArgs, $FileLang, $Output,
+        push @NewArgs, @CmdArgs;
+        Analyze($ClangCC, \@NewArgs, \@AnalyzeArgs, $FileLang, $Output,
                 $Verbose, $HtmlDir, $file, $Analyses);
       }
     }
     else {
-      Analyze($ClangCC, \@AnalyzeArgs, $FileLang, $Output,
+      Analyze($ClangCC, \@CmdArgs, \@AnalyzeArgs, $FileLang, $Output,
               $Verbose, $HtmlDir, $file, $Analyses);
     }
   }
