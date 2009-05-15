@@ -353,17 +353,6 @@ public:
 // Utility Functions  //
 // ****************** //
 
-/// InvalidateKill - A MI that defines the specified register is being deleted,
-/// invalidate the register kill information.
-static void InvalidateKill(unsigned Reg, BitVector &RegKills,
-                           std::vector<MachineOperand*> &KillOps) {
-  if (RegKills[Reg]) {
-    KillOps[Reg]->setIsKill(false);
-    KillOps[Reg] = NULL;
-    RegKills.reset(Reg);
-  }
-}
-
 /// findSinglePredSuccessor - Return via reference a vector of machine basic
 /// blocks each of which is a successor of the specified BB and has no other
 /// predecessor.
@@ -377,9 +366,31 @@ static void findSinglePredSuccessor(MachineBasicBlock *MBB,
   }
 }
 
+/// InvalidateKill - Invalidate register kill information for a specific
+/// register. This also unsets the kills marker on the last kill operand.
+static void InvalidateKill(unsigned Reg,
+                           const TargetRegisterInfo* TRI,
+                           BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps) {
+  if (RegKills[Reg]) {
+    KillOps[Reg]->setIsKill(false);
+    KillOps[Reg] = NULL;
+    RegKills.reset(Reg);
+    for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
+      if (RegKills[*SR]) {
+        KillOps[*SR]->setIsKill(false);
+        KillOps[*SR] = NULL;
+        RegKills.reset(*SR);
+      }
+    }
+  }
+}
+
 /// InvalidateKills - MI is going to be deleted. If any of its operands are
 /// marked kill, then invalidate the information.
-static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
+static void InvalidateKills(MachineInstr &MI,
+                            const TargetRegisterInfo* TRI,
+                            BitVector &RegKills,
                             std::vector<MachineOperand*> &KillOps,
                             SmallVector<unsigned, 2> *KillRegs = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
@@ -393,8 +404,14 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
       KillRegs->push_back(Reg);
     assert(Reg < KillOps.size());
     if (KillOps[Reg] == &MO) {
-      RegKills.reset(Reg);
       KillOps[Reg] = NULL;
+      RegKills.reset(Reg);
+      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
+        if (RegKills[*SR]) {
+          KillOps[*SR] = NULL;
+          RegKills.reset(*SR);
+        }
+      }
     }
   }
 }
@@ -447,9 +464,9 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
 /// UpdateKills - Track and update kill info. If a MI reads a register that is
 /// marked kill, then it must be due to register reuse. Transfer the kill info
 /// over.
-static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
-                        std::vector<MachineOperand*> &KillOps,
-                        const TargetRegisterInfo* TRI) {
+static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
+                        BitVector &RegKills,
+                        std::vector<MachineOperand*> &KillOps) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse())
@@ -471,6 +488,10 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
     if (MO.isKill()) {
       RegKills.set(Reg);
       KillOps[Reg] = &MO;
+      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
+        RegKills.set(*SR);
+        KillOps[*SR] = &MO;
+      }
     }
   }
 
@@ -482,9 +503,9 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
     RegKills.reset(Reg);
     KillOps[Reg] = NULL;
     // It also defines (or partially define) aliases.
-    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
-      RegKills.reset(*AS);
-      KillOps[*AS] = NULL;
+    for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
+      RegKills.reset(*SR);
+      KillOps[*SR] = NULL;
     }
   }
 }
@@ -610,7 +631,7 @@ void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB,
       NotAvailable.insert(Reg);
     else {
       MBB.addLiveIn(Reg);
-      InvalidateKill(Reg, RegKills, KillOps);
+      InvalidateKill(Reg, TRI, RegKills, KillOps);
     }
 
     // Skip over the same register.
@@ -733,7 +754,7 @@ unsigned ReuseInfo::GetRegForReload(unsigned PhysReg, MachineInstr *MI,
 
         Spills.addAvailable(NewOp.StackSlotOrReMat, NewPhysReg);
         --MII;
-        UpdateKills(*MII, RegKills, KillOps, TRI);
+        UpdateKills(*MII, TRI, RegKills, KillOps);
         DOUT << '\t' << *MII;
         
         DOUT << "Reuse undone!\n";
@@ -1012,7 +1033,7 @@ private:
     AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
     VRM.transferRestorePts(&MI, NewMIs[0]);
     MII = MBB.insert(MII, NewMIs[0]);
-    InvalidateKills(MI, RegKills, KillOps);
+    InvalidateKills(MI, TRI, RegKills, KillOps);
     VRM.RemoveMachineInstrFromMaps(&MI);
     MBB.erase(&MI);
     ++NumModRefUnfold;
@@ -1028,7 +1049,7 @@ private:
       AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
       VRM.transferRestorePts(&NextMI, NewMIs[0]);
       MBB.insert(NextMII, NewMIs[0]);
-      InvalidateKills(NextMI, RegKills, KillOps);
+      InvalidateKills(NextMI, TRI, RegKills, KillOps);
       VRM.RemoveMachineInstrFromMaps(&NextMI);
       MBB.erase(&NextMI);
       ++NumModRefUnfold;
@@ -1150,7 +1171,7 @@ private:
             VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
           VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
           MII = MBB.insert(MII, FoldedMI);
-          InvalidateKills(MI, RegKills, KillOps);
+          InvalidateKills(MI, TRI, RegKills, KillOps);
           VRM.RemoveMachineInstrFromMaps(&MI);
           MBB.erase(&MI);
           MF.DeleteMachineInstr(NewMI);
@@ -1234,13 +1255,13 @@ private:
       MII = MBB.insert(MII, FoldedMI);  // Update MII to backtrack.
 
       // Delete all 3 old instructions.
-      InvalidateKills(*ReloadMI, RegKills, KillOps);
+      InvalidateKills(*ReloadMI, TRI, RegKills, KillOps);
       VRM.RemoveMachineInstrFromMaps(ReloadMI);
       MBB.erase(ReloadMI);
-      InvalidateKills(*DefMI, RegKills, KillOps);
+      InvalidateKills(*DefMI, TRI, RegKills, KillOps);
       VRM.RemoveMachineInstrFromMaps(DefMI);
       MBB.erase(DefMI);
-      InvalidateKills(MI, RegKills, KillOps);
+      InvalidateKills(MI, TRI, RegKills, KillOps);
       VRM.RemoveMachineInstrFromMaps(&MI);
       MBB.erase(&MI);
 
@@ -1279,7 +1300,7 @@ private:
       DOUT << "Removed dead store:\t" << *LastStore;
       ++NumDSE;
       SmallVector<unsigned, 2> KillRegs;
-      InvalidateKills(*LastStore, RegKills, KillOps, &KillRegs);
+      InvalidateKills(*LastStore, TRI, RegKills, KillOps, &KillRegs);
       MachineBasicBlock::iterator PrevMII = LastStore;
       bool CheckDef = PrevMII != MBB.begin();
       if (CheckDef)
@@ -1506,7 +1527,7 @@ private:
             MachineInstr *CopyMI = prior(MII);
             MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
             KillOpnd->setIsKill();
-            UpdateKills(*CopyMI, RegKills, KillOps, TRI);
+            UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
             DOUT << '\t' << *CopyMI;
             ++NumCopified;
@@ -1528,7 +1549,7 @@ private:
           // Remember it's available.
           Spills.addAvailable(SSorRMId, Phys);
 
-          UpdateKills(*prior(MII), RegKills, KillOps, TRI);
+          UpdateKills(*prior(MII), TRI, RegKills, KillOps);
           DOUT << '\t' << *prior(MII);
         }
       }
@@ -1771,7 +1792,7 @@ private:
           TII->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC, RC);
 
           MachineInstr *CopyMI = prior(MII);
-          UpdateKills(*CopyMI, RegKills, KillOps, TRI);
+          UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
           // This invalidates DesignatedReg.
           Spills.ClobberPhysReg(DesignatedReg);
@@ -1827,7 +1848,7 @@ private:
             KilledMIRegs.insert(VirtReg);
           }
 
-          UpdateKills(*prior(MII), RegKills, KillOps, TRI);
+          UpdateKills(*prior(MII), TRI, RegKills, KillOps);
           DOUT << '\t' << *prior(MII);
         }
         unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
@@ -1843,7 +1864,7 @@ private:
         MachineInstr* DeadStore = MaybeDeadStores[PDSSlot];
         if (DeadStore) {
           DOUT << "Removed dead store:\t" << *DeadStore;
-          InvalidateKills(*DeadStore, RegKills, KillOps);
+          InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
           VRM.RemoveMachineInstrFromMaps(DeadStore);
           MBB.erase(DeadStore);
           MaybeDeadStores[PDSSlot] = NULL;
@@ -1907,11 +1928,11 @@ private:
               } else {
                 DOUT << "Removing now-noop copy: " << MI;
                 // Unset last kill since it's being reused.
-                InvalidateKill(InReg, RegKills, KillOps);
+                InvalidateKill(InReg, TRI, RegKills, KillOps);
                 Spills.disallowClobberPhysReg(InReg);
               }
 
-              InvalidateKills(MI, RegKills, KillOps);
+              InvalidateKills(MI, TRI, RegKills, KillOps);
               VRM.RemoveMachineInstrFromMaps(&MI);
               MBB.erase(&MI);
               Erased = true;
@@ -1923,7 +1944,7 @@ private:
             if (PhysReg &&
                 TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)) {
               MBB.insert(MII, NewMIs[0]);
-              InvalidateKills(MI, RegKills, KillOps);
+              InvalidateKills(MI, TRI, RegKills, KillOps);
               VRM.RemoveMachineInstrFromMaps(&MI);
               MBB.erase(&MI);
               Erased = true;
@@ -1960,7 +1981,7 @@ private:
                 NewStore = NewMIs[1];
                 MBB.insert(MII, NewStore);
                 VRM.addSpillSlotUse(SS, NewStore);
-                InvalidateKills(MI, RegKills, KillOps);
+                InvalidateKills(MI, TRI, RegKills, KillOps);
                 VRM.RemoveMachineInstrFromMaps(&MI);
                 MBB.erase(&MI);
                 Erased = true;
@@ -1976,7 +1997,7 @@ private:
           if (isDead) {  // Previous store is dead.
             // If we get here, the store is dead, nuke it now.
             DOUT << "Removed dead store:\t" << *DeadStore;
-            InvalidateKills(*DeadStore, RegKills, KillOps);
+            InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
             VRM.RemoveMachineInstrFromMaps(DeadStore);
             MBB.erase(DeadStore);
             if (!NewStore)
@@ -2044,7 +2065,7 @@ private:
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
             SmallVector<unsigned, 2> KillRegs;
-            InvalidateKills(MI, RegKills, KillOps, &KillRegs);
+            InvalidateKills(MI, TRI, RegKills, KillOps, &KillRegs);
             if (MO.isDead() && !KillRegs.empty()) {
               // Source register or an implicit super/sub-register use is killed.
               assert(KillRegs[0] == Dst ||
@@ -2131,11 +2152,11 @@ private:
             if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
               ++NumDCE;
               DOUT << "Removing now-noop copy: " << MI;
-              InvalidateKills(MI, RegKills, KillOps);
+              InvalidateKills(MI, TRI, RegKills, KillOps);
               VRM.RemoveMachineInstrFromMaps(&MI);
               MBB.erase(&MI);
               Erased = true;
-              UpdateKills(*LastStore, RegKills, KillOps, TRI);
+              UpdateKills(*LastStore, TRI, RegKills, KillOps);
               goto ProcessNextInst;
             }
           }
@@ -2145,7 +2166,7 @@ private:
       DistanceMap.insert(std::make_pair(&MI, Dist++));
       if (!Erased && !BackTracked) {
         for (MachineBasicBlock::iterator II = &MI; II != NextMII; ++II)
-          UpdateKills(*II, RegKills, KillOps, TRI);
+          UpdateKills(*II, TRI, RegKills, KillOps);
       }
       MII = NextMII;
     }
