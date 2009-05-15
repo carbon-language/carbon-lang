@@ -173,6 +173,15 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
       switch (S->getStmtClass()) {
         default:
           break;
+        case Stmt::DeclStmtClass: {
+          const DeclStmt *DS = cast<DeclStmt>(S);
+          if (DS->isSingleDecl()) {
+            // Should always be the case, but we'll be defensive.
+            return SourceRange(DS->getLocStart(),
+                               DS->getSingleDecl()->getLocation());            
+          }
+          break;
+        }
           // FIXME: Provide better range information for different
           //  terminators.
         case Stmt::IfStmtClass:
