@@ -26,3 +26,14 @@ struct X2 {
 
 template struct X2<int>;
 template struct X2<int&>; // expected-note{{instantiation of}}
+
+template<typename T>
+struct X3 {
+  void f(T) {
+    Label:
+    T x;
+    goto Label;
+  }
+};
+
+template struct X3<int>;

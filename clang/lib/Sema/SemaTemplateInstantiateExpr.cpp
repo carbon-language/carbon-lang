@@ -445,6 +445,8 @@ namespace {
     OwningStmtResult VisitNullStmt(NullStmt *S);
     OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
     OwningStmtResult VisitExpr(Expr *E);
+    OwningStmtResult VisitLabelStmt(LabelStmt *S);
+    OwningStmtResult VisitGotoStmt(GotoStmt *S);
 
     // Base case. I'm supposed to ignore this.
     OwningStmtResult VisitStmt(Stmt *S) { 
@@ -479,6 +481,22 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitNullStmt(NullStmt *S) {
   return SemaRef.Owned(new (SemaRef.Context) NullStmt(S->getSemiLoc()));
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitLabelStmt(LabelStmt *S) {
+  OwningStmtResult SubStmt = Visit(S->getSubStmt());
+
+  if (SubStmt.isInvalid())
+    return SemaRef.StmtError();
+  
+  // FIXME: Pass the real colon loc in.
+  return SemaRef.ActOnLabelStmt(S->getIdentLoc(), S->getID(), SourceLocation(), 
+                                move(SubStmt));
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitGotoStmt(GotoStmt *S) {
+  return SemaRef.ActOnGotoStmt(S->getGotoLoc(), S->getLabelLoc(), 
+                               S->getLabel()->getID());
 }
 
 Sema::OwningStmtResult 
