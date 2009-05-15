@@ -140,6 +140,8 @@ void PCHStmtWriter::VisitCaseStmt(CaseStmt *S) {
   Writer.WriteSubStmt(S->getRHS());
   Writer.WriteSubStmt(S->getSubStmt());
   Writer.AddSourceLocation(S->getCaseLoc(), Record);
+  Writer.AddSourceLocation(S->getEllipsisLoc(), Record);
+  Writer.AddSourceLocation(S->getColonLoc(), Record);
   Code = pch::STMT_CASE;
 }
 
@@ -147,6 +149,7 @@ void PCHStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
   VisitSwitchCase(S);
   Writer.WriteSubStmt(S->getSubStmt());
   Writer.AddSourceLocation(S->getDefaultLoc(), Record);
+  Writer.AddSourceLocation(S->getColonLoc(), Record);
   Code = pch::STMT_DEFAULT;
 }
 

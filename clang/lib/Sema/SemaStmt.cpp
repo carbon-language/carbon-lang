@@ -102,13 +102,15 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
   // C99 6.8.4.2p3: The expression shall be an integer constant.
   // However, GCC allows any evaluatable integer expression. 
   Expr *LHSVal = static_cast<Expr*>(lhsval.get());
-  if (VerifyIntegerConstantExpression(LHSVal))
+  if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent() && 
+      VerifyIntegerConstantExpression(LHSVal))
     return StmtError();
 
   // GCC extension: The expression shall be an integer constant.
 
   Expr *RHSVal = static_cast<Expr*>(rhsval.get());
-  if (RHSVal && VerifyIntegerConstantExpression(RHSVal)) {
+  if (RHSVal && !RHSVal->isTypeDependent() && !RHSVal->isValueDependent() &&
+      VerifyIntegerConstantExpression(RHSVal)) {
     RHSVal = 0;  // Recover by just forgetting about it.
     rhsval = 0;
   }
@@ -121,7 +123,8 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
   // Only now release the smart pointers.
   lhsval.release();
   rhsval.release();
-  CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc);
+  CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc, DotDotDotLoc,
+                                        ColonLoc);
   getSwitchStack().back()->addSwitchCase(CS);
   return Owned(CS);
 }
@@ -143,7 +146,7 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
     return Owned(SubStmt);
   }
 
-  DefaultStmt *DS = new (Context) DefaultStmt(DefaultLoc, SubStmt);
+  DefaultStmt *DS = new (Context) DefaultStmt(DefaultLoc, ColonLoc, SubStmt);
   getSwitchStack().back()->addSwitchCase(DS);
   return Owned(DS);
 }
@@ -227,17 +230,18 @@ Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
     // converted by calling that conversion function, and the result of the
     // conversion is used in place of the original condition for the remainder
     // of this section. Integral promotions are performed.
-
-    QualType Ty = Cond->getType();
-
-    // FIXME: Handle class types.
-
-    // If the type is wrong a diagnostic will be emitted later at
-    // ActOnFinishSwitchStmt.
-    if (Ty->isIntegralType() || Ty->isEnumeralType()) {
-      // Integral promotions are performed.
-      // FIXME: Integral promotions for C++ are not complete.
-      UsualUnaryConversions(Cond);
+    if (!Cond->isTypeDependent()) {
+      QualType Ty = Cond->getType();
+      
+      // FIXME: Handle class types.
+      
+      // If the type is wrong a diagnostic will be emitted later at
+      // ActOnFinishSwitchStmt.
+      if (Ty->isIntegralType() || Ty->isEnumeralType()) {
+        // Integral promotions are performed.
+        // FIXME: Integral promotions for C++ are not complete.
+        UsualUnaryConversions(Cond);
+      }
     }
   } else {
     // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
@@ -338,7 +342,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   Expr *CondExpr = SS->getCond();
   QualType CondType = CondExpr->getType();
 
-  if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
+  if (!CondExpr->isTypeDependent() && 
+      !CondType->isIntegerType()) { // C99 6.8.4.2p1
     Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
       << CondType << CondExpr->getSourceRange();
     return StmtError();
@@ -346,7 +351,11 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 
   // Get the bitwidth of the switched-on value before promotions.  We must
   // convert the integer case values to this width before comparison.
-  unsigned CondWidth = static_cast<unsigned>(Context.getTypeSize(CondType));
+  bool HasDependentValue 
+    = CondExpr->isTypeDependent() || CondExpr->isValueDependent();
+  unsigned CondWidth 
+    = HasDependentValue? 0
+                       : static_cast<unsigned>(Context.getTypeSize(CondType));
   bool CondIsSigned = CondType->isSignedIntegerType();
   
   // Accumulate all of the case values in a vector so that we can sort them
@@ -362,7 +371,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   
   bool CaseListIsErroneous = false;
   
-  for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
+  for (SwitchCase *SC = SS->getSwitchCaseList(); SC && !HasDependentValue;
        SC = SC->getNextSwitchCase()) {
     
     if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC)) {
@@ -384,6 +393,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
       // We already verified that the expression has a i-c-e value (C99
       // 6.8.4.2p3) - get that value now.
       Expr *Lo = CS->getLHS();
+
+      if (Lo->isTypeDependent() || Lo->isValueDependent()) {
+        HasDependentValue = true;
+        break;
+      }
+        
       llvm::APSInt LoVal = Lo->EvaluateAsInt(Context);
       
       // Convert the value to the same width/sign as the condition.
@@ -397,117 +412,127 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
       CS->setLHS(Lo);
       
       // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
-      if (CS->getRHS())
+      if (CS->getRHS()) {
+        if (CS->getRHS()->isTypeDependent() || 
+            CS->getRHS()->isValueDependent()) {
+          HasDependentValue = true;
+          break;
+        }
         CaseRanges.push_back(std::make_pair(LoVal, CS));
-      else 
+      } else 
         CaseVals.push_back(std::make_pair(LoVal, CS));
     }
   }
+
+  if (!HasDependentValue) {
+    // Sort all the scalar case values so we can easily detect duplicates.
+    std::stable_sort(CaseVals.begin(), CaseVals.end(), CmpCaseVals);
+
+    if (!CaseVals.empty()) {
+      for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
+        if (CaseVals[i].first == CaseVals[i+1].first) {
+          // If we have a duplicate, report it.
+          Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
+               diag::err_duplicate_case) << CaseVals[i].first.toString(10);
+          Diag(CaseVals[i].second->getLHS()->getLocStart(), 
+               diag::note_duplicate_case_prev);
+          // FIXME: We really want to remove the bogus case stmt from
+          // the substmt, but we have no way to do this right now.
+          CaseListIsErroneous = true;
+        }
+      }
+    }
   
-  // Sort all the scalar case values so we can easily detect duplicates.
-  std::stable_sort(CaseVals.begin(), CaseVals.end(), CmpCaseVals);
-  
-  if (!CaseVals.empty()) {
-    for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
-      if (CaseVals[i].first == CaseVals[i+1].first) {
-        // If we have a duplicate, report it.
-        Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
-             diag::err_duplicate_case) << CaseVals[i].first.toString(10);
-        Diag(CaseVals[i].second->getLHS()->getLocStart(), 
-             diag::note_duplicate_case_prev);
-        // FIXME: We really want to remove the bogus case stmt from the substmt,
-        // but we have no way to do this right now.
-        CaseListIsErroneous = true;
+    // Detect duplicate case ranges, which usually don't exist at all in
+    // the first place.
+    if (!CaseRanges.empty()) {
+      // Sort all the case ranges by their low value so we can easily detect
+      // overlaps between ranges.
+      std::stable_sort(CaseRanges.begin(), CaseRanges.end());
+      
+      // Scan the ranges, computing the high values and removing empty ranges.
+      std::vector<llvm::APSInt> HiVals;
+      for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
+        CaseStmt *CR = CaseRanges[i].second;
+        Expr *Hi = CR->getRHS();
+        llvm::APSInt HiVal = Hi->EvaluateAsInt(Context);
+        
+        // Convert the value to the same width/sign as the condition.
+        ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
+                                           CR->getRHS()->getLocStart(),
+                                           diag::warn_case_value_overflow);
+        
+        // If the LHS is not the same type as the condition, insert an implicit
+        // cast.
+        ImpCastExprToType(Hi, CondType);
+        CR->setRHS(Hi);
+        
+        // If the low value is bigger than the high value, the case is empty.
+        if (CaseRanges[i].first > HiVal) {
+          Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range)
+            << SourceRange(CR->getLHS()->getLocStart(),
+                           CR->getRHS()->getLocEnd());
+          CaseRanges.erase(CaseRanges.begin()+i);
+          --i, --e;
+          continue;
+        }
+        HiVals.push_back(HiVal);
+      }
+      
+      // Rescan the ranges, looking for overlap with singleton values and other
+      // ranges.  Since the range list is sorted, we only need to compare case
+      // ranges with their neighbors.
+      for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
+        llvm::APSInt &CRLo = CaseRanges[i].first;
+        llvm::APSInt &CRHi = HiVals[i];
+        CaseStmt *CR = CaseRanges[i].second;
+        
+        // Check to see whether the case range overlaps with any
+        // singleton cases.
+        CaseStmt *OverlapStmt = 0;
+        llvm::APSInt OverlapVal(32);
+        
+        // Find the smallest value >= the lower bound.  If I is in the
+        // case range, then we have overlap.
+        CaseValsTy::iterator I = std::lower_bound(CaseVals.begin(),
+                                                  CaseVals.end(), CRLo,
+                                                  CaseCompareFunctor());
+        if (I != CaseVals.end() && I->first < CRHi) {
+          OverlapVal  = I->first;   // Found overlap with scalar.
+          OverlapStmt = I->second;
+        }
+        
+        // Find the smallest value bigger than the upper bound.
+        I = std::upper_bound(I, CaseVals.end(), CRHi, CaseCompareFunctor());
+        if (I != CaseVals.begin() && (I-1)->first >= CRLo) {
+          OverlapVal  = (I-1)->first;      // Found overlap with scalar.
+          OverlapStmt = (I-1)->second;
+        }
+        
+        // Check to see if this case stmt overlaps with the subsequent
+        // case range.
+        if (i && CRLo <= HiVals[i-1]) {
+          OverlapVal  = HiVals[i-1];       // Found overlap with range.
+          OverlapStmt = CaseRanges[i-1].second;
+        }
+        
+        if (OverlapStmt) {
+          // If we have a duplicate, report it.
+          Diag(CR->getLHS()->getLocStart(), diag::err_duplicate_case)
+            << OverlapVal.toString(10);
+          Diag(OverlapStmt->getLHS()->getLocStart(), 
+               diag::note_duplicate_case_prev);
+          // FIXME: We really want to remove the bogus case stmt from
+          // the substmt, but we have no way to do this right now.
+          CaseListIsErroneous = true;
+        }
       }
     }
   }
-  
-  // Detect duplicate case ranges, which usually don't exist at all in the first
-  // place.
-  if (!CaseRanges.empty()) {
-    // Sort all the case ranges by their low value so we can easily detect
-    // overlaps between ranges.
-    std::stable_sort(CaseRanges.begin(), CaseRanges.end());
-    
-    // Scan the ranges, computing the high values and removing empty ranges.
-    std::vector<llvm::APSInt> HiVals;
-    for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
-      CaseStmt *CR = CaseRanges[i].second;
-      Expr *Hi = CR->getRHS();
-      llvm::APSInt HiVal = Hi->EvaluateAsInt(Context);
 
-      // Convert the value to the same width/sign as the condition.
-      ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
-                                         CR->getRHS()->getLocStart(),
-                                         diag::warn_case_value_overflow);
-      
-      // If the LHS is not the same type as the condition, insert an implicit
-      // cast.
-      ImpCastExprToType(Hi, CondType);
-      CR->setRHS(Hi);
-      
-      // If the low value is bigger than the high value, the case is empty.
-      if (CaseRanges[i].first > HiVal) {
-        Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range)
-          << SourceRange(CR->getLHS()->getLocStart(),
-                         CR->getRHS()->getLocEnd());
-        CaseRanges.erase(CaseRanges.begin()+i);
-        --i, --e;
-        continue;
-      }
-      HiVals.push_back(HiVal);
-    }
-
-    // Rescan the ranges, looking for overlap with singleton values and other
-    // ranges.  Since the range list is sorted, we only need to compare case
-    // ranges with their neighbors.
-    for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
-      llvm::APSInt &CRLo = CaseRanges[i].first;
-      llvm::APSInt &CRHi = HiVals[i];
-      CaseStmt *CR = CaseRanges[i].second;
-      
-      // Check to see whether the case range overlaps with any singleton cases.
-      CaseStmt *OverlapStmt = 0;
-      llvm::APSInt OverlapVal(32);
-      
-      // Find the smallest value >= the lower bound.  If I is in the case range,
-      // then we have overlap.
-      CaseValsTy::iterator I = std::lower_bound(CaseVals.begin(),
-                                                CaseVals.end(), CRLo,
-                                                CaseCompareFunctor());
-      if (I != CaseVals.end() && I->first < CRHi) {
-        OverlapVal  = I->first;   // Found overlap with scalar.
-        OverlapStmt = I->second;
-      }
-
-      // Find the smallest value bigger than the upper bound.
-      I = std::upper_bound(I, CaseVals.end(), CRHi, CaseCompareFunctor());
-      if (I != CaseVals.begin() && (I-1)->first >= CRLo) {
-        OverlapVal  = (I-1)->first;      // Found overlap with scalar.
-        OverlapStmt = (I-1)->second;
-      }
-
-      // Check to see if this case stmt overlaps with the subsequent case range.
-      if (i && CRLo <= HiVals[i-1]) {
-        OverlapVal  = HiVals[i-1];       // Found overlap with range.
-        OverlapStmt = CaseRanges[i-1].second;
-      }
-      
-      if (OverlapStmt) {
-        // If we have a duplicate, report it.
-        Diag(CR->getLHS()->getLocStart(), diag::err_duplicate_case)
-          << OverlapVal.toString(10);
-        Diag(OverlapStmt->getLHS()->getLocStart(), 
-             diag::note_duplicate_case_prev);
-        // FIXME: We really want to remove the bogus case stmt from the substmt,
-        // but we have no way to do this right now.
-        CaseListIsErroneous = true;
-      }
-    }
-  }
-  
-  // FIXME: If the case list was broken is some way, we don't have a good system
-  // to patch it up.  Instead, just return the whole substmt as broken.
+  // FIXME: If the case list was broken is some way, we don't have a
+  // good system to patch it up.  Instead, just return the whole
+  // substmt as broken.
   if (CaseListIsErroneous)
     return StmtError();
 

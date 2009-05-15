@@ -417,14 +417,20 @@ class CaseStmt : public SwitchCase {
   Stmt* SubExprs[END_EXPR];  // The expression for the RHS is Non-null for 
                              // GNU "case 1 ... 4" extension
   SourceLocation CaseLoc;
+  SourceLocation EllipsisLoc;
+  SourceLocation ColonLoc;
+
   virtual Stmt* v_getSubStmt() { return getSubStmt(); }
 public:
-  CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc) 
+  CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc,
+           SourceLocation ellipsisLoc, SourceLocation colonLoc) 
     : SwitchCase(CaseStmtClass) {
     SubExprs[SUBSTMT] = 0;
     SubExprs[LHS] = reinterpret_cast<Stmt*>(lhs);
     SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
     CaseLoc = caseLoc;
+    EllipsisLoc = ellipsisLoc;
+    ColonLoc = colonLoc;
   }
 
   /// \brief Build an empty switch case statement.
@@ -432,6 +438,10 @@ public:
 
   SourceLocation getCaseLoc() const { return CaseLoc; }
   void setCaseLoc(SourceLocation L) { CaseLoc = L; }
+  SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
+  void setEllipsisLoc(SourceLocation L) { EllipsisLoc = L; }
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  void setColonLoc(SourceLocation L) { ColonLoc = L; }
 
   Expr *getLHS() { return reinterpret_cast<Expr*>(SubExprs[LHS]); }
   Expr *getRHS() { return reinterpret_cast<Expr*>(SubExprs[RHS]); }
@@ -471,10 +481,12 @@ public:
 class DefaultStmt : public SwitchCase {
   Stmt* SubStmt;
   SourceLocation DefaultLoc;
+  SourceLocation ColonLoc;
   virtual Stmt* v_getSubStmt() { return getSubStmt(); }
 public:
-  DefaultStmt(SourceLocation DL, Stmt *substmt) : 
-    SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL) {}
+  DefaultStmt(SourceLocation DL, SourceLocation CL, Stmt *substmt) : 
+    SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL),
+    ColonLoc(CL) {}
 
   /// \brief Build an empty default statement.
   explicit DefaultStmt(EmptyShell) : SwitchCase(DefaultStmtClass) { }
@@ -485,6 +497,8 @@ public:
 
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
   void setDefaultLoc(SourceLocation L) { DefaultLoc = L; }
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  void setColonLoc(SourceLocation L) { ColonLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(DefaultLoc, SubStmt->getLocEnd()); 

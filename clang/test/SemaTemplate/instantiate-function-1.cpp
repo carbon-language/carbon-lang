@@ -140,3 +140,33 @@ template<typename T> struct Member0 {
     this.f; // expected-error{{member reference base type 'struct Member0 *const' is not a structure or union}}
   }
 };
+
+template<typename T, typename U> struct Switch0 {
+  U f(T value, U v0, U v1, U v2) {
+    switch (value) {
+    case 0: return v0;
+
+    case 1: return v1;
+
+    case 2: // fall through
+
+    default:
+      return  v2;
+    }
+  }
+};
+
+template struct Switch0<int, float>;
+
+template<typename T, int I1, int I2> struct Switch1 {
+  T f(T x, T y, T z) {
+    switch (x) {
+    case I1: return y; // expected-note{{previous}}
+    case I2: return z; // expected-error{{duplicate}}
+    default: return x;
+    }
+  }
+};
+
+template struct Switch1<int, 1, 2>;
+template struct Switch1<int, 2, 2>; // expected-note{{instantiation}}

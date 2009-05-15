@@ -147,6 +147,8 @@ unsigned PCHStmtReader::VisitCaseStmt(CaseStmt *S) {
   S->setRHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
   S->setSubStmt(StmtStack.back());
   S->setCaseLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setEllipsisLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 3;
 }
 
@@ -154,6 +156,7 @@ unsigned PCHStmtReader::VisitDefaultStmt(DefaultStmt *S) {
   VisitSwitchCase(S);
   S->setSubStmt(StmtStack.back());
   S->setDefaultLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 1;
 }
 
