@@ -217,6 +217,8 @@ unsigned PCHStmtReader::VisitForStmt(ForStmt *S) {
   S->setInc(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
   S->setBody(StmtStack.back());
   S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 4;
 }
 

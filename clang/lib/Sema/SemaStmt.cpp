@@ -589,7 +589,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       }
     }
   }
-  if (Second) {
+  if (Second && !Second->isTypeDependent()) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
 
@@ -605,7 +605,8 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   second.release();
   third.release();
   body.release();
-  return Owned(new (Context) ForStmt(First, Second, Third, Body, ForLoc));
+  return Owned(new (Context) ForStmt(First, Second, Third, Body, ForLoc,
+                                     LParenLoc, RParenLoc));
 }
 
 Action::OwningStmtResult

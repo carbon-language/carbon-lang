@@ -204,6 +204,8 @@ void PCHStmtWriter::VisitForStmt(ForStmt *S) {
   Writer.WriteSubStmt(S->getInc());
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getForLoc(), Record);
+  Writer.AddSourceLocation(S->getLParenLoc(), Record);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
   Code = pch::STMT_FOR;
 }
 

@@ -735,14 +735,19 @@ class ForStmt : public Stmt {
   enum { INIT, COND, INC, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
   SourceLocation ForLoc;
+  SourceLocation LParenLoc, RParenLoc;
+
 public:
-  ForStmt(Stmt *Init, Expr *Cond, Expr *Inc, Stmt *Body, SourceLocation FL) 
+  ForStmt(Stmt *Init, Expr *Cond, Expr *Inc, Stmt *Body, SourceLocation FL,
+          SourceLocation LP, SourceLocation RP) 
     : Stmt(ForStmtClass) {
     SubExprs[INIT] = Init;
     SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
     SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
     SubExprs[BODY] = Body;
     ForLoc = FL;
+    LParenLoc = LP;
+    RParenLoc = RP;
   }
   
   /// \brief Build an empty for statement.
@@ -765,6 +770,10 @@ public:
 
   SourceLocation getForLoc() const { return ForLoc; }
   void setForLoc(SourceLocation L) { ForLoc = L; }
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  void setLParenLoc(SourceLocation L) { LParenLoc = L; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 

@@ -112,3 +112,12 @@ template<typename T> struct Do0 {
 struct NotConvertibleToBool { };
 template struct Do0<ConvertibleToInt>;
 template struct Do0<NotConvertibleToBool>; // expected-note{{instantiation}}
+
+template<typename T> struct For0 {
+  void f(T f, T l) {
+    for (; f != l; ++f) {
+    }
+  }
+};
+
+template struct For0<int*>;

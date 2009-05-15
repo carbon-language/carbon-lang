@@ -42,6 +42,7 @@ namespace {
     OwningStmtResult VisitIfStmt(IfStmt *S);
     OwningStmtResult VisitWhileStmt(WhileStmt *S);
     OwningStmtResult VisitDoStmt(DoStmt *S);
+    OwningStmtResult VisitForStmt(ForStmt *S);
     OwningStmtResult VisitExpr(Expr *E);
     OwningStmtResult VisitLabelStmt(LabelStmt *S);
     OwningStmtResult VisitGotoStmt(GotoStmt *S);
@@ -185,6 +186,32 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitDoStmt(DoStmt *S) {
 
   return SemaRef.ActOnDoStmt(S->getDoLoc(), move(Body), S->getWhileLoc(),
                              move(Cond));
+}
+
+Sema::OwningStmtResult TemplateStmtInstantiator::VisitForStmt(ForStmt *S) {
+  // Instantiate the initialization statement
+  OwningStmtResult Init = SemaRef.InstantiateStmt(S->getInit(), TemplateArgs);
+  if (Init.isInvalid())
+    return SemaRef.StmtError();
+
+  // Instantiate the condition
+  OwningExprResult Cond = SemaRef.InstantiateExpr(S->getCond(), TemplateArgs);
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+
+  // Instantiate the increment
+  OwningExprResult Inc = SemaRef.InstantiateExpr(S->getInc(), TemplateArgs);
+  if (Inc.isInvalid())
+    return SemaRef.StmtError();
+
+  // Instantiate the body
+  OwningStmtResult Body = SemaRef.InstantiateStmt(S->getBody(), TemplateArgs);
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+
+  return SemaRef.ActOnForStmt(S->getForLoc(), S->getLParenLoc(),
+                              move(Init), move(Cond), move(Inc),
+                              S->getRParenLoc(), move(Body));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitExpr(Expr *E) {
