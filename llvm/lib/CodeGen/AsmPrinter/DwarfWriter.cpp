@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/DwarfWriter.h"
+#include "DIE.h"
+#include "DwarfPrinter.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
@@ -64,633 +66,6 @@ static const unsigned InitAbbreviationsSetSize = 9; // log2(512)
 static const unsigned InitValuesSetSize        = 9; // log2(512)
 
 //===----------------------------------------------------------------------===//
-/// Forward declarations.
-///
-class DIE;
-class DIEValue;
-
-//===----------------------------------------------------------------------===//
-/// DWLabel - Labels are used to track locations in the assembler file.
-/// Labels appear in the form @verbatim <prefix><Tag><Number> @endverbatim,
-/// where the tag is a category of label (Ex. location) and number is a value
-/// unique in that category.
-class DWLabel {
-public:
-  /// Tag - Label category tag. Should always be a staticly declared C string.
-  ///
-  const char *Tag;
-
-  /// Number - Value to make label unique.
-  ///
-  unsigned    Number;
-
-  DWLabel(const char *T, unsigned N) : Tag(T), Number(N) {}
-
-  void Profile(FoldingSetNodeID &ID) const {
-    ID.AddString(Tag);
-    ID.AddInteger(Number);
-  }
-
-#ifndef NDEBUG
-  void print(std::ostream *O) const {
-    if (O) print(*O);
-  }
-  void print(std::ostream &O) const {
-    O << "." << Tag;
-    if (Number) O << Number;
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
-/// Dwarf abbreviation.
-class DIEAbbrevData {
-  /// Attribute - Dwarf attribute code.
-  ///
-  unsigned Attribute;
-
-  /// Form - Dwarf form code.
-  ///
-  unsigned Form;
-public:
-  DIEAbbrevData(unsigned A, unsigned F) : Attribute(A), Form(F) {}
-
-  // Accessors.
-  unsigned getAttribute() const { return Attribute; }
-  unsigned getForm()      const { return Form; }
-
-  /// Profile - Used to gather unique data for the abbreviation folding set.
-  ///
-  void Profile(FoldingSetNodeID &ID)const  {
-    ID.AddInteger(Attribute);
-    ID.AddInteger(Form);
-  }
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
-/// information object.
-class DIEAbbrev : public FoldingSetNode {
-private:
-  /// Tag - Dwarf tag code.
-  ///
-  unsigned Tag;
-
-  /// Unique number for node.
-  ///
-  unsigned Number;
-
-  /// ChildrenFlag - Dwarf children flag.
-  ///
-  unsigned ChildrenFlag;
-
-  /// Data - Raw data bytes for abbreviation.
-  ///
-  SmallVector<DIEAbbrevData, 8> Data;
-public:
-  DIEAbbrev(unsigned T, unsigned C) : Tag(T), ChildrenFlag(C), Data() {}
-  virtual ~DIEAbbrev() {}
-
-  // Accessors.
-  unsigned getTag()                           const { return Tag; }
-  unsigned getNumber()                        const { return Number; }
-  unsigned getChildrenFlag()                  const { return ChildrenFlag; }
-  const SmallVector<DIEAbbrevData, 8> &getData() const { return Data; }
-  void setTag(unsigned T)                           { Tag = T; }
-  void setChildrenFlag(unsigned CF)                 { ChildrenFlag = CF; }
-  void setNumber(unsigned N)                        { Number = N; }
-
-  /// AddAttribute - Adds another set of attribute information to the
-  /// abbreviation.
-  void AddAttribute(unsigned Attribute, unsigned Form) {
-    Data.push_back(DIEAbbrevData(Attribute, Form));
-  }
-
-  /// AddFirstAttribute - Adds a set of attribute information to the front
-  /// of the abbreviation.
-  void AddFirstAttribute(unsigned Attribute, unsigned Form) {
-    Data.insert(Data.begin(), DIEAbbrevData(Attribute, Form));
-  }
-
-  /// Profile - Used to gather unique data for the abbreviation folding set.
-  ///
-  void Profile(FoldingSetNodeID &ID) {
-    ID.AddInteger(Tag);
-    ID.AddInteger(ChildrenFlag);
-
-    // For each attribute description.
-    for (unsigned i = 0, N = Data.size(); i < N; ++i)
-      Data[i].Profile(ID);
-  }
-
-  /// Emit - Print the abbreviation using the specified Dwarf writer.
-  ///
-  void Emit(const DwarfDebug &DD) const;
-
-#ifndef NDEBUG
-  void print(std::ostream *O) {
-    if (O) print(*O);
-  }
-  void print(std::ostream &O);
-  void dump();
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIE - A structured debug information entry.  Has an abbreviation which
-/// describes it's organization.
-class CompileUnit;
-class DIE : public FoldingSetNode {
-protected:
-  /// Abbrev - Buffer for constructing abbreviation.
-  ///
-  DIEAbbrev Abbrev;
-
-  /// Offset - Offset in debug info section.
-  ///
-  unsigned Offset;
-
-  /// Size - Size of instance + children.
-  ///
-  unsigned Size;
-
-  /// Children DIEs.
-  ///
-  std::vector<DIE *> Children;
-
-  /// Attributes values.
-  ///
-  SmallVector<DIEValue*, 32> Values;
-
-  /// Abstract compile unit.
-  CompileUnit *AbstractCU;
-public:
-  explicit DIE(unsigned Tag)
-    : Abbrev(Tag, DW_CHILDREN_no), Offset(0), Size(0) {}
-  virtual ~DIE();
-
-  // Accessors.
-  DIEAbbrev &getAbbrev()                           { return Abbrev; }
-  unsigned   getAbbrevNumber()               const {
-    return Abbrev.getNumber();
-  }
-  unsigned getTag()                          const { return Abbrev.getTag(); }
-  unsigned getOffset()                       const { return Offset; }
-  unsigned getSize()                         const { return Size; }
-  const std::vector<DIE *> &getChildren()    const { return Children; }
-  SmallVector<DIEValue*, 32> &getValues()       { return Values; }
-  CompileUnit *getAbstractCompileUnit() const { return AbstractCU; }
-
-  void setTag(unsigned Tag)                  { Abbrev.setTag(Tag); }
-  void setOffset(unsigned O)                 { Offset = O; }
-  void setSize(unsigned S)                   { Size = S; }
-  void setAbstractCompileUnit(CompileUnit *CU) { AbstractCU = CU; }
-
-  /// AddValue - Add a value and attributes to a DIE.
-  ///
-  void AddValue(unsigned Attribute, unsigned Form, DIEValue *Value) {
-    Abbrev.AddAttribute(Attribute, Form);
-    Values.push_back(Value);
-  }
-
-  /// SiblingOffset - Return the offset of the debug information entry's
-  /// sibling.
-  unsigned SiblingOffset() const { return Offset + Size; }
-
-  /// AddSiblingOffset - Add a sibling offset field to the front of the DIE.
-  ///
-  void AddSiblingOffset();
-
-  /// AddChild - Add a child to the DIE.
-  ///
-  void AddChild(DIE *Child) {
-    Abbrev.setChildrenFlag(DW_CHILDREN_yes);
-    Children.push_back(Child);
-  }
-
-  /// Detach - Detaches objects connected to it after copying.
-  ///
-  void Detach() {
-    Children.clear();
-  }
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  void Profile(FoldingSetNodeID &ID) ;
-
-#ifndef NDEBUG
-  void print(std::ostream *O, unsigned IncIndent = 0) {
-    if (O) print(*O, IncIndent);
-  }
-  void print(std::ostream &O, unsigned IncIndent = 0);
-  void dump();
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEValue - A debug information entry value.
-///
-class DIEValue : public FoldingSetNode {
-public:
-  enum {
-    isInteger,
-    isString,
-    isLabel,
-    isAsIsLabel,
-    isSectionOffset,
-    isDelta,
-    isEntry,
-    isBlock
-  };
-
-  /// Type - Type of data stored in the value.
-  ///
-  unsigned Type;
-
-  explicit DIEValue(unsigned T) : Type(T) {}
-  virtual ~DIEValue() {}
-
-  // Accessors
-  unsigned getType()  const { return Type; }
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *) { return true; }
-
-  /// EmitValue - Emit value via the Dwarf writer.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form) = 0;
-
-  /// SizeOf - Return the size of a value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const = 0;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  virtual void Profile(FoldingSetNodeID &ID) = 0;
-
-#ifndef NDEBUG
-  void print(std::ostream *O) {
-    if (O) print(*O);
-  }
-  virtual void print(std::ostream &O) = 0;
-  void dump();
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DWInteger - An integer value DIE.
-///
-class DIEInteger : public DIEValue {
-private:
-  uint64_t Integer;
-
-public:
-  explicit DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEInteger *) { return true; }
-  static bool classof(const DIEValue *I)  { return I->Type == isInteger; }
-
-  /// BestForm - Choose the best form for integer.
-  ///
-  static unsigned BestForm(bool IsSigned, uint64_t Integer) {
-    if (IsSigned) {
-      if ((char)Integer == (signed)Integer)   return DW_FORM_data1;
-      if ((short)Integer == (signed)Integer)  return DW_FORM_data2;
-      if ((int)Integer == (signed)Integer)    return DW_FORM_data4;
-    } else {
-      if ((unsigned char)Integer == Integer)  return DW_FORM_data1;
-      if ((unsigned short)Integer == Integer) return DW_FORM_data2;
-      if ((unsigned int)Integer == Integer)   return DW_FORM_data4;
-    }
-    return DW_FORM_data8;
-  }
-
-  /// EmitValue - Emit integer of appropriate size.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of integer value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, unsigned Integer) {
-    ID.AddInteger(isInteger);
-    ID.AddInteger(Integer);
-  }
-  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, Integer); }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Int: " << (int64_t)Integer
-      << "  0x" << std::hex << Integer << std::dec;
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEString - A string value DIE.
-///
-class DIEString : public DIEValue {
-  const std::string Str;
-public:
-  explicit DIEString(const std::string &S) : DIEValue(isString), Str(S) {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEString *) { return true; }
-  static bool classof(const DIEValue *S) { return S->Type == isString; }
-
-  /// EmitValue - Emit string value.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of string value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const {
-    return Str.size() + sizeof(char); // sizeof('\0');
-  }
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, const std::string &Str) {
-    ID.AddInteger(isString);
-    ID.AddString(Str);
-  }
-  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, Str); }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Str: \"" << Str << "\"";
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEDwarfLabel - A Dwarf internal label expression DIE.
-//
-class DIEDwarfLabel : public DIEValue {
-  const DWLabel Label;
-public:
-  explicit DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEDwarfLabel *)  { return true; }
-  static bool classof(const DIEValue *L) { return L->Type == isLabel; }
-
-  /// EmitValue - Emit label value.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of label value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, const DWLabel &Label) {
-    ID.AddInteger(isLabel);
-    Label.Profile(ID);
-  }
-  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, Label); }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Lbl: ";
-    Label.print(O);
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEObjectLabel - A label to an object in code or data.
-//
-class DIEObjectLabel : public DIEValue {
-  const std::string Label;
-public:
-  explicit DIEObjectLabel(const std::string &L)
-  : DIEValue(isAsIsLabel), Label(L) {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEObjectLabel *) { return true; }
-  static bool classof(const DIEValue *L)    { return L->Type == isAsIsLabel; }
-
-  /// EmitValue - Emit label value.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of label value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, const std::string &Label) {
-    ID.AddInteger(isAsIsLabel);
-    ID.AddString(Label);
-  }
-  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, Label.c_str()); }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Obj: " << Label;
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIESectionOffset - A section offset DIE.
-//
-class DIESectionOffset : public DIEValue {
-  const DWLabel Label;
-  const DWLabel Section;
-  bool IsEH : 1;
-  bool UseSet : 1;
-public:
-  DIESectionOffset(const DWLabel &Lab, const DWLabel &Sec,
-                   bool isEH = false, bool useSet = true)
-    : DIEValue(isSectionOffset), Label(Lab), Section(Sec),
-      IsEH(isEH), UseSet(useSet) {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIESectionOffset *)  { return true; }
-  static bool classof(const DIEValue *D) { return D->Type == isSectionOffset; }
-
-  /// EmitValue - Emit section offset.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of section offset value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, const DWLabel &Label,
-                                            const DWLabel &Section) {
-    ID.AddInteger(isSectionOffset);
-    Label.Profile(ID);
-    Section.Profile(ID);
-    // IsEH and UseSet are specific to the Label/Section that we will emit
-    // the offset for; so Label/Section are enough for uniqueness.
-  }
-  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, Label, Section); }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Off: ";
-    Label.print(O);
-    O << "-";
-    Section.print(O);
-    O << "-" << IsEH << "-" << UseSet;
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEDelta - A simple label difference DIE.
-///
-class DIEDelta : public DIEValue {
-  const DWLabel LabelHi;
-  const DWLabel LabelLo;
-public:
-  DIEDelta(const DWLabel &Hi, const DWLabel &Lo)
-    : DIEValue(isDelta), LabelHi(Hi), LabelLo(Lo) {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEDelta *)  { return true; }
-  static bool classof(const DIEValue *D) { return D->Type == isDelta; }
-
-  /// EmitValue - Emit delta value.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of delta value in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, const DWLabel &LabelHi,
-                                            const DWLabel &LabelLo) {
-    ID.AddInteger(isDelta);
-    LabelHi.Profile(ID);
-    LabelLo.Profile(ID);
-  }
-  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, LabelHi, LabelLo); }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Del: ";
-    LabelHi.print(O);
-    O << "-";
-    LabelLo.print(O);
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEntry - A pointer to another debug information entry.  An instance of this
-/// class can also be used as a proxy for a debug information entry not yet
-/// defined (ie. types.)
-class DIEntry : public DIEValue {
-  DIE *Entry;
-public:
-  explicit DIEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
-
-  DIE *getEntry() const { return Entry; }
-  void setEntry(DIE *E) { Entry = E; }
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEntry *)   { return true; }
-  static bool classof(const DIEValue *E) { return E->Type == isEntry; }
-
-  /// EmitValue - Emit debug information entry offset.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of debug information entry in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const {
-    return sizeof(int32_t);
-  }
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  static void Profile(FoldingSetNodeID &ID, DIE *Entry) {
-    ID.AddInteger(isEntry);
-    ID.AddPointer(Entry);
-  }
-  virtual void Profile(FoldingSetNodeID &ID) {
-    ID.AddInteger(isEntry);
-
-    if (Entry) {
-      ID.AddPointer(Entry);
-    } else {
-      ID.AddPointer(this);
-    }
-  }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Die: 0x" << std::hex << (intptr_t)Entry << std::dec;
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
-/// DIEBlock - A block of values.  Primarily used for location expressions.
-//
-class DIEBlock : public DIEValue, public DIE {
-  unsigned Size;                // Size in bytes excluding size header.
-public:
-  DIEBlock()
-    : DIEValue(isBlock), DIE(0), Size(0) {}
-  virtual ~DIEBlock() {}
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEBlock *)  { return true; }
-  static bool classof(const DIEValue *E) { return E->Type == isBlock; }
-
-  /// ComputeSize - calculate the size of the block.
-  ///
-  unsigned ComputeSize(DwarfDebug &DD);
-
-  /// BestForm - Choose the best form for data.
-  ///
-  unsigned BestForm() const {
-    if ((unsigned char)Size == Size)  return DW_FORM_block1;
-    if ((unsigned short)Size == Size) return DW_FORM_block2;
-    if ((unsigned int)Size == Size)   return DW_FORM_block4;
-    return DW_FORM_block;
-  }
-
-  /// EmitValue - Emit block data.
-  ///
-  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
-
-  /// SizeOf - Determine size of block data in bytes.
-  ///
-  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
-
-  /// Profile - Used to gather unique data for the value folding set.
-  ///
-  virtual void Profile(FoldingSetNodeID &ID) {
-    ID.AddInteger(isBlock);
-    DIE::Profile(ID);
-  }
-
-#ifndef NDEBUG
-  virtual void print(std::ostream &O) {
-    O << "Blk: ";
-    DIE::print(O, 5);
-  }
-#endif
-};
-
-//===----------------------------------------------------------------------===//
 /// CompileUnit - This dwarf writer support class manages information associate
 /// with a source file.
 class CompileUnit {
@@ -706,9 +81,9 @@ class CompileUnit {
   /// variables to debug information entries.
   std::map<GlobalVariable *, DIE *> GVToDieMap;
 
-  /// GVToDIEntryMap - Tracks the mapping of unit level debug informaton
-  /// descriptors to debug information entries using a DIEntry proxy.
-  std::map<GlobalVariable *, DIEntry *> GVToDIEntryMap;
+  /// GVToDIEEntryMap - Tracks the mapping of unit level debug informaton
+  /// descriptors to debug information entries using a DIEEntry proxy.
+  std::map<GlobalVariable *, DIEEntry *> GVToDIEEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
@@ -720,7 +95,7 @@ class CompileUnit {
 public:
   CompileUnit(unsigned I, DIE *D)
     : ID(I), Die(D), GVToDieMap(),
-      GVToDIEntryMap(), Globals(), DiesSet(InitDiesSetSize)
+      GVToDIEEntryMap(), Globals(), DiesSet(InitDiesSetSize)
   {}
 
   ~CompileUnit() {
@@ -750,10 +125,10 @@ public:
     return GVToDieMap[GV];
   }
 
-  /// getDIEntrySlotFor - Returns the debug information entry proxy slot for the
+  /// getDIEEntrySlotFor - Returns the debug information entry proxy slot for the
   /// specified debug variable.
-  DIEntry *&getDIEntrySlotFor(GlobalVariable *GV) {
-    return GVToDIEntryMap[GV];
+  DIEEntry *&getDIEEntrySlotFor(GlobalVariable *GV) {
+    return GVToDIEEntryMap[GV];
   }
 
   /// AddDie - Adds or interns the DIE to the compile unit.
@@ -776,315 +151,13 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// Dwarf - Emits general Dwarf directives.
-///
-class Dwarf {
-protected:
-  //===--------------------------------------------------------------------===//
-  // Core attributes used by the Dwarf writer.
-  //
-
-  //
-  /// O - Stream to .s file.
-  ///
-  raw_ostream &O;
-
-  /// Asm - Target of Dwarf emission.
-  ///
-  AsmPrinter *Asm;
-
-  /// TAI - Target asm information.
-  const TargetAsmInfo *TAI;
-
-  /// TD - Target data.
-  const TargetData *TD;
-
-  /// RI - Register Information.
-  const TargetRegisterInfo *RI;
-
-  /// M - Current module.
-  ///
-  Module *M;
-
-  /// MF - Current machine function.
-  ///
-  MachineFunction *MF;
-
-  /// MMI - Collected machine module information.
-  ///
-  MachineModuleInfo *MMI;
-
-  /// SubprogramCount - The running count of functions being compiled.
-  ///
-  unsigned SubprogramCount;
-
-  /// Flavor - A unique string indicating what dwarf producer this is, used to
-  /// unique labels.
-  const char * const Flavor;
-
-  unsigned SetCounter;
-  Dwarf(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T,
-        const char *flavor)
-  : O(OS)
-  , Asm(A)
-  , TAI(T)
-  , TD(Asm->TM.getTargetData())
-  , RI(Asm->TM.getRegisterInfo())
-  , M(NULL)
-  , MF(NULL)
-  , MMI(NULL)
-  , SubprogramCount(0)
-  , Flavor(flavor)
-  , SetCounter(1)
-  {
-  }
-
-public:
-  //===--------------------------------------------------------------------===//
-  // Accessors.
-  //
-  const AsmPrinter *getAsm() const { return Asm; }
-  MachineModuleInfo *getMMI() const { return MMI; }
-  const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
-  const TargetData *getTargetData() const { return TD; }
-
-  void PrintRelDirective(bool Force32Bit = false, bool isInSection = false)
-                                                                         const {
-    if (isInSection && TAI->getDwarfSectionOffsetDirective())
-      O << TAI->getDwarfSectionOffsetDirective();
-    else if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
-      O << TAI->getData32bitsDirective();
-    else
-      O << TAI->getData64bitsDirective();
-  }
-
-  /// PrintLabelName - Print label name in form used by Dwarf writer.
-  ///
-  void PrintLabelName(DWLabel Label) const {
-    PrintLabelName(Label.Tag, Label.Number);
-  }
-  void PrintLabelName(const char *Tag, unsigned Number) const {
-    O << TAI->getPrivateGlobalPrefix() << Tag;
-    if (Number) O << Number;
-  }
-
-  void PrintLabelName(const char *Tag, unsigned Number,
-                      const char *Suffix) const {
-    O << TAI->getPrivateGlobalPrefix() << Tag;
-    if (Number) O << Number;
-    O << Suffix;
-  }
-
-  /// EmitLabel - Emit location label for internal use by Dwarf.
-  ///
-  void EmitLabel(DWLabel Label) const {
-    EmitLabel(Label.Tag, Label.Number);
-  }
-  void EmitLabel(const char *Tag, unsigned Number) const {
-    PrintLabelName(Tag, Number);
-    O << ":\n";
-  }
-
-  /// EmitReference - Emit a reference to a label.
-  ///
-  void EmitReference(DWLabel Label, bool IsPCRelative = false,
-                     bool Force32Bit = false) const {
-    EmitReference(Label.Tag, Label.Number, IsPCRelative, Force32Bit);
-  }
-  void EmitReference(const char *Tag, unsigned Number,
-                     bool IsPCRelative = false, bool Force32Bit = false) const {
-    PrintRelDirective(Force32Bit);
-    PrintLabelName(Tag, Number);
-
-    if (IsPCRelative) O << "-" << TAI->getPCSymbol();
-  }
-  void EmitReference(const std::string &Name, bool IsPCRelative = false,
-                     bool Force32Bit = false) const {
-    PrintRelDirective(Force32Bit);
-
-    O << Name;
-
-    if (IsPCRelative) O << "-" << TAI->getPCSymbol();
-  }
-
-  /// EmitDifference - Emit the difference between two labels.  Some
-  /// assemblers do not behave with absolute expressions with data directives,
-  /// so there is an option (needsSet) to use an intermediary set expression.
-  void EmitDifference(DWLabel LabelHi, DWLabel LabelLo,
-                      bool IsSmall = false) {
-    EmitDifference(LabelHi.Tag, LabelHi.Number,
-                   LabelLo.Tag, LabelLo.Number,
-                   IsSmall);
-  }
-  void EmitDifference(const char *TagHi, unsigned NumberHi,
-                      const char *TagLo, unsigned NumberLo,
-                      bool IsSmall = false) {
-    if (TAI->needsSet()) {
-      O << "\t.set\t";
-      PrintLabelName("set", SetCounter, Flavor);
-      O << ",";
-      PrintLabelName(TagHi, NumberHi);
-      O << "-";
-      PrintLabelName(TagLo, NumberLo);
-      O << "\n";
-
-      PrintRelDirective(IsSmall);
-      PrintLabelName("set", SetCounter, Flavor);
-      ++SetCounter;
-    } else {
-      PrintRelDirective(IsSmall);
-
-      PrintLabelName(TagHi, NumberHi);
-      O << "-";
-      PrintLabelName(TagLo, NumberLo);
-    }
-  }
-
-  void EmitSectionOffset(const char* Label, const char* Section,
-                         unsigned LabelNumber, unsigned SectionNumber,
-                         bool IsSmall = false, bool isEH = false,
-                         bool useSet = true) {
-    bool printAbsolute = false;
-    if (isEH)
-      printAbsolute = TAI->isAbsoluteEHSectionOffsets();
-    else
-      printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
-
-    if (TAI->needsSet() && useSet) {
-      O << "\t.set\t";
-      PrintLabelName("set", SetCounter, Flavor);
-      O << ",";
-      PrintLabelName(Label, LabelNumber);
-
-      if (!printAbsolute) {
-        O << "-";
-        PrintLabelName(Section, SectionNumber);
-      }
-      O << "\n";
-
-      PrintRelDirective(IsSmall);
-
-      PrintLabelName("set", SetCounter, Flavor);
-      ++SetCounter;
-    } else {
-      PrintRelDirective(IsSmall, true);
-
-      PrintLabelName(Label, LabelNumber);
-
-      if (!printAbsolute) {
-        O << "-";
-        PrintLabelName(Section, SectionNumber);
-      }
-    }
-  }
-
-  /// EmitFrameMoves - Emit frame instructions to describe the layout of the
-  /// frame.
-  void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
-                      const std::vector<MachineMove> &Moves, bool isEH) {
-    int stackGrowth =
-        Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-          TargetFrameInfo::StackGrowsUp ?
-            TD->getPointerSize() : -TD->getPointerSize();
-    bool IsLocal = BaseLabel && strcmp(BaseLabel, "label") == 0;
-
-    for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
-      const MachineMove &Move = Moves[i];
-      unsigned LabelID = Move.getLabelID();
-
-      if (LabelID) {
-        LabelID = MMI->MappedLabel(LabelID);
-
-        // Throw out move if the label is invalid.
-        if (!LabelID) continue;
-      }
-
-      const MachineLocation &Dst = Move.getDestination();
-      const MachineLocation &Src = Move.getSource();
-
-      // Advance row if new location.
-      if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
-        Asm->EmitInt8(DW_CFA_advance_loc4);
-        Asm->EOL("DW_CFA_advance_loc4");
-        EmitDifference("label", LabelID, BaseLabel, BaseLabelID, true);
-        Asm->EOL();
-
-        BaseLabelID = LabelID;
-        BaseLabel = "label";
-        IsLocal = true;
-      }
-
-      // If advancing cfa.
-      if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-        if (!Src.isReg()) {
-          if (Src.getReg() == MachineLocation::VirtualFP) {
-            Asm->EmitInt8(DW_CFA_def_cfa_offset);
-            Asm->EOL("DW_CFA_def_cfa_offset");
-          } else {
-            Asm->EmitInt8(DW_CFA_def_cfa);
-            Asm->EOL("DW_CFA_def_cfa");
-            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), isEH));
-            Asm->EOL("Register");
-          }
-
-          int Offset = -Src.getOffset();
-
-          Asm->EmitULEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        } else {
-          assert(0 && "Machine move no supported yet.");
-        }
-      } else if (Src.isReg() &&
-        Src.getReg() == MachineLocation::VirtualFP) {
-        if (Dst.isReg()) {
-          Asm->EmitInt8(DW_CFA_def_cfa_register);
-          Asm->EOL("DW_CFA_def_cfa_register");
-          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), isEH));
-          Asm->EOL("Register");
-        } else {
-          assert(0 && "Machine move no supported yet.");
-        }
-      } else {
-        unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);
-        int Offset = Dst.getOffset() / stackGrowth;
-
-        if (Offset < 0) {
-          Asm->EmitInt8(DW_CFA_offset_extended_sf);
-          Asm->EOL("DW_CFA_offset_extended_sf");
-          Asm->EmitULEB128Bytes(Reg);
-          Asm->EOL("Reg");
-          Asm->EmitSLEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        } else if (Reg < 64) {
-          Asm->EmitInt8(DW_CFA_offset + Reg);
-          if (Asm->isVerbose())
-            Asm->EOL("DW_CFA_offset + Reg (" + utostr(Reg) + ")");
-          else
-            Asm->EOL();
-          Asm->EmitULEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        } else {
-          Asm->EmitInt8(DW_CFA_offset_extended);
-          Asm->EOL("DW_CFA_offset_extended");
-          Asm->EmitULEB128Bytes(Reg);
-          Asm->EOL("Reg");
-          Asm->EmitULEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        }
-      }
-    }
-  }
-
-};
-
-//===----------------------------------------------------------------------===//
 /// SrcLineInfo - This class is used to record source line correspondence.
 ///
 class SrcLineInfo {
-  unsigned Line;                        // Source line number.
-  unsigned Column;                      // Source column.
-  unsigned SourceID;                    // Source ID number.
-  unsigned LabelID;                     // Label in code ID number.
+  unsigned Line;                     // Source line number.
+  unsigned Column;                   // Source column.
+  unsigned SourceID;                 // Source ID number.
+  unsigned LabelID;                  // Label in code ID number.
 public:
   SrcLineInfo(unsigned L, unsigned C, unsigned S, unsigned I)
     : Line(L), Column(C), SourceID(S), LabelID(I) {}
@@ -1100,7 +173,7 @@ public:
 /// DbgVariable - This class is used to track local variable information.
 ///
 class DbgVariable {
-  DIVariable Var;                   // Variable Descriptor.
+  DIVariable Var;                    // Variable Descriptor.
   unsigned FrameIndex;               // Variable frame index.
 public:
   DbgVariable(DIVariable V, unsigned I) : Var(V), FrameIndex(I)  {}
@@ -1395,32 +468,32 @@ private:
     return DWLabel("string", StringID);
   }
 
-  /// NewDIEntry - Creates a new DIEntry to be a proxy for a debug information
+  /// NewDIEEntry - Creates a new DIEEntry to be a proxy for a debug information
   /// entry.
-  DIEntry *NewDIEntry(DIE *Entry = NULL) {
-    DIEntry *Value;
+  DIEEntry *NewDIEEntry(DIE *Entry = NULL) {
+    DIEEntry *Value;
 
     if (Entry) {
       FoldingSetNodeID ID;
-      DIEntry::Profile(ID, Entry);
+      DIEEntry::Profile(ID, Entry);
       void *Where;
-      Value = static_cast<DIEntry *>(ValuesSet.FindNodeOrInsertPos(ID, Where));
+      Value = static_cast<DIEEntry *>(ValuesSet.FindNodeOrInsertPos(ID, Where));
 
       if (Value) return Value;
 
-      Value = new DIEntry(Entry);
+      Value = new DIEEntry(Entry);
       ValuesSet.InsertNode(Value, Where);
     } else {
-      Value = new DIEntry(Entry);
+      Value = new DIEEntry(Entry);
     }
 
     Values.push_back(Value);
     return Value;
   }
 
-  /// SetDIEntry - Set a DIEntry once the debug information entry is defined.
+  /// SetDIEEntry - Set a DIEEntry once the debug information entry is defined.
   ///
-  void SetDIEntry(DIEntry *Value, DIE *Entry) {
+  void SetDIEEntry(DIEEntry *Value, DIE *Entry) {
     Value->setEntry(Entry);
     // Add to values set if not already there.  If it is, we merely have a
     // duplicate in the values list (no harm.)
@@ -1483,7 +556,7 @@ private:
   /// AddLabel - Add a Dwarf label attribute data and value.
   ///
   void AddLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                     const DWLabel &Label) {
+                const DWLabel &Label) {
     FoldingSetNodeID ID;
     DIEDwarfLabel::Profile(ID, Label);
     void *Where;
@@ -1549,16 +622,16 @@ private:
     Die->AddValue(Attribute, Form, Value);
   }
 
-  /// AddDIEntry - Add a DIE attribute data and value.
+  /// AddDIEEntry - Add a DIE attribute data and value.
   ///
-  void AddDIEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
-    Die->AddValue(Attribute, Form, NewDIEntry(Entry));
+  void AddDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
+    Die->AddValue(Attribute, Form, NewDIEEntry(Entry));
   }
 
   /// AddBlock - Add block data.
   ///
   void AddBlock(DIE *Die, unsigned Attribute, unsigned Form, DIEBlock *Block) {
-    Block->ComputeSize(*this);
+    Block->ComputeSize(TD);
     FoldingSetNodeID ID;
     Block->Profile(ID);
     void *Where;
@@ -1649,7 +722,7 @@ private:
       return;
 
     // Check for pre-existence.
-    DIEntry *&Slot = DW_Unit->getDIEntrySlotFor(Ty.getGV());
+    DIEEntry *&Slot = DW_Unit->getDIEEntrySlotFor(Ty.getGV());
     // If it exists then use the existing value.
     if (Slot) {
       Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
@@ -1657,7 +730,7 @@ private:
     }
 
     // Set up proxy. 
-    Slot = NewDIEntry();
+    Slot = NewDIEEntry();
 
     // Construct type.
     DIE Buffer(DW_TAG_base_type);
@@ -1680,10 +753,10 @@ private:
       DIE *Child = new DIE(Buffer);
       Die->AddChild(Child);
       Buffer.Detach();
-      SetDIEntry(Slot, Child);
+      SetDIEEntry(Slot, Child);
     } else {
       Die = DW_Unit->AddDie(Buffer);
-      SetDIEntry(Slot, Die);
+      SetDIEEntry(Slot, Die);
     }
 
     Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
@@ -1856,7 +929,7 @@ private:
     int64_t H = SR.getHi();
     DIE *DW_Subrange = new DIE(DW_TAG_subrange_type);
     if (L != H) {
-      AddDIEntry(DW_Subrange, DW_AT_type, DW_FORM_ref4, IndexTy);
+      AddDIEEntry(DW_Subrange, DW_AT_type, DW_FORM_ref4, IndexTy);
       if (L)
         AddSInt(DW_Subrange, DW_AT_lower_bound, 0, L);
       AddSInt(DW_Subrange, DW_AT_upper_bound, 0, H);
@@ -2363,7 +1436,7 @@ private:
         Asm->EmitInt32(Die->SiblingOffset());
         break;
       case DW_AT_abstract_origin: {
-        DIEntry *E = cast<DIEntry>(Values[i]);
+        DIEEntry *E = cast<DIEEntry>(Values[i]);
         DIE *Origin = E->getEntry();
         unsigned Addr =
           CompileUnitOffsets[Die->getAbstractCompileUnit()] +
@@ -2374,7 +1447,7 @@ private:
       }
       default:
         // Emit an attribute using the defined form.
-        Values[i]->EmitValue(*this, Form);
+        Values[i]->EmitValue(this, Form);
         break;
       }
 
@@ -2420,7 +1493,7 @@ private:
     // Size the DIE attribute values.
     for (unsigned i = 0, N = Values.size(); i < N; ++i) {
       // Size attribute value.
-      Offset += Values[i]->SizeOf(*this, AbbrevData[i].getForm());
+      Offset += Values[i]->SizeOf(TD, AbbrevData[i].getForm());
     }
 
     // Size the DIE children if any.
@@ -2531,7 +1604,7 @@ private:
         Asm->EOL("Abbreviation Code");
 
         // Emit the abbreviations data.
-        Abbrev->Emit(*this);
+        Abbrev->Emit(Asm);
 
         Asm->EOL();
       }
@@ -3646,7 +2719,7 @@ public:
     ScopeDie->setAbstractCompileUnit(Unit);
 
     DIE *Origin = Unit->getDieMapSlotFor(GV);
-    AddDIEntry(ScopeDie, DW_AT_abstract_origin, DW_FORM_ref4, Origin);
+    AddDIEEntry(ScopeDie, DW_AT_abstract_origin, DW_FORM_ref4, Origin);
     AddUInt(ScopeDie, DW_AT_call_file, 0, Unit->getID());
     AddUInt(ScopeDie, DW_AT_call_line, 0, Line);
     AddUInt(ScopeDie, DW_AT_call_column, 0, Col);
@@ -4504,319 +3577,6 @@ public:
 };
 
 } // End of namespace llvm
-
-//===----------------------------------------------------------------------===//
-
-/// Emit - Print the abbreviation using the specified Dwarf writer.
-///
-void DIEAbbrev::Emit(const DwarfDebug &DD) const {
-  // Emit its Dwarf tag type.
-  DD.getAsm()->EmitULEB128Bytes(Tag);
-  DD.getAsm()->EOL(TagString(Tag));
-
-  // Emit whether it has children DIEs.
-  DD.getAsm()->EmitULEB128Bytes(ChildrenFlag);
-  DD.getAsm()->EOL(ChildrenString(ChildrenFlag));
-
-  // For each attribute description.
-  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
-    const DIEAbbrevData &AttrData = Data[i];
-
-    // Emit attribute type.
-    DD.getAsm()->EmitULEB128Bytes(AttrData.getAttribute());
-    DD.getAsm()->EOL(AttributeString(AttrData.getAttribute()));
-
-    // Emit form type.
-    DD.getAsm()->EmitULEB128Bytes(AttrData.getForm());
-    DD.getAsm()->EOL(FormEncodingString(AttrData.getForm()));
-  }
-
-  // Mark end of abbreviation.
-  DD.getAsm()->EmitULEB128Bytes(0); DD.getAsm()->EOL("EOM(1)");
-  DD.getAsm()->EmitULEB128Bytes(0); DD.getAsm()->EOL("EOM(2)");
-}
-
-#ifndef NDEBUG
-void DIEAbbrev::print(std::ostream &O) {
-  O << "Abbreviation @"
-    << std::hex << (intptr_t)this << std::dec
-    << "  "
-    << TagString(Tag)
-    << " "
-    << ChildrenString(ChildrenFlag)
-    << "\n";
-
-  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
-    O << "  "
-      << AttributeString(Data[i].getAttribute())
-      << "  "
-      << FormEncodingString(Data[i].getForm())
-      << "\n";
-  }
-}
-void DIEAbbrev::dump() { print(cerr); }
-#endif
-
-//===----------------------------------------------------------------------===//
-
-#ifndef NDEBUG
-void DIEValue::dump() {
-  print(cerr);
-}
-#endif
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit integer of appropriate size.
-///
-void DIEInteger::EmitValue(DwarfDebug &DD, unsigned Form) {
-  switch (Form) {
-  case DW_FORM_flag:  // Fall thru
-  case DW_FORM_ref1:  // Fall thru
-  case DW_FORM_data1: DD.getAsm()->EmitInt8(Integer);         break;
-  case DW_FORM_ref2:  // Fall thru
-  case DW_FORM_data2: DD.getAsm()->EmitInt16(Integer);        break;
-  case DW_FORM_ref4:  // Fall thru
-  case DW_FORM_data4: DD.getAsm()->EmitInt32(Integer);        break;
-  case DW_FORM_ref8:  // Fall thru
-  case DW_FORM_data8: DD.getAsm()->EmitInt64(Integer);        break;
-  case DW_FORM_udata: DD.getAsm()->EmitULEB128Bytes(Integer); break;
-  case DW_FORM_sdata: DD.getAsm()->EmitSLEB128Bytes(Integer); break;
-  default: assert(0 && "DIE Value form not supported yet");   break;
-  }
-}
-
-/// SizeOf - Determine size of integer value in bytes.
-///
-unsigned DIEInteger::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  switch (Form) {
-  case DW_FORM_flag:  // Fall thru
-  case DW_FORM_ref1:  // Fall thru
-  case DW_FORM_data1: return sizeof(int8_t);
-  case DW_FORM_ref2:  // Fall thru
-  case DW_FORM_data2: return sizeof(int16_t);
-  case DW_FORM_ref4:  // Fall thru
-  case DW_FORM_data4: return sizeof(int32_t);
-  case DW_FORM_ref8:  // Fall thru
-  case DW_FORM_data8: return sizeof(int64_t);
-  case DW_FORM_udata: return TargetAsmInfo::getULEB128Size(Integer);
-  case DW_FORM_sdata: return TargetAsmInfo::getSLEB128Size(Integer);
-  default: assert(0 && "DIE Value form not supported yet"); break;
-  }
-  return 0;
-}
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit string value.
-///
-void DIEString::EmitValue(DwarfDebug &DD, unsigned Form) {
-  DD.getAsm()->EmitString(Str);
-}
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit label value.
-///
-void DIEDwarfLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
-  bool IsSmall = Form == DW_FORM_data4;
-  DD.EmitReference(Label, false, IsSmall);
-}
-
-/// SizeOf - Determine size of label value in bytes.
-///
-unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  if (Form == DW_FORM_data4) return 4;
-  return DD.getTargetData()->getPointerSize();
-}
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit label value.
-///
-void DIEObjectLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
-  bool IsSmall = Form == DW_FORM_data4;
-  DD.EmitReference(Label, false, IsSmall);
-}
-
-/// SizeOf - Determine size of label value in bytes.
-///
-unsigned DIEObjectLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  if (Form == DW_FORM_data4) return 4;
-  return DD.getTargetData()->getPointerSize();
-}
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit delta value.
-///
-void DIESectionOffset::EmitValue(DwarfDebug &DD, unsigned Form) {
-  bool IsSmall = Form == DW_FORM_data4;
-  DD.EmitSectionOffset(Label.Tag, Section.Tag,
-                       Label.Number, Section.Number, IsSmall, IsEH, UseSet);
-}
-
-/// SizeOf - Determine size of delta value in bytes.
-///
-unsigned DIESectionOffset::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  if (Form == DW_FORM_data4) return 4;
-  return DD.getTargetData()->getPointerSize();
-}
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit delta value.
-///
-void DIEDelta::EmitValue(DwarfDebug &DD, unsigned Form) {
-  bool IsSmall = Form == DW_FORM_data4;
-  DD.EmitDifference(LabelHi, LabelLo, IsSmall);
-}
-
-/// SizeOf - Determine size of delta value in bytes.
-///
-unsigned DIEDelta::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  if (Form == DW_FORM_data4) return 4;
-  return DD.getTargetData()->getPointerSize();
-}
-
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit debug information entry offset.
-///
-void DIEntry::EmitValue(DwarfDebug &DD, unsigned Form) {
-  DD.getAsm()->EmitInt32(Entry->getOffset());
-}
-
-//===----------------------------------------------------------------------===//
-
-/// ComputeSize - calculate the size of the block.
-///
-unsigned DIEBlock::ComputeSize(DwarfDebug &DD) {
-  if (!Size) {
-    const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
-
-    for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-      Size += Values[i]->SizeOf(DD, AbbrevData[i].getForm());
-    }
-  }
-  return Size;
-}
-
-/// EmitValue - Emit block data.
-///
-void DIEBlock::EmitValue(DwarfDebug &DD, unsigned Form) {
-  switch (Form) {
-  case DW_FORM_block1: DD.getAsm()->EmitInt8(Size);         break;
-  case DW_FORM_block2: DD.getAsm()->EmitInt16(Size);        break;
-  case DW_FORM_block4: DD.getAsm()->EmitInt32(Size);        break;
-  case DW_FORM_block:  DD.getAsm()->EmitULEB128Bytes(Size); break;
-  default: assert(0 && "Improper form for block");          break;
-  }
-
-  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
-
-  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    DD.getAsm()->EOL();
-    Values[i]->EmitValue(DD, AbbrevData[i].getForm());
-  }
-}
-
-/// SizeOf - Determine size of block data in bytes.
-///
-unsigned DIEBlock::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  switch (Form) {
-  case DW_FORM_block1: return Size + sizeof(int8_t);
-  case DW_FORM_block2: return Size + sizeof(int16_t);
-  case DW_FORM_block4: return Size + sizeof(int32_t);
-  case DW_FORM_block: return Size + TargetAsmInfo::getULEB128Size(Size);
-  default: assert(0 && "Improper form for block"); break;
-  }
-  return 0;
-}
-
-//===----------------------------------------------------------------------===//
-/// DIE Implementation
-
-DIE::~DIE() {
-  for (unsigned i = 0, N = Children.size(); i < N; ++i)
-    delete Children[i];
-}
-
-/// AddSiblingOffset - Add a sibling offset field to the front of the DIE.
-///
-void DIE::AddSiblingOffset() {
-  DIEInteger *DI = new DIEInteger(0);
-  Values.insert(Values.begin(), DI);
-  Abbrev.AddFirstAttribute(DW_AT_sibling, DW_FORM_ref4);
-}
-
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIE::Profile(FoldingSetNodeID &ID) {
-  Abbrev.Profile(ID);
-
-  for (unsigned i = 0, N = Children.size(); i < N; ++i)
-    ID.AddPointer(Children[i]);
-
-  for (unsigned j = 0, M = Values.size(); j < M; ++j)
-    ID.AddPointer(Values[j]);
-}
-
-#ifndef NDEBUG
-void DIE::print(std::ostream &O, unsigned IncIndent) {
-  static unsigned IndentCount = 0;
-  IndentCount += IncIndent;
-  const std::string Indent(IndentCount, ' ');
-  bool isBlock = Abbrev.getTag() == 0;
-
-  if (!isBlock) {
-    O << Indent
-      << "Die: "
-      << "0x" << std::hex << (intptr_t)this << std::dec
-      << ", Offset: " << Offset
-      << ", Size: " << Size
-      << "\n";
-
-    O << Indent
-      << TagString(Abbrev.getTag())
-      << " "
-      << ChildrenString(Abbrev.getChildrenFlag());
-  } else {
-    O << "Size: " << Size;
-  }
-  O << "\n";
-
-  const SmallVector<DIEAbbrevData, 8> &Data = Abbrev.getData();
-
-  IndentCount += 2;
-  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
-    O << Indent;
-
-    if (!isBlock)
-      O << AttributeString(Data[i].getAttribute());
-    else
-      O << "Blk[" << i << "]";
-
-    O <<  "  "
-      << FormEncodingString(Data[i].getForm())
-      << " ";
-    Values[i]->print(O);
-    O << "\n";
-  }
-  IndentCount -= 2;
-
-  for (unsigned j = 0, M = Children.size(); j < M; ++j) {
-    Children[j]->print(O, 4);
-  }
-
-  if (!isBlock) O << "\n";
-  IndentCount -= IncIndent;
-}
-
-void DIE::dump() {
-  print(cerr);
-}
-#endif
 
 //===----------------------------------------------------------------------===//
 /// DwarfWriter Implementation
