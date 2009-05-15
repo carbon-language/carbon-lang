@@ -333,7 +333,8 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
   DeclarationName Name
-    = SemaRef.Context.DeclarationNames.getCXXConstructorName(ClassTy);
+    = SemaRef.Context.DeclarationNames.getCXXConstructorName(
+                                 SemaRef.Context.getCanonicalType(ClassTy));
   CXXConstructorDecl *Constructor
     = CXXConstructorDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                                  Name, T, D->isExplicit(), D->isInline(), 
@@ -362,6 +363,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   SemaRef.CheckFunctionDeclaration(Constructor, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
+  Record->addedConstructor(SemaRef.Context, Constructor);
   Owner->addDecl(SemaRef.Context, Constructor);
   return Constructor;
 }
@@ -377,7 +379,8 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 
   // Build the instantiated destructor declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
-  QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
+  QualType ClassTy = 
+    SemaRef.Context.getCanonicalType(SemaRef.Context.getTypeDeclType(Record));
   CXXDestructorDecl *Destructor
     = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                 D->getLocation(),

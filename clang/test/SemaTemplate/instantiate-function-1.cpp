@@ -64,8 +64,12 @@ template<typename T, typename U, typename V> struct X6 {
     // IfStmt
     if (t > 0)
       return u;
-    else
-      return v; // expected-error{{incompatible type}}
+    else { 
+      if (t < 0)
+        return v; // expected-error{{incompatible type}}
+    }
+
+    return v;
   }
 };
 

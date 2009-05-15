@@ -302,7 +302,8 @@ DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
   assert(Kind >= DeclarationName::CXXConstructorName &&
          Kind <= DeclarationName::CXXConversionFunctionName &&
          "Kind must be a C++ special name kind");
-  
+  assert(Ty->isCanonical() && 
+         "Can only build C++ special names from canonical types");
   llvm::FoldingSet<CXXSpecialName> *SpecialNames 
     = static_cast<llvm::FoldingSet<CXXSpecialName>*>(CXXSpecialNamesImpl);
 
