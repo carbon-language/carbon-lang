@@ -823,7 +823,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
   }
 
-  if (!RetValExp) {
+  if (!RetValExp && !FnRetType->isDependentType()) {
     unsigned DiagID = diag::warn_return_missing_expr;  // C90 6.6.6.4p4
     // C99 6.8.6.4p1 (ext_ since GCC warns)
     if (getLangOptions().C99) DiagID = diag::ext_return_missing_expr;

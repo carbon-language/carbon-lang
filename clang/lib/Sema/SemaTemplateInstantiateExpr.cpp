@@ -447,6 +447,7 @@ namespace {
     OwningStmtResult VisitExpr(Expr *E);
     OwningStmtResult VisitLabelStmt(LabelStmt *S);
     OwningStmtResult VisitGotoStmt(GotoStmt *S);
+    OwningStmtResult VisitReturnStmt(ReturnStmt *S);
 
     // Base case. I'm supposed to ignore this.
     OwningStmtResult VisitStmt(Stmt *S) { 
@@ -497,6 +498,19 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitLabelStmt(LabelStmt *S) {
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitGotoStmt(GotoStmt *S) {
   return SemaRef.ActOnGotoStmt(S->getGotoLoc(), S->getLabelLoc(), 
                                S->getLabel()->getID());
+}
+
+Sema::OwningStmtResult
+TemplateStmtInstantiator::VisitReturnStmt(ReturnStmt *S) {
+  Sema::OwningExprResult Result = SemaRef.ExprEmpty();
+  if (Expr *E = S->getRetValue()) {
+    Result = SemaRef.InstantiateExpr(E, TemplateArgs);
+    
+    if (Result.isInvalid())
+      return SemaRef.StmtError();
+  }
+  
+  return SemaRef.ActOnReturnStmt(S->getReturnLoc(), move(Result));
 }
 
 Sema::OwningStmtResult 

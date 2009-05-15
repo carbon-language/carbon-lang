@@ -37,3 +37,16 @@ struct X3 {
 };
 
 template struct X3<int>;
+
+template <typename T> struct X4 {
+  T f() const {
+    return; // expected-warning{{non-void function 'f' should return a value}}
+  }
+  
+  T g() const {
+    return 1; // expected-warning{{void function 'g' should not return a value}}
+  }
+};
+
+template struct X4<void>; // expected-note{{in instantiation of template class 'X4<void>' requested here}}
+template struct X4<int>; // expected-note{{in instantiation of template class 'X4<int>' requested here}}
