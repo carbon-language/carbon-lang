@@ -201,10 +201,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         expression ',' assignment-expression
 ///
 Parser::OwningExprResult Parser::ParseExpression() {
-  if (Tok.is(tok::kw_throw))
-    return ParseThrowExpression();
-
-  OwningExprResult LHS(ParseCastExpression(false));
+  OwningExprResult LHS(ParseAssignmentExpression());
   if (LHS.isInvalid()) return move(LHS);
 
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
@@ -228,11 +225,7 @@ Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
 /// process of disambiguating between an expression and a declaration.
 Parser::OwningExprResult
 Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
-  // FIXME: The handling for throw is almost certainly wrong.
-  if (Tok.is(tok::kw_throw))
-    return ParseThrowExpression();
-
-  OwningExprResult LHS(ParseCastExpression(false));
+  OwningExprResult LHS(ParseAssignmentExpression());
   if (LHS.isInvalid()) return move(LHS);
 
   LHS = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
