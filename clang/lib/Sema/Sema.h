@@ -2512,12 +2512,6 @@ public:
   // can initialize the transparent union with the given expression.
   AssignConvertType CheckTransparentUnionArgumentConstraints(QualType lhs, 
                                                              Expr *&rExpr);
-
-  // CheckCompoundAssignmentConstraints - Type check without performing any 
-  // conversions. For compound assignments, the "Check...Operands" methods 
-  // perform the necessary conversions. 
-  AssignConvertType CheckCompoundAssignmentConstraints(QualType lhs, 
-                                                       QualType rhs);
   
   // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
   AssignConvertType CheckPointerTypesForAssignment(QualType lhsType, 

@@ -3446,11 +3446,6 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   return result;
 }
 
-Sema::AssignConvertType
-Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
-  return CheckAssignmentConstraints(lhsType, rhsType);
-}
-
 QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   Diag(Loc, diag::err_typecheck_invalid_operands)
     << lex->getType() << rex->getType()
@@ -4241,7 +4236,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
     }
   } else {
     // Compound assignment "x += y"
-    ConvTy = CheckCompoundAssignmentConstraints(LHSType, RHSType);
+    ConvTy = CheckAssignmentConstraints(LHSType, RHSType);
   }
 
   if (DiagnoseAssignmentResult(ConvTy, Loc, LHSType, RHSType,
