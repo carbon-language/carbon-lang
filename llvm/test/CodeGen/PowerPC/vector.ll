@@ -1,6 +1,6 @@
 ; Test that vectors are scalarized/lowered correctly.
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 > %t
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3 > %t
 
 %d8 = type <8 x double>
 %f1 = type <1 x float>
