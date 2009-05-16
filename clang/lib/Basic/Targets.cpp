@@ -1258,6 +1258,7 @@ namespace {
       TLSSupported = false;
       IntWidth = 16;
       LongWidth = LongLongWidth = 32;
+      IntMaxTWidth = 32;
       PointerWidth = 16;
       IntAlign = 8;
       LongAlign = LongLongAlign = 8;
@@ -1300,6 +1301,7 @@ namespace {
       TLSSupported = false;
       IntWidth = 16;
       LongWidth = LongLongWidth = 32;
+      IntMaxTWidth = 32;
       PointerWidth = 16;
       IntAlign = 8;
       LongAlign = LongLongAlign = 8;
