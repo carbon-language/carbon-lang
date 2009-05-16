@@ -473,15 +473,15 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
       .addReg(Mips::FP).addReg(Mips::ZERO);
 
     // lw  $fp,stack_loc($sp)
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::LW))
-      .addReg(Mips::FP).addImm(FPOffset).addReg(Mips::SP);
+    BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::FP)
+      .addImm(FPOffset).addReg(Mips::SP);
   }
 
   // Restore the return address only if the function isnt a leaf one.
   // lw  $ra, stack_loc($sp)
   if (MFI->hasCalls()) { 
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::LW))
-      .addReg(Mips::RA).addImm(RAOffset).addReg(Mips::SP);
+    BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::RA)
+      .addImm(RAOffset).addReg(Mips::SP);
   }
 
   // adjust stack  : insert addi sp, sp, (imm)
