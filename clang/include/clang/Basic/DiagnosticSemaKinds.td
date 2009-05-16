@@ -860,6 +860,8 @@ def err_vm_decl_has_extern_linkage : Error<
 def err_typecheck_field_variable_size : Error<
   "fields must have a constant size: 'variable length array in structure' "
   "extension will never be supported">;
+def err_vm_func_decl : Error<
+  "function declaration cannot have variably modified type">;
 
 def err_typecheck_negative_array_size : Error<"array size is negative">;
 def warn_typecheck_function_qualifiers : Warning<
