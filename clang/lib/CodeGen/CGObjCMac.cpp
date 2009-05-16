@@ -140,8 +140,8 @@ namespace {
 
   typedef std::vector<llvm::Constant*> ConstantVector;
 
-  // FIXME: We should find a nicer way to make the labels for
-  // metadata, string concatenation is lame.
+  // FIXME: We should find a nicer way to make the labels for metadata, string
+  // concatenation is lame.
 
 class ObjCCommonTypesHelper {
 private:
@@ -1463,8 +1463,8 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   } else {
     Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
   }
-  // FIXME: We shouldn't need to do this cast, rectify the ASTContext
-  // and ObjCTypes types.
+  // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
+  // ObjCTypes types.
   const llvm::Type *ClassTy = 
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
@@ -1526,8 +1526,8 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
       }
     }
     else
-      // FIXME. This currently matches gcc's API for x86-32. May need
-      // to change for others if we have their API.
+      // FIXME. This currently matches gcc's API for x86-32. May need to change
+      // for others if we have their API.
       Fn = ObjCTypes.getSendFpretFn(IsSuper);
   } else {
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
@@ -1541,8 +1541,7 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder, 
                                             const ObjCProtocolDecl *PD) {
   // FIXME: I don't understand why gcc generates this, or where it is
-  // resolved. Investigate. Its also wasteful to look this up over and
-  // over.
+  // resolved. Investigate. Its also wasteful to look this up over and over.
   LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
 
   return llvm::ConstantExpr::getBitCast(GetProtocolRef(PD),
@@ -1550,9 +1549,8 @@ llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,
 }
 
 void CGObjCCommonMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
-  // FIXME: We shouldn't need this, the protocol decl should contain
-  // enough information to tell us whether this was a declaration or a
-  // definition.
+  // FIXME: We shouldn't need this, the protocol decl should contain enough
+  // information to tell us whether this was a declaration or a definition.
   DefinedProtocols.insert(PD->getIdentifier());
 
   // If we have generated a forward reference to this protocol, emit
@@ -1588,8 +1586,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
     return Entry;
 
   // FIXME: I don't understand why gcc generates this, or where it is
-  // resolved. Investigate. Its also wasteful to look this up over and
-  // over.
+  // resolved. Investigate. Its also wasteful to look this up over and over.
   LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
 
   const char *ProtocolName = PD->getNameAsCString();
@@ -1866,11 +1863,10 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
 void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.CategoryTy);
 
-  // FIXME: This is poor design, the OCD should have a pointer to the
-  // category decl. Additionally, note that Category can be null for
-  // the @implementation w/o an @interface case. Sema should just
-  // create one for us as it does for @implementation so everyone else
-  // can live life under a clear blue sky.
+  // FIXME: This is poor design, the OCD should have a pointer to the category
+  // decl. Additionally, note that Category can be null for the @implementation
+  // w/o an @interface case. Sema should just create one for us as it does for
+  // @implementation so everyone else can live life under a clear blue sky.
   const ObjCInterfaceDecl *Interface = OCD->getClassInterface();
   const ObjCCategoryDecl *Category = 
     Interface->FindCategoryDeclaration(OCD->getIdentifier());
@@ -2122,10 +2118,10 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
 llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {  
   std::string Name = "\01L_OBJC_METACLASS_" + ID->getNameAsString();
 
-  // FIXME: Should we look these up somewhere other than the
-  // module. Its a bit silly since we only generate these while
-  // processing an implementation, so exactly one pointer would work
-  // if know when we entered/exitted an implementation block.
+  // FIXME: Should we look these up somewhere other than the module. Its a bit
+  // silly since we only generate these while processing an implementation, so
+  // exactly one pointer would work if know when we entered/exitted an
+  // implementation block.
 
   // Check for an existing forward reference.
   // Previously, metaclass with internal linkage may have been defined.
@@ -3114,8 +3110,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                 (GCAttr == QualType::GCNone || GCAttr == QualType::Weak))
                || (!ForStrongLayout && GCAttr != QualType::Weak)) {
       if (IsUnion) {
-        // FIXME: Why the asymmetry? We divide by word size in bits on
-        // other side.
+        // FIXME: Why the asymmetry? We divide by word size in bits on other
+        // side.
         uint64_t UnionIvarSize = FieldSize;
         if (UnionIvarSize > MaxSkippedUnionIvarSize) {
           MaxSkippedUnionIvarSize = UnionIvarSize;
@@ -3525,8 +3521,8 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   PtrObjectPtrTy = llvm::PointerType::getUnqual(ObjectPtrTy);
   SelectorPtrTy = Types.ConvertType(Ctx.getObjCSelType());
   
-  // FIXME: It would be nice to unify this with the opaque type, so
-  // that the IR comes out a bit cleaner.
+  // FIXME: It would be nice to unify this with the opaque type, so that the IR
+  // comes out a bit cleaner.
   const llvm::Type *T = Types.ConvertType(Ctx.getObjCProtoType());
   ExternalProtocolPtrTy = llvm::PointerType::getUnqual(T);
   
@@ -3800,8 +3796,8 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_module", ModuleTy);
 
   
-  // FIXME: This is the size of the setjmp buffer and should be 
-  // target specific. 18 is what's used on 32-bit X86.
+  // FIXME: This is the size of the setjmp buffer and should be target
+  // specific. 18 is what's used on 32-bit X86.
   uint64_t SetJmpBufferSize = 18;
  
   // Exceptions
@@ -4679,8 +4675,8 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
   IvarOffsetGV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
 
-  // FIXME: This matches gcc, but shouldn't the visibility be set on
-  // the use as well (i.e., in ObjCIvarOffsetVariable).
+  // FIXME: This matches gcc, but shouldn't the visibility be set on the use as
+  // well (i.e., in ObjCIvarOffsetVariable).
   if (Ivar->getAccessControl() == ObjCIvarDecl::Private ||
       Ivar->getAccessControl() == ObjCIvarDecl::Package ||
       CGM.getDeclVisibilityMode(ID) == LangOptions::Hidden)
@@ -5037,16 +5033,16 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
                                            QualType Arg0Ty,
                                            bool IsSuper,
                                            const CallArgList &CallArgs) {
-  // FIXME. Even though IsSuper is passes. This function doese not
-  // handle calls to 'super' receivers.
+  // FIXME. Even though IsSuper is passes. This function doese not handle calls
+  // to 'super' receivers.
   CodeGenTypes &Types = CGM.getTypes();
   llvm::Value *Arg0 = Receiver;
   if (!IsSuper)
     Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
   
   // Find the message function name.
-  // FIXME. This is too much work to get the ABI-specific result type
-  // needed to find the message name.
+  // FIXME. This is too much work to get the ABI-specific result type needed to
+  // find the message name.
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, 
                                         llvm::SmallVector<QualType, 16>());
   llvm::Constant *Fn = 0;
@@ -5295,8 +5291,8 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   else
     Target = EmitSuperClassRef(CGF.Builder, Class);
     
-  // FIXME: We shouldn't need to do this cast, rectify the ASTContext
-  // and ObjCTypes types.
+  // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
+  // ObjCTypes types.
   const llvm::Type *ClassTy =
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
@@ -5567,8 +5563,8 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
       // Cleanups must call objc_end_catch.
       // 
-      // FIXME: It seems incorrect for objc_begin_catch to be inside
-      // this context, but this matches gcc.
+      // FIXME: It seems incorrect for objc_begin_catch to be inside this
+      // context, but this matches gcc.
       CGF.PushCleanupBlock(MatchEnd);
       CGF.setInvokeDest(MatchHandler);
       

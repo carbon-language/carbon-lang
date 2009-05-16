@@ -155,9 +155,9 @@ public:
       ++i;
 
     // Promote the size of V if necessary
-    // FIXME: This should never occur, but currently it can because
-    // initializer constants are cast to bool, and because clang is
-    // not enforcing bitfield width limits.
+    // FIXME: This should never occur, but currently it can because initializer
+    // constants are cast to bool, and because clang is not enforcing bitfield
+    // width limits.
     if (bitFieldInfo.Size > V.getBitWidth())
       V.zext(bitFieldInfo.Size);
 

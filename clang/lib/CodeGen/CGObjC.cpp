@@ -133,9 +133,9 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   FinishFunction(OMD->getBodyRBrace(getContext()));
 }
 
-// FIXME: I wasn't sure about the synthesis approach. If we end up
-// generating an AST for the whole body we can just fall back to
-// having a GenerateFunction which takes the body Stmt.
+// FIXME: I wasn't sure about the synthesis approach. If we end up generating an
+// AST for the whole body we can just fall back to having a GenerateFunction
+// which takes the body Stmt.
 
 /// GenerateObjCGetter - Generate an Objective-C property getter
 /// function. The given Decl must be an ObjCImplementationDecl. @synthesize
@@ -146,8 +146,8 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
-  // FIXME: This is rather murky, we create this here since they will
-  // not have been created by Sema for us.
+  // FIXME: This is rather murky, we create this here since they will not have
+  // been created by Sema for us.
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD, IMP->getClassInterface());
 
@@ -221,8 +221,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
-  // FIXME: This is rather murky, we create this here since they will
-  // not have been created by Sema for us.  
+  // FIXME: This is rather murky, we create this here since they will not have
+  // been created by Sema for us.
   OMD->createImplicitParams(getContext(), IMP->getClassInterface());
   StartObjCMethod(OMD, IMP->getClassInterface());
 
@@ -274,8 +274,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                   getContext().BoolTy));
     Args.push_back(std::make_pair(RValue::get(IsCopy ? True : False), 
                                   getContext().BoolTy));
-    // FIXME: We shouldn't need to get the function info here, the
-    // runtime already should have computed it to build the function.
+    // FIXME: We shouldn't need to get the function info here, the runtime
+    // already should have computed it to build the function.
     EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args), 
              SetPropertyFn, Args);
   } else {
@@ -540,8 +540,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   CallArgList Args2;
   Args2.push_back(std::make_pair(RValue::get(V), 
                                 getContext().getObjCIdType()));
-  // FIXME: We shouldn't need to get the function info here, the
-  // runtime already should have computed it to build the function.
+  // FIXME: We shouldn't need to get the function info here, the runtime already
+  // should have computed it to build the function.
   EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args2), 
            EnumerationMutationFn, Args2);
   

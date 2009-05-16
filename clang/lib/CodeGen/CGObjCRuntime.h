@@ -57,8 +57,8 @@ namespace CodeGen {
 namespace CodeGen {
   class CodeGenModule;
 
-//FIXME Several methods should be pure virtual but aren't to avoid the
-//partially-implemented subclass breaking.
+// FIXME: Several methods should be pure virtual but aren't to avoid the
+// partially-implemented subclass breaking.
 
 /// Implements runtime-specific code generation functions.
 class CGObjCRuntime {
@@ -150,10 +150,9 @@ public:
   /// Generate a function preamble for a method with the specified
   /// types.  
 
-  // FIXME: Current this just generates the Function definition, but
-  // really this should also be generating the loads of the
-  // parameters, as the runtime should have full control over how
-  // parameters are passed.
+  // FIXME: Current this just generates the Function definition, but really this
+  // should also be generating the loads of the parameters, as the runtime
+  // should have full control over how parameters are passed.
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD, 
                                          const ObjCContainerDecl *CD) = 0;
 

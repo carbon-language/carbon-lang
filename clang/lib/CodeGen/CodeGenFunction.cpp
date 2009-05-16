@@ -66,8 +66,8 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
 }
 
 bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
-  // FIXME: Use positive checks instead of negative ones to be more
-  // robust in the face of extension.
+  // FIXME: Use positive checks instead of negative ones to be more robust in
+  // the face of extension.
   return !T->hasPointerRepresentation() &&!T->isRealType() &&
     !T->isVoidType() && !T->isVectorType() && !T->isFunctionType() && 
     !T->isBlockPointerType();
@@ -105,9 +105,9 @@ void CodeGenFunction::EmitReturnBlock() {
     }
   }
 
-  // FIXME: We are at an unreachable point, there is no reason to emit
-  // the block unless it has uses. However, we still need a place to
-  // put the debug region.end for now.
+  // FIXME: We are at an unreachable point, there is no reason to emit the block
+  // unless it has uses. However, we still need a place to put the debug
+  // region.end for now.
 
   EmitBlock(ReturnBlock);
 }
@@ -663,8 +663,8 @@ void CodeGenFunction::AddBranchFixup(llvm::BranchInst *BI)
   assert(!CleanupEntries.empty() && 
          "Trying to add branch fixup without cleanup block!");
   
-  // FIXME: We could be more clever here and check if there's already a 
-  // branch fixup for this destination and recycle it.
+  // FIXME: We could be more clever here and check if there's already a branch
+  // fixup for this destination and recycle it.
   CleanupEntries.back().BranchFixups.push_back(BI);
 }
 

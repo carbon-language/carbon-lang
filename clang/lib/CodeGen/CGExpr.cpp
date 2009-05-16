@@ -211,12 +211,11 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile) {
-  // Handle stores of types which have different representations in
-  // memory and as LLVM values.
+  // Handle stores of types which have different representations in memory and
+  // as LLVM values.
 
-  // FIXME: We shouldn't be this loose, we should only do this
-  // conversion when we have a type we know has a different memory
-  // representation (e.g., bool).
+  // FIXME: We shouldn't be this loose, we should only do this conversion when
+  // we have a type we know has a different memory representation (e.g., bool).
 
   const llvm::Type *SrcTy = Value->getType();
   const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
@@ -433,10 +432,10 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
 #if 0
-    // FIXME. We cannot positively determine if we have an
-    // 'ivar' assignment, object assignment or an unknown 
-    // assignment. For now, generate call to objc_assign_strongCast
-    // assignment which is a safe, but consevative assumption.
+    // FIXME. We cannot positively determine if we have an 'ivar' assignment,
+    // object assignment or an unknown assignment. For now, generate call to
+    // objc_assign_strongCast assignment which is a safe, but consevative
+    // assumption.
     if (Dst.isObjCIvar())
       CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, LvalueDst);
     else
@@ -956,8 +955,8 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                               FieldDecl* Field,
                                               unsigned CVRQualifiers) {
    unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
-  // FIXME: CodeGenTypes should expose a method to get the appropriate
-  // type for FieldTy (the appropriate type is ABI-dependent).
+  // FIXME: CodeGenTypes should expose a method to get the appropriate type for
+  // FieldTy (the appropriate type is ABI-dependent).
   const llvm::Type *FieldTy = 
     CGM.getTypes().ConvertTypeForMem(Field->getType());
   const llvm::PointerType *BaseTy =

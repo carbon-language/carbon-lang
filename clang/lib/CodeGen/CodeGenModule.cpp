@@ -288,9 +288,8 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
 
 /// SetFunctionDefinitionAttributes - Set attributes for a global.
 ///
-/// FIXME: This is currently only done for aliases and functions, but
-/// not for variables (these details are set in
-/// EmitGlobalVarDefinition for variables).
+/// FIXME: This is currently only done for aliases and functions, but not for
+/// variables (these details are set in EmitGlobalVarDefinition for variables).
 void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
                                                     llvm::GlobalValue *GV) {
   GVALinkage Linkage = GetLinkageForFunction(D, Features);
@@ -703,8 +702,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
 
   // Handle things which are present even on external declarations.
   if (D) {
-    // FIXME: This code is overly simple and should be merged with
-    // other global handling.
+    // FIXME: This code is overly simple and should be merged with other global
+    // handling.
     GV->setConstant(D->getType().isConstant(Context));
 
     // FIXME: Merge with other attribute handling code.
@@ -1213,11 +1212,10 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
     Ty = llvm::ArrayType::get(Ty, 0);
 
-    // FIXME: This is fairly broken if
-    // __CFConstantStringClassReference is already defined, in that it
-    // will get renamed and the user will most likely see an opaque
-    // error message. This is a general issue with relying on
-    // particular names.
+    // FIXME: This is fairly broken if __CFConstantStringClassReference is
+    // already defined, in that it will get renamed and the user will most
+    // likely see an opaque error message. This is a general issue with relying
+    // on particular names.
     llvm::GlobalVariable *GV = 
       new llvm::GlobalVariable(Ty, false,
                                llvm::GlobalVariable::ExternalLinkage, 0, 
@@ -1531,10 +1529,9 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   }
    
   default: 
-    // Make sure we handled everything we should, every other kind is
-    // a non-top-level decl.  FIXME: Would be nice to have an
-    // isTopLevelDeclKind function. Need to recode Decl::Kind to do
-    // that easily.
+    // Make sure we handled everything we should, every other kind is a
+    // non-top-level decl.  FIXME: Would be nice to have an isTopLevelDeclKind
+    // function. Need to recode Decl::Kind to do that easily.
     assert(isa<TypeDecl>(D) && "Unsupported decl kind");
   }
 }

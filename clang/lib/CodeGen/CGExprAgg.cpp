@@ -335,12 +335,11 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // FIXME: Disabled while we figure out what to do about 
   // test/CodeGen/bitfield.c
   //
-  // If we can, prefer a copy from a global; this is a lot less
-  // code for long globals, and it's easier for the current optimizers
-  // to analyze.
-  // FIXME: Should we really be doing this? Should we try to avoid
-  // cases where we emit a global with a lot of zeros?  Should
-  // we try to avoid short globals? 
+  // If we can, prefer a copy from a global; this is a lot less code for long
+  // globals, and it's easier for the current optimizers to analyze.
+  // FIXME: Should we really be doing this? Should we try to avoid cases where
+  // we emit a global with a lot of zeros?  Should we try to avoid short
+  // globals?
   if (E->isConstantInitializer(CGF.getContext(), 0)) {
     llvm::Constant* C = CGF.CGM.EmitConstantExpr(E, &CGF);
     llvm::GlobalVariable* GV =

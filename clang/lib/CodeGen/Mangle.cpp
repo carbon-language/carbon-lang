@@ -543,8 +543,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
 void CXXNameMangler::mangleType(const FunctionType *T) {
   // <function-type> ::= F [Y] <bare-function-type> E
   Out << 'F';
-  // FIXME: We don't have enough information in the AST to produce the
-  // 'Y' encoding for extern "C" function types.
+  // FIXME: We don't have enough information in the AST to produce the 'Y'
+  // encoding for extern "C" function types.
   mangleBareFunctionType(T, /*MangleReturnType=*/true);
   Out << 'E';
 }

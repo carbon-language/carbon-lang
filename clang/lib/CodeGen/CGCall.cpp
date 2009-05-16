@@ -258,10 +258,9 @@ static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
     if (!is32Or64BitBasicType(FD->getType(), Context))
       return false;
     
-    // FIXME: Reject bit-fields wholesale; there are two problems, we
-    // don't know how to expand them yet, and the predicate for
-    // telling if a bitfield still counts as "basic" is more
-    // complicated than what we were doing previously.
+    // FIXME: Reject bit-fields wholesale; there are two problems, we don't know
+    // how to expand them yet, and the predicate for telling if a bitfield still
+    // counts as "basic" is more complicated than what we were doing previously.
     if (FD->isBitField())
       return false;
   }
@@ -430,8 +429,8 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
           return ABIArgInfo::getCoerce(llvm::Type::DoubleTy);
         }
       } else if (SeltTy->isPointerType()) {
-        // FIXME: It would be really nice if this could come out as
-        // the proper pointer type.
+        // FIXME: It would be really nice if this could come out as the proper
+        // pointer type.
         llvm::Type *PtrTy = 
           llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
         return ABIArgInfo::getCoerce(PtrTy);
@@ -566,11 +565,10 @@ class X86_64ABIInfo : public ABIInfo {
   /// that \arg CoerceTo would be passed, but while keeping the
   /// emitted code as simple as possible.
   ///
-  /// FIXME: Note, this should be cleaned up to just take an
-  /// enumeration of all the ways we might want to pass things,
-  /// instead of constructing an LLVM type. This makes this code more
-  /// explicit, and it makes it clearer that we are also doing this
-  /// for correctness in the case of passing scalar types.
+  /// FIXME: Note, this should be cleaned up to just take an enumeration of all
+  /// the ways we might want to pass things, instead of constructing an LLVM
+  /// type. This makes this code more explicit, and it makes it clearer that we
+  /// are also doing this for correctness in the case of passing scalar types.
   ABIArgInfo getCoerceResult(QualType Ty,
                              const llvm::Type *CoerceTo,
                              ASTContext &Context) const;
@@ -637,13 +635,13 @@ void X86_64ABIInfo::classify(QualType Ty,
                              ASTContext &Context,
                              uint64_t OffsetBase,
                              Class &Lo, Class &Hi) const {
-  // FIXME: This code can be simplified by introducing a simple value
-  // class for Class pairs with appropriate constructor methods for
-  // the various situations.
+  // FIXME: This code can be simplified by introducing a simple value class for
+  // Class pairs with appropriate constructor methods for the various
+  // situations.
 
-  // FIXME: Some of the split computations are wrong; unaligned
-  // vectors shouldn't be passed in registers for example, so there is
-  // no chance they can straddle an eightbyte. Verify & simplify.
+  // FIXME: Some of the split computations are wrong; unaligned vectors
+  // shouldn't be passed in registers for example, so there is no chance they
+  // can straddle an eightbyte. Verify & simplify.
 
   Lo = Hi = NoClass;
 
@@ -862,8 +860,8 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
       return ABIArgInfo::getDirect();
 
   } else if (CoerceTo == llvm::Type::DoubleTy) {
-    // FIXME: It would probably be better to make CGFunctionInfo only
-    // map using canonical types than to canonize here.
+    // FIXME: It would probably be better to make CGFunctionInfo only map using
+    // canonical types than to canonize here.
     QualType CTy = Context.getCanonicalType(Ty);
   
     // Float and double end up in a single SSE reg.
@@ -1198,11 +1196,10 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   // in different register classes or requires an alignment greater
   // than 8 for general purpose registers and 16 for XMM registers.
   //
-  // FIXME: This really results in shameful code when we end up
-  // needing to collect arguments from different places; often what
-  // should result in a simple assembling of a structure from
-  // scattered addresses has many more loads than necessary. Can we
-  // clean this up?
+  // FIXME: This really results in shameful code when we end up needing to
+  // collect arguments from different places; often what should result in a
+  // simple assembling of a structure from scattered addresses has many more
+  // loads than necessary. Can we clean this up?
   const llvm::Type *LTy = CGF.ConvertTypeForMem(Ty);
   llvm::Value *RegAddr = 
     CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(VAListAddr, 3), 
@@ -1363,8 +1360,8 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
     return ABIArgInfo::getDirect();
   }
-  // FIXME: This is kind of nasty... but there isn't much choice
-  // because the ARM backend doesn't support byval.
+  // FIXME: This is kind of nasty... but there isn't much choice because the ARM
+  // backend doesn't support byval.
   // FIXME: This doesn't handle alignment > 64 bits.
   const llvm::Type* ElemTy;
   unsigned SizeRegs;
@@ -1579,13 +1576,12 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
 
   // If load is legal, just bitcast the src pointer.
   if (SrcSize >= DstSize) {
-    // Generally SrcSize is never greater than DstSize, since this
-    // means we are losing bits. However, this can happen in cases
-    // where the structure has additional padding, for example due to
-    // a user specified alignment.
+    // Generally SrcSize is never greater than DstSize, since this means we are
+    // losing bits. However, this can happen in cases where the structure has
+    // additional padding, for example due to a user specified alignment.
     //
-    // FIXME: Assert that we aren't truncating non-padding bits when
-    // have access to that information.
+    // FIXME: Assert that we aren't truncating non-padding bits when have access
+    // to that information.
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
     llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
@@ -1623,13 +1619,12 @@ static void CreateCoercedStore(llvm::Value *Src,
 
   // If store is legal, just bitcast the src pointer.
   if (SrcSize >= DstSize) {
-    // Generally SrcSize is never greater than DstSize, since this
-    // means we are losing bits. However, this can happen in cases
-    // where the structure has additional padding, for example due to
-    // a user specified alignment.
+    // Generally SrcSize is never greater than DstSize, since this means we are
+    // losing bits. However, this can happen in cases where the structure has
+    // additional padding, for example due to a user specified alignment.
     //
-    // FIXME: Assert that we aren't truncating non-padding bits when
-    // have access to that information.
+    // FIXME: Assert that we aren't truncating non-padding bits when have access
+    // to that information.
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
     // FIXME: Use better alignment / avoid requiring aligned store.
@@ -1824,9 +1819,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     case ABIArgInfo::Expand: {
       std::vector<const llvm::Type*> Tys;  
-      // FIXME: This is rather inefficient. Do we ever actually need
-      // to do anything here? The result should be just reconstructed
-      // on the other side, so extension should be a non-issue.
+      // FIXME: This is rather inefficient. Do we ever actually need to do
+      // anything here? The result should be just reconstructed on the other
+      // side, so extension should be a non-issue.
       getTypes().GetExpandedTypes(ParamType, Tys);
       Index += Tys.size();
       continue;
@@ -1844,8 +1839,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
-  // FIXME: We no longer need the types from FunctionArgList; lift up
-  // and simplify.
+  // FIXME: We no longer need the types from FunctionArgList; lift up and
+  // simplify.
 
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = Fn->arg_begin();
@@ -1936,10 +1931,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
     case ABIArgInfo::Coerce: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
-      // FIXME: This is very wasteful; EmitParmDecl is just going to
-      // drop the result in a new alloca anyway, so we could just
-      // store into that directly if we broke the abstraction down
-      // more.
+      // FIXME: This is very wasteful; EmitParmDecl is just going to drop the
+      // result in a new alloca anyway, so we could just store into that
+      // directly if we broke the abstraction down more.
       llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(Ty), "coerce");
       CreateCoercedStore(AI, V, *this);
       // Match to what EmitParmDecl is expecting for this type.
@@ -2016,8 +2010,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee, 
                                  const CallArgList &CallArgs,
                                  const Decl *TargetDecl) {
-  // FIXME: We no longer need the types from CallArgs; lift up and
-  // simplify.
+  // FIXME: We no longer need the types from CallArgs; lift up and simplify.
   llvm::SmallVector<llvm::Value*, 16> Args;
 
   // Handle struct-return functions by passing a pointer to the
@@ -2116,9 +2109,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
     
-    // FIXME: For now, emit a dummy basic block because expr
-    // emitters in generally are not ready to handle emitting
-    // expressions at unreachable points.
+    // FIXME: For now, emit a dummy basic block because expr emitters in
+    // generally are not ready to handle emitting expressions at unreachable
+    // points.
     EnsureInsertPoint();
     
     // Return a reasonable RValue.
