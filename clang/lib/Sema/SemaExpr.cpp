@@ -4426,14 +4426,10 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   NamedDecl *dcl = getPrimaryDecl(op);
   Expr::isLvalueResult lval = op->isLvalue(Context);
 
-  if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
+  if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
+    // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
-    if (op->getType()->isFunctionType()) {
-      // Function designator is valid
-    } else if (lval == Expr::LV_IncompleteVoidType) {
-      Diag(OpLoc, diag::ext_typecheck_addrof_void)
-        << op->getSourceRange();
-    } else {
+    if (!op->getType()->isFunctionType()) {
       // FIXME: emit more specific diag...
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
         << op->getSourceRange();
@@ -4479,6 +4475,13 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
               Context.getTypeDeclType(MD->getParent()).getTypePtr());
     } else if (!isa<FunctionDecl>(dcl))
       assert(0 && "Unknown/unexpected decl type");
+  }
+
+  if (lval == Expr::LV_IncompleteVoidType) {
+    // Taking the address of a void variable is technically illegal, but we
+    // allow it in cases which are otherwise valid.
+    // Example: "extern void x; void* y = &x;".
+    Diag(OpLoc, diag::ext_typecheck_addrof_void) << op->getSourceRange();
   }
 
   // If the operand has type "type", the result has type "pointer to type".
