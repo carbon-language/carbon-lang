@@ -391,7 +391,7 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
-  addFrameReference(BuildMI(MBB, MI, DL, get(opc)).addReg(DestReg), FrameIdx);
+  addFrameReference(BuildMI(MBB, MI, DL, get(opc), DestReg), FrameIdx);
 }
 
 /*!
