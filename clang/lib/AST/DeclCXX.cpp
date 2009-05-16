@@ -194,6 +194,47 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline);
 }
 
+
+typedef llvm::DenseMap<const CXXMethodDecl*, 
+                       std::vector<const CXXMethodDecl *> *> 
+                       OverriddenMethodsMapTy;
+
+static OverriddenMethodsMapTy *OverriddenMethods = 0;
+
+void CXXMethodDecl::addOverriddenMethod(const CXXMethodDecl *MD) {
+  // FIXME: The CXXMethodDecl dtor needs to remove and free the entry.
+  
+  if (!OverriddenMethods)
+    OverriddenMethods = new OverriddenMethodsMapTy();
+  
+  std::vector<const CXXMethodDecl *> *&Methods = (*OverriddenMethods)[this];
+  if (!Methods)
+    Methods = new std::vector<const CXXMethodDecl *>;
+  
+  Methods->push_back(MD);
+}
+
+CXXMethodDecl::method_iterator CXXMethodDecl::begin_overridden_methods() const {
+  if (!OverriddenMethods)
+    return 0;
+  
+  OverriddenMethodsMapTy::iterator it = OverriddenMethods->find(this);
+  if (it == OverriddenMethods->end())
+    return 0;
+  return &(*it->second)[0];
+}
+
+CXXMethodDecl::method_iterator CXXMethodDecl::end_overridden_methods() const {
+  if (!OverriddenMethods)
+    return 0;
+  
+  OverriddenMethodsMapTy::iterator it = OverriddenMethods->find(this);
+  if (it == OverriddenMethods->end())
+    return 0;
+
+  return &(*it->second)[it->second->size()];
+}
+
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   // C++ 9.3.2p1: The type of this in a member function of a class X is X*.
   // If the member function is declared const, the type of this is const X*,

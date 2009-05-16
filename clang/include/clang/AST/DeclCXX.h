@@ -478,9 +478,17 @@ public:
   }
 
   bool isVirtual() const { 
-    // FIXME: Check if it's inherited virtual as well.
-    return isVirtualAsWritten();
+    return isVirtualAsWritten() ||
+      (begin_overridden_methods() != end_overridden_methods());
   }
+
+  /// 
+  void addOverriddenMethod(const CXXMethodDecl *MD);
+  
+  typedef const CXXMethodDecl ** method_iterator;
+  
+  method_iterator begin_overridden_methods() const;
+  method_iterator end_overridden_methods() const;
   
   /// getParent - Returns the parent of this method declaration, which
   /// is the class in which this method is defined.
