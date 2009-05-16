@@ -511,7 +511,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
         
     case tok::star:
       Res = LHS.Val * RHS.Val;
-      if (LHS.Val != 0 && RHS.Val != 0)
+      if (Res.isSigned() && LHS.Val != 0 && RHS.Val != 0)
         Overflow = Res/RHS.Val != LHS.Val || Res/LHS.Val != RHS.Val;
       break;
     case tok::lessless: {
@@ -520,7 +520,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       if (ShAmt >= LHS.Val.getBitWidth())
         Overflow = true, ShAmt = LHS.Val.getBitWidth()-1;
       else if (LHS.isUnsigned())
-        Overflow = ShAmt > LHS.Val.countLeadingZeros();
+        Overflow = false;
       else if (LHS.Val.isNonNegative()) // Don't allow sign change.
         Overflow = ShAmt >= LHS.Val.countLeadingZeros();
       else
@@ -540,7 +540,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     case tok::plus:
       Res = LHS.Val + RHS.Val;
       if (LHS.isUnsigned())
-        Overflow = Res.ult(LHS.Val);
+        Overflow = false;
       else if (LHS.Val.isNonNegative() == RHS.Val.isNonNegative() &&
                Res.isNonNegative() != LHS.Val.isNonNegative())
         Overflow = true;  // Overflow for signed addition.
@@ -548,7 +548,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     case tok::minus:
       Res = LHS.Val - RHS.Val;
       if (LHS.isUnsigned())
-        Overflow = Res.ugt(LHS.Val);
+        Overflow = false;
       else if (LHS.Val.isNonNegative() != RHS.Val.isNonNegative() &&
                Res.isNonNegative() != LHS.Val.isNonNegative())
         Overflow = true;  // Overflow for signed subtraction.
