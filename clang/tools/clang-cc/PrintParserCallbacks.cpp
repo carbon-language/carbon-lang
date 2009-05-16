@@ -181,9 +181,9 @@ namespace {
       return DeclPtrTy();
     }
     
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Type Parsing Callbacks.
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
   
     virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
       llvm::cout << __FUNCTION__ << "\n";
@@ -237,14 +237,15 @@ namespace {
       return DeclPtrTy();
     }
 
-    virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDecl,
+    virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
+                               SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
                                DeclPtrTy *Elements, unsigned NumElements) {
       llvm::cout << __FUNCTION__ << "\n";
     }
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Statement Parsing Callbacks.
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc) {
       llvm::cout << __FUNCTION__ << "\n";
@@ -368,7 +369,7 @@ namespace {
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnAsmStmt(SourceLocation AsmLoc,
-                                          bool IsSimple,                                  
+                                          bool IsSimple,
                                           bool IsVolatile,
                                           unsigned NumOutputs,
                                           unsigned NumInputs,
@@ -438,9 +439,9 @@ namespace {
       return StmtEmpty();
     }
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Expression Parsing Callbacks.
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     // Primary Expressions.
 

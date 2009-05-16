@@ -408,7 +408,8 @@ public:
                                       SourceLocation EqualLoc, ExprTy *Val) {
     return DeclPtrTy();
   }
-  virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDecl,
+  virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
+                             SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
                              DeclPtrTy *Elements, unsigned NumElements) {}
 
   //===--------------------------------------------------------------------===//

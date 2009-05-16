@@ -4215,9 +4215,8 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
   return DeclPtrTy::make(New);
 }
 
-// FIXME: For consistency with ActOnFields(), we should have the parser
-// pass in the source location for the left/right braces.
-void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDeclX,
+void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
+                         SourceLocation RBraceLoc, DeclPtrTy EnumDeclX,
                          DeclPtrTy *Elements, unsigned NumElements) {
   EnumDecl *Enum = cast<EnumDecl>(EnumDeclX.getAs<Decl>());
   QualType EnumType = Context.getTypeDeclType(Enum);

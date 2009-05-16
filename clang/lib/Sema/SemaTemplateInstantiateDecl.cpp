@@ -245,7 +245,9 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     }
   }
       
-  SemaRef.ActOnEnumBody(Enum->getLocation(), Sema::DeclPtrTy::make(Enum),
+  // FIXME: Fixup LBraceLoc and RBraceLoc
+  SemaRef.ActOnEnumBody(Enum->getLocation(), SourceLocation(), SourceLocation(),
+                        Sema::DeclPtrTy::make(Enum),
                         &Enumerators[0], Enumerators.size());
 
   return Enum;

@@ -489,7 +489,8 @@ public:
                                       DeclPtrTy LastEnumConstant,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
                                       SourceLocation EqualLoc, ExprTy *Val);
-  virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclPtrTy EnumDecl,
+  virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
+                             SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
                              DeclPtrTy *Elements, unsigned NumElements);
 
   DeclContext *getContainingDC(DeclContext *DC);

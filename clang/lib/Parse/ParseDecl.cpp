@@ -1534,10 +1534,10 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   }
   
   // Eat the }.
-  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  Actions.ActOnEnumBody(StartLoc, EnumDecl, &EnumConstantDecls[0],
-                        EnumConstantDecls.size());
+  Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
+                        &EnumConstantDecls[0], EnumConstantDecls.size());
   
   Action::AttrTy *AttrList = 0;
   // If attributes exist after the identifier list, parse them.
