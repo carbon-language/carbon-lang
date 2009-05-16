@@ -10,7 +10,6 @@ void foo() {
   throw 1;
   throw;
   1 ? throw : (void)42;
-  // gcc doesn't parse the below, but we do
-  __extension__ throw 1;
+  __extension__ throw 1;    // expected-error {{expected expression}}
   (void)throw;              // expected-error {{expected expression}}
 }
