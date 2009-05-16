@@ -196,6 +196,13 @@ namespace llvm {
   /// createStackProtectorPass - This pass adds stack protectors to functions.
   FunctionPass *createStackProtectorPass(const TargetLowering *tli);
 
+  /// createMachineVerifierPass - This pass verifies cenerated machine code
+  /// instructions for correctness.
+  ///
+  /// @param allowPhysDoubleDefs ignore double definitions of
+  ///        registers. Useful before LiveVariables has run.
+  FunctionPass *createMachineVerifierPass(bool allowDoubleDefs);
+
 } // End llvm namespace
 
 #endif

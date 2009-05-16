@@ -37,6 +37,9 @@ static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
     cl::desc("Dump emitter generated instructions as assembly"));
 static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
     cl::desc("Dump garbage collector data"));
+static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
+    cl::desc("Verify generated machine code"),
+    cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
 // When this works it will be on by default.
 static cl::opt<bool>
@@ -132,6 +135,15 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   return false; // success!
 }
 
+static void printAndVerify(PassManagerBase &PM,
+                           bool allowDoubleDefs = false) {
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
+  if (VerifyMachineCode)
+    PM.add(createMachineVerifierPass(allowDoubleDefs));
+}
+
 /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for both
 /// emitting to assembly files or machine code output.
 ///
@@ -176,17 +188,17 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     return true;
 
   // Print the instruction selected machine code...
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  printAndVerify(PM, /* allowDoubleDefs= */ true);
 
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createMachineLICMPass());
     PM.add(createMachineSinkingPass());
+    printAndVerify(PM, /* allowDoubleDefs= */ true);
   }
 
   // Run pre-ra passes.
-  if (addPreRegAlloc(PM, OptLevel) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  if (addPreRegAlloc(PM, OptLevel))
+    printAndVerify(PM);
 
   // Perform register allocation.
   PM.add(createRegisterAllocator());
@@ -195,46 +207,33 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None)
     PM.add(createStackSlotColoringPass(OptLevel >= CodeGenOpt::Aggressive));
 
-  if (PrintMachineCode)  // Print the register-allocated code
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  printAndVerify(PM);           // Print the register-allocated code
 
   // Run post-ra passes.
-  if (addPostRegAlloc(PM, OptLevel) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  if (addPostRegAlloc(PM, OptLevel))
+    printAndVerify(PM);
 
   PM.add(createLowerSubregsPass());
-
-  if (PrintMachineCode)  // Print the subreg lowered code
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  printAndVerify(PM);
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  printAndVerify(PM);
 
   // Second pass scheduler.
   if (OptLevel != CodeGenOpt::None && !DisablePostRAScheduler) {
     PM.add(createPostRAScheduler());
-
-    if (PrintMachineCode)
-      PM.add(createMachineFunctionPrinterPass(cerr));
+    printAndVerify(PM);
   }
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
-  if (OptLevel != CodeGenOpt::None)
+  if (OptLevel != CodeGenOpt::None) {
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+    printAndVerify(PM);
+  }
 
   PM.add(createGCMachineCodeAnalysisPass());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+  printAndVerify(PM);
 
   if (PrintGCInfo)
     PM.add(createGCInfoPrinter(*cerr));
