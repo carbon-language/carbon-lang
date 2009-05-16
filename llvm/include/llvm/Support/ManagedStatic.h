@@ -14,8 +14,6 @@
 #ifndef LLVM_SUPPORT_MANAGED_STATIC_H
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
-#include "llvm/System/Atomic.h"
-
 namespace llvm {
 
 /// object_deleter - Helper method for ManagedStatic.
@@ -28,8 +26,6 @@ void object_deleter(void *Ptr) {
 /// ManagedStaticBase - Common base class for ManagedStatic instances.
 class ManagedStaticBase {
 protected:
-  mutable sys::cas_flag InitFlag;
-  
   // This should only be used as a static variable, which guarantees that this
   // will be zero initialized.
   mutable void *Ptr;
@@ -51,35 +47,23 @@ public:
 ///
 template<class C>
 class ManagedStatic : public ManagedStaticBase {
-private:
-  void checkInit() {
-    sys::cas_flag OldFlag = sys::CompareAndSwap(&InitFlag, 1, 0);
-    if (OldFlag == 0) {
-      LazyInit();
-      sys::MemoryFence();
-      InitFlag = 2;
-    } else if (OldFlag == 1) {
-      while (InitFlag == 1) ;
-      sys::MemoryFence();
-    }
-  }
 public:
 
   // Accessors.
   C &operator*() {
-    checkInit();
+    if (!Ptr) LazyInit();
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
-    checkInit();
+    if (!Ptr) LazyInit();
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
-    checkInit();
+    if (!Ptr) LazyInit();
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
-    checkInit();
+    if (!Ptr) LazyInit();
     return static_cast<C*>(Ptr);
   }
 
