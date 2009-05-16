@@ -4471,17 +4471,13 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
           return Context.getMemberPointerType(op->getType(),
                 Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
       }
-    } else if (isa<FunctionDecl>(dcl)) {
+    } else if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(dcl)) {
       // Okay: we can take the address of a function.
       // As above.
-      if (isa<QualifiedDeclRefExpr>(op)) {
-        DeclContext *Ctx = dcl->getDeclContext();
-        if (Ctx && Ctx->isRecord())
-          return Context.getMemberPointerType(op->getType(),
-                Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
-      }
-    }
-    else
+      if (isa<QualifiedDeclRefExpr>(op) && MD->isInstance())
+        return Context.getMemberPointerType(op->getType(),
+              Context.getTypeDeclType(MD->getParent()).getTypePtr());
+    } else if (!isa<FunctionDecl>(dcl))
       assert(0 && "Unknown/unexpected decl type");
   }
 
