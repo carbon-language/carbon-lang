@@ -1347,16 +1347,19 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // Find the (first) error node in the trimmed graph.  We just need to consult
   // the node map (NMap) which maps from nodes in the original graph to nodes
   // in the new graph.
-  const ExplodedNode<GRState>* N = 0;
-  unsigned NodeIndex = 0;
+
+  std::queue<const ExplodedNode<GRState>*> WS;
+  typedef llvm::DenseMap<const ExplodedNode<GRState>*,unsigned> IndexMapTy;
+  IndexMapTy IndexMap;
 
   for (const ExplodedNode<GRState>** I = NStart; I != NEnd; ++I)
-    if ((N = NMap->getMappedNode(*I))) {
-      NodeIndex = (I - NStart) / sizeof(*I);
-      break;
+    if (const ExplodedNode<GRState> *N = NMap->getMappedNode(*I)) {
+      unsigned NodeIndex = (I - NStart) / sizeof(*I);
+      WS.push(N);
+      IndexMap[*I] = NodeIndex;
     }
   
-  assert(N && "No error node found in the trimmed graph.");
+  assert(!WS.empty() && "No error node found in the trimmed graph.");
 
   // Create a new (third!) graph with a single path.  This is the graph
   // that will be returned to the caller.
@@ -1368,8 +1371,6 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // to the root node, and then construct a new graph that contains only
   // a single path.
   llvm::DenseMap<const void*,unsigned> Visited;
-  std::queue<const ExplodedNode<GRState>*> WS;
-  WS.push(N);
   
   unsigned cnt = 0;
   const ExplodedNode<GRState>* Root = 0;
@@ -1393,17 +1394,18 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
       WS.push(*I);
   }
   
-  assert (Root);
+  assert(Root);
   
   // Now walk from the root down the BFS path, always taking the successor
   // with the lowest number.
   ExplodedNode<GRState> *Last = 0, *First = 0;  
   NodeBackMap *BM = new NodeBackMap();
+  unsigned NodeIndex = 0;
   
-  for ( N = Root ;;) {
+  for ( const ExplodedNode<GRState> *N = Root ;;) {
     // Lookup the number associated with the current node.
     llvm::DenseMap<const void*,unsigned>::iterator I = Visited.find(N);
-    assert (I != Visited.end());
+    assert(I != Visited.end());
     
     // Create the equivalent node in the new graph with the same state
     // and location.
@@ -1422,8 +1424,11 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     Last = NewN;
     
     // Are we at the final node?
-    if (I->second == 0) {
+    IndexMapTy::iterator IMI =
+      IndexMap.find((const ExplodedNode<GRState>*)(IMitr->second));
+    if (IMI != IndexMap.end()) {
       First = NewN;
+      NodeIndex = IMI->second;
       break;
     }
     
@@ -1446,10 +1451,11 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
       }
     }
     
-    assert (N);
+    assert(N);
   }
   
-  assert (First);
+  assert(First);
+
   return std::make_pair(std::make_pair(GNew, BM),
                         std::make_pair(First, NodeIndex));
 }
