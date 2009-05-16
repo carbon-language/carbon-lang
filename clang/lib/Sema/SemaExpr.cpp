@@ -5208,15 +5208,21 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
 
   // Get the va_list type
   QualType VaListType = Context.getBuiltinVaListType();
-  // Deal with implicit array decay; for example, on x86-64,
-  // va_list is an array, but it's supposed to decay to
-  // a pointer for va_arg.
-  if (VaListType->isArrayType())
+  if (VaListType->isArrayType()) {
+    // Deal with implicit array decay; for example, on x86-64,
+    // va_list is an array, but it's supposed to decay to
+    // a pointer for va_arg.
     VaListType = Context.getArrayDecayedType(VaListType);
-  // Make sure the input expression also decays appropriately.
-  UsualUnaryConversions(E);
+    // Make sure the input expression also decays appropriately.
+    UsualUnaryConversions(E);
+  } else {
+    // Otherwise, the va_list argument must be an l-value because
+    // it is modified by va_arg.
+    if (CheckForModifiableLvalue(E, BuiltinLoc, *this))
+      return ExprError();
+  }
 
-  if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible) {
+  if (!Context.hasSameType(VaListType, E->getType())) {
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << OrigExpr->getType() << E->getSourceRange());
