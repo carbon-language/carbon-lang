@@ -21,3 +21,7 @@ extern "C" int foo;
 
 extern "C" const int bar;
 extern "C" int const bar;
+
+// <rdar://problem/6895431>
+extern "C" struct bar d;
+extern struct bar e;

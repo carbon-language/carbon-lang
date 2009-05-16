@@ -2703,7 +2703,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
       QualType InitType = Type;
       if (const ArrayType *Array = Context.getAsArrayType(Type))
         InitType = Array->getElementType();
-      if (!Var->hasExternalStorage() && InitType->isRecordType()) {
+      if ((!Var->hasExternalStorage() && !Var->isExternC(Context)) &&
+           InitType->isRecordType()) {
         CXXRecordDecl *RD = 
           cast<CXXRecordDecl>(InitType->getAsRecordType()->getDecl());
         CXXConstructorDecl *Constructor = 0;
