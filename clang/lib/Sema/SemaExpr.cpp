@@ -2035,16 +2035,22 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                             diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr->getSourceRange());
   } else {
-    // We use isTemplateTypeParmType directly here, instead of simply checking
-    // whether BaseType is dependent, because we want to report an error for
-    //
-    // T *t;
-    // t.foo;
-    //
-    //
-    if (BaseType->isTemplateTypeParmType()) 
-      return Owned(new (Context) MemberExpr(BaseExpr, false, 0,
-                                            MemberLoc, Context.DependentTy));
+    if (BaseType->isDependentType()) {
+      // Require that the base type isn't a pointer type 
+      // (so we'll report an error for)
+      // T* t;
+      // t.f;
+      // 
+      // In Obj-C++, however, the above expression is valid, since it could be
+      // accessing the 'f' property if T is an Obj-C interface. The extra check
+      // allows this, while still reporting an error if T is a struct pointer.
+      const PointerType *PT = BaseType->getAsPointerType();
+
+      if (!PT || (getLangOptions().ObjC1 && 
+                  !PT->getPointeeType()->isRecordType()))
+        return Owned(new (Context) MemberExpr(BaseExpr, false, 0,
+                                              MemberLoc, Context.DependentTy));
+    }
   }
 
   // Handle field access to simple records.  This also handles access to fields
