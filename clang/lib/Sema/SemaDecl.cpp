@@ -2161,15 +2161,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           if (!OldMD->isVirtual())
             continue;
          
-          if (!CheckOverridingFunctionReturnType(NewMD, OldMD)) {
-            // FIXME: Add OldMD to the list of methods NewMD overrides.
-          }
-          
+          if (!CheckOverridingFunctionReturnType(NewMD, OldMD))
+            NewMD->addOverriddenMethod(OldMD);
         }
       }
-                        
     }
-    
   }
   
   if (SC == FunctionDecl::Static && isa<CXXMethodDecl>(NewFD) && 
