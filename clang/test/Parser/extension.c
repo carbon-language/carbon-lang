@@ -1,17 +1,20 @@
-// RUN: clang-cc %s -fsyntax-only
+/* RUN: clang-cc %s -fsyntax-only -pedantic -verify -std=c89
+ */
 
-// Top level extension marker.
+/* Top level extension marker. */
 
 __extension__ typedef struct
 {
     long long int quot; 
     long long int rem; 
-}lldiv_t; 
+} lldiv_t;
 
 
-// Compound expr __extension__ marker.
+/* Decl/expr __extension__ marker. */
 void bar() {
   __extension__ int i;
   int j;
+  __extension__ (j = 10LL);
+  __extension__ j = 10LL; /* expected-warning {{'long long' is an extension}} */
 }
 

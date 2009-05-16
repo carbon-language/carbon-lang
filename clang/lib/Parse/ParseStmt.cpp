@@ -435,13 +435,13 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       SourceLocation ExtLoc = ConsumeToken();
       while (Tok.is(tok::kw___extension__))
         ConsumeToken();
-      
-      // __extension__ silences extension warnings in the subexpression.
-      ExtensionRAIIObject O(Diags);  // Use RAII to do this.
 
       // If this is the start of a declaration, parse it as such.
       if (isDeclarationStatement()) {
+        // __extension__ silences extension warnings in the subdeclaration.
         // FIXME: Save the __extension__ on the decl as a node somehow?
+        ExtensionRAIIObject O(Diags);
+
         SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
         DeclGroupPtrTy Res = ParseDeclaration(Declarator::BlockContext,DeclEnd);
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclEnd);

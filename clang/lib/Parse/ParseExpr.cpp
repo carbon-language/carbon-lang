@@ -225,8 +225,14 @@ Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
 /// process of disambiguating between an expression and a declaration.
 Parser::OwningExprResult
 Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
-  OwningExprResult LHS(ParseCastExpression(false));
-  if (LHS.isInvalid()) return move(LHS);
+  OwningExprResult LHS(Actions, true);
+  {
+    // Silence extension warnings in the sub-expression
+    ExtensionRAIIObject O(Diags);
+
+    LHS = ParseCastExpression(false);
+    if (LHS.isInvalid()) return move(LHS);
+  }
 
   LHS = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
                              move(LHS));
