@@ -46,7 +46,7 @@ namespace llvm {
       __sync_synchronize();
     }
 
-    typedef volatile uint32_t cas_flag;
+    typedef uint32_t cas_flag;
     inline cas_flag CompareAndSwap(cas_flag* dest, cas_flag exc, cas_flag c) {
       return __sync_val_compare_and_swap(dest, exc, c);
     }
@@ -56,7 +56,7 @@ namespace llvm {
       OSMemoryBarrier();
     }
 
-    typedef volatile int32_t cas_flag;
+    typedef int32_t cas_flag;
     inline cas_flag CompareAndSwap(cas_flag* dest, cas_flag exc, cas_flag c) {
       cas_flag old = *dest;
       OSAtomicCompareAndSwap32(c, exc, dest);
