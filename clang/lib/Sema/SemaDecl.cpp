@@ -916,7 +916,13 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   MergeAttributes(New, Old, Context);
 
   // Merge the types
-  QualType MergedT = Context.mergeTypes(New->getType(), Old->getType());
+  QualType MergedT;
+  if (getLangOptions().CPlusPlus) {
+    if (Context.hasSameType(New->getType(), Old->getType()))
+      MergedT = New->getType();
+  } else {
+    MergedT = Context.mergeTypes(New->getType(), Old->getType());
+  }
   if (MergedT.isNull()) {
     Diag(New->getLocation(), diag::err_redefinition_different_type) 
       << New->getDeclName();

@@ -3727,14 +3727,24 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
                                      rex->getType()))
         return QualType();
 
-      // Pointee types must be compatible.
-      if (!Context.typesAreCompatible(
-              Context.getCanonicalType(lpointee).getUnqualifiedType(),
-              Context.getCanonicalType(rpointee).getUnqualifiedType())) {
-        Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
-          << lex->getType() << rex->getType()
-          << lex->getSourceRange() << rex->getSourceRange();
-        return QualType();
+      if (getLangOptions().CPlusPlus) {
+        // Pointee types must be the same: C++ [expr.add]
+        if (!Context.hasSameUnqualifiedType(lpointee, rpointee)) {
+          Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
+            << lex->getType() << rex->getType()
+            << lex->getSourceRange() << rex->getSourceRange();
+          return QualType();
+        }
+      } else {
+        // Pointee types must be compatible C99 6.5.6p3
+        if (!Context.typesAreCompatible(
+                Context.getCanonicalType(lpointee).getUnqualifiedType(),
+                Context.getCanonicalType(rpointee).getUnqualifiedType())) {
+          Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
+            << lex->getType() << rex->getType()
+            << lex->getSourceRange() << rex->getSourceRange();
+          return QualType();
+        }
       }
 
       if (ComplainAboutVoid)
