@@ -446,7 +446,8 @@ MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI)
       if (TargetRegisterInfo::isPhysicalRegister(*I)) {
         // We allow double defines to physical registers with live
         // super-registers.
-        if (!allowPhysDoubleDefs && !anySuperRegisters(regsLive, *I)) {
+        if (!allowPhysDoubleDefs && !isReserved(*I) &&
+            !anySuperRegisters(regsLive, *I)) {
           report("Redefining a live physical register", MI);
           *OS << "Register " << TRI->getName(*I)
               << " was defined but already live.\n";
@@ -615,7 +616,7 @@ MachineVerifier::visitMachineFunctionAfter()
         for (MachineBasicBlock::const_livein_iterator I = MFI->livein_begin(),
                E = MFI->livein_end(); I != E; ++I) {
           if (TargetRegisterInfo::isPhysicalRegister(*I) &&
-              !PrInfo.isLiveOut(*I)) {
+              !isReserved (*I) && !PrInfo.isLiveOut(*I)) {
             report("Live-in physical register is not live-out from predecessor",
                    MFI);
             *OS << "Register " << TRI->getName(*I)
