@@ -840,10 +840,13 @@ public:
 ///
 class IndirectGotoStmt : public Stmt {
   SourceLocation GotoLoc;
+  SourceLocation StarLoc;
   Stmt *Target;
 public:
-  IndirectGotoStmt(SourceLocation gotoLoc, Expr *target)
-    : Stmt(IndirectGotoStmtClass), GotoLoc(gotoLoc), Target((Stmt*)target) {}
+  IndirectGotoStmt(SourceLocation gotoLoc, SourceLocation starLoc, 
+                   Expr *target)
+    : Stmt(IndirectGotoStmtClass), GotoLoc(gotoLoc), StarLoc(starLoc),
+      Target((Stmt*)target) {}
 
   /// \brief Build an empty indirect goto statement.
   explicit IndirectGotoStmt(EmptyShell Empty) 
@@ -851,6 +854,8 @@ public:
   
   void setGotoLoc(SourceLocation L) { GotoLoc = L; }
   SourceLocation getGotoLoc() const { return GotoLoc; }
+  void setStarLoc(SourceLocation L) { StarLoc = L; }
+  SourceLocation getStarLoc() const { return StarLoc; }
   
   Expr *getTarget();
   const Expr *getTarget() const;

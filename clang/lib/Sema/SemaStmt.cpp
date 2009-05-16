@@ -706,13 +706,15 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
                             ExprArg DestExp) {
   // Convert operand to void*
   Expr* E = DestExp.takeAs<Expr>();
-  QualType ETy = E->getType();
-  AssignConvertType ConvTy =
-        CheckSingleAssignmentConstraints(Context.VoidPtrTy, E);
-  if (DiagnoseAssignmentResult(ConvTy, StarLoc, Context.VoidPtrTy, ETy,
-                               E, "passing"))
-    return StmtError();
-  return Owned(new (Context) IndirectGotoStmt(GotoLoc, E));
+  if (!E->isTypeDependent()) {
+    QualType ETy = E->getType();
+    AssignConvertType ConvTy =
+      CheckSingleAssignmentConstraints(Context.VoidPtrTy, E);
+    if (DiagnoseAssignmentResult(ConvTy, StarLoc, Context.VoidPtrTy, ETy,
+                                 E, "passing"))
+      return StmtError();
+  }
+  return Owned(new (Context) IndirectGotoStmt(GotoLoc, StarLoc, E));
 }
 
 Action::OwningStmtResult

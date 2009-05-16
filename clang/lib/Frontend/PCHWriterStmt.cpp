@@ -223,6 +223,7 @@ void PCHStmtWriter::VisitGotoStmt(GotoStmt *S) {
 void PCHStmtWriter::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getGotoLoc(), Record);
+  Writer.AddSourceLocation(S->getStarLoc(), Record);
   Writer.WriteSubStmt(S->getTarget());
   Code = pch::STMT_INDIRECT_GOTO;
 }

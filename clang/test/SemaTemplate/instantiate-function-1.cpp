@@ -170,3 +170,13 @@ template<typename T, int I1, int I2> struct Switch1 {
 
 template struct Switch1<int, 1, 2>;
 template struct Switch1<int, 2, 2>; // expected-note{{instantiation}}
+
+template<typename T> struct IndirectGoto0 {
+  void f(T x) {
+    // FIXME: crummy error message below
+    goto *x; // expected-error{{incompatible}}
+  }
+};
+
+template struct IndirectGoto0<void*>;
+template struct IndirectGoto0<int>; // expected-note{{instantiation}}

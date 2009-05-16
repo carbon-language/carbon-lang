@@ -49,6 +49,7 @@ namespace {
     OwningStmtResult VisitExpr(Expr *E);
     OwningStmtResult VisitLabelStmt(LabelStmt *S);
     OwningStmtResult VisitGotoStmt(GotoStmt *S);
+    OwningStmtResult VisitIndirectGotoStmt(IndirectGotoStmt *S);
     OwningStmtResult VisitBreakStmt(BreakStmt *S);
     OwningStmtResult VisitContinueStmt(ContinueStmt *S);
     OwningStmtResult VisitReturnStmt(ReturnStmt *S);
@@ -102,6 +103,17 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitLabelStmt(LabelStmt *S) {
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitGotoStmt(GotoStmt *S) {
   return SemaRef.ActOnGotoStmt(S->getGotoLoc(), S->getLabelLoc(), 
                                S->getLabel()->getID());
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
+  OwningExprResult Target = SemaRef.InstantiateExpr(S->getTarget(),
+                                                    TemplateArgs);
+  if (Target.isInvalid())
+    return SemaRef.StmtError();
+
+  return SemaRef.ActOnIndirectGotoStmt(S->getGotoLoc(), S->getStarLoc(),
+                                       move(Target));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitBreakStmt(BreakStmt *S) {
