@@ -116,7 +116,7 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
           cerr << "Unprocessed value in a map!";
           Failed = true;
         }
-      } else if (isTypeLegal(Res.getValueType())) {
+      } else if (isTypeLegal(Res.getValueType()) || IgnoreNodeResults(I)) {
         if (Mapped > 1) {
           cerr << "Value with legal type was transformed!";
           Failed = true;
