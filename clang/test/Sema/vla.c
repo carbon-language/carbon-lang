@@ -46,3 +46,8 @@ static const unsigned array[((2 * (int)((((4) / 2) + 1.0/3.0) * (4) - 1e-8)) + 1
 
 int a[*]; // expected-error {{star modifier used outside of function prototype}}
 int f4(int a[*][*]);
+
+// PR2044
+int pr2044(int b) {int (*c(void))[b];**c() = 2;} // expected-error {{variably modified type}}
+int pr2044b;
+int (*pr2044c(void))[pr2044b]; // expected-error {{variably modified type}}

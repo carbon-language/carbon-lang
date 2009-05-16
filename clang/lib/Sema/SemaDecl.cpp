@@ -2344,6 +2344,13 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
   if (NewFD->isInvalidDecl())
     return;
 
+  if (NewFD->getResultType()->isVariablyModifiedType()) {
+    // Functions returning a variably modified type violate C99 6.7.5.2p2
+    // because all functions have linkage.
+    Diag(NewFD->getLocation(), diag::err_vm_func_decl);
+    return NewFD->setInvalidDecl();
+  }
+
   // Semantic checking for this function declaration (in isolation).
   if (getLangOptions().CPlusPlus) {
     // C++-specific checks.
