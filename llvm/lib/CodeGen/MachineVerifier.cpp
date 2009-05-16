@@ -345,7 +345,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
           addRegWithSubRegs(regsKilled, Reg);
       }
       // Explicit use of a dead register.
-      if (!MO->isImplicit() && !regsLive.count(Reg))
+      if (!MO->isImplicit() && !regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
           // Reserved registers may be used even when 'dead'.
           if (!isReserved(Reg))
@@ -360,6 +360,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
           else if (MI->getOpcode() != TargetInstrInfo::PHI)
             MInfo.vregsLiveIn.insert(std::make_pair(Reg, MI));
         }
+      }
     } else {
       // Register defined.
       // TODO: verify that earlyclobber ops are not used.
