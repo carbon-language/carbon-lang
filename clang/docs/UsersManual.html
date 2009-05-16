@@ -510,6 +510,9 @@ in gnu* modes.</li>
 -trigraphs option.</li>
 <li>The parser recognizes "asm" and "typeof" as keywords in gnu* modes; the
 variants "__asm__" and "__typeof__" are recognized in all modes.</li>
+<li>The Apple "blocks" extension is recognized by default in gnu* modes
+on some platforms; it can be enabled in any mode with the "-fblocks"
+option.</li>
 <li>Some warnings are different.</li>
 </ul>
 
@@ -526,7 +529,6 @@ statement is different. (example: "if ((struct x {int x;}*)0) {}".)</li>
 <li>Commas are allowed in integer constant expressions in *99 modes.</li>
 <li>Arrays which are not lvalues are not implicitly promoted to pointers in
 *89 modes.</li>
-<li>Constructs like "&*X" are always allowed in *99 modes.</li>
 <li>Some warnings are different.</li>
 </ul>
 
@@ -560,11 +562,6 @@ point, at least partially.</li>
 (<a href="http://llvm.org/bugs/show_bug.cgi?id=2461">bug 3811</a>). This is a
 relatively small feature, so it is likely to be implemented relatively
 soon.</li>
-
-<li>clang does not implement overloads for the __sync_* builtins
-(<a href="http://llvm.org/bugs/show_bug.cgi?id=2461">bug 3824</a>). The
-builtins only currently work with 32-bit types. This is a relatively
-small feature, so it is likely to be implemented relatively soon.</li>
 
 <li>clang does not support code generation for variables pinned to registers
 (<a href="http://llvm.org/bugs/show_bug.cgi?id=3933">bug 3933</a>).  This
