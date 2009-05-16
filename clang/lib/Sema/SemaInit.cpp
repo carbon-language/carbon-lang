@@ -538,7 +538,7 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
     }
   }
 
-  if (T->isScalarType())
+  if (T->isScalarType() && !TopLevelObject)
     SemaRef.Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init)
       << IList->getSourceRange()
       << CodeModificationHint::CreateRemoval(SourceRange(IList->getLocStart()))

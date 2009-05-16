@@ -24,7 +24,7 @@ int* f3(int x, int *y) {
 
 void* compound_literal(int x, int y) {
   if (x)
-    return &(unsigned short){((unsigned short)0x22EF)}; // expected-warning{{Address of stack memory}} expected-warning{{braces around scalar initializer}}
+    return &(unsigned short){((unsigned short)0x22EF)}; // expected-warning{{Address of stack memory}}
 
   int* array[] = {};
   struct s { int z; double y; int w; };

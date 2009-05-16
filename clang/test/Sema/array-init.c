@@ -20,7 +20,7 @@ void func() {
 
   int x3[x] = { 1, 2 }; // expected-error{{variable-sized object may not be initialized}}
 
-  int x4 = { 1, 2 }; // expected-warning{{braces around scalar initializer}} expected-warning{{excess elements in scalar initializer}}
+  int x4 = { 1, 2 }; // expected-warning{{excess elements in scalar initializer}}
 
   int y[4][3] = { 
     { 1, 3, 5 },
