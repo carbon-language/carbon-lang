@@ -207,7 +207,9 @@ class CXXBoolLiteralExpr : public Expr {
 public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) : 
     Expr(CXXBoolLiteralExprClass, Ty), Value(val), Loc(l) {}
-  
+
+  CXXBoolLiteralExpr* Clone(ASTContext &C) const;
+
   bool getValue() const { return Value; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
@@ -228,6 +230,8 @@ class CXXNullPtrLiteralExpr : public Expr {
 public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
     Expr(CXXNullPtrLiteralExprClass, Ty), Loc(l) {}
+
+  CXXNullPtrLiteralExpr* Clone(ASTContext &C) const;
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 

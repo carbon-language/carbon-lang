@@ -27,8 +27,25 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
+PredefinedExpr* PredefinedExpr::Clone(ASTContext &C) const {
+  return new (C) PredefinedExpr(Loc, getType(), Type);
+}
+
 IntegerLiteral* IntegerLiteral::Clone(ASTContext &C) const {
   return new (C) IntegerLiteral(Value, getType(), Loc);
+}
+
+CharacterLiteral* CharacterLiteral::Clone(ASTContext &C) const {
+  return new (C) CharacterLiteral(Value, IsWide, getType(), Loc);
+}
+
+FloatingLiteral* FloatingLiteral::Clone(ASTContext &C) const {
+  bool exact = IsExact;
+  return new (C) FloatingLiteral(Value, &exact, getType(), Loc);
+}
+
+GNUNullExpr* GNUNullExpr::Clone(ASTContext &C) const {
+  return new (C) GNUNullExpr(getType(), TokenLoc);
 }
 
 /// getValueAsApproximateDouble - This returns the value as an inaccurate

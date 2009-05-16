@@ -36,7 +36,11 @@ namespace {
     // FIXME: Once we get closer to completion, replace these manually-written
     // declarations with automatically-generated ones from
     // clang/AST/StmtNodes.def.
+    OwningExprResult VisitPredefinedExpr(PredefinedExpr *E);
     OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
+    OwningExprResult VisitFloatingLiteral(FloatingLiteral *E);
+    OwningExprResult VisitStringLiteral(StringLiteral *E);
+    OwningExprResult VisitCharacterLiteral(CharacterLiteral *E);
     OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
     OwningExprResult VisitParenExpr(ParenExpr *E);
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
@@ -49,7 +53,10 @@ namespace {
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
     OwningExprResult VisitCXXThisExpr(CXXThisExpr *E);
-      
+    OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
+    OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
+    OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
+
     // Base case. I'm supposed to ignore this.
     Sema::OwningExprResult VisitStmt(Stmt *S) { 
       S->dump();
@@ -59,8 +66,43 @@ namespace {
   };
 }
 
-Sema::OwningExprResult 
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitPredefinedExpr(PredefinedExpr *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
 TemplateExprInstantiator::VisitIntegerLiteral(IntegerLiteral *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitFloatingLiteral(FloatingLiteral *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitStringLiteral(StringLiteral *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitCharacterLiteral(CharacterLiteral *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitGNUNullExpr(GNUNullExpr *E) {
   return SemaRef.Clone(E);
 }
 

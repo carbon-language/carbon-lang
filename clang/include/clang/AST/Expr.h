@@ -361,6 +361,8 @@ public:
   explicit PredefinedExpr(EmptyShell Empty) 
     : Expr(PredefinedExprClass, Empty) { }
 
+  PredefinedExpr* Clone(ASTContext &C) const;
+
   IdentType getIdentType() const { return Type; }
   void setIdentType(IdentType IT) { Type = IT; }
 
@@ -433,6 +435,8 @@ public:
   /// \brief Construct an empty character literal.
   CharacterLiteral(EmptyShell Empty) : Expr(CharacterLiteralClass, Empty) { }
 
+  CharacterLiteral* Clone(ASTContext &C) const;
+
   SourceLocation getLoc() const { return Loc; }
   bool isWide() const { return IsWide; }
   
@@ -464,8 +468,10 @@ public:
     : Expr(FloatingLiteralClass, Type), Value(V), IsExact(*isexact), Loc(L) {} 
 
   /// \brief Construct an empty floating-point literal.
-  FloatingLiteral(EmptyShell Empty) 
+  explicit FloatingLiteral(EmptyShell Empty) 
     : Expr(FloatingLiteralClass, Empty), Value(0.0) { }
+
+  FloatingLiteral* Clone(ASTContext &C) const;
 
   const llvm::APFloat &getValue() const { return Value; }
   void setValue(const llvm::APFloat &Val) { Value = Val; }
@@ -1805,6 +1811,8 @@ public:
 
   /// \brief Build an empty GNU __null expression.
   explicit GNUNullExpr(EmptyShell Empty) : Expr(GNUNullExprClass, Empty) { }
+
+  GNUNullExpr* Clone(ASTContext &C) const;
 
   /// getTokenLocation - The location of the __null token.
   SourceLocation getTokenLocation() const { return TokenLoc; }

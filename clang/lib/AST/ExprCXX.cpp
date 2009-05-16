@@ -309,3 +309,15 @@ Stmt::child_iterator CXXExprWithTemporaries::child_end() {
   return &SubExpr + 1;
 }
 
+
+//===----------------------------------------------------------------------===//
+//  Cloners
+//===----------------------------------------------------------------------===//
+
+CXXBoolLiteralExpr* CXXBoolLiteralExpr::Clone(ASTContext &C) const {
+  return new (C) CXXBoolLiteralExpr(Value, getType(), Loc);
+}
+
+CXXNullPtrLiteralExpr* CXXNullPtrLiteralExpr::Clone(ASTContext &C) const {
+  return new (C) CXXNullPtrLiteralExpr(getType(), Loc);
+}
