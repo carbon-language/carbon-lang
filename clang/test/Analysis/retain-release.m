@@ -632,6 +632,25 @@ void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
 }
 
 //===----------------------------------------------------------------------===//
+// <rdar://problem/6893565> don't flag leaks for return types that cannot be 
+//                          determined to be CF types
+//===----------------------------------------------------------------------===//
+
+// We don't know if 'struct s6893565' represents a Core Foundation type, so
+// we shouldn't emit an error here.
+typedef struct s6893565* TD6893565;
+
+@interface RDar6893565 {}
+-(TD6893565)newThing;
+@end
+
+@implementation RDar6893565
+-(TD6893565)newThing {  
+  return (TD6893565) [[NSString alloc] init]; // no-warning
+}
+@end
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 

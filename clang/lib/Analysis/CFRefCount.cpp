@@ -894,10 +894,17 @@ bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
   if (!OT)
     return true;
     
-  // Does the interface subclass NSObject?
-  // FIXME: We can memoize here if this gets too expensive.  
-  IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
+  // Does the interface subclass NSObject?    
+  // FIXME: We can memoize here if this gets too expensive.    
   ObjCInterfaceDecl* ID = OT->getDecl();  
+
+  // Assume that anything declared with a forward declaration and no
+  // @interface subclasses NSObject.
+  if (ID->isForwardDecl())
+    return true;
+  
+  IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
+
 
   for ( ; ID ; ID = ID->getSuperClass())
     if (ID->getIdentifier() == NSObjectII)
@@ -3142,22 +3149,24 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
       RetEffect RE = Summ.getRetEffect();
       bool hasError = false;
 
-      if (isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
-        // Things are more complicated with garbage collection.  If the
-        // returned object is suppose to be an Objective-C object, we have
-        // a leak (as the caller expects a GC'ed object) because no
-        // method should return ownership unless it returns a CF object.
-        X = X ^ RefVal::ErrorGCLeakReturned;
-        
-        // Keep this false until this is properly tested.
-        hasError = true;
-      }
-      else if (!RE.isOwned()) {
-        // Either we are using GC and the returned object is a CF type
-        // or we aren't using GC.  In either case, we expect that the
-        // enclosing method is expected to return ownership.        
-        hasError = true;
-        X = X ^ RefVal::ErrorLeakReturned;
+      if (RE.getKind() != RetEffect::NoRet) {
+        if (isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
+          // Things are more complicated with garbage collection.  If the
+          // returned object is suppose to be an Objective-C object, we have
+          // a leak (as the caller expects a GC'ed object) because no
+          // method should return ownership unless it returns a CF object.
+          X = X ^ RefVal::ErrorGCLeakReturned;
+          
+          // Keep this false until this is properly tested.
+          hasError = true;
+        }
+        else if (!RE.isOwned()) {
+          // Either we are using GC and the returned object is a CF type
+          // or we aren't using GC.  In either case, we expect that the
+          // enclosing method is expected to return ownership.        
+          hasError = true;
+          X = X ^ RefVal::ErrorLeakReturned;
+        }
       }
       
       if (hasError) {        
