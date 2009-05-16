@@ -813,9 +813,9 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ImplicitConversionSequence::UserDefinedConversion:
-    // FIXME: This is, of course, wrong. We'll need to actually call
-    // the constructor or conversion operator, and then cope with the
-    // standard conversions.
+    // FIXME: This is, of course, wrong. We'll need to actually call the
+    // constructor or conversion operator, and then cope with the standard
+    // conversions.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
                       ToType->isLValueReferenceType());
     return false;
@@ -842,16 +842,14 @@ bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const StandardConversionSequence& SCS,
                                 const char *Flavor) {
-  // Overall FIXME: we are recomputing too many types here and doing
-  // far too much extra work. What this means is that we need to keep
-  // track of more information that is computed when we try the
-  // implicit conversion initially, so that we don't need to recompute
-  // anything here.
+  // Overall FIXME: we are recomputing too many types here and doing far too
+  // much extra work. What this means is that we need to keep track of more
+  // information that is computed when we try the implicit conversion initially,
+  // so that we don't need to recompute anything here.
   QualType FromType = From->getType();
 
   if (SCS.CopyConstructor) {
-    // FIXME: Create a temporary object by calling the copy
-    // constructor.
+    // FIXME: Create a temporary object by calling the copy constructor.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
                       ToType->isLValueReferenceType());
     return false;
@@ -946,8 +944,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Qualification:
-    // FIXME: Not sure about lvalue vs rvalue here in the presence of
-    // rvalue references.
+    // FIXME: Not sure about lvalue vs rvalue here in the presence of rvalue
+    // references.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
                       ToType->isLValueReferenceType());
     break;
@@ -966,9 +964,9 @@ Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                  TypeTy *Ty,
                                                  SourceLocation RParen) {
   // FIXME: Some of the type traits have requirements. Interestingly, only the
-  // __is_base_of requirement is explicitly stated to be diagnosed. Indeed,
-  // G++ accepts __is_pod(Incomplete) without complaints, and claims that the
-  // type is indeed a POD.
+  // __is_base_of requirement is explicitly stated to be diagnosed. Indeed, G++
+  // accepts __is_pod(Incomplete) without complaints, and claims that the type
+  // is indeed a POD.
 
   // There is no point in eagerly computing the value. The traits are designed
   // to be used from type trait templates, so Ty will be a template parameter
@@ -1015,8 +1013,8 @@ QualType Sema::CheckPointerToMemberOperands(
       Context.getCanonicalType(LType).getUnqualifiedType()) {
     BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
                     /*DetectVirtual=*/false);
-    // FIXME: Would it be useful to print full ambiguity paths,
-    // or is that overkill?
+    // FIXME: Would it be useful to print full ambiguity paths, or is that
+    // overkill?
     if (!IsDerivedFrom(LType, Class, Paths) ||
         Paths.isAmbiguous(Context.getCanonicalType(Class))) {
       Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
@@ -1032,9 +1030,9 @@ QualType Sema::CheckPointerToMemberOperands(
   // in accordance with 5.5p5 and 5.2.5.
   // FIXME: This returns a dereferenced member function pointer as a normal
   // function type. However, the only operation valid on such functions is
-  // calling them. There's also a GCC extension to get a function pointer to
-  // the thing, which is another complication, because this type - unlike the
-  // type that is the result of this expression - takes the class as the first
+  // calling them. There's also a GCC extension to get a function pointer to the
+  // thing, which is another complication, because this type - unlike the type
+  // that is the result of this expression - takes the class as the first
   // argument.
   // We probably need a "MemberFunctionClosureType" or something like that.
   QualType Result = MemPtr->getPointeeType();
@@ -1162,8 +1160,8 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
       Self.Diag(Loc, diag::err_conditional_ambiguous_ovl)
         << LHS->getType() << RHS->getType()
         << LHS->getSourceRange() << RHS->getSourceRange();
-      // FIXME: Print the possible common types by printing the return types
-      // of the viable candidates.
+      // FIXME: Print the possible common types by printing the return types of
+      // the viable candidates.
       break;
 
     case Sema::OR_Deleted:
@@ -1210,8 +1208,8 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
 /// extension. In this case, LHS == Cond. (But they're not aliases.)
 QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                            SourceLocation QuestionLoc) {
-  // FIXME: Handle C99's complex types, vector types, block pointers and
-  // Obj-C++ interface pointers.
+  // FIXME: Handle C99's complex types, vector types, block pointers and Obj-C++
+  // interface pointers.
 
   // C++0x 5.16p1
   //   The first expression is contextually converted to bool.

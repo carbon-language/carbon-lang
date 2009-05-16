@@ -548,9 +548,9 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   }
 
   // We tried everything. Everything! Nothing works! :-(
-  // FIXME: Error reporting could be a lot better. Should store the reason
-  // why every substep failed and, at the end, select the most specific and
-  // report that.
+  // FIXME: Error reporting could be a lot better. Should store the reason why
+  // every substep failed and, at the end, select the most specific and report
+  // that.
   Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic)
     << "static_cast" << DestType << OrigSrcType
     << OpRange;

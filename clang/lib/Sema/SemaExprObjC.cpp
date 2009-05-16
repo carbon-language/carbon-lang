@@ -444,12 +444,12 @@ Sema::ExprResult Sema::ActOnClassMessage(
                                 lbrac, rbrac, returnType))
     return true;
 
-  // If we have the ObjCInterfaceDecl* for the class that is receiving
-  // the message, use that to construct the ObjCMessageExpr.  Otherwise
-  // pass on the IdentifierInfo* for the class.
-  // FIXME: need to do a better job handling 'super' usage within a class 
-  // For now, we simply pass the "super" identifier through (which isn't
-  // consistent with instance methods.
+  // If we have the ObjCInterfaceDecl* for the class that is receiving the
+  // message, use that to construct the ObjCMessageExpr.  Otherwise pass on the
+  // IdentifierInfo* for the class.
+  // FIXME: need to do a better job handling 'super' usage within a class.  For
+  // now, we simply pass the "super" identifier through (which isn't consistent
+  // with instance methods.
   if (isSuper)
     return new (Context) ObjCMessageExpr(receiverName, Sel, returnType, Method,
                                          lbrac, rbrac, ArgExprs, NumArgs);
@@ -580,7 +580,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     
     ClassDecl = OCIType->getDecl();
     // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
-    // faster than the following method (which can do *many* linear searches). 
+    // faster than the following method (which can do *many* linear searches).
     // The idea is to add class info to InstanceMethodPool.
     Method = ClassDecl->lookupInstanceMethod(Context, Sel);
     
@@ -668,12 +668,12 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
        E = Protocols.end(); PI != E; ++PI) {
     if (ProtocolCompatibleWithProtocol(lProto, *PI))
       return true;
-    // This is dubious and is added to be compatible with gcc.
-    // In gcc, it is also allowed assigning a protocol-qualified 'id'
-    // type to a LHS object when protocol in qualified LHS is in list
-    // of protocols in the rhs 'id' object. This IMO, should be a bug.
-    // FIXME: Treat this as an extension, and flag this as an error when
-    //  GCC extensions are not enabled.
+    // This is dubious and is added to be compatible with gcc.  In gcc, it is
+    // also allowed assigning a protocol-qualified 'id' type to a LHS object
+    // when protocol in qualified LHS is in list of protocols in the rhs 'id'
+    // object. This IMO, should be a bug.
+    // FIXME: Treat this as an extension, and flag this as an error when GCC
+    // extensions are not enabled.
     if (RHSIsQualifiedID && ProtocolCompatibleWithProtocol(*PI, lProto))
       return true;
   }

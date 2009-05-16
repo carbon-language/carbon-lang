@@ -128,10 +128,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
         Diag(DeclLoc, diag::warn_missing_type_specifier)
           << DS.getSourceRange();
 
-      // FIXME: If we could guarantee that the result would be
-      // well-formed, it would be useful to have a code insertion hint
-      // here. However, after emitting this warning/error, we often
-      // emit other errors.
+      // FIXME: If we could guarantee that the result would be well-formed, it
+      // would be useful to have a code insertion hint here. However, after
+      // emitting this warning/error, we often emit other errors.
     }
       
     // FALL THROUGH.  
@@ -191,8 +190,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = QualType::getFromOpaquePtr(DS.getTypeRep());
 
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
-      // we have this "hack" for now... 
+      // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so we have
+      // this "hack" for now...
       if (const ObjCInterfaceType *Interface = Result->getAsObjCInterfaceType())
         Result = Context.getObjCQualifiedInterfaceType(Interface->getDecl(),
                                                        (ObjCProtocolDecl**)PQ,

@@ -436,8 +436,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   if (SS.isNotEmpty() && !SS.isInvalid()) {
     SemanticContext = computeDeclContext(SS);
 
-    // FIXME: need to match up several levels of template parameter
-    // lists here.
+    // FIXME: need to match up several levels of template parameter lists here.
   }
 
   // FIXME: member templates!
@@ -668,9 +667,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         // Merge the default argument from the old declaration to the
         // new declaration.
         SawDefaultArgument = true;
-        // FIXME: We need to create a new kind of "default argument"
-        // expression that points to a previous template template
-        // parameter.
+        // FIXME: We need to create a new kind of "default argument" expression
+        // that points to a previous template template parameter.
         NewTemplateParm->setDefaultArgument(
                                         OldTemplateParm->getDefaultArgument());
         PreviousDefaultArgLoc = OldTemplateParm->getDefaultArgumentLoc();
@@ -1802,12 +1800,11 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       // Okay; all template type parameters are equivalent (since we
       // know we're at the same index).
 #if 0
-      // FIXME: Enable this code in debug mode *after* we properly go
-      // through and "instantiate" the template parameter lists of
-      // template template parameters. It's only after this
-      // instantiation that (1) any dependent types within the
-      // template parameter list of the template template parameter
-      // can be checked, and (2) the template type parameter depths
+      // FIXME: Enable this code in debug mode *after* we properly go through
+      // and "instantiate" the template parameter lists of template template
+      // parameters. It's only after this instantiation that (1) any dependent
+      // types within the template parameter list of the template template
+      // parameter can be checked, and (2) the template type parameter depths
       // will match up.
       QualType OldParmType 
         = Context.getTypeDeclType(cast<TemplateTypeParmDecl>(*OldParm));
@@ -1960,8 +1957,8 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
   // We have a previous declaration of this entity. Make sure that
   // this redeclaration (or definition) occurs in an enclosing namespace.
   if (!CurContext->Encloses(TemplateContext)) {
-    // FIXME: In C++98, we would like to turn these errors into
-    // warnings, dependent on a -Wc++0x flag.
+    // FIXME:  In C++98,  we  would like  to  turn these  errors into  warnings,
+    // dependent on a -Wc++0x flag.
     bool SuppressedDiag = false;
     if (isa<TranslationUnitDecl>(TemplateContext)) {
       if (!ExplicitInstantiation || getLangOptions().CPlusPlus0x)
@@ -2117,8 +2114,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // Check that this isn't a redefinition of this specialization.
   if (TK == TK_Definition) {
     if (RecordDecl *Def = Specialization->getDefinition(Context)) {
-      // FIXME: Should also handle explicit specialization after 
-      // implicit instantiation with a special diagnostic.
+      // FIXME: Should also handle explicit specialization after implicit
+      // instantiation with a special diagnostic.
       SourceRange Range(TemplateNameLoc, RAngleLoc);
       Diag(TemplateNameLoc, diag::err_redefinition) 
         << Specialization << Range;
@@ -2389,8 +2386,8 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   //
   // This is C++ DR 275.
   if (getLangOptions().CPlusPlus0x) {
-    // FIXME: In C++98, we would like to turn these errors into
-    // warnings, dependent on a -Wc++0x flag.
+    // FIXME: In C++98, we would like to turn these errors into warnings,
+    // dependent on a -Wc++0x flag.
     DeclContext *PatternContext 
       = Pattern->getDeclContext()->getEnclosingNamespaceContext();
     if (!CurContext->Encloses(PatternContext)) {
@@ -2415,10 +2412,10 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                             getTemplateInstantiationArgs(Record));
   }
 
-  // FIXME: We don't have any representation for explicit
-  // instantiations of member classes. Such a representation is not
-  // needed for compilation, but it should be available for clients
-  // that want to see all of the declarations in the source code.
+  // FIXME: We don't have any representation for explicit instantiations of
+  // member classes. Such a representation is not needed for compilation, but it
+  // should be available for clients that want to see all of the declarations in
+  // the source code.
   return TagD;
 }
 

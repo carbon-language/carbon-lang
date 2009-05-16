@@ -174,8 +174,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       //      expression as its argument; if the function is a
       //      constructor, the call initializes a temporary of the
       //      destination type.
-      // FIXME: We're pretending to do copy elision here; return to
-      // this when we have ASTs for such things.
+      // FIXME: We're pretending to do copy elision here; return to this when we
+      // have ASTs for such things.
       if (!PerformImplicitConversion(Init, DeclType, "initializing"))
         return false;
       
@@ -349,10 +349,9 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
           return;
         }
 
-        // FIXME: If value-initialization involves calling a
-        // constructor, should we make that call explicit in the
-        // representation (even when it means extending the
-        // initializer list)?
+        // FIXME: If value-initialization involves calling a constructor, should
+        // we make that call explicit in the representation (even when it means
+        // extending the initializer list)?
         if (Init < NumInits && !hadError)
           ILE->setInit(Init, 
               new (SemaRef.Context) ImplicitValueInitExpr(Field->getType()));
@@ -390,10 +389,9 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
         return;
       }
 
-      // FIXME: If value-initialization involves calling a
-      // constructor, should we make that call explicit in the
-      // representation (even when it means extending the
-      // initializer list)?
+      // FIXME: If value-initialization involves calling a constructor, should
+      // we make that call explicit in the representation (even when it means
+      // extending the initializer list)?
       if (Init < NumInits && !hadError)
         ILE->setInit(Init, 
                      new (SemaRef.Context) ImplicitValueInitExpr(ElementType));
@@ -761,10 +759,10 @@ void InitListChecker::CheckReferenceType(InitListExpr *IList, QualType DeclType,
       UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
     ++Index;
   } else {
-    // FIXME: It would be wonderful if we could point at the actual
-    // member. In general, it would be useful to pass location
-    // information down the stack, so that we know the location (or
-    // decl) of the "current object" being initialized.
+    // FIXME: It would be wonderful if we could point at the actual member. In
+    // general, it would be useful to pass location information down the stack,
+    // so that we know the location (or decl) of the "current object" being
+    // initialized.
     SemaRef.Diag(IList->getLocStart(), 
                   diag::err_init_reference_member_uninitialized)
       << DeclType
@@ -1733,8 +1731,8 @@ bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
       //    called (and the initialization is ill-formed if T has no
       //    accessible default constructor);
       if (ClassDecl->hasUserDeclaredConstructor())
-        // FIXME: Eventually, we'll need to put the constructor decl
-        // into the AST.
+        // FIXME: Eventually, we'll need to put the constructor decl into the
+        // AST.
         return PerformInitializationByConstructor(Type, 0, 0, Loc,
                                                   SourceRange(Loc), 
                                                   DeclarationName(),
@@ -1747,8 +1745,8 @@ bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
     //   [...] A program that calls for default-initialization or
     //   value-initialization of an entity of reference type is
     //   ill-formed. [...]
-    // FIXME: Once we have code that goes through this path, add an
-    // actual diagnostic :)
+    // FIXME: Once we have code that goes through this path, add an actual
+    // diagnostic :)
   }
 
   return false;

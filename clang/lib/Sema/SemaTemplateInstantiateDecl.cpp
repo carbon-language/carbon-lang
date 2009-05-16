@@ -32,9 +32,9 @@ namespace {
                              const TemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
     
-    // FIXME: Once we get closer to completion, replace these
-    // manually-written declarations with automatically-generated ones
-    // from clang/AST/DeclNodes.def.
+    // FIXME: Once we get closer to completion, replace these manually-written
+    // declarations with automatically-generated ones from
+    // clang/AST/DeclNodes.def.
     Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
@@ -116,8 +116,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setDeclaredInCondition(D->isDeclaredInCondition());
  
-  // FIXME: In theory, we could have a previous declaration for
-  // variables that are not static data members.
+  // FIXME: In theory, we could have a previous declaration for variables that
+  // are not static data members.
   bool Redeclaration = false;
   SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration);
   Owner->addDecl(SemaRef.Context, Var);

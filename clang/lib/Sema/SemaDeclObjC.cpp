@@ -667,8 +667,8 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
 
-    // FIXME: Do we support attributes on the @implementation? If so
-    // we should copy them over.
+    // FIXME: Do we support attributes on the @implementation? If so we should
+    // copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc, 
                                       ClassName, ClassLoc, false, true);
     IDecl->setSuperClass(SDecl);
@@ -851,12 +851,11 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
   return true;
 }
 
-/// FIXME: Type hierarchies in Objective-C can be deep. We could most
-/// likely improve the efficiency of selector lookups and type
-/// checking by associating with each protocol / interface / category
-/// the flattened instance tables. If we used an immutable set to keep
-/// the table then it wouldn't add significant memory cost and it
-/// would be handy for lookups.
+/// FIXME: Type hierarchies in Objective-C can be deep. We could most likely
+/// improve the efficiency of selector lookups and type checking by associating
+/// with each protocol / interface / category the flattened instance tables. If
+/// we used an immutable set to keep the table then it wouldn't add significant
+/// memory cost and it would be handy for lookups.
 
 /// CheckProtocolMethodDefs - This routine checks unimplemented methods
 /// Declared in protocol, and those referenced by it.
@@ -1353,11 +1352,10 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
   // Synthesize getter/setter methods if none exist.
   // Find the default getter and if one not found, add one.
-  // FIXME: The synthesized property we set here is misleading. We
-  // almost always synthesize these methods unless the user explicitly
-  // provided prototypes (which is odd, but allowed). Sema should be
-  // typechecking that the declarations jive in that situation (which
-  // it is not currently).
+  // FIXME: The synthesized property we set here is misleading. We almost always
+  // synthesize these methods unless the user explicitly provided prototypes
+  // (which is odd, but allowed). Sema should be typechecking that the
+  // declarations jive in that situation (which it is not currently).
   if (!GetterMethod) {
     // No instance method of same name as property getter name was found.
     // Declare a getter method and add it to the list of methods 

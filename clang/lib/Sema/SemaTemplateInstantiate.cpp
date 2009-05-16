@@ -502,8 +502,7 @@ InstantiateTemplateSpecializationType(
     }
   }
 
-  // FIXME: We're missing the locations of the template name, '<', and
-  // '>'.
+  // FIXME: We're missing the locations of the template name, '<', and '>'.
 
   TemplateName Name = SemaRef.InstantiateTemplateName(T->getTemplateName(),
                                                       Loc, 
@@ -752,9 +751,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         Fields.push_back(DeclPtrTy::make(Field));
     } else {
       // FIXME: Eventually, a NULL return will mean that one of the
-      // instantiations was a semantic disaster, and we'll want to set
-      // Invalid = true. For now, we expect to skip some members that
-      // we can't yet handle.
+      // instantiations was a semantic disaster, and we'll want to set Invalid =
+      // true. For now, we expect to skip some members that we can't yet handle.
     }
   }
 
@@ -790,12 +788,11 @@ Sema::InstantiateClassTemplateSpecialization(
   if (ClassTemplateSpec->getSpecializationKind() != TSK_Undeclared)
     return true;
 
-  // FIXME: Push this class template instantiation onto the
-  // instantiation stack, checking for recursion that exceeds a
-  // certain depth.
+  // FIXME: Push this class template instantiation onto the instantiation stack,
+  // checking for recursion that exceeds a certain depth.
 
-  // FIXME: Perform class template partial specialization to select
-  // the best template.
+  // FIXME: Perform class template partial specialization to select the best
+  // template.
   ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
 
   CXXRecordDecl *Pattern = Template->getTemplatedDecl();
@@ -977,9 +974,8 @@ Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
 
   
 
-  // FIXME: Even if we're referring to a Decl that isn't a template
-  // template parameter, we may need to instantiate the outer contexts
-  // of that Decl. However, this won't be needed until we implement
-  // member templates.
+  // FIXME: Even if we're referring to a Decl that isn't a template template
+  // parameter, we may need to instantiate the outer contexts of that
+  // Decl. However, this won't be needed until we implement member templates.
   return Name;
 }

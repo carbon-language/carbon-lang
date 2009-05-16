@@ -101,9 +101,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   int sentinelPos = attr->getSentinel();
   int nullPos = attr->getNullPos();
   
-  // FIXME. ObjCMethodDecl and FunctionDecl need be derived from the
-  // same common base class. Then we won't be needing two versions of
-  // the same code.
+  // FIXME. ObjCMethodDecl and FunctionDecl need be derived from the same common
+  // base class. Then we won't be needing two versions of the same code.
   unsigned int i = 0;
   bool warnNotEnoughArgs = false;
   int isMethod = 0;
@@ -644,10 +643,9 @@ static Decl *getObjectForAnonymousRecordDecl(ASTContext &Context,
   assert(Record->isAnonymousStructOrUnion() && 
          "Record must be an anonymous struct or union!");
   
-  // FIXME: Once Decls are directly linked together, this will
-  // be an O(1) operation rather than a slow walk through DeclContext's
-  // vector (which itself will be eliminated). DeclGroups might make
-  // this even better.
+  // FIXME: Once Decls are directly linked together, this will be an O(1)
+  // operation rather than a slow walk through DeclContext's vector (which
+  // itself will be eliminated). DeclGroups might make this even better.
   DeclContext *Ctx = Record->getDeclContext();
   for (DeclContext::decl_iterator D = Ctx->decls_begin(Context), 
                                DEnd = Ctx->decls_end(Context);
@@ -873,8 +871,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           if (IV->getAccessControl() == ObjCIvarDecl::Private &&
               ClassDeclared != IFace)
            Diag(Loc, diag::error_private_ivar_access) << IV->getDeclName();
-          // FIXME: This should use a new expr for a direct reference, don't turn
-          // this into Self->ivar, just return a BareIVarExpr or something.
+          // FIXME: This should use a new expr for a direct reference, don't
+          // turn this into Self->ivar, just return a BareIVarExpr or something.
           IdentifierInfo &II = Context.Idents.get("self");
           OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
           return Owned(new (Context) 
@@ -2059,8 +2057,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return ExprError();
 
     // The record definition is complete, now make sure the member is valid.
-    // FIXME: Qualified name lookup for C++ is a bit more complicated
-    // than this.
+    // FIXME: Qualified name lookup for C++ is a bit more complicated than this.
     LookupResult Result
       = LookupQualifiedName(RDecl, DeclarationName(&Member),
                             LookupMemberName, false);
@@ -2161,10 +2158,10 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         else if (ObjCImpDecl && getCurFunctionDecl()) {
           // Case of a c-function declared inside an objc implementation.
           // FIXME: For a c-style function nested inside an objc implementation
-          // class, there is no implementation context available, so we pass down
-          // the context as argument to this routine. Ideally, this context need
-          // be passed down in the AST node and somehow calculated from the AST
-          // for a function decl.
+          // class, there is no implementation context available, so we pass
+          // down the context as argument to this routine. Ideally, this context
+          // need be passed down in the AST node and somehow calculated from the
+          // AST for a function decl.
           Decl *ImplDecl = ObjCImpDecl.getAs<Decl>();
           if (ObjCImplementationDecl *IMPD = 
               dyn_cast<ObjCImplementationDecl>(ImplDecl))
@@ -2510,7 +2507,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   if (getLangOptions().CPlusPlus) {
     // Determine whether this is a dependent call inside a C++ template,
     // in which case we won't do any semantic analysis now.
-    // FIXME: Will need to cache the results of name lookup (including ADL) in Fn.
+    // FIXME: Will need to cache the results of name lookup (including ADL) in
+    // Fn.
     bool Dependent = false;
     if (Fn->isTypeDependent())
       Dependent = true;
@@ -3043,9 +3041,10 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
          Context.isObjCObjectPointerType(RHSTy)) ||
         (RHSTy->isObjCQualifiedIdType() &&
          Context.isObjCObjectPointerType(LHSTy))) {
-      // FIXME: This is not the correct composite type. This only
-      // happens to work because id can more or less be used anywhere,
-      // however this may change the type of method sends.
+      // FIXME: This is not the correct composite type. This only happens to
+      // work because id can more or less be used anywhere, however this may
+      // change the type of method sends.
+
       // FIXME: gcc adds some type-checking of the arguments and emits
       // (confusing) incompatible comparison warnings in some
       // cases. Investigate.
@@ -4351,8 +4350,8 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
     // Otherwise, the expression refers to a part of the base
     return getPrimaryDecl(cast<MemberExpr>(E)->getBase());
   case Stmt::ArraySubscriptExprClass: {
-    // FIXME: This code shouldn't be necessary!  We should catch the
-    // implicit promotion of register arrays earlier.
+    // FIXME: This code shouldn't be necessary!  We should catch the implicit
+    // promotion of register arrays earlier.
     Expr* Base = cast<ArraySubscriptExpr>(E)->getBase();
     if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Base)) {
       if (ICE->getSubExpr()->getType()->isArrayType())
@@ -4705,8 +4704,7 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                                     ExprArg InputArg) {
   UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
 
-  // FIXME: Input is modified below, but InputArg is not updated
-  // appropriately.
+  // FIXME: Input is modified below, but InputArg is not updated appropriately.
   Expr *Input = (Expr *)InputArg.get();
   QualType resultType;
   switch (Opc) {

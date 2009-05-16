@@ -33,9 +33,9 @@ namespace {
                              const TemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), TemplateArgs(TemplateArgs) { }
 
-    // FIXME: Once we get closer to completion, replace these
-    // manually-written declarations with automatically-generated ones
-    // from clang/AST/StmtNodes.def.
+    // FIXME: Once we get closer to completion, replace these manually-written
+    // declarations with automatically-generated ones from
+    // clang/AST/StmtNodes.def.
     OwningStmtResult VisitDeclStmt(DeclStmt *S);
     OwningStmtResult VisitNullStmt(NullStmt *S);
     OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
@@ -140,8 +140,8 @@ TemplateStmtInstantiator::VisitReturnStmt(ReturnStmt *S) {
 
 Sema::OwningStmtResult 
 TemplateStmtInstantiator::VisitCompoundStmt(CompoundStmt *S) {
-  // FIXME: We need an *easy* RAII way to delete these statements if
-  // something goes wrong.
+  // FIXME: We need an *easy* RAII way to delete these statements if something
+  // goes wrong.
   llvm::SmallVector<Stmt *, 16> Statements;
   
   for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();

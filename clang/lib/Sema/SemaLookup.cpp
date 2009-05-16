@@ -131,9 +131,9 @@ MaybeConstructOverloadSet(ASTContext &Context,
     OverloadedFunctionDecl *Ovl = 0;
     for (++Last; Last != IEnd && isa<FunctionDecl>(*Last); ++Last) {
       if (!Ovl) {
-        // FIXME: We leak this overload set. Eventually, we want to
-        // stop building the declarations for these overload sets, so
-        // there will be nothing to leak.
+        // FIXME: We leak this overload set. Eventually, we want to stop
+        // building the declarations for these overload sets, so there will be
+        // nothing to leak.
         Ovl = OverloadedFunctionDecl::Create(Context, (*I)->getDeclContext(),
                                              (*I)->getDeclName());
         Ovl->addOverload(cast<FunctionDecl>(*I));
@@ -677,12 +677,11 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
     if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
       LookupResult R;
       // Perform member lookup into struct.
-      // FIXME: In some cases, we know that every name that could be
-      // found by this qualified name lookup will also be on the
-      // identifier chain. For example, inside a class without any
-      // base classes, we never need to perform qualified lookup
-      // because all of the members are on top of the identifier
-      // chain.
+      // FIXME: In some cases, we know that every name that could be found by
+      // this qualified name lookup will also be on the identifier chain. For
+      // example, inside a class without any base classes, we never need to
+      // perform qualified lookup because all of the members are on top of the
+      // identifier chain.
       if (isa<RecordDecl>(Ctx)) {
         R = LookupQualifiedName(Ctx, Name, NameKind, RedeclarationOnly);
         if (R || RedeclarationOnly)
@@ -705,10 +704,9 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
 
   // Collect UsingDirectiveDecls in all scopes, and recursively all
   // nominated namespaces by those using-directives.
-  // UsingDirectives are pushed to heap, in common ancestor pointer
-  // value order.
-  // FIXME: Cache this sorted list in Scope structure, and DeclContext,
-  // so we don't build it for each lookup!
+  // UsingDirectives are pushed to heap, in common ancestor pointer value order.
+  // FIXME: Cache this sorted list in Scope structure, and DeclContext, so we
+  // don't build it for each lookup!
   UsingDirectivesTy UDirs;
   for (Scope *SC = Initial; SC; SC = SC->getParent())
     if (SC->getFlags() & Scope::DeclScope)

@@ -696,8 +696,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   }
   
   // Check for a virtual base class.
-  // FIXME: We might be able to short-circuit this if we know in
-  // advance that there are no virtual bases.
+  // FIXME: We might be able to short-circuit this if we know in advance that
+  // there are no virtual bases.
   const CXXBaseSpecifier *VirtualBaseSpec = 0;
   if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
     // We haven't found a base yet; search the class hierarchy for a
@@ -1539,9 +1539,8 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   //   same object type (or a reference to it), to a (possibly
   //   cv-qualified) base class of that type (or a reference to it),
   //   or to (possibly cv-qualified) void.
-  // FIXME: Suppress this warning if the conversion function ends up
-  // being a virtual function that overrides a virtual function in a 
-  // base class.
+  // FIXME: Suppress this warning if the conversion function ends up being a
+  // virtual function that overrides a virtual function in a base class.
   QualType ClassType 
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
   if (const ReferenceType *ConvTypeRef = ConvType->getAsReferenceType())
@@ -1632,9 +1631,9 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
   // Although we could have an invalid decl (i.e. the namespace name is a
   // redefinition), push it as current DeclContext and try to continue parsing.
-  // FIXME: We should be able to push Namespc here, so that the
-  // each DeclContext for the namespace has the declarations
-  // that showed up in that particular namespace definition.
+  // FIXME: We should be able to push Namespc here, so that the each DeclContext
+  // for the namespace has the declarations that showed up in that particular
+  // namespace definition.
   PushDeclContext(NamespcScope, Namespc);
   return DeclPtrTy::make(Namespc);
 }
@@ -2117,8 +2116,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       return false;
     } else {
       // Perform the conversion.
-      // FIXME: Binding to a subobject of the lvalue is going to require
-      // more AST annotation than this.
+      // FIXME: Binding to a subobject of the lvalue is going to require more
+      // AST annotation than this.
       ImpCastExprToType(Init, T1, /*isLvalue=*/true);    
     }
   }
@@ -2176,8 +2175,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         return false;
       } else {
         // Perform the conversion.
-        // FIXME: Binding to a subobject of the lvalue is going to require
-        // more AST annotation than this.
+        // FIXME: Binding to a subobject of the lvalue is going to require more
+        // AST annotation than this.
         ImpCastExprToType(Init, T1, /*isLvalue=*/true);
       }
       break;
@@ -2264,8 +2263,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       ICS->Standard.RRefBinding = isRValRef;
       ICS->Standard.CopyConstructor = 0;
     } else {
-      // FIXME: Binding to a subobject of the rvalue is going to require
-      // more AST annotation than this.
+      // FIXME: Binding to a subobject of the rvalue is going to require more
+      // AST annotation than this.
       ImpCastExprToType(Init, T1, /*isLvalue=*/true);
     }
     return false;
@@ -2349,8 +2348,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   described completely in 3.7.3. The attributes and restrictions
   //   found in the rest of this subclause do not apply to them unless
   //   explicitly stated in 3.7.3.
-  // FIXME: Write a separate routine for checking this. For now, just 
-  // allow it.
+  // FIXME: Write a separate routine for checking this. For now, just allow it.
   if (Op == OO_New || Op == OO_Array_New ||
       Op == OO_Delete || Op == OO_Array_Delete)
     return false;
@@ -2576,8 +2574,8 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
                                          AbstractVariableType))
     Invalid = true;
 
-  // FIXME: Need to test for ability to copy-construct and destroy the
-  // exception variable.
+  // FIXME: Need to test for ability to copy-construct and destroy the exception
+  // variable.
   // FIXME: Need to check for abstract classes.
 
   IdentifierInfo *II = D.getIdentifier();

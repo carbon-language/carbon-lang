@@ -33,9 +33,9 @@ namespace {
                              const TemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), TemplateArgs(TemplateArgs) { }
 
-    // FIXME: Once we get closer to completion, replace these
-    // manually-written declarations with automatically-generated ones
-    // from clang/AST/StmtNodes.def.
+    // FIXME: Once we get closer to completion, replace these manually-written
+    // declarations with automatically-generated ones from
+    // clang/AST/StmtNodes.def.
     OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
     OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
     OwningExprResult VisitParenExpr(ParenExpr *E);
@@ -247,8 +247,8 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
                                            Functions, move(First));
   }
 
-  // FIXME: This would be far less ugly if CreateOverloadedBinOp took
-  // in ExprArg arguments!
+  // FIXME: This would be far less ugly if CreateOverloadedBinOp took in ExprArg
+  // arguments!
   BinaryOperator::Opcode Opc = 
     BinaryOperator::getOverloadedOpcode(E->getOperator());
   OwningExprResult Result 

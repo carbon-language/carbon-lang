@@ -380,9 +380,9 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         Diag(TheDefaultStmt->getDefaultLoc(), diag::note_duplicate_case_prev);
 
         // FIXME: Remove the default statement from the switch block so that
-        // we'll return a valid AST.  This requires recursing down the
-        // AST and finding it, not something we are set up to do right now.  For
-        // now, just lop the entire switch stmt out of the AST.
+        // we'll return a valid AST.  This requires recursing down the AST and
+        // finding it, not something we are set up to do right now.  For now,
+        // just lop the entire switch stmt out of the AST.
         CaseListIsErroneous = true;
       }
       TheDefaultStmt = DS;
@@ -436,8 +436,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
                diag::err_duplicate_case) << CaseVals[i].first.toString(10);
           Diag(CaseVals[i].second->getLHS()->getLocStart(), 
                diag::note_duplicate_case_prev);
-          // FIXME: We really want to remove the bogus case stmt from
-          // the substmt, but we have no way to do this right now.
+          // FIXME: We really want to remove the bogus case stmt from the
+          // substmt, but we have no way to do this right now.
           CaseListIsErroneous = true;
         }
       }
@@ -522,17 +522,16 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
             << OverlapVal.toString(10);
           Diag(OverlapStmt->getLHS()->getLocStart(), 
                diag::note_duplicate_case_prev);
-          // FIXME: We really want to remove the bogus case stmt from
-          // the substmt, but we have no way to do this right now.
+          // FIXME: We really want to remove the bogus case stmt from the
+          // substmt, but we have no way to do this right now.
           CaseListIsErroneous = true;
         }
       }
     }
   }
 
-  // FIXME: If the case list was broken is some way, we don't have a
-  // good system to patch it up.  Instead, just return the whole
-  // substmt as broken.
+  // FIXME: If the case list was broken is some way, we don't have a good system
+  // to patch it up.  Instead, just return the whole substmt as broken.
   if (CaseListIsErroneous)
     return StmtError();
 

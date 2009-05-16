@@ -1152,19 +1152,17 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       return;
     }
   } else if (is_NSString) {
-    // FIXME: do we need to check if the type is NSString*?  What are
-    //  the semantics?
+    // FIXME: do we need to check if the type is NSString*?  What are the
+    // semantics?
     if (!isNSStringType(Ty, S.Context)) {
-      // FIXME: Should highlight the actual expression that has the
-      // wrong type.
+      // FIXME: Should highlight the actual expression that has the wrong type.
       S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
         << "an NSString" << IdxExpr->getSourceRange();
       return;
     }    
   } else if (!Ty->isPointerType() ||
              !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
-    // FIXME: Should highlight the actual expression that has the
-    // wrong type.
+    // FIXME: Should highlight the actual expression that has the wrong type.
     S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
       << "a string type" << IdxExpr->getSourceRange();
     return;
@@ -1418,10 +1416,10 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
       S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
   }
 
-  // FIXME: Sync this with InitializePredefinedMacros; we need to match
-  // int8_t and friends, at least with glibc.
-  // FIXME: Make sure 32/64-bit integers don't get defined to types of
-  // the wrong width on unusual platforms.
+  // FIXME: Sync this with InitializePredefinedMacros; we need to match int8_t
+  // and friends, at least with glibc.
+  // FIXME: Make sure 32/64-bit integers don't get defined to types of the wrong
+  // width on unusual platforms.
   // FIXME: Make sure floating-point mappings are accurate
   // FIXME: Support XF and TF types
   QualType NewTy;

@@ -745,8 +745,8 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
   // the bit-field is larger yet, no integral promotion applies to
   // it. If the bit-field has an enumerated type, it is treated as any
   // other value of that type for promotion purposes (C++ 4.5p3).
-  // FIXME: We should delay checking of bit-fields until we actually
-  // perform the conversion.
+  // FIXME: We should delay checking of bit-fields until we actually perform the
+  // conversion.
   using llvm::APSInt;
   if (From)
     if (FieldDecl *MemberDecl = From->getBitField()) {
@@ -1141,8 +1141,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
                ToPointeeType   = ToPtrType->getPointeeType();
 
       // Objective-C++ conversions are always okay.
-      // FIXME: We should have a different class of conversions for
-      // the Objective-C++ implicit conversions.
+      // FIXME: We should have a different class of conversions for the
+      // Objective-C++ implicit conversions.
       if (Context.isObjCIdStructType(FromPointeeType) || 
           Context.isObjCIdStructType(ToPointeeType) ||
           Context.isObjCClassStructType(FromPointeeType) ||
@@ -2385,9 +2385,9 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   }
 }
 
-// FIXME: This will eventually be removed, once we've migrated all of
-// the operator overloading logic over to the scheme used by binary
-// operators, which works for template instantiation.
+// FIXME: This will eventually be removed, once we've migrated all of the
+// operator overloading logic over to the scheme used by binary operators, which
+// works for template instantiation.
 void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                                  SourceLocation OpLoc,
                                  Expr **Args, unsigned NumArgs,
@@ -2580,8 +2580,8 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
     QualType PointeeTy = PointerTy->getPointeeType();
     // FIXME: Optimize this so that we don't keep trying to add the same types.
 
-    // FIXME: Do we have to add CVR qualifiers at *all* levels to deal
-    // with all pointer conversions that don't cast away constness?
+    // FIXME: Do we have to add CVR qualifiers at *all* levels to deal with all
+    // pointer conversions that don't cast away constness?
     if (!PointeeTy.isConstQualified())
       AddPointerWithMoreQualifiedTypeVariants
         (Context.getPointerType(PointeeTy.withConst()));
@@ -3546,8 +3546,8 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
           << FnType;
       } else {
         // FIXME: We need to get the identifier in here
-        // FIXME: Do we want the error message to point at the 
-        // operator? (built-ins won't have a location)
+        // FIXME: Do we want the error message to point at the operator?
+        // (built-ins won't have a location)
         QualType FnType 
           = Context.getFunctionType(Cand->BuiltinTypes.ResultTy,
                                     Cand->BuiltinTypes.ParamTypes,
