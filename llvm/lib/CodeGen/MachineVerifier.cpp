@@ -327,6 +327,18 @@ void
 MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
 {
   const MachineInstr *MI = MO->getParent();
+  const TargetInstrDesc &TI = MI->getDesc();
+
+  // The first TI.NumDefs operands must be explicit register defines
+  if (MONum < TI.getNumDefs()) {
+    if (!MO->isReg())
+      report("Explicit definition must be a register", MO, MONum);
+    else if (!MO->isDef())
+      report("Explicit definition marked as use", MO, MONum);
+    else if (MO->isImplicit())
+      report("Explicit definition marked as implicit", MO, MONum);
+  }
+
   switch (MO->getType()) {
   case MachineOperand::MO_Register: {
     const unsigned Reg = MO->getReg();
@@ -374,7 +386,6 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
     }
 
     // Check register classes.
-    const TargetInstrDesc &TI = MI->getDesc();
     if (MONum < TI.getNumOperands() && !MO->isImplicit()) {
       const TargetOperandInfo &TOI = TI.OpInfo[MONum];
       unsigned SubIdx = MO->getSubReg();
