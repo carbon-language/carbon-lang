@@ -2,4 +2,4 @@
 
 _Complex cd;
 
-int i0 = { 17 }; // expected-warning{{braces}}
+int i0[1] = { { 17 } }; // expected-warning{{braces}}
