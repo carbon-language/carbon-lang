@@ -162,7 +162,11 @@ public:
   /// in the top level function.  Clients should always use getSwitchStack() to
   /// handle the case when they are in a block.
   llvm::SmallVector<SwitchStmt*, 8> FunctionSwitchStack;
-  
+
+  /// ExprTemporaries - This is the stack of temporaries that are created by 
+  /// the current full expression.
+  llvm::SmallVector<CXXTempVarDecl*, 8> ExprTemporaries;
+
   /// CurFunctionNeedsScopeChecking - This is set to true when a function or
   /// ObjC method body contains a VLA or an ObjC try block, which introduce
   /// scopes that need to be checked for goto conditions.  If a function does
@@ -1582,6 +1586,8 @@ public:
                                                SourceLocation LParen,
                                                TypeTy *Ty,
                                                SourceLocation RParen);
+
+  virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);
 
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
   

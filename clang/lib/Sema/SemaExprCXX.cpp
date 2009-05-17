@@ -164,8 +164,11 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
     exprs.release();
     
-    // FIXME: Is this correct?
+    // FIXME: Is this correct (I don't think so). Instead, we should have an 
+    // CXXUnresolvedTemporaryObjectExpr node for this.
     CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
+    ExprTemporaries.push_back(Temp);
+
     return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 0, Ty, 
                                                       TyBeginLoc,
                                                       Exprs, NumExprs,
@@ -190,6 +193,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   if (const RecordType *RT = Ty->getAsRecordType()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
 
+    // FIXME: We should always create a CXXTemporaryObjectExpr here unless
+    // both the ctor and dtor are trivial.
     if (NumExprs > 1 || Record->hasUserDeclaredConstructor()) {
       CXXConstructorDecl *Constructor
         = PerformInitializationByConstructor(Ty, Exprs, NumExprs,
@@ -203,7 +208,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
         return ExprError();
 
       CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
-
+      ExprTemporaries.push_back(Temp);
+      
       exprs.release();
       return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 
                                                         Constructor, Ty,
@@ -1493,4 +1499,19 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
       return Composite2;
   }
   return QualType();
+}
+
+Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
+  Expr *FullExpr = Arg.takeAs<Expr>();
+  assert(FullExpr && "Null full expr!");
+ 
+  if (!ExprTemporaries.empty()) {
+    // Create a cleanup expr.
+    FullExpr = 
+      new (Context) CXXExprWithTemporaries(FullExpr, &ExprTemporaries[0],
+                                           ExprTemporaries.size());
+    ExprTemporaries.clear();
+  }
+
+  return Owned(FullExpr);
 }
