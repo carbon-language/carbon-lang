@@ -180,17 +180,19 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
 }
 
 Action::OwningStmtResult
-Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
+Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
                   StmtArg ThenVal, SourceLocation ElseLoc,
                   StmtArg ElseVal) {
-  Expr *condExpr = CondVal.takeAs<Expr>();
+  OwningExprResult CondResult(CondVal.release());
+  
+  Expr *condExpr = CondResult.takeAs<Expr>();
 
   assert(condExpr && "ActOnIfStmt(): missing expression");
 
   if (!condExpr->isTypeDependent()) {
     DefaultFunctionArrayConversion(condExpr);
     // Take ownership again until we're past the error checking.
-    CondVal = condExpr;
+    CondResult = condExpr;
     QualType condType = condExpr->getType();
     
     if (getLangOptions().CPlusPlus) {
@@ -213,7 +215,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
       Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
-  CondVal.release();
+  CondResult.release();
   return Owned(new (Context) IfStmt(IfLoc, condExpr, thenStmt,
                                     ElseLoc, ElseVal.takeAs<Stmt>()));
 }

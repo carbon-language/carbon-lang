@@ -1172,9 +1172,9 @@ public:
                                           IdentifierInfo *II,
                                           SourceLocation ColonLoc,
                                           StmtArg SubStmt);
-  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
-                                       StmtArg ThenVal, SourceLocation ElseLoc,
-                                       StmtArg ElseVal);
+  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, 
+                                       FullExprArg CondVal, StmtArg ThenVal, 
+                                       SourceLocation ElseLoc, StmtArg ElseVal);
   virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond);
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body);

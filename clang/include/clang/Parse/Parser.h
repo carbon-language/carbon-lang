@@ -141,6 +141,7 @@ public:
 
   typedef Action::ExprArg ExprArg;
   typedef Action::MultiStmtArg MultiStmtArg;
+  typedef Action::FullExprArg FullExprArg;
 
   /// Adorns a ExprResult with Actions to make it an OwningExprResult
   OwningExprResult Owned(ExprResult res) {

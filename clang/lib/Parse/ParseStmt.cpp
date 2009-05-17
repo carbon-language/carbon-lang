@@ -632,7 +632,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Actions.ActOnIfStmt(IfLoc, move(CondExp), move(ThenStmt),
+  return Actions.ActOnIfStmt(IfLoc, Actions.FullExpr(CondExp), move(ThenStmt), 
                              ElseLoc, move(ElseStmt));
 }
 

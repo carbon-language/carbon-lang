@@ -296,8 +296,9 @@ namespace {
       return StmtEmpty();
     }
 
-    virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
-                                         StmtArg ThenVal,SourceLocation ElseLoc,
+    virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, 
+                                         FullExprArg CondVal, StmtArg ThenVal,
+                                         SourceLocation ElseLoc,
                                          StmtArg ElseVal) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();

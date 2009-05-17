@@ -25,6 +25,10 @@ namespace {
     Sema &SemaRef;
     const TemplateArgumentList &TemplateArgs;
 
+    Sema::FullExprArg FullExpr(Sema::ExprArg &expr) {
+        return SemaRef.FullExpr(expr);
+    }
+        
   public:
     typedef Sema::OwningExprResult OwningExprResult;
     typedef Sema::OwningStmtResult OwningStmtResult;
@@ -225,7 +229,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitIfStmt(IfStmt *S) {
   if (Else.isInvalid())
     return SemaRef.StmtError();
 
-  return SemaRef.ActOnIfStmt(S->getIfLoc(), move(Cond), move(Then),
+  return SemaRef.ActOnIfStmt(S->getIfLoc(), FullExpr(Cond), move(Then),
                              S->getElseLoc(), move(Else));
 }
 

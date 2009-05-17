@@ -102,6 +102,34 @@ public:
   typedef ASTMultiPtr<&ActionBase::DeleteStmt> MultiStmtArg;
   typedef ASTMultiPtr<&ActionBase::DeleteTemplateParams> MultiTemplateParamsArg;
 
+  class FullExprArg {    
+  public:
+    FullExprArg(const FullExprArg& Other)
+      : Expr(move(const_cast<FullExprArg&>(Other).Expr)) {}
+    
+    OwningExprResult release() {
+      return move(Expr);
+    }
+    
+    ExprArg* operator->() {
+      return &Expr;
+    }
+    
+  private:
+    // FIXME: No need to make the entire Action class a friend when it's just
+    // Action::FullExpr that needs access to the constructor below.
+    friend class Action;
+
+    explicit FullExprArg(ExprArg expr)
+      : Expr(move(expr)) {}
+
+    ExprArg Expr;
+  };
+  
+  FullExprArg FullExpr(ExprArg &Arg) {
+      return FullExprArg(ActOnFinishFullExpr(move(Arg)));
+  }
+
   // Utilities for Action implementations to return smart results.
 
   OwningExprResult ExprError() { return OwningExprResult(*this, true); }
@@ -461,8 +489,9 @@ public:
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, ExprArg CondVal,
-                                       StmtArg ThenVal, SourceLocation ElseLoc,
+  virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, 
+                                       FullExprArg CondVal, StmtArg ThenVal, 
+                                       SourceLocation ElseLoc,
                                        StmtArg ElseVal) {
     return StmtEmpty();
   }
@@ -1040,6 +1069,13 @@ public:
                                                TypeTy *Ty,
                                                SourceLocation RParen) {
     return ExprEmpty();
+  }
+
+
+  /// ActOnFinishFullExpr - Called whenever a full expression has been parsed.
+  /// (C++ [intro.execution]p12).
+  virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr) {
+    return move(Expr);
   }
 
   //===---------------------------- C++ Classes ---------------------------===//
