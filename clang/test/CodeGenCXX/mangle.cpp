@@ -75,5 +75,13 @@ void f(S3<true>) {}
 // RUN: grep "_Z1f2S3ILb0EE" %t | count 1 &&
 void f(S3<false>) {}
 
-// RUN: grep "_Z2f22S3ILb1EE" %t | count 1 
+// RUN: grep "_Z2f22S3ILb1EE" %t | count 1 &&
 void f2(S3<100>) {}
+
+struct S;
+
+// RUN: grep "_Z1fM1SKFvvE" %t | count 1 &&
+void f(void (S::*)() const) {}
+
+// RUN: grep "_Z1fM1SFvvE" %t | count 1
+void f(void (S::*)()) {}

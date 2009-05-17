@@ -385,12 +385,19 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return llvm::PointerType::get(PointeeType, FTy.getAddressSpace());
   }
 
-  case Type::MemberPointer:
-    // FIXME: Implement C++ pointer-to-member. The GCC representation is
-    // documented here:
-    // http://gcc.gnu.org/onlinedocs/gccint/Type-Layout.html#Type-Layout
-    assert(0 && "FIXME: We can't handle member pointers yet.");
-    return llvm::OpaqueType::get();
+  case Type::MemberPointer: {
+    // FIXME: This is ABI dependent. We use the Itanium C++ ABI.
+    // http://www.codesourcery.com/public/cxx-abi/abi.html#member-pointers
+    // If we ever want to support other ABIs this needs to be abstracted.
+
+    QualType ETy = cast<MemberPointerType>(Ty).getPointeeType();
+    if (ETy->isFunctionType()) {
+      return llvm::StructType::get(ConvertType(Context.getPointerDiffType()), 
+                                   ConvertType(Context.getPointerDiffType()),
+                                   NULL);
+    } else
+      return ConvertType(Context.getPointerDiffType());
+  }
 
   case Type::TemplateSpecialization:
     assert(false && "Dependent types can't get here");

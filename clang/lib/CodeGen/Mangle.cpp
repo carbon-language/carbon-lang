@@ -608,7 +608,12 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
   //  <pointer-to-member-type> ::= M <class type> <member type>
   Out << 'M';
   mangleType(QualType(T->getClass(), 0));
-  mangleType(T->getPointeeType());
+  QualType PointeeType = T->getPointeeType();
+  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(PointeeType)) {
+    mangleCVQualifiers(FPT->getTypeQuals());
+    mangleType(FPT);
+  } else 
+    mangleType(PointeeType);
 }
 
 void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
