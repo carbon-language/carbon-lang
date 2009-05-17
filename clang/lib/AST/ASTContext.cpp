@@ -475,18 +475,18 @@ ASTContext::getTypeInfo(const Type *T) {
     // pointer size.
     return getTypeInfo(cast<ReferenceType>(T)->getPointeeType());
   case Type::MemberPointer: {
-    // FIXME: This is not only platform- but also ABI-dependent. We follow
-    // the GCC ABI, where pointers to data are one pointer large, pointers to
-    // functions two pointers. But if we want to support ABI compatibility with
-    // other compilers too, we need to delegate this completely to TargetInfo
-    // or some ABI abstraction layer.
+    // FIXME: This is ABI dependent. We use the Itanium C++ ABI.
+    // http://www.codesourcery.com/public/cxx-abi/abi.html#member-pointers
+    // If we ever want to support other ABIs this needs to be abstracted.
+
     QualType Pointee = cast<MemberPointerType>(T)->getPointeeType();
-    unsigned AS = Pointee.getAddressSpace();
-    Width = Target.getPointerWidth(AS);
+    std::pair<uint64_t, unsigned> PtrDiffInfo = 
+      getTypeInfo(getPointerDiffType());
+    Width = PtrDiffInfo.first;
     if (Pointee->isFunctionType())
       Width *= 2;
-    Align = Target.getPointerAlign(AS);
-    // GCC aligns at single pointer width.
+    Align = PtrDiffInfo.second;
+    break;
   }
   case Type::Complex: {
     // Complex types have the same alignment as their elements, but twice the
