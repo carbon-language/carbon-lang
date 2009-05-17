@@ -542,13 +542,14 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 }
 
 Action::OwningStmtResult
-Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond, StmtArg Body) {
-  Expr *condExpr = Cond.takeAs<Expr>();
+Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
+  ExprArg CondArg(Cond.release());
+  Expr *condExpr = CondArg.takeAs<Expr>();
   assert(condExpr && "ActOnWhileStmt(): missing expression");
 
   if (!condExpr->isTypeDependent()) {
     DefaultFunctionArrayConversion(condExpr);
-    Cond = condExpr;
+    CondArg = condExpr;
     QualType condType = condExpr->getType();
     
     if (getLangOptions().CPlusPlus) {
@@ -560,7 +561,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond, StmtArg Body) {
                        << condType << condExpr->getSourceRange());
   }
 
-  Cond.release();
+  CondArg.release();
   return Owned(new (Context) WhileStmt(condExpr, Body.takeAs<Stmt>(), 
                                        WhileLoc));
 }

@@ -267,7 +267,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitWhileStmt(WhileStmt *S) {
   if (Body.isInvalid())
     return SemaRef.StmtError();
 
-  return SemaRef.ActOnWhileStmt(S->getWhileLoc(), move(Cond), move(Body));
+  return SemaRef.ActOnWhileStmt(S->getWhileLoc(), FullExpr(Cond), move(Body));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitDoStmt(DoStmt *S) {

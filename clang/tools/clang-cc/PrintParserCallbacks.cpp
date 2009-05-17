@@ -317,7 +317,7 @@ namespace {
     }
 
     virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
-                                            ExprArg Cond, StmtArg Body) {
+                                            FullExprArg Cond, StmtArg Body) {
       llvm::cout << __FUNCTION__ << "\n";
       return StmtEmpty();
     }

@@ -1182,8 +1182,8 @@ public:
   virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond);
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body);
-  virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprArg Cond,
-                                          StmtArg Body);
+  virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc, 
+                                          FullExprArg Cond, StmtArg Body);
   virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
                                        SourceLocation WhileLoc, ExprArg Cond);
 

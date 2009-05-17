@@ -777,7 +777,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement() {
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnWhileStmt(WhileLoc, move(Cond), move(Body));
+  return Actions.ActOnWhileStmt(WhileLoc, Actions.FullExpr(Cond), move(Body));
 }
 
 /// ParseDoStatement
