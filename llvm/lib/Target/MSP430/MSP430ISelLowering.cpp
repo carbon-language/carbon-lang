@@ -468,7 +468,7 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   }
 
   while (ShiftAmount--)
-    Victim = DAG.getNode((Opc == ISD::SRA ? MSP430ISD::RRA : MSP430ISD::RLA),
+    Victim = DAG.getNode((Opc == ISD::SHL ? MSP430ISD::RLA : MSP430ISD::RRA),
                          dl, VT, Victim);
 
   return Victim;

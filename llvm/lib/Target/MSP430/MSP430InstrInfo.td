@@ -624,12 +624,12 @@ def SHL16r1 : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                       (implicit SRW)]>;
 
 def SAR8r1c  : Pseudo<(outs GR8:$dst), (ins GR8:$src),
-                      "clrc\n"
+                      "clrc\n\t"
                       "rrc.b\t$dst",
                       [(set GR8:$dst, (MSP430rrc GR8:$src)),
                        (implicit SRW)]>;
 def SAR16r1c : Pseudo<(outs GR16:$dst), (ins GR16:$src),
-                      "clrc\n"
+                      "clrc\n\t"
                       "rrc.w\t$dst",
                       [(set GR16:$dst, (MSP430rrc GR16:$src)),
                        (implicit SRW)]>;
