@@ -765,6 +765,11 @@ void PBQPRegAlloc::finalizeAlloc() const {
       continue;
     }
 
+    // Ignore unallocated vregs:
+    if (reg == 0) {
+      continue;
+    }
+
     // Iterate over the ranges of the current interval...
     for (LRIterator lrItr = li->begin(), lrEnd = li->end();
          lrItr != lrEnd; ++lrItr) {
