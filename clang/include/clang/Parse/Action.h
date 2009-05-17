@@ -126,7 +126,8 @@ public:
     ExprArg Expr;
   };
   
-  FullExprArg FullExpr(ExprArg &Arg) {
+  template<typename T>
+  FullExprArg FullExpr(T &Arg) {
       return FullExprArg(ActOnFinishFullExpr(move(Arg)));
   }
 

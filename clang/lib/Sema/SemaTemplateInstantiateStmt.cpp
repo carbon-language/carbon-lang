@@ -25,7 +25,8 @@ namespace {
     Sema &SemaRef;
     const TemplateArgumentList &TemplateArgs;
 
-    Sema::FullExprArg FullExpr(Sema::ExprArg &expr) {
+    template<typename T>
+    Sema::FullExprArg FullExpr(T &expr) {
         return SemaRef.FullExpr(expr);
     }
         
