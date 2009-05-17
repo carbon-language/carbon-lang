@@ -141,19 +141,20 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     if (const IdentifierInfo *II = TD->getIdentifier())
       Out << II->getName();
 
-    Out << " {\n";
-    ChangeIndent(1);
-    // FIXME: Shouldn't pass a NULL context
-    ASTContext *Context = 0;
-    for (DeclContext::decl_iterator i = TD->decls_begin(*Context);
-         i != TD->decls_end(*Context);
-         ++i)
-      PrintDecl(*i);    
-    ChangeIndent(-1);
-    Indent();
-    Out << "}";
-
-    Out << "\n";
+    if (TD->isDefinition()) {
+      Out << " {\n";
+      ChangeIndent(1);
+      // FIXME: Shouldn't pass a NULL context
+      ASTContext *Context = 0;
+      for (DeclContext::decl_iterator i = TD->decls_begin(*Context);
+           i != TD->decls_end(*Context);
+           ++i)
+        PrintDecl(*i);    
+      ChangeIndent(-1);
+      Indent();
+      Out << "}";
+    }
+    Out << ";\n";
   } else if (TemplateDecl *TempD = dyn_cast<TemplateDecl>(D)) {
     PrintTemplateDecl(TempD);
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {

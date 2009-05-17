@@ -289,9 +289,9 @@ void StmtPrinter::VisitDoStmt(DoStmt *Node) {
     Indent();
   }
   
-  OS << "while ";
+  OS << "while (";
   PrintExpr(Node->getCond());
-  OS << ";\n";
+  OS << ");\n";
 }
 
 void StmtPrinter::VisitForStmt(ForStmt *Node) {
