@@ -454,24 +454,25 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size(); i < e; ++i) {
     Elements.clear();
-    llvm::Constant *C = 
-      CGM.GetAddrOfConstantCString(MethodSels[i].getAsString());
-    Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
-    Elements.push_back(
-          llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
-    llvm::Constant *Method =
+    if (llvm::Constant *Method =
       TheModule.getFunction(SymbolNameForMethod(ClassName, CategoryName,
                                                 MethodSels[i].getAsString(),
-                                                isClassMethodList));
-    Method = llvm::ConstantExpr::getBitCast(Method,
-        llvm::PointerType::getUnqual(IMPTy));
-    Elements.push_back(Method);
-    Methods.push_back(llvm::ConstantStruct::get(ObjCMethodTy, Elements));
+                                                isClassMethodList))) {
+      llvm::Constant *C = 
+        CGM.GetAddrOfConstantCString(MethodSels[i].getAsString());
+      Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
+      Elements.push_back(
+            llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
+      Method = llvm::ConstantExpr::getBitCast(Method,
+          llvm::PointerType::getUnqual(IMPTy));
+      Elements.push_back(Method);
+      Methods.push_back(llvm::ConstantStruct::get(ObjCMethodTy, Elements));
+    }
   }
 
   // Array of method structures
   llvm::ArrayType *ObjCMethodArrayTy = llvm::ArrayType::get(ObjCMethodTy,
-                                                            MethodSels.size());
+                                                            Methods.size());
   llvm::Constant *MethodArray = llvm::ConstantArray::get(ObjCMethodArrayTy,
                                                          Methods);
 
@@ -847,6 +848,24 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
     InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+  }
+  for (ObjCImplDecl::propimpl_iterator 
+         iter = OID->propimpl_begin(CGM.getContext()),
+         endIter = OID->propimpl_end(CGM.getContext());
+       iter != endIter ; iter++) {
+    ObjCPropertyDecl *property = (*iter)->getPropertyDecl();
+    if (ObjCMethodDecl *getter = property->getGetterMethodDecl()) {
+      InstanceMethodSels.push_back(getter->getSelector());
+      std::string TypeStr;
+      Context.getObjCEncodingForMethodDecl(getter,TypeStr);
+      InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+    }
+    if (ObjCMethodDecl *setter = property->getSetterMethodDecl()) {
+      InstanceMethodSels.push_back(setter->getSelector());
+      std::string TypeStr;
+      Context.getObjCEncodingForMethodDecl(setter,TypeStr);
+      InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+    }
   }
 
   // Collect information about class methods
@@ -1363,13 +1382,14 @@ void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
     llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
-    ExceptionAsObject = 
-      CGF.Builder.CreateBitCast(Exception, IdTy, "tmp");
+    ExceptionAsObject = Exception;
   } else {
     assert((!CGF.ObjCEHValueStack.empty() && CGF.ObjCEHValueStack.back()) && 
            "Unexpected rethrow outside @catch block.");
     ExceptionAsObject = CGF.ObjCEHValueStack.back();
   }
+  ExceptionAsObject =
+      CGF.Builder.CreateBitCast(ExceptionAsObject, IdTy, "tmp");
   
   // Note: This may have to be an invoke, if we want to support constructs like:
   // @try {
