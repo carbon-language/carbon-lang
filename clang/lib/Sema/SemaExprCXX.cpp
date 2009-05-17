@@ -167,7 +167,6 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     // FIXME: Is this correct (I don't think so). Instead, we should have an 
     // CXXUnresolvedTemporaryObjectExpr node for this.
     CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
-    ExprTemporaries.push_back(Temp);
 
     return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 0, Ty, 
                                                       TyBeginLoc,
