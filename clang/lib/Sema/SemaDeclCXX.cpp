@@ -786,34 +786,38 @@ namespace {
     }
     
     // Next, zero out any pure virtual methods that this class overrides.
-    for (size_t i = 0, e = Methods.size(); i != e; ++i) {
-      const CXXMethodDecl *VMD = dyn_cast_or_null<CXXMethodDecl>(Methods[i]);
-      if (!VMD)
-        continue;
-      
-      DeclContext::lookup_const_iterator I, E;
-      for (llvm::tie(I, E) = RD->lookup(Context, VMD->getDeclName()); 
-           I != E; ++I) {
-        if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*I)) {
-          if (Context.getCanonicalType(MD->getType()) == 
-              Context.getCanonicalType(VMD->getType())) {
-            // We did find a matching method, which means that this is not a
-            // pure virtual method in the current class. Zero it out.
-            Methods[i] = 0;
-          }
+    typedef llvm::SmallPtrSet<const CXXMethodDecl*, 4> MethodSetTy;
+  
+    MethodSetTy OverriddenMethods;
+    size_t MethodsSize = Methods.size();
+
+    for (RecordDecl::decl_iterator i = RD->decls_begin(Context), 
+         e = RD->decls_end(Context); 
+         i != e; ++i) {
+      // Traverse the record, looking for methods.
+      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
+        // If the method is pre virtual, add it to the methods vector.
+        if (MD->isPure()) {
+          Methods.push_back(MD);
+          continue;
+        }
+        
+        // Otherwise, record all the overridden methods in our set.
+        for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+             E = MD->end_overridden_methods(); I != E; ++I) {
+          // Keep track of the overridden methods.
+          OverriddenMethods.insert(*I);
         }
       }
     }
     
-    // Finally, add pure virtual methods from this class.
-    for (RecordDecl::decl_iterator i = RD->decls_begin(Context), 
-                                   e = RD->decls_end(Context); 
-         i != e; ++i) {
-      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
-        if (MD->isPure())
-          Methods.push_back(MD);
-      }
+    // Now go through the methods and zero out all the ones we know are 
+    // overridden.
+    for (size_t i = 0, e = MethodsSize; i != e; ++i) {
+      if (OverriddenMethods.count(Methods[i]))
+        Methods[i] = 0;
     }
+    
   }
 }
 
