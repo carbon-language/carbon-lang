@@ -73,6 +73,10 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SRA,              MVT::i16,   Custom);
   setOperationAction(ISD::SHL,              MVT::i16,   Custom);
   setOperationAction(ISD::SRL,              MVT::i16,   Custom);
+  setOperationAction(ISD::ROTL,             MVT::i8,    Expand);
+  setOperationAction(ISD::ROTR,             MVT::i8,    Expand);
+  setOperationAction(ISD::ROTL,             MVT::i16,   Expand);
+  setOperationAction(ISD::ROTR,             MVT::i16,   Expand);
   setOperationAction(ISD::RET,              MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
   setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
