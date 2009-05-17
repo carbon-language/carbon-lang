@@ -173,7 +173,7 @@ namespace {
 
 char MachineVerifier::ID = 0;
 static RegisterPass<MachineVerifier>
-MachineVer("verify-machineinstrs", "Verify generated machine code");
+MachineVer("machineverifier", "Verify generated machine code");
 static const PassInfo *const MachineVerifyID = &MachineVer;
 
 FunctionPass *
