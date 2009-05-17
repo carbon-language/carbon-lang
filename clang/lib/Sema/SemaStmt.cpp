@@ -21,8 +21,8 @@
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
-Sema::OwningStmtResult Sema::ActOnExprStmt(ExprArg expr) {
-  Expr *E = expr.takeAs<Expr>();
+Sema::OwningStmtResult Sema::ActOnExprStmt(FullExprArg expr) {
+  Expr *E = expr->takeAs<Expr>();
   assert(E && "ActOnExprStmt(): missing expression");
 
   // C99 6.8.3p2: The expression in an expression statement is evaluated as a

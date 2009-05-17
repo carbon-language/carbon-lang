@@ -266,9 +266,9 @@ namespace {
       return StmtEmpty();
     }
   
-    virtual OwningStmtResult ActOnExprStmt(ExprArg Expr) {
+    virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr) {
       llvm::cout << __FUNCTION__ << "\n";
-      return OwningStmtResult(*this, Expr.release());
+      return OwningStmtResult(*this, Expr->release());
     }
   
     /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,

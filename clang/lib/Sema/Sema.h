@@ -1155,7 +1155,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
-  virtual OwningStmtResult ActOnExprStmt(ExprArg Expr);
+  virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr);
 
   virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc);
   virtual OwningStmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,

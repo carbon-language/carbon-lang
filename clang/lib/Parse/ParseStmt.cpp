@@ -121,7 +121,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
     // Otherwise, eat the semicolon.
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-    return Actions.ActOnExprStmt(move(Expr));
+    return Actions.ActOnExprStmt(Actions.FullExpr(Expr));
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -457,7 +457,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.
         ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-        R = Actions.ActOnExprStmt(move(Res));
+        R = Actions.ActOnExprStmt(Actions.FullExpr(Res));
       }
     }
 
@@ -929,7 +929,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
 
     // Turn the expression into a stmt.
     if (!Value.isInvalid())
-      FirstPart = Actions.ActOnExprStmt(move(Value));
+      FirstPart = Actions.ActOnExprStmt(Actions.FullExpr(Value));
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();

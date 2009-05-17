@@ -460,8 +460,8 @@ public:
     return StmtEmpty();
   }
 
-  virtual OwningStmtResult ActOnExprStmt(ExprArg Expr) {
-    return OwningStmtResult(*this, Expr.release());
+  virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr) {
+    return OwningStmtResult(*this, Expr->release());
   }
 
   /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
