@@ -75,6 +75,9 @@ use Socket;
 #                   this option is not specified it defaults to
 #                   /nightlytest/NightlyTestAccept.php. This is basically
 #                   everything after the www.yourserver.org.
+#  -submit-aux      If specified, an auxiliary script to run in addition to the
+#                   normal submit script. The script will be passed the path to
+#                   the "sentdata.txt" file as its sole argument.
 #  -nosubmit        Do not report the test results back to a submit server.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
@@ -128,6 +131,7 @@ $NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
 $SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.php";
+$SUBMITAUX="";
 $SUBMIT = 1;
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
@@ -168,6 +172,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              shift; next; }
   if (/^-submit-server/)   { $SUBMITSERVER = "$ARGV[0]"; shift; next; }
   if (/^-submit-script/)   { $SUBMITSCRIPT = "$ARGV[0]"; shift; next; }
+  if (/^-submit-aux/)      { $SUBMITAUX = "$ARGV[0]"; shift; next; }
   if (/^-nosubmit$/)       { $SUBMIT = 0; next; }
   if (/^-nickname$/)       { $nickname = "$ARGV[0]"; shift; next; }
   if (/^-gccpath/)         { $CONFIGUREARGS .=
@@ -477,6 +482,9 @@ sub SendData{
     }
     WriteFile "$Prefix-sentdata.txt", $sentdata;
 
+    if (!($SUBMITAUX eq "")) {
+      system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
+    }
 
     return $result;
 }
