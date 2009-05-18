@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "regalloc"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
+#include "Spiller.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
@@ -54,6 +55,11 @@ NewHeuristic("new-spilling-heuristic",
 static cl::opt<bool>
 PreSplitIntervals("pre-alloc-split",
                   cl::desc("Pre-register allocation live interval splitting"),
+                  cl::init(false), cl::Hidden);
+
+static cl::opt<bool>
+NewSpillFramework("new-spill-framework",
+                  cl::desc("New spilling framework"),
                   cl::init(false), cl::Hidden);
 
 static RegisterRegAlloc
@@ -126,6 +132,8 @@ namespace {
     VirtRegMap* vrm_;
 
     std::auto_ptr<VirtRegRewriter> rewriter_;
+
+    std::auto_ptr<Spiller> spiller_;
 
   public:
     virtual const char* getPassName() const {
@@ -420,6 +428,13 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
 
   vrm_ = &getAnalysis<VirtRegMap>();
   if (!rewriter_.get()) rewriter_.reset(createVirtRegRewriter());
+  
+  if (NewSpillFramework) {
+    spiller_.reset(createSpiller(mf_, li_, vrm_));
+  }
+  else {
+    spiller_.reset(0);
+  }
 
   initIntervalSets();
 
@@ -1108,8 +1123,15 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DOUT << "\t\t\tspilling(c): " << *cur << '\n';
     SmallVector<LiveInterval*, 8> spillIs;
-    std::vector<LiveInterval*> added =
-      li_->addIntervalsForSpills(*cur, spillIs, loopInfo, *vrm_);
+    std::vector<LiveInterval*> added;
+    
+    if (!NewSpillFramework) {
+      added = li_->addIntervalsForSpills(*cur, spillIs, loopInfo, *vrm_);
+    }
+    else {
+      added = spiller_->spill(cur); 
+    }
+
     std::sort(added.begin(), added.end(), LISorter());
     addStackInterval(cur, ls_, li_, mri_, *vrm_);
     if (added.empty())
