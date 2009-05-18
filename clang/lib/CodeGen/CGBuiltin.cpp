@@ -883,10 +883,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitShuffleVector(Ops[0], Ops[1], 0, 2, "unpcklpd");
   case X86::BI__builtin_ia32_movsd:
     return EmitShuffleVector(Ops[0], Ops[1], 2, 1, "movsd");
-  case X86::BI__builtin_ia32_movqv4si: {
-    llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 2);
-    return Builder.CreateBitCast(Ops[0], Ty);
-  }
   case X86::BI__builtin_ia32_loadlps:
   case X86::BI__builtin_ia32_loadhps: {
     // FIXME: This should probably be represented as 

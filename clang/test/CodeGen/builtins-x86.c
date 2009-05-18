@@ -476,7 +476,6 @@ void f0() {
   tmp_i = __builtin_ia32_vec_ext_v2si(tmp_V2i, imm_i_0_2);
   tmp_V8s = __builtin_ia32_vec_set_v8hi(tmp_V8s, tmp_s, imm_i_0_8);
   tmp_V4s = __builtin_ia32_vec_set_v4hi(tmp_V4s, tmp_s, imm_i_0_4);
-  tmp_V4i = __builtin_ia32_movqv4si(tmp_V4i);
   tmp_V4i = __builtin_ia32_loadlv4si(tmp_V2ip);
   (void) __builtin_ia32_storelv4si(tmp_V2ip, tmp_V2LLi);
 #ifdef USE_SSE4
