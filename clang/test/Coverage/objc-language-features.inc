@@ -53,12 +53,9 @@
 @end
 
 int f0(id x) {
-#ifndef IRGENABLE_GNU
   @synchronized(x) {
   }
-#endif
 
-#ifndef IRGENABLE_GNU
   @try {
     @throw x;
 
@@ -75,7 +72,6 @@ int f0(id x) {
   for (id y in x) {
     break;
   }
-#endif
 }
 
 #ifndef __OBJC2__
