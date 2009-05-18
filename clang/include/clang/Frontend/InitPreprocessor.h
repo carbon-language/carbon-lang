@@ -50,7 +50,7 @@ public:
   macro_iterator macro_end() const { return Macros.end(); }
 
   typedef std::vector<std::pair<std::string,
-																bool> >::const_iterator include_iterator;
+                                bool> >::const_iterator include_iterator;
   include_iterator include_begin() const { return Includes.begin(); }
   include_iterator include_end() const { return Includes.end(); }
 
