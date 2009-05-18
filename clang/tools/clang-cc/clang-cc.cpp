@@ -1318,7 +1318,6 @@ void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts)
 
 namespace {
 class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
-  const std::string &InFile;
   Diagnostic        &Diags;
   const LangOptions &LangInfo;
   TargetInfo        &Target;
@@ -1326,11 +1325,10 @@ class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
   HeaderSearch      &HeaderInfo;
   
 public:
-  DriverPreprocessorFactory(const std::string &infile,
-                            Diagnostic &diags, const LangOptions &opts,
+  DriverPreprocessorFactory(Diagnostic &diags, const LangOptions &opts,
                             TargetInfo &target, SourceManager &SM,
                             HeaderSearch &Headers)  
-  : InFile(infile), Diags(diags), LangInfo(opts), Target(target),
+  : Diags(diags), LangInfo(opts), Target(target),
     SourceMgr(SM), HeaderInfo(Headers) {}
   
   
@@ -1371,7 +1369,7 @@ public:
 
     PreprocessorInitOptions InitOpts;
     InitializePreprocessorInitOptions(InitOpts);
-    if (InitializePreprocessor(*PP, InFile, InitOpts))
+    if (InitializePreprocessor(*PP, InitOpts))
       return 0;
 
     std::string ErrStr;
@@ -2019,7 +2017,7 @@ int main(int argc, char **argv) {
     InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
     
     // Set up the preprocessor with these options.
-    DriverPreprocessorFactory PPFactory(InFile, Diags, LangInfo, *Target,
+    DriverPreprocessorFactory PPFactory(Diags, LangInfo, *Target,
                                         *SourceMgr.get(), HeaderInfo);
     
     llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());

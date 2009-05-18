@@ -429,7 +429,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 /// environment ready to process a single file. This returns true on error.
 ///
 bool InitializePreprocessor(Preprocessor &PP,
-                            const std::string &InFile,
                             const PreprocessorInitOptions& InitOpts) {
   std::vector<char> PredefineBuffer;
   

@@ -63,7 +63,6 @@ public:
 /// environment ready to process a single file. This returns true on error.
 ///
 bool InitializePreprocessor(Preprocessor &PP,
-                            const std::string &InFile,
                             const PreprocessorInitOptions& InitOptions);
 
 } // end namespace clang
