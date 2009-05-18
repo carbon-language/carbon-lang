@@ -1,11 +1,11 @@
 set(LLVM_NO_RTTI 1)
 
 set( LLVM_USED_LIBS
+  clangFrontend
   clangCodeGen
   clangAnalysis
   clangRewrite
   clangSema
-  clangFrontend
   clangAST
   clangParse
   clangLex
@@ -23,19 +23,13 @@ set( LLVM_LINK_COMPONENTS
 
 add_clang_executable(clang-cc
   AnalysisConsumer.cpp
-  ASTConsumers.cpp
-  Backend.cpp
   CacheTokens.cpp
   clang-cc.cpp
   DependencyFile.cpp
   DiagChecker.cpp
-  GeneratePCH.cpp
-  HTMLPrint.cpp
   PrintParserCallbacks.cpp
   PrintPreprocessedOutput.cpp
-  RewriteBlocks.cpp
   RewriteMacros.cpp
-  RewriteObjC.cpp
   RewriteTest.cpp
   Warnings.cpp
   )
