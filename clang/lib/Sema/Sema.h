@@ -2070,9 +2070,10 @@ public:
   /// Destruction of this object will pop the named instantiation off
   /// the stack.
   struct InstantiatingTemplate {
-    /// \brief Note that we are instantiating a class template.
+    /// \brief Note that we are instantiating a class template,
+    /// function template, or a member thereof.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                          CXXRecordDecl *Entity,
+                          Decl *Entity,
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are instantiating a default argument in a
@@ -2083,7 +2084,10 @@ public:
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange = SourceRange());
 
-    ~InstantiatingTemplate();
+    /// \brief Note that we have finished instantiating this template.
+    void Clear();
+
+    ~InstantiatingTemplate() { Clear(); }
 
     /// \brief Determines whether we have exceeded the maximum
     /// recursive template instantiations.
@@ -2216,7 +2220,8 @@ public:
   InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
                           const TemplateArgumentList &TemplateArgs);
 
-  void InstantiateFunctionDefinition(FunctionDecl *Function);
+  void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
+                                     FunctionDecl *Function);
   void InstantiateVariableDefinition(VarDecl *Var);
 
   // Simple function for cloning expressions.

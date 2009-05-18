@@ -2340,11 +2340,8 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   // instantiation.
   if (SpecializationRequiresInstantiation)
     InstantiateClassTemplateSpecialization(Specialization, true);
-  else {
-    // Instantiate the members of this class template specialization.
-    InstantiatingTemplate Inst(*this, TemplateLoc, Specialization);
+  else // Instantiate the members of this class template specialization.
     InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization);
-  }
 
   return DeclPtrTy::make(Specialization);
 }
@@ -2405,12 +2402,9 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                     getTemplateInstantiationArgs(Record),
                                     /*ExplicitInstantiation=*/true))
       return true;
-  } else {
-    // Instantiate all of the members of class.
-    InstantiatingTemplate Inst(*this, TemplateLoc, Record);
+  } else // Instantiate all of the members of class.
     InstantiateClassMembers(TemplateLoc, Record, 
                             getTemplateInstantiationArgs(Record));
-  }
 
   // FIXME: We don't have any representation for explicit instantiations of
   // member classes. Such a representation is not needed for compilation, but it

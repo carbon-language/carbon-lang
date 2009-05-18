@@ -49,7 +49,7 @@ template struct X2<int&>; // expected-note{{in instantiation of}}
 
 // Check that explicit instantiations instantiate member classes.
 template<typename T> struct X3 {
-  struct Inner { // expected-note{{here}}
+  struct Inner {
     void f(T*); // expected-error{{pointer to a reference}}
   };
 };
@@ -59,8 +59,8 @@ void f1(X3<int&>); // okay, Inner, not instantiated
 template struct X3<int&>; // expected-note{{instantiation}}
 
 template<typename T> struct X4 {
-  struct Inner { // expected-note 2{{here}}
-    struct VeryInner { // expected-note 2{{here}}
+  struct Inner {
+    struct VeryInner {
       void f(T*); // expected-error 2{{pointer to a reference}}
     };
   };
@@ -82,7 +82,7 @@ struct X5 {
   };
 
   struct Inner2 {
-    struct VeryInner { // expected-note 2{{instantiation}}
+    struct VeryInner {
       void g(T*); // expected-error 2{{pointer to a reference}}
     };
   };

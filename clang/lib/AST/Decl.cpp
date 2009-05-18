@@ -212,7 +212,15 @@ std::string NamedDecl::getQualifiedNameAsString() const {
       // scope class/struct/union. How do we handle this case?
       break;
 
-    if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
+    if (const ClassTemplateSpecializationDecl *Spec 
+          = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
+      const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+      std::string TemplateArgsStr
+        = TemplateSpecializationType::PrintTemplateArgumentList(
+                                           TemplateArgs.getFlatArgumentList(),
+                                           TemplateArgs.flat_size());
+      Names.push_back(Spec->getIdentifier()->getName() + TemplateArgsStr);
+    } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
       Names.push_back(ND->getNameAsString());
     else
       break;

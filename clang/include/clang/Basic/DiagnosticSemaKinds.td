@@ -745,6 +745,8 @@ def note_template_class_instantiation_here : Note<
   "in instantiation of template class %0 requested here">;
 def note_template_member_class_here : Note<
   "in instantiation of member class %0 requested here">;
+def note_template_member_function_here : Note<
+  "in instantiation of member function %q0 requested here">;
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
 def err_field_instantiates_to_function : Error<

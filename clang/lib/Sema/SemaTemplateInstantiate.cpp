@@ -46,7 +46,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D) {
 
 Sema::InstantiatingTemplate::
 InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                      CXXRecordDecl *Entity,
+                      Decl *Entity,
                       SourceRange InstantiationRange)
   :  SemaRef(SemaRef) {
 
@@ -89,9 +89,11 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
   }
 }
 
-Sema::InstantiatingTemplate::~InstantiatingTemplate() {
-  if (!Invalid)
+void Sema::InstantiatingTemplate::Clear() {
+  if (!Invalid) {
     SemaRef.ActiveTemplateInstantiations.pop_back();
+    Invalid = true;
+  }
 }
 
 bool Sema::InstantiatingTemplate::CheckInstantiationDepth(
@@ -120,14 +122,24 @@ void Sema::PrintInstantiationStack() {
        ++Active) {
     switch (Active->Kind) {
     case ActiveTemplateInstantiation::TemplateInstantiation: {
-      unsigned DiagID = diag::note_template_member_class_here;
-      CXXRecordDecl *Record = (CXXRecordDecl *)Active->Entity;
-      if (isa<ClassTemplateSpecializationDecl>(Record))
-        DiagID = diag::note_template_class_instantiation_here;
-      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
-                   DiagID)
-        << Context.getTypeDeclType(Record)
-        << Active->InstantiationRange;
+      Decl *D = reinterpret_cast<Decl *>(Active->Entity);
+      if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
+        unsigned DiagID = diag::note_template_member_class_here;
+        if (isa<ClassTemplateSpecializationDecl>(Record))
+          DiagID = diag::note_template_class_instantiation_here;
+        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
+                     DiagID)
+          << Context.getTypeDeclType(Record)
+          << Active->InstantiationRange;
+      } else {
+        FunctionDecl *Function = cast<FunctionDecl>(D);
+        unsigned DiagID = diag::note_template_member_function_here;
+        // FIXME: check for a function template
+        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
+                     DiagID)
+          << Function
+          << Active->InstantiationRange;
+      }
       break;
     }
 
@@ -768,8 +780,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   CurContext = PreviousContext;
 
   // If this is an explicit instantiation, instantiate our members, too.
-  if (!Invalid && ExplicitInstantiation)
+  if (!Invalid && ExplicitInstantiation) {
+    Inst.Clear();
     InstantiateClassMembers(PointOfInstantiation, Instantiation, TemplateArgs);
+  }
 
   return Invalid;
 }
@@ -820,7 +834,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
        D != DEnd; ++D) {
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
       if (!Function->getBody(Context))
-        InstantiateFunctionDefinition(Function);
+        InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
       const VarDecl *Def = 0;
       if (!Var->getDefinition(Def))
@@ -829,7 +843,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       if (!Record->isInjectedClassName() && !Record->getDefinition(Context)) {
         assert(Record->getInstantiatedFromMemberClass() && 
                "Missing instantiated-from-template information");
-        InstantiateClass(Record->getLocation(), Record,
+        InstantiateClass(PointOfInstantiation, Record,
                          Record->getInstantiatedFromMemberClass(),
                          TemplateArgs, true);
       }

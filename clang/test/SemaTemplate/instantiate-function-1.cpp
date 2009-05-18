@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only %s
 template<typename T, typename U>
 struct X0 {
   void f(T x, U y) { 
@@ -47,8 +47,8 @@ template <typename T> struct X4 {
   }
 };
 
-template struct X4<void>; // expected-note{{in instantiation of template class 'X4<void>' requested here}}
-template struct X4<int>; // expected-note{{in instantiation of template class 'X4<int>' requested here}}
+template struct X4<void>; // expected-note{{in instantiation of}}
+template struct X4<int>; // expected-note{{in instantiation of}}
 
 struct Incomplete; // expected-note{{forward declaration}}
 

@@ -574,7 +574,8 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 ///
 /// \param Function the already-instantiated declaration of a
 /// function.
-void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
+void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
+                                         FunctionDecl *Function) {
   // FIXME: make this work for function template specializations, too.
 
   if (Function->isInvalidDecl())
@@ -590,7 +591,9 @@ void Sema::InstantiateFunctionDefinition(FunctionDecl *Function) {
   if (!Pattern)
     return;
 
-  // FIXME: add to the instantiation stack.
+  InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
+  if (Inst)
+    return;
 
   ActOnStartOfFunctionDef(0, DeclPtrTy::make(Function));
 
