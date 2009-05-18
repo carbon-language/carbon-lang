@@ -2553,7 +2553,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   // The exception-declaration shall not denote a pointer or reference to an
   // incomplete type, other than [cv] void*.
   // N2844 forbids rvalue references.
-  if(ExDeclType->isRValueReferenceType()) {
+  if(!ExDeclType->isDependentType() && ExDeclType->isRValueReferenceType()) {
     Diag(Loc, diag::err_catch_rvalue_ref) << Range;
     Invalid = true;
   }
