@@ -2201,7 +2201,7 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
                           getSCEV(U->getOperand(1)));
 
       // If the RHS of xor is -1, then this is a not operation.
-      else if (CI->isAllOnesValue())
+      if (CI->isAllOnesValue())
         return getNotSCEV(getSCEV(U->getOperand(0)));
     }
     break;
