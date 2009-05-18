@@ -21,6 +21,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -512,9 +513,14 @@ GenericValue JIT::runFunction(Function *F,
 /// just-in-time compilation passes on F, hopefully filling in
 /// GlobalAddress[F] with the address of F's machine code.
 ///
-void JIT::runJITOnFunction(Function *F) {
+void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
   MutexGuard locked(lock);
+
+  registerMachineCodeInfo(MCI);
+
   runJITOnFunctionUnlocked(F, locked);
+
+  registerMachineCodeInfo(0);
 }
 
 void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {

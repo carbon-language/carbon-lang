@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -614,9 +615,12 @@ namespace {
     // ExtFnStubs - A map of external function names to stubs which have entries
     // in the JITResolver's ExternalFnToStubMap.
     StringMap<void *> ExtFnStubs;
-    
+
+    // MCI - A pointer to a MachineCodeInfo object to update with information.
+    MachineCodeInfo *MCI;
+
   public:
-    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0) {
+    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0), MCI(0) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -711,6 +715,10 @@ namespace {
     }
     
     JITMemoryManager *getMemMgr(void) const { return MemMgr; }
+
+    void setMachineCodeInfo(MachineCodeInfo *mci) {
+      MCI = mci;
+    }
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
@@ -1155,6 +1163,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
        << "] Function: " << F.getFunction()->getName()
        << ": " << (FnEnd-FnStart) << " bytes of text, "
        << Relocations.size() << " relocations\n";
+
+  if (MCI) {
+    MCI->setAddress(FnStart);
+    MCI->setSize(FnEnd-FnStart);
+  }
+
   Relocations.clear();
   ConstPoolAddresses.clear();
 
@@ -1476,6 +1490,13 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
   JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
   return JE->getJITResolver().getFunctionStub(F);
+}
+
+void JIT::registerMachineCodeInfo(MachineCodeInfo *mc) {
+  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
+
+  JE->setMachineCodeInfo(mc);
 }
 
 void JIT::updateFunctionStub(Function *F) {

@@ -35,6 +35,7 @@ class TargetData;
 class Type;
 class MutexGuard;
 class JITMemoryManager;
+class MachineCodeInfo;
 
 class ExecutionEngineState {
 private:
@@ -240,6 +241,9 @@ public:
     // Default implementation, just codegen the function.
     return getPointerToFunction(F);
   }
+
+  // The JIT overrides a version that actually does this.
+  virtual void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0) { }
 
   /// getGlobalValueAtAddress - Return the LLVM global value object that starts
   /// at the specified address.

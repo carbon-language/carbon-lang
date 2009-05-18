@@ -23,6 +23,7 @@ class Function;
 class TargetMachine;
 class TargetJITInfo;
 class MachineCodeEmitter;
+class MachineCodeInfo;
 
 class JITState {
 private:
@@ -151,14 +152,18 @@ public:
   static ExecutionEngine *createJIT(ModuleProvider *MP, std::string *Err,
                                     JITMemoryManager *JMM,
                                     CodeGenOpt::Level OptLevel);
-  
+
+
+  // Run the JIT on F and return information about the generated code
+  void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0);
+
 private:
   static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
-  void runJITOnFunction(Function *F);
+  void registerMachineCodeInfo(MachineCodeInfo *MCI);
   void runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked);
   void updateFunctionStub(Function *F);
   void updateDlsymStubTable();
-  
+
 protected:
 
   /// getMemoryforGV - Allocate memory for a global variable.
