@@ -2203,6 +2203,19 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
       // If the RHS of xor is -1, then this is a not operation.
       if (CI->isAllOnesValue())
         return getNotSCEV(getSCEV(U->getOperand(0)));
+
+      // Model xor(and(x, C), C) as and(~x, C), if C is a low-bits mask.
+      // This is a variant of the check for xor with -1, and it handles
+      // the case where instcombine has trimmed non-demanded bits out
+      // of an xor with -1.
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(U->getOperand(0)))
+        if (ConstantInt *LCI = dyn_cast<ConstantInt>(BO->getOperand(1)))
+          if (BO->getOpcode() == Instruction::And &&
+              LCI->getValue() == CI->getValue())
+            if (const SCEVZeroExtendExpr *Z =
+                  dyn_cast<SCEVZeroExtendExpr>(getSCEV(U->getOperand(0))))
+              return getZeroExtendExpr(getNotSCEV(Z->getOperand()),
+                                       U->getType());
     }
     break;
 
