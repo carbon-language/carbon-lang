@@ -1616,11 +1616,6 @@ public:
 
   virtual ExtractValueInst *clone() const;
 
-  // getType - Overload to return most specific pointer type...
-  const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(Instruction::getType());
-  }
-
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
   ///
@@ -1793,11 +1788,6 @@ public:
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-
-  // getType - Overload to return most specific pointer type...
-  const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(Instruction::getType());
-  }
 
   typedef const unsigned* idx_iterator;
   inline idx_iterator idx_begin() const { return Indices.begin(); }
