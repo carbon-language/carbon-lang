@@ -3081,6 +3081,7 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
   }
 
   assert(0 && "Unknown SCEV type!");
+  return 0;
 }
 
 /// getSCEVAtScope - This is a convenience function which does

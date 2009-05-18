@@ -6000,9 +6000,9 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
 
   // Get alias information for node.
   SDValue Ptr;
-  int64_t Size;
-  const Value *SrcValue;
-  int SrcValueOffset;
+  int64_t Size = 0;
+  const Value *SrcValue = 0;
+  int SrcValueOffset = 0;
   bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue, SrcValueOffset);
 
   // Starting off.
@@ -6028,9 +6028,9 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
     case ISD::STORE: {
       // Get alias information for Chain.
       SDValue OpPtr;
-      int64_t OpSize;
-      const Value *OpSrcValue;
-      int OpSrcValueOffset;
+      int64_t OpSize = 0;
+      const Value *OpSrcValue = 0;
+      int OpSrcValueOffset = 0;
       bool IsOpLoad = FindAliasInfo(Chain.getNode(), OpPtr, OpSize,
                                     OpSrcValue, OpSrcValueOffset);
 

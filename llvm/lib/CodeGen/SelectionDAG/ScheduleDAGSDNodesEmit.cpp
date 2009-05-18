@@ -119,6 +119,7 @@ void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
                                      DstRC, SrcRC);
 
     assert(Emitted && "Unable to issue a copy instruction!\n");
+    (void) Emitted;
   }
 
   SDValue Op(Node, ResNo);
@@ -254,6 +255,7 @@ ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
       bool Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
                                        DstRC, SrcRC);
       assert(Emitted && "Unable to issue a copy instruction!\n");
+      (void) Emitted;
       VReg = NewVReg;
     }
   }
@@ -445,6 +447,7 @@ ScheduleDAGSDNodes::EmitCopyToRegClassNode(SDNode *Node,
                                    DstRC, SrcRC);
   assert(Emitted &&
          "Unable to issue a copy instruction for a COPY_TO_REGCLASS node!\n");
+  (void) Emitted;
 
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
@@ -568,6 +571,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     bool Emitted = TII->copyRegToReg(*BB, InsertPos, DestReg, SrcReg,
                                      DstTRC, SrcTRC);
     assert(Emitted && "Unable to issue a copy instruction!\n");
+    (void) Emitted;
     break;
   }
   case ISD::CopyFromReg: {
