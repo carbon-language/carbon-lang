@@ -25,6 +25,8 @@ class Diagnostic;
 class ASTConsumer;
 class IdentifierTable;
 class SourceManager;
+class PreprocessorFactory;
+class LangOptions;
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.
@@ -54,6 +56,14 @@ bool CreateDependencyFileGen(Preprocessor *PP, std::string &ErrStr);
 
 /// CacheTokens - Cache tokens for use with PCH.
 void CacheTokens(Preprocessor& PP, const std::string& OutFile);
+
+/// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
+/// analysis passes.  (The set of analyses run is controlled by command-line
+/// options.)
+ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor *pp,
+                                    PreprocessorFactory *ppf,
+                                    const LangOptions &lopts,
+                                    const std::string &output);
 
 }  // end namespace clang
 

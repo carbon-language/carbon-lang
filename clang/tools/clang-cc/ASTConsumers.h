@@ -97,13 +97,6 @@ ASTConsumer *CreateBlockRewriter(const std::string &InFile,
 // tree for the given class and displays it with "dotty".
 ASTConsumer *CreateInheritanceViewer(const std::string& clsname);
 
-// Analyzer: runs various code analysis passes.  (The exact analyses
-// run is controlled by command-line options.)
-ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor *pp,
-                                    PreprocessorFactory *ppf,
-                                    const LangOptions &lopts,
-                                    const std::string &output);
-
 } // end clang namespace
 
 #endif
