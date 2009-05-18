@@ -729,11 +729,22 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
   
   unsigned QueriedFilePos = FilePos+1;
 
+  // FIXME: I would like to be convinced that this code is worth being as
+  // complicated as it is, binary search isn't that slow. 
+  //
+  // If it is worth being optimized, then in my opinion it could be more
+  // performant, simpler, and more obviously correct by just "galloping" outward
+  // from the queried file position. In fact, this could be incorporated into a
+  // generic algorithm such as lower_bound_with_hint.
+  //
+  // If someone gives me a test case where this matters, and I will do it! - DWD
+
   // If the previous query was to the same file, we know both the file pos from
   // that query and the line number returned.  This allows us to narrow the
   // search space from the entire file to something near the match.
   if (LastLineNoFileIDQuery == FID) {
     if (QueriedFilePos >= LastLineNoFilePos) {
+      // FIXME: Potential overflow?
       SourceLineCache = SourceLineCache+LastLineNoResult-1;
       
       // The query is likely to be nearby the previous one.  Here we check to
@@ -753,7 +764,8 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
         }
       }
     } else {
-      SourceLineCacheEnd = SourceLineCache+LastLineNoResult+1;
+      if (LastLineNoResult < Content->NumLines)
+        SourceLineCacheEnd = SourceLineCache+LastLineNoResult+1;
     }
   }
   
