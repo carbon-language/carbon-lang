@@ -1691,9 +1691,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
   case RewriteObjC:
     OS.reset(ComputeOutFile(InFile, "cpp", true, OutPath));
-    Consumer.reset(CreateCodeRewriterTest(InFile, OS.get(),
-                                          PP.getDiagnostics(),
-                                          PP.getLangOptions()));
+    Consumer.reset(CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
+                                      PP.getLangOptions()));
     break;
 
   case RewriteBlocks:

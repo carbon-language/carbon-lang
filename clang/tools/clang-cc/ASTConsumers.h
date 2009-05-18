@@ -55,10 +55,10 @@ ASTConsumer *CreateDeclContextPrinter();
 
 // ObjC rewriter: attempts tp rewrite ObjC constructs into pure C code.
 // This is considered experimental, and only works with Apple's ObjC runtime.
-ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
-                                    llvm::raw_ostream* OS,
-                                    Diagnostic &Diags,
-                                    const LangOptions &LOpts);
+ASTConsumer *CreateObjCRewriter(const std::string& InFile,
+                                llvm::raw_ostream* OS,
+                                Diagnostic &Diags,
+                                const LangOptions &LOpts);
 
 // LLVM code generator: uses the code generation backend to generate LLVM
 // assembly. This runs optimizations depending on the CompileOptions

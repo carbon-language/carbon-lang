@@ -427,10 +427,10 @@ RewriteObjC::RewriteObjC(std::string inFile, llvm::raw_ostream* OS,
                "for @try/@finally (code may not execute properly)");
 }
 
-ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
-                                           llvm::raw_ostream* OS,
-                                           Diagnostic &Diags, 
-                                           const LangOptions &LOpts) {
+ASTConsumer *clang::CreateObjCRewriter(const std::string& InFile,
+                                       llvm::raw_ostream* OS,
+                                       Diagnostic &Diags, 
+                                       const LangOptions &LOpts) {
   return new RewriteObjC(InFile, OS, Diags, LOpts);
 }
 
