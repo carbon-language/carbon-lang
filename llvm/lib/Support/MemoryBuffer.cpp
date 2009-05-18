@@ -258,13 +258,16 @@ public:
 
 MemoryBuffer *MemoryBuffer::getSTDIN() {
   char Buffer[4096*4];
-  
+
   std::vector<char> FileData;
-  
+
   // Read in all of the data from stdin, we cannot mmap stdin.
   sys::Program::ChangeStdinToBinary();
-  while (size_t ReadBytes = fread(Buffer, sizeof(char), 4096*4, stdin))
+  size_t ReadBytes;
+  do {
+    ReadBytes = fread(Buffer, sizeof(char), sizeof(Buffer), stdin);
     FileData.insert(FileData.end(), Buffer, Buffer+ReadBytes);
+  } while (ReadBytes == sizeof(Buffer));
 
   FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
   size_t Size = FileData.size();
