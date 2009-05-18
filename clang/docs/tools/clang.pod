@@ -93,15 +93,10 @@ Run the preprocessor stage.
 
 Run the preprocessor, parser and type checking stages.
 
-=item B<-emit-llvm>
-
-Run the preprocessor, parser, type checking stages, LLVM generation and
-optimization stages.
-
 =item B<-S>
 
-Run all of the above, plus target-specific code generation, producing an
-assembly file.
+Run the previous stages as well as LLVM generation and optimization stages and
+target-specific code generation, producing an assembly file.
 
 =item B<-c>
 
@@ -138,11 +133,11 @@ Same as B<-std=c89>.
 
 =item B<-ObjC++>
 
-Treat subsequent source input files as Objective-C++ inputs.
+Treat source input files as Objective-C++ inputs.
 
 =item B<-ObjC>
 
-Treat subsequent source input files as Objective-C inputs.
+Treat source input files as Objective-C inputs.
 
 =item B<-trigraphs>
 
@@ -200,18 +195,11 @@ with both GC and non-GC mode.
 
 =head2 Target Selection Options
 
-Clang fully supports cross compilation and an inherent part of its design.
+Clang fully supports cross compilation as an inherent part of its design.
 Depending on how your version of Clang is configured, it may have support for
-a number of cross compilers, or may just support a native target.
+a number of cross compilers, or may only support a native target.
 
 =over
-
-=cut
-######
-######=item B<-triple>=I<target triple>
-######
-=pod
-
 
 =item B<-arch> I<architecture>
 
@@ -245,12 +233,14 @@ may not exist on earlier ones.
 =item B<-O0> B<-O1> B<-O2> B<-Os> B<-O3> B<-O4>
 
 Specify which optimization level to use.  B<-O0> means "no optimization": this
-level compiles the fastest and generates the most debuggable code.  B<-O2> is
-a moderate level of debugging which enables most optimizations.  B<-Os> is like
-B<-O2> but it does extra optimizations to reduce code size.  B<-O3> is like
-B<-O2>, except that it enables optimizations that take longer to perform or that
-may generate larger code (in an attempt to make the program run faster).  B<-O1>
-is somewhere between B<-O0> and B<-O1>.
+level compiles the fastest and generates the most debuggable code.  B<-O2> is a
+moderate level of optimization which enables most optimizations.  B<-Os> is like
+B<-O2> with extra optimizations to reduce code size.  B<-O3> is like B<-O2>,
+except that it enables optimizations that take longer to perform or that may
+generate larger code (in an attempt to make the program run faster).  On
+supported platforms, B<-O4> enables link-time optimization; object files are
+stored in the LLVM bitcode file format and whole program optimization is done at
+link time. B<-O1> is somewhere between B<-O0> and B<-O2>.
 
 =item B<-g>
 
@@ -278,6 +268,13 @@ This flag sets the default visibility level.
 
 This flag specifies that variables without initializers get common linkage.  It
 can be disabled with B<-fno-common>.
+
+=item B<-flto> B<-emit-llvm>
+
+Generate output files in LLVM formats, suitable for link time optimization. When
+used with B<-S> this generates LLVM intermediate language assembly files,
+otherwise this generates LLVM bitcode format object files (which may be passed
+to the linker depending on the stage selection options).
 
 =cut
 
