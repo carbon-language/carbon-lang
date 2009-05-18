@@ -220,7 +220,7 @@ namespace llvm {
       return true;
     }
 
-    // hasComputableLoopEvolution - Commutative expressions have computable loop
+    // hasComputableLoopEvolution - N-ary expressions have computable loop
     // evolutions iff they have at least one operand that varies with the loop,
     // but that all varying operands are computable.
     virtual bool hasComputableLoopEvolution(const Loop *L) const {
