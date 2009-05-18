@@ -28,3 +28,6 @@
 }
 @end
 
+@interface C : A @end
+@implementation C
+@end
