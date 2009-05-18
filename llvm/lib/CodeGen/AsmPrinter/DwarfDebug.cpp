@@ -2463,15 +2463,10 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
           SmallSet<const GlobalVariable *, 32> >::iterator
           IP = InlinedParamMap.find(V);
 
-        if (IP != InlinedParamMap.end()) {
-          SmallSet<const GlobalVariable*, 32> &S = IP->second;
-
-          if (S.count(GV) > 0) {
-            if (TimePassesIsEnabled)
-              DebugTimer->stopTimer();
-            return;
-          }
-
+        if (IP != InlinedParamMap.end() && IP->second.count(GV) > 0) {
+          if (TimePassesIsEnabled)
+            DebugTimer->stopTimer();
+          return;
         }
 
         // or GV is an inlined local variable.
