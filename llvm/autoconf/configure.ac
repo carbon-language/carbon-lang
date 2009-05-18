@@ -372,7 +372,6 @@ case "$enableval" in
   default) AC_SUBST(ENABLE_THREADS,[1]) ;;
   *) AC_MSG_ERROR([Invalid setting for --enable-threads. Use "yes" or "no"]) ;;
 esac
-AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
 
 dnl Allow building without position independent code
 AC_ARG_ENABLE(pic,
@@ -896,6 +895,26 @@ if test "$llvm_cv_platform_type" = "Unix" ; then
     AC_MSG_WARN([mmap() of files required but not found])
   fi
 fi
+
+dnl atomic builtins are required for threading support.
+if test "$ENABLE_THREADS" -eq 1 ; then
+  AC_MSG_CHECKING(for GCC atomic builtins)
+  AC_LINK_IFELSE(
+	AC_LANG_SOURCE(
+          [[int main() { 
+              volatile unsigned long val = 1;
+              __sync_synchronize();
+              __sync_val_compare_and_swap(&val, 1, 0);
+              return 0;
+            }
+          ]]),
+        AC_MSG_RESULT(yes),
+        AC_MSG_RESULT(no)
+        AC_SUBST(ENABLE_THREADS, [0])
+        AC_MSG_WARN([Threading support disabled because atomic builtins are missing]))
+fi
+
+AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
 
 dnl===-----------------------------------------------------------------------===
 dnl===
