@@ -519,7 +519,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   
-  unsigned RuntimeLang = DefUnit.getRunTimeVersion();
+  unsigned RuntimeLang = DefUnit.getLanguage();
 
   // To handle recursive interface, we
   // first generate a debug descriptor for the struct as a forward declaration.
