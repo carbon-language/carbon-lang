@@ -102,13 +102,19 @@ private:  // Methods only usable by Rewriter.
   /// inserted text at the position.
   unsigned getMappedOffset(unsigned OrigOffset,
                            bool AfterInserts = false) const{
-    return Deltas.getDeltaAt(OrigOffset+AfterInserts)+OrigOffset;
+    return Deltas.getDeltaAt(2*OrigOffset+AfterInserts)+OrigOffset;
   }
   
-  /// AddDelta - When a change is made that shifts around the text buffer, this
-  /// method is used to record that info.
-  void AddDelta(unsigned OrigOffset, int Change) {
-    return Deltas.AddDelta(OrigOffset, Change);
+  /// AddInsertDelta - When an insertion is made at a position, this
+  /// method is used to record that information.
+  void AddInsertDelta(unsigned OrigOffset, int Change) {
+    return Deltas.AddDelta(2*OrigOffset, Change);
+  }
+
+  /// AddReplaceDelta - When a replacement/deletion is made at a position, this
+  /// method is used to record that information.
+  void AddReplaceDelta(unsigned OrigOffset, int Change) {
+    return Deltas.AddDelta(2*OrigOffset+1, Change);
   }
 };
   

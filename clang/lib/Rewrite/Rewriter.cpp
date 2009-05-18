@@ -31,7 +31,7 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
   Buffer.erase(RealOffset, Size);
 
   // Add a delta so that future changes are offset correctly.
-  AddDelta(OrigOffset, -Size);
+  AddReplaceDelta(OrigOffset, -Size);
 }
 
 void RewriteBuffer::InsertText(unsigned OrigOffset,
@@ -45,7 +45,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
   Buffer.insert(RealOffset, StrData, StrData+StrLen);
   
   // Add a delta so that future changes are offset correctly.
-  AddDelta(OrigOffset, StrLen);
+  AddInsertDelta(OrigOffset, StrLen);
 }
 
 /// ReplaceText - This method replaces a range of characters in the input
@@ -53,11 +53,11 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
-  unsigned RealOffset = getMappedOffset(OrigOffset, false);
+  unsigned RealOffset = getMappedOffset(OrigOffset, true);
   Buffer.erase(RealOffset, OrigLength);
   Buffer.insert(RealOffset, NewStr, NewStr+NewLength);
   if (OrigLength != NewLength)
-    AddDelta(OrigOffset, NewLength-OrigLength);
+    AddReplaceDelta(OrigOffset, NewLength-OrigLength);
 }
 
 
