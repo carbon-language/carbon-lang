@@ -3300,7 +3300,6 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
     Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
       << (NewTag == TagDecl::TK_class)
       << isTemplate << &Name
-      << (OldTag == TagDecl::TK_class)
       << CodeModificationHint::CreateReplacement(SourceRange(NewTagLoc),
                               OldTag == TagDecl::TK_class? "class" : "struct");
     Diag(Previous->getLocation(), diag::note_previous_use);

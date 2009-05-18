@@ -835,7 +835,7 @@ def err_use_with_wrong_tag : Error<
   "use of %0 with tag type that does not match previous declaration">;
 def warn_struct_class_tag_mismatch : Warning<
     "%select{struct|class}0 %select{|template}1 %2 was previously declared "
-    "as a %select{struct|class}3 %select{|template}1">,
+    "as a %select{class|struct}0 %select{|template}1">,
     InGroup<MismatchedTags>, DefaultIgnore;
 def ext_forward_ref_enum : Extension<
   "ISO C forbids forward references to 'enum' types">;
