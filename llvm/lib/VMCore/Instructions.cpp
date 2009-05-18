@@ -2220,8 +2220,6 @@ CastInst::getCastOpcode(
     } else {
       assert(isa<PointerType>(SrcTy) &&
              "Casting from a value that is not first-class type");
-      assert(!SrcIsSigned &&
-             "Pointer types cannot be considered signed for conversions!");
       return PtrToInt;                              // ptr -> int
     }
   } else if (DestTy->isFloatingPoint()) {           // Casting to floating pt
@@ -2261,7 +2259,6 @@ CastInst::getCastOpcode(
     if (isa<PointerType>(SrcTy)) {
       return BitCast;                               // ptr -> ptr
     } else if (SrcTy->isInteger()) {
-      assert(!SrcIsSigned && "Cannot cast signed integer to pointer!");
       return IntToPtr;                              // int -> ptr
     } else {
       assert(!"Casting pointer to other than pointer or int");
