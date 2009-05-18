@@ -921,6 +921,12 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
 SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty add!");
   if (Ops.size() == 1) return Ops[0];
+#ifndef NDEBUG
+  for (unsigned i = 1, e = Ops.size(); i != e; ++i)
+    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
+           getEffectiveSCEVType(Ops[0]->getType()) &&
+           "SCEVAddExpr operand types don't match!");
+#endif
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, LI);
@@ -1205,6 +1211,12 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
 
 SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty mul!");
+#ifndef NDEBUG
+  for (unsigned i = 1, e = Ops.size(); i != e; ++i)
+    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
+           getEffectiveSCEVType(Ops[0]->getType()) &&
+           "SCEVMulExpr operand types don't match!");
+#endif
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, LI);
@@ -1362,6 +1374,10 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
 
 SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
                                         const SCEVHandle &RHS) {
+  assert(getEffectiveSCEVType(LHS->getType()) ==
+         getEffectiveSCEVType(RHS->getType()) &&
+         "SCEVUDivExpr operand types don't match!");
+
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                            // X udiv 1 --> x
@@ -1466,6 +1482,12 @@ SCEVHandle ScalarEvolution::getAddRecExpr(const SCEVHandle &Start,
 SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
                                           const Loop *L) {
   if (Operands.size() == 1) return Operands[0];
+#ifndef NDEBUG
+  for (unsigned i = 1, e = Operands.size(); i != e; ++i)
+    assert(getEffectiveSCEVType(Operands[i]->getType()) ==
+           getEffectiveSCEVType(Operands[0]->getType()) &&
+           "SCEVAddRecExpr operand types don't match!");
+#endif
 
   if (Operands.back()->isZero()) {
     Operands.pop_back();
@@ -1502,6 +1524,12 @@ SCEVHandle ScalarEvolution::getSMaxExpr(const SCEVHandle &LHS,
 SCEVHandle ScalarEvolution::getSMaxExpr(std::vector<SCEVHandle> Ops) {
   assert(!Ops.empty() && "Cannot get empty smax!");
   if (Ops.size() == 1) return Ops[0];
+#ifndef NDEBUG
+  for (unsigned i = 1, e = Ops.size(); i != e; ++i)
+    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
+           getEffectiveSCEVType(Ops[0]->getType()) &&
+           "SCEVSMaxExpr operand types don't match!");
+#endif
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, LI);
@@ -1582,6 +1610,12 @@ SCEVHandle ScalarEvolution::getUMaxExpr(const SCEVHandle &LHS,
 SCEVHandle ScalarEvolution::getUMaxExpr(std::vector<SCEVHandle> Ops) {
   assert(!Ops.empty() && "Cannot get empty umax!");
   if (Ops.size() == 1) return Ops[0];
+#ifndef NDEBUG
+  for (unsigned i = 1, e = Ops.size(); i != e; ++i)
+    assert(getEffectiveSCEVType(Ops[i]->getType()) ==
+           getEffectiveSCEVType(Ops[0]->getType()) &&
+           "SCEVUMaxExpr operand types don't match!");
+#endif
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, LI);
