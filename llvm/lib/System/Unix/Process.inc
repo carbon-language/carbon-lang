@@ -27,6 +27,9 @@
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #endif
+#ifdef HAVE_TERMIOS_H
+#  include <termios.h>
+#endif
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only generic UNIX code that
@@ -204,7 +207,7 @@ static unsigned getColumns(int FileID) {
 
   unsigned Columns = 0;
 
-#ifdef HAVE_SYS_IOCTL_H
+#if defined(HAVE_SYS_IOCTL_H) && defined(HAVE_TERMIOS_H)
   // Try to determine the width of the terminal.
   struct winsize ws;
   if (ioctl(FileID, TIOCGWINSZ, &ws) == 0)

@@ -419,6 +419,9 @@
 /* Define to 1 if the system has the type `uint64_t'. */
 #undef HAVE_UINT64_T
 
+/* Define to 1 if you have the <termios.h> header file. */
+#cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H ${HAVE_UNISTD_H}
 
