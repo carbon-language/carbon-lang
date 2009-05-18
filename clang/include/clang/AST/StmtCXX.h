@@ -18,17 +18,19 @@
 
 namespace clang {
 
+class VarDecl;
+
 /// CXXCatchStmt - This represents a C++ catch block.
 ///
 class CXXCatchStmt : public Stmt {
   SourceLocation CatchLoc;
   /// The exception-declaration of the type.
-  Decl *ExceptionDecl;
+  VarDecl *ExceptionDecl;
   /// The handler block.
   Stmt *HandlerBlock;
 
 public:
-  CXXCatchStmt(SourceLocation catchLoc, Decl *exDecl, Stmt *handlerBlock)
+  CXXCatchStmt(SourceLocation catchLoc, VarDecl *exDecl, Stmt *handlerBlock)
   : Stmt(CXXCatchStmtClass), CatchLoc(catchLoc), ExceptionDecl(exDecl),
     HandlerBlock(handlerBlock) {}
 
@@ -38,7 +40,8 @@ public:
     return SourceRange(CatchLoc, HandlerBlock->getLocEnd());
   }
 
-  Decl *getExceptionDecl() { return ExceptionDecl; }
+  SourceLocation getCatchLoc() const { return CatchLoc; }
+  VarDecl *getExceptionDecl() { return ExceptionDecl; }
   QualType getCaughtType();
   Stmt *getHandlerBlock() { return HandlerBlock; }
 
@@ -66,6 +69,8 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(TryLoc, Stmts.back()->getLocEnd());
   }
+
+  SourceLocation getTryLoc() const { return TryLoc; }
 
   CompoundStmt *getTryBlock() { return llvm::cast<CompoundStmt>(Stmts[0]); }
   const CompoundStmt *getTryBlock() const {

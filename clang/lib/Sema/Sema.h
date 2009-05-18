@@ -1244,7 +1244,12 @@ public:
                                                        ExprArg SynchExpr,
                                                        StmtArg SynchBody);
 
+  VarDecl *BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
+                                     IdentifierInfo *Name,
+                                     SourceLocation Loc,
+                                     SourceRange Range);
   virtual DeclPtrTy ActOnExceptionDeclarator(Scope *S, Declarator &D);
+
   virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
                                               DeclPtrTy ExDecl,
                                               StmtArg HandlerBlock);

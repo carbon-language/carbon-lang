@@ -50,7 +50,7 @@ template <typename T> struct X4 {
 template struct X4<void>; // expected-note{{in instantiation of}}
 template struct X4<int>; // expected-note{{in instantiation of}}
 
-struct Incomplete; // expected-note{{forward declaration}}
+struct Incomplete; // expected-note 2{{forward declaration}}
 
 template<typename T> struct X5 {
   T f() { } // expected-error{{incomplete result type}}
@@ -180,3 +180,21 @@ template<typename T> struct IndirectGoto0 {
 
 template struct IndirectGoto0<void*>;
 template struct IndirectGoto0<int>; // expected-note{{instantiation}}
+
+template<typename T> struct TryCatch0 {
+  void f() {
+    try {
+    } catch (T t) { // expected-error{{incomplete type}} \
+                    // expected-error{{abstract class}}
+    } catch (...) {
+    }
+  }
+};
+
+struct Abstract {
+  virtual void foo() = 0; // expected-note{{pure virtual}}
+};
+
+template struct TryCatch0<int>; // okay
+template struct TryCatch0<Incomplete*>; // expected-note{{instantiation}}
+template struct TryCatch0<Abstract>; // expected-note{{instantiation}}

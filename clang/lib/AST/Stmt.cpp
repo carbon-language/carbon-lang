@@ -564,7 +564,7 @@ Stmt::child_iterator CXXCatchStmt::child_end() {
 
 QualType CXXCatchStmt::getCaughtType() {
   if (ExceptionDecl)
-    return llvm::cast<VarDecl>(ExceptionDecl)->getType();
+    return ExceptionDecl->getType();
   return QualType();
 }
 

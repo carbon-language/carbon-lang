@@ -130,6 +130,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     else
       SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), move(Init),
                                    D->hasCXXDirectInitializer());
+  } else {
+    // FIXME: Call ActOnUninitializedDecl? (Not always)
   }
 
   return Var;

@@ -2534,13 +2534,14 @@ Sema::DeclPtrTy Sema::ActOnFinishLinkageSpecification(Scope *S,
   return LinkageSpec;
 }
 
-/// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
-/// handler.
-Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
-  QualType ExDeclType = GetTypeForDeclarator(D, S);
-  SourceLocation Begin = D.getDeclSpec().getSourceRange().getBegin();
-
-  bool Invalid = D.isInvalidType();
+/// \brief Perform semantic analysis for the variable declaration that
+/// occurs within a C++ catch clause, returning the newly-created
+/// variable.
+VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
+                                         IdentifierInfo *Name,
+                                         SourceLocation Loc,
+                                         SourceRange Range) {
+  bool Invalid = false;
 
   // Arrays and functions decay.
   if (ExDeclType->isArrayType())
@@ -2553,9 +2554,10 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   // incomplete type, other than [cv] void*.
   // N2844 forbids rvalue references.
   if(ExDeclType->isRValueReferenceType()) {
-    Diag(Begin, diag::err_catch_rvalue_ref) << D.getSourceRange();
+    Diag(Loc, diag::err_catch_rvalue_ref) << Range;
     Invalid = true;
   }
+
   QualType BaseType = ExDeclType;
   int Mode = 0; // 0 for direct type, 1 for pointer, 2 for reference
   unsigned DK = diag::err_catch_incomplete;
@@ -2570,18 +2572,36 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
     DK = diag::err_catch_incomplete_ref;
   }
   if (!Invalid && (Mode == 0 || !BaseType->isVoidType()) &&
-      RequireCompleteType(Begin, BaseType, DK))
+      !BaseType->isDependentType() && RequireCompleteType(Loc, BaseType, DK))
     Invalid = true;
 
-  if (!Invalid && RequireNonAbstractType(Begin, ExDeclType,
-                                         diag::err_abstract_type_in_decl,
-                                         AbstractVariableType))
+  if (!Invalid && !ExDeclType->isDependentType() && 
+      RequireNonAbstractType(Loc, ExDeclType,
+                             diag::err_abstract_type_in_decl,
+                             AbstractVariableType))
     Invalid = true;
 
-  // FIXME: Need to test for ability to copy-construct and destroy the exception
-  // variable.
+  // FIXME: Need to test for ability to copy-construct and destroy the
+  // exception variable.
+
   // FIXME: Need to check for abstract classes.
 
+  VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc, 
+                                    Name, ExDeclType, VarDecl::None, 
+                                    Range.getBegin());
+
+  if (Invalid)
+    ExDecl->setInvalidDecl();
+
+  return ExDecl;
+}
+
+/// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
+/// handler.
+Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
+  QualType ExDeclType = GetTypeForDeclarator(D, S);
+
+  bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
   if (NamedDecl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
     // The scope should be freshly made just for us. There is just no way
@@ -2593,21 +2613,25 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
     }
   }
 
-  VarDecl *ExDecl = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                    II, ExDeclType, VarDecl::None, Begin);
   if (D.getCXXScopeSpec().isSet() && !Invalid) {
     Diag(D.getIdentifierLoc(), diag::err_qualified_catch_declarator)
       << D.getCXXScopeSpec().getRange();
     Invalid = true;
   }
 
+  VarDecl *ExDecl = BuildExceptionDeclaration(S, ExDeclType,
+                                              D.getIdentifier(),
+                                              D.getIdentifierLoc(),
+                                            D.getDeclSpec().getSourceRange());
+
   if (Invalid)
     ExDecl->setInvalidDecl();
   
   // Add the exception declaration into this scope.
-  S->AddDecl(DeclPtrTy::make(ExDecl));
   if (II)
-    IdResolver.AddDecl(ExDecl);
+    PushOnScopeChains(ExDecl, S);
+  else
+    CurContext->addDecl(Context, ExDecl);
 
   ProcessDeclAttributes(ExDecl, D);
   return DeclPtrTy::make(ExDecl);

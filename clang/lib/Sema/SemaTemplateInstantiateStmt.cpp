@@ -320,16 +320,69 @@ TemplateStmtInstantiator::VisitAsmStmt(AsmStmt *S) {
 //===----------------------------------------------------------------------===/
 Sema::OwningStmtResult
 TemplateStmtInstantiator::VisitCXXTryStmt(CXXTryStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate a C++ try statement");
-  return SemaRef.StmtError();
+  // Instantiate the try block itself.
+  OwningStmtResult TryBlock = VisitCompoundStmt(S->getTryBlock());
+  if (TryBlock.isInvalid())
+    return SemaRef.StmtError();
+
+  // Instantiate the handlers.
+  llvm::SmallVector<Stmt *, 4> Handlers;
+  for (unsigned I = 0, N = S->getNumHandlers(); I != N; ++I) {
+    OwningStmtResult Handler = VisitCXXCatchStmt(S->getHandler(I));
+    if (Handler.isInvalid()) {
+      // Destroy all of the previous handlers.
+      for (unsigned Victim = 0; Victim != I; ++Victim)
+        Handlers[Victim]->Destroy(SemaRef.Context);
+      return SemaRef.StmtError();
+    }
+
+    Handlers.push_back(Handler.takeAs<Stmt>());
+  }
+
+  return SemaRef.ActOnCXXTryBlock(S->getTryLoc(), move(TryBlock),
+                                  Sema::MultiStmtArg(SemaRef,
+                                                     (void**)&Handlers.front(),
+                                                     Handlers.size()));
 }
 
 Sema::OwningStmtResult
 TemplateStmtInstantiator::VisitCXXCatchStmt(CXXCatchStmt *S) {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate a C++ catch statement");
-  return SemaRef.StmtError();
+  // Instantiate the exception declaration, if any.
+  VarDecl *Var = 0;
+  if (S->getExceptionDecl()) {
+    VarDecl *ExceptionDecl = S->getExceptionDecl();
+    QualType T = SemaRef.InstantiateType(ExceptionDecl->getType(),
+                                         TemplateArgs,
+                                         ExceptionDecl->getLocation(),
+                                         ExceptionDecl->getDeclName());
+    if (T.isNull())
+      return SemaRef.StmtError();
+
+    Var = SemaRef.BuildExceptionDeclaration(0, T,
+                                            ExceptionDecl->getIdentifier(),
+                                            ExceptionDecl->getLocation(),
+                                            /*FIXME: Inaccurate*/
+                                   SourceRange(ExceptionDecl->getLocation()));
+    if (Var->isInvalidDecl()) {
+      Var->Destroy(SemaRef.Context);
+      return SemaRef.StmtError();
+    }
+   
+    // Introduce the exception declaration into scope. 
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(ExceptionDecl, Var);
+  }
+
+  // Instantiate the actual exception handler.
+  OwningStmtResult Handler = Visit(S->getHandlerBlock());
+  if (Handler.isInvalid()) {
+    if (Var)
+      Var->Destroy(SemaRef.Context);
+    return SemaRef.StmtError();
+  }
+
+  return SemaRef.Owned(new (SemaRef.Context) CXXCatchStmt(S->getCatchLoc(),
+                                                          Var,
+                                                     Handler.takeAs<Stmt>()));
 }
 
 //===----------------------------------------------------------------------===/
