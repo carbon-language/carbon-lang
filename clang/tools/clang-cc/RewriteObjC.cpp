@@ -31,10 +31,6 @@
 using namespace clang;
 using llvm::utostr;
 
-static llvm::cl::opt<bool>
-SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
-                           llvm::cl::desc("Silence ObjC rewriting warnings"));
-
 namespace {
   class RewriteObjC : public ASTConsumer {
     Rewriter Rewrite;
@@ -94,7 +90,9 @@ namespace {
     
     std::string InFileName;
     llvm::raw_ostream* OutFile;
-     
+
+    bool SilenceRewriteMacroWarning;
+
     std::string Preamble;
 
     // Block expressions.
@@ -137,7 +135,8 @@ namespace {
     void HandleTopLevelSingleDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
     RewriteObjC(std::string inFile, llvm::raw_ostream *OS,
-                Diagnostic &D, const LangOptions &LOpts);
+                Diagnostic &D, const LangOptions &LOpts,
+                bool silenceMacroWarn);
 
     ~RewriteObjC() {}
     
@@ -417,8 +416,10 @@ static bool IsHeaderFile(const std::string &Filename) {
 }    
 
 RewriteObjC::RewriteObjC(std::string inFile, llvm::raw_ostream* OS,
-                         Diagnostic &D, const LangOptions &LOpts)
-      : Diags(D), LangOpts(LOpts), InFileName(inFile), OutFile(OS) {
+                         Diagnostic &D, const LangOptions &LOpts,
+                         bool silenceMacroWarn)
+      : Diags(D), LangOpts(LOpts), InFileName(inFile), OutFile(OS),
+        SilenceRewriteMacroWarning(silenceMacroWarn) {
   IsHeader = IsHeaderFile(inFile);
   RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                "rewriting sub-expression within a macro (may not be correct)");
@@ -430,8 +431,9 @@ RewriteObjC::RewriteObjC(std::string inFile, llvm::raw_ostream* OS,
 ASTConsumer *clang::CreateObjCRewriter(const std::string& InFile,
                                        llvm::raw_ostream* OS,
                                        Diagnostic &Diags, 
-                                       const LangOptions &LOpts) {
-  return new RewriteObjC(InFile, OS, Diags, LOpts);
+                                       const LangOptions &LOpts,
+                                       bool SilenceRewriteMacroWarning) {
+  return new RewriteObjC(InFile, OS, Diags, LOpts, SilenceRewriteMacroWarning);
 }
 
 void RewriteObjC::Initialize(ASTContext &context) {

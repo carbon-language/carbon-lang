@@ -1490,6 +1490,13 @@ FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
 
 //===----------------------------------------------------------------------===//
+// ObjC Rewriter Options
+//===----------------------------------------------------------------------===//
+static llvm::cl::opt<bool>
+SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
+                           llvm::cl::desc("Silence ObjC rewriting warnings"));
+
+//===----------------------------------------------------------------------===//
 // -dump-build-information Stuff
 //===----------------------------------------------------------------------===//
 
@@ -1692,7 +1699,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   case RewriteObjC:
     OS.reset(ComputeOutFile(InFile, "cpp", true, OutPath));
     Consumer.reset(CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
-                                      PP.getLangOptions()));
+                                      PP.getLangOptions(),
+                                      SilenceRewriteMacroWarning));
     break;
 
   case RewriteBlocks:

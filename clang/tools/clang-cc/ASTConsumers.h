@@ -58,7 +58,8 @@ ASTConsumer *CreateDeclContextPrinter();
 ASTConsumer *CreateObjCRewriter(const std::string& InFile,
                                 llvm::raw_ostream* OS,
                                 Diagnostic &Diags,
-                                const LangOptions &LOpts);
+                                const LangOptions &LOpts,
+                                bool SilenceRewriteMacroWarning);
 
 // LLVM code generator: uses the code generation backend to generate LLVM
 // assembly. This runs optimizations depending on the CompileOptions
