@@ -77,6 +77,10 @@ namespace llvm {
     ///
     bool isZero() const;
 
+    /// isOne - Return true if the expression is a constant one.
+    ///
+    bool isOne() const;
+
     /// replaceSymbolicValuesWithConcrete - If this SCEV internally references
     /// the symbolic value "Sym", construct and return a new SCEV that produces
     /// the same value, but which uses the concrete value Conc instead of the

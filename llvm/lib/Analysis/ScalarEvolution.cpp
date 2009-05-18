@@ -127,6 +127,11 @@ bool SCEV::isZero() const {
   return false;
 }
 
+bool SCEV::isOne() const {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(this))
+    return SC->getValue()->isOne();
+  return false;
+}
 
 SCEVCouldNotCompute::SCEVCouldNotCompute() : SCEV(scCouldNotCompute) {}
 SCEVCouldNotCompute::~SCEVCouldNotCompute() {}
@@ -3392,7 +3397,7 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     const SCEVConstant *CStep = dyn_cast<SCEVConstant>(Step);
     if (!CStep || CStep->isZero())
       return UnknownValue;
-    if (CStep->getValue()->getValue() == 1) {
+    if (CStep->isOne()) {
       // With unit stride, the iteration never steps past the limit value.
     } else if (CStep->getValue()->getValue().isStrictlyPositive()) {
       if (const SCEVConstant *CLimit = dyn_cast<SCEVConstant>(RHS)) {
