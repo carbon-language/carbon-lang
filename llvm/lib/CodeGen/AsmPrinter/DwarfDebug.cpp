@@ -129,12 +129,15 @@ public:
 class VISIBILITY_HIDDEN DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
   unsigned FrameIndex;               // Variable frame index.
+  bool InlinedFnVar;                 // Variable for an inlined function.
 public:
-  DbgVariable(DIVariable V, unsigned I) : Var(V), FrameIndex(I)  {}
+  DbgVariable(DIVariable V, unsigned I, bool IFV)
+    : Var(V), FrameIndex(I), InlinedFnVar(IFV)  {}
 
   // Accessors.
-  DIVariable getVariable()  const { return Var; }
+  DIVariable getVariable() const { return Var; }
   unsigned getFrameIndex() const { return FrameIndex; }
+  bool isInlinedFnVar() const { return InlinedFnVar; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -956,10 +959,14 @@ DIE *DwarfDebug::NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
   AddType(Unit, VariableDie, VD.getType());
 
   // Add variable address.
-  MachineLocation Location;
-  Location.set(RI->getFrameRegister(*MF),
-               RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
-  AddAddress(VariableDie, dwarf::DW_AT_location, Location);
+  if (!DV->isInlinedFnVar()) {
+    // Variables for abstract instances of inlined functions don't get a
+    // location.
+    MachineLocation Location;
+    Location.set(RI->getFrameRegister(*MF),
+                 RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
+    AddAddress(VariableDie, dwarf::DW_AT_location, Location);
+  }
 
   return VariableDie;
 }
@@ -2434,6 +2441,7 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
 
   DIDescriptor Desc(GV);
   DbgScope *Scope = NULL;
+  bool InlinedFnVar = false;
 
   if (Desc.getTag() == dwarf::DW_TAG_variable) {
     // GV is a global variable.
@@ -2472,6 +2480,7 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
         // or GV is an inlined local variable.
         Scope = AI->second;
         InlinedParamMap[V].insert(GV);
+        InlinedFnVar = true;
       } else {
         // or GV is a local variable.
         Scope = getOrCreateScope(V);
@@ -2480,7 +2489,7 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
   }
 
   assert(Scope && "Unable to find the variable's scope");
-  DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex);
+  DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex, InlinedFnVar);
   Scope->AddVariable(DV);
 
   if (TimePassesIsEnabled)
