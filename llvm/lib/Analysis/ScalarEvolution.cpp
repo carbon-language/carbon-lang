@@ -3328,6 +3328,10 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
 bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
                                           ICmpInst::Predicate Pred,
                                           const SCEV *LHS, const SCEV *RHS) {
+  // Interpret a null as meaning no loop, where there is obviously no guard
+  // (interprocedural conditions notwithstanding).
+  if (!L) return false;
+
   BasicBlock *Predecessor = getLoopPredecessor(L);
   BasicBlock *PredecessorDest = L->getHeader();
 
