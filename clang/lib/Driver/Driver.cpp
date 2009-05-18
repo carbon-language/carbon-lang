@@ -595,12 +595,11 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
             Ty = types::TY_Object;
         }
 
-        // -ObjC and -ObjC++ override the default language, but only
-        // -for "source files". We just treat everything that isn't a
-        // -linker input as a source file.
+        // -ObjC and -ObjC++ override the default language, but only for "source
+        // files". We just treat everything that isn't a linker input as a
+        // source file.
         // 
-        // FIXME: Clean this up if we move the phase sequence into the
-        // type.
+        // FIXME: Clean this up if we move the phase sequence into the type.
         if (Ty != types::TY_Object) {
           if (Args.hasArg(options::OPT_ObjC))
             Ty = types::TY_ObjC;
