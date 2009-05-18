@@ -2280,7 +2280,7 @@ def ADC8rr   : I<0x10, MRMDestReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
 def ADC16rr  : I<0x11, MRMDestReg, (outs GR16:$dst),
                                    (ins GR16:$src1, GR16:$src2),
                  "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, GR16:$src2))]>;
+                 [(set GR16:$dst, (adde GR16:$src1, GR16:$src2))]>, OpSize;
 def ADC32rr  : I<0x11, MRMDestReg, (outs GR32:$dst),
                                    (ins GR32:$src1, GR32:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
@@ -2293,7 +2293,8 @@ def ADC8rm   : I<0x12, MRMSrcMem , (outs GR8:$dst),
 def ADC16rm  : I<0x13, MRMSrcMem , (outs GR16:$dst),
                                    (ins GR16:$src1, i16mem:$src2),
                  "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, (load addr:$src2)))]>;
+                 [(set GR16:$dst, (adde GR16:$src1, (load addr:$src2)))]>,
+                 OpSize;
 def ADC32rm  : I<0x13, MRMSrcMem , (outs GR32:$dst),
                                    (ins GR32:$src1, i32mem:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
@@ -2304,11 +2305,12 @@ def ADC8ri   : Ii8<0x80, MRM2r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
 def ADC16ri  : Ii16<0x81, MRM2r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, imm:$src2))]>;
+                 [(set GR16:$dst, (adde GR16:$src1, imm:$src2))]>, OpSize;
 def ADC16ri8 : Ii8<0x83, MRM2r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "adc{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (adde GR16:$src1, i16immSExt8:$src2))]>;
+                 [(set GR16:$dst, (adde GR16:$src1, i16immSExt8:$src2))]>,
+                 OpSize;
 def ADC32ri  : Ii32<0x81, MRM2r, (outs GR32:$dst),
                                  (ins GR32:$src1, i32imm:$src2),
                     "adc{l}\t{$src2, $dst|$dst, $src2}",
@@ -2324,7 +2326,8 @@ let isTwoAddress = 0 in {
                    [(store (adde (load addr:$dst), GR8:$src2), addr:$dst)]>;
   def ADC16mr  : I<0x11, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    "adc{w}\t{$src2, $dst|$dst, $src2}",
-                   [(store (adde (load addr:$dst), GR16:$src2), addr:$dst)]>;
+                   [(store (adde (load addr:$dst), GR16:$src2), addr:$dst)]>,
+                   OpSize;
   def ADC32mr  : I<0x11, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                    "adc{l}\t{$src2, $dst|$dst, $src2}",
                    [(store (adde (load addr:$dst), GR32:$src2), addr:$dst)]>;
@@ -2333,10 +2336,12 @@ let isTwoAddress = 0 in {
                   [(store (adde (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADC16mi  : Ii16<0x81, MRM2m, (outs), (ins i16mem:$dst, i16imm:$src2),
                       "adc{w}\t{$src2, $dst|$dst, $src2}",
-                  [(store (adde (loadi16 addr:$dst), imm:$src2), addr:$dst)]>;
+                  [(store (adde (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
+                  OpSize;
   def ADC16mi8 : Ii8<0x83, MRM2m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
                      "adc{w}\t{$src2, $dst|$dst, $src2}",
-               [(store (adde (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>;
+               [(store (adde (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
+               OpSize;
   def ADC32mi  : Ii32<0x81, MRM2m, (outs), (ins i32mem:$dst, i32imm:$src2),
                       "adc{l}\t{$src2, $dst|$dst, $src2}",
                   [(store (adde (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
@@ -2452,7 +2457,7 @@ def SBB8rr     : I<0x18, MRMDestReg, (outs GR8:$dst),
 def SBB16rr    : I<0x19, MRMDestReg, (outs GR16:$dst),
                                      (ins GR16:$src1, GR16:$src2),
                   "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (sube GR16:$src1, GR16:$src2))]>;
+                 [(set GR16:$dst, (sube GR16:$src1, GR16:$src2))]>, OpSize;
 def SBB32rr    : I<0x19, MRMDestReg, (outs GR32:$dst),
                                       (ins GR32:$src1, GR32:$src2),
                   "sbb{l}\t{$src2, $dst|$dst, $src2}",
@@ -2464,7 +2469,8 @@ let isTwoAddress = 0 in {
                    [(store (sube (load addr:$dst), GR8:$src2), addr:$dst)]>;
   def SBB16mr  : I<0x19, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2), 
                    "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                   [(store (sube (load addr:$dst), GR16:$src2), addr:$dst)]>;
+                   [(store (sube (load addr:$dst), GR16:$src2), addr:$dst)]>,
+                   OpSize;
   def SBB32mr  : I<0x19, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
                    [(store (sube (load addr:$dst), GR32:$src2), addr:$dst)]>;
@@ -2473,10 +2479,12 @@ let isTwoAddress = 0 in {
                    [(store (sube (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def SBB16mi  : Ii16<0x81, MRM3m, (outs), (ins i16mem:$dst, i16imm:$src2), 
                       "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                  [(store (sube (loadi16 addr:$dst), imm:$src2), addr:$dst)]>;
+                  [(store (sube (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
+                  OpSize;
   def SBB16mi8 : Ii8<0x83, MRM3m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
                      "sbb{w}\t{$src2, $dst|$dst, $src2}",
-               [(store (sube (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>;
+               [(store (sube (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
+               OpSize;
   def SBB32mi  : Ii32<0x81, MRM3m, (outs), (ins i32mem:$dst, i32imm:$src2), 
                       "sbb{l}\t{$src2, $dst|$dst, $src2}",
                   [(store (sube (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
@@ -2490,7 +2498,8 @@ def SBB8rm   : I<0x1A, MRMSrcMem, (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
 def SBB16rm  : I<0x1B, MRMSrcMem, (outs GR16:$dst),
                                   (ins GR16:$src1, i16mem:$src2),
                     "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (sube GR16:$src1, (load addr:$src2)))]>;
+                    [(set GR16:$dst, (sube GR16:$src1, (load addr:$src2)))]>,
+                    OpSize;
 def SBB32rm  : I<0x1B, MRMSrcMem, (outs GR32:$dst),
                                   (ins GR32:$src1, i32mem:$src2),
                     "sbb{l}\t{$src2, $dst|$dst, $src2}",
@@ -2501,11 +2510,12 @@ def SBB8ri   : Ii8<0x80, MRM3r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
 def SBB16ri  : Ii16<0x81, MRM3r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (sube GR16:$src1, imm:$src2))]>;
+                    [(set GR16:$dst, (sube GR16:$src1, imm:$src2))]>, OpSize;
 def SBB16ri8 : Ii8<0x83, MRM3r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "sbb{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (sube GR16:$src1, i16immSExt8:$src2))]>;
+                   [(set GR16:$dst, (sube GR16:$src1, i16immSExt8:$src2))]>,
+                   OpSize;
 def SBB32ri  : Ii32<0x81, MRM3r, (outs GR32:$dst), 
                                  (ins GR32:$src1, i32imm:$src2),
                     "sbb{l}\t{$src2, $dst|$dst, $src2}",
