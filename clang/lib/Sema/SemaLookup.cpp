@@ -713,7 +713,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
       AddScopeUsingDirectives(Context, SC, UDirs);
 
   // Sort heapified UsingDirectiveDecls.
-  std::sort_heap(UDirs.begin(), UDirs.end());
+  std::sort_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
 
   // Lookup namespace scope, and global scope.
   // Unqualified name lookup in C++ requires looking into scopes
