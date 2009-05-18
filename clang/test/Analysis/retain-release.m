@@ -619,6 +619,18 @@ void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
 }
 
 //===----------------------------------------------------------------------===//
+// PR 4230 - an autorelease pool is not necessarily leaked during a premature
+//  return
+//===----------------------------------------------------------------------===//
+
+static void PR4230(void)
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init]; // no-warning
+  NSString *object = [[[NSString alloc] init] autorelease]; // no-warning
+  return;
+}
+
+//===----------------------------------------------------------------------===//
 // Method name that has a null IdentifierInfo* for its first selector slot.
 // This test just makes sure that we handle it.
 //===----------------------------------------------------------------------===//

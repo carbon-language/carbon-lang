@@ -1438,6 +1438,10 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addInstMethSummary("NSPanel", NoTrackYet, "initWithContentRect",
                      "styleMask", "backing", "defer", "screen", NULL);
 #endif
+  
+  // Don't track allocated autorelease pools yet, as it is okay to prematurely
+  // exit a method.
+  addClassMethSummary("NSAutoreleasePool", "alloc", NoTrackYet);
 
   // Create NSAssertionHandler summaries.
   addPanicSummary("NSAssertionHandler", "handleFailureInFunction", "file",
