@@ -170,145 +170,145 @@ _mm_xor_ps(__m128 a, __m128 b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpeqss(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 0);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpeqps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 0);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmplt_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpltss(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 1);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmplt_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpltps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 1);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmple_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpless(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 2);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmple_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpleps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 2);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpltss(b, a);
+  return (__m128)__builtin_ia32_cmpss(b, a, 1);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpltps(b, a);
+  return (__m128)__builtin_ia32_cmpps(b, a, 1);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpge_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpless(b, a);
+  return (__m128)__builtin_ia32_cmpss(b, a, 2);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpge_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpleps(b, a);
+  return (__m128)__builtin_ia32_cmpps(b, a, 2);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpneq_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpneqss(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 4);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpneq_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpneqps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 4);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnlt_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnltss(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 5);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnlt_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnltps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 5);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnle_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnless(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 6);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnle_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnleps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 6);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpngt_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnltss(b, a);
+  return (__m128)__builtin_ia32_cmpss(b, a, 5);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpngt_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnltps(b, a);
+  return (__m128)__builtin_ia32_cmpps(b, a, 5);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnge_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnless(b, a);
+  return (__m128)__builtin_ia32_cmpss(b, a, 6);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnge_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpnleps(b, a);
+  return (__m128)__builtin_ia32_cmpps(b, a, 6);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpord_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpordss(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 7);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpord_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpordps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 7);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpunord_ss(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpunordss(a, b);
+  return (__m128)__builtin_ia32_cmpss(a, b, 3);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpunord_ps(__m128 a, __m128 b)
 {
-  return (__m128)__builtin_ia32_cmpunordps(a, b);
+  return (__m128)__builtin_ia32_cmpps(a, b, 3);
 }
 
 static inline int __attribute__((__always_inline__, __nodebug__))
