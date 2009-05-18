@@ -633,6 +633,7 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   }
 
   assert(0 && "Unprocessed region.");
+  return 0;
 }
 
 SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
