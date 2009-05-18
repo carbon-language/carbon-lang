@@ -806,8 +806,9 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
         // the addrec's type. The count is always unsigned.
         SCEVHandle CastedMaxBECount =
           getTruncateOrZeroExtend(MaxBECount, Start->getType());
-        if (MaxBECount ==
-            getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType())) {
+        SCEVHandle RecastedMaxBECount =
+          getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
+        if (MaxBECount == RecastedMaxBECount) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
           // Check whether Start+Step*MaxBECount has no unsigned overflow.
@@ -815,10 +816,11 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
             getMulExpr(CastedMaxBECount,
                        getTruncateOrZeroExtend(Step, Start->getType()));
           SCEVHandle Add = getAddExpr(Start, ZMul);
-          if (getZeroExtendExpr(Add, WideTy) ==
-              getAddExpr(getZeroExtendExpr(Start, WideTy),
-                         getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
-                                    getZeroExtendExpr(Step, WideTy))))
+          SCEVHandle OperandExtendedAdd =
+            getAddExpr(getZeroExtendExpr(Start, WideTy),
+                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+                                  getZeroExtendExpr(Step, WideTy)));
+          if (getZeroExtendExpr(Add, WideTy) == OperandExtendedAdd)
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getZeroExtendExpr(Start, Ty),
                                  getZeroExtendExpr(Step, Ty),
@@ -830,10 +832,11 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
             getMulExpr(CastedMaxBECount,
                        getTruncateOrSignExtend(Step, Start->getType()));
           Add = getAddExpr(Start, SMul);
-          if (getZeroExtendExpr(Add, WideTy) ==
-              getAddExpr(getZeroExtendExpr(Start, WideTy),
-                         getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
-                                    getSignExtendExpr(Step, WideTy))))
+          OperandExtendedAdd =
+            getAddExpr(getZeroExtendExpr(Start, WideTy),
+                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+                                  getSignExtendExpr(Step, WideTy)));
+          if (getZeroExtendExpr(Add, WideTy) == OperandExtendedAdd)
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getZeroExtendExpr(Start, Ty),
                                  getSignExtendExpr(Step, Ty),
@@ -891,8 +894,9 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
         // the addrec's type. The count is always unsigned.
         SCEVHandle CastedMaxBECount =
           getTruncateOrZeroExtend(MaxBECount, Start->getType());
-        if (MaxBECount ==
-            getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType())) {
+        SCEVHandle RecastedMaxBECount =
+          getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
+        if (MaxBECount == RecastedMaxBECount) {
           const Type *WideTy =
             IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
           // Check whether Start+Step*MaxBECount has no signed overflow.
@@ -900,10 +904,11 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
             getMulExpr(CastedMaxBECount,
                        getTruncateOrSignExtend(Step, Start->getType()));
           SCEVHandle Add = getAddExpr(Start, SMul);
-          if (getSignExtendExpr(Add, WideTy) ==
-              getAddExpr(getSignExtendExpr(Start, WideTy),
-                         getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
-                                    getSignExtendExpr(Step, WideTy))))
+          SCEVHandle OperandExtendedAdd =
+            getAddExpr(getSignExtendExpr(Start, WideTy),
+                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+                                  getSignExtendExpr(Step, WideTy)));
+          if (getSignExtendExpr(Add, WideTy) == OperandExtendedAdd)
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getSignExtendExpr(Start, Ty),
                                  getSignExtendExpr(Step, Ty),
