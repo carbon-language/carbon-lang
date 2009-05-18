@@ -23,7 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-cc.h"
-#include "ASTConsumers.h"
+#include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"

@@ -21,9 +21,9 @@ TOOL_NO_EXPORTS = 1
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader bitwriter codegen ipo selectiondag
-USEDLIBS = clangCodeGen.a clangAnalysis.a clangRewrite.a clangSema.a	\
-           clangFrontend.a clangAST.a clangParse.a clangLex.a		\
-           clangBasic.a 
+USEDLIBS = clangFrontend.a clangCodeGen.a clangAnalysis.a 	\
+           clangRewrite.a clangSema.a clangAST.a clangParse.a 		\
+           clangLex.a clangBasic.a 
 
 # clang-cc lives in a special location; we can get away with this
 # because nothing else gets installed from here.

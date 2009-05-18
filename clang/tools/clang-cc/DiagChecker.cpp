@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-cc.h"
-#include "ASTConsumers.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
