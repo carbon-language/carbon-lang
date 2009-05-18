@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/UniqueVector.h"
 #include <string>
@@ -162,6 +163,11 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// functions. These are subroutine entries that contain a DW_AT_inline
   /// attribute.
   DenseMap<const GlobalVariable *, DbgScope *> AbstractInstanceRootMap;
+
+  /// InlinedParamMap - A map keeping track of which parameters are assigned to
+  /// which abstract instance.
+  DenseMap<const GlobalVariable *,
+    SmallSet<const GlobalVariable *, 32> > InlinedParamMap;
 
   /// AbstractInstanceRootList - List of abstract instance roots of inlined
   /// functions. These are subroutine entries that contain a DW_AT_inline
@@ -333,7 +339,8 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// CreateSubprogramDIE - Create new DIE using SP.
   DIE *CreateSubprogramDIE(CompileUnit *DW_Unit,
                            const DISubprogram &SP,
-                           bool IsConstructor = false);
+                           bool IsConstructor = false,
+                           bool IsInlined = false);
 
   /// FindCompileUnit - Get the compile unit for the given descriptor. 
   ///

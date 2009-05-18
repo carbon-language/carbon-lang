@@ -855,7 +855,8 @@ DIE *DwarfDebug::CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
 /// CreateSubprogramDIE - Create new DIE using SP.
 DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
                                      const DISubprogram &SP,
-                                     bool IsConstructor) {
+                                     bool IsConstructor,
+                                     bool IsInlined) {
   DIE *SPDie = new DIE(dwarf::DW_TAG_subprogram);
 
   std::string Name;
@@ -903,7 +904,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
       }
   }
 
-  if (!SP.isLocalToUnit())
+  if (!SP.isLocalToUnit() && !IsInlined)
     AddUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
@@ -2425,7 +2426,7 @@ unsigned DwarfDebug::RecordRegionEnd(GlobalVariable *V) {
   return ID;
 }
 
-/// RecordVariable - Indicate the declaration of  a local variable.
+/// RecordVariable - Indicate the declaration of a local variable.
 void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
                                 const MachineInstr *MI) {
   if (TimePassesIsEnabled)
@@ -2453,12 +2454,33 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
       DenseMap<const GlobalVariable *, DbgScope *>::iterator
         AI = AbstractInstanceRootMap.find(V);
 
-      if (AI != AbstractInstanceRootMap.end())
+      if (AI != AbstractInstanceRootMap.end()) {
+        // This method is called each time a DECLARE node is encountered. For an
+        // inlined function, this could be many, many times. We don't want to
+        // re-add variables to that DIE for each time. We just want to add them
+        // once. Check to make sure that we haven't added them already.
+        DenseMap<const GlobalVariable *,
+          SmallSet<const GlobalVariable *, 32> >::iterator
+          IP = InlinedParamMap.find(V);
+
+        if (IP != InlinedParamMap.end()) {
+          SmallSet<const GlobalVariable*, 32> &S = IP->second;
+
+          if (S.count(GV) > 0) {
+            if (TimePassesIsEnabled)
+              DebugTimer->stopTimer();
+            return;
+          }
+
+        }
+
         // or GV is an inlined local variable.
         Scope = AI->second;
-      else
+        InlinedParamMap[V].insert(GV);
+      } else {
         // or GV is a local variable.
         Scope = getOrCreateScope(V);
+      }
     }
   }
 
@@ -2494,13 +2516,13 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
     CompileUnit *Unit = &FindCompileUnit(SP.getCompileUnit());
     DIE *SPDie = Unit->getDieMapSlotFor(GV);
     if (!SPDie)
-      SPDie = CreateSubprogramDIE(Unit, SP);
+      SPDie = CreateSubprogramDIE(Unit, SP, false, true);
 
     // Mark as being inlined. This makes this subprogram entry an abstract
     // instance root.
     // FIXME: Our debugger doesn't care about the value of DW_AT_inline, only
-    // that it's defined. It probably won't change in the future, but this
-    // could be more elegant.
+    // that it's defined. That probably won't change in the future. However,
+    // this could be more elegant.
     AddUInt(SPDie, dwarf::DW_AT_inline, 0, dwarf::DW_INL_declared_not_inlined);
 
     // Keep track of the abstract scope for this function.
@@ -2566,6 +2588,7 @@ unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
     I = DbgConcreteScopeMap.find(GV);
 
   if (I == DbgConcreteScopeMap.end()) {
+    // FIXME: Can this situation actually happen? And if so, should it?
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
 
