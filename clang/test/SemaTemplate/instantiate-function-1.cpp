@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only -verify %s
 template<typename T, typename U>
 struct X0 {
   void f(T x, U y) { 
