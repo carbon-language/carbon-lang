@@ -2692,6 +2692,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // Do special checking on direct calls to functions.
   if (FDecl)
     return CheckFunctionCall(FDecl, TheCall.take());
+  if (NDecl)
+    return CheckBlockCall(NDecl, TheCall.take());
 
   return Owned(TheCall.take());
 }

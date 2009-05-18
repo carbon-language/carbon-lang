@@ -181,6 +181,34 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   return move(TheCallResult);
 }
 
+Action::OwningExprResult
+Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
+
+  OwningExprResult TheCallResult(Owned(TheCall));
+  // Printf checking.
+  const FormatAttr *Format = NDecl->getAttr<FormatAttr>();
+  if (!Format)
+    return move(TheCallResult);
+  const VarDecl *V = dyn_cast<VarDecl>(NDecl);
+  if (!V)
+    return move(TheCallResult);
+  QualType Ty = V->getType();
+  if (!Ty->isBlockPointerType())
+    return move(TheCallResult);
+  if (Format->getType() == "printf") {
+      bool HasVAListArg = Format->getFirstArg() == 0;
+      if (!HasVAListArg) {
+        const FunctionType *FT = 
+          Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
+        if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
+          HasVAListArg = !Proto->isVariadic();
+      }
+      CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
+                           HasVAListArg ? 0 : Format->getFirstArg() - 1);
+  }
+  return move(TheCallResult);
+}
+
 /// SemaBuiltinAtomicOverloaded - We have a call to a function like
 /// __sync_fetch_and_add, which is an overloaded function based on the pointer
 /// type of its first argument.  The main ActOnCallExpr routines have already

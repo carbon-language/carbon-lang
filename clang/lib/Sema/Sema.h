@@ -2700,6 +2700,8 @@ public:
 private:
   Action::OwningExprResult CheckFunctionCall(FunctionDecl *FDecl,
                                              CallExpr *TheCall);
+  
+  Action::OwningExprResult CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
   SourceLocation getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                 unsigned ByteNo) const;
   bool CheckObjCString(Expr *Arg);
