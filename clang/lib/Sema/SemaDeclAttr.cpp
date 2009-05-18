@@ -24,7 +24,7 @@ using namespace clang;
 //  Helper functions
 //===----------------------------------------------------------------------===//
 
-static const FunctionType *getFunctionType(Decl *d) {
+static const FunctionType *getFunctionType(Decl *d, bool blocksToo = true) {
   QualType Ty;
   if (ValueDecl *decl = dyn_cast<ValueDecl>(d))
     Ty = decl->getType();
@@ -37,7 +37,7 @@ static const FunctionType *getFunctionType(Decl *d) {
   
   if (Ty->isFunctionPointerType())
     Ty = Ty->getAsPointerType()->getPointeeType();
-  else if (Ty->isBlockPointerType())
+  else if (blocksToo && Ty->isBlockPointerType())
     Ty = Ty->getAsBlockPointerType()->getPointeeType();
 
   return Ty->getAsFunctionType();
@@ -50,7 +50,7 @@ static const FunctionType *getFunctionType(Decl *d) {
 /// type (function or function-typed variable) or an Objective-C
 /// method.
 static bool isFunctionOrMethod(Decl *d) {
-  return getFunctionType(d) || isa<ObjCMethodDecl>(d);
+  return getFunctionType(d, false) || isa<ObjCMethodDecl>(d);
 }
 
 /// isFunctionOrMethodOrBlock - Return true if the given decl has function
