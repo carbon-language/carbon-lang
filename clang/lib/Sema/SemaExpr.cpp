@@ -5075,10 +5075,9 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
 void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   assert(ParamInfo.getIdentifier()==0 && "block-id should have no identifier!");
 
-  ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
-
   if (ParamInfo.getNumTypeObjects() == 0
       || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
+    ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
     QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
 
     if (T->isArrayType()) {
@@ -5134,6 +5133,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   CurBlock->TheDecl->setParams(Context, &CurBlock->Params[0], 
                                CurBlock->Params.size());
 
+  ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
        E = CurBlock->TheDecl->param_end(); AI != E; ++AI)
     // If this has an identifier, add it to the scope stack.
