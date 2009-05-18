@@ -291,9 +291,9 @@ static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
 
 /// getAccessType - Return the type of the memory being accessed.
 static const Type *getAccessType(const Instruction *Inst) {
-  const Type *UseTy = Inst->getType();
+  const Type *AccessTy = Inst->getType();
   if (const StoreInst *SI = dyn_cast<StoreInst>(Inst))
-    UseTy = SI->getOperand(0)->getType();
+    AccessTy = SI->getOperand(0)->getType();
   else if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
     // Addressing modes can also be folded into prefetches and a variety
     // of intrinsics.
@@ -303,11 +303,11 @@ static const Type *getAccessType(const Instruction *Inst) {
     case Intrinsic::x86_sse2_storeu_pd:
     case Intrinsic::x86_sse2_storeu_dq:
     case Intrinsic::x86_sse2_storel_dq:
-      UseTy = II->getOperand(1)->getType();
+      AccessTy = II->getOperand(1)->getType();
       break;
     }
   }
-  return UseTy;
+  return AccessTy;
 }
 
 namespace {
@@ -547,7 +547,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
 
 /// fitsInAddressMode - Return true if V can be subsumed within an addressing
 /// mode, and does not need to be put in a register first.
-static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
+static bool fitsInAddressMode(const SCEVHandle &V, const Type *AccessTy,
                              const TargetLowering *TLI, bool HasBaseReg) {
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     int64_t VC = SC->getValue()->getSExtValue();
@@ -555,7 +555,7 @@ static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
       TargetLowering::AddrMode AM;
       AM.BaseOffs = VC;
       AM.HasBaseReg = HasBaseReg;
-      return TLI->isLegalAddressingMode(AM, UseTy);
+      return TLI->isLegalAddressingMode(AM, AccessTy);
     } else {
       // Defaults to PPC. PPC allows a sign-extended 16-bit immediate field.
       return (VC > -(1 << 16) && VC < (1 << 16)-1);
@@ -568,7 +568,7 @@ static bool fitsInAddressMode(const SCEVHandle &V, const Type *UseTy,
         TargetLowering::AddrMode AM;
         AM.BaseGV = GV;
         AM.HasBaseReg = HasBaseReg;
-        return TLI->isLegalAddressingMode(AM, UseTy);
+        return TLI->isLegalAddressingMode(AM, AccessTy);
       } else {
         // Default: assume global addresses are not legal.
       }
@@ -620,7 +620,7 @@ static void MoveLoopVariantsToImmediateField(SCEVHandle &Val, SCEVHandle &Imm,
 /// that can fit into the immediate field of instructions in the target.
 /// Accumulate these immediate values into the Imm value.
 static void MoveImmediateValues(const TargetLowering *TLI,
-                                const Type *UseTy,
+                                const Type *AccessTy,
                                 SCEVHandle &Val, SCEVHandle &Imm,
                                 bool isAddress, Loop *L,
                                 ScalarEvolution *SE) {
@@ -630,7 +630,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     
     for (unsigned i = 0; i != SAE->getNumOperands(); ++i) {
       SCEVHandle NewOp = SAE->getOperand(i);
-      MoveImmediateValues(TLI, UseTy, NewOp, Imm, isAddress, L, SE);
+      MoveImmediateValues(TLI, AccessTy, NewOp, Imm, isAddress, L, SE);
       
       if (!NewOp->isLoopInvariant(L)) {
         // If this is a loop-variant expression, it must stay in the immediate
@@ -649,7 +649,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
   } else if (const SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
-    MoveImmediateValues(TLI, UseTy, Start, Imm, isAddress, L, SE);
+    MoveImmediateValues(TLI, AccessTy, Start, Imm, isAddress, L, SE);
     
     if (Start != SARE->getStart()) {
       std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
@@ -659,12 +659,13 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     return;
   } else if (const SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
     // Transform "8 * (4 + v)" -> "32 + 8*V" if "32" fits in the immed field.
-    if (isAddress && fitsInAddressMode(SME->getOperand(0), UseTy, TLI, false) &&
+    if (isAddress &&
+        fitsInAddressMode(SME->getOperand(0), AccessTy, TLI, false) &&
         SME->getNumOperands() == 2 && SME->isLoopInvariant(L)) {
 
       SCEVHandle SubImm = SE->getIntegerSCEV(0, Val->getType());
       SCEVHandle NewOp = SME->getOperand(1);
-      MoveImmediateValues(TLI, UseTy, NewOp, SubImm, isAddress, L, SE);
+      MoveImmediateValues(TLI, AccessTy, NewOp, SubImm, isAddress, L, SE);
       
       // If we extracted something out of the subexpressions, see if we can 
       // simplify this!
@@ -672,7 +673,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
         // Scale SubImm up by "8".  If the result is a target constant, we are
         // good.
         SubImm = SE->getMulExpr(SubImm, SME->getOperand(0));
-        if (fitsInAddressMode(SubImm, UseTy, TLI, false)) {
+        if (fitsInAddressMode(SubImm, AccessTy, TLI, false)) {
           // Accumulate the immediate.
           Imm = SE->getAddExpr(Imm, SubImm);
           
@@ -686,7 +687,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 
   // Loop-variant expressions must stay in the immediate field of the
   // expression.
-  if ((isAddress && fitsInAddressMode(Val, UseTy, TLI, false)) ||
+  if ((isAddress && fitsInAddressMode(Val, AccessTy, TLI, false)) ||
       !Val->isLoopInvariant(L)) {
     Imm = SE->getAddExpr(Imm, Val);
     Val = SE->getIntegerSCEV(0, Val->getType());
@@ -701,8 +702,8 @@ static void MoveImmediateValues(const TargetLowering *TLI,
                                 SCEVHandle &Val, SCEVHandle &Imm,
                                 bool isAddress, Loop *L,
                                 ScalarEvolution *SE) {
-  const Type *UseTy = getAccessType(User);
-  MoveImmediateValues(TLI, UseTy, Val, Imm, isAddress, L, SE);
+  const Type *AccessTy = getAccessType(User);
+  MoveImmediateValues(TLI, AccessTy, Val, Imm, isAddress, L, SE);
 }
 
 /// SeparateSubExprs - Decompose Expr into all of the subexpressions that are
@@ -796,11 +797,11 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // If this use is as an address we may be able to put CSEs in the addressing
     // mode rather than hoisting them.
     bool isAddrUse = isAddressUse(Uses[i].Inst, Uses[i].OperandValToReplace);
-    // We may need the UseTy below, but only when isAddrUse, so compute it
+    // We may need the AccessTy below, but only when isAddrUse, so compute it
     // only in that case.
-    const Type *UseTy = 0;
+    const Type *AccessTy = 0;
     if (isAddrUse)
-      UseTy = getAccessType(Uses[i].Inst);
+      AccessTy = getAccessType(Uses[i].Inst);
 
     // Split the expression into subexprs.
     SeparateSubExprs(SubExprs, Uses[i].Base, SE);
@@ -811,7 +812,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     for (unsigned j = 0, e = SubExprs.size(); j != e; ++j) {
       if (++SubExpressionUseData[SubExprs[j]].Count == 1)
         UniqueSubExprs.push_back(SubExprs[j]);
-      if (!isAddrUse || !fitsInAddressMode(SubExprs[j], UseTy, TLI, false))
+      if (!isAddrUse || !fitsInAddressMode(SubExprs[j], AccessTy, TLI, false))
         SubExpressionUseData[SubExprs[j]].notAllUsesAreFree = true;
     }
     SubExprs.clear();
@@ -845,8 +846,8 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
         continue;
       // We know this is an addressing mode use; if there are any uses that
       // are not, FreeResult would be Zero.
-      const Type *UseTy = getAccessType(Uses[i].Inst);
-      if (!fitsInAddressMode(FreeResult, UseTy, TLI, Result!=Zero)) {
+      const Type *AccessTy = getAccessType(Uses[i].Inst);
+      if (!fitsInAddressMode(FreeResult, AccessTy, TLI, Result!=Zero)) {
         // FIXME:  could split up FreeResult into pieces here, some hoisted
         // and some not.  There is no obvious advantage to this.
         Result = SE->getAddExpr(Result, FreeResult);
@@ -1258,11 +1259,11 @@ bool LoopStrengthReduce::ShouldUseFullStrengthReductionMode(
         if (!CurImm) CurImm = SE->getIntegerSCEV(0, Stride->getType());
         if (!Imm)       Imm = SE->getIntegerSCEV(0, Stride->getType());
         const Instruction *Inst = UsersToProcess[i].Inst;
-        const Type *UseTy = getAccessType(Inst);
+        const Type *AccessTy = getAccessType(Inst);
         SCEVHandle Diff = SE->getMinusSCEV(UsersToProcess[i].Imm, Imm);
         if (!Diff->isZero() &&
             (!AllUsesAreAddresses ||
-             !fitsInAddressMode(Diff, UseTy, TLI, /*HasBaseReg=*/true)))
+             !fitsInAddressMode(Diff, AccessTy, TLI, /*HasBaseReg=*/true)))
           return false;
       }
     } while (++i != e && Base == UsersToProcess[i].Base);
