@@ -38,26 +38,14 @@ namespace {
                              const TemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), TemplateArgs(TemplateArgs) { }
 
-    // FIXME: Once we get closer to completion, replace these manually-written
-    // declarations with automatically-generated ones from
-    // clang/AST/StmtNodes.def.
-    OwningStmtResult VisitDeclStmt(DeclStmt *S);
-    OwningStmtResult VisitNullStmt(NullStmt *S);
-    OwningStmtResult VisitCompoundStmt(CompoundStmt *S);
-    OwningStmtResult VisitCaseStmt(CaseStmt *S);
-    OwningStmtResult VisitDefaultStmt(DefaultStmt *S);
-    OwningStmtResult VisitIfStmt(IfStmt *S);
-    OwningStmtResult VisitSwitchStmt(SwitchStmt *S);
-    OwningStmtResult VisitWhileStmt(WhileStmt *S);
-    OwningStmtResult VisitDoStmt(DoStmt *S);
-    OwningStmtResult VisitForStmt(ForStmt *S);
+    // Declare VisitXXXStmt nodes for all of the statement kinds.
+#define STMT(Type, Base) OwningStmtResult Visit##Type(Type *S);
+#define EXPR(Type, Base)
+#include "clang/AST/StmtNodes.def"
+
+    // Visit an expression (which will use the expression
+    // instantiator).
     OwningStmtResult VisitExpr(Expr *E);
-    OwningStmtResult VisitLabelStmt(LabelStmt *S);
-    OwningStmtResult VisitGotoStmt(GotoStmt *S);
-    OwningStmtResult VisitIndirectGotoStmt(IndirectGotoStmt *S);
-    OwningStmtResult VisitBreakStmt(BreakStmt *S);
-    OwningStmtResult VisitContinueStmt(ContinueStmt *S);
-    OwningStmtResult VisitReturnStmt(ReturnStmt *S);
 
     // Base case. I'm supposed to ignore this.
     OwningStmtResult VisitStmt(Stmt *S) { 
@@ -68,6 +56,9 @@ namespace {
   };
 }
 
+//===----------------------------------------------------------------------===/
+//  Common/C statements
+//===----------------------------------------------------------------------===/
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
   llvm::SmallVector<Decl *, 8> Decls;
   for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
@@ -168,6 +159,12 @@ TemplateStmtInstantiator::VisitCompoundStmt(CompoundStmt *S) {
                                               Statements.size(),
                                               S->getLBracLoc(),
                                               S->getRBracLoc()));
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitSwitchCase(SwitchCase *S) {
+  assert(false && "SwitchCase statements are never directly instantiated");
+  return SemaRef.StmtError();
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitCaseStmt(CaseStmt *S) {
@@ -309,6 +306,77 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitForStmt(ForStmt *S) {
   return SemaRef.ActOnForStmt(S->getForLoc(), S->getLParenLoc(),
                               move(Init), move(Cond), move(Inc),
                               S->getRParenLoc(), move(Body));
+}
+
+Sema::OwningStmtResult
+TemplateStmtInstantiator::VisitAsmStmt(AsmStmt *S) {
+  // FIXME: Implement this 
+ assert(false && "Cannot instantiate an 'asm' statement");
+  return SemaRef.StmtError();
+}
+
+//===----------------------------------------------------------------------===/
+//  C++ statements
+//===----------------------------------------------------------------------===/
+Sema::OwningStmtResult
+TemplateStmtInstantiator::VisitCXXTryStmt(CXXTryStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate a C++ try statement");
+  return SemaRef.StmtError();
+}
+
+Sema::OwningStmtResult
+TemplateStmtInstantiator::VisitCXXCatchStmt(CXXCatchStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate a C++ catch statement");
+  return SemaRef.StmtError();
+}
+
+//===----------------------------------------------------------------------===/
+//  Objective-C statements
+//===----------------------------------------------------------------------===/
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate an Objective-C @finally statement");
+  return SemaRef.StmtError();
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitObjCAtSynchronizedStmt(
+                                                ObjCAtSynchronizedStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate an Objective-C @synchronized statement");
+  return SemaRef.StmtError();
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate an Objective-C @try statement");
+  return SemaRef.StmtError();
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitObjCForCollectionStmt(
+                                               ObjCForCollectionStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate an Objective-C \"for\" statement");
+  return SemaRef.StmtError();
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate an Objective-C @throw statement");
+  return SemaRef.StmtError();
+}
+
+Sema::OwningStmtResult 
+TemplateStmtInstantiator::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
+  // FIXME: Implement this
+  assert(false && "Cannot instantiate an Objective-C @catch statement");
+  return SemaRef.StmtError();
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitExpr(Expr *E) {
