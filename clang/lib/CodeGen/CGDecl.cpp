@@ -126,6 +126,11 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (D.getType()->isVariablyModifiedType())
     EmitVLASize(D.getType());
 
+  if (D.getType()->isReferenceType()) {
+    CGM.ErrorUnsupported(&D, "static declaration with reference type");
+    return;
+  }
+
   if (D.getInit()) {
     llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
 
@@ -324,6 +329,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }
 
+  if (D.getType()->isReferenceType()) {
+    CGM.ErrorUnsupported(&D, "declaration with reference type");
+    return;
+  }
+  
   // If this local has an initializer, emit it now.
   if (const Expr *Init = D.getInit()) {
     llvm::Value *Loc = DeclPtr;
