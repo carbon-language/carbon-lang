@@ -134,6 +134,7 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
       TII->RemoveBranch(*MBB);
       ChangedMBBs.insert(MBB);
       ++NumIntraElim;
+      Changed = true;
       continue;
     }
 
@@ -231,6 +232,7 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
       TII->InsertBranch(*FtMBB, FtTBB, FtFBB, FtCond);
       ChangedMBBs.insert(FtMBB);
     }
+    Changed = true;
 
     // If BB is the loop latch, we may have a new loop headr.
     if (MBB == L->getLoopLatch()) {
