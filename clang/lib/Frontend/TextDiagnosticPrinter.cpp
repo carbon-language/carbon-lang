@@ -204,11 +204,11 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
-      while (CaretEnd != SourceLength && isspace(SourceLine[NewEnd - 1]))
+      while (NewEnd != SourceLength && isspace(SourceLine[NewEnd - 1]))
         ++NewEnd;
         
       // Skip over this bit of "interesting" text.
-      while (CaretEnd != SourceLength && !isspace(SourceLine[NewEnd - 1]))
+      while (NewEnd != SourceLength && !isspace(SourceLine[NewEnd - 1]))
         ++NewEnd;
 
       if (NewEnd - CaretStart <= TargetColumns) {
