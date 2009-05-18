@@ -8,7 +8,7 @@
 
 @Arr = external global [0 x i32]		; <[0 x i32]*> [#uses=1]
 
-define void @foo(i32 %N.in, i32 %x) {
+define void @foo(i32 %N.in, i32 %x) nounwind {
 entry:
 	%N = bitcast i32 %N.in to i32		; <i32> [#uses=1]
 	br label %cond_true

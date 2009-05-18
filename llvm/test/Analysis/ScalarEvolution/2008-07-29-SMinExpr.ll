@@ -3,7 +3,7 @@
 ; RUN: grep -F "backedge-taken count is (-2147483632 + (2147483632 smax (-1 + (-1 * %x)) smax (-1 + (-1 * %y))))"
 ; PR2607
 
-define i32 @b(i32 %x, i32 %y) {
+define i32 @b(i32 %x, i32 %y) nounwind {
 entry:
 	%cmp2 = icmp slt i32 %y, %x
 	%cond3 = select i1 %cmp2, i32 %y, i32 %x

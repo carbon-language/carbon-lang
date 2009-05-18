@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep lea
 
-define float @foo(i32* %x, float* %y, i32 %c) {
+define float @foo(i32* %x, float* %y, i32 %c) nounwind {
 entry:
 	%tmp2132 = icmp eq i32 %c, 0		; <i1> [#uses=1]
 	br i1 %tmp2132, label %bb23, label %bb18

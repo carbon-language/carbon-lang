@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep -F {str r2, \[r0, +r3, lsl #2\]}
 ; Should use scaled addressing mode.
 
-define void @sintzero(i32* %a) {
+define void @sintzero(i32* %a) nounwind {
 entry:
 	store i32 0, i32* %a
 	br label %cond_next

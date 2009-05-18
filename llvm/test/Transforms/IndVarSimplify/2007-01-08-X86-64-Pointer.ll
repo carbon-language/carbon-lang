@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep {(%rdi,%rax,8)}
 ; RUN: llvm-as < %s | llc -march=x86-64 | not grep {addq.*8}
 
-define void @foo(double* %y) {
+define void @foo(double* %y) nounwind {
 entry:
         br label %bb
 
