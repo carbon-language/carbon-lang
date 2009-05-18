@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -O0 -o - -mllvm --disable-llvm-optzns | grep bar
+// RUN: %llvmgcc -S %s -O0 -o - -mllvm -disable-llvm-optzns | grep bar
 // Check that the gcc inliner is turned off.
 
 #include <stdio.h>
