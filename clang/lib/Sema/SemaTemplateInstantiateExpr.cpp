@@ -41,6 +41,7 @@ namespace {
     OwningExprResult VisitFloatingLiteral(FloatingLiteral *E);
     OwningExprResult VisitStringLiteral(StringLiteral *E);
     OwningExprResult VisitCharacterLiteral(CharacterLiteral *E);
+    OwningExprResult VisitImaginaryLiteral(ImaginaryLiteral *E);
     OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
     OwningExprResult VisitParenExpr(ParenExpr *E);
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
@@ -88,6 +89,11 @@ TemplateExprInstantiator::VisitStringLiteral(StringLiteral *E) {
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitCharacterLiteral(CharacterLiteral *E) {
+  return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitImaginaryLiteral(ImaginaryLiteral *E) {
   return SemaRef.Clone(E);
 }
 

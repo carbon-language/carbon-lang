@@ -523,6 +523,8 @@ public:
   Expr *getSubExpr() { return cast<Expr>(Val); }
   void setSubExpr(Expr *E) { Val = E; }
 
+  ImaginaryLiteral* Clone(ASTContext &C) const;
+
   virtual SourceRange getSourceRange() const { return Val->getSourceRange(); }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImaginaryLiteralClass; 

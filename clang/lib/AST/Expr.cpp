@@ -44,6 +44,16 @@ FloatingLiteral* FloatingLiteral::Clone(ASTContext &C) const {
   return new (C) FloatingLiteral(Value, &exact, getType(), Loc);
 }
 
+ImaginaryLiteral* ImaginaryLiteral::Clone(ASTContext &C) const {
+  // FIXME: Use virtual Clone(), once it is available
+  Expr *ClonedVal = 0;
+  if (const IntegerLiteral *IntLit = dyn_cast<IntegerLiteral>(Val))
+    ClonedVal = IntLit->Clone(C);
+  else
+    ClonedVal = cast<FloatingLiteral>(Val)->Clone(C);
+  return new (C) ImaginaryLiteral(ClonedVal, getType());
+}
+
 GNUNullExpr* GNUNullExpr::Clone(ASTContext &C) const {
   return new (C) GNUNullExpr(getType(), TokenLoc);
 }
