@@ -3246,6 +3246,21 @@ SCEVHandle ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   return UnknownValue;
 }
 
+/// getLoopPredecessor - If the given loop's header has exactly one unique
+/// predecessor outside the loop, return it. Otherwise return null.
+///
+BasicBlock *ScalarEvolution::getLoopPredecessor(const Loop *L) {
+  BasicBlock *Header = L->getHeader();
+  BasicBlock *Pred = 0;
+  for (pred_iterator PI = pred_begin(Header), E = pred_end(Header);
+       PI != E; ++PI)
+    if (!L->contains(*PI)) {
+      if (Pred && Pred != *PI) return 0; // Multiple predecessors.
+      Pred = *PI;
+    }
+  return Pred;
+}
+
 /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
 /// (which may not be an immediate predecessor) which has exactly one
 /// successor from which BB is reachable, or null if no such block is
@@ -3260,11 +3275,10 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
     return Pred;
 
   // A loop's header is defined to be a block that dominates the loop.
-  // If the loop has a preheader, it must be a block that has exactly
-  // one successor that can reach BB. This is slightly more strict
-  // than necessary, but works if critical edges are split.
+  // If the header has a unique predecessor outside the loop, it must be
+  // a block that has exactly one successor that can reach the loop.
   if (Loop *L = LI->getLoopFor(BB))
-    return L->getLoopPreheader();
+    return getLoopPredecessor(L);
 
   return 0;
 }
@@ -3275,18 +3289,18 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
 bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
                                           ICmpInst::Predicate Pred,
                                           const SCEV *LHS, const SCEV *RHS) {
-  BasicBlock *Preheader = L->getLoopPreheader();
-  BasicBlock *PreheaderDest = L->getHeader();
+  BasicBlock *Predecessor = getLoopPredecessor(L);
+  BasicBlock *PredecessorDest = L->getHeader();
 
-  // Starting at the preheader, climb up the predecessor chain, as long as
-  // there are predecessors that can be found that have unique successors
+  // Starting at the loop predecessor, climb up the predecessor chain, as long
+  // as there are predecessors that can be found that have unique successors
   // leading to the original header.
-  for (; Preheader;
-       PreheaderDest = Preheader,
-       Preheader = getPredecessorWithUniqueSuccessorForBB(Preheader)) {
+  for (; Predecessor;
+       PredecessorDest = Predecessor,
+       Predecessor = getPredecessorWithUniqueSuccessorForBB(Predecessor)) {
 
     BranchInst *LoopEntryPredicate =
-      dyn_cast<BranchInst>(Preheader->getTerminator());
+      dyn_cast<BranchInst>(Predecessor->getTerminator());
     if (!LoopEntryPredicate ||
         LoopEntryPredicate->isUnconditional())
       continue;
@@ -3299,7 +3313,7 @@ bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
     Value *PreCondLHS = ICI->getOperand(0);
     Value *PreCondRHS = ICI->getOperand(1);
     ICmpInst::Predicate Cond;
-    if (LoopEntryPredicate->getSuccessor(0) == PreheaderDest)
+    if (LoopEntryPredicate->getSuccessor(0) == PredecessorDest)
       Cond = ICI->getPredicate();
     else
       Cond = ICI->getInversePredicate();

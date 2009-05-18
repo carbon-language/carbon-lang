@@ -341,6 +341,10 @@ namespace llvm {
     BackedgeTakenInfo HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                        const Loop *L, bool isSigned);
 
+    /// getLoopPredecessor - If the given loop's header has exactly one unique
+    /// predecessor outside the loop, return it. Otherwise return null.
+    BasicBlock *getLoopPredecessor(const Loop *L);
+
     /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
     /// (which may not be an immediate predecessor) which has exactly one
     /// successor from which BB is reachable, or null if no such block is
