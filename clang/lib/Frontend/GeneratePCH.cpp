@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ASTConsumers.h"
+#include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/PCHWriter.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/AST/ASTContext.h"

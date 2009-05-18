@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ASTConsumers.h"
+#include "clang/Frontend/ASTConsumers.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/AST/ASTContext.h"
