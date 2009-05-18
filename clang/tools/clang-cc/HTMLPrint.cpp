@@ -30,25 +30,25 @@ using namespace clang;
 namespace {
   class HTMLPrinter : public ASTConsumer {
     Rewriter R;
-    std::string OutFilename;
+    llvm::raw_ostream *Out;
     Diagnostic &Diags;
     Preprocessor *PP;
     PreprocessorFactory *PPF;
   public:
-    HTMLPrinter(const std::string &OutFile, Diagnostic &D, Preprocessor *pp,
+    HTMLPrinter(llvm::raw_ostream *OS, Diagnostic &D, Preprocessor *pp,
                 PreprocessorFactory* ppf)
-      : OutFilename(OutFile), Diags(D), PP(pp), PPF(ppf) {}
+      : Out(OS), Diags(D), PP(pp), PPF(ppf) {}
     virtual ~HTMLPrinter();
     
     void Initialize(ASTContext &context);
   };
 }
 
-ASTConsumer* clang::CreateHTMLPrinter(const std::string &OutFile, 
+ASTConsumer* clang::CreateHTMLPrinter(llvm::raw_ostream *OS,
                                       Diagnostic &D, Preprocessor *PP,
                                       PreprocessorFactory* PPF) {
   
-  return new HTMLPrinter(OutFile, D, PP, PPF);
+  return new HTMLPrinter(OS, D, PP, PPF);
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {
@@ -73,25 +73,11 @@ HTMLPrinter::~HTMLPrinter() {
   if (PP) html::SyntaxHighlight(R, FID, *PP);
   if (PPF) html::HighlightMacros(R, FID, *PP);
   html::EscapeText(R, FID, false, true);
-  
-  // Open the output.
-  FILE *OutputFILE;
-  if (OutFilename.empty() || OutFilename == "-")
-    OutputFILE = stdout;
-  else {
-    OutputFILE = fopen(OutFilename.c_str(), "w+");
-    if (OutputFILE == 0) {
-      fprintf(stderr, "Error opening output file '%s'.\n", OutFilename.c_str());
-      exit(1);
-    }
-  }
-  
+
   // Emit the HTML.
   const RewriteBuffer &RewriteBuf = R.getEditBuffer(FID);
   char *Buffer = (char*)malloc(RewriteBuf.size());
   std::copy(RewriteBuf.begin(), RewriteBuf.end(), Buffer);
-  fwrite(Buffer, 1, RewriteBuf.size(), OutputFILE);
+  Out->write(Buffer, RewriteBuf.size());
   free(Buffer);
-  
-  if (OutputFILE != stdout) fclose(OutputFILE);
 }

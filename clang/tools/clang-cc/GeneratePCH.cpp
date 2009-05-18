@@ -32,19 +32,19 @@ using namespace llvm;
 namespace {
   class VISIBILITY_HIDDEN PCHGenerator : public SemaConsumer {
     const Preprocessor &PP;
-    std::string OutFile;
+    llvm::raw_ostream *Out;
     Sema *SemaPtr;
     MemorizeStatCalls *StatCalls; // owned by the FileManager
 
   public:
-    explicit PCHGenerator(const Preprocessor &PP, const std::string &OutFile);
+    explicit PCHGenerator(const Preprocessor &PP, llvm::raw_ostream *Out);
     virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
     virtual void HandleTranslationUnit(ASTContext &Ctx);
   };
 }
 
-PCHGenerator::PCHGenerator(const Preprocessor &PP, const std::string &OutFile)
-  : PP(PP), OutFile(OutFile), SemaPtr(0), StatCalls(0) { 
+PCHGenerator::PCHGenerator(const Preprocessor &PP, llvm::raw_ostream *OS)
+  : PP(PP), Out(OS), SemaPtr(0), StatCalls(0) { 
 
   // Install a stat() listener to keep track of all of the stat()
   // calls.
@@ -65,23 +65,14 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   assert(SemaPtr && "No Sema?");
   Writer.WritePCH(*SemaPtr, StatCalls);
 
-  // Open up the PCH file.
-  std::string ErrMsg;
-  llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
-  
-  if (!ErrMsg.empty()) {
-    llvm::errs() << "PCH error: " << ErrMsg << "\n";
-    return;
-  }
-
   // Write the generated bitstream to "Out".
-  Out.write((char *)&Buffer.front(), Buffer.size());
+  Out->write((char *)&Buffer.front(), Buffer.size());
 
   // Make sure it hits disk now.
-  Out.flush();
+  Out->flush();
 }
 
 ASTConsumer *clang::CreatePCHGenerator(const Preprocessor &PP,
-                                       const std::string &OutFile) {
-  return new PCHGenerator(PP, OutFile);
+                                       llvm::raw_ostream *OS) {
+  return new PCHGenerator(PP, OS);
 }

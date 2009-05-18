@@ -57,12 +57,10 @@ class RewriteBlocks : public ASTConsumer {
   ObjCMethodDecl *CurMethodDef;
   
   bool IsHeader;
-  std::string InFileName;
-  std::string OutFileName;
   
   std::string Preamble;
 public:
-  RewriteBlocks(std::string inFile, std::string outFile, Diagnostic &D, 
+  RewriteBlocks(std::string inFile, Diagnostic &D, 
                 const LangOptions &LOpts);
   ~RewriteBlocks() {
     // Get the buffer corresponding to MainFileID.  
@@ -169,12 +167,10 @@ static bool IsHeaderFile(const std::string &Filename) {
   return Ext == "h" || Ext == "hh" || Ext == "H";
 }    
 
-RewriteBlocks::RewriteBlocks(std::string inFile, std::string outFile, 
+RewriteBlocks::RewriteBlocks(std::string inFile,
                              Diagnostic &D, const LangOptions &LOpts) : 
   Diags(D), LangOpts(LOpts) {
   IsHeader = IsHeaderFile(inFile);
-  InFileName = inFile;
-  OutFileName = outFile;
   CurFunctionDef = 0;
   CurMethodDef = 0;
   RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
@@ -182,10 +178,9 @@ RewriteBlocks::RewriteBlocks(std::string inFile, std::string outFile,
 }
 
 ASTConsumer *clang::CreateBlockRewriter(const std::string& InFile,
-                                        const std::string& OutFile,
                                         Diagnostic &Diags,
                                         const LangOptions &LangOpts) {
-  return new RewriteBlocks(InFile, OutFile, Diags, LangOpts);
+  return new RewriteBlocks(InFile, Diags, LangOpts);
 }
 
 void RewriteBlocks::Initialize(ASTContext &context) {

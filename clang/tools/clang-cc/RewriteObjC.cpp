@@ -93,7 +93,7 @@ namespace {
     bool IsHeader;
     
     std::string InFileName;
-    std::string OutFileName;
+    llvm::raw_ostream* OutFile;
      
     std::string Preamble;
 
@@ -136,7 +136,7 @@ namespace {
     }
     void HandleTopLevelSingleDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
-    RewriteObjC(std::string inFile, std::string outFile,
+    RewriteObjC(std::string inFile, llvm::raw_ostream *OS,
                 Diagnostic &D, const LangOptions &LOpts);
 
     ~RewriteObjC() {}
@@ -416,12 +416,10 @@ static bool IsHeaderFile(const std::string &Filename) {
   return Ext == "h" || Ext == "hh" || Ext == "H";
 }    
 
-RewriteObjC::RewriteObjC(std::string inFile, std::string outFile,
+RewriteObjC::RewriteObjC(std::string inFile, llvm::raw_ostream* OS,
                          Diagnostic &D, const LangOptions &LOpts)
-      : Diags(D), LangOpts(LOpts) {
+      : Diags(D), LangOpts(LOpts), InFileName(inFile), OutFile(OS) {
   IsHeader = IsHeaderFile(inFile);
-  InFileName = inFile;
-  OutFileName = outFile;
   RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                "rewriting sub-expression within a macro (may not be correct)");
   TryFinallyContainsReturnDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
@@ -430,10 +428,10 @@ RewriteObjC::RewriteObjC(std::string inFile, std::string outFile,
 }
 
 ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
-                                           const std::string& OutFile,
+                                           llvm::raw_ostream* OS,
                                            Diagnostic &Diags, 
                                            const LangOptions &LOpts) {
-  return new RewriteObjC(InFile, OutFile, Diags, LOpts);
+  return new RewriteObjC(InFile, OS, Diags, LOpts);
 }
 
 void RewriteObjC::Initialize(ASTContext &context) {
@@ -4654,33 +4652,6 @@ void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
   
   if (Diags.hasErrorOccurred())
     return;
-
-  // Create the output file.
-  
-  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
-  llvm::raw_ostream *OutFile;
-  if (OutFileName == "-") {
-    OutFile = &llvm::outs();
-  } else if (!OutFileName.empty()) {
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), 
-                                       // set binary mode (critical for Windoze)
-                                       true, 
-                                       Err);
-    OwnedStream.reset(OutFile);
-  } else if (InFileName == "-") {
-    OutFile = &llvm::outs();
-  } else {
-    llvm::sys::Path Path(InFileName);
-    Path.eraseSuffix();
-    Path.appendSuffix("cpp");
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), 
-                                       // set binary mode (critical for Windoze)
-                                       true, 
-                                       Err);
-    OwnedStream.reset(OutFile);
-  }
   
   RewriteInclude();
   

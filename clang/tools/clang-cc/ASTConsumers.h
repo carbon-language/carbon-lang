@@ -36,7 +36,7 @@ class LangOptions;
 // original C code.  The output is intended to be in a format such that
 // clang could re-parse the output back into the same AST, but the
 // implementation is still incomplete.
-ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS = NULL);
+ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS);
 
 // AST dumper: dumps the raw AST in human-readable form to stderr; this is
 // intended for debugging. A normal dump is done with FullDump = false;
@@ -56,7 +56,7 @@ ASTConsumer *CreateDeclContextPrinter();
 // ObjC rewriter: attempts tp rewrite ObjC constructs into pure C code.
 // This is considered experimental, and only works with Apple's ObjC runtime.
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
-                                    const std::string& OutFile,
+                                    llvm::raw_ostream* OS,
                                     Diagnostic &Diags,
                                     const LangOptions &LOpts);
 
@@ -73,24 +73,23 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,
                                    const LangOptions &Features,
                                    const CompileOptions &CompileOpts,
-                                   const std::string &InFile,
-                                   const std::string &OutFile);
+                                   const std::string &ModuleID,
+                                   llvm::raw_ostream *OS);
 
 // HTML printer: uses the rewriter to convert source code to HTML with
 // syntax highlighting suitable for viewing in a web-browser.
-ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
+ASTConsumer* CreateHTMLPrinter(llvm::raw_ostream *OS, Diagnostic &D,
                                Preprocessor *PP, PreprocessorFactory *PPF);
 
 // PCH generator: generates a precompiled header file; this file can be
 // used later with the PCHReader (clang-cc option -include-pch)
 // to speed up compile times.
 ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
-                                const std::string &OutFile);
+                                llvm::raw_ostream *OS);
 
 // Block rewriter: rewrites code using the Apple blocks extension to pure
-// C code.
+// C code.  Output is always sent to stdout.
 ASTConsumer *CreateBlockRewriter(const std::string &InFile,
-                                 const std::string &OutFile,
                                  Diagnostic &Diags,
                                  const LangOptions &LangOpts);
 

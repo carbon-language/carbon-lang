@@ -42,8 +42,7 @@ namespace {
   class VISIBILITY_HIDDEN BackendConsumer : public ASTConsumer {
     BackendAction Action;
     CompileOptions CompileOpts;
-    const std::string &InputFile;
-    std::string OutputFile;
+    llvm::raw_ostream *AsmOutStream;
     ASTContext *Context;
 
     Timer LLVMIRGeneration;
@@ -53,7 +52,6 @@ namespace {
     
     llvm::Module *TheModule;
     llvm::TargetData *TheTargetData;
-    llvm::raw_ostream *AsmOutStream;
 
     mutable llvm::ModuleProvider *ModuleProvider;
     mutable FunctionPassManager *CodeGenPasses;
@@ -78,15 +76,14 @@ namespace {
   public:  
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
                     const LangOptions &langopts, const CompileOptions &compopts,
-                    const std::string &infile, const std::string &outfile) :
+                    const std::string &infile, llvm::raw_ostream* OS) :
       Action(action), 
       CompileOpts(compopts),
-      InputFile(infile), 
-      OutputFile(outfile), 
+      AsmOutStream(OS), 
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, InputFile, compopts)),
-      TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
+      Gen(CreateLLVMCodeGen(Diags, infile, compopts)),
+      TheModule(0), TheTargetData(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
       
       // Enable -time-passes if -ftime-report is enabled.
@@ -94,7 +91,6 @@ namespace {
     }
 
     ~BackendConsumer() {
-      delete AsmOutStream;
       delete TheTargetData;
       delete ModuleProvider;
       delete CodeGenPasses;
@@ -195,28 +191,6 @@ FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
 bool BackendConsumer::AddEmitPasses(std::string &Error) {
   if (Action == Backend_EmitNothing)
     return true;
-
-  if (OutputFile == "-" || (InputFile == "-" && OutputFile.empty())) {
-    AsmOutStream = new raw_stdout_ostream();
-    sys::Program::ChangeStdoutToBinary();
-  } else {
-    if (OutputFile.empty()) {
-      llvm::sys::Path Path(InputFile);
-      Path.eraseSuffix();
-      if (Action == Backend_EmitBC) {
-        Path.appendSuffix("bc");
-      } else if (Action == Backend_EmitLL) {
-        Path.appendSuffix("ll");
-      } else {
-        Path.appendSuffix("s");
-      }
-      OutputFile = Path.toString();
-    }
-
-    AsmOutStream = new raw_fd_ostream(OutputFile.c_str(), true, Error);
-    if (!Error.empty())
-      return false;
-  }
 
   if (Action == Backend_EmitBC) {
     getPerModulePasses()->add(createBitcodeWriterPass(*AsmOutStream));
@@ -435,7 +409,6 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           const LangOptions &LangOpts,
                                           const CompileOptions &CompileOpts,
                                           const std::string& InFile,
-                                          const std::string& OutFile) {
-  return new BackendConsumer(Action, Diags, LangOpts, CompileOpts,
-                             InFile, OutFile);  
+                                          llvm::raw_ostream* OS) {
+  return new BackendConsumer(Action, Diags, LangOpts, CompileOpts, InFile, OS);
 }

@@ -59,10 +59,12 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
+#include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include <cstdlib>
 #if HAVE_SYS_TYPES_H
@@ -1569,73 +1571,42 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
 // Main driver
 //===----------------------------------------------------------------------===//
 
-/// CreateASTConsumer - Create the ASTConsumer for the corresponding program
-/// action.  These consumers can operate on both ASTs that are freshly
-/// parsed from source files as well as those deserialized from Bitcode.
-/// Note that PP and PPF may be null here.
-static ASTConsumer *CreateASTConsumer(const std::string& InFile,
-                                      Diagnostic& Diag, FileManager& FileMgr, 
-                                      const LangOptions& LangOpts,
-                                      const llvm::StringMap<bool>& Features,
-                                      Preprocessor *PP,
-                                      PreprocessorFactory *PPF) {
-  switch (ProgAction) {
-  default:
-    return NULL;
-    
-  case ASTPrint:
-    return CreateASTPrinter();
-    
-  case ASTDump:
-    return CreateASTDumper(false);
-
-  case ASTDumpFull:
-    return CreateASTDumper(true);
-    
-  case ASTView:
-    return CreateASTViewer();   
-
-  case PrintDeclContext:
-    return CreateDeclContextPrinter();
-    
-  case EmitHTML:
-    return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);
-
-  case InheritanceView:
-    return CreateInheritanceViewer(InheritanceViewCls);
-    
-  case EmitAssembly:
-  case EmitLLVM:
-  case EmitBC: 
-  case EmitLLVMOnly: {
-    BackendAction Act;
-    if (ProgAction == EmitAssembly)
-      Act = Backend_EmitAssembly;
-    else if (ProgAction == EmitLLVM)
-      Act = Backend_EmitLL;
-    else if (ProgAction == EmitLLVMOnly)
-      Act = Backend_EmitNothing;
-    else
-      Act = Backend_EmitBC;
-    
-    CompileOptions Opts;
-    InitializeCompileOptions(Opts, LangOpts, Features);
-    return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
-                                 InFile, OutputFile);
+static llvm::raw_ostream* ComputeOutFile(const std::string& InFile,
+                                         const char* Extension,
+                                         bool Binary,
+                                         llvm::sys::Path& OutPath) {
+  llvm::raw_ostream* Ret;
+  bool UseStdout = false;
+  std::string OutFile;
+  if (OutputFile == "-" || (OutputFile.empty() && InFile == "-")) {
+    UseStdout = true;
+  } else if (!OutputFile.empty()) {
+    OutFile = OutputFile;
+  } else if (Extension) {
+    llvm::sys::Path Path(InFile);
+    Path.eraseSuffix();
+    Path.appendSuffix(Extension);
+    OutFile = Path.toString();
+  } else {
+    UseStdout = true;
   }
 
-  case GeneratePCH:
-    return CreatePCHGenerator(*PP, OutputFile);    
-
-  case RewriteObjC:
-    return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
-
-  case RewriteBlocks:
-    return CreateBlockRewriter(InFile, OutputFile, Diag, LangOpts);
-    
-  case RunAnalysis:
-    return CreateAnalysisConsumer(Diag, PP, PPF, LangOpts, OutputFile);
+  if (UseStdout) {
+    Ret = new llvm::raw_stdout_ostream();
+    if (Binary)
+      llvm::sys::Program::ChangeStdoutToBinary();
+  } else {
+    std::string Error;
+    Ret = new llvm::raw_fd_ostream(OutFile.c_str(), Binary, Error);
+    if (!Error.empty()) {
+      // FIXME: Don't fail this way.
+      llvm::cerr << "ERROR: " << Error << "\n";
+      ::exit(1);
+    }
+    OutPath = OutFile;
   }
+
+  return Ret;
 }
 
 /// ProcessInputFile - Process a single input file with the specified state.
@@ -1643,27 +1614,98 @@ static ASTConsumer *CreateASTConsumer(const std::string& InFile,
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                              const std::string &InFile, ProgActions PA,
                              const llvm::StringMap<bool> &Features) {
+  llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
   FixItRewriter *FixItRewrite = 0;
   bool CompleteTranslationUnit = true;
+  llvm::sys::Path OutPath;
 
   switch (PA) {
   default:
-    Consumer.reset(CreateASTConsumer(InFile, PP.getDiagnostics(),
-                                     PP.getFileManager(), PP.getLangOptions(),
-                                     Features, &PP, &PPF));
+    fprintf(stderr, "Unexpected program action!\n");
+    HadErrors = true;
+    return;
+
+  case ASTPrint:
+    OS.reset(ComputeOutFile(InFile, 0, false, OutPath));
+    Consumer.reset(CreateASTPrinter(OS.get()));
+    break;
     
-    if (!Consumer) {      
-      fprintf(stderr, "Unexpected program action!\n");
-      HadErrors = true;
-      return;
+  case ASTDump:
+    Consumer.reset(CreateASTDumper(false));
+    break;
+
+  case ASTDumpFull:
+    Consumer.reset(CreateASTDumper(true));
+    break;
+    
+  case ASTView:
+    Consumer.reset(CreateASTViewer());   
+    break;
+
+  case PrintDeclContext:
+    Consumer.reset(CreateDeclContextPrinter());
+    break;
+
+  case EmitHTML:
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    Consumer.reset(CreateHTMLPrinter(OS.get(), PP.getDiagnostics(), &PP, &PPF));
+    break;
+
+  case InheritanceView:
+    Consumer.reset(CreateInheritanceViewer(InheritanceViewCls));
+    break;
+
+  case EmitAssembly:
+  case EmitLLVM:
+  case EmitBC: 
+  case EmitLLVMOnly: {
+    BackendAction Act;
+    if (ProgAction == EmitAssembly) {
+      Act = Backend_EmitAssembly;
+      OS.reset(ComputeOutFile(InFile, "s", true, OutPath));
+    } else if (ProgAction == EmitLLVM) {
+      Act = Backend_EmitLL;
+      OS.reset(ComputeOutFile(InFile, "ll", true, OutPath));
+    } else if (ProgAction == EmitLLVMOnly) {
+      Act = Backend_EmitNothing;
+    } else {
+      Act = Backend_EmitBC;
+      OS.reset(ComputeOutFile(InFile, "bc", true, OutPath));
     }
 
-    if (ProgAction == GeneratePCH)
-      CompleteTranslationUnit = false;
+    CompileOptions Opts;
+    InitializeCompileOptions(Opts, PP.getLangOptions(), Features);
+    Consumer.reset(CreateBackendConsumer(Act, PP.getDiagnostics(),
+                                         PP.getLangOptions(), Opts, InFile,
+                                         OS.get()));
     break;
-      
+  }
+
+  case GeneratePCH:
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    Consumer.reset(CreatePCHGenerator(PP, OS.get()));
+    CompleteTranslationUnit = false;
+    break;
+
+  case RewriteObjC:
+    OS.reset(ComputeOutFile(InFile, "cpp", true, OutPath));
+    Consumer.reset(CreateCodeRewriterTest(InFile, OS.get(),
+                                          PP.getDiagnostics(),
+                                          PP.getLangOptions()));
+    break;
+
+  case RewriteBlocks:
+    Consumer.reset(CreateBlockRewriter(InFile, PP.getDiagnostics(),
+                                       PP.getLangOptions()));
+    break;
+
+  case RunAnalysis:
+    Consumer.reset(CreateAnalysisConsumer(PP.getDiagnostics(), &PP, &PPF,
+                                          PP.getLangOptions(), OutputFile));
+    break;
+
   case DumpRawTokens: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
     SourceManager &SM = PP.getSourceManager();
@@ -1869,7 +1911,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ContextOwner.take();
   else
     ContextOwner.reset(); // Delete ASTContext
-  
+
   if (VerifyDiagnostics)
     if (CheckDiagnostics(PP))
       exit(1);
@@ -1891,6 +1933,18 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
   if (DisableFree)
     Consumer.take();
+  else
+    Consumer.reset();
+
+  // Always delete the output stream because we don't want to leak file
+  // handles.  Also, we don't want to try to erase an open file.
+  OS.reset();
+
+  if ((HadErrors || (PP.getDiagnostics().getNumErrors() != 0)) &&
+      !OutPath.isEmpty()) {
+    // If we had errors, try to erase the output file.
+    OutPath.eraseFromDisk();
+  }
 }
 
 static llvm::cl::list<std::string>
