@@ -100,3 +100,19 @@ struct Choose0 {
 template struct Choose0<true, int, float, int&>;
 template struct Choose0<false, int, float, float&>;
 template struct Choose0<true, int, float, float&>; // expected-note{{instantiation}}
+
+// ---------------------------------------------------------------------
+// va_arg
+// ---------------------------------------------------------------------
+template<typename ArgType>
+struct VaArg0 {
+  void f(int n, ...) {
+    __builtin_va_list va;
+    __builtin_va_start(va, n);
+    for (int i = 0; i != n; ++i)
+      (void)__builtin_va_arg(va, ArgType);
+    __builtin_va_end(va);
+  }
+};
+
+template struct VaArg0<int>;

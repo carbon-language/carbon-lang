@@ -59,6 +59,7 @@ namespace {
     OwningExprResult VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     OwningExprResult VisitChooseExpr(ChooseExpr *E);
+    OwningExprResult VisitVAArgExpr(VAArgExpr *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
@@ -162,12 +163,17 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
                                                  *Arg.getAsIntegral(),
                                                  T, 
                                        E->getSourceRange().getBegin()));
-  } else if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))
+  } else if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
     NewD = SemaRef.CurrentInstantiationScope->getInstantiationOf(Parm);
-  else if (isa<FunctionDecl>(D) || isa<OverloadedFunctionDecl>(D))
+  } else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    if (Var->hasLocalStorage())
+      NewD = SemaRef.CurrentInstantiationScope->getInstantiationOf(Var);
+    else
+      assert(false && "Cannot instantiation non-local variable declarations");
+  } else if (isa<FunctionDecl>(D) || isa<OverloadedFunctionDecl>(D)) {
     // FIXME: Instantiate decl!
     NewD = cast<ValueDecl>(D);
-  else
+  } else
     assert(false && "Unhandled declaratrion reference kind");
 
   if (!NewD)
@@ -538,6 +544,24 @@ TemplateExprInstantiator::VisitChooseExpr(ChooseExpr *E) {
   return SemaRef.ActOnChooseExpr(E->getBuiltinLoc(),
                                  move(Cond), move(LHS), move(RHS),
                                  E->getRParenLoc());
+}
+
+Sema::OwningExprResult TemplateExprInstantiator::VisitVAArgExpr(VAArgExpr *E) {
+  OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+
+  SourceLocation FakeTypeLoc 
+    = SemaRef.PP.getLocForEndOfToken(E->getSubExpr()->getSourceRange()
+                                       .getEnd());
+  QualType T = SemaRef.InstantiateType(E->getType(), TemplateArgs,
+                                       /*FIXME:*/FakeTypeLoc, 
+                                       DeclarationName());
+  if (T.isNull())
+    return SemaRef.ExprError();
+
+  return SemaRef.ActOnVAArg(E->getBuiltinLoc(), move(SubExpr),
+                            T.getAsOpaquePtr(), E->getRParenLoc());
 }
 
 Sema::OwningExprResult 

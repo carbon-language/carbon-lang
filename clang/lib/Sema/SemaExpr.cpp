@@ -5253,11 +5253,13 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   } else {
     // Otherwise, the va_list argument must be an l-value because
     // it is modified by va_arg.
-    if (CheckForModifiableLvalue(E, BuiltinLoc, *this))
+    if (!E->isTypeDependent() && 
+        CheckForModifiableLvalue(E, BuiltinLoc, *this))
       return ExprError();
   }
 
-  if (!Context.hasSameType(VaListType, E->getType())) {
+  if (!E->isTypeDependent() &&
+      !Context.hasSameType(VaListType, E->getType())) {
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << OrigExpr->getType() << E->getSourceRange());
