@@ -50,6 +50,7 @@ namespace {
     // FIXME: VisitMemberExpr
     // FIXME: CompoundLiteralExpr
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
+    OwningExprResult VisitCompoundAssignOperator(CompoundAssignOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
     OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
@@ -281,6 +282,12 @@ TemplateExprInstantiator::VisitBinaryOperator(BinaryOperator *E) {
   LHS.release();
   RHS.release();
   return move(Result);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCompoundAssignOperator(
+                                                 CompoundAssignOperator *E) {
+  return VisitBinaryOperator(E);
 }
 
 Sema::OwningExprResult 
