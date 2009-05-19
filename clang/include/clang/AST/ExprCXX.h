@@ -114,6 +114,11 @@ protected:
 public:
   const char *getCastName() const;
 
+  /// \brief Retrieve the location of the cast operator keyword, e.g.,
+  /// "static_cast".
+  SourceLocation getOperatorLoc() const { return Loc; }
+  void setOperatorLoc(SourceLocation L) { Loc = L; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
   }

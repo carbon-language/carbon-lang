@@ -47,6 +47,8 @@ namespace {
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
     OwningExprResult VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     OwningExprResult VisitCallExpr(CallExpr *E);
+    // FIXME: VisitMemberExpr
+    // FIXME: CompoundLiteralExpr
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
@@ -54,7 +56,15 @@ namespace {
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
+    OwningExprResult VisitCastExpr(CastExpr *E);
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
+    OwningExprResult VisitExplicitCastExpr(ExplicitCastExpr *E);
+    OwningExprResult VisitCStyleCastExpr(CStyleCastExpr *E);
+    OwningExprResult VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
+    OwningExprResult VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
+    OwningExprResult VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
+    OwningExprResult VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E);
+    OwningExprResult VisitCXXConstCastExpr(CXXConstCastExpr *E);
     OwningExprResult VisitCXXThisExpr(CXXThisExpr *E);
     OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
@@ -546,6 +556,11 @@ TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
   return SemaRef.ExprError();
 }
 
+Sema::OwningExprResult TemplateExprInstantiator::VisitCastExpr(CastExpr *E) {
+  assert(false && "Cannot instantiate abstract CastExpr");
+  return SemaRef.ExprError();
+}
+
 Sema::OwningExprResult TemplateExprInstantiator::VisitImplicitCastExpr(
                                                          ImplicitCastExpr *E) {
   assert(!E->isTypeDependent() && "Implicit casts must have known types");
@@ -559,6 +574,112 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitImplicitCastExpr(
                                            (Expr *)SubExpr.release(),
                                            E->isLvalueCast());
   return SemaRef.Owned(ICE);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitExplicitCastExpr(ExplicitCastExpr *E) {
+  assert(false && "Cannot instantiate abstract ExplicitCastExpr");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCStyleCastExpr(CStyleCastExpr *E) {
+  // Instantiate the type that we're casting to.
+  SourceLocation TypeStartLoc 
+    = SemaRef.PP.getLocForEndOfToken(E->getLParenLoc());
+  QualType ExplicitTy = SemaRef.InstantiateType(E->getTypeAsWritten(),
+                                                TemplateArgs,
+                                                TypeStartLoc,
+                                                DeclarationName());
+  if (ExplicitTy.isNull())
+    return SemaRef.ExprError();
+
+  // Instantiate the subexpression.
+  OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+  
+  return SemaRef.ActOnCastExpr(E->getLParenLoc(), 
+                               ExplicitTy.getAsOpaquePtr(),
+                               E->getRParenLoc(),
+                               move(SubExpr));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
+  // Figure out which cast operator we're dealing with.
+  tok::TokenKind Kind;
+  switch (E->getStmtClass()) {
+  case Stmt::CXXStaticCastExprClass:
+    Kind = tok::kw_static_cast;
+    break;
+
+  case Stmt::CXXDynamicCastExprClass:
+    Kind = tok::kw_dynamic_cast;
+    break;
+
+  case Stmt::CXXReinterpretCastExprClass:
+    Kind = tok::kw_reinterpret_cast;
+    break;
+
+  case Stmt::CXXConstCastExprClass:
+    Kind = tok::kw_const_cast;
+    break;
+
+  default:
+    assert(false && "Invalid C++ named cast");
+    return SemaRef.ExprError();
+  }
+
+  // Instantiate the type that we're casting to.
+  SourceLocation TypeStartLoc 
+    = SemaRef.PP.getLocForEndOfToken(E->getOperatorLoc());
+  QualType ExplicitTy = SemaRef.InstantiateType(E->getTypeAsWritten(),
+                                                TemplateArgs,
+                                                TypeStartLoc,
+                                                DeclarationName());
+  if (ExplicitTy.isNull())
+    return SemaRef.ExprError();
+
+  // Instantiate the subexpression.
+  OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+  
+  SourceLocation FakeLAngleLoc 
+    = SemaRef.PP.getLocForEndOfToken(E->getOperatorLoc());
+  SourceLocation FakeRAngleLoc = E->getSubExpr()->getSourceRange().getBegin();
+  SourceLocation FakeRParenLoc
+    = SemaRef.PP.getLocForEndOfToken(
+                                E->getSubExpr()->getSourceRange().getEnd());
+  return SemaRef.ActOnCXXNamedCast(E->getOperatorLoc(), Kind,
+                                   /*FIXME:*/FakeLAngleLoc,
+                                   ExplicitTy.getAsOpaquePtr(),
+                                   /*FIXME:*/FakeRAngleLoc,
+                                   /*FIXME:*/FakeRAngleLoc,
+                                   move(SubExpr),
+                                   /*FIXME:*/FakeRParenLoc);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXReinterpretCastExpr(
+                                                CXXReinterpretCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXConstCastExpr(CXXConstCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
 }
 
 Sema::OwningExprResult
