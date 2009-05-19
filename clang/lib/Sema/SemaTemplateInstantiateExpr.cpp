@@ -45,6 +45,7 @@ namespace {
     OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
     OwningExprResult VisitParenExpr(ParenExpr *E);
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
+    OwningExprResult VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
@@ -170,6 +171,36 @@ TemplateExprInstantiator::VisitUnaryOperator(UnaryOperator *E) {
   return SemaRef.CreateBuiltinUnaryOp(E->getOperatorLoc(),
                                       E->getOpcode(),
                                       move(Arg));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
+  Sema::OwningExprResult LHS = Visit(E->getLHS());
+  if (LHS.isInvalid())
+    return SemaRef.ExprError();
+
+  Sema::OwningExprResult RHS = Visit(E->getRHS());
+  if (RHS.isInvalid())
+    return SemaRef.ExprError();
+
+  // Since the overloaded array-subscript operator (operator[]) can
+  // only be a member function, we can make several simplifying
+  // assumptions here:
+  //   1) Normal name lookup (from the current scope) will not ever
+  //   find any declarations of operator[] that won't also be found be
+  //   member operator lookup, so it is safe to pass a NULL Scope
+  //   during the instantiation to avoid the lookup entirely.
+  //
+  //   2) Neither normal name lookup nor argument-dependent lookup at
+  //   template definition time will find any operators that won't be
+  //   found at template instantiation time, so we do not need to
+  //   cache the results of name lookup as we do for the binary
+  //   operators.
+  SourceLocation LLocFake = ((Expr*)LHS.get())->getSourceRange().getBegin();
+  return SemaRef.ActOnArraySubscriptExpr(/*Scope=*/0, move(LHS),
+                                         /*FIXME:*/LLocFake,
+                                         move(RHS),
+                                         E->getRBracketLoc());
 }
 
 Sema::OwningExprResult 

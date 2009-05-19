@@ -1665,6 +1665,14 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
        *RHSExp = static_cast<Expr*>(Idx.get());
 
   if (getLangOptions().CPlusPlus &&
+      (LHSExp->isTypeDependent() || RHSExp->isTypeDependent())) {
+    Base.release();
+    Idx.release();
+    return Owned(new (Context) ArraySubscriptExpr(LHSExp, RHSExp,
+                                                  Context.DependentTy, RLoc));
+  }
+
+  if (getLangOptions().CPlusPlus && 
       (LHSExp->getType()->isRecordType() ||
        LHSExp->getType()->isEnumeralType() ||
        RHSExp->getType()->isRecordType() ||

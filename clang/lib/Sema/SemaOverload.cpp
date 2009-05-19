@@ -2402,7 +2402,8 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
     T2 = Args[1]->getType();
 
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
-  LookupOverloadedOperatorName(Op, S, T1, T2, Functions);
+  if (S)
+    LookupOverloadedOperatorName(Op, S, T1, T2, Functions);
   ArgumentDependentLookup(OpName, Args, NumArgs, Functions);
   AddFunctionCandidates(Functions, Args, NumArgs, CandidateSet);
   AddMemberOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet, OpRange);
