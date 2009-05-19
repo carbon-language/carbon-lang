@@ -294,7 +294,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     if (!Modifier || strcmp(Modifier, "no_hash") != 0)
       O << "#";
 
-    O << (int)MO.getImm();
+    O << MO.getImm();
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
