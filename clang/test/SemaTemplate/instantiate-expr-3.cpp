@@ -71,18 +71,6 @@ template struct StatementExpr0<int>;
 template struct StatementExpr0<N1::X>; // expected-note{{instantiation}}
 
 // ---------------------------------------------------------------------
-// __builtin_types_compatible_p
-// ---------------------------------------------------------------------
-template<typename T, typename U, bool Result>
-struct TypesCompatible0 {
-  void f() {
-    int a[__builtin_types_compatible_p(T, U) == Result? 1 : -1];
-  }
-};
-
-template struct TypesCompatible0<int, const int, true>;
-
-// ---------------------------------------------------------------------
 // __builtin_shufflevector
 // ---------------------------------------------------------------------
 typedef __attribute__(( ext_vector_type(2) )) double double2;

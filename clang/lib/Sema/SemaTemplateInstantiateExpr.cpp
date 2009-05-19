@@ -469,22 +469,8 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitStmtExpr(StmtExpr *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  QualType Type1 = SemaRef.InstantiateType(E->getArgType1(), TemplateArgs,
-                                           /*FIXME:*/ E->getBuiltinLoc(),
-                                           DeclarationName());
-  if (Type1.isNull())
-    return SemaRef.ExprError();
-
-  QualType Type2 = SemaRef.InstantiateType(E->getArgType2(), TemplateArgs,
-                                           /*FIXME:*/ E->getBuiltinLoc(),
-                                           DeclarationName());
-  if (Type2.isNull())
-    return SemaRef.ExprError();
-
-  return SemaRef.ActOnTypesCompatibleExpr(E->getBuiltinLoc(),
-                                          Type1.getAsOpaquePtr(),
-                                          Type2.getAsOpaquePtr(),
-                                          E->getRParenLoc());
+  assert(false && "__builtin_types_compatible_p is not legal in C++");
+  return SemaRef.ExprError();
 }
 
 Sema::OwningExprResult 

@@ -110,6 +110,8 @@ def err_implicit_decl_requires_stdio : Error<
 def warn_redecl_library_builtin : Warning<
   "incompatible redeclaration of library function %0">;
 def err_builtin_definition : Error<"definition of builtin function %0">;
+def err_types_compatible_p_in_cplusplus : Error<
+  "__builtin_types_compatible_p is not valid in C++">;
 
 /// parser diagnostics
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">;

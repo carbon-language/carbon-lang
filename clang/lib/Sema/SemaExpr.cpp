@@ -5022,6 +5022,12 @@ Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
 
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
 
+  if (getLangOptions().CPlusPlus) {
+    Diag(BuiltinLoc, diag::err_types_compatible_p_in_cplusplus)
+      << SourceRange(BuiltinLoc, RPLoc);
+    return ExprError();
+  }
+
   return Owned(new (Context) TypesCompatibleExpr(Context.IntTy, BuiltinLoc,
                                                  argT1, argT2, RPLoc));
 }
