@@ -62,11 +62,24 @@ namespace llvm {
     }
 #elif defined(_MSC_VER)
     typedef LONG cas_flag;
+    template<typename T>
     inline T CompareAndSwap(volatile T* ptr,
 			    T new_value,
 			    T old_value) {
-      return InterlockedCompareExchange(addr, new_value, old_value);
+      if (sizeof(T) == 4)
+	return InterlockedCompareExchange(ptr, new_value, old_value);
+      else
+	return InterlockedCompareExchange64(ptr, new_value, old_value);
     }
+    
+    template<typename T>
+    inline T* CompareAndSwap<T*>(volatile T** ptr,
+				 T* new_value,
+				 T* old_value) {
+      return InterlockedCompareExchangePtr(ptr, new_value, old_value);
+    }
+
+
 #else
 #  error No compare-and-swap implementation for your platform!
 #endif
