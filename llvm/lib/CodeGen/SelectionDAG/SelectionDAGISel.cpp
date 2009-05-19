@@ -54,7 +54,6 @@ using namespace llvm;
 
 static cl::opt<bool>
 DisableLegalizeTypes("disable-legalize-types", cl::Hidden);
-#ifndef NDEBUG
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
           cl::desc("Enable verbose messages in the \"fast\" "
@@ -62,10 +61,6 @@ EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
 static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
           cl::desc("Enable abort calls when \"fast\" instruction fails"));
-#else
-static const bool EnableFastISelVerbose = false,
-                  EnableFastISelAbort = false;
-#endif
 static cl::opt<bool>
 SchedLiveInCopies("schedule-livein-copies",
                   cl::desc("Schedule copies of livein registers"),
