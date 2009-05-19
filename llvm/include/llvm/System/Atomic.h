@@ -44,24 +44,27 @@ namespace llvm {
 
 #if !defined(ENABLE_THREADS) || ENABLE_THREADS == 0
     typedef unsigned long cas_flag;
-    inline cas_flag CompareAndSwap(cas_flag* dest, cas_flag exc, cas_flag c) {
-      cas_flag result = *dest;
+    template<typename T>
+    inline T CompareAndSwap(volatile T* dest,
+			    T exc, T c) {
+      T result = *dest;
       if (result == c)
         *dest = exc;
       return result;
     }
 #elif defined(__GNUC__)
     typedef unsigned long cas_flag;
-    inline cas_flag CompareAndSwap(cas_flag* ptr,
-                                   cas_flag new_value,
-                                   cas_flag old_value) {
+    template<typename T>
+    inline T CompareAndSwap(volatile T* ptr,
+			    T new_value,
+			    T old_value) {
       return __sync_val_compare_and_swap(ptr, old_value, new_value);
     }
-#elif defined(_MSC_VER) && _M_IX86 > 400
+#elif defined(_MSC_VER)
     typedef LONG cas_flag;
-    inline cas_flag CompareAndSwap(cas_flag* ptr,
-                                   cas_flag new_value,
-                                   cas_flag old_value) {
+    inline T CompareAndSwap(volatile T* ptr,
+			    T new_value,
+			    T old_value) {
       return InterlockedCompareExchange(addr, new_value, old_value);
     }
 #else
