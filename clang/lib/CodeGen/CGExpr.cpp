@@ -634,8 +634,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     LValue LV;
     bool GCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
     if (VD->hasExternalStorage()) {
-      LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
-                            E->getType().getCVRQualifiers(),
+      llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
+      if (VD->getType()->isReferenceType())
+        V = Builder.CreateLoad(V, "tmp");
+      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                             getContext().getObjCGCAttrKind(E->getType()));
     }
     else {
@@ -657,13 +659,17 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
         V = Builder.CreateBitCast(V, PtrStructTy);
         V = Builder.CreateStructGEP(V, needsCopyDispose*2 + 4, "x");
       }
+      if (VD->getType()->isReferenceType())
+        V = Builder.CreateLoad(V, "tmp");
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
     }
     LValue::SetObjCNonGC(LV, GCable);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
-    LValue LV = LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
-                                 E->getType().getCVRQualifiers(),
+    llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
+    if (VD->getType()->isReferenceType())
+      V = Builder.CreateLoad(V, "tmp");
+    LValue LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                                  getContext().getObjCGCAttrKind(E->getType()));
     if (LV.isObjCStrong())
       LV.SetGlobalObjCRef(LV, true);
