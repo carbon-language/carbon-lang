@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AnalysisConsumer.h"
+#include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/ManagerRegistry.h"
 #include "clang/AST/ASTConsumer.h"

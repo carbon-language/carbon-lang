@@ -22,6 +22,5 @@ set( LLVM_LINK_COMPONENTS
   )
 
 add_clang_executable(clang-cc
-  AnalysisConsumer.cpp
   clang-cc.cpp
   )

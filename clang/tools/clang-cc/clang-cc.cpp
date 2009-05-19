@@ -22,7 +22,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AnalysisConsumer.h"
+#include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
@@ -1525,7 +1525,7 @@ AnalysisList(llvm::cl::desc("Source Code Analysis - Checks and Analyses"),
 llvm::cl::values(
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
 clEnumValN(NAME, CMDFLAG, DESC),
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
 clEnumValEnd));
 
 static llvm::cl::opt<AnalysisStores> 
@@ -1535,7 +1535,7 @@ AnalysisStoreOpt("analyzer-store",
   llvm::cl::values(
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN)\
 clEnumValN(NAME##Model, CMDFLAG, DESC),
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
 clEnumValEnd));
 
 static llvm::cl::opt<AnalysisConstraints> 
@@ -1545,7 +1545,7 @@ AnalysisConstraintsOpt("analyzer-constraints",
   llvm::cl::values(
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN)\
 clEnumValN(NAME##Model, CMDFLAG, DESC),
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
 clEnumValEnd));
 
 static llvm::cl::opt<AnalysisDiagClients>
@@ -1555,7 +1555,7 @@ AnalysisDiagOpt("analyzer-output",
                 llvm::cl::values(
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREATE)\
 clEnumValN(PD_##NAME, CMDFLAG, DESC),
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
 clEnumValEnd));
 
 static llvm::cl::opt<bool>
