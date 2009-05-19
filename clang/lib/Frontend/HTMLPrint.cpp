@@ -20,6 +20,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ASTContext.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace clang;
 
@@ -62,9 +63,17 @@ HTMLPrinter::~HTMLPrinter() {
   // Format the file.
   FileID FID = R.getSourceMgr().getMainFileID();
   const FileEntry* Entry = R.getSourceMgr().getFileEntryForID(FID);
-  
+  const char* Name;
+  // In some cases, in particular the case where the input is from stdin,
+  // there is no entry.  Fall back to the memory buffer for a name in those
+  // cases.
+  if (Entry)
+    Name = Entry->getName();
+  else
+    Name = R.getSourceMgr().getBuffer(FID)->getBufferIdentifier();
+
   html::AddLineNumbers(R, FID);
-  html::AddHeaderFooterInternalBuiltinCSS(R, FID, Entry->getName());
+  html::AddHeaderFooterInternalBuiltinCSS(R, FID, Name);
 
   // If we have a preprocessor, relex the file and syntax highlight.
   // We might not have a preprocessor if we come from a deserialized AST file,
