@@ -24,10 +24,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Path.h"
 using namespace clang;
 using llvm::utostr;
 

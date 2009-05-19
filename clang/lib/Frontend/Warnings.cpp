@@ -24,8 +24,8 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
-#include "llvm/Support/CommandLine.h"
 #include <cstdio>
+#include <cstring>
 #include <utility>
 #include <algorithm>
 using namespace clang;

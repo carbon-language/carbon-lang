@@ -24,9 +24,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 
 #include "ABIInfo.h"

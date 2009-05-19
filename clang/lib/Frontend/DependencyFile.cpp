@@ -19,8 +19,6 @@
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/System/Path.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
