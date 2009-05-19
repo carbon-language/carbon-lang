@@ -34,7 +34,8 @@ class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
   const Preprocessor *PP;
   std::vector<std::string> Targets;
   llvm::raw_ostream *OS;
-
+  bool IncludeSystemHeaders;
+  bool PhonyTarget;
 private:
   bool FileMatchesDepCriteria(const char *Filename,
                               SrcMgr::CharacteristicKind FileType);
@@ -43,9 +44,11 @@ private:
 public:
   DependencyFileCallback(const Preprocessor *_PP, 
                          llvm::raw_ostream *_OS, 
-                         const std::vector<std::string> &_Targets)
-    : PP(_PP), Targets(_Targets), OS(_OS) {
-  }
+                         const std::vector<std::string> &_Targets,
+                         bool _IncludeSystemHeaders,
+                         bool _PhonyTarget)
+    : PP(_PP), Targets(_Targets), OS(_OS),
+      IncludeSystemHeaders(_IncludeSystemHeaders), PhonyTarget(_PhonyTarget) {}
 
   ~DependencyFileCallback() {
     OutputDependencyFile();
@@ -58,54 +61,18 @@ public:
 };
 }
 
-//===----------------------------------------------------------------------===//
-// Dependency file options
-//===----------------------------------------------------------------------===//
-static llvm::cl::opt<std::string>
-DependencyFile("dependency-file",
-               llvm::cl::desc("Filename (or -) to write dependency output to"));
 
-static llvm::cl::opt<bool>
-DependenciesIncludeSystemHeaders("sys-header-deps",
-                 llvm::cl::desc("Include system headers in dependency output"));
 
-static llvm::cl::list<std::string>
-DependencyTargets("MT",
-         llvm::cl::desc("Specify target for dependency"));
-
-// FIXME: Implement feature
-static llvm::cl::opt<bool>
-PhonyDependencyTarget("MP",
-            llvm::cl::desc("Create phony target for each dependency "
-                           "(other than main file)"));
-
-bool clang::CreateDependencyFileGen(Preprocessor *PP,
-                                    std::string &ErrStr) {
-  ErrStr = "";
-  if (DependencyFile.empty())
-    return false;
-
-  if (DependencyTargets.empty()) {
-    ErrStr = "-dependency-file requires at least one -MT option\n";
-    return false;
-  }
-
-  std::string ErrMsg;
-  llvm::raw_ostream *OS;
-  if (DependencyFile == "-") {
-    OS = new llvm::raw_stdout_ostream();
-  } else {
-    OS = new llvm::raw_fd_ostream(DependencyFile.c_str(), false, ErrStr);
-    if (!ErrMsg.empty()) {
-      ErrStr = "unable to open dependency file: " + ErrMsg;
-      return false;
-    }
-  }
+void clang::AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
+                                    std::vector<std::string> &Targets,
+                                    bool IncludeSystemHeaders,
+                                    bool PhonyTarget) {
+  assert(!Targets.empty() && "Target required for dependency generation");
 
   DependencyFileCallback *PPDep = 
-    new DependencyFileCallback(PP, OS, DependencyTargets);
+    new DependencyFileCallback(PP, OS, Targets, IncludeSystemHeaders, 
+                               PhonyTarget);
   PP->setPPCallbacks(PPDep);
-  return true;
 }
 
 /// FileMatchesDepCriteria - Determine whether the given Filename should be
@@ -115,7 +82,7 @@ bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
   if (strcmp("<built-in>", Filename) == 0)
     return false;
 
-  if (DependenciesIncludeSystemHeaders)
+  if (IncludeSystemHeaders)
     return true;
 
   return FileType == SrcMgr::C_User;
@@ -192,7 +159,7 @@ void DependencyFileCallback::OutputDependencyFile() {
   *OS << '\n';
 
   // Create phony targets if requested.
-  if (PhonyDependencyTarget) {
+  if (PhonyTarget) {
     // Skip the first entry, this is always the input file itself.
     for (std::vector<std::string>::iterator I = Files.begin() + 1,
            E = Files.end(); I != E; ++I) {

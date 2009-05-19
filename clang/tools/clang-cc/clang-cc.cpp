@@ -1374,13 +1374,6 @@ public:
     if (InitializePreprocessor(*PP, InitOpts))
       return 0;
 
-    std::string ErrStr;
-    bool DFG = CreateDependencyFileGen(PP.get(), ErrStr);
-    if (!DFG && !ErrStr.empty()) {
-      fprintf(stderr, "%s", ErrStr.c_str());
-      return 0;
-    }
-
     return PP.take();
   }
 };
@@ -1527,6 +1520,28 @@ DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
 static llvm::cl::opt<bool>
 DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
                                 "addition to normal output"));
+
+//===----------------------------------------------------------------------===//
+// Dependency file options
+//===----------------------------------------------------------------------===//
+static llvm::cl::opt<std::string>
+DependencyFile("dependency-file",
+               llvm::cl::desc("Filename (or -) to write dependency output to"));
+
+static llvm::cl::opt<bool>
+DependenciesIncludeSystemHeaders("sys-header-deps",
+                 llvm::cl::desc("Include system headers in dependency output"));
+
+static llvm::cl::list<std::string>
+DependencyTargets("MT",
+         llvm::cl::desc("Specify target for dependency"));
+
+// FIXME: Implement feature
+static llvm::cl::opt<bool>
+PhonyDependencyTarget("MP",
+            llvm::cl::desc("Create phony target for each dependency "
+                           "(other than main file)"));
+
 //===----------------------------------------------------------------------===//
 // -dump-build-information Stuff
 //===----------------------------------------------------------------------===//
@@ -2132,6 +2147,30 @@ int main(int argc, char **argv) {
           
     if (!PP)
       continue;
+
+    // Handle generating dependencies, if requested
+    if (!DependencyFile.empty()) {
+      llvm::raw_ostream *DependencyOS;
+      if (DependencyTargets.empty()) {
+        // FIXME: Use a proper diagnostic
+        llvm::cerr << "-dependency-file requires at least one -MT option\n";
+        HadErrors = true;
+        continue;
+      }
+      std::string ErrStr;
+      DependencyOS =
+          new llvm::raw_fd_ostream(DependencyFile.c_str(), false, ErrStr);
+      if (!ErrStr.empty()) {
+        // FIXME: Use a proper diagnostic
+        llvm::cerr << "unable to open dependency file: " + ErrStr;
+        HadErrors = true;
+        continue;
+      }
+
+      AttachDependencyFileGen(PP.get(), DependencyOS, DependencyTargets,
+                              DependenciesIncludeSystemHeaders,
+                              PhonyDependencyTarget);
+    }
 
     if (ImplicitIncludePCH.empty() && 
         InitializeSourceManager(*PP.get(), InFile))

@@ -64,9 +64,11 @@ MinimalAction *CreatePrintParserActionsAction(Preprocessor &PP,
 /// CheckDiagnostics - Gather the expected diagnostics and check them.
 bool CheckDiagnostics(Preprocessor &PP);
 
-/// CreateDependencyFileGen - Create dependency file generator.
-/// This is only done if either -MD or -MMD has been specified.
-bool CreateDependencyFileGen(Preprocessor *PP, std::string &ErrStr);
+/// AttachDependencyFileGen - Create a dependency file generator, and attach
+/// it to the given preprocessor.  This takes ownership of the output stream.
+void AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
+                             std::vector<std::string> &Targets,
+                             bool IncludeSystemHeaders, bool PhonyTarget);
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
