@@ -269,6 +269,11 @@ public:
     return CGF.LoadCXXThis();
   }      
     
+  Value *VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+    // FIXME: Do something with the temporaries!
+    return Visit(E->getSubExpr());
+  }
+      
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
     if (CGF.getContext().getLangOptions().OverflowChecking

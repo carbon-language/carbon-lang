@@ -99,6 +99,8 @@ public:
     Visit(DAE->getExpr());
   }
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
+  void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+
   void VisitVAArgExpr(VAArgExpr *E);
 
   void EmitInitializationToLValue(Expr *E, LValue Address);
@@ -295,9 +297,22 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 
 void
 AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
-  assert(DestPtr && "Must have a dest to emit into!");
+  llvm::Value *V = DestPtr;
   
-  CGF.EmitCXXConstructExpr(DestPtr, E);
+  if (!V) {
+    assert(isa<CXXTempVarDecl>(E->getVarDecl()) && 
+           "Must have a temp var decl when there's no destination!");
+    
+    V = CGF.CreateTempAlloca(CGF.ConvertType(E->getVarDecl()->getType()), 
+                             "tmpvar");
+  }
+  
+  CGF.EmitCXXConstructExpr(V, E);
+}
+
+void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+  // FIXME: Do something with the temporaries!
+  Visit(E->getSubExpr());
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
