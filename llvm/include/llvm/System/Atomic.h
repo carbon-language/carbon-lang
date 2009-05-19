@@ -68,8 +68,10 @@ namespace llvm {
 			    T old_value) {
       if (sizeof(T) == 4)
 	return InterlockedCompareExchange(ptr, new_value, old_value);
-      else
+      else if (sizeof(T) == 8)
 	return InterlockedCompareExchange64(ptr, new_value, old_value);
+      else
+	assert(0 && "Unsupported compare-and-swap size!");
     }
     
     template<typename T>
