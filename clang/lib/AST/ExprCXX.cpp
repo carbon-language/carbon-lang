@@ -131,6 +131,11 @@ Stmt::child_iterator UnresolvedFunctionNameExpr::child_end() {
   return child_iterator();
 }
 
+UnresolvedFunctionNameExpr* 
+UnresolvedFunctionNameExpr::Clone(ASTContext &C) const {
+  return new (C) UnresolvedFunctionNameExpr(Name, getType(), Loc);
+}
+
 // UnaryTypeTraitExpr
 Stmt::child_iterator UnaryTypeTraitExpr::child_begin() {
   return child_iterator();

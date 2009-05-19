@@ -800,6 +800,8 @@ public:
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
+  UnresolvedFunctionNameExpr* Clone(ASTContext &C) const;
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == UnresolvedFunctionNameExprClass;
   }

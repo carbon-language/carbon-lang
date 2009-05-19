@@ -46,6 +46,7 @@ namespace {
     OwningExprResult VisitParenExpr(ParenExpr *E);
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
     OwningExprResult VisitArraySubscriptExpr(ArraySubscriptExpr *E);
+    OwningExprResult VisitCallExpr(CallExpr *E);
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
@@ -58,6 +59,8 @@ namespace {
     OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
     OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
+    OwningExprResult VisitUnresolvedFunctionNameExpr(
+                                              UnresolvedFunctionNameExpr *E);
 
     // Base case. I'm supposed to ignore this.
     Sema::OwningExprResult VisitStmt(Stmt *S) { 
@@ -113,9 +116,16 @@ TemplateExprInstantiator::VisitGNUNullExpr(GNUNullExpr *E) {
   return SemaRef.Clone(E);
 }
 
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
+                                              UnresolvedFunctionNameExpr *E) {
+  return SemaRef.Clone(E);
+}
+
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   Decl *D = E->getDecl();
+  ValueDecl *NewD = 0;
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
     const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
@@ -136,19 +146,23 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
                                                  *Arg.getAsIntegral(),
                                                  T, 
                                        E->getSourceRange().getBegin()));
-  } else if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
-    ParmVarDecl *ParmInst 
-      = SemaRef.CurrentInstantiationScope->getInstantiationOf(Parm);
-    QualType T = ParmInst->getType();
-    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(ParmInst,
+  } else if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))
+    NewD = SemaRef.CurrentInstantiationScope->getInstantiationOf(Parm);
+  else if (isa<FunctionDecl>(D) || isa<OverloadedFunctionDecl>(D))
+    // FIXME: Instantiate decl!
+    NewD = cast<ValueDecl>(D);
+  else
+    assert(false && "Unhandled declaratrion reference kind");
+
+  if (!NewD)
+    return SemaRef.ExprError();
+
+  QualType T = NewD->getType();
+  return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(NewD,
                                                       T.getNonReferenceType(),
                                                            E->getLocation(),
                                                         T->isDependentType(),
                                                         T->isDependentType()));
-  } else
-    assert(false && "Can't handle arbitrary declaration references");
-
-  return SemaRef.ExprError();
 }
 
 Sema::OwningExprResult
@@ -201,6 +215,39 @@ TemplateExprInstantiator::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
                                          /*FIXME:*/LLocFake,
                                          move(RHS),
                                          E->getRBracketLoc());
+}
+
+Sema::OwningExprResult TemplateExprInstantiator::VisitCallExpr(CallExpr *E) {
+  // Instantiate callee
+  OwningExprResult Callee = Visit(E->getCallee());
+  if (Callee.isInvalid())
+    return SemaRef.ExprError();
+
+  // Instantiate arguments
+  llvm::SmallVector<Expr*, 8> Args;
+  llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
+    OwningExprResult Arg = Visit(E->getArg(I));
+    if (Arg.isInvalid()) {
+      for (unsigned Victim = 0; Victim != I; ++Victim)
+        Args[Victim]->Destroy(SemaRef.Context);
+      return SemaRef.ExprError();
+    }
+
+    FakeCommaLocs.push_back(
+     SemaRef.PP.getLocForEndOfToken(E->getArg(I)->getSourceRange().getEnd()));
+    Args.push_back(Arg.takeAs<Expr>());
+  }
+
+  SourceLocation FakeLParenLoc 
+    = ((Expr *)Callee.get())->getSourceRange().getBegin();
+  return SemaRef.ActOnCallExpr(/*Scope=*/0, move(Callee), 
+                               /*FIXME:*/FakeLParenLoc,
+                               Sema::MultiExprArg(SemaRef,
+                                                  (void **)&Args.front(),
+                                                  Args.size()),
+                               /*FIXME:*/&FakeCommaLocs.front(), 
+                               E->getRParenLoc());
 }
 
 Sema::OwningExprResult 
