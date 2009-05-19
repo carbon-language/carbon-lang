@@ -54,6 +54,8 @@ namespace {
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
     OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
+    // FIXME: AddrLabelExpr
+    OwningExprResult VisitStmtExpr(StmtExpr *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
@@ -451,6 +453,16 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
   return SemaRef.ActOnConditionalOp(/*FIXME*/E->getCond()->getLocEnd(),
                                     /*FIXME*/E->getFalseExpr()->getLocStart(),
                                     move(Cond), move(LHS), move(RHS));
+}
+
+Sema::OwningExprResult TemplateExprInstantiator::VisitStmtExpr(StmtExpr *E) {
+  Sema::OwningStmtResult SubStmt = SemaRef.InstantiateStmt(E->getSubStmt(),
+                                                           TemplateArgs);
+  if (SubStmt.isInvalid())
+    return SemaRef.ExprError();
+  
+  return SemaRef.ActOnStmtExpr(E->getLParenLoc(), move(SubStmt),
+                               E->getRParenLoc());
 }
 
 Sema::OwningExprResult 

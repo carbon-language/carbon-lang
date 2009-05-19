@@ -56,3 +56,16 @@ struct Conditional0 {
 };
 
 template struct Conditional0<int, int, int>;
+
+// ---------------------------------------------------------------------
+// Statement expressions
+// ---------------------------------------------------------------------
+template<typename T>
+struct StatementExpr0 {
+  void f(T t) {
+    (void)({ if (t) t = t + 17; }); // expected-error{{invalid}}
+  }
+};
+
+template struct StatementExpr0<int>;
+template struct StatementExpr0<N1::X>; // expected-note{{instantiation}}
