@@ -23,14 +23,8 @@ namespace llvm {
   namespace sys {
     
     inline void MemoryFence() {
-#if !defined(ENABLE_THREADS) || ENABLE_THREADS == 0
-#  if defined(__GNUC__)
-      __asm__ __volatile__("" : : : "memory");
-#  elif defined(_MSC_VER)
-      __asm { };
-#  else
-#    error No memory fence implementation for your platform!
-#  endif
+#if LLVM_MULTITHREADED==0
+      return;
 #else
 #  if defined(__GNUC__)
       __sync_synchronize();
@@ -42,7 +36,7 @@ namespace llvm {
 #endif
 }
 
-#if !defined(ENABLE_THREADS) || ENABLE_THREADS == 0
+#if LLVM_MULTITHREADED==0
     typedef unsigned long cas_flag;
     template<typename T>
     inline T CompareAndSwap(volatile T* dest,
