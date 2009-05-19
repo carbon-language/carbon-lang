@@ -23,13 +23,5 @@ set( LLVM_LINK_COMPONENTS
 
 add_clang_executable(clang-cc
   AnalysisConsumer.cpp
-  CacheTokens.cpp
   clang-cc.cpp
-  DependencyFile.cpp
-  DiagChecker.cpp
-  PrintParserCallbacks.cpp
-  PrintPreprocessedOutput.cpp
-  RewriteMacros.cpp
-  RewriteTest.cpp
-  Warnings.cpp
   )
