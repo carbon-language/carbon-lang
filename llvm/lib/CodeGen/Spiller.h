@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace llvm {
+  struct LiveInterval;
 
   /// Spiller interface.
   ///
@@ -21,7 +22,7 @@ namespace llvm {
   class Spiller {
   public:
     virtual ~Spiller() = 0;
-    virtual std::vector<class LiveInterval*> spill(class LiveInterval *li) = 0;
+    virtual std::vector<LiveInterval*> spill(class LiveInterval *li) = 0;
   };
 
   /// Create and return a spiller object, as specified on the command line.
