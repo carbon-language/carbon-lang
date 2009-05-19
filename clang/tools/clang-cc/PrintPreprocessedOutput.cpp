@@ -81,22 +81,6 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
 // Preprocessed token printer
 //===----------------------------------------------------------------------===//
 
-static llvm::cl::opt<bool>
-DisableLineMarkers("P", llvm::cl::desc("Disable linemarker output in -E mode"));
-static llvm::cl::opt<bool>
-EnableCommentOutput("C", llvm::cl::desc("Enable comment output in -E mode"));
-static llvm::cl::opt<bool>
-EnableMacroCommentOutput("CC",
-                         llvm::cl::desc("Enable comment output in -E mode, "
-                                        "even from macro expansions"));
-static llvm::cl::opt<bool>
-DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
-                                " normal output"));
-
-static llvm::cl::opt<bool>
-DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
-                                "addition to normal output"));
-
 namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
   Preprocessor &PP;
@@ -109,9 +93,13 @@ private:
   SrcMgr::CharacteristicKind FileType;
   llvm::SmallString<512> CurFilename;
   bool Initialized;
+  bool DisableLineMarkers;
+  bool DumpDefines;
 public:
-  PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os)
-     : PP(pp), ConcatInfo(PP), OS(os) {
+  PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os,
+                           bool lineMarkers, bool defines)
+     : PP(pp), ConcatInfo(PP), OS(os), DisableLineMarkers(lineMarkers),
+       DumpDefines(defines) {
     CurLine = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
@@ -441,19 +429,19 @@ void clang::DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS) {
-  if (DumpMacros) {
-    DoPrintMacros(PP, OS);
-    return;
-  }
-
+void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
+                                     bool EnableCommentOutput,
+                                     bool EnableMacroCommentOutput,
+                                     bool DisableLineMarkers,
+                                     bool DumpDefines) {
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
 
   OS->SetBufferSize(64*1024);
 
-  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, *OS);
+  PrintPPOutputPPCallbacks *Callbacks =
+      new PrintPPOutputPPCallbacks(PP, *OS, DisableLineMarkers, DumpDefines);
   PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                       Callbacks));

@@ -1511,6 +1511,23 @@ static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
 //===----------------------------------------------------------------------===//
+// Preprocessing (-E mode) Options
+//===----------------------------------------------------------------------===//
+static llvm::cl::opt<bool>
+DisableLineMarkers("P", llvm::cl::desc("Disable linemarker output in -E mode"));
+static llvm::cl::opt<bool>
+EnableCommentOutput("C", llvm::cl::desc("Enable comment output in -E mode"));
+static llvm::cl::opt<bool>
+EnableMacroCommentOutput("CC",
+                         llvm::cl::desc("Enable comment output in -E mode, "
+                                        "even from macro expansions"));
+static llvm::cl::opt<bool>
+DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
+                                " normal output"));
+static llvm::cl::opt<bool>
+DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
+                                "addition to normal output"));
+//===----------------------------------------------------------------------===//
 // -dump-build-information Stuff
 //===----------------------------------------------------------------------===//
 
@@ -1930,7 +1947,12 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
   } else if (PA == PrintPreprocessedInput){  // -E mode.
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    DoPrintPreprocessedInput(PP, OS.get());
+    if (DumpMacros)
+      DoPrintMacros(PP, OS.get());
+    else
+      DoPrintPreprocessedInput(PP, OS.get(), EnableCommentOutput,
+                               EnableMacroCommentOutput,
+                               DisableLineMarkers, DumpDefines);
     ClearSourceMgr = true;
   }
   

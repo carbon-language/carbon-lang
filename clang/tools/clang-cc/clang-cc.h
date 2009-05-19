@@ -44,7 +44,11 @@ bool ProcessWarningOptions(Diagnostic &Diags,
 void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream* OS);
 
 /// DoPrintPreprocessedInput - Implement -E mode.
-void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS);
+void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS,
+                              bool EnableCommentOutput,
+                              bool EnableMacroCommentOutput,
+                              bool DisableLineMarkers,
+                              bool DumpDefines);
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
 void RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream* OS);
