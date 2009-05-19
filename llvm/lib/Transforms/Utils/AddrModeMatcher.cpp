@@ -255,43 +255,44 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
 
     // Save the valid addressing mode in case we can't match.
     ExtAddrMode BackupAddrMode = AddrMode;
-    
-    // Check that this has no base reg yet.  If so, we won't have a place to
-    // put the base of the GEP (assuming it is not a null ptr).
-    bool SetBaseReg = true;
-    if (isa<ConstantPointerNull>(AddrInst->getOperand(0)))
-      SetBaseReg = false;   // null pointer base doesn't need representation.
-    else if (AddrMode.HasBaseReg)
-      return false;  // Base register already specified, can't match GEP.
-    else {
-      // Otherwise, we'll use the GEP base as the BaseReg.
+    unsigned OldSize = AddrModeInsts.size();
+
+    // See if the scale and offset amount is valid for this target.
+    AddrMode.BaseOffs += ConstantOffset;
+
+    // Match the base operand of the GEP.
+    if (!MatchAddr(AddrInst->getOperand(0), Depth+1)) {
+      // If it couldn't be matched, just stuff the value in a register.
+      if (AddrMode.HasBaseReg) {
+        AddrMode = BackupAddrMode;
+        AddrModeInsts.resize(OldSize);
+        return false;
+      }
       AddrMode.HasBaseReg = true;
       AddrMode.BaseReg = AddrInst->getOperand(0);
     }
-    
-    // See if the scale and offset amount is valid for this target.
-    AddrMode.BaseOffs += ConstantOffset;
-    
+
+    // Match the remaining variable portion of the GEP.
     if (!MatchScaledValue(AddrInst->getOperand(VariableOperand), VariableScale,
                           Depth)) {
+      // If it couldn't be matched, try stuffing the base into a register
+      // instead of matching it, and retrying the match of the scale.
       AddrMode = BackupAddrMode;
-      return false;
+      AddrModeInsts.resize(OldSize);
+      if (AddrMode.HasBaseReg)
+        return false;
+      AddrMode.HasBaseReg = true;
+      AddrMode.BaseReg = AddrInst->getOperand(0);
+      AddrMode.BaseOffs += ConstantOffset;
+      if (!MatchScaledValue(AddrInst->getOperand(VariableOperand),
+                            VariableScale, Depth)) {
+        // If even that didn't work, bail.
+        AddrMode = BackupAddrMode;
+        AddrModeInsts.resize(OldSize);
+        return false;
+      }
     }
-    
-    // If we have a null as the base of the GEP, folding in the constant offset
-    // plus variable scale is all we can do.
-    if (!SetBaseReg) return true;
-      
-    // If this match succeeded, we know that we can form an address with the
-    // GepBase as the basereg.  Match the base pointer of the GEP more
-    // aggressively by zeroing out BaseReg and rematching.  If the base is
-    // (for example) another GEP, this allows merging in that other GEP into
-    // the addressing mode we're forming.
-    AddrMode.HasBaseReg = false;
-    AddrMode.BaseReg = 0;
-    bool Success = MatchAddr(AddrInst->getOperand(0), Depth+1);
-    assert(Success && "MatchAddr should be able to fill in BaseReg!");
-    Success=Success;
+
     return true;
   }
   }

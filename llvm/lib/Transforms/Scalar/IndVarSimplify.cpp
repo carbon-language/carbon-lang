@@ -172,7 +172,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = Rewriter.expandCodeFor(RHS, IndVar->getType(),
+  Value *ExitCnt = Rewriter.expandCodeFor(RHS, CmpIndVar->getType(),
                                           Preheader->getTerminator());
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
@@ -218,7 +218,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
 
   // Scan all of the instructions in the loop, looking at those that have
   // extra-loop users and which are recurrences.
-  SCEVExpander Rewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE);
 
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
@@ -386,7 +386,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Create a rewriter object which we'll use to transform the code with.
-  SCEVExpander Rewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE);
 
   // Now that we know the largest of of the induction variable expressions
   // in this loop, insert a canonical induction variable of the largest size.
@@ -478,7 +478,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         BasicBlock::iterator I = Rewriter.getInsertionPoint();
         // Expand loop-invariant values in the loop preheader. They will
         // be sunk to the exit block later, if possible.
-          NewVal =
+        NewVal =
           Rewriter.expandCodeFor(AR, LargestType,
                                  L->getLoopPreheader()->getTerminator());
         Rewriter.setInsertionPoint(I);
@@ -523,7 +523,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         NewAR = SE->getAddExpr(NewAR, PromotedOffset);
 
         // Expand the addrec into instructions.
-        Value *V = Rewriter.expandCodeFor(NewAR, LargestType);
+        Value *V = Rewriter.expandCodeFor(NewAR);
 
         // Insert an explicit cast if necessary to truncate the value
         // down to the original stride type. This is done outside of
@@ -533,7 +533,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
           if (SE->getTypeSizeInBits(IVTy) != SE->getTypeSizeInBits(LargestType))
             NewAR = SE->getTruncateExpr(NewAR, IVTy);
           if (Rewriter.isInsertedExpression(NewAR))
-            V = Rewriter.expandCodeFor(NewAR, IVTy);
+            V = Rewriter.expandCodeFor(NewAR);
           else {
             V = Rewriter.InsertCastOfTo(CastInst::getCastOpcode(V, false,
                                                                 IVTy, false),

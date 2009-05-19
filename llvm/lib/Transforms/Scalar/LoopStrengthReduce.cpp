@@ -367,12 +367,14 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
+                                        LoopInfo &LI,
                                         SmallVectorImpl<WeakVH> &DeadInsts);
     
     Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
                                        const Type *Ty,
                                        SCEVExpander &Rewriter,
-                                       Instruction *IP, Loop *L);
+                                       Instruction *IP, Loop *L,
+                                       LoopInfo &LI);
     void dump() const;
   };
 }
@@ -386,12 +388,12 @@ void BasedUser::dump() const {
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
                                               const Type *Ty,
                                               SCEVExpander &Rewriter,
-                                              Instruction *IP, Loop *L) {
+                                              Instruction *IP, Loop *L,
+                                              LoopInfo &LI) {
   // Figure out where we *really* want to insert this code.  In particular, if
   // the user is inside of a loop that is nested inside of L, we really don't
   // want to insert this expression before the user, we'd rather pull it out as
   // many loops as possible.
-  LoopInfo &LI = Rewriter.getLoopInfo();
   Instruction *BaseInsertPt = IP;
   
   // Figure out the most-nested loop that IP is in.
@@ -405,8 +407,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
       InsertLoop = InsertLoop->getParentLoop();
     }
   
-  Value *Base = Rewriter.expandCodeFor(NewBase, NewBase->getType(),
-                                       BaseInsertPt);
+  Value *Base = Rewriter.expandCodeFor(NewBase, 0, BaseInsertPt);
 
   SCEVHandle NewValSCEV = SE->getUnknown(Base);
 
@@ -439,6 +440,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
+                                      LoopInfo &LI,
                                       SmallVectorImpl<WeakVH> &DeadInsts) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
@@ -468,7 +470,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     }
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase,
                                                 OperandValToReplace->getType(),
-                                                Rewriter, InsertPt, L);
+                                                Rewriter, InsertPt, L, LI);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
@@ -527,7 +529,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                 PN->getIncomingBlock(i)->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
-                                           Rewriter, InsertPt, L);
+                                           Rewriter, InsertPt, L, LI);
 
         DOUT << "      Changing PHI use to ";
         DEBUG(WriteAsOperand(*DOUT, Code, /*PrintType=*/false));
@@ -1580,8 +1582,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
        << *Stride << ":\n"
        << "  Common base: " << *CommonExprs << "\n";
 
-  SCEVExpander Rewriter(*SE, *LI);
-  SCEVExpander PreheaderRewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE);
+  SCEVExpander PreheaderRewriter(*SE);
 
   BasicBlock  *Preheader = L->getLoopPreheader();
   Instruction *PreInsertPt = Preheader->getTerminator();
@@ -1636,8 +1638,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // Emit the code for Base into the preheader.
     Value *BaseV = 0;
     if (!Base->isZero()) {
-      BaseV = PreheaderRewriter.expandCodeFor(Base, Base->getType(),
-                                              PreInsertPt);
+      BaseV = PreheaderRewriter.expandCodeFor(Base, 0, PreInsertPt);
 
       DOUT << "  INSERTING code for BASE = " << *Base << ":";
       if (BaseV->hasName())
@@ -1758,7 +1759,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
-                                          Rewriter, L, this,
+                                          Rewriter, L, this, *LI,
                                           DeadInsts);
 
       // Mark old value we replaced as possibly dead, so that it is eliminated

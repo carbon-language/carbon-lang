@@ -456,6 +456,13 @@ namespace {
       if (const SCEVUnknown *LU = dyn_cast<SCEVUnknown>(LHS)) {
         const SCEVUnknown *RU = cast<SCEVUnknown>(RHS);
 
+        // Order pointer values after integer values. This helps SCEVExpander
+        // form GEPs.
+        if (isa<PointerType>(LU->getType()) && !isa<PointerType>(RU->getType()))
+          return false;
+        if (isa<PointerType>(RU->getType()) && !isa<PointerType>(LU->getType()))
+          return true;
+
         // Compare getValueID values.
         if (LU->getValue()->getValueID() != RU->getValue()->getValueID())
           return LU->getValue()->getValueID() < RU->getValue()->getValueID();

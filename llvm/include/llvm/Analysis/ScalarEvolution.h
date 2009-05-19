@@ -213,6 +213,7 @@ namespace llvm {
   ///
   class ScalarEvolution : public FunctionPass {
     friend class SCEVCallbackVH;
+    friend class SCEVExpander;
 
     /// F - The function we are analyzing.
     ///
