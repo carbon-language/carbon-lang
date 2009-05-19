@@ -40,6 +40,9 @@ bool ProcessWarningOptions(Diagnostic &Diags,
                            bool Pedantic, bool PedanticErrors,
                            bool NoWarnings);
 
+/// DoPrintPreprocessedInput - Implement -E -dM mode.
+void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream* OS);
+
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS);
 

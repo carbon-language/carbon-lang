@@ -414,67 +414,67 @@ namespace {
   };
 }
 
+void clang::DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
+  // -dM mode just scans and ignores all tokens in the files, then dumps out
+  // the macro table at the end.
+  PP.EnterMainSourceFile();
+
+  Token Tok;
+  do PP.Lex(Tok);
+  while (Tok.isNot(tok::eof));
+
+  std::vector<std::pair<IdentifierInfo*, MacroInfo*> > MacrosByID;
+  for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
+       I != E; ++I)
+    MacrosByID.push_back(*I);
+  std::sort(MacrosByID.begin(), MacrosByID.end(), SortMacrosByID());
+
+  for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i) {
+    MacroInfo &MI = *MacrosByID[i].second;
+    // Ignore computed macros like __LINE__ and friends. 
+    if (MI.isBuiltinMacro()) continue;
+
+    PrintMacroDefinition(*MacrosByID[i].first, MI, PP, *OS);
+    *OS << "\n";
+  }
+}
+
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP, 
-                                     llvm::raw_ostream *OS) {
+void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS) {
+  if (DumpMacros) {
+    DoPrintMacros(PP, OS);
+    return;
+  }
+
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
 
   OS->SetBufferSize(64*1024);
-  
-  if (DumpMacros) {
-    // -dM mode just scans and ignores all tokens in the files, then dumps out
-    // the macro table at the end.
-    PP.EnterMainSourceFile();
-    
-    Token Tok;
-    do PP.Lex(Tok);
-    while (Tok.isNot(tok::eof));
-    
-    std::vector<std::pair<IdentifierInfo*, MacroInfo*> > MacrosByID;
-    for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
-         I != E; ++I)
-      MacrosByID.push_back(*I);
-    std::sort(MacrosByID.begin(), MacrosByID.end(), SortMacrosByID());
-    
-    for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i) {
-      MacroInfo &MI = *MacrosByID[i].second;
-      // Ignore computed macros like __LINE__ and friends. 
-      if (MI.isBuiltinMacro()) continue;
 
-      PrintMacroDefinition(*MacrosByID[i].first, MI, PP, *OS);
-      *OS << "\n";
-    }
-    
-  } else {
-    PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, *OS);
-    PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
-    PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
-                                                        Callbacks));
+  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, *OS);
+  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
+  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
+                                                      Callbacks));
 
-    PP.setPPCallbacks(Callbacks);
+  PP.setPPCallbacks(Callbacks);
 
-    // After we have configured the preprocessor, enter the main file.
-    PP.EnterMainSourceFile();
+  // After we have configured the preprocessor, enter the main file.
+  PP.EnterMainSourceFile();
 
-    // Consume all of the tokens that come from the predefines buffer.  Those
-    // should not be emitted into the output and are guaranteed to be at the
-    // start.
-    const SourceManager &SourceMgr = PP.getSourceManager();
-    Token Tok;
-    do PP.Lex(Tok);
-    while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
-           !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
-                   "<built-in>"));
+  // Consume all of the tokens that come from the predefines buffer.  Those
+  // should not be emitted into the output and are guaranteed to be at the
+  // start.
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  Token Tok;
+  do PP.Lex(Tok);
+  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
+         !strcmp(SourceMgr.getPresumedLoc(Tok.getLocation()).getFilename(),
+                 "<built-in>"));
 
-    // Read all the preprocessed tokens, printing them out to the stream.
-    PrintPreprocessedTokens(PP, Tok, Callbacks, *OS);
-    *OS << '\n';
-  }
-
-  // Flush the ostream.
-  OS->flush();
+  // Read all the preprocessed tokens, printing them out to the stream.
+  PrintPreprocessedTokens(PP, Tok, Callbacks, *OS);
+  *OS << '\n';
 }
 
