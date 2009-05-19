@@ -535,16 +535,7 @@ public:
 } // end anonymous namespace
 
 
-void clang::CacheTokens(Preprocessor &PP, const std::string &OutFile) {
-  // Open up the PTH file.
-  std::string ErrMsg;
-  llvm::raw_fd_ostream Out(OutFile.c_str(), true, ErrMsg);
-  
-  if (!ErrMsg.empty()) {
-    llvm::errs() << "PTH error: " << ErrMsg << "\n";
-    return;
-  }
-  
+void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   // Get the name of the main file.
   const SourceManager &SrcMgr = PP.getSourceManager();
   const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());
@@ -560,7 +551,7 @@ void clang::CacheTokens(Preprocessor &PP, const std::string &OutFile) {
   }
 
   // Create the PTHWriter.
-  PTHWriter PW(Out, PP);
+  PTHWriter PW(*OS, PP);
   
   // Install the 'stat' system call listener in the FileManager.
   PP.getFileManager().setStatCache(new StatListener(PW.getPM()));

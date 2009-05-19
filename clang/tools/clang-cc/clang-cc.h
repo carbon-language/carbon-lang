@@ -17,6 +17,11 @@
 #include <vector>
 #include <string>
 
+namespace llvm {
+class raw_ostream;
+class raw_fd_ostream;
+}
+
 namespace clang {
 class Preprocessor;
 class MinimalAction;
@@ -33,19 +38,18 @@ class LangOptions;
 bool ProcessWarningOptions(Diagnostic &Diags);
 
 /// DoPrintPreprocessedInput - Implement -E mode.
-void DoPrintPreprocessedInput(Preprocessor &PP, const std::string& OutFile);
+void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS);
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
-void RewriteMacrosInInput(Preprocessor &PP, const std::string &InFileName,
-                          const std::string& OutFile);
+void RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream* OS);
 
-void DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
-                   const std::string &OutFileName);
-    
+/// RewriteMacrosInInput - A simple test for the TokenRewriter class.
+void DoRewriteTest(Preprocessor &PP, llvm::raw_ostream* OS);
   
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
-MinimalAction *CreatePrintParserActionsAction(Preprocessor &PP);
+MinimalAction *CreatePrintParserActionsAction(Preprocessor &PP,
+                                              llvm::raw_ostream* OS);
 
 /// CheckDiagnostics - Gather the expected diagnostics and check them.
 bool CheckDiagnostics(Preprocessor &PP);
@@ -54,8 +58,9 @@ bool CheckDiagnostics(Preprocessor &PP);
 /// This is only done if either -MD or -MMD has been specified.
 bool CreateDependencyFileGen(Preprocessor *PP, std::string &ErrStr);
 
-/// CacheTokens - Cache tokens for use with PCH.
-void CacheTokens(Preprocessor& PP, const std::string& OutFile);
+/// CacheTokens - Cache tokens for use with PCH. Note that this requires
+/// a seekable stream.
+void CacheTokens(Preprocessor& PP, llvm::raw_fd_ostream* OS);
 
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line

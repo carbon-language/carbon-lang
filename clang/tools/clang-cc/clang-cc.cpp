@@ -1748,12 +1748,20 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       
   case GeneratePTH: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    CacheTokens(PP, OutputFile);
+    if (OutputFile.empty() || OutputFile == "-") {
+      // FIXME: Don't fail this way.
+      // FIXME: Verify that we can actually seek in the given file.
+      llvm::cerr << "ERROR: PTH requires an seekable file for output!\n";
+      ::exit(1);
+    }
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
     ClearSourceMgr = true;
     break;
   }      
 
   case PrintPreprocessedInput:
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
     break;
       
   case ParseNoop:
@@ -1761,7 +1769,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     
   case ParsePrintCallbacks: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    ParseFile(PP, CreatePrintParserActionsAction(PP));
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
     ClearSourceMgr = true;
     break;
   }
@@ -1773,15 +1782,16 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   }
       
   case RewriteMacros:
-    RewriteMacrosInInput(PP, InFile, OutputFile);
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    RewriteMacrosInInput(PP, OS.get());
     ClearSourceMgr = true;
     break;
       
-  case RewriteTest: {
-    DoRewriteTest(PP, InFile, OutputFile);
+  case RewriteTest:
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    DoRewriteTest(PP, OS.get());
     ClearSourceMgr = true;
     break;
-  }
 
   case FixIt:
     llvm::TimeRegion Timer(ClangFrontendTimer);
@@ -1906,7 +1916,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
   } else if (PA == PrintPreprocessedInput){  // -E mode.
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    DoPrintPreprocessedInput(PP, OutputFile);
+    DoPrintPreprocessedInput(PP, OS.get());
     ClearSourceMgr = true;
   }
   

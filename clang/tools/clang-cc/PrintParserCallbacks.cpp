@@ -15,14 +15,16 @@
 #include "clang-cc.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 namespace {
   class ParserPrintActions : public MinimalAction {
-    
+  llvm::raw_ostream& Out;
+
   public:
-    ParserPrintActions(Preprocessor &PP) : MinimalAction(PP) {}
+    ParserPrintActions(Preprocessor &PP, llvm::raw_ostream& OS)
+      : MinimalAction(PP), Out(OS) {}
 
     // Printing Functions which also must call MinimalAction
 
@@ -30,13 +32,13 @@ namespace {
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
     virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
-      llvm::cout << __FUNCTION__ << " ";
+      Out << __FUNCTION__ << " ";
       if (IdentifierInfo *II = D.getIdentifier()) {
-        llvm::cout << "'" << II->getName() << "'";
+        Out << "'" << II->getName() << "'";
       } else {
-        llvm::cout << "<anon>";
+        Out << "<anon>";
       }
-      llvm::cout << "\n";
+      Out << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
       return MinimalAction::ActOnDeclarator(S, D);
@@ -44,14 +46,14 @@ namespace {
     /// ActOnPopScope - This callback is called immediately before the specified
     /// scope is popped and deleted.
     virtual void ActOnPopScope(SourceLocation Loc, Scope *S) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return MinimalAction::ActOnPopScope(Loc, S);
     }
 
     /// ActOnTranslationUnitScope - This callback is called once, immediately
     /// after creating the translation unit scope (in Parser::Initialize).
     virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       MinimalAction::ActOnTranslationUnitScope(Loc, S);
     }
 
@@ -65,7 +67,7 @@ namespace {
                                                unsigned NumProtocols,
                                                SourceLocation EndProtoLoc,
                                                AttributeList *AttrList) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return MinimalAction::ActOnStartClassInterface(AtInterfaceLoc,
                                                      ClassName, ClassLoc, 
                                                      SuperName, SuperLoc,
@@ -78,7 +80,7 @@ namespace {
     Action::DeclPtrTy ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                                    IdentifierInfo **IdentList, 
                                                    unsigned NumElts) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return MinimalAction::ActOnForwardClassDeclaration(AtClassLoc, IdentList,
                                                          NumElts);
     }
@@ -90,13 +92,13 @@ namespace {
     /// with prototypes. S is the function prototype scope for the
     /// parameters (C++ [basic.scope.proto]).
     virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D) {
-      llvm::cout << __FUNCTION__ << " ";
+      Out << __FUNCTION__ << " ";
       if (IdentifierInfo *II = D.getIdentifier()) {
-        llvm::cout << "'" << II->getName() << "'";
+        Out << "'" << II->getName() << "'";
       } else {
-        llvm::cout << "<anon>";
+        Out << "<anon>";
       }
-      llvm::cout << "\n";
+      Out << "\n";
       return DeclPtrTy();
     }
     
@@ -108,7 +110,7 @@ namespace {
     /// initializer. The declaration above should still result in a warning, 
     /// since the reference to "xx" is uninitialized.
     virtual void AddInitializerToDecl(DeclPtrTy Dcl, ExprArg Init) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed,
@@ -116,7 +118,7 @@ namespace {
     /// a whole.
     virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
                                                    unsigned NumDecls) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclGroupPtrTy();
     }
 
@@ -125,38 +127,38 @@ namespace {
     /// information about formal arguments that are part of this function.
     virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope,
                                               Declarator &D){
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
     /// ActOnStartOfFunctionDef - This is called at the start of a function
     /// definition, after the FunctionDecl has already been created.
     virtual DeclPtrTy ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
     virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
   
     /// ActOnFunctionDefBody - This is called when a function body has completed
     /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
     virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
     virtual DeclPtrTy ActOnFileScopeAsmDecl(SourceLocation Loc,
                                             ExprArg AsmString) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
   
     /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
     /// no declarator (e.g. "struct foo;") is parsed.
     virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
     
@@ -169,7 +171,7 @@ namespace {
                                        SourceLocation RBrace, const char *Lang,
                                        unsigned StrSize, 
                                        DeclPtrTy *Decls, unsigned NumDecls) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
     
@@ -186,7 +188,7 @@ namespace {
     //===------------------------------------------------------------------===//
   
     virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return TypeResult();
     }
   
@@ -196,7 +198,7 @@ namespace {
                                AttributeList *Attr, AccessSpecifier AS) {
       // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
       // is (struct/union/enum/class).
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
   
@@ -205,20 +207,20 @@ namespace {
     virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                            IdentifierInfo *ClassName,
                            llvm::SmallVectorImpl<DeclPtrTy> &Decls) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual DeclPtrTy ActOnField(Scope *S, DeclPtrTy TagD, 
                                  SourceLocation DeclStart,
                                  Declarator &D, ExprTy *BitfieldWidth) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
   
     virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
                                 Declarator &D, ExprTy *BitfieldWidth,
                                 tok::ObjCKeywordKind visibility) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
   
@@ -226,21 +228,21 @@ namespace {
                              DeclPtrTy *Fields, unsigned NumFields, 
                              SourceLocation LBrac, SourceLocation RBrac,
                              AttributeList *AttrList) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
   
     virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
                                         DeclPtrTy LastEnumConstant,
                                         SourceLocation IdLoc,IdentifierInfo *Id,
                                         SourceLocation EqualLoc, ExprTy *Val) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
     virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                                SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
                                DeclPtrTy *Elements, unsigned NumElements) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     //===------------------------------------------------------------------===//
@@ -248,7 +250,7 @@ namespace {
     //===------------------------------------------------------------------===//
 
     virtual OwningStmtResult ActOnNullStmt(SourceLocation SemiLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
@@ -256,18 +258,18 @@ namespace {
                                                SourceLocation R,
                                                MultiStmtArg Elts,
                                                bool isStmtExpr) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
   
     virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return OwningStmtResult(*this, Expr->release());
     }
   
@@ -278,13 +280,13 @@ namespace {
                                            SourceLocation DotDotDotLoc,
                                            ExprArg RHSVal,
                                            SourceLocation ColonLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                               SourceLocation ColonLoc,
                                               StmtArg SubStmt, Scope *CurScope){
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
@@ -292,7 +294,7 @@ namespace {
                                             IdentifierInfo *II,
                                             SourceLocation ColonLoc,
                                             StmtArg SubStmt) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
@@ -300,30 +302,30 @@ namespace {
                                          FullExprArg CondVal, StmtArg ThenVal,
                                          SourceLocation ElseLoc,
                                          StmtArg ElseVal) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                    StmtArg Switch,
                                                    StmtArg Body) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
                                             FullExprArg Cond, StmtArg Body) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
                                          SourceLocation WhileLoc, ExprArg Cond){
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
@@ -331,7 +333,7 @@ namespace {
                                         StmtArg First, ExprArg Second,
                                         ExprArg Third, SourceLocation RParenLoc,
                                         StmtArg Body) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnObjCForCollectionStmt(
@@ -339,34 +341,34 @@ namespace {
                                        SourceLocation LParenLoc,
                                        StmtArg First, ExprArg Second,
                                        SourceLocation RParenLoc, StmtArg Body) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                            SourceLocation LabelLoc,
                                            IdentifierInfo *LabelII) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
                                                    SourceLocation StarLoc,
                                                    ExprArg DestExp) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
                                                Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnBreakStmt(SourceLocation GotoLoc,
                                             Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                              ExprArg RetValExp) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnAsmStmt(SourceLocation AsmLoc,
@@ -380,7 +382,7 @@ namespace {
                                           ExprArg AsmString,
                                           MultiExprArg Clobbers,
                                           SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
@@ -389,54 +391,54 @@ namespace {
                                                   SourceLocation RParen,
                                                   DeclPtrTy Parm, StmtArg Body,
                                                   StmtArg CatchList) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc,
                                                     StmtArg Body) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc,
                                                 StmtArg Try, StmtArg Catch,
                                                 StmtArg Finally) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc,
                                                   ExprArg Throw,
                                                   Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
                                                          ExprArg SynchExpr,
                                                          StmtArg SynchBody) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     // C++ Statements
     virtual DeclPtrTy ActOnExceptionDeclarator(Scope *S, Declarator &D) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
     virtual OwningStmtResult ActOnCXXCatchBlock(SourceLocation CatchLoc,
                                                 DeclPtrTy ExceptionDecl,
                                                 StmtArg HandlerBlock) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
     virtual OwningStmtResult ActOnCXXTryBlock(SourceLocation TryLoc,
                                               StmtArg TryBlock,
                                               MultiStmtArg Handlers) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
@@ -454,7 +456,7 @@ namespace {
                                                  bool HasTrailingLParen,
                                                  const CXXScopeSpec *SS,
                                                  bool isAddressOfOperand) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -463,7 +465,7 @@ namespace {
                                OverloadedOperatorKind Op,
                                bool HasTrailingLParen, const CXXScopeSpec &SS,
                                bool isAddressOfOperand) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -471,23 +473,23 @@ namespace {
                                Scope *S, SourceLocation OperatorLoc,
                                TypeTy *Type, bool HasTrailingLParen,
                                const CXXScopeSpec &SS,bool isAddressOfOperand) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                                  tok::TokenKind Kind) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnCharacterConstant(const Token &) { 
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnNumericConstant(const Token &) { 
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -495,13 +497,13 @@ namespace {
     /// fragments (e.g. "foo" "bar" L"baz").
     virtual OwningExprResult ActOnStringLiteral(const Token *Toks,
                                                 unsigned NumToks) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                             ExprArg Val) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return move(Val);  // Default impl returns operand.
     }
 
@@ -509,14 +511,14 @@ namespace {
     virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
                                                  tok::TokenKind Kind,
                                                  ExprArg Input) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
     virtual OwningExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
                                                      SourceLocation LLoc,
                                                      ExprArg Idx,
                                                      SourceLocation RLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
     virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
@@ -525,7 +527,7 @@ namespace {
                                                       SourceLocation MemberLoc,
                                                       IdentifierInfo &Member,
                                                       DeclPtrTy ImplDecl) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -534,20 +536,20 @@ namespace {
                                            MultiExprArg Args,
                                            SourceLocation *CommaLocs,
                                            SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     // Unary Operators.  'Tok' is the token for the operator.
     virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                           tok::TokenKind Op, ExprArg Input) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
     virtual OwningExprResult
       ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
                              void *TyOrEx, const SourceRange &ArgRange) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -555,25 +557,25 @@ namespace {
                                                   TypeTy *Ty,
                                                   SourceLocation RParen,
                                                   ExprArg Op) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
     virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
                                            MultiExprArg InitList,
                                            SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
     virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                            SourceLocation RParenLoc,ExprArg Op){
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                         tok::TokenKind Kind,
                                         ExprArg LHS, ExprArg RHS) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -583,7 +585,7 @@ namespace {
                                                 SourceLocation ColonLoc,
                                                 ExprArg Cond, ExprArg LHS,
                                                 ExprArg RHS) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -592,14 +594,14 @@ namespace {
     virtual OwningExprResult ActOnAddrLabel(SourceLocation OpLoc,
                                             SourceLocation LabLoc,
                                             IdentifierInfo *LabelII) {// "&&foo"
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnStmtExpr(SourceLocation LPLoc,
                                            StmtArg SubStmt,
                                            SourceLocation RPLoc) { // "({..})"
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -610,7 +612,7 @@ namespace {
                                                   OffsetOfComponent *CompPtr,
                                                   unsigned NumComponents,
                                                   SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -618,7 +620,7 @@ namespace {
     virtual OwningExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                                       TypeTy *arg1,TypeTy *arg2,
                                                       SourceLocation RPLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
     // __builtin_choose_expr(constExpr, expr1, expr2)
@@ -626,7 +628,7 @@ namespace {
                                              ExprArg cond, ExprArg expr1,
                                              ExprArg expr2,
                                              SourceLocation RPLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -634,43 +636,43 @@ namespace {
     virtual OwningExprResult ActOnVAArg(SourceLocation BuiltinLoc,
                                   ExprArg expr, TypeTy *type,
                                   SourceLocation RPLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnGNUNullExpr(SourceLocation TokenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual void ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual OwningExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
                                                 StmtArg Body,
                                                 Scope *CurScope) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
                                              IdentifierInfo *Ident,
                                              SourceLocation LBrace) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
     virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return;
     }
 
@@ -684,7 +686,7 @@ namespace {
                                           SourceLocation IdentLoc,
                                           IdentifierInfo *NamespcName,
                                           AttributeList *AttrList) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 #endif
@@ -692,16 +694,16 @@ namespace {
     virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                            SourceLocation EqualLoc,
                                            ExprArg defarg) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param,
                                                    SourceLocation EqualLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnParamDefaultArgumentError(DeclPtrTy param) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
@@ -709,29 +711,29 @@ namespace {
                                                MultiExprArg Exprs,
                                                SourceLocation *CommaLocs,
                                                SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return;
     }
 
     virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
                                                        DeclPtrTy Method)
     {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy Param) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S,
                                                         DeclPtrTy Method) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
     }
 
     virtual DeclPtrTy ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                                    ExprArg AssertExpr,
                                                    ExprArg AssertMessageExpr) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
 
@@ -743,7 +745,7 @@ namespace {
                                                SourceLocation LParenLoc,
                                                ExprArg Op,
                                                SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -751,23 +753,23 @@ namespace {
                                             SourceLocation LParenLoc,
                                             bool isType, void *TyOrExpr,
                                             SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnCXXThis(SourceLocation ThisLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                                  tok::TokenKind Kind) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnCXXThrow(SourceLocation OpLoc, ExprArg Op) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -777,7 +779,7 @@ namespace {
                                                      MultiExprArg Exprs,
                                                      SourceLocation *CommaLocs,
                                                      SourceLocation RParenLoc) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -786,7 +788,7 @@ namespace {
                                                         Declarator &D,
                                                         SourceLocation EqualLoc,
                                                         ExprArg AssignExprVal) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -799,14 +801,14 @@ namespace {
                                          SourceLocation ConstructorLParen,
                                          MultiExprArg ConstructorArgs,
                                          SourceLocation ConstructorRParen) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
     virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
                                             bool UseGlobal, bool ArrayForm,
                                             ExprArg Operand) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
@@ -815,12 +817,13 @@ namespace {
                                                  SourceLocation LParen,
                                                  TypeTy *Ty,
                                                  SourceLocation RParen) {
-      llvm::cout << __FUNCTION__ << "\n";
+      Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
   };
 }
 
-MinimalAction *clang::CreatePrintParserActionsAction(Preprocessor &PP) {
-  return new ParserPrintActions(PP);
+MinimalAction *clang::CreatePrintParserActionsAction(Preprocessor &PP,
+                                                     llvm::raw_ostream* OS) {
+  return new ParserPrintActions(PP, *OS);
 }

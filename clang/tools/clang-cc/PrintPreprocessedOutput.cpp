@@ -417,21 +417,12 @@ namespace {
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
 void clang::DoPrintPreprocessedInput(Preprocessor &PP, 
-                                     const std::string &OutFile) {
+                                     llvm::raw_ostream *OS) {
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
-  
-  // Open the output buffer using "Binary" mode. On Windows, this distinction
-  // is important (to surpress automatic LF->CFLF conversion).
-  std::string Err;
-  llvm::raw_fd_ostream OS(OutFile.empty() ? "-" : OutFile.c_str(), true, Err);
-  if (!Err.empty()) {
-    fprintf(stderr, "%s\n", Err.c_str());
-    exit(1);
-  }
-  
-  OS.SetBufferSize(64*1024);
+
+  OS->SetBufferSize(64*1024);
   
   if (DumpMacros) {
     // -dM mode just scans and ignores all tokens in the files, then dumps out
@@ -453,12 +444,12 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
       // Ignore computed macros like __LINE__ and friends. 
       if (MI.isBuiltinMacro()) continue;
 
-      PrintMacroDefinition(*MacrosByID[i].first, MI, PP, OS);
-      OS << "\n";
+      PrintMacroDefinition(*MacrosByID[i].first, MI, PP, *OS);
+      *OS << "\n";
     }
     
   } else {
-    PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
+    PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, *OS);
     PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
     PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                         Callbacks));
@@ -479,15 +470,11 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
                    "<built-in>"));
 
     // Read all the preprocessed tokens, printing them out to the stream.
-    PrintPreprocessedTokens(PP, Tok, Callbacks, OS);
-    OS << '\n';
+    PrintPreprocessedTokens(PP, Tok, Callbacks, *OS);
+    *OS << '\n';
   }
-  
+
   // Flush the ostream.
-  OS.flush();
-  
-  // If an error occurred, remove the output file.
-  if (PP.getDiagnostics().hasErrorOccurred() && !OutFile.empty())
-    llvm::sys::Path(OutFile).eraseFromDisk();
+  OS->flush();
 }
 

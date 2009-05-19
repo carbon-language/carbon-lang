@@ -85,8 +85,7 @@ static void LexRawTokensFromMainFile(Preprocessor &PP,
 
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
-void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
-                                 const std::string &OutFileName) {
+void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
   SourceManager &SM = PP.getSourceManager();
   
   Rewriter Rewrite;
@@ -202,35 +201,15 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
     Expansion += ' ';
     RB.InsertTextBefore(InsertPos, &Expansion[0], Expansion.size());
   }
-  
-  // Create the output file.
-  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
-  llvm::raw_ostream *OutFile;
-  if (OutFileName == "-") {
-    OutFile = &llvm::outs();
-  } else if (!OutFileName.empty()) {
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), false, Err);
-    OwnedStream.reset(OutFile);
-  } else if (InFileName == "-") {
-    OutFile = &llvm::outs();
-  } else {
-    llvm::sys::Path Path(InFileName);
-    Path.eraseSuffix();
-    Path.appendSuffix("cpp");
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), false, Err);
-    OwnedStream.reset(OutFile);
-  }
 
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
   if (const RewriteBuffer *RewriteBuf = 
       Rewrite.getRewriteBufferFor(SM.getMainFileID())) {
     //printf("Changed:\n");
-    *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
+    *OS << std::string(RewriteBuf->begin(), RewriteBuf->end());
   } else {
     fprintf(stderr, "No changes\n");
   }
-  OutFile->flush();
+  OS->flush();
 }

@@ -14,10 +14,9 @@
 #include "clang-cc.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/TokenRewriter.h"
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 
-void clang::DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
-                          const std::string &OutFileName) {
+void clang::DoRewriteTest(Preprocessor &PP, llvm::raw_ostream* OS) {
   SourceManager &SM = PP.getSourceManager();
   const LangOptions &LangOpts = PP.getLangOptions();
 
@@ -36,5 +35,5 @@ void clang::DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
   // Print out the output.
   for (TokenRewriter::token_iterator I = Rewriter.token_begin(),
        E = Rewriter.token_end(); I != E; ++I)
-    std::cout << PP.getSpelling(*I);
+    *OS << PP.getSpelling(*I);
 }
