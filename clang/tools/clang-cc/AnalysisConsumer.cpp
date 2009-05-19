@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang-cc.h"
+#include "AnalysisConsumer.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/ManagerRegistry.h"
 #include "clang/AST/ASTConsumer.h"
@@ -44,13 +44,6 @@ static ExplodedNodeImpl::Auditor* CreateUbiViz();
 // Analyzer Options: available analyses.
 //===----------------------------------------------------------------------===//
 
-/// Analysis - Set of available source code analyses.
-enum Analyses {
-#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE) NAME,
-#include "Analyses.def"
-NumAnalyses
-};
-
 static llvm::cl::list<Analyses>
 AnalysisList(llvm::cl::desc("Source Code Analysis - Checks and Analyses"),
 llvm::cl::values(
@@ -62,13 +55,6 @@ clEnumValEnd));
 //===----------------------------------------------------------------------===//
 // Analyzer Options: store model.
 //===----------------------------------------------------------------------===//
-
-/// AnalysisStores - Set of available analysis store models.
-enum AnalysisStores {
-#define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN) NAME##Model,
-#include "Analyses.def"
-NumStores
-};
 
 static llvm::cl::opt<AnalysisStores> 
 AnalysisStoreOpt("analyzer-store",
@@ -84,13 +70,6 @@ clEnumValEnd));
 // Analyzer Options: constraint engines.
 //===----------------------------------------------------------------------===//
 
-/// AnalysisConstraints - Set of available constraint models.
-enum AnalysisConstraints {
-#define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN) NAME##Model,
-#include "Analyses.def"
-NumConstraints
-};
-
 static llvm::cl::opt<AnalysisConstraints> 
 AnalysisConstraintsOpt("analyzer-constraints",
   llvm::cl::desc("Source Code Analysis - Symbolic Constraint Engines"),
@@ -104,14 +83,6 @@ clEnumValEnd));
 //===----------------------------------------------------------------------===//
 // Analyzer Options: diagnostic clients.
 //===----------------------------------------------------------------------===//
-
-/// AnalysisDiagClients - Set of available diagnostic clients for rendering
-///  analysis results.
-enum AnalysisDiagClients {
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREAT) PD_##NAME,
-#include "Analyses.def"
-NUM_ANALYSIS_DIAG_CLIENTS
-};
 
 static llvm::cl::opt<AnalysisDiagClients>
 AnalysisDiagOpt("analyzer-output",

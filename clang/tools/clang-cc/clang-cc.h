@@ -74,14 +74,6 @@ void AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
 /// a seekable stream.
 void CacheTokens(Preprocessor& PP, llvm::raw_fd_ostream* OS);
 
-/// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
-/// analysis passes.  (The set of analyses run is controlled by command-line
-/// options.)
-ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor *pp,
-                                    PreprocessorFactory *ppf,
-                                    const LangOptions &lopts,
-                                    const std::string &output);
-
 }  // end namespace clang
 
 #endif
