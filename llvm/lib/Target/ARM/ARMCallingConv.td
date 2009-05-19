@@ -51,11 +51,14 @@ def CC_ARM_AAPCS : CallingConv<[
 
   // i64/f64 is passed in even pairs of GPRs
   // i64 is 8-aligned i32 here, so we may need to eat R1 as a pad register
+  // (and the same is true for f64 if VFP is not enabled)
   CCIfType<[i32], CCIfAlign<"8", CCAssignToRegWithShadow<[R0, R2], [R0, R1]>>>,
   CCIfType<[f64], CCCustom<"CC_ARM_AAPCS_Custom_f64">>,
 
   CCIfType<[f32], CCBitConvertToType<i32>>,
-  CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
+  CCIfType<[i32], CCIf<"State.getNextStackOffset() == 0 &&"
+                       "ArgFlags.getOrigAlign() != 8",
+                       CCAssignToReg<[R0, R1, R2, R3]>>>,
 
   CCIfType<[i32], CCAssignToStack<4, 4>>,
   CCIfType<[f64], CCAssignToStack<8, 8>>
