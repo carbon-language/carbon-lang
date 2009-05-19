@@ -246,7 +246,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEVAddExpr *S,
     // Fold a GEP with constant operands.
     if (Constant *CLHS = dyn_cast<Constant>(V))
       if (Constant *CRHS = dyn_cast<Constant>(Idx))
-        return ConstantExpr::get(Instruction::GetElementPtr, CLHS, CRHS);
+        return ConstantExpr::getGetElementPtr(CLHS, &CRHS, 1);
 
     // Do a quick scan to see if we have this GEP nearby.  If so, reuse it.
     unsigned ScanLimit = 6;
