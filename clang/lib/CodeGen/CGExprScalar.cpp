@@ -719,8 +719,8 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
   // the operand is an icmp ne, turn into icmp eq.
   BoolVal = Builder.CreateNot(BoolVal, "lnot");
   
-  // ZExt result to int.
-  return Builder.CreateZExt(BoolVal, CGF.LLVMIntTy, "lnot.ext");
+  // ZExt result to the expr type.
+  return Builder.CreateZExt(BoolVal, ConvertType(E->getType()), "lnot.ext");
 }
 
 /// VisitSizeOfAlignOfExpr - Return the size or alignment of the type of
