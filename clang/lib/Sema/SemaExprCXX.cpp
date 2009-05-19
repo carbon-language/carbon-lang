@@ -854,9 +854,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   QualType FromType = From->getType();
 
   if (SCS.CopyConstructor) {
-    // FIXME: Create a temporary object by calling the copy constructor.
-    ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      ToType->isLValueReferenceType());
+    // FIXME: When can ToType be a reference type?
+    assert(!ToType->isReferenceType());
+    
+    CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, ToType);
+    // FIXME: Keep track of whether the copy constructor is elidable or not.
+    From = CXXConstructExpr::Create(Context, Temp, ToType, 
+                                    SCS.CopyConstructor, false, &From, 1);
     return false;
   }
 
