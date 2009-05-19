@@ -351,6 +351,9 @@ public:
   /// by one each time through the loop.  If so, return the phi node that
   /// corresponds to it.
   ///
+  /// The IndVarSimplify pass transforms loops to have a canonical induction
+  /// variable.
+  ///
   inline PHINode *getCanonicalInductionVariable() const {
     BlockT *H = getHeader();
 
@@ -405,6 +408,9 @@ public:
   /// times the loop will be executed.  Note that this means that the backedge
   /// of the loop executes N-1 times.  If the trip-count cannot be determined,
   /// this returns null.
+  ///
+  /// The IndVarSimplify pass transforms loops to have a form that this
+  /// function easily understands.
   ///
   inline Value *getTripCount() const {
     // Canonical loops will end with a 'cmp ne I, V', where I is the incremented
