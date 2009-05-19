@@ -7,8 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This transformation analyzes and transforms the induction variables (and
+// computations derived from them) into forms suitable for efficient execution
+// on the target.
+//
 // This pass performs a strength reduction on array references inside loops that
-// have as one or more of their components the loop induction variable.
+// have as one or more of their components the loop induction variable, it
+// rewrites expressions to take advantage of scaled-index addressing modes
+// available on the target, and it performs a variety of other optimizations
+// related to loop induction variables.
 //
 //===----------------------------------------------------------------------===//
 
