@@ -17,6 +17,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
+#include <cstdio>
 using namespace clang;
 
 typedef TextDiagnosticBuffer::DiagList DiagList;
