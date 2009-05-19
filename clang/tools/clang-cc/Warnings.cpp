@@ -30,34 +30,27 @@
 #include <algorithm>
 using namespace clang;
 
-// This gets all -W options, including -Werror, -W[no-]system-headers, etc.  The
-// driver has stripped off -Wa,foo etc.  The driver has also translated -W to
-// -Wextra, so we don't need to worry about it.
-static llvm::cl::list<std::string>
-OptWarnings("W", llvm::cl::Prefix, llvm::cl::ValueOptional);
-
-static llvm::cl::opt<bool> OptPedantic("pedantic");
-static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
-static llvm::cl::opt<bool> OptNoWarnings("w");
-
-bool clang::ProcessWarningOptions(Diagnostic &Diags) {
+bool clang::ProcessWarningOptions(Diagnostic &Diags,
+                                  std::vector<std::string> &Warnings,
+                                  bool Pedantic, bool PedanticErrors,
+                                  bool NoWarnings) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
-  Diags.setIgnoreAllWarnings(OptNoWarnings);
+  Diags.setIgnoreAllWarnings(NoWarnings);
 
   // If -pedantic or -pedantic-errors was specified, then we want to map all
   // extension diagnostics onto WARNING or ERROR unless the user has futz'd
   // around with them explicitly.
-  if (OptPedanticErrors)
+  if (PedanticErrors)
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Error);
-  else if (OptPedantic)
+  else if (Pedantic)
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Warn);
   else
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
   
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
-  for (unsigned i = 0, e = OptWarnings.size(); i != e; ++i) {
-    const std::string &Opt = OptWarnings[i];
+  for (unsigned i = 0, e = Warnings.size(); i != e; ++i) {
+    const std::string &Opt = Warnings[i];
     const char *OptStart = &Opt[0];
     const char *OptEnd = OptStart+Opt.size();
     assert(*OptEnd == 0 && "Expect null termination for lower-bound search");

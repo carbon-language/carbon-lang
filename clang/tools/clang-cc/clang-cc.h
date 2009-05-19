@@ -35,7 +35,10 @@ class LangOptions;
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.
-bool ProcessWarningOptions(Diagnostic &Diags);
+bool ProcessWarningOptions(Diagnostic &Diags,
+                           std::vector<std::string> &Warnings,
+                           bool Pedantic, bool PedanticErrors,
+                           bool NoWarnings);
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS);
