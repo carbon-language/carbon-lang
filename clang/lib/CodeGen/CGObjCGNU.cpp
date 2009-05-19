@@ -1130,11 +1130,37 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
 }
 
 llvm::Function *CGObjCGNU::GetPropertyGetFunction() {
-  return 0;
+	std::vector<const llvm::Type*> Params;
+	const llvm::Type *BoolTy =
+		CGM.getTypes().ConvertType(CGM.getContext().BoolTy);
+	Params.push_back(IdTy);
+	Params.push_back(SelectorTy);
+	// FIXME: Using LongTy for ptrdiff_t is probably broken on Win64
+	Params.push_back(LongTy);
+	Params.push_back(BoolTy);
+	// void objc_getProperty (id, SEL, ptrdiff_t, bool)
+	const llvm::FunctionType *FTy =
+		llvm::FunctionType::get(IdTy, Params, false);
+	return cast<llvm::Function>(CGM.CreateRuntimeFunction(FTy,
+				"objc_getProperty"));
 }
 
 llvm::Function *CGObjCGNU::GetPropertySetFunction() {
-  return 0;
+	std::vector<const llvm::Type*> Params;
+	const llvm::Type *BoolTy =
+		CGM.getTypes().ConvertType(CGM.getContext().BoolTy);
+	Params.push_back(IdTy);
+	Params.push_back(SelectorTy);
+	// FIXME: Using LongTy for ptrdiff_t is probably broken on Win64
+	Params.push_back(LongTy);
+	Params.push_back(IdTy);
+	Params.push_back(BoolTy);
+	Params.push_back(BoolTy);
+	// void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
+	const llvm::FunctionType *FTy =
+		llvm::FunctionType::get(llvm::Type::VoidTy, Params, false);
+	return cast<llvm::Function>(CGM.CreateRuntimeFunction(FTy,
+				"objc_setProperty"));
 }
 
 llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
