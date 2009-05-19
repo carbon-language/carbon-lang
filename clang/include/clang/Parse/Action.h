@@ -104,6 +104,9 @@ public:
 
   class FullExprArg {    
   public:
+    // FIXME: The const_cast here is ugly. RValue references would make this
+    // much nicer (or we could duplicate a bunch of the move semantics 
+    // emulation code from Ownership.h).
     FullExprArg(const FullExprArg& Other)
       : Expr(move(const_cast<FullExprArg&>(Other).Expr)) {}
     
