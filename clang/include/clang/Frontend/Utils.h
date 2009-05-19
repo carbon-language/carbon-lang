@@ -1,4 +1,4 @@
-//===--- clang-cc.h - C-Language Front-end --------------------------------===//
+//===--- Utils.h - Misc utilities for the front-end------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This is the header file that pulls together the top-level driver.
+//  This header contains miscellaneous utilities for various front-end actions.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CLANG_CC_H
-#define LLVM_CLANG_CLANG_CC_H
+#ifndef LLVM_CLANG_FRONTEND_UTILS_H
+#define LLVM_CLANG_FRONTEND_UTILS_H
 
 #include <vector>
 #include <string>

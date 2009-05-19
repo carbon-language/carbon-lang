@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang-cc.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/TokenRewriter.h"
 #include "llvm/Support/raw_ostream.h"

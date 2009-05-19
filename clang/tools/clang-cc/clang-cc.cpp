@@ -22,7 +22,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang-cc.h"
 #include "AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompileOptions.h"
@@ -34,6 +33,7 @@
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Sema/ParseAST.h"

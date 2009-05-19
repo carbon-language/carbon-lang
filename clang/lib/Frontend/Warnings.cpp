@@ -20,7 +20,7 @@
 // Given a warning option 'foo', the following are valid:
 //    -Wfoo, -Wno-foo, -Werror=foo
 //
-#include "clang-cc.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
