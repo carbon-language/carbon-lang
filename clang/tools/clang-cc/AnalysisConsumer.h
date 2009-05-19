@@ -73,6 +73,7 @@ struct AnalyzerOptions {
 ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor *pp,
                                     PreprocessorFactory *ppf,
                                     const LangOptions &lopts,
-                                    const std::string &output);
+                                    const std::string &output,
+                                    const AnalyzerOptions& Opts);
 
 }

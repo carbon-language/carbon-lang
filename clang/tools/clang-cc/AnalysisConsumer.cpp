@@ -41,101 +41,6 @@ using namespace clang;
 static ExplodedNodeImpl::Auditor* CreateUbiViz();
 
 //===----------------------------------------------------------------------===//
-// Analyzer Options: available analyses.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::list<Analyses>
-AnalysisList(llvm::cl::desc("Source Code Analysis - Checks and Analyses"),
-llvm::cl::values(
-#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
-clEnumValN(NAME, CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));
-
-//===----------------------------------------------------------------------===//
-// Analyzer Options: store model.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<AnalysisStores> 
-AnalysisStoreOpt("analyzer-store",
-  llvm::cl::desc("Source Code Analysis - Abstract Memory Store Models"),
-  llvm::cl::init(BasicStoreModel),
-  llvm::cl::values(
-#define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN)\
-clEnumValN(NAME##Model, CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));
-
-//===----------------------------------------------------------------------===//
-// Analyzer Options: constraint engines.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<AnalysisConstraints> 
-AnalysisConstraintsOpt("analyzer-constraints",
-  llvm::cl::desc("Source Code Analysis - Symbolic Constraint Engines"),
-  llvm::cl::init(RangeConstraintsModel),
-  llvm::cl::values(
-#define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN)\
-clEnumValN(NAME##Model, CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));
-
-//===----------------------------------------------------------------------===//
-// Analyzer Options: diagnostic clients.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<AnalysisDiagClients>
-AnalysisDiagOpt("analyzer-output",
-                llvm::cl::desc("Source Code Analysis - Output Options"),
-                llvm::cl::init(PD_HTML),
-                llvm::cl::values(
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREATE)\
-clEnumValN(PD_##NAME, CMDFLAG, DESC),
-#include "Analyses.def"
-clEnumValEnd));
-
-//===----------------------------------------------------------------------===//
-//  Misc. fun options.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<bool>
-VisualizeEGDot("analyzer-viz-egraph-graphviz",
-               llvm::cl::desc("Display exploded graph using GraphViz"));
-
-static llvm::cl::opt<bool>
-VisualizeEGUbi("analyzer-viz-egraph-ubigraph",
-               llvm::cl::desc("Display exploded graph using Ubigraph"));
-
-static llvm::cl::opt<bool>
-AnalyzeAll("analyzer-opt-analyze-headers",
-    llvm::cl::desc("Force the static analyzer to analyze "
-                   "functions defined in header files"));
-
-static llvm::cl::opt<bool>
-AnalyzerDisplayProgress("analyzer-display-progress",
-          llvm::cl::desc("Emit verbose output about the analyzer's progress."));
-
-static llvm::cl::opt<bool>
-PurgeDead("analyzer-purge-dead",
-          llvm::cl::init(true),
-          llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
-                         " processing a statement."));
-
-static llvm::cl::opt<bool>
-EagerlyAssume("analyzer-eagerly-assume",
-          llvm::cl::init(false),
-              llvm::cl::desc("Eagerly assume the truth/falseness of some "
-                             "symbolic constraints."));
-
-static llvm::cl::opt<std::string>
-AnalyzeSpecificFunction("analyze-function",
-               llvm::cl::desc("Run analysis on specific function"));
-
-static llvm::cl::opt<bool>
-TrimGraph("trim-egraph",
-     llvm::cl::desc("Only show error-related paths in the analysis graph"));
-
-//===----------------------------------------------------------------------===//
 // Basic type definitions.
 //===----------------------------------------------------------------------===//
 
@@ -164,15 +69,17 @@ namespace {
     Preprocessor* PP;
     PreprocessorFactory* PPF;
     const std::string OutDir;
+    AnalyzerOptions Opts;
     llvm::OwningPtr<PathDiagnosticClient> PD;
 
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                      PreprocessorFactory* ppf,
                      const LangOptions& lopts,
-                     const std::string& outdir)
+                     const std::string& outdir,
+                     const AnalyzerOptions& opts)
       : LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
-        OutDir(outdir) {}
+        OutDir(outdir), Opts(opts) {}
     
     void addCodeAction(CodeAction action) {
       FunctionActions.push_back(action);
@@ -279,7 +186,7 @@ namespace {
     
     virtual PathDiagnosticClient* getPathDiagnosticClient() {
       if (C.PD.get() == 0 && !C.OutDir.empty()) {
-        switch (AnalysisDiagOpt) {
+        switch (C.Opts.AnalysisDiagOpt) {
           default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
 case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
@@ -302,15 +209,19 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
       return liveness.get();
     }
     
-    bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
+    bool shouldVisualizeGraphviz() const { return C.Opts.VisualizeEGDot; }
 
-    bool shouldVisualizeUbigraph() const { return VisualizeEGUbi; }
+    bool shouldVisualizeUbigraph() const { return C.Opts.VisualizeEGUbi; }
 
     bool shouldVisualize() const {
-      return VisualizeEGDot || VisualizeEGUbi;
+      return C.Opts.VisualizeEGDot || C.Opts.VisualizeEGUbi;
     }
 
-    bool shouldTrimGraph() const { return TrimGraph; }
+    bool shouldTrimGraph() const { return C.Opts.TrimGraph; }
+
+    bool shouldPurgeDead() const { return C.Opts.PurgeDead; }
+
+    bool shouldEagerlyAssume() const { return C.Opts.EagerlyAssume; }
 
     void DisplayFunction() {
       
@@ -339,7 +250,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
         CreateStoreMgr = ManagerRegistry::StoreMgrCreator;
       }
       else {
-        switch (AnalysisStoreOpt) {
+        switch (C.Opts.AnalysisStoreOpt) {
         default:
           assert(0 && "Unknown store manager.");
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)     \
@@ -351,7 +262,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
       if (ManagerRegistry::ConstraintMgrCreator != 0)
         CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
       else {
-        switch (AnalysisConstraintsOpt) {
+        switch (C.Opts.AnalysisConstraintsOpt) {
         default:
           assert(0 && "Unknown store manager.");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
@@ -363,7 +274,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
       
       // Some DiagnosticClients should be created all the time instead of
       // lazily.  Create those now.
-      switch (AnalysisDiagOpt) {
+      switch (C.Opts.AnalysisDiagOpt) {
         default: break;
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
 case PD_##NAME: if (AUTOCREATE) getPathDiagnosticClient(); break;
@@ -392,8 +303,8 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
     case Decl::Function: {
       FunctionDecl* FD = cast<FunctionDecl>(D);
 
-      if (AnalyzeSpecificFunction.size() > 0 && 
-          AnalyzeSpecificFunction != FD->getIdentifier()->getName())
+      if (Opts.AnalyzeSpecificFunction.size() > 0 && 
+          Opts.AnalyzeSpecificFunction != FD->getIdentifier()->getName())
         break;
       
       Stmt* Body = FD->getBody(*Ctx);
@@ -404,8 +315,8 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
     case Decl::ObjCMethod: {
       ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
       
-      if (AnalyzeSpecificFunction.size() > 0 &&
-          AnalyzeSpecificFunction != MD->getSelector().getAsString())
+      if (Opts.AnalyzeSpecificFunction.size() > 0 &&
+          Opts.AnalyzeSpecificFunction != MD->getSelector().getAsString())
         return;
       
       Stmt* Body = MD->getBody();
@@ -421,7 +332,7 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
   if(!TranslationUnitActions.empty()) {
-    AnalysisManager mgr(*this, AnalyzerDisplayProgress);
+    AnalysisManager mgr(*this, Opts.AnalyzerDisplayProgress);
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
       (*I)(mgr);  
@@ -451,12 +362,13 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
 
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
-  if (!AnalyzeAll && !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
+  if (!Opts.AnalyzeAll &&
+      !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
     return;  
 
   // Create an AnalysisManager that will manage the state for analyzing
   // this method/function.
-  AnalysisManager mgr(*this, D, Body, AnalyzerDisplayProgress);
+  AnalysisManager mgr(*this, D, Body, Opts.AnalyzerDisplayProgress);
   
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
@@ -494,7 +406,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   if (!L) return;
 
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L, mgr,
-                   PurgeDead, EagerlyAssume,
+                   mgr.shouldPurgeDead(), mgr.shouldEagerlyAssume(),
                    mgr.getStoreManagerCreator(), 
                    mgr.getConstraintManagerCreator());
 
@@ -611,13 +523,15 @@ static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
 ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                                            PreprocessorFactory* ppf,
                                            const LangOptions& lopts,
-                                           const std::string& OutDir) {
+                                           const std::string& OutDir,
+                                           const AnalyzerOptions& Opts) {
 
   llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(diags, pp, ppf,
-                                                           lopts, OutDir));
+                                                           lopts, OutDir,
+                                                           Opts));
 
-  for (unsigned i = 0; i < AnalysisList.size(); ++i)
-    switch (AnalysisList[i]) {
+  for (unsigned i = 0; i < Opts.AnalysisList.size(); ++i)
+    switch (Opts.AnalysisList[i]) {
 #define ANALYSIS(NAME, CMD, DESC, SCOPE)\
       case NAME:\
         C->add ## SCOPE ## Action(&Action ## NAME);\
