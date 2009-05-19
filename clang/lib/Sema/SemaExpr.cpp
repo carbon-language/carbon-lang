@@ -5043,7 +5043,7 @@ Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
   assert((CondExpr && LHSExpr && RHSExpr) && "Missing type argument(s)");
 
   QualType resType;
-  if (CondExpr->isValueDependent()) {
+  if (CondExpr->isTypeDependent() || CondExpr->isValueDependent()) {
     resType = Context.DependentTy;
   } else {
     // The conditional expression is required to be a constant expression.

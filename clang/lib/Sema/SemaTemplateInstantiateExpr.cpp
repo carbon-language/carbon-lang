@@ -58,6 +58,7 @@ namespace {
     OwningExprResult VisitStmtExpr(StmtExpr *E);
     OwningExprResult VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
+    OwningExprResult VisitChooseExpr(ChooseExpr *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
@@ -518,6 +519,25 @@ TemplateExprInstantiator::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 
   OwnedCall.release();
   return move(Result);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitChooseExpr(ChooseExpr *E) {
+  OwningExprResult Cond = Visit(E->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.ExprError();
+
+  OwningExprResult LHS = SemaRef.InstantiateExpr(E->getLHS(), TemplateArgs);
+  if (LHS.isInvalid())
+    return SemaRef.ExprError();
+
+  OwningExprResult RHS = Visit(E->getRHS());
+  if (RHS.isInvalid())
+    return SemaRef.ExprError();
+
+  return SemaRef.ActOnChooseExpr(E->getBuiltinLoc(),
+                                 move(Cond), move(LHS), move(RHS),
+                                 E->getRParenLoc());
 }
 
 Sema::OwningExprResult 
