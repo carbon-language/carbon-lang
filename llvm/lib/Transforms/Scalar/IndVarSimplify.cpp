@@ -31,9 +31,7 @@
 //      expression, this transformation will make the loop dead.
 //
 // This transformation should be followed by strength reduction after all of the
-// desired loop transformations have been performed.  Additionally, on targets
-// where it is profitable, the loop could be transformed to count down to zero
-// (the "do loop" optimization).
+// desired loop transformations have been performed.
 //
 //===----------------------------------------------------------------------===//
 
