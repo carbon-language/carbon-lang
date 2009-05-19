@@ -210,7 +210,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
 }
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
-                                        bool Volatile) {
+                                        bool Volatile, QualType Ty) {
   // Handle stores of types which have different representations in memory and
   // as LLVM values.
 
@@ -449,8 +449,8 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   }
   
   assert(Src.isScalar() && "Can't emit an agg store with this method");
-  EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(), 
-                    Dst.isVolatileQualified());
+  EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(),
+                    Dst.isVolatileQualified(), Ty);
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,

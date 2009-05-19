@@ -343,7 +343,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     }
     if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified());
+      EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified(), 
+                        D.getType());
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, D.getType().isVolatileQualified());
     } else {
@@ -466,7 +467,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
       DeclPtr->setName(Name.c_str());
       
       // Store the initial value into the alloca.
-      EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified());
+      EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(), Ty);
     } else {
       // Otherwise, if this is an aggregate, just use the input pointer.
       DeclPtr = Arg;

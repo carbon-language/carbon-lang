@@ -1971,7 +1971,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
         EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
       } else {
         EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(), 
-                          false);
+                          false, RetTy);
       }
       break;
 
@@ -2034,7 +2034,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         // Make a temporary alloca to pass the argument.
         Args.push_back(CreateTempAlloca(ConvertTypeForMem(I->second)));
         if (RV.isScalar())
-          EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false);
+          EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false, I->second);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
       } else {
@@ -2063,7 +2063,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
         SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
-        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false);
+        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, I->second);
       } else if (RV.isComplex()) {
         SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
