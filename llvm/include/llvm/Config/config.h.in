@@ -470,6 +470,9 @@
 /* Installation directory for man pages */
 #undef LLVM_MANDIR
 
+/* Build multithreading support into LLVM */
+#undef LLVM_MULTITHREADED
+
 /* Define if this is Unixish platform */
 #undef LLVM_ON_UNIX
 
