@@ -14,6 +14,9 @@
 
 namespace llvm {
   struct LiveInterval;
+  class LiveIntervals;
+  class MachineFunction;
+  class VirtRegMap;
 
   /// Spiller interface.
   ///
