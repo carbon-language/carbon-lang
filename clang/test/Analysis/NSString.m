@@ -1,9 +1,9 @@
-// RUN: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s
+// RUN: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s
 
 
-// NOTWORK: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
-// NOTWORK: clang-cc -arch i386 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// NOTWORK: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// NOTWORK: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

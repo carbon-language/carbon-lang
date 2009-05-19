@@ -858,9 +858,6 @@ TargetTriple("triple",
   llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
 
 static llvm::cl::opt<std::string>
-Arch("arch", llvm::cl::desc("Specify target architecture (e.g. i686)"));
-
-static llvm::cl::opt<std::string>
 MacOSVersionMin("mmacosx-version-min", 
                 llvm::cl::desc("Specify target Mac OS X version (e.g. 10.5)"));
 
@@ -987,30 +984,6 @@ static std::string CreateTargetTriple() {
   std::string Triple = TargetTriple;
   if (Triple.empty())
     Triple = llvm::sys::getHostTriple();
-  
-  // If -arch foo was specified, remove the architecture from the triple we have
-  // so far and replace it with the specified one.
-
-  // FIXME: -arch should be removed, the driver should handle this.
-  if (!Arch.empty()) {
-    // Decompose the base triple into "arch" and suffix.
-    std::string::size_type FirstDashIdx = Triple.find('-');
-    
-    if (FirstDashIdx == std::string::npos) {
-      fprintf(stderr, 
-              "Malformed target triple: \"%s\" ('-' could not be found).\n",
-              Triple.c_str());
-      exit(1);
-    }
-    
-    // Canonicalize -arch ppc to add "powerpc" to the triple, not ppc.
-    if (Arch == "ppc")
-      Arch = "powerpc";
-    else if (Arch == "ppc64")
-      Arch = "powerpc64";
-  
-    Triple = Arch + std::string(Triple.begin()+FirstDashIdx, Triple.end());
-  }
 
   // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
   // something like powerpc-apple-darwin9 to powerpc-apple-darwin7

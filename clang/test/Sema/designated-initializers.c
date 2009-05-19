@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -arch x86_64 %s
+// RUN: clang-cc -fsyntax-only -verify -triple x86_64-unknown-unknown %s
 
 int complete_array_from_init[] = { 1, 2, [10] = 5, 1, 2, [5] = 2, 6 };
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -arch i386 -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s &&
 // RUN: grep '@llvm.memset.i32' %t &&
 // RUN: grep '@llvm.memcpy.i32' %t &&
 // RUN: grep '@llvm.memmove.i32' %t &&
