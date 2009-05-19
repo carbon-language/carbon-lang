@@ -1616,7 +1616,7 @@ public:
   virtual child_iterator child_end();
 };
 
-/// TypesCompatibleExpr - GNU builtin-in function __builtin_type_compatible_p.
+/// TypesCompatibleExpr - GNU builtin-in function __builtin_types_compatible_p.
 /// This AST node represents a function that returns 1 if two *types* (not
 /// expressions) are compatible. The result of this built-in function can be
 /// used in integer constant expressions.
