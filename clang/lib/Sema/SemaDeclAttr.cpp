@@ -64,7 +64,7 @@ static bool isFunctionOrMethodOrBlock(Decl *d) {
     QualType Ty = V->getType();
     return Ty->isBlockPointerType();
   }
-  return false;
+  return isa<BlockDecl>(d);
 }
 
 /// hasFunctionProto - Return true if the given decl has a argument
@@ -74,7 +74,7 @@ static bool hasFunctionProto(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return isa<FunctionProtoType>(FnTy);
   else {
-    assert(isa<ObjCMethodDecl>(d));
+    assert(isa<ObjCMethodDecl>(d) || isa<BlockDecl>(d));
     return true;
   }
 }
@@ -85,13 +85,16 @@ static bool hasFunctionProto(Decl *d) {
 static unsigned getFunctionOrMethodNumArgs(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getNumArgs();
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(d))
+    return BD->getNumParams();
   return cast<ObjCMethodDecl>(d)->param_size();
 }
 
 static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getArgType(Idx);
-  
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(d))
+    return BD->getParamDecl(Idx)->getType();
   
   return cast<ObjCMethodDecl>(d)->param_begin()[Idx]->getType();
 }
@@ -100,7 +103,9 @@ static bool isFunctionOrMethodVariadic(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d)) {
     const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
     return proto->isVariadic();
-  } else {
+  } else if (const BlockDecl *BD = dyn_cast<BlockDecl>(d))
+    return BD->IsVariadic();
+  else {
     return cast<ObjCMethodDecl>(d)->isVariadic();
   }
 }

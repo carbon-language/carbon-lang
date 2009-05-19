@@ -1211,6 +1211,8 @@ public:
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
 ///
 class BlockDecl : public Decl, public DeclContext {
+  // FIXME: This can be packed into the bitfields in Decl.
+  bool isVariadic : 1;
   /// ParamInfo - new[]'d array of pointers to ParmVarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.
@@ -1222,7 +1224,7 @@ class BlockDecl : public Decl, public DeclContext {
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block), 
-      ParamInfo(0), NumParams(0), Body(0) {}
+      isVariadic(false), ParamInfo(0), NumParams(0), Body(0) {}
 
   virtual ~BlockDecl();
   virtual void Destroy(ASTContext& C);
@@ -1232,6 +1234,9 @@ public:
 
   SourceLocation getCaretLocation() const { return getLocation(); }
 
+  bool IsVariadic() const { return isVariadic; }
+  void setIsVariadic(bool value) { isVariadic = value; }
+  
   CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
   Stmt *getBody(ASTContext &C) const { return (Stmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
