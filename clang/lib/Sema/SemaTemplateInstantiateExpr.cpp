@@ -427,13 +427,13 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
   if (Cond.isInvalid())
     return SemaRef.ExprError();
 
-  // FIXME: use getLHS() and cope with NULLness
-  Sema::OwningExprResult True = Visit(E->getTrueExpr());
-  if (True.isInvalid())
+  Sema::OwningExprResult LHS = SemaRef.InstantiateExpr(E->getLHS(), 
+                                                       TemplateArgs);
+  if (LHS.isInvalid())
     return SemaRef.ExprError();
 
-  Sema::OwningExprResult False = Visit(E->getFalseExpr());
-  if (False.isInvalid())
+  Sema::OwningExprResult RHS = Visit(E->getRHS());
+  if (RHS.isInvalid())
     return SemaRef.ExprError();
 
   if (!E->isTypeDependent()) { 
@@ -442,15 +442,15 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
     // Instead, we just build the new conditional operator call expression.
     return SemaRef.Owned(new (SemaRef.Context) ConditionalOperator(
                                                            Cond.takeAs<Expr>(),
-                                                           True.takeAs<Expr>(), 
-                                                           False.takeAs<Expr>(),
+                                                           LHS.takeAs<Expr>(), 
+                                                           RHS.takeAs<Expr>(),
                                                            E->getType()));
   }
 
 
   return SemaRef.ActOnConditionalOp(/*FIXME*/E->getCond()->getLocEnd(),
                                     /*FIXME*/E->getFalseExpr()->getLocStart(),
-                                    move(Cond), move(True), move(False));
+                                    move(Cond), move(LHS), move(RHS));
 }
 
 Sema::OwningExprResult 

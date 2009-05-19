@@ -828,16 +828,16 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     // casts should be wrapped by ImplicitCastExprs. There's just the special
     // case involving throws to work out.
     const ConditionalOperator *Cond = cast<ConditionalOperator>(this);
-    Expr *LHS = Cond->getLHS();
-    Expr *RHS = Cond->getRHS();
+    Expr *True = Cond->getTrueExpr();
+    Expr *False = Cond->getFalseExpr();
     // C++0x 5.16p2
     //   If either the second or the third operand has type (cv) void, [...]
     //   the result [...] is an rvalue.
-    if (LHS->getType()->isVoidType() || RHS->getType()->isVoidType())
+    if (True->getType()->isVoidType() || False->getType()->isVoidType())
       return LV_InvalidExpression;
 
     // Both sides must be lvalues for the result to be an lvalue.
-    if (LHS->isLvalue(Ctx) != LV_Valid || RHS->isLvalue(Ctx) != LV_Valid)
+    if (True->isLvalue(Ctx) != LV_Valid || False->isLvalue(Ctx) != LV_Valid)
       return LV_InvalidExpression;
 
     // That's it.

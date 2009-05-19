@@ -1,5 +1,8 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+// ---------------------------------------------------------------------
+// Imaginary literals
+// ---------------------------------------------------------------------
 template<typename T>
 struct ImaginaryLiteral0 {
   void f(T &x) {
@@ -10,6 +13,9 @@ struct ImaginaryLiteral0 {
 template struct ImaginaryLiteral0<_Complex float>;
 template struct ImaginaryLiteral0<int*>; // expected-note{{instantiation}}
 
+// ---------------------------------------------------------------------
+// Compound assignment operator
+// ---------------------------------------------------------------------
 namespace N1 {
   struct X { };
 
@@ -38,3 +44,15 @@ template struct N2::PlusEquals0<N1::X, long, long&>;
 template struct N2::PlusEquals0<N3::Y, long, short&>;
 template struct N2::PlusEquals0<int, int, int&>;
 template struct N2::PlusEquals0<N3::Y, int, short&>; // expected-note{{instantiation}}
+
+// ---------------------------------------------------------------------
+// Conditional operator
+// ---------------------------------------------------------------------
+template<typename T, typename U, typename Result>
+struct Conditional0 {
+  void f(T t, U u) {
+    Result result = t? : u;
+  }
+};
+
+template struct Conditional0<int, int, int>;
