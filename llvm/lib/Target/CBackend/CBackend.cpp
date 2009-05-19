@@ -1127,7 +1127,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
         Out << CI->getZExtValue() << 'u';
       else
         Out << CI->getSExtValue();
-       Out << ')';
+      Out << ')';
     }
     return;
   } 
