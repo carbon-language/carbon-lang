@@ -200,8 +200,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                                QualType Ty) {
   llvm::Value *V = Builder.CreateLoad(Addr, Volatile, "tmp");
 
-  // Bool can have different representation in memory than in
-  // registers.
+  // Bool can have different representation in memory than in registers.
   if (Ty->isBooleanType())
     if (V->getType() != llvm::Type::Int1Ty)
       V = Builder.CreateTrunc(V, llvm::Type::Int1Ty, "tobool");
@@ -211,20 +210,18 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, QualType Ty) {
-  // Handle stores of types which have different representations in memory and
-  // as LLVM values.
-
-  // FIXME: We shouldn't be this loose, we should only do this conversion when
-  // we have a type we know has a different memory representation (e.g., bool).
-
-  const llvm::Type *SrcTy = Value->getType();
-  const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
-  if (DstPtr->getElementType() != SrcTy) {
-    const llvm::Type *MemTy = 
-      llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
-    Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
+  
+  if (Ty->isBooleanType()) {
+    // Bool can have different representation in memory than in registers.
+    const llvm::Type *SrcTy = Value->getType();
+    const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
+    if (DstPtr->getElementType() != SrcTy) {
+      const llvm::Type *MemTy = 
+        llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
+      Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
+    }
   }
-
+  
   Builder.CreateStore(Value, Addr, Volatile);  
 }
 
