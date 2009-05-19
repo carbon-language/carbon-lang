@@ -51,7 +51,6 @@ enum AnalysisDiagClients {
 NUM_ANALYSIS_DIAG_CLIENTS
 };
 
-// FIXME: Use this instead of using command-line options directly.
 struct AnalyzerOptions {
   std::vector<Analyses> AnalysisList;
   AnalysisStores AnalysisStoreOpt;
