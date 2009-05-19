@@ -688,6 +688,10 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
 
+  // Memory operands in inline assembly always use AddrMode2.
+  if (Opcode == ARM::INLINEASM)
+    AddrMode = ARMII::AddrMode2;
+
   if (Opcode == ARM::ADDri) {
     Offset += MI.getOperand(i+1).getImm();
     if (Offset == 0) {
