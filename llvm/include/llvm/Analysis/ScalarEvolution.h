@@ -145,16 +145,6 @@ namespace llvm {
     static bool classof(const SCEV *S);
   };
 
-  /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
-  /// notified whenever a Value is deleted.
-  class SCEVCallbackVH : public CallbackVH {
-    ScalarEvolution *SE;
-    virtual void deleted();
-    virtual void allUsesReplacedWith(Value *New);
-  public:
-    SCEVCallbackVH(Value *V, ScalarEvolution *SE = 0);
-  };
-
   /// SCEVHandle - This class is used to maintain the SCEV object's refcounts,
   /// freeing the objects when the last reference is dropped.
   class SCEVHandle {
@@ -212,6 +202,16 @@ namespace llvm {
   /// they must ask this class for services.
   ///
   class ScalarEvolution : public FunctionPass {
+    /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
+    /// notified whenever a Value is deleted.
+    class SCEVCallbackVH : public CallbackVH {
+      ScalarEvolution *SE;
+      virtual void deleted();
+      virtual void allUsesReplacedWith(Value *New);
+    public:
+      SCEVCallbackVH(Value *V, ScalarEvolution *SE = 0);
+    };
+
     friend class SCEVCallbackVH;
     friend class SCEVExpander;
 
