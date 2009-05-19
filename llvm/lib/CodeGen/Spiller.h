@@ -22,12 +22,12 @@ namespace llvm {
   class Spiller {
   public:
     virtual ~Spiller() = 0;
-    virtual std::vector<LiveInterval*> spill(class LiveInterval *li) = 0;
+    virtual std::vector<LiveInterval*> spill(LiveInterval *li) = 0;
   };
 
   /// Create and return a spiller object, as specified on the command line.
-  Spiller* createSpiller(class MachineFunction *mf, class LiveIntervals *li,
-                         class VirtRegMap *vrm);
+  Spiller* createSpiller(MachineFunction *mf, LiveIntervals *li,
+                         VirtRegMap *vrm);
 }
 
 #endif
