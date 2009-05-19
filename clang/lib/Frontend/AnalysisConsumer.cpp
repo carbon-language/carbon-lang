@@ -190,7 +190,7 @@ namespace {
           default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
 case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
         }
       }
       return C.PD.get();      
@@ -255,7 +255,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
           assert(0 && "Unknown store manager.");
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)     \
           case NAME##Model: CreateStoreMgr = CREATEFN; break;
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
         }
       }
 
@@ -267,7 +267,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
           assert(0 && "Unknown store manager.");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
           case NAME##Model: CreateConstraintMgr = CREATEFN; break;
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
         }
       }
 
@@ -278,7 +278,7 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
         default: break;
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
 case PD_##NAME: if (AUTOCREATE) getPathDiagnosticClient(); break;
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
       }      
     }
 
@@ -536,7 +536,7 @@ ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
       case NAME:\
         C->add ## SCOPE ## Action(&Action ## NAME);\
         break;
-#include "Analyses.def"
+#include "clang/Frontend/Analyses.def"
       default: break;
     }
   
