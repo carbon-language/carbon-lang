@@ -102,7 +102,7 @@ template struct Choose0<false, int, float, float&>;
 template struct Choose0<true, int, float, float&>; // expected-note{{instantiation}}
 
 // ---------------------------------------------------------------------
-// va_arg
+// __builtin_va_arg
 // ---------------------------------------------------------------------
 template<typename ArgType>
 struct VaArg0 {
@@ -116,3 +116,22 @@ struct VaArg0 {
 };
 
 template struct VaArg0<int>;
+
+// ---------------------------------------------------------------------
+// Vector element expressions
+// ---------------------------------------------------------------------
+#if 0
+// Not supported until we have full support for MemberExpr.
+typedef __attribute__(( ext_vector_type(2) )) double double2;
+typedef __attribute__(( ext_vector_type(4) )) double double4;
+
+template<typename T, typename U>
+struct VectorElem0 {
+  void f(T t, U u) {
+    t.xy = u.zw;
+  }
+};
+
+template struct VectorElem0<double2, double4>;
+template struct VectorElem0<double4, double4>;
+#endif

@@ -60,6 +60,12 @@ namespace {
     OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     OwningExprResult VisitChooseExpr(ChooseExpr *E);
     OwningExprResult VisitVAArgExpr(VAArgExpr *E);
+    // FIXME: InitListExpr
+    // FIXME: DesignatedInitExpr
+    // FIXME: ImplicitValueInitExpr
+    // FIXME: ExtVectorElementExpr
+    // FIXME: BlockExpr
+    // FIXME: BlockDeclRefExpr
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
@@ -67,6 +73,7 @@ namespace {
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
     OwningExprResult VisitExplicitCastExpr(ExplicitCastExpr *E);
     OwningExprResult VisitCStyleCastExpr(CStyleCastExpr *E);
+    // FIXME: CXXMemberCallExpr
     OwningExprResult VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
     OwningExprResult VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
     OwningExprResult VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
@@ -75,6 +82,17 @@ namespace {
     OwningExprResult VisitCXXThisExpr(CXXThisExpr *E);
     OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
+    // FIXME: CXXTypeIdExpr
+    // FIXME: CXXThrowExpr
+    // FIXME: CXXDefaultArgExpr
+    // FIXME: CXXConstructExpr
+    // FIXME: CXXFunctionalCastExpr
+    // FIXME: CXXZeroInitValueExpr
+    // FIXME: CXXNewExpr
+    // FIXME: CXXDeleteExpr
+    // FIXME: UnaryTypeTraitExpr
+    // FIXME: QualifiedDeclRefExpr
+    // FIXME: CXXExprWithTemporaries
     OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
     OwningExprResult VisitUnresolvedFunctionNameExpr(
                                               UnresolvedFunctionNameExpr *E);
@@ -324,13 +342,17 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
     // perform lookup again at instantiation time (C++ [temp.dep]p1).
     // Instead, we just build the new overloaded operator call
     // expression.
+    OwningExprResult Callee = Visit(E->getCallee());
+    if (Callee.isInvalid())
+      return SemaRef.ExprError();
+
     First.release();
     Second.release();
-    // FIXME: Don't reuse the callee here. We need to instantiate it.
+
     return SemaRef.Owned(new (SemaRef.Context) CXXOperatorCallExpr(
                                                        SemaRef.Context, 
                                                        E->getOperator(),
-                                                       E->getCallee(), 
+                                                       Callee.takeAs<Expr>(), 
                                                        Args, E->getNumArgs(),
                                                        E->getType(), 
                                                        E->getOperatorLoc()));
