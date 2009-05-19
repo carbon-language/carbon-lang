@@ -67,4 +67,3 @@ Autoconf            llvm/autoconf
                     llvm/projects/sample/autoconf
 CellSPU backend     llvm/lib/Target/CellSPU/README.txt
 Google Test         llvm/utils/unittest/googletest
-Atomics Library     llvm/include/llvm/System/Atomic.h
