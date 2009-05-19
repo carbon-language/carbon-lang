@@ -2269,7 +2269,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     } else {
       // FIXME: Binding to a subobject of the rvalue is going to require more
       // AST annotation than this.
-      ImpCastExprToType(Init, T1, /*isLvalue=*/true);
+      ImpCastExprToType(Init, T1, /*isLvalue=*/false);
     }
     return false;
   }
