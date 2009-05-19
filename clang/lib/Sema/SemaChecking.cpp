@@ -501,7 +501,7 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   
   Expr *OrigArg0 = TheCall->getArg(0);
   Expr *OrigArg1 = TheCall->getArg(1);
-  
+
   // Do standard promotions between the two arguments, returning their common
   // type.
   QualType Res = UsualArithmeticConversions(OrigArg0, OrigArg1, false);
@@ -512,6 +512,9 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   TheCall->setArg(0, OrigArg0);
   TheCall->setArg(1, OrigArg1);
   
+  if (OrigArg0->isTypeDependent() || OrigArg1->isTypeDependent())
+    return false;
+
   // If the common type isn't a real floating type, then the arguments were
   // invalid for this operation.
   if (!Res->isRealFloatingType())
@@ -527,7 +530,9 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
   // The signature for these builtins is exact; the only thing we need
   // to check is that the argument is a constant.
   SourceLocation Loc;
-  if (!TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc))
+  if (!TheCall->getArg(0)->isTypeDependent() &&
+      !TheCall->getArg(0)->isValueDependent() &&
+      !TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc))
     return Diag(Loc, diag::err_stack_const_level) << TheCall->getSourceRange();
   
   return false;
@@ -541,36 +546,44 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
                           diag::err_typecheck_call_too_few_args)
       << 0 /*function call*/ << TheCall->getSourceRange());
 
-  QualType FAType = TheCall->getArg(0)->getType();
-  QualType SAType = TheCall->getArg(1)->getType();
+  unsigned numElements = std::numeric_limits<unsigned>::max();
+  if (!TheCall->getArg(0)->isTypeDependent() &&
+      !TheCall->getArg(1)->isTypeDependent()) {
+    QualType FAType = TheCall->getArg(0)->getType();
+    QualType SAType = TheCall->getArg(1)->getType();
+    
+    if (!FAType->isVectorType() || !SAType->isVectorType()) {
+      Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
+        << SourceRange(TheCall->getArg(0)->getLocStart(), 
+                       TheCall->getArg(1)->getLocEnd());
+      return ExprError();
+    }
+    
+    if (Context.getCanonicalType(FAType).getUnqualifiedType() !=
+        Context.getCanonicalType(SAType).getUnqualifiedType()) {
+      Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
+        << SourceRange(TheCall->getArg(0)->getLocStart(), 
+                       TheCall->getArg(1)->getLocEnd());
+      return ExprError();
+    }
 
-  if (!FAType->isVectorType() || !SAType->isVectorType()) {
-    Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
-      << SourceRange(TheCall->getArg(0)->getLocStart(), 
-                     TheCall->getArg(1)->getLocEnd());
-    return ExprError();
-  }
-
-  if (Context.getCanonicalType(FAType).getUnqualifiedType() !=
-      Context.getCanonicalType(SAType).getUnqualifiedType()) {
-    Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
-      << SourceRange(TheCall->getArg(0)->getLocStart(), 
-                     TheCall->getArg(1)->getLocEnd());
-    return ExprError();
-  }
-
-  unsigned numElements = FAType->getAsVectorType()->getNumElements();
-  if (TheCall->getNumArgs() != numElements+2) {
-    if (TheCall->getNumArgs() < numElements+2)
+    numElements = FAType->getAsVectorType()->getNumElements();
+    if (TheCall->getNumArgs() != numElements+2) {
+      if (TheCall->getNumArgs() < numElements+2)
+        return ExprError(Diag(TheCall->getLocEnd(),
+                              diag::err_typecheck_call_too_few_args)
+                 << 0 /*function call*/ << TheCall->getSourceRange());
       return ExprError(Diag(TheCall->getLocEnd(),
-                            diag::err_typecheck_call_too_few_args)
-               << 0 /*function call*/ << TheCall->getSourceRange());
-    return ExprError(Diag(TheCall->getLocEnd(),
-                          diag::err_typecheck_call_too_many_args)
-             << 0 /*function call*/ << TheCall->getSourceRange());
+                            diag::err_typecheck_call_too_many_args)
+                 << 0 /*function call*/ << TheCall->getSourceRange());
+    }
   }
 
   for (unsigned i = 2; i < TheCall->getNumArgs(); i++) {
+    if (TheCall->getArg(i)->isTypeDependent() ||
+        TheCall->getArg(i)->isValueDependent())
+      continue;
+
     llvm::APSInt Result(32);
     if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
       return ExprError(Diag(TheCall->getLocStart(),
@@ -590,8 +603,8 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     TheCall->setArg(i, 0);
   }
 
-  return Owned(new (Context) ShuffleVectorExpr(exprs.begin(), numElements+2,
-                                            FAType,
+  return Owned(new (Context) ShuffleVectorExpr(exprs.begin(), exprs.size(),
+                                               exprs[0]->getType(),
                                             TheCall->getCallee()->getLocStart(),
                                             TheCall->getRParenLoc()));
 }
@@ -610,14 +623,23 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
   // constant integers.
   for (unsigned i = 1; i != NumArgs; ++i) {
     Expr *Arg = TheCall->getArg(i);
+    if (Arg->isTypeDependent())
+      continue;
+
     QualType RWType = Arg->getType();
 
     const BuiltinType *BT = RWType->getAsBuiltinType();
     llvm::APSInt Result;
-    if (!BT || BT->getKind() != BuiltinType::Int ||
-        !Arg->isIntegerConstantExpr(Result, Context))
+    if (!BT || BT->getKind() != BuiltinType::Int)
       return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
               << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
+
+    if (Arg->isValueDependent())
+      continue;
+
+    if (!Arg->isIntegerConstantExpr(Result, Context))
+      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
+        << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
     
     // FIXME: gcc issues a warning and rewrites these to 0. These
     // seems especially odd for the third argument since the default
@@ -641,11 +663,20 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
 /// constants (0-3).
 bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
   Expr *Arg = TheCall->getArg(1);
+  if (Arg->isTypeDependent())
+    return false;
+
   QualType ArgType = Arg->getType();  
   const BuiltinType *BT = ArgType->getAsBuiltinType();  
   llvm::APSInt Result(32);
-  if (!BT || BT->getKind() != BuiltinType::Int ||
-      !Arg->isIntegerConstantExpr(Result, Context)) {
+  if (!BT || BT->getKind() != BuiltinType::Int)
+    return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
+             << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
+
+  if (Arg->isValueDependent())
+    return false;
+
+  if (!Arg->isIntegerConstantExpr(Result, Context)) {
     return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
              << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
   }
@@ -662,6 +693,9 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
 /// This checks that val is a constant 1.
 bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
   Expr *Arg = TheCall->getArg(1);
+  if (Arg->isTypeDependent() || Arg->isValueDependent())
+    return false;
+
   llvm::APSInt Result(32);
   if (!Arg->isIntegerConstantExpr(Result, Context) || Result != 1)
     return Diag(TheCall->getLocStart(), diag::err_builtin_longjmp_invalid_val)
@@ -674,6 +708,8 @@ bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
 bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                                   bool HasVAListArg,
                                   unsigned format_idx, unsigned firstDataArg) {
+  if (E->isTypeDependent() || E->isValueDependent())
+    return false;
 
   switch (E->getStmtClass()) {
   case Stmt::ConditionalOperatorClass: {

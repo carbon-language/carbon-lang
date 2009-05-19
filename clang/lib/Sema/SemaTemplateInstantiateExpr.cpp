@@ -57,6 +57,7 @@ namespace {
     // FIXME: AddrLabelExpr
     OwningExprResult VisitStmtExpr(StmtExpr *E);
     OwningExprResult VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
+    OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
     OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
@@ -484,6 +485,53 @@ TemplateExprInstantiator::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
                                           Type1.getAsOpaquePtr(),
                                           Type2.getAsOpaquePtr(),
                                           E->getRParenLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
+  // FIXME: Better solution for this!
+  llvm::SmallVector<Expr *, 8> SubExprs;
+  for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I) {
+    OwningExprResult SubExpr = Visit(E->getExpr(I));
+    if (SubExpr.isInvalid()) {
+      for (unsigned Victim = 0; Victim != I; ++Victim)
+        SubExprs[I]->Destroy(SemaRef.Context);
+      return SemaRef.ExprError();
+    }
+
+    SubExprs.push_back(SubExpr.takeAs<Expr>());
+  }
+
+  // Find the declaration for __builtin_shufflevector
+  const IdentifierInfo &Name 
+    = SemaRef.Context.Idents.get("__builtin_shufflevector");
+  TranslationUnitDecl *TUDecl = SemaRef.Context.getTranslationUnitDecl();
+  DeclContext::lookup_result Lookup 
+    = TUDecl->lookup(SemaRef.Context, DeclarationName(&Name));
+  assert(Lookup.first != Lookup.second && "No __builtin_shufflevector?");
+  
+  // Build a reference to the __builtin_shufflevector builtin
+  FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
+  Expr *Callee = new (SemaRef.Context) DeclRefExpr(Builtin, Builtin->getType(),
+                                                   E->getBuiltinLoc(), 
+                                                   false, false);
+  SemaRef.UsualUnaryConversions(Callee);
+
+  // Build the CallExpr 
+  CallExpr *TheCall = new (SemaRef.Context) CallExpr(SemaRef.Context, Callee,
+                                                     &SubExprs[0], 
+                                                     SubExprs.size(),
+                                                     Builtin->getResultType(),
+                                                     E->getRParenLoc());
+  OwningExprResult OwnedCall(SemaRef.Owned(TheCall));
+
+  // Type-check the __builtin_shufflevector expression.
+  OwningExprResult Result = SemaRef.SemaBuiltinShuffleVector(TheCall);
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+  OwnedCall.release();
+  return move(Result);
 }
 
 Sema::OwningExprResult 

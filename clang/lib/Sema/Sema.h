@@ -2708,7 +2708,12 @@ private:
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
+
+public:
+  // Used by C++ template instantiation.
   Action::OwningExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
+
+private:
   bool SemaBuiltinPrefetch(CallExpr *TheCall); 
   bool SemaBuiltinObjectSize(CallExpr *TheCall);
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
