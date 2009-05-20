@@ -189,6 +189,10 @@ public:
   bool GVRequiresRegister(const GlobalValue* GV, const TargetMachine& TM,
                            bool isDirectCall) const;
 
+  /// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls
+  /// to immediate address.
+  bool IsLegalToCallImmediateAddr(const TargetMachine &TM) const;
+
   /// This function returns the name of a function which has an interface
   /// like the non-standard bzero function, if such a function exists on
   /// the current subtarget and it is considered prefereable over

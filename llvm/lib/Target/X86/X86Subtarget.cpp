@@ -74,8 +74,8 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
 /// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
 /// a register, but not an extra load.
 bool X86Subtarget::GVRequiresRegister(const GlobalValue *GV,
-                                       const TargetMachine& TM,
-                                       bool isDirectCall) const
+                                      const TargetMachine& TM,
+                                      bool isDirectCall) const
 {
   if (GVRequiresExtraLoad(GV, TM, isDirectCall))
     return true;
@@ -97,6 +97,14 @@ const char *X86Subtarget::getBZeroEntry() const {
     return "__bzero";
 
   return 0;
+}
+
+/// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls
+/// to immediate address.
+bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
+  if (Is64Bit)
+    return false;
+  return isTargetELF() || TM.getRelocationModel() == Reloc::Static;
 }
 
 /// getSpecialAddressLatency - For targets where it is beneficial to

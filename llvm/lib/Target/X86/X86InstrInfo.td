@@ -234,9 +234,9 @@ def In64BitMode  : Predicate<"Subtarget->is64Bit()">;
 def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;
 def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
-def IsNotPIC     : Predicate<"TM.getRelocationModel() != Reloc::PIC_">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
+def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -562,8 +562,7 @@ let isCall = 1 in
               XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
       Uses = [ESP] in {
     def CALLpcrel32 : Ii32<0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
-                           "call\t${dst:call}", [(X86call imm:$dst)]>,
-                      Requires<[In32BitMode, IsNotPIC]>;
+                           "call\t${dst:call}", []>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
                         "call\t{*}$dst", [(X86call GR32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
@@ -3342,6 +3341,8 @@ def : Pat<(X86call (i32 tglobaladdr:$dst)),
           (CALLpcrel32 tglobaladdr:$dst)>;
 def : Pat<(X86call (i32 texternalsym:$dst)),
           (CALLpcrel32 texternalsym:$dst)>;
+def : Pat<(X86call (i32 imm:$dst)),
+          (CALLpcrel32 imm:$dst)>, Requires<[CallImmAddr]>;
 
 // X86 specific add which produces a flag.
 def : Pat<(addc GR32:$src1, GR32:$src2),
