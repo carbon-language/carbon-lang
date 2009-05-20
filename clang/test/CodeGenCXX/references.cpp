@@ -24,6 +24,8 @@ void f(const int&);
 void f(const _Complex int&);
 void f(const C&);
 
+C structfunc();
+
 void test_bool() {
   bool a = true;
   f(a);
@@ -39,6 +41,9 @@ void test_scalar() {
   f(s.bitfield);
   
   f(10);
+
+  __attribute((vector_size(16))) typedef int vec4;
+  f((vec4){1,2,3,4}[0]);
 }
 
 void test_complex() {
@@ -51,5 +56,7 @@ void test_complex() {
 void test_aggregate() {
   C c;
   f(c);
+
+  f(structfunc());
 }
 

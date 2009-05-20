@@ -72,28 +72,31 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc,
 
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    QualType DestType) {
-  if (E->isLvalue(getContext()) == Expr::LV_Valid && !E->getBitField()) {
+  RValue Val;
+  if (E->isLvalue(getContext()) == Expr::LV_Valid) {
     // Emit the expr as an lvalue.
     LValue LV = EmitLValue(E);
-    return RValue::get(LV.getAddress());
+    if (LV.isSimple())
+      return RValue::get(LV.getAddress());
+    Val = EmitLoadOfLValue(LV, E->getType());
+  } else {
+    Val = EmitAnyExprToTemp(E);
   }
-  
-  if (!hasAggregateLLVMType(E->getType())) {
+
+  if (Val.isAggregate()) {
+    Val = RValue::get(Val.getAggregateAddr());
+  } else {
     // Create a temporary variable that we can bind the reference to.
     llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), 
                                          "reftmp");
-    EmitStoreOfScalar(EmitScalarExpr(E), Temp, false, E->getType());
-    return RValue::get(Temp);
-  } else if (E->getType()->isAnyComplexType()) {
-    // Create a temporary variable that we can bind the reference to.
-    llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), 
-                                         "reftmp");
-    EmitComplexExprIntoAddr(E, Temp, false);
-    return RValue::get(Temp);
+    if (Val.isScalar())
+      EmitStoreOfScalar(Val.getScalarVal(), Temp, false, E->getType());
+    else
+      StoreComplexToAddr(Val.getComplexVal(), Temp, false);
+    Val = RValue::get(Temp);
   }
-  
-  CGM.ErrorUnsupported(E, "reference binding");
-  return GetUndefRValue(DestType);
+
+  return Val;
 }
 
 
