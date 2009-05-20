@@ -2456,6 +2456,11 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   SCEVHandle One = SE->getIntegerSCEV(1, BackedgeTakenCount->getType());
   if (!AR || !AR->isAffine() || AR->getStepRecurrence(*SE) != One)
     return;
+  // If the RHS of the comparison is defined inside the loop, the rewrite
+  // cannot be done.
+  if (Instruction *CR = dyn_cast<Instruction>(Cond->getOperand(1)))
+    if (L->contains(CR->getParent()))
+      return;
 
   // Make sure the IV is only used for counting.  Value may be preinc or
   // postinc; 2 uses in either case.
