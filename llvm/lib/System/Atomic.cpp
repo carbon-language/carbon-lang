@@ -38,9 +38,9 @@ sys::cas_flag sys::CompareAndSwap(volatile sys::cas_flag* ptr,
 	                                sys::cas_flag new_value,
 	                                sys::cas_flag old_value) {
 #if LLVM_MULTITHREADED==0
-  sys::cas_flag result = *dest;
-  if (result == c)
-    *dest = exc;
+  sys::cas_flag result = *ptr;
+  if (result == old_value)
+    *ptr = new_value;
   return result;
 #elif defined(__GNUC__)
   return __sync_val_compare_and_swap(ptr, old_value, new_value);
