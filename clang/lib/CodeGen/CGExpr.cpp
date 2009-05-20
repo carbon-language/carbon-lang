@@ -72,6 +72,12 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc,
 
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    QualType DestType) {
+  if (E->isLvalue(getContext()) == Expr::LV_Valid) {
+    // Emit the expr as an lvalue.
+    LValue LV = EmitLValue(E);
+    return RValue::get(LV.getAddress());
+  }
+  
   CGM.ErrorUnsupported(E, "reference binding");
   return GetUndefRValue(DestType);
 }

@@ -14,3 +14,30 @@ int& gr = g;
 void t3() {
   int b = gr;
 }
+
+// Test reference binding.
+
+struct C {};
+
+void f(const int&);
+void f(const _Complex int&);
+void f(const C&);
+
+void test_scalar() {
+  int a = 10;
+  
+  f(a);
+}
+
+void test_complex() {
+  _Complex int a = 10i;
+  
+  f(a);
+}
+
+void test_aggregate() {
+  C c;
+  
+  f(c);
+}
+
