@@ -1919,6 +1919,10 @@ void DwarfDebug::RecordVariableScope(DIVariable &DV,
     DebugTimer->stopTimer();
 }
 
+//===----------------------------------------------------------------------===//
+// Emit Methods
+//===----------------------------------------------------------------------===//
+
 /// SizeAndOffsetDie - Compute the size and offset of a DIE.
 ///
 unsigned DwarfDebug::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
