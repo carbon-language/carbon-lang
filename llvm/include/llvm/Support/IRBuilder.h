@@ -67,6 +67,8 @@ public:
 
   BasicBlock *GetInsertBlock() const { return BB; }
 
+  BasicBlock::iterator GetInsertPoint() const { return InsertPt; }
+
   /// SetInsertPoint - This specifies that created instructions should be
   /// appended to the end of the specified block.
   void SetInsertPoint(BasicBlock *TheBB) {
