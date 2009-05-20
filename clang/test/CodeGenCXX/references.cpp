@@ -19,25 +19,32 @@ void t3() {
 
 struct C {};
 
+void f(const bool&);
 void f(const int&);
 void f(const _Complex int&);
 void f(const C&);
 
+void test_bool() {
+  bool a = true;
+  f(a);
+
+  f(true);
+}
+
 void test_scalar() {
   int a = 10;
-  
   f(a);
+  
+  f(10);
 }
 
 void test_complex() {
   _Complex int a = 10i;
-  
   f(a);
 }
 
 void test_aggregate() {
   C c;
-  
   f(c);
 }
 

@@ -78,6 +78,14 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     return RValue::get(LV.getAddress());
   }
   
+  if (!hasAggregateLLVMType(E->getType())) {
+    // Make a temporary variable that we can bind the reference to.
+    llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), 
+                                         "reftmp");
+    EmitStoreOfScalar(EmitScalarExpr(E), Temp, false, E->getType());
+    return RValue::get(Temp);
+  }
+  
   CGM.ErrorUnsupported(E, "reference binding");
   return GetUndefRValue(DestType);
 }
