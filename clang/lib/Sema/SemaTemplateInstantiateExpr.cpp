@@ -85,9 +85,9 @@ namespace {
     // FIXME: CXXTypeIdExpr
     // FIXME: CXXThrowExpr
     // FIXME: CXXDefaultArgExpr
-    // FIXME: CXXConstructExpr
-    // FIXME: CXXFunctionalCastExpr
-    // FIXME: CXXZeroInitValueExpr
+    OwningExprResult VisitCXXConstructExpr(CXXConstructExpr *E);
+    OwningExprResult VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
+    OwningExprResult VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     // FIXME: CXXNewExpr
     // FIXME: CXXDeleteExpr
     // FIXME: UnaryTypeTraitExpr
@@ -833,6 +833,87 @@ TemplateExprInstantiator::VisitCXXThisExpr(CXXThisExpr *E) {
     new (SemaRef.Context) CXXThisExpr(E->getLocStart(), ThisType);
   
   return SemaRef.Owned(TE);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
+  assert(!cast<CXXRecordDecl>(E->getConstructor()->getDeclContext())
+           ->isDependentType() && "Dependent constructor shouldn't be here");
+
+  QualType T = SemaRef.InstantiateType(E->getType(), TemplateArgs,
+                                       /*FIXME*/E->getSourceRange().getBegin(),
+                                       DeclarationName());
+  if (T.isNull())
+    return SemaRef.ExprError();
+
+  bool Invalid = false;
+  llvm::SmallVector<Expr *, 8> Args;
+  for (CXXConstructExpr::arg_iterator Arg = E->arg_begin(), 
+                                   ArgEnd = E->arg_end();
+       Arg != ArgEnd; ++Arg) {
+    OwningExprResult ArgInst = Visit(*Arg);
+    if (ArgInst.isInvalid()) {
+      Invalid = true;
+      break;
+    }
+
+    Args.push_back(ArgInst.takeAs<Expr>());
+  }
+
+
+  VarDecl *Var = 0;
+  if (!Invalid) {
+    Var = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
+                                                        SemaRef.CurContext,
+                                                        TemplateArgs));
+    if (!Var)
+      Invalid = true;
+  }
+
+  if (Invalid) {
+    for (unsigned I = 0, N = Args.size(); I != N; ++I)
+      Args[I]->Destroy(SemaRef.Context);
+
+    return SemaRef.ExprError();
+  }
+
+  return SemaRef.Owned(CXXConstructExpr::Create(SemaRef.Context, Var, T,
+                                                E->getConstructor(), 
+                                                E->isElidable(),
+                                                &Args.front(), Args.size()));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXFunctionalCastExpr(
+                                                   CXXFunctionalCastExpr *E) {
+  // Instantiate the type that we're casting to.
+  QualType ExplicitTy = SemaRef.InstantiateType(E->getTypeAsWritten(),
+                                                TemplateArgs,
+                                                E->getTypeBeginLoc(),
+                                                DeclarationName());
+  if (ExplicitTy.isNull())
+    return SemaRef.ExprError();
+
+  // Instantiate the subexpression.
+  OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+  
+  // FIXME: The end of the type's source range is wrong
+  Expr *Sub = SubExpr.takeAs<Expr>();
+  return SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc()),
+                                           ExplicitTy.getAsOpaquePtr(),
+                                           /*FIXME:*/E->getTypeBeginLoc(),
+                                           Sema::MultiExprArg(SemaRef,
+                                                              (void **)&Sub,
+                                                              1),
+                                           0, 
+                                           E->getRParenLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+  return SemaRef.Clone(E);
 }
 
 Sema::OwningExprResult 

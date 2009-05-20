@@ -365,3 +365,7 @@ CXXBoolLiteralExpr* CXXBoolLiteralExpr::Clone(ASTContext &C) const {
 CXXNullPtrLiteralExpr* CXXNullPtrLiteralExpr::Clone(ASTContext &C) const {
   return new (C) CXXNullPtrLiteralExpr(getType(), Loc);
 }
+
+CXXZeroInitValueExpr* CXXZeroInitValueExpr::Clone(ASTContext &C) const {
+  return new (C) CXXZeroInitValueExpr(getType(), TyBeginLoc, RParenLoc);
+}

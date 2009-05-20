@@ -431,8 +431,11 @@ public:
   
   void Destroy(ASTContext &C);
   
-  const VarDecl* getVarDecl() const { return VD; }
-  const CXXConstructorDecl* getConstructor() const { return Constructor; }
+  VarDecl* getVarDecl() const { return VD; }
+  CXXConstructorDecl* getConstructor() const { return Constructor; }
+
+  /// \brief Whether this construction is elidable.
+  bool isElidable() const { return Elidable; }
 
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
@@ -537,7 +540,7 @@ class CXXZeroInitValueExpr : public Expr {
 public:
   CXXZeroInitValueExpr(QualType ty, SourceLocation tyBeginLoc,
                        SourceLocation rParenLoc ) : 
-    Expr(CXXZeroInitValueExprClass, ty),
+    Expr(CXXZeroInitValueExprClass, ty, false, false),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
   
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
@@ -553,6 +556,8 @@ public:
     return SourceRange(TyBeginLoc, RParenLoc);
   }
     
+  CXXZeroInitValueExpr* Clone(ASTContext &C) const;
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXZeroInitValueExprClass;
   }
