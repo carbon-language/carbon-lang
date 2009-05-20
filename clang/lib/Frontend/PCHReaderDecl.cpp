@@ -454,6 +454,12 @@ Attr *PCHReader::ReadAttributes() {
       break;
     }
         
+    case Attr::FormatArg: {
+      unsigned FormatIdx = Record[Idx++];
+      New = ::new (*Context) FormatArgAttr(FormatIdx);
+      break;
+    }
+        
     case Attr::Sentinel: {
       int sentinel = Record[Idx++];
       int nullPos = Record[Idx++];

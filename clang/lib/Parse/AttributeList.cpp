@@ -103,8 +103,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;
     if (!memcmp(Str, "visibility", 10)) return AT_visibility;
     if (!memcmp(Str, "destructor", 10)) return AT_destructor;
-    if (!memcmp(Str, "format_arg", 10))
-      return IgnoredAttribute; // FIXME: printf format string checking.
+    if (!memcmp(Str, "format_arg", 10)) return AT_format_arg; 
     if (!memcmp(Str, "gnu_inline", 10)) return AT_gnu_inline;
     break;
   case 11:

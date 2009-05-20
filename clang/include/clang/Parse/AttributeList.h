@@ -66,6 +66,7 @@ public:
     AT_ext_vector_type,
     AT_fastcall,
     AT_format,
+    AT_format_arg,
     AT_gnu_inline,
     AT_mode,
     AT_nodebug,

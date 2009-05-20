@@ -404,6 +404,7 @@ def err_format_strftime_third_parameter : Error<
 def err_format_attribute_requires_variadic : Error<
   "format attribute requires variadic function">;
 def err_format_attribute_not : Error<"format argument not %0">;
+def err_format_attribute_result_not : Error<"function does not return %0">;
 def err_attribute_invalid_size : Error<
   "vector size not an integral multiple of component size">;
 def err_attribute_zero_size : Error<"zero vector size">;

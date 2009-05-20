@@ -50,6 +50,7 @@ public:
     Destructor,
     FastCall,    
     Format,
+    FormatArg,
     GNUInline,
     IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
     NoReturn,
@@ -358,6 +359,21 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) { return A->getKind() == Format; }
   static bool classof(const FormatAttr *A) { return true; }
+};
+
+class FormatArgAttr : public Attr {
+  int formatIdx;
+public:
+  FormatArgAttr(int idx) : Attr(FormatArg), formatIdx(idx) {}
+  int getFormatIdx() const { return formatIdx; }
+
+  virtual Attr *clone(ASTContext &C) const {
+    return ::new (C) FormatArgAttr(formatIdx);
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == FormatArg; }
+  static bool classof(const FormatArgAttr *A) { return true; }
 };
 
 class SentinelAttr : public Attr {

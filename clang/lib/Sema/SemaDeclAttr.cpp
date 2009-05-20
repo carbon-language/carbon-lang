@@ -99,6 +99,12 @@ static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
   return cast<ObjCMethodDecl>(d)->param_begin()[Idx]->getType();
 }
 
+static QualType getFunctionOrMethodResultType(Decl *d) {
+  if (const FunctionType *FnTy = getFunctionType(d))
+    return cast<FunctionProtoType>(FnTy)->getResultType();
+  return cast<ObjCMethodDecl>(d)->getResultType();
+}
+
 static bool isFunctionOrMethodVariadic(Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d)) {
     const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
@@ -1069,6 +1075,69 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) CleanupAttr(FD));
 }
 
+/// Handle __attribute__((format_arg((idx)))) attribute
+/// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
+static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) { 
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+  if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << Attr.getName() << 0 /*function*/;
+    return;
+  }
+  // FIXME: in C++ the implicit 'this' function parameter also counts.
+  // this is needed in order to be compatible with GCC
+  // the index must start with 1.
+  unsigned NumArgs  = getFunctionOrMethodNumArgs(d);
+  unsigned FirstIdx = 1;
+  // checks for the 2nd argument
+  Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt Idx(32);
+  if (!IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+    << "format" << 2 << IdxExpr->getSourceRange();
+    return;
+  }
+  
+  if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+    << "format" << 2 << IdxExpr->getSourceRange();
+    return;
+  }
+  
+  unsigned ArgIdx = Idx.getZExtValue() - 1;
+  
+  // make sure the format string is really a string
+  QualType Ty = getFunctionOrMethodArgType(d, ArgIdx);
+  
+  bool not_nsstring_type = !isNSStringType(Ty, S.Context);
+  if (not_nsstring_type &&
+      !isCFStringType(Ty, S.Context) &&
+      (!Ty->isPointerType() ||
+       !Ty->getAsPointerType()->getPointeeType()->isCharType())) {
+    // FIXME: Should highlight the actual expression that has the wrong type.
+    S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
+    << (not_nsstring_type ? "a string type" : "an NSString") 
+       << IdxExpr->getSourceRange();
+    return;
+  }    
+  Ty = getFunctionOrMethodResultType(d);
+  if (!isNSStringType(Ty, S.Context) &&
+      !isCFStringType(Ty, S.Context) &&
+      (!Ty->isPointerType() ||
+       !Ty->getAsPointerType()->getPointeeType()->isCharType())) {
+    // FIXME: Should highlight the actual expression that has the wrong type.
+    S.Diag(Attr.getLoc(), diag::err_format_attribute_result_not)
+    << (not_nsstring_type ? "string type" : "NSString") 
+       << IdxExpr->getSourceRange();
+    return;
+  }    
+  
+  d->addAttr(::new (S.Context) FormatArgAttr(Idx.getZExtValue()));
+}
+
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1653,6 +1722,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     break;
   case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
+  case AttributeList::AT_format_arg:  HandleFormatArgAttr (D, Attr, S); break;
   case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr(D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;

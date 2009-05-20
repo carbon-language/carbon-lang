@@ -1558,6 +1558,12 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       break;
     }
 
+    case Attr::FormatArg: {
+      const FormatArgAttr *Format = cast<FormatArgAttr>(Attr);
+      Record.push_back(Format->getFormatIdx());
+      break;
+    }
+
     case Attr::Sentinel : {
       const SentinelAttr *Sentinel = cast<SentinelAttr>(Attr);
       Record.push_back(Sentinel->getSentinel());
