@@ -117,6 +117,20 @@ struct VaArg0 {
 
 template struct VaArg0<int>;
 
+template<typename VaList, typename ArgType>
+struct VaArg1 {
+  void f(int n, ...) {
+    VaList va;
+    __builtin_va_start(va, n); // expected-error{{incompatible}}
+    for (int i = 0; i != n; ++i)
+      (void)__builtin_va_arg(va, ArgType);
+    __builtin_va_end(va);
+  }
+};
+
+template struct VaArg1<__builtin_va_list, int>;
+template struct VaArg1<int, int>; // expected-note{{instantiation}}
+
 // ---------------------------------------------------------------------
 // Vector element expressions
 // ---------------------------------------------------------------------
