@@ -67,36 +67,25 @@ class VISIBILITY_HIDDEN CompileUnit {
   FoldingSet<DIE> DiesSet;
 public:
   CompileUnit(unsigned I, DIE *D)
-    : ID(I), Die(D), GVToDieMap(),
-      GVToDIEEntryMap(), Globals(), DiesSet(InitDiesSetSize)
-  {}
-
-  ~CompileUnit() {
-    delete Die;
-  }
+    : ID(I), Die(D), DiesSet(InitDiesSetSize) {}
+  ~CompileUnit() { delete Die; }
 
   // Accessors.
-  unsigned getID()           const { return ID; }
-  DIE* getDie()              const { return Die; }
+  unsigned getID() const { return ID; }
+  DIE* getDie() const { return Die; }
   StringMap<DIE*> &getGlobals() { return Globals; }
 
   /// hasContent - Return true if this compile unit has something to write out.
   ///
-  bool hasContent() const {
-    return !Die->getChildren().empty();
-  }
+  bool hasContent() const { return !Die->getChildren().empty(); }
 
   /// AddGlobal - Add a new global entity to the compile unit.
   ///
-  void AddGlobal(const std::string &Name, DIE *Die) {
-    Globals[Name] = Die;
-  }
+  void AddGlobal(const std::string &Name, DIE *Die) { Globals[Name] = Die; }
 
   /// getDieMapSlotFor - Returns the debug information entry map slot for the
   /// specified debug variable.
-  DIE *&getDieMapSlotFor(GlobalVariable *GV) {
-    return GVToDieMap[GV];
-  }
+  DIE *&getDieMapSlotFor(GlobalVariable *GV) { return GVToDieMap[GV]; }
 
   /// getDIEEntrySlotFor - Returns the debug information entry proxy slot for the
   /// specified debug variable.
