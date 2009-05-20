@@ -230,9 +230,16 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   void AssignAbbrevNumber(DIEAbbrev &Abbrev);
 
-  /// CreateDIEEntry - Creates a new DIEEntry to be a proxy for a debug
-  /// information entry.
-  DIEEntry *CreateDIEEntry(DIE *Entry = NULL);
+  /// NewString - Add a string to the constant pool and returns a label.
+  ///
+  DWLabel NewString(const std::string &String) {
+    unsigned StringID = StringPool.insert(String);
+    return DWLabel("string", StringID);
+  }
+
+  /// NewDIEEntry - Creates a new DIEEntry to be a proxy for a debug information
+  /// entry.
+  DIEEntry *NewDIEEntry(DIE *Entry = NULL);
 
   /// SetDIEEntry - Set a DIEEntry once the debug information entry is defined.
   ///
@@ -275,7 +282,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// AddDIEEntry - Add a DIE attribute data and value.
   ///
   void AddDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
-    Die->AddValue(Attribute, Form, CreateDIEEntry(Entry));
+    Die->AddValue(Attribute, Form, NewDIEEntry(Entry));
   }
 
   /// AddBlock - Add block data.
@@ -339,9 +346,9 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   CompileUnit &FindCompileUnit(DICompileUnit Unit) const;
 
-  /// CreateDbgScopeVariable - Create a new debug scope variable.
+  /// NewDbgScopeVariable - Create a new scope variable.
   ///
-  DIE *CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
+  DIE *NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
 
   /// getOrCreateScope - Returns the scope associated with the given descriptor.
   ///
@@ -355,37 +362,16 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// ConstructFunctionDbgScope - Construct the scope for the subprogram.
   ///
-  void ConstructFunctionDbgScope(DbgScope *RootScope,
-                                 bool AbstractScope = false);
+  void ConstructFunctionDbgScope(DbgScope *RootScope);
+
+  /// ConstructFunctionDbgScope - Construct the scope for the abstract debug
+  /// scope.
+  ///
+  void ConstructAbstractDbgScope(DbgScope *AbsScope);
 
   /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
   ///
   void ConstructDefaultDbgScope(MachineFunction *MF);
-
-  /// GetOrCreateSourceID - Look up the source id with the given directory and
-  /// source file names. If none currently exists, create a new id and insert it
-  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
-  /// as well.
-  unsigned GetOrCreateSourceID(const std::string &DirName,
-                               const std::string &FileName);
-
-  void ConstructCompileUnit(GlobalVariable *GV);
-
-  /// ConstructCompileUnits - Create a compile unit DIEs.
-  void ConstructCompileUnits();
-
-  bool ConstructGlobalVariableDIE(GlobalVariable *GV);
-
-  /// ConstructGlobalVariableDIEs - Create DIEs for each of the externally 
-  /// visible global variables. Return true if at least one global DIE is
-  /// created.
-  bool ConstructGlobalVariableDIEs();
-
-  bool ConstructSubprogram(GlobalVariable *GV);
-
-  /// ConstructSubprograms - Create DIEs for each of the externally visible
-  /// subprograms. Return true if at least one subprogram DIE is created.
-  bool ConstructSubprograms();
 
   /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
   /// tools to recognize the object file contains Dwarf information.
@@ -475,6 +461,31 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// the __debug_info section, and the low_pc is the starting address  for the
   ///  inlining instance.
   void EmitDebugInlineInfo();
+
+  /// GetOrCreateSourceID - Look up the source id with the given directory and
+  /// source file names. If none currently exists, create a new id and insert it
+  /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
+  /// as well.
+  unsigned GetOrCreateSourceID(const std::string &DirName,
+                               const std::string &FileName);
+
+  void ConstructCompileUnit(GlobalVariable *GV);
+
+  /// ConstructCompileUnits - Create a compile unit DIEs.
+  void ConstructCompileUnits();
+
+  bool ConstructGlobalVariableDIE(GlobalVariable *GV);
+
+  /// ConstructGlobalVariableDIEs - Create DIEs for each of the externally 
+  /// visible global variables. Return true if at least one global DIE is
+  /// created.
+  bool ConstructGlobalVariableDIEs();
+
+  bool ConstructSubprogram(GlobalVariable *GV);
+
+  /// ConstructSubprograms - Create DIEs for each of the externally visible
+  /// subprograms. Return true if at least one subprogram DIE is created.
+  bool ConstructSubprograms();
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
