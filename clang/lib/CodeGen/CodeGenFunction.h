@@ -708,6 +708,10 @@ public:
   void EmitObjCSuperPropertySet(const Expr *E, const Selector &S, RValue Src);
 
 
+  /// EmitReferenceBindingToExpr - Emits a reference binding to the passed in
+  /// expression. Will emit a temporary variable if E is not an LValue.
+  RValue EmitReferenceBindingToExpr(const Expr* E, QualType DestType);
+  
   //===--------------------------------------------------------------------===//
   //                           Expression Emission
   //===--------------------------------------------------------------------===//

@@ -260,4 +260,3 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
 }
-

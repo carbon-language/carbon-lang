@@ -70,6 +70,13 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc,
   return EmitAnyExpr(E, AggLoc, isAggLocVolatile);
 }
 
+RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
+                                                   QualType DestType) {
+  CGM.ErrorUnsupported(E, "reference binding");
+  return GetUndefRValue(DestType);
+}
+
+
 /// getAccessedFieldNo - Given an encoded value and a result number, return
 /// the input field number being accessed.
 unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx, 

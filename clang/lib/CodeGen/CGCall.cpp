@@ -2001,6 +2001,9 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 }
 
 RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
+  if (ArgType->isReferenceType())
+    return EmitReferenceBindingToExpr(E, ArgType);
+  
   return EmitAnyExprToTemp(E);
 }
 
