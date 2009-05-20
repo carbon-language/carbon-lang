@@ -111,6 +111,8 @@ class MachineFunction : private Annotation {
   // Tracks debug locations.
   DebugLocTracker DebugLocInfo;
 
+  std::vector<DebugScopeInfo> DbgScopeInfos;
+
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -332,7 +334,7 @@ public:
   /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
   /// source file, line, and column. If none currently exists, create a new
   /// DebugLocTuple, and insert it into the DebugIdMap.
-  unsigned getOrCreateDebugLocID(GlobalVariable *CompileUnit,
+  unsigned getOrCreateDebugLocID(GlobalVariable *CompileUnit, DebugScope Scope,
                                  unsigned Line, unsigned Col);
 
   /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
@@ -345,6 +347,12 @@ public:
   /// setDefaultDebugLoc - Get the default debug location for the machine
   /// function.
   void setDefaultDebugLoc(DebugLoc DL) { DefaultDebugLoc = DL; }
+
+  /// CreateDebugScope - Create a new debug scope.
+  DebugScope CreateDebugScope(GlobalVariable *ScopeGV, DebugScope Parent);
+
+  /// getDebugScopeInfo - Get the DebugScopeInfo for a given DebugScope object.
+  const DebugScopeInfo &getDebugScopeInfo(DebugScope DS) const;
 };
 
 //===--------------------------------------------------------------------===//

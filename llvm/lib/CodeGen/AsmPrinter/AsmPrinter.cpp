@@ -1311,7 +1311,7 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
 void AsmPrinter::processDebugLoc(DebugLoc DL) {
   if (TAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
     if (!DL.isUnknown()) {
-      static DebugLocTuple PrevDLT(0, ~0U, ~0U);
+      static DebugLocTuple PrevDLT(0, DebugScope::getInvalid(), ~0U, ~0U);
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
 
       if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT)

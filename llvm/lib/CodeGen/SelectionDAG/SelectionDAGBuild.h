@@ -169,6 +169,8 @@ class SelectionDAGLowering {
   /// CurDebugLoc - current file + line number.  Changes as we build the DAG.
   DebugLoc CurDebugLoc;
 
+  DebugScopeTracker DbgScopeTrack;
+
   DenseMap<const Value*, SDValue> NodeMap;
 
   /// PendingLoads - Loads are not emitted to the program immediately.  We bunch

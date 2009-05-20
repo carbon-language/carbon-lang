@@ -403,8 +403,9 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
 /// source file, line, and column. If none currently exists, create a new
 /// DebugLocTuple, and insert it into the DebugIdMap.
 unsigned MachineFunction::getOrCreateDebugLocID(GlobalVariable *CompileUnit,
+                                                DebugScope Scope,
                                                 unsigned Line, unsigned Col) {
-  DebugLocTuple Tuple(CompileUnit, Line, Col);
+  DebugLocTuple Tuple(CompileUnit, Scope, Line, Col);
   DenseMap<DebugLocTuple, unsigned>::iterator II
     = DebugLocInfo.DebugIdMap.find(Tuple);
   if (II != DebugLocInfo.DebugIdMap.end())
@@ -423,6 +424,21 @@ DebugLocTuple MachineFunction::getDebugLocTuple(DebugLoc DL) const {
          "Invalid index into debug locations!");
   return DebugLocInfo.DebugLocations[Idx];
 }
+
+/// CreateDebugScope - Create a new debug scope.
+DebugScope MachineFunction::CreateDebugScope(GlobalVariable *ScopeGV,
+                                             DebugScope Parent) {
+  DbgScopeInfos.push_back(DebugScopeInfo(ScopeGV, Parent));
+  return DebugScope::get(DbgScopeInfos.size() - 1);
+}
+
+/// getDebugScopeInfo - Get the DebugScopeInfo for a given DebugScope object.
+const DebugScopeInfo &MachineFunction::getDebugScopeInfo(DebugScope DS) const {
+  unsigned Idx = DS.getIndex();
+  assert(Idx < DbgScopeInfos.size() && "Invalid index into debug scopes!");
+  return DbgScopeInfos[Idx];
+}
+
 
 //===----------------------------------------------------------------------===//
 //  MachineFrameInfo implementation
