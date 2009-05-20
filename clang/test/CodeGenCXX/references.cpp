@@ -35,6 +35,9 @@ void test_scalar() {
   int a = 10;
   f(a);
   
+  struct { int bitfield : 3; } s = { 3 };
+  f(s.bitfield)
+  
   f(10);
 }
 

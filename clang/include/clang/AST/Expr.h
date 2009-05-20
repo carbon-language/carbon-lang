@@ -182,6 +182,10 @@ public:
   /// declaration of that bit-field.
   FieldDecl *getBitField();
 
+  const FieldDecl *getBitField() const {
+    return const_cast<Expr*>(this)->getBitField();
+  }
+  
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location

@@ -72,7 +72,7 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc,
 
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    QualType DestType) {
-  if (E->isLvalue(getContext()) == Expr::LV_Valid) {
+  if (E->isLvalue(getContext()) == Expr::LV_Valid && !E->getBitField()) {
     // Emit the expr as an lvalue.
     LValue LV = EmitLValue(E);
     return RValue::get(LV.getAddress());
