@@ -136,29 +136,22 @@ TemplateStmtInstantiator::VisitReturnStmt(ReturnStmt *S) {
 
 Sema::OwningStmtResult 
 TemplateStmtInstantiator::VisitCompoundStmt(CompoundStmt *S) {
-  // FIXME: We need an *easy* RAII way to delete these statements if something
-  // goes wrong.
-  llvm::SmallVector<Stmt *, 16> Statements;
+  ASTOwningVector<&ActionBase::DeleteStmt> Statements(SemaRef);
   
   for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
        B != BEnd; ++B) {
     OwningStmtResult Result = Visit(*B);
-    if (Result.isInvalid()) {
-      // FIXME: This should be handled by an RAII destructor.
-      for (unsigned I = 0, N = Statements.size(); I != N; ++I)
-        Statements[I]->Destroy(SemaRef.Context);
+    if (Result.isInvalid())
       return SemaRef.StmtError();
-    }
 
     Statements.push_back(Result.takeAs<Stmt>());
   }
 
-  return SemaRef.Owned(
-           new (SemaRef.Context) CompoundStmt(SemaRef.Context,
-                                              &Statements[0], 
-                                              Statements.size(),
-                                              S->getLBracLoc(),
-                                              S->getRBracLoc()));
+  return SemaRef.ActOnCompoundStmt(S->getLBracLoc(), S->getRBracLoc(),
+                                   Sema::MultiStmtArg(SemaRef,
+                                                      Statements.take(),
+                                                      Statements.size()),
+                                   /*isStmtExpr=*/false);
 }
 
 Sema::OwningStmtResult 
@@ -326,22 +319,18 @@ TemplateStmtInstantiator::VisitCXXTryStmt(CXXTryStmt *S) {
     return SemaRef.StmtError();
 
   // Instantiate the handlers.
-  llvm::SmallVector<Stmt *, 4> Handlers;
+  ASTOwningVector<&ActionBase::DeleteStmt> Handlers(SemaRef);
   for (unsigned I = 0, N = S->getNumHandlers(); I != N; ++I) {
     OwningStmtResult Handler = VisitCXXCatchStmt(S->getHandler(I));
-    if (Handler.isInvalid()) {
-      // Destroy all of the previous handlers.
-      for (unsigned Victim = 0; Victim != I; ++Victim)
-        Handlers[Victim]->Destroy(SemaRef.Context);
+    if (Handler.isInvalid())
       return SemaRef.StmtError();
-    }
 
     Handlers.push_back(Handler.takeAs<Stmt>());
   }
 
   return SemaRef.ActOnCXXTryBlock(S->getTryLoc(), move(TryBlock),
                                   Sema::MultiStmtArg(SemaRef,
-                                                     (void**)&Handlers.front(),
+                                                     Handlers.take(),
                                                      Handlers.size()));
 }
 

@@ -2747,7 +2747,7 @@ public:
   T& operator*() const { return *get(); }
   T* operator->() const { return get(); }
 };
-  
+
 }  // end namespace clang
 
 #endif

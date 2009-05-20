@@ -2,7 +2,7 @@
 template<typename T, typename U>
 struct X0 {
   void f(T x, U y) { 
-    x + y; // expected-error{{invalid operands}}
+    (void)(x + y); // expected-error{{invalid operands}}
   }
 };
 

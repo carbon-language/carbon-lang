@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_PARSE_OWNERSHIP_H
 #define LLVM_CLANG_PARSE_OWNERSHIP_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/PointerIntPair.h"
 
 //===----------------------------------------------------------------------===//
@@ -720,6 +721,44 @@ namespace clang {
 #endif
       return Args;
     }
+  };
+
+  /// \brief A small vector that owns a set of AST nodes.
+  template <ASTDestroyer Destroyer>
+  class ASTOwningVector : public llvm::SmallVector<void *, 8> {
+#if !defined(DISABLE_SMART_POINTERS)
+    ActionBase &Actions;
+    bool Owned;
+#endif
+
+    ASTOwningVector(ASTOwningVector &); // do not implement
+    ASTOwningVector &operator=(ASTOwningVector &); // do not implement
+
+  public:
+    explicit ASTOwningVector(ActionBase &Actions) 
+#if !defined(DISABLE_SMART_POINTERS)
+      : Actions(Actions), Owned(true)
+#endif
+    { }
+
+#if !defined(DISABLE_SMART_POINTERS)
+    ~ASTOwningVector() {
+      if (!Owned)
+        return;
+
+      for (unsigned I = 0, N = this->size(); I != N; ++I)
+        (Actions.*Destroyer)((*this)[I]);
+    }
+#endif
+
+    void **take() {
+#if !defined(DISABLE_SMART_POINTERS)
+      Owned = false;
+#endif
+      return &this->front();
+    }
+
+    template<typename T> T **takeAs() { return (T**)take(); }
   };
 
 #if !defined(DISABLE_SMART_POINTERS)

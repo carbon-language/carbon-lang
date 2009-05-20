@@ -266,15 +266,12 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitCallExpr(CallExpr *E) {
     return SemaRef.ExprError();
 
   // Instantiate arguments
-  llvm::SmallVector<Expr*, 8> Args;
+  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
   llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
     OwningExprResult Arg = Visit(E->getArg(I));
-    if (Arg.isInvalid()) {
-      for (unsigned Victim = 0; Victim != I; ++Victim)
-        Args[Victim]->Destroy(SemaRef.Context);
+    if (Arg.isInvalid())
       return SemaRef.ExprError();
-    }
 
     FakeCommaLocs.push_back(
      SemaRef.PP.getLocForEndOfToken(E->getArg(I)->getSourceRange().getEnd()));
@@ -286,8 +283,7 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitCallExpr(CallExpr *E) {
   return SemaRef.ActOnCallExpr(/*Scope=*/0, move(Callee), 
                                /*FIXME:*/FakeLParenLoc,
                                Sema::MultiExprArg(SemaRef,
-                                                  (void **)&Args.front(),
-                                                  Args.size()),
+                                                  Args.take(), Args.size()),
                                /*FIXME:*/&FakeCommaLocs.front(), 
                                E->getRParenLoc());
 }
@@ -507,15 +503,11 @@ TemplateExprInstantiator::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
-  // FIXME: Better solution for this!
-  llvm::SmallVector<Expr *, 8> SubExprs;
+  ASTOwningVector<&ActionBase::DeleteExpr> SubExprs(SemaRef);
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I) {
     OwningExprResult SubExpr = Visit(E->getExpr(I));
-    if (SubExpr.isInvalid()) {
-      for (unsigned Victim = 0; Victim != I; ++Victim)
-        SubExprs[I]->Destroy(SemaRef.Context);
+    if (SubExpr.isInvalid())
       return SemaRef.ExprError();
-    }
 
     SubExprs.push_back(SubExpr.takeAs<Expr>());
   }
@@ -537,7 +529,7 @@ TemplateExprInstantiator::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 
   // Build the CallExpr 
   CallExpr *TheCall = new (SemaRef.Context) CallExpr(SemaRef.Context, Callee,
-                                                     &SubExprs[0], 
+                                                     SubExprs.takeAs<Expr>(),
                                                      SubExprs.size(),
                                                      Builtin->getResultType(),
                                                      E->getRParenLoc());
@@ -656,47 +648,34 @@ TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
       return SemaRef.ExprError();
   }
 
-  llvm::SmallVector<Expr *, 16> Args;
+  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
   Args.reserve(E->getNumArgs());
-  bool Invalid = false;
   for (CXXTemporaryObjectExpr::arg_iterator Arg = E->arg_begin(), 
                                          ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
     OwningExprResult InstantiatedArg = Visit(*Arg);
-    if (InstantiatedArg.isInvalid()) {
-      Invalid = true;
-      break;
-    }
+    if (InstantiatedArg.isInvalid())
+      return SemaRef.ExprError();
 
     Args.push_back((Expr *)InstantiatedArg.release());
   }
 
-  if (!Invalid) {
-    SourceLocation CommaLoc;
-    // FIXME: HACK!
-    if (Args.size() > 1)
-      CommaLoc 
-        = SemaRef.PP.getLocForEndOfToken(Args[0]->getSourceRange().getEnd());
-    Sema::OwningExprResult Result(
-      SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc()
-                                                    /*, FIXME*/),
-                                        T.getAsOpaquePtr(),
-                                        /*FIXME*/E->getTypeBeginLoc(),
-                                        Sema::MultiExprArg(SemaRef,
-                                                           (void**)&Args[0],
-                                                           Args.size()),
-                                        /*HACK*/&CommaLoc,
-                                        E->getSourceRange().getEnd()));
-    // At this point, Args no longer owns the arguments, no matter what.
-    return move(Result);
+  SourceLocation CommaLoc;
+  // FIXME: HACK!
+  if (Args.size() > 1) {
+    Expr *First = (Expr *)Args[0];
+    CommaLoc 
+      = SemaRef.PP.getLocForEndOfToken(First->getSourceRange().getEnd());
   }
-
-  // Clean up the instantiated arguments.
-  // FIXME: Would rather do this with RAII.
-  for (unsigned Idx = 0; Idx < Args.size(); ++Idx)
-    SemaRef.DeleteExpr(Args[Idx]);
-
-  return SemaRef.ExprError();
+  return SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc()
+                                                       /*, FIXME*/),
+                                           T.getAsOpaquePtr(),
+                                           /*FIXME*/E->getTypeBeginLoc(),
+                                           Sema::MultiExprArg(SemaRef,
+                                                              Args.take(),
+                                                              Args.size()),
+                                           /*HACK*/&CommaLoc,
+                                           E->getSourceRange().getEnd());
 }
 
 Sema::OwningExprResult TemplateExprInstantiator::VisitCastExpr(CastExpr *E) {
@@ -847,42 +826,30 @@ TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
   if (T.isNull())
     return SemaRef.ExprError();
 
-  bool Invalid = false;
-  llvm::SmallVector<Expr *, 8> Args;
+  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
   for (CXXConstructExpr::arg_iterator Arg = E->arg_begin(), 
                                    ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
     OwningExprResult ArgInst = Visit(*Arg);
-    if (ArgInst.isInvalid()) {
-      Invalid = true;
-      break;
-    }
+    if (ArgInst.isInvalid())
+      return SemaRef.ExprError();
 
     Args.push_back(ArgInst.takeAs<Expr>());
   }
 
 
-  VarDecl *Var = 0;
-  if (!Invalid) {
-    Var = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
-                                                        SemaRef.CurContext,
-                                                        TemplateArgs));
-    if (!Var)
-      Invalid = true;
-  }
-
-  if (Invalid) {
-    for (unsigned I = 0, N = Args.size(); I != N; ++I)
-      Args[I]->Destroy(SemaRef.Context);
-
+  VarDecl *Var = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
+                                                            SemaRef.CurContext,
+                                                               TemplateArgs));
+  if (!Var)
     return SemaRef.ExprError();
-  }
 
   SemaRef.CurrentInstantiationScope->InstantiatedLocal(E->getVarDecl(), Var);
   return SemaRef.Owned(CXXConstructExpr::Create(SemaRef.Context, Var, T,
                                                 E->getConstructor(), 
                                                 E->isElidable(),
-                                                &Args.front(), Args.size()));
+                                                Args.takeAs<Expr>(), 
+                                                Args.size()));
 }
 
 Sema::OwningExprResult 
@@ -937,17 +904,14 @@ TemplateExprInstantiator::VisitCXXUnresolvedConstructExpr(
   if (T.isNull())
     return SemaRef.ExprError();
 
-  llvm::SmallVector<Expr *, 8> Args;
+  ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
   llvm::SmallVector<SourceLocation, 8> FakeCommaLocs;
   for (CXXUnresolvedConstructExpr::arg_iterator Arg = E->arg_begin(),
                                              ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
     OwningExprResult InstArg = Visit(*Arg);
-    if (InstArg.isInvalid()) {
-      for (unsigned I = 0; I != Args.size(); ++I)
-        Args[I]->Destroy(SemaRef.Context);
+    if (InstArg.isInvalid())
       return SemaRef.ExprError();
-    }
 
     FakeCommaLocs.push_back(
            SemaRef.PP.getLocForEndOfToken((*Arg)->getSourceRange().getEnd()));
@@ -961,7 +925,7 @@ TemplateExprInstantiator::VisitCXXUnresolvedConstructExpr(
                                            T.getAsOpaquePtr(),
                                            E->getLParenLoc(),
                                            Sema::MultiExprArg(SemaRef, 
-                                                       (void **)&Args.front(),
+                                                              Args.take(),
                                                               Args.size()),
                                            &FakeCommaLocs.front(),
                                            E->getRParenLoc());
