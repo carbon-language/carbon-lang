@@ -38,7 +38,7 @@ sys::cas_flag sys::CompareAndSwap(volatile sys::cas_flag* ptr,
 	                                sys::cas_flag new_value,
 	                                sys::cas_flag old_value) {
 #if LLVM_MULTITHREADED==0
-  T result = *dest;
+  sys::cas_flag result = *dest;
   if (result == c)
     *dest = exc;
   return result;
