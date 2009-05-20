@@ -968,8 +968,8 @@ public:
       tmpSet.insert(*I);
 
     for (DomSetType::const_iterator I = DS1.begin(),
-           E = DS1.end(); I != E; ++I) {
-      BasicBlock *Node = *I;
+           E = DS1.end(); I != E; ) {
+      BasicBlock *Node = *I++;
 
       if (tmpSet.erase(Node) == 0)
         // Node is in DS1 but not in DS2.
@@ -993,7 +993,7 @@ public:
       tmpFrontiers.insert(std::make_pair(I->first, I->second));
 
     for (DomSetMapType::iterator I = tmpFrontiers.begin(),
-           E = tmpFrontiers.end(); I != E; ++I) {
+           E = tmpFrontiers.end(); I != E; ) {
       BasicBlock *Node = I->first;
       const_iterator DFI = find(Node);
       if (DFI == end()) 
@@ -1002,6 +1002,7 @@ public:
       if (compareDomSet(I->second, DFI->second))
         return true;
 
+      ++I;
       tmpFrontiers.erase(Node);
     }
 
