@@ -230,16 +230,9 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   void AssignAbbrevNumber(DIEAbbrev &Abbrev);
 
-  /// NewString - Add a string to the constant pool and returns a label.
-  ///
-  DWLabel NewString(const std::string &String) {
-    unsigned StringID = StringPool.insert(String);
-    return DWLabel("string", StringID);
-  }
-
-  /// NewDIEEntry - Creates a new DIEEntry to be a proxy for a debug information
-  /// entry.
-  DIEEntry *NewDIEEntry(DIE *Entry = NULL);
+  /// CreateDIEEntry - Creates a new DIEEntry to be a proxy for a debug
+  /// information entry.
+  DIEEntry *CreateDIEEntry(DIE *Entry = NULL);
 
   /// SetDIEEntry - Set a DIEEntry once the debug information entry is defined.
   ///
@@ -282,7 +275,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// AddDIEEntry - Add a DIE attribute data and value.
   ///
   void AddDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
-    Die->AddValue(Attribute, Form, NewDIEEntry(Entry));
+    Die->AddValue(Attribute, Form, CreateDIEEntry(Entry));
   }
 
   /// AddBlock - Add block data.
@@ -346,9 +339,9 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   CompileUnit &FindCompileUnit(DICompileUnit Unit) const;
 
-  /// NewDbgScopeVariable - Create a new scope variable.
+  /// CreateDbgScopeVariable - Create a new scope variable.
   ///
-  DIE *NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
+  DIE *CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
 
   /// getOrCreateScope - Returns the scope associated with the given descriptor.
   ///

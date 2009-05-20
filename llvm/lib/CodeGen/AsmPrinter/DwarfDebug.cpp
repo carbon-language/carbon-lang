@@ -275,9 +275,9 @@ void DwarfDebug::AssignAbbrevNumber(DIEAbbrev &Abbrev) {
   }
 }
 
-/// NewDIEEntry - Creates a new DIEEntry to be a proxy for a debug information
-/// entry.
-DIEEntry *DwarfDebug::NewDIEEntry(DIE *Entry) {
+/// CreateDIEEntry - Creates a new DIEEntry to be a proxy for a debug
+/// information entry.
+DIEEntry *DwarfDebug::CreateDIEEntry(DIE *Entry) {
   DIEEntry *Value;
 
   if (Entry) {
@@ -545,7 +545,7 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   }
 
   // Set up proxy.
-  Slot = NewDIEEntry();
+  Slot = CreateDIEEntry();
 
   // Construct type.
   DIE Buffer(dwarf::DW_TAG_base_type);
@@ -925,9 +925,9 @@ CompileUnit &DwarfDebug::FindCompileUnit(DICompileUnit Unit) const {
   return *I->second;
 }
 
-/// NewDbgScopeVariable - Create a new scope variable.
+/// CreateDbgScopeVariable - Create a new scope variable.
 ///
-DIE *DwarfDebug::NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
+DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
   // Get the descriptor.
   const DIVariable &VD = DV->getVariable();
 
@@ -1012,7 +1012,7 @@ void DwarfDebug::ConstructDbgScope(DbgScope *ParentScope,
   // Add variables to scope.
   SmallVector<DbgVariable *, 8> &Variables = ParentScope->getVariables();
   for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-    DIE *VariableDie = NewDbgScopeVariable(Variables[i], Unit);
+    DIE *VariableDie = CreateDbgScopeVariable(Variables[i], Unit);
     if (VariableDie) ParentDie->AddChild(VariableDie);
   }
 
