@@ -121,7 +121,7 @@ template<typename VaList, typename ArgType>
 struct VaArg1 {
   void f(int n, ...) {
     VaList va;
-    __builtin_va_start(va, n); // expected-error{{incompatible}}
+    __builtin_va_start(va, n); // expected-error{{int}}
     for (int i = 0; i != n; ++i)
       (void)__builtin_va_arg(va, ArgType);
     __builtin_va_end(va);
