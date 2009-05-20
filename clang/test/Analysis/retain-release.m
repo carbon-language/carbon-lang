@@ -1,14 +1,17 @@
+//>>SLICER
 // RUN: clang-cc -analyze -checker-cfref -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
-
 //===----------------------------------------------------------------------===//
-// The following code is reduced using delta-debugging from
-// Foundation.h (Mac OS X).
+// The following code is reduced using delta-debugging from Mac OS X headers:
+//
+// #include <Cocoa/Cocoa.h>
+// #include <CoreFoundation/CoreFoundation.h>
+// #include <DiskArbitration/DiskArbitration.h>
+// #include <QuartzCore/QuartzCore.h>
+// #include <Quartz/Quartz.h>
 //
 // It includes the basic definitions for the test cases below.
-// Not including Foundation.h directly makes this test case both svelte and
-// portable to non-Mac platforms.
 //===----------------------------------------------------------------------===//
 
 typedef unsigned int __darwin_natural_t;
@@ -17,9 +20,9 @@ typedef signed long CFIndex;
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
-extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
 extern void CFRelease(CFTypeRef cf);
+extern const CFAllocatorRef kCFAllocatorDefault;
 typedef struct {
 }
 CFArrayCallBacks;
@@ -39,17 +42,16 @@ typedef CFTimeInterval CFAbsoluteTime;
 extern CFAbsoluteTime CFAbsoluteTimeGetCurrent(void);
 typedef const struct __CFDate * CFDateRef;
 extern CFDateRef CFDateCreate(CFAllocatorRef allocator, CFAbsoluteTime at);
-extern CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
+CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
+enum {
+kCFCalendarComponentsWrap = (1UL << 0) };
 typedef __darwin_natural_t natural_t;
 typedef natural_t mach_port_name_t;
 typedef mach_port_name_t mach_port_t;
 typedef int kern_return_t;
 typedef kern_return_t mach_error_t;
-typedef struct objc_selector *SEL;
 typedef signed char BOOL;
 typedef unsigned long NSUInteger;
-@class NSString, Protocol;
-extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object;
@@ -69,20 +71,30 @@ typedef struct {
 }
 NSFastEnumerationState;
 @protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
-@end           @class NSString, NSDictionary;
-typedef double NSTimeInterval;
+@end      @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
+@end  @interface NSArray (NSArrayCreation)  + (id)array;
+@end        @interface NSAutoreleasePool : NSObject {
+}
+- (void)drain;
+@end    typedef double NSTimeInterval;
 @interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
-@end            typedef unsigned short unichar;
+@end  enum {
+NSWrapCalendarComponents = kCFCalendarComponentsWrap, };
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
 - ( const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
-@end        @class NSDictionary;
-@interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
+@end      @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
++ (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
++ (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
+@end      @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
 @end    @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
 @end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (id)dictionaryWithCapacity:(NSUInteger)numItems;
-@end @class NSString, NSDictionary, NSArray;
+struct CGRect {
+};
+typedef struct CGRect CGRect;
+- (id)init;
 typedef mach_port_t io_object_t;
 typedef io_object_t io_service_t;
 typedef struct __DASession * DASessionRef;
@@ -92,27 +104,20 @@ extern DADiskRef DADiskCreateFromBSDName( CFAllocatorRef allocator, DASessionRef
 extern DADiskRef DADiskCreateFromIOMedia( CFAllocatorRef allocator, DASessionRef session, io_service_t media );
 extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk );
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk );
-@interface NSTask : NSObject - (id)init;
-@end  extern NSString * const NSTaskDidTerminateNotification;
+typedef struct CGColorSpace *CGColorSpaceRef;
+typedef struct CGImage *CGImageRef;
+@end   @class CIContext;
+@class NSArray, NSError, NSEvent, NSMenu, NSUndoManager, NSWindow;
 @interface NSResponder : NSObject <NSCoding> {
-struct __vaFlags {
-}
-_vaFlags;
 }
 @end    @protocol NSAnimatablePropertyContainer      - (id)animator;
 @end  extern NSString *NSAnimationTriggerOrderIn ;
-@class NSBitmapImageRep, NSCursor, NSGraphicsContext, NSImage, NSPasteboard, NSScrollView, NSTextInputContext, NSWindow, NSAttributedString;
 @interface NSView : NSResponder  <NSAnimatablePropertyContainer>  {
-struct __VFlags2 {
 }
-_vFlags2;
-}
-@end  @class NSColor, NSFont, NSNotification;
-@interface NSTextTab : NSObject <NSCopying, NSCoding> {
-}
-@end @protocol NSValidatedUserInterfaceItem - (SEL)action;
+@end   @class NSColor, NSFont, NSNotification;
+@protocol NSValidatedUserInterfaceItem - (SEL)action;
 @end   @protocol NSUserInterfaceValidations - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem;
-@end @class NSArray, NSError, NSImage, NSView, NSNotificationCenter, NSURL, NSScreen, NSRunningApplication;
+@end    typedef struct NSThreadPrivate _NSThreadPrivate;
 @interface NSApplication : NSResponder <NSUserInterfaceValidations> {
 }
 @end   enum {
@@ -121,29 +126,30 @@ typedef NSUInteger NSApplicationTerminateReply;
 @protocol NSApplicationDelegate <NSObject> @optional        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 @end    enum {
 NSUserInterfaceLayoutDirectionLeftToRight = 0,     NSUserInterfaceLayoutDirectionRightToLeft = 1 };
-@interface NSManagedObject : NSObject {
+@interface CIImage : NSObject <NSCoding, NSCopying> {
 }
-@end enum {
+typedef int CIFormat;
+typedef struct __SFlags {
+}
+_SFlags;
+@end    extern NSString * const kCAGravityCenter     __attribute__((visibility("default")));
+enum {
 kDAReturnSuccess = 0,     kDAReturnError = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x01,     kDAReturnBusy = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x02,     kDAReturnBadArgument = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x03,     kDAReturnExclusiveAccess = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x04,     kDAReturnNoResources = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x05,     kDAReturnNotFound = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x06,     kDAReturnNotMounted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x07,     kDAReturnNotPermitted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x08,     kDAReturnNotPrivileged = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x09,     kDAReturnNotReady = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0A,     kDAReturnNotWritable = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0B,     kDAReturnUnsupported = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0C };
 typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string );
-
- @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
- - (NSUInteger)count;
- + (id)array;
- @end
- 
-@interface NSAutoreleasePool : NSObject {}
-+ (void)addObject:(id)anObject;
-- (void)addObject:(id)anObject;
-- (void)drain;
+@interface CIContext: NSObject {
+}
+- (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r;
+- (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r     format:(CIFormat)f colorSpace:(CGColorSpaceRef)cs;
+@end     @protocol QCCompositionRenderer      @end   @interface QCRenderer : NSObject <QCCompositionRenderer> {
+}
+- (id) createSnapshotImageOfType:(NSString*)type;
+@end     @interface QCView : NSView <QCCompositionRenderer> {
+}
+- (id) createSnapshotImageOfType:(NSString*)type;
 @end
-
-@interface NSData : NSObject {}
-+ (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
-+ (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
-@end
+extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -642,6 +648,7 @@ static void PR4230(void)
 + (id):(int)x, ... {
   return [[NSString alloc] init]; // expected-warning{{leak}}
 }
+@end
 
 //===----------------------------------------------------------------------===//
 // <rdar://problem/6893565> don't flag leaks for return types that cannot be 
@@ -661,6 +668,19 @@ typedef struct s6893565* TD6893565;
   return (TD6893565) [[NSString alloc] init]; // no-warning
 }
 @end
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6902710> clang: false positives w/QC and CoreImage methods
+//===----------------------------------------------------------------------===//
+
+void rdar6902710(QCView *view, QCRenderer *renderer, CIContext *context,
+                 NSString *str, CIImage *img, CGRect rect,
+                 CIFormat form, CGColorSpaceRef cs) {
+  [view createSnapshotImageOfType:str]; // expected-warning{{leak}}
+  [renderer createSnapshotImageOfType:str]; // expected-warning{{leak}}
+  [context createCGImage:img fromRect:rect]; // expected-warning{{leak}}
+  [context createCGImage:img fromRect:rect format:form colorSpace:cs]; // expected-warning{{leak}}
+}
 
 //===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
@@ -684,4 +704,5 @@ void test_attr_1(TestOwnershipAttr *X) {
 void test_attr_1b(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
 }
+//<<SLICER
 

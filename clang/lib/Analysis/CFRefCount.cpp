@@ -1371,17 +1371,17 @@ void RetainSummaryManager::InitializeMethodSummaries() {
                  DecRefMsg));
   
   // The next methods are allocators.
-  RetainSummary* Summ = getPersistentSummary(ObjCAllocRetE);  
+  RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);  
   
   // Create the "copy" selector.  
-  addNSObjectMethSummary(GetNullarySelector("copy", Ctx), Summ);  
+  addNSObjectMethSummary(GetNullarySelector("copy", Ctx), AllocSumm);  
 
   // Create the "mutableCopy" selector.
-  addNSObjectMethSummary(GetNullarySelector("mutableCopy", Ctx), Summ);
+  addNSObjectMethSummary(GetNullarySelector("mutableCopy", Ctx), AllocSumm);
   
   // Create the "retain" selector.
   RetEffect E = RetEffect::MakeReceiverAlias();
-  Summ = getPersistentSummary(E, IncRefMsg);
+  RetainSummary *Summ = getPersistentSummary(E, IncRefMsg);
   addNSObjectMethSummary(GetNullarySelector("retain", Ctx), Summ);
   
   // Create the "release" selector.
@@ -1449,6 +1449,18 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   addPanicSummary("NSAssertionHandler", "handleFailureInMethod", "object",
                   "file", "lineNumber", "description", NULL);
+  
+  // Create summaries QCRenderer/QCView -createSnapShotImageOfType:
+  addInstMethSummary("QCRenderer", AllocSumm,
+                     "createSnapshotImageOfType", NULL);
+  addInstMethSummary("QCView", AllocSumm,
+                     "createSnapshotImageOfType", NULL);
+
+  // Create summaries for CIContext, 'createCGImage'.
+  addInstMethSummary("CIContext", AllocSumm,
+                     "createCGImage", "fromRect", NULL);
+  addInstMethSummary("CIContext", AllocSumm,
+                     "createCGImage", "fromRect", "format", "colorSpace", NULL);
 }
 
 //===----------------------------------------------------------------------===//
