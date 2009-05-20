@@ -314,6 +314,45 @@ Stmt::child_iterator CXXExprWithTemporaries::child_end() {
   return &SubExpr + 1;
 }
 
+CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(
+                                                 SourceLocation TyBeginLoc,
+                                                 QualType T,
+                                                 SourceLocation LParenLoc,
+                                                 Expr **Args,
+                                                 unsigned NumArgs,
+                                                 SourceLocation RParenLoc)
+  : Expr(CXXUnresolvedConstructExprClass, T.getNonReferenceType(),
+         T->isDependentType(), true),
+    TyBeginLoc(TyBeginLoc),
+    Type(T),
+    LParenLoc(LParenLoc),
+    RParenLoc(RParenLoc),
+    NumArgs(NumArgs) {
+  Stmt **StoredArgs = reinterpret_cast<Stmt **>(this + 1);
+  memcpy(StoredArgs, Args, sizeof(Expr *) * NumArgs);
+}
+
+CXXUnresolvedConstructExpr *
+CXXUnresolvedConstructExpr::Create(ASTContext &C, 
+                                   SourceLocation TyBegin,
+                                   QualType T,
+                                   SourceLocation LParenLoc,
+                                   Expr **Args,
+                                   unsigned NumArgs,
+                                   SourceLocation RParenLoc) {
+  void *Mem = C.Allocate(sizeof(CXXUnresolvedConstructExpr) +
+                         sizeof(Expr *) * NumArgs);
+  return new (Mem) CXXUnresolvedConstructExpr(TyBegin, T, LParenLoc,
+                                              Args, NumArgs, RParenLoc);
+}
+
+Stmt::child_iterator CXXUnresolvedConstructExpr::child_begin() {
+  return child_iterator(reinterpret_cast<Stmt **>(this + 1));
+}
+
+Stmt::child_iterator CXXUnresolvedConstructExpr::child_end() {
+  return child_iterator(reinterpret_cast<Stmt **>(this + 1) + NumArgs);
+}
 
 //===----------------------------------------------------------------------===//
 //  Cloners

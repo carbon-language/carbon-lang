@@ -126,6 +126,7 @@ EXPR(UnresolvedDeclRefExpr  , Expr)
 EXPR(CXXConstructExpr       , Expr)
 EXPR(CXXExprWithTemporaries , Expr)
 EXPR(CXXTemporaryObjectExpr , CXXConstructExpr)
+EXPR(CXXUnresolvedConstructExpr, Expr)
 
 // Obj-C Expressions.
 EXPR(ObjCStringLiteral    , Expr)

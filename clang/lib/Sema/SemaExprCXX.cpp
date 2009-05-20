@@ -164,14 +164,11 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
     exprs.release();
     
-    // FIXME: Is this correct (I don't think so). Instead, we should have an 
-    // CXXUnresolvedTemporaryObjectExpr node for this.
-    CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
-
-    return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 0, Ty, 
-                                                      TyBeginLoc,
-                                                      Exprs, NumExprs,
-                                                      RParenLoc));
+    return Owned(CXXUnresolvedConstructExpr::Create(Context, 
+                                                    TypeRange.getBegin(), Ty, 
+                                                    LParenLoc,
+                                                    Exprs, NumExprs,
+                                                    RParenLoc));
   }
 
 

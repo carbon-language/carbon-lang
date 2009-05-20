@@ -1110,6 +1110,21 @@ void StmtPrinter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   PrintExpr(E->getSubExpr());
 }
 
+void 
+StmtPrinter::VisitCXXUnresolvedConstructExpr(
+                                           CXXUnresolvedConstructExpr *Node) {
+  OS << Node->getTypeAsWritten().getAsString();
+  OS << "(";
+  for (CXXUnresolvedConstructExpr::arg_iterator Arg = Node->arg_begin(),
+                                             ArgEnd = Node->arg_end(); 
+       Arg != ArgEnd; ++Arg) {
+    if (Arg != Node->arg_begin())
+      OS << ", ";
+    PrintExpr(*Arg);
+  }
+  OS << ")";
+}
+
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
   default: assert(false && "Unknown type trait");

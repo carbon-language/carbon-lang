@@ -93,6 +93,8 @@ namespace {
     // FIXME: UnaryTypeTraitExpr
     // FIXME: QualifiedDeclRefExpr
     // FIXME: CXXExprWithTemporaries
+    OwningExprResult VisitCXXUnresolvedConstructExpr(
+                                               CXXUnresolvedConstructExpr *E);
     OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
     OwningExprResult VisitUnresolvedFunctionNameExpr(
                                               UnresolvedFunctionNameExpr *E);
@@ -831,6 +833,45 @@ TemplateExprInstantiator::VisitCXXThisExpr(CXXThisExpr *E) {
     new (SemaRef.Context) CXXThisExpr(E->getLocStart(), ThisType);
   
   return SemaRef.Owned(TE);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXUnresolvedConstructExpr(
+                                              CXXUnresolvedConstructExpr *E) {
+  QualType T = SemaRef.InstantiateType(E->getTypeAsWritten(), TemplateArgs,
+                                       E->getTypeBeginLoc(), 
+                                       DeclarationName());
+  if (T.isNull())
+    return SemaRef.ExprError();
+
+  llvm::SmallVector<Expr *, 8> Args;
+  llvm::SmallVector<SourceLocation, 8> FakeCommaLocs;
+  for (CXXUnresolvedConstructExpr::arg_iterator Arg = E->arg_begin(),
+                                             ArgEnd = E->arg_end();
+       Arg != ArgEnd; ++Arg) {
+    OwningExprResult InstArg = Visit(*Arg);
+    if (InstArg.isInvalid()) {
+      for (unsigned I = 0; I != Args.size(); ++I)
+        Args[I]->Destroy(SemaRef.Context);
+      return SemaRef.ExprError();
+    }
+
+    FakeCommaLocs.push_back(
+           SemaRef.PP.getLocForEndOfToken((*Arg)->getSourceRange().getEnd()));
+    Args.push_back(InstArg.takeAs<Expr>());
+  }
+
+  // FIXME: The end of the type range isn't exactly correct.
+  // FIXME: we're faking the locations of the commas
+  return SemaRef.ActOnCXXTypeConstructExpr(SourceRange(E->getTypeBeginLoc(),
+                                                       E->getLParenLoc()),
+                                           T.getAsOpaquePtr(),
+                                           E->getLParenLoc(),
+                                           Sema::MultiExprArg(SemaRef, 
+                                                       (void **)&Args.front(),
+                                                              Args.size()),
+                                           &FakeCommaLocs.front(),
+                                           E->getRParenLoc());
 }
 
 Sema::OwningExprResult 

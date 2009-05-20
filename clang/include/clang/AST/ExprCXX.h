@@ -982,6 +982,103 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Describes an explicit type conversion that uses functional
+/// notion but could not be resolved because one or more arguments are
+/// type-dependent.
+///
+/// The explicit type conversions expressed by
+/// CXXUnresolvedConstructExpr have the form \c T(a1, a2, ..., aN),
+/// where \c T is some type and \c a1, a2, ..., aN are values, and
+/// either \C T is a dependent type or one or more of the \c a's is
+/// type-dependent. For example, this would occur in a template such
+/// as:
+///
+/// \code
+///   template<typename T, typename A1>
+///   inline T make_a(const A1& a1) {
+///     return T(a1);
+///   }
+/// \endcode
+///
+/// When the returned expression is instantiated, it may resolve to a
+/// constructor call, conversion function call, or some kind of type
+/// conversion.
+class CXXUnresolvedConstructExpr : public Expr {
+  /// \brief The starting location of the type
+  SourceLocation TyBeginLoc;
+
+  /// \brief The type being constructed.
+  QualType Type;
+
+  /// \brief The location of the left parentheses ('(').
+  SourceLocation LParenLoc;
+
+  /// \brief The location of the right parentheses (')').
+  SourceLocation RParenLoc;
+
+  /// \brief The number of arguments used to construct the type.
+  unsigned NumArgs;
+  
+  CXXUnresolvedConstructExpr(SourceLocation TyBegin,
+                             QualType T,
+                             SourceLocation LParenLoc,
+                             Expr **Args,
+                             unsigned NumArgs,
+                             SourceLocation RParenLoc);
+
+public:
+  static CXXUnresolvedConstructExpr *Create(ASTContext &C, 
+                                            SourceLocation TyBegin,
+                                            QualType T,
+                                            SourceLocation LParenLoc,
+                                            Expr **Args,
+                                            unsigned NumArgs,
+                                            SourceLocation RParenLoc);
+
+  /// \brief Retrieve the source location where the type begins.
+  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }
+
+  /// \brief Retrieve the type that is being constructed, as specified
+  /// in the source code.
+  QualType getTypeAsWritten() const { return Type; }
+  void setTypeAsWritten(QualType T) { Type = T; }
+
+  /// \brief Retrieve the location of the left parentheses ('(') that
+  /// precedes the argument list.
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  void setLParenLoc(SourceLocation L) { LParenLoc = L; }
+
+  /// \brief Retrieve the location of the right parentheses (')') that
+  /// follows the argument list.
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
+  /// \brief Retrieve the number of arguments.
+  unsigned arg_size() const { return NumArgs; }
+
+  typedef Expr** arg_iterator;
+  arg_iterator arg_begin() { return reinterpret_cast<Expr**>(this + 1); }
+  arg_iterator arg_end() { return arg_begin() + NumArgs; }
+
+  Expr *getArg(unsigned I) {
+    assert(I < NumArgs && "Argument index out-of-range");
+    return *(arg_begin() + I);
+  }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(TyBeginLoc, RParenLoc);
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXUnresolvedConstructExprClass;
+  }
+  static bool classof(const CXXUnresolvedConstructExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 }  // end namespace clang
 
 #endif
