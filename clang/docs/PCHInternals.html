@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Precompiled Headers (PCH)</title>
+</head>
+
+<body>
+
+<!--#include virtual="../menu.html.incl"-->
+
+<div id="content">
+
+<h1>Precompiled Headers</h1>
+
+  <p>This document describes the design and implementation of Clang's
+  precompiled headers (PCH). If you are interested in the end-user
+  view, please see the <a
+   href="UsersManual.html#precompiledheaders">User's Manual</a>.</p>
+
+<h2>Using precompiled headers with <tt>clang-cc</tt></h2>
+
+<p>The low-level Clang compiler, <tt>clang-cc</tt>, supports two command
+line options for generating and using PCH files.<p>
+
+<p>To generate PCH files using <tt>clang-cc</tt>, use the option
+<b><tt>-emit-pch</tt></b>:
+
+<pre> $ clang-cc test.h -emit-pch -o test.h.pch </pre>
+
+<p>This option is transparently used by <tt>clang</tt> when generating
+PCH files. The resulting PCH file contains the serialized form of the
+compiler's internal representation after it has completed parsing and
+semantic analysis. The PCH file can then be used as a prefix header
+with the <b><tt>-include-pch</tt></b> option:</p>
+
+<pre>
+  $ clang-cc -include-pch test.h.pch test.c -o test.s
+</pre>
+
+<h2>PCH Design Philosophy</h2>
+  
+<p>Precompiled headers are meant to improve overall compile times for
+  projects, so the design of precompiled headers is entirely driven by
+  performance concerns. The use case for precompiled headers is
+  relatively simple: when there is a common set of headers that is
+  included in nearly every source file in the project, we
+  <i>precompile</i> that bundle of headers into a single precompiled
+  header (PCH file). Then, when compiling the source files in the
+  project, we load the PCH file first (as a prefix header), which acts
+  as a stand-in for that bundle of headers.</p>
+
+<p>A precompiled header implementation improves performance when:</p>
+<ul>
+  <li>Loading the PCH file is significantly faster than re-parsing the
+  bundle of headers stored within the PCH file. Thus, a precompiled
+  header design attempts to minimize the cost of reading the PCH
+  file. Ideally, this cost should not vary with the size of the
+  precompiled header file.</li>
+  
+  <li>The cost of generating the PCH file initially is not so large
+  that it counters the per-source-file performance improvement due to
+  eliminating the need to parse the bundled headers in the first
+  place. This is particularly important on multi-core systems, because
+  PCH file generation serializes the build when all compilations
+  require the PCH file to be up-to-date.</li>
+</ul>
+  
+<p>More to be written...</p>
+</div>
+
+</body>
+</html>

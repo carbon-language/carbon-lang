@@ -31,7 +31,7 @@ td {
   <ul>
   </ul>
 </li>
-<li><a href="#pth">Pretokenized Headers (PTH)</a>
+<li><a href="#pch">Precompiled Headers</a>
 <li><a href="#libfrontend">The Frontend Library</a>
   <ul>
   </ul>
@@ -548,11 +548,19 @@ This concept maps directly to the "spelling location" for the token.</p>
 href="DriverInternals.html">here<a>.<p>
 
 <!-- ======================================================================= -->
-<h2 id="pth">Pretokenized Headers (PTH)</h2>
+<h2 id="pch">Precompiled Headers</h2>
 <!-- ======================================================================= -->
 
-<p>Clang's current implementation of precompiled headers, known as PTH, is
-documented <a href="PTHInternals.html">here</a>.</p>
+<p>Clang supports two implementations of precompiled headers. The
+   default implementation, precompiled headers (<a
+    href="PCHInternals.html">PCH</a>) uses a serialized representation
+   of Clang's internal data structures, encoded with the <a
+    href="http://llvm.org/docs/BitCodeFormat.html">LLVM bitstream
+   format</a>. Pretokenized headers (<a
+    href="PTHInternals.html">PTH</a>), on the other hand, contain a
+   serialized representation of the tokens encountered when
+   preprocessing a header (and anything that header includes).</p>
+
 
 <!-- ======================================================================= -->
 <h2 id="libfrontend">The Frontend Library</h2>
