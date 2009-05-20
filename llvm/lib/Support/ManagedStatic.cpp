@@ -68,12 +68,13 @@ void ManagedStaticBase::destroy() const {
   DeleterFn = 0;
 }
 
-void llvm::llvm_start_multithreaded() {
+bool llvm::llvm_start_multithreaded() {
 #if LLVM_MULTITHREADED
   assert(ManagedStaticMutex == 0 && "Multithreaded LLVM already initialized!");
   ManagedStaticMutex = new sys::Mutex(true);
+  return true;
 #else
-  assert(0 && "LLVM built without multithreading support!");
+  return false;
 #endif
 }
 

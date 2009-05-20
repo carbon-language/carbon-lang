@@ -96,8 +96,10 @@ public:
 
 
 /// llvm_start_multithreaded - Allocate and initialize structures needed to
-/// make LLVM safe for multithreading.
-void llvm_start_multithreaded();
+/// make LLVM safe for multithreading.  The return value indicates whether
+/// multithreaded initialization succeeded.  LLVM will still be operational
+/// on "failed" return, but will not be safe to run multithreaded.
+bool llvm_start_multithreaded();
 
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 void llvm_shutdown();
