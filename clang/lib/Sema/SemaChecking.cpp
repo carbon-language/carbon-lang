@@ -19,6 +19,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
+#include <limits>
 using namespace clang;
 
 /// getLocationOfStringLiteralByte - Return a source location that points to the
