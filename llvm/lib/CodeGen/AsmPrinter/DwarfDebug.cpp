@@ -1092,7 +1092,8 @@ void DwarfDebug::ConstructDbgScope(DbgScope *ParentScope,
 
 /// ConstructFunctionDbgScope - Construct the scope for the subprogram.
 ///
-void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope) {
+void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
+                                           bool AbstractScope) {
   // Exit if there is no root scope.
   if (!RootScope) return;
   DIDescriptor Desc = RootScope->getDesc();
@@ -1111,41 +1112,17 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope) {
   DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
   assert(SPDie && "Missing subprogram descriptor");
 
-  // Add the function bounds.
-  AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           DWLabel("func_begin", SubprogramCount));
-  AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           DWLabel("func_end", SubprogramCount));
-  MachineLocation Location(RI->getFrameRegister(*MF));
-  AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
+  if (!AbstractScope) {
+    // Add the function bounds.
+    AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+             DWLabel("func_begin", SubprogramCount));
+    AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
+             DWLabel("func_end", SubprogramCount));
+    MachineLocation Location(RI->getFrameRegister(*MF));
+    AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
+  }
 
   ConstructDbgScope(RootScope, 0, 0, SPDie, Unit);
-}
-
-/// ConstructFunctionDbgScope - Construct the scope for the abstract debug
-/// scope.
-///
-void DwarfDebug::ConstructAbstractDbgScope(DbgScope *AbsScope) {
-  // Exit if there is no root scope.
-  if (!AbsScope) return;
-
-  DIDescriptor Desc = AbsScope->getDesc();
-  if (Desc.isNull())
-    return;
-
-  // Get the subprogram debug information entry.
-  DISubprogram SPD(Desc.getGV());
-
-  // Get the compile unit context.
-  CompileUnit *Unit = MainCU;
-  if (!Unit)
-    Unit = &FindCompileUnit(SPD.getCompileUnit());
-
-  // Get the subprogram die.
-  DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
-  assert(SPDie && "Missing subprogram descriptor");
-
-  ConstructDbgScope(AbsScope, 0, 0, SPDie, Unit);
 }
 
 /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
@@ -1587,7 +1564,7 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
   for (SmallVector<DbgScope *, 32>::iterator
          I = AbstractInstanceRootList.begin(),
          E = AbstractInstanceRootList.end(); I != E; ++I)
-    ConstructAbstractDbgScope(*I);
+    ConstructFunctionDbgScope(*I);
 
   // Construct scopes for subprogram.
   if (FunctionDbgScope)

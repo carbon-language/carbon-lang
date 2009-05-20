@@ -355,12 +355,8 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// ConstructFunctionDbgScope - Construct the scope for the subprogram.
   ///
-  void ConstructFunctionDbgScope(DbgScope *RootScope);
-
-  /// ConstructFunctionDbgScope - Construct the scope for the abstract debug
-  /// scope.
-  ///
-  void ConstructAbstractDbgScope(DbgScope *AbsScope);
+  void ConstructFunctionDbgScope(DbgScope *RootScope,
+                                 bool AbstractScope = false);
 
   /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
   ///
