@@ -14,7 +14,15 @@
 #ifndef LLVM_SUPPORT_MANAGED_STATIC_H
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
+#include "llvm/System/Atomic.h"
+
 namespace llvm {
+
+/// object_creator - Helper method for ManagedStatic.
+template<class C>
+void* object_creator() {
+  return new C();
+}
 
 /// object_deleter - Helper method for ManagedStatic.
 ///
@@ -32,7 +40,7 @@ protected:
   mutable void (*DeleterFn)(void*);
   mutable const ManagedStaticBase *Next;
 
-  void RegisterManagedStatic(void *ObjPtr, void (*deleter)(void*)) const;
+  void RegisterManagedStatic(void *(*creator)(), void (*deleter)(void*)) const;
 public:
   /// isConstructed - Return true if this object has not been created yet.
   bool isConstructed() const { return Ptr != 0; }
@@ -51,25 +59,32 @@ public:
 
   // Accessors.
   C &operator*() {
-    if (!Ptr) LazyInit();
+    void* tmp = Ptr;
+    sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
-    if (!Ptr) LazyInit();
+    void* tmp = Ptr;
+    sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
-    if (!Ptr) LazyInit();
+    void* tmp = Ptr;
+    sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
+
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
-    if (!Ptr) LazyInit();
-    return static_cast<C*>(Ptr);
-  }
+    void* tmp = Ptr;
+    sys::MemoryFence();
+    if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
 
-public:
-  void LazyInit() const {
-    RegisterManagedStatic(new C(), object_deleter<C>);
+    return static_cast<C*>(Ptr);
   }
 };
 
@@ -80,6 +95,10 @@ public:
 };
 
 
+/// llvm_start_multithreaded - Allocate and initialize structures needed to
+/// make LLVM safe for multithreading.
+void llvm_start_multithreaded();
+
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 void llvm_shutdown();
 
@@ -87,7 +106,10 @@ void llvm_shutdown();
 /// llvm_shutdown_obj - This is a simple helper class that calls
 /// llvm_shutdown() when it is destroyed.
 struct llvm_shutdown_obj {
-  llvm_shutdown_obj() {}
+  llvm_shutdown_obj() { }
+  explicit llvm_shutdown_obj(bool multithreaded) {
+    if (multithreaded) llvm_start_multithreaded();
+  }
   ~llvm_shutdown_obj() { llvm_shutdown(); }
 };
 
