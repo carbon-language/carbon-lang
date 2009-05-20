@@ -17,6 +17,7 @@
 #include "llvm/Config/config.h"
 
 #if defined(_MSC_VER)
+#define NOMINMAX
 #include <windows.h>
 #endif
 
