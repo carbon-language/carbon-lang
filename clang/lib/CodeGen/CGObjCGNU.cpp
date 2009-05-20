@@ -41,6 +41,7 @@ using llvm::dyn_cast;
 // The version of the runtime that this class targets.  Must match the version
 // in the runtime.
 static const int RuntimeVersion = 8;
+static const int NonFragileRuntimeVersion = 9;
 static const int ProtocolVersion = 2;
 
 namespace {
@@ -101,6 +102,8 @@ private:
       std::vector<llvm::Constant*> &V, const std::string &Name="");
   llvm::Constant *MakeGlobal(const llvm::ArrayType *Ty,
       std::vector<llvm::Constant*> &V, const std::string &Name="");
+  llvm::GlobalVariable *ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
+      const ObjCIvarDecl *Ivar);
 public:
   CGObjCGNU(CodeGen::CodeGenModule &cgm);
   virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *);
@@ -822,6 +825,14 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   llvm::SmallVector<llvm::Constant*, 16> IvarNames;
   llvm::SmallVector<llvm::Constant*, 16> IvarTypes;
   llvm::SmallVector<llvm::Constant*, 16> IvarOffsets;
+  
+  int superInstanceSize = !SuperClassDecl ? 0 : 
+    Context.getASTObjCInterfaceLayout(SuperClassDecl).getSize() / 8;
+  // For non-fragile ivars, set the instance size to 0 - {the size of just this
+  // class}.  The runtime will then set this to the correct value on load.
+  if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
+    instanceSize = 0 - (instanceSize - superInstanceSize);
+  }
   for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
       endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
       // Store the name
@@ -832,7 +843,14 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
       IvarTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
       // Get the offset
-      uint64_t Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
+      uint64_t Offset;
+      if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
+		Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter) -
+			superInstanceSize;
+        ObjCIvarOffsetVariable(ClassDecl, *iter);
+      } else {
+        Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
+      }
       IvarOffsets.push_back(
           llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset));
   }
@@ -1078,7 +1096,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       PtrToInt8Ty, llvm::PointerType::getUnqual(SymTabTy), NULL);
   Elements.clear();
   // Runtime version used for compatibility checking.
-  Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
+  if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
+	Elements.push_back(llvm::ConstantInt::get(LongTy,
+        NonFragileRuntimeVersion));
+  } else {
+    Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
+  }
   // sizeof(ModuleTy)
   llvm::TargetData td = llvm::TargetData::TargetData(&TheModule);
   Elements.push_back(llvm::ConstantInt::get(LongTy, td.getTypeSizeInBits(ModuleTy)/8));
@@ -1104,6 +1127,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
         llvm::Type::VoidTy, Params, true), "__objc_exec_class");
   Builder.CreateCall(Register, Module);
   Builder.CreateRetVoid();
+
   return LoadFunction;
 }
 
@@ -1468,6 +1492,25 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
   return;
 }
 
+llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
+                              const ObjCInterfaceDecl *ID,
+                              const ObjCIvarDecl *Ivar) {
+  const std::string Name = "__objc_ivar_offset_" + ID->getNameAsString()
+    + '.' + Ivar->getNameAsString();
+  // Emit the variable and initialize it with what we think the correct value
+  // is.  This allows code compiled with non-fragile ivars to work correctly
+  // when linked against code which isn't (most of the time).
+  llvm::GlobalVariable *IvarOffsetGV = CGM.getModule().getGlobalVariable(Name);
+  if (!IvarOffsetGV) {
+    uint64_t Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
+    llvm::ConstantInt *OffsetGuess =
+      llvm::ConstantInt::get(LongTy, Offset, "ivar");
+    IvarOffsetGV = new llvm::GlobalVariable(LongTy, false,
+        llvm::GlobalValue::CommonLinkage, OffsetGuess, Name, &TheModule);
+  }
+  return IvarOffsetGV;
+}
+
 LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        QualType ObjectTy,
                                        llvm::Value *BaseValue,
@@ -1477,12 +1520,40 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
                                   EmitIvarOffset(CGF, ID, Ivar));
 }
+static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
+                                                  const ObjCInterfaceDecl *OID,
+                                                  const ObjCIvarDecl *OIVD) {
+  for (ObjCInterfaceDecl::ivar_iterator IVI = OID->ivar_begin(), 
+         IVE = OID->ivar_end(); IVI != IVE; ++IVI)
+    if (OIVD == *IVI)
+      return OID;
+  
+  // Also look in synthesized ivars.
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  Context.CollectSynthesizedIvars(OID, Ivars);
+  for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
+    if (OIVD == Ivars[k])
+      return OID;
+  }
+  
+  // Otherwise check in the super class.
+  if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
+    return FindIvarInterface(Context, Super, OIVD);
+    
+  return 0;
+}
 
 llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                          const ObjCInterfaceDecl *Interface,
                          const ObjCIvarDecl *Ivar) {
+  if (CGF.getContext().getLangOptions().ObjCNonFragileABI)
+  {
+    Interface = FindIvarInterface(CGM.getContext(), Interface, Ivar);
+    return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar),
+        false, "ivar");
+  }
   uint64_t Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
-  return llvm::ConstantInt::get(LongTy, Offset);
+  return llvm::ConstantInt::get(LongTy, Offset, "ivar");
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){
