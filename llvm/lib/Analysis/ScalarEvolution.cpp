@@ -388,7 +388,9 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
 bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   // This recurrence is invariant w.r.t to QueryLoop iff QueryLoop doesn't
   // contain L and if the start is invariant.
-  return !QueryLoop->contains(L->getHeader()) &&
+  // Add recurrences are never invariant in the function-body (null loop).
+  return QueryLoop &&
+         !QueryLoop->contains(L->getHeader()) &&
          getOperand(0)->isLoopInvariant(QueryLoop);
 }
 
@@ -410,8 +412,10 @@ SCEVUnknown::~SCEVUnknown() { SCEVUnknowns->erase(V); }
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // All non-instruction values are loop invariant.  All instructions are loop
   // invariant if they are not contained in the specified loop.
+  // Instructions are never considered invariant in the function body
+  // (null loop) because they are defined within the "loop".
   if (Instruction *I = dyn_cast<Instruction>(V))
-    return !L->contains(I->getParent());
+    return L && !L->contains(I->getParent());
   return true;
 }
 
