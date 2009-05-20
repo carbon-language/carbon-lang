@@ -44,6 +44,8 @@ void test_scalar() {
 void test_complex() {
   _Complex int a = 10i;
   f(a);
+  
+  f(10i);
 }
 
 void test_aggregate() {

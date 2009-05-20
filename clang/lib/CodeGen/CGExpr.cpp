@@ -79,10 +79,16 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
   }
   
   if (!hasAggregateLLVMType(E->getType())) {
-    // Make a temporary variable that we can bind the reference to.
+    // Create a temporary variable that we can bind the reference to.
     llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), 
                                          "reftmp");
     EmitStoreOfScalar(EmitScalarExpr(E), Temp, false, E->getType());
+    return RValue::get(Temp);
+  } else if (E->getType()->isAnyComplexType()) {
+    // Create a temporary variable that we can bind the reference to.
+    llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), 
+                                         "reftmp");
+    EmitComplexExprIntoAddr(E, Temp, false);
     return RValue::get(Temp);
   }
   
