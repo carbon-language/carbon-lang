@@ -705,10 +705,13 @@ SVal RegionStoreManager::Retrieve(const GRState* St, Loc L, QualType T) {
 
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
 
-  // We return unknown for symbolic region for now. This might be improved.
+  // FIXME: return symbolic value for these cases.
   // Example:
   // void f(int* p) { int x = *p; }
-  if (isa<SymbolicRegion>(MR))
+  // char* p = alloca();
+  // read(p);
+  // c = *p;
+  if (isa<SymbolicRegion>(MR) || isa<AllocaRegion>(MR))
     return UnknownVal();
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument

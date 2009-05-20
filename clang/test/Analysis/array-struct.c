@@ -15,6 +15,7 @@ typedef struct {
   int data;
 } STYPE;
 
+void g(char *p);
 void g1(struct s* p);
 
 // Array to pointer conversion. Array in the struct field.
@@ -62,6 +63,8 @@ void f5() {
 void f6() {
   char *p;
   p = __builtin_alloca(10); 
+  g(p);
+  char c = *p;
   p[1] = 'a';
   // Test if RegionStore::EvalBinOp converts the alloca region to element
   // region.
@@ -98,7 +101,7 @@ void f10() {
 // Retrieve the default value of element/field region.
 void f11() {
   struct s a;
-  g(&a);
+  g1(&a);
   if (a.data == 0) // no-warning
     a.data = 1;
 }
