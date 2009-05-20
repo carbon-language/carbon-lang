@@ -53,8 +53,8 @@ public:
   
   // Pointer arithmetic.
   
-  virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         Loc L, NonLoc R);  
+  virtual SVal EvalBinOp(GRExprEngine& Engine, const GRState *state,
+                         BinaryOperator::Opcode Op, Loc L, NonLoc R);  
   
   // Calls.
   

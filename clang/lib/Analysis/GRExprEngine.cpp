@@ -177,7 +177,7 @@ const GRState* GRExprEngine::getInitialState() {
       if (T->isIntegerType())
         if (const MemRegion *R = StateMgr.getRegion(PD)) {
           SVal V = GetSVal(state, loc::MemRegionVal(R));
-          SVal Constraint = EvalBinOp(BinaryOperator::GT, V,
+          SVal Constraint = EvalBinOp(state, BinaryOperator::GT, V,
                                       ValMgr.makeZeroVal(T),
                                       getContext().IntTy);          
           bool isFeasible = false;          
@@ -841,7 +841,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
         
     do {
       nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1.Val.getInt()));      
-      SVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal,
+      SVal Res = EvalBinOp(DefaultSt, BinaryOperator::EQ, CondV, CaseVal,
                            getContext().IntTy);
       
       // Now "assume" that the case matches.      
@@ -1333,7 +1333,8 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     SVal oldValueVal = StateMgr.GetSVal(stateLoad, oldValueExpr);
         
     // Perform the comparison.
-    SVal Cmp = Engine.EvalBinOp(BinaryOperator::EQ, theValueVal, oldValueVal,
+    SVal Cmp = Engine.EvalBinOp(stateLoad,
+                                BinaryOperator::EQ, theValueVal, oldValueVal,
                                 Engine.getContext().IntTy);
     bool isFeasible = false;
     const GRState *stateEqual = StateMgr.Assume(stateLoad, Cmp, true,
@@ -2622,7 +2623,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             
             if (isa<Loc>(V)) {
               Loc X = Loc::MakeNull(getBasicVals());
-              SVal Result = EvalBinOp(BinaryOperator::EQ, cast<Loc>(V), X,
+              SVal Result = EvalBinOp(state,BinaryOperator::EQ, cast<Loc>(V), X,
                                       U->getType());
               state = BindExpr(state, U, Result);
             }
@@ -2679,7 +2680,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
 
-      SVal Result = EvalBinOp(Op, V2, MakeConstantVal(1U, U), U->getType());    
+      SVal Result = EvalBinOp(state, Op, V2, MakeConstantVal(1U, U), 
+                              U->getType());    
       
       // Conjure a new symbol if necessary to recover precision.
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result)){
@@ -2690,7 +2692,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         // non-nullness.  Check if the original value was non-null, and if so propagate
         // that constraint.        
         if (Loc::IsLocType(U->getType())) {
-          SVal Constraint = EvalBinOp(BinaryOperator::EQ, V2,
+          SVal Constraint = EvalBinOp(state, BinaryOperator::EQ, V2,
                                       ValMgr.makeZeroVal(U->getType()),
                                       getContext().IntTy);          
           
@@ -2699,7 +2701,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
           if (!isFeasible) {
             // It isn't feasible for the original value to be null.
             // Propagate this constraint.
-            Constraint = EvalBinOp(BinaryOperator::EQ, Result,
+            Constraint = EvalBinOp(state, BinaryOperator::EQ, Result,
                                    ValMgr.makeZeroVal(U->getType()),
                                    getContext().IntTy);
             
@@ -2965,7 +2967,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Process non-assignements except commas or short-circuited
           // logical expressions (LAnd and LOr).
           
-          SVal Result = EvalBinOp(Op, LeftV, RightV, B->getType());
+          SVal Result = EvalBinOp(state, Op, LeftV, RightV, B->getType());
           
           if (Result.isUnknown()) {
             if (OldSt != state) {
@@ -3079,7 +3081,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         }
       
         // Compute the result of the operation.      
-        SVal Result = EvalCast(EvalBinOp(Op, V, RightV, CTy), B->getType());
+        SVal Result = EvalCast(EvalBinOp(state, Op, V, RightV, CTy), 
+                               B->getType());
           
         if (Result.isUndef()) {
           // The operands were not undefined, but the result is undefined.
@@ -3147,8 +3150,8 @@ void GRExprEngine::EvalBinOp(GRStateSet& OStates, const GRState* state,
   if (R.isValid()) getTF().EvalBinOpNN(OStates, *this, state, Ex, Op, L, R, T);
 }
 
-SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R,
-                             QualType T) {
+SVal GRExprEngine::EvalBinOp(const GRState* state, BinaryOperator::Opcode Op, 
+                             SVal L, SVal R, QualType T) {
   
   if (L.isUndef() || R.isUndef())
     return UndefinedVal();
@@ -3160,7 +3163,7 @@ SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R,
     if (isa<Loc>(R))
       return getTF().EvalBinOp(*this, Op, cast<Loc>(L), cast<Loc>(R));
     else
-      return getTF().EvalBinOp(*this, Op, cast<Loc>(L), cast<NonLoc>(R));
+      return getTF().EvalBinOp(*this, state, Op, cast<Loc>(L), cast<NonLoc>(R));
   }
   
   if (isa<Loc>(R)) {
@@ -3170,8 +3173,7 @@ SVal GRExprEngine::EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R,
     assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
     
     // Commute the operands.
-    return getTF().EvalBinOp(*this, Op, cast<Loc>(R),
-                             cast<NonLoc>(L));
+    return getTF().EvalBinOp(*this, state, Op, cast<Loc>(R), cast<NonLoc>(L));
   }
   else
     return getTF().DetermEvalBinOpNN(*this, Op, cast<NonLoc>(L),

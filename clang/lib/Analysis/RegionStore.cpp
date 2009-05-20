@@ -214,7 +214,7 @@ public:
   CastResult CastRegion(const GRState* state, const MemRegion* R,
                         QualType CastToTy);
 
-  SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R);
+  SVal EvalBinOp(const GRState *state,BinaryOperator::Opcode Op,Loc L,NonLoc R);
 
   /// The high level logic for this method is this:
   /// Retrieve (L)
@@ -636,15 +636,17 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
   return 0;
 }
 
-SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
+SVal RegionStoreManager::EvalBinOp(const GRState *state, 
+                                   BinaryOperator::Opcode Op, Loc L, NonLoc R) {
   // Assume the base location is MemRegionVal.
   if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
 
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
   const ElementRegion *ER = 0;
-  // If the operand is a symbolic region, we convert it to the first element
-  // region implicitly.
+
+  // If the operand is a symbolic or alloca region, create the first element
+  // region on it.
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR)) {
     // Get symbol's type. It should be a pointer type.
     SymbolRef Sym = SR->getSymbol();
@@ -653,7 +655,18 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
 
     SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
     ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR);
-  } else
+  } 
+  else if (const AllocaRegion *AR = dyn_cast<AllocaRegion>(MR)) {
+    // Get the alloca region's current cast type.
+    GRStateRef StRef(state, StateMgr);
+
+    GRStateTrait<RegionCasts>::lookup_type T = StRef.get<RegionCasts>(AR);
+    assert(T && "alloca region has no type.");
+    QualType EleTy = cast<PointerType>(T->getTypePtr())->getPointeeType();
+    SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR);
+  } 
+  else
     ER = cast<ElementRegion>(MR);
 
   SVal Idx = ER->getIndex();

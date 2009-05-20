@@ -693,7 +693,8 @@ public:
   void EvalBinOp(GRStateSet& OStates, const GRState* St, Expr* Ex,
                  BinaryOperator::Opcode Op, NonLoc L, NonLoc R, QualType T);  
   
-  SVal EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R, QualType T);
+  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op, SVal L,SVal R,
+                 QualType T);
   
 protected:
   

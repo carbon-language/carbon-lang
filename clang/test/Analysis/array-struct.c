@@ -63,6 +63,7 @@ void f6() {
   char *p;
   p = __builtin_alloca(10); 
   p[1] = 'a';
+  p += 2;
 }
 
 struct s2;

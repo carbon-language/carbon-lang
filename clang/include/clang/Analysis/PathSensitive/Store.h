@@ -137,7 +137,8 @@ public:
                                 QualType CastToTy);
 
   /// EvalBinOp - Perform pointer arithmetic.
-  virtual SVal EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R) {
+  virtual SVal EvalBinOp(const GRState *state, 
+                         BinaryOperator::Opcode Op, Loc L, NonLoc R) {
     return UnknownVal();
   }
   

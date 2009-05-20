@@ -257,8 +257,8 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
   }
 }
 
-SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
-                             Loc L, NonLoc R) {
+SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, const GRState *state, 
+                             BinaryOperator::Opcode Op, Loc L, NonLoc R) {
   
   // Special case: 'R' is an integer that has the same width as a pointer and
   // we are using the integer location in a comparison.  Normally this cannot be
@@ -280,7 +280,7 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
   }
   
   // Delegate pointer arithmetic to store manager.
-  return Eng.getStoreManager().EvalBinOp(Op, L, R);
+  return Eng.getStoreManager().EvalBinOp(state, Op, L, R);
 }
 
 // Equality operators for Locs.  
