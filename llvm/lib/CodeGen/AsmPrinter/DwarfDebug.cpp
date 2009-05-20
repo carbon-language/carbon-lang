@@ -275,9 +275,9 @@ void DwarfDebug::AssignAbbrevNumber(DIEAbbrev &Abbrev) {
   }
 }
 
-/// NewDIEEntry - Creates a new DIEEntry to be a proxy for a debug information
-/// entry.
-DIEEntry *DwarfDebug::NewDIEEntry(DIE *Entry) {
+/// CreateDIEEntry - Creates a new DIEEntry to be a proxy for a debug
+/// information entry.
+DIEEntry *DwarfDebug::CreateDIEEntry(DIE *Entry) {
   DIEEntry *Value;
 
   if (Entry) {
@@ -545,7 +545,7 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   }
 
   // Set up proxy.
-  Slot = NewDIEEntry();
+  Slot = CreateDIEEntry();
 
   // Construct type.
   DIE Buffer(dwarf::DW_TAG_base_type);
@@ -925,9 +925,9 @@ CompileUnit &DwarfDebug::FindCompileUnit(DICompileUnit Unit) const {
   return *I->second;
 }
 
-/// NewDbgScopeVariable - Create a new scope variable.
+/// CreateDbgScopeVariable - Create a new scope variable.
 ///
-DIE *DwarfDebug::NewDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
+DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
   // Get the descriptor.
   const DIVariable &VD = DV->getVariable();
 
@@ -1012,7 +1012,7 @@ void DwarfDebug::ConstructDbgScope(DbgScope *ParentScope,
   // Add variables to scope.
   SmallVector<DbgVariable *, 8> &Variables = ParentScope->getVariables();
   for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-    DIE *VariableDie = NewDbgScopeVariable(Variables[i], Unit);
+    DIE *VariableDie = CreateDbgScopeVariable(Variables[i], Unit);
     if (VariableDie) ParentDie->AddChild(VariableDie);
   }
 
@@ -1092,7 +1092,8 @@ void DwarfDebug::ConstructDbgScope(DbgScope *ParentScope,
 
 /// ConstructFunctionDbgScope - Construct the scope for the subprogram.
 ///
-void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope) {
+void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
+                                           bool AbstractScope) {
   // Exit if there is no root scope.
   if (!RootScope) return;
   DIDescriptor Desc = RootScope->getDesc();
@@ -1111,41 +1112,17 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope) {
   DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
   assert(SPDie && "Missing subprogram descriptor");
 
-  // Add the function bounds.
-  AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           DWLabel("func_begin", SubprogramCount));
-  AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           DWLabel("func_end", SubprogramCount));
-  MachineLocation Location(RI->getFrameRegister(*MF));
-  AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
+  if (!AbstractScope) {
+    // Add the function bounds.
+    AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+             DWLabel("func_begin", SubprogramCount));
+    AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
+             DWLabel("func_end", SubprogramCount));
+    MachineLocation Location(RI->getFrameRegister(*MF));
+    AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
+  }
 
   ConstructDbgScope(RootScope, 0, 0, SPDie, Unit);
-}
-
-/// ConstructFunctionDbgScope - Construct the scope for the abstract debug
-/// scope.
-///
-void DwarfDebug::ConstructAbstractDbgScope(DbgScope *AbsScope) {
-  // Exit if there is no root scope.
-  if (!AbsScope) return;
-
-  DIDescriptor Desc = AbsScope->getDesc();
-  if (Desc.isNull())
-    return;
-
-  // Get the subprogram debug information entry.
-  DISubprogram SPD(Desc.getGV());
-
-  // Get the compile unit context.
-  CompileUnit *Unit = MainCU;
-  if (!Unit)
-    Unit = &FindCompileUnit(SPD.getCompileUnit());
-
-  // Get the subprogram die.
-  DIE *SPDie = Unit->getDieMapSlotFor(SPD.getGV());
-  assert(SPDie && "Missing subprogram descriptor");
-
-  ConstructDbgScope(AbsScope, 0, 0, SPDie, Unit);
 }
 
 /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
@@ -1194,6 +1171,809 @@ void DwarfDebug::ConstructDefaultDbgScope(MachineFunction *MF) {
   // their unmangled counterparts. See PR2885. Don't do this assert.
   assert(0 && "Couldn't find DIE for machine function!");
 #endif
+}
+
+/// GetOrCreateSourceID - Look up the source id with the given directory and
+/// source file names. If none currently exists, create a new id and insert it
+/// in the SourceIds map. This can update DirectoryNames and SourceFileNames
+/// maps as well.
+unsigned DwarfDebug::GetOrCreateSourceID(const std::string &DirName,
+                                         const std::string &FileName) {
+  unsigned DId;
+  StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
+  if (DI != DirectoryIdMap.end()) {
+    DId = DI->getValue();
+  } else {
+    DId = DirectoryNames.size() + 1;
+    DirectoryIdMap[DirName] = DId;
+    DirectoryNames.push_back(DirName);
+  }
+
+  unsigned FId;
+  StringMap<unsigned>::iterator FI = SourceFileIdMap.find(FileName);
+  if (FI != SourceFileIdMap.end()) {
+    FId = FI->getValue();
+  } else {
+    FId = SourceFileNames.size() + 1;
+    SourceFileIdMap[FileName] = FId;
+    SourceFileNames.push_back(FileName);
+  }
+
+  DenseMap<std::pair<unsigned, unsigned>, unsigned>::iterator SI =
+    SourceIdMap.find(std::make_pair(DId, FId));
+  if (SI != SourceIdMap.end())
+    return SI->second;
+
+  unsigned SrcId = SourceIds.size() + 1;  // DW_AT_decl_file cannot be 0.
+  SourceIdMap[std::make_pair(DId, FId)] = SrcId;
+  SourceIds.push_back(std::make_pair(DId, FId));
+
+  return SrcId;
+}
+
+void DwarfDebug::ConstructCompileUnit(GlobalVariable *GV) {
+  DICompileUnit DIUnit(GV);
+  std::string Dir, FN, Prod;
+  unsigned ID = GetOrCreateSourceID(DIUnit.getDirectory(Dir),
+                                    DIUnit.getFilename(FN));
+
+  DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
+  AddSectionOffset(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
+                   DWLabel("section_line", 0), DWLabel("section_line", 0),
+                   false);
+  AddString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
+            DIUnit.getProducer(Prod));
+  AddUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,
+          DIUnit.getLanguage());
+  AddString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
+
+  if (!Dir.empty())
+    AddString(Die, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string, Dir);
+  if (DIUnit.isOptimized())
+    AddUInt(Die, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
+
+  std::string Flags;
+  DIUnit.getFlags(Flags);
+  if (!Flags.empty())
+    AddString(Die, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string, Flags);
+
+  unsigned RVer = DIUnit.getRunTimeVersion();
+  if (RVer)
+    AddUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
+            dwarf::DW_FORM_data1, RVer);
+
+  CompileUnit *Unit = new CompileUnit(ID, Die);
+  if (DIUnit.isMain()) {
+    assert(!MainCU && "Multiple main compile units are found!");
+    MainCU = Unit;
+    }
+
+  CompileUnitMap[DIUnit.getGV()] = Unit;
+  CompileUnits.push_back(Unit);
+}
+
+/// ConstructCompileUnits - Create a compile unit DIEs.
+void DwarfDebug::ConstructCompileUnits() {
+  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.compile_units");
+  if (!Root)
+    return;
+  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
+         "Malformed compile unit descriptor anchor type");
+  Constant *RootC = cast<Constant>(*Root->use_begin());
+  assert(RootC->hasNUsesOrMore(1) &&
+         "Malformed compile unit descriptor anchor type");
+
+  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
+       UI != UE; ++UI)
+    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
+         UUI != UUE; ++UUI) {
+      GlobalVariable *GV = cast<GlobalVariable>(*UUI);
+      ConstructCompileUnit(GV);
+    }
+}
+
+bool DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
+  DIGlobalVariable DI_GV(GV);
+  CompileUnit *DW_Unit = MainCU;
+  if (!DW_Unit)
+    DW_Unit = &FindCompileUnit(DI_GV.getCompileUnit());
+
+  // Check for pre-existence.
+  DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV.getGV());
+  if (Slot)
+    return false;
+
+  DIE *VariableDie = CreateGlobalVariableDIE(DW_Unit, DI_GV);
+
+  // Add address.
+  DIEBlock *Block = new DIEBlock();
+  AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+  std::string GLN;
+  AddObjectLabel(Block, 0, dwarf::DW_FORM_udata,
+                 Asm->getGlobalLinkName(DI_GV.getGlobal(), GLN));
+  AddBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
+
+  // Add to map.
+  Slot = VariableDie;
+
+  // Add to context owner.
+  DW_Unit->getDie()->AddChild(VariableDie);
+
+  // Expose as global. FIXME - need to check external flag.
+  std::string Name;
+  DW_Unit->AddGlobal(DI_GV.getName(Name), VariableDie);
+  return true;
+}
+
+/// ConstructGlobalVariableDIEs - Create DIEs for each of the externally visible
+/// global variables. Return true if at least one global DIE is created.
+bool DwarfDebug::ConstructGlobalVariableDIEs() {
+  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.global_variables");
+  if (!Root)
+    return false;
+
+  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
+         "Malformed global variable descriptor anchor type");
+  Constant *RootC = cast<Constant>(*Root->use_begin());
+  assert(RootC->hasNUsesOrMore(1) &&
+         "Malformed global variable descriptor anchor type");
+
+  bool Result = false;
+  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
+       UI != UE; ++UI)
+    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
+         UUI != UUE; ++UUI)
+      Result |= ConstructGlobalVariableDIE(cast<GlobalVariable>(*UUI));
+
+  return Result;
+}
+
+bool DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
+  DISubprogram SP(GV);
+  CompileUnit *Unit = MainCU;
+  if (!Unit)
+    Unit = &FindCompileUnit(SP.getCompileUnit());
+
+  // Check for pre-existence.
+  DIE *&Slot = Unit->getDieMapSlotFor(GV);
+  if (Slot)
+    return false;
+
+  if (!SP.isDefinition())
+    // This is a method declaration which will be handled while constructing
+    // class type.
+    return false;
+
+  DIE *SubprogramDie = CreateSubprogramDIE(Unit, SP);
+
+  // Add to map.
+  Slot = SubprogramDie;
+
+  // Add to context owner.
+  Unit->getDie()->AddChild(SubprogramDie);
+
+  // Expose as global.
+  std::string Name;
+  Unit->AddGlobal(SP.getName(Name), SubprogramDie);
+  return true;
+}
+
+/// ConstructSubprograms - Create DIEs for each of the externally visible
+/// subprograms. Return true if at least one subprogram DIE is created.
+bool DwarfDebug::ConstructSubprograms() {
+  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.subprograms");
+  if (!Root)
+    return false;
+
+  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
+         "Malformed subprogram descriptor anchor type");
+  Constant *RootC = cast<Constant>(*Root->use_begin());
+  assert(RootC->hasNUsesOrMore(1) &&
+         "Malformed subprogram descriptor anchor type");
+
+  bool Result = false;
+  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
+       UI != UE; ++UI)
+    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
+         UUI != UUE; ++UUI)
+      Result |= ConstructSubprogram(cast<GlobalVariable>(*UUI));
+
+  return Result;
+}
+
+/// SetDebugInfo - Create global DIEs and emit initial debug info sections.
+/// This is inovked by the target AsmPrinter.
+void DwarfDebug::SetDebugInfo(MachineModuleInfo *mmi) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  // Create all the compile unit DIEs.
+  ConstructCompileUnits();
+
+  if (CompileUnits.empty()) {
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
+    return;
+  }
+
+  // Create DIEs for each of the externally visible global variables.
+  bool globalDIEs = ConstructGlobalVariableDIEs();
+
+  // Create DIEs for each of the externally visible subprograms.
+  bool subprogramDIEs = ConstructSubprograms();
+
+  // If there is not any debug info available for any global variables and any
+  // subprograms then there is not any debug info to emit.
+  if (!globalDIEs && !subprogramDIEs) {
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
+    return;
+  }
+
+  MMI = mmi;
+  shouldEmit = true;
+  MMI->setDebugInfoAvailability(true);
+
+  // Prime section data.
+  SectionMap.insert(TAI->getTextSection());
+
+  // Print out .file directives to specify files for .loc directives. These are
+  // printed out early so that they precede any .loc directives.
+  if (TAI->hasDotLocAndDotFile()) {
+    for (unsigned i = 1, e = getNumSourceIds()+1; i != e; ++i) {
+      // Remember source id starts at 1.
+      std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(i);
+      sys::Path FullPath(getSourceDirectoryName(Id.first));
+      bool AppendOk =
+        FullPath.appendComponent(getSourceFileName(Id.second));
+      assert(AppendOk && "Could not append filename to directory!");
+      AppendOk = false;
+      Asm->EmitFile(i, FullPath.toString());
+      Asm->EOL();
+    }
+  }
+
+  // Emit initial sections
+  EmitInitial();
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+}
+
+/// EndModule - Emit all Dwarf sections that should come after the content.
+///
+void DwarfDebug::EndModule() {
+  if (!ShouldEmitDwarfDebug())
+    return;
+
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  // Standard sections final addresses.
+  Asm->SwitchToSection(TAI->getTextSection());
+  EmitLabel("text_end", 0);
+  Asm->SwitchToSection(TAI->getDataSection());
+  EmitLabel("data_end", 0);
+
+  // End text sections.
+  for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
+    Asm->SwitchToSection(SectionMap[i]);
+    EmitLabel("section_end", i);
+  }
+
+  // Emit common frame information.
+  EmitCommonDebugFrame();
+
+  // Emit function debug frame information
+  for (std::vector<FunctionDebugFrameInfo>::iterator I = DebugFrames.begin(),
+         E = DebugFrames.end(); I != E; ++I)
+    EmitFunctionDebugFrame(*I);
+
+  // Compute DIE offsets and sizes.
+  SizeAndOffsets();
+
+  // Emit all the DIEs into a debug info section
+  EmitDebugInfo();
+
+  // Corresponding abbreviations into a abbrev section.
+  EmitAbbreviations();
+
+  // Emit source line correspondence into a debug line section.
+  EmitDebugLines();
+
+  // Emit info into a debug pubnames section.
+  EmitDebugPubNames();
+
+  // Emit info into a debug str section.
+  EmitDebugStr();
+
+  // Emit info into a debug loc section.
+  EmitDebugLoc();
+
+  // Emit info into a debug aranges section.
+  EmitDebugARanges();
+
+  // Emit info into a debug ranges section.
+  EmitDebugRanges();
+
+  // Emit info into a debug macinfo section.
+  EmitDebugMacInfo();
+
+  // Emit inline info.
+  EmitDebugInlineInfo();
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+}
+
+/// BeginFunction - Gather pre-function debug information.  Assumes being
+/// emitted immediately after the function entry point.
+void DwarfDebug::BeginFunction(MachineFunction *MF) {
+  this->MF = MF;
+
+  if (!ShouldEmitDwarfDebug()) return;
+
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  // Begin accumulating function debug information.
+  MMI->BeginFunction(MF);
+
+  // Assumes in correct section after the entry point.
+  EmitLabel("func_begin", ++SubprogramCount);
+
+  // Emit label for the implicitly defined dbg.stoppoint at the start of the
+  // function.
+  DebugLoc FDL = MF->getDefaultDebugLoc();
+  if (!FDL.isUnknown()) {
+    DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
+    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col,
+                                        DICompileUnit(DLT.CompileUnit));
+    Asm->printLabel(LabelID);
+  }
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+}
+
+/// EndFunction - Gather and emit post-function debug information.
+///
+void DwarfDebug::EndFunction(MachineFunction *MF) {
+  if (!ShouldEmitDwarfDebug()) return;
+
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  // Define end label for subprogram.
+  EmitLabel("func_end", SubprogramCount);
+
+  // Get function line info.
+  if (!Lines.empty()) {
+    // Get section line info.
+    unsigned ID = SectionMap.insert(Asm->CurrentSection_);
+    if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
+    std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
+    // Append the function info to section info.
+    SectionLineInfos.insert(SectionLineInfos.end(),
+                            Lines.begin(), Lines.end());
+  }
+
+  // Construct the DbgScope for abstract instances.
+  for (SmallVector<DbgScope *, 32>::iterator
+         I = AbstractInstanceRootList.begin(),
+         E = AbstractInstanceRootList.end(); I != E; ++I)
+    ConstructFunctionDbgScope(*I, true);
+
+  // Construct scopes for subprogram.
+  if (FunctionDbgScope)
+    ConstructFunctionDbgScope(FunctionDbgScope);
+  else
+    // FIXME: This is wrong. We are essentially getting past a problem with
+    // debug information not being able to handle unreachable blocks that have
+    // debug information in them. In particular, those unreachable blocks that
+    // have "region end" info in them. That situation results in the "root
+    // scope" not being created. If that's the case, then emit a "default"
+    // scope, i.e., one that encompasses the whole function. This isn't
+    // desirable. And a better way of handling this (and all of the debugging
+    // information) needs to be explored.
+    ConstructDefaultDbgScope(MF);
+
+  DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
+                                               MMI->getFrameMoves()));
+
+  // Clear debug info
+  if (FunctionDbgScope) {
+    delete FunctionDbgScope;
+    DbgScopeMap.clear();
+    DbgAbstractScopeMap.clear();
+    DbgConcreteScopeMap.clear();
+    InlinedVariableScopes.clear();
+    FunctionDbgScope = NULL;
+    LexicalScopeStack.clear();
+    AbstractInstanceRootList.clear();
+  }
+
+  Lines.clear();
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+}
+
+/// RecordSourceLine - Records location information and associates it with a
+/// label. Returns a unique label ID used to generate a label and provide
+/// correspondence to the source line list.
+unsigned DwarfDebug::RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  CompileUnit *Unit = CompileUnitMap[V];
+  assert(Unit && "Unable to find CompileUnit");
+  unsigned ID = MMI->NextLabelID();
+  Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return ID;
+}
+
+/// RecordSourceLine - Records location information and associates it with a
+/// label. Returns a unique label ID used to generate a label and provide
+/// correspondence to the source line list.
+unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col,
+                                      DICompileUnit CU) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  std::string Dir, Fn;
+  unsigned Src = GetOrCreateSourceID(CU.getDirectory(Dir),
+                                     CU.getFilename(Fn));
+  unsigned ID = MMI->NextLabelID();
+  Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return ID;
+}
+
+/// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
+/// timed. Look up the source id with the given directory and source file
+/// names. If none currently exists, create a new id and insert it in the
+/// SourceIds map. This can update DirectoryNames and SourceFileNames maps as
+/// well.
+unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
+                                         const std::string &FileName) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  unsigned SrcId = GetOrCreateSourceID(DirName, FileName);
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return SrcId;
+}
+
+/// RecordRegionStart - Indicate the start of a region.
+unsigned DwarfDebug::RecordRegionStart(GlobalVariable *V) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  DbgScope *Scope = getOrCreateScope(V);
+  unsigned ID = MMI->NextLabelID();
+  if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
+  LexicalScopeStack.push_back(Scope);
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return ID;
+}
+
+/// RecordRegionEnd - Indicate the end of a region.
+unsigned DwarfDebug::RecordRegionEnd(GlobalVariable *V) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  DbgScope *Scope = getOrCreateScope(V);
+  unsigned ID = MMI->NextLabelID();
+  Scope->setEndLabelID(ID);
+  if (LexicalScopeStack.size() != 0)
+    LexicalScopeStack.pop_back();
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return ID;
+}
+
+/// RecordVariable - Indicate the declaration of a local variable.
+void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
+                                const MachineInstr *MI) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  DIDescriptor Desc(GV);
+  DbgScope *Scope = NULL;
+  bool InlinedFnVar = false;
+
+  if (Desc.getTag() == dwarf::DW_TAG_variable) {
+    // GV is a global variable.
+    DIGlobalVariable DG(GV);
+    Scope = getOrCreateScope(DG.getContext().getGV());
+  } else {
+    DenseMap<const MachineInstr *, DbgScope *>::iterator
+      SI = InlinedVariableScopes.find(MI);
+
+    if (SI != InlinedVariableScopes.end()) {
+      // or GV is an inlined local variable.
+      Scope = SI->second;
+    } else {
+      DIVariable DV(GV);
+      GlobalVariable *V = DV.getContext().getGV();
+
+      // FIXME: The code that checks for the inlined local variable is a hack!
+      DenseMap<const GlobalVariable *, DbgScope *>::iterator
+        AI = AbstractInstanceRootMap.find(V);
+
+      if (AI != AbstractInstanceRootMap.end()) {
+        // This method is called each time a DECLARE node is encountered. For an
+        // inlined function, this could be many, many times. We don't want to
+        // re-add variables to that DIE for each time. We just want to add them
+        // once. Check to make sure that we haven't added them already.
+        DenseMap<const GlobalVariable *,
+          SmallSet<const GlobalVariable *, 32> >::iterator
+          IP = InlinedParamMap.find(V);
+
+        if (IP != InlinedParamMap.end() && IP->second.count(GV) > 0) {
+          if (TimePassesIsEnabled)
+            DebugTimer->stopTimer();
+          return;
+        }
+
+        // or GV is an inlined local variable.
+        Scope = AI->second;
+        InlinedParamMap[V].insert(GV);
+        InlinedFnVar = true;
+      } else {
+        // or GV is a local variable.
+        Scope = getOrCreateScope(V);
+      }
+    }
+  }
+
+  assert(Scope && "Unable to find the variable's scope");
+  DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex, InlinedFnVar);
+  Scope->AddVariable(DV);
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+}
+
+/// RecordInlinedFnStart - Indicate the start of inlined subroutine.
+unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
+                                          unsigned Line, unsigned Col) {
+  unsigned LabelID = MMI->NextLabelID();
+
+  if (!TAI->doesDwarfUsesInlineInfoSection())
+    return LabelID;
+
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  GlobalVariable *GV = SP.getGV();
+  DenseMap<const GlobalVariable *, DbgScope *>::iterator
+    II = AbstractInstanceRootMap.find(GV);
+
+  if (II == AbstractInstanceRootMap.end()) {
+    // Create an abstract instance entry for this inlined function if it doesn't
+    // already exist.
+    DbgScope *Scope = new DbgScope(NULL, DIDescriptor(GV));
+
+    // Get the compile unit context.
+    CompileUnit *Unit = &FindCompileUnit(SP.getCompileUnit());
+    DIE *SPDie = Unit->getDieMapSlotFor(GV);
+    if (!SPDie)
+      SPDie = CreateSubprogramDIE(Unit, SP, false, true);
+
+    // Mark as being inlined. This makes this subprogram entry an abstract
+    // instance root.
+    // FIXME: Our debugger doesn't care about the value of DW_AT_inline, only
+    // that it's defined. That probably won't change in the future. However,
+    // this could be more elegant.
+    AddUInt(SPDie, dwarf::DW_AT_inline, 0, dwarf::DW_INL_declared_not_inlined);
+
+    // Keep track of the abstract scope for this function.
+    DbgAbstractScopeMap[GV] = Scope;
+
+    AbstractInstanceRootMap[GV] = Scope;
+    AbstractInstanceRootList.push_back(Scope);
+  }
+
+  // Create a concrete inlined instance for this inlined function.
+  DbgConcreteScope *ConcreteScope = new DbgConcreteScope(DIDescriptor(GV));
+  DIE *ScopeDie = new DIE(dwarf::DW_TAG_inlined_subroutine);
+  CompileUnit *Unit = &FindCompileUnit(SP.getCompileUnit());
+  ScopeDie->setAbstractCompileUnit(Unit);
+
+  DIE *Origin = Unit->getDieMapSlotFor(GV);
+  AddDIEEntry(ScopeDie, dwarf::DW_AT_abstract_origin,
+              dwarf::DW_FORM_ref4, Origin);
+  AddUInt(ScopeDie, dwarf::DW_AT_call_file, 0, Unit->getID());
+  AddUInt(ScopeDie, dwarf::DW_AT_call_line, 0, Line);
+  AddUInt(ScopeDie, dwarf::DW_AT_call_column, 0, Col);
+
+  ConcreteScope->setDie(ScopeDie);
+  ConcreteScope->setStartLabelID(LabelID);
+  MMI->RecordUsedDbgLabel(LabelID);
+
+  LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
+  LexicalScopeStack.push_back(ConcreteScope);
+
+  // Keep track of the concrete scope that's inlined into this function.
+  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+    SI = DbgConcreteScopeMap.find(GV);
+
+  if (SI == DbgConcreteScopeMap.end())
+    DbgConcreteScopeMap[GV].push_back(ConcreteScope);
+  else
+    SI->second.push_back(ConcreteScope);
+
+  // Track the start label for this inlined function.
+  DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
+    I = InlineInfo.find(GV);
+
+  if (I == InlineInfo.end())
+    InlineInfo[GV].push_back(LabelID);
+  else
+    I->second.push_back(LabelID);
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return LabelID;
+}
+
+/// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
+unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
+  if (!TAI->doesDwarfUsesInlineInfoSection())
+    return 0;
+
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  GlobalVariable *GV = SP.getGV();
+  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+    I = DbgConcreteScopeMap.find(GV);
+
+  if (I == DbgConcreteScopeMap.end()) {
+    // FIXME: Can this situation actually happen? And if so, should it?
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
+    return 0;
+  }
+
+  SmallVector<DbgScope *, 8> &Scopes = I->second;
+  assert(!Scopes.empty() && "We should have at least one debug scope!");
+  DbgScope *Scope = Scopes.back(); Scopes.pop_back();
+  unsigned ID = MMI->NextLabelID();
+  MMI->RecordUsedDbgLabel(ID);
+  Scope->setEndLabelID(ID);
+  LexicalScopeStack.pop_back();
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+
+  return ID;
+}
+
+/// RecordVariableScope - Record scope for the variable declared by
+/// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE. Record scopes
+/// for only inlined subroutine variables. Other variables's scopes are
+/// determined during RecordVariable().
+void DwarfDebug::RecordVariableScope(DIVariable &DV,
+                                     const MachineInstr *DeclareMI) {
+  if (TimePassesIsEnabled)
+    DebugTimer->startTimer();
+
+  DISubprogram SP(DV.getContext().getGV());
+
+  if (SP.isNull()) {
+    if (TimePassesIsEnabled)
+      DebugTimer->stopTimer();
+
+    return;
+  }
+
+  DenseMap<GlobalVariable *, DbgScope *>::iterator
+    I = DbgAbstractScopeMap.find(SP.getGV());
+  if (I != DbgAbstractScopeMap.end())
+    InlinedVariableScopes[DeclareMI] = I->second;
+
+  if (TimePassesIsEnabled)
+    DebugTimer->stopTimer();
+}
+
+//===----------------------------------------------------------------------===//
+// Emit Methods
+//===----------------------------------------------------------------------===//
+
+/// SizeAndOffsetDie - Compute the size and offset of a DIE.
+///
+unsigned DwarfDebug::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
+  // Get the children.
+  const std::vector<DIE *> &Children = Die->getChildren();
+
+  // If not last sibling and has children then add sibling offset attribute.
+  if (!Last && !Children.empty()) Die->AddSiblingOffset();
+
+  // Record the abbreviation.
+  AssignAbbrevNumber(Die->getAbbrev());
+
+  // Get the abbreviation for this DIE.
+  unsigned AbbrevNumber = Die->getAbbrevNumber();
+  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
+
+  // Set DIE offset
+  Die->setOffset(Offset);
+
+  // Start the size with the size of abbreviation code.
+  Offset += TargetAsmInfo::getULEB128Size(AbbrevNumber);
+
+  const SmallVector<DIEValue*, 32> &Values = Die->getValues();
+  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
+
+  // Size the DIE attribute values.
+  for (unsigned i = 0, N = Values.size(); i < N; ++i)
+    // Size attribute value.
+    Offset += Values[i]->SizeOf(TD, AbbrevData[i].getForm());
+
+  // Size the DIE children if any.
+  if (!Children.empty()) {
+    assert(Abbrev->getChildrenFlag() == dwarf::DW_CHILDREN_yes &&
+           "Children flag not set");
+
+    for (unsigned j = 0, M = Children.size(); j < M; ++j)
+      Offset = SizeAndOffsetDie(Children[j], Offset, (j + 1) == M);
+
+    // End of children marker.
+    Offset += sizeof(int8_t);
+  }
+
+  Die->setSize(Offset - Die->getOffset());
+  return Offset;
+}
+
+/// SizeAndOffsets - Compute the size and offset of all the DIEs.
+///
+void DwarfDebug::SizeAndOffsets() {
+  // Compute size of compile unit header.
+  static unsigned Offset =
+    sizeof(int32_t) + // Length of Compilation Unit Info
+    sizeof(int16_t) + // DWARF version number
+    sizeof(int32_t) + // Offset Into Abbrev. Section
+    sizeof(int8_t);   // Pointer Size (in bytes)
+
+  // Process base compile unit.
+  if (MainCU) {
+    SizeAndOffsetDie(MainCU->getDie(), Offset, true);
+    CompileUnitOffsets[MainCU] = 0;
+    return;
+  }
+
+  // Process all compile units.
+  unsigned PrevOffset = 0;
+
+  for (unsigned i = 0, e = CompileUnits.size(); i != e; ++i) {
+    CompileUnit *Unit = CompileUnits[i];
+    CompileUnitOffsets[Unit] = PrevOffset;
+    PrevOffset += SizeAndOffsetDie(Unit->getDie(), Offset, true)
+      + sizeof(int32_t);  // FIXME - extra pad for gdb bug.
+  }
 }
 
 /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
@@ -1299,80 +2079,6 @@ void DwarfDebug::EmitDIE(DIE *Die) {
       EmitDIE(Children[j]);
 
     Asm->EmitInt8(0); Asm->EOL("End Of Children Mark");
-  }
-}
-
-/// SizeAndOffsetDie - Compute the size and offset of a DIE.
-///
-unsigned DwarfDebug::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
-  // Get the children.
-  const std::vector<DIE *> &Children = Die->getChildren();
-
-  // If not last sibling and has children then add sibling offset attribute.
-  if (!Last && !Children.empty()) Die->AddSiblingOffset();
-
-  // Record the abbreviation.
-  AssignAbbrevNumber(Die->getAbbrev());
-
-  // Get the abbreviation for this DIE.
-  unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
-
-  // Set DIE offset
-  Die->setOffset(Offset);
-
-  // Start the size with the size of abbreviation code.
-  Offset += TargetAsmInfo::getULEB128Size(AbbrevNumber);
-
-  const SmallVector<DIEValue*, 32> &Values = Die->getValues();
-  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
-
-  // Size the DIE attribute values.
-  for (unsigned i = 0, N = Values.size(); i < N; ++i)
-    // Size attribute value.
-    Offset += Values[i]->SizeOf(TD, AbbrevData[i].getForm());
-
-  // Size the DIE children if any.
-  if (!Children.empty()) {
-    assert(Abbrev->getChildrenFlag() == dwarf::DW_CHILDREN_yes &&
-           "Children flag not set");
-
-    for (unsigned j = 0, M = Children.size(); j < M; ++j)
-      Offset = SizeAndOffsetDie(Children[j], Offset, (j + 1) == M);
-
-    // End of children marker.
-    Offset += sizeof(int8_t);
-  }
-
-  Die->setSize(Offset - Die->getOffset());
-  return Offset;
-}
-
-/// SizeAndOffsets - Compute the size and offset of all the DIEs.
-///
-void DwarfDebug::SizeAndOffsets() {
-  // Compute size of compile unit header.
-  static unsigned Offset =
-    sizeof(int32_t) + // Length of Compilation Unit Info
-    sizeof(int16_t) + // DWARF version number
-    sizeof(int32_t) + // Offset Into Abbrev. Section
-    sizeof(int8_t);   // Pointer Size (in bytes)
-
-  // Process base compile unit.
-  if (MainCU) {
-    SizeAndOffsetDie(MainCU->getDie(), Offset, true);
-    CompileUnitOffsets[MainCU] = 0;
-    return;
-  }
-
-  // Process all compile units.
-  unsigned PrevOffset = 0;
-
-  for (unsigned i = 0, e = CompileUnits.size(); i != e; ++i) {
-    CompileUnit *Unit = CompileUnits[i];
-    CompileUnitOffsets[Unit] = PrevOffset;
-    PrevOffset += SizeAndOffsetDie(Unit->getDie(), Offset, true)
-      + sizeof(int32_t);  // FIXME - extra pad for gdb bug.
   }
 }
 
@@ -1914,727 +2620,4 @@ void DwarfDebug::EmitDebugInlineInfo() {
 
   EmitLabel("debug_inlined_end", 1);
   Asm->EOL();
-}
-
-/// GetOrCreateSourceID - Look up the source id with the given directory and
-/// source file names. If none currently exists, create a new id and insert it
-/// in the SourceIds map. This can update DirectoryNames and SourceFileNames
-/// maps as well.
-unsigned DwarfDebug::GetOrCreateSourceID(const std::string &DirName,
-                                         const std::string &FileName) {
-  unsigned DId;
-  StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
-  if (DI != DirectoryIdMap.end()) {
-    DId = DI->getValue();
-  } else {
-    DId = DirectoryNames.size() + 1;
-    DirectoryIdMap[DirName] = DId;
-    DirectoryNames.push_back(DirName);
-  }
-
-  unsigned FId;
-  StringMap<unsigned>::iterator FI = SourceFileIdMap.find(FileName);
-  if (FI != SourceFileIdMap.end()) {
-    FId = FI->getValue();
-  } else {
-    FId = SourceFileNames.size() + 1;
-    SourceFileIdMap[FileName] = FId;
-    SourceFileNames.push_back(FileName);
-  }
-
-  DenseMap<std::pair<unsigned, unsigned>, unsigned>::iterator SI =
-    SourceIdMap.find(std::make_pair(DId, FId));
-  if (SI != SourceIdMap.end())
-    return SI->second;
-
-  unsigned SrcId = SourceIds.size() + 1;  // DW_AT_decl_file cannot be 0.
-  SourceIdMap[std::make_pair(DId, FId)] = SrcId;
-  SourceIds.push_back(std::make_pair(DId, FId));
-
-  return SrcId;
-}
-
-void DwarfDebug::ConstructCompileUnit(GlobalVariable *GV) {
-  DICompileUnit DIUnit(GV);
-  std::string Dir, FN, Prod;
-  unsigned ID = GetOrCreateSourceID(DIUnit.getDirectory(Dir),
-                                    DIUnit.getFilename(FN));
-
-  DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  AddSectionOffset(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                   DWLabel("section_line", 0), DWLabel("section_line", 0),
-                   false);
-  AddString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
-            DIUnit.getProducer(Prod));
-  AddUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,
-          DIUnit.getLanguage());
-  AddString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
-
-  if (!Dir.empty())
-    AddString(Die, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string, Dir);
-  if (DIUnit.isOptimized())
-    AddUInt(Die, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
-
-  std::string Flags;
-  DIUnit.getFlags(Flags);
-  if (!Flags.empty())
-    AddString(Die, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string, Flags);
-
-  unsigned RVer = DIUnit.getRunTimeVersion();
-  if (RVer)
-    AddUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
-            dwarf::DW_FORM_data1, RVer);
-
-  CompileUnit *Unit = new CompileUnit(ID, Die);
-  if (DIUnit.isMain()) {
-    assert(!MainCU && "Multiple main compile units are found!");
-    MainCU = Unit;
-    }
-
-  CompileUnitMap[DIUnit.getGV()] = Unit;
-  CompileUnits.push_back(Unit);
-}
-
-/// ConstructCompileUnits - Create a compile unit DIEs.
-void DwarfDebug::ConstructCompileUnits() {
-  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.compile_units");
-  if (!Root)
-    return;
-  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
-         "Malformed compile unit descriptor anchor type");
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  assert(RootC->hasNUsesOrMore(1) &&
-         "Malformed compile unit descriptor anchor type");
-
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI)
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI) {
-      GlobalVariable *GV = cast<GlobalVariable>(*UUI);
-      ConstructCompileUnit(GV);
-    }
-}
-
-bool DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
-  DIGlobalVariable DI_GV(GV);
-  CompileUnit *DW_Unit = MainCU;
-  if (!DW_Unit)
-    DW_Unit = &FindCompileUnit(DI_GV.getCompileUnit());
-
-  // Check for pre-existence.
-  DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV.getGV());
-  if (Slot)
-    return false;
-
-  DIE *VariableDie = CreateGlobalVariableDIE(DW_Unit, DI_GV);
-
-  // Add address.
-  DIEBlock *Block = new DIEBlock();
-  AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-  std::string GLN;
-  AddObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                 Asm->getGlobalLinkName(DI_GV.getGlobal(), GLN));
-  AddBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
-
-  // Add to map.
-  Slot = VariableDie;
-
-  // Add to context owner.
-  DW_Unit->getDie()->AddChild(VariableDie);
-
-  // Expose as global. FIXME - need to check external flag.
-  std::string Name;
-  DW_Unit->AddGlobal(DI_GV.getName(Name), VariableDie);
-  return true;
-}
-
-/// ConstructGlobalVariableDIEs - Create DIEs for each of the externally visible
-/// global variables. Return true if at least one global DIE is created.
-bool DwarfDebug::ConstructGlobalVariableDIEs() {
-  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.global_variables");
-  if (!Root)
-    return false;
-
-  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
-         "Malformed global variable descriptor anchor type");
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  assert(RootC->hasNUsesOrMore(1) &&
-         "Malformed global variable descriptor anchor type");
-
-  bool Result = false;
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI)
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI)
-      Result |= ConstructGlobalVariableDIE(cast<GlobalVariable>(*UUI));
-
-  return Result;
-}
-
-bool DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
-  DISubprogram SP(GV);
-  CompileUnit *Unit = MainCU;
-  if (!Unit)
-    Unit = &FindCompileUnit(SP.getCompileUnit());
-
-  // Check for pre-existence.
-  DIE *&Slot = Unit->getDieMapSlotFor(GV);
-  if (Slot)
-    return false;
-
-  if (!SP.isDefinition())
-    // This is a method declaration which will be handled while constructing
-    // class type.
-    return false;
-
-  DIE *SubprogramDie = CreateSubprogramDIE(Unit, SP);
-
-  // Add to map.
-  Slot = SubprogramDie;
-
-  // Add to context owner.
-  Unit->getDie()->AddChild(SubprogramDie);
-
-  // Expose as global.
-  std::string Name;
-  Unit->AddGlobal(SP.getName(Name), SubprogramDie);
-  return true;
-}
-
-/// ConstructSubprograms - Create DIEs for each of the externally visible
-/// subprograms. Return true if at least one subprogram DIE is created.
-bool DwarfDebug::ConstructSubprograms() {
-  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.subprograms");
-  if (!Root)
-    return false;
-
-  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
-         "Malformed subprogram descriptor anchor type");
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  assert(RootC->hasNUsesOrMore(1) &&
-         "Malformed subprogram descriptor anchor type");
-
-  bool Result = false;
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI)
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI)
-      Result |= ConstructSubprogram(cast<GlobalVariable>(*UUI));
-
-  return Result;
-}
-
-/// SetDebugInfo - Create global DIEs and emit initial debug info sections.
-/// This is inovked by the target AsmPrinter.
-void DwarfDebug::SetDebugInfo(MachineModuleInfo *mmi) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  // Create all the compile unit DIEs.
-  ConstructCompileUnits();
-
-  if (CompileUnits.empty()) {
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return;
-  }
-
-  // Create DIEs for each of the externally visible global variables.
-  bool globalDIEs = ConstructGlobalVariableDIEs();
-
-  // Create DIEs for each of the externally visible subprograms.
-  bool subprogramDIEs = ConstructSubprograms();
-
-  // If there is not any debug info available for any global variables and any
-  // subprograms then there is not any debug info to emit.
-  if (!globalDIEs && !subprogramDIEs) {
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return;
-  }
-
-  MMI = mmi;
-  shouldEmit = true;
-  MMI->setDebugInfoAvailability(true);
-
-  // Prime section data.
-  SectionMap.insert(TAI->getTextSection());
-
-  // Print out .file directives to specify files for .loc directives. These are
-  // printed out early so that they precede any .loc directives.
-  if (TAI->hasDotLocAndDotFile()) {
-    for (unsigned i = 1, e = getNumSourceIds()+1; i != e; ++i) {
-      // Remember source id starts at 1.
-      std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(i);
-      sys::Path FullPath(getSourceDirectoryName(Id.first));
-      bool AppendOk =
-        FullPath.appendComponent(getSourceFileName(Id.second));
-      assert(AppendOk && "Could not append filename to directory!");
-      AppendOk = false;
-      Asm->EmitFile(i, FullPath.toString());
-      Asm->EOL();
-    }
-  }
-
-  // Emit initial sections
-  EmitInitial();
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-}
-
-/// EndModule - Emit all Dwarf sections that should come after the content.
-///
-void DwarfDebug::EndModule() {
-  if (!ShouldEmitDwarfDebug())
-    return;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  // Standard sections final addresses.
-  Asm->SwitchToSection(TAI->getTextSection());
-  EmitLabel("text_end", 0);
-  Asm->SwitchToSection(TAI->getDataSection());
-  EmitLabel("data_end", 0);
-
-  // End text sections.
-  for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
-    Asm->SwitchToSection(SectionMap[i]);
-    EmitLabel("section_end", i);
-  }
-
-  // Emit common frame information.
-  EmitCommonDebugFrame();
-
-  // Emit function debug frame information
-  for (std::vector<FunctionDebugFrameInfo>::iterator I = DebugFrames.begin(),
-         E = DebugFrames.end(); I != E; ++I)
-    EmitFunctionDebugFrame(*I);
-
-  // Compute DIE offsets and sizes.
-  SizeAndOffsets();
-
-  // Emit all the DIEs into a debug info section
-  EmitDebugInfo();
-
-  // Corresponding abbreviations into a abbrev section.
-  EmitAbbreviations();
-
-  // Emit source line correspondence into a debug line section.
-  EmitDebugLines();
-
-  // Emit info into a debug pubnames section.
-  EmitDebugPubNames();
-
-  // Emit info into a debug str section.
-  EmitDebugStr();
-
-  // Emit info into a debug loc section.
-  EmitDebugLoc();
-
-  // Emit info into a debug aranges section.
-  EmitDebugARanges();
-
-  // Emit info into a debug ranges section.
-  EmitDebugRanges();
-
-  // Emit info into a debug macinfo section.
-  EmitDebugMacInfo();
-
-  // Emit inline info.
-  EmitDebugInlineInfo();
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-}
-
-/// BeginFunction - Gather pre-function debug information.  Assumes being
-/// emitted immediately after the function entry point.
-void DwarfDebug::BeginFunction(MachineFunction *MF) {
-  this->MF = MF;
-
-  if (!ShouldEmitDwarfDebug()) return;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  // Begin accumulating function debug information.
-  MMI->BeginFunction(MF);
-
-  // Assumes in correct section after the entry point.
-  EmitLabel("func_begin", ++SubprogramCount);
-
-  // Emit label for the implicitly defined dbg.stoppoint at the start of the
-  // function.
-  DebugLoc FDL = MF->getDefaultDebugLoc();
-  if (!FDL.isUnknown()) {
-    DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
-    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col,
-                                        DICompileUnit(DLT.CompileUnit));
-    Asm->printLabel(LabelID);
-  }
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-}
-
-/// EndFunction - Gather and emit post-function debug information.
-///
-void DwarfDebug::EndFunction(MachineFunction *MF) {
-  if (!ShouldEmitDwarfDebug()) return;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  // Define end label for subprogram.
-  EmitLabel("func_end", SubprogramCount);
-
-  // Get function line info.
-  if (!Lines.empty()) {
-    // Get section line info.
-    unsigned ID = SectionMap.insert(Asm->CurrentSection_);
-    if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
-    std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
-    // Append the function info to section info.
-    SectionLineInfos.insert(SectionLineInfos.end(),
-                            Lines.begin(), Lines.end());
-  }
-
-  // Construct the DbgScope for abstract instances.
-  for (SmallVector<DbgScope *, 32>::iterator
-         I = AbstractInstanceRootList.begin(),
-         E = AbstractInstanceRootList.end(); I != E; ++I)
-    ConstructAbstractDbgScope(*I);
-
-  // Construct scopes for subprogram.
-  if (FunctionDbgScope)
-    ConstructFunctionDbgScope(FunctionDbgScope);
-  else
-    // FIXME: This is wrong. We are essentially getting past a problem with
-    // debug information not being able to handle unreachable blocks that have
-    // debug information in them. In particular, those unreachable blocks that
-    // have "region end" info in them. That situation results in the "root
-    // scope" not being created. If that's the case, then emit a "default"
-    // scope, i.e., one that encompasses the whole function. This isn't
-    // desirable. And a better way of handling this (and all of the debugging
-    // information) needs to be explored.
-    ConstructDefaultDbgScope(MF);
-
-  DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
-                                               MMI->getFrameMoves()));
-
-  // Clear debug info
-  if (FunctionDbgScope) {
-    delete FunctionDbgScope;
-    DbgScopeMap.clear();
-    DbgAbstractScopeMap.clear();
-    DbgConcreteScopeMap.clear();
-    InlinedVariableScopes.clear();
-    FunctionDbgScope = NULL;
-    LexicalScopeStack.clear();
-    AbstractInstanceRootList.clear();
-  }
-
-  Lines.clear();
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-}
-
-/// RecordSourceLine - Records location information and associates it with a
-/// label. Returns a unique label ID used to generate a label and provide
-/// correspondence to the source line list.
-unsigned DwarfDebug::RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  CompileUnit *Unit = CompileUnitMap[V];
-  assert(Unit && "Unable to find CompileUnit");
-  unsigned ID = MMI->NextLabelID();
-  Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordSourceLine - Records location information and associates it with a
-/// label. Returns a unique label ID used to generate a label and provide
-/// correspondence to the source line list.
-unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col,
-                                      DICompileUnit CU) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  std::string Dir, Fn;
-  unsigned Src = GetOrCreateSourceID(CU.getDirectory(Dir),
-                                     CU.getFilename(Fn));
-  unsigned ID = MMI->NextLabelID();
-  Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
-/// timed. Look up the source id with the given directory and source file
-/// names. If none currently exists, create a new id and insert it in the
-/// SourceIds map. This can update DirectoryNames and SourceFileNames maps as
-/// well.
-unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
-                                         const std::string &FileName) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  unsigned SrcId = GetOrCreateSourceID(DirName, FileName);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return SrcId;
-}
-
-/// RecordRegionStart - Indicate the start of a region.
-unsigned DwarfDebug::RecordRegionStart(GlobalVariable *V) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DbgScope *Scope = getOrCreateScope(V);
-  unsigned ID = MMI->NextLabelID();
-  if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
-  LexicalScopeStack.push_back(Scope);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordRegionEnd - Indicate the end of a region.
-unsigned DwarfDebug::RecordRegionEnd(GlobalVariable *V) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DbgScope *Scope = getOrCreateScope(V);
-  unsigned ID = MMI->NextLabelID();
-  Scope->setEndLabelID(ID);
-  if (LexicalScopeStack.size() != 0)
-    LexicalScopeStack.pop_back();
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordVariable - Indicate the declaration of a local variable.
-void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
-                                const MachineInstr *MI) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DIDescriptor Desc(GV);
-  DbgScope *Scope = NULL;
-  bool InlinedFnVar = false;
-
-  if (Desc.getTag() == dwarf::DW_TAG_variable) {
-    // GV is a global variable.
-    DIGlobalVariable DG(GV);
-    Scope = getOrCreateScope(DG.getContext().getGV());
-  } else {
-    DenseMap<const MachineInstr *, DbgScope *>::iterator
-      SI = InlinedVariableScopes.find(MI);
-
-    if (SI != InlinedVariableScopes.end()) {
-      // or GV is an inlined local variable.
-      Scope = SI->second;
-    } else {
-      DIVariable DV(GV);
-      GlobalVariable *V = DV.getContext().getGV();
-
-      // FIXME: The code that checks for the inlined local variable is a hack!
-      DenseMap<const GlobalVariable *, DbgScope *>::iterator
-        AI = AbstractInstanceRootMap.find(V);
-
-      if (AI != AbstractInstanceRootMap.end()) {
-        // This method is called each time a DECLARE node is encountered. For an
-        // inlined function, this could be many, many times. We don't want to
-        // re-add variables to that DIE for each time. We just want to add them
-        // once. Check to make sure that we haven't added them already.
-        DenseMap<const GlobalVariable *,
-          SmallSet<const GlobalVariable *, 32> >::iterator
-          IP = InlinedParamMap.find(V);
-
-        if (IP != InlinedParamMap.end() && IP->second.count(GV) > 0) {
-          if (TimePassesIsEnabled)
-            DebugTimer->stopTimer();
-          return;
-        }
-
-        // or GV is an inlined local variable.
-        Scope = AI->second;
-        InlinedParamMap[V].insert(GV);
-        InlinedFnVar = true;
-      } else {
-        // or GV is a local variable.
-        Scope = getOrCreateScope(V);
-      }
-    }
-  }
-
-  assert(Scope && "Unable to find the variable's scope");
-  DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex, InlinedFnVar);
-  Scope->AddVariable(DV);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-}
-
-//// RecordInlinedFnStart - Indicate the start of inlined subroutine.
-unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
-                                          unsigned Line, unsigned Col) {
-  unsigned LabelID = MMI->NextLabelID();
-
-  if (!TAI->doesDwarfUsesInlineInfoSection())
-    return LabelID;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  GlobalVariable *GV = SP.getGV();
-  DenseMap<const GlobalVariable *, DbgScope *>::iterator
-    II = AbstractInstanceRootMap.find(GV);
-
-  if (II == AbstractInstanceRootMap.end()) {
-    // Create an abstract instance entry for this inlined function if it doesn't
-    // already exist.
-    DbgScope *Scope = new DbgScope(NULL, DIDescriptor(GV));
-
-    // Get the compile unit context.
-    CompileUnit *Unit = &FindCompileUnit(SP.getCompileUnit());
-    DIE *SPDie = Unit->getDieMapSlotFor(GV);
-    if (!SPDie)
-      SPDie = CreateSubprogramDIE(Unit, SP, false, true);
-
-    // Mark as being inlined. This makes this subprogram entry an abstract
-    // instance root.
-    // FIXME: Our debugger doesn't care about the value of DW_AT_inline, only
-    // that it's defined. That probably won't change in the future. However,
-    // this could be more elegant.
-    AddUInt(SPDie, dwarf::DW_AT_inline, 0, dwarf::DW_INL_declared_not_inlined);
-
-    // Keep track of the abstract scope for this function.
-    DbgAbstractScopeMap[GV] = Scope;
-
-    AbstractInstanceRootMap[GV] = Scope;
-    AbstractInstanceRootList.push_back(Scope);
-  }
-
-  // Create a concrete inlined instance for this inlined function.
-  DbgConcreteScope *ConcreteScope = new DbgConcreteScope(DIDescriptor(GV));
-  DIE *ScopeDie = new DIE(dwarf::DW_TAG_inlined_subroutine);
-  CompileUnit *Unit = &FindCompileUnit(SP.getCompileUnit());
-  ScopeDie->setAbstractCompileUnit(Unit);
-
-  DIE *Origin = Unit->getDieMapSlotFor(GV);
-  AddDIEEntry(ScopeDie, dwarf::DW_AT_abstract_origin,
-              dwarf::DW_FORM_ref4, Origin);
-  AddUInt(ScopeDie, dwarf::DW_AT_call_file, 0, Unit->getID());
-  AddUInt(ScopeDie, dwarf::DW_AT_call_line, 0, Line);
-  AddUInt(ScopeDie, dwarf::DW_AT_call_column, 0, Col);
-
-  ConcreteScope->setDie(ScopeDie);
-  ConcreteScope->setStartLabelID(LabelID);
-  MMI->RecordUsedDbgLabel(LabelID);
-
-  LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
-
-  // Keep track of the concrete scope that's inlined into this function.
-  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
-    SI = DbgConcreteScopeMap.find(GV);
-
-  if (SI == DbgConcreteScopeMap.end())
-    DbgConcreteScopeMap[GV].push_back(ConcreteScope);
-  else
-    SI->second.push_back(ConcreteScope);
-
-  // Track the start label for this inlined function.
-  DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
-    I = InlineInfo.find(GV);
-
-  if (I == InlineInfo.end())
-    InlineInfo[GV].push_back(LabelID);
-  else
-    I->second.push_back(LabelID);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return LabelID;
-}
-
-/// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
-unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
-  if (!TAI->doesDwarfUsesInlineInfoSection())
-    return 0;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  GlobalVariable *GV = SP.getGV();
-  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
-    I = DbgConcreteScopeMap.find(GV);
-
-  if (I == DbgConcreteScopeMap.end()) {
-    // FIXME: Can this situation actually happen? And if so, should it?
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return 0;
-  }
-
-  SmallVector<DbgScope *, 8> &Scopes = I->second;
-  assert(!Scopes.empty() && "We should have at least one debug scope!");
-  DbgScope *Scope = Scopes.back(); Scopes.pop_back();
-  unsigned ID = MMI->NextLabelID();
-  MMI->RecordUsedDbgLabel(ID);
-  Scope->setEndLabelID(ID);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordVariableScope - Record scope for the variable declared by
-/// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE. Record scopes
-/// for only inlined subroutine variables. Other variables's scopes are
-/// determined during RecordVariable().
-void DwarfDebug::RecordVariableScope(DIVariable &DV,
-                                     const MachineInstr *DeclareMI) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DISubprogram SP(DV.getContext().getGV());
-
-  if (SP.isNull()) {
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return;
-  }
-
-  DenseMap<GlobalVariable *, DbgScope *>::iterator
-    I = DbgAbstractScopeMap.find(SP.getGV());
-  if (I != DbgAbstractScopeMap.end())
-    InlinedVariableScopes[DeclareMI] = I->second;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
