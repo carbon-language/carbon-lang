@@ -426,7 +426,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
 
   if (NumParts > 1) {
     // Assemble the value from multiple parts.
-    if (!ValueVT.isVector()) {
+    if (!ValueVT.isVector() && ValueVT.isInteger()) {
       unsigned PartBits = PartVT.getSizeInBits();
       unsigned ValueBits = ValueVT.getSizeInBits();
 
@@ -438,9 +438,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
         ValueVT : MVT::getIntegerVT(RoundBits);
       SDValue Lo, Hi;
 
-      MVT HalfVT = ValueVT.isInteger() ?
-        MVT::getIntegerVT(RoundBits/2) :
-        MVT::getFloatingPointVT(RoundBits/2);
+      MVT HalfVT = MVT::getIntegerVT(RoundBits/2);
 
       if (RoundParts > 2) {
         Lo = getCopyFromParts(DAG, dl, Parts, RoundParts/2, PartVT, HalfVT);
@@ -473,7 +471,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
         Lo = DAG.getNode(ISD::ZERO_EXTEND, dl, TotalVT, Lo);
         Val = DAG.getNode(ISD::OR, dl, TotalVT, Lo, Hi);
       }
-    } else {
+    } else if (ValueVT.isVector()) {
       // Handle a multi-element vector.
       MVT IntermediateVT, RegisterVT;
       unsigned NumIntermediates;
@@ -510,6 +508,22 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
       Val = DAG.getNode(IntermediateVT.isVector() ?
                         ISD::CONCAT_VECTORS : ISD::BUILD_VECTOR, dl,
                         ValueVT, &Ops[0], NumIntermediates);
+    } else if (PartVT.isFloatingPoint()) {
+      // FP split into multiple FP parts (for ppcf128)
+      assert(ValueVT == MVT(MVT::ppcf128) && PartVT == MVT(MVT::f64) &&
+             "Unexpected split");
+      SDValue Lo, Hi;
+      Lo = DAG.getNode(ISD::BIT_CONVERT, dl, MVT(MVT::f64), Parts[0]);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, dl, MVT(MVT::f64), Parts[1]);
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      Val = DAG.getNode(ISD::BUILD_PAIR, dl, ValueVT, Lo, Hi);
+    } else {
+      // FP split into integer parts (soft fp)
+      assert(ValueVT.isFloatingPoint() && PartVT.isInteger() &&
+             !PartVT.isVector() && "Unexpected split");
+      MVT IntVT = MVT::getIntegerVT(ValueVT.getSizeInBits());
+      Val = getCopyFromParts(DAG, dl, Parts, NumParts, PartVT, IntVT);
     }
   }
 
