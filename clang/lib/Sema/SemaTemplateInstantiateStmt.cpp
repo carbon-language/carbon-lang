@@ -136,22 +136,7 @@ TemplateStmtInstantiator::VisitReturnStmt(ReturnStmt *S) {
 
 Sema::OwningStmtResult 
 TemplateStmtInstantiator::VisitCompoundStmt(CompoundStmt *S) {
-  ASTOwningVector<&ActionBase::DeleteStmt> Statements(SemaRef);
-  
-  for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
-       B != BEnd; ++B) {
-    OwningStmtResult Result = Visit(*B);
-    if (Result.isInvalid())
-      return SemaRef.StmtError();
-
-    Statements.push_back(Result.takeAs<Stmt>());
-  }
-
-  return SemaRef.ActOnCompoundStmt(S->getLBracLoc(), S->getRBracLoc(),
-                                   Sema::MultiStmtArg(SemaRef,
-                                                      Statements.take(),
-                                                      Statements.size()),
-                                   /*isStmtExpr=*/false);
+  return SemaRef.InstantiateCompoundStmt(S, TemplateArgs, false);
 }
 
 Sema::OwningStmtResult 
@@ -436,4 +421,29 @@ Sema::InstantiateStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
 
   TemplateStmtInstantiator Instantiator(*this, TemplateArgs);
   return Instantiator.Visit(S);
+}
+
+Sema::OwningStmtResult 
+Sema::InstantiateCompoundStmt(CompoundStmt *S, 
+                              const TemplateArgumentList &TemplateArgs,
+                              bool isStmtExpr) {
+  if (!S)
+    return Owned((Stmt *)0);
+
+  TemplateStmtInstantiator Instantiator(*this, TemplateArgs);
+  ASTOwningVector<&ActionBase::DeleteStmt> Statements(*this);
+  for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
+       B != BEnd; ++B) {
+    OwningStmtResult Result = Instantiator.Visit(*B);
+    if (Result.isInvalid())
+      return StmtError();
+
+    Statements.push_back(Result.takeAs<Stmt>());
+  }
+
+  return ActOnCompoundStmt(S->getLBracLoc(), S->getRBracLoc(),
+                           Sema::MultiStmtArg(*this,
+                                              Statements.take(),
+                                              Statements.size()),
+                           isStmtExpr);
 }

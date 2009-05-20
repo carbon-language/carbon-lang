@@ -2188,6 +2188,9 @@ public:
 
   OwningStmtResult InstantiateStmt(Stmt *S, 
                                    const TemplateArgumentList &TemplateArgs);
+  OwningStmtResult InstantiateCompoundStmt(CompoundStmt *S, 
+                                    const TemplateArgumentList &TemplateArgs,
+                                           bool isStmtExpr);
 
   Decl *InstantiateDecl(Decl *D, DeclContext *Owner,
                         const TemplateArgumentList &TemplateArgs);

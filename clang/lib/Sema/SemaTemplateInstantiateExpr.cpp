@@ -486,8 +486,8 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
 }
 
 Sema::OwningExprResult TemplateExprInstantiator::VisitStmtExpr(StmtExpr *E) {
-  Sema::OwningStmtResult SubStmt = SemaRef.InstantiateStmt(E->getSubStmt(),
-                                                           TemplateArgs);
+  Sema::OwningStmtResult SubStmt 
+    = SemaRef.InstantiateCompoundStmt(E->getSubStmt(), TemplateArgs, true);
   if (SubStmt.isInvalid())
     return SemaRef.ExprError();
   
