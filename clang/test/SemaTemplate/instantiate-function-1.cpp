@@ -69,6 +69,9 @@ template<typename T, typename U, typename V> struct X6 {
         return v; // expected-error{{incompatible type}}
     }
 
+    if (T x = t) {
+      t = x;
+    }
     return v;
   }
 };

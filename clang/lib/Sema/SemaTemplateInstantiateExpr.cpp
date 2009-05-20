@@ -92,7 +92,7 @@ namespace {
     // FIXME: CXXDeleteExpr
     // FIXME: UnaryTypeTraitExpr
     // FIXME: QualifiedDeclRefExpr
-    // FIXME: CXXExprWithTemporaries
+    OwningExprResult VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     OwningExprResult VisitCXXUnresolvedConstructExpr(
                                                CXXUnresolvedConstructExpr *E);
     OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
@@ -450,6 +450,7 @@ TemplateExprInstantiator::VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
   if (!Var)
     return SemaRef.ExprError();
 
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(E->getVarDecl(), Var);
   return SemaRef.Owned(new (SemaRef.Context) CXXConditionDeclExpr(
                                                     E->getStartLoc(), 
                                                     SourceLocation(),
@@ -877,6 +878,7 @@ TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
     return SemaRef.ExprError();
   }
 
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(E->getVarDecl(), Var);
   return SemaRef.Owned(CXXConstructExpr::Create(SemaRef.Context, Var, T,
                                                 E->getConstructor(), 
                                                 E->isElidable(),
@@ -914,6 +916,16 @@ TemplateExprInstantiator::VisitCXXFunctionalCastExpr(
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXExprWithTemporaries(
+                                                  CXXExprWithTemporaries *E) {
+  OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+
+  return SemaRef.ActOnFinishFullExpr(move(SubExpr));
 }
 
 Sema::OwningExprResult 

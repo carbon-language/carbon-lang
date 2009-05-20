@@ -33,3 +33,12 @@ struct BuildTemporary0 {
 };
 
 template struct BuildTemporary0<5, 7>;
+
+template<int N, int M>
+struct Temporaries0 {
+  void f() {
+    (void)X(N, M);
+  }
+};
+
+template struct Temporaries0<5, 7>;
