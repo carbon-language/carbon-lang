@@ -14,6 +14,8 @@
 #ifndef LLVM_SYSTEM_ATOMIC_H
 #define LLVM_SYSTEM_ATOMIC_H
 
+#include "llvm/Config/config.h"
+
 #if defined(_MSC_VER)
 #include <windows.h>
 #endif
