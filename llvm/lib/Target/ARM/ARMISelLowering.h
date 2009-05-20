@@ -62,7 +62,7 @@ namespace llvm {
       RRX,          // V = RRX X, Flag     -> srl X, 1 + shift in carry flag.
 
       FMRRD,        // double to two gprs.
-      FMDRR,         // Two gprs to double.
+      FMDRR,        // Two gprs to double.
 
       EH_SJLJ_SETJMP,    // SjLj exception handling setjmp
       EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp
@@ -71,7 +71,7 @@ namespace llvm {
     };
   }
 
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   //  ARMTargetLowering - ARM Implementation of the TargetLowering interface
 
   class ARMTargetLowering : public TargetLowering {
