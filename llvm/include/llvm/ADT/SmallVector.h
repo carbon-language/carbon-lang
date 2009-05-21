@@ -374,6 +374,16 @@ public:
     return I;
   }
 
+  /// data - Return a pointer to the vector's buffer, even if empty().
+  pointer data() {
+    return pointer(Begin);
+  }
+
+  /// data - Return a pointer to the vector's buffer, even if empty().
+  const_pointer data() const {
+    return const_pointer(Begin);
+  }
+
   const SmallVectorImpl &operator=(const SmallVectorImpl &RHS);
 
   bool operator==(const SmallVectorImpl &RHS) const {
