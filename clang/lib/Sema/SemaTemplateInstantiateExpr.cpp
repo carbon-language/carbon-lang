@@ -83,7 +83,7 @@ namespace {
     OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
     // FIXME: CXXTypeIdExpr
-    // FIXME: CXXThrowExpr
+    OwningExprResult VisitCXXThrowExpr(CXXThrowExpr *E);
     // FIXME: CXXDefaultArgExpr
     OwningExprResult VisitCXXConstructExpr(CXXConstructExpr *E);
     OwningExprResult VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
@@ -810,6 +810,18 @@ TemplateExprInstantiator::VisitCXXThisExpr(CXXThisExpr *E) {
     new (SemaRef.Context) CXXThisExpr(E->getLocStart(), ThisType);
   
   return SemaRef.Owned(TE);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXThrowExpr(CXXThrowExpr *E) {
+  OwningExprResult SubExpr(SemaRef, (void *)0);
+  if (E->getSubExpr()) {
+    SubExpr = Visit(E->getSubExpr());
+    if (SubExpr.isInvalid())
+      return SemaRef.ExprError();
+  }
+
+  return SemaRef.ActOnCXXThrow(E->getThrowLoc(), move(SubExpr));
 }
 
 Sema::OwningExprResult 

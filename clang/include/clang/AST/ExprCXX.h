@@ -351,6 +351,10 @@ public:
     Expr(CXXThrowExprClass, Ty, false, false), Op(expr), ThrowLoc(l) {}
   const Expr *getSubExpr() const { return cast_or_null<Expr>(Op); }
   Expr *getSubExpr() { return cast_or_null<Expr>(Op); }
+  void setSubExpr(Expr *E) { Op = E; }
+
+  SourceLocation getThrowLoc() const { return ThrowLoc; }
+  void setThrowLoc(SourceLocation L) { ThrowLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     if (getSubExpr() == 0)

@@ -95,3 +95,21 @@ struct Delete0 {
 template struct Delete0<int*>;
 template struct Delete0<X*>;
 template struct Delete0<int>; // expected-note{{instantiation}}
+
+// ---------------------------------------------------------------------
+// throw expressions
+// ---------------------------------------------------------------------
+template<typename T>
+struct Throw1 {
+  void f(T t) {
+    throw;
+    throw t; // expected-error{{incomplete type}}
+  }
+};
+
+struct Incomplete; // expected-note{{forward}}
+
+template struct Throw1<int>;
+template struct Throw1<int*>;
+template struct Throw1<Incomplete*>; // expected-note{{instantiation}}
+
