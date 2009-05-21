@@ -54,3 +54,16 @@ struct DesigArrayInit0 {
 
 template struct DesigArrayInit0<int[8], 5, 3, float, int>;
 template struct DesigArrayInit0<int[8], 5, 13, float, int>; // expected-note{{instantiation}}
+
+template<typename T, int Subscript1, int Subscript2,
+         typename Val1>
+struct DesigArrayRangeInit0 {
+  void f(Val1 val1) {
+    T array = {
+      [Subscript1...Subscript2] = val1 // expected-error{{exceeds}}
+    };
+  }
+};
+
+template struct DesigArrayRangeInit0<int[8], 3, 5, float>;
+template struct DesigArrayRangeInit0<int[8], 5, 13, float>; // expected-note{{instantiation}}

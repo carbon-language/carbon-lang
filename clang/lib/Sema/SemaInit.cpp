@@ -1672,7 +1672,7 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
         else if (StartValue.getBitWidth() < EndValue.getBitWidth())
           StartValue.extend(EndValue.getBitWidth());
 
-        if (EndValue < StartValue) {
+        if (!StartDependent && !EndDependent && EndValue < StartValue) {
           Diag(D.getEllipsisLoc(), diag::err_array_designator_empty_range)
             << StartValue.toString(10) << EndValue.toString(10) 
             << StartIndex->getSourceRange() << EndIndex->getSourceRange();

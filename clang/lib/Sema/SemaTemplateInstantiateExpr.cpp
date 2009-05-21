@@ -628,7 +628,22 @@ TemplateExprInstantiator::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
       continue;
     }
 
-    assert(false && "No array range designators, yet");
+    assert(D->isArrayRangeDesignator() && "New kind of designator?");
+    OwningExprResult Start = Visit(E->getArrayRangeStart(*D));
+    if (Start.isInvalid())
+      return SemaRef.ExprError();
+
+    OwningExprResult End = Visit(E->getArrayRangeEnd(*D));
+    if (End.isInvalid())
+      return SemaRef.ExprError();
+
+    Desig.AddDesignator(Designator::getArrayRange(Start.get(), 
+                                                  End.get(),
+                                                  D->getLBracketLoc(),
+                                                  D->getEllipsisLoc()));
+    
+    ArrayExprs.push_back(Start.release());
+    ArrayExprs.push_back(End.release());
   }
 
   OwningExprResult Result = 
