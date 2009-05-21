@@ -88,7 +88,7 @@ namespace {
     OwningExprResult VisitCXXConstructExpr(CXXConstructExpr *E);
     OwningExprResult VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
     OwningExprResult VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
-    // FIXME: CXXNewExpr
+    OwningExprResult VisitCXXNewExpr(CXXNewExpr *E);
     // FIXME: CXXDeleteExpr
     // FIXME: UnaryTypeTraitExpr
     // FIXME: QualifiedDeclRefExpr
@@ -883,6 +883,61 @@ TemplateExprInstantiator::VisitCXXFunctionalCastExpr(
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXNewExpr(CXXNewExpr *E) {
+  // Instantiate the type that we're allocating
+  QualType AllocType = SemaRef.InstantiateType(E->getAllocatedType(),
+                                               TemplateArgs,
+                                   /*FIXME:*/E->getSourceRange().getBegin(),
+                                               DeclarationName());
+  if (AllocType.isNull())
+    return SemaRef.ExprError();
+
+  // Instantiate the size of the array we're allocating (if any).
+  OwningExprResult ArraySize = SemaRef.InstantiateExpr(E->getArraySize(),
+                                                       TemplateArgs);
+  if (ArraySize.isInvalid())
+    return SemaRef.ExprError();
+
+  // Instantiate the placement arguments (if any).
+  ASTOwningVector<&ActionBase::DeleteExpr> PlacementArgs(SemaRef);
+  for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I) {
+    OwningExprResult Arg = Visit(E->getPlacementArg(I));
+    if (Arg.isInvalid())
+      return SemaRef.ExprError();
+
+    PlacementArgs.push_back(Arg.take());
+  }
+
+  // Instantiate the constructor arguments (if any).
+  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(SemaRef);
+  for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I) {
+    OwningExprResult Arg = Visit(E->getConstructorArg(I));
+    if (Arg.isInvalid())
+      return SemaRef.ExprError();
+
+    ConstructorArgs.push_back(Arg.take());
+  }
+
+  return SemaRef.BuildCXXNew(E->getSourceRange().getBegin(), 
+                             E->isGlobalNew(),
+                             /*FIXME*/SourceLocation(),
+                             Sema::MultiExprArg(SemaRef,
+                                                PlacementArgs.take(),
+                                                PlacementArgs.size()),
+                             /*FIXME*/SourceLocation(),
+                             E->isParenTypeId(),
+                             AllocType,
+                             /*FIXME*/E->getSourceRange().getBegin(),
+                             SourceRange(),
+                             move(ArraySize),
+                             /*FIXME*/SourceLocation(),
+                             Sema::MultiExprArg(SemaRef,
+                                                ConstructorArgs.take(),
+                                                ConstructorArgs.size()),
+                             E->getSourceRange().getEnd());
 }
 
 Sema::OwningExprResult 

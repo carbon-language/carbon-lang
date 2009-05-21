@@ -283,18 +283,57 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (D.isInvalidType())
     return ExprError();
 
-  if (CheckAllocatedType(AllocType, D))
+  // Every dimension shall be of constant size.
+  unsigned i = 1;
+  QualType ElementType = AllocType;
+  while (const ArrayType *Array = Context.getAsArrayType(ElementType)) {
+    if (!Array->isConstantArrayType()) {
+      Diag(D.getTypeObject(i).Loc, diag::err_new_array_nonconst)
+        << static_cast<Expr*>(D.getTypeObject(i).Arr.NumElts)->getSourceRange();
+      return ExprError();
+    }
+    ElementType = Array->getElementType();
+    ++i;
+  }
+
+  return BuildCXXNew(StartLoc, UseGlobal, 
+                     PlacementLParen,
+                     move(PlacementArgs), 
+                     PlacementRParen,
+                     ParenTypeId,
+                     AllocType, 
+                     D.getSourceRange().getBegin(),
+                     D.getSourceRange(),
+                     Owned(ArraySize),
+                     ConstructorLParen,
+                     move(ConstructorArgs),
+                     ConstructorRParen);
+}
+
+Sema::OwningExprResult 
+Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                  SourceLocation PlacementLParen,
+                  MultiExprArg PlacementArgs,
+                  SourceLocation PlacementRParen,
+                  bool ParenTypeId, 
+                  QualType AllocType,
+                  SourceLocation TypeLoc,
+                  SourceRange TypeRange,
+                  ExprArg ArraySizeE,
+                  SourceLocation ConstructorLParen,
+                  MultiExprArg ConstructorArgs,
+                  SourceLocation ConstructorRParen) {
+  if (CheckAllocatedType(AllocType, TypeLoc, TypeRange))
     return ExprError();
 
-  QualType ResultType = AllocType->isDependentType()
-                          ? Context.DependentTy
-                          : Context.getPointerType(AllocType);
+  QualType ResultType = Context.getPointerType(AllocType);
 
   // That every array dimension except the first is constant was already
   // checked by the type check above.
 
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
+  Expr *ArraySize = (Expr *)ArraySizeE.get();
   if (ArraySize && !ArraySize->isTypeDependent()) {
     QualType SizeType = ArraySize->getType();
     if (!SizeType->isIntegralType() && !SizeType->isEnumeralType())
@@ -357,9 +396,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
             !AllocType->isAggregateType()) {
     Constructor = PerformInitializationByConstructor(
                       AllocType, ConsArgs, NumConsArgs,
-                      D.getSourceRange().getBegin(),
-                      SourceRange(D.getSourceRange().getBegin(),
-                                  ConstructorRParen),
+                      TypeLoc,
+                      SourceRange(TypeLoc, ConstructorRParen),
                       RT->getDecl()->getDeclName(),
                       NumConsArgs != 0 ? IK_Direct : IK_Default);
     if (!Constructor)
@@ -369,7 +407,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       // FIXME: Check that no subpart is const.
       if (AllocType.isConstQualified())
         return ExprError(Diag(StartLoc, diag::err_new_uninitialized_const)
-          << D.getSourceRange());
+                           << TypeRange);
     } else if (NumConsArgs == 0) {
       // Object is value-initialized. Do nothing.
     } else if (NumConsArgs == 1) {
@@ -390,45 +428,35 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   PlacementArgs.release();
   ConstructorArgs.release();
+  ArraySizeE.release();
   return Owned(new (Context) CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs,
                         NumPlaceArgs, ParenTypeId, ArraySize, Constructor, Init,
                         ConsArgs, NumConsArgs, OperatorDelete, ResultType,
-                        StartLoc, Init ? ConstructorRParen : SourceLocation()));
+                        StartLoc, Init ? ConstructorRParen : SourceLocation()));  
 }
 
 /// CheckAllocatedType - Checks that a type is suitable as the allocated type
 /// in a new-expression.
 /// dimension off and stores the size expression in ArraySize.
-bool Sema::CheckAllocatedType(QualType AllocType, const Declarator &D)
+bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
+                              SourceRange R)
 {
   // C++ 5.3.4p1: "[The] type shall be a complete object type, but not an
   //   abstract class type or array thereof.
   if (AllocType->isFunctionType())
-    return Diag(D.getSourceRange().getBegin(), diag::err_bad_new_type)
-      << AllocType << 0 << D.getSourceRange();
+    return Diag(Loc, diag::err_bad_new_type)
+      << AllocType << 0 << R;
   else if (AllocType->isReferenceType())
-    return Diag(D.getSourceRange().getBegin(), diag::err_bad_new_type)
-      << AllocType << 1 << D.getSourceRange();
+    return Diag(Loc, diag::err_bad_new_type)
+      << AllocType << 1 << R;
   else if (!AllocType->isDependentType() &&
-           RequireCompleteType(D.getSourceRange().getBegin(), AllocType,
+           RequireCompleteType(Loc, AllocType,
                                diag::err_new_incomplete_type,
-                               D.getSourceRange()))
+                               R))
     return true;
-  else if (RequireNonAbstractType(D.getSourceRange().getBegin(), AllocType,
+  else if (RequireNonAbstractType(Loc, AllocType,
                                   diag::err_allocation_of_abstract_type))
     return true;
-
-  // Every dimension shall be of constant size.
-  unsigned i = 1;
-  while (const ArrayType *Array = Context.getAsArrayType(AllocType)) {
-    if (!Array->isConstantArrayType()) {
-      Diag(D.getTypeObject(i).Loc, diag::err_new_array_nonconst)
-        << static_cast<Expr*>(D.getTypeObject(i).Arr.NumElts)->getSourceRange();
-      return true;
-    }
-    AllocType = Array->getElementType();
-    ++i;
-  }
 
   return false;
 }

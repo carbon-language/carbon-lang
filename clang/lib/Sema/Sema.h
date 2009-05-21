@@ -1556,7 +1556,21 @@ public:
                                        SourceLocation ConstructorLParen,
                                        MultiExprArg ConstructorArgs,
                                        SourceLocation ConstructorRParen);
-  bool CheckAllocatedType(QualType AllocType, const Declarator &D);
+  OwningExprResult BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
+                               SourceLocation PlacementLParen,
+                               MultiExprArg PlacementArgs,
+                               SourceLocation PlacementRParen,
+                               bool ParenTypeId, 
+                               QualType AllocType,
+                               SourceLocation TypeLoc,
+                               SourceRange TypeRange,
+                               ExprArg ArraySize,
+                               SourceLocation ConstructorLParen,
+                               MultiExprArg ConstructorArgs,
+                               SourceLocation ConstructorRParen);
+  
+  bool CheckAllocatedType(QualType AllocType, SourceLocation Loc,
+                          SourceRange R);
   bool FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
                                bool UseGlobal, QualType AllocType, bool IsArray,
                                Expr **PlaceArgs, unsigned NumPlaceArgs,
