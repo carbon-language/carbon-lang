@@ -7,6 +7,7 @@ add_clang_library(clangFrontend
   CacheTokens.cpp
   DependencyFile.cpp
   DiagChecker.cpp
+  DocumentXML.cpp
   FixItRewriter.cpp
   GeneratePCH.cpp
   HTMLDiagnostics.cpp
@@ -27,6 +28,7 @@ add_clang_library(clangFrontend
   RewriteMacros.cpp
   RewriteObjC.cpp
   RewriteTest.cpp
+  StmtXML.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
   Warnings.cpp
