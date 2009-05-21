@@ -36,7 +36,7 @@
   <li><a href="#testsuitestructure">Test suite structure</a></li>
   <li><a href="#testsuiterun">Running the test suite</a>
     <ul>
-      <li><a href="#testsuiteexternal">Configuring external tests</a></li>
+      <li><a href="#testsuiteexternal">Configuring External Tests</a></li>
       <li><a href="#testsuitetests">Running different tests</a></li>
       <li><a href="#testsuiteoutput">Generating test output</a></li>
       <li><a href="#testsuitecustom">Writing custom tests for llvm-test</a></li>
@@ -665,7 +665,7 @@ go here.</p></li>
 <p>The External directory contains Makefiles for building code that is external
 to (i.e., not distributed with) LLVM.  The most prominent members of this
 directory are the SPEC 95 and SPEC 2000 benchmark suites. The <tt>External</tt>
-directory does not contain these actual tests,but only the Makefiles that know
+directory does not contain these actual tests, but only the Makefiles that know
 how to properly compile these programs from somewhere else. The presence and
 location of these external programs is configured by the llvm-test
 <tt>configure</tt> script.</p></li>
@@ -710,15 +710,20 @@ test suite creates temporary files during execution.</p>
 % svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 </pre>
 </div>
-      <p>This will get the test suite into <tt>llvm/projects/test-suite</tt>.</p>
+    <p>This will get the test suite into <tt>llvm/projects/test-suite</tt>.</p>
   </li>
-  <li><p>Configure llvm from the top level of each build tree (LLVM object directory tree)
-  in which you want to run the test suite, just as you do before building LLVM.</p>
-  <p>When running configure, you must either: (1) have <tt>llvm-gcc</tt>
-  in your path, or (2) specify the directory where <tt>llvm-gcc</tt> is
-  installed using <tt>--with-llvmgccdir=$LLVM_GCC_DIR</tt>.</p>
-  <p>This step tells the configure machinery that the test suite
-  is now available so it can be configured for your build tree:</p>
+  <li><p>Configure and build <tt>llvm</tt>.</p></li>
+  <li><p>Configure and build <tt>llvm-gcc</tt>.</p></li>
+  <li><p>Install <tt>llvm-gcc</tt> somewhere.</p></li>
+  <li><p><em>Re-configure</em> <tt>llvm</tt> from the top level of
+      each build tree (LLVM object directory tree) in which you want
+      to run the test suite, just as you do before building LLVM.</p>
+    <p>During the <em>re-configuration</em>, you must either: (1)
+      have <tt>llvm-gcc</tt> you just built in your path, or (2)
+      specify the directory where your just-built <tt>llvm-gcc</tt> is
+      installed using <tt>--with-llvmgccdir=$LLVM_GCC_DIR</tt>.</p>
+    <p>You must also tell the configure machinery that the test suite
+      is available so it can be configured for your build tree:</p>
 <div class="doc_code">
 <pre>
 % cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure [--with-llvmgccdir=$LLVM_GCC_DIR]
@@ -743,12 +748,16 @@ the test code or configure script changes).</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
-<a name="testsuiteexternal">Configuring external tests</a></div>
+<a name="testsuiteexternal">Configuring External Tests</a></div>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
-<p>Note, when configuring the <tt>test-suite</tt> module, you might want to
-specify the following configuration option:</p>
+<p>In order to run the External tests in the <tt>test-suite</tt>
+  module, you must specify <i>--with-externals</i>.  This
+  must be done during the <em>re-configuration</em> step (see above),
+  and the <tt>llvm</tt> re-configuration must recognize the
+  previously-built <tt>llvm-gcc</tt>.  If any of these is missing or
+  neglected, the External tests won't work.</p>
 <dl>
 <dt><i>--with-externals</i></dt>
 <dt><i>--with-externals=&lt;<tt>directory</tt>&gt;</i></dt>
@@ -774,7 +783,7 @@ specify the following configuration option:</p>
 <a name="testsuitetests">Running different tests</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
-<p>In addition to the regular "whole program"  tests, the <tt>test-suite</tt>
+<p>In addition to the regular "whole program" tests, the <tt>test-suite</tt>
 module also provides a mechanism for compiling the programs in different ways.
 If the variable TEST is defined on the <tt>gmake</tt> command line, the test system will
 include a Makefile named <tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.
