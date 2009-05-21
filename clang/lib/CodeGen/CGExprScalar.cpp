@@ -1189,8 +1189,10 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
 }
 
 Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
-  LValue LHS = EmitLValue(E->getLHS());
+  // __block variables need to have the rhs evaluated first, plus
+  // this should improve codegen just a little.
   Value *RHS = Visit(E->getRHS());
+  LValue LHS = EmitLValue(E->getLHS());
   
   // Store the value into the LHS.  Bit-fields are handled specially
   // because the result is altered by the store, i.e., [C99 6.5.16p1]
