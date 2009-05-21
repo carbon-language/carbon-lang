@@ -331,22 +331,17 @@ bool FastISel::SelectCall(User *I) {
       DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
       unsigned Line = SPI->getLine();
       unsigned Col = SPI->getColumn();
-      unsigned Idx = MF.getOrCreateDebugLocID(CU.getGV(),
-                                              DbgScopeTrack.getCurScope(),
-                                              Line, Col);
+      unsigned Idx = MF.getOrCreateDebugLocID(CU.getGV(), Line, Col);
       setCurDebugLoc(DebugLoc::get(Idx));
     }
     return true;
   }
   case Intrinsic::dbg_region_start: {
     DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(RSI->getContext(), CodeGenOpt::None))
-      return true;
-
-    GlobalVariable *Rgn = cast<GlobalVariable>(RSI->getContext());
-    DbgScopeTrack.EnterDebugScope(Rgn, MF);
-    if (DW && DW->ShouldEmitDwarfDebug()) {
-      unsigned ID = DW->RecordRegionStart(Rgn);
+    if (DIDescriptor::ValidDebugInfo(RSI->getContext(), CodeGenOpt::None) &&
+        DW && DW->ShouldEmitDwarfDebug()) {
+      unsigned ID = 
+        DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
       BuildMI(MBB, DL, II).addImm(ID);
     }
@@ -354,14 +349,10 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::dbg_region_end: {
     DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(REI->getContext(), CodeGenOpt::None))
-      return true;
-
-    GlobalVariable *Rgn = cast<GlobalVariable>(REI->getContext());
-    DbgScopeTrack.ExitDebugScope(Rgn, MF);
-    if (DW && DW->ShouldEmitDwarfDebug()) {
+    if (DIDescriptor::ValidDebugInfo(REI->getContext(), CodeGenOpt::None) &&
+        DW && DW->ShouldEmitDwarfDebug()) {
      unsigned ID = 0;
-     DISubprogram Subprogram(Rgn);
+     DISubprogram Subprogram(cast<GlobalVariable>(REI->getContext()));
      if (!Subprogram.isNull() && !Subprogram.describes(MF.getFunction())) {
         // This is end of an inlined function.
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
@@ -391,7 +382,6 @@ bool FastISel::SelectCall(User *I) {
     DebugLoc PrevLoc = DL;
     DISubprogram Subprogram(cast<GlobalVariable>(SP));
     DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-    DbgScopeTrack.EnterDebugScope(Subprogram.getGV(), MF);
 
     if (!Subprogram.describes(MF.getFunction())) {
       // This is a beginning of an inlined function.
@@ -403,10 +393,8 @@ bool FastISel::SelectCall(User *I) {
         return true;
       // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
-      setCurDebugLoc(
-        DebugLoc::get(MF.getOrCreateDebugLocID(CompileUnit.getGV(),
-                                               DbgScopeTrack.getCurScope(),
-                                               Line, 0)));
+      setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
+                                              CompileUnit.getGV(), Line, 0)));
 
       if (DW && DW->ShouldEmitDwarfDebug()) {
         DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
@@ -420,10 +408,8 @@ bool FastISel::SelectCall(User *I) {
     } else {
       // Record the source line.
       unsigned Line = Subprogram.getLineNumber();
-      MF.setDefaultDebugLoc(
-        DebugLoc::get(MF.getOrCreateDebugLocID(CompileUnit.getGV(),
-                                               DbgScopeTrack.getCurScope(),
-                                               Line, 0)));
+      MF.setDefaultDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
+                                              CompileUnit.getGV(), Line, 0)));
       if (DW && DW->ShouldEmitDwarfDebug()) {
         // llvm.dbg.func_start also defines beginning of function scope.
         DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));

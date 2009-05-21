@@ -57,7 +57,6 @@ protected:
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;
   DebugLoc DL;
-  DebugScopeTracker DbgScopeTrack;
   const TargetMachine &TM;
   const TargetData &TD;
   const TargetInstrInfo &TII;

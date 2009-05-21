@@ -20,77 +20,18 @@
 
 namespace llvm {
   class GlobalVariable;
-  class MachineFunction;
 
-  /// DebugScope - Debug scope id. This is carried into DebugLocTuple to index
-  /// into a vector of DebugScopeInfos. Provides the ability to associate a
-  /// SDNode/MachineInstr with the debug scope that it belongs to.
-  ///
-  class DebugScope {
-    unsigned Idx;
-
-  public:
-    DebugScope() : Idx(~0U) {}  // Defaults to null.
-
-    static DebugScope getInvalid()   { DebugScope S; S.Idx = ~0U; return S; }
-    static DebugScope get(unsigned idx) { DebugScope S; S.Idx = idx; return S; }
-
-    unsigned getIndex() const { return Idx; }
-
-    /// isInvalid - Return true if it doesn't refer to any scope.
-    bool isInvalid() const { return Idx == ~0U; }
-
-    bool operator==(const DebugScope &DS) const { return Idx == DS.Idx; }
-    bool operator!=(const DebugScope &DS) const { return !(*this == DS); }
-  };
-
-  /// DebugScopeInfo - Contains info about the scope global variable and the
-  /// parent debug scope. DebugScope is only a "cookie" that can point to a
-  /// specific DebugScopeInfo.
-  ///
-  struct DebugScopeInfo {
-    GlobalVariable *GV;
-    DebugScope Parent;
-
-    DebugScopeInfo(GlobalVariable *gv, DebugScope parent)
-      : GV(gv), Parent(parent) {}
-    DebugScopeInfo()
-      : GV(0), Parent(DebugScope::getInvalid()) {}
-  };
-
-  /// DebugScopeTracker - Create and keep track of the debug scope while
-  /// entering/exiting subprograms and blocks. Used by the instruction
-  /// selectors.
-  ///
-  class DebugScopeTracker {
-    DebugScope CurScope;
-
-  public:
-    /// getCurScope - The current debug scope that we "entered" through
-    /// EnterDebugScope.
-    DebugScope getCurScope() const { return CurScope; }
-
-    /// EnterDebugScope - Start a new debug scope. ScopeGV can be a DISubprogram
-    /// or a DIBlock.
-    void EnterDebugScope(GlobalVariable *ScopeGV, MachineFunction &MF);
-
-    /// ExitDebugScope - "Pop" a DISubprogram or a DIBlock.
-    void ExitDebugScope(GlobalVariable *ScopeGV, MachineFunction &MF);
-  };
-
-  /// DebugLocTuple - Debug location tuple of a DICompileUnit global variable,
-  /// debug scope, line and column.
+  /// DebugLocTuple - Debug location tuple of filename id, line and column.
   ///
   struct DebugLocTuple {
     GlobalVariable *CompileUnit;
-    DebugScope Scope;
     unsigned Line, Col;
 
-    DebugLocTuple(GlobalVariable *v, DebugScope s, unsigned l, unsigned c)
-      : CompileUnit(v), Scope(s), Line(l), Col(c) {};
+    DebugLocTuple(GlobalVariable *v, unsigned l, unsigned c)
+      : CompileUnit(v), Line(l), Col(c) {};
 
     bool operator==(const DebugLocTuple &DLT) const {
-      return CompileUnit == DLT.CompileUnit && Scope == DLT.Scope &&
+      return CompileUnit == DLT.CompileUnit &&
              Line == DLT.Line && Col == DLT.Col;
     }
     bool operator!=(const DebugLocTuple &DLT) const {
@@ -122,20 +63,18 @@ namespace llvm {
   // Partially specialize DenseMapInfo for DebugLocTyple.
   template<>  struct DenseMapInfo<DebugLocTuple> {
     static inline DebugLocTuple getEmptyKey() {
-      return DebugLocTuple(0, DebugScope::getInvalid(), ~0U, ~0U);
+      return DebugLocTuple(0, ~0U, ~0U);
     }
     static inline DebugLocTuple getTombstoneKey() {
-      return DebugLocTuple((GlobalVariable*)~1U,DebugScope::get(~1U), ~1U, ~1U);
+      return DebugLocTuple((GlobalVariable*)~1U, ~1U, ~1U);
     }
     static unsigned getHashValue(const DebugLocTuple &Val) {
       return DenseMapInfo<GlobalVariable*>::getHashValue(Val.CompileUnit) ^
-             DenseMapInfo<unsigned>::getHashValue(Val.Scope.getIndex()) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Line) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Col);
     }
     static bool isEqual(const DebugLocTuple &LHS, const DebugLocTuple &RHS) {
       return LHS.CompileUnit == RHS.CompileUnit &&
-             LHS.Scope       == RHS.Scope &&
              LHS.Line        == RHS.Line &&
              LHS.Col         == RHS.Col;
     }

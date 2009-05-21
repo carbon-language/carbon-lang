@@ -312,17 +312,6 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
             !StaticAllocaMap.count(cast<AllocaInst>(I)))
           InitializeRegForValue(I);
 
-  // FIXME: PHI instructions currently get an invalid scope. This is because
-  // tracking of debug scopes is done through a simple mechanism where
-  // "entering" a scope implies that the scope is entered for the first time.
-  // If we keep track of debug scopes for the following loop, the PHI
-  // instructions would get scopes that will not be used again later by the
-  // instruction selectors.
-  // Either provide a mechanism to re-enter a previously created scope or wait
-  // for when the DebugLoc is retrieved from Instruction, in which case the
-  // current debug scope tracking mechanism will be obsolete.
-  DebugScope DbgScope;
-
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This
   // also creates the initial PHI MachineInstrs, though none of the input
   // operands are populated.
@@ -348,7 +337,6 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
                                              CodeGenOpt::Default)) {
               DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
               unsigned idx = MF->getOrCreateDebugLocID(CU.getGV(),
-                                                       DbgScope,
                                                        SPI->getLine(),
                                                        SPI->getColumn());
               DL = DebugLoc::get(idx);
@@ -364,7 +352,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
               DISubprogram Subprogram(cast<GlobalVariable>(SP));
               DICompileUnit CU(Subprogram.getCompileUnit());
               unsigned Line = Subprogram.getLineNumber();
-              DL = DebugLoc::get(MF->getOrCreateDebugLocID(CU.getGV(), DbgScope,
+              DL = DebugLoc::get(MF->getOrCreateDebugLocID(CU.getGV(),
                                                            Line, 0));
             }
 
@@ -3921,9 +3909,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       MachineFunction &MF = DAG.getMachineFunction();
       DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
       DebugLoc Loc = DebugLoc::get(MF.getOrCreateDebugLocID(CU.getGV(),
-                                                 DbgScopeTrack.getCurScope(),
-                                                           SPI.getLine(),
-                                                           SPI.getColumn()));
+                                              SPI.getLine(), SPI.getColumn()));
       setCurDebugLoc(Loc);
       
       if (OptLevel == CodeGenOpt::None)
@@ -3937,14 +3923,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLevel))
-      return 0;
 
-    MachineFunction &MF = DAG.getMachineFunction();
-    GlobalVariable *Rgn = cast<GlobalVariable>(RSI.getContext());
-    DbgScopeTrack.EnterDebugScope(Rgn, MF);
-    if (DW && DW->ShouldEmitDwarfDebug()) {
-      unsigned LabelID = DW->RecordRegionStart(Rgn);
+    if (DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLevel) &&
+        DW && DW->ShouldEmitDwarfDebug()) {
+      unsigned LabelID =
+        DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
       DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                getRoot(), LabelID));
     }
@@ -3954,14 +3937,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_end: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-    if (!DIDescriptor::ValidDebugInfo(REI.getContext(), OptLevel))
-      return 0;
 
-    MachineFunction &MF = DAG.getMachineFunction();
-    GlobalVariable *Rgn = cast<GlobalVariable>(REI.getContext());
-    DbgScopeTrack.ExitDebugScope(Rgn, MF);
-    if (DW && DW->ShouldEmitDwarfDebug()) {
-      DISubprogram Subprogram(Rgn);
+    if (DIDescriptor::ValidDebugInfo(REI.getContext(), OptLevel) &&
+        DW && DW->ShouldEmitDwarfDebug()) {
+      MachineFunction &MF = DAG.getMachineFunction();
+      DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
 
       if (Subprogram.isNull() || Subprogram.describes(MF.getFunction())) {
         unsigned LabelID =
@@ -3994,7 +3974,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0;
 
     MachineFunction &MF = DAG.getMachineFunction();
-    DbgScopeTrack.EnterDebugScope(cast<GlobalVariable>(SP), MF);
     if (OptLevel == CodeGenOpt::None) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
       // (most?) gdb expects.
@@ -4014,9 +3993,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         // Record the source line.
         unsigned Line = Subprogram.getLineNumber();
         setCurDebugLoc(DebugLoc::get(
-                     MF.getOrCreateDebugLocID(CompileUnit.getGV(),
-                                              DbgScopeTrack.getCurScope(),
-                                              Line, 0)));
+                     MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
 
         if (DW && DW->ShouldEmitDwarfDebug()) {
           DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
@@ -4031,9 +4008,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         // Record the source line.
         unsigned Line = Subprogram.getLineNumber();
         MF.setDefaultDebugLoc(DebugLoc::get(
-                     MF.getOrCreateDebugLocID(CompileUnit.getGV(),
-                                              DbgScopeTrack.getCurScope(),
-                                              Line, 0)));
+                     MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
         if (DW && DW->ShouldEmitDwarfDebug()) {
           // llvm.dbg.func_start also defines beginning of function scope.
           DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
@@ -4060,9 +4035,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // create a label if this is a beginning of inlined function.
       unsigned Line = Subprogram.getLineNumber();
       setCurDebugLoc(DebugLoc::get(
-                     MF.getOrCreateDebugLocID(CompileUnit.getGV(),
-                                              DbgScopeTrack.getCurScope(),
-                                              Line, 0)));
+                     MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
       // FIXME -  Start new region because llvm.dbg.func_start also defines
       // beginning of function scope.
     }
