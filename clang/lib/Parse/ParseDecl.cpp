@@ -15,7 +15,6 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Scope.h"
 #include "ExtensionRAIIObject.h"
-#include "AstGuard.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
 

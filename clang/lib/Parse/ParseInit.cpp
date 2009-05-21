@@ -13,7 +13,6 @@
 
 #include "clang/Parse/Designator.h"
 #include "clang/Parse/Parser.h"
-#include "AstGuard.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;

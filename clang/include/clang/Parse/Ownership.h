@@ -724,8 +724,8 @@ namespace clang {
   };
 
   /// \brief A small vector that owns a set of AST nodes.
-  template <ASTDestroyer Destroyer>
-  class ASTOwningVector : public llvm::SmallVector<void *, 8> {
+  template <ASTDestroyer Destroyer, unsigned N = 8>
+  class ASTOwningVector : public llvm::SmallVector<void *, N> {
 #if !defined(DISABLE_SMART_POINTERS)
     ActionBase &Actions;
     bool Owned;
@@ -746,7 +746,7 @@ namespace clang {
       if (!Owned)
         return;
 
-      for (unsigned I = 0, N = this->size(); I != N; ++I)
+      for (unsigned I = 0, Last = this->size(); I != Last; ++I)
         (Actions.*Destroyer)((*this)[I]);
     }
 #endif
@@ -759,7 +759,26 @@ namespace clang {
     }
 
     template<typename T> T **takeAs() { return (T**)take(); }
+
+#if !defined(DISABLE_SMART_POINTERS)
+    ActionBase &getActions() const { return Actions; }
+#endif
   };
+
+  /// A SmallVector of statements, with stack size 32 (as that is the only one
+  /// used.)
+  typedef ASTOwningVector<&ActionBase::DeleteStmt, 32> StmtVector;
+  /// A SmallVector of expressions, with stack size 12 (the maximum used.)
+  typedef ASTOwningVector<&ActionBase::DeleteExpr, 12> ExprVector;
+
+  template <ASTDestroyer Destroyer, unsigned N> inline
+  ASTMultiPtr<Destroyer> move_arg(ASTOwningVector<Destroyer, N> &vec) {
+#if !defined(DISABLE_SMART_POINTERS)
+    return ASTMultiPtr<Destroyer>(vec.getActions(), vec.take(), vec.size());
+#else
+    return ASTMultiPtr<Destroyer>(vec.take(), vec.size());
+#endif
+  }
 
 #if !defined(DISABLE_SMART_POINTERS)
 

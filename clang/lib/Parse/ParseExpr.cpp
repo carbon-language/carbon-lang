@@ -24,7 +24,6 @@
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "ExtensionRAIIObject.h"
-#include "AstGuard.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;

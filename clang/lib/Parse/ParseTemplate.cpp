@@ -15,7 +15,6 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
-#include "AstGuard.h"
 using namespace clang;
 
 /// \brief Parse a template declaration, explicit instantiation, or

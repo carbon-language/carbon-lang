@@ -282,8 +282,7 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitCallExpr(CallExpr *E) {
     = ((Expr *)Callee.get())->getSourceRange().getBegin();
   return SemaRef.ActOnCallExpr(/*Scope=*/0, move(Callee), 
                                /*FIXME:*/FakeLParenLoc,
-                               Sema::MultiExprArg(SemaRef,
-                                                  Args.take(), Args.size()),
+                               move_arg(Args),
                                /*FIXME:*/&FakeCommaLocs.front(), 
                                E->getRParenLoc());
 }
@@ -671,9 +670,7 @@ TemplateExprInstantiator::VisitCXXTemporaryObjectExpr(
                                                        /*, FIXME*/),
                                            T.getAsOpaquePtr(),
                                            /*FIXME*/E->getTypeBeginLoc(),
-                                           Sema::MultiExprArg(SemaRef,
-                                                              Args.take(),
-                                                              Args.size()),
+                                           move_arg(Args),
                                            /*HACK*/&CommaLoc,
                                            E->getSourceRange().getEnd());
 }
@@ -924,9 +921,7 @@ TemplateExprInstantiator::VisitCXXNewExpr(CXXNewExpr *E) {
   return SemaRef.BuildCXXNew(E->getSourceRange().getBegin(), 
                              E->isGlobalNew(),
                              /*FIXME*/SourceLocation(),
-                             Sema::MultiExprArg(SemaRef,
-                                                PlacementArgs.take(),
-                                                PlacementArgs.size()),
+                             move_arg(PlacementArgs),
                              /*FIXME*/SourceLocation(),
                              E->isParenTypeId(),
                              AllocType,
@@ -979,9 +974,7 @@ TemplateExprInstantiator::VisitCXXUnresolvedConstructExpr(
                                                        E->getLParenLoc()),
                                            T.getAsOpaquePtr(),
                                            E->getLParenLoc(),
-                                           Sema::MultiExprArg(SemaRef, 
-                                                              Args.take(),
-                                                              Args.size()),
+                                           move_arg(Args),
                                            &FakeCommaLocs.front(),
                                            E->getRParenLoc());
 }

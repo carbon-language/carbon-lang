@@ -314,9 +314,7 @@ TemplateStmtInstantiator::VisitCXXTryStmt(CXXTryStmt *S) {
   }
 
   return SemaRef.ActOnCXXTryBlock(S->getTryLoc(), move(TryBlock),
-                                  Sema::MultiStmtArg(SemaRef,
-                                                     Handlers.take(),
-                                                     Handlers.size()));
+                                  move_arg(Handlers));
 }
 
 Sema::OwningStmtResult
@@ -442,8 +440,5 @@ Sema::InstantiateCompoundStmt(CompoundStmt *S,
   }
 
   return ActOnCompoundStmt(S->getLBracLoc(), S->getRBracLoc(),
-                           Sema::MultiStmtArg(*this,
-                                              Statements.take(),
-                                              Statements.size()),
-                           isStmtExpr);
+                           move_arg(Statements), isStmtExpr);
 }

@@ -14,7 +14,6 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
-#include "AstGuard.h"
 using namespace clang;
 
 /// ParseOptionalCXXScopeSpecifier - Parse global scope or
