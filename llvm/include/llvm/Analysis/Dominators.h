@@ -251,48 +251,15 @@ protected:
 
     assert(!PredBlocks.empty() && "No predblocks??");
 
-    // The newly inserted basic block will dominate existing basic blocks iff the
-    // PredBlocks dominate all of the non-pred blocks.  If all predblocks dominate
-    // the non-pred blocks, then they all must be the same block!
-    //
     bool NewBBDominatesNewBBSucc = true;
-    {
-      typename GraphT::NodeType* OnePred = PredBlocks[0];
-      size_t i = 1, e = PredBlocks.size();
-      for (i = 1; !DT.isReachableFromEntry(OnePred); ++i) {
-        assert(i != e && "Didn't find reachable pred?");
-        OnePred = PredBlocks[i];
+    for (typename GraphTraits<Inverse<N> >::ChildIteratorType PI =
+         GraphTraits<Inverse<N> >::child_begin(NewBBSucc),
+         E = GraphTraits<Inverse<N> >::child_end(NewBBSucc); PI != E; ++PI)
+      if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI) &&
+          DT.isReachableFromEntry(*PI)) {
+        NewBBDominatesNewBBSucc = false;
+        break;
       }
-
-      for (; i != e; ++i)
-        if (PredBlocks[i] != OnePred && DT.isReachableFromEntry(OnePred)) {
-          NewBBDominatesNewBBSucc = false;
-          break;
-        }
-
-      if (NewBBDominatesNewBBSucc)
-        for (typename GraphTraits<Inverse<N> >::ChildIteratorType PI =
-             GraphTraits<Inverse<N> >::child_begin(NewBBSucc),
-             E = GraphTraits<Inverse<N> >::child_end(NewBBSucc); PI != E; ++PI)
-          if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI)) {
-            NewBBDominatesNewBBSucc = false;
-            break;
-          }
-    }
-
-    // The other scenario where the new block can dominate its successors are when
-    // all predecessors of NewBBSucc that are not NewBB are dominated by NewBBSucc
-    // already.
-    if (!NewBBDominatesNewBBSucc) {
-      NewBBDominatesNewBBSucc = true;
-      for (typename GraphTraits<Inverse<N> >::ChildIteratorType PI = 
-           GraphTraits<Inverse<N> >::child_begin(NewBBSucc),
-           E = GraphTraits<Inverse<N> >::child_end(NewBBSucc); PI != E; ++PI)
-        if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI)) {
-          NewBBDominatesNewBBSucc = false;
-          break;
-        }
-    }
 
     // Find NewBB's immediate dominator and create new dominator tree node for
     // NewBB.
