@@ -113,3 +113,29 @@ template struct Throw1<int>;
 template struct Throw1<int*>;
 template struct Throw1<Incomplete*>; // expected-note{{instantiation}}
 
+// ---------------------------------------------------------------------
+// typeid expressions
+// ---------------------------------------------------------------------
+
+// FIXME: This should really include <typeinfo>, but we don't have that yet.
+namespace std {
+  class type_info;
+}
+
+template<typename T>
+struct TypeId0 {
+  const std::type_info &f(T* ptr) {
+    if (ptr)
+      return typeid(ptr);
+    else
+      return typeid(T);
+  }
+};
+
+struct Abstract {
+  virtual void f() = 0;
+};
+
+template struct TypeId0<int>;
+template struct TypeId0<Incomplete>;
+template struct TypeId0<Abstract>;

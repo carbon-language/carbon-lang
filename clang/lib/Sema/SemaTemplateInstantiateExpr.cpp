@@ -82,7 +82,7 @@ namespace {
     OwningExprResult VisitCXXThisExpr(CXXThisExpr *E);
     OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
     OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
-    // FIXME: CXXTypeIdExpr
+    OwningExprResult VisitCXXTypeidExpr(CXXTypeidExpr *E);
     OwningExprResult VisitCXXThrowExpr(CXXThrowExpr *E);
     // FIXME: CXXDefaultArgExpr
     OwningExprResult VisitCXXConstructExpr(CXXConstructExpr *E);
@@ -810,6 +810,38 @@ TemplateExprInstantiator::VisitCXXThisExpr(CXXThisExpr *E) {
     new (SemaRef.Context) CXXThisExpr(E->getLocStart(), ThisType);
   
   return SemaRef.Owned(TE);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
+  if (E->isTypeOperand()) {
+    QualType T = SemaRef.InstantiateType(E->getTypeOperand(),
+                                         TemplateArgs,
+                                     /*FIXME*/E->getSourceRange().getBegin(),
+                                         DeclarationName());
+    if (T.isNull())
+      return SemaRef.ExprError();
+
+    return SemaRef.ActOnCXXTypeid(E->getSourceRange().getBegin(),
+                                  /*FIXME*/E->getSourceRange().getBegin(),
+                                  true, T.getAsOpaquePtr(),
+                                  E->getSourceRange().getEnd());
+  }
+
+  OwningExprResult Operand = Visit(E->getExprOperand());
+  if (Operand.isInvalid())
+    return SemaRef.ExprError();
+
+  OwningExprResult Result 
+    = SemaRef.ActOnCXXTypeid(E->getSourceRange().getBegin(),
+                              /*FIXME*/E->getSourceRange().getBegin(),
+                             false, Operand.get(),
+                             E->getSourceRange().getEnd());
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+  Operand.release(); // FIXME: since ActOnCXXTypeid silently took ownership
+  return move(Result);
 }
 
 Sema::OwningExprResult 
