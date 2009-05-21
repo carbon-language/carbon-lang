@@ -37,7 +37,7 @@ namespace S1 {
     
     namespace S3 {
       void f() {
-        x = 0; // expected-error {{incompatible type assigning 'int', expected 'class B'}}
+        x = 0; // expected-error {{no viable overloaded '='}}
       }
     }
 

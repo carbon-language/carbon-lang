@@ -12,5 +12,5 @@ void test() {
 
   std::vector<INT> v1;
   vector<Real> v2;
-  v1 = v2; // expected-error{{incompatible type assigning 'vector<Real>', expected 'std::vector<INT>'}}
+  v1 = v2; // expected-error{{no viable overloaded '='}}
 }

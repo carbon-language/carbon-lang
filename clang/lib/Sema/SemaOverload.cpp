@@ -4020,6 +4020,15 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     }
 
     case OR_No_Viable_Function:
+      // For class as left operand for assignment or compound assigment operator
+      // do not fall through to handling in built-in, but report that no overloaded
+      // assignment operator found
+      if (LHS->getType()->isRecordType() && Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
+        Diag(OpLoc,  diag::err_ovl_no_viable_oper)
+             << BinaryOperator::getOpcodeStr(Opc)
+             << LHS->getSourceRange() << RHS->getSourceRange();
+        return ExprError();
+      }
       // No viable function; fall through to handling this as a
       // built-in operator, which will produce an error message for us.
       break;
