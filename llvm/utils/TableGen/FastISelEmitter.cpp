@@ -82,11 +82,11 @@ struct OperandsSignature {
       if (!Op->isLeaf()) {
         if (Op->getOperator()->getName() == "imm") {
           Operands.push_back("i");
-          return true;
+          continue;
         }
         if (Op->getOperator()->getName() == "fpimm") {
           Operands.push_back("f");
-          return true;
+          continue;
         }
         // For now, ignore other non-leaf nodes.
         return false;
