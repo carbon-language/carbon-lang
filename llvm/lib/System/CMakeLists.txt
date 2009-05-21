@@ -1,5 +1,6 @@
 add_llvm_library(LLVMSystem
   Alarm.cpp
+  Atomic.cpp
   Disassembler.cpp
   DynamicLibrary.cpp
   Host.cpp
