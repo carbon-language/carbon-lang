@@ -506,7 +506,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
 
   // Handle messages to id.
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
-      ReceiverCType->isBlockPointerType()) {
+      ReceiverCType->isBlockPointerType() ||
+      Context.isObjCNSObjectType(RExpr->getType())) {
     ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
     if (!Method)
