@@ -2359,7 +2359,7 @@ APInt::tcMSB(const integerPart *parts, unsigned int n)
    the least significant bit of DST.  All high bits above srcBITS in
    DST are zero-filled.  */
 void
-APInt::tcExtract(integerPart *dst, unsigned int dstCount, const integerPart *src,
+APInt::tcExtract(integerPart *dst, unsigned int dstCount,const integerPart *src,
                  unsigned int srcBits, unsigned int srcLSB)
 {
   unsigned int firstSrcPart, dstParts, shift, n;
