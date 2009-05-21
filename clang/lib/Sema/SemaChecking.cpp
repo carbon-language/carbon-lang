@@ -178,6 +178,10 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                            HasVAListArg ? 0 : Format->getFirstArg() - 1);
     }
   }
+  for (const Attr *attr = FDecl->getAttrs(); attr; attr = attr->getNext()) {
+    if (const NonNullAttr *NonNull = dyn_cast<NonNullAttr>(attr))
+      CheckNonNullArguments(NonNull, TheCall);
+  }
 
   return move(TheCallResult);
 }
@@ -784,6 +788,16 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
   }
 }
 
+void
+Sema::CheckNonNullArguments(const NonNullAttr *NonNull, const CallExpr *TheCall)
+{
+  for (NonNullAttr::iterator i = NonNull->begin(), e = NonNull->end();
+       i != e; ++i) {
+    const Expr *ArgExpr = TheCall->getArg(*i)->IgnoreParenCasts();
+    if (ArgExpr->isNullPointerConstant(Context))
+      Diag(ArgExpr->getLocStart(), diag::warn_null_arg);
+  }
+}
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
 /// correct use of format strings.  

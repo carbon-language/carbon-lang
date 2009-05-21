@@ -1621,6 +1621,9 @@ def warn_printf_invalid_conversion : Warning<
   "invalid conversion '%0'">, InGroup<Format>;
 def warn_printf_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
+def warn_null_arg : Warning<
+  "argument is null where non-null is required">,
+  InGroup<DiagGroup<"nonnull">>, DefaultIgnore;
 def warn_printf_empty_format_string : Warning<
   "format string is empty">, InGroup<FormatZeroLength>;
 def warn_printf_format_string_is_wide_literal : Warning<

@@ -2741,6 +2741,8 @@ private:
   void CheckPrintfString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          const CallExpr *TheCall, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg);
+  void CheckNonNullArguments(const NonNullAttr *NonNull, 
+                             const CallExpr *TheCall);
   void CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg, 
                             unsigned format_idx, unsigned firstDataArg);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
