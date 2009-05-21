@@ -1090,6 +1090,12 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
                                SourceRange Range1, SourceRange Range2,
                                QualType PrintType) {
+  // FIXME: Add this assertion to help us flush out problems with
+  // checking for dependent types and type-dependent expressions.
+  //
+  //  assert(!T->isDependentType() && 
+  //         "Can't ask whether a dependent type is complete");
+
   // If we have a complete type, we're done.
   if (!T->isIncompleteType())
     return false;

@@ -49,7 +49,7 @@ namespace {
     OwningExprResult VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     OwningExprResult VisitCallExpr(CallExpr *E);
     // FIXME: VisitMemberExpr
-    // FIXME: CompoundLiteralExpr
+    OwningExprResult VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCompoundAssignOperator(CompoundAssignOperator *E);
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
@@ -286,6 +286,26 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitCallExpr(CallExpr *E) {
                                move_arg(Args),
                                /*FIXME:*/&FakeCommaLocs.front(), 
                                E->getRParenLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  SourceLocation FakeTypeLoc 
+    = SemaRef.PP.getLocForEndOfToken(E->getLParenLoc());
+  QualType T = SemaRef.InstantiateType(E->getType(), TemplateArgs,
+                                       FakeTypeLoc,
+                                       DeclarationName());
+  if (T.isNull())
+    return SemaRef.ExprError();
+
+  OwningExprResult Init = Visit(E->getInitializer());
+  if (Init.isInvalid())
+    return SemaRef.ExprError();
+
+  return SemaRef.ActOnCompoundLiteral(E->getLParenLoc(),
+                                      T.getAsOpaquePtr(),
+                                      /*FIXME*/E->getLParenLoc(),
+                                      move(Init));
 }
 
 Sema::OwningExprResult 

@@ -67,3 +67,15 @@ struct DesigArrayRangeInit0 {
 
 template struct DesigArrayRangeInit0<int[8], 3, 5, float>;
 template struct DesigArrayRangeInit0<int[8], 5, 13, float>; // expected-note{{instantiation}}
+
+// ---------------------------------------------------------------------
+// Compound literals
+// ---------------------------------------------------------------------
+template<typename T, typename Arg1, typename Arg2>
+struct CompoundLiteral0 {
+  T f(Arg1 a1, Arg2 a2) {
+    return (T){a1, a2};
+  }
+};
+
+template struct CompoundLiteral0<Point2D, int, float>;

@@ -2719,8 +2719,9 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
     if (literalType->isVariableArrayType())
       return ExprError(Diag(LParenLoc, diag::err_variable_object_no_init)
         << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd()));
-  } else if (RequireCompleteType(LParenLoc, literalType,
-                                    diag::err_typecheck_decl_incomplete_type,
+  } else if (!literalType->isDependentType() &&
+             RequireCompleteType(LParenLoc, literalType,
+                                 diag::err_typecheck_decl_incomplete_type,
                 SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd())))
     return ExprError();
 
