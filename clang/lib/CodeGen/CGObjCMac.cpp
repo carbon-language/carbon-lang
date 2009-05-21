@@ -1277,7 +1277,7 @@ private:
 
   /// ImplementationIsNonLazy - Check whether the given category or
   /// class implementation is "non-lazy".
-  bool ImplementationIsNonLazy(const DeclContext *DC) const;
+  bool ImplementationIsNonLazy(const ObjCImplDecl *OD) const;
 
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
@@ -4328,16 +4328,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
 }
 
 bool 
-CGObjCNonFragileABIMac::ImplementationIsNonLazy(const DeclContext *DC) const {
-  DeclContext::lookup_const_result res = 
-    DC->lookup(CGM.getContext(), GetNullarySelector("load"));
-
-  for (; res.first != res.second; ++res.first)
-    if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(*res.first))
-      if (OMD->isClassMethod())
-        return true;
-  
-  return false;
+CGObjCNonFragileABIMac::ImplementationIsNonLazy(const ObjCImplDecl *OD) const {
+  return OD->getClassMethod(CGM.getContext(), GetNullarySelector("load")) != 0;
 }
 
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
