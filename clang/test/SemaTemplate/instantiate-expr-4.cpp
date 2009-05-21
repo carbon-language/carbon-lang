@@ -150,3 +150,31 @@ struct is_pod {
 
 static const int is_pod0[is_pod<X>::value? -1 : 1];
 static const int is_pod1[is_pod<Y>::value? 1 : -1];
+
+// ---------------------------------------------------------------------
+// initializer lists
+// ---------------------------------------------------------------------
+template<typename T, typename Val1>
+struct InitList1 {
+  void f(Val1 val1) { 
+    T x = { val1 };
+  }
+};
+
+struct APair {
+  int *x;
+  const float *y;
+};
+
+template struct InitList1<int[1], float>;
+template struct InitList1<APair, int*>;
+
+template<typename T, typename Val1, typename Val2>
+struct InitList2 {
+  void f(Val1 val1, Val2 val2) { 
+    T x = { val1, val2 }; // expected-error{{incompatible}}
+  }
+};
+
+template struct InitList2<APair, int*, float*>;
+template struct InitList2<APair, int*, double*>; // expected-note{{instantiation}}

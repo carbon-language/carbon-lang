@@ -60,7 +60,7 @@ namespace {
     OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     OwningExprResult VisitChooseExpr(ChooseExpr *E);
     OwningExprResult VisitVAArgExpr(VAArgExpr *E);
-    // FIXME: InitListExpr
+    OwningExprResult VisitInitListExpr(InitListExpr *E);
     // FIXME: DesignatedInitExpr
     // FIXME: ImplicitValueInitExpr
     // FIXME: ExtVectorElementExpr
@@ -578,6 +578,20 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitVAArgExpr(VAArgExpr *E) {
 
   return SemaRef.ActOnVAArg(E->getBuiltinLoc(), move(SubExpr),
                             T.getAsOpaquePtr(), E->getRParenLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitInitListExpr(InitListExpr *E) {
+  ExprVector Inits(SemaRef);
+  for (unsigned I = 0, N = E->getNumInits(); I != N; ++I) {
+    OwningExprResult Init = Visit(E->getInit(I));
+    if (Init.isInvalid())
+      return SemaRef.ExprError();
+    Inits.push_back(Init.takeAs<Expr>());
+  }
+
+  return SemaRef.ActOnInitList(E->getLBraceLoc(), move_arg(Inits),
+                               E->getRBraceLoc());
 }
 
 Sema::OwningExprResult 
