@@ -1210,7 +1210,7 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
   }
 
   return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
-                              NumOutputs, NumInputs, &Names[0],
+                              NumOutputs, NumInputs, Names.data(),
                               move_arg(Constraints), move_arg(Exprs),
                               move(AsmString), move_arg(Clobbers),
                               RParenLoc);

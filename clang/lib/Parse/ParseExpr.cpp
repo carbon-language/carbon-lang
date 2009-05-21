@@ -876,7 +876,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
         LHS = Actions.ActOnCallExpr(CurScope, move(LHS), Loc,
-                                    move_arg(ArgExprs), &CommaLocs[0],
+                                    move_arg(ArgExprs), CommaLocs.data(),
                                     Tok.getLocation());
       }
       

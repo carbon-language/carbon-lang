@@ -652,7 +652,7 @@ void Parser::ParseBaseClause(DeclPtrTy ClassDecl) {
   }
 
   // Attach the base specifiers
-  Actions.ActOnBaseSpecifiers(ClassDecl, &BaseInfo[0], BaseInfo.size());
+  Actions.ActOnBaseSpecifiers(ClassDecl, BaseInfo.data(), BaseInfo.size());
 }
 
 /// ParseBaseSpecifier - Parse a C++ base-specifier. A base-specifier is
@@ -970,7 +970,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
+    Actions.FinalizeDeclaratorGroup(CurScope, DeclsInGroup.data(),
                                     DeclsInGroup.size());
     return;
   }
@@ -1137,7 +1137,7 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
   } while (true);
 
   Actions.ActOnMemInitializers(ConstructorDecl, ColonLoc, 
-                               &MemInitializers[0], MemInitializers.size());
+                               MemInitializers.data(), MemInitializers.size());
 }
 
 /// ParseMemInitializer - Parse a C++ member initializer, which is
@@ -1183,7 +1183,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
 
   return Actions.ActOnMemInitializer(ConstructorDecl, CurScope, II, IdLoc,
                                      LParenLoc, ArgExprs.take(),
-                                     ArgExprs.size(), &CommaLocs[0], RParenLoc);
+                                     ArgExprs.size(), CommaLocs.data(),
+                                     RParenLoc);
 }
 
 /// ParseExceptionSpecification - Parse a C++ exception-specification

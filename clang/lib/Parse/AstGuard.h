@@ -56,7 +56,7 @@ namespace clang
 #if !defined(DISABLE_SMART_POINTERS)
       Owns = false;
 #endif
-      return &(*this)[0];
+      return this->data();
     }
 
 #if !defined(DISABLE_SMART_POINTERS)

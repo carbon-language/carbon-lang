@@ -795,7 +795,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           
           ArgTys.push_back(ArgTy);
         }
-        T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
+        T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(),
                                     FTI.isVariadic, FTI.TypeQuals);
       }
       break;

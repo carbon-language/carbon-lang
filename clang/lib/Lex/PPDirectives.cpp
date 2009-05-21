@@ -1049,8 +1049,8 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     FilenameBuffer.push_back('<');
     if (ConcatenateIncludeName(FilenameBuffer, *this))
       return;   // Found <eom> but no ">"?  Diagnostic already emitted.
-    FilenameStart = &FilenameBuffer[0];
-    FilenameEnd = &FilenameBuffer[FilenameBuffer.size()];
+    FilenameStart = FilenameBuffer.data();
+    FilenameEnd = FilenameStart + FilenameBuffer.size();
     break;
   default:
     Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);

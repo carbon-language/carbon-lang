@@ -686,7 +686,7 @@ Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
   }
 
   if (!Invalid &&
-      AttachBaseSpecifiers(Instantiation, &InstantiatedBases[0],
+      AttachBaseSpecifiers(Instantiation, InstantiatedBases.data(),
                            InstantiatedBases.size()))
     Invalid = true;
 
@@ -770,7 +770,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   // Finish checking fields.
   ActOnFields(0, Instantiation->getLocation(), DeclPtrTy::make(Instantiation),
-              &Fields[0], Fields.size(), SourceLocation(), SourceLocation(),
+              Fields.data(), Fields.size(), SourceLocation(), SourceLocation(),
               0);
 
   // Add any implicitly-declared members that we might need.

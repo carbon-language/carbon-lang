@@ -161,7 +161,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  FD->setParams(*Reader.getContext(), &Params[0], NumParams);
+  FD->setParams(*Reader.getContext(), Params.data(), NumParams);
 }
 
 void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
@@ -185,7 +185,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  MD->setMethodParams(*Reader.getContext(), &Params[0], NumParams);
+  MD->setMethodParams(*Reader.getContext(), Params.data(), NumParams);
 }
 
 void PCHDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
@@ -203,13 +203,13 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   Protocols.reserve(NumProtocols);
   for (unsigned I = 0; I != NumProtocols; ++I)
     Protocols.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  ID->setProtocolList(&Protocols[0], NumProtocols, *Reader.getContext());
+  ID->setProtocolList(Protocols.data(), NumProtocols, *Reader.getContext());
   unsigned NumIvars = Record[Idx++];
   llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
   IVars.reserve(NumIvars);
   for (unsigned I = 0; I != NumIvars; ++I)
     IVars.push_back(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
-  ID->setIVarList(&IVars[0], NumIvars, *Reader.getContext());
+  ID->setIVarList(IVars.data(), NumIvars, *Reader.getContext());
   ID->setCategoryList(
                cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
   ID->setForwardDecl(Record[Idx++]);
@@ -233,7 +233,7 @@ void PCHDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  PD->setProtocolList(&ProtoRefs[0], NumProtoRefs, *Reader.getContext());
+  PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, *Reader.getContext());
 }
 
 void PCHDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {

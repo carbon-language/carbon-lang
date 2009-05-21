@@ -33,7 +33,7 @@ ValueSymbolTable::~ValueSymbolTable() {
 // lookup a value - Returns null on failure...
 //
 Value *ValueSymbolTable::lookup(const std::string &Name) const {
-  const_iterator VI = vmap.find(&Name[0], &Name[Name.size()]);
+  const_iterator VI = vmap.find(Name.data(), Name.data() + Name.size());
   if (VI != vmap.end())                   // We found the symbol
     return VI->getValue();
   return 0;
@@ -70,8 +70,9 @@ void ValueSymbolTable::reinsertValue(Value* V) {
     UniqueName.resize(BaseSize);
     UniqueName.append_uint_32(++LastUnique);
     // Try insert the vmap entry with this suffix.
-    ValueName &NewName = vmap.GetOrCreateValue(&UniqueName[0],
-                                               &UniqueName[UniqueName.size()]);
+    ValueName &NewName =
+      vmap.GetOrCreateValue(UniqueName.data(),
+                            UniqueName.data() + UniqueName.size());
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
@@ -111,8 +112,9 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
     UniqueName.append_uint_32(++LastUnique);
     
     // Try insert the vmap entry with this suffix.
-    ValueName &NewName = vmap.GetOrCreateValue(&UniqueName[0],
-                                               &UniqueName[UniqueName.size()]);
+    ValueName &NewName =
+      vmap.GetOrCreateValue(UniqueName.data(),
+                            UniqueName.data() + UniqueName.size());
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);

@@ -442,7 +442,7 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   
   Constant *Init = ConstantArray::get(ArrayType::get(EmptyStructPtr,
                                                      Elts.size()),
-                                      &Elts[0], Elts.size());
+                                      Elts.data(), Elts.size());
   // If we already have this array, just return the uniqued version.
   DIDescriptor &Entry = SimpleConstantCache[Init];
   if (!Entry.isNull()) return DIArray(Entry.getGV());

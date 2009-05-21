@@ -260,7 +260,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
         }
       }
       
-      return ConstantVector::get(&Result[0], Result.size());
+      return ConstantVector::get(Result.data(), Result.size());
     }
   }
   
@@ -306,10 +306,10 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                           &Ops[0], Ops.size(), TD);
+                                           Ops.data(), Ops.size(), TD);
   else
     return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                    &Ops[0], Ops.size(), TD);
+                                    Ops.data(), Ops.size(), TD);
 }
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
@@ -325,10 +325,10 @@ Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
 
   if (CE->isCompare())
     return ConstantFoldCompareInstOperands(CE->getPredicate(),
-                                           &Ops[0], Ops.size(), TD);
+                                           Ops.data(), Ops.size(), TD);
   else 
     return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(),
-                                    &Ops[0], Ops.size(), TD);
+                                    Ops.data(), Ops.size(), TD);
 }
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the

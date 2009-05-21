@@ -2091,11 +2091,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   
   llvm::CallSite CS;
   if (!InvokeDest || (Attrs.getFnAttributes() & llvm::Attribute::NoUnwind)) {
-    CS = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
+    CS = Builder.CreateCall(Callee, Args.data(), Args.data()+Args.size());
   } else {
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
     CS = Builder.CreateInvoke(Callee, Cont, InvokeDest, 
-                              &Args[0], &Args[0]+Args.size());
+                              Args.data(), Args.data()+Args.size());
     EmitBlock(Cont);
   }
 

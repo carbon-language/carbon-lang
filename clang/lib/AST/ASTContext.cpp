@@ -1361,7 +1361,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
       CanonicalArgs.push_back(getCanonicalType(ArgArray[i]));
     
     Canonical = getFunctionType(getCanonicalType(ResultTy),
-                                &CanonicalArgs[0], NumArgs,
+                                CanonicalArgs.data(), NumArgs,
                                 isVariadic, TypeQuals);
     
     // Get the new insert position for the node we care about.

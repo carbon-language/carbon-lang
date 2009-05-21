@@ -1687,8 +1687,9 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   Desig.ClearExprs(*this);
 
   DesignatedInitExpr *DIE
-    = DesignatedInitExpr::Create(Context, &Designators[0], Designators.size(),
-                                 &InitExpressions[0], InitExpressions.size(),
+    = DesignatedInitExpr::Create(Context,
+                                 Designators.data(), Designators.size(),
+                                 InitExpressions.data(), InitExpressions.size(),
                                  Loc, GNUSyntax, Init.takeAs<Expr>());
   return Owned(DIE);
 }

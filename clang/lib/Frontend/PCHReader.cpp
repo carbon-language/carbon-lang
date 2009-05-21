@@ -1670,7 +1670,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       ParamTypes.push_back(GetType(Record[Idx++]));
     bool isVariadic = Record[Idx++];
     unsigned Quals = Record[Idx++];
-    return Context->getFunctionType(ResultType, &ParamTypes[0], NumParams,
+    return Context->getFunctionType(ResultType, ParamTypes.data(), NumParams,
                                     isVariadic, Quals);
   }
 
@@ -2151,7 +2151,7 @@ llvm::APFloat PCHReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
 // \brief Read a string
 std::string PCHReader::ReadString(const RecordData &Record, unsigned &Idx) {
   unsigned Len = Record[Idx++];
-  std::string Result(&Record[Idx], &Record[Idx] + Len);
+  std::string Result(Record.data() + Idx, Record.data() + Idx + Len);
   Idx += Len;
   return Result;
 }

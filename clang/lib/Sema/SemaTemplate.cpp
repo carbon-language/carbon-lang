@@ -879,7 +879,8 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
 
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, LAngleLoc,
-                                        &TemplateArgs[0], TemplateArgs.size(),
+                                        TemplateArgs.data(),
+                                        TemplateArgs.size(),
                                         RAngleLoc);
   TemplateArgsIn.release();
 

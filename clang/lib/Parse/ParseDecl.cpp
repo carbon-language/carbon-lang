@@ -377,7 +377,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D) {
              "Unexpected number of commas!");
       Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
                                             move_arg(Exprs),
-                                            &CommaLocs[0], RParenLoc);
+                                            CommaLocs.data(), RParenLoc);
     }
   } else {
     Actions.ActOnUninitializedDecl(ThisDecl);
@@ -438,7 +438,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     ParseDeclarator(D);
   }
   
-  return Actions.FinalizeDeclaratorGroup(CurScope, &DeclsInGroup[0],
+  return Actions.FinalizeDeclaratorGroup(CurScope, DeclsInGroup.data(),
                                          DeclsInGroup.size());
 }
 
@@ -1387,7 +1387,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     AttrList = ParseAttributes();
 
   Actions.ActOnFields(CurScope,
-                      RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size(),
+                      RecordLoc, TagDecl, FieldDecls.data(), FieldDecls.size(),
                       LBraceLoc, RBraceLoc,
                       AttrList);
   StructScope.Exit();
@@ -1537,7 +1537,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
   Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
-                        &EnumConstantDecls[0], EnumConstantDecls.size());
+                        EnumConstantDecls.data(), EnumConstantDecls.size());
   
   Action::AttrTy *AttrList = 0;
   // If attributes exist after the identifier list, parse them.
@@ -2462,7 +2462,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
                                              EllipsisLoc,
-                                             &ParamInfo[0], ParamInfo.size(),
+                                             ParamInfo.data(), ParamInfo.size(),
                                              DS.getTypeQualifiers(),
                                              hasExceptionSpec,
                                              hasAnyExceptionSpec,

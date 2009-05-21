@@ -285,6 +285,6 @@ QualType Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context,
   // handle untyped/variadic arguments "T c99Style();" or "T cppStyle(...);".
   if (ArgTypes.size() == 0 && TypeStr[0] == '.')
     return Context.getFunctionNoProtoType(ResType);
-  return Context.getFunctionType(ResType, &ArgTypes[0], ArgTypes.size(),
+  return Context.getFunctionType(ResType, ArgTypes.data(), ArgTypes.size(),
                                  TypeStr[0] == '.', 0);
 }

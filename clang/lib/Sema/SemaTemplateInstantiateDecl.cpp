@@ -301,7 +301,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
     Params[P]->setOwningFunction(Method);
-  Method->setParams(SemaRef.Context, &Params[0], Params.size());
+  Method->setParams(SemaRef.Context, Params.data(), Params.size());
 
   if (InitMethodInstantiation(Method, D))
     Method->setInvalidDecl();
@@ -348,7 +348,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
     Params[P]->setOwningFunction(Constructor);
-  Constructor->setParams(SemaRef.Context, &Params[0], Params.size());
+  Constructor->setParams(SemaRef.Context, Params.data(), Params.size());
 
   if (InitMethodInstantiation(Constructor, D))
     Constructor->setInvalidDecl();
@@ -538,7 +538,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
   if (ResultType.isNull())
     return QualType();
 
-  return SemaRef.BuildFunctionType(ResultType, &ParamTys[0], ParamTys.size(),
+  return SemaRef.BuildFunctionType(ResultType, ParamTys.data(), ParamTys.size(),
                                    Proto->isVariadic(), Proto->getTypeQuals(),
                                    D->getLocation(), D->getDeclName());
 }

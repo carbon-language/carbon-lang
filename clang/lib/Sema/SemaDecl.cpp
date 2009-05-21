@@ -456,7 +456,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
                                            FT->getArgType(i), VarDecl::None, 0));
-    New->setParams(Context, &Params[0], Params.size());
+    New->setParams(Context, Params.data(), Params.size());
   }
   
   AddKnownFunctionAttributes(New);  
@@ -732,7 +732,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       llvm::SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
                                                  OldProto->arg_type_end());
       NewQType = Context.getFunctionType(NewFuncType->getResultType(),
-                                         &ParamTypes[0], ParamTypes.size(),
+                                         ParamTypes.data(), ParamTypes.size(),
                                          OldProto->isVariadic(),
                                          OldProto->getTypeQuals());
       New->setType(NewQType);
@@ -752,7 +752,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         Params.push_back(Param);
       }
 
-      New->setParams(Context, &Params[0], Params.size());
+      New->setParams(Context, Params.data(), Params.size());
     } 
 
     return MergeCompatibleFunctionDecls(New, Old);
@@ -2243,7 +2243,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
            "Should not need args for typedef of non-prototype fn");
   }
   // Finally, we know we have the right number of parameters, install them.
-  NewFD->setParams(Context, &Params[0], Params.size());
+  NewFD->setParams(Context, Params.data(), Params.size());
 
   
     
@@ -2804,7 +2804,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
     }
   }
   return DeclGroupPtrTy::make(DeclGroupRef::Create(Context,
-                                                   &Decls[0], Decls.size()));
+                                                   Decls.data(), Decls.size()));
 }
 
 
@@ -4084,7 +4084,8 @@ void Sema::ActOnFields(Scope* S,
   if (Record) {
     Record->completeDefinition(Context);
   } else {
-    ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
+    ObjCIvarDecl **ClsFields =
+      reinterpret_cast<ObjCIvarDecl**>(RecFields.data());
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl)) {
       ID->setIVarList(ClsFields, RecFields.size(), Context);
       ID->setLocEnd(RBrac);

@@ -158,10 +158,13 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    DeclPtrTy CategoryType = Actions.ActOnStartCategoryInterface(atLoc, 
-                                     nameId, nameLoc, categoryId, categoryLoc,
-                                     &ProtocolRefs[0], ProtocolRefs.size(),
-                                     EndProtoLoc);
+    DeclPtrTy CategoryType =
+      Actions.ActOnStartCategoryInterface(atLoc, 
+                                          nameId, nameLoc,
+                                          categoryId, categoryLoc,
+                                          ProtocolRefs.data(),
+                                          ProtocolRefs.size(),
+                                          EndProtoLoc);
     
     ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
     return CategoryType;
@@ -189,7 +192,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
   DeclPtrTy ClsType = 
     Actions.ActOnStartClassInterface(atLoc, nameId, nameLoc, 
                                      superClassId, superClassLoc,
-                                     &ProtocolRefs[0], ProtocolRefs.size(),
+                                     ProtocolRefs.data(), ProtocolRefs.size(),
                                      EndProtoLoc, attrList);
             
   if (Tok.is(tok::l_brace))
@@ -358,9 +361,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
   // Insert collected methods declarations into the @interface object.
   // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
   Actions.ActOnAtEnd(AtEndLoc, interfaceDecl,
-                     &allMethods[0], allMethods.size(), 
-                     &allProperties[0], allProperties.size(),
-                     &allTUVariables[0], allTUVariables.size());
+                     allMethods.data(), allMethods.size(), 
+                     allProperties.data(), allProperties.size(),
+                     allTUVariables.data(), allTUVariables.size());
 }
 
 ///   Parse property attribute declarations.
@@ -905,7 +908,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
   // Call ActOnFields() even if we don't have any decls. This is useful
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(CurScope, atLoc, interfaceDecl,
-                      &AllIvarDecls[0], AllIvarDecls.size(),
+                      AllIvarDecls.data(), AllIvarDecls.size(),
                       LBraceLoc, RBraceLoc, 0);
   return;
 }
@@ -986,7 +989,8 @@ Parser::DeclPtrTy Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
   
   DeclPtrTy ProtoType =
     Actions.ActOnStartProtocolInterface(AtLoc, protocolName, nameLoc,
-                                        &ProtocolRefs[0], ProtocolRefs.size(),
+                                        ProtocolRefs.data(),
+                                        ProtocolRefs.size(),
                                         EndProtoLoc, attrList);
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
   return ProtoType;

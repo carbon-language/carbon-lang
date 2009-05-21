@@ -339,7 +339,7 @@ public:
   }
   IdentifierInfo &get(const std::string &Name) {
     // Don't use c_str() here: no need to be null terminated.
-    const char *NameBytes = &Name[0];
+    const char *NameBytes = Name.data();
     return get(NameBytes, NameBytes+Name.size());
   }
 
@@ -470,8 +470,9 @@ public:
     SelectorName = "set";
     SelectorName.append(Name->getName(), Name->getName()+Name->getLength());
     SelectorName[3] = toupper(SelectorName[3]);
-    IdentifierInfo *SetterName = 
-      &Idents.get(&SelectorName[0], &SelectorName[SelectorName.size()]);
+    IdentifierInfo *SetterName =
+      &Idents.get(SelectorName.data(),
+                  SelectorName.data() + SelectorName.size());
     return SelTable.getUnarySelector(SetterName);
   }
 };

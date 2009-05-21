@@ -547,7 +547,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       Args.push_back(ArgValue);
     }
     
-    Value *V = Builder.CreateCall(F, &Args[0], &Args[0] + Args.size());
+    Value *V = Builder.CreateCall(F, Args.data(), Args.data() + Args.size());
     QualType BuiltinRetType = E->getType();
     
     const llvm::Type *RetTy = llvm::Type::VoidTy;

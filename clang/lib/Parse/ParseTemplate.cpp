@@ -106,7 +106,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     ParamLists.push_back(
       Actions.ActOnTemplateParameterList(ParamLists.size(), ExportLoc, 
                                          TemplateLoc, LAngleLoc, 
-                                         &TemplateParams[0],
+                                         TemplateParams.data(),
                                          TemplateParams.size(), RAngleLoc));
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
@@ -633,8 +633,8 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                                   TemplateArgLocations,
                                                   RAngleLoc);
 
-  ASTTemplateArgsPtr TemplateArgsPtr(Actions, &TemplateArgs[0],
-                                     &TemplateArgIsType[0],
+  ASTTemplateArgsPtr TemplateArgsPtr(Actions, TemplateArgs.data(),
+                                     TemplateArgIsType.data(),
                                      TemplateArgs.size());
 
   if (Invalid) // FIXME: How to recover from a broken template-id?

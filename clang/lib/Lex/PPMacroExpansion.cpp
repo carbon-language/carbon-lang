@@ -439,7 +439,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     return 0;
   }
   
-  return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size(),isVarargsElided);
+  return MacroArgs::create(MI, ArgTokens.data(), ArgTokens.size(),
+                           isVarargsElided);
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified

@@ -609,7 +609,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   }
   
   llvm::DIArray Elements =
-    DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+    DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
   // Bit size, align and offset of the type.
   uint64_t Size = M->getContext().getTypeSize(Ty);
@@ -645,7 +645,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   
   // Return a CompositeType for the enum itself.
   llvm::DIArray EltArray =
-    DebugFactory.GetOrCreateArray(&Enumerators[0], Enumerators.size());
+    DebugFactory.GetOrCreateArray(Enumerators.data(), Enumerators.size());
 
   std::string EnumName = Decl->getNameAsString();
   SourceLocation DefLoc = Decl->getLocation();

@@ -1041,7 +1041,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
         Ops.push_back(LegalizeOp(Node->getOperand(i)));
 
-      Result = DAG.UpdateNodeOperands(Result.getValue(0), &Ops[0], Ops.size());
+      Result = DAG.UpdateNodeOperands(Result.getValue(0), Ops.data(), Ops.size());
 
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         AddLegalizedOperand(Op.getValue(i), Result.getValue(i));

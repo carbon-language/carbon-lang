@@ -129,7 +129,7 @@ unsigned PCHStmtReader::VisitCompoundStmt(CompoundStmt *S) {
   VisitStmt(S);
   unsigned NumStmts = Record[Idx++];
   S->setStmts(*Reader.getContext(), 
-              &StmtStack[StmtStack.size() - NumStmts], NumStmts);
+              StmtStack.data() + StmtStack.size() - NumStmts, NumStmts);
   S->setLBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return NumStmts;
@@ -303,13 +303,13 @@ unsigned PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
     Exprs.push_back(StmtStack[StackIdx++]);
   }
   S->setOutputsAndInputs(NumOutputs, NumInputs,
-                         &Names[0], &Constraints[0], &Exprs[0]);
+                         Names.data(), Constraints.data(), Exprs.data());
 
   // Constraints
   llvm::SmallVector<StringLiteral*, 16> Clobbers;
   for (unsigned I = 0; I != NumClobbers; ++I)
     Clobbers.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
-  S->setClobbers(&Clobbers[0], NumClobbers);
+  S->setClobbers(Clobbers.data(), NumClobbers);
 
   assert(StackIdx == StmtStack.size() && "Error deserializing AsmStmt");
   return NumOutputs*2 + NumInputs*2 + NumClobbers + 1;

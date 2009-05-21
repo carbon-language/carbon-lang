@@ -1000,7 +1000,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
                                     Literal->getByteLength(),
                                     Names[i]);
-    if (!Context.Target.validateInputConstraint(&OutputConstraintInfos[0],
+    if (!Context.Target.validateInputConstraint(OutputConstraintInfos.data(),
                                                 NumOutputs, Info)) {
       return StmtError(Diag(Literal->getLocStart(),
                             diag::err_asm_invalid_input_constraint)

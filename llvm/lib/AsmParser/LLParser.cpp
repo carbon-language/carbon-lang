@@ -1577,7 +1577,7 @@ bool LLParser::ParseValID(ValID &ID) {
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
-      ID.ConstantVal = MDNode::get(&Elts[0], Elts.size());
+      ID.ConstantVal = MDNode::get(Elts.data(), Elts.size());
       return false;
     }
 
@@ -1617,7 +1617,7 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseToken(lltok::rbrace, "expected end of struct constant"))
       return true;
     
-    ID.ConstantVal = ConstantStruct::get(&Elts[0], Elts.size(), false);
+    ID.ConstantVal = ConstantStruct::get(Elts.data(), Elts.size(), false);
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -1636,7 +1636,7 @@ bool LLParser::ParseValID(ValID &ID) {
       return true;
     
     if (isPackedStruct) {
-      ID.ConstantVal = ConstantStruct::get(&Elts[0], Elts.size(), true);
+      ID.ConstantVal = ConstantStruct::get(Elts.data(), Elts.size(), true);
       ID.Kind = ValID::t_Constant;
       return false;
     }
@@ -1656,7 +1656,7 @@ bool LLParser::ParseValID(ValID &ID) {
                      "vector element #" + utostr(i) +
                     " is not of type '" + Elts[0]->getType()->getDescription());
     
-    ID.ConstantVal = ConstantVector::get(&Elts[0], Elts.size());
+    ID.ConstantVal = ConstantVector::get(Elts.data(), Elts.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -1690,7 +1690,7 @@ bool LLParser::ParseValID(ValID &ID) {
                      " is not of type '" +Elts[0]->getType()->getDescription());
     }
     
-    ID.ConstantVal = ConstantArray::get(ATy, &Elts[0], Elts.size());
+    ID.ConstantVal = ConstantArray::get(ATy, Elts.data(), Elts.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -1761,8 +1761,8 @@ bool LLParser::ParseValID(ValID &ID) {
     if (!ExtractValueInst::getIndexedType(Val->getType(), Indices.begin(),
                                           Indices.end()))
       return Error(ID.Loc, "invalid indices for extractvalue");
-    ID.ConstantVal = ConstantExpr::getExtractValue(Val,
-                                                   &Indices[0], Indices.size());
+    ID.ConstantVal =
+      ConstantExpr::getExtractValue(Val, Indices.data(), Indices.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -1782,8 +1782,8 @@ bool LLParser::ParseValID(ValID &ID) {
     if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
                                           Indices.end()))
       return Error(ID.Loc, "invalid indices for insertvalue");
-    ID.ConstantVal = ConstantExpr::getInsertValue(Val0, Val1,
-                                                  &Indices[0], Indices.size());
+    ID.ConstantVal =
+      ConstantExpr::getInsertValue(Val0, Val1, Indices.data(), Indices.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }

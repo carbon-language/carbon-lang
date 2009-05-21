@@ -286,8 +286,7 @@ public:
     return find(Key, Key + strlen(Key));
   }
   iterator find(const std::string &Key) {
-    const char* key_start = (Key.empty() ? NULL : &Key[0]);
-    return find(key_start, key_start + Key.size());
+    return find(Key.data(), Key.data() + Key.size());
   }
 
   const_iterator find(const char *KeyStart, const char *KeyEnd) const {
@@ -299,8 +298,7 @@ public:
     return find(Key, Key + strlen(Key));
   }
   const_iterator find(const std::string &Key) const {
-    const char* key_start = (Key.empty() ? NULL : &Key[0]);
-    return find(key_start, key_start + Key.size());
+    return find(Key.data(), Key.data() + Key.size());
   }
 
    /// lookup - Return the entry for the specified key, or a default
@@ -328,8 +326,7 @@ public:
     return GetOrCreateValue(Key, Key + strlen(Key)).getValue();
   }
   ValueTy& operator[](const std::string &Key) {
-    const char* key_start = (Key.empty() ? NULL : &Key[0]);
-    return GetOrCreateValue(key_start, key_start + Key.size()).getValue();
+    return GetOrCreateValue(Key.data(), Key.data() + Key.size()).getValue();
   }
 
   size_type count(const char *KeyStart, const char *KeyEnd) const {
@@ -339,8 +336,7 @@ public:
     return count(Key, Key + strlen(Key));
   }
   size_type count(const std::string &Key) const {
-    const char* key_start = (Key.empty() ? NULL : &Key[0]);
-    return count(key_start, key_start + Key.size());
+    return count(Key.data(), Key.data() + Key.size());
   }
 
   /// insert - Insert the specified key/value pair into the map.  If the key

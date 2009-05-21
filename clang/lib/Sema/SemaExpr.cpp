@@ -5144,7 +5144,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
       CurBlock->Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
     CurBlock->isVariadic = FTI.isVariadic;
   }
-  CurBlock->TheDecl->setParams(Context, &CurBlock->Params[0], 
+  CurBlock->TheDecl->setParams(Context, CurBlock->Params.data(),
                                CurBlock->Params.size());
   CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
   ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
@@ -5215,7 +5215,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   if (!BSI->hasPrototype)
     BlockTy = Context.getFunctionNoProtoType(RetTy);
   else
-    BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
+    BlockTy = Context.getFunctionType(RetTy, ArgTypes.data(), ArgTypes.size(),
                                       BSI->isVariadic, 0);
 
   // FIXME: Check that return/parameter types are complete/non-abstract
