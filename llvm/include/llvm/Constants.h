@@ -680,6 +680,12 @@ public:
     return getSelectTy(V1->getType(), C, V1, V2);
   }
 
+  /// getAlignOf constant expr - computes the alignment of a type in a target
+  /// independent way (Note: the return type is an i32; Note: assumes that i8
+  /// is byte aligned).
+  ///
+  static Constant *getAlignOf(const Type *Ty);
+
   /// getSizeOf constant expr - computes the size of a type in a target
   /// independent way (Note: the return type is an i64).
   ///

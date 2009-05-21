@@ -356,6 +356,10 @@ LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
 
 /*--.. Constant expressions ................................................--*/
 
+LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty) {
+  return wrap(ConstantExpr::getAlignOf(unwrap(Ty)));
+}
+
 LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty) {
   return wrap(ConstantExpr::getSizeOf(unwrap(Ty)));
 }

@@ -514,9 +514,15 @@ external const_vector : llvalue array -> llvalue = "llvm_const_vector"
 
 (** {7 Constant expressions} *)
 
+(** [align_of ty] returns the alignof constant for the type [ty]. This is
+    equivalent to [const_ptrtoint (const_gep (const_null (pointer_type {i8,ty}))
+    (const_int i32_type 0) (const_int i32_type 1)) i32_type], but considerably
+    more readable.  See the method [llvm::ConstantExpr::getAlignOf]. *)
+external align_of : lltype -> llvalue = "LLVMAlignOf"
+
 (** [size_of ty] returns the sizeof constant for the type [ty]. This is
     equivalent to [const_ptrtoint (const_gep (const_null (pointer_type ty))
-    (const_int i64_type 1)) i64_type], but considerably more readable.
+    (const_int i32_type 1)) i64_type], but considerably more readable.
     See the method [llvm::ConstantExpr::getSizeOf]. *)
 external size_of : lltype -> llvalue = "LLVMSizeOf"
 

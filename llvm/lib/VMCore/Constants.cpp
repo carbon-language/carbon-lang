@@ -2082,6 +2082,17 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   return getFoldedCast(Instruction::BitCast, C, DstTy);
 }
 
+Constant *ConstantExpr::getAlignOf(const Type *Ty) {
+  // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
+  const Type *AligningTy = StructType::get(Type::Int8Ty, Ty, NULL);
+  Constant *NullPtr = getNullValue(AligningTy->getPointerTo());
+  Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
+  Constant *One = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *Indices[2] = { Zero, One };
+  Constant *GEP = getGetElementPtr(NullPtr, Indices, 2);
+  return getCast(Instruction::PtrToInt, GEP, Type::Int32Ty);
+}
+
 Constant *ConstantExpr::getSizeOf(const Type *Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
   Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
