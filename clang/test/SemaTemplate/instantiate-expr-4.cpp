@@ -44,7 +44,7 @@ struct Temporaries0 {
 template struct Temporaries0<5, 7>;
 
 // ---------------------------------------------------------------------
-// new expressions
+// new/delete expressions
 // ---------------------------------------------------------------------
 struct Y { };
 
@@ -83,3 +83,15 @@ struct New2 {
 template struct New2<X, int, float>;
 template struct New2<X, int, int*>; // expected-note{{instantiation}}
 // FIXME: template struct New2<int, int, float>;
+
+template<typename T>
+struct Delete0 {
+  void f(T t) {
+    delete t; // expected-error{{cannot delete}}
+    ::delete [] t;
+  }
+};
+
+template struct Delete0<int*>;
+template struct Delete0<X*>;
+template struct Delete0<int>; // expected-note{{instantiation}}

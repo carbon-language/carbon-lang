@@ -89,7 +89,7 @@ namespace {
     OwningExprResult VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
     OwningExprResult VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     OwningExprResult VisitCXXNewExpr(CXXNewExpr *E);
-    // FIXME: CXXDeleteExpr
+    OwningExprResult VisitCXXDeleteExpr(CXXDeleteExpr *E);
     // FIXME: UnaryTypeTraitExpr
     // FIXME: QualifiedDeclRefExpr
     OwningExprResult VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
@@ -933,6 +933,18 @@ TemplateExprInstantiator::VisitCXXNewExpr(CXXNewExpr *E) {
                                                 ConstructorArgs.take(),
                                                 ConstructorArgs.size()),
                              E->getSourceRange().getEnd());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+  OwningExprResult Operand = Visit(E->getArgument());
+  if (Operand.isInvalid())
+    return SemaRef.ExprError();
+
+  return SemaRef.ActOnCXXDelete(E->getSourceRange().getBegin(),
+                                E->isGlobalDelete(),
+                                E->isArrayForm(),
+                                move(Operand));
 }
 
 Sema::OwningExprResult 
