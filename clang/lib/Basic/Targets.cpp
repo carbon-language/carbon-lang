@@ -63,9 +63,10 @@ static void DefineStd(std::vector<char> &Buf, const char *MacroName,
 // Defines specific to certain operating systems.
 //===----------------------------------------------------------------------===//
 
-static void getSolarisDefines(std::vector<char> &Defs) {
-  Define(Defs, "__SUN__");
-  Define(Defs, "__SOLARIS__");
+static void getSolarisDefines(const LangOptions &Opts, std::vector<char> &Defs) {
+  DefineStd(Defs, "sun", Opts);
+  DefineStd(Defs, "unix", Opts);
+  Define(Defs, "__ELF__", "1");
 }
 
 static void getFreeBSDDefines(const LangOptions &Opts, bool is64Bit,
@@ -886,6 +887,23 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 Solaris target
+class SolarisX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  SolarisX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+    UserLabelPrefix = "";
+    WCharType = WCharType = SignedLong;    
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
+    getSolarisDefines(Opts, Defines);
+  }
+};
+} // end anonymous namespace
+
+
+namespace {
 // x86-32 Windows target
 class WindowsX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -962,6 +980,22 @@ public:
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
     getLinuxDefines(Opts, Defines);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 Solaris target
+class SolarisX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  SolarisX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
+    UserLabelPrefix = "";
+    WCharType = WCharType = SignedLong;
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Defines);
+    getSolarisDefines(Opts, Defines);
   }
 };
 } // end anonymous namespace
@@ -1246,7 +1280,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     SparcV8TargetInfo::getTargetDefines(Opts, Defines);
-    getSolarisDefines(Defines);
+    getSolarisDefines(Opts, Defines);
   }
 };
 } // end anonymous namespace.
@@ -1420,6 +1454,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new LinuxX86_64TargetInfo(T);
     if (isFreeBSD)
       return new FreeBSDX86_64TargetInfo(T);
+    if (isSolaris)
+      return new SolarisX86_64TargetInfo(T);
     return new X86_64TargetInfo(T);
   }
 
@@ -1438,6 +1474,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new DragonFlyX86_32TargetInfo(T);
     if (isFreeBSD)
       return new FreeBSDX86_32TargetInfo(T);
+    if (isSolaris)
+      return new SolarisX86_32TargetInfo(T);
     if (isWindows)
       return new WindowsX86_32TargetInfo(T);
     return new X86_32TargetInfo(T);
