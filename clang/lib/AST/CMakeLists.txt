@@ -13,6 +13,7 @@ add_clang_library(clangAST
   DeclGroup.cpp
   DeclObjC.cpp
   DeclTemplate.cpp
+  DocumentXML.cpp
   ExprConstant.cpp
   Expr.cpp
   ExprCXX.cpp
@@ -24,6 +25,7 @@ add_clang_library(clangAST
   StmtIterator.cpp
   StmtPrinter.cpp
   StmtViz.cpp
+  StmtXML.cpp
   TemplateName.cpp
   Type.cpp
   )

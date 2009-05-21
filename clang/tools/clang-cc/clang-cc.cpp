@@ -194,6 +194,7 @@ enum ProgActions {
   EmitLLVMOnly,                 // Generate LLVM IR, but do not 
   EmitHTML,                     // Translate input source into HTML.
   ASTPrint,                     // Parse ASTs and print them.
+  ASTPrintXML,                  // Parse ASTs and print them in XML.
   ASTDump,                      // Parse ASTs and dump them.
   ASTDumpFull,                  // Parse ASTs and dump them, including the 
                                 // contents of a PCH file.
@@ -236,6 +237,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Output input source as HTML"),
              clEnumValN(ASTPrint, "ast-print",
                         "Build ASTs and then pretty-print them"),
+             clEnumValN(ASTPrintXML, "ast-print-xml",
+                        "Build ASTs and then print them in XML format"),
              clEnumValN(ASTDump, "ast-dump",
                         "Build ASTs and then debug dump them"),
              clEnumValN(ASTDumpFull, "ast-dump-full",
@@ -1755,6 +1758,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     Consumer.reset(CreateASTPrinter(OS.get()));
     break;
     
+  case ASTPrintXML:
+    OS.reset(ComputeOutFile(InFile, "xml", false, OutPath));
+    Consumer.reset(CreateASTPrinterXML(OS.get()));
+    break;
+
   case ASTDump:
     Consumer.reset(CreateASTDumper(false));
     break;
