@@ -160,10 +160,7 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
         break;
       }
     }
-    
-    if (!BlockDominatesAny)
-      continue;
-    
+
     // If NewBBSucc should not stay in our dominator frontier, remove it.
     // We remove it unless there is a predecessor of NewBBSucc that we
     // dominate, but we don't strictly dominate NewBBSucc.
@@ -181,7 +178,8 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
     
     if (ShouldRemove)
       removeFromFrontier(DFI, NewBBSucc);
-    addToFrontier(DFI, NewBB);
+    if (BlockDominatesAny && (&*FI == NewBB || !DT.dominates(FI, NewBB)))
+      addToFrontier(DFI, NewBB);
   }
 }
 
