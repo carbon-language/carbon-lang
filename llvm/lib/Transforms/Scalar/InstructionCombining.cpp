@@ -7152,6 +7152,10 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
 
+  // See if we can fold away this shift.
+  if (!isa<VectorType>(I.getType()) && SimplifyDemandedInstructionBits(I))
+    return &I;
+
   // Try to fold constant and into select arguments.
   if (isa<Constant>(Op0))
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
@@ -7171,8 +7175,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint32_t TypeBits = Op0->getType()->getPrimitiveSizeInBits();
-  if (SimplifyDemandedInstructionBits(I))
-    return &I;
   
   // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
   // of a signed value.

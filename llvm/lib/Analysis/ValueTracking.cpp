@@ -48,8 +48,9 @@ static unsigned getOpcode(const Value *V) {
 void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                              APInt &KnownZero, APInt &KnownOne,
                              TargetData *TD, unsigned Depth) {
+  const unsigned MaxDepth = 6;
   assert(V && "No Value?");
-  assert(Depth <= 6 && "Limit Search Depth");
+  assert(Depth <= MaxDepth && "Limit Search Depth");
   unsigned BitWidth = Mask.getBitWidth();
   assert((V->getType()->isInteger() || isa<PointerType>(V->getType())) &&
          "Not integer or pointer type!");
@@ -88,7 +89,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
 
   KnownZero.clear(); KnownOne.clear();   // Start out not knowing anything.
 
-  if (Depth == 6 || Mask == 0)
+  if (Depth == MaxDepth || Mask == 0)
     return;  // Limit search depth.
 
   User *I = dyn_cast<User>(V);
@@ -520,6 +521,30 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                                                     KnownZero3.countTrailingOnes()));
           break;
         }
+      }
+    }
+
+    // Otherwise take the unions of the known bit sets of the operands,
+    // taking conservative care to avoid excessive recursion.
+    if (Depth < MaxDepth - 1 && !KnownZero && !KnownOne) {
+      KnownZero = APInt::getAllOnesValue(BitWidth);
+      KnownOne = APInt::getAllOnesValue(BitWidth);
+      for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i) {
+        // Skip direct self references.
+        if (P->getIncomingValue(i) == P) continue;
+
+        KnownZero2 = APInt(BitWidth, 0);
+        KnownOne2 = APInt(BitWidth, 0);
+        // Recurse, but cap the recursion to one level, because we don't
+        // want to waste time spinning around in loops.
+        ComputeMaskedBits(P->getIncomingValue(i), KnownZero | KnownOne,
+                          KnownZero2, KnownOne2, TD, MaxDepth-1);
+        KnownZero &= KnownZero2;
+        KnownOne &= KnownOne2;
+        // If all bits have been ruled out, there's no need to check
+        // more operands.
+        if (!KnownZero && !KnownOne)
+          break;
       }
     }
     break;
