@@ -41,6 +41,7 @@ namespace clang {
 class Expr : public Stmt {
   QualType TR;
 
+protected:
   /// TypeDependent - Whether this expression is type-dependent 
   /// (C++ [temp.dep.expr]).
   bool TypeDependent : 1;
@@ -49,7 +50,6 @@ class Expr : public Stmt {
   /// (C++ [temp.dep.constexpr]).
   bool ValueDependent : 1;
 
-protected:
   // FIXME: Eventually, this constructor should go away and we should
   // require every subclass to provide type/value-dependence
   // information.
@@ -2074,7 +2074,8 @@ private:
   DesignatedInitExpr(QualType Ty, unsigned NumDesignators, 
                      const Designator *Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
-                     unsigned NumSubExprs);
+                     Expr **IndexExprs, unsigned NumIndexExprs,
+                     Expr *Init);
 
   explicit DesignatedInitExpr(unsigned NumSubExprs)
     : Expr(DesignatedInitExprClass, EmptyShell()),
@@ -2336,6 +2337,8 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange();
   }
+
+  ImplicitValueInitExpr *Clone(ASTContext &C) const;
 
   // Iterators
   virtual child_iterator child_begin();

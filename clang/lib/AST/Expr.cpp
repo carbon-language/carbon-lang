@@ -385,7 +385,9 @@ OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
 InitListExpr::InitListExpr(SourceLocation lbraceloc, 
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)
-  : Expr(InitListExprClass, QualType()),
+  : Expr(InitListExprClass, QualType(),
+         hasAnyTypeDependentArguments(initExprs, numInits),
+         hasAnyValueDependentArguments(initExprs, numInits)),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0), 
     UnionFieldInit(0), HadArrayRangeDesignator(false) {
 
@@ -1632,13 +1634,48 @@ DesignatedInitExpr::DesignatedInitExpr(QualType Ty, unsigned NumDesignators,
                                        const Designator *Designators,
                                        SourceLocation EqualOrColonLoc, 
                                        bool GNUSyntax,
-                                       unsigned NumSubExprs)
-  : Expr(DesignatedInitExprClass, Ty), 
+                                       Expr **IndexExprs, 
+                                       unsigned NumIndexExprs,
+                                       Expr *Init)
+  : Expr(DesignatedInitExprClass, Ty, 
+         Init->isTypeDependent(), Init->isValueDependent()),
     EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax), 
-    NumDesignators(NumDesignators), NumSubExprs(NumSubExprs) { 
+    NumDesignators(NumDesignators), NumSubExprs(NumIndexExprs + 1) { 
   this->Designators = new Designator[NumDesignators];
-  for (unsigned I = 0; I != NumDesignators; ++I)
+
+  // Record the initializer itself.
+  child_iterator Child = child_begin();
+  *Child++ = Init;
+
+  // Copy the designators and their subexpressions, computing
+  // value-dependence along the way.
+  unsigned IndexIdx = 0;
+  for (unsigned I = 0; I != NumDesignators; ++I) {
     this->Designators[I] = Designators[I];
+
+    if (this->Designators[I].isArrayDesignator()) {
+      // Compute type- and value-dependence.
+      Expr *Index = IndexExprs[IndexIdx];
+      ValueDependent = ValueDependent || 
+        Index->isTypeDependent() || Index->isValueDependent();
+
+      // Copy the index expressions into permanent storage.
+      *Child++ = IndexExprs[IndexIdx++];
+    } else if (this->Designators[I].isArrayRangeDesignator()) {
+      // Compute type- and value-dependence.
+      Expr *Start = IndexExprs[IndexIdx];
+      Expr *End = IndexExprs[IndexIdx + 1];
+      ValueDependent = ValueDependent || 
+        Start->isTypeDependent() || Start->isValueDependent() ||
+        End->isTypeDependent() || End->isValueDependent();
+
+      // Copy the start/end expressions into permanent storage.
+      *Child++ = IndexExprs[IndexIdx++];
+      *Child++ = IndexExprs[IndexIdx++];
+    }
+  }
+
+  assert(IndexIdx == NumIndexExprs && "Wrong number of index expressions");
 }
 
 DesignatedInitExpr *
@@ -1649,29 +1686,9 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
                            bool UsesColonSyntax, Expr *Init) {
   void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
                          sizeof(Stmt *) * (NumIndexExprs + 1), 8);
-  DesignatedInitExpr *DIE 
-    = new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators, Designators,
-                                   ColonOrEqualLoc, UsesColonSyntax,
-                                   NumIndexExprs + 1);
-
-  // Fill in the designators
-  unsigned ExpectedNumSubExprs = 0;
-  designators_iterator Desig = DIE->designators_begin();
-  for (unsigned Idx = 0; Idx < NumDesignators; ++Idx, ++Desig) {
-    if (Designators[Idx].isArrayDesignator())
-      ++ExpectedNumSubExprs;
-    else if (Designators[Idx].isArrayRangeDesignator())
-      ExpectedNumSubExprs += 2;
-  }
-  assert(ExpectedNumSubExprs == NumIndexExprs && "Wrong number of indices!");
-
-  // Fill in the subexpressions, including the initializer expression.
-  child_iterator Child = DIE->child_begin();
-  *Child++ = Init;
-  for (unsigned Idx = 0; Idx < NumIndexExprs; ++Idx, ++Child)
-    *Child = IndexExprs[Idx];
-
-  return DIE;
+  return new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators, Designators,
+                                      ColonOrEqualLoc, UsesColonSyntax,
+                                      IndexExprs, NumIndexExprs, Init);
 }
 
 DesignatedInitExpr *DesignatedInitExpr::CreateEmpty(ASTContext &C, 
@@ -1764,6 +1781,10 @@ void DesignatedInitExpr::ExpandDesignator(unsigned Idx,
 void DesignatedInitExpr::Destroy(ASTContext &C) {
   delete [] Designators;
   Expr::Destroy(C);
+}
+
+ImplicitValueInitExpr *ImplicitValueInitExpr::Clone(ASTContext &C) const {
+  return new (C) ImplicitValueInitExpr(getType());
 }
 
 //===----------------------------------------------------------------------===//

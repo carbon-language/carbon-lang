@@ -16,6 +16,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Designator.h"
 #include "clang/Lex/Preprocessor.h" // for the identifier table
 #include "llvm/Support/Compiler.h"
 using namespace clang;
@@ -61,8 +62,8 @@ namespace {
     OwningExprResult VisitChooseExpr(ChooseExpr *E);
     OwningExprResult VisitVAArgExpr(VAArgExpr *E);
     OwningExprResult VisitInitListExpr(InitListExpr *E);
-    // FIXME: DesignatedInitExpr
-    // FIXME: ImplicitValueInitExpr
+    OwningExprResult VisitDesignatedInitExpr(DesignatedInitExpr *E);
+    OwningExprResult VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
     // FIXME: ExtVectorElementExpr
     // FIXME: BlockExpr
     // FIXME: BlockDeclRefExpr
@@ -592,6 +593,62 @@ TemplateExprInstantiator::VisitInitListExpr(InitListExpr *E) {
 
   return SemaRef.ActOnInitList(E->getLBraceLoc(), move_arg(Inits),
                                E->getRBraceLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+  Designation Desig;
+
+  // Instantiate the initializer value
+  OwningExprResult Init = Visit(E->getInit());
+  if (Init.isInvalid())
+    return SemaRef.ExprError();
+
+  // Instantiate the designators.
+  ExprVector ArrayExprs(SemaRef); // Expresses used in array designators
+  for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
+                                             DEnd = E->designators_end();
+       D != DEnd; ++D) {
+    if (D->isFieldDesignator()) {
+      Desig.AddDesignator(Designator::getField(D->getFieldName(),
+                                               D->getDotLoc(),
+                                               D->getFieldLoc()));
+      continue;
+    }
+
+    if (D->isArrayDesignator()) {
+      OwningExprResult Index = Visit(E->getArrayIndex(*D));
+      if (Index.isInvalid())
+        return SemaRef.ExprError();
+
+      Desig.AddDesignator(Designator::getArray(Index.get(), 
+                                               D->getLBracketLoc()));
+
+      ArrayExprs.push_back(Index.release());
+      continue;
+    }
+
+    assert(false && "No array range designators, yet");
+  }
+
+  OwningExprResult Result = 
+    SemaRef.ActOnDesignatedInitializer(Desig,
+                                       E->getEqualOrColonLoc(),
+                                       E->usesGNUSyntax(),
+                                       move(Init));
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+
+  ArrayExprs.take();
+  return move(Result);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitImplicitValueInitExpr(
+                                                  ImplicitValueInitExpr *E) {
+  assert(!E->isTypeDependent() && !E->isValueDependent() &&
+         "ImplicitValueInitExprs are never dependent");
+  return SemaRef.Clone(E);
 }
 
 Sema::OwningExprResult 

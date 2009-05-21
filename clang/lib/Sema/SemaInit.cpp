@@ -117,7 +117,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
                                  DeclarationName InitEntity,
                                  bool DirectInit) {
-  if (DeclType->isDependentType() || Init->isTypeDependent())
+  if (DeclType->isDependentType() || 
+      Init->isTypeDependent() || Init->isValueDependent())
     return false;
   
   // C++ [dcl.init.ref]p1:
@@ -1635,7 +1636,9 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
     case Designator::ArrayDesignator: {
       Expr *Index = static_cast<Expr *>(D.getArrayIndex());
       llvm::APSInt IndexValue;
-      if (CheckArrayDesignatorExpr(*this, Index, IndexValue))
+      if (!Index->isTypeDependent() &&
+          !Index->isValueDependent() &&
+          CheckArrayDesignatorExpr(*this, Index, IndexValue))
         Invalid = true;
       else {
         Designators.push_back(ASTDesignator(InitExpressions.size(),
@@ -1651,12 +1654,20 @@ Sema::OwningExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
       Expr *EndIndex = static_cast<Expr *>(D.getArrayRangeEnd());
       llvm::APSInt StartValue;
       llvm::APSInt EndValue;
-      if (CheckArrayDesignatorExpr(*this, StartIndex, StartValue) ||
-          CheckArrayDesignatorExpr(*this, EndIndex, EndValue))
+      bool StartDependent = StartIndex->isTypeDependent() ||
+                            StartIndex->isValueDependent();
+      bool EndDependent = EndIndex->isTypeDependent() ||
+                          EndIndex->isValueDependent();
+      if ((!StartDependent &&
+           CheckArrayDesignatorExpr(*this, StartIndex, StartValue)) ||
+          (!EndDependent &&
+           CheckArrayDesignatorExpr(*this, EndIndex, EndValue)))
         Invalid = true;
       else {
         // Make sure we're comparing values with the same bit width.
-        if (StartValue.getBitWidth() > EndValue.getBitWidth())
+        if (StartDependent || EndDependent) {
+          // Nothing to compute.
+        } else if (StartValue.getBitWidth() > EndValue.getBitWidth())
           EndValue.extend(StartValue.getBitWidth());
         else if (StartValue.getBitWidth() < EndValue.getBitWidth())
           StartValue.extend(EndValue.getBitWidth());
