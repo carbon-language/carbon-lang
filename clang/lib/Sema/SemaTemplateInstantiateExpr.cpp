@@ -90,7 +90,7 @@ namespace {
     OwningExprResult VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     OwningExprResult VisitCXXNewExpr(CXXNewExpr *E);
     OwningExprResult VisitCXXDeleteExpr(CXXDeleteExpr *E);
-    // FIXME: UnaryTypeTraitExpr
+    OwningExprResult VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
     // FIXME: QualifiedDeclRefExpr
     OwningExprResult VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     OwningExprResult VisitCXXUnresolvedConstructExpr(
@@ -989,6 +989,23 @@ TemplateExprInstantiator::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
                                 E->isGlobalDelete(),
                                 E->isArrayForm(),
                                 move(Operand));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+  QualType T = SemaRef.InstantiateType(E->getQueriedType(), TemplateArgs,
+                                       /*FIXME*/E->getSourceRange().getBegin(),
+                                       DeclarationName());
+  if (T.isNull())
+    return SemaRef.ExprError();
+
+  SourceLocation FakeLParenLoc
+    = SemaRef.PP.getLocForEndOfToken(E->getSourceRange().getBegin());
+  return SemaRef.ActOnUnaryTypeTrait(E->getTrait(),
+                                     E->getSourceRange().getBegin(),
+                                     /*FIXME*/FakeLParenLoc,
+                                     T.getAsOpaquePtr(),
+                                     E->getSourceRange().getEnd());
 }
 
 Sema::OwningExprResult 

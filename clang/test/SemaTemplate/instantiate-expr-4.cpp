@@ -139,3 +139,14 @@ struct Abstract {
 template struct TypeId0<int>;
 template struct TypeId0<Incomplete>;
 template struct TypeId0<Abstract>;
+
+// ---------------------------------------------------------------------
+// type traits
+// ---------------------------------------------------------------------
+template<typename T>
+struct is_pod {
+  static const bool value = __is_pod(T);
+};
+
+static const int is_pod0[is_pod<X>::value? -1 : 1];
+static const int is_pod1[is_pod<Y>::value? 1 : -1];
