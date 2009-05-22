@@ -238,3 +238,41 @@ struct NonDepMemberExpr0 {
 };
 
 template struct NonDepMemberExpr0<0>; 
+
+template<typename T, typename Result>
+struct MemberFuncCall0 {
+  void f(T t) {
+    Result result = t.f();
+  }
+};
+
+template<typename T>
+struct HasMemFunc0 {
+  T f();
+};
+
+
+template struct MemberFuncCall0<HasMemFunc0<int&>, const int&>;
+
+template<typename Result>
+struct ThisMemberFuncCall0 {
+  Result g();
+
+  void f() {
+    Result r1 = g();
+    Result r2 = this->g();
+  }
+};
+
+template struct ThisMemberFuncCall0<int&>;
+
+template<typename T>
+struct NonDepMemberCall0 {
+  void foo(HasMemFunc0<int&> x) {
+    T result = x.f(); // expected-error{{initialized}}
+  }
+};
+
+template struct NonDepMemberCall0<int&>;
+template struct NonDepMemberCall0<const int&>;
+template struct NonDepMemberCall0<float&>; // expected-note{{instantiation}}

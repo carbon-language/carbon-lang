@@ -74,7 +74,7 @@ namespace {
     OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
     OwningExprResult VisitExplicitCastExpr(ExplicitCastExpr *E);
     OwningExprResult VisitCStyleCastExpr(CStyleCastExpr *E);
-    // FIXME: CXXMemberCallExpr
+    OwningExprResult VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
     OwningExprResult VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
     OwningExprResult VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
     OwningExprResult VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
@@ -849,6 +849,11 @@ TemplateExprInstantiator::VisitCStyleCastExpr(CStyleCastExpr *E) {
                                ExplicitTy.getAsOpaquePtr(),
                                E->getRParenLoc(),
                                move(SubExpr));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+  return VisitCallExpr(E);
 }
 
 Sema::OwningExprResult 
