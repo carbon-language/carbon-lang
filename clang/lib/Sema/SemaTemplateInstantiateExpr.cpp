@@ -64,7 +64,7 @@ namespace {
     OwningExprResult VisitInitListExpr(InitListExpr *E);
     OwningExprResult VisitDesignatedInitExpr(DesignatedInitExpr *E);
     OwningExprResult VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
-    // FIXME: ExtVectorElementExpr
+    OwningExprResult VisitExtVectorElementExpr(ExtVectorElementExpr *E);
     // FIXME: BlockExpr
     // FIXME: BlockDeclRefExpr
     OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
@@ -705,6 +705,23 @@ TemplateExprInstantiator::VisitImplicitValueInitExpr(
   assert(!E->isTypeDependent() && !E->isValueDependent() &&
          "ImplicitValueInitExprs are never dependent");
   return SemaRef.Clone(E);
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
+  OwningExprResult Base = Visit(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+
+  SourceLocation FakeOperatorLoc = 
+    SemaRef.PP.getLocForEndOfToken(E->getBase()->getSourceRange().getEnd());
+  return SemaRef.ActOnMemberReferenceExpr(/*Scope=*/0,
+                                          move(Base), 
+                                          /*FIXME*/FakeOperatorLoc,
+                                          tok::period,
+                                          E->getAccessorLoc(),
+                                          E->getAccessor(),
+                                   /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
 }
 
 Sema::OwningExprResult 
