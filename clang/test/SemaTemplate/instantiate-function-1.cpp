@@ -178,6 +178,14 @@ template<typename T> struct IndirectGoto0 {
   void f(T x) {
     // FIXME: crummy error message below
     goto *x; // expected-error{{incompatible}}
+
+  prior:
+    T prior_label = &&prior;
+
+    T later_label = &&later;
+
+  later:
+    (void)(1+1);
   }
 };
 

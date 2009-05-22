@@ -55,7 +55,7 @@ namespace {
     OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
     OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
-    // FIXME: AddrLabelExpr
+    OwningExprResult VisitAddrLabelExpr(AddrLabelExpr *E);
     OwningExprResult VisitStmtExpr(StmtExpr *E);
     OwningExprResult VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
@@ -524,6 +524,13 @@ TemplateExprInstantiator::VisitConditionalOperator(ConditionalOperator *E) {
   return SemaRef.ActOnConditionalOp(/*FIXME*/E->getCond()->getLocEnd(),
                                     /*FIXME*/E->getFalseExpr()->getLocStart(),
                                     move(Cond), move(LHS), move(RHS));
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitAddrLabelExpr(AddrLabelExpr *E) {
+  return SemaRef.ActOnAddrLabel(E->getAmpAmpLoc(),
+                                E->getLabelLoc(),
+                                E->getLabel()->getID());
 }
 
 Sema::OwningExprResult TemplateExprInstantiator::VisitStmtExpr(StmtExpr *E) {
