@@ -178,3 +178,63 @@ struct InitList2 {
 
 template struct InitList2<APair, int*, float*>;
 template struct InitList2<APair, int*, double*>; // expected-note{{instantiation}}
+
+// ---------------------------------------------------------------------
+// member references
+// ---------------------------------------------------------------------
+template<typename T, typename Result>
+struct DotMemRef0 {
+  void f(T t) {
+    Result result = t.m; // expected-error{{cannot be initialized}}
+  }
+};
+
+struct MemInt {
+  int m;
+};
+
+struct InheritsMemInt : MemInt { };
+
+struct MemIntFunc {
+  static int m(int);
+};
+
+template struct DotMemRef0<MemInt, int&>;
+template struct DotMemRef0<InheritsMemInt, int&>;
+template struct DotMemRef0<MemIntFunc, int (*)(int)>;
+template struct DotMemRef0<MemInt, float&>; // expected-note{{instantiation}}
+
+template<typename T, typename Result>
+struct ArrowMemRef0 {
+  void f(T t) {
+    Result result = t->m; // expected-error 2{{cannot be initialized}}
+  }
+};
+
+template<typename T>
+struct ArrowWrapper {
+  T operator->();
+};
+
+template struct ArrowMemRef0<MemInt*, int&>;
+template struct ArrowMemRef0<InheritsMemInt*, int&>;
+template struct ArrowMemRef0<MemIntFunc*, int (*)(int)>;
+template struct ArrowMemRef0<MemInt*, float&>; // expected-note{{instantiation}}
+
+template struct ArrowMemRef0<ArrowWrapper<MemInt*>, int&>;
+template struct ArrowMemRef0<ArrowWrapper<InheritsMemInt*>, int&>;
+template struct ArrowMemRef0<ArrowWrapper<MemIntFunc*>, int (*)(int)>;
+template struct ArrowMemRef0<ArrowWrapper<MemInt*>, float&>; // expected-note{{instantiation}}
+template struct ArrowMemRef0<ArrowWrapper<ArrowWrapper<MemInt*> >, int&>;
+
+// FIXME: we should be able to return a MemInt without the reference!
+MemInt &createMemInt(int);
+
+template<int N>
+struct NonDepMemberExpr0 {
+  void f() {
+    createMemInt(N).m = N;
+  }
+};
+
+template struct NonDepMemberExpr0<0>; 

@@ -48,7 +48,7 @@ namespace {
     OwningExprResult VisitUnaryOperator(UnaryOperator *E);
     OwningExprResult VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     OwningExprResult VisitCallExpr(CallExpr *E);
-    // FIXME: VisitMemberExpr
+    OwningExprResult VisitMemberExpr(MemberExpr *E);
     OwningExprResult VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
     OwningExprResult VisitBinaryOperator(BinaryOperator *E);
     OwningExprResult VisitCompoundAssignOperator(CompoundAssignOperator *E);
@@ -96,6 +96,7 @@ namespace {
     OwningExprResult VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     OwningExprResult VisitCXXUnresolvedConstructExpr(
                                                CXXUnresolvedConstructExpr *E);
+    OwningExprResult VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *E);
     OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
     OwningExprResult VisitUnresolvedFunctionNameExpr(
                                               UnresolvedFunctionNameExpr *E);
@@ -286,6 +287,26 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitCallExpr(CallExpr *E) {
                                move_arg(Args),
                                /*FIXME:*/&FakeCommaLocs.front(), 
                                E->getRParenLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitMemberExpr(MemberExpr *E) {
+  // Instantiate the base of the expression.
+  OwningExprResult Base = Visit(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+
+  // FIXME: Handle declaration names here
+  SourceLocation FakeOperatorLoc = 
+    SemaRef.PP.getLocForEndOfToken(E->getBase()->getSourceRange().getEnd());
+  return SemaRef.ActOnMemberReferenceExpr(/*Scope=*/0,
+                                          move(Base), 
+                                          /*FIXME*/FakeOperatorLoc,
+                                          E->isArrow()? tok::arrow 
+                                                      : tok::period,
+                                          E->getMemberLoc(),
+                               /*FIXME:*/*E->getMemberDecl()->getIdentifier(),
+                                   /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
 }
 
 Sema::OwningExprResult 
@@ -1156,6 +1177,24 @@ TemplateExprInstantiator::VisitCXXUnresolvedConstructExpr(
                                            move_arg(Args),
                                            &FakeCommaLocs.front(),
                                            E->getRParenLoc());
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXUnresolvedMemberExpr(
+                                                 CXXUnresolvedMemberExpr *E) {
+  // Instantiate the base of the expression.
+  OwningExprResult Base = Visit(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+
+  // FIXME: Instantiate the declaration name.
+  return SemaRef.ActOnMemberReferenceExpr(/*Scope=*/0,
+                                          move(Base), E->getOperatorLoc(),
+                                          E->isArrow()? tok::arrow 
+                                                      : tok::period,
+                                          E->getMemberLoc(),
+                              /*FIXME:*/*E->getMember().getAsIdentifierInfo(),
+                                   /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
 }
 
 Sema::OwningExprResult 

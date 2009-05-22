@@ -354,6 +354,14 @@ Stmt::child_iterator CXXUnresolvedConstructExpr::child_end() {
   return child_iterator(reinterpret_cast<Stmt **>(this + 1) + NumArgs);
 }
 
+Stmt::child_iterator CXXUnresolvedMemberExpr::child_begin() {
+  return child_iterator(&Base);
+}
+
+Stmt::child_iterator CXXUnresolvedMemberExpr::child_end() {
+  return child_iterator(&Base + 1);
+}
+
 //===----------------------------------------------------------------------===//
 //  Cloners
 //===----------------------------------------------------------------------===//

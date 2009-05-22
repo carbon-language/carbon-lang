@@ -2031,10 +2031,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // must have pointer type, and the accessed type is the pointee.
   if (OpKind == tok::arrow) {
     if (BaseType->isDependentType())
-      // FIXME: This should not return a MemberExpr AST node, but a more 
-      // specialized one.
-      return Owned(new (Context) MemberExpr(BaseExpr, true, 0,
-                                            MemberLoc, Context.DependentTy));
+      return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
+                                                         BaseExpr, true, 
+                                                         OpLoc, 
+                                                     DeclarationName(&Member),
+                                                         MemberLoc));
     else if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
     else if (getLangOptions().CPlusPlus && BaseType->isRecordType())
@@ -2058,10 +2059,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
       if (!PT || (getLangOptions().ObjC1 && 
                   !PT->getPointeeType()->isRecordType()))
-        // FIXME: This should not return a MemberExpr AST node, but a more 
-        // specialized one.
-        return Owned(new (Context) MemberExpr(BaseExpr, false, 0,
-                                              MemberLoc, Context.DependentTy));
+        return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
+                                                           BaseExpr, false, 
+                                                           OpLoc, 
+                                                     DeclarationName(&Member),
+                                                           MemberLoc));
     }
   }
 

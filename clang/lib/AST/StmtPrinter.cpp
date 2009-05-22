@@ -1125,6 +1125,12 @@ StmtPrinter::VisitCXXUnresolvedConstructExpr(
   OS << ")";
 }
 
+void StmtPrinter::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *Node) {
+  PrintExpr(Node->getBase());
+  OS << (Node->isArrow() ? "->" : ".");
+  OS << Node->getMember().getAsString();
+}
+
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
   default: assert(false && "Unknown type trait");

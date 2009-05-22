@@ -1088,6 +1088,76 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief 
+class CXXUnresolvedMemberExpr : public Expr {
+  /// \brief The expression for the base pointer or class reference,
+  /// e.g., the \c x in x.f.
+  Stmt *Base;
+  
+  /// \brief Whether this member expression used the '->' operator or
+  /// the '.' operator.
+  bool IsArrow;
+
+  /// \brief The location of the '->' or '.' operator.
+  SourceLocation OperatorLoc;
+
+  /// \brief The member to which this member expression refers, which
+  /// can be name, overloaded operator, or destructor.
+  /// FIXME: could also be a template-id, and we might have a 
+  /// nested-name-specifier as well.
+  DeclarationName Member;
+
+  /// \brief The location of the member name.
+  SourceLocation MemberLoc;
+
+public:
+  CXXUnresolvedMemberExpr(ASTContext &C, 
+                          Expr *Base, bool IsArrow, 
+                          SourceLocation OperatorLoc,
+                          DeclarationName Member,
+                          SourceLocation MemberLoc)
+    : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
+      Base(Base), IsArrow(IsArrow), OperatorLoc(OperatorLoc),
+      Member(Member), MemberLoc(MemberLoc) { }
+
+  /// \brief Retrieve the base object of this member expressions,
+  /// e.g., the \c x in \c x.m.
+  Expr *getBase() { return cast<Expr>(Base); }
+  void setBase(Expr *E) { Base = E; }
+
+  /// \brief Determine whether this member expression used the '->'
+  /// operator; otherwise, it used the '.' operator.
+  bool isArrow() const { return IsArrow; }
+  void setArrow(bool A) { IsArrow = A; }
+
+  /// \brief Retrieve the location of the '->' or '.' operator.
+  SourceLocation getOperatorLoc() const { return OperatorLoc; }
+  void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
+
+  /// \brief Retrieve the name of the member that this expression
+  /// refers to.
+  DeclarationName getMember() const { return Member; }
+  void setMember(DeclarationName N) { Member = N; }
+
+  // \brief Retrieve the location of the name of the member that this
+  // expression refers to.
+  SourceLocation getMemberLoc() const { return MemberLoc; }
+  void setMemberLoc(SourceLocation L) { MemberLoc = L; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Base->getSourceRange().getBegin(),
+                       MemberLoc);
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXUnresolvedMemberExprClass;
+  }
+  static bool classof(const CXXUnresolvedMemberExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 }  // end namespace clang
 
 #endif
