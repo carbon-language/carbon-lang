@@ -158,6 +158,8 @@ public:
   OwningExprResult ExprError(const DiagnosticBuilder &) { return ExprError(); }
   OwningStmtResult StmtError(const DiagnosticBuilder &) { return StmtError(); }
 
+  OwningExprResult ExprEmpty() { return OwningExprResult(Actions, false); }
+
   // Parsing methods.
   
   /// ParseTranslationUnit - All in one method that initializes parses, and
@@ -663,6 +665,11 @@ private:
   OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
   OwningExprResult ParseSizeofAlignofExpression();
   OwningExprResult ParseBuiltinPrimaryExpression();
+  
+  OwningExprResult ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
+                                                     bool &isCastExpr,
+                                                     TypeTy *&CastTy,
+                                                     SourceRange &CastRange);
 
   static const unsigned ExprListSize = 12;
   typedef llvm::SmallVector<ExprTy*, ExprListSize> ExprListTy;

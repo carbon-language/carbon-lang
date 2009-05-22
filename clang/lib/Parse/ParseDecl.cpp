@@ -2648,51 +2648,35 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 ///
 void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   assert(Tok.is(tok::kw_typeof) && "Not a typeof specifier");
-  const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
+  Token OpTok = Tok;
   SourceLocation StartLoc = ConsumeToken();
 
-  // If the operand doesn't start with an '(', it must be an expression.
-  OwningExprResult Operand(Actions);
-  if (Tok.isNot(tok::l_paren)) {
-    if (!getLang().CPlusPlus) {
-      Diag(Tok, diag::err_expected_lparen_after_id) << BuiltinII;
-      return;
-    }
-    Operand = ParseCastExpression(true/*isUnaryExpression*/);
+  bool isCastExpr;
+  TypeTy *CastTy;
+  SourceRange CastRange;
+  OwningExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
+                                                               isCastExpr,
+                                                               CastTy,
+                                                               CastRange);
+
+  if (CastRange.getEnd().isInvalid())
     // FIXME: Not accurate, the range gets one token more than it should.
     DS.SetRangeEnd(Tok.getLocation());
-
-  } else {
-    // If it starts with a '(', we know that it is either a parenthesized
-    // type-name, or it is a unary-expression that starts with a compound
-    // literal, or starts with a primary-expression that is a parenthesized
-    // expression.
-    ParenParseOption ExprType = CastExpr;
-    TypeTy *CastTy;
-    SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
-    Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
-    DS.SetRangeEnd(RParenLoc);
-
-    // If ParseParenExpression parsed a '(typename)' sequence only, then this is
-    // typeof a type.  Otherwise, it is typeof an expression.
-    if (ExprType == CastExpr) {
-      if (!CastTy) {
-        DS.SetTypeSpecError();
-        return;
-      }
-
-      const char *PrevSpec = 0;
-      // Check for duplicate type specifiers (e.g. "int typeof(int)").
-      if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec,
-                             CastTy))
-        Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+  else
+    DS.SetRangeEnd(CastRange.getEnd());
+  
+  if (isCastExpr) {
+    if (!CastTy) {
+      DS.SetTypeSpecError();
       return;
     }
 
-    // If this is a parenthesized expression, it is the start of a
-    // unary-expression, but doesn't include any postfix pieces.  Parse these
-    // now if present.
-    Operand = ParsePostfixExpressionSuffix(move(Operand));
+    const char *PrevSpec = 0;
+    // Check for duplicate type specifiers (e.g. "int typeof(int)").
+    if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec,
+                           CastTy))
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+    return;
   }
 
   // If we get here, the operand to the typeof was an expresion.

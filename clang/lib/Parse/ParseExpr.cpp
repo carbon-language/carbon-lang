@@ -913,6 +913,72 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
   }
 }
 
+/// ParseExprAfterTypeofSizeofAlignof - We parsed a typeof/sizeof/alignof and
+/// we are at the start of an expression or a parenthesized type-id.
+/// OpTok is the operand token (typeof/sizeof/alignof). Returns the expression
+/// (isCastExpr == false) or the type (isCastExpr == true).
+///
+///       unary-expression:  [C99 6.5.3]
+///         'sizeof' unary-expression
+///         'sizeof' '(' type-name ')'
+/// [GNU]   '__alignof' unary-expression
+/// [GNU]   '__alignof' '(' type-name ')'
+/// [C++0x] 'alignof' '(' type-id ')'
+///
+/// [GNU]   typeof-specifier:
+///           typeof ( expressions )
+///           typeof ( type-name )
+/// [GNU/C++] typeof unary-expression
+///
+Parser::OwningExprResult
+Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
+                                          bool &isCastExpr,
+                                          TypeTy *&CastTy,
+                                          SourceRange &CastRange) {
+  
+  assert((OpTok.is(tok::kw_typeof)    || OpTok.is(tok::kw_sizeof) || 
+          OpTok.is(tok::kw___alignof) || OpTok.is(tok::kw_alignof)) &&
+          "Not a typeof/sizeof/alignof expression!");
+
+  OwningExprResult Operand(Actions);
+  
+  // If the operand doesn't start with an '(', it must be an expression.
+  if (Tok.isNot(tok::l_paren)) {
+    isCastExpr = false;
+    if (OpTok.is(tok::kw_typeof) && !getLang().CPlusPlus) {
+      Diag(Tok,diag::err_expected_lparen_after_id) << OpTok.getIdentifierInfo();
+      return ExprError();
+    }
+    Operand = ParseCastExpression(true/*isUnaryExpression*/);
+
+  } else {
+    // If it starts with a '(', we know that it is either a parenthesized
+    // type-name, or it is a unary-expression that starts with a compound
+    // literal, or starts with a primary-expression that is a parenthesized
+    // expression.
+    ParenParseOption ExprType = CastExpr;
+    SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
+    Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
+    CastRange = SourceRange(LParenLoc, RParenLoc);
+
+    // If ParseParenExpression parsed a '(typename)' sequence only, then this is
+    // a type.
+    if (ExprType == CastExpr) {
+      isCastExpr = true;
+      return ExprEmpty();
+    }
+
+    // If this is a parenthesized expression, it is the start of a 
+    // unary-expression, but doesn't include any postfix pieces.  Parse these
+    // now if present.
+    Operand = ParsePostfixExpressionSuffix(move(Operand));
+  }
+
+  // If we get here, the operand to the typeof/sizeof/alignof was an expresion.
+  isCastExpr = false;
+  return move(Operand);
+}
+
 
 /// ParseSizeofAlignofExpression - Parse a sizeof or alignof expression.
 ///       unary-expression:  [C99 6.5.3]
@@ -928,40 +994,26 @@ Parser::OwningExprResult Parser::ParseSizeofAlignofExpression() {
   Token OpTok = Tok;
   ConsumeToken();
   
-  // If the operand doesn't start with an '(', it must be an expression.
-  OwningExprResult Operand(Actions);
-  if (Tok.isNot(tok::l_paren)) {
-    Operand = ParseCastExpression(true);
-  } else {
-    // If it starts with a '(', we know that it is either a parenthesized
-    // type-name, or it is a unary-expression that starts with a compound
-    // literal, or starts with a primary-expression that is a parenthesized
-    // expression.
-    ParenParseOption ExprType = CastExpr;
-    TypeTy *CastTy;
-    SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
-    Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
+  bool isCastExpr;
+  TypeTy *CastTy;
+  SourceRange CastRange;
+  OwningExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
+                                                               isCastExpr,
+                                                               CastTy,
+                                                               CastRange);
 
-    // If ParseParenExpression parsed a '(typename)' sequence only, the this is
-    // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
-    if (ExprType == CastExpr)
-      return Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
-                                            OpTok.is(tok::kw_sizeof),
-                                            /*isType=*/true, CastTy,
-                                            SourceRange(LParenLoc, RParenLoc));
-
-    // If this is a parenthesized expression, it is the start of a 
-    // unary-expression, but doesn't include any postfix pieces.  Parse these
-    // now if present.
-    Operand = ParsePostfixExpressionSuffix(move(Operand));
-  }
+  if (isCastExpr)
+    return Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
+                                          OpTok.is(tok::kw_sizeof),
+                                          /*isType=*/true, CastTy,
+                                          CastRange);
 
   // If we get here, the operand to the sizeof/alignof was an expresion.
   if (!Operand.isInvalid())
     Operand = Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
                                              OpTok.is(tok::kw_sizeof),
                                              /*isType=*/false,
-                                             Operand.release(), SourceRange());
+                                             Operand.release(), CastRange);
   return move(Operand);
 }
 
@@ -1177,6 +1229,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
       Result = Actions.ActOnStmtExpr(OpenLoc, move(Stmt), Tok.getLocation());
 
   } else if (ExprType >= CompoundLiteral && isTypeIdInParens()) {
+    
     // Otherwise, this is a compound literal expression or cast expression.
     TypeResult Ty = ParseTypeName();
 
