@@ -349,11 +349,8 @@ bool LoopIndexSplit::processOneIterationLoop() {
   // If BR operands are not IV or not loop invariants then skip this loop.
   Value *OPV = SplitCondition->getOperand(0);
   Value *SplitValue = SplitCondition->getOperand(1);
-  if (!L->isLoopInvariant(SplitValue)) {
-    Value *T = SplitValue;
-    SplitValue = OPV;
-    OPV = T;
-  }
+  if (!L->isLoopInvariant(SplitValue))
+    std::swap(OPV, SplitValue);
   if (!L->isLoopInvariant(SplitValue))
     return false;
   Instruction *OPI = dyn_cast<Instruction>(OPV);
@@ -783,25 +780,23 @@ void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
   // ExitBB is now dominated by CondBB
   DT->changeImmediateDominator(ExitBB, CondBB);
   DF->changeImmediateDominator(ExitBB, CondBB, DT);
-  
-  // Basicblocks dominated by ActiveBB may have ExitingBB or
-  // a basic block outside the loop in their DF list. If so,
-  // replace it with CondBB.
-  DomTreeNode *Node = DT->getNode(ActiveBB);
-  for (df_iterator<DomTreeNode *> DI = df_begin(Node), DE = df_end(Node);
-       DI != DE; ++DI) {
-    BasicBlock *BB = DI->getBlock();
-    DominanceFrontier::iterator BBDF = DF->find(BB);
+
+  // Blocks outside the loop may have been in the dominance frontier of blocks
+  // inside the condition; this is now impossible because the blocks inside the
+  // condition no loger dominate the exit.  Remove the relevant blocks from
+  // the dominance frontiers.
+  for (Loop::block_iterator I = LP->block_begin(), E = LP->block_end();
+       I != E; ++I) {
+    if (*I == CondBB || !DT->dominates(CondBB, *I)) continue;
+    DominanceFrontier::iterator BBDF = DF->find(*I);
     DominanceFrontier::DomSetType::iterator DomSetI = BBDF->second.begin();
     DominanceFrontier::DomSetType::iterator DomSetE = BBDF->second.end();
     while (DomSetI != DomSetE) {
       DominanceFrontier::DomSetType::iterator CurrentItr = DomSetI;
       ++DomSetI;
       BasicBlock *DFBB = *CurrentItr;
-      if (DFBB == ExitingBB || !L->contains(DFBB)) {
+      if (!LP->contains(DFBB))
         BBDF->second.erase(DFBB);
-        BBDF->second.insert(CondBB);
-      }
     }
   }
 }
