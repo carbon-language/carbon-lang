@@ -249,6 +249,7 @@ external const_packed_struct : llvalue array -> llvalue
 external const_vector : llvalue array -> llvalue = "llvm_const_vector"
 
 (*--... Constant expressions ...............................................--*)
+external align_of : lltype -> llvalue = "LLVMAlignOf"
 external size_of : lltype -> llvalue = "LLVMSizeOf"
 external const_neg : llvalue -> llvalue = "LLVMConstNeg"
 external const_not : llvalue -> llvalue = "LLVMConstNot"
