@@ -220,6 +220,9 @@ namespace RTLIB {
     O_F32,
     O_F64,
 
+    // EXCEPTION HANDLING
+    UNWIND_RESUME,
+
     UNKNOWN_LIBCALL
   };
 

@@ -455,11 +455,7 @@ bool FastISel::SelectCall(User *I) {
     switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {
     default: break;
     case TargetLowering::Expand: {
-      if (!MBB->isLandingPad()) {
-        // FIXME: Mark exception register as live in.  Hack for PR1508.
-        unsigned Reg = TLI.getExceptionAddressRegister();
-        if (Reg) MBB->addLiveIn(Reg);
-      }
+      assert(MBB->isLandingPad() && "Call to eh.exception not in landing pad!");
       unsigned Reg = TLI.getExceptionAddressRegister();
       const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
       unsigned ResultReg = createResultReg(RC);

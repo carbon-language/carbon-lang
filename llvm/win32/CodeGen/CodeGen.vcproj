@@ -313,6 +313,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\DwarfEHPrepare.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\ELFWriter.cpp"
 				>
 			</File>

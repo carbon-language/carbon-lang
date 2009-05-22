@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -enable-eh -asm-verbose -o - | \
-; RUN:   grep -A 3 {Llabel137.*Region start} | grep {3.*Action}
+; RUN:   grep -A 3 {Llabel138.*Region start} | grep {3.*Action}
 ; PR1422
 ; PR1508
 

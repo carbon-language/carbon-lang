@@ -4055,12 +4055,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::eh_exception: {
-    if (!CurMBB->isLandingPad()) {
-      // FIXME: Mark exception register as live in.  Hack for PR1508.
-      unsigned Reg = TLI.getExceptionAddressRegister();
-      if (Reg) CurMBB->addLiveIn(Reg);
-    }
     // Insert the EXCEPTIONADDR instruction.
+    assert(CurMBB->isLandingPad() &&"Call to eh.exception not in landing pad!");
     SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
     SDValue Ops[1];
     Ops[0] = DAG.getRoot();

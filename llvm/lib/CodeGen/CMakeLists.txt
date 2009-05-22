@@ -2,6 +2,7 @@ add_llvm_library(LLVMCodeGen
   BranchFolding.cpp
   CodePlacementOpt.cpp
   DeadMachineInstructionElim.cpp
+  DwarfEHPrepare.cpp
   ELFWriter.cpp
   GCMetadata.cpp
   GCMetadataPrinter.cpp

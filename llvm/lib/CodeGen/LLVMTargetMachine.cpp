@@ -158,10 +158,14 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
       PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &errs()));
   }
 
-  PM.add(createGCLoweringPass());
-
+  // Turn exception handling constructs into something the code generators can
+  // handle.
   if (!getTargetAsmInfo()->doesSupportExceptionHandling())
     PM.add(createLowerInvokePass(getTargetLowering()));
+  else
+    PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
+
+  PM.add(createGCLoweringPass());
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());

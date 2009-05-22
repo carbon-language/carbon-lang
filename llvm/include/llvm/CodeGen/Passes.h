@@ -203,6 +203,10 @@ namespace llvm {
   ///        registers. Useful before LiveVariables has run.
   FunctionPass *createMachineVerifierPass(bool allowDoubleDefs);
 
+  /// createDwarfEHPass - This pass mulches exception handling code into a form
+  /// adapted to code generation.  Required if using dwarf exception handling.
+  FunctionPass *createDwarfEHPass(const TargetLowering *tli, bool fast);
+
 } // End llvm namespace
 
 #endif

@@ -235,6 +235,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::UO_F64] = "__unorddf2";
   Names[RTLIB::O_F32] = "__unordsf2";
   Names[RTLIB::O_F64] = "__unorddf2";
+  Names[RTLIB::UNWIND_RESUME] = "_Unwind_Resume";
 }
 
 /// getFPEXT - Return the FPEXT_*_* value for the given types, or
