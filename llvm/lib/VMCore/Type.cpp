@@ -1198,7 +1198,7 @@ static ManagedStatic<TypeMap<PointerValType, PointerType> > PointerTypes;
 PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(ValueType && "Can't get a pointer to <null> type!");
   assert(ValueType != Type::VoidTy &&
-         "Pointer to void is not valid, use sbyte* instead!");
+         "Pointer to void is not valid, use i8* instead!");
   assert(ValueType != Type::LabelTy && "Pointer to label is not valid!");
   PointerValType PVT(ValueType, AddressSpace);
 
