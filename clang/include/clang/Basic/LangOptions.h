@@ -36,6 +36,8 @@ public:
     
   unsigned ObjC1             : 1;  // Objective-C 1 support enabled.
   unsigned ObjC2             : 1;  // Objective-C 2 support enabled.
+  unsigned ObjCSenderDispatch: 1;  // Objective-C 2 three-dimensional dispatch
+                                   // enabled.
   unsigned ObjCNonFragileABI : 1;  // Objective-C modern abi enabled
     
   unsigned PascalStrings     : 1;  // Allow Pascal strings

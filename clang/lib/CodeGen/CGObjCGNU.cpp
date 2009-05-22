@@ -417,8 +417,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   CallArgList ActualArgs;
 
   ActualArgs.push_back(
-	  std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), 
-	  CGF.getContext().getObjCIdType()));
+    std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), 
+    CGF.getContext().getObjCIdType()));
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
@@ -427,15 +427,36 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
   const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
 
+  llvm::Value *imp;
   std::vector<const llvm::Type*> Params;
   Params.push_back(Receiver->getType());
   Params.push_back(SelectorTy);
-  llvm::Constant *lookupFunction = 
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-          llvm::PointerType::getUnqual(impType), Params, true),
-        "objc_msg_lookup");
+  // For sender-aware dispatch, we pass the sender as the third argument to a
+  // lookup function.  When sending messages from C code, the sender is nil.
+  // objc_msg_lookup_sender(id receiver, SEL selector, id sender);
+  if (CGM.getContext().getLangOptions().ObjCSenderDispatch) {
+    llvm::Value *self;
 
-  llvm::Value *imp = CGF.Builder.CreateCall2(lookupFunction, Receiver, cmd);
+    if (isa<ObjCMethodDecl>(CGF.CurFuncDecl)) {
+      self = CGF.LoadObjCSelf();
+    } else {
+      self = llvm::ConstantPointerNull::get(IdTy);
+    }
+    Params.push_back(self->getType());
+    llvm::Constant *lookupFunction = 
+      CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+          llvm::PointerType::getUnqual(impType), Params, true),
+        "objc_msg_lookup_sender");
+
+    imp = CGF.Builder.CreateCall3(lookupFunction, Receiver, cmd, self);
+  } else {
+    llvm::Constant *lookupFunction = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
+        llvm::PointerType::getUnqual(impType), Params, true),
+      "objc_msg_lookup");
+
+    imp = CGF.Builder.CreateCall2(lookupFunction, Receiver, cmd);
+  }
 
   return CGF.EmitCall(FnInfo, imp, ActualArgs);
 }

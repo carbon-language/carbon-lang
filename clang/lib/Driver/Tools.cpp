@@ -479,6 +479,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fno_show_column);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc_only);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc);
+  Args.AddLastArg(CmdArgs, options::OPT_fobjc_sender_dependent_dispatch);
   // FIXME: Should we remove this?
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_nonfragile_abi);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_tight_layout);

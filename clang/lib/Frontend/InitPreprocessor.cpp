@@ -280,6 +280,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.ObjC2)
     DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
 
+  if (LangOpts.ObjCSenderDispatch)
+    DefineBuiltinMacro(Buf, "__OBJC_SENDER_AWARE_DISPATCH__");
+
   if (LangOpts.PascalStrings)
     DefineBuiltinMacro(Buf, "__PASCAL_STRINGS__");
 
