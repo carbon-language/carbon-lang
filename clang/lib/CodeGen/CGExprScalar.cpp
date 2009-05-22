@@ -803,15 +803,16 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
     return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
   }
 
+  // Emit the RHS first.  __block variables need to have the rhs evaluated
+  // first, plus this should improve codegen a little.
+  OpInfo.RHS = Visit(E->getRHS());
+  OpInfo.Ty = E->getComputationResultType();
+  OpInfo.E = E;
   // Load/convert the LHS.
   LValue LHSLV = EmitLValue(E->getLHS());
   OpInfo.LHS = EmitLoadOfLValue(LHSLV, LHSTy);
   OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy,
                                     E->getComputationLHSType());
-  // Emit the RHS.
-  OpInfo.RHS = Visit(E->getRHS());
-  OpInfo.Ty = E->getComputationResultType();
-  OpInfo.E = E;
   
   // Expand the binary operator.
   Value *Result = (this->*Func)(OpInfo);
