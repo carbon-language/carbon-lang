@@ -1066,7 +1066,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   // type-id, it is not useful for determining the context past the parens.
   //
   // The good news is that the parser can disambiguate this part without
-  // making any unnecessary Action calls (apart from isTypeName).
+  // making any unnecessary Action calls.
 
   // Start tentantive parsing.
   TentativeParsingAction PA(*this);
@@ -1122,7 +1122,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
     return move(Result);
   }
 
-  // If we get here, it means the things after the parens are not the start of
+  // If we get here, the things after the parens are not the start of
   // a cast-expression. This means we must actually parse the tokens inside
   // the parens as an expression.
   PA.Revert();
