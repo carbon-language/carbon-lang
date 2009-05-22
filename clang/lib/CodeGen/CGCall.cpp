@@ -2100,7 +2100,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }
 
   CS.setAttributes(Attrs);
-  if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
+  if (const llvm::Function *F =  dyn_cast<llvm::Function>(Callee->stripPointerCasts()))
     CS.setCallingConv(F->getCallingConv());
 
   // If the call doesn't return, finish the basic block and clear the
