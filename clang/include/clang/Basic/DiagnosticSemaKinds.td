@@ -1423,6 +1423,8 @@ def err_typecheck_expect_scalar_operand : Error<
   "operand of type %0 where arithmetic or pointer type is required">;
 def err_typecheck_cond_incompatible_operands : Error<
   "incompatible operand types (%0 and %1)">;
+def err_cast_selector_expr : Error<
+  "cannot type cast @selector expression">;
 def warn_typecheck_cond_incompatible_pointers : Warning<
   "pointer type mismatch (%0 and %1)">;
 def warn_typecheck_cond_pointer_integer_mismatch : Warning<
