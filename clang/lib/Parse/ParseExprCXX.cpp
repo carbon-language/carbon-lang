@@ -1067,68 +1067,82 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   //
   // The good news is that the parser can disambiguate this part without
   // making any unnecessary Action calls.
+  //
+  // It uses a scheme similar to parsing inline methods. The parenthesized
+  // tokens are cached, the context that follows is determined (possibly by
+  // parsing a cast-expression), and then we re-introduce the cached tokens
+  // into the token stream and parse them appropriately.
 
-  // Start tentantive parsing.
-  TentativeParsingAction PA(*this);
+  ParenParseOption ParseAs;  
+  CachedTokens Toks;
 
-  // Parse the type-id but don't create a type with ActOnTypeName yet.
-  DeclSpec DS;
-  ParseSpecifierQualifierList(DS);
-
-  // Parse the abstract-declarator, if present.
-  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
-  ParseDeclarator(DeclaratorInfo);
-
-  if (!Tok.is(tok::r_paren)) {
-    PA.Commit();
+  // Store the tokens of the parentheses. We will parse them after we determine
+  // the context that follows them.
+  if (!ConsumeAndStoreUntil(tok::r_paren, tok::unknown, Toks, tok::semi)) {
+    // We didn't find the ')' we expected.
     MatchRHSPunctuation(tok::r_paren, LParenLoc);
     return ExprError();
   }
 
-  RParenLoc = ConsumeParen();
-
   if (Tok.is(tok::l_brace)) {
-    // Compound literal. Ok, we can commit the parsed tokens and continue
-    // normal parsing.
-    ExprType = CompoundLiteral;
-    PA.Commit();
-    TypeResult Ty = true;
-    if (!DeclaratorInfo.isInvalidType())
-      Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
-    return ParseCompoundLiteralExpression(Ty.get(), LParenLoc, RParenLoc);
+    ParseAs = CompoundLiteral;
+  } else {
+    bool NotCastExpr;
+    // Try parsing the cast-expression that may follow.
+    // If it is not a cast-expression, NotCastExpr will be true and no token
+    // will be consumed.
+    Result = ParseCastExpression(false/*isUnaryExpression*/,
+                                 false/*isAddressofOperand*/,
+                                 NotCastExpr);
+
+    // If we parsed a cast-expression, it's really a type-id, otherwise it's
+    // an expression.
+    ParseAs = NotCastExpr ? SimpleExpr : CastExpr;
   }
 
-  // We parsed '(' type-name ')' and the thing after it wasn't a '{'.
+  // The current token should go after the cached tokens. 
+  Toks.push_back(Tok);
+  // Re-enter the stored parenthesized tokens into the token stream, so we may
+  // parse them now.
+  PP.EnterTokenStream(Toks.data(), Toks.size(),
+                      true/*DisableMacroExpansion*/, false/*OwnsTokens*/);
+  // Drop the current token and bring the first cached one. It's the same token
+  // as when we entered this function.
+  ConsumeAnyToken();
 
-  if (DeclaratorInfo.isInvalidType()) {
-    PA.Commit();
-    return ExprError();
-  }
+  if (ParseAs >= CompoundLiteral) {
+    TypeResult Ty = ParseTypeName();
 
-  bool NotCastExpr;
-  // Parse the cast-expression that follows it next.
-  Result = ParseCastExpression(false/*isUnaryExpression*/,
-                               false/*isAddressofOperand*/,
-                               NotCastExpr);
+    // Match the ')'.
+    if (Tok.is(tok::r_paren))
+      RParenLoc = ConsumeParen();
+    else
+      MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  if (NotCastExpr == false) {
-    // We parsed a cast-expression. That means it's really a type-id, so commit
-    // the parsed tokens and continue normal parsing.
-    PA.Commit();
-    TypeResult Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
+    if (ParseAs == CompoundLiteral) {
+      ExprType = CompoundLiteral;
+      return ParseCompoundLiteralExpression(Ty.get(), LParenLoc, RParenLoc);
+    }
+    
+    // We parsed '(' type-id ')' and the thing after it wasn't a '{'.
+    assert(ParseAs == CastExpr);
+
+    if (Ty.isInvalid())
+      return ExprError();
+
     CastTy = Ty.get();
+
+    // Result is what ParseCastExpression returned earlier.
     if (!Result.isInvalid())
       Result = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc,move(Result));
     return move(Result);
   }
+  
+  // Not a compound literal, and not followed by a cast-expression.
+  assert(ParseAs == SimpleExpr);
 
-  // If we get here, the things after the parens are not the start of
-  // a cast-expression. This means we must actually parse the tokens inside
-  // the parens as an expression.
-  PA.Revert();
-
-  Result = ParseExpression();
   ExprType = SimpleExpr;
+  Result = ParseExpression();
   if (!Result.isInvalid() && Tok.is(tok::r_paren))
     Result = Actions.ActOnParenExpr(LParenLoc, Tok.getLocation(), move(Result));
 
@@ -1137,7 +1151,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
     SkipUntil(tok::r_paren);
     return ExprError();
   }
-
+  
   if (Tok.is(tok::r_paren))
     RParenLoc = ConsumeParen();
   else
