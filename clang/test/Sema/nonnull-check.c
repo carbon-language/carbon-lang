@@ -1,4 +1,4 @@
-// RUN: clang-cc -Wnonnull -fsyntax-only -verify %s
+// RUN: clang-cc -fblocks -Wnonnull -fsyntax-only -verify %s
 
 extern void func1 (void (^block1)(), void (^block2)(), int) __attribute__((nonnull));
 
