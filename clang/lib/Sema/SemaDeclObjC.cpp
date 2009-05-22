@@ -866,29 +866,46 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                    const llvm::DenseSet<Selector> &ClsMap,
                                    ObjCInterfaceDecl *IDecl) {
   ObjCInterfaceDecl *Super = IDecl->getSuperClass();
-
+  ObjCInterfaceDecl *NSIDecl = 0;
+  if (getLangOptions().NeXTRuntime) {
+    // check to see if class implements forwardInvocation method and objects 
+    // of this class are derived from 'NSProxy' so that to forward requests 
+    // from one object to another.
+    // Under such conditions, which means that every method possible is 
+    // implemented in the class, we should not issue "Method definition not 
+    // found" warnings.
+    // FIXME: Use a general GetUnarySelector method for this.
+    IdentifierInfo* II = &Context.Idents.get("forwardInvocation");
+    Selector fISelector = Context.Selectors.getSelector(1, &II);
+    if (InsMap.count(fISelector))
+      // Is IDecl derived from 'NSProxy'? If so, no instance methods
+      // need be implemented in the implementation.
+      NSIDecl = IDecl->lookupInheritedClass(&Context.Idents.get("NSProxy"));
+  }
+  
   // If a method lookup fails locally we still need to look and see if
   // the method was implemented by a base class or an inherited
   // protocol. This lookup is slow, but occurs rarely in correct code
   // and otherwise would terminate in a warning.
 
   // check unimplemented instance methods.
-  for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(Context), 
-       E = PDecl->instmeth_end(Context); I != E; ++I) {
-    ObjCMethodDecl *method = *I;
-    if (method->getImplementationControl() != ObjCMethodDecl::Optional && 
-        !method->isSynthesized() && !InsMap.count(method->getSelector()) &&
-        (!Super || 
-         !Super->lookupInstanceMethod(Context, method->getSelector()))) {
-        // Ugly, but necessary. Method declared in protcol might have
-        // have been synthesized due to a property declared in the class which
-        // uses the protocol.
-        ObjCMethodDecl *MethodInClass = 
-          IDecl->lookupInstanceMethod(Context, method->getSelector());
-        if (!MethodInClass || !MethodInClass->isSynthesized())
-          WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
-      }
-  }
+  if (!NSIDecl)
+    for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(Context), 
+         E = PDecl->instmeth_end(Context); I != E; ++I) {
+      ObjCMethodDecl *method = *I;
+      if (method->getImplementationControl() != ObjCMethodDecl::Optional && 
+          !method->isSynthesized() && !InsMap.count(method->getSelector()) &&
+          (!Super || 
+           !Super->lookupInstanceMethod(Context, method->getSelector()))) {
+            // Ugly, but necessary. Method declared in protcol might have
+            // have been synthesized due to a property declared in the class which
+            // uses the protocol.
+            ObjCMethodDecl *MethodInClass = 
+            IDecl->lookupInstanceMethod(Context, method->getSelector());
+            if (!MethodInClass || !MethodInClass->isSynthesized())
+              WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
+          }
+    }
   // check unimplemented class methods
   for (ObjCProtocolDecl::classmeth_iterator 
          I = PDecl->classmeth_begin(Context),

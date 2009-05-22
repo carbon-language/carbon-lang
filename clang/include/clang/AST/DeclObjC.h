@@ -486,6 +486,7 @@ public:
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupInstanceMethod(ASTContext &Context, Selector Sel);
   ObjCMethodDecl *lookupClassMethod(ASTContext &Context, Selector Sel);
+  ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface

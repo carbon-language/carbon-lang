@@ -161,6 +161,20 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
   return NULL;
 }
 
+/// lookupInheritedClass - This method returns ObjCInterfaceDecl * of the super
+/// class whose name is passed as argument. If it is not one of the super classes
+/// the it returns NULL.
+ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
+                                        const IdentifierInfo*ICName) {
+  ObjCInterfaceDecl* ClassDecl = this;
+  while (ClassDecl != NULL) {
+    if (ClassDecl->getIdentifier() == ICName)
+      return ClassDecl;
+    ClassDecl = ClassDecl->getSuperClass();
+  }
+  return NULL;
+}
+
 /// lookupInstanceMethod - This method returns an instance method by looking in
 /// the class, its categories, and its super classes (using a linear search).
 ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(ASTContext &Context,
