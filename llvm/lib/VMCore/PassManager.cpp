@@ -43,7 +43,12 @@ enum PassDebugLevel {
   None, Arguments, Structure, Executions, Details
 };
 
+// Always verify dominfo if expensive checking is enabled.
+#ifdef XDEBUG
+bool VerifyDomInfo = true;
+#else
 bool VerifyDomInfo = false;
+#endif
 static cl::opt<bool,true>
 VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
                cl::desc("Verify dominator info (time consuming)"));
