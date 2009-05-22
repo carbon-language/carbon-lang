@@ -137,6 +137,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     }
   }
 
+  // These libcalls are not available in 32-bit.
+  setLibcallName(RTLIB::SHL_I128, 0);
+  setLibcallName(RTLIB::SRL_I128, 0);
+  setLibcallName(RTLIB::SRA_I128, 0);
+
   if (Subtarget->isThumb())
     addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
   else
