@@ -2383,6 +2383,10 @@ cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown
 exception.  Additionally, this is important for implementation of
 '<tt>catch</tt>' clauses in high-level languages that support them.</p>
 
+<p>It is not valid to reference the return value of an invoke call from
+anywhere not dominated by the normal label, since an unwind does not
+provide a return value.</p>
+
 <h5>Example:</h5>
 <pre>
   %retval = invoke i32 @Test(i32 15) to label %Continue
