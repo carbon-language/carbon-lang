@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -pedantic -verify %s
 
 void f() {
   typedef int T;
@@ -12,4 +12,8 @@ void f() {
   // Expression.
   x = (T());
   x = (T())/x;
+
+  typedef int *PT;
+  // Make sure stuff inside the parens are parsed only once (only one warning).
+  x = (PT()[(int){1}]); // expected-warning {{compound literals}}
 }
