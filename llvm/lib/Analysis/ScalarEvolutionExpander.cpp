@@ -168,6 +168,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEVAddExpr *S,
     std::vector<SCEVHandle> ScaledOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       if (ElSize != 0) {
+        // For a Constant, check for a multiple of the pointer type's
+        // scale size.
         if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i]))
           if (!C->getValue()->getValue().srem(ElSize)) {
             ConstantInt *CI =
@@ -176,13 +178,19 @@ Value *SCEVExpander::expandAddToGEP(const SCEVAddExpr *S,
             ScaledOps.push_back(Div);
             continue;
           }
+        // In a Mul, check if there is a constant operand which is a multiple
+        // of the pointer type's scale size.
         if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(Ops[i]))
           if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
-            if (C->getValue()->getValue() == ElSize) {
-              for (unsigned j = 1, f = M->getNumOperands(); j != f; ++j)
-                ScaledOps.push_back(M->getOperand(j));
+            if (!C->getValue()->getValue().srem(ElSize)) {
+              std::vector<SCEVHandle> NewMulOps(M->getOperands());
+              NewMulOps[0] =
+                SE.getConstant(C->getValue()->getValue().sdiv(ElSize));
+              ScaledOps.push_back(SE.getMulExpr(NewMulOps));
               continue;
             }
+        // In an Unknown, check if the underlying value is a Mul by a constant
+        // which is equal to the pointer type's scale size.
         if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Ops[i]))
           if (BinaryOperator *BO = dyn_cast<BinaryOperator>(U->getValue()))
             if (BO->getOpcode() == Instruction::Mul)
@@ -191,6 +199,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEVAddExpr *S,
                   ScaledOps.push_back(SE.getUnknown(BO->getOperand(0)));
                   continue;
                 }
+        // If the pointer type's scale size is 1, no scaling is necessary
+        // and any value can be used.
         if (ElSize == 1) {
           ScaledOps.push_back(Ops[i]);
           continue;
