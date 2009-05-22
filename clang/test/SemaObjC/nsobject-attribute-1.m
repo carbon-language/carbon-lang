@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fblocks -fsyntax-only -verify %s
 
 @interface NSObject
 - (id)self;
