@@ -29,6 +29,8 @@
 2: '
 3: "
 
+// (balance quotes to keep editors happy): "'
+
 // Empty char literals are ok.
 // RUN: grep "4: ''" %t &&
 4: ''
@@ -52,5 +54,13 @@
 #define FOO(name)  name ## $foo
 7: FOO(blarg)
 
+
+// 
+#define T6() T6 #nostring
+#define T7(x) T7 #x
+T6()
+T7(foo)
+// RUN: grep 'T6 #nostring' %t &&
+// RUN: grep 'T7 "foo"' %t &&
 
 // RUN: true

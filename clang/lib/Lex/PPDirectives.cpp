@@ -1376,9 +1376,11 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
      
-      // Not a macro arg identifier?
-      if (!Tok.getIdentifierInfo() ||
-          MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
+      // Check for a valid macro arg identifier, unless this is a .S file in
+      // which case it is still added to the body.
+      if ((!Tok.getIdentifierInfo() ||
+           MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) && 
+          !getLangOptions().AsmPreprocessor) {
         Diag(Tok, diag::err_pp_stringize_not_parameter);
         ReleaseMacroInfo(MI);
         
