@@ -1055,6 +1055,11 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
 
   // Keep track of the number of assigned registers.
   unsigned freeIntRegs = 6, freeSSERegs = 8;
+  
+  // If the return value is indirect, then the hidden argument is consuming one
+  // integer register.
+  if (FI.getReturnInfo().isIndirect())
+    --freeIntRegs;
 
   // AMD64-ABI 3.2.3p3: Once arguments are classified, the registers
   // get assigned (in left-to-right order) for passing as follows...
