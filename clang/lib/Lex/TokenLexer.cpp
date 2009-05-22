@@ -342,9 +342,10 @@ void TokenLexer::Lex(Token &Tok) {
   }
   
   // Handle recursive expansion!
-  if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+  if (!Tok.isAnnotation() && Tok.getIdentifierInfo() != 0) {
     // Change the kind of this identifier to the appropriate token kind, e.g.
     // turning "for" into a keyword.
+    IdentifierInfo *II = Tok.getIdentifierInfo();
     Tok.setKind(II->getTokenID());
     
     // If this identifier was poisoned and from a paste, emit an error.  This
