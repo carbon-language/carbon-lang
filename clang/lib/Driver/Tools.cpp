@@ -399,7 +399,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
       (Unsupported = Args.getLastArg(options::OPT_MQ)) ||
       (Unsupported = Args.getLastArg(options::OPT_iframework)))
-    D.Diag(clang::diag::err_drv_unsupported_opt)
+    D.Diag(clang::diag::err_drv_clang_unsupported)
       << Unsupported->getOption().getName();
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
@@ -549,6 +549,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fdollars-in-identifiers=0");
   }
 
+  // -funit-at-a-time is default, and we don't support -fno-unit-at-a-time for
+  // practical purposes.
+  if (Arg *A = Args.getLastArg(options::OPT_funit_at_a_time, 
+                               options::OPT_fno_unit_at_a_time)) {
+    if (A->getOption().matches(options::OPT_fno_unit_at_a_time))
+      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  }
+  
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
 
