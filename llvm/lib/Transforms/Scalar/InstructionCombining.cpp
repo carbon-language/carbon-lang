@@ -5598,68 +5598,74 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   // [0, UMAX], but it may still be fractional.  See if it is fractional by
   // casting the FP value to the integer value and back, checking for equality.
   // Don't do this for zero, because -0.0 is not fractional.
-  Constant *RHSInt = ConstantExpr::getFPToSI(RHSC, IntTy);
-  if (!RHS.isZero() &&
-      ConstantExpr::getSIToFP(RHSInt, RHSC->getType()) != RHSC) {
-    // If we had a comparison against a fractional value, we have to adjust the
-    // compare predicate and sometimes the value.  RHSC is rounded towards zero
-    // at this point.
-    switch (Pred) {
-    default: assert(0 && "Unexpected integer comparison!");
-    case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
-      return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-    case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
-      return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-    case ICmpInst::ICMP_ULE:
-      // (float)int <= 4.4   --> int <= 4
-      // (float)int <= -4.4  --> false
-      if (RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      break;
-    case ICmpInst::ICMP_SLE:
-      // (float)int <= 4.4   --> int <= 4
-      // (float)int <= -4.4  --> int < -4
-      if (RHS.isNegative())
-        Pred = ICmpInst::ICMP_SLT;
-      break;
-    case ICmpInst::ICMP_ULT:
-      // (float)int < -4.4   --> false
-      // (float)int < 4.4    --> int <= 4
-      if (RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      Pred = ICmpInst::ICMP_ULE;
-      break;
-    case ICmpInst::ICMP_SLT:
-      // (float)int < -4.4   --> int < -4
-      // (float)int < 4.4    --> int <= 4
-      if (!RHS.isNegative())
-        Pred = ICmpInst::ICMP_SLE;
-      break;
-    case ICmpInst::ICMP_UGT:
-      // (float)int > 4.4    --> int > 4
-      // (float)int > -4.4   --> true
-      if (RHS.isNegative())
+  Constant *RHSInt = LHSUnsigned
+    ? ConstantExpr::getFPToUI(RHSC, IntTy)
+    : ConstantExpr::getFPToSI(RHSC, IntTy);
+  if (!RHS.isZero()) {
+    bool Equal = LHSUnsigned
+      ? ConstantExpr::getUIToFP(RHSInt, RHSC->getType()) == RHSC
+      : ConstantExpr::getSIToFP(RHSInt, RHSC->getType()) == RHSC;
+    if (!Equal) {
+      // If we had a comparison against a fractional value, we have to adjust
+      // the compare predicate and sometimes the value.  RHSC is rounded towards
+      // zero at this point.
+      switch (Pred) {
+      default: assert(0 && "Unexpected integer comparison!");
+      case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      break;
-    case ICmpInst::ICMP_SGT:
-      // (float)int > 4.4    --> int > 4
-      // (float)int > -4.4   --> int >= -4
-      if (RHS.isNegative())
-        Pred = ICmpInst::ICMP_SGE;
-      break;
-    case ICmpInst::ICMP_UGE:
-      // (float)int >= -4.4   --> true
-      // (float)int >= 4.4    --> int > 4
-      if (!RHS.isNegative())
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      Pred = ICmpInst::ICMP_UGT;
-      break;
-    case ICmpInst::ICMP_SGE:
-      // (float)int >= -4.4   --> int >= -4
-      // (float)int >= 4.4    --> int > 4
-      if (!RHS.isNegative())
-        Pred = ICmpInst::ICMP_SGT;
-      break;
+      case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      case ICmpInst::ICMP_ULE:
+        // (float)int <= 4.4   --> int <= 4
+        // (float)int <= -4.4  --> false
+        if (RHS.isNegative())
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+        break;
+      case ICmpInst::ICMP_SLE:
+        // (float)int <= 4.4   --> int <= 4
+        // (float)int <= -4.4  --> int < -4
+        if (RHS.isNegative())
+          Pred = ICmpInst::ICMP_SLT;
+        break;
+      case ICmpInst::ICMP_ULT:
+        // (float)int < -4.4   --> false
+        // (float)int < 4.4    --> int <= 4
+        if (RHS.isNegative())
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+        Pred = ICmpInst::ICMP_ULE;
+        break;
+      case ICmpInst::ICMP_SLT:
+        // (float)int < -4.4   --> int < -4
+        // (float)int < 4.4    --> int <= 4
+        if (!RHS.isNegative())
+          Pred = ICmpInst::ICMP_SLE;
+        break;
+      case ICmpInst::ICMP_UGT:
+        // (float)int > 4.4    --> int > 4
+        // (float)int > -4.4   --> true
+        if (RHS.isNegative())
+          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+        break;
+      case ICmpInst::ICMP_SGT:
+        // (float)int > 4.4    --> int > 4
+        // (float)int > -4.4   --> int >= -4
+        if (RHS.isNegative())
+          Pred = ICmpInst::ICMP_SGE;
+        break;
+      case ICmpInst::ICMP_UGE:
+        // (float)int >= -4.4   --> true
+        // (float)int >= 4.4    --> int > 4
+        if (!RHS.isNegative())
+          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+        Pred = ICmpInst::ICMP_UGT;
+        break;
+      case ICmpInst::ICMP_SGE:
+        // (float)int >= -4.4   --> int >= -4
+        // (float)int >= 4.4    --> int > 4
+        if (!RHS.isNegative())
+          Pred = ICmpInst::ICMP_SGT;
+        break;
+      }
     }
   }
 
