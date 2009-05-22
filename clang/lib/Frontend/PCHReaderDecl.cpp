@@ -247,7 +247,7 @@ void PCHDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
   ClassRefs.reserve(NumClassRefs);
   for (unsigned I = 0; I != NumClassRefs; ++I)
     ClassRefs.push_back(cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  CD->setClassList(*Reader.getContext(), &ClassRefs[0], NumClassRefs);
+  CD->setClassList(*Reader.getContext(), ClassRefs.data(), NumClassRefs);
 }
 
 void PCHDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
@@ -257,7 +257,7 @@ void PCHDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  FPD->setProtocolList(&ProtoRefs[0], NumProtoRefs, *Reader.getContext());
+  FPD->setProtocolList(ProtoRefs.data(), NumProtoRefs, *Reader.getContext());
 }
 
 void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
@@ -373,7 +373,7 @@ void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  BD->setParams(*Reader.getContext(), &Params[0], NumParams);  
+  BD->setParams(*Reader.getContext(), Params.data(), NumParams);  
 }
 
 std::pair<uint64_t, uint64_t> 
@@ -483,7 +483,7 @@ Attr *PCHReader::ReadAttributes() {
       llvm::SmallVector<unsigned, 16> ArgNums;
       ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
       Idx += Size;
-      New = ::new (*Context) NonNullAttr(&ArgNums[0], Size);
+      New = ::new (*Context) NonNullAttr(ArgNums.data(), Size);
       break;
     }
 

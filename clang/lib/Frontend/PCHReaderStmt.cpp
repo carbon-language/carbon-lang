@@ -274,7 +274,8 @@ unsigned PCHStmtReader::VisitDeclStmt(DeclStmt *S) {
     for (unsigned N = Record.size(); Idx != N; ++Idx)
       Decls.push_back(Reader.GetDecl(Record[Idx]));
     S->setDeclGroup(DeclGroupRef(DeclGroup::Create(*Reader.getContext(),
-                                                   &Decls[0], Decls.size())));
+                                                   Decls.data(),
+                                                   Decls.size())));
   }
   return 0;
 }
@@ -369,7 +370,7 @@ unsigned PCHStmtReader::VisitStringLiteral(StringLiteral *E) {
 
   // Read string data  
   llvm::SmallVector<char, 16> Str(&Record[Idx], &Record[Idx] + Len);
-  E->setStrData(*Reader.getContext(), &Str[0], Len);
+  E->setStrData(*Reader.getContext(), Str.data(), Len);
   Idx += Len;
 
   // Read source locations
@@ -585,7 +586,7 @@ unsigned PCHStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
     }
     }
   }
-  E->setDesignators(&Designators[0], Designators.size());
+  E->setDesignators(Designators.data(), Designators.size());
 
   return NumSubExprs;
 }

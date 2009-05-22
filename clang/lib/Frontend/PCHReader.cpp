@@ -117,7 +117,7 @@ public:
     for (unsigned I = 1; I != N; ++I)
       Args.push_back(Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d)));
 
-    return SelTable.getSelector(N, &Args[0]);
+    return SelTable.getSelector(N, Args.data());
   }
     
   data_type ReadData(Selector, const unsigned char* d, unsigned DataLen) {
@@ -946,7 +946,7 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
         MI->setIsFunctionLike();
         if (isC99VarArgs) MI->setIsC99Varargs();
         if (isGNUVarArgs) MI->setIsGNUVarargs();
-        MI->setArgumentList(&MacroArgs[0], MacroArgs.size(),
+        MI->setArgumentList(MacroArgs.data(), MacroArgs.size(),
                             PP.getPreprocessorAllocator());
       }
 
@@ -1710,7 +1710,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCQualifiedInterfaceType(ItfD, &Protos[0], NumProtos);
+    return Context->getObjCQualifiedInterfaceType(ItfD, Protos.data(), NumProtos);
   }
 
   case pch::TYPE_OBJC_QUALIFIED_ID: {
@@ -1719,7 +1719,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCQualifiedIdType(&Protos[0], NumProtos);
+    return Context->getObjCQualifiedIdType(Protos.data(), NumProtos);
   }
   }
   // Suppress a GCC warning
