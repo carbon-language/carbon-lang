@@ -230,17 +230,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (isa<AnalyzeJobAction>(JA)) {
     // Add default argument set.
-    //
-    // FIXME: Move into clang?
-    CmdArgs.push_back("-warn-dead-stores");
-    CmdArgs.push_back("-checker-cfref");
-    CmdArgs.push_back("-analyzer-eagerly-assume");
-    CmdArgs.push_back("-warn-objc-methodsigs");
-    // Do not enable the missing -dealloc check.
-    // '-warn-objc-missing-dealloc',
-    CmdArgs.push_back("-warn-objc-unused-ivars");
+    if (!Args.hasArg(options::OPT__analyzer_no_default_checks)) {
+      CmdArgs.push_back("-warn-dead-stores");
+      CmdArgs.push_back("-checker-cfref");
+      CmdArgs.push_back("-analyzer-eagerly-assume");
+      CmdArgs.push_back("-warn-objc-methodsigs");
+      // Do not enable the missing -dealloc check.
+      // '-warn-objc-missing-dealloc',
+      CmdArgs.push_back("-warn-objc-unused-ivars");
+    }
 
-    CmdArgs.push_back("-analyzer-output=plist");
+    // Set the output format. The default is plist, for (lame) historical
+    // reasons.
+    CmdArgs.push_back("-analyzer-output");
+    if (Arg *A = Args.getLastArg(options::OPT__analyzer_output))
+      CmdArgs.push_back(A->getValue(Args));
+    else
+      CmdArgs.push_back("plist");
 
     // Add -Xanalyzer arguments when running as analyzer.
     Args.AddAllArgValues(CmdArgs, options::OPT_Xanalyzer);
@@ -329,8 +335,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   (void) Args.hasArg(options::OPT_mtune_EQ);
 
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    // FIXME: We made need some translation here from the options gcc
-    // takes to names the LLVM backend understand?
+    // FIXME: We may need some translation here from the options gcc takes to
+    // names the LLVM backend understand?
     CmdArgs.push_back("-mcpu");
     CmdArgs.push_back(A->getValue(Args));
   } else {
