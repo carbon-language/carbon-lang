@@ -1024,31 +1024,6 @@ void Verifier::VerifyCallSite(CallSite CS) {
             "Call parameter type does not match function signature!",
             CS.getArgument(i), FTy->getParamType(i), I);
 
-  Assert2(CS.getType() == FTy->getReturnType(),
-          "Call return type does not match function signature!",
-          CS.getInstruction(), FTy->getReturnType());
-
-  // Verify calling convention for direct calls
-  Value *CalledF = CS.getCalledValue()->stripPointerCasts();
-  if (Function *F = dyn_cast<Function>(CalledF)) {
-    unsigned CC1 = CS.getCallingConv();
-    unsigned CC2 = F->getCallingConv();
-    if(CC1 != CC2) {
-      // tolerate some mismatch among C prototype and LLVM-specific calling conv
-      if (CC2 >= CallingConv::FirstTargetCC || 
-          CC1 >= CallingConv::FirstTargetCC) {
-        Instruction *I = CS.getInstruction()->clone();
-        if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          CI->setCallingConv(F->getCallingConv());
-        } else
-          cast<InvokeInst>(I)->setCallingConv(F->getCallingConv());
-        Assert2(0,"Calling convention does not match function signature!",
-                CS.getInstruction(), I);
-        delete I;
-      }
-    }
-  }
-
   if (CS.getCalledValue()->getNameLen() < 5 ||
       strncmp(CS.getCalledValue()->getNameStart(), "llvm.", 5) != 0) {
     // Verify that none of the arguments are metadata...
