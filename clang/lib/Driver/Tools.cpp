@@ -642,24 +642,27 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   RenderExtraToolArgs(CmdArgs);
 
   // If using a driver driver, force the arch.
+  const std::string &Arch = getToolChain().getArchName();
   if (getToolChain().getHost().useDriverDriver()) {
     CmdArgs.push_back("-arch");
 
     // FIXME: Remove these special cases.
-    const char *Str = getToolChain().getArchName().c_str();
-    if (strcmp(Str, "powerpc") == 0)
-      Str = "ppc";
-    else if (strcmp(Str, "powerpc64") == 0)
-      Str = "ppc64";
-    CmdArgs.push_back(Str);
+    if (Arch == "powerpc")
+      CmdArgs.push_back("ppc");
+    else if (Arch == "powerpc64")
+      CmdArgs.push_back("ppc64");
+    else
+      CmdArgs.push_back(Args.MakeArgString(Arch.c_str()));
   }
 
   // Try to force gcc to match the tool chain we want, if we recognize
   // the arch.
-  const char *Str = getToolChain().getArchName().c_str();
-  if (strcmp(Str, "i386") == 0 || strcmp(Str, "powerpc") == 0)
+  //
+  // FIXME: The triple class should directly provide the information we want
+  // here.
+  if (Arch == "i386" || Arch == "powerpc")
     CmdArgs.push_back("-m32");
-  else if (strcmp(Str, "x86_64") == 0 || strcmp(Str, "powerpc64") == 0)
+  else if (Arch == "x86_64" || Arch == "powerpc64")
     CmdArgs.push_back("-m64");
 
   if (Output.isPipe()) {
@@ -1199,7 +1202,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Derived from asm spec.
   CmdArgs.push_back("-arch");
-  CmdArgs.push_back(getToolChain().getArchName().c_str());
+  CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName().c_str()));
 
   CmdArgs.push_back("-force_cpusubtype_ALL");
   if ((Args.hasArg(options::OPT_mkernel) ||
@@ -1276,7 +1279,7 @@ void darwin::Link::AddDarwinArch(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   // Derived from darwin_arch spec.
   CmdArgs.push_back("-arch");
-  CmdArgs.push_back(getToolChain().getArchName().c_str());
+  CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName().c_str()));
 }
 
 void darwin::Link::AddDarwinSubArch(const ArgList &Args,
