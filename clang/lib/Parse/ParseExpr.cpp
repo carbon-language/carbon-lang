@@ -400,6 +400,23 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 /// id-expression that is the operand of address-of gets special treatment
 /// due to member pointers.
 ///
+Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
+                                                     bool isAddressOfOperand) {
+  bool NotCastExpr;
+  OwningExprResult Res = ParseCastExpression(isUnaryExpression,
+                                             isAddressOfOperand,
+                                             NotCastExpr);
+  if (NotCastExpr)
+    Diag(Tok, diag::err_expected_expression);
+  return move(Res);
+}
+
+/// ParseCastExpression - Parse a cast-expression, or, if isUnaryExpression is
+/// true, parse a unary-expression. isAddressOfOperand exists because an
+/// id-expression that is the operand of address-of gets special treatment
+/// due to member pointers. NotCastExpr is set to true if the token is not the
+/// start of a cast-expression, and no diagnostic is emitted in this case.
+///
 ///       cast-expression: [C99 6.5.4]
 ///         unary-expression
 ///         '(' type-name ')' cast-expression
@@ -506,9 +523,11 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 ///                   '__is_base_of'                          [TODO]
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
-                                                     bool isAddressOfOperand) {
+                                                     bool isAddressOfOperand,
+                                                     bool &NotCastExpr) {
   OwningExprResult Res(Actions);
   tok::TokenKind SavedKind = Tok.getKind();
+  NotCastExpr = false;
   
   // This handles all of cast-expression, unary-expression, postfix-expression,
   // and primary-expression.  We handle them together like this for efficiency
@@ -797,7 +816,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
     // FALL THROUGH.      
   default:
-    Diag(Tok, diag::err_expected_expression);
+    NotCastExpr = true;
     return ExprError();
   }
 
@@ -1216,6 +1235,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   SourceLocation OpenLoc = ConsumeParen();
   OwningExprResult Result(Actions, true);
+  bool isAmbiguousTypeId;
   CastTy = 0;
 
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
@@ -1227,9 +1247,20 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     if (!Stmt.isInvalid() && Tok.is(tok::r_paren))
       Result = Actions.ActOnStmtExpr(OpenLoc, move(Stmt), Tok.getLocation());
 
-  } else if (ExprType >= CompoundLiteral && isTypeIdInParens()) {
+  } else if (ExprType >= CompoundLiteral &&
+             isTypeIdInParens(isAmbiguousTypeId)) {
     
     // Otherwise, this is a compound literal expression or cast expression.
+    
+    // In C++, if the type-id is ambiguous we disambiguate based on context.
+    // If stopIfCastExpr is true the context is a typeof/sizeof/alignof
+    // in which case we should treat it as type-id.
+    // if stopIfCastExpr is false, we need to determine the context past the
+    // parens, so we defer to ParseCXXAmbiguousParenExpression for that.
+    if (isAmbiguousTypeId && !stopIfCastExpr)
+      return ParseCXXAmbiguousParenExpression(ExprType, CastTy,
+                                              OpenLoc, RParenLoc);
+    
     TypeResult Ty = ParseTypeName();
 
     // Match the ')'.

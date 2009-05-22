@@ -661,6 +661,9 @@ private:
   OwningExprResult ParseRHSOfBinaryExpression(OwningExprResult LHS,
                                               unsigned MinPrec);
   OwningExprResult ParseCastExpression(bool isUnaryExpression,
+                                       bool isAddressOfOperand,
+                                       bool &NotCastExpr);
+  OwningExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand = false);
   OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
   OwningExprResult ParseSizeofAlignofExpression();
@@ -689,6 +692,11 @@ private:
                                         bool stopIfCastExpr,
                                         TypeTy *&CastTy,
                                         SourceLocation &RParenLoc);
+  
+  OwningExprResult ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
+                                                    TypeTy *&CastTy,
+                                                    SourceLocation LParenLoc,
+                                                    SourceLocation &RParenLoc);
   
   OwningExprResult ParseCompoundLiteralExpression(TypeTy *Ty,
                                                   SourceLocation LParenLoc,
@@ -918,10 +926,15 @@ private:
   /// isTypeIdInParens - Assumes that a '(' was parsed and now we want to know
   /// whether the parens contain an expression or a type-id.
   /// Returns true for a type-id and false for an expression.
-  bool isTypeIdInParens() {
+  bool isTypeIdInParens(bool &isAmbiguous) {
     if (getLang().CPlusPlus)
-      return isCXXTypeId(TypeIdInParens);
+      return isCXXTypeId(TypeIdInParens, isAmbiguous);
+    isAmbiguous = false;
     return isTypeSpecifierQualifier();
+  }
+  bool isTypeIdInParens() {
+    bool isAmbiguous;
+    return isTypeIdInParens(isAmbiguous);
   }
 
   /// isCXXDeclarationStatement - C++-specialized function that disambiguates
@@ -951,7 +964,11 @@ private:
   /// the function returns true to let the declaration parsing code handle it.
   bool isCXXConditionDeclaration();
 
-  bool isCXXTypeId(TentativeCXXTypeIdContext Context);
+  bool isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous);
+  bool isCXXTypeId(TentativeCXXTypeIdContext Context) {
+    bool isAmbiguous;
+    return isCXXTypeId(Context, isAmbiguous);
+  }
 
   /// TPResult - Used as the result value for functions whose purpose is to
   /// disambiguate C++ constructs by "tentatively parsing" them.

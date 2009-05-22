@@ -1038,3 +1038,110 @@ Parser::OwningExprResult Parser::ParseUnaryTypeTrait()
 
   return Actions.ActOnUnaryTypeTrait(UTT, Loc, LParen, Ty.get(), RParen);
 }
+
+/// ParseCXXAmbiguousParenExpression - We have parsed the left paren of a
+/// parenthesized ambiguous type-id. This uses tentative parsing to disambiguate
+/// based on the context past the parens.
+Parser::OwningExprResult
+Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
+                                         TypeTy *&CastTy,
+                                         SourceLocation LParenLoc,
+                                         SourceLocation &RParenLoc) {
+  assert(getLang().CPlusPlus && "Should only be called for C++!");
+  assert(ExprType == CastExpr && "Compound literals are not ambiguous!");
+  assert(isTypeIdInParens() && "Not a type-id!");
+
+  OwningExprResult Result(Actions, true);
+  CastTy = 0;
+
+  // We need to disambiguate a very ugly part of the C++ syntax:
+  //
+  // (T())x;  - type-id
+  // (T())*x; - type-id
+  // (T())/x; - expression
+  // (T());   - expression
+  //
+  // The bad news is that we cannot use the specialized tentative parser, since
+  // it can only verify that the thing inside the parens can be parsed as
+  // type-id, it is not useful for determining the context past the parens.
+  //
+  // The good news is that the parser can disambiguate this part without
+  // making any unnecessary Action calls (apart from isTypeName).
+
+  // Start tentantive parsing.
+  TentativeParsingAction PA(*this);
+
+  // Parse the type-id but don't create a type with ActOnTypeName yet.
+  DeclSpec DS;
+  ParseSpecifierQualifierList(DS);
+
+  // Parse the abstract-declarator, if present.
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  ParseDeclarator(DeclaratorInfo);
+
+  if (!Tok.is(tok::r_paren)) {
+    PA.Commit();
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    return ExprError();
+  }
+
+  RParenLoc = ConsumeParen();
+
+  if (Tok.is(tok::l_brace)) {
+    // Compound literal. Ok, we can commit the parsed tokens and continue
+    // normal parsing.
+    ExprType = CompoundLiteral;
+    PA.Commit();
+    TypeResult Ty = true;
+    if (!DeclaratorInfo.isInvalidType())
+      Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
+    return ParseCompoundLiteralExpression(Ty.get(), LParenLoc, RParenLoc);
+  }
+
+  // We parsed '(' type-name ')' and the thing after it wasn't a '{'.
+
+  if (DeclaratorInfo.isInvalidType()) {
+    PA.Commit();
+    return ExprError();
+  }
+
+  bool NotCastExpr;
+  // Parse the cast-expression that follows it next.
+  Result = ParseCastExpression(false/*isUnaryExpression*/,
+                               false/*isAddressofOperand*/,
+                               NotCastExpr);
+
+  if (NotCastExpr == false) {
+    // We parsed a cast-expression. That means it's really a type-id, so commit
+    // the parsed tokens and continue normal parsing.
+    PA.Commit();
+    TypeResult Ty = Actions.ActOnTypeName(CurScope, DeclaratorInfo);
+    CastTy = Ty.get();
+    if (!Result.isInvalid())
+      Result = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc,move(Result));
+    return move(Result);
+  }
+
+  // If we get here, it means the things after the parens are not the start of
+  // a cast-expression. This means we must actually parse the tokens inside
+  // the parens as an expression.
+  PA.Revert();
+
+  Result = ParseExpression();
+  ExprType = SimpleExpr;
+  if (!Result.isInvalid() && Tok.is(tok::r_paren))
+    Result = Actions.ActOnParenExpr(LParenLoc, Tok.getLocation(), move(Result));
+
+  // Match the ')'.
+  if (Result.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return ExprError();
+  }
+
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+  return move(Result);
+}

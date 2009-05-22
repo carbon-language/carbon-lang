@@ -287,7 +287,9 @@ bool Parser::isCXXConditionDeclaration() {
   /// type-id:
   ///   type-specifier-seq abstract-declarator[opt]
   ///
-bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context) {
+bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
+  
+  isAmbiguous = false;
 
   // C++ 8.2p2:
   // The ambiguity arising from the similarity between a function-style cast and
@@ -326,16 +328,20 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context) {
   if (TPR == TPResult::Ambiguous()) {
     // We are supposed to be inside parens, so if after the abstract declarator
     // we encounter a ')' this is a type-id, otherwise it's an expression.
-    if (Context == TypeIdInParens && Tok.is(tok::r_paren))
+    if (Context == TypeIdInParens && Tok.is(tok::r_paren)) {
       TPR = TPResult::True();
+      isAmbiguous = true;
+
     // We are supposed to be inside a template argument, so if after
     // the abstract declarator we encounter a '>', '>>' (in C++0x), or
     // ',', this is a type-id. Otherwise, it's an expression.
-    else if (Context == TypeIdAsTemplateArgument &&
-             (Tok.is(tok::greater) || Tok.is(tok::comma) ||
-              (getLang().CPlusPlus0x && Tok.is(tok::greatergreater))))
+    } else if (Context == TypeIdAsTemplateArgument &&
+               (Tok.is(tok::greater) || Tok.is(tok::comma) ||
+                (getLang().CPlusPlus0x && Tok.is(tok::greatergreater)))) {
       TPR = TPResult::True();
-    else
+      isAmbiguous = true;
+
+    } else
       TPR = TPResult::False();
   }
 
