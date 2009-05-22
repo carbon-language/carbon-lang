@@ -276,3 +276,14 @@ struct NonDepMemberCall0 {
 template struct NonDepMemberCall0<int&>;
 template struct NonDepMemberCall0<const int&>;
 template struct NonDepMemberCall0<float&>; // expected-note{{instantiation}}
+
+
+template<typename T>
+struct QualifiedDeclRef0 {
+  T f() {
+    return is_pod<X>::value; // expected-error{{initialized}}
+  }
+};
+
+template struct QualifiedDeclRef0<bool>;
+template struct QualifiedDeclRef0<int&>; // expected-note{{instantiation}}

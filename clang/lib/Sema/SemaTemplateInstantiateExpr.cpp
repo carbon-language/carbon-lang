@@ -34,80 +34,25 @@ namespace {
                              const TemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), TemplateArgs(TemplateArgs) { }
 
-    // FIXME: Once we get closer to completion, replace these manually-written
-    // declarations with automatically-generated ones from
-    // clang/AST/StmtNodes.def.
-    OwningExprResult VisitPredefinedExpr(PredefinedExpr *E);
-    OwningExprResult VisitIntegerLiteral(IntegerLiteral *E);
-    OwningExprResult VisitFloatingLiteral(FloatingLiteral *E);
-    OwningExprResult VisitStringLiteral(StringLiteral *E);
-    OwningExprResult VisitCharacterLiteral(CharacterLiteral *E);
-    OwningExprResult VisitImaginaryLiteral(ImaginaryLiteral *E);
-    OwningExprResult VisitDeclRefExpr(DeclRefExpr *E);
-    OwningExprResult VisitParenExpr(ParenExpr *E);
-    OwningExprResult VisitUnaryOperator(UnaryOperator *E);
-    OwningExprResult VisitArraySubscriptExpr(ArraySubscriptExpr *E);
-    OwningExprResult VisitCallExpr(CallExpr *E);
-    OwningExprResult VisitMemberExpr(MemberExpr *E);
-    OwningExprResult VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
-    OwningExprResult VisitBinaryOperator(BinaryOperator *E);
-    OwningExprResult VisitCompoundAssignOperator(CompoundAssignOperator *E);
-    OwningExprResult VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
-    OwningExprResult VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E);
-    OwningExprResult VisitConditionalOperator(ConditionalOperator *E);
-    OwningExprResult VisitAddrLabelExpr(AddrLabelExpr *E);
-    OwningExprResult VisitStmtExpr(StmtExpr *E);
-    OwningExprResult VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
-    OwningExprResult VisitShuffleVectorExpr(ShuffleVectorExpr *E);
-    OwningExprResult VisitChooseExpr(ChooseExpr *E);
-    OwningExprResult VisitVAArgExpr(VAArgExpr *E);
-    OwningExprResult VisitInitListExpr(InitListExpr *E);
-    OwningExprResult VisitDesignatedInitExpr(DesignatedInitExpr *E);
-    OwningExprResult VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
-    OwningExprResult VisitExtVectorElementExpr(ExtVectorElementExpr *E);
-    // FIXME: BlockExpr
-    // FIXME: BlockDeclRefExpr
-    OwningExprResult VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
-    OwningExprResult VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E);
-    OwningExprResult VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
-    OwningExprResult VisitCastExpr(CastExpr *E);
-    OwningExprResult VisitImplicitCastExpr(ImplicitCastExpr *E);
-    OwningExprResult VisitExplicitCastExpr(ExplicitCastExpr *E);
-    OwningExprResult VisitCStyleCastExpr(CStyleCastExpr *E);
-    OwningExprResult VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
-    OwningExprResult VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
-    OwningExprResult VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
-    OwningExprResult VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
-    OwningExprResult VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E);
-    OwningExprResult VisitCXXConstCastExpr(CXXConstCastExpr *E);
-    OwningExprResult VisitCXXThisExpr(CXXThisExpr *E);
-    OwningExprResult VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
-    OwningExprResult VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
-    OwningExprResult VisitCXXTypeidExpr(CXXTypeidExpr *E);
-    OwningExprResult VisitCXXThrowExpr(CXXThrowExpr *E);
-    // FIXME: CXXDefaultArgExpr
-    OwningExprResult VisitCXXConstructExpr(CXXConstructExpr *E);
-    OwningExprResult VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
-    OwningExprResult VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
-    OwningExprResult VisitCXXNewExpr(CXXNewExpr *E);
-    OwningExprResult VisitCXXDeleteExpr(CXXDeleteExpr *E);
-    OwningExprResult VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
-    // FIXME: QualifiedDeclRefExpr
-    OwningExprResult VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
-    OwningExprResult VisitCXXUnresolvedConstructExpr(
-                                               CXXUnresolvedConstructExpr *E);
-    OwningExprResult VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *E);
-    OwningExprResult VisitGNUNullExpr(GNUNullExpr *E);
-    OwningExprResult VisitUnresolvedFunctionNameExpr(
-                                              UnresolvedFunctionNameExpr *E);
+    // Declare VisitXXXStmt nodes for all of the expression kinds.
+#define EXPR(Type, Base) OwningExprResult Visit##Type(Type *S);
+#define STMT(Type, Base)
+#include "clang/AST/StmtNodes.def"
 
-    // Base case. I'm supposed to ignore this.
+    // Base case. We can't get here.
     Sema::OwningExprResult VisitStmt(Stmt *S) { 
       S->dump();
       assert(false && "Cannot instantiate this kind of expression");
       return SemaRef.ExprError(); 
     }
   };
+}
+
+// Base case. We can't get here.
+Sema::OwningExprResult TemplateExprInstantiator::VisitExpr(Expr *E) { 
+  E->dump();
+  assert(false && "Cannot instantiate this kind of expression");
+  return SemaRef.ExprError(); 
 }
 
 Sema::OwningExprResult
@@ -191,12 +136,13 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
     if (Var->hasLocalStorage())
       NewD = SemaRef.CurrentInstantiationScope->getInstantiationOf(Var);
     else
-      assert(false && "Cannot instantiation non-local variable declarations");
+      assert(false && 
+             "FIXME: instantiation of non-local variable declarations");
   } else if (isa<FunctionDecl>(D) || isa<OverloadedFunctionDecl>(D)) {
     // FIXME: Instantiate decl!
     NewD = cast<ValueDecl>(D);
   } else
-    assert(false && "Unhandled declaratrion reference kind");
+    assert(false && "FIXME: unhandled declaration reference kind");
 
   if (!NewD)
     return SemaRef.ExprError();
@@ -731,6 +677,18 @@ TemplateExprInstantiator::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
                                    /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
 }
 
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitBlockExpr(BlockExpr *E) {
+  assert(false && "FIXME:Template instantiation for blocks is unimplemented");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+  assert(false && "FIXME:Template instantiation for blocks is unimplemented");
+  return SemaRef.ExprError();
+}
+
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   bool isSizeOf = E->isSizeOf();
@@ -1012,6 +970,13 @@ TemplateExprInstantiator::VisitCXXThrowExpr(CXXThrowExpr *E) {
   return SemaRef.ActOnCXXThrow(E->getThrowLoc(), move(SubExpr));
 }
 
+Sema::OwningExprResult
+TemplateExprInstantiator::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
+  assert(false && 
+         "FIXME: Instantiation for default arguments is unimplemented");
+  return SemaRef.ExprError();
+}
+
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
   assert(!cast<CXXRecordDecl>(E->getConstructor()->getDeclContext())
@@ -1165,6 +1130,26 @@ TemplateExprInstantiator::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
 }
 
 Sema::OwningExprResult 
+TemplateExprInstantiator::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *E) {
+  NestedNameSpecifier *NNS 
+    = SemaRef.InstantiateNestedNameSpecifier(E->getQualifier(),
+                                             E->getQualifierRange(),
+                                             TemplateArgs);
+  if (!NNS)
+    return SemaRef.ExprError();
+
+  CXXScopeSpec SS;
+  SS.setRange(E->getQualifierRange());
+  SS.setScopeRep(NNS);
+  return SemaRef.ActOnDeclarationNameExpr(/*Scope=*/0, 
+                                          E->getLocation(),
+                                          E->getDecl()->getDeclName(),
+                                          /*Trailing lparen=*/false,
+                                          &SS,
+                                          /*FIXME:*/false);
+}
+
+Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXExprWithTemporaries(
                                                   CXXExprWithTemporaries *E) {
   OwningExprResult SubExpr = Visit(E->getSubExpr());
@@ -1224,6 +1209,63 @@ TemplateExprInstantiator::VisitCXXUnresolvedMemberExpr(
                                           E->getMemberLoc(),
                               /*FIXME:*/*E->getMember().getAsIdentifierInfo(),
                                    /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
+}
+
+//----------------------------------------------------------------------------
+// Objective-C Expressions
+//----------------------------------------------------------------------------
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCStringLiteral(ObjCStringLiteral *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCEncodeExpr(ObjCEncodeExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCMessageExpr(ObjCMessageExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCSelectorExpr(ObjCSelectorExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCProtocolExpr(ObjCProtocolExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCSuperExpr(ObjCSuperExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
 }
 
 Sema::OwningExprResult 
