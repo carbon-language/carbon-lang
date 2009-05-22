@@ -17,6 +17,8 @@
 
 #include "PIC16.h"
 #include "PIC16TargetMachine.h"
+#include "PIC16DebugInfo.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "PIC16TargetAsmInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/CommandLine.h"
@@ -53,6 +55,7 @@ namespace llvm {
     void EmitRomData (Module &M);
     void emitFunctionData(MachineFunction &MF);
     void printLibcallDecls(void);
+    void EmitVarDebugInfo (Module &M);
 
     protected:
     bool doInitialization(Module &M);
@@ -60,6 +63,7 @@ namespace llvm {
 
     private:
     PIC16TargetLowering *PTLI;
+    PIC16DbgInfo DbgInfo;
     const PIC16TargetAsmInfo *PTAI;
     std::list<const char *> LibcallDecls; // List of extern decls.
   };

@@ -273,6 +273,8 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   printLibcallDecls();
+  EmitVarDebugInfo(M);
+  O << "\t" << ".EOF\n";
   O << "\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
   return Result;
@@ -384,3 +386,48 @@ void PIC16AsmPrinter::EmitAutos (Module &M)
     }
   }
 }
+
+void PIC16AsmPrinter::EmitVarDebugInfo(Module &M) {
+  GlobalVariable *Root = M.getGlobalVariable("llvm.dbg.global_variables");
+  if (!Root)
+    return;
+
+  O << TAI->getCommentString() << " Debug Information:";
+  Constant *RootC = cast<Constant>(*Root->use_begin());
+  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
+       UI != UE; ++UI) {
+    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
+         UUI != UUE; ++UUI) {
+      DIGlobalVariable DIGV(cast<GlobalVariable>(*UUI));
+      DIType Ty = DIGV.getType();
+      unsigned short TypeNo = 0;
+      bool HasAux = false;
+      int Aux[20] = { 0 };
+      std::string TypeName = "";
+      std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getName();
+      DbgInfo.PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TypeName);
+      // Emit debug info only if type information is availaible.
+      if (TypeNo != PIC16Dbg::T_NULL) {
+        O << "\n\t.type " << VarName << ", " << TypeNo;
+        short ClassNo = DbgInfo.getClass(DIGV);
+        O << "\n\t.class " << VarName << ", " << ClassNo;
+        if (HasAux) {
+          if (TypeName != "") {
+           // Emit debug info for structure and union objects after
+           // .dim directive supports structure/union tag name in aux entry.
+           /* O << "\n\t.dim " << VarName << ", 1," << TypeName;
+            for (int i = 0; i<20; i++)
+              O << "," << Aux[i];*/
+          }
+          else {
+            O << "\n\t.dim " << VarName << ", 1" ;
+            for (int i = 0; i<20; i++)
+              O << "," << Aux[i];
+          }
+        }
+      }
+    }
+  }
+  O << "\n";
+}
+
