@@ -25,9 +25,8 @@
  
 using namespace clang::driver;
 
-HostInfo::HostInfo(const Driver &D, const char *_Arch, const char *_Platform,
-                   const char *_OS) 
-  : TheDriver(D), Arch(_Arch), Platform(_Platform), OS(_OS) 
+HostInfo::HostInfo(const Driver &D, const llvm::Triple &_Triple)
+  : TheDriver(D), Triple(_Triple)
 {
   
 }
@@ -51,8 +50,7 @@ class DarwinHostInfo : public HostInfo {
   mutable llvm::StringMap<ToolChain *> ToolChains;
 
 public:
-  DarwinHostInfo(const Driver &D, const char *Arch, 
-                 const char *Platform, const char *OS);
+  DarwinHostInfo(const Driver &D, const llvm::Triple &Triple);
   ~DarwinHostInfo();
 
   virtual bool useDriverDriver() const;
@@ -72,9 +70,8 @@ public:
                                   const char *ArchName) const;
 };
 
-DarwinHostInfo::DarwinHostInfo(const Driver &D, const char *_Arch, 
-                               const char *_Platform, const char *_OS) 
-  : HostInfo(D, _Arch, _Platform, _OS) {
+DarwinHostInfo::DarwinHostInfo(const Driver &D, const llvm::Triple& Triple)
+  : HostInfo(D, Triple) {
   
   assert((getArchName() == "i386" || getArchName() == "x86_64" || 
           getArchName() == "powerpc" || getArchName() == "powerpc64") &&
@@ -108,8 +105,10 @@ bool DarwinHostInfo::useDriverDriver() const {
 
 ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args, 
                                         const char *ArchName) const {
+  std::string Arch;
   if (!ArchName) {
-    ArchName = getArchName().c_str();
+    Arch = getArchName();
+    ArchName = Arch.c_str();
 
     // If no arch name is specified, infer it from the host and
     // -m32/-m64.
@@ -124,6 +123,9 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
     } 
   } else {
     // Normalize arch name; we shouldn't be doing this here.
+    //
+    // FIXME: This should be unnecessary once everything moves over to using the
+    // ID based Triple interface.
     if (strcmp(ArchName, "ppc") == 0)
       ArchName = "powerpc";
     else if (strcmp(ArchName, "ppc64") == 0)
@@ -132,16 +134,15 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
 
   ToolChain *&TC = ToolChains[ArchName];
   if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+                          
     if (strcmp(ArchName, "i386") == 0 || strcmp(ArchName, "x86_64") == 0)
-      TC = new toolchains::Darwin_X86(*this, ArchName, 
-                                      getPlatformName().c_str(), 
-                                      getOSName().c_str(),
+      TC = new toolchains::Darwin_X86(*this, TCTriple,
                                       DarwinVersion,
                                       GCCVersion);
     else
-      TC = new toolchains::Darwin_GCC(*this, ArchName, 
-                                      getPlatformName().c_str(), 
-                                      getOSName().c_str());
+      TC = new toolchains::Darwin_GCC(*this, TCTriple);
   }
 
   return TC;
@@ -156,8 +157,7 @@ class UnknownHostInfo : public HostInfo {
   mutable llvm::StringMap<ToolChain*> ToolChains;
 
 public:
-  UnknownHostInfo(const Driver &D, const char *Arch, 
-                  const char *Platform, const char *OS);
+  UnknownHostInfo(const Driver &D, const llvm::Triple& Triple);
   ~UnknownHostInfo();
 
   virtual bool useDriverDriver() const;
@@ -170,9 +170,8 @@ public:
                                   const char *ArchName) const;
 };
 
-UnknownHostInfo::UnknownHostInfo(const Driver &D, const char *Arch, 
-                                 const char *Platform, const char *OS) 
-  : HostInfo(D, Arch, Platform, OS) {
+UnknownHostInfo::UnknownHostInfo(const Driver &D, const llvm::Triple& Triple) 
+  : HostInfo(D, Triple) {
 }
 
 UnknownHostInfo::~UnknownHostInfo() {
@@ -191,7 +190,8 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
          "Unexpected arch name on platform without driver driver support.");
   
   // Automatically handle some instances of -m32/-m64 we know about.
-  ArchName = getArchName().c_str();
+  std::string Arch = getArchName();
+  ArchName = Arch.c_str();
   if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
     if (getArchName() == "i386" || getArchName() == "x86_64") {
       ArchName = 
@@ -203,10 +203,12 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
   } 
   
   ToolChain *&TC = ToolChains[ArchName];
-  if (!TC)
-    TC = new toolchains::Generic_GCC(*this, ArchName, 
-                                     getPlatformName().c_str(), 
-                                     getOSName().c_str());
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+
+    TC = new toolchains::Generic_GCC(*this, TCTriple);
+  }
 
   return TC;
 }
@@ -219,8 +221,8 @@ class FreeBSDHostInfo : public HostInfo {
   mutable llvm::StringMap<ToolChain*> ToolChains;
 
 public:
-  FreeBSDHostInfo(const Driver &D, const char *Arch, 
-                  const char *Platform, const char *OS);
+  FreeBSDHostInfo(const Driver &D, const llvm::Triple& Triple) 
+    : HostInfo(D, Triple) {}
   ~FreeBSDHostInfo();
 
   virtual bool useDriverDriver() const;
@@ -232,11 +234,6 @@ public:
   virtual ToolChain *getToolChain(const ArgList &Args, 
                                   const char *ArchName) const;
 };
-
-FreeBSDHostInfo::FreeBSDHostInfo(const Driver &D, const char *Arch, 
-                                 const char *Platform, const char *OS) 
-  : HostInfo(D, Arch, Platform, OS) {
-}
 
 FreeBSDHostInfo::~FreeBSDHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
@@ -258,17 +255,20 @@ ToolChain *FreeBSDHostInfo::getToolChain(const ArgList &Args,
   // On x86_64 we need to be able to compile 32-bits binaries as well.
   // Compiling 64-bit binaries on i386 is not supported. We don't have a
   // lib64.
-  ArchName = getArchName().c_str();
+  std::string Arch = getArchName();
+  ArchName = Arch.c_str();
   if (Args.hasArg(options::OPT_m32) && getArchName() == "x86_64") {
     ArchName = "i386";
     Lib32 = true;
   } 
   
   ToolChain *&TC = ToolChains[ArchName];
-  if (!TC)
-    TC = new toolchains::FreeBSD(*this, ArchName, 
-                                 getPlatformName().c_str(), 
-                                 getOSName().c_str(), Lib32);
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+
+    TC = new toolchains::FreeBSD(*this, TCTriple, Lib32);
+  }
 
   return TC;
 }
@@ -281,8 +281,8 @@ class DragonFlyHostInfo : public HostInfo {
   mutable llvm::StringMap<ToolChain*> ToolChains;
 
 public:
-  DragonFlyHostInfo(const Driver &D, const char *Arch, 
-                  const char *Platform, const char *OS);
+  DragonFlyHostInfo(const Driver &D, const llvm::Triple& Triple)
+    : HostInfo(D, Triple) {}
   ~DragonFlyHostInfo();
 
   virtual bool useDriverDriver() const;
@@ -295,11 +295,6 @@ public:
                                   const char *ArchName) const;
 };
 
-DragonFlyHostInfo::DragonFlyHostInfo(const Driver &D, const char *Arch, 
-                                 const char *Platform, const char *OS) 
-  : HostInfo(D, Arch, Platform, OS) {
-}
-
 DragonFlyHostInfo::~DragonFlyHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
@@ -311,50 +306,44 @@ bool DragonFlyHostInfo::useDriverDriver() const {
 }
 
 ToolChain *DragonFlyHostInfo::getToolChain(const ArgList &Args, 
-                                         const char *ArchName) const {
-
+                                           const char *ArchName) const {
   assert(!ArchName && 
          "Unexpected arch name on platform without driver driver support.");
 
+  ToolChain *&TC = ToolChains[getArchName()];
 
-  ArchName = getArchName().c_str();
-  
-  ToolChain *&TC = ToolChains[ArchName];
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(getArchName());
 
+    TC = new toolchains::DragonFly(*this, TCTriple);
+  }
 
-  if (!TC)
-    TC = new toolchains::DragonFly(*this, ArchName, 
-                                 getPlatformName().c_str(), 
-                                 getOSName().c_str());
   return TC;
 }
 
 }
 
-const HostInfo *clang::driver::createDarwinHostInfo(const Driver &D,
-                                                    const char *Arch, 
-                                                    const char *Platform, 
-                                                    const char *OS) {
-  return new DarwinHostInfo(D, Arch, Platform, OS);
+const HostInfo *
+clang::driver::createDarwinHostInfo(const Driver &D,
+                                    const llvm::Triple& Triple){
+  return new DarwinHostInfo(D, Triple);
 }
 
-const HostInfo *clang::driver::createFreeBSDHostInfo(const Driver &D,
-                                                     const char *Arch, 
-                                                     const char *Platform, 
-                                                     const char *OS) {
-  return new FreeBSDHostInfo(D, Arch, Platform, OS);
+const HostInfo *
+clang::driver::createFreeBSDHostInfo(const Driver &D, 
+                                     const llvm::Triple& Triple) {
+  return new FreeBSDHostInfo(D, Triple);
 }
 
-const HostInfo *clang::driver::createDragonFlyHostInfo(const Driver &D,
-                                                     const char *Arch, 
-                                                     const char *Platform, 
-                                                     const char *OS) {
-  return new DragonFlyHostInfo(D, Arch, Platform, OS);
+const HostInfo *
+clang::driver::createDragonFlyHostInfo(const Driver &D,
+                                       const llvm::Triple& Triple) {
+  return new DragonFlyHostInfo(D, Triple);
 }
 
-const HostInfo *clang::driver::createUnknownHostInfo(const Driver &D,
-                                                     const char *Arch, 
-                                                     const char *Platform, 
-                                                     const char *OS) {
-  return new UnknownHostInfo(D, Arch, Platform, OS);
+const HostInfo *
+clang::driver::createUnknownHostInfo(const Driver &D,
+                                     const llvm::Triple& Triple) {
+  return new UnknownHostInfo(D, Triple);
 }

@@ -27,11 +27,10 @@ using namespace clang::driver::toolchains;
 
 /// Darwin_X86 - Darwin tool chain for i386 and x86_64.
 
-Darwin_X86::Darwin_X86(const HostInfo &Host, const char *Arch, 
-                       const char *Platform, const char *OS, 
+Darwin_X86::Darwin_X86(const HostInfo &Host, const llvm::Triple& Triple,
                        const unsigned (&_DarwinVersion)[3],
                        const unsigned (&_GCCVersion)[3])
-  : ToolChain(Host, Arch, Platform, OS) {
+  : ToolChain(Host, Triple) {
   DarwinVersion[0] = _DarwinVersion[0];
   DarwinVersion[1] = _DarwinVersion[1];
   DarwinVersion[2] = _DarwinVersion[2];
@@ -309,9 +308,8 @@ const char *Darwin_X86::GetForcedPicModel() const {
 /// all subcommands; this relies on gcc translating the majority of
 /// command line options.
 
-Generic_GCC::Generic_GCC(const HostInfo &Host, const char *Arch, 
-                         const char *Platform, const char *OS)
-  : ToolChain(Host, Arch, Platform, OS) 
+Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
+  : ToolChain(Host, Triple) 
 {
   std::string Path(getHost().getDriver().Dir);
   Path += "/../libexec";
@@ -388,9 +386,8 @@ DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args) const {
 
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
-FreeBSD::FreeBSD(const HostInfo &Host, const char *Arch, 
-                 const char *Platform, const char *OS, bool Lib32)
-  : Generic_GCC(Host, Arch, Platform, OS) {
+FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32)
+  : Generic_GCC(Host, Triple) {
   if (Lib32) {
     getFilePaths().push_back(getHost().getDriver().Dir + "/../lib32");
     getFilePaths().push_back("/usr/lib32");
@@ -424,9 +421,8 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
 
-DragonFly::DragonFly(const HostInfo &Host, const char *Arch, 
-                 const char *Platform, const char *OS)
-  : Generic_GCC(Host, Arch, Platform, OS) {
+DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
+  : Generic_GCC(Host, Triple) {
 
   // Path mangling to find libexec
   std::string Path(getHost().getDriver().Dir);

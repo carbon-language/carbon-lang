@@ -30,8 +30,7 @@ protected:
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
 public:
-  Generic_GCC(const HostInfo &Host, const char *Arch, const char *Platform, 
-              const char *OS);
+  Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple);
   ~Generic_GCC();
 
   virtual DerivedArgList *TranslateArgs(InputArgList &Args) const;
@@ -64,8 +63,8 @@ class VISIBILITY_HIDDEN Darwin_X86 : public ToolChain {
   const char *getMacosxVersionMin() const;
 
 public:
-  Darwin_X86(const HostInfo &Host, const char *Arch, const char *Platform, 
-             const char *OS, const unsigned (&DarwinVersion)[3],
+  Darwin_X86(const HostInfo &Host, const llvm::Triple& Triple, 
+             const unsigned (&DarwinVersion)[3],
              const unsigned (&GCCVersion)[3]);
   ~Darwin_X86();
 
@@ -102,24 +101,22 @@ public:
   /// Darwin_GCC - Generic Darwin tool chain using gcc.
 class VISIBILITY_HIDDEN Darwin_GCC : public Generic_GCC {
 public:
-  Darwin_GCC(const HostInfo &Host, const char *Arch, const char *Platform, 
-             const char *OS) : Generic_GCC(Host, Arch, Platform, OS) {}
+  Darwin_GCC(const HostInfo &Host, const llvm::Triple& Triple) 
+    : Generic_GCC(Host, Triple) {}
 
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }
 };
 
 class VISIBILITY_HIDDEN FreeBSD : public Generic_GCC {
 public:
-  FreeBSD(const HostInfo &Host, const char *Arch, const char *Platform, 
-          const char *OS, bool Lib32);
+  FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
 class VISIBILITY_HIDDEN DragonFly : public Generic_GCC {
 public:
-  DragonFly(const HostInfo &Host, const char *Arch, const char *Platform, 
-          const char *OS);
+  DragonFly(const HostInfo &Host, const llvm::Triple& Triple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };

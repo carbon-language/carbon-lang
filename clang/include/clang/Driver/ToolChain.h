@@ -11,6 +11,7 @@
 #define CLANG_DRIVER_TOOLCHAIN_H_
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/System/Path.h"
 #include <string>
 
@@ -30,7 +31,7 @@ public:
 
 private:
   const HostInfo &Host;
-  std::string Arch, Platform, OS;
+  const llvm::Triple Triple;
 
   /// The list of toolchain specific path prefixes to search for
   /// files.
@@ -41,8 +42,7 @@ private:
   path_list ProgramPaths;
 
 protected:
-  ToolChain(const HostInfo &Host, const char *_Arch, const char *_Platform, 
-            const char *_OS);
+  ToolChain(const HostInfo &Host, const llvm::Triple &_Triple);
 
 public:
   virtual ~ToolChain();
@@ -50,12 +50,12 @@ public:
   // Accessors
 
   const HostInfo &getHost() const { return Host; }
-  const std::string &getArchName() const { return Arch; }
-  const std::string &getPlatform() const { return Platform; }
-  const std::string &getOS() const { return OS; }
+  std::string getArchName() const { return Triple.getArchName(); }
+  std::string getPlatform() const { return Triple.getVendorName(); }
+  std::string getOS() const { return Triple.getOSName(); }
 
-  const std::string getTripleString() const {
-    return getArchName() + "-" + getPlatform() + "-" + getOS();
+  std::string getTripleString() const {
+    return Triple.getTriple();
   }
 
   path_list &getFilePaths() { return FilePaths; }

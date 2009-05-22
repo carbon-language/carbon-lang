@@ -15,9 +15,8 @@
 
 using namespace clang::driver;
 
-ToolChain::ToolChain(const HostInfo &_Host, const char *_Arch, 
-                     const char *_Platform, const char *_OS) 
-  : Host(_Host), Arch(_Arch), Platform(_Platform), OS(_OS) {
+ToolChain::ToolChain(const HostInfo &_Host, const llvm::Triple &_Triple)
+  : Host(_Host), Triple(_Triple) {
 }
 
 ToolChain::~ToolChain() {

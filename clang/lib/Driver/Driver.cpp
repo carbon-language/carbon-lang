@@ -917,8 +917,11 @@ void Driver::BuildJobsForAction(Compilation &C,
 
   if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
     const char *ArchName = BAA->getArchName();
-    if (!ArchName)
-      ArchName = C.getDefaultToolChain().getArchName().c_str();
+    std::string Arch;
+    if (!ArchName) {
+      Arch = C.getDefaultToolChain().getArchName();
+      ArchName = Arch.c_str();
+    }
     BuildJobsForAction(C,
                        *BAA->begin(), 
                        Host->getToolChain(C.getArgs(), ArchName),
@@ -1133,48 +1136,34 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
   return P.toString();
 }
 
-const HostInfo *Driver::GetHostInfo(const char *Triple) const {
+const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   llvm::PrettyStackTraceString CrashInfo("Constructing host");
-  // Dice into arch, platform, and OS. This matches 
-  //  arch,platform,os = '(.*?)-(.*?)-(.*?)'
-  // and missing fields are left empty.
-  std::string Arch, Platform, OS;
-
-  if (const char *ArchEnd = strchr(Triple, '-')) {
-    Arch = std::string(Triple, ArchEnd);
-
-    if (const char *PlatformEnd = strchr(ArchEnd+1, '-')) {
-      Platform = std::string(ArchEnd+1, PlatformEnd);
-      OS = PlatformEnd+1;
-    } else
-      Platform = ArchEnd+1;
-  } else
-    Arch = Triple;
+  llvm::Triple Triple(TripleStr);
 
   // Normalize Arch a bit. 
   //
-  // FIXME: This is very incomplete.
-  if (Arch == "i686") 
-    Arch = "i386";
-  else if (Arch == "amd64")
-    Arch = "x86_64";
-  else if (Arch == "ppc" || Arch == "Power Macintosh")
-    Arch = "powerpc";
-  else if (Arch == "ppc64")
-    Arch = "powerpc64";
-  
-  if (memcmp(&OS[0], "darwin", 6) == 0)
-    return createDarwinHostInfo(*this, Arch.c_str(), Platform.c_str(), 
-                                OS.c_str());
-  if (memcmp(&OS[0], "freebsd", 7) == 0)
-    return createFreeBSDHostInfo(*this, Arch.c_str(), Platform.c_str(), 
-                                 OS.c_str());
-  if (memcmp(&OS[0], "dragonfly", 9) == 0)
-    return createDragonFlyHostInfo(*this, Arch.c_str(), Platform.c_str(),
-                                 OS.c_str());    
+  // FIXME: We shouldn't need to do this once everything goes through the triple
+  // interface.
+  if (Triple.getArchName() == "i686") 
+    Triple.setArchName("i386");
+  else if (Triple.getArchName() == "amd64")
+    Triple.setArchName("x86_64");
+  else if (Triple.getArchName() == "ppc" || 
+           Triple.getArchName() == "Power Macintosh")
+    Triple.setArchName("powerpc");
+  else if (Triple.getArchName() == "ppc64")
+    Triple.setArchName("powerpc64");
 
-  return createUnknownHostInfo(*this, Arch.c_str(), Platform.c_str(), 
-                               OS.c_str());
+  switch (Triple.getOS()) {
+  case llvm::Triple::Darwin:
+    return createDarwinHostInfo(*this, Triple);
+  case llvm::Triple::DragonFly:
+    return createDragonFlyHostInfo(*this, Triple);
+  case llvm::Triple::FreeBSD:
+    return createFreeBSDHostInfo(*this, Triple);
+  default:
+    return createUnknownHostInfo(*this, Triple);
+  }
 }
 
 bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
