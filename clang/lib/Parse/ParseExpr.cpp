@@ -1239,14 +1239,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       MatchRHSPunctuation(tok::r_paren, OpenLoc);
 
     if (Tok.is(tok::l_brace)) {
-      if (!getLang().C99)   // Compound literals don't exist in C90.
-        Diag(OpenLoc, diag::ext_c99_compound_literal);
-      Result = ParseInitializer();
       ExprType = CompoundLiteral;
-      if (!Result.isInvalid() && !Ty.isInvalid())
-        Result = Actions.ActOnCompoundLiteral(OpenLoc, Ty.get(), RParenLoc,
-                                              move(Result));
-      return move(Result);
+      return ParseCompoundLiteralExpression(Ty.get(), OpenLoc, RParenLoc);
     }
 
     if (ExprType == CastExpr) {
@@ -1291,6 +1285,26 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   else
     MatchRHSPunctuation(tok::r_paren, OpenLoc);
 
+  return move(Result);
+}
+
+/// ParseCompoundLiteralExpression - We have parsed the parenthesized type-name
+/// and we are at the left brace.
+///
+///       postfix-expression: [C99 6.5.2]
+///         '(' type-name ')' '{' initializer-list '}'
+///         '(' type-name ')' '{' initializer-list ',' '}'
+///
+Parser::OwningExprResult
+Parser::ParseCompoundLiteralExpression(TypeTy *Ty,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation RParenLoc) {
+  assert(Tok.is(tok::l_brace) && "Not a compound literal!");
+  if (!getLang().C99)   // Compound literals don't exist in C90.
+    Diag(LParenLoc, diag::ext_c99_compound_literal);
+  OwningExprResult Result = ParseInitializer();
+  if (!Result.isInvalid() && Ty)
+    return Actions.ActOnCompoundLiteral(LParenLoc, Ty, RParenLoc, move(Result));
   return move(Result);
 }
 

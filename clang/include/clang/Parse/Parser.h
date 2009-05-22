@@ -690,6 +690,10 @@ private:
                                         TypeTy *&CastTy,
                                         SourceLocation &RParenLoc);
   
+  OwningExprResult ParseCompoundLiteralExpression(TypeTy *Ty,
+                                                  SourceLocation LParenLoc,
+                                                  SourceLocation RParenLoc);
+  
   OwningExprResult ParseStringLiteralExpression();
 
   //===--------------------------------------------------------------------===//
