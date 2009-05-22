@@ -529,7 +529,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     TypeTy *CastTy;
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
-    Res = ParseParenExpression(ParenExprType, CastTy, RParenLoc);
+    Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
+                               CastTy, RParenLoc);
     if (Res.isInvalid()) return move(Res);
     
     switch (ParenExprType) {
@@ -540,12 +541,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       // postfix-expression exist, parse them now.
       break;
     case CastExpr:
-      // We parsed '(' type-name ')' and the thing after it wasn't a '{'.  Parse
-      // the cast-expression that follows it next.
-      // TODO: For cast expression with CastTy.
-      Res = ParseCastExpression(false);
-      if (!Res.isInvalid())
-        Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc, move(Res));
+      // We have parsed the cast-expression and no postfix-expr pieces are
+      // following.
       return move(Res);
     }
 
@@ -958,7 +955,8 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     // expression.
     ParenParseOption ExprType = CastExpr;
     SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
-    Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
+    Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/,
+                                   CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);
 
     // If ParseParenExpression parsed a '(typename)' sequence only, then this is
@@ -1199,7 +1197,8 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 
 /// ParseParenExpression - This parses the unit that starts with a '(' token,
 /// based on what is allowed by ExprType.  The actual thing parsed is returned
-/// in ExprType.
+/// in ExprType. If stopIfCastExpr is true, it will only return the parsed type,
+/// not the parsed cast-expression.
 ///
 ///       primary-expression: [C99 6.5.1]
 ///         '(' expression ')'
@@ -1211,7 +1210,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 ///         '(' type-name ')' cast-expression
 ///
 Parser::OwningExprResult
-Parser::ParseParenExpression(ParenParseOption &ExprType,
+Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                              TypeTy *&CastTy, SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
@@ -1245,21 +1244,31 @@ Parser::ParseParenExpression(ParenParseOption &ExprType,
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
       if (!Result.isInvalid() && !Ty.isInvalid())
-        return Actions.ActOnCompoundLiteral(OpenLoc, Ty.get(), RParenLoc,
-                                            move(Result));
+        Result = Actions.ActOnCompoundLiteral(OpenLoc, Ty.get(), RParenLoc,
+                                              move(Result));
       return move(Result);
     }
 
     if (ExprType == CastExpr) {
-      // Note that this doesn't parse the subsequent cast-expression, it just
-      // returns the parsed type to the callee.
-      ExprType = CastExpr;
+      // We parsed '(' type-name ')' and the thing after it wasn't a '{'.
 
       if (Ty.isInvalid())
         return ExprError();
 
       CastTy = Ty.get();
-      return OwningExprResult(Actions);
+
+      if (stopIfCastExpr) {
+        // Note that this doesn't parse the subsequent cast-expression, it just
+        // returns the parsed type to the callee.
+        return OwningExprResult(Actions);
+      }
+
+      // Parse the cast-expression that follows it next.
+      // TODO: For cast expression with CastTy.
+      Result = ParseCastExpression(false);
+      if (!Result.isInvalid())
+        Result = Actions.ActOnCastExpr(OpenLoc, CastTy, RParenLoc,move(Result));
+      return move(Result);
     }
 
     Diag(Tok, diag::err_expected_lbrace_in_compound_literal);

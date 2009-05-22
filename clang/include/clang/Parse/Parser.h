@@ -686,6 +686,7 @@ private:
     CastExpr         // Also allow '(' type-name ')' <anything>
   };
   OwningExprResult ParseParenExpression(ParenParseOption &ExprType,
+                                        bool stopIfCastExpr,
                                         TypeTy *&CastTy,
                                         SourceLocation &RParenLoc);
   
