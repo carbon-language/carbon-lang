@@ -1324,7 +1324,7 @@ void TypeOfExprType::getAsStringInternal(std::string &InnerString) const {
   std::string Str;
   llvm::raw_string_ostream s(Str);
   getUnderlyingExpr()->printPretty(s);
-  InnerString = "typeof(" + s.str() + ")" + InnerString;
+  InnerString = "typeof " + s.str() + InnerString;
 }
 
 void TypeOfType::getAsStringInternal(std::string &InnerString) const {

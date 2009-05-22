@@ -2651,68 +2651,59 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
   SourceLocation StartLoc = ConsumeToken();
 
+  // If the operand doesn't start with an '(', it must be an expression.
+  OwningExprResult Operand(Actions);
   if (Tok.isNot(tok::l_paren)) {
     if (!getLang().CPlusPlus) {
       Diag(Tok, diag::err_expected_lparen_after_id) << BuiltinII;
       return;
     }
+    Operand = ParseCastExpression(true/*isUnaryExpression*/);
+    // FIXME: Not accurate, the range gets one token more than it should.
+    DS.SetRangeEnd(Tok.getLocation());
 
-    OwningExprResult Result(ParseCastExpression(true/*isUnaryExpression*/));
-    if (Result.isInvalid()) {
-      DS.SetTypeSpecError();
+  } else {
+    // If it starts with a '(', we know that it is either a parenthesized
+    // type-name, or it is a unary-expression that starts with a compound
+    // literal, or starts with a primary-expression that is a parenthesized
+    // expression.
+    ParenParseOption ExprType = CastExpr;
+    TypeTy *CastTy;
+    SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
+    Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
+    DS.SetRangeEnd(RParenLoc);
+
+    // If ParseParenExpression parsed a '(typename)' sequence only, then this is
+    // typeof a type.  Otherwise, it is typeof an expression.
+    if (ExprType == CastExpr) {
+      if (!CastTy) {
+        DS.SetTypeSpecError();
+        return;
+      }
+
+      const char *PrevSpec = 0;
+      // Check for duplicate type specifiers (e.g. "int typeof(int)").
+      if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec,
+                             CastTy))
+        Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
       return;
     }
 
-    const char *PrevSpec = 0;
-    // Check for duplicate type specifiers.
-    if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           Result.release()))
-      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+    // If this is a parenthesized expression, it is the start of a
+    // unary-expression, but doesn't include any postfix pieces.  Parse these
+    // now if present.
+    Operand = ParsePostfixExpressionSuffix(move(Operand));
+  }
 
-    // FIXME: Not accurate, the range gets one token more than it should.
-    DS.SetRangeEnd(Tok.getLocation());
+  // If we get here, the operand to the typeof was an expresion.
+  if (Operand.isInvalid()) {
+    DS.SetTypeSpecError();
     return;
   }
 
-  SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
-  
-  if (isTypeIdInParens()) {
-    Action::TypeResult Ty = ParseTypeName();
-
-    assert((Ty.isInvalid() || Ty.get()) && 
-           "Parser::ParseTypeofSpecifier(): missing type");
-
-    if (Tok.isNot(tok::r_paren)) {
-      MatchRHSPunctuation(tok::r_paren, LParenLoc);
-      return;
-    }
-    RParenLoc = ConsumeParen();
-
-    if (Ty.isInvalid())
-      DS.SetTypeSpecError();
-    else {
-      const char *PrevSpec = 0;
-      // Check for duplicate type specifiers (e.g. "int typeof(int)").
-      if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, 
-                             Ty.get()))
-        Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
-    }
-  } else { // we have an expression.
-    OwningExprResult Result(ParseExpression());
-
-    if (Result.isInvalid() || Tok.isNot(tok::r_paren)) {
-      MatchRHSPunctuation(tok::r_paren, LParenLoc);
-      DS.SetTypeSpecError();
-      return;
-    }
-    RParenLoc = ConsumeParen();
-    const char *PrevSpec = 0;
-    // Check for duplicate type specifiers (e.g. "int typeof(int)").
-    if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                           Result.release()))
-      Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
-  }
-  DS.SetRangeEnd(RParenLoc);
+  const char *PrevSpec = 0;
+  // Check for duplicate type specifiers (e.g. "int typeof(int)").
+  if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec,
+                         Operand.release()))
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
-
-

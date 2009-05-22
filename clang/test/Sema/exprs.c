@@ -79,7 +79,7 @@ void test10(int n,...) {
 
 struct mystruct {int A; };
 void test11(struct mystruct P, float F) {
-  MYMAX(P, F);  // expected-error {{invalid operands to binary expression ('typeof(P)' (aka 'struct mystruct') and 'typeof(F)' (aka 'float'))}}
+  MYMAX(P, F);  // expected-error {{invalid operands to binary expression ('typeof (P)' (aka 'struct mystruct') and 'typeof (F)' (aka 'float'))}}
 }
 
 // PR3753

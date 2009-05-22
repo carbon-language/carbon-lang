@@ -75,3 +75,8 @@ void f(int& i) {
 
 template<typename T>
 const T& min(const T&, const T&);
+
+void f2() {
+  int x;
+  A< typeof(x>1) > a;
+}
