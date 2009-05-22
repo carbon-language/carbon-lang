@@ -662,7 +662,11 @@ void IndVarSimplify::FixUsesBeforeDefs(Loop *L, SCEVExpander &Rewriter) {
         if (Z != NumPredsLeft.end() && Z->second != 0 && --Z->second == 0) {
           SmallVector<Instruction *, 4> UseWorkList;
           UseWorkList.push_back(Inst);
-          BasicBlock::iterator InsertPt = next(I);
+          BasicBlock::iterator InsertPt = I;
+          if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt))
+            InsertPt = II->getNormalDest()->begin();
+          else
+            ++InsertPt;
           while (isa<PHINode>(InsertPt)) ++InsertPt;
           do {
             Instruction *Use = UseWorkList.pop_back_val();
