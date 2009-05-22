@@ -688,16 +688,6 @@ private:
   OwningExprResult ParseParenExpression(ParenParseOption &ExprType,
                                         TypeTy *&CastTy,
                                         SourceLocation &RParenLoc);
-
-  OwningExprResult ParseSimpleParenExpression() {  // Parse SimpleExpr only.
-    SourceLocation RParenLoc;
-    return ParseSimpleParenExpression(RParenLoc);
-  }
-  OwningExprResult ParseSimpleParenExpression(SourceLocation &RParenLoc) {
-    ParenParseOption Op = SimpleExpr;
-    TypeTy *CastTy;
-    return ParseParenExpression(Op, CastTy, RParenLoc);
-  }
   
   OwningExprResult ParseStringLiteralExpression();
 

@@ -322,10 +322,19 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
 
   SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
 
-  if (Tok.isNot(tok::l_paren))
-    return ExprError(Diag(Tok, diag::err_expected_lparen_after) << CastName);
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after, CastName))
+    return ExprError();
 
-  OwningExprResult Result(ParseSimpleParenExpression(RParenLoc));
+  OwningExprResult Result = ParseExpression();
+  
+  // Match the ')'.
+  if (Result.isInvalid())
+    SkipUntil(tok::r_paren);
+  
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
   if (!Result.isInvalid() && !CastTy.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
