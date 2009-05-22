@@ -66,7 +66,9 @@ static void DefineStd(std::vector<char> &Buf, const char *MacroName,
 static void getSolarisDefines(const LangOptions &Opts, std::vector<char> &Defs) {
   DefineStd(Defs, "sun", Opts);
   DefineStd(Defs, "unix", Opts);
-  Define(Defs, "__ELF__", "1");
+  Define(Defs, "__ELF__");
+  Define(Defs, "__svr4__");
+  Define(Defs, "__SVR4");
 }
 
 static void getFreeBSDDefines(const LangOptions &Opts, bool is64Bit,
@@ -892,7 +894,8 @@ class SolarisX86_32TargetInfo : public X86_32TargetInfo {
 public:
   SolarisX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
     UserLabelPrefix = "";
-    WCharType = WCharType = SignedLong;    
+    WCharType = SignedLong;
+    // FIXME: WIntType should be SignedLong
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -990,7 +993,6 @@ class SolarisX86_64TargetInfo : public X86_64TargetInfo {
 public:
   SolarisX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
     UserLabelPrefix = "";
-    WCharType = WCharType = SignedLong;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -1182,11 +1184,9 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
-    // FIXME: This is missing a lot of important defines; some of the
-    // missing stuff is likely to break system headers.
-    Define(Defines, "__sparc");
-    Define(Defines, "__sparc__");
+    DefineStd(Defines, "sparc", Opts);
     Define(Defines, "__sparcv8");
+    Define(Defines, "__REGISTER_PREFIX__", "");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
@@ -1275,6 +1275,9 @@ public:
       SparcV8TargetInfo(triple) {
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
+    WCharType = SignedLong;
+    // FIXME: WIntType should be SignedLong
+    UserLabelPrefix = "";
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,
