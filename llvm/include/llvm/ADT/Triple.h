@@ -50,6 +50,7 @@ public:
     UnknownOS,
 
     Darwin,
+    DragonFly,
     FreeBSD,
     Linux
   };
@@ -75,6 +76,13 @@ public:
   
   Triple() : Data(""), Arch(InvalidArch) {}
   explicit Triple(const char *Str) : Data(Str), Arch(InvalidArch) {}
+  explicit Triple(const char *ArchStr, const char *VendorStr, const char *OSStr)
+    : Data(ArchStr), Arch(InvalidArch) {
+    Data += '-';
+    Data += VendorStr;
+    Data += '-';
+    Data += OSStr;
+  }
 
   /// @}
   /// @name Typed Component Access
