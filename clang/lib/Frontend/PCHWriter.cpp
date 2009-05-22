@@ -758,8 +758,8 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         Record.push_back((unsigned)LE->FileKind);
         Record.push_back(LE->IncludeOffset);
       }
-      Stream.EmitRecord(pch::SM_LINE_TABLE, Record);
     }
+    Stream.EmitRecord(pch::SM_LINE_TABLE, Record);
   }
 
   // Write out entries for all of the header files we know about.
