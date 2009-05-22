@@ -1161,30 +1161,39 @@ public:
   typedef ConstExprIterator const_inputs_iterator;
   
   inputs_iterator begin_inputs() {
-    return &Exprs[0] + NumOutputs;
+    return Exprs.empty() ? NULL : &Exprs[0] + NumOutputs;
   }
   
   inputs_iterator end_inputs() {
-    return  &Exprs[0] + NumOutputs + NumInputs;
+    return Exprs.empty() ? NULL : &Exprs[0] + NumOutputs + NumInputs;
   }
   
   const_inputs_iterator begin_inputs() const {
-    return &Exprs[0] + NumOutputs;
+    return Exprs.empty() ? NULL : &Exprs[0] + NumOutputs;
   }
   
   const_inputs_iterator end_inputs() const {
-    return  &Exprs[0] + NumOutputs + NumInputs;}
+    return Exprs.empty() ? NULL : &Exprs[0] + NumOutputs + NumInputs;
+  }
   
   // Output expr iterators.
   
   typedef ExprIterator outputs_iterator;
   typedef ConstExprIterator const_outputs_iterator;
   
-  outputs_iterator begin_outputs() { return &Exprs[0]; }
-  outputs_iterator end_outputs() { return &Exprs[0] + NumOutputs; }
+  outputs_iterator begin_outputs() {
+    return Exprs.empty() ? NULL : &Exprs[0];
+  }
+  outputs_iterator end_outputs() {
+    return Exprs.empty() ? NULL : &Exprs[0] + NumOutputs;
+  }
   
-  const_outputs_iterator begin_outputs() const { return &Exprs[0]; }
-  const_outputs_iterator end_outputs() const { return &Exprs[0] + NumOutputs; }
+  const_outputs_iterator begin_outputs() const {
+    return Exprs.empty() ? NULL : &Exprs[0];
+  }
+  const_outputs_iterator end_outputs() const {
+    return Exprs.empty() ? NULL : &Exprs[0] + NumOutputs;
+  }
   
   // Input name iterator.
   
