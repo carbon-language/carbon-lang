@@ -42,6 +42,7 @@ check_include_file(windows.h HAVE_WINDOWS_H)
 # library checks
 include(CheckLibraryExists)
 check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
+check_library_exists(dl dlopen "" HAVE_LIBDL)
 
 # function checks
 include(CheckSymbolExists)
