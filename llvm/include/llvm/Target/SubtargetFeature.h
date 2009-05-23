@@ -82,10 +82,13 @@ public:
 
   /// Set the CPU string.  Replaces previous setting.  Setting to "" clears CPU.
   void setCPU(const std::string &String);
-  
+
   /// Setting CPU string only if no string is set.
   void setCPUIfNone(const std::string &String);
-  
+
+  /// Returns current CPU string.
+  const std::string & getCPU() const;
+
   /// Adding Features.
   void AddFeature(const std::string &String, bool IsEnabled = true);
            

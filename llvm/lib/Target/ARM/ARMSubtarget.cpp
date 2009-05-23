@@ -23,14 +23,13 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS, bool thumb)
   , UseThumbBacktraces(false)
   , IsR9Reserved(false)
   , stackAlignment(4)
+  , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.
   , TargetABI(ARM_ABI_APCS) {
-
   // Determine default and user specified characteristics
-  std::string CPU = "generic";
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  CPUString = ParseSubtargetFeatures(FS, CPUString);
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.

@@ -186,7 +186,7 @@ void SubtargetFeatures::setString(const std::string &Initial) {
 }
 
 
-/// setCPU - Set the CPU string.  Replaces previous setting.  Setting to "" 
+/// setCPU - Set the CPU string.  Replaces previous setting.  Setting to ""
 /// clears CPU.
 void SubtargetFeatures::setCPU(const std::string &String) {
   Features[0] = LowercaseString(String);
@@ -199,9 +199,16 @@ void SubtargetFeatures::setCPUIfNone(const std::string &String) {
   if (Features[0].empty()) setCPU(String);
 }
 
+/// getCPU - Returns current CPU.
+///
+const std::string & SubtargetFeatures::getCPU() const {
+  return Features[0];
+}
+
+
 /// SetImpliedBits - For each feature that is (transitively) implied by this
 /// feature, set it.
-/// 
+///
 static
 void SetImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
                     const SubtargetFeatureKV *FeatureTable,

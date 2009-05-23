@@ -451,7 +451,7 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
 
   OS << "// ParseSubtargetFeatures - Parses features string setting specified\n" 
      << "// subtarget options.\n" 
-     << "void llvm::";
+     << "std::string llvm::";
   OS << Target;
   OS << "Subtarget::ParseSubtargetFeatures(const std::string &FS,\n"
      << "                                  const std::string &CPU) {\n"
@@ -481,11 +481,12 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
        <<              "Features.getInfo(ProcItinKV, ProcItinKVSize);\n"
        << "  InstrItins = InstrItineraryData(Stages, Itinerary);\n";
   }
-  
-  OS << "}\n";
+
+  OS << "  return Features.getCPU();\n"
+     << "}\n";
 }
 
-// 
+//
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
 void SubtargetEmitter::run(std::ostream &OS) {
