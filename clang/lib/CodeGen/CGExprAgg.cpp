@@ -227,13 +227,12 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // We have to special case property setters, otherwise we must have
   // a simple lvalue (no aggregates inside vectors, bitfields).
   if (LHS.isPropertyRef()) {
-    // FIXME: Volatility?
     llvm::Value *AggLoc = DestPtr;
     if (!AggLoc)
       AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
-    CGF.EmitAggExpr(E->getRHS(), AggLoc, false);
+    CGF.EmitAggExpr(E->getRHS(), AggLoc, VolatileDest);
     CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), 
-                            RValue::getAggregate(AggLoc));
+                            RValue::getAggregate(AggLoc, VolatileDest));
   } 
   else if (LHS.isKVCRef()) {
     // FIXME: Volatility?
