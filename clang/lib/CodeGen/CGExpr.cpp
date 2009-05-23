@@ -723,7 +723,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 }
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
-  return LValue::MakeAddr(GetAddrOfBlockDecl(E), 0);
+  return LValue::MakeAddr(GetAddrOfBlockDecl(E), 
+                          E->getType().getCVRQualifiers(),
+                          getContext().getObjCGCAttrKind(E->getType()));
 }
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
