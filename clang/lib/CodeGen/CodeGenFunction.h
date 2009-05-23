@@ -419,8 +419,12 @@ public:
   RValue EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc = 0,
                            bool isAggLocVolatile = false);
 
+  /// EmitAggregateCopy - Emit an aggrate copy.
+  ///
+  /// \param isVolatile - True iff either the source or the destination is
+  /// volatile.
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                         QualType EltTy);
+                         QualType EltTy, bool isVolatile=false);
 
   void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
 

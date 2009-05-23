@@ -144,7 +144,8 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src) {
   // FIXME: Pass VolatileDest as well.  I think we also need to merge volatile
   // from the source as well, as we can't eliminate it if either operand
   // is volatile, unless copy has volatile for both source and destination..
-  CGF.EmitAggregateCopy(DestPtr, Src.getAggregateAddr(), E->getType());
+  CGF.EmitAggregateCopy(DestPtr, Src.getAggregateAddr(), E->getType(),
+                        VolatileDest|Src.isVolatileQualified());
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
@@ -484,7 +485,8 @@ void CodeGenFunction::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
 }
 
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
-                                        llvm::Value *SrcPtr, QualType Ty) {
+                                        llvm::Value *SrcPtr, QualType Ty,
+                                        bool isVolatile) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
   
   // Aggregate assignment turns into llvm.memcpy.  This is almost valid per
@@ -520,7 +522,8 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // }
   //
   // either, we need to use a differnt call here, or the backend needs to be
-  // taught to not do this.
+  // taught to not do this.  We use isVolatile to indicate when either the
+  // source or the destination is volatile.
   Builder.CreateCall4(CGM.getMemCpyFn(),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
