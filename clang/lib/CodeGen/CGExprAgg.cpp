@@ -252,7 +252,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     if (DestPtr == 0)
       return;
     
-    // If the result of the assignment is used, copy the RHS there also.
+    // If the result of the assignment is used, copy the LHS there also.
     CGF.EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
   }
 }
