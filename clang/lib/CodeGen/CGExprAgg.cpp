@@ -247,7 +247,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
                             RValue::getAggregate(AggLoc));
   } else {
     // Codegen the RHS so that it stores directly into the LHS.
-    CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);
+    CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified());
     
     if (DestPtr == 0)
       return;
@@ -519,6 +519,18 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
   
+  // FIXME: If we have a volatile struct, the optimizer can remove what might
+  // appear to be `extra' memory ops:
+  //
+  // volatile struct { int i; } a, b;
+  //
+  // int main() {
+  //   a = b;
+  //   a = b;
+  // }
+  //
+  // either, we need to use a differnt call here, or the backend needs to be
+  // taught to not do this.
   Builder.CreateCall4(CGM.getMemCpyFn(),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
