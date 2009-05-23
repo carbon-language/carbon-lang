@@ -49,6 +49,10 @@ public:
   /// then loads the result into DestPtr.
   void EmitAggLoadOfLValue(const Expr *E);
 
+  /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
+  void EmitFinalDestCopy(const Expr *E, LValue Src);
+  void EmitFinalDestCopy(const Expr *E, RValue Src);
+
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -119,15 +123,31 @@ public:
 /// then loads the result into DestPtr.
 void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
   LValue LV = CGF.EmitLValue(E);
-  assert(LV.isSimple() && "Can't have aggregate bitfield, vector, etc");
-  llvm::Value *SrcPtr = LV.getAddress();
-  
+  EmitFinalDestCopy(E, LV);
+}
+
+/// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
+void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src) {
+  assert(Src.isAggregate() && "value must be aggregate value!");
+
   // If the result is ignored, don't copy from the value.
   if (DestPtr == 0)
     // FIXME: If the source is volatile, we must read from it.
     return;
 
-  CGF.EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
+  // If the result of the assignment is used, copy the LHS there also.
+  // FIXME: Pass VolatileDest as well.  I think we also need to merge volatile
+  // from the source as well, as we can't eliminate it if either operand
+  // is volatile, unless copy has volatile for both source and destination..
+  CGF.EmitAggregateCopy(DestPtr, Src.getAggregateAddr(), E->getType());
+}
+
+/// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
+void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src) {
+  assert(Src.isSimple() && "Can't have aggregate bitfield, vector, etc");
+
+  EmitFinalDestCopy(E, RValue::getAggregate(Src.getAddress(),
+                                            Src.isVolatileQualified()));
 }
 
 //===----------------------------------------------------------------------===//
@@ -158,50 +178,22 @@ void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
 
 void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
   RValue RV = CGF.EmitCallExpr(E);
-  assert(RV.isAggregate() && "Return value must be aggregate value!");
-  
-  // If the result is ignored, don't copy from the value.
-  if (DestPtr == 0)
-    // FIXME: If the source is volatile, we must read from it.
-    return;
-  
-  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  EmitFinalDestCopy(E, RV);
 }
 
 void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   RValue RV = CGF.EmitObjCMessageExpr(E);
-  assert(RV.isAggregate() && "Return value must be aggregate value!");
-
-  // If the result is ignored, don't copy from the value.
-  if (DestPtr == 0)
-    // FIXME: If the source is volatile, we must read from it.
-    return;
-  
-  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  EmitFinalDestCopy(E, RV);
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   RValue RV = CGF.EmitObjCPropertyGet(E);
-  assert(RV.isAggregate() && "Return value must be aggregate value!");
-  
-  // If the result is ignored, don't copy from the value.
-  if (DestPtr == 0)
-    // FIXME: If the source is volatile, we must read from it.
-    return;
-  
-  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  EmitFinalDestCopy(E, RV);
 }
 
 void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
   RValue RV = CGF.EmitObjCPropertyGet(E);
-  assert(RV.isAggregate() && "Return value must be aggregate value!");
-  
-  // If the result is ignored, don't copy from the value.
-  if (DestPtr == 0)
-    // FIXME: If the source is volatile, we must read from it.
-    return;
-  
-  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  EmitFinalDestCopy(E, RV);
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
@@ -248,12 +240,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   } else {
     // Codegen the RHS so that it stores directly into the LHS.
     CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified());
-    
-    if (DestPtr == 0)
-      return;
-    
-    // If the result of the assignment is used, copy the LHS there also.
-    CGF.EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
+    EmitFinalDestCopy(E, LHS);
   }
 }
 
@@ -290,9 +277,7 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
     return;
   }
 
-  if (DestPtr)
-    // FIXME: volatility
-    CGF.EmitAggregateCopy(DestPtr, ArgPtr, VE->getType());
+  EmitFinalDestCopy(VE, LValue::MakeAddr(ArgPtr, 0));
 }
 
 void
@@ -361,7 +346,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     new llvm::GlobalVariable(C->getType(), true,
                              llvm::GlobalValue::InternalLinkage,
                              C, "", &CGF.CGM.getModule(), 0);
-    CGF.EmitAggregateCopy(DestPtr, GV, E->getType());
+    EmitFinalDestCopy(E, LValue::MakeAddr(GV, 0));
     return;
   }
 #endif
