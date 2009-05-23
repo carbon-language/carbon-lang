@@ -123,8 +123,7 @@ public:
   bool hasInternalLinkage() const { return Linkage == InternalLinkage; }
   bool hasPrivateLinkage() const { return Linkage == PrivateLinkage; }
   bool hasLocalLinkage() const {
-    return Linkage == InternalLinkage || Linkage == PrivateLinkage ||
-           Linkage == AvailableExternallyLinkage;
+    return Linkage == InternalLinkage || Linkage == PrivateLinkage;
   }
   bool hasDLLImportLinkage() const { return Linkage == DLLImportLinkage; }
   bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }

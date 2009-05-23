@@ -64,7 +64,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     Changed |= RemoveUnusedGlobalValue(*I);
     // Functions with external linkage are needed if they have a body
     if (!I->hasLocalLinkage() && !I->hasLinkOnceLinkage() &&
-        !I->isDeclaration())
+        !I->isDeclaration() && !I->hasAvailableExternallyLinkage())
       GlobalIsNeeded(I);
   }
 
@@ -74,7 +74,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     // Externally visible & appending globals are needed, if they have an
     // initializer.
     if (!I->hasLocalLinkage() && !I->hasLinkOnceLinkage() &&
-        !I->isDeclaration())
+        !I->isDeclaration() && !I->hasAvailableExternallyLinkage())
       GlobalIsNeeded(I);
   }
 

@@ -69,7 +69,8 @@ bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
 
   // If we inlined the last possible call site to the function, delete the
   // function body now.
-  if (Callee->use_empty() && Callee->hasLocalLinkage() &&
+  if (Callee->use_empty() && (Callee->hasLocalLinkage() ||
+                              Callee->hasAvailableExternallyLinkage()) &&
       !SCCFunctions.count(Callee)) {
     DOUT << "    -> Deleting dead function: " << Callee->getName() << "\n";
     CallGraphNode *CalleeNode = CG[Callee];
