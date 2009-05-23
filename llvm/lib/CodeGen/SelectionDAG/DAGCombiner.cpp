@@ -2546,13 +2546,13 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       MVT TruncVT =
         MVT::getIntegerVT(VTValSize - N1C->getZExtValue());
       // Determine the residual right-shift amount.
-      unsigned ShiftAmt = N1C->getZExtValue() - N01C->getZExtValue();
+      signed ShiftAmt = N1C->getZExtValue() - N01C->getZExtValue();
 
       // If the shift is not a no-op (in which case this should be just a sign
       // extend already), the truncated to type is legal, sign_extend is legal
       // on that type, and the the truncate to that type is both legal and free,
       // perform the transform.
-      if (ShiftAmt &&
+      if ((ShiftAmt > 0) &&
           TLI.isOperationLegalOrCustom(ISD::SIGN_EXTEND, TruncVT) &&
           TLI.isOperationLegalOrCustom(ISD::TRUNCATE, VT) &&
           TLI.isTruncateFree(VT, TruncVT)) {
