@@ -116,16 +116,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
-  } else {
-    if (!UseSoftFloat && !NoImplicitFloat && X86ScalarSSEf64) {
+  } else if (!UseSoftFloat) {
+    if (X86ScalarSSEf64) {
       // We have an impenetrably clever algorithm for ui64->double only.
       setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
-
-      // We have faster algorithm for ui32->single only.
-      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
-    } else {
-      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
     }
+    // We have an algorithm for SSE2, and we turn this into a 64-bit
+    // FILD for other targets.
+    setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
   }
 
   // Promote i1/i8 SINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have
@@ -176,15 +174,16 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::FP_TO_UINT     , MVT::i64  , Expand);
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
-  } else {
+  } else if (!UseSoftFloat) {
     if (X86ScalarSSEf32 && !Subtarget->hasSSE3())
       // Expand FP_TO_UINT into a select.
       // FIXME: We would like to use a Custom expander here eventually to do
       // the optimal thing for SSE vs. the default expansion in the legalizer.
       setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Expand);
     else
-      // With SSE3 we can use fisttpll to convert to a signed i64.
-      setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Promote);
+      // With SSE3 we can use fisttpll to convert to a signed i64; without
+      // SSE, we're stuck with a fistpll.
+      setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Custom);
   }
 
   // TODO: when we have SSE, these could be more efficient, by using movd/movq.
@@ -4608,8 +4607,14 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
                                StackSlot,
                                PseudoSourceValue::getFixedStack(SSFI), 0);
+  return BuildFILD(Op, SrcVT, Chain, StackSlot, DAG);
+}
 
+SDValue X86TargetLowering::BuildFILD(SDValue Op, MVT SrcVT, SDValue Chain,
+                                     SDValue StackSlot,
+                                     SelectionDAG &DAG) {
   // Build the FILD
+  DebugLoc dl = Op.getDebugLoc();
   SDVTList Tys;
   bool useSSE = isScalarFPTypeInSSEReg(Op.getValueType());
   if (useSSE)
@@ -4792,38 +4797,57 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
       return SDValue();
 
     return LowerUINT_TO_FP_i64(Op, DAG);
-  } else if (SrcVT == MVT::i32) {
+  } else if (SrcVT == MVT::i32 && X86ScalarSSEf64) {
     return LowerUINT_TO_FP_i32(Op, DAG);
   }
 
-  assert(0 && "Unknown UINT_TO_FP to lower!");
-  return SDValue();
+  assert(SrcVT == MVT::i32 && "Unknown UINT_TO_FP to lower!");
+
+  // Make a 64-bit buffer, and use it to build an FILD.
+  SDValue StackSlot = DAG.CreateStackTemporary(MVT::i64);
+  SDValue WordOff = DAG.getConstant(4, getPointerTy());
+  SDValue OffsetSlot = DAG.getNode(ISD::ADD, dl,
+                                   getPointerTy(), StackSlot, WordOff);
+  SDValue Store1 = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
+                                StackSlot, NULL, 0);
+  SDValue Store2 = DAG.getStore(Store1, dl, DAG.getConstant(0, MVT::i32),
+                                OffsetSlot, NULL, 0);
+  return BuildFILD(Op, MVT::i64, Store2, StackSlot, DAG);
 }
 
 std::pair<SDValue,SDValue> X86TargetLowering::
-FP_TO_SINTHelper(SDValue Op, SelectionDAG &DAG) {
+FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
   DebugLoc dl = Op.getDebugLoc();
-  assert(Op.getValueType().getSimpleVT() <= MVT::i64 &&
-         Op.getValueType().getSimpleVT() >= MVT::i16 &&
+
+  MVT DstTy = Op.getValueType();
+
+  if (!IsSigned) {
+    assert(DstTy == MVT::i32 && "Unexpected FP_TO_UINT");
+    DstTy = MVT::i64;
+  }
+
+  assert(DstTy.getSimpleVT() <= MVT::i64 &&
+         DstTy.getSimpleVT() >= MVT::i16 &&
          "Unknown FP_TO_SINT to lower!");
 
   // These are really Legal.
-  if (Op.getValueType() == MVT::i32 &&
+  if (DstTy == MVT::i32 &&
       isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType()))
     return std::make_pair(SDValue(), SDValue());
   if (Subtarget->is64Bit() &&
-      Op.getValueType() == MVT::i64 &&
+      DstTy == MVT::i64 &&
       Op.getOperand(0).getValueType() != MVT::f80)
     return std::make_pair(SDValue(), SDValue());
 
   // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
   // stack slot.
   MachineFunction &MF = DAG.getMachineFunction();
-  unsigned MemSize = Op.getValueType().getSizeInBits()/8;
+  unsigned MemSize = DstTy.getSizeInBits()/8;
   int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+  
   unsigned Opc;
-  switch (Op.getValueType().getSimpleVT()) {
+  switch (DstTy.getSimpleVT()) {
   default: assert(0 && "Invalid FP_TO_SINT to lower!");
   case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
   case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
@@ -4833,7 +4857,7 @@ FP_TO_SINTHelper(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = DAG.getEntryNode();
   SDValue Value = Op.getOperand(0);
   if (isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType())) {
-    assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
+    assert(DstTy == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, dl, Value, StackSlot,
                          PseudoSourceValue::getFixedStack(SSFI), 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
@@ -4854,9 +4878,19 @@ FP_TO_SINTHelper(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
-  std::pair<SDValue,SDValue> Vals = FP_TO_SINTHelper(Op, DAG);
+  std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, true);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
   if (FIST.getNode() == 0) return SDValue();
+
+  // Load the result.
+  return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
+                     FIST, StackSlot, NULL, 0);
+}
+
+SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) {
+  std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, false);
+  SDValue FIST = Vals.first, StackSlot = Vals.second;
+  assert(FIST.getNode() && "Unexpected failure");
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
@@ -6555,6 +6589,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
+  case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
@@ -6626,7 +6661,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     assert(false && "Do not know how to custom type legalize this operation!");
     return;
   case ISD::FP_TO_SINT: {
-    std::pair<SDValue,SDValue> Vals = FP_TO_SINTHelper(SDValue(N, 0), DAG);
+    std::pair<SDValue,SDValue> Vals =
+        FP_TO_INTHelper(SDValue(N, 0), DAG, true);
     SDValue FIST = Vals.first, StackSlot = Vals.second;
     if (FIST.getNode() != 0) {
       MVT VT = N->getValueType(0);

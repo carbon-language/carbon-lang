@@ -569,8 +569,8 @@ namespace llvm {
     NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDValue Op);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
 
-    std::pair<SDValue,SDValue> FP_TO_SINTHelper(SDValue Op, 
-                                                    SelectionDAG &DAG);
+    std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
+                                               bool isSigned);
     
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG);
@@ -586,11 +586,14 @@ namespace llvm {
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
+    SDValue BuildFILD(SDValue Op, MVT SrcVT, SDValue Chain, SDValue StackSlot,
+                      SelectionDAG &DAG);
     SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG);
     SDValue LowerUINT_TO_FP_i32(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFABS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG);
