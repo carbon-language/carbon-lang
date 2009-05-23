@@ -18,7 +18,7 @@ using namespace llvm;
 
 ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS, bool thumb)
   : ARMArchVersion(V4T)
-  , HasVFP2(false)
+  , ARMFPUType(None)
   , IsThumb(thumb)
   , UseThumbBacktraces(false)
   , IsR9Reserved(false)

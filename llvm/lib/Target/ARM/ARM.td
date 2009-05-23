@@ -28,8 +28,14 @@ def ArchV5TE    : SubtargetFeature<"v5te", "ARMArchVersion", "V5TE",
                                    "ARM v5TE, v5TEj, v5TExp">;
 def ArchV6      : SubtargetFeature<"v6", "ARMArchVersion", "V6",
                                    "ARM v6">;
-def FeatureVFP2 : SubtargetFeature<"vfp2", "HasVFP2", "true",
+def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
+                                   "ARM v7A">;
+def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
                                    "Enable VFP2 instructions ">;
+def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",
+                                   "Enable VFP3 instructions ">;
+def FeatureNEON : SubtargetFeature<"neon", "ARMFPUType", "NEON",
+                                   "Enable NEON instructions ">;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -83,6 +89,9 @@ def : Proc<"arm1176jz-s",     [ArchV6]>;
 def : Proc<"arm1176jzf-s",    [ArchV6, FeatureVFP2]>;
 def : Proc<"mpcorenovfp",     [ArchV6]>;
 def : Proc<"mpcore",          [ArchV6, FeatureVFP2]>;
+
+def : Proc<"cortex-a8",       [ArchV7A, FeatureNEON]>;
+def : Proc<"cortex-a9",       [ArchV7A, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
