@@ -127,15 +127,18 @@ static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor &PP,
 /// specified FP model.
 template <typename T>
 static T PickFP(const llvm::fltSemantics *Sem, T IEEESingleVal,
-                T IEEEDoubleVal, T X87DoubleExtendedVal, T PPCDoubleDoubleVal) {
+                T IEEEDoubleVal, T X87DoubleExtendedVal, T PPCDoubleDoubleVal,
+                T IEEEQuadVal) {
   if (Sem == &llvm::APFloat::IEEEsingle)
     return IEEESingleVal;
   if (Sem == &llvm::APFloat::IEEEdouble)
     return IEEEDoubleVal;
   if (Sem == &llvm::APFloat::x87DoubleExtended)
     return X87DoubleExtendedVal;
-  assert(Sem == &llvm::APFloat::PPCDoubleDouble);
-  return PPCDoubleDoubleVal;
+  if (Sem == &llvm::APFloat::PPCDoubleDouble)
+    return PPCDoubleDoubleVal;
+  assert(Sem == &llvm::APFloat::IEEEquad);
+  return IEEEQuadVal;
 }
 
 static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
@@ -143,25 +146,29 @@ static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
   const char *DenormMin, *Epsilon, *Max, *Min;
   DenormMin = PickFP(Sem, "1.40129846e-45F", "4.9406564584124654e-324", 
                      "3.64519953188247460253e-4951L",
-                     "4.94065645841246544176568792868221e-324L");
-  int Digits = PickFP(Sem, 6, 15, 18, 31);
+                     "4.94065645841246544176568792868221e-324L",
+                     "6.47517511943802511092443895822764655e-4966L");
+  int Digits = PickFP(Sem, 6, 15, 18, 31, 33);
   Epsilon = PickFP(Sem, "1.19209290e-7F", "2.2204460492503131e-16",
                    "1.08420217248550443401e-19L",
-                   "4.94065645841246544176568792868221e-324L");
+                   "4.94065645841246544176568792868221e-324L",
+                   "1.92592994438723585305597794258492732e-34L");
   int HasInifinity = 1, HasQuietNaN = 1;
-  int MantissaDigits = PickFP(Sem, 24, 53, 64, 106);
-  int Min10Exp = PickFP(Sem, -37, -307, -4931, -291);
-  int Max10Exp = PickFP(Sem, 38, 308, 4932, 308);
-  int MinExp = PickFP(Sem, -125, -1021, -16381, -968);
-  int MaxExp = PickFP(Sem, 128, 1024, 16384, 1024);
+  int MantissaDigits = PickFP(Sem, 24, 53, 64, 106, 113);
+  int Min10Exp = PickFP(Sem, -37, -307, -4931, -291, -4931);
+  int Max10Exp = PickFP(Sem, 38, 308, 4932, 308, 4932);
+  int MinExp = PickFP(Sem, -125, -1021, -16381, -968, -16381);
+  int MaxExp = PickFP(Sem, 128, 1024, 16384, 1024, 16384);
   Min = PickFP(Sem, "1.17549435e-38F", "2.2250738585072014e-308",
                "3.36210314311209350626e-4932L",
-               "2.00416836000897277799610805135016e-292L");
+               "2.00416836000897277799610805135016e-292L",
+               "3.36210314311209350626267781732175260e-4932L");
   Max = PickFP(Sem, "3.40282347e+38F", "1.7976931348623157e+308",
                "1.18973149535723176502e+4932L",
-               "1.79769313486231580793728971405301e+308L");
+               "1.79769313486231580793728971405301e+308L",
+               "1.18973149535723176508575932662800702e+4932L");
   
-  char MacroBuf[64];
+  char MacroBuf[100];
   sprintf(MacroBuf, "__%s_DENORM_MIN__=%s", Prefix, DenormMin);
   DefineBuiltinMacro(Buf, MacroBuf);
   sprintf(MacroBuf, "__%s_DIG__=%d", Prefix, Digits);
@@ -421,7 +428,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineBuiltinMacro(Buf, "__FLT_EVAL_METHOD__=0");
   DefineBuiltinMacro(Buf, "__FLT_RADIX__=2");
   sprintf(MacroBuf, "__DECIMAL_DIG__=%d",
-          PickFP(&TI.getLongDoubleFormat(), -1/*FIXME*/, 17, 21, 33));
+          PickFP(&TI.getLongDoubleFormat(), -1/*FIXME*/, 17, 21, 33, 36));
   DefineBuiltinMacro(Buf, MacroBuf);
   
   // Get other target #defines.
