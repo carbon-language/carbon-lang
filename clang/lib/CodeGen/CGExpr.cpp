@@ -56,7 +56,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
     return RValue::getComplex(EmitComplexExpr(E));
   
   EmitAggExpr(E, AggLoc, isAggLocVolatile);
-  return RValue::getAggregate(AggLoc);
+  return RValue::getAggregate(AggLoc, isAggLocVolatile);
 }
 
 /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result

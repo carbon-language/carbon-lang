@@ -197,8 +197,8 @@ void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
-  CGF.EmitAnyExpr(E->getLHS());
-  CGF.EmitAggExpr(E->getRHS(), DestPtr, false);
+  CGF.EmitAnyExprToTemp(E->getLHS(), 0, VolatileDest);
+  CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
 }
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
