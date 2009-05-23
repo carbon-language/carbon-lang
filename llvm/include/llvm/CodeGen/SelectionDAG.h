@@ -220,6 +220,19 @@ public:
   /// the graph.
   void Legalize(bool TypesNeedLegalizing, CodeGenOpt::Level OptLevel);
 
+  /// LegalizeVectors - This transforms the SelectionDAG into a SelectionDAG
+  /// that only uses vector math operations supported by the target.  This is
+  /// necessary as a separate step from Legalize because unrolling a vector
+  /// operation can introduce illegal types, which requires running
+  /// LegalizeTypes again.
+  ///
+  /// This returns true if it made any changes; in that case, LegalizeTypes
+  /// is called again before Legalize.
+  ///
+  /// Note that this is an involved process that may invalidate pointers into
+  /// the graph.
+  bool LegalizeVectors();
+
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG.
   void RemoveDeadNodes();

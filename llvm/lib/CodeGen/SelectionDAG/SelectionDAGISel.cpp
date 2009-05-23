@@ -611,6 +611,36 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
       DOUT << "Optimized type-legalized selection DAG:\n";
       DEBUG(CurDAG->dump());
     }
+
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T("Vector Legalization", GroupName);
+      Changed = CurDAG->LegalizeVectors();
+    } else {
+      Changed = CurDAG->LegalizeVectors();
+    }
+
+    if (Changed) {
+      if (TimePassesIsEnabled) {
+        NamedRegionTimer T("Type Legalization 2", GroupName);
+        Changed = CurDAG->LegalizeTypes();
+      } else {
+        Changed = CurDAG->LegalizeTypes();
+      }
+
+      if (ViewDAGCombineLT)
+        CurDAG->viewGraph("dag-combine-lv input for " + BlockName);
+
+      // Run the DAG combiner in post-type-legalize mode.
+      if (TimePassesIsEnabled) {
+        NamedRegionTimer T("DAG Combining after legalize vectors", GroupName);
+        CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
+      } else {
+        CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
+      }
+
+      DOUT << "Optimized vector-legalized selection DAG:\n";
+      DEBUG(CurDAG->dump());
+    }
   }
   
   if (ViewLegalizeDAGs) CurDAG->viewGraph("legalize input for " + BlockName);
