@@ -313,6 +313,7 @@ private:
 
   SDValue ExpandEXTRACT_SUBVECTOR(SDValue Op);
   SDValue ExpandEXTRACT_VECTOR_ELT(SDValue Op);
+  SDValue ExpandExtractFromVectorThroughStack(SDValue Op);
 };
 }
 
@@ -1746,7 +1747,23 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp1 = Node->getOperand(0);
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-    Result = ExpandEXTRACT_SUBVECTOR(Result);
+    switch (TLI.getOperationAction(ISD::EXTRACT_SUBVECTOR,
+                                   Node->getValueType(0))) {
+    default: assert(0 && "Unknown operation action!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.getNode()) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand: {
+      Result = ExpandExtractFromVectorThroughStack(Result);
+      break;
+    }
+    }
     break;
 
   case ISD::CONCAT_VECTORS: {
@@ -5060,26 +5077,32 @@ SDValue SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDValue Op) {
     Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
     Op = ExpandEXTRACT_VECTOR_ELT(Op);
   } else {
-    // Store the value to a temporary stack slot, then LOAD the scalar
-    // element back out.
-    SDValue StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
-    SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, NULL, 0);
-
-    // Add the offset to the index.
-    unsigned EltSize = Op.getValueType().getSizeInBits()/8;
-    Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
-                      DAG.getConstant(EltSize, Idx.getValueType()));
-
-    if (Idx.getValueType().bitsGT(TLI.getPointerTy()))
-      Idx = DAG.getNode(ISD::TRUNCATE, dl, TLI.getPointerTy(), Idx);
-    else
-      Idx = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Idx);
-
-    StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
-
-    Op = DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, NULL, 0);
+    Op = ExpandExtractFromVectorThroughStack(Op);
   }
   return Op;
+}
+
+SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
+  SDValue Vec = Op.getOperand(0);
+  SDValue Idx = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
+  // Store the value to a temporary stack slot, then LOAD the returned part.
+  SDValue StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
+  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, NULL, 0);
+
+  // Add the offset to the index.
+  unsigned EltSize = Op.getValueType().getSizeInBits()/8;
+  Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
+                    DAG.getConstant(EltSize, Idx.getValueType()));
+
+  if (Idx.getValueType().bitsGT(TLI.getPointerTy()))
+    Idx = DAG.getNode(ISD::TRUNCATE, dl, TLI.getPointerTy(), Idx);
+  else
+    Idx = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Idx);
+
+  StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
+
+  return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, NULL, 0);
 }
 
 /// ExpandEXTRACT_SUBVECTOR - Expand a EXTRACT_SUBVECTOR operation.  For now
