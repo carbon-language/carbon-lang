@@ -131,9 +131,14 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src) {
   assert(Src.isAggregate() && "value must be aggregate value!");
 
   // If the result is ignored, don't copy from the value.
-  if (DestPtr == 0)
-    // FIXME: If the source is volatile, we must read from it.
-    return;
+  if (DestPtr == 0) {
+    if (Src.isVolatileQualified())
+      // If the source is volatile, we must read from it; to do that, we need
+      // some place to put it.
+      DestPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "agg.tmp");
+    else
+      return;
+  }
 
   // If the result of the assignment is used, copy the LHS there also.
   // FIXME: Pass VolatileDest as well.  I think we also need to merge volatile
@@ -197,7 +202,7 @@ void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
-  CGF.EmitAnyExprToTemp(E->getLHS(), 0, VolatileDest);
+  CGF.EmitAnyExpr(E->getLHS());
   CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
 }
 
