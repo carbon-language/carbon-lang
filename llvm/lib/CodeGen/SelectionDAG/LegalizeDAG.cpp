@@ -5091,7 +5091,8 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, NULL, 0);
 
   // Add the offset to the index.
-  unsigned EltSize = Op.getValueType().getSizeInBits()/8;
+  unsigned EltSize =
+      Vec.getValueType().getVectorElementType().getSizeInBits()/8;
   Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, Idx.getValueType()));
 
