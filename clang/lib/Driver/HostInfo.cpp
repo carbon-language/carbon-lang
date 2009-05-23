@@ -79,12 +79,12 @@ DarwinHostInfo::DarwinHostInfo(const Driver &D, const llvm::Triple& Triple)
 
   assert(memcmp(&getOSName()[0], "darwin", 6) == 0 &&
          "Unknown Darwin platform.");
-  const char *Release = &getOSName()[6];
   bool HadExtra;
-  if (!Driver::GetReleaseVersion(Release, DarwinVersion[0], DarwinVersion[1], 
+  if (!Driver::GetReleaseVersion(&getOSName()[6], 
+                                 DarwinVersion[0], DarwinVersion[1], 
                                  DarwinVersion[2], HadExtra)) {
     D.Diag(clang::diag::err_drv_invalid_darwin_version)
-      << Release;
+      << getOSName();
   }
   
   // We can only call 4.2.1 for now.
