@@ -161,7 +161,7 @@ static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
                "1.18973149535723176502e+4932L",
                "1.79769313486231580793728971405301e+308L");
   
-  char MacroBuf[60];
+  char MacroBuf[64];
   sprintf(MacroBuf, "__%s_DENORM_MIN__=%s", Prefix, DenormMin);
   DefineBuiltinMacro(Buf, MacroBuf);
   sprintf(MacroBuf, "__%s_DIG__=%d", Prefix, Digits);
