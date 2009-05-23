@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "ARM.h"
+#include "ARMBuildAttrs.h"
 #include "ARMTargetMachine.h"
 #include "ARMAddressingModes.h"
 #include "ARMConstantPoolValue.h"
@@ -815,6 +816,32 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   // Darwin wants symbols to be quoted if they have complex names.
   if (Subtarget->isTargetDarwin())
     Mang->setUseQuotes(true);
+
+  // Emit ARM Build Attributes
+  if (Subtarget->isTargetELF()) {
+    // CPU Type
+    O << "\t.cpu " << Subtarget->getCPUString() << '\n';
+
+    // FIXME: Emit FPU type
+    if (Subtarget->hasVFP2())
+      O << "\t.eabi_attribute " << ARMBuildAttrs::VFP_arch << ", 2\n";
+
+    // Signal various FP modes.
+    if (!UnsafeFPMath)
+      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_denormal << ", 1\n"
+        << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_exceptions << ", 1\n";
+
+    if (FiniteOnlyFPMath())
+      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_number_model << ", 1\n";
+    else
+      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_FP_number_model << ", 3\n";
+
+    // 8-bytes alignment stuff.
+    O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_align8_needed << ", 1\n"
+      << "\t.eabi_attribute " << ARMBuildAttrs::ABI_align8_preserved << ", 1\n";
+
+    // FIXME: Should we signal R9 usage?
+  }
 
   return Result;
 }
