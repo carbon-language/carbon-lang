@@ -1,4 +1,10 @@
-// RUN: clang-cc -fnext-runtime --emit-llvm -o %t %s
+// RUN: clang-cc -fnext-runtime --emit-llvm -o %t %s &&
+// RUN: grep "objc_msgSend" %t | count 6 &&
+// RUNX: clang-cc -fgnu-runtime --emit-llvm -o %t %s &&
+// RUNX: grep "objc_msg_lookup" %t | count 6 &&
+// RUNY: clang-cc -fgnu-runtime -fobjc-sender-dependent-dispatch --emit-llvm -o %t %s &&
+// RUNY: grep "objc_msg_lookup_sender" %t | count 6
+// RUN: true
 
 typedef struct {
   int x;
