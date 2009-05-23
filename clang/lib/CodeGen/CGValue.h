@@ -38,14 +38,15 @@ class RValue {
   // return-by-value.
   enum { Scalar, Complex, Aggregate } Flavor;
   
-  // FIXME: Aggregate rvalues need to retain information about whether they are
-  // volatile or not.
+  bool Volatile:1;
 public:
   
   bool isScalar() const { return Flavor == Scalar; }
   bool isComplex() const { return Flavor == Complex; }
   bool isAggregate() const { return Flavor == Aggregate; }
   
+  bool isVolatileQualified() const { return Volatile; }
+
   /// getScalar() - Return the Value* of this scalar value.
   llvm::Value *getScalarVal() const {
     assert(isScalar() && "Not a scalar!");
@@ -84,10 +85,14 @@ public:
     ER.Flavor = Complex;
     return ER;
   }
-  static RValue getAggregate(llvm::Value *V) {
+  // FIXME: Aggregate rvalues need to retain information about whether they are
+  // volatile or not.  Remove default to find all places that probably get this
+  // wrong.
+  static RValue getAggregate(llvm::Value *V, bool Vol = false) {
     RValue ER;
     ER.V1 = V;
     ER.Flavor = Aggregate;
+    ER.Volatile = Vol;
     return ER;
   }
 };
