@@ -51,7 +51,7 @@ static void runAtExitHandlers() {
 #if defined(HAVE_SYS_STAT_H)
 #include <sys/stat.h>
 #endif
-
+#include <fcntl.h>
 /* stat functions are redirecting to __xstat with a version number.  On x86-64 
  * linking with libc_nonshared.a and -Wl,--export-dynamic doesn't make 'stat' 
  * available as an exported symbol, so we have to add it explicitly.
@@ -63,6 +63,9 @@ public:
     sys::DynamicLibrary::AddSymbol("fstat", (void*)(intptr_t)fstat);
     sys::DynamicLibrary::AddSymbol("lstat", (void*)(intptr_t)lstat);
     sys::DynamicLibrary::AddSymbol("stat64", (void*)(intptr_t)stat64);
+    sys::DynamicLibrary::AddSymbol("\x1stat64", (void*)(intptr_t)stat64);
+    sys::DynamicLibrary::AddSymbol("\x1open64", (void*)(intptr_t)open64);
+    sys::DynamicLibrary::AddSymbol("\x1lseek64", (void*)(intptr_t)lseek64);
     sys::DynamicLibrary::AddSymbol("fstat64", (void*)(intptr_t)fstat64);
     sys::DynamicLibrary::AddSymbol("lstat64", (void*)(intptr_t)lstat64);
     sys::DynamicLibrary::AddSymbol("atexit", (void*)(intptr_t)atexit);
