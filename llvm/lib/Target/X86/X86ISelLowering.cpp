@@ -557,6 +557,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::LOAD, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT,(MVT::SimpleValueType)VT,Expand);
+    setOperationAction(ISD::EXTRACT_SUBVECTOR,(MVT::SimpleValueType)VT,Expand);
     setOperationAction(ISD::INSERT_VECTOR_ELT,(MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FABS, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FSIN, (MVT::SimpleValueType)VT, Expand);
