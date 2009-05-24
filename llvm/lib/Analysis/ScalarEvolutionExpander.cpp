@@ -351,7 +351,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   if (SE.TD)
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
       const std::vector<SCEVHandle> &Ops = S->getOperands();
-      return expandAddToGEP(Ops.data(), Ops.data() + Ops.size() - 1,
+      return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1],
                             PTy, Ty, V);
     }
 
