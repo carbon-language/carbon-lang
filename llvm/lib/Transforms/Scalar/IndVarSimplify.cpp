@@ -414,8 +414,11 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   Rewriter.setInsertionPoint(Header->getFirstNonPHI());
 
-  // Rewrite IV-derived expressions.
+  // Rewrite IV-derived expressions. Clears the rewriter cache.
   RewriteIVExpressions(L, LargestType, Rewriter);
+
+  // The Rewriter may only be used for isInsertedInstruction queries from this
+  // point on.
 
   // Loop-invariant instructions in the preheader that aren't used in the
   // loop may be sunk below the loop to reduce register pressure.
@@ -424,7 +427,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Reorder instructions to avoid use-before-def conditions.
   FixUsesBeforeDefs(L, Rewriter);
 
-  Rewriter.clear();
   // For completeness, inform IVUsers of the IV use in the newly-created
   // loop exit test instruction.
   if (NewICmp)
@@ -574,6 +576,10 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
     }
   }
 
+  // Clear the rewriter cache, because values that are in the rewriter's cache
+  // can be deleted in the loop below, causing the AssertingVH in the cache to
+  // trigger.
+  Rewriter.clear();
   // Now that we're done iterating through lists, clean up any instructions
   // which are now dead.
   while (!DeadInsts.empty()) {
