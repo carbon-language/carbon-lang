@@ -698,15 +698,13 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
 
   if (OpVal.getNode() == 0) return SDValue();  // All UNDEF: use implicit def.
 
-  unsigned ValSizeInBytes = 0;
+  unsigned ValSizeInBytes = EltSize;
   uint64_t Value = 0;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
     Value = CN->getZExtValue();
-    ValSizeInBytes = CN->getValueType(0).getSizeInBits()/8;
   } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
     assert(CN->getValueType(0) == MVT::f32 && "Only one legal FP vector type!");
     Value = FloatToBits(CN->getValueAPF().convertToFloat());
-    ValSizeInBytes = 4;
   }
 
   // If the splat value is larger than the element value, then we can never do
@@ -3113,7 +3111,7 @@ static SDValue BuildSplatI(int Val, unsigned SplatSize, MVT VT,
   MVT CanonicalVT = VTys[SplatSize-1];
 
   // Build a canonical splat for this value.
-  SDValue Elt = DAG.getConstant(Val, CanonicalVT.getVectorElementType());
+  SDValue Elt = DAG.getConstant(Val, MVT::i32);
   SmallVector<SDValue, 8> Ops;
   Ops.assign(CanonicalVT.getVectorNumElements(), Elt);
   SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, dl, CanonicalVT,
@@ -3515,7 +3513,7 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
 
     for (unsigned j = 0; j != BytesPerElement; ++j)
       ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
-                                           MVT::i8));
+                                           MVT::i32));
   }
 
   SDValue VPermMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i8,
