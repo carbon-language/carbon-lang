@@ -3143,18 +3143,32 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Expand: {
       assert((Tmp2.getValueType() == MVT::f32 ||
-              Tmp2.getValueType() == MVT::f64) && isTypeLegal(MVT::i32) &&
+              Tmp2.getValueType() == MVT::f64) &&
               "Ugly special-cased code!");
       // Get the sign bit of the RHS.
-      SDValue StackPtr = DAG.CreateStackTemporary(Tmp2.getValueType());
-      SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StackPtr, NULL,
-                                0);
-      if (Tmp2.getValueType() == MVT::f64 && TLI.isLittleEndian())
-        StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(),
-                               StackPtr, DAG.getIntPtrConstant(4));
-      SDValue SignBit = DAG.getLoad(MVT::i32, dl, Ch, StackPtr, NULL, 0);
-      SignBit = DAG.getSetCC(dl, TLI.getSetCCResultType(MVT::i32),
-                             SignBit, DAG.getConstant(0, MVT::i32), ISD::SETLT);
+      SDValue SignBit;
+      MVT IVT = Tmp2.getValueType() == MVT::f64 ? MVT::i64 : MVT::i32;
+      if (isTypeLegal(IVT)) {
+        SignBit = DAG.getNode(ISD::BIT_CONVERT, dl, IVT, Tmp2);
+      } else {
+        assert(isTypeLegal(TLI.getPointerTy()) &&
+               (TLI.getPointerTy() == MVT::i32 || 
+                TLI.getPointerTy() == MVT::i64) &&
+               "Legal type for load?!");
+        SDValue StackPtr = DAG.CreateStackTemporary(Tmp2.getValueType());
+        SDValue StorePtr = StackPtr, LoadPtr = StackPtr;
+        SDValue Ch =
+            DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StorePtr, NULL, 0);
+        if (Tmp2.getValueType() == MVT::f64 && TLI.isLittleEndian())
+          LoadPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(),
+                                LoadPtr, DAG.getIntPtrConstant(4));
+        SignBit = DAG.getExtLoad(ISD::SEXTLOAD, dl, TLI.getPointerTy(),
+                                 Ch, LoadPtr, NULL, 0, MVT::i32);
+      }
+      SignBit =
+          DAG.getSetCC(dl, TLI.getSetCCResultType(SignBit.getValueType()),
+                       SignBit, DAG.getConstant(0, SignBit.getValueType()),
+                       ISD::SETLT);
       // Get the absolute value of the result.
       SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
       // Select between the nabs and abs value based on the sign bit of
