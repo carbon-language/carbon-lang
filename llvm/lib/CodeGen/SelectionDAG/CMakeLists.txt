@@ -7,6 +7,7 @@ add_llvm_library(LLVMSelectionDAG
   LegalizeIntegerTypes.cpp
   LegalizeTypes.cpp
   LegalizeTypesGeneric.cpp
+  LegalizeVectorOps.cpp
   LegalizeVectorTypes.cpp
   ScheduleDAGSDNodes.cpp
   ScheduleDAGSDNodesEmit.cpp
