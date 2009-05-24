@@ -842,6 +842,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   WeakVH WeakPH = PH;
 
   // Delete old, floating point, exit comparision instruction.
+  NewEC->takeName(EC);
   EC->replaceAllUsesWith(NewEC);
   RecursivelyDeleteTriviallyDeadInstructions(EC);
 
