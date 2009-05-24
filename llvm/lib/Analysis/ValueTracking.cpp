@@ -343,22 +343,43 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   // fall through
   case Instruction::Add: {
-    // Output known-0 bits are known if clear or set in both the low clear bits
-    // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
-    // low 3 bits clear.
-    APInt Mask2 = APInt::getLowBitsSet(BitWidth, Mask.countTrailingOnes());
-    ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, TD,
+    // If one of the operands has trailing zeros, than the bits that the
+    // other operand has in those bit positions will be preserved in the
+    // result. For an add, this works with either operand. For a subtract,
+    // this only works if the known zeros are in the right operand.
+    APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
+    APInt Mask2 = APInt::getLowBitsSet(BitWidth,
+                                       BitWidth - Mask.countLeadingZeros());
+    ComputeMaskedBits(I->getOperand(0), Mask2, LHSKnownZero, LHSKnownOne, TD,
                       Depth+1);
-    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
-    unsigned KnownZeroOut = KnownZero2.countTrailingOnes();
+    assert((LHSKnownZero & LHSKnownOne) == 0 &&
+           "Bits known to be one AND zero?");
+    unsigned LHSKnownZeroOut = LHSKnownZero.countTrailingOnes();
 
     ComputeMaskedBits(I->getOperand(1), Mask2, KnownZero2, KnownOne2, TD, 
                       Depth+1);
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
-    KnownZeroOut = std::min(KnownZeroOut, 
-                            KnownZero2.countTrailingOnes());
+    unsigned RHSKnownZeroOut = KnownZero2.countTrailingOnes();
 
-    KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroOut);
+    // Determine which operand has more trailing zeros, and use that
+    // many bits from the other operand.
+    if (LHSKnownZeroOut > RHSKnownZeroOut) {
+      if (getOpcode(I) == Instruction::Add) {
+        APInt Mask = APInt::getLowBitsSet(BitWidth, LHSKnownZeroOut);
+        KnownZero |= KnownZero2 & Mask;
+        KnownOne  |= KnownOne2 & Mask;
+      } else {
+        // If the known zeros are in the left operand for a subtract,
+        // fall back to the minimum known zeros in both operands.
+        KnownZero |= APInt::getLowBitsSet(BitWidth,
+                                          std::min(LHSKnownZeroOut,
+                                                   RHSKnownZeroOut));
+      }
+    } else if (RHSKnownZeroOut >= LHSKnownZeroOut) {
+      APInt Mask = APInt::getLowBitsSet(BitWidth, RHSKnownZeroOut);
+      KnownZero |= LHSKnownZero & Mask;
+      KnownOne  |= LHSKnownOne & Mask;
+    }
     return;
   }
   case Instruction::SRem:
