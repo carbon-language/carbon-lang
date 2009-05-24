@@ -224,6 +224,9 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
 }
 
 SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
+  // Vector "promotion" is basically just bitcasting and doing the operation
+  // in a different type.  For example, x86 promotes ISD::AND on v2i32 to
+  // v1i64.
   MVT VT = Op.getValueType();
   assert(Op.getNode()->getNumValues() == 1 &&
          "Can't promote a vector with multiple results!");
