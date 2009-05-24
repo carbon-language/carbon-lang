@@ -1334,19 +1334,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     switch (TLI.getOperationAction(ISD::DEBUG_LOC, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal: {
-      LegalizeAction Action = getTypeAction(Node->getOperand(1).getValueType());
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-      if (Action == Legal && Tmp1 == Node->getOperand(0))
+      if (Tmp1 == Node->getOperand(0))
         break;
-      if (Action == Legal) {
-        Tmp2 = Node->getOperand(1);
-        Tmp3 = Node->getOperand(2);
-        Tmp4 = Node->getOperand(3);
-      } else {
-        Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the line #.
-        Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the col #.
-        Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize the source file id.
-      }
+      Tmp2 = Node->getOperand(1);
+      Tmp3 = Node->getOperand(2);
+      Tmp4 = Node->getOperand(3);
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3, Tmp4);
       break;
     }
@@ -1395,8 +1388,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Ops[0] = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
       for (int x = 1; x < 6; ++x) {
         Ops[x] = Node->getOperand(x);
-        if (!isTypeLegal(Ops[x].getValueType()))
-          Ops[x] = PromoteOp(Ops[x]);
       }
       Result = DAG.UpdateNodeOperands(Result, &Ops[0], 6);
       break;
@@ -1583,17 +1574,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // The type of the value to insert may not be legal, even though the vector
     // type is legal.  Legalize/Promote accordingly.  We do not handle Expand
     // here.
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    default: assert(0 && "Cannot expand insert element operand");
-    case Legal:   Tmp2 = LegalizeOp(Node->getOperand(1)); break;
-    case Promote: Tmp2 = PromoteOp(Node->getOperand(1));  break;
-    case Expand:
-      // FIXME: An alternative would be to check to see if the target is not
-      // going to custom lower this operation, we could bitcast to half elt
-      // width and perform two inserts at that width, if that is legal.
-      Tmp2 = Node->getOperand(1);
-      break;
-    }
+    Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
 
     switch (TLI.getOperationAction(ISD::INSERT_VECTOR_ELT,
@@ -1643,11 +1624,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     break;
   case ISD::SCALAR_TO_VECTOR:
-    if (!TLI.isTypeLegal(Node->getOperand(0).getValueType())) {
-      Result = LegalizeOp(ExpandSCALAR_TO_VECTOR(Node));
-      break;
-    }
-
     Tmp1 = LegalizeOp(Node->getOperand(0));  // InVal
     Result = DAG.UpdateNodeOperands(Result, Tmp1);
     switch (TLI.getOperationAction(ISD::SCALAR_TO_VECTOR,
@@ -2004,12 +1980,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp1 = LegalizeOp(Tmp1);
     LastCALLSEQ_END = DAG.getEntryNode();
 
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    default: assert(0 && "Indirect target must be legal type (pointer)!");
-    case Legal:
-      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
-      break;
-    }
+    Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
     break;
   case ISD::BR_JT:
@@ -2063,23 +2034,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp1 = LegalizeOp(Tmp1);
     LastCALLSEQ_END = DAG.getEntryNode();
 
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    case Expand: assert(0 && "It's impossible to expand bools");
-    case Legal:
-      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
-      break;
-    case Promote: {
-      Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
-
-      // The top bits of the promoted condition are not necessarily zero, ensure
-      // that the value is properly zero extended.
-      unsigned BitWidth = Tmp2.getValueSizeInBits();
-      if (!DAG.MaskedValueIsZero(Tmp2,
-                                 APInt::getHighBitsSet(BitWidth, BitWidth-1)))
-        Tmp2 = DAG.getZeroExtendInReg(Tmp2, dl, MVT::i1);
-      break;
-    }
-    }
+    Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
 
     // Basic block destination (Op#2) is always legal.
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
@@ -2396,29 +2351,16 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   }
   case ISD::EXTRACT_ELEMENT: {
     MVT OpTy = Node->getOperand(0).getValueType();
-    switch (getTypeAction(OpTy)) {
-    default: assert(0 && "EXTRACT_ELEMENT action for type unimplemented!");
-    case Legal:
-      if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
-        // 1 -> Hi
-        Result = DAG.getNode(ISD::SRL, dl, OpTy, Node->getOperand(0),
-                             DAG.getConstant(OpTy.getSizeInBits()/2,
-                                             TLI.getShiftAmountTy()));
-        Result = DAG.getNode(ISD::TRUNCATE, dl, Node->getValueType(0), Result);
-      } else {
-        // 0 -> Lo
-        Result = DAG.getNode(ISD::TRUNCATE, dl, Node->getValueType(0),
-                             Node->getOperand(0));
-      }
-      break;
-    case Expand:
-      // Get both the low and high parts.
-      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-      if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue())
-        Result = Tmp2;  // 1 -> Hi
-      else
-        Result = Tmp1;  // 0 -> Lo
-      break;
+    if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
+      // 1 -> Hi
+      Result = DAG.getNode(ISD::SRL, dl, OpTy, Node->getOperand(0),
+                           DAG.getConstant(OpTy.getSizeInBits()/2,
+                                           TLI.getShiftAmountTy()));
+      Result = DAG.getNode(ISD::TRUNCATE, dl, Node->getValueType(0), Result);
+    } else {
+      // 0 -> Lo
+      Result = DAG.getNode(ISD::TRUNCATE, dl, Node->getValueType(0),
+                           Node->getOperand(0));
     }
     break;
   }
@@ -2426,8 +2368,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::CopyToReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
 
-    assert(isTypeLegal(Node->getOperand(2).getValueType()) &&
-           "Register type must be legal!");
     // Legalize the incoming value (must be a legal type).
     Tmp2 = LegalizeOp(Node->getOperand(2));
     if (Node->getNumValues() == 1) {
@@ -2462,67 +2402,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case 3:  // ret val
       Tmp2 = Node->getOperand(1);
       Tmp3 = Node->getOperand(2);  // Signness
-      switch (getTypeAction(Tmp2.getValueType())) {
-      case Legal:
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2), Tmp3);
-        break;
-      case Expand:
-        if (!Tmp2.getValueType().isVector()) {
-          SDValue Lo, Hi;
-          ExpandOp(Tmp2, Lo, Hi);
-
-          // Big endian systems want the hi reg first.
-          if (TLI.isBigEndian())
-            std::swap(Lo, Hi);
-
-          if (Hi.getNode())
-            Result = DAG.getNode(ISD::RET, dl, MVT::Other,
-                                 Tmp1, Lo, Tmp3, Hi, Tmp3);
-          else
-            Result = DAG.getNode(ISD::RET, dl, MVT::Other, Tmp1, Lo, Tmp3);
-          Result = LegalizeOp(Result);
-        } else {
-          SDNode *InVal = Tmp2.getNode();
-          int InIx = Tmp2.getResNo();
-          unsigned NumElems = InVal->getValueType(InIx).getVectorNumElements();
-          MVT EVT = InVal->getValueType(InIx).getVectorElementType();
-
-          // Figure out if there is a simple type corresponding to this Vector
-          // type.  If so, convert to the vector type.
-          MVT TVT = MVT::getVectorVT(EVT, NumElems);
-          if (TLI.isTypeLegal(TVT)) {
-            // Turn this into a return of the vector type.
-            Tmp2 = LegalizeOp(Tmp2);
-            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-          } else if (NumElems == 1) {
-            // Turn this into a return of the scalar type.
-            Tmp2 = ScalarizeVectorOp(Tmp2);
-            Tmp2 = LegalizeOp(Tmp2);
-            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-
-            // FIXME: Returns of gcc generic vectors smaller than a legal type
-            // should be returned in integer registers!
-
-            // The scalarized value type may not be legal, e.g. it might require
-            // promotion or expansion.  Relegalize the return.
-            Result = LegalizeOp(Result);
-          } else {
-            // FIXME: Returns of gcc generic vectors larger than a legal vector
-            // type should be returned by reference!
-            SDValue Lo, Hi;
-            SplitVectorOp(Tmp2, Lo, Hi);
-            Result = DAG.getNode(ISD::RET, dl, MVT::Other,
-                                 Tmp1, Lo, Tmp3, Hi, Tmp3);
-            Result = LegalizeOp(Result);
-          }
-        }
-        break;
-      case Promote:
-        Tmp2 = PromoteOp(Node->getOperand(1));
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-        Result = LegalizeOp(Result);
-        break;
-      }
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2), Tmp3);
       break;
     case 1:  // ret void
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
@@ -2530,47 +2410,22 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: { // ret <values>
       SmallVector<SDValue, 8> NewValues;
       NewValues.push_back(Tmp1);
-      for (unsigned i = 1, e = Node->getNumOperands(); i < e; i += 2)
-        switch (getTypeAction(Node->getOperand(i).getValueType())) {
-        case Legal:
-          NewValues.push_back(LegalizeOp(Node->getOperand(i)));
-          NewValues.push_back(Node->getOperand(i+1));
-          break;
-        case Expand: {
-          SDValue Lo, Hi;
-          assert(!Node->getOperand(i).getValueType().isExtended() &&
-                 "FIXME: TODO: implement returning non-legal vector types!");
-          ExpandOp(Node->getOperand(i), Lo, Hi);
-          NewValues.push_back(Lo);
-          NewValues.push_back(Node->getOperand(i+1));
-          if (Hi.getNode()) {
-            NewValues.push_back(Hi);
-            NewValues.push_back(Node->getOperand(i+1));
-          }
-          break;
-        }
-        case Promote:
-          assert(0 && "Can't promote multiple return value yet!");
-        }
-
-      if (NewValues.size() == Node->getNumOperands())
-        Result = DAG.UpdateNodeOperands(Result, &NewValues[0],NewValues.size());
-      else
-        Result = DAG.getNode(ISD::RET, dl, MVT::Other,
-                             &NewValues[0], NewValues.size());
+      for (unsigned i = 1, e = Node->getNumOperands(); i < e; i += 2) {
+        NewValues.push_back(LegalizeOp(Node->getOperand(i)));
+        NewValues.push_back(Node->getOperand(i+1));
+      }
+      Result = DAG.UpdateNodeOperands(Result, &NewValues[0],NewValues.size());
       break;
     }
     }
 
-    if (Result.getOpcode() == ISD::RET) {
-      switch (TLI.getOperationAction(Result.getOpcode(), MVT::Other)) {
-      default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal: break;
-      case TargetLowering::Custom:
-        Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.getNode()) Result = Tmp1;
-        break;
-      }
+    switch (TLI.getOperationAction(Result.getOpcode(), MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.getNode()) Result = Tmp1;
+      break;
     }
     break;
   case ISD::STORE: {
@@ -2628,8 +2483,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         }
       }
 
-      switch (getTypeAction(ST->getMemoryVT())) {
-      case Legal: {
+      {
         Tmp3 = LegalizeOp(ST->getValue());
         Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
                                         ST->getOffset());
@@ -2663,111 +2517,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         }
         break;
       }
-      case Promote:
-        if (!ST->getMemoryVT().isVector()) {
-          // Truncate the value and store the result.
-          Tmp3 = PromoteOp(ST->getValue());
-          Result = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                     SVOffset, ST->getMemoryVT(),
-                                     isVolatile, Alignment);
-          break;
-        }
-        // Fall thru to expand for vector
-      case Expand: {
-        unsigned IncrementSize = 0;
-        SDValue Lo, Hi;
-
-        // If this is a vector type, then we have to calculate the increment as
-        // the product of the element size in bytes, and the number of elements
-        // in the high half of the vector.
-        if (ST->getValue().getValueType().isVector()) {
-          SDNode *InVal = ST->getValue().getNode();
-          int InIx = ST->getValue().getResNo();
-          MVT InVT = InVal->getValueType(InIx);
-          unsigned NumElems = InVT.getVectorNumElements();
-          MVT EVT = InVT.getVectorElementType();
-
-          // Figure out if there is a simple type corresponding to this Vector
-          // type.  If so, convert to the vector type.
-          MVT TVT = MVT::getVectorVT(EVT, NumElems);
-          if (TLI.isTypeLegal(TVT)) {
-            // Turn this into a normal store of the vector type.
-            Tmp3 = LegalizeOp(ST->getValue());
-            Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                  SVOffset, isVolatile, Alignment);
-            Result = LegalizeOp(Result);
-            break;
-          } else if (NumElems == 1) {
-            // Turn this into a normal store of the scalar type.
-            Tmp3 = ScalarizeVectorOp(ST->getValue());
-            Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                  SVOffset, isVolatile, Alignment);
-            // The scalarized value type may not be legal, e.g. it might require
-            // promotion or expansion.  Relegalize the scalar store.
-            Result = LegalizeOp(Result);
-            break;
-          } else {
-            // Check if we have widen this node with another value
-            std::map<SDValue, SDValue>::iterator I =
-              WidenNodes.find(ST->getValue());
-            if (I != WidenNodes.end()) {
-              Result = StoreWidenVectorOp(ST, Tmp1, Tmp2);
-              break;
-            }
-            else {
-              SplitVectorOp(ST->getValue(), Lo, Hi);
-              IncrementSize = Lo.getNode()->getValueType(0).getVectorNumElements() *
-                              EVT.getSizeInBits()/8;
-            }
-          }
-        } else {
-          ExpandOp(ST->getValue(), Lo, Hi);
-          IncrementSize = Hi.getNode() ? Hi.getValueType().getSizeInBits()/8 : 0;
-
-          if (Hi.getNode() && TLI.isBigEndian())
-            std::swap(Lo, Hi);
-        }
-
-        Lo = DAG.getStore(Tmp1, dl, Lo, Tmp2, ST->getSrcValue(),
-                          SVOffset, isVolatile, Alignment);
-
-        if (Hi.getNode() == NULL) {
-          // Must be int <-> float one-to-one expansion.
-          Result = Lo;
-          break;
-        }
-
-        Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
-                           DAG.getIntPtrConstant(IncrementSize));
-        assert(isTypeLegal(Tmp2.getValueType()) &&
-               "Pointers must be legal!");
-        SVOffset += IncrementSize;
-        Alignment = MinAlign(Alignment, IncrementSize);
-        Hi = DAG.getStore(Tmp1, dl, Hi, Tmp2, ST->getSrcValue(),
-                          SVOffset, isVolatile, Alignment);
-        Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
-        break;
-      }  // case Expand
-      }
     } else {
-      switch (getTypeAction(ST->getValue().getValueType())) {
-      case Legal:
-        Tmp3 = LegalizeOp(ST->getValue());
-        break;
-      case Promote:
-        if (!ST->getValue().getValueType().isVector()) {
-          // We can promote the value, the truncstore will still take care of it.
-          Tmp3 = PromoteOp(ST->getValue());
-          break;
-        }
-        // Vector case falls through to expand
-      case Expand:
-        // Just store the low part.  This may become a non-trunc store, so make
-        // sure to use getTruncStore, not UpdateNodeOperands below.
-        ExpandOp(ST->getValue(), Tmp3, Tmp4);
-        return DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                 SVOffset, MVT::i8, isVolatile, Alignment);
-      }
+      Tmp3 = LegalizeOp(ST->getValue());
 
       MVT StVT = ST->getMemoryVT();
       unsigned StWidth = StVT.getSizeInBits();
@@ -2953,22 +2704,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     return Result;
 
   case ISD::SELECT:
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "It's impossible to expand bools");
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
-      break;
-    case Promote: {
-      assert(!Node->getOperand(0).getValueType().isVector() && "not possible");
-      Tmp1 = PromoteOp(Node->getOperand(0));  // Promote the condition.
-      // Make sure the condition is either zero or one.
-      unsigned BitWidth = Tmp1.getValueSizeInBits();
-      if (!DAG.MaskedValueIsZero(Tmp1,
-                                 APInt::getHighBitsSet(BitWidth, BitWidth-1)))
-        Tmp1 = DAG.getZeroExtendInReg(Tmp1, dl, MVT::i1);
-      break;
-    }
-    }
+    Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
     Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
 
@@ -3231,15 +2967,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         !Node->getValueType(0).isVector())
       Tmp2 = DAG.getShiftAmountOperand(Tmp2);
 
-    switch (getTypeAction(Tmp2.getValueType())) {
-    case Expand: assert(0 && "Not possible");
-    case Legal:
-      Tmp2 = LegalizeOp(Tmp2); // Legalize the RHS.
-      break;
-    case Promote:
-      Tmp2 = PromoteOp(Tmp2);  // Promote the RHS.
-      break;
-    }
+    Tmp2 = LegalizeOp(Tmp2); // Legalize the RHS.
 
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
 
@@ -3402,15 +3130,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
   case ISD::FCOPYSIGN:  // FCOPYSIGN does not require LHS/RHS to match type!
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-      case Expand: assert(0 && "Not possible");
-      case Legal:
-        Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
-        break;
-      case Promote:
-        Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
-        break;
-    }
+    Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
 
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
 
@@ -4014,25 +3734,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       SDValue STyOp = Node->getOperand(2);
       SDValue RndOp = Node->getOperand(3);
       SDValue SatOp = Node->getOperand(4);
-      switch (getTypeAction(Node->getOperand(0).getValueType())) {
-      case Expand: assert(0 && "Shouldn't need to expand other operators here!");
-      case Legal:
-        Tmp1 = LegalizeOp(Node->getOperand(0));
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, DTyOp, STyOp,
-                                        RndOp, SatOp);
-        if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
-            TargetLowering::Custom) {
-          Tmp1 = TLI.LowerOperation(Result, DAG);
-          if (Tmp1.getNode()) Result = Tmp1;
-        }
-        break;
-      case Promote:
-        Result = PromoteOp(Node->getOperand(0));
-        // For FP, make Op1 a i32
-
-        Result = DAG.getConvertRndSat(Op.getValueType(), dl, Result,
-                                      DTyOp, STyOp, RndOp, SatOp, CvtCode);
-        break;
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, DTyOp, STyOp,
+                                      RndOp, SatOp);
+      if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
+          TargetLowering::Custom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     }
@@ -4048,133 +3756,71 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   }
   case ISD::TRUNCATE:
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-      default: assert(0 && "Unknown TRUNCATE legalization operation action!");
-      case TargetLowering::Custom:
-        isCustom = true;
-        // FALLTHROUGH
-      case TargetLowering::Legal:
-        Result = DAG.UpdateNodeOperands(Result, Tmp1);
-        if (isCustom) {
-          Tmp1 = TLI.LowerOperation(Result, DAG);
-          if (Tmp1.getNode()) Result = Tmp1;
-        }
-        break;
-      case TargetLowering::Expand:
-        assert(Result.getValueType().isVector() && "must be vector type");
-        // Unroll the truncate.  We should do better.
-        Result = LegalizeOp(UnrollVectorOp(Result));
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default: assert(0 && "Unknown TRUNCATE legalization operation action!");
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
+    case TargetLowering::Legal:
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
-    case Expand:
-      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-
-      // Since the result is legal, we should just be able to truncate the low
-      // part of the source.
-      Result = DAG.getNode(ISD::TRUNCATE, dl, Node->getValueType(0), Tmp1);
-      break;
-    case Promote:
-      Result = PromoteOp(Node->getOperand(0));
-      Result = DAG.getNode(ISD::TRUNCATE, dl, Op.getValueType(), Result);
+    case TargetLowering::Expand:
+      assert(Result.getValueType().isVector() && "must be vector type");
+      // Unroll the truncate.  We should do better.
+      Result = LegalizeOp(UnrollVectorOp(Result));
       break;
     }
     break;
 
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp1 = LegalizeOp(Node->getOperand(0));
 
-      switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))){
-      default: assert(0 && "Unknown operation action!");
-      case TargetLowering::Custom:
-        isCustom = true;
-        // FALLTHROUGH
-      case TargetLowering::Legal:
-        Result = DAG.UpdateNodeOperands(Result, Tmp1);
-        if (isCustom) {
-          Tmp1 = TLI.LowerOperation(Result, DAG);
-          if (Tmp1.getNode()) Result = Tmp1;
-        }
-        break;
-      case TargetLowering::Promote:
-        Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
-                                       Node->getOpcode() == ISD::FP_TO_SINT,
-                                       dl);
-        break;
-      case TargetLowering::Expand:
-        if (Node->getOpcode() == ISD::FP_TO_UINT) {
-          SDValue True, False;
-          MVT VT =  Node->getOperand(0).getValueType();
-          MVT NVT = Node->getValueType(0);
-          const uint64_t zero[] = {0, 0};
-          APFloat apf = APFloat(APInt(VT.getSizeInBits(), 2, zero));
-          APInt x = APInt::getSignBit(NVT.getSizeInBits());
-          (void)apf.convertFromAPInt(x, false, APFloat::rmNearestTiesToEven);
-          Tmp2 = DAG.getConstantFP(apf, VT);
-          Tmp3 = DAG.getSetCC(dl, TLI.getSetCCResultType(VT),
-                              Node->getOperand(0),
-                              Tmp2, ISD::SETLT);
-          True = DAG.getNode(ISD::FP_TO_SINT, dl, NVT, Node->getOperand(0));
-          False = DAG.getNode(ISD::FP_TO_SINT, dl, NVT,
-                              DAG.getNode(ISD::FSUB, dl, VT,
-                                          Node->getOperand(0), Tmp2));
-          False = DAG.getNode(ISD::XOR, dl, NVT, False,
-                              DAG.getConstant(x, NVT));
-          Result = DAG.getNode(ISD::SELECT, dl, NVT, Tmp3, True, False);
-          break;
-        } else {
-          assert(0 && "Do not know how to expand FP_TO_SINT yet!");
-        }
-        break;
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))){
+    default: assert(0 && "Unknown operation action!");
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
+    case TargetLowering::Legal:
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
-    case Expand: {
-      MVT VT = Op.getValueType();
-      MVT OVT = Node->getOperand(0).getValueType();
-      // Convert ppcf128 to i32
-      if (OVT == MVT::ppcf128 && VT == MVT::i32) {
-        if (Node->getOpcode() == ISD::FP_TO_SINT) {
-          Result = DAG.getNode(ISD::FP_ROUND_INREG, dl, MVT::ppcf128,
-                               Node->getOperand(0), DAG.getValueType(MVT::f64));
-          Result = DAG.getNode(ISD::FP_ROUND, dl, MVT::f64, Result,
-                               DAG.getIntPtrConstant(1));
-          Result = DAG.getNode(ISD::FP_TO_SINT, dl, VT, Result);
-        } else {
-          const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
-          APFloat apf = APFloat(APInt(128, 2, TwoE31));
-          Tmp2 = DAG.getConstantFP(apf, OVT);
-          //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
-          // FIXME: generated code sucks.
-          Result = DAG.getNode(ISD::SELECT_CC, dl, VT, Node->getOperand(0),
-                               Tmp2,
-                               DAG.getNode(ISD::ADD, dl, MVT::i32,
-                                 DAG.getNode(ISD::FP_TO_SINT, dl, VT,
-                                   DAG.getNode(ISD::FSUB, dl, OVT,
-                                                 Node->getOperand(0), Tmp2)),
-                                 DAG.getConstant(0x80000000, MVT::i32)),
-                               DAG.getNode(ISD::FP_TO_SINT, dl, VT,
-                                           Node->getOperand(0)),
-                               DAG.getCondCode(ISD::SETGE));
-        }
-        break;
-      }
-      // Convert f32 / f64 to i32 / i64 / i128.
-      RTLIB::Libcall LC = (Node->getOpcode() == ISD::FP_TO_SINT) ?
-        RTLIB::getFPTOSINT(OVT, VT) : RTLIB::getFPTOUINT(OVT, VT);
-      assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpectd fp-to-int conversion!");
-      SDValue Dummy;
-      Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
+    case TargetLowering::Promote:
+      Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
+                                     Node->getOpcode() == ISD::FP_TO_SINT,
+                                     dl);
       break;
-    }
-    case Promote:
-      Tmp1 = PromoteOp(Node->getOperand(0));
-      Result = DAG.UpdateNodeOperands(Result, LegalizeOp(Tmp1));
-      Result = LegalizeOp(Result);
+    case TargetLowering::Expand:
+      if (Node->getOpcode() == ISD::FP_TO_UINT) {
+        SDValue True, False;
+        MVT VT =  Node->getOperand(0).getValueType();
+        MVT NVT = Node->getValueType(0);
+        const uint64_t zero[] = {0, 0};
+        APFloat apf = APFloat(APInt(VT.getSizeInBits(), 2, zero));
+        APInt x = APInt::getSignBit(NVT.getSizeInBits());
+        (void)apf.convertFromAPInt(x, false, APFloat::rmNearestTiesToEven);
+        Tmp2 = DAG.getConstantFP(apf, VT);
+        Tmp3 = DAG.getSetCC(dl, TLI.getSetCCResultType(VT),
+                            Node->getOperand(0),
+                            Tmp2, ISD::SETLT);
+        True = DAG.getNode(ISD::FP_TO_SINT, dl, NVT, Node->getOperand(0));
+        False = DAG.getNode(ISD::FP_TO_SINT, dl, NVT,
+                            DAG.getNode(ISD::FSUB, dl, VT,
+                                        Node->getOperand(0), Tmp2));
+        False = DAG.getNode(ISD::XOR, dl, NVT, False,
+                            DAG.getConstant(x, NVT));
+        Result = DAG.getNode(ISD::SELECT, dl, NVT, Tmp3, True, False);
+      } else {
+        assert(0 && "Do not know how to expand FP_TO_SINT yet!");
+      }
       break;
     }
     break;
@@ -4188,17 +3834,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = EmitStackConvert(Node->getOperand(0), SrcVT, DstVT, dl);
       break;
     }
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "Shouldn't need to expand other operators here!");
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1);
-      break;
-    case Promote:
-      Tmp1 = PromoteOp(Node->getOperand(0));
-      Result = DAG.getNode(ISD::FP_EXTEND, dl, Op.getValueType(), Tmp1);
-      break;
-    }
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1);
     break;
   }
   case ISD::FP_ROUND: {
@@ -4214,54 +3851,19 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = EmitStackConvert(Node->getOperand(0), DstVT, DstVT, dl);
       break;
     }
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "Shouldn't need to expand other operators here!");
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Node->getOperand(1));
-      break;
-    case Promote:
-      Tmp1 = PromoteOp(Node->getOperand(0));
-      Result = DAG.getNode(ISD::FP_ROUND, dl, Op.getValueType(), Tmp1,
-                           Node->getOperand(1));
-      break;
-    }
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Node->getOperand(1));
     break;
   }
   case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "Shouldn't need to expand other operators here!");
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1);
-      if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
-          TargetLowering::Custom) {
-        Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.getNode()) Result = Tmp1;
-      }
-      break;
-    case Promote:
-      switch (Node->getOpcode()) {
-      case ISD::ANY_EXTEND:
-        Tmp1 = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(), Tmp1);
-        break;
-      case ISD::ZERO_EXTEND:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(), Result);
-        Result = DAG.getZeroExtendInReg(Result, dl,
-                                        Node->getOperand(0).getValueType());
-        break;
-      case ISD::SIGN_EXTEND:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(), Result);
-        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Result.getValueType(),
-                             Result,
-                          DAG.getValueType(Node->getOperand(0).getValueType()));
-        break;
-      }
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1);
+    if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
+        TargetLowering::Custom) {
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.getNode()) Result = Tmp1;
     }
     break;
   case ISD::FP_ROUND_INREG:
