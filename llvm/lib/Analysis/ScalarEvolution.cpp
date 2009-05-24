@@ -596,7 +596,7 @@ static void GroupByComplexity(std::vector<SCEVHandle> &Ops,
 //===----------------------------------------------------------------------===//
 
 /// BinomialCoefficient - Compute BC(It, K).  The result has width W.
-// Assume, K > 0.
+/// Assume, K > 0.
 static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
                                       ScalarEvolution &SE,
                                       const Type* ResultTy) {
@@ -933,7 +933,8 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
   return Result;
 }
 
-// get - Get a canonical add expression, or something simpler if possible.
+/// getAddExpr - Get a canonical add expression, or something simpler if
+/// possible.
 SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty add!");
   if (Ops.size() == 1) return Ops[0];
@@ -1225,6 +1226,8 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
 }
 
 
+/// getMulExpr - Get a canonical multiply expression, or something simpler if
+/// possible.
 SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty mul!");
 #ifndef NDEBUG
@@ -1388,6 +1391,8 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   return Result;
 }
 
+/// getUDivExpr - Get a canonical multiply expression, or something simpler if
+/// possible.
 SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
                                         const SCEVHandle &RHS) {
   assert(getEffectiveSCEVType(LHS->getType()) ==
@@ -1476,8 +1481,8 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
 }
 
 
-/// SCEVAddRecExpr::get - Get a add recurrence expression for the
-/// specified loop.  Simplify the expression as much as possible.
+/// getAddRecExpr - Get an add recurrence expression for the specified loop.
+/// Simplify the expression as much as possible.
 SCEVHandle ScalarEvolution::getAddRecExpr(const SCEVHandle &Start,
                                const SCEVHandle &Step, const Loop *L) {
   std::vector<SCEVHandle> Operands;
@@ -1493,8 +1498,8 @@ SCEVHandle ScalarEvolution::getAddRecExpr(const SCEVHandle &Start,
   return getAddRecExpr(Operands, L);
 }
 
-/// SCEVAddRecExpr::get - Get a add recurrence expression for the
-/// specified loop.  Simplify the expression as much as possible.
+/// getAddRecExpr - Get an add recurrence expression for the specified loop.
+/// Simplify the expression as much as possible.
 SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
                                           const Loop *L) {
   if (Operands.size() == 1) return Operands[0];
@@ -3201,7 +3206,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 }
 
 /// HowFarToZero - Return the number of times a backedge comparing the specified
-/// value to zero will execute.  If not computable, return UnknownValue
+/// value to zero will execute.  If not computable, return UnknownValue.
 SCEVHandle ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // If the value is a constant
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
@@ -3506,8 +3511,8 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
     // If we know that the condition is true in order to enter the loop,
     // then we know that it will run exactly (m-n)/s times. Otherwise, we
-    // only know if will execute (max(m,n)-n)/s times. In both cases, the
-    // division must round up.
+    // only know that it will execute (max(m,n)-n)/s times. In both cases,
+    // the division must round up.
     SCEVHandle End = RHS;
     if (!isLoopGuardedByCond(L,
                              isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,

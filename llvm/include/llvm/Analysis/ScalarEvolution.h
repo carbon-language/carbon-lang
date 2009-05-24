@@ -35,8 +35,8 @@ namespace llvm {
   class ScalarEvolution;
   class TargetData;
 
-  /// SCEV - This class represent an analyzed expression in the program.  These
-  /// are reference counted opaque objects that the client is not allowed to
+  /// SCEV - This class represents an analyzed expression in the program.  These
+  /// are reference-counted opaque objects that the client is not allowed to
   /// do much with directly.
   ///
   class SCEV {
