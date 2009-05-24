@@ -187,7 +187,12 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   ICmpInst *Cond = new ICmpInst(Opcode, CmpIndVar, ExitCnt, "exitcond", BI);
 
   Instruction *OrigCond = cast<Instruction>(BI->getCondition());
-  OrigCond->replaceAllUsesWith(Cond);
+  // It's tempting to use replaceAllUsesWith here to fully replace the old
+  // comparison, but that's not immediately safe, since users of the old
+  // comparison may not be dominated by the new comparison. Instead, just
+  // update the branch to use the new comparison; in the common case this
+  // will make old comparison dead.
+  BI->setCondition(Cond);
   RecursivelyDeleteTriviallyDeadInstructions(OrigCond);
 
   ++NumLFTR;
