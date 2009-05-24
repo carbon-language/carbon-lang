@@ -23,21 +23,21 @@ involved</a> with the Clang community.</p>
 <h2>A Word of Warning</h2>
 
 <p>While this work aims to provide a fully functional C/C++/ObjC front-end, it
-is <em>still early work</em> and is under heavy development. In particular,
-there is no real C++ support yet (this is obviously a big project), and C/ObjC
-support is still missing some minor features. Some of the more notable missing 
-pieces of C support are:</p>
+is still relatively new and under heavy development. Currently we believe clang
+to be very usable as a C and Objective-C compiler, however there is no real C++
+support yet (this is obviously a big project). Additionally, for C and
+Objective-C:</p>
 
 <ol>
   <li>The semantic analyzer does not produce all of the warnings it should.</li>
   <li>We don't consider the API to be stable yet, and reserve the right to
       change fundamental things.</li>
-  <li>The driver is currently implemented in python and is "really slow".</li>
+  <li>Only the X86-32 and X86-64 targets have been well tested.</li>
 </ol>
 
-<p>At this point, C and Objective-C are generally usable for X86-32 and X86-64 
-targets.  If you run into problems, please file bugs in <a 
-href="http://llvm.org/bugs/">LLVM Bugzilla</a> or bring up the issue on the 
+<p>If you run into problems, please file
+bugsin <a href="http://llvm.org/bugs/">LLVM Bugzilla</a> or bring up the issue
+on the
 <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang development 
 mailing list</a>.</p>
 
