@@ -426,7 +426,10 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
            E = BD.getProgram()->end(); I != E; ++I)
       for (Function::const_iterator FI = I->begin(), E = I->end(); FI !=E; ++FI)
         Blocks.push_back(FI);
+    unsigned OldSize = Blocks.size();
     ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks);
+    if (Blocks.size() < OldSize)
+      BD.EmitProgressBitcode("reduced-blocks");
   }
 
   // FIXME: This should use the list reducer to converge faster by deleting
