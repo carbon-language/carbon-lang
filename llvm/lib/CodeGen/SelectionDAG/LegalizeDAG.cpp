@@ -3142,36 +3142,27 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Legal: break;
     case TargetLowering::Expand: {
-      // If this target supports fabs/fneg natively and select is cheap,
-      // do this efficiently.
-      if (!TLI.isSelectExpensive() &&
-          TLI.getOperationAction(ISD::FABS, Tmp1.getValueType()) ==
-          TargetLowering::Legal &&
-          TLI.getOperationAction(ISD::FNEG, Tmp1.getValueType()) ==
-          TargetLowering::Legal) {
-        // Get the sign bit of the RHS.
-        MVT IVT =
-          Tmp2.getValueType() == MVT::f32 ? MVT::i32 : MVT::i64;
-        SDValue SignBit = DAG.getNode(ISD::BIT_CONVERT, dl, IVT, Tmp2);
-        SignBit = DAG.getSetCC(dl, TLI.getSetCCResultType(IVT),
-                               SignBit, DAG.getConstant(0, IVT), ISD::SETLT);
-        // Get the absolute value of the result.
-        SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
-        // Select between the nabs and abs value based on the sign bit of
-        // the input.
-        Result = DAG.getNode(ISD::SELECT, dl, AbsVal.getValueType(), SignBit,
-                             DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(),
-                                         AbsVal),
-                             AbsVal);
-        Result = LegalizeOp(Result);
-        break;
-      }
-
-      // Otherwise, do bitwise ops!
-      MVT NVT =
-        Node->getValueType(0) == MVT::f32 ? MVT::i32 : MVT::i64;
-      Result = ExpandFCOPYSIGNToBitwiseOps(Node, NVT, DAG, TLI);
-      Result = DAG.getNode(ISD::BIT_CONVERT, dl, Node->getValueType(0), Result);
+      assert((Tmp2.getValueType() == MVT::f32 ||
+              Tmp2.getValueType() == MVT::f64) && isTypeLegal(MVT::i32) &&
+              "Ugly special-cased code!");
+      // Get the sign bit of the RHS.
+      SDValue StackPtr = DAG.CreateStackTemporary(Tmp2.getValueType());
+      SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StackPtr, NULL,
+                                0);
+      if (Tmp2.getValueType() == MVT::f64 && TLI.isLittleEndian())
+        StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(),
+                               StackPtr, DAG.getIntPtrConstant(4));
+      SDValue SignBit = DAG.getLoad(MVT::i32, dl, Ch, StackPtr, NULL, 0);
+      SignBit = DAG.getSetCC(dl, TLI.getSetCCResultType(MVT::i32),
+                             SignBit, DAG.getConstant(0, MVT::i32), ISD::SETLT);
+      // Get the absolute value of the result.
+      SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
+      // Select between the nabs and abs value based on the sign bit of
+      // the input.
+      Result = DAG.getNode(ISD::SELECT, dl, AbsVal.getValueType(), SignBit,
+                           DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(),
+                                       AbsVal),
+                           AbsVal);
       Result = LegalizeOp(Result);
       break;
     }
