@@ -250,7 +250,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
     // Iterate over all of the PHI nodes.
     BasicBlock::iterator BBI = ExitBB->begin();
     while ((PN = dyn_cast<PHINode>(BBI++))) {
-
+      if (PN->use_empty())
+        continue; // dead use, don't replace it
       // Iterate over all of the values in all the PHI nodes.
       for (unsigned i = 0; i != NumPreds; ++i) {
         // If the value being merged in is not integer or is not defined
@@ -303,7 +304,6 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // in the loop, so we don't need an LCSSA phi node anymore.
         if (NumPreds == 1) {
           PN->replaceAllUsesWith(ExitVal);
-          Rewriter.clear();
           RecursivelyDeleteTriviallyDeadInstructions(PN);
           break;
         }

@@ -615,7 +615,8 @@ Value *SCEVExpander::expandCodeFor(SCEVHandle SH, const Type *Ty) {
 
 Value *SCEVExpander::expand(const SCEV *S) {
   // Check to see if we already expanded this.
-  std::map<SCEVHandle, AssertingVH<Value> >::iterator I = InsertedExpressions.find(S);
+  std::map<SCEVHandle, AssertingVH<Value> >::iterator I =
+    InsertedExpressions.find(S);
   if (I != InsertedExpressions.end())
     return I->second;
   
