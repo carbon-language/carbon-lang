@@ -110,8 +110,8 @@ namespace llvm {
   private:
     /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
     /// instead of using ptrtoint+arithmetic+inttoptr.
-    Value *expandAddToGEP(const SCEVAddExpr *S, const PointerType *PTy,
-                          const Type *Ty, Value *V);
+    Value *expandAddToGEP(const SCEVHandle *op_begin, const SCEVHandle *op_end,
+                          const PointerType *PTy, const Type *Ty, Value *V);
 
     Value *expand(const SCEV *S);
 

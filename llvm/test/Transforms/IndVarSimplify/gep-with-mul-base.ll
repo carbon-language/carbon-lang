@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
 ; RUN: grep add %t | count 8
-; RUN: grep mul %t | count 9
+; RUN: grep mul %t | count 7
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* nocapture %p) nounwind {
 entry:

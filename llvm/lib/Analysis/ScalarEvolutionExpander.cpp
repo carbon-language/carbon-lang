@@ -144,17 +144,89 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   return BO;
 }
 
+/// FactorOutConstant - Test if S is evenly divisible by Factor, using signed
+/// division. If so, update S with Factor divided out and return true.
+/// TODO: When ScalarEvolution gets a SCEVSDivExpr, this can be made
+/// unnecessary; in its place, just signed-divide Ops[i] by the scale and
+/// check to see if the divide was folded.
+static bool FactorOutConstant(SCEVHandle &S,
+                              const APInt &Factor,
+                              ScalarEvolution &SE) {
+  // Everything is divisible by one.
+  if (Factor == 1)
+    return true;
+
+  // For a Constant, check for a multiple of the given factor.
+  if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
+    if (!C->getValue()->getValue().srem(Factor)) {
+      ConstantInt *CI =
+        ConstantInt::get(C->getValue()->getValue().sdiv(Factor));
+      SCEVHandle Div = SE.getConstant(CI);
+      S = Div;
+      return true;
+    }
+
+  // In a Mul, check if there is a constant operand which is a multiple
+  // of the given factor.
+  if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S))
+    if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
+      if (!C->getValue()->getValue().srem(Factor)) {
+        std::vector<SCEVHandle> NewMulOps(M->getOperands());
+        NewMulOps[0] =
+          SE.getConstant(C->getValue()->getValue().sdiv(Factor));
+        S = SE.getMulExpr(NewMulOps);
+        return true;
+      }
+
+  // In an AddRec, check if both start and step are divisible.
+  if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
+    SCEVHandle Start = A->getStart();
+    if (!FactorOutConstant(Start, Factor, SE))
+      return false;
+    SCEVHandle Step = A->getStepRecurrence(SE);
+    if (!FactorOutConstant(Step, Factor, SE))
+      return false;
+    S = SE.getAddRecExpr(Start, Step, A->getLoop());
+    return true;
+  }
+
+  return false;
+}
+
 /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
-/// instead of using ptrtoint+arithmetic+inttoptr.
-Value *SCEVExpander::expandAddToGEP(const SCEVAddExpr *S,
+/// instead of using ptrtoint+arithmetic+inttoptr. This helps
+/// BasicAliasAnalysis analyze the result. However, it suffers from the
+/// underlying bug described in PR2831. Addition in LLVM currently always
+/// has two's complement wrapping guaranteed. However, the semantics for
+/// getelementptr overflow are ambiguous. In the common case though, this
+/// expansion gets used when a GEP in the original code has been converted
+/// into integer arithmetic, in which case the resulting code will be no
+/// more undefined than it was originally.
+///
+/// Design note: It might seem desirable for this function to be more
+/// loop-aware. If some of the indices are loop-invariant while others
+/// aren't, it might seem desirable to emit multiple GEPs, keeping the
+/// loop-invariant portions of the overall computation outside the loop.
+/// However, there are a few reasons this is not done here. Hoisting simple
+/// arithmetic is a low-level optimization that often isn't very
+/// important until late in the optimization process. In fact, passes
+/// like InstructionCombining will combine GEPs, even if it means
+/// pushing loop-invariant computation down into loops, so even if the
+/// GEPs were split here, the work would quickly be undone. The
+/// LoopStrengthReduction pass, which is usually run quite late (and
+/// after the last InstructionCombining pass), takes care of hoisting
+/// loop-invariant portions of expressions, after considering what
+/// can be folded using target addressing modes.
+///
+Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
+                                    const SCEVHandle *op_end,
                                     const PointerType *PTy,
                                     const Type *Ty,
                                     Value *V) {
   const Type *ElTy = PTy->getElementType();
   SmallVector<Value *, 4> GepIndices;
-  std::vector<SCEVHandle> Ops = S->getOperands();
+  std::vector<SCEVHandle> Ops(op_begin, op_end);
   bool AnyNonZeroIndices = false;
-  Ops.pop_back();
 
   // Decend down the pointer's type and attempt to convert the other
   // operands into GEP indices, at each level. The first index in a GEP
@@ -167,45 +239,27 @@ Value *SCEVExpander::expandAddToGEP(const SCEVAddExpr *S,
     std::vector<SCEVHandle> NewOps;
     std::vector<SCEVHandle> ScaledOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      // Split AddRecs up into parts as either of the parts may be usable
+      // without the other.
+      if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(Ops[i]))
+        if (!A->getStart()->isZero()) {
+          SCEVHandle Start = A->getStart();
+          Ops.push_back(SE.getAddRecExpr(SE.getIntegerSCEV(0, A->getType()),
+                                         A->getStepRecurrence(SE),
+                                         A->getLoop()));
+          Ops[i] = Start;
+          ++e;
+        }
+      // If the scale size is not 0, attempt to factor out a scale.
       if (ElSize != 0) {
-        // For a Constant, check for a multiple of the pointer type's
-        // scale size.
-        if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i]))
-          if (!C->getValue()->getValue().srem(ElSize)) {
-            ConstantInt *CI =
-              ConstantInt::get(C->getValue()->getValue().sdiv(ElSize));
-            SCEVHandle Div = SE.getConstant(CI);
-            ScaledOps.push_back(Div);
-            continue;
-          }
-        // In a Mul, check if there is a constant operand which is a multiple
-        // of the pointer type's scale size.
-        if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(Ops[i]))
-          if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
-            if (!C->getValue()->getValue().srem(ElSize)) {
-              std::vector<SCEVHandle> NewMulOps(M->getOperands());
-              NewMulOps[0] =
-                SE.getConstant(C->getValue()->getValue().sdiv(ElSize));
-              ScaledOps.push_back(SE.getMulExpr(NewMulOps));
-              continue;
-            }
-        // In an Unknown, check if the underlying value is a Mul by a constant
-        // which is equal to the pointer type's scale size.
-        if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Ops[i]))
-          if (BinaryOperator *BO = dyn_cast<BinaryOperator>(U->getValue()))
-            if (BO->getOpcode() == Instruction::Mul)
-              if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->getOperand(1)))
-                if (CI->getValue() == ElSize) {
-                  ScaledOps.push_back(SE.getUnknown(BO->getOperand(0)));
-                  continue;
-                }
-        // If the pointer type's scale size is 1, no scaling is necessary
-        // and any value can be used.
-        if (ElSize == 1) {
-          ScaledOps.push_back(Ops[i]);
+        SCEVHandle Op = Ops[i];
+        if (FactorOutConstant(Op, ElSize, SE)) {
+          ScaledOps.push_back(Op); // Op now has ElSize factored out.
           continue;
         }
       }
+      // If the operand was not divisible, add it to the list of operands
+      // we'll scan next iteration.
       NewOps.push_back(Ops[i]);
     }
     Ops = NewOps;
@@ -292,17 +346,14 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expand(S->getOperand(S->getNumOperands()-1));
 
-  // Turn things like ptrtoint+arithmetic+inttoptr into GEP. This helps
-  // BasicAliasAnalysis analyze the result. However, it suffers from the
-  // underlying bug described in PR2831. Addition in LLVM currently always
-  // has two's complement wrapping guaranteed. However, the semantics for
-  // getelementptr overflow are ambiguous. In the common case though, this
-  // expansion gets used when a GEP in the original code has been converted
-  // into integer arithmetic, in which case the resulting code will be no
-  // more undefined than it was originally.
+  // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
+  // comments on expandAddToGEP for details.
   if (SE.TD)
-    if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
-      return expandAddToGEP(S, PTy, Ty, V);
+    if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
+      const std::vector<SCEVHandle> &Ops = S->getOperands();
+      return expandAddToGEP(Ops.data(), Ops.data() + Ops.size() - 1,
+                            PTy, Ty, V);
+    }
 
   V = InsertNoopCastOfTo(V, Ty);
 
@@ -357,6 +408,27 @@ Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
   return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
 }
 
+/// Move parts of Base into Rest to leave Base with the minimal
+/// expression that provides a pointer operand suitable for a
+/// GEP expansion.
+static void ExposePointerBase(SCEVHandle &Base, SCEVHandle &Rest,
+                              ScalarEvolution &SE) {
+  while (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(Base)) {
+    Base = A->getStart();
+    Rest = SE.getAddExpr(Rest,
+                         SE.getAddRecExpr(SE.getIntegerSCEV(0, A->getType()),
+                                          A->getStepRecurrence(SE),
+                                          A->getLoop()));
+  }
+  if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(Base)) {
+    Base = A->getOperand(A->getNumOperands()-1);
+    std::vector<SCEVHandle> NewAddOps(A->op_begin(), A->op_end());
+    NewAddOps.back() = Rest;
+    Rest = SE.getAddExpr(NewAddOps);
+    ExposePointerBase(Base, Rest, SE);
+  }
+}
+
 Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   const Loop *L = S->getLoop();
@@ -365,8 +437,25 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   if (!S->getStart()->isZero()) {
     std::vector<SCEVHandle> NewOps(S->getOperands());
     NewOps[0] = SE.getIntegerSCEV(0, Ty);
-    Value *Rest = expand(SE.getAddRecExpr(NewOps, L));
-    return expand(SE.getAddExpr(S->getStart(), SE.getUnknown(Rest)));
+    SCEVHandle Rest = SE.getAddRecExpr(NewOps, L);
+
+    // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
+    // comments on expandAddToGEP for details.
+    if (SE.TD) {
+      SCEVHandle Base = S->getStart();
+      SCEVHandle RestArray[1] = Rest;
+      // Dig into the expression to find the pointer base for a GEP.
+      ExposePointerBase(Base, RestArray[0], SE);
+      // If we found a pointer, expand the AddRec with a GEP.
+      if (const PointerType *PTy = dyn_cast<PointerType>(Base->getType())) {
+        Value *StartV = expand(Base);
+        assert(StartV->getType() == PTy && "Pointer type mismatch for GEP!");
+        return expandAddToGEP(RestArray, RestArray+1, PTy, Ty, StartV);
+      }
+    }
+
+    Value *RestV = expand(Rest);
+    return expand(SE.getAddExpr(S->getStart(), SE.getUnknown(RestV)));
   }
 
   // {0,+,1} --> Insert a canonical induction variable into the loop!
