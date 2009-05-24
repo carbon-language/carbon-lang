@@ -490,8 +490,8 @@ namespace llvm {
     /// This method can be used to compute the exit value for a variable defined
     /// in a loop by querying what the value will hold in the parent loop.
     ///
-    /// If this value is not computable at this scope, a SCEVCouldNotCompute
-    /// object is returned.
+    /// In the case that a relevant loop exit value cannot be computed, the
+    /// original value V is returned.
     SCEVHandle getSCEVAtScope(const SCEV *S, const Loop *L);
 
     /// getSCEVAtScope - This is a convenience function which does

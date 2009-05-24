@@ -2521,10 +2521,8 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   SCEVHandle RHS = getSCEV(ExitCond->getOperand(1));
 
   // Try to evaluate any dependencies out of the loop.
-  SCEVHandle Tmp = getSCEVAtScope(LHS, L);
-  if (!isa<SCEVCouldNotCompute>(Tmp)) LHS = Tmp;
-  Tmp = getSCEVAtScope(RHS, L);
-  if (!isa<SCEVCouldNotCompute>(Tmp)) RHS = Tmp;
+  LHS = getSCEVAtScope(LHS, L);
+  RHS = getSCEVAtScope(RHS, L);
 
   // At this point, we would like to compute how many iterations of the 
   // loop the predicate will return true for these inputs.
@@ -2680,8 +2678,7 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
   // Okay, we know we have a (load (gep GV, 0, X)) comparison with a constant.
   // Check to see if X is a loop variant variable value now.
   SCEVHandle Idx = getSCEV(VarIdx);
-  SCEVHandle Tmp = getSCEVAtScope(Idx, L);
-  if (!isa<SCEVCouldNotCompute>(Tmp)) Idx = Tmp;
+  Idx = getSCEVAtScope(Idx, L);
 
   // We can only recognize very limited forms of loop index expressions, in
   // particular, only affine AddRec's like {C1,+,C2}.
@@ -2911,8 +2908,8 @@ ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen)
 /// This method can be used to compute the exit value for a variable defined
 /// in a loop by querying what the value will hold in the parent loop.
 ///
-/// If this value is not computable at this scope, a SCEVCouldNotCompute
-/// object is returned.
+/// In the case that a relevant loop exit value cannot be computed, the
+/// original value V is returned.
 SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
   // FIXME: this should be turned into a virtual method on SCEV!
 
@@ -3016,7 +3013,6 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
     for (unsigned i = 0, e = Comm->getNumOperands(); i != e; ++i) {
       SCEVHandle OpAtScope = getSCEVAtScope(Comm->getOperand(i), L);
       if (OpAtScope != Comm->getOperand(i)) {
-        if (OpAtScope == UnknownValue) return UnknownValue;
         // Okay, at least one of these operands is loop variant but might be
         // foldable.  Build a new instance of the folded commutative expression.
         std::vector<SCEVHandle> NewOps(Comm->op_begin(), Comm->op_begin()+i);
@@ -3024,7 +3020,6 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
 
         for (++i; i != e; ++i) {
           OpAtScope = getSCEVAtScope(Comm->getOperand(i), L);
-          if (OpAtScope == UnknownValue) return UnknownValue;
           NewOps.push_back(OpAtScope);
         }
         if (isa<SCEVAddExpr>(Comm))
@@ -3044,9 +3039,7 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
 
   if (const SCEVUDivExpr *Div = dyn_cast<SCEVUDivExpr>(V)) {
     SCEVHandle LHS = getSCEVAtScope(Div->getLHS(), L);
-    if (LHS == UnknownValue) return LHS;
     SCEVHandle RHS = getSCEVAtScope(Div->getRHS(), L);
-    if (RHS == UnknownValue) return RHS;
     if (LHS == Div->getLHS() && RHS == Div->getRHS())
       return Div;   // must be loop invariant
     return getUDivExpr(LHS, RHS);
@@ -3059,17 +3052,16 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
       // To evaluate this recurrence, we need to know how many times the AddRec
       // loop iterates.  Compute this now.
       SCEVHandle BackedgeTakenCount = getBackedgeTakenCount(AddRec->getLoop());
-      if (BackedgeTakenCount == UnknownValue) return UnknownValue;
+      if (BackedgeTakenCount == UnknownValue) return AddRec;
 
       // Then, evaluate the AddRec.
       return AddRec->evaluateAtIteration(BackedgeTakenCount, *this);
     }
-    return UnknownValue;
+    return AddRec;
   }
 
   if (const SCEVZeroExtendExpr *Cast = dyn_cast<SCEVZeroExtendExpr>(V)) {
     SCEVHandle Op = getSCEVAtScope(Cast->getOperand(), L);
-    if (Op == UnknownValue) return Op;
     if (Op == Cast->getOperand())
       return Cast;  // must be loop invariant
     return getZeroExtendExpr(Op, Cast->getType());
@@ -3077,7 +3069,6 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
 
   if (const SCEVSignExtendExpr *Cast = dyn_cast<SCEVSignExtendExpr>(V)) {
     SCEVHandle Op = getSCEVAtScope(Cast->getOperand(), L);
-    if (Op == UnknownValue) return Op;
     if (Op == Cast->getOperand())
       return Cast;  // must be loop invariant
     return getSignExtendExpr(Op, Cast->getType());
@@ -3085,7 +3076,6 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
 
   if (const SCEVTruncateExpr *Cast = dyn_cast<SCEVTruncateExpr>(V)) {
     SCEVHandle Op = getSCEVAtScope(Cast->getOperand(), L);
-    if (Op == UnknownValue) return Op;
     if (Op == Cast->getOperand())
       return Cast;  // must be loop invariant
     return getTruncateExpr(Op, Cast->getType());
@@ -3238,8 +3228,6 @@ SCEVHandle ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 
     // Get the initial value for the loop.
     SCEVHandle Start = getSCEVAtScope(AddRec->getStart(), L->getParentLoop());
-    if (isa<SCEVCouldNotCompute>(Start)) return UnknownValue;
-
     SCEVHandle Step = getSCEVAtScope(AddRec->getOperand(1), L->getParentLoop());
 
     if (const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step)) {
@@ -3805,13 +3793,12 @@ void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
       if (const Loop *L = LI->getLoopFor((*I).getParent())) {
         OS << "Exits: ";
         SCEVHandle ExitValue = SE.getSCEVAtScope(&*I, L->getParentLoop());
-        if (isa<SCEVCouldNotCompute>(ExitValue)) {
+        if (!ExitValue->isLoopInvariant(L)) {
           OS << "<<Unknown>>";
         } else {
           OS << *ExitValue;
         }
       }
-
 
       OS << "\n";
     }

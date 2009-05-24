@@ -275,10 +275,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // Okay, this instruction has a user outside of the current loop
         // and varies predictably *inside* the loop.  Evaluate the value it
         // contains when the loop exits, if possible.
-        SCEVHandle SH = SE->getSCEV(Inst);
-        SCEVHandle ExitValue = SE->getSCEVAtScope(SH, L->getParentLoop());
-        if (isa<SCEVCouldNotCompute>(ExitValue) ||
-            !ExitValue->isLoopInvariant(L))
+        SCEVHandle ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
+        if (!ExitValue->isLoopInvariant(L))
           continue;
 
         Changed = true;
