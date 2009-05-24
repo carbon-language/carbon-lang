@@ -56,7 +56,6 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
   CodeGenOpt::Level OptLevel;
-  bool TypesNeedLegalizing;
 
   // Libcall insertion helpers.
 
@@ -138,8 +137,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   }
 
 public:
-  explicit SelectionDAGLegalize(SelectionDAG &DAG, bool TypesNeedLegalizing,
-                                CodeGenOpt::Level ol);
+  SelectionDAGLegalize(SelectionDAG &DAG, CodeGenOpt::Level ol);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
@@ -351,9 +349,9 @@ SelectionDAGLegalize::ShuffleWithNarrowerEltType(MVT NVT, MVT VT,  DebugLoc dl,
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
-                                           bool types, CodeGenOpt::Level ol)
+                                           CodeGenOpt::Level ol)
   : TLI(dag.getTargetLoweringInfo()), DAG(dag), OptLevel(ol),
-    TypesNeedLegalizing(types), ValueTypeActions(TLI.getValueTypeActions()) {
+    ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
 }
@@ -491,13 +489,12 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
 /// HandleOp - Legalize, Promote, Widen, or Expand the specified operand as
 /// appropriate for its type.
 void SelectionDAGLegalize::HandleOp(SDValue Op) {
+  // Don't touch TargetConstants
+  if (Op.getOpcode() == ISD::TargetConstant)
+    return;
   MVT VT = Op.getValueType();
-  // If the type legalizer was run then we should never see any illegal result
-  // types here except for target constants (the type legalizer does not touch
-  // those) or for build vector used as a mask for a vector shuffle.
-  assert((TypesNeedLegalizing || getTypeAction(VT) == Legal ||
-          IsLegalizingCallArgs || Op.getOpcode() == ISD::TargetConstant) &&
-         "Illegal type introduced after type legalization?");
+  // We should never see any illegal result types here.
+  assert(isTypeLegal(VT) && "Illegal type introduced after type legalization?");
   switch (getTypeAction(VT)) {
   default: assert(0 && "Bad type action!");
   case Legal:   (void)LegalizeOp(Op); break;
@@ -986,22 +983,17 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   if (Op.getOpcode() == ISD::TargetConstant) // Allow illegal target nodes.
     return Op;
 
-  assert(isTypeLegal(Op.getValueType()) &&
-         "Caller should expand or promote operands that are not legal!");
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
 
-  // If this operation defines any values that cannot be represented in a
-  // register on this target, make sure to expand or promote them.
-  if (Node->getNumValues() > 1) {
-    for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-      if (getTypeAction(Node->getValueType(i)) != Legal) {
-        HandleOp(Op.getValue(i));
-        assert(LegalizedNodes.count(Op) &&
-               "Handling didn't add legal operands!");
-        return LegalizedNodes[Op];
-      }
-  }
+  for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+    assert(getTypeAction(Node->getValueType(i)) == Legal &&
+           "Unexpected illegal type!");
+
+  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+    assert((isTypeLegal(Node->getOperand(i).getValueType()) || 
+            Node->getOperand(i).getOpcode() == ISD::TargetConstant) &&
+           "Unexpected illegal type!");
 
   // Note that LegalizeOp may be reentered even from single-use nodes, which
   // means that we always must cache transformed nodes.
@@ -1744,9 +1736,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
 
   case ISD::EXTRACT_SUBVECTOR:
-    Tmp1 = Node->getOperand(0);
+    Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+
     switch (TLI.getOperationAction(ISD::EXTRACT_SUBVECTOR,
                                    Node->getValueType(0))) {
     default: assert(0 && "Unknown operation action!");
@@ -3990,47 +3983,17 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   }
   case ISD::BIT_CONVERT:
-    if (!isTypeLegal(Node->getOperand(0).getValueType())) {
+    switch (TLI.getOperationAction(ISD::BIT_CONVERT,
+                                   Node->getOperand(0).getValueType())) {
+    default: assert(0 && "Unknown operation action!");
+    case TargetLowering::Expand:
       Result = EmitStackConvert(Node->getOperand(0), Node->getValueType(0),
                                 Node->getValueType(0), dl);
-    } else if (Op.getOperand(0).getValueType().isVector()) {
-      // The input has to be a vector type, we have to either scalarize it, pack
-      // it, or convert it based on whether the input vector type is legal.
-      SDNode *InVal = Node->getOperand(0).getNode();
-      int InIx = Node->getOperand(0).getResNo();
-      unsigned NumElems = InVal->getValueType(InIx).getVectorNumElements();
-      MVT EVT = InVal->getValueType(InIx).getVectorElementType();
-
-      // Figure out if there is a simple type corresponding to this Vector
-      // type.  If so, convert to the vector type.
-      MVT TVT = MVT::getVectorVT(EVT, NumElems);
-      if (TLI.isTypeLegal(TVT)) {
-        // Turn this into a bit convert of the vector input.
-        Tmp1 = LegalizeOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::BIT_CONVERT, dl, Node->getValueType(0), Tmp1);
-        break;
-      } else if (NumElems == 1) {
-        // Turn this into a bit convert of the scalar input.
-        Result = DAG.getNode(ISD::BIT_CONVERT, dl, Node->getValueType(0),
-                             ScalarizeVectorOp(Node->getOperand(0)));
-        break;
-      } else {
-        // FIXME: UNIMP!  Store then reload
-        assert(0 && "Cast from unsupported vector type not implemented yet!");
-      }
-    } else {
-      switch (TLI.getOperationAction(ISD::BIT_CONVERT,
-                                     Node->getOperand(0).getValueType())) {
-      default: assert(0 && "Unknown operation action!");
-      case TargetLowering::Expand:
-        Result = EmitStackConvert(Node->getOperand(0), Node->getValueType(0),
-                                  Node->getValueType(0), dl);
-        break;
-      case TargetLowering::Legal:
-        Tmp1 = LegalizeOp(Node->getOperand(0));
-        Result = DAG.UpdateNodeOperands(Result, Tmp1);
-        break;
-      }
+      break;
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      break;
     }
     break;
   case ISD::CONVERT_RNDSAT: {
@@ -4243,13 +4206,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     MVT SrcVT = Op.getOperand(0).getValueType();
     if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
       if (SrcVT == MVT::ppcf128) {
-        SDValue Lo;
-        ExpandOp(Node->getOperand(0), Lo, Result);
-        // Round it the rest of the way (e.g. to f32) if needed.
-        if (DstVT!=MVT::f64)
-          Result = DAG.getNode(ISD::FP_ROUND, dl,
-                               DstVT, Result, Op.getOperand(1));
-        break;
+        // FIXME: Figure out how to extract the double without
+        // help from type legalization
       }
       // The only other way we can lower this is to turn it into a STORE,
       // LOAD pair, targetting a temporary location (a stack slot).
@@ -4533,6 +4491,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 /// have the correct bits for the low portion of the register, but no guarantee
 /// is made about the top bits: it may be zero, sign-extended, or garbage.
 SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
+  assert(0 && "This should be dead!");
   MVT VT = Op.getValueType();
   MVT NVT = TLI.getTypeToTransformTo(VT);
   assert(getTypeAction(VT) == Promote &&
@@ -5057,29 +5016,11 @@ SDValue SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDValue Op) {
     break;
   }
 
-  if (NumElems == 1) {
+  if (NumElems == 1)
     // This must be an access of the only element.  Return it.
-    Op = ScalarizeVectorOp(Vec);
-  } else if (!TLI.isTypeLegal(TVT) && isa<ConstantSDNode>(Idx)) {
-    unsigned NumLoElts =  1 << Log2_32(NumElems-1);
-    ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
-    SDValue Lo, Hi;
-    SplitVectorOp(Vec, Lo, Hi);
-    if (CIdx->getZExtValue() < NumLoElts) {
-      Vec = Lo;
-    } else {
-      Vec = Hi;
-      Idx = DAG.getConstant(CIdx->getZExtValue() - NumLoElts,
-                            Idx.getValueType());
-    }
-
-    // It's now an extract from the appropriate high or low part.  Recurse.
-    Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
-    Op = ExpandEXTRACT_VECTOR_ELT(Op);
-  } else {
-    Op = ExpandExtractFromVectorThroughStack(Op);
-  }
-  return Op;
+    return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Vec);
+  else
+    return ExpandExtractFromVectorThroughStack(Op);
 }
 
 SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
@@ -6448,6 +6389,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
 /// ExpandedNodes map is filled in for any results that are expanded, and the
 /// Lo/Hi values are returned.
 void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
+  assert(0 && "This should be dead!");
   MVT VT = Op.getValueType();
   MVT NVT = TLI.getTypeToTransformTo(VT);
   SDNode *Node = Op.getNode();
@@ -7503,6 +7445,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
 /// two smaller values, still of vector type.
 void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
                                          SDValue &Hi) {
+  assert(0 && "This should be dead!");
   assert(Op.getValueType().isVector() && "Cannot split non-vector type!");
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
@@ -7857,6 +7800,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
 /// (e.g. v1f32), convert it into the equivalent operation that returns a
 /// scalar (e.g. f32) value.
 SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
+  assert(0 && "This should be dead!");
   assert(Op.getValueType().isVector() && "Bad ScalarizeVectorOp invocation!");
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
@@ -8026,6 +7970,7 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
 
 
 SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
+  assert(0 && "This should be dead!");
   std::map<SDValue, SDValue>::iterator I = WidenNodes.find(Op);
   if (I != WidenNodes.end()) return I->second;
 
@@ -8643,6 +8588,6 @@ void SelectionDAG::Legalize(bool TypesNeedLegalizing,
                             CodeGenOpt::Level OptLevel) {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(*this, TypesNeedLegalizing, OptLevel).LegalizeDAG();
+  SelectionDAGLegalize(*this, OptLevel).LegalizeDAG();
 }
 
