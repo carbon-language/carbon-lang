@@ -223,7 +223,11 @@ void TokenLexer::ExpandFunctionArguments() {
       // If the next token was supposed to get leading whitespace, ensure it has
       // it now.
       if (CurTok.hasLeadingSpace() || NextTokGetsSpace) {
-        ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
+        // Exception: the RHS of a paste doesn't get whitespace. This allows
+        // constructs like conacatenating a period and an identifer to work
+        // correctly in assembler-with-cpp.
+        if (!PasteBefore)
+          ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
         NextTokGetsSpace = false;
       }
       continue;
