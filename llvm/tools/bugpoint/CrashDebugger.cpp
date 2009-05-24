@@ -37,6 +37,10 @@ namespace {
   KeepMain("keep-main",
            cl::desc("Force function reduction to keep main"),
            cl::init(false));
+  cl::opt<bool>
+  NoGlobalRM ("disable-global-remove",
+         cl::desc("Do not remove global variables"),
+         cl::init(false));
 }
 
 namespace llvm {
@@ -344,7 +348,8 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   // See if we can get away with nuking some of the global variable initializers
   // in the program...
-  if (BD.getProgram()->global_begin() != BD.getProgram()->global_end()) {
+  if (!NoGlobalRM &&
+      BD.getProgram()->global_begin() != BD.getProgram()->global_end()) {
     // Now try to reduce the number of global variable initializers in the
     // module to something small.
     Module *M = CloneModule(BD.getProgram());
