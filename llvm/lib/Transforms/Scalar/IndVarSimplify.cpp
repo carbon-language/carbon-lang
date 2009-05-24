@@ -298,6 +298,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // in the loop, so we don't need an LCSSA phi node anymore.
         if (NumPreds == 1) {
           PN->replaceAllUsesWith(ExitVal);
+          Rewriter.clear();
           RecursivelyDeleteTriviallyDeadInstructions(PN);
           break;
         }
@@ -418,6 +419,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Reorder instructions to avoid use-before-def conditions.
   FixUsesBeforeDefs(L, Rewriter);
 
+  Rewriter.clear();
   // For completeness, inform IVUsers of the IV use in the newly-created
   // loop exit test instruction.
   if (NewICmp)

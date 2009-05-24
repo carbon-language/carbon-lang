@@ -28,7 +28,7 @@ namespace llvm {
   /// memory.
   struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
-    std::map<SCEVHandle, Value*> InsertedExpressions;
+    std::map<SCEVHandle, AssertingVH<Value> > InsertedExpressions;
     std::set<Value*> InsertedValues;
 
     BasicBlock::iterator InsertPt;
