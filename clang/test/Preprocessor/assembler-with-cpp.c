@@ -58,14 +58,20 @@
 // 
 #define T6() T6 #nostring
 #define T7(x) T7 #x
-T6()
-T7(foo)
-// RUN: grep 'T6 #nostring' %t &&
-// RUN: grep 'T7 "foo"' %t &&
+8: T6()
+9: T7(foo)
+// RUN: grep '8: T6 #nostring' %t &&
+// RUN: grep '9: T7 "foo"' %t &&
 
 // Concatenation with period doesn't leave a space
-// RUN: grep -F '.T8' %t &&
+// RUN: grep -F '10: .T8' %t &&
 #define T8(A,B) A ## B
-T8(.,T8)
+10: T8(.,T8)
+
+
+// This should not crash.
+// RUN: grep '11: #0' %t &&
+#define T11(a) #0
+11: T11(b)
 
 // RUN: true

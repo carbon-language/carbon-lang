@@ -1359,15 +1359,15 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     }
     
   } else {
-    // Otherwise, read the body of a function-like macro.  This has to validate
-    // the # (stringize) operator.
+    // Otherwise, read the body of a function-like macro.  While we are at it,
+    // check C99 6.10.3.2p1: ensure that # operators are followed by macro
+    // parameters in function-like macro expansions.
     while (Tok.isNot(tok::eom)) {
       LastTok = Tok;
-      MI->AddTokenToBody(Tok);
 
-      // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
-      // parameters in function-like macro expansions.
       if (Tok.isNot(tok::hash)) {
+        MI->AddTokenToBody(Tok);
+        
         // Get the next token of the macro.
         LexUnexpandedToken(Tok);
         continue;
@@ -1376,22 +1376,31 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
      
-      // Check for a valid macro arg identifier, unless this is a .S file in
-      // which case it is still added to the body.
-      if ((!Tok.getIdentifierInfo() ||
-           MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) && 
-          !getLangOptions().AsmPreprocessor) {
-        Diag(Tok, diag::err_pp_stringize_not_parameter);
-        ReleaseMacroInfo(MI);
-        
-        // Disable __VA_ARGS__ again.
-        Ident__VA_ARGS__->setIsPoisoned(true);
-        return;
+      // Check for a valid macro arg identifier.
+      if (Tok.getIdentifierInfo() == 0 ||
+          MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
+
+        // If this is assembler-with-cpp mode, we accept random gibberish after
+        // the '#' because '#' is often a comment character.  However, change
+        // the kind of the token to tok::unknown so that the preprocessor isn't
+        // confused.
+        if (getLangOptions().AsmPreprocessor && Tok.isNot(tok::eom)) {
+          LastTok.setKind(tok::unknown);
+        } else {
+          Diag(Tok, diag::err_pp_stringize_not_parameter);
+          ReleaseMacroInfo(MI);
+          
+          // Disable __VA_ARGS__ again.
+          Ident__VA_ARGS__->setIsPoisoned(true);
+          return;
+        }
       }
       
-      // Things look ok, add the param name token to the macro.
+      // Things look ok, add the '#' and param name tokens to the macro.
+      MI->AddTokenToBody(LastTok);
       MI->AddTokenToBody(Tok);
-
+      LastTok = Tok;
+      
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
     }
