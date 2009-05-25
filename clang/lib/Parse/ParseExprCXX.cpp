@@ -1088,12 +1088,17 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
     ParseAs = CompoundLiteral;
   } else {
     bool NotCastExpr;
-    // Try parsing the cast-expression that may follow.
-    // If it is not a cast-expression, NotCastExpr will be true and no token
-    // will be consumed.
-    Result = ParseCastExpression(false/*isUnaryExpression*/,
-                                 false/*isAddressofOperand*/,
-                                 NotCastExpr);
+    // FIXME: Special-case ++ and --: "(S())++;" is not a cast-expression
+    if (Tok.is(tok::l_paren) && NextToken().is(tok::r_paren)) {
+      NotCastExpr = true;
+    } else {
+      // Try parsing the cast-expression that may follow.
+      // If it is not a cast-expression, NotCastExpr will be true and no token
+      // will be consumed.
+      Result = ParseCastExpression(false/*isUnaryExpression*/,
+                                   false/*isAddressofOperand*/,
+                                   NotCastExpr);
+    }
 
     // If we parsed a cast-expression, it's really a type-id, otherwise it's
     // an expression.
