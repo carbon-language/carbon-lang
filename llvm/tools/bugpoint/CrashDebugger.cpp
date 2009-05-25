@@ -150,7 +150,7 @@ ReduceCrashingGlobalVariables::TestGlobalVariables(
   // playing with...
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
-    if (I->hasInitializer()) {
+    if (I->hasInitializer() && !GVSet.count(I)) {
       I->setInitializer(0);
       I->setLinkage(GlobalValue::ExternalLinkage);
     }
