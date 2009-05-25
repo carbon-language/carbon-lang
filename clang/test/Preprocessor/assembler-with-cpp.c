@@ -64,7 +64,7 @@ T7(foo)
 // RUN: grep 'T7 "foo"' %t &&
 
 // Concatenation with period doesn't leave a space
-// RUN: grep '.T8' %t &&
+// RUN: grep -F '.T8' %t &&
 #define T8(A,B) A ## B
 T8(.,T8)
 
