@@ -1883,3 +1883,17 @@ On Nehalem, it may even be cheaper to just use movups when unaligned than to
 fall back to lower-granularity chunks.
 
 //===---------------------------------------------------------------------===//
+
+Implement processor-specific optimizations for parity with GCC on these
+processors.  GCC does two optimizations:
+
+1. ix86_pad_returns inserts a noop before ret instructions if immediately
+   preceeded by a conditional branch or is the target of a jump.
+2. ix86_avoid_jump_misspredicts inserts noops in cases where a 16-byte block of
+   code contains more than 3 branches.
+   
+The first one is done for all AMDs, Core2, and "Generic"
+The second one is done for: Atom, Pentium Pro, all AMDs, Pentium 4, Nocona,
+  Core 2, and "Generic"
+
+//===---------------------------------------------------------------------===//
