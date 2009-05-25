@@ -7,7 +7,7 @@ if [ $# != 1 ]; then
     exit 1
 fi
 
-for i in $(zseq 0 $1); do 
+for i in $(seq 0 $1); do 
     if (! make test.$i.report &> /dev/null); then 
         echo "FAIL: $i";
     fi; 

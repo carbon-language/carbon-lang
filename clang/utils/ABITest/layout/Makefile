@@ -12,7 +12,7 @@ TIMEOUT := 5
 CFLAGS := -std=gnu99
 
 X_COMPILER := llvm-gcc
-Y_COMPILER := xcc -ccc-clang
+Y_COMPILER := clang
 CC := gcc
 
 ifeq (0, 0)

@@ -36,7 +36,7 @@ test.%.report: temps/test.%.xx.diff temps/test.%.xy.diff temps/test.%.yx.diff te
 			ok=0;\
 		fi; \
 	done; \
-	if [ $$ok == 1 ]; then \
+	if [ $$ok -eq 1 ]; then \
 		true; \
 	else \
 		false; \

@@ -7,6 +7,6 @@ if [ $# != 1 ]; then
     exit 1
 fi
 
-CPUS=$(sysctl -n hw.ncpu)
+CPUS=2
 make -j $CPUS \
-  $(for i in $(zseq 0 $1); do echo test.$i.report; done) -k
+  $(for i in $(seq 0 $1); do echo test.$i.report; done) -k
