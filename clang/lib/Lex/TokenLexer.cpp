@@ -220,16 +220,21 @@ void TokenLexer::ExpandFunctionArguments() {
       
       ResultToks.append(ArgToks, ArgToks+NumToks);
       
-      // If the next token was supposed to get leading whitespace, ensure it has
-      // it now.
-      if (CurTok.hasLeadingSpace() || NextTokGetsSpace) {
-        // Exception: the RHS of a paste doesn't get whitespace. This allows
-        // constructs like conacatenating a period and an identifer to work
-        // correctly in assembler-with-cpp.
-        if (!PasteBefore)
-          ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
-        NextTokGetsSpace = false;
-      }
+      // If this token (the macro argument) was supposed to get leading
+      // whitespace, transfer this information onto the first token of the
+      // expansion.
+      //
+      // Do not do this if the paste operator occurs before the macro argument,
+      // as in "A ## MACROARG".  In valid code, the first token will get
+      // smooshed onto the preceding one anyway (forming AMACROARG).  In
+      // assembler-with-cpp mode, invalid pastes are allowed through: in this
+      // case, we do not want the extra whitespace to be added.  For example,
+      // we want ". ## foo" -> ".foo" not ". foo".
+      if ((CurTok.hasLeadingSpace() || NextTokGetsSpace) &&
+          !PasteBefore)
+        ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
+      
+      NextTokGetsSpace = false;
       continue;
     }
     
