@@ -793,9 +793,10 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull, const CallExpr *TheCall)
 {
   for (NonNullAttr::iterator i = NonNull->begin(), e = NonNull->end();
        i != e; ++i) {
-    const Expr *ArgExpr = TheCall->getArg(*i)->IgnoreParenCasts();
+    const Expr *ArgExpr = TheCall->getArg(*i);
     if (ArgExpr->isNullPointerConstant(Context))
-      Diag(ArgExpr->getLocStart(), diag::warn_null_arg);
+      Diag(TheCall->getCallee()->getLocStart(), diag::warn_null_arg)
+        << ArgExpr->getSourceRange();
   }
 }
 
