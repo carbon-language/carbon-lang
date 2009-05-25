@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains enumerations amd support routines for ARM build attributes
+// This file contains enumerations and support routines for ARM build attributes
 // as defined in ARM ABI addenda document (ABI release 2.07).
 //
 //===----------------------------------------------------------------------===//
