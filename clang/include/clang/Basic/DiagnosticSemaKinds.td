@@ -1624,7 +1624,8 @@ def warn_printf_invalid_conversion : Warning<
 def warn_printf_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
 def warn_null_arg : Warning<
-  "argument is null where non-null is required">, InGroup<NonNull>;
+  "null passed to a callee which requires a non-null argument">,
+  InGroup<NonNull>;
 def warn_printf_empty_format_string : Warning<
   "format string is empty">, InGroup<FormatZeroLength>;
 def warn_printf_format_string_is_wide_literal : Warning<
