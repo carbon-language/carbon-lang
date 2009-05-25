@@ -202,9 +202,17 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      // If alias analysis can tell that this store is guaranteed to not modify
+      // the query pointer, ignore it.  Use getModRefInfo to handle cases where
+      // the query pointer points to constant memory etc.
+      if (AA->getModRefInfo(SI, MemPtr, MemSize) == AliasAnalysis::NoModRef)
+        continue;
+
+      // Ok, this store might clobber the query pointer.  Check to see if it is
+      // a must alias: in this case, we want to return this as a def.
       Value *Pointer = SI->getPointerOperand();
       uint64_t PointerSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
-
+      
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R =
         AA->alias(Pointer, PointerSize, MemPtr, MemSize);
