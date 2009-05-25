@@ -2,6 +2,8 @@
 // Random ideas for the X86 backend.
 //===---------------------------------------------------------------------===//
 
+We should add support for the "movbe" instruction, which does a byte-swapping
+copy (3-addr bswap + memory support?)  This is available on Atom processors.
 
 //===---------------------------------------------------------------------===//
 
