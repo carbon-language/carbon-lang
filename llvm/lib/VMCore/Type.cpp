@@ -322,15 +322,15 @@ FunctionType::FunctionType(const Type *Result,
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
   assert(isValidReturnType(Result) && "invalid return type for function");
-    
-    
+
+
   bool isAbstract = Result->isAbstract();
   new (&ContainedTys[0]) PATypeHandle(Result, this);
 
   for (unsigned i = 0; i != Params.size(); ++i) {
     assert((Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])) &&
            "Function arguments must be value types!");
-    new (&ContainedTys[i+1]) PATypeHandle(Params[i],this);
+    new (&ContainedTys[i+1]) PATypeHandle(Params[i], this);
     isAbstract |= Params[i]->isAbstract();
   }
 
@@ -345,8 +345,10 @@ StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
   setSubclassData(isPacked);
   bool isAbstract = false;
   for (unsigned i = 0; i < Types.size(); ++i) {
-    assert(Types[i] != Type::VoidTy && "Void type for structure field!!");
-     new (&ContainedTys[i]) PATypeHandle(Types[i], this);
+    assert(Types[i] && "<null> type for structure field!");
+    assert(Types[i] != Type::VoidTy && "Void type for structure field!");
+    assert(Types[i] != Type::LabelTy && "Label type for structure field!");
+    new (&ContainedTys[i]) PATypeHandle(Types[i], this);
     isAbstract |= Types[i]->isAbstract();
   }
 
@@ -1038,7 +1040,9 @@ static ManagedStatic<TypeMap<ArrayValType, ArrayType> > ArrayTypes;
 
 
 ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
-  assert(ElementType && "Can't get array of null types!");
+  assert(ElementType && "Can't get array of <null> types!");
+  assert(ElementType != Type::VoidTy && "Array of void is not valid!");
+  assert(ElementType != Type::LabelTy && "Array of labels is not valid!");
 
   ArrayValType AVT(ElementType, NumElements);
   ArrayType *AT = ArrayTypes->get(AVT);
@@ -1082,7 +1086,7 @@ static ManagedStatic<TypeMap<VectorValType, VectorType> > VectorTypes;
 
 
 VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
-  assert(ElementType && "Can't get vector of null types!");
+  assert(ElementType && "Can't get vector of <null> types!");
 
   VectorValType PVT(ElementType, NumElements);
   VectorType *PT = VectorTypes->get(PVT);
