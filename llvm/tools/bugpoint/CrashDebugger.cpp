@@ -342,6 +342,82 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   return false;
 }
 
+namespace {
+  /// ReduceCrashingInstructions reducer - This works by removing the specified
+  /// non-terminator instructions and replacing them with undef.
+  ///
+  class ReduceCrashingInstructions : public ListReducer<const Instruction*> {
+    BugDriver &BD;
+    bool (*TestFn)(BugDriver &, Module *);
+  public:
+    ReduceCrashingInstructions(BugDriver &bd, bool (*testFn)(BugDriver &,
+                                                             Module *))
+      : BD(bd), TestFn(testFn) {}
+
+    virtual TestResult doTest(std::vector<const Instruction*> &Prefix,
+                              std::vector<const Instruction*> &Kept) {
+      if (!Kept.empty() && TestInsts(Kept))
+        return KeepSuffix;
+      if (!Prefix.empty() && TestInsts(Prefix))
+        return KeepPrefix;
+      return NoFailure;
+    }
+
+    bool TestInsts(std::vector<const Instruction*> &Prefix);
+  };
+}
+
+bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
+                                           &Insts) {
+  // Clone the program to try hacking it apart...
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *M = CloneModule(BD.getProgram(), ValueMap);
+
+  // Convert list to set for fast lookup...
+  SmallPtrSet<Instruction*, 64> Instructions;
+  for (unsigned i = 0, e = Insts.size(); i != e; ++i) {
+    assert(!isa<TerminatorInst>(Insts[i]));
+    Instructions.insert(cast<Instruction>(ValueMap[Insts[i]]));
+  }
+
+  std::cout << "Checking for crash with only " << Instructions.size();
+  if (Instructions.size() == 1)
+    std::cout << " instruction: ";
+  else
+    std::cout << " instructions: ";
+
+  for (Module::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
+    for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE; ++FI)
+      for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E;) {
+        Instruction *Inst = I++;
+        if (!Instructions.count(Inst) && !isa<TerminatorInst>(Inst)) {
+          if (Inst->getType() != Type::VoidTy)
+            Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
+          Inst->eraseFromParent();
+        }
+      }
+
+  // Verify that this is still valid.
+  PassManager Passes;
+  Passes.add(createVerifierPass());
+  Passes.run(*M);
+
+  // Try running on the hacked up program...
+  if (TestFn(BD, M)) {
+    BD.setNewProgram(M);      // It crashed, keep the trimmed version...
+
+    // Make sure to use instruction pointers that point into the now-current
+    // module, and that they don't include any deleted blocks.
+    Insts.clear();
+    for (SmallPtrSet<Instruction*, 64>::const_iterator I = Instructions.begin(),
+             E = Instructions.end(); I != E; ++I)
+      Insts.push_back(*I);
+    return true;
+  }
+  delete M;  // It didn't crash, try something else.
+  return false;
+}
+
 /// DebugACrash - Given a predicate that determines whether a component crashes
 /// on a program, try to destructively reduce the program while still keeping
 /// the predicate true.
@@ -430,6 +506,22 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks);
     if (Blocks.size() < OldSize)
       BD.EmitProgressBitcode("reduced-blocks");
+  }
+
+  // Attempt to delete instructions using bisection. This should help out nasty
+  // cases with large basic blocks where the problem is at one end.
+  if (!BugpointIsInterrupted) {
+    std::vector<const Instruction*> Insts;
+    for (Module::const_iterator MI = BD.getProgram()->begin(),
+           ME = BD.getProgram()->end(); MI != ME; ++MI)
+      for (Function::const_iterator FI = MI->begin(), FE = MI->end(); FI != FE;
+           ++FI)
+        for (BasicBlock::const_iterator I = FI->begin(), E = FI->end();
+             I != E; ++I)
+          if (!isa<TerminatorInst>(I))
+            Insts.push_back(I);
+
+    ReduceCrashingInstructions(BD, TestFn).reduceList(Insts);
   }
 
   // FIXME: This should use the list reducer to converge faster by deleting
