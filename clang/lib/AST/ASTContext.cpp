@@ -563,11 +563,14 @@ ASTContext::getTypeInfo(const Type *T) {
 /// a data type.
 unsigned ASTContext::getPreferredTypeAlign(const Type *T) {
   unsigned ABIAlign = getTypeAlign(T);
-  
-  // Doubles should be naturally aligned if possible.
-  if (T->isSpecificBuiltinType(BuiltinType::Double))
-    return std::max(ABIAlign, 64U);
-  
+
+  // Double and long long should be naturally aligned if possible.
+  if (const ComplexType* CT = T->getAsComplexType())
+    T = CT->getElementType().getTypePtr();
+  if (T->isSpecificBuiltinType(BuiltinType::Double) ||
+      T->isSpecificBuiltinType(BuiltinType::LongLong))
+    return std::max(ABIAlign, (unsigned)getTypeSize(T));
+
   return ABIAlign;
 }
 
