@@ -244,16 +244,16 @@ class TypePrinter:
             raise NotImplementedError,'Cannot make tests values of type: "%s"'%(t,)
 
     def printSizeOfType(self, prefix, name, t, output=None, indent=2):
-        print >>output, '%*sprintf("%s: sizeof(%s) = %%ld\\n", sizeof(%s));'%(indent, '', prefix, name, name) 
+        print >>output, '%*sprintf("%s: sizeof(%s) = %%ld\\n", (long)sizeof(%s));'%(indent, '', prefix, name, name) 
     def printAlignOfType(self, prefix, name, t, output=None, indent=2):
-        print >>output, '%*sprintf("%s: __alignof__(%s) = %%ld\\n", __alignof__(%s));'%(indent, '', prefix, name, name) 
+        print >>output, '%*sprintf("%s: __alignof__(%s) = %%ld\\n", (long)__alignof__(%s));'%(indent, '', prefix, name, name) 
     def printOffsetsOfType(self, prefix, name, t, output=None, indent=2):
         if isinstance(t, RecordType):
             for i,f in enumerate(t.fields):
-                if f.isPaddingBitField():
+                if f.isBitField():
                     continue
                 fname = 'field%d' % i
-                print >>output, '%*sprintf("%s: __builtin_offsetof(%s, %s) = %%ld\\n", __builtin_offsetof(%s, %s));'%(indent, '', prefix, name, fname, name, fname) 
+                print >>output, '%*sprintf("%s: __builtin_offsetof(%s, %s) = %%ld\\n", (long)__builtin_offsetof(%s, %s));'%(indent, '', prefix, name, fname, name, fname) 
                 
     def printValueOfType(self, prefix, name, t, output=None, indent=2):
         if output is None:
