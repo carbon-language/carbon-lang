@@ -52,8 +52,9 @@ void LiveVariables::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void LiveVariables::VarInfo::dump() const {
   cerr << "  Alive in blocks: ";
-  for (int i = AliveBlocks.find_first(); i != -1; i = AliveBlocks.find_next(i))
-    cerr << i << ", ";
+  for (SparseBitVector<>::iterator I = AliveBlocks.begin(),
+           E = AliveBlocks.end(); I != E; ++I)
+    cerr << *I << ", ";
   cerr << "\n  Killed by:";
   if (Kills.empty())
     cerr << " No instructions.\n";
@@ -75,9 +76,7 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
     else
       VirtRegInfo.resize(2*VirtRegInfo.size());
   }
-  VarInfo &VI = VirtRegInfo[RegIdx];
-  VI.AliveBlocks.resize(MF->getNumBlockIDs());
-  return VI;
+  return VirtRegInfo[RegIdx];
 }
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
@@ -96,11 +95,11 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
   
   if (MBB == DefBlock) return;  // Terminate recursion
 
-  if (VRInfo.AliveBlocks[BBNum])
+  if (VRInfo.AliveBlocks.test(BBNum))
     return;  // We already know the block is live
 
   // Mark the variable known alive in this bb
-  VRInfo.AliveBlocks[BBNum] = true;
+  VRInfo.AliveBlocks.set(BBNum);
 
   for (MachineBasicBlock::const_pred_reverse_iterator PI = MBB->pred_rbegin(),
          E = MBB->pred_rend(); PI != E; ++PI)
@@ -163,7 +162,7 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
   // Add a new kill entry for this basic block. If this virtual register is
   // already marked as alive in this basic block, that means it is alive in at
   // least one of the successor blocks, it's not a kill.
-  if (!VRInfo.AliveBlocks[BBNum])
+  if (!VRInfo.AliveBlocks.test(BBNum))
     VRInfo.Kills.push_back(MI);
 
   // Update all dominating blocks to mark them as "known live".
@@ -175,7 +174,7 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
 void LiveVariables::HandleVirtRegDef(unsigned Reg, MachineInstr *MI) {
   VarInfo &VRInfo = getVarInfo(Reg);
 
-  if (VRInfo.AliveBlocks.none())
+  if (VRInfo.AliveBlocks.empty())
     // If vr is not alive in any block, then defaults to dead.
     VRInfo.Kills.push_back(MI);
 }

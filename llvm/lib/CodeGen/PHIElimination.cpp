@@ -334,8 +334,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 
       // Is it alive in this successor?
       unsigned SuccIdx = SuccMBB->getNumber();
-      if (SuccIdx < InRegVI.AliveBlocks.size() &&
-          InRegVI.AliveBlocks[SuccIdx]) {
+      if (InRegVI.AliveBlocks.test(SuccIdx)) {
         ValueIsLive = true;
         break;
       }
@@ -407,8 +406,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 
       // This vreg no longer lives all of the way through opBlock.
       unsigned opBlockNum = opBlock.getNumber();
-      if (opBlockNum < InRegVI.AliveBlocks.size())
-        InRegVI.AliveBlocks[opBlockNum] = false;
+      InRegVI.AliveBlocks.reset(opBlockNum);
     }
   }
     

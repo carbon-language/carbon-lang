@@ -33,6 +33,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SparseBitVector.h"
 
 namespace llvm {
 
@@ -75,7 +76,7 @@ public:
     /// through.  This is a bit set which uses the basic block number as an
     /// index.
     ///
-    BitVector AliveBlocks;
+    SparseBitVector<> AliveBlocks;
 
     /// NumUses - Number of uses of this register across the entire function.
     ///

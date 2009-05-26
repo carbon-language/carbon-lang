@@ -422,7 +422,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // If the kill happens after the definition, we have an intra-block
       // live range.
       if (killIdx > defIndex) {
-        assert(vi.AliveBlocks.none() &&
+        assert(vi.AliveBlocks.empty() &&
                "Shouldn't be alive across any blocks!");
         LiveRange LR(defIndex, killIdx, ValNo);
         interval.addRange(LR);
@@ -443,10 +443,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // Iterate over all of the blocks that the variable is completely
     // live in, adding [insrtIndex(begin), instrIndex(end)+4) to the
     // live interval.
-    for (int i = vi.AliveBlocks.find_first(); i != -1;
-         i = vi.AliveBlocks.find_next(i)) {
-      LiveRange LR(getMBBStartIdx(i),
-                   getMBBEndIdx(i)+1,  // MBB ends at -1.
+    for (SparseBitVector<>::iterator I = vi.AliveBlocks.begin(), 
+             E = vi.AliveBlocks.end(); I != E; ++I) {
+      LiveRange LR(getMBBStartIdx(*I),
+                   getMBBEndIdx(*I)+1,  // MBB ends at -1.
                    ValNo);
       interval.addRange(LR);
       DOUT << " +" << LR;
