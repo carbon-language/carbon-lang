@@ -2304,7 +2304,7 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
     return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
   }
 
-  return SDValue();
+  return Op;
 }
 
 //! Lower ISD::SINT_TO_FP, ISD::UINT_TO_FP for i32
@@ -2330,7 +2330,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
     return ExpandLibCall(LC, Op, DAG, false, Dummy, TLI);
   }
 
-  return SDValue();
+  return Op;
 }
 
 //! Lower ISD::SETCC
