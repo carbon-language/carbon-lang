@@ -448,9 +448,14 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
       ExposePointerBase(Base, RestArray[0], SE);
       // If we found a pointer, expand the AddRec with a GEP.
       if (const PointerType *PTy = dyn_cast<PointerType>(Base->getType())) {
-        Value *StartV = expand(Base);
-        assert(StartV->getType() == PTy && "Pointer type mismatch for GEP!");
-        return expandAddToGEP(RestArray, RestArray+1, PTy, Ty, StartV);
+        // Make sure the Base isn't something exotic, such as a multiplied
+        // or divided pointer value. In those cases, the result type isn't
+        // actually a pointer type.
+        if (!isa<SCEVMulExpr>(Base) && !isa<SCEVUDivExpr>(Base)) {
+          Value *StartV = expand(Base);
+          assert(StartV->getType() == PTy && "Pointer type mismatch for GEP!");
+          return expandAddToGEP(RestArray, RestArray+1, PTy, Ty, StartV);
+        }
       }
     }
 
