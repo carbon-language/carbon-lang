@@ -371,7 +371,6 @@
 		3537AA0D0ECD08A4008F7CDC /* PreprocessorLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PreprocessorLexer.cpp; sourceTree = "<group>"; };
 		3538FDB60ED24A2C005EC283 /* DeclarationName.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclarationName.h; path = clang/AST/DeclarationName.h; sourceTree = "<group>"; tabWidth = 2; };
 		3538FDB70ED24A4E005EC283 /* DeclarationName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclarationName.cpp; path = lib/AST/DeclarationName.cpp; sourceTree = "<group>"; };
-		353959D30EE5F88A00E82461 /* AstGuard.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AstGuard.h; path = lib/Parse/AstGuard.h; sourceTree = "<group>"; tabWidth = 2; };
 		353959D40EE5F88A00E82461 /* ParseTemplate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ParseTemplate.cpp; path = lib/Parse/ParseTemplate.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; tabWidth = 2; };
 		35475B1F0E79973F0000BFE4 /* CGCall.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCall.cpp; path = lib/CodeGen/CGCall.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -968,7 +967,6 @@
 		DE1F22600A7D8C9B00FBF588 /* Parse */ = {
 			isa = PBXGroup;
 			children = (
-				353959D30EE5F88A00E82461 /* AstGuard.h */,
 				84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */,
 				DE17336D0B068DC20080B521 /* DeclSpec.cpp */,
 				DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */,
