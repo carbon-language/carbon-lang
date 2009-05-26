@@ -78,6 +78,7 @@ void Stmt::PrintStats() {
   sum = 0;
   for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
+    if (StmtClassInfo[i].Counter == 0) continue;
     fprintf(stderr, "    %d %s, %d each (%d bytes)\n",
             StmtClassInfo[i].Counter, StmtClassInfo[i].Name,
             StmtClassInfo[i].Size,

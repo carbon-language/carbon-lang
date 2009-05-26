@@ -97,107 +97,30 @@ ASTContext::setExternalSource(llvm::OwningPtr<ExternalASTSource> &Source) {
 void ASTContext::PrintStats() const {
   fprintf(stderr, "*** AST Context Stats:\n");
   fprintf(stderr, "  %d types total.\n", (int)Types.size());
-  unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
-  unsigned NumVector = 0, NumComplex = 0, NumBlockPointer = 0;
-  unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0;
-  unsigned NumLValueReference = 0, NumRValueReference = 0, NumMemberPointer = 0;
 
-  unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
-  unsigned NumObjCInterfaces = 0, NumObjCQualifiedInterfaces = 0;
-  unsigned NumObjCQualifiedIds = 0;
-  unsigned NumTypeOfTypes = 0, NumTypeOfExprTypes = 0;
-  unsigned NumExtQual = 0;
+  unsigned counts[] = {
+#define TYPE(Name, Parent) 0, 
+#define ABSTRACT_TYPE(Name, Parent)
+#include "clang/AST/TypeNodes.def"
+    0 // Extra
+  };
 
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
-    if (isa<BuiltinType>(T))
-      ++NumBuiltin;
-    else if (isa<PointerType>(T))
-      ++NumPointer;
-    else if (isa<BlockPointerType>(T))
-      ++NumBlockPointer;
-    else if (isa<LValueReferenceType>(T))
-      ++NumLValueReference;
-    else if (isa<RValueReferenceType>(T))
-      ++NumRValueReference;
-    else if (isa<MemberPointerType>(T))
-      ++NumMemberPointer;
-    else if (isa<ComplexType>(T))
-      ++NumComplex;
-    else if (isa<ArrayType>(T))
-      ++NumArray;
-    else if (isa<VectorType>(T))
-      ++NumVector;
-    else if (isa<FunctionNoProtoType>(T))
-      ++NumFunctionNP;
-    else if (isa<FunctionProtoType>(T))
-      ++NumFunctionP;
-    else if (isa<TypedefType>(T))
-      ++NumTypeName;
-    else if (TagType *TT = dyn_cast<TagType>(T)) {
-      ++NumTagged;
-      switch (TT->getDecl()->getTagKind()) {
-      default: assert(0 && "Unknown tagged type!");
-      case TagDecl::TK_struct: ++NumTagStruct; break;
-      case TagDecl::TK_union:  ++NumTagUnion; break;
-      case TagDecl::TK_class:  ++NumTagClass; break; 
-      case TagDecl::TK_enum:   ++NumTagEnum; break;
-      }
-    } else if (isa<ObjCInterfaceType>(T))
-      ++NumObjCInterfaces;
-    else if (isa<ObjCQualifiedInterfaceType>(T))
-      ++NumObjCQualifiedInterfaces;
-    else if (isa<ObjCQualifiedIdType>(T))
-      ++NumObjCQualifiedIds;
-    else if (isa<TypeOfType>(T))
-      ++NumTypeOfTypes;
-    else if (isa<TypeOfExprType>(T))
-      ++NumTypeOfExprTypes;
-    else if (isa<ExtQualType>(T))
-      ++NumExtQual;
-    else {
-      QualType(T, 0).dump();
-      assert(0 && "Unknown type!");
-    }
+    counts[(unsigned)T->getTypeClass()]++;
   }
 
-  fprintf(stderr, "    %d builtin types\n", NumBuiltin);
-  fprintf(stderr, "    %d pointer types\n", NumPointer);
-  fprintf(stderr, "    %d block pointer types\n", NumBlockPointer);
-  fprintf(stderr, "    %d lvalue reference types\n", NumLValueReference);
-  fprintf(stderr, "    %d rvalue reference types\n", NumRValueReference);
-  fprintf(stderr, "    %d member pointer types\n", NumMemberPointer);
-  fprintf(stderr, "    %d complex types\n", NumComplex);
-  fprintf(stderr, "    %d array types\n", NumArray);
-  fprintf(stderr, "    %d vector types\n", NumVector);
-  fprintf(stderr, "    %d function types with proto\n", NumFunctionP);
-  fprintf(stderr, "    %d function types with no proto\n", NumFunctionNP);
-  fprintf(stderr, "    %d typename (typedef) types\n", NumTypeName);
-  fprintf(stderr, "    %d tagged types\n", NumTagged);
-  fprintf(stderr, "      %d struct types\n", NumTagStruct);
-  fprintf(stderr, "      %d union types\n", NumTagUnion);
-  fprintf(stderr, "      %d class types\n", NumTagClass);
-  fprintf(stderr, "      %d enum types\n", NumTagEnum);
-  fprintf(stderr, "    %d interface types\n", NumObjCInterfaces);
-  fprintf(stderr, "    %d protocol qualified interface types\n",
-          NumObjCQualifiedInterfaces);
-  fprintf(stderr, "    %d protocol qualified id types\n",
-          NumObjCQualifiedIds);
-  fprintf(stderr, "    %d typeof types\n", NumTypeOfTypes);
-  fprintf(stderr, "    %d typeof exprs\n", NumTypeOfExprTypes);
-  fprintf(stderr, "    %d attribute-qualified types\n", NumExtQual);
-
-  fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
-    NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
-    NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
-    NumLValueReference*sizeof(LValueReferenceType)+
-    NumRValueReference*sizeof(RValueReferenceType)+
-    NumMemberPointer*sizeof(MemberPointerType)+
-    NumFunctionP*sizeof(FunctionProtoType)+
-    NumFunctionNP*sizeof(FunctionNoProtoType)+
-    NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)+
-    NumTypeOfTypes*sizeof(TypeOfType)+NumTypeOfExprTypes*sizeof(TypeOfExprType)+
-    NumExtQual*sizeof(ExtQualType)));
+  unsigned Idx = 0;
+  unsigned TotalBytes = 0;
+#define TYPE(Name, Parent)                                              \
+  if (counts[Idx])                                                      \
+    fprintf(stderr, "    %d %s types\n", (int)counts[Idx], #Name);      \
+  TotalBytes += counts[Idx] * sizeof(Name##Type);                       \
+  ++Idx;
+#define ABSTRACT_TYPE(Name, Parent)
+#include "clang/AST/TypeNodes.def"
+  
+  fprintf(stderr, "Total bytes = %d\n", int(TotalBytes));
 
   if (ExternalSource.get()) {
     fprintf(stderr, "\n");
