@@ -194,6 +194,10 @@ namespace llvm {
   };
 
 
+  //===--------------------------------------------------------------------===//
+  /// SCEVNAryExpr - This node is a base class providing common
+  /// functionality for n'ary operators.
+  ///
   class SCEVNAryExpr : public SCEV {
   protected:
     std::vector<SCEVHandle> Operands;
