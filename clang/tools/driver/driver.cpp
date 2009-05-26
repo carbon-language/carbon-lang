@@ -169,15 +169,13 @@ int main(int argc, const char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
 
   llvm::sys::Path Path = GetExecutablePath(argv[0]);
-  llvm::OwningPtr<DiagnosticClient> 
-    DiagClient(new DriverDiagnosticPrinter(Path.getBasename(), llvm::errs()));
+  DriverDiagnosticPrinter DiagClient(Path.getBasename(), llvm::errs());
 
-  Diagnostic Diags(DiagClient.get());
+  Diagnostic Diags(&DiagClient);
 
-  llvm::OwningPtr<Driver> 
-    TheDriver(new Driver(Path.getBasename().c_str(), Path.getDirname().c_str(),
-                         llvm::sys::getHostTriple().c_str(),
-                         "a.out", Diags));
+  Driver TheDriver(Path.getBasename().c_str(), Path.getDirname().c_str(),
+                   llvm::sys::getHostTriple().c_str(),
+                   "a.out", Diags);
 
   llvm::OwningPtr<Compilation> C;
 
@@ -190,8 +188,8 @@ int main(int argc, const char **argv) {
 
     ApplyQAOverride(StringPointers, OverrideStr, SavedStrings);
 
-    C.reset(TheDriver->BuildCompilation(StringPointers.size(), 
-                                        &StringPointers[0]));
+    C.reset(TheDriver.BuildCompilation(StringPointers.size(), 
+                                       &StringPointers[0]));
   } else if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
     std::vector<const char*> StringPointers;
 
@@ -214,10 +212,10 @@ int main(int argc, const char **argv) {
 
     StringPointers.insert(StringPointers.end(), argv + 1, argv + argc);
 
-    C.reset(TheDriver->BuildCompilation(StringPointers.size(), 
-                                        &StringPointers[0]));
+    C.reset(TheDriver.BuildCompilation(StringPointers.size(), 
+                                       &StringPointers[0]));
   } else
-    C.reset(TheDriver->BuildCompilation(argc, argv));
+    C.reset(TheDriver.BuildCompilation(argc, argv));
 
   int Res = 0;
   if (C.get())
