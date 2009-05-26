@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===/
 #include "Sema.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
@@ -622,6 +623,9 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                           /*IsInstantiation=*/true);
 
   CurContext = PreviousContext;
+
+  DeclGroupRef DG(Function);
+  Consumer.HandleTopLevelDecl(DG);
 }
 
 /// \brief Instantiate the definition of the given variable from its

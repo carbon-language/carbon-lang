@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===/
 
 #include "Sema.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclTemplate.h"
@@ -778,6 +779,9 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   // Exit the scope of this instantiation.
   CurContext = PreviousContext;
+
+  if (!Invalid)
+    Consumer.HandleTagDeclDefinition(Instantiation);
 
   // If this is an explicit instantiation, instantiate our members, too.
   if (!Invalid && ExplicitInstantiation) {
