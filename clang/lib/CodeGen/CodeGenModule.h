@@ -397,12 +397,13 @@ private:
 
   /// SetFunctionDefinitionAttributes - Set attributes for a global definition.
   void SetFunctionDefinitionAttributes(const FunctionDecl *D, 
-                                 llvm::GlobalValue *GV);
+                                       llvm::GlobalValue *GV);
     
   /// SetFunctionAttributes - Set function attributes for a function
   /// declaration.
   void SetFunctionAttributes(const FunctionDecl *FD,
-                             llvm::Function *F);
+                             llvm::Function *F,
+                             bool IsIncompleteFunction);
 
   /// EmitGlobal - Emit code for a singal global function or var decl. Forward
   /// declarations are emitted lazily.

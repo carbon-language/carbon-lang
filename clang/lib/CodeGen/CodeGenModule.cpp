@@ -373,8 +373,10 @@ void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
-                                          llvm::Function *F) {
-  SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
+                                          llvm::Function *F,
+                                          bool IsIncompleteFunction) {
+  if (!IsIncompleteFunction)
+    SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
   
   // Only a few attributes are set on declarations; these may later be
   // overridden by a definition.
@@ -625,18 +627,19 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
   // This function doesn't have a complete type (for example, the return
   // type is an incomplete struct). Use a fake type instead, and make
   // sure not to try to set attributes.
-  bool ShouldSetAttributes = true;
+  bool IsIncompleteFunction = false;
   if (!isa<llvm::FunctionType>(Ty)) {
     Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
                                  std::vector<const llvm::Type*>(), false);
-    ShouldSetAttributes = false;
+    IsIncompleteFunction = true;
   }
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                              llvm::Function::ExternalLinkage,
                                              "", &getModule());
   F->setName(MangledName);
-  if (D.getDecl() && ShouldSetAttributes)
-    SetFunctionAttributes(cast<FunctionDecl>(D.getDecl()), F);
+  if (D.getDecl())
+    SetFunctionAttributes(cast<FunctionDecl>(D.getDecl()), F,
+                          IsIncompleteFunction);
   Entry = F;
   return F;
 }
