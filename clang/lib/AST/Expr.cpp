@@ -776,6 +776,9 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     QualType CalleeType = cast<CallExpr>(this)->getCallee()->getType();
     if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
       CalleeType = FnTypePtr->getPointeeType();
+    else if (const BlockPointerType *BPT = CalleeType->getAsBlockPointerType())
+      CalleeType = BPT->getPointeeType();
+    
     if (const FunctionType *FnType = CalleeType->getAsFunctionType())
       if (FnType->getResultType()->isLValueReferenceType())
         return LV_Valid;
