@@ -948,7 +948,7 @@ $(LibName.SO): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) $(SharedLibKindMessage) \
 	  $(LIBRARYNAME)$(SHLIBEXT)
 	$(Verb) $(Link) $(SharedLinkOptions) -o $@ $(ObjectsO) \
-	  $(ProjLibsOptions) $(LLVMLibsOptions)
+	  $(ProjLibsOptions) $(LLVMLibsOptions) $(LIBS)
 else
 $(LibName.SO): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
