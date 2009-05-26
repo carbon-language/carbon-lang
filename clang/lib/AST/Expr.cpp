@@ -278,6 +278,16 @@ unsigned CallExpr::isBuiltinCall(ASTContext &Context) const {
   return FDecl->getBuiltinID(Context);
 }
 
+QualType CallExpr::getCallReturnType() const {
+  QualType CalleeType = getCallee()->getType();
+  if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
+    CalleeType = FnTypePtr->getPointeeType();
+  else if (const BlockPointerType *BPT = CalleeType->getAsBlockPointerType())
+    CalleeType = BPT->getPointeeType();
+  
+  const FunctionType *FnType = CalleeType->getAsFunctionType();
+  return FnType->getResultType();
+}
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
@@ -773,15 +783,9 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     // C++0x [expr.call]p10
     //   A function call is an lvalue if and only if the result type
     //   is an lvalue reference.
-    QualType CalleeType = cast<CallExpr>(this)->getCallee()->getType();
-    if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
-      CalleeType = FnTypePtr->getPointeeType();
-    else if (const BlockPointerType *BPT = CalleeType->getAsBlockPointerType())
-      CalleeType = BPT->getPointeeType();
-    
-    if (const FunctionType *FnType = CalleeType->getAsFunctionType())
-      if (FnType->getResultType()->isLValueReferenceType())
-        return LV_Valid;
+    QualType ReturnType = cast<CallExpr>(this)->getCallReturnType();
+    if (ReturnType->isLValueReferenceType())
+      return LV_Valid;
 
     break;
   }

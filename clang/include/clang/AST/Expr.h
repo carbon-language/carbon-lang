@@ -1006,6 +1006,11 @@ public:
   /// not, return 0.
   unsigned isBuiltinCall(ASTContext &Context) const;
   
+  /// getCallReturnType - Get the return type of the call expr. This is not 
+  /// always the type of the expr itself, if the return type is a reference 
+  /// type.
+  QualType getCallReturnType() const;
+  
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
