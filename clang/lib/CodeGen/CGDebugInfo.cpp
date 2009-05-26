@@ -253,7 +253,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   EltTys.push_back(FieldTy);
 
   FieldOffset += FieldSize;
-  Elements = DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+  Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   EltTys.clear();
 
   EltTy = DebugFactory.CreateCompositeType(Tag, Unit, "__block_descriptor",
@@ -324,7 +324,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   EltTys.push_back(FieldTy);
 
   FieldOffset += FieldSize;
-  Elements = DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+  Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
   EltTy = DebugFactory.CreateCompositeType(Tag, Unit, "__block_literal_generic",
                                            DefUnit, 0, FieldOffset, 0, 0, 0,
@@ -375,7 +375,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   }
 
   llvm::DIArray EltTypeArray =
-    DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+    DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
                                           Unit, "", llvm::DICompileUnit(),
@@ -485,7 +485,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   }
   
   llvm::DIArray Elements =
-    DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+    DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
   // Bit size, align and offset of the type.
   uint64_t Size = M->getContext().getTypeSize(Ty);
@@ -714,7 +714,7 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   }
   
   llvm::DIArray SubscriptArray =
-    DebugFactory.GetOrCreateArray(&Subscripts[0], Subscripts.size());
+    DebugFactory.GetOrCreateArray(Subscripts.data(), Subscripts.size());
 
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_array_type,
                                           Unit, "", llvm::DICompileUnit(),
