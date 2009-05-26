@@ -346,7 +346,12 @@ void SCEVUDivExpr::print(raw_ostream &OS) const {
 }
 
 const Type *SCEVUDivExpr::getType() const {
-  return LHS->getType();
+  // In most cases the types of LHS and RHS will be the same, but in some
+  // crazy cases one or the other may be a pointer. ScalarEvolution doesn't
+  // depend on the type for correctness, but handling types carefully can
+  // avoid extra casts in the SCEVExpander. The LHS is more likely to be
+  // a pointer type than the RHS, so use the RHS' type here.
+  return RHS->getType();
 }
 
 // SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
