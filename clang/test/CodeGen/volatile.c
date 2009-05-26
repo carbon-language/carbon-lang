@@ -2,7 +2,7 @@
 // RUN: grep volatile %t | count 25 &&
 // RUN: grep memcpy %t | count 7
 
-// The number 26 comes from the current codegen for volatile loads;
+// The number 25 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
 // something has changed to affect volatile load/store codegen
 
