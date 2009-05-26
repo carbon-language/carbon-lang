@@ -67,6 +67,9 @@ protected:
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
   
+  /// HasSSE4A - True if the processor supports SSE4A instructions.
+  bool HasSSE4A;
+
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
   unsigned char DarwinVers; // Is any darwin-x86 platform.
@@ -127,6 +130,7 @@ public:
   bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
   bool hasSSE41() const { return X86SSELevel >= SSE41; }
   bool hasSSE42() const { return X86SSELevel >= SSE42; }
+  bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 

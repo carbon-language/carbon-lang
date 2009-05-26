@@ -216,6 +216,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
     X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
     HasX86_64 = (EDX >> 29) & 0x1;
+    HasSSE4A = IsAMD && ((ECX >> 6) & 0x1);
   }
 }
 
@@ -229,6 +230,7 @@ static const char *GetCurrentX86CPU() {
 
   X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
+  bool HasSSE3 = (ECX & 0x1);
 
   union {
     unsigned u[3];
@@ -311,10 +313,20 @@ static const char *GetCurrentX86CPU() {
         default: return "athlon";
         }
       case 15:
+        if (HasSSE3) {
+          switch (Model) {
+          default: return "k8-sse3";
+          }
+        } else {
+          switch (Model) {
+          case 1:  return "opteron";
+          case 5:  return "athlon-fx"; // also opteron
+          default: return "athlon64";
+          }
+        }
+      case 16:
         switch (Model) {
-        case 1:  return "opteron";
-        case 5:  return "athlon-fx"; // also opteron
-        default: return "athlon64";
+        default: return "amdfam10";
         }
     default:
       return "generic";
