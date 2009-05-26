@@ -2581,7 +2581,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     // };
 
     // Attach the initializer
-    VDecl->setInit(Init);
+    VDecl->setInit(Context, Init);
 
     // C++ [class.mem]p4:
     //   A member-declarator can contain a constant-initializer only
@@ -2644,7 +2644,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   }
     
   // Attach the initializer to the decl.
-  VDecl->setInit(Init);
+  VDecl->setInit(Context, Init);
 
   // If the previous declaration of VDecl was a tentative definition,
   // remove it from the set of tentative definitions.

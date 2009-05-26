@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
+#include "clang/AST/APValue.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
@@ -186,6 +187,27 @@ public:
   static bool classof(const ValueDecl *D) { return true; }
 };
 
+/// \brief Structure used to store a statement, the constant value to
+/// which it was evaluated (if any), and whether or not the statement
+/// is an integral constant expression (if known).
+struct EvaluatedStmt {
+  EvaluatedStmt() : WasEvaluated(false), CheckedICE(false), IsICE(false) { }
+
+  /// \brief Whether this statement was already evaluated.
+  bool WasEvaluated : 1;
+
+  /// \brief Whether we already checked whether this statement was an
+  /// integral constant expression.
+  bool CheckedICE : 1;
+
+  /// \brief Whether this statement is an integral constant
+  /// expression. Only valid if CheckedICE is true.
+  bool IsICE : 1;
+
+  Stmt *Value;
+  APValue Evaluated;
+};
+
 /// VarDecl - An instance of this class is created to represent a variable
 /// declaration or definition.
 class VarDecl : public ValueDecl {
@@ -201,7 +223,7 @@ public:
   static const char *getStorageClassSpecifierString(StorageClass SC);
 
 private:
-  Stmt *Init;
+  mutable llvm::PointerUnion<Stmt *, EvaluatedStmt *> Init;
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
   bool ThreadSpecified : 1;
@@ -220,7 +242,7 @@ private:
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
           QualType T, StorageClass SC, SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, Id, T), Init(0),
+    : ValueDecl(DK, DC, L, Id, T), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
       DeclaredInCondition(false), PreviousDeclaration(0), 
       TypeSpecStartLoc(TSSL) { 
@@ -243,10 +265,95 @@ public:
     TypeSpecStartLoc = SL;
   }
 
-  const Expr *getInit() const { return (const Expr*) Init; }
-  Expr *getInit() { return (Expr*) Init; }
-  void setInit(Expr *I) { Init = (Stmt*) I; }
-      
+  const Expr *getInit() const { 
+    if (Init.isNull())
+      return 0;
+
+    const Stmt *S = Init.dyn_cast<Stmt *>();
+    if (!S)
+      S = Init.get<EvaluatedStmt *>()->Value;
+
+    return (const Expr*) S; 
+  }
+  Expr *getInit() { 
+    if (Init.isNull())
+      return 0;
+
+    Stmt *S = Init.dyn_cast<Stmt *>();
+    if (!S)
+      S = Init.get<EvaluatedStmt *>()->Value;
+
+    return (Expr*) S; 
+  }
+
+  /// \brief Retrieve the address of the initializer expression.
+  Stmt **getInitAddress() {
+    if (Init.is<Stmt *>())
+      return reinterpret_cast<Stmt **>(&Init); // FIXME: ugly hack
+    return &Init.get<EvaluatedStmt *>()->Value;
+  }
+
+  void setInit(ASTContext &C, Expr *I);
+   
+  /// \brief Note that constant evaluation has computed the given
+  /// value for this variable's initializer.
+  void setEvaluatedValue(ASTContext &C, const APValue &Value) const {
+    EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
+    if (!Eval) {
+      Stmt *S = Init.get<Stmt *>();
+      Eval = new (C) EvaluatedStmt;
+      Eval->Value = S;
+      Init = Eval;
+    }
+
+    Eval->WasEvaluated = true;
+    Eval->Evaluated = Value;
+  }
+   
+  /// \brief Return the already-evaluated value of this variable's
+  /// initializer, or NULL if the value is not yet known.
+  APValue *getEvaluatedValue() const {
+    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
+      if (Eval->WasEvaluated)
+        return &Eval->Evaluated;
+
+    return 0;
+  }
+
+  /// \brief Determines whether it is already known whether the
+  /// initializer is an integral constant expression or not.
+  bool isInitKnownICE() const {
+    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
+      return Eval->CheckedICE;
+
+    return false;
+  }
+
+  /// \brief Determines whether the initializer is an integral
+  /// constant expression.
+  ///
+  /// \pre isInitKnownICE()
+  bool isInitICE() const {
+    assert(isInitKnownICE() && 
+           "Check whether we already know that the initializer is an ICE");
+    return Init.get<EvaluatedStmt *>()->IsICE;
+  }
+
+  /// \brief Note that we now know whether the initializer is an
+  /// integral constant expression.
+  void setInitKnownICE(ASTContext &C, bool IsICE) const {
+    EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
+    if (!Eval) {
+      Stmt *S = Init.get<Stmt *>();
+      Eval = new (C) EvaluatedStmt;
+      Eval->Value = S;
+      Init = Eval;
+    }
+
+    Eval->CheckedICE = true;
+    Eval->IsICE = IsICE;
+  }
+
   /// \brief Retrieve the definition of this variable, which may come
   /// from a previous declaration. Def will be set to the VarDecl that
   /// contains the initializer, and the result will be that

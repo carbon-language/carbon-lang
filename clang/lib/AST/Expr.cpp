@@ -1210,8 +1210,21 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       //   type initialized by an ICE can be used in ICEs.
       if (const VarDecl *Dcl =
               dyn_cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl())) {
-        if (const Expr *Init = Dcl->getInit())
-          return CheckICE(Init, Ctx);
+        if (Dcl->isInitKnownICE()) {
+          // We have already checked whether this subexpression is an
+          // integral constant expression.
+          if (Dcl->isInitICE())
+            return NoDiag();
+          else
+            return ICEDiag(2, E->getLocStart());
+        }
+
+        if (const Expr *Init = Dcl->getInit()) {
+          ICEDiag Result = CheckICE(Init, Ctx);
+          // Cache the result of the ICE test.
+          Dcl->setInitKnownICE(Ctx, Result.Val == 0);
+          return Result;
+        }
       }
     }
     return ICEDiag(2, E->getLocStart());

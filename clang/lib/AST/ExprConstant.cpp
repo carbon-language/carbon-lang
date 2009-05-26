@@ -700,8 +700,17 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   // In C, they can also be folded, although they are not ICEs.
   if (E->getType().getCVRQualifiers() == QualType::Const) {
     if (const VarDecl *D = dyn_cast<VarDecl>(E->getDecl())) {
-      if (const Expr *Init = D->getInit())
-        return Visit(const_cast<Expr*>(Init));
+      if (APValue *V = D->getEvaluatedValue())
+        return Success(V->getInt(), E);
+      if (const Expr *Init = D->getInit()) {
+        if (Visit(const_cast<Expr*>(Init))) {
+          // Cache the evaluated value in the variable declaration.
+          D->setEvaluatedValue(Info.Ctx, Result);
+          return true;
+        }
+
+        return false;
+      }
     }
   }
 

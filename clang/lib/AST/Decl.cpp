@@ -89,6 +89,15 @@ QualType ParmVarDecl::getOriginalType() const {
   return getType();
 }
 
+void VarDecl::setInit(ASTContext &C, Expr *I) { 
+    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
+      Eval->~EvaluatedStmt();
+      C.Deallocate(Eval);
+    }
+
+    Init = I;
+  }
+
 bool VarDecl::isExternC(ASTContext &Context) const {
   if (!Context.getLangOptions().CPlusPlus)
     return (getDeclContext()->isTranslationUnit() && 
@@ -287,8 +296,13 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
 
 void VarDecl::Destroy(ASTContext& C) {
   Expr *Init = getInit();
-  if (Init)
+  if (Init) {
     Init->Destroy(C);
+    if (EvaluatedStmt *Eval = this->Init.dyn_cast<EvaluatedStmt *>()) {
+      Eval->~EvaluatedStmt();
+      C.Deallocate(Eval);
+    }
+  }
   this->~VarDecl();
   C.Deallocate((void *)this);
 }

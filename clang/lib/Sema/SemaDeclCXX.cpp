@@ -1776,7 +1776,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         Expr **Exprs, unsigned NumExprs) {
   Expr *Temp = CXXConstructExpr::Create(Context, VD, DeclInitType, Constructor, 
                                         false, Exprs, NumExprs);
-  VD->setInit(Temp);
+  VD->setInit(Context, Temp);
 }
 
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 

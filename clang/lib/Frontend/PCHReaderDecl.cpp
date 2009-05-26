@@ -342,7 +342,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   VD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
-    VD->setInit(Reader.ReadDeclExpr());
+    VD->setInit(*Reader.getContext(), Reader.ReadDeclExpr());
 }
 
 void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {

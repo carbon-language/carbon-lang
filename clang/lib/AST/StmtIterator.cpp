@@ -140,14 +140,14 @@ Stmt*& StmtIteratorBase::GetDeclExpr() const {
   
   if (inDeclGroup()) {
     VarDecl* VD = cast<VarDecl>(*DGI);
-    return VD->Init;
+    return *VD->getInitAddress();
   }
   
   assert (inDecl());
 
   if (VarDecl* VD = dyn_cast<VarDecl>(decl)) {
     assert (VD->Init);
-    return VD->Init;
+    return *VD->getInitAddress();
   }
 
   EnumConstantDecl* ECD = cast<EnumConstantDecl>(decl);
