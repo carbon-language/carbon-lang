@@ -465,13 +465,16 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 //                        Entry Points into this File
 //===----------------------------------------------------------------------===//
 
-/// EmitAggExpr - Emit the computation of the specified expression of
-/// aggregate type.  The result is computed into DestPtr.  Note that if
-/// DestPtr is null, the value of the aggregate expression is not needed.
+/// EmitAggExpr - Emit the computation of the specified expression of aggregate
+/// type.  The result is computed into DestPtr.  Note that if DestPtr is null,
+/// the value of the aggregate expression is not needed.  If VolatileDest is
+/// true, DestPtr cannot be 0.
 void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
                                   bool VolatileDest) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
+  assert ((DestPtr != 0 || VolatileDest == false)
+          && "volatile aggregate can't be 0");
   
   AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
 }
