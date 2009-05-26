@@ -4595,10 +4595,10 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
 
   // These are really Legal; caller falls through into that case.
   if (SrcVT == MVT::i32 && isScalarFPTypeInSSEReg(Op.getValueType()))
-    return Op;
+    return SDValue();
   if (SrcVT == MVT::i64 && Op.getValueType() != MVT::f80 &&
       Subtarget->is64Bit())
-    return Op;
+    return SDValue();
 
   DebugLoc dl = Op.getDebugLoc();
   unsigned Size = SrcVT.getSizeInBits()/8;
@@ -4795,7 +4795,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   if (SrcVT == MVT::i64) {
     // We only handle SSE2 f64 target here; caller can handle the rest.
     if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
-      return Op;
+      return SDValue();
 
     return LowerUINT_TO_FP_i64(Op, DAG);
   } else if (SrcVT == MVT::i32 && X86ScalarSSEf64) {
@@ -4881,7 +4881,7 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
   std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, true);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
-  if (FIST.getNode() == 0) return Op;
+  if (FIST.getNode() == 0) return SDValue();
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
