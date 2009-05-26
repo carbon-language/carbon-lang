@@ -189,7 +189,7 @@ int main(int argc, const char **argv) {
     ApplyQAOverride(StringPointers, OverrideStr, SavedStrings);
 
     C.reset(TheDriver.BuildCompilation(StringPointers.size(), 
-                                       &StringPointers[0]));
+                                       StringPointers.data()));
   } else if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
     std::vector<const char*> StringPointers;
 
@@ -213,7 +213,7 @@ int main(int argc, const char **argv) {
     StringPointers.insert(StringPointers.end(), argv + 1, argv + argc);
 
     C.reset(TheDriver.BuildCompilation(StringPointers.size(), 
-                                       &StringPointers[0]));
+                                       StringPointers.data()));
   } else
     C.reset(TheDriver.BuildCompilation(argc, argv));
 
