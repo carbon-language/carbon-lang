@@ -407,8 +407,10 @@ public:
   /// any type.  The result is returned as an RValue struct.  If this is an
   /// aggregate expression, the aggloc/agglocvolatile arguments indicate where
   /// the result should be returned.
+  ///
+  /// \param IgnoreResult - True if the resulting value isn't used.
   RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0,
-                     bool isAggLocVolatile = false);
+                     bool isAggLocVolatile = false, bool IgnoreResult = false);
 
   // EmitVAListRef - Emit a "reference" to a va_list; this is either the address
   // or the value of the expression, depending on how va_list is defined.
@@ -741,7 +743,8 @@ public:
   /// EmitAggExpr - Emit the computation of the specified expression of
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.
-  void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest);
+  void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest,
+                   bool IgnoreResult = false);
 
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.

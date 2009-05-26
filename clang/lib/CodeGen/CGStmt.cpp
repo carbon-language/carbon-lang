@@ -58,7 +58,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     // Must be an expression in a stmt context.  Emit the value (to get
     // side-effects) and ignore the result.
     if (const Expr *E = dyn_cast<Expr>(S)) {
-      EmitAnyExpr(E);
+      EmitAnyExpr(E, 0, false, true);
     } else {
       ErrorUnsupported(S, "statement");
     }

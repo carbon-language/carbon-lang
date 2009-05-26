@@ -34,10 +34,13 @@ class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CGBuilderTy &Builder;
   llvm::Value *DestPtr;
   bool VolatileDest;
+  bool IgnoreResult;
+
 public:
-  AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool volatileDest)
+  AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool volatileDest,
+                 bool IgnoreResult)
     : CGF(cgf), Builder(CGF.Builder),
-      DestPtr(destPtr), VolatileDest(volatileDest) {
+      DestPtr(destPtr), VolatileDest(volatileDest), IgnoreResult(IgnoreResult) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -50,8 +53,8 @@ public:
   void EmitAggLoadOfLValue(const Expr *E);
 
   /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-  void EmitFinalDestCopy(const Expr *E, LValue Src);
-  void EmitFinalDestCopy(const Expr *E, RValue Src);
+  void EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore = false);
+  void EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore = false);
 
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -127,17 +130,16 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src) {
+void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
   assert(Src.isAggregate() && "value must be aggregate value!");
 
   // If the result is ignored, don't copy from the value.
   if (DestPtr == 0) {
-    if (Src.isVolatileQualified())
-      // If the source is volatile, we must read from it; to do that, we need
-      // some place to put it.
-      DestPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "agg.tmp");
-    else
+    if (!Src.isVolatileQualified() || (IgnoreResult && Ignore))
       return;
+    // If the source is volatile, we must read from it; to do that, we need
+    // some place to put it.
+    DestPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "agg.tmp");
   }
 
   // If the result of the assignment is used, copy the LHS there also.
@@ -149,11 +151,12 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src) {
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src) {
+void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
   assert(Src.isSimple() && "Can't have aggregate bitfield, vector, etc");
 
   EmitFinalDestCopy(E, RValue::getAggregate(Src.getAddress(),
-                                            Src.isVolatileQualified()));
+                                            Src.isVolatileQualified()),
+                    Ignore);
 }
 
 //===----------------------------------------------------------------------===//
@@ -244,7 +247,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   } else {
     // Codegen the RHS so that it stores directly into the LHS.
     CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified());
-    EmitFinalDestCopy(E, LHS);
+    EmitFinalDestCopy(E, LHS, true);
   }
 }
 
@@ -470,13 +473,14 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// the value of the aggregate expression is not needed.  If VolatileDest is
 /// true, DestPtr cannot be 0.
 void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
-                                  bool VolatileDest) {
+                                  bool VolatileDest, bool IgnoreResult) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert ((DestPtr != 0 || VolatileDest == false)
           && "volatile aggregate can't be 0");
   
-  AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
+  AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult)
+    .Visit(const_cast<Expr*>(E));
 }
 
 void CodeGenFunction::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
@@ -522,9 +526,8 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   //   a = b;
   // }
   //
-  // either, we need to use a differnt call here, or the backend needs to be
-  // taught to not do this.  We use isVolatile to indicate when either the
-  // source or the destination is volatile.
+  // we need to use a differnt call here.  We use isVolatile to indicate when
+  // either the source or the destination is volatile.
   Builder.CreateCall4(CGM.getMemCpyFn(),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
