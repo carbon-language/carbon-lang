@@ -444,6 +444,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
                                 lbrac, rbrac, returnType))
     return true;
 
+  returnType = returnType.getNonReferenceType();
+  
   // If we have the ObjCInterfaceDecl* for the class that is receiving the
   // message, use that to construct the ObjCMessageExpr.  Otherwise pass on the
   // IdentifierInfo* for the class.
@@ -500,6 +502,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
+    
+    returnType = returnType.getNonReferenceType();
     return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
                                          rbrac, ArgExprs, NumArgs);
   }
@@ -515,6 +519,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false, 
                                   lbrac, rbrac, returnType))
       return true;
+    returnType = returnType.getNonReferenceType();
     return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
                                          rbrac, ArgExprs, NumArgs);
   }
@@ -556,6 +561,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                   lbrac, rbrac, returnType))
       return true;
+    returnType = returnType.getNonReferenceType();
     return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
                                          rbrac, ArgExprs, NumArgs);
   }
@@ -632,6 +638,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, false,
                                 lbrac, rbrac, returnType))
     return true;
+  returnType = returnType.getNonReferenceType();
   return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
                                        rbrac, ArgExprs, NumArgs);
 }
