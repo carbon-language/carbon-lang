@@ -121,6 +121,12 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
+class VISIBILITY_HIDDEN Linux : public Generic_GCC {
+public:
+  Linux(const HostInfo &Host, const llvm::Triple& Triple);
+};
+
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

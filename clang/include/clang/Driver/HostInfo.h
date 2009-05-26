@@ -73,6 +73,8 @@ const HostInfo *createFreeBSDHostInfo(const Driver &D,
                                       const llvm::Triple& Triple);
 const HostInfo *createDragonFlyHostInfo(const Driver &D, 
                                         const llvm::Triple& Triple);
+const HostInfo *createLinuxHostInfo(const Driver &D, 
+                                    const llvm::Triple& Triple);
 const HostInfo *createUnknownHostInfo(const Driver &D, 
                                       const llvm::Triple& Triple);
 

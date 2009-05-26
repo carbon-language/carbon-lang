@@ -322,6 +322,58 @@ ToolChain *DragonFlyHostInfo::getToolChain(const ArgList &Args,
   return TC;
 }
 
+// Linux Host Info
+
+/// LinuxHostInfo -  Linux host information implementation.
+class LinuxHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  LinuxHostInfo(const Driver &D, const llvm::Triple& Triple)
+    : HostInfo(D, Triple) {}
+  ~LinuxHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *getToolChain(const ArgList &Args, 
+                                  const char *ArchName) const;
+};
+
+LinuxHostInfo::~LinuxHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool LinuxHostInfo::useDriverDriver() const { 
+  return false;
+}
+
+ToolChain *LinuxHostInfo::getToolChain(const ArgList &Args, 
+                                       const char *ArchName) const {
+
+  assert(!ArchName && 
+         "Unexpected arch name on platform without driver driver support.");
+
+  ArchName = getArchName().c_str();
+  
+  ToolChain *&TC = ToolChains[ArchName];
+
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(getArchName());
+
+    TC = new toolchains::Linux(*this, TCTriple);
+  }
+
+  return TC;
+}
+
 }
 
 const HostInfo *
@@ -340,6 +392,12 @@ const HostInfo *
 clang::driver::createDragonFlyHostInfo(const Driver &D,
                                        const llvm::Triple& Triple) {
   return new DragonFlyHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createLinuxHostInfo(const Driver &D,
+                                   const llvm::Triple& Triple) {
+  return new LinuxHostInfo(D, Triple);
 }
 
 const HostInfo *

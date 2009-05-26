@@ -1161,6 +1161,8 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
     return createDragonFlyHostInfo(*this, Triple);
   case llvm::Triple::FreeBSD:
     return createFreeBSDHostInfo(*this, Triple);
+  case llvm::Triple::Linux:
+    return createLinuxHostInfo(*this, Triple);
   default:
     return createUnknownHostInfo(*this, Triple);
   }

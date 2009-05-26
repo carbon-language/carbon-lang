@@ -419,6 +419,22 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   return *T;
 }
 
+/// Linux toolchain (very bare-bones at the moment).
+
+Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
+  : Generic_GCC(Host, Triple) {
+  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib/clang/1.0/");
+  getFilePaths().push_back("/lib/");
+  getFilePaths().push_back("/usr/lib/");
+  // FIXME: Figure out some way to get gcc's libdir
+  // (e.g. /usr/lib/gcc/i486-linux-gnu/4.3/ for Ubuntu 32-bit); we need
+  // crtbegin.o/crtend.o/etc., and want static versions of various
+  // libraries. If we had our own crtbegin.o/crtend.o/etc, we could probably
+  // get away with using shared versions in /usr/lib, though.
+  // We could fall back to the approach we used for includes (a massive
+  // list), but that's messy at best.
+}
+
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
 
 DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
