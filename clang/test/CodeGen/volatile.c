@@ -1,6 +1,6 @@
 // RUN: clang-cc -emit-llvm < %s -o %t &&
 // RUN: grep volatile %t | count 25 &&
-// RUN: grep memcpy %t | count 5
+// RUN: grep memcpy %t | count 7
 
 // The number 26 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
@@ -90,4 +90,5 @@ void main() {
   (void)vF2;
   vF2 = vF2;
   vF2 = vF2 = vF2;
+  vF2 = (vF2, vF2);
 }
