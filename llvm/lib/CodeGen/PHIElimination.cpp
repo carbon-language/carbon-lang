@@ -249,8 +249,6 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
       // each for each incoming block), the "def" block and instruction fields
       // for the VarInfo is not filled in.
       LV->addVirtualRegisterKilled(IncomingReg, PHICopy);
-
-      LV->getVarInfo(IncomingReg).UsedBlocks[MBB.getNumber()] = true;
     }
 
     // Since we are going to be deleting the PHI node, if it is the last use of
@@ -317,7 +315,6 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     // variables information so that it knows the copy source instruction kills
     // the incoming value.
     LiveVariables::VarInfo &InRegVI = LV->getVarInfo(SrcReg);
-    InRegVI.UsedBlocks[opBlock.getNumber()] = true;
 
     // Loop over all of the successors of the basic block, checking to see if
     // the value is either live in the block, or if it is killed in the block.

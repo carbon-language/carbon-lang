@@ -77,10 +77,6 @@ public:
     ///
     BitVector AliveBlocks;
 
-    /// UsedBlocks - Set of blocks in which this value is actually used. This
-    /// is a bit set which uses the basic block number as an index.
-    BitVector UsedBlocks;
-
     /// NumUses - Number of uses of this register across the entire function.
     ///
     unsigned NumUses;

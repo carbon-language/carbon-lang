@@ -54,9 +54,6 @@ void LiveVariables::VarInfo::dump() const {
   cerr << "  Alive in blocks: ";
   for (int i = AliveBlocks.find_first(); i != -1; i = AliveBlocks.find_next(i))
     cerr << i << ", ";
-  cerr << "  Used in blocks: ";
-  for (int i = UsedBlocks.find_first(); i != -1; i = UsedBlocks.find_next(i))
-    cerr << i << ", ";
   cerr << "\n  Killed by:";
   if (Kills.empty())
     cerr << " No instructions.\n";
@@ -80,7 +77,6 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
   }
   VarInfo &VI = VirtRegInfo[RegIdx];
   VI.AliveBlocks.resize(MF->getNumBlockIDs());
-  VI.UsedBlocks.resize(MF->getNumBlockIDs());
   return VI;
 }
 
@@ -131,7 +127,6 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
   unsigned BBNum = MBB->getNumber();
 
   VarInfo& VRInfo = getVarInfo(reg);
-  VRInfo.UsedBlocks[BBNum] = true;
   VRInfo.NumUses++;
 
   // Check to see if this basic block is already a kill block.
