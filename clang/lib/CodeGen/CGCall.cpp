@@ -571,6 +571,11 @@ class X86_64ABIInfo : public ABIInfo {
                              const llvm::Type *CoerceTo,
                              ASTContext &Context) const;
 
+  /// getIndirectResult - Give a source type \arg Ty, return a suitable result
+  /// such that the argument will be passed in memory.
+  ABIArgInfo getIndirectResult(QualType Ty,
+                               ASTContext &Context) const;
+
   ABIArgInfo classifyReturnType(QualType RetTy, 
                                 ASTContext &Context) const;  
 
@@ -871,6 +876,17 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
   return ABIArgInfo::getCoerce(CoerceTo);
 }
 
+ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
+                                            ASTContext &Context) const {
+  // If this is a scalar LLVM value then assume LLVM will pass it in the right
+  // place naturally.
+  if (!CodeGenFunction::hasAggregateLLVMType(Ty))
+    return ABIArgInfo::getDirect();
+
+  // FIXME: Set alignment correctly.
+  return ABIArgInfo::getIndirect(0);
+}
+
 ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context) const {
   // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
@@ -895,7 +911,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
     // hidden argument.
   case Memory:
-    return ABIArgInfo::getIndirect(0);
+    return getIndirectResult(RetTy, Context);
 
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
@@ -991,7 +1007,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // COMPLEX_X87, it is passed in memory.
   case X87:
   case ComplexX87:
-    return ABIArgInfo::getIndirect(0);
+    return getIndirectResult(Ty, Context);
 
   case SSEUp:
   case X87Up:
@@ -1076,7 +1092,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
       freeIntRegs -= neededInt;
       freeSSERegs -= neededSSE;
     } else {
-      it->info = ABIArgInfo::getIndirect(0);
+      it->info = getIndirectResult(it->type, Context);
     }
   }
 }

@@ -69,4 +69,17 @@ struct s13_0 { long long f0[3]; };
 struct s13_0 f13(int a, int b, int c, int d, 
                  struct s13_1 { long long f0[2]; } e, int f) {}
 
+// RUN: grep 'define void @f14(.*, i8 signext .X)' %t &&
+void f14(int a, int b, int c, int d, int e, int f, 
+         char X) {}
+// RUN: grep 'define void @f15(.*, i8\* .X)' %t &&
+void f15(int a, int b, int c, int d, int e, int f, 
+         void *X) {}
+// RUN: grep 'define void @f16(.*, float .X)' %t &&
+void f16(float a, float b, float c, float d, float e, float f, float g, float h,
+         float X) {}
+// RUN: grep 'define void @f17(.*, x86_fp80 .X)' %t &&
+void f17(float a, float b, float c, float d, float e, float f, float g, float h,
+         long double X) {}
+
 // RUN: true
