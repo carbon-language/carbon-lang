@@ -138,9 +138,15 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
     else
       assert(false && 
              "FIXME: instantiation of non-local variable declarations");
-  } else if (isa<FunctionDecl>(D) || isa<OverloadedFunctionDecl>(D)) {
+  } else if (isa<FunctionDecl>(D)) {
     // FIXME: Instantiate decl!
     NewD = cast<ValueDecl>(D);
+  } else if (isa<OverloadedFunctionDecl>(D)) {
+    // FIXME: instantiate decls?
+    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(cast<NamedDecl>(D),
+                                                   SemaRef.Context.OverloadTy,
+                                                           E->getLocation(),
+                                                           false, false));
   } else
     assert(false && "FIXME: unhandled declaration reference kind");
 

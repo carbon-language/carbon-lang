@@ -414,17 +414,22 @@ TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
 QualType 
 TemplateTypeInstantiator::InstantiateTypeOfExprType(const TypeOfExprType *T,
                                                     unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate TypeOfExprType yet");
-  return QualType();
+  Sema::OwningExprResult E 
+    = SemaRef.InstantiateExpr(T->getUnderlyingExpr(), TemplateArgs);
+  if (E.isInvalid())
+    return QualType();
+
+  return SemaRef.Context.getTypeOfExprType(E.takeAs<Expr>());
 }
 
 QualType 
 TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
                                                 unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate TypeOfType yet");
-  return QualType();
+  QualType Underlying = Instantiate(T->getUnderlyingType());
+  if (Underlying.isNull())
+    return QualType();
+
+  return SemaRef.Context.getTypeOfType(Underlying);
 }
 
 QualType 
