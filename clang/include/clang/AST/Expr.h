@@ -945,12 +945,6 @@ class CallExpr : public Expr {
   unsigned NumArgs;
   SourceLocation RParenLoc;
   
-  // This version of the ctor is for deserialization.
-  CallExpr(StmtClass SC, Stmt** subexprs, unsigned numargs, QualType t, 
-           SourceLocation rparenloc)
-  : Expr(SC,t), SubExprs(subexprs), 
-    NumArgs(numargs), RParenLoc(rparenloc) {}
-
 protected:
   // This version of the constructor is for derived classes.
   CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args, unsigned numargs,

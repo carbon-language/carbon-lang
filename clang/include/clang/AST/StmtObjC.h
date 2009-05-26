@@ -76,10 +76,6 @@ private:
   Stmt *SubExprs[END_EXPR];
   SourceLocation AtCatchLoc, RParenLoc;
 
-  // Used by deserialization.
-  ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc)
-  : Stmt(ObjCAtCatchStmtClass), AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {}
-
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
                   ParmVarDecl *catchVarDecl, 

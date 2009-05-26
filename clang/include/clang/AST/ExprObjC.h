@@ -344,14 +344,6 @@ class ObjCMessageExpr : public Expr {
   enum { IsInstMeth=0, IsClsMethDeclUnknown, IsClsMethDeclKnown, Flags=0x3 };
   unsigned getFlag() const { return (uintptr_t) SubExprs[RECEIVER] & Flags; }
   
-  // constructor used during deserialization
-  ObjCMessageExpr(Selector selInfo, QualType retType,
-                  SourceLocation LBrac, SourceLocation RBrac,
-                  Stmt **subexprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType), SubExprs(subexprs),
-    NumArgs(nargs), SelName(selInfo), MethodProto(NULL),
-    LBracloc(LBrac), RBracloc(RBrac) {}
-  
 public:
   /// This constructor is used to represent class messages where the
   /// ObjCInterfaceDecl* of the receiver is not known.
