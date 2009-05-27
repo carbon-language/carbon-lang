@@ -9,8 +9,7 @@ namespace N {
           typedef T type;
 
           static enum K1 { K1Val = sizeof(T) } Kind1;
-          // FIXME: Remove the name K2, below
-          static enum K2 { K2Val = sizeof(T)*2 } Kind2;
+          static enum { K2Val = sizeof(T)*2 } Kind2;
 
           void foo() {
             K1 k1 = K1Val;

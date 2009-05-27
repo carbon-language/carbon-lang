@@ -1149,10 +1149,15 @@ class EnumDecl : public TagDecl {
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
   QualType IntegerType;
-  
+
+  /// \brief If the enumeration was instantiated from an enumeration
+  /// within a class or function template, this pointer refers to the
+  /// enumeration declared within the template.
+  EnumDecl *InstantiatedFrom;
+
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id)
-    : TagDecl(Enum, TK_enum, DC, L, Id) {
+    : TagDecl(Enum, TK_enum, DC, L, Id), InstantiatedFrom(0) {
       IntegerType = QualType();
     }
 public:
@@ -1187,6 +1192,15 @@ public:
 
   /// \brief Set the underlying integer type.
   void setIntegerType(QualType T) { IntegerType = T; }
+
+  /// \brief Returns the enumeration (declared within the template)
+  /// from which this enumeration type was instantiated, or NULL if
+  /// this enumeration was not instantiated from any template.
+  EnumDecl *getInstantiatedFromMemberEnum() const {
+    return InstantiatedFrom;
+  }
+
+  void setInstantiationOfMemberEnum(EnumDecl *IF) { InstantiatedFrom = IF; }
 
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }

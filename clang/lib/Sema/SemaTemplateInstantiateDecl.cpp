@@ -208,6 +208,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner, 
                                     D->getLocation(), D->getIdentifier(),
                                     /*PrevDecl=*/0);
+  Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
   Owner->addDecl(SemaRef.Context, Enum);
   Enum->startDefinition();
@@ -648,7 +649,9 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
     return Ctx.getCanonicalDecl(Function->getInstantiatedFromMemberFunction())
              == Ctx.getCanonicalDecl(D);
 
-  // FIXME: Need something similar to the above for EnumDecls.
+  if (EnumDecl *Enum = dyn_cast<EnumDecl>(Other))
+    return Ctx.getCanonicalDecl(Enum->getInstantiatedFromMemberEnum())
+             == Ctx.getCanonicalDecl(D);
 
   // FIXME: How can we find instantiations of anonymous unions?
 
