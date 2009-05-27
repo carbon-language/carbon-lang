@@ -504,8 +504,8 @@ for those modes.  If no -std option is specified, clang defaults to gnu99 mode.
 <p>Differences between all c* and gnu* modes:</p>
 <ul>
 <li>c* modes define "__STRICT_ANSI__".</li>
-<li>Target-specific defines not prefixed by underscores, like "linux", are defined
-in gnu* modes.</li>
+<li>Target-specific defines not prefixed by underscores, like "linux", are
+defined in gnu* modes.</li>
 <li>Trigraphs default to being off in gnu* modes; they can be enabled by the
 -trigraphs option.</li>
 <li>The parser recognizes "asm" and "typeof" as keywords in gnu* modes; the
@@ -521,11 +521,12 @@ option.</li>
 <li>The *99 modes default to implementing "inline" as specified in C99, while
 the *89 modes implement the GNU version.  This can be overridden for individual
 functions with the __gnu_inline__ attribute.</li>
-<li>Digraphs are enabled in the *99 modes.</li>
+<li>Digraphs are not recognized in c89 mode.</li>
 <li>The scope of names defined inside a "for", "if", "switch", "while", or "do"
 statement is different. (example: "if ((struct x {int x;}*)0) {}".)</li>
 <li>__STDC_VERSION__ is not defined in *89 modes.</li>
-<li>"inline" and "restrict" are not recognized as keywords in c89 mode.</li>
+<li>"inline" is not recognized as a keyword in c89 mode.</li>
+<li>"restrict" is not recognized as a keyword in *89 modes.</li>
 <li>Commas are allowed in integer constant expressions in *99 modes.</li>
 <li>Arrays which are not lvalues are not implicitly promoted to pointers in
 *89 modes.</li>
