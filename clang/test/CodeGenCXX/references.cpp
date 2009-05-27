@@ -78,3 +78,9 @@ void test_aggregate() {
 int& reference_return() {
   return g;
 }
+
+int reference_decl() {
+  int& a = g;
+  const int& b = 1;
+  return a+b;
+}

@@ -332,11 +332,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }
 
-  if (D.getType()->isReferenceType()) {
-    CGM.ErrorUnsupported(&D, "declaration with reference type");
-    return;
-  }
-  
   // If this local has an initializer, emit it now.
   if (const Expr *Init = D.getInit()) {
     llvm::Value *Loc = DeclPtr;
@@ -344,7 +339,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       bool needsCopyDispose = BlockRequiresCopying(Ty);
       Loc = Builder.CreateStructGEP(DeclPtr, needsCopyDispose*2+4, "x");
     }
-    if (!hasAggregateLLVMType(Init->getType())) {
+    if (Ty->isReferenceType()) {
+      llvm::Value *V = EmitReferenceBindingToExpr(Init, Ty).getScalarVal();
+      EmitStoreOfScalar(V, Loc, false, Ty);
+    } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
       EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified(), 
                         D.getType());
