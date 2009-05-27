@@ -990,110 +990,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     }
     break;
-  case ISD::VECTOR_SHUFFLE: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the input vectors,
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // but not the shuffle mask.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-    MVT VT = Result.getValueType();
-
-    // Copy the Mask to a local SmallVector for use with isShuffleMaskLegal.
-    SmallVector<int, 8> Mask;
-    cast<ShuffleVectorSDNode>(Result)->getMask(Mask);
-
-    // Allow targets to custom lower the SHUFFLEs they support.
-    switch (TLI.getOperationAction(ISD::VECTOR_SHUFFLE, VT)) {
-    default: assert(0 && "Unknown operation action!");
-    case TargetLowering::Legal:
-      assert(TLI.isShuffleMaskLegal(Mask, VT) &&
-             "vector shuffle should not be created if not legal!");
-      break;
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.getNode()) {
-        Result = Tmp3;
-        break;
-      }
-      // FALLTHROUGH
-    case TargetLowering::Expand: {
-      MVT EltVT = VT.getVectorElementType();
-      unsigned NumElems = VT.getVectorNumElements();
-      SmallVector<SDValue, 8> Ops;
-      for (unsigned i = 0; i != NumElems; ++i) {
-        if (Mask[i] < 0) {
-          Ops.push_back(DAG.getUNDEF(EltVT));
-          continue;
-        }
-        unsigned Idx = Mask[i];
-        if (Idx < NumElems)
-          Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp1,
-                                    DAG.getIntPtrConstant(Idx)));
-        else
-          Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Tmp2,
-                                    DAG.getIntPtrConstant(Idx - NumElems)));
-      }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
-      break;
-    }
-    case TargetLowering::Promote: {
-      // Change base type to a different vector type.
-      MVT OVT = Node->getValueType(0);
-      MVT NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
-
-      // Cast the two input vectors.
-      Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Tmp1);
-      Tmp2 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Tmp2);
-
-      // Convert the shuffle mask to the right # elements.
-      Result = ShuffleWithNarrowerEltType(NVT, OVT, dl, Tmp1, Tmp2, Mask);
-      Result = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Result);
-      break;
-    }
-    }
-    break;
-  }
-  case ISD::CONCAT_VECTORS: {
-    // Legalize the operands.
-    SmallVector<SDValue, 8> Ops;
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-      Ops.push_back(LegalizeOp(Node->getOperand(i)));
-    Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
-
-    switch (TLI.getOperationAction(ISD::CONCAT_VECTORS,
-                                   Node->getValueType(0))) {
-    default: assert(0 && "Unknown operation action!");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.getNode()) {
-        Result = Tmp3;
-        break;
-      }
-      // FALLTHROUGH
-    case TargetLowering::Expand: {
-      // Use extract/insert/build vector for now. We might try to be
-      // more clever later.
-      MVT PtrVT = TLI.getPointerTy();
-      SmallVector<SDValue, 8> Ops;
-      unsigned NumOperands = Node->getNumOperands();
-      for (unsigned i=0; i < NumOperands; ++i) {
-        SDValue SubOp = Node->getOperand(i);
-        MVT VVT = SubOp.getNode()->getValueType(0);
-        MVT EltVT = VVT.getVectorElementType();
-        unsigned NumSubElem = VVT.getVectorNumElements();
-        for (unsigned j=0; j < NumSubElem; ++j) {
-          Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, SubOp,
-                                    DAG.getConstant(j, PtrVT)));
-        }
-      }
-      return LegalizeOp(DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                    Node->getValueType(0),
-                                    &Ops[0], Ops.size()));
-    }
-    }
-    break;
-  }
-
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
 
@@ -1759,60 +1655,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     break;
   }
-  case ISD::SELECT:
-    Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
-    Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
-
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-
-    switch (TLI.getOperationAction(ISD::SELECT, Tmp2.getValueType())) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom: {
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.getNode()) Result = Tmp1;
-      break;
-    }
-    case TargetLowering::Expand:
-      if (Tmp1.getOpcode() == ISD::SETCC) {
-        Result = DAG.getSelectCC(dl, Tmp1.getOperand(0), Tmp1.getOperand(1),
-                              Tmp2, Tmp3,
-                              cast<CondCodeSDNode>(Tmp1.getOperand(2))->get());
-      } else {
-        Result = DAG.getSelectCC(dl, Tmp1,
-                                 DAG.getConstant(0, Tmp1.getValueType()),
-                                 Tmp2, Tmp3, ISD::SETNE);
-      }
-      break;
-    case TargetLowering::Promote: {
-      MVT NVT =
-        TLI.getTypeToPromoteTo(ISD::SELECT, Tmp2.getValueType());
-      unsigned ExtOp, TruncOp;
-      if (Tmp2.getValueType().isVector()) {
-        ExtOp   = ISD::BIT_CONVERT;
-        TruncOp = ISD::BIT_CONVERT;
-      } else if (Tmp2.getValueType().isInteger()) {
-        ExtOp   = ISD::ANY_EXTEND;
-        TruncOp = ISD::TRUNCATE;
-      } else {
-        ExtOp   = ISD::FP_EXTEND;
-        TruncOp = ISD::FP_ROUND;
-      }
-      // Promote each of the values to the new type.
-      Tmp2 = DAG.getNode(ExtOp, dl, NVT, Tmp2);
-      Tmp3 = DAG.getNode(ExtOp, dl, NVT, Tmp3);
-      // Perform the larger operation, then round down.
-      Result = DAG.getNode(ISD::SELECT, dl, NVT, Tmp1, Tmp2, Tmp3);
-      if (TruncOp != ISD::FP_ROUND)
-        Result = DAG.getNode(TruncOp, dl, Node->getValueType(0), Result);
-      else
-        Result = DAG.getNode(TruncOp, dl, Node->getValueType(0), Result,
-                             DAG.getIntPtrConstant(0));
-      break;
-    }
-    }
-    break;
   case ISD::SELECT_CC: {
     Tmp1 = Node->getOperand(0);               // LHS
     Tmp2 = Node->getOperand(1);               // RHS
@@ -1967,52 +1809,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     }
     break;
-  case ISD::VAARG: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
-
-    MVT VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom:
-      isCustom = true;
-      // FALLTHROUGH
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
-      Result = Result.getValue(0);
-      Tmp1 = Result.getValue(1);
-
-      if (isCustom) {
-        Tmp2 = TLI.LowerOperation(Result, DAG);
-        if (Tmp2.getNode()) {
-          Result = LegalizeOp(Tmp2);
-          Tmp1 = LegalizeOp(Tmp2.getValue(1));
-        }
-      }
-      break;
-    case TargetLowering::Expand: {
-      const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
-      SDValue VAList = DAG.getLoad(TLI.getPointerTy(), dl, Tmp1, Tmp2, V, 0);
-      // Increment the pointer, VAList, to the next vaarg
-      Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
-                         DAG.getConstant(TLI.getTargetData()->
-                                         getTypeAllocSize(VT.getTypeForMVT()),
-                                         TLI.getPointerTy()));
-      // Store the incremented VAList to the legalized pointer
-      Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Tmp2, V, 0);
-      // Load the actual argument out of the pointer VAList
-      Result = DAG.getLoad(VT, dl, Tmp3, VAList, NULL, 0);
-      Tmp1 = LegalizeOp(Result.getValue(1));
-      Result = LegalizeOp(Result);
-      break;
-    }
-    }
-    // Since VAARG produces two values, make sure to remember that we
-    // legalized both of them.
-    AddLegalizedOperand(SDValue(Node, 0), Result);
-    AddLegalizedOperand(SDValue(Node, 1), Tmp1);
-    return Op.getResNo() ? Tmp1 : Result;
-  }
   case ISD::SADDO:
   case ISD::SSUBO: {
     MVT VT = Node->getValueType(0);
@@ -2967,6 +2763,24 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(Tmp1);
     break;
   }
+  case ISD::VAARG: {
+    const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
+    MVT VT = Node->getValueType(0);
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = Node->getOperand(1);
+    SDValue VAList = DAG.getLoad(TLI.getPointerTy(), dl, Tmp1, Tmp2, V, 0);
+    // Increment the pointer, VAList, to the next vaarg
+    Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
+                       DAG.getConstant(TLI.getTargetData()->
+                                       getTypeAllocSize(VT.getTypeForMVT()),
+                                       TLI.getPointerTy()));
+    // Store the incremented VAList to the legalized pointer
+    Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Tmp2, V, 0);
+    // Load the actual argument out of the pointer VAList
+    Results.push_back(DAG.getLoad(VT, dl, Tmp3, VAList, NULL, 0));
+    Results.push_back(Results[0].getValue(1));
+    break;
+  }
   case ISD::VACOPY: {
     // This defaults to loading a pointer from the input and storing it to the
     // output, returning the chain.
@@ -2990,6 +2804,26 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::EXTRACT_SUBVECTOR:
     Results.push_back(ExpandExtractFromVectorThroughStack(SDValue(Node, 0)));
     break;
+  case ISD::CONCAT_VECTORS: {
+    // Use extract/insert/build vector for now. We might try to be
+    // more clever later.
+    SmallVector<SDValue, 8> Ops;
+    unsigned NumOperands = Node->getNumOperands();
+    for (unsigned i=0; i < NumOperands; ++i) {
+      SDValue SubOp = Node->getOperand(i);
+      MVT VVT = SubOp.getNode()->getValueType(0);
+      MVT EltVT = VVT.getVectorElementType();
+      unsigned NumSubElem = VVT.getVectorNumElements();
+      for (unsigned j=0; j < NumSubElem; ++j) {
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, SubOp,
+                                  DAG.getIntPtrConstant(j)));
+      }
+    }
+    Tmp1 = DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
+                       &Ops[0], Ops.size());
+    Results.push_back(Tmp1);
+    break;
+  }
   case ISD::SCALAR_TO_VECTOR:
     Results.push_back(ExpandSCALAR_TO_VECTOR(Node));
     break;
@@ -2998,6 +2832,33 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                               Node->getOperand(1),
                                               Node->getOperand(2), dl));
     break;
+  case ISD::VECTOR_SHUFFLE: {
+    SmallVector<int, 8> Mask;
+    cast<ShuffleVectorSDNode>(Node)->getMask(Mask);
+
+    MVT VT = Node->getValueType(0);
+    MVT EltVT = VT.getVectorElementType();
+    unsigned NumElems = VT.getVectorNumElements();
+    SmallVector<SDValue, 8> Ops;
+    for (unsigned i = 0; i != NumElems; ++i) {
+      if (Mask[i] < 0) {
+        Ops.push_back(DAG.getUNDEF(EltVT));
+        continue;
+      }
+      unsigned Idx = Mask[i];
+      if (Idx < NumElems)
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
+                                  Node->getOperand(0),
+                                  DAG.getIntPtrConstant(Idx)));
+      else
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
+                                  Node->getOperand(1),
+                                  DAG.getIntPtrConstant(Idx - NumElems)));
+    }
+    Tmp1 = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
+    Results.push_back(Tmp1);
+    break;
+  }
   case ISD::EXTRACT_ELEMENT: {
     MVT OpTy = Node->getOperand(0).getValueType();
     if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
@@ -3269,6 +3130,21 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(DAG.getNode(ISD::OR, dl, PairTy, Tmp1, Tmp2));
     break;
   }
+  case ISD::SELECT:
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = Node->getOperand(1);
+    Tmp3 = Node->getOperand(2);
+    if (Tmp1.getOpcode() == ISD::SETCC) {
+      Tmp1 = DAG.getSelectCC(dl, Tmp1.getOperand(0), Tmp1.getOperand(1),
+                             Tmp2, Tmp3,
+                             cast<CondCodeSDNode>(Tmp1.getOperand(2))->get());
+    } else {
+      Tmp1 = DAG.getSelectCC(dl, Tmp1,
+                             DAG.getConstant(0, Tmp1.getValueType()),
+                             Tmp2, Tmp3, ISD::SETNE);
+    }
+    Results.push_back(Tmp1);
+    break;
   case ISD::BRCOND:
     // Expand brcond's setcc into its constituent parts and create a BR_CC
     // Node.
@@ -3311,7 +3187,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
   }
   MVT NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
   DebugLoc dl = Node->getDebugLoc();
-  SDValue Tmp1, Tmp2;
+  SDValue Tmp1, Tmp2, Tmp3;
   switch (Node->getOpcode()) {
   case ISD::CTTZ:
   case ISD::CTLZ:
@@ -3367,6 +3243,45 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     // Bit convert the result back the original type.
     Results.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Tmp1));
     break;
+  case ISD::SELECT:
+    unsigned ExtOp, TruncOp;
+    if (Tmp2.getValueType().isVector()) {
+      ExtOp   = ISD::BIT_CONVERT;
+      TruncOp = ISD::BIT_CONVERT;
+    } else if (Tmp2.getValueType().isInteger()) {
+      ExtOp   = ISD::ANY_EXTEND;
+      TruncOp = ISD::TRUNCATE;
+    } else {
+      ExtOp   = ISD::FP_EXTEND;
+      TruncOp = ISD::FP_ROUND;
+    }
+    Tmp1 = Node->getOperand(0);
+    // Promote each of the values to the new type.
+    Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
+    Tmp3 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(2));
+    // Perform the larger operation, then round down.
+    Tmp1 = DAG.getNode(ISD::SELECT, dl, NVT, Tmp1, Tmp2, Tmp3);
+    if (TruncOp != ISD::FP_ROUND)
+      Tmp1 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1);
+    else
+      Tmp1 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1,
+                         DAG.getIntPtrConstant(0));
+    Results.push_back(Tmp1);
+    break;
+  case ISD::VECTOR_SHUFFLE: {
+    SmallVector<int, 8> Mask;
+    cast<ShuffleVectorSDNode>(Node)->getMask(Mask);
+
+    // Cast the two input vectors.
+    Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Node->getOperand(0));
+    Tmp2 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Node->getOperand(1));
+
+    // Convert the shuffle mask to the right # elements.
+    Tmp1 = ShuffleWithNarrowerEltType(NVT, OVT, dl, Tmp1, Tmp2, Mask);
+    Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Tmp1);
+    Results.push_back(Tmp1);
+    break;
+  }
   }
 }
 

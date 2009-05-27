@@ -10,8 +10,8 @@
 // This file implements the SelectionDAG::LegalizeVectors method.
 //
 // The vector legalizer looks for vector operations which might need to be
-// unrolled and legalizes them. This is a separate step from Legalize because
-// unrolling can introduce illegal types.  For example, suppose we have an
+// scalarized and legalizes them. This is a separate step from Legalize because
+// scalarizing can introduce illegal types.  For example, suppose we have an
 // ISD::SDIV of type v2i64 on x86-32.  The type is legal (for example, addition
 // on a v2i64 is legal), but ISD::SDIV isn't legal, so we have to unroll the
 // operation, which introduces nodes with the illegal type i64 which must be
