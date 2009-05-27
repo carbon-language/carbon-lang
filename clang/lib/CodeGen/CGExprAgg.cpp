@@ -186,6 +186,11 @@ void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
 }
 
 void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
+  if (E->getCallReturnType()->isReferenceType()) {
+    EmitAggLoadOfLValue(E);
+    return;
+  }
+  
   RValue RV = CGF.EmitCallExpr(E);
   EmitFinalDestCopy(E, RV);
 }
