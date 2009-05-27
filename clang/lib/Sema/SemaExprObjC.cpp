@@ -571,10 +571,11 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   
   // We allow sending a message to a qualified ID ("id<foo>"), which is ok as 
   // long as one of the protocols implements the selector (if not, warn).
-  if (ObjCQualifiedIdType *QIT = dyn_cast<ObjCQualifiedIdType>(ReceiverCType)) {
+  if (ObjCQualifiedIdType *QIdTy = dyn_cast<ObjCQualifiedIdType>(ReceiverCType)) {
     // Search protocols for instance methods.
-    for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-      ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
+    for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
+         E = QIdTy->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *PDecl = *I;
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Context, Sel)))
         break;
       // Since we aren't supporting "Class<foo>", look for a class method.
@@ -750,11 +751,12 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
         // make sure we check the class hierarchy.
         if (const ObjCInterfaceType *IT = rtype->getAsObjCInterfaceType()) {
           ObjCInterfaceDecl *rhsID = IT->getDecl();
-          for (unsigned i = 0; i != lhsQID->getNumProtocols(); ++i) {
+          for (ObjCQualifiedIdType::qual_iterator I = lhsQID->qual_begin(),
+               E = lhsQID->qual_end(); I != E; ++I) {
             // when comparing an id<P> on lhs with a static type on rhs,
             // see if static class implements all of id's protocols, directly or
             // through its super class and categories.
-            if (!ClassImplementsProtocol(lhsQID->getProtocols(i), rhsID, true))
+            if (!ClassImplementsProtocol(*I, rhsID, true))
               return false;
           }
           return true;
@@ -773,8 +775,9 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       return false;
     }
     
-    for (unsigned i =0; i < lhsQID->getNumProtocols(); i++) {
-      ObjCProtocolDecl *lhsProto = lhsQID->getProtocols(i);
+    for (ObjCQualifiedIdType::qual_iterator I = lhsQID->qual_begin(),
+         E = lhsQID->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *lhsProto = *I;
       bool match = false;
 
       // when comparing an id<P> on lhs with a static type on rhs,
@@ -793,11 +796,12 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
         // make sure we check the class hierarchy.
         if (const ObjCInterfaceType *IT = rtype->getAsObjCInterfaceType()) {
           ObjCInterfaceDecl *rhsID = IT->getDecl();
-          for (unsigned i = 0; i != lhsQID->getNumProtocols(); ++i) {
+          for (ObjCQualifiedIdType::qual_iterator I = lhsQID->qual_begin(),
+               E = lhsQID->qual_end(); I != E; ++I) {
             // when comparing an id<P> on lhs with a static type on rhs,
             // see if static class implements all of id's protocols, directly or
             // through its super class and categories.
-            if (ClassImplementsProtocol(lhsQID->getProtocols(i), rhsID, true)) {
+            if (ClassImplementsProtocol(*I, rhsID, true)) {
               match = true;
               break;
             }
@@ -825,8 +829,9 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     for (; LHSProtoI != LHSProtoE; ++LHSProtoI) {
       bool match = false;
       ObjCProtocolDecl *lhsProto = *LHSProtoI;
-      for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-        ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+      for (ObjCQualifiedIdType::qual_iterator I = rhsQID->qual_begin(),
+           E = rhsQID->qual_end(); I != E; ++I) {
+        ObjCProtocolDecl *rhsProto = *I;
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
           match = true;
@@ -843,9 +848,9 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     // for static type vs. qualified 'id' type, check that class implements
     // all of 'id's protocols.
     ObjCInterfaceDecl *lhsID = IT->getDecl();
-    for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-      ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
-      if (!ClassImplementsProtocol(rhsProto, lhsID, compare, true))
+    for (ObjCQualifiedIdType::qual_iterator I = rhsQID->qual_begin(),
+         E = rhsQID->qual_end(); I != E; ++I) {
+      if (!ClassImplementsProtocol(*I, lhsID, compare, true))
         return false;
     }
     return true;

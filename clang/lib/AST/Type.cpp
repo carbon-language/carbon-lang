@@ -1531,10 +1531,9 @@ void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString) const {
     InnerString = ' ' + InnerString;
   std::string ObjCQIString = "id";
   ObjCQIString += '<';
-  int num = getNumProtocols();
-  for (int i = 0; i < num; i++) {
-    ObjCQIString += getProtocols(i)->getNameAsString();
-    if (i < num-1)
+  for (qual_iterator I = qual_begin(), E = qual_end(); I != E; ++I) {
+    ObjCQIString += (*I)->getNameAsString();
+    if (I+1 != E)
       ObjCQIString += ',';
   }
   ObjCQIString += '>';

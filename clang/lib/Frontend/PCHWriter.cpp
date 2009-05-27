@@ -218,15 +218,17 @@ PCHTypeWriter::VisitObjCQualifiedInterfaceType(
                                       const ObjCQualifiedInterfaceType *T) {
   VisitObjCInterfaceType(T);
   Record.push_back(T->getNumProtocols());
-  for (unsigned I = 0, N = T->getNumProtocols(); I != N; ++I)
-    Writer.AddDeclRef(T->getProtocol(I), Record);
+  for (ObjCInterfaceType::qual_iterator I = T->qual_begin(),
+       E = T->qual_end(); I != E; ++I)
+    Writer.AddDeclRef(*I, Record);
   Code = pch::TYPE_OBJC_QUALIFIED_INTERFACE;
 }
 
 void PCHTypeWriter::VisitObjCQualifiedIdType(const ObjCQualifiedIdType *T) {
   Record.push_back(T->getNumProtocols());
-  for (unsigned I = 0, N = T->getNumProtocols(); I != N; ++I)
-    Writer.AddDeclRef(T->getProtocols(I), Record);
+  for (ObjCQualifiedIdType::qual_iterator I = T->qual_begin(),
+       E = T->qual_end(); I != E; ++I)
+    Writer.AddDeclRef(*I, Record);
   Code = pch::TYPE_OBJC_QUALIFIED_ID;
 }
 

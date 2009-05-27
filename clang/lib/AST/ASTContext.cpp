@@ -2350,10 +2350,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       // Only when doing ivar or property encoding.
       const ObjCQualifiedIdType *QIDT = T->getAsObjCQualifiedIdType();
       S += '"';
-      for (unsigned i =0; i < QIDT->getNumProtocols(); i++) {
-        ObjCProtocolDecl *Proto = QIDT->getProtocols(i);
+      for (ObjCQualifiedIdType::qual_iterator I = QIDT->qual_begin(),
+           E = QIDT->qual_end(); I != E; ++I) {
         S += '<';
-        S += Proto->getNameAsString();
+        S += (*I)->getNameAsString();
         S += '>';
       }
       S += '"';
@@ -2416,10 +2416,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         ObjCInterfaceDecl *OI = OIT->getDecl();
         S += '"';
         S += OI->getNameAsCString();
-        for (unsigned i =0; i < OIT->getNumProtocols(); i++) {
-          ObjCProtocolDecl *Proto = OIT->getProtocol(i);
+        for (ObjCInterfaceType::qual_iterator I = OIT->qual_begin(),
+             E = OIT->qual_end(); I != E; ++I) {
           S += '<';
-          S += Proto->getNameAsString();
+          S += (*I)->getNameAsString();
           S += '>';
         } 
         S += '"';

@@ -1623,10 +1623,6 @@ public:
   /// interface type, or 0 if there are none.
   inline unsigned getNumProtocols() const;
   
-  /// getProtocol - Return the specified qualifying protocol.
-  inline ObjCProtocolDecl *getProtocol(unsigned i) const;
-  
-  
   virtual void getAsStringInternal(std::string &InnerString) const;
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ObjCInterface ||
@@ -1654,9 +1650,6 @@ class ObjCQualifiedInterfaceType : public ObjCInterfaceType,
   friend class ASTContext;  // ASTContext creates these.
 public:
   
-  ObjCProtocolDecl *getProtocol(unsigned i) const {
-    return Protocols[i];
-  }
   unsigned getNumProtocols() const {
     return Protocols.size();
   }
@@ -1699,13 +1692,6 @@ inline unsigned ObjCInterfaceType::getNumProtocols() const {
   return 0;
 }
 
-/// getProtocol - Return the specified qualifying protocol.
-inline ObjCProtocolDecl *ObjCInterfaceType::getProtocol(unsigned i) const {
-  return cast<ObjCQualifiedInterfaceType>(this)->getProtocol(i);
-}
-  
-  
-
 /// ObjCQualifiedIdType - to represent id<protocol-list>.
 ///
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
@@ -1723,14 +1709,8 @@ class ObjCQualifiedIdType : public Type,
   friend class ASTContext;  // ASTContext creates these.
 public:
     
-  ObjCProtocolDecl *getProtocols(unsigned i) const {
-    return Protocols[i];
-  }
   unsigned getNumProtocols() const {
     return Protocols.size();
-  }
-  ObjCProtocolDecl **getReferencedProtocols() {
-    return &Protocols[0];
   }
                               
   typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
