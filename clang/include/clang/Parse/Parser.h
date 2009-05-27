@@ -512,11 +512,26 @@ private:
   /// nested classes are lexed and stored here.
   typedef std::list<LexedMethod> LexedMethodsForTopClass;
 
+  /// \brief Representation of a class that has been parsed, including
+  /// any member function declarations or definitions that need to be
+  /// parsed after the corresponding top-level class is complete.
+  struct ParsingClass {
+    ParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass) 
+      : TopLevelClass(TopLevelClass), TemplateScope(false), 
+        TagOrTemplate(TagOrTemplate) { }
 
-  /// TopClass - Contains information about parts of the top
-  /// (non-nested) C++ class that will need to be parsed after the
-  /// class is fully defined.
-  struct TopClass {
+    /// \brief Whether this is a "top-level" class, meaning that it is
+    /// not nested within another class.
+    bool TopLevelClass : 1;
+
+    /// \brief Whether this class had an associated template
+    /// scope. When true, TagOrTemplate is a template declaration;
+    /// othewise, it is a tag declaration.
+    bool TemplateScope : 1;
+
+    /// \brief The class or class template whose definition we are parsing.
+    DeclPtrTy TagOrTemplate;
+
     /// MethodDecls - Method declarations that contain pieces whose
     /// parsing will be delayed until the class is fully defined.
     LateParsedMethodDecls MethodDecls;
@@ -524,27 +539,52 @@ private:
     /// MethodDefs - Methods whose definitions will be parsed once the
     /// class has been fully defined.
     LexedMethodsForTopClass MethodDefs;
+
+    /// \brief Nested classes inside this class.
+    llvm::SmallVector<ParsingClass*, 4> NestedClasses;
   };
 
-  /// TopClassStacks - This is initialized with one TopClass used
-  /// for lexing all top classes, until a local class in an inline method is
-  /// encountered, at which point a new TopClass is pushed here
-  /// and used until the parsing of that local class is finished.
-  std::stack<TopClass> TopClassStacks;
+  /// \brief The stack of classes that is currently being
+  /// parsed. Nested and local classes will be pushed onto this stack
+  /// when they are parsed, and removed afterward.
+  std::stack<ParsingClass *> ClassStack;
 
-  TopClass &getCurTopClassStack() {
-    assert(!TopClassStacks.empty() && "No lexed method stacks!");
-    return TopClassStacks.top();
+  ParsingClass &getCurrentClass() {
+    assert(!ClassStack.empty() && "No lexed method stacks!");
+    return *ClassStack.top();
   }
 
-  void PushTopClassStack() {
-    TopClassStacks.push(TopClass());
-  }
-  void PopTopClassStack() { TopClassStacks.pop(); }
+  /// \brief RAII object used to 
+  class ParsingClassDefinition {
+    Parser &P;
+    bool Popped;
+
+  public:
+    ParsingClassDefinition(Parser &P, DeclPtrTy TagOrTemplate, bool TopLevelClass) 
+      : P(P), Popped(false) { 
+      P.PushParsingClass(TagOrTemplate, TopLevelClass);
+    }
+
+    /// \brief Pop this class of the stack.
+    void Pop() { 
+      assert(!Popped && "Nested class has already been popped");
+      Popped = true;
+      P.PopParsingClass();
+    }
+
+    ~ParsingClassDefinition() { 
+      if (!Popped)
+        P.PopParsingClass(); 
+    }
+  };
+
+  void PushParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass);
+  void DeallocateParsedClasses(ParsingClass *Class);
+  void PopParsingClass();
 
   DeclPtrTy ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D);
-  void ParseLexedMethodDeclarations();
-  void ParseLexedMethodDefs();
+  void ParseLexedMethodDeclarations(ParsingClass &Class);
+  void ParseLexedMethodDefs(ParsingClass &Class);
   bool ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2, 
                             CachedTokens &Toks,
                             tok::TokenKind EarlyAbortIf = tok::unknown,

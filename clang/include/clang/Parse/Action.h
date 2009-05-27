@@ -930,6 +930,24 @@ public:
     return;
   }
 
+  /// \brief Called when we re-enter a template parameter scope.
+  ///
+  /// This action occurs when we are going to parse an member
+  /// function's default arguments or inline definition after the
+  /// outermost class definition has been completed, and when one or
+  /// more of the class definitions enclosing the member function is a
+  /// template. The "entity" in the given scope will be set as it was
+  /// when we entered the scope of the template initially, and should
+  /// be used to, e.g., reintroduce the names of template parameters
+  /// into the current scope so that they can be found by name lookup.
+  ///
+  /// \param S The (new) template parameter scope.
+  ///
+  /// \param Template the class template declaration whose template
+  /// parameters should be reintroduced into the current scope.
+  virtual void ActOnReenterTemplateScope(Scope *S, DeclPtrTy Template) {
+  }
+
   /// ActOnStartDelayedCXXMethodDeclaration - We have completed
   /// parsing a top-level (non-nested) C++ class, and we are now
   /// parsing those parts of the given Method declaration that could

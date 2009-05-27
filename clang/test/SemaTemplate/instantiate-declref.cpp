@@ -38,3 +38,24 @@ namespace N {
 typedef int INT;
 template struct N::Outer::Inner::InnerTemplate<INT>::VeryInner;
 template struct N::Outer::Inner::InnerTemplate<INT>::UeberInner; // expected-error{{'UeberInner' does not name a tag member}}
+
+namespace N2 {
+  struct Outer2 {
+    template<typename T>
+    struct Inner {
+      void foo() {
+        enum { K1Val = sizeof(T) } k1;
+        enum K2 { K2Val = sizeof(T)*2 };
+
+        K2 k2 = K2Val;
+
+        Inner i1;
+        i1.foo();
+        Inner<T> i2;
+        i2.foo();
+      }
+    };
+  };
+}
+
+// FIXME: template struct N2::Outer2::Inner<float>;

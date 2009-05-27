@@ -921,9 +921,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
           if (!LateMethod) {
             // Push this method onto the stack of late-parsed method
             // declarations.
-            getCurTopClassStack().MethodDecls.push_back(
+            getCurrentClass().MethodDecls.push_back(
                                    LateParsedMethodDeclaration(ThisDecl));
-            LateMethod = &getCurTopClassStack().MethodDecls.back();
+            LateMethod = &getCurrentClass().MethodDecls.back();
 
             // Add all of the parameters prior to this one (they don't
             // have default arguments).
@@ -1000,15 +1000,15 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   
   SourceLocation LBraceLoc = ConsumeBrace();
 
-  if (!CurScope->isClassScope() && // Not about to define a nested class.
-      CurScope->isInCXXInlineMethodScope()) {
-    // We will define a local class of an inline method.
-    // Push a new LexedMethodsForTopClass for its inline methods.
-    PushTopClassStack();
-  }
+  // Determine whether this is a top-level (non-nested) class.
+  bool TopLevelClass = ClassStack.empty() || 
+    CurScope->isInCXXInlineMethodScope();
 
   // Enter a scope for the class.
   ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
+
+  // Note that we are parsing a new (potentially-nested) class definition.
+  ParsingClassDefinition ParsingDef(*this, TagDecl, TopLevelClass);
 
   if (TagDecl)
     Actions.ActOnTagStartDefinition(CurScope, TagDecl);
@@ -1067,26 +1067,16 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   //
   // FIXME: Only function bodies and constructor ctor-initializers are
   // parsed correctly, fix the rest.
-  if (!CurScope->getParent()->isClassScope() && 
-      !(CurScope->getParent()->isTemplateParamScope() &&
-        CurScope->getParent()->getParent()->isClassScope())) {
+  if (TopLevelClass) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.
-    ParseLexedMethodDeclarations();
-    ParseLexedMethodDefs();
-
-    // For a local class of inline method, pop the LexedMethodsForTopClass that
-    // was previously pushed.
-
-    assert((CurScope->isInCXXInlineMethodScope() ||
-           TopClassStacks.size() == 1) &&
-           "MethodLexers not getting popped properly!");
-    if (CurScope->isInCXXInlineMethodScope())
-      PopTopClassStack();
+    ParseLexedMethodDeclarations(getCurrentClass());
+    ParseLexedMethodDefs(getCurrentClass());
   }
 
   // Leave the class scope.
+  ParsingDef.Pop();
   ClassScope.Exit();
 
   Actions.ActOnTagFinishDefinition(CurScope, TagDecl);
@@ -1235,4 +1225,61 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
 
   EndLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   return false;
+}
+
+/// \brief We have just started parsing the definition of a new class,
+/// so push that class onto our stack of classes that is currently
+/// being parsed.
+void Parser::PushParsingClass(DeclPtrTy ClassDecl, bool TopLevelClass) {
+  assert((TopLevelClass || !ClassStack.empty()) && 
+         "Nested class without outer class");
+  ClassStack.push(new ParsingClass(ClassDecl, TopLevelClass));
+}
+
+/// \brief Deallocate the given parsed class and all of its nested
+/// classes.
+void Parser::DeallocateParsedClasses(Parser::ParsingClass *Class) {
+  for (unsigned I = 0, N = Class->NestedClasses.size(); I != N; ++I)
+    DeallocateParsedClasses(Class->NestedClasses[I]);
+  delete Class;
+}
+
+/// \brief Pop the top class of the stack of classes that are
+/// currently being parsed.
+///
+/// This routine should be called when we have finished parsing the
+/// definition of a class, but have not yet popped the Scope
+/// associated with the class's definition.
+///
+/// \returns true if the class we've popped is a top-level class,
+/// false otherwise.
+void Parser::PopParsingClass() {
+  assert(!ClassStack.empty() && "Mismatched push/pop for class parsing");
+  
+  ParsingClass *Victim = ClassStack.top();
+  ClassStack.pop();
+  if (Victim->TopLevelClass) {
+    // Deallocate all of the nested classes of this class,
+    // recursively: we don't need to keep any of this information.
+    DeallocateParsedClasses(Victim);
+    return;
+  } 
+  assert(!ClassStack.empty() && "Missing top-level class?");
+
+  if (Victim->MethodDecls.empty() && Victim->MethodDefs.empty() &&
+      Victim->NestedClasses.empty()) {
+    // The victim is a nested class, but we will not need to perform
+    // any processing after the definition of this class since it has
+    // no members whose handling was delayed. Therefore, we can just
+    // remove this nested class.
+    delete Victim;
+    return;
+  }
+
+  // This nested class has some members that will need to be processed
+  // after the top-level class is completely defined. Therefore, add
+  // it to the list of nested classes within its parent.
+  assert(CurScope->isClassScope() && "Nested class outside of class scope?");
+  ClassStack.top()->NestedClasses.push_back(Victim);
+  Victim->TemplateScope = CurScope->getParent()->isTemplateParamScope();
 }

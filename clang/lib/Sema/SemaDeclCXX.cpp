@@ -1205,6 +1205,23 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   }
 }
 
+void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
+  TemplateDecl *Template = TemplateD.getAs<TemplateDecl>();
+  if (!Template)
+    return;
+
+  TemplateParameterList *Params = Template->getTemplateParameters();
+  for (TemplateParameterList::iterator Param = Params->begin(),
+                                    ParamEnd = Params->end();
+       Param != ParamEnd; ++Param) {
+    NamedDecl *Named = cast<NamedDecl>(*Param);
+    if (Named->getDeclName()) {
+      S->AddDecl(DeclPtrTy::make(Named));
+      IdResolver.AddDecl(Named);
+    }
+  }
+}
+
 /// ActOnStartDelayedCXXMethodDeclaration - We have completed
 /// parsing a top-level (non-nested) C++ class, and we are now
 /// parsing those parts of the given Method declaration that could

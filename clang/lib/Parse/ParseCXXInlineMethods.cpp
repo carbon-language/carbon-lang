@@ -31,8 +31,8 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
 
   // Consume the tokens and store them for later parsing.
 
-  getCurTopClassStack().MethodDefs.push_back(LexedMethod(FnD));
-  CachedTokens &Toks = getCurTopClassStack().MethodDefs.back().Toks;
+  getCurrentClass().MethodDefs.push_back(LexedMethod(FnD));
+  CachedTokens &Toks = getCurrentClass().MethodDefs.back().Toks;
 
   tok::TokenKind kind = Tok.getKind();
   // We may have a constructor initializer or function-try-block here.
@@ -46,7 +46,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
         // don't try to parse this method later.
         Diag(Tok.getLocation(), diag::err_expected_lbrace);
         ConsumeAnyToken();
-        getCurTopClassStack().MethodDefs.pop_back();
+        getCurrentClass().MethodDefs.pop_back();
         return FnD;
       }
     }
@@ -74,11 +74,22 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
 /// specification of a top (non-nested) C++ class. Now go over the
 /// stack of method declarations with some parts for which parsing was
 /// delayed (such as default arguments) and parse them.
-void Parser::ParseLexedMethodDeclarations() {
-  for (; !getCurTopClassStack().MethodDecls.empty();
-       getCurTopClassStack().MethodDecls.pop_front()) {
-    LateParsedMethodDeclaration &LM = getCurTopClassStack().MethodDecls.front();
+void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
+  bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
+  ParseScope TemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
+  if (HasTemplateScope)
+    Actions.ActOnReenterTemplateScope(CurScope, Class.TagOrTemplate);
+
+  bool HasClassScope = !Class.TopLevelClass;
+  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope,
+                        HasClassScope);
+
+  for (; !Class.MethodDecls.empty(); Class.MethodDecls.pop_front()) {
+    LateParsedMethodDeclaration &LM = Class.MethodDecls.front();
     
+    // FIXME: For member function templates, we'll need to introduce a
+    // scope for the template parameters.
+
     // Start the delayed C++ method declaration
     Actions.ActOnStartDelayedCXXMethodDeclaration(CurScope, LM.Method);
 
@@ -117,15 +128,26 @@ void Parser::ParseLexedMethodDeclarations() {
     // Finish the delayed C++ method declaration.
     Actions.ActOnFinishDelayedCXXMethodDeclaration(CurScope, LM.Method);
   }
+
+  for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
+    ParseLexedMethodDeclarations(*Class.NestedClasses[I]);
 }
 
 /// ParseLexedMethodDefs - We finished parsing the member specification of a top
 /// (non-nested) C++ class. Now go over the stack of lexed methods that were
 /// collected during its parsing and parse them all.
-void Parser::ParseLexedMethodDefs() {
-  for (; !getCurTopClassStack().MethodDefs.empty(); 
-       getCurTopClassStack().MethodDefs.pop_front()) {
-    LexedMethod &LM = getCurTopClassStack().MethodDefs.front();
+void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
+  bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
+  ParseScope TemplateScope(this, Scope::TemplateParamScope, HasTemplateScope);
+  if (HasTemplateScope)
+    Actions.ActOnReenterTemplateScope(CurScope, Class.TagOrTemplate);
+
+  bool HasClassScope = !Class.TopLevelClass;
+  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope,
+                        HasClassScope);
+
+  for (; !Class.MethodDefs.empty(); Class.MethodDefs.pop_front()) {
+    LexedMethod &LM = Class.MethodDefs.front();
 
     assert(!LM.Toks.empty() && "Empty body!");
     // Append the current token at the end of the new token stream so that it
@@ -152,6 +174,9 @@ void Parser::ParseLexedMethodDefs() {
     // FIXME: What if ParseConstructorInitializer doesn't leave us with a '{'??
     ParseFunctionStatementBody(LM.D);
   }
+
+  for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
+    ParseLexedMethodDefs(*Class.NestedClasses[I]);
 }
 
 /// ConsumeAndStoreUntil - Consume and store the token at the passed token

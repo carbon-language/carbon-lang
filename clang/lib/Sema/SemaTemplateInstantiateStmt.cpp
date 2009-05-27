@@ -69,8 +69,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
       return SemaRef.StmtError();
 
     Decls.push_back(Instantiated);
-    SemaRef.CurrentInstantiationScope->InstantiatedLocal(cast<VarDecl>(*D),
-                                                  cast<VarDecl>(Instantiated));
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(*D, Instantiated);
   }
 
   return SemaRef.Owned(new (SemaRef.Context) DeclStmt(

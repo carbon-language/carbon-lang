@@ -39,9 +39,6 @@ Parser::Parser(Preprocessor &pp, Action &actions)
           PragmaUnusedHandler(&PP.getIdentifierTable().get("unused"), actions,
                               *this));
   PP.AddPragmaHandler(0, UnusedHandler.get());
-
-  // Instantiate a LexedMethodsForTopClass for all the non-nested classes.
-  PushTopClassStack();
 }
 
 /// If a crash happens while the parser is active, print out a line indicating

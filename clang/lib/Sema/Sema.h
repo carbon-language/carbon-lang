@@ -1731,6 +1731,7 @@ public:
                                                  SourceLocation LBrac,
                                                  SourceLocation RBrac);
 
+  virtual void ActOnReenterTemplateScope(Scope *S, DeclPtrTy Template);
   virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
                                                      DeclPtrTy Method);
   virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy Param);
