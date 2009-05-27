@@ -1609,6 +1609,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
         UsualUnaryConversions(FnExpr);
 
         Input.release();
+        Args[0] = Arg;
         return Owned(new (Context) CXXOperatorCallExpr(Context, OverOp, FnExpr,
                                                        Args, 2, ResultTy, 
                                                        OpLoc));
@@ -1725,6 +1726,8 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
         Base.release();
         Idx.release();
+        Args[0] = LHSExp;
+        Args[1] = RHSExp;
         return Owned(new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
                                                        FnExpr, Args, 2, 
                                                        ResultTy, LLoc));
