@@ -943,42 +943,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     }
     break;
-  case ISD::ConstantFP: {
-    // Spill FP immediates to the constant pool if the target cannot directly
-    // codegen them.  Targets often have some immediate values that can be
-    // efficiently generated into an FP register without a load.  We explicitly
-    // leave these constants as ConstantFP nodes for the target to deal with.
-    ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
-
-    switch (TLI.getOperationAction(ISD::ConstantFP, CFP->getValueType(0))) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.getNode()) {
-        Result = Tmp3;
-        break;
-      }
-      // FALLTHROUGH
-    case TargetLowering::Expand: {
-      // Check to see if this FP immediate is already legal.
-      bool isLegal = false;
-      for (TargetLowering::legal_fpimm_iterator I = TLI.legal_fpimm_begin(),
-             E = TLI.legal_fpimm_end(); I != E; ++I) {
-        if (CFP->isExactlyValue(*I)) {
-          isLegal = true;
-          break;
-        }
-      }
-      // If this is a legal constant, turn it into a TargetConstantFP node.
-      if (isLegal)
-        break;
-      Result = ExpandConstantFP(CFP, true, DAG, TLI);
-    }
-    }
-    break;
-  }
   case ISD::FORMAL_ARGUMENTS:
   case ISD::CALL:
     // The only option for this is to custom lower it.
@@ -1319,42 +1283,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       }
       Result = DAG.getNode(ISD::BRIND, dl, MVT::Other, LD.getValue(1), Addr);
     }
-    }
-    break;
-  case ISD::BRCOND:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    // Ensure that libcalls are emitted before a return.
-    Tmp1 = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Tmp1, LastCALLSEQ_END);
-    Tmp1 = LegalizeOp(Tmp1);
-    LastCALLSEQ_END = DAG.getEntryNode();
-
-    Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
-
-    // Basic block destination (Op#2) is always legal.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
-
-    switch (TLI.getOperationAction(ISD::BRCOND, MVT::Other)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.getNode()) Result = Tmp1;
-      break;
-    case TargetLowering::Expand:
-      // Expand brcond's setcc into its constituent parts and create a BR_CC
-      // Node.
-      if (Tmp2.getOpcode() == ISD::SETCC) {
-        Result = DAG.getNode(ISD::BR_CC, dl, MVT::Other,
-                             Tmp1, Tmp2.getOperand(2),
-                             Tmp2.getOperand(0), Tmp2.getOperand(1),
-                             Node->getOperand(2));
-      } else {
-        Result = DAG.getNode(ISD::BR_CC, dl, MVT::Other, Tmp1,
-                             DAG.getCondCode(ISD::SETNE), Tmp2,
-                             DAG.getConstant(0, Tmp2.getValueType()),
-                             Node->getOperand(2));
-      }
-      break;
     }
     break;
   case ISD::BR_CC:
@@ -2035,104 +1963,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                        AbsVal),
                            AbsVal);
       Result = LegalizeOp(Result);
-      break;
-    }
-    }
-    break;
-  case ISD::BUILD_PAIR: {
-    MVT PairTy = Node->getValueType(0);
-    // TODO: handle the case where the Lo and Hi operands are not of legal type
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Lo
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // Hi
-    switch (TLI.getOperationAction(ISD::BUILD_PAIR, PairTy)) {
-    case TargetLowering::Promote:
-    case TargetLowering::Custom:
-      assert(0 && "Cannot promote/custom this yet!");
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(ISD::BUILD_PAIR, dl, PairTy, Tmp1, Tmp2);
-      break;
-    case TargetLowering::Expand:
-      Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, PairTy, Tmp1);
-      Tmp2 = DAG.getNode(ISD::ANY_EXTEND, dl, PairTy, Tmp2);
-      Tmp2 = DAG.getNode(ISD::SHL, dl, PairTy, Tmp2,
-                         DAG.getConstant(PairTy.getSizeInBits()/2,
-                                         TLI.getShiftAmountTy()));
-      Result = DAG.getNode(ISD::OR, dl, PairTy, Tmp1, Tmp2);
-      break;
-    }
-    break;
-  }
-
-  case ISD::UREM:
-  case ISD::SREM:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Promote: assert(0 && "Cannot promote this yet!");
-    case TargetLowering::Custom:
-      isCustom = true;
-      // FALLTHROUGH
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-      if (isCustom) {
-        Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.getNode()) Result = Tmp1;
-      }
-      break;
-    case TargetLowering::Expand: {
-      unsigned DivOpc= (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
-      bool isSigned = DivOpc == ISD::SDIV;
-      MVT VT = Node->getValueType(0);
-
-      // See if remainder can be lowered using two-result operations.
-      SDVTList VTs = DAG.getVTList(VT, VT);
-      if (Node->getOpcode() == ISD::SREM &&
-          TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SDIVREM, dl,
-                                     VTs, Tmp1, Tmp2).getNode(), 1);
-        break;
-      }
-      if (Node->getOpcode() == ISD::UREM &&
-          TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UDIVREM, dl,
-                                     VTs, Tmp1, Tmp2).getNode(), 1);
-        break;
-      }
-
-      if (VT.isInteger() &&
-          TLI.getOperationAction(DivOpc, VT) == TargetLowering::Legal) {
-        // X % Y -> X-X/Y*Y
-        Result = DAG.getNode(DivOpc, dl, VT, Tmp1, Tmp2);
-        Result = DAG.getNode(ISD::MUL, dl, VT, Result, Tmp2);
-        Result = DAG.getNode(ISD::SUB, dl, VT, Tmp1, Result);
-        break;
-      }
-
-      // Check to see if we have a libcall for this operator.
-      RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-      switch (Node->getOpcode()) {
-      default: break;
-      case ISD::UREM:
-      case ISD::SREM:
-       if (VT == MVT::i16)
-         LC = (isSigned ? RTLIB::SREM_I16  : RTLIB::UREM_I16);
-       else if (VT == MVT::i32)
-         LC = (isSigned ? RTLIB::SREM_I32  : RTLIB::UREM_I32);
-       else if (VT == MVT::i64)
-         LC = (isSigned ? RTLIB::SREM_I64  : RTLIB::UREM_I64);
-       else if (VT == MVT::i128)
-         LC = (isSigned ? RTLIB::SREM_I128 : RTLIB::UREM_I128);
-       break;
-      }
-
-      if (LC != RTLIB::UNKNOWN_LIBCALL) {
-        Result = ExpandLibCall(LC, Node, isSigned);
-        break;
-      }
-
-      assert(0 && "Cannot expand this binary operator!");
       break;
     }
     }
@@ -3295,6 +3125,24 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(ExpandFPLibCall(Node, RTLIB::REM_F32, RTLIB::REM_F64,
                                       RTLIB::REM_F80, RTLIB::REM_PPCF128));
     break;
+  case ISD::ConstantFP: {
+    ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
+    // Check to see if this FP immediate is already legal.
+    bool isLegal = false;
+    for (TargetLowering::legal_fpimm_iterator I = TLI.legal_fpimm_begin(),
+            E = TLI.legal_fpimm_end(); I != E; ++I) {
+      if (CFP->isExactlyValue(*I)) {
+        isLegal = true;
+        break;
+      }
+    }
+    // If this is a legal constant, turn it into a TargetConstantFP node.
+    if (isLegal)
+      Results.push_back(SDValue(Node, 0));
+    else
+      Results.push_back(ExpandConstantFP(CFP, true, DAG, TLI));
+    break;
+  }
   case ISD::EHSELECTION: {
     unsigned Reg = TLI.getExceptionSelectorRegister();
     assert(Reg && "Can't expand to unknown register!");
@@ -3322,37 +3170,47 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(DAG.getNode(ISD::ADD, dl, VT, Node->getOperand(0), Tmp1));
     break;
   }
-  case ISD::UDIV:
-  case ISD::UREM: {
-    bool isRem = Node->getOpcode() == ISD::UREM;
+  case ISD::UREM:
+  case ISD::SREM: {
     MVT VT = Node->getValueType(0);
     SDVTList VTs = DAG.getVTList(VT, VT);
-    if (TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT))
-      Tmp1 = DAG.getNode(ISD::UDIVREM, dl, VTs, Node->getOperand(0),
-                         Node->getOperand(1)).getValue(isRem);
-    else if (isRem)
+    bool isSigned = Node->getOpcode() == ISD::SREM;
+    unsigned DivOpc = isSigned ? ISD::SDIV : ISD::UDIV;
+    unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
+    Tmp2 = Node->getOperand(0);
+    Tmp3 = Node->getOperand(1);
+    if (TLI.getOperationAction(DivOpc, VT) == TargetLowering::Legal) {
+      // X % Y -> X-X/Y*Y
+      Tmp1 = DAG.getNode(DivOpc, dl, VT, Tmp2, Tmp3);
+      Tmp1 = DAG.getNode(ISD::MUL, dl, VT, Tmp1, Tmp3);
+      Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Tmp2, Tmp1);
+    } else if (TLI.isOperationLegalOrCustom(DivRemOpc, VT)) {
+      Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
+    } else if (isSigned) {
+      Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SREM_I16, RTLIB::SREM_I32,
+                              RTLIB::SREM_I64, RTLIB::SREM_I128);
+    } else {
       Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UREM_I16, RTLIB::UREM_I32,
                               RTLIB::UREM_I64, RTLIB::UREM_I128);
-    else
-      Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UDIV_I16, RTLIB::UDIV_I32,
-                              RTLIB::UDIV_I64, RTLIB::UDIV_I128);
+    }
     Results.push_back(Tmp1);
     break;
   }
-  case ISD::SDIV:
-  case ISD::SREM: {
-    bool isRem = Node->getOpcode() == ISD::SREM;
+  case ISD::UDIV:
+  case ISD::SDIV: {
+    bool isSigned = Node->getOpcode() == ISD::SDIV;
+    unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
     MVT VT = Node->getValueType(0);
     SDVTList VTs = DAG.getVTList(VT, VT);
-    if (TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT))
-      Tmp1 = DAG.getNode(ISD::SDIVREM, dl, VTs, Node->getOperand(0),
-                         Node->getOperand(1)).getValue(isRem);
-    else if (isRem)
-      Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SREM_I16, RTLIB::SREM_I32,
-                              RTLIB::SREM_I64, RTLIB::SREM_I128);
-    else
+    if (TLI.isOperationLegalOrCustom(DivRemOpc, VT))
+      Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Node->getOperand(0),
+                         Node->getOperand(1));
+    else if (isSigned)
       Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SDIV_I16, RTLIB::SDIV_I32,
                               RTLIB::SDIV_I64, RTLIB::SDIV_I128);
+    else
+      Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UDIV_I16, RTLIB::UDIV_I32,
+                              RTLIB::UDIV_I64, RTLIB::UDIV_I128);
     Results.push_back(Tmp1);
     break;
   }
@@ -3392,7 +3250,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       OpToUse = ISD::UMUL_LOHI;
     }
     if (OpToUse) {
-      Results.push_back(DAG.getNode(OpToUse, dl, VTs, Tmp1, Tmp2));
+      Results.push_back(DAG.getNode(OpToUse, dl, VTs, Node->getOperand(0),
+                                    Node->getOperand(1)));
       break;
     }
     Tmp1 = ExpandIntLibCall(Node, false, RTLIB::MUL_I16, RTLIB::MUL_I32,
@@ -3400,6 +3259,34 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(Tmp1);
     break;
   }
+  case ISD::BUILD_PAIR: {
+    MVT PairTy = Node->getValueType(0);
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, PairTy, Node->getOperand(0));
+    Tmp2 = DAG.getNode(ISD::ANY_EXTEND, dl, PairTy, Node->getOperand(1));
+    Tmp2 = DAG.getNode(ISD::SHL, dl, PairTy, Tmp2,
+                       DAG.getConstant(PairTy.getSizeInBits()/2,
+                                       TLI.getShiftAmountTy()));
+    Results.push_back(DAG.getNode(ISD::OR, dl, PairTy, Tmp1, Tmp2));
+    break;
+  }
+  case ISD::BRCOND:
+    // Expand brcond's setcc into its constituent parts and create a BR_CC
+    // Node.
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = Node->getOperand(1);
+    if (Tmp2.getOpcode() == ISD::SETCC) {
+      Tmp1 = DAG.getNode(ISD::BR_CC, dl, MVT::Other,
+                         Tmp1, Tmp2.getOperand(2),
+                         Tmp2.getOperand(0), Tmp2.getOperand(1),
+                         Node->getOperand(2));
+    } else {
+      Tmp1 = DAG.getNode(ISD::BR_CC, dl, MVT::Other, Tmp1,
+                         DAG.getCondCode(ISD::SETNE), Tmp2,
+                         DAG.getConstant(0, Tmp2.getValueType()),
+                         Node->getOperand(2));
+    }
+    Results.push_back(Tmp1);
+    break;
   case ISD::GLOBAL_OFFSET_TABLE:
   case ISD::GlobalAddress:
   case ISD::GlobalTLSAddress:
