@@ -1494,7 +1494,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       } 
 
       Converted->push_back(TemplateArgument(StartLoc, Value,
-                                   Context.getCanonicalType(IntegerType)));
+                      ParamType->isEnumeralType() ? ParamType : IntegerType));
     }
 
     return false;
