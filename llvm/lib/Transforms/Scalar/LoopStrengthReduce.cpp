@@ -1993,6 +1993,12 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
           ValidScale(!CommonExprs->isZero(), Scale, UsersToProcess))
         continue;
 
+      // Avoid rewriting the compare instruction with an iv which has
+      // implicit extension or truncation built into it.
+      // TODO: This is over-conservative.
+      if (SE->getTypeSizeInBits(CondUse->getOffset()->getType()) != TyBits)
+        continue;
+
       // If scale is negative, use swapped predicate unless it's testing
       // for equality.
       if (Scale < 0 && !Cond->isEquality())
@@ -2005,16 +2011,11 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         ConstantInt *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
         NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
       }
-      NewOffset = CondUse->getOffset();
-      if (CondUse->isSigned())
-        NewOffset = SE->getNoopOrSignExtend(CondUse->getOffset(), NewCmpTy);
-      else
-        NewOffset = SE->getNoopOrZeroExtend(CondUse->getOffset(), NewCmpTy);
       NewOffset = TyBits == NewTyBits
-        ? SE->getMulExpr(NewOffset,
+        ? SE->getMulExpr(CondUse->getOffset(),
                          SE->getConstant(ConstantInt::get(CmpTy, Scale)))
         : SE->getConstant(ConstantInt::get(NewCmpIntTy,
-          cast<SCEVConstant>(NewOffset)->getValue()
+          cast<SCEVConstant>(CondUse->getOffset())->getValue()
             ->getSExtValue()*Scale));
       break;
     }

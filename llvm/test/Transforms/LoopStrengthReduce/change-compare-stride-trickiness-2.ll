@@ -31,3 +31,28 @@ if.end52:		; preds = %for.cond.i.preheader
 	%indvar.next689 = add i64 %indvar688, 1		; <i64> [#uses=1]
 	br i1 %phitmp654, label %for.cond.i.preheader, label %if.end
 }
+
+define void @promote(%struct.dumperinfo* %di) nounwind {
+entry:
+	br label %if.end
+
+if.end:		; preds = %if.end52, %entry
+	br label %for.cond.i.preheader
+
+for.cond.i.preheader:		; preds = %if.end52, %if.end
+	%indvar688 = phi i32 [ 0, %if.end ], [ %indvar.next689, %if.end52 ]		; <i64> [#uses=3]
+	%tmp690 = shl i32 %indvar688, 12		; <i64> [#uses=1]
+	%pa.0642 = add i32 %tmp690, 0		; <i64> [#uses=1]
+	%tmp692693 = add i32 %indvar688, 1		; <i32> [#uses=1]
+	%phitmp = sext i32 %tmp692693 to i64		; <i64> [#uses=1]
+	br i1 false, label %if.end52, label %land.lhs.true.i
+
+land.lhs.true.i:		; preds = %for.cond.i.preheader
+	%shr2.i = lshr i32 %pa.0642, 18		; <i64> [#uses=0]
+	unreachable
+
+if.end52:		; preds = %for.cond.i.preheader
+	%phitmp654 = icmp ult i64 %phitmp, 512		; <i1> [#uses=1]
+	%indvar.next689 = add i32 %indvar688, 1		; <i64> [#uses=1]
+	br i1 %phitmp654, label %for.cond.i.preheader, label %if.end
+}
