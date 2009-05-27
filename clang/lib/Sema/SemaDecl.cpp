@@ -3358,6 +3358,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     if (PrevDecl == 0) {
       Diag(NameLoc, diag::err_not_tag_in_scope) << Name << SS.getRange();
       Name = 0;
+      Invalid = true;
       goto CreateNewDecl;
     }
   } else if (Name) {
@@ -3629,7 +3630,8 @@ CreateNewDecl:
   New->setLexicalDeclContext(CurContext);
 
   // Set the access specifier.
-  SetMemberAccessSpecifier(New, PrevDecl, AS);
+  if (!Invalid)
+    SetMemberAccessSpecifier(New, PrevDecl, AS);
 
   if (TK == TK_Definition)
     New->startDefinition();

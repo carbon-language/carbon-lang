@@ -2369,6 +2369,9 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
     return true;
   }
 
+  if (Tag->isInvalidDecl())
+    return true;
+
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Tag);
   CXXRecordDecl *Pattern = Record->getInstantiatedFromMemberClass();
   if (!Pattern) {
