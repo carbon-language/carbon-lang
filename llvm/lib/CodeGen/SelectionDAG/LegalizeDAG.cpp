@@ -153,8 +153,7 @@ private:
     LegalizeSetCCCondCode(VT, LHS, RHS, CC, dl);
   }
 
-  SDValue ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned,
-                          SDValue &Hi);
+  SDValue ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned);
 
   SDValue EmitStackConvert(SDValue SrcOp, MVT SlotVT, MVT DestVT, DebugLoc dl);
   SDValue ExpandBUILD_VECTOR(SDNode *Node);
@@ -2201,8 +2200,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       default: break;
       }
       if (LC != RTLIB::UNKNOWN_LIBCALL) {
-        SDValue Dummy;
-        Result = ExpandLibCall(LC, Node, isSigned, Dummy);
+        Result = ExpandLibCall(LC, Node, isSigned);
         break;
       }
 
@@ -2379,8 +2377,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       }
 
       if (LC != RTLIB::UNKNOWN_LIBCALL) {
-        SDValue Dummy;
-        Result = ExpandLibCall(LC, Node, isSigned, Dummy);
+        Result = ExpandLibCall(LC, Node, isSigned);
         break;
       }
 
@@ -2556,8 +2553,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
         default: assert(0 && "Unreachable!");
         }
-        SDValue Dummy;
-        Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
+        Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/);
         break;
       }
       }
@@ -2573,8 +2569,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // We always lower FPOWI into a libcall.  No target support for it yet.
     RTLIB::Libcall LC = GetFPLibCall(VT, RTLIB::POWI_F32, RTLIB::POWI_F64,
                                      RTLIB::POWI_F80, RTLIB::POWI_PPCF128);
-    SDValue Dummy;
-    Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
+    Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/);
     break;
   }
   case ISD::SADDO:
@@ -2996,7 +2991,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 // by-reg argument.  If it does fit into a single register, return the result
 // and leave the Hi part unset.
 SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
-                                            bool isSigned, SDValue &Hi) {
+                                            bool isSigned) {
   assert(!IsLegalizingCall && "Cannot overlap legalization of calls!");
   // The input chain to this libcall is the entry node of the function.
   // Legalizing the call will automatically add the previous call to the
