@@ -4593,12 +4593,14 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   assert(SrcVT.getSimpleVT() <= MVT::i64 && SrcVT.getSimpleVT() >= MVT::i16 &&
          "Unknown SINT_TO_FP to lower!");
 
-  // These are really Legal; caller falls through into that case.
+  // These are really Legal; return the operand so the caller accepts it as
+  // Legal.
   if (SrcVT == MVT::i32 && isScalarFPTypeInSSEReg(Op.getValueType()))
-    return SDValue();
-  if (SrcVT == MVT::i64 && Op.getValueType() != MVT::f80 &&
-      Subtarget->is64Bit())
-    return SDValue();
+    return Op;
+  if (SrcVT == MVT::i64 && isScalarFPTypeInSSEReg(Op.getValueType()) &&
+      Subtarget->is64Bit()) {
+    return Op;
+  }
 
   DebugLoc dl = Op.getDebugLoc();
   unsigned Size = SrcVT.getSizeInBits()/8;
@@ -4793,7 +4795,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
 
   MVT SrcVT = N0.getValueType();
   if (SrcVT == MVT::i64) {
-    // We only handle SSE2 f64 target here; caller can handle the rest.
+    // We only handle SSE2 f64 target here; caller can expand the rest.
     if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
       return SDValue();
 
@@ -4837,7 +4839,7 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
     return std::make_pair(SDValue(), SDValue());
   if (Subtarget->is64Bit() &&
       DstTy == MVT::i64 &&
-      Op.getOperand(0).getValueType() != MVT::f80)
+      isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType()))
     return std::make_pair(SDValue(), SDValue());
 
   // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
@@ -4881,7 +4883,8 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
   std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, true);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
-  if (FIST.getNode() == 0) return SDValue();
+  // If FP_TO_INTHelper failed, the node is actually supposed to be Legal.
+  if (FIST.getNode() == 0) return Op;
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
