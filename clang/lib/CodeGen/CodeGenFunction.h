@@ -672,7 +672,11 @@ public:
                   llvm::Value *Callee,
                   const CallArgList &Args,
                   const Decl *TargetDecl = 0);
-
+  
+  RValue EmitCall(llvm::Value *Callee, QualType FnType,
+                  CallExpr::const_arg_iterator ArgBeg,
+                  CallExpr::const_arg_iterator ArgEnd,
+                  const Decl *TargetDecl = 0);
   RValue EmitCallExpr(const CallExpr *E);
   
   RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
@@ -680,13 +684,7 @@ public:
                            llvm::Value *This,
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
-  
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E);
-
-  RValue EmitCallExpr(llvm::Value *Callee, QualType FnType,
-                      CallExpr::const_arg_iterator ArgBeg,
-                      CallExpr::const_arg_iterator ArgEnd,
-                      const Decl *TargetDecl = 0);
 
   RValue EmitBuiltinExpr(const FunctionDecl *FD, 
                          unsigned BuiltinID, const CallExpr *E);

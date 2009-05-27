@@ -517,9 +517,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   // that function.
   if (getContext().BuiltinInfo.isLibFunction(BuiltinID) ||
       getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-    return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), 
-                        E->getCallee()->getType(), E->arg_begin(),
-                        E->arg_end());
+    return EmitCall(CGM.getBuiltinLibFunction(BuiltinID), 
+                    E->getCallee()->getType(), E->arg_begin(),
+                    E->arg_end());
   
   // See if we have a target specific intrinsic.
   const char *Name = getContext().BuiltinInfo.GetName(BuiltinID);

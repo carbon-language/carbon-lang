@@ -1137,8 +1137,8 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   }
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCallExpr(Callee, E->getCallee()->getType(),
-                      E->arg_begin(), E->arg_end(), TargetDecl);
+  return EmitCall(Callee, E->getCallee()->getType(),
+                  E->arg_begin(), E->arg_end(), TargetDecl);
 }
 
 LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
@@ -1255,10 +1255,10 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
 }
 
 
-RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType CalleeType, 
-                                     CallExpr::const_arg_iterator ArgBeg,
-                                     CallExpr::const_arg_iterator ArgEnd,
-                                     const Decl *TargetDecl) {
+RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType, 
+                                 CallExpr::const_arg_iterator ArgBeg,
+                                 CallExpr::const_arg_iterator ArgEnd,
+                                 const Decl *TargetDecl) {
   // Get the actual function type. The callee type will always be a
   // pointer to function type or a block pointer type.
   assert(CalleeType->isFunctionPointerType() && 
