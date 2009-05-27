@@ -473,7 +473,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
         // Do not emit the warning when preprocessing assembler code.
         if (!PP.getLangOptions().AsmPreprocessor)
           PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
-            << std::string(Buffer.begin(), Buffer.end()-1);
+            << std::string(Buffer.begin(), Buffer.end());
         
         // Do not consume the RHS.
         --CurToken;
