@@ -109,8 +109,7 @@ TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   // FIXME: Recast this in terms of Sema::InstantiateDeclRef.
-  Decl *D = E->getDecl();
-  ValueDecl *NewD = 0;
+  NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
     const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
@@ -131,29 +130,22 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
                                                  *Arg.getAsIntegral(),
                                                  T, 
                                        E->getSourceRange().getBegin()));
-  } else if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
-    NewD = SemaRef.CurrentInstantiationScope->getInstantiationOf(Parm);
-  } else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if (Var->hasLocalStorage())
-      NewD = SemaRef.CurrentInstantiationScope->getInstantiationOf(Var);
-    else
-      assert(false && 
-             "FIXME: instantiation of non-local variable declarations");
-  } else if (isa<FunctionDecl>(D)) {
-    // FIXME: Instantiate decl!
-    NewD = cast<ValueDecl>(D);
-  } else if (isa<OverloadedFunctionDecl>(D)) {
-    // FIXME: instantiate decls?
-    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(cast<NamedDecl>(D),
+  }
+
+  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
+    // FIXME: instantiate each decl in the overload set
+    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Ovl,
                                                    SemaRef.Context.OverloadTy,
                                                            E->getLocation(),
                                                            false, false));
-  } else
-    assert(false && "FIXME: unhandled declaration reference kind");
+  }
 
+  ValueDecl *NewD 
+    = dyn_cast_or_null<ValueDecl>(SemaRef.InstantiateDeclRef(D, TemplateArgs));
   if (!NewD)
     return SemaRef.ExprError();
 
+  // FIXME: Build QualifiedDeclRefExpr?
   QualType T = NewD->getType();
   return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(NewD,
                                                       T.getNonReferenceType(),

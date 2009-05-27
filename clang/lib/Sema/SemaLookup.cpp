@@ -687,7 +687,8 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         if (R || RedeclarationOnly)
           return std::make_pair(true, R);
       }
-      if (Ctx->getParent() != Ctx->getLexicalParent()) {
+      if (Ctx->getParent() != Ctx->getLexicalParent() 
+          || isa<CXXMethodDecl>(Ctx)) {
         // It is out of line defined C++ method or struct, we continue
         // doing name lookup in parent context. Once we will find namespace
         // or translation-unit we save it for possible checking

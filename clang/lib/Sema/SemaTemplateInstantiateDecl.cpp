@@ -697,20 +697,18 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
 NamedDecl *
 Sema::InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs) {
   DeclContext *ParentDC = D->getDeclContext();
+  if (isa<ParmVarDecl>(D) || ParentDC->isFunctionOrMethod()) {
+    // D is a local of some kind. Look into the map of local
+    // declarations to their instantiations.
+    return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
+  }
 
-  if (!ParentDC->isFileContext()) {
-    NamedDecl *ParentDecl = cast<NamedDecl>(ParentDC);
+  if (NamedDecl *ParentDecl = dyn_cast<NamedDecl>(ParentDC)) {
     ParentDecl = InstantiateDeclRef(ParentDecl, TemplateArgs);
     if (!ParentDecl)
       return 0;
 
     ParentDC = cast<DeclContext>(ParentDecl);
-  }
-
-  if (ParentDC->isFunctionOrMethod()) {
-    // D is a local of some kind. Look into the map of local
-    // variables to their instantiations.
-    return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
   }
 
   if (ParentDC != D->getDeclContext()) {

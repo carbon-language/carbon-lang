@@ -1067,7 +1067,9 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   //
   // FIXME: Only function bodies and constructor ctor-initializers are
   // parsed correctly, fix the rest.
-  if (!CurScope->getParent()->isClassScope()) {
+  if (!CurScope->getParent()->isClassScope() && 
+      !(CurScope->getParent()->isTemplateParamScope() &&
+        CurScope->getParent()->getParent()->isClassScope())) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.

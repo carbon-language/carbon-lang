@@ -120,8 +120,6 @@ int main() {
   assert(di.size() == 4);
   di.push_back(4);
 
-#if 0
-  // FIXME: Copy construction via copy initialization
   dynarray<int> di2 = di;
   assert(di2.size() == 5);
   assert(di.begin() != di2.begin());
@@ -129,7 +127,6 @@ int main() {
        I != IEnd; ++I)
     assert(*I == I - di2.begin());
 
-  // FIXME: Copy construction via direct initialization
   dynarray<int> di3(di);
   assert(di3.size() == 5);
   assert(di.begin() != di3.begin());
@@ -137,7 +134,6 @@ int main() {
        I != IEnd; ++I)
     assert(*I == I - di3.begin());
 
-  // FIXME: assignment operator 
   dynarray<int> di4;
   assert(di4.size() == 0);
   di4 = di;
@@ -146,7 +142,6 @@ int main() {
   for (dynarray<int>::iterator I = di4.begin(), IEnd = di4.end(); 
        I != IEnd; ++I)
     assert(*I == I - di4.begin());
-#endif
 
   return 0;
 }
