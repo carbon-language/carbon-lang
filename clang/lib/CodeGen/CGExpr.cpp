@@ -1161,8 +1161,17 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
-  // Can only get l-value for call expression returning aggregate type
   RValue RV = EmitCallExpr(E);
+
+  if (RV.isScalar()) {
+    assert(E->getCallReturnType()->isReferenceType() &&
+           "Can't have a scalar return unless the return type is a "
+           "reference type!");
+    
+    return LValue::MakeAddr(RV.getScalarVal(), E->getType().getCVRQualifiers(), 
+                            getContext().getObjCGCAttrKind(E->getType()));
+  }
+  
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers(),
                           getContext().getObjCGCAttrKind(E->getType()));

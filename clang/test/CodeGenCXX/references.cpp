@@ -24,13 +24,19 @@ void f(const int&);
 void f(const _Complex int&);
 void f(const C&);
 
-C structfunc();
+C aggregate_return();
+
+bool& bool_reference_return();
+int& int_reference_return();
+_Complex int& complex_int_reference_return();
 
 void test_bool() {
   bool a = true;
   f(a);
 
   f(true);
+  
+  bool_reference_return() = true;
 }
 
 void test_scalar() {
@@ -44,6 +50,8 @@ void test_scalar() {
 
   __attribute((vector_size(16))) typedef int vec4;
   f((vec4){1,2,3,4}[0]);
+  
+  int_reference_return() = 10;
 }
 
 void test_complex() {
@@ -51,12 +59,14 @@ void test_complex() {
   f(a);
   
   f(10i);
+  
+  complex_int_reference_return() = 10i;
 }
 
 void test_aggregate() {
   C c;
   f(c);
 
-  f(structfunc());
+  f(aggregate_return());
 }
 
