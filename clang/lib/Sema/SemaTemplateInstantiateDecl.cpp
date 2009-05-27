@@ -635,3 +635,125 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 void Sema::InstantiateVariableDefinition(VarDecl *Var) {
   // FIXME: Implement this!
 }
+
+static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
+  if (D->getKind() != Other->getKind())
+    return false;
+
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other))
+    return Ctx.getCanonicalDecl(Record->getInstantiatedFromMemberClass())
+             == Ctx.getCanonicalDecl(D);
+
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Other))
+    return Ctx.getCanonicalDecl(Function->getInstantiatedFromMemberFunction())
+             == Ctx.getCanonicalDecl(D);
+
+  // FIXME: Need something similar to the above for EnumDecls.
+
+  // FIXME: How can we find instantiations of anonymous unions?
+
+  return D->getDeclName() && isa<NamedDecl>(Other) &&
+    D->getDeclName() == cast<NamedDecl>(Other)->getDeclName();
+}
+
+template<typename ForwardIterator>
+static NamedDecl *findInstantiationOf(ASTContext &Ctx, 
+                                      NamedDecl *D,
+                                      ForwardIterator first,
+                                      ForwardIterator last) {
+  for (; first != last; ++first)
+    if (isInstantiationOf(Ctx, D, *first))
+      return cast<NamedDecl>(*first);
+
+  return 0;
+}
+
+/// \brief Find the instantiation of the given declaration with the
+/// given template arguments.
+///
+/// This routine is intended to be used when \p D is a declaration
+/// referenced from within a template, that needs to mapped into the
+/// corresponding declaration within an instantiation. For example,
+/// given:
+///
+/// \code
+/// template<typename T>
+/// struct X {
+///   enum Kind {
+///     KnownValue = sizeof(T)
+///   };
+///
+///   bool getKind() const { return KnownValue; }
+/// };
+///
+/// template struct X<int>;
+/// \endcode
+///
+/// In the instantiation of X<int>::getKind(), we need to map the
+/// EnumConstantDecl for KnownValue (which refers to
+/// X<T>::<Kind>::KnownValue) to its instantiation
+/// (X<int>::<Kind>::KnownValue). InstantiateDeclRef() performs this
+/// mapping, given the template arguments 'int'.
+NamedDecl *
+Sema::InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs) {
+  DeclContext *ParentDC = D->getDeclContext();
+
+  if (!ParentDC->isFileContext()) {
+    NamedDecl *ParentDecl = cast<NamedDecl>(ParentDC);
+    ParentDecl = InstantiateDeclRef(ParentDecl, TemplateArgs);
+    if (!ParentDecl)
+      return 0;
+
+    ParentDC = cast<DeclContext>(ParentDecl);
+  }
+
+  if (ParentDC->isFunctionOrMethod()) {
+    // D is a local of some kind. Look into the map of local
+    // variables to their instantiations.
+    return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
+  }
+
+  if (ParentDC != D->getDeclContext()) {
+    // We performed some kind of instantiation in the parent context,
+    // so now we need to look into the instantiated parent context to
+    // find the instantiation of the declaration D.
+    NamedDecl *Result = 0;
+    if (D->getDeclName()) {
+      DeclContext::lookup_result Found
+        = ParentDC->lookup(Context, D->getDeclName());
+      Result = findInstantiationOf(Context, D, Found.first, Found.second);
+    } else {
+      // Since we don't have a name for the entity we're looking for,
+      // our only option is to walk through all of the declarations to
+      // find that name. This will occur in a few cases:
+      //
+      //   - anonymous struct/union within a template
+      //   - unnamed class/struct/union/enum within a template
+      //
+      // FIXME: Find a better way to find these instantiations!
+      Result = findInstantiationOf(Context, D, 
+                                   ParentDC->decls_begin(Context),
+                                   ParentDC->decls_end(Context));
+    }
+    assert(Result && "Unable to find instantiation of declaration!");
+    D = Result;
+  }
+
+  // D itself might be a class template that we need to instantiate
+  // with the given template arguments.
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D))
+    if (ClassTemplateDecl *ClassTemplate = Record->getDescribedClassTemplate()) {
+      QualType InjectedClassName 
+        = ClassTemplate->getInjectedClassNameType(Context);
+      QualType InstantiatedType = InstantiateType(InjectedClassName,
+                                                  TemplateArgs,
+                                                  Record->getLocation(), 
+                                                  Record->getDeclName());
+      if (InstantiatedType.isNull())
+        return 0;
+      if (const RecordType *RT = InstantiatedType->getAsRecordType())
+        D = RT->getDecl();
+    }
+
+  return D;
+}

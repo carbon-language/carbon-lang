@@ -77,16 +77,14 @@ class dynarray {
     return Start[Idx];
   }
 
-  // FIXME: use these for begin/end when we can instantiate
-  // TypedefType nodes.
   typedef T* iterator;
   typedef const T* const_iterator;
 
-  T* begin() { return Start; }
-  const T* begin() const { return Start; }
+  iterator begin() { return Start; }
+  const_iterator begin() const { return Start; }
   
-  T* end() { return Last; }
-  const T* end() const { return Last; }
+  iterator end() { return Last; }
+  const_iterator end() const { return Last; }
   
 public:
   T* Start, *Last, *End;
@@ -114,6 +112,9 @@ int main() {
   assert(di.size() == 5);
   for (dynarray<int>::iterator I = di.begin(), IEnd = di.end(); I != IEnd; ++I)
     assert(*I == I - di.begin());
+
+  for (int I = 0, N = di.size(); I != N; ++I)
+    assert(di[I] == I);
 
   di.pop_back();
   assert(di.size() == 4);

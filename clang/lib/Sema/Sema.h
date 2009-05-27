@@ -2138,7 +2138,7 @@ public:
     /// this template instantiation.
     Sema &SemaRef;
 
-    /// \brief A mapping from local variable declarations that occur
+    /// \brief A mapping from local declarations that occur
     /// within a template to their instantiations.
     ///
     /// This mapping is used during instantiation to keep track of,
@@ -2152,7 +2152,7 @@ public:
     /// when we instantiate add<int>, we will introduce a mapping from
     /// the ParmVarDecl for 'x' that occurs in the template to the
     /// instantiated ParmVarDecl for 'x'.
-    llvm::DenseMap<const VarDecl *, VarDecl *> LocalDecls;
+    llvm::DenseMap<const Decl *, Decl *> LocalDecls;
 
     /// \brief The outer scope, in which contains local variable
     /// definitions from some other instantiation (that is not
@@ -2173,20 +2173,24 @@ public:
       SemaRef.CurrentInstantiationScope = Outer;
     }
 
-    VarDecl *getInstantiationOf(const VarDecl *Var) {
-      VarDecl *Result = LocalDecls[Var];
-      assert(Result && "Variable was not instantiated in this scope!");
+    Decl *getInstantiationOf(const Decl *D) {
+      Decl *Result = LocalDecls[D];
+      assert(Result && "declaration was not instantiated in this scope!");
       return Result;
     }
 
-    ParmVarDecl *getInstantiationOf(const ParmVarDecl *Var) {
-      return cast<ParmVarDecl>(getInstantiationOf(cast<VarDecl>(Var)));
+    VarDecl *getInstantiationOf(const VarDecl *Var) {
+      return cast<VarDecl>(getInstantiationOf(cast<Decl>(Var)));
     }
 
-    void InstantiatedLocal(const VarDecl *Var, VarDecl *VarInst) {
-      VarDecl *&Stored = LocalDecls[Var];
-      assert(!Stored && "Already instantiated this local variable");
-      Stored = VarInst;
+    ParmVarDecl *getInstantiationOf(const ParmVarDecl *Var) {
+      return cast<ParmVarDecl>(getInstantiationOf(cast<Decl>(Var)));
+    }
+
+    void InstantiatedLocal(const Decl *D, Decl *Inst) {
+      Decl *&Stored = LocalDecls[D];
+      assert(!Stored && "Already instantiated this local");
+      Stored = Inst;
     }
   };
 
@@ -2246,6 +2250,9 @@ public:
                                      FunctionDecl *Function);
   void InstantiateVariableDefinition(VarDecl *Var);
 
+  NamedDecl *
+  InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs);
+  
   // Simple function for cloning expressions.
   template<typename T> 
   OwningExprResult Clone(T *E) {

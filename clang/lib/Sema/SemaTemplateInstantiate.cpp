@@ -406,9 +406,13 @@ InstantiateFunctionNoProtoType(const FunctionNoProtoType *T,
 QualType 
 TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
                                                  unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate TypedefType yet");
-  return QualType();
+  TypedefDecl *Typedef 
+    = cast_or_null<TypedefDecl>(SemaRef.InstantiateDeclRef(T->getDecl(), 
+                                                           TemplateArgs));
+  if (!Typedef)
+    return QualType();
+  
+  return SemaRef.Context.getTypeDeclType(Typedef);
 }
 
 QualType 
@@ -435,17 +439,25 @@ TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
 QualType 
 TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
                                                 unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate RecordType yet");
-  return QualType();
+  RecordDecl *Record 
+    = cast_or_null<RecordDecl>(SemaRef.InstantiateDeclRef(T->getDecl(), 
+                                                          TemplateArgs));
+  if (!Record)
+    return QualType();
+  
+  return SemaRef.Context.getTypeDeclType(Record);
 }
 
 QualType 
 TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T,
                                               unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate EnumType yet");
-  return QualType();
+  EnumDecl *Enum 
+    = cast_or_null<EnumDecl>(SemaRef.InstantiateDeclRef(T->getDecl(), 
+                                                        TemplateArgs));
+  if (!Enum)
+    return QualType();
+  
+  return SemaRef.Context.getTypeDeclType(Enum);
 }
 
 QualType 

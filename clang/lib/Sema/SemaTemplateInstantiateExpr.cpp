@@ -108,6 +108,7 @@ TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
+  // FIXME: Recast this in terms of Sema::InstantiateDeclRef.
   Decl *D = E->getDecl();
   ValueDecl *NewD = 0;
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
