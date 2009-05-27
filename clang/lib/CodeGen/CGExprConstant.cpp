@@ -478,21 +478,9 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   
   bool Success = false;
   
-  if (DestType->isReferenceType()) {
-    // If the destination type is a reference type, we need to evaluate it
-    // as an lvalue.
-    if (E->EvaluateAsLValue(Result, Context)) {
-      if (const Expr *LVBase = Result.Val.getLValueBase()) {
-        if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVBase)) {
-          const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl());
-
-          // We can only initialize a reference with an lvalue if the lvalue
-          // is not a reference itself.
-          Success = !VD->getType()->isReferenceType();
-        }
-      }
-    }
-  } else 
+  if (DestType->isReferenceType())
+    Success = E->EvaluateAsLValue(Result, Context);
+  else 
     Success = E->Evaluate(Result, Context);
   
   if (Success) {

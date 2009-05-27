@@ -178,11 +178,20 @@ static bool EvaluateLValue(const Expr* E, APValue& Result, EvalInfo &Info) {
 }
 
 APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E)
-{ 
+{
   if (!E->hasGlobalStorage())
     return APValue();
-  
-  return APValue(E, 0); 
+
+  if (isa<FunctionDecl>(E->getDecl())) {
+    return APValue(E, 0);
+  } else if (VarDecl* VD = dyn_cast<VarDecl>(E->getDecl())) {
+    if (!VD->getType()->isReferenceType())
+      return APValue(E, 0);
+    if (VD->getInit())
+      return Visit(VD->getInit());
+  }
+
+  return APValue();
 }
 
 APValue LValueExprEvaluator::VisitBlockExpr(BlockExpr *E)

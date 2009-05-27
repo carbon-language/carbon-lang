@@ -11,6 +11,7 @@ void t2(int& a) {
 
 int g;
 int& gr = g;
+int& grr = gr;
 void t3() {
   int b = gr;
 }
