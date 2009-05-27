@@ -111,10 +111,6 @@ public:
   void LegalizeDAG();
 
 private:
-  /// HandleOp - Legalize, Promote, or Expand the specified operand as
-  /// appropriate for its type.
-  void HandleOp(SDValue Op);
-
   /// LegalizeOp - We know that the specified value has a legal type.
   /// Recursively ensure that the operands have legal types, then return the
   /// result.
@@ -128,9 +124,6 @@ private:
                                          SDValue Idx, DebugLoc dl);
   SDValue ExpandINSERT_VECTOR_ELT(SDValue Vec, SDValue Val,
                                   SDValue Idx, DebugLoc dl);
-
-  /// Useful 16 element vector type that is used to pass operands for widening.
-  typedef SmallVector<SDValue, 16> SDValueVector;
 
   /// ShuffleWithNarrowerEltType - Return a vector shuffle operation which
   /// performs the same shuffe in terms of order or result bytes, but on a type
@@ -239,7 +232,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   DAG.AssignTopologicalOrder();
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = prior(DAG.allnodes_end()); I != next(E); ++I)
-    HandleOp(SDValue(I, 0));
+    LegalizeOp(SDValue(I, 0));
 
   // Finally, it's possible the root changed.  Get the new root.
   SDValue OldRoot = DAG.getRoot();
@@ -336,20 +329,8 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
   }
 
   // Okay, this node looks safe, legalize it and return false.
-  HandleOp(SDValue(N, 0));
+  LegalizeOp(SDValue(N, 0));
   return false;
-}
-
-/// HandleOp - Legalize, Promote, Widen, or Expand the specified operand as
-/// appropriate for its type.
-void SelectionDAGLegalize::HandleOp(SDValue Op) {
-  // Don't touch TargetConstants
-  if (Op.getOpcode() == ISD::TargetConstant)
-    return;
-  MVT VT = Op.getValueType();
-  // We should never see any illegal result types here.
-  assert(isTypeLegal(VT) && "Illegal type introduced after type legalization?");
-  (void)LegalizeOp(Op);
 }
 
 /// ExpandConstantFP - Expands the ConstantFP node to an integer constant or
@@ -800,8 +781,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Action = TargetLowering::Custom;
     break;
   case ISD::BUILD_VECTOR:
-    // A weird case: when a BUILD_VECTOR is custom-lowered, it doesn't legalize
-    // its operands first!
+    // A weird case: legalization for BUILD_VECTOR never legalizes the
+    // operands!
+    // FIXME: This really sucks... changing it isn't semantically incorrect,
+    // but it massively pessimizes the code for floating-point BUILD_VECTORs
+    // because ConstantFP operands get legalized into constant pool loads
+    // before the BUILD_VECTOR code can see them.  It doesn't usually bite,
+    // though, because BUILD_VECTORS usually get lowered into other nodes
+    // which get legalized properly.
     SimpleFinishLegalizing = false;
     break;
   default:
