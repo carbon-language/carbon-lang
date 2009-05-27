@@ -2562,7 +2562,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
       if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getDeclName(), DirectInit))
+                                VDecl->getDeclName(), DirectInit, VDecl))
         VDecl->setInvalidDecl();
       
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.

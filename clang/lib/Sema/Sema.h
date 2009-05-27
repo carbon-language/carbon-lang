@@ -2630,9 +2630,12 @@ public:
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
+  
+  /// FIXME: The VarDecl parameter should not have a default value,
+  /// and all call sites should be audited.
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
                              SourceLocation InitLoc,DeclarationName InitEntity,
-                             bool DirectInit);
+                             bool DirectInit, VarDecl *VD = 0);
   bool CheckInitList(InitListExpr *&InitList, QualType &DeclType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   

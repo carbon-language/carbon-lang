@@ -18,6 +18,7 @@
 #include "Sema.h"
 #include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include <map>
 using namespace clang;
@@ -116,7 +117,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
                                  DeclarationName InitEntity,
-                                 bool DirectInit) {
+                                 bool DirectInit, VarDecl *VD) {
   if (DeclType->isDependentType() || 
       Init->isTypeDependent() || Init->isValueDependent())
     return false;
@@ -160,7 +161,14 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                              InitLoc, Init->getSourceRange(),
                                              InitEntity, 
                                              DirectInit? IK_Direct : IK_Copy);
-        return Constructor == 0;
+        if (!Constructor)
+          return true;
+        
+        // FIXME: What do do if VD is null here?
+        assert(VD && "Must have a var decl to construct into!");
+        Init = CXXConstructExpr::Create(Context, VD, DeclType, Constructor, 
+                                        false, &Init, 1);
+        return false;
       }
       
       //   -- Otherwise (i.e., for the remaining copy-initialization
