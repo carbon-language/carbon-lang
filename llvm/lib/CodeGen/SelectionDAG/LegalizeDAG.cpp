@@ -125,7 +125,9 @@ private:
   /// is necessary to spill the vector being inserted into to memory, perform
   /// the insert there, and then read the result back.
   SDValue PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val,
-                                           SDValue Idx, DebugLoc dl);
+                                         SDValue Idx, DebugLoc dl);
+  SDValue ExpandINSERT_VECTOR_ELT(SDValue Vec, SDValue Val,
+                                  SDValue Idx, DebugLoc dl);
 
   /// Useful 16 element vector type that is used to pass operands for widening.
   typedef SmallVector<SDValue, 16> SDValueVector;
@@ -683,6 +685,33 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
 }
 
 
+SDValue SelectionDAGLegalize::
+ExpandINSERT_VECTOR_ELT(SDValue Vec, SDValue Val, SDValue Idx, DebugLoc dl) {
+  if (ConstantSDNode *InsertPos = dyn_cast<ConstantSDNode>(Idx)) {
+    // SCALAR_TO_VECTOR requires that the type of the value being inserted
+    // match the element type of the vector being created, except for
+    // integers in which case the inserted value can be over width.
+    MVT EltVT = Vec.getValueType().getVectorElementType();
+    if (Val.getValueType() == EltVT ||
+        (EltVT.isInteger() && Val.getValueType().bitsGE(EltVT))) {
+      SDValue ScVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
+                                  Vec.getValueType(), Val);
+
+      unsigned NumElts = Vec.getValueType().getVectorNumElements();
+      // We generate a shuffle of InVec and ScVec, so the shuffle mask
+      // should be 0,1,2,3,4,5... with the appropriate element replaced with
+      // elt 0 of the RHS.
+      SmallVector<int, 8> ShufOps;
+      for (unsigned i = 0; i != NumElts; ++i)
+        ShufOps.push_back(i != InsertPos->getZExtValue() ? i : NumElts);
+
+      return DAG.getVectorShuffle(Vec.getValueType(), dl, Vec, ScVec,
+                                  &ShufOps[0]);
+    }
+  }
+  return PerformInsertVectorEltInMemory(Vec, Val, Idx, dl);
+}
+
 /// LegalizeOp - We know that the specified value has a legal type, and
 /// that its operands are legal.  Now ensure that the operation itself
 /// is legal, recursively ensuring that the operands' operations remain
@@ -861,22 +890,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
-  case ISD::GLOBAL_OFFSET_TABLE:
-  case ISD::GlobalAddress:
-  case ISD::GlobalTLSAddress:
-  case ISD::ExternalSymbol:
-  case ISD::ConstantPool:
-  case ISD::JumpTable: // Nothing to do.
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Op, DAG);
-      if (Tmp1.getNode()) Result = Tmp1;
-      // FALLTHROUGH if the target doesn't want to lower this op after all.
-    case TargetLowering::Legal:
-      break;
-    }
-    break;
   case ISD::EXCEPTIONADDR: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     MVT VT = Node->getValueType(0);
@@ -944,33 +957,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     AddLegalizedOperand(Op.getValue(0), Tmp1);
     AddLegalizedOperand(Op.getValue(1), Tmp2);
     return Op.getResNo() ? Tmp2 : Tmp1;
-  case ISD::INTRINSIC_W_CHAIN:
-  case ISD::INTRINSIC_WO_CHAIN:
-  case ISD::INTRINSIC_VOID: {
-    SmallVector<SDValue, 8> Ops;
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-      Ops.push_back(LegalizeOp(Node->getOperand(i)));
-    Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
-
-    // Allow the target to custom lower its intrinsics if it wants to.
-    if (TLI.getOperationAction(Node->getOpcode(), MVT::Other) ==
-        TargetLowering::Custom) {
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.getNode()) Result = Tmp3;
-    }
-
-    if (Result.getNode()->getNumValues() == 1) break;
-
-    // Must have return value and chain result.
-    assert(Result.getNode()->getNumValues() == 2 &&
-           "Cannot return more than two values!");
-
-    // Since loads produce two values, make sure to remember that we
-    // legalized both of them.
-    AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
-    AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.getResNo());
-  }
 
   case ISD::DBG_STOPPOINT:
     assert(Node->getNumOperands() == 1 && "Invalid DBG_STOPPOINT node!");
@@ -1113,62 +1099,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Expand:
       Result = ExpandBUILD_VECTOR(Result.getNode());
       break;
-    }
-    break;
-  case ISD::INSERT_VECTOR_ELT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // InVec
-    Tmp3 = LegalizeOp(Node->getOperand(2));  // InEltNo
-
-    // The type of the value to insert may not be legal, even though the vector
-    // type is legal.  Legalize/Promote accordingly.  We do not handle Expand
-    // here.
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-
-    switch (TLI.getOperationAction(ISD::INSERT_VECTOR_ELT,
-                                   Node->getValueType(0))) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Custom:
-      Tmp4 = TLI.LowerOperation(Result, DAG);
-      if (Tmp4.getNode()) {
-        Result = Tmp4;
-        break;
-      }
-      // FALLTHROUGH
-    case TargetLowering::Promote:
-      // Fall thru for vector case
-    case TargetLowering::Expand: {
-      // If the insert index is a constant, codegen this as a scalar_to_vector,
-      // then a shuffle that inserts it into the right position in the vector.
-      if (ConstantSDNode *InsertPos = dyn_cast<ConstantSDNode>(Tmp3)) {
-        // SCALAR_TO_VECTOR requires that the type of the value being inserted
-        // match the element type of the vector being created, except for
-        // integers in which case the inserted value can be over width.
-        MVT EltVT = Op.getValueType().getVectorElementType();
-        if (Tmp2.getValueType() == EltVT ||
-            (EltVT.isInteger() && Tmp2.getValueType().bitsGE(EltVT))) {
-          SDValue ScVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
-                                      Tmp1.getValueType(), Tmp2);
-
-          unsigned NumElts = Tmp1.getValueType().getVectorNumElements();
-          // We generate a shuffle of InVec and ScVec, so the shuffle mask
-          // should be 0,1,2,3,4,5... with the appropriate element replaced with
-          // elt 0 of the RHS.
-          SmallVector<int, 8> ShufOps;
-          for (unsigned i = 0; i != NumElts; ++i)
-            ShufOps.push_back(i != InsertPos->getZExtValue() ? i : NumElts);
-          
-          Result = DAG.getVectorShuffle(Tmp1.getValueType(), dl, Tmp1, ScVec,
-                                        &ShufOps[0]);
-          Result = LegalizeOp(Result);
-          break;
-        }
-      }
-      Result = PerformInsertVectorEltInMemory(Tmp1, Tmp2, Tmp3, dl);
-      break;
-    }
     }
     break;
   case ISD::VECTOR_SHUFFLE: {
@@ -1976,65 +1906,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     break;
   }
-  case ISD::STACKSAVE:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1);
-    Tmp1 = Result.getValue(0);
-    Tmp2 = Result.getValue(1);
-
-    switch (TLI.getOperationAction(ISD::STACKSAVE, MVT::Other)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.getNode()) {
-        Tmp1 = LegalizeOp(Tmp3);
-        Tmp2 = LegalizeOp(Tmp3.getValue(1));
-      }
-      break;
-    case TargetLowering::Expand:
-      // Expand to CopyFromReg if the target set
-      // StackPointerRegisterToSaveRestore.
-      if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
-        Tmp1 = DAG.getCopyFromReg(Result.getOperand(0), dl, SP,
-                                  Node->getValueType(0));
-        Tmp2 = Tmp1.getValue(1);
-      } else {
-        Tmp1 = DAG.getUNDEF(Node->getValueType(0));
-        Tmp2 = Node->getOperand(0);
-      }
-      break;
-    }
-
-    // Since stacksave produce two values, make sure to remember that we
-    // legalized both of them.
-    AddLegalizedOperand(SDValue(Node, 0), Tmp1);
-    AddLegalizedOperand(SDValue(Node, 1), Tmp2);
-    return Op.getResNo() ? Tmp2 : Tmp1;
-
-  case ISD::STACKRESTORE:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-
-    switch (TLI.getOperationAction(ISD::STACKRESTORE, MVT::Other)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.getNode()) Result = Tmp1;
-      break;
-    case TargetLowering::Expand:
-      // Expand to CopyToReg if the target set
-      // StackPointerRegisterToSaveRestore.
-      if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
-        Result = DAG.getCopyToReg(Tmp1, dl, SP, Tmp2);
-      } else {
-        Result = Tmp1;
-      }
-      break;
-    }
-    break;
   case ISD::SELECT:
     Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
@@ -3654,6 +3525,11 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::SCALAR_TO_VECTOR:
     Results.push_back(ExpandSCALAR_TO_VECTOR(Node));
     break;
+  case ISD::INSERT_VECTOR_ELT:
+    Results.push_back(ExpandINSERT_VECTOR_ELT(Node->getOperand(0),
+                                              Node->getOperand(1),
+                                              Node->getOperand(2), dl));
+    break;
   case ISD::EXTRACT_ELEMENT: {
     MVT OpTy = Node->getOperand(0).getValueType();
     if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
@@ -3670,6 +3546,41 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(Tmp1);
     break;
   }
+  case ISD::STACKSAVE:
+    // Expand to CopyFromReg if the target set
+    // StackPointerRegisterToSaveRestore.
+    if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
+      Results.push_back(DAG.getCopyFromReg(Node->getOperand(0), dl, SP,
+                                           Node->getValueType(0)));
+      Results.push_back(Results[0].getValue(1));
+    } else {
+      Results.push_back(DAG.getUNDEF(Node->getValueType(0)));
+      Results.push_back(Node->getOperand(0));
+    }
+    break;
+  case ISD::STACKRESTORE:
+    // Expand to CopyToReg if the target set
+    // StackPointerRegisterToSaveRestore.
+    if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
+      Results.push_back(DAG.getCopyToReg(Node->getOperand(0), dl, SP,
+                                         Node->getOperand(1)));
+    } else {
+      Results.push_back(Node->getOperand(0));
+    }
+    break;
+  case ISD::GLOBAL_OFFSET_TABLE:
+  case ISD::GlobalAddress:
+  case ISD::GlobalTLSAddress:
+  case ISD::ExternalSymbol:
+  case ISD::ConstantPool:
+  case ISD::JumpTable:
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_WO_CHAIN:
+  case ISD::INTRINSIC_VOID:
+    // FIXME: Custom lowering for these operations shouldn't return null!
+    for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+      Results.push_back(SDValue(Node, i));
+    break;
   }
 }
 void SelectionDAGLegalize::PromoteNode(SDNode *Node,
