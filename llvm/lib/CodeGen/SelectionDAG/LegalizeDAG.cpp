@@ -164,6 +164,10 @@ private:
   SDValue EmitStackConvert(SDValue SrcOp, MVT SlotVT, MVT DestVT, DebugLoc dl);
   SDValue ExpandBUILD_VECTOR(SDNode *Node);
   SDValue ExpandSCALAR_TO_VECTOR(SDNode *Node);
+  SDValue ExpandDBG_STOPPOINT(SDNode *Node);
+  void ExpandDYNAMIC_STACKALLOC(SDNode *Node,
+                                SmallVectorImpl<SDValue> &Results);
+  SDValue ExpandFCOPYSIGN(SDNode *Node);
   SDValue ExpandLegalINT_TO_FP(bool isSigned, SDValue LegalOp, MVT DestVT,
                                DebugLoc dl);
   SDValue PromoteLegalINT_TO_FP(SDValue LegalOp, MVT DestVT, bool isSigned,
@@ -789,9 +793,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::TRAMPOLINE:
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
-    // These operations lie about being legal: they must always be
-    // custom-lowered.
-    Action = TargetLowering::Custom;
+    // These operations lie about being legal: when they claim to be legal,
+    // they should actually be custom-lowered.
+    Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
+    if (Action == TargetLowering::Legal)
+      Action = TargetLowering::Custom;
     break;
   case ISD::BUILD_VECTOR:
     // A weird case: when a BUILD_VECTOR is custom-lowered, it doesn't legalize
@@ -883,66 +889,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
-  case ISD::DBG_STOPPOINT:
-    assert(Node->getNumOperands() == 1 && "Invalid DBG_STOPPOINT node!");
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the input chain.
-
-    switch (TLI.getOperationAction(ISD::DBG_STOPPOINT, MVT::Other)) {
-    case TargetLowering::Promote:
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Expand: {
-      DwarfWriter *DW = DAG.getDwarfWriter();
-      bool useDEBUG_LOC = TLI.isOperationLegalOrCustom(ISD::DEBUG_LOC,
-                                                       MVT::Other);
-      bool useLABEL = TLI.isOperationLegalOrCustom(ISD::DBG_LABEL, MVT::Other);
-
-      const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
-      GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
-      if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
-        DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
-
-        unsigned Line = DSP->getLine();
-        unsigned Col = DSP->getColumn();
-
-        if (OptLevel == CodeGenOpt::None) {
-          // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
-          // won't hurt anything.
-          if (useDEBUG_LOC) {
-            SDValue Ops[] = { Tmp1, DAG.getConstant(Line, MVT::i32),
-                              DAG.getConstant(Col, MVT::i32),
-                              DAG.getSrcValue(CU.getGV()) };
-            Result = DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Ops, 4);
-          } else {
-            unsigned ID = DW->RecordSourceLine(Line, Col, CU);
-            Result = DAG.getLabel(ISD::DBG_LABEL, dl, Tmp1, ID);
-          }
-        } else {
-          Result = Tmp1;  // chain
-        }
-      } else {
-        Result = Tmp1;  // chain
-      }
-      break;
-    }
-   case TargetLowering::Custom:
-      Result = TLI.LowerOperation(Op, DAG);
-      if (Result.getNode())
-        break;
-    case TargetLowering::Legal: {
-      if (Tmp1 == Node->getOperand(0))
-        break;
-
-      SmallVector<SDValue, 8> Ops;
-      Ops.push_back(Tmp1);
-      Ops.push_back(Node->getOperand(1));  // line # must be legal.
-      Ops.push_back(Node->getOperand(2));  // col # must be legal.
-      Ops.push_back(Node->getOperand(3));  // filename must be legal.
-      Ops.push_back(Node->getOperand(4));  // working dir # must be legal.
-      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
-      break;
-    }
-    }
-    break;
   case ISD::FORMAL_ARGUMENTS:
   case ISD::CALL:
     // The only option for this is to custom lower it.
@@ -1081,106 +1027,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     if (Node->getNumValues() == 2)
       AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
     return Result.getValue(Op.getResNo());
-  case ISD::DYNAMIC_STACKALLOC: {
-    MVT VT = Node->getValueType(0);
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the size.
-    Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the alignment.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-
-    Tmp1 = Result.getValue(0);
-    Tmp2 = Result.getValue(1);
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Expand: {
-      unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
-      assert(SPReg && "Target cannot require DYNAMIC_STACKALLOC expansion and"
-             " not tell us which reg is the stack pointer!");
-      SDValue Chain = Tmp1.getOperand(0);
-
-      // Chain the dynamic stack allocation so that it doesn't modify the stack
-      // pointer when other instructions are using the stack.
-      Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
-
-      SDValue Size  = Tmp2.getOperand(1);
-      SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
-      Chain = SP.getValue(1);
-      unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
-      unsigned StackAlign =
-        TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
-      if (Align > StackAlign)
-        SP = DAG.getNode(ISD::AND, dl, VT, SP,
-                         DAG.getConstant(-(uint64_t)Align, VT));
-      Tmp1 = DAG.getNode(ISD::SUB, dl, VT, SP, Size);       // Value
-      Chain = DAG.getCopyToReg(Chain, dl, SPReg, Tmp1);     // Output chain
-
-      Tmp2 = DAG.getCALLSEQ_END(Chain,  DAG.getIntPtrConstant(0, true),
-                                DAG.getIntPtrConstant(0, true), SDValue());
-
-      Tmp1 = LegalizeOp(Tmp1);
-      Tmp2 = LegalizeOp(Tmp2);
-      break;
-    }
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Tmp1, DAG);
-      if (Tmp3.getNode()) {
-        Tmp1 = LegalizeOp(Tmp3);
-        Tmp2 = LegalizeOp(Tmp3.getValue(1));
-      }
-      break;
-    case TargetLowering::Legal:
-      break;
-    }
-    // Since this op produce two values, make sure to remember that we
-    // legalized both of them.
-    AddLegalizedOperand(SDValue(Node, 0), Tmp1);
-    AddLegalizedOperand(SDValue(Node, 1), Tmp2);
-    return Op.getResNo() ? Tmp2 : Tmp1;
-  }
-  case ISD::BR_JT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    // Ensure that libcalls are emitted before a branch.
-    Tmp1 = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Tmp1, LastCALLSEQ_END);
-    Tmp1 = LegalizeOp(Tmp1);
-    LastCALLSEQ_END = DAG.getEntryNode();
-
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the jumptable node.
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
-
-    switch (TLI.getOperationAction(ISD::BR_JT, MVT::Other)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.getNode()) Result = Tmp1;
-      break;
-    case TargetLowering::Expand: {
-      SDValue Chain = Result.getOperand(0);
-      SDValue Table = Result.getOperand(1);
-      SDValue Index = Result.getOperand(2);
-
-      MVT PTy = TLI.getPointerTy();
-      MachineFunction &MF = DAG.getMachineFunction();
-      unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize();
-      Index= DAG.getNode(ISD::MUL, dl, PTy,
-                         Index, DAG.getConstant(EntrySize, PTy));
-      SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
-
-      MVT MemVT = MVT::getIntegerVT(EntrySize * 8);
-      SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, dl, PTy, Chain, Addr,
-                                  PseudoSourceValue::getJumpTable(), 0, MemVT);
-      Addr = LD;
-      if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-        // For PIC, the sequence is:
-        // BRIND(load(Jumptable + index) + RelocBase)
-        // RelocBase can be JumpTable, GOT or some sort of global base.
-        Addr = DAG.getNode(ISD::ADD, dl, PTy, Addr,
-                           TLI.getPICJumpTableRelocBase(Table, DAG));
-      }
-      Result = DAG.getNode(ISD::BRIND, dl, MVT::Other, LD.getValue(1), Addr);
-    }
-    }
-    break;
   case ISD::BR_CC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Ensure that libcalls are emitted before a branch.
@@ -1753,151 +1599,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     }
     break;
-
-    // Binary operators
-  case ISD::FCOPYSIGN:  // FCOPYSIGN does not require LHS/RHS to match type!
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
-
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    default: assert(0 && "Operation not supported");
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.getNode()) Result = Tmp1;
-      break;
-    case TargetLowering::Legal: break;
-    case TargetLowering::Expand: {
-      assert((Tmp2.getValueType() == MVT::f32 ||
-              Tmp2.getValueType() == MVT::f64) &&
-              "Ugly special-cased code!");
-      // Get the sign bit of the RHS.
-      SDValue SignBit;
-      MVT IVT = Tmp2.getValueType() == MVT::f64 ? MVT::i64 : MVT::i32;
-      if (isTypeLegal(IVT)) {
-        SignBit = DAG.getNode(ISD::BIT_CONVERT, dl, IVT, Tmp2);
-      } else {
-        assert(isTypeLegal(TLI.getPointerTy()) &&
-               (TLI.getPointerTy() == MVT::i32 || 
-                TLI.getPointerTy() == MVT::i64) &&
-               "Legal type for load?!");
-        SDValue StackPtr = DAG.CreateStackTemporary(Tmp2.getValueType());
-        SDValue StorePtr = StackPtr, LoadPtr = StackPtr;
-        SDValue Ch =
-            DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StorePtr, NULL, 0);
-        if (Tmp2.getValueType() == MVT::f64 && TLI.isLittleEndian())
-          LoadPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(),
-                                LoadPtr, DAG.getIntPtrConstant(4));
-        SignBit = DAG.getExtLoad(ISD::SEXTLOAD, dl, TLI.getPointerTy(),
-                                 Ch, LoadPtr, NULL, 0, MVT::i32);
-      }
-      SignBit =
-          DAG.getSetCC(dl, TLI.getSetCCResultType(SignBit.getValueType()),
-                       SignBit, DAG.getConstant(0, SignBit.getValueType()),
-                       ISD::SETLT);
-      // Get the absolute value of the result.
-      SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
-      // Select between the nabs and abs value based on the sign bit of
-      // the input.
-      Result = DAG.getNode(ISD::SELECT, dl, AbsVal.getValueType(), SignBit,
-                           DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(),
-                                       AbsVal),
-                           AbsVal);
-      Result = LegalizeOp(Result);
-      break;
-    }
-    }
-    break;
-  case ISD::SADDO:
-  case ISD::SSUBO: {
-    MVT VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
-    default: assert(0 && "This action not supported for this op yet!");
-    case TargetLowering::Custom:
-      Result = TLI.LowerOperation(Op, DAG);
-      if (Result.getNode()) break;
-      // FALLTHROUGH
-    case TargetLowering::Legal: {
-      SDValue LHS = LegalizeOp(Node->getOperand(0));
-      SDValue RHS = LegalizeOp(Node->getOperand(1));
-
-      SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::SADDO ?
-                                ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
-                                LHS, RHS);
-      MVT OType = Node->getValueType(1);
-
-      SDValue Zero = DAG.getConstant(0, LHS.getValueType());
-
-      //   LHSSign -> LHS >= 0
-      //   RHSSign -> RHS >= 0
-      //   SumSign -> Sum >= 0
-      //
-      //   Add:
-      //   Overflow -> (LHSSign == RHSSign) && (LHSSign != SumSign)
-      //   Sub:
-      //   Overflow -> (LHSSign != RHSSign) && (LHSSign != SumSign)
-      //
-      SDValue LHSSign = DAG.getSetCC(dl, OType, LHS, Zero, ISD::SETGE);
-      SDValue RHSSign = DAG.getSetCC(dl, OType, RHS, Zero, ISD::SETGE);
-      SDValue SignsMatch = DAG.getSetCC(dl, OType, LHSSign, RHSSign,
-                                        Node->getOpcode() == ISD::SADDO ?
-                                        ISD::SETEQ : ISD::SETNE);
-
-      SDValue SumSign = DAG.getSetCC(dl, OType, Sum, Zero, ISD::SETGE);
-      SDValue SumSignNE = DAG.getSetCC(dl, OType, LHSSign, SumSign, ISD::SETNE);
-
-      SDValue Cmp = DAG.getNode(ISD::AND, dl, OType, SignsMatch, SumSignNE);
-
-      MVT ValueVTs[] = { LHS.getValueType(), OType };
-      SDValue Ops[] = { Sum, Cmp };
-
-      Result = DAG.getNode(ISD::MERGE_VALUES, dl,
-                           DAG.getVTList(&ValueVTs[0], 2),
-                           &Ops[0], 2);
-      SDNode *RNode = Result.getNode();
-      DAG.ReplaceAllUsesWith(Node, RNode);
-      break;
-    }
-    }
-
-    break;
-  }
-  case ISD::UADDO:
-  case ISD::USUBO: {
-    MVT VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
-    default: assert(0 && "This action not supported for this op yet!");
-    case TargetLowering::Custom:
-      Result = TLI.LowerOperation(Op, DAG);
-      if (Result.getNode()) break;
-      // FALLTHROUGH
-    case TargetLowering::Legal: {
-      SDValue LHS = LegalizeOp(Node->getOperand(0));
-      SDValue RHS = LegalizeOp(Node->getOperand(1));
-
-      SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::UADDO ?
-                                ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
-                                LHS, RHS);
-      MVT OType = Node->getValueType(1);
-      SDValue Cmp = DAG.getSetCC(dl, OType, Sum, LHS,
-                                 Node->getOpcode () == ISD::UADDO ?
-                                 ISD::SETULT : ISD::SETUGT);
-
-      MVT ValueVTs[] = { LHS.getValueType(), OType };
-      SDValue Ops[] = { Sum, Cmp };
-
-      Result = DAG.getNode(ISD::MERGE_VALUES, dl,
-                           DAG.getVTList(&ValueVTs[0], 2),
-                           &Ops[0], 2);
-      SDNode *RNode = Result.getNode();
-      DAG.ReplaceAllUsesWith(Node, RNode);
-      break;
-    }
-    }
-
-    break;
-  }
   }
 
   assert(Result.getValueType() == Op.getValueType() &&
@@ -1935,6 +1636,113 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
 
   return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, NULL, 0);
+}
+
+SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
+  DebugLoc dl = Node->getDebugLoc();
+  SDValue Tmp1 = Node->getOperand(0);
+  SDValue Tmp2 = Node->getOperand(1);
+  assert((Tmp2.getValueType() == MVT::f32 ||
+          Tmp2.getValueType() == MVT::f64) &&
+          "Ugly special-cased code!");
+  // Get the sign bit of the RHS.
+  SDValue SignBit;
+  MVT IVT = Tmp2.getValueType() == MVT::f64 ? MVT::i64 : MVT::i32;
+  if (isTypeLegal(IVT)) {
+    SignBit = DAG.getNode(ISD::BIT_CONVERT, dl, IVT, Tmp2);
+  } else {
+    assert(isTypeLegal(TLI.getPointerTy()) &&
+            (TLI.getPointerTy() == MVT::i32 || 
+            TLI.getPointerTy() == MVT::i64) &&
+            "Legal type for load?!");
+    SDValue StackPtr = DAG.CreateStackTemporary(Tmp2.getValueType());
+    SDValue StorePtr = StackPtr, LoadPtr = StackPtr;
+    SDValue Ch =
+        DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StorePtr, NULL, 0);
+    if (Tmp2.getValueType() == MVT::f64 && TLI.isLittleEndian())
+      LoadPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(),
+                            LoadPtr, DAG.getIntPtrConstant(4));
+    SignBit = DAG.getExtLoad(ISD::SEXTLOAD, dl, TLI.getPointerTy(),
+                              Ch, LoadPtr, NULL, 0, MVT::i32);
+  }
+  SignBit =
+      DAG.getSetCC(dl, TLI.getSetCCResultType(SignBit.getValueType()),
+                    SignBit, DAG.getConstant(0, SignBit.getValueType()),
+                    ISD::SETLT);
+  // Get the absolute value of the result.
+  SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
+  // Select between the nabs and abs value based on the sign bit of
+  // the input.
+  return DAG.getNode(ISD::SELECT, dl, AbsVal.getValueType(), SignBit,
+                     DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(), AbsVal),
+                     AbsVal);
+}
+
+SDValue SelectionDAGLegalize::ExpandDBG_STOPPOINT(SDNode* Node) {
+  DebugLoc dl = Node->getDebugLoc();
+  DwarfWriter *DW = DAG.getDwarfWriter();
+  bool useDEBUG_LOC = TLI.isOperationLegalOrCustom(ISD::DEBUG_LOC,
+                                                    MVT::Other);
+  bool useLABEL = TLI.isOperationLegalOrCustom(ISD::DBG_LABEL, MVT::Other);
+
+  const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
+  GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
+  if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
+    DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
+
+    unsigned Line = DSP->getLine();
+    unsigned Col = DSP->getColumn();
+
+    if (OptLevel == CodeGenOpt::None) {
+      // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
+      // won't hurt anything.
+      if (useDEBUG_LOC) {
+        return DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Node->getOperand(0),
+                           DAG.getConstant(Line, MVT::i32),
+                           DAG.getConstant(Col, MVT::i32),
+                           DAG.getSrcValue(CU.getGV()));
+      } else {
+        unsigned ID = DW->RecordSourceLine(Line, Col, CU);
+        return DAG.getLabel(ISD::DBG_LABEL, dl, Node->getOperand(0), ID);
+      }
+    }
+  }
+  return Node->getOperand(0);
+}
+
+void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
+                                           SmallVectorImpl<SDValue> &Results) {
+  unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
+  assert(SPReg && "Target cannot require DYNAMIC_STACKALLOC expansion and"
+          " not tell us which reg is the stack pointer!");
+  DebugLoc dl = Node->getDebugLoc();
+  MVT VT = Node->getValueType(0);
+  SDValue Tmp1 = SDValue(Node, 0);
+  SDValue Tmp2 = SDValue(Node, 1);
+  SDValue Tmp3 = Node->getOperand(2);
+  SDValue Chain = Tmp1.getOperand(0);
+
+  // Chain the dynamic stack allocation so that it doesn't modify the stack
+  // pointer when other instructions are using the stack.
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
+
+  SDValue Size  = Tmp2.getOperand(1);
+  SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
+  Chain = SP.getValue(1);
+  unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
+  unsigned StackAlign =
+    TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
+  if (Align > StackAlign)
+    SP = DAG.getNode(ISD::AND, dl, VT, SP,
+                      DAG.getConstant(-(uint64_t)Align, VT));
+  Tmp1 = DAG.getNode(ISD::SUB, dl, VT, SP, Size);       // Value
+  Chain = DAG.getCopyToReg(Chain, dl, SPReg, Tmp1);     // Output chain
+
+  Tmp2 = DAG.getCALLSEQ_END(Chain,  DAG.getIntPtrConstant(0, true),
+                            DAG.getIntPtrConstant(0, true), SDValue());
+
+  Results.push_back(Tmp1);
+  Results.push_back(Tmp2);
 }
 
 /// LegalizeSetCCOperands - Attempts to create a legal LHS and RHS for a SETCC
@@ -2672,6 +2480,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::VAEND:
     Results.push_back(Node->getOperand(0));
     break;
+  case ISD::DBG_STOPPOINT:
+    Results.push_back(ExpandDBG_STOPPOINT(Node));
+    break;
+  case ISD::DYNAMIC_STACKALLOC:
+    ExpandDYNAMIC_STACKALLOC(Node, Results);
+    break;
   case ISD::MERGE_VALUES:
     for (unsigned i = 0; i < Node->getNumValues(); i++)
       Results.push_back(Node->getOperand(i));
@@ -2897,6 +2711,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       Results.push_back(Node->getOperand(0));
     }
     break;
+  case ISD::FCOPYSIGN:
+    Results.push_back(ExpandFCOPYSIGN(Node));
+    break;
   case ISD::FNEG:
     // Expand Y = FNEG(X) ->  Y = SUB -0.0, X
     Tmp1 = DAG.getConstantFP(-0.0, Node->getValueType(0));
@@ -3120,6 +2937,53 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(Tmp1);
     break;
   }
+  case ISD::SADDO:
+  case ISD::SSUBO: {
+    SDValue LHS = Node->getOperand(0);
+    SDValue RHS = Node->getOperand(1);
+    SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::SADDO ?
+                              ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
+                              LHS, RHS);
+    Results.push_back(Sum);
+    MVT OType = Node->getValueType(1);
+
+    SDValue Zero = DAG.getConstant(0, LHS.getValueType());
+
+    //   LHSSign -> LHS >= 0
+    //   RHSSign -> RHS >= 0
+    //   SumSign -> Sum >= 0
+    //
+    //   Add:
+    //   Overflow -> (LHSSign == RHSSign) && (LHSSign != SumSign)
+    //   Sub:
+    //   Overflow -> (LHSSign != RHSSign) && (LHSSign != SumSign)
+    //
+    SDValue LHSSign = DAG.getSetCC(dl, OType, LHS, Zero, ISD::SETGE);
+    SDValue RHSSign = DAG.getSetCC(dl, OType, RHS, Zero, ISD::SETGE);
+    SDValue SignsMatch = DAG.getSetCC(dl, OType, LHSSign, RHSSign,
+                                      Node->getOpcode() == ISD::SADDO ?
+                                      ISD::SETEQ : ISD::SETNE);
+
+    SDValue SumSign = DAG.getSetCC(dl, OType, Sum, Zero, ISD::SETGE);
+    SDValue SumSignNE = DAG.getSetCC(dl, OType, LHSSign, SumSign, ISD::SETNE);
+
+    SDValue Cmp = DAG.getNode(ISD::AND, dl, OType, SignsMatch, SumSignNE);
+    Results.push_back(Cmp);
+    break;
+  }
+  case ISD::UADDO:
+  case ISD::USUBO: {
+    SDValue LHS = Node->getOperand(0);
+    SDValue RHS = Node->getOperand(1);
+    SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::UADDO ?
+                              ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
+                              LHS, RHS);
+    Results.push_back(Sum);
+    Results.push_back(DAG.getSetCC(dl, Node->getValueType(1), Sum, LHS,
+                                   Node->getOpcode () == ISD::UADDO ?
+                                   ISD::SETULT : ISD::SETUGT));
+    break;
+  }
   case ISD::BUILD_PAIR: {
     MVT PairTy = Node->getValueType(0);
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, PairTy, Node->getOperand(0));
@@ -3145,6 +3009,33 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     }
     Results.push_back(Tmp1);
     break;
+  case ISD::BR_JT: {
+    SDValue Chain = Node->getOperand(0);
+    SDValue Table = Node->getOperand(1);
+    SDValue Index = Node->getOperand(2);
+
+    MVT PTy = TLI.getPointerTy();
+    MachineFunction &MF = DAG.getMachineFunction();
+    unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize();
+    Index= DAG.getNode(ISD::MUL, dl, PTy,
+                        Index, DAG.getConstant(EntrySize, PTy));
+    SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
+
+    MVT MemVT = MVT::getIntegerVT(EntrySize * 8);
+    SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, dl, PTy, Chain, Addr,
+                                PseudoSourceValue::getJumpTable(), 0, MemVT);
+    Addr = LD;
+    if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+      // For PIC, the sequence is:
+      // BRIND(load(Jumptable + index) + RelocBase)
+      // RelocBase can be JumpTable, GOT or some sort of global base.
+      Addr = DAG.getNode(ISD::ADD, dl, PTy, Addr,
+                          TLI.getPICJumpTableRelocBase(Table, DAG));
+    }
+    Tmp1 = DAG.getNode(ISD::BRIND, dl, MVT::Other, LD.getValue(1), Addr);
+    Results.push_back(Tmp1);
+    break;
+  }
   case ISD::BRCOND:
     // Expand brcond's setcc into its constituent parts and create a BR_CC
     // Node.
@@ -3245,10 +3136,10 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     break;
   case ISD::SELECT:
     unsigned ExtOp, TruncOp;
-    if (Tmp2.getValueType().isVector()) {
+    if (Node->getValueType(0).isVector()) {
       ExtOp   = ISD::BIT_CONVERT;
       TruncOp = ISD::BIT_CONVERT;
-    } else if (Tmp2.getValueType().isInteger()) {
+    } else if (Node->getValueType(0).isInteger()) {
       ExtOp   = ISD::ANY_EXTEND;
       TruncOp = ISD::TRUNCATE;
     } else {
