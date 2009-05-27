@@ -14,7 +14,7 @@
 
 int atomic(void)
 {
-  // nonsenical test for sync functions
+  // non-sensical test for sync functions
   int old;
   int val = 1;
   char valc = 1;

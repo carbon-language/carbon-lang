@@ -475,7 +475,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     const llvm::Type *ElTy =
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
     Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr, true);
-    return RValue();
+    return RValue::get(0);
   }
 
   case Builtin::BI__sync_synchronize: {
@@ -483,7 +483,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     C[0] = C[1] = C[2] = C[3] = llvm::ConstantInt::get(llvm::Type::Int1Ty, 1);
     C[4] = ConstantInt::get(llvm::Type::Int1Ty, 0);
     Builder.CreateCall(CGM.getIntrinsic(Intrinsic::memory_barrier), C, C + 5);
-    return RValue();
+    return RValue::get(0);
   }
       
     // Library functions with special handling.
