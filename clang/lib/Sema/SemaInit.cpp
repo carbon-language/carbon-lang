@@ -165,9 +165,9 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
           return true;
         
         // FIXME: What do do if VD is null here?
-        assert(VD && "Must have a var decl to construct into!");
-        Init = CXXConstructExpr::Create(Context, VD, DeclType, Constructor, 
-                                        false, &Init, 1);
+        if (VD)
+          Init = CXXConstructExpr::Create(Context, VD, DeclType, Constructor, 
+                                          false, &Init, 1);
         return false;
       }
       
