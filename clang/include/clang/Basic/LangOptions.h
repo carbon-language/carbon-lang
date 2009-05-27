@@ -124,6 +124,7 @@ public:
     
     OverflowChecking = 0;
     ObjCGCBitmapPrint = 0;
+    ObjCSenderDispatch = 0;
 
     InstantiationDepth = 99;
     
