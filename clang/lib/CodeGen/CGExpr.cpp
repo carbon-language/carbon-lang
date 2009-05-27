@@ -1136,6 +1136,11 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     }
   }
 
+  if (const CXXOperatorCallExpr *CE = dyn_cast<CXXOperatorCallExpr>(E)) {
+    if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(TargetDecl))
+      return EmitCXXOperatorMemberCallExpr(CE, MD);
+  }
+      
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCall(Callee, E->getCallee()->getType(),
                   E->arg_begin(), E->arg_end(), TargetDecl);

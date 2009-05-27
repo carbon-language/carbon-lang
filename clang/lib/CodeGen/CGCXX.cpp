@@ -124,6 +124,25 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
                            CE->arg_begin(), CE->arg_end());
 }
 
+RValue 
+CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
+                                               const CXXMethodDecl *MD) {
+  assert(MD->isInstance() && 
+         "Trying to emit a member call expr on a static method!");
+  
+  
+  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const llvm::Type *Ty = 
+  CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
+                                 FPT->isVariadic());
+  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
+  
+  llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+  
+  return EmitCXXMemberCall(MD, Callee, This,
+                           E->arg_begin() + 1, E->arg_end());
+}
+
 llvm::Value *CodeGenFunction::LoadCXXThis() {
   assert(isa<CXXMethodDecl>(CurFuncDecl) && 
          "Must be in a C++ member function decl to load 'this'");

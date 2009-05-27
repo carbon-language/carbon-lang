@@ -37,7 +37,7 @@ struct S {
   static void f();
 };
 
-// RUN: grep "define void @_ZN1S1fEv" %t
+// RUN: grep "define void @_ZN1S1fEv" %t &&
 void S::f() {
 }
 
@@ -49,4 +49,15 @@ void test2() {
   
   S::g();
   
+}
+
+struct T {
+  T operator+(const T&);
+};
+
+void test3() {
+  T t1, t2;
+  
+  // RUN: grep "call void @_ZN1TpsERK1T" %t
+  T result = t1 + t2;
 }

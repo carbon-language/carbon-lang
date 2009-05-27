@@ -686,6 +686,9 @@ public:
                            CallExpr::const_arg_iterator ArgEnd);
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E);
 
+  RValue EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
+                                       const CXXMethodDecl *MD);
+  
   RValue EmitBuiltinExpr(const FunctionDecl *FD, 
                          unsigned BuiltinID, const CallExpr *E);
 
