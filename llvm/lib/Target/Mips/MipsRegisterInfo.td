@@ -131,7 +131,7 @@ let Namespace = "Mips" in {
   def LO  : Register<"lo">, DwarfRegNum<[65]>;
 
   // Status flags register
-  def FCR31 : Register<"FCR31">;
+  def FCR31 : Register<"31">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -244,11 +244,9 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64,
   }];
 }
 
-def CCR : RegisterClass<"Mips", [i32], 32, [FCR31]> {
-  let CopyCost = -1;  // Don't allow copying of status registers.
-}
+// Condition Register for floating point operations
+def CCR  : RegisterClass<"Mips", [i32], 32, [FCR31]>;
 
-def HILO : RegisterClass<"Mips", [i32], 32, [HI, LO]> {
-  //let CopyCost = -1;  // Don't allow copying of hi/lo registers.
-}
+// Hi/Lo Registers
+def HILO : RegisterClass<"Mips", [i32], 32, [HI, LO]>;
 

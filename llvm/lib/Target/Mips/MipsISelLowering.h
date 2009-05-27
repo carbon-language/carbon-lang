@@ -55,6 +55,9 @@ namespace llvm {
       // Floating Point Compare
       FPCmp,
 
+      // Floating Point Rounding
+      FPRound,
+
       // Return 
       Ret
     };
@@ -98,6 +101,7 @@ namespace llvm {
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);

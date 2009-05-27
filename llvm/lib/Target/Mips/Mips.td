@@ -39,6 +39,8 @@ def FeatureFP64Bit     : SubtargetFeature<"fp64", "IsFP64bit", "true",
                                 "Support 64-bit FP registers.">;
 def FeatureSingleFloat : SubtargetFeature<"single-float", "IsSingleFloat",
                                 "true", "Only supports single precision float">;
+def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
+                                "Mips1 ISA Support">;
 def FeatureMips2       : SubtargetFeature<"mips2", "MipsArchVersion", "Mips2",
                                 "Mips2 ISA Support">;
 def FeatureO32         : SubtargetFeature<"o32", "MipsABI", "O32",
@@ -67,9 +69,9 @@ def FeatureBitCount    : SubtargetFeature<"bitcount", "HasBitCount", "true",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;
 
-def : Proc<"mips1", []>;
-def : Proc<"r2000", []>;
-def : Proc<"r3000", []>;
+def : Proc<"mips1", [FeatureMips1]>;
+def : Proc<"r2000", [FeatureMips1]>;
+def : Proc<"r3000", [FeatureMips1]>;
 
 def : Proc<"mips2", [FeatureMips2]>;
 def : Proc<"r6000", [FeatureMips2]>;

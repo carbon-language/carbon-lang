@@ -30,6 +30,8 @@ def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<0>,
                                   SDTCisInt<2>]>;
 def SDT_MipsFPSelectCC : SDTypeProfile<1, 4, [SDTCisInt<1>, SDTCisInt<4>,
                                   SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
+
+def MipsFPRound : SDNode<"MipsISD::FPRound", SDTFPRoundOp, [SDNPOptInFlag]>;
 def MipsFPBrcond : SDNode<"MipsISD::FPBrcond", SDT_MipsFPBrcond, 
                           [SDNPHasChain]>; 
 def MipsFPCmp : SDNode<"MipsISD::FPCmp", SDT_MipsFPCmp>;
@@ -66,7 +68,7 @@ multiclass FFR1_1<bits<6> funct, string asmstr>
   def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
       !strconcat(asmstr, ".s $fd, $fs"), []>;
 
-  def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
+  def _D32  : FFR<0x11, funct, 0x1, (outs FGR32:$fd), (ins AFGR64:$fs),
       !strconcat(asmstr, ".d $fd, $fs"), []>, Requires<[In32BitMode]>;
 }
 
@@ -157,12 +159,12 @@ let ft = 0 in {
 // regardless of register aliasing.
 let fd = 0 in {
   /// Move Control Registers From/To CPU Registers
-  ///def CFC1  : FFR<0x11, 0x0, 0x2, (outs CPURegs:$rt), (ins FGR32:$fs),
-  ///                "cfc1 $rt, $fs", []>;
+  def CFC1  : FFR<0x11, 0x0, 0x2, (outs CPURegs:$rt), (ins CCR:$fs),
+                  "cfc1 $rt, $fs", []>;
 
-  ///def CTC1  : FFR<0x11, 0x0, 0x6, (outs CPURegs:$rt), (ins FGR32:$fs),
-  ///                "ctc1 $rt, $fs", []>;
-  ///                
+  def CTC1  : FFR<0x11, 0x0, 0x6, (outs CCR:$rt), (ins CPURegs:$fs),
+                  "ctc1 $fs, $rt", []>;
+                  
   def MFC1  : FFR<0x11, 0x00, 0x00, (outs CPURegs:$rt), (ins FGR32:$fs),
                   "mfc1 $rt, $fs", []>;
 
@@ -272,6 +274,9 @@ def Select_FCC_S32 : PseudoFPSelCC<FGR32, "# MipsSelect_FCC_S32_f32">;
 def Select_FCC_D32 : PseudoFPSelCC<AFGR64, "# MipsSelect_FCC_D32_f32">, 
                      Requires<[In32BitMode]>;
 
+def MOVCCRToCCR : MipsPseudo<(outs CCR:$dst), (ins CCR:$src), 
+                             "# MOVCCRToCCR", []>; 
+
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns
 //===----------------------------------------------------------------------===//
@@ -288,3 +293,12 @@ def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S32 FGR32:$src))>;
 
 def : Pat<(i32 (bitconvert FGR32:$src)),  (MFC1 FGR32:$src)>;
 def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1 CPURegs:$src)>;
+
+let Predicates = [In32BitMode] in { 
+  def : Pat<(f32 (fround AFGR64:$src)), (CVTS_D32 AFGR64:$src)>;
+  def : Pat<(f64 (fextend FGR32:$src)), (CVTD_S32 FGR32:$src)>;
+}
+
+// MipsFPRound is only emitted for MipsI targets.
+def : Pat<(f32 (MipsFPRound AFGR64:$src)), (CVTW_D32 AFGR64:$src)>;
+

@@ -37,6 +37,7 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
   HasMulDivAdd(false), HasMinMax(false), HasSwap(false), HasBitCount(false)
 {
   std::string CPU = "mips1";
+  MipsArchVersion = Mips1;
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);

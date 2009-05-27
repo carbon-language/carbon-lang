@@ -518,10 +518,10 @@ let Uses = [LO] in
 
 /// Sign Ext In Register Instructions.
 let Predicates = [HasSEInReg] in {
-  let shamt = 0x10, rs = 0 in 
+  let shamt = 0x10, rs = 0 in
     def SEB : SignExtInReg<0x21, "seb", i8>;
 
-  let shamt = 0x18, rs = 0 in 
+  let shamt = 0x18, rs = 0 in
     def SEH : SignExtInReg<0x20, "seh", i16>;
 }
 

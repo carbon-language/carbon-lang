@@ -112,7 +112,7 @@ public:
   std::string ParseSubtargetFeatures(const std::string &FS,
                                      const std::string &CPU);
 
-  bool hasMips2Ops() const { return MipsArchVersion >= Mips2; }
+  bool isMips1() const { return MipsArchVersion == Mips1; }
 
   bool isLittle() const { return IsLittle; }
   bool isFP64bit() const { return IsFP64bit; };

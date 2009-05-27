@@ -55,7 +55,8 @@ isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg,
   if (MI.getOpcode() == Mips::FMOV_S32 || 
       MI.getOpcode() == Mips::FMOV_D32 || 
       MI.getOpcode() == Mips::MFC1 || 
-      MI.getOpcode() == Mips::MTC1 ) {
+      MI.getOpcode() == Mips::MTC1 ||
+      MI.getOpcode() == Mips::MOVCCRToCCR) {
     DstReg = MI.getOperand(0).getReg();
     SrcReg = MI.getOperand(1).getReg();
     return true;
@@ -69,6 +70,7 @@ isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg,
       return true;
     }
   }
+
   return false;
 }
 
@@ -132,21 +134,22 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC != SrcRC) {
-    // Moves between coprocessors and cpu
+
+    // Copy to/from FCR31 condition register
     if ((DestRC == Mips::CPURegsRegisterClass) && 
+        (SrcRC == Mips::CCRRegisterClass))
+      BuildMI(MBB, I, DL, get(Mips::CFC1), DestReg).addReg(SrcReg);
+    else if ((DestRC == Mips::CCRRegisterClass) && 
+        (SrcRC == Mips::CPURegsRegisterClass))
+      BuildMI(MBB, I, DL, get(Mips::CTC1), DestReg).addReg(SrcReg);
+
+    // Moves between coprocessors and cpu
+    else if ((DestRC == Mips::CPURegsRegisterClass) && 
         (SrcRC == Mips::FGR32RegisterClass))
       BuildMI(MBB, I, DL, get(Mips::MFC1), DestReg).addReg(SrcReg);
     else if ((DestRC == Mips::FGR32RegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass))
       BuildMI(MBB, I, DL, get(Mips::MTC1), DestReg).addReg(SrcReg);
-
-    // Condition registers
-    else if ((SrcRC == Mips::CCRRegisterClass) && 
-             (SrcReg == Mips::FCR31))
-      return true; // This register is used implicitly, no copy needed.
-    else if ((DestRC == Mips::CCRRegisterClass) && 
-             (DestReg == Mips::FCR31))
-      return true; // This register is used implicitly, no copy needed.
 
     // Move from/to Hi/Lo registers
     else if ((DestRC == Mips::HILORegisterClass) &&
@@ -172,6 +175,8 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(Mips::FMOV_S32), DestReg).addReg(SrcReg);
   else if (DestRC == Mips::AFGR64RegisterClass)
     BuildMI(MBB, I, DL, get(Mips::FMOV_D32), DestReg).addReg(SrcReg);
+  else if (DestRC == Mips::CCRRegisterClass)
+    BuildMI(MBB, I, DL, get(Mips::MOVCCRToCCR), DestReg).addReg(SrcReg);
   else
     // Can't copy this register
     return false;
