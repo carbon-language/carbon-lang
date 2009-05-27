@@ -780,8 +780,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::MERGE_VALUES:
   case ISD::EH_RETURN:
   case ISD::FRAME_TO_ARGS_OFFSET:
-  case ISD::EXCEPTIONADDR:
-  case ISD::EHSELECTION:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be expanded.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -885,74 +883,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
-  case ISD::EXCEPTIONADDR: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    MVT VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Expand: {
-        unsigned Reg = TLI.getExceptionAddressRegister();
-        Result = DAG.getCopyFromReg(Tmp1, dl, Reg, VT);
-      }
-      break;
-    case TargetLowering::Custom:
-      Result = TLI.LowerOperation(Op, DAG);
-      if (Result.getNode()) break;
-      // Fall Thru
-    case TargetLowering::Legal: {
-      SDValue Ops[] = { DAG.getConstant(0, VT), Tmp1 };
-      Result = DAG.getMergeValues(Ops, 2, dl);
-      break;
-    }
-    }
-    }
-    if (Result.getNode()->getNumValues() == 1) break;
-
-    assert(Result.getNode()->getNumValues() == 2 &&
-           "Cannot return more than two values!");
-
-    // Since we produced two values, make sure to remember that we
-    // legalized both of them.
-    Tmp1 = LegalizeOp(Result);
-    Tmp2 = LegalizeOp(Result.getValue(1));
-    AddLegalizedOperand(Op.getValue(0), Tmp1);
-    AddLegalizedOperand(Op.getValue(1), Tmp2);
-    return Op.getResNo() ? Tmp2 : Tmp1;
-  case ISD::EHSELECTION: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    MVT VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Expand: {
-        unsigned Reg = TLI.getExceptionSelectorRegister();
-        Result = DAG.getCopyFromReg(Tmp2, dl, Reg, VT);
-      }
-      break;
-    case TargetLowering::Custom:
-      Result = TLI.LowerOperation(Op, DAG);
-      if (Result.getNode()) break;
-      // Fall Thru
-    case TargetLowering::Legal: {
-      SDValue Ops[] = { DAG.getConstant(0, VT), Tmp2 };
-      Result = DAG.getMergeValues(Ops, 2, dl);
-      break;
-    }
-    }
-    }
-    if (Result.getNode()->getNumValues() == 1) break;
-
-    assert(Result.getNode()->getNumValues() == 2 &&
-           "Cannot return more than two values!");
-
-    // Since we produced two values, make sure to remember that we
-    // legalized both of them.
-    Tmp1 = LegalizeOp(Result);
-    Tmp2 = LegalizeOp(Result.getValue(1));
-    AddLegalizedOperand(Op.getValue(0), Tmp1);
-    AddLegalizedOperand(Op.getValue(1), Tmp2);
-    return Op.getResNo() ? Tmp2 : Tmp1;
-
   case ISD::DBG_STOPPOINT:
     assert(Node->getNumOperands() == 1 && "Invalid DBG_STOPPOINT node!");
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the input chain.
@@ -2055,128 +1985,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
 
     // Binary operators
-  case ISD::SUB:
-  case ISD::MUL:
-  case ISD::MULHS:
-  case ISD::MULHU:
-  case ISD::UDIV:
-  case ISD::SDIV:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    default: assert(0 && "BinOp legalize operation not supported");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.getNode()) {
-        Result = Tmp1;
-        break;
-      }
-      // Fall through if the custom lower can't deal with the operation
-    case TargetLowering::Expand: {
-      MVT VT = Op.getValueType();
-
-      // See if multiply or divide can be lowered using two-result operations.
-      SDVTList VTs = DAG.getVTList(VT, VT);
-      if (Node->getOpcode() == ISD::MUL) {
-        // We just need the low half of the multiply; try both the signed
-        // and unsigned forms. If the target supports both SMUL_LOHI and
-        // UMUL_LOHI, form a preference by checking which forms of plain
-        // MULH it supports.
-        bool HasSMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, VT);
-        bool HasUMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, VT);
-        bool HasMULHS = TLI.isOperationLegalOrCustom(ISD::MULHS, VT);
-        bool HasMULHU = TLI.isOperationLegalOrCustom(ISD::MULHU, VT);
-        unsigned OpToUse = 0;
-        if (HasSMUL_LOHI && !HasMULHS) {
-          OpToUse = ISD::SMUL_LOHI;
-        } else if (HasUMUL_LOHI && !HasMULHU) {
-          OpToUse = ISD::UMUL_LOHI;
-        } else if (HasSMUL_LOHI) {
-          OpToUse = ISD::SMUL_LOHI;
-        } else if (HasUMUL_LOHI) {
-          OpToUse = ISD::UMUL_LOHI;
-        }
-        if (OpToUse) {
-          Result = DAG.getNode(OpToUse, dl, VTs, Tmp1, Tmp2);
-          break;
-        }
-      }
-      if (Node->getOpcode() == ISD::MULHS &&
-          TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SMUL_LOHI, dl,
-                                     VTs, Tmp1, Tmp2).getNode(),
-                         1);
-        break;
-      }
-      if (Node->getOpcode() == ISD::MULHU &&
-          TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UMUL_LOHI, dl,
-                                     VTs, Tmp1, Tmp2).getNode(),
-                         1);
-        break;
-      }
-      if (Node->getOpcode() == ISD::SDIV &&
-          TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT)) {
-        Result = DAG.getNode(ISD::SDIVREM, dl, VTs, Tmp1, Tmp2);
-        break;
-      }
-      if (Node->getOpcode() == ISD::UDIV &&
-          TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT)) {
-        Result = DAG.getNode(ISD::UDIVREM, dl, VTs, Tmp1, Tmp2);
-        break;
-      }
-      if (Node->getOpcode() == ISD::SUB &&
-          TLI.isOperationLegalOrCustom(ISD::ADD, VT) &&
-          TLI.isOperationLegalOrCustom(ISD::XOR, VT)) {
-        Tmp2 = DAG.getNode(ISD::XOR, dl, VT, Tmp2,
-               DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT));
-        Tmp2 = DAG.getNode(ISD::ADD, dl, VT, Tmp2, DAG.getConstant(1, VT));
-        Result = DAG.getNode(ISD::ADD, dl, VT, Tmp1, Tmp2);
-        break;
-      }
-
-      // Check to see if we have a libcall for this operator.
-      RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-      bool isSigned = false;
-      switch (Node->getOpcode()) {
-      case ISD::UDIV:
-      case ISD::SDIV:
-       isSigned = Node->getOpcode() == ISD::SDIV;
-       if (VT == MVT::i16)
-         LC = (isSigned ? RTLIB::SDIV_I16  : RTLIB::UDIV_I16);
-       else if (VT == MVT::i32)
-         LC = (isSigned ? RTLIB::SDIV_I32  : RTLIB::UDIV_I32);
-       else if (VT == MVT::i64)
-         LC = (isSigned ? RTLIB::SDIV_I64  : RTLIB::UDIV_I64);
-       else if (VT == MVT::i128)
-         LC = (isSigned ? RTLIB::SDIV_I128 : RTLIB::UDIV_I128);
-       break;
-      case ISD::MUL:
-        if (VT == MVT::i16)
-          LC = RTLIB::MUL_I16;
-        else if (VT == MVT::i32)
-          LC = RTLIB::MUL_I32;
-        else if (VT == MVT::i64)
-          LC = RTLIB::MUL_I64;
-        else if (VT == MVT::i128)
-          LC = RTLIB::MUL_I128;
-        break;
-      default: break;
-      }
-      if (LC != RTLIB::UNKNOWN_LIBCALL) {
-        Result = ExpandLibCall(LC, Node, isSigned);
-        break;
-      }
-
-      assert(0 && "Cannot expand this binary operator!");
-      break;
-    }
-    }
-    break;
   case ISD::FCOPYSIGN:  // FCOPYSIGN does not require LHS/RHS to match type!
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
@@ -3487,6 +3295,111 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(ExpandFPLibCall(Node, RTLIB::REM_F32, RTLIB::REM_F64,
                                       RTLIB::REM_F80, RTLIB::REM_PPCF128));
     break;
+  case ISD::EHSELECTION: {
+    unsigned Reg = TLI.getExceptionSelectorRegister();
+    assert(Reg && "Can't expand to unknown register!");
+    Results.push_back(DAG.getCopyFromReg(Node->getOperand(1), dl, Reg,
+                                         Node->getValueType(0)));
+    Results.push_back(Results[0].getValue(1));
+    break;
+  }
+  case ISD::EXCEPTIONADDR: {
+    unsigned Reg = TLI.getExceptionAddressRegister();
+    assert(Reg && "Can't expand to unknown register!");
+    Results.push_back(DAG.getCopyFromReg(Node->getOperand(0), dl, Reg,
+                                         Node->getValueType(0)));
+    Results.push_back(Results[0].getValue(1));
+    break;
+  }
+  case ISD::SUB: {
+    MVT VT = Node->getValueType(0);
+    assert(TLI.isOperationLegalOrCustom(ISD::ADD, VT) &&
+           TLI.isOperationLegalOrCustom(ISD::XOR, VT) &&
+           "Don't know how to expand this subtraction!");
+    Tmp1 = DAG.getNode(ISD::XOR, dl, VT, Node->getOperand(1),
+               DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT));
+    Tmp1 = DAG.getNode(ISD::ADD, dl, VT, Tmp2, DAG.getConstant(1, VT));
+    Results.push_back(DAG.getNode(ISD::ADD, dl, VT, Node->getOperand(0), Tmp1));
+    break;
+  }
+  case ISD::UDIV:
+  case ISD::UREM: {
+    bool isRem = Node->getOpcode() == ISD::UREM;
+    MVT VT = Node->getValueType(0);
+    SDVTList VTs = DAG.getVTList(VT, VT);
+    if (TLI.isOperationLegalOrCustom(ISD::UDIVREM, VT))
+      Tmp1 = DAG.getNode(ISD::UDIVREM, dl, VTs, Node->getOperand(0),
+                         Node->getOperand(1)).getValue(isRem);
+    else if (isRem)
+      Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UREM_I16, RTLIB::UREM_I32,
+                              RTLIB::UREM_I64, RTLIB::UREM_I128);
+    else
+      Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UDIV_I16, RTLIB::UDIV_I32,
+                              RTLIB::UDIV_I64, RTLIB::UDIV_I128);
+    Results.push_back(Tmp1);
+    break;
+  }
+  case ISD::SDIV:
+  case ISD::SREM: {
+    bool isRem = Node->getOpcode() == ISD::SREM;
+    MVT VT = Node->getValueType(0);
+    SDVTList VTs = DAG.getVTList(VT, VT);
+    if (TLI.isOperationLegalOrCustom(ISD::SDIVREM, VT))
+      Tmp1 = DAG.getNode(ISD::SDIVREM, dl, VTs, Node->getOperand(0),
+                         Node->getOperand(1)).getValue(isRem);
+    else if (isRem)
+      Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SREM_I16, RTLIB::SREM_I32,
+                              RTLIB::SREM_I64, RTLIB::SREM_I128);
+    else
+      Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SDIV_I16, RTLIB::SDIV_I32,
+                              RTLIB::SDIV_I64, RTLIB::SDIV_I128);
+    Results.push_back(Tmp1);
+    break;
+  }
+  case ISD::MULHU:
+  case ISD::MULHS: {
+    unsigned ExpandOpcode = Node->getOpcode() == ISD::MULHU ? ISD::UMUL_LOHI :
+                                                              ISD::SMUL_LOHI;
+    MVT VT = Node->getValueType(0);
+    SDVTList VTs = DAG.getVTList(VT, VT);
+    assert(TLI.isOperationLegalOrCustom(ExpandOpcode, VT) &&
+           "If this wasn't legal, it shouldn't have been created!");
+    Tmp1 = DAG.getNode(ExpandOpcode, dl, VTs, Node->getOperand(0),
+                       Node->getOperand(1));
+    Results.push_back(Tmp1.getValue(1));
+    break;
+  }
+  case ISD::MUL: {
+    MVT VT = Node->getValueType(0);
+    SDVTList VTs = DAG.getVTList(VT, VT);
+    // See if multiply or divide can be lowered using two-result operations.
+    // We just need the low half of the multiply; try both the signed
+    // and unsigned forms. If the target supports both SMUL_LOHI and
+    // UMUL_LOHI, form a preference by checking which forms of plain
+    // MULH it supports.
+    bool HasSMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::SMUL_LOHI, VT);
+    bool HasUMUL_LOHI = TLI.isOperationLegalOrCustom(ISD::UMUL_LOHI, VT);
+    bool HasMULHS = TLI.isOperationLegalOrCustom(ISD::MULHS, VT);
+    bool HasMULHU = TLI.isOperationLegalOrCustom(ISD::MULHU, VT);
+    unsigned OpToUse = 0;
+    if (HasSMUL_LOHI && !HasMULHS) {
+      OpToUse = ISD::SMUL_LOHI;
+    } else if (HasUMUL_LOHI && !HasMULHU) {
+      OpToUse = ISD::UMUL_LOHI;
+    } else if (HasSMUL_LOHI) {
+      OpToUse = ISD::SMUL_LOHI;
+    } else if (HasUMUL_LOHI) {
+      OpToUse = ISD::UMUL_LOHI;
+    }
+    if (OpToUse) {
+      Results.push_back(DAG.getNode(OpToUse, dl, VTs, Tmp1, Tmp2));
+      break;
+    }
+    Tmp1 = ExpandIntLibCall(Node, false, RTLIB::MUL_I16, RTLIB::MUL_I32,
+                            RTLIB::MUL_I64, RTLIB::MUL_I128);
+    Results.push_back(Tmp1);
+    break;
+  }
   case ISD::GLOBAL_OFFSET_TABLE:
   case ISD::GlobalAddress:
   case ISD::GlobalTLSAddress:
