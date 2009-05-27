@@ -662,7 +662,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
         isa<ImplicitParamDecl>(VD))) {
     LValue LV;
-    bool GCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
+    bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
     if (VD->hasExternalStorage()) {
       llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
       if (VD->getType()->isReferenceType())
@@ -676,7 +676,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // local variables do not get their gc attribute set.
       QualType::GCAttrTypes attr = QualType::GCNone;
       // local static?
-      if (!GCable)
+      if (!NonGCable)
         attr = getContext().getObjCGCAttrKind(E->getType());
       if (VD->hasAttr<BlocksAttr>()) {
         bool needsCopyDispose = BlockRequiresCopying(VD->getType());
@@ -693,7 +693,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
         V = Builder.CreateLoad(V, "tmp");
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
     }
-    LValue::SetObjCNonGC(LV, GCable);
+    LValue::SetObjCNonGC(LV, NonGCable);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
