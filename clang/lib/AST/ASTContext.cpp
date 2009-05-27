@@ -360,6 +360,7 @@ ASTContext::getTypeInfo(const Type *T) {
     case BuiltinType::NullPtr:
       Width = Target.getPointerWidth(0); // C++ 3.9.1p11: sizeof(nullptr_t)
       Align = Target.getPointerAlign(0); //   == sizeof(void*)
+      break;
     }
     break;
   case Type::FixedWidthInt:
@@ -768,7 +769,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
-  NewEntry->FinalizeLayout();
+  NewEntry->FinalizeLayout(getLangOptions().CPlusPlus);
   return *NewEntry;
 }
 

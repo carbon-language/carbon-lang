@@ -46,9 +46,12 @@ class ASTRecordLayout {
     FieldCount = N;
     FieldOffsets = new uint64_t[N];
   }
-  
+
   /// Finalize record layout. Adjust record size based on the alignment.
-  void FinalizeLayout() {
+  void FinalizeLayout(bool ForceNonEmpty = false) {
+    // In C++, records cannot be of size 0.
+    if (ForceNonEmpty && Size == 0)
+      Size = 8;
     // Finally, round the size of the record up to the alignment of the
     // record itself.
     Size = (Size + (Alignment-1)) & ~(Alignment-1);
