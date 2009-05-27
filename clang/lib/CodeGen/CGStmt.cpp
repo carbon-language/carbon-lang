@@ -498,6 +498,10 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
       EmitAnyExpr(RV);
   } else if (RV == 0) {
     // Do nothing (return value is left uninitialized)
+  } else if (FnRetTy->isReferenceType()) {
+    // If this function returns a reference, take the address of the expression
+    // rather than the value.
+    Builder.CreateStore(EmitLValue(RV).getAddress(), ReturnValue);
   } else if (!hasAggregateLLVMType(RV->getType())) {
     Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);
   } else if (RV->getType()->isAnyComplexType()) {

@@ -75,3 +75,6 @@ void test_aggregate() {
   aggregate_reference_return().a = 10;
 }
 
+int& reference_return() {
+  return g;
+}
