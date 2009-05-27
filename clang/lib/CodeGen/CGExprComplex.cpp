@@ -255,6 +255,9 @@ VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
 
 
 ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
+  if (E->getCallReturnType()->isReferenceType())
+    return EmitLoadOfLValue(E);
+
   return CGF.EmitCallExpr(E).getComplexVal();
 }
 

@@ -38,6 +38,7 @@ void test_bool() {
   f(true);
   
   bool_reference_return() = true;
+  a = bool_reference_return();
 }
 
 void test_scalar() {
@@ -53,6 +54,7 @@ void test_scalar() {
   f((vec4){1,2,3,4}[0]);
   
   int_reference_return() = 10;
+  a = int_reference_return();
 }
 
 void test_complex() {
@@ -62,6 +64,7 @@ void test_complex() {
   f(10i);
   
   complex_int_reference_return() = 10i;
+  a = complex_int_reference_return();
 }
 
 void test_aggregate() {

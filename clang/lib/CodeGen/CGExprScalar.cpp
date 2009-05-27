@@ -223,6 +223,9 @@ public:
   Value *EmitCastExpr(const Expr *E, QualType T);
 
   Value *VisitCallExpr(const CallExpr *E) {
+    if (E->getCallReturnType()->isReferenceType())
+      return EmitLoadOfLValue(E);
+    
     return CGF.EmitCallExpr(E).getScalarVal();
   }
 
