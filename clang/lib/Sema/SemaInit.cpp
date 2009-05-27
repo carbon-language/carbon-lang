@@ -156,6 +156,14 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       //      class of the destination, constructors are considered.
       if ((DeclTypeC.getUnqualifiedType() == InitTypeC.getUnqualifiedType()) ||
           IsDerivedFrom(InitTypeC, DeclTypeC)) {
+        const CXXRecordDecl *RD = 
+          cast<CXXRecordDecl>(DeclType->getAsRecordType()->getDecl());
+        
+        // No need to make a CXXConstructExpr if both the ctor and dtor are
+        // trivial.
+        if (RD->hasTrivialConstructor() && RD->hasTrivialDestructor())
+          return false;
+        
         CXXConstructorDecl *Constructor 
         = PerformInitializationByConstructor(DeclType, &Init, 1,
                                              InitLoc, Init->getSourceRange(),
