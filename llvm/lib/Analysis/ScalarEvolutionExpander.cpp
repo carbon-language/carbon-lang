@@ -458,7 +458,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // comments on expandAddToGEP for details.
     if (SE.TD) {
       SCEVHandle Base = S->getStart();
-      SCEVHandle RestArray[1] = Rest;
+      SCEVHandle RestArray[1] = { Rest };
       // Dig into the expression to find the pointer base for a GEP.
       ExposePointerBase(Base, RestArray[0], SE);
       // If we found a pointer, expand the AddRec with a GEP.
