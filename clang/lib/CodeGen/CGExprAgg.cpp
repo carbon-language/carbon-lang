@@ -459,6 +459,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     // FIXME: volatility
     LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *Field, false, 0);
+    // We never generate write-barries for initialized fields.
+    LValue::SetObjCNonGC(FieldLoc, true);
     if (CurInitVal < NumInitElements) {
       // Store the initializer into the field
       EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc);
