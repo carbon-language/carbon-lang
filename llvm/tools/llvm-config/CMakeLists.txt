@@ -28,6 +28,11 @@ set(SHLIBEXT ${LTDL_SHLIB_EXT})
 set(OS "${CMAKE_SYSTEM}")
 set(ARCH "X86") # TODO: This gives "i686" in Linux: "${CMAKE_SYSTEM_PROCESSOR}")
 
+get_system_libs(LLVM_SYSTEM_LIBS_LIST)
+foreach(l ${LLVM_SYSTEM_LIBS_LIST})
+  set(LLVM_SYSTEM_LIBS ${LLVM_SYSTEM_LIBS} "-l${l}")
+endforeach()
+
 include(GetTargetTriple)
 get_target_triple(target)
 
@@ -93,7 +98,7 @@ add_custom_command(OUTPUT ${LLVM_CONFIG}
   COMMAND echo 's!@LLVM_CXXFLAGS@!${CXX_FLGS}!' >> temp.sed
   # TODO: Use general flags for linking! not just for shared libs:
   COMMAND echo 's!@LLVM_LDFLAGS@!${CMAKE_SHARED_LINKER_FLAGS}!' >> temp.sed
-  COMMAND echo 's!@LIBS@!!' >> temp.sed                    # TODO: System libs
+  COMMAND echo 's!@LIBS@!${LLVM_SYSTEM_LIBS}!' >> temp.sed
   COMMAND echo 's!@LLVM_BUILDMODE@!${CMAKE_BUILD_TYPE}!' >> temp.sed
   COMMAND sed -f temp.sed < ${LLVM_CONFIG_IN} > ${LLVM_CONFIG}
   COMMAND ${CMAKE_COMMAND} -E remove -f temp.sed

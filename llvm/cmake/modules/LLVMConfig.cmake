@@ -1,5 +1,24 @@
 include(FindPerl)
 
+
+function(get_system_libs return_var)
+  # Returns in `return_var' a list of system libraries used by LLVM.
+  if( NOT MSVC )
+    if( MINGW )
+      set(system_libs ${system_libs} imagehlp psapi)
+    elseif( CMAKE_HOST_UNIX )
+      if( HAVE_LIBDL )
+	set(system_libs ${system_libs} dl)
+      endif()
+      if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD )
+	set(system_libs ${system_libs} pthread)
+      endif()
+    endif( MINGW )
+  endif( NOT MSVC )
+  set(${return_var} ${system_libs} PARENT_SCOPE)
+endfunction(get_system_libs)
+
+
 macro(llvm_config executable)
   # extra args is the list of link components.
   if( MSVC )
