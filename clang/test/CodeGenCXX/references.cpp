@@ -17,7 +17,7 @@ void t3() {
 
 // Test reference binding.
 
-struct C {};
+struct C { int a; };
 
 void f(const bool&);
 void f(const int&);
@@ -29,6 +29,7 @@ C aggregate_return();
 bool& bool_reference_return();
 int& int_reference_return();
 _Complex int& complex_int_reference_return();
+C& aggregate_reference_return();
 
 void test_bool() {
   bool a = true;
@@ -68,5 +69,6 @@ void test_aggregate() {
   f(c);
 
   f(aggregate_return());
+  aggregate_reference_return().a = 10;
 }
 
