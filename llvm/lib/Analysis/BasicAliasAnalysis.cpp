@@ -611,18 +611,39 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (G1OC != G2OC) {
             // Handle the "be careful" case above: if this is an array/vector
             // subscript, scan for a subsequent variable array index.
-            if (isa<SequentialType>(BasePtr1Ty))  {
-              const Type *NextTy =
-                cast<SequentialType>(BasePtr1Ty)->getElementType();
+            if (const SequentialType *STy =
+                  dyn_cast<SequentialType>(BasePtr1Ty)) {
+              const Type *NextTy = STy;
               bool isBadCase = false;
               
-              for (unsigned Idx = FirstConstantOper+1;
+              for (unsigned Idx = FirstConstantOper;
                    Idx != MinOperands && isa<SequentialType>(NextTy); ++Idx) {
                 const Value *V1 = GEP1Ops[Idx], *V2 = GEP2Ops[Idx];
                 if (!isa<Constant>(V1) || !isa<Constant>(V2)) {
                   isBadCase = true;
                   break;
                 }
+                // If the array is indexed beyond the bounds of the static type
+                // at this level, it will also fall into the "be careful" case.
+                // It would theoretically be possible to analyze these cases,
+                // but for now just be conservatively correct.
+                if (const ArrayType *ATy = dyn_cast<ArrayType>(STy))
+                  if (cast<ConstantInt>(G1OC)->getZExtValue() >=
+                        ATy->getNumElements() ||
+                      cast<ConstantInt>(G2OC)->getZExtValue() >=
+                        ATy->getNumElements()) {
+                    isBadCase = true;
+                    break;
+                  }
+                if (const VectorType *VTy = dyn_cast<VectorType>(STy))
+                  if (cast<ConstantInt>(G1OC)->getZExtValue() >=
+                        VTy->getNumElements() ||
+                      cast<ConstantInt>(G2OC)->getZExtValue() >=
+                        VTy->getNumElements()) {
+                    isBadCase = true;
+                    break;
+                  }
+                STy = cast<SequentialType>(NextTy);
                 NextTy = cast<SequentialType>(NextTy)->getElementType();
               }
               
