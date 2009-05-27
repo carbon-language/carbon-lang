@@ -716,12 +716,20 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         T = Context.IntTy;
         D.setInvalidType(true);
       }
-        
+
       if (FTI.NumArgs == 0) {
         if (getLangOptions().CPlusPlus) {
           // C++ 8.3.5p2: If the parameter-declaration-clause is empty, the
           // function takes no arguments.
-          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic,FTI.TypeQuals);
+          llvm::SmallVector<QualType, 4> Exceptions;
+          Exceptions.reserve(FTI.NumExceptions);
+          for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei)
+            Exceptions.push_back(
+              QualType::getFromOpaquePtr(FTI.Exceptions[ei]));
+          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, FTI.TypeQuals,
+                                      FTI.hasExceptionSpec,
+                                      FTI.hasAnyExceptionSpec,
+                                      FTI.NumExceptions, Exceptions.data());
         } else if (FTI.isVariadic) {
           // We allow a zero-parameter variadic function in C if the
           // function is marked with the "overloadable"
@@ -795,8 +803,17 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
           
           ArgTys.push_back(ArgTy);
         }
+
+        llvm::SmallVector<QualType, 4> Exceptions;
+        Exceptions.reserve(FTI.NumExceptions);
+        for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei)
+          Exceptions.push_back(QualType::getFromOpaquePtr(FTI.Exceptions[ei]));
+
         T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(),
-                                    FTI.isVariadic, FTI.TypeQuals);
+                                    FTI.isVariadic, FTI.TypeQuals,
+                                    FTI.hasExceptionSpec,
+                                    FTI.hasAnyExceptionSpec,
+                                    FTI.NumExceptions, Exceptions.data());
       }
       break;
     }
