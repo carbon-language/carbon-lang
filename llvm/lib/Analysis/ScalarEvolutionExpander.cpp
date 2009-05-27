@@ -144,12 +144,15 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   return BO;
 }
 
-/// FactorOutConstant - Test if S is evenly divisible by Factor, using signed
+/// FactorOutConstant - Test if S is divisible by Factor, using signed
 /// division. If so, update S with Factor divided out and return true.
+/// S need not be evenly divisble if a reasonable remainder can be
+/// computed.
 /// TODO: When ScalarEvolution gets a SCEVSDivExpr, this can be made
 /// unnecessary; in its place, just signed-divide Ops[i] by the scale and
 /// check to see if the divide was folded.
 static bool FactorOutConstant(SCEVHandle &S,
+                              SCEVHandle &Remainder,
                               const APInt &Factor,
                               ScalarEvolution &SE) {
   // Everything is divisible by one.
@@ -157,14 +160,21 @@ static bool FactorOutConstant(SCEVHandle &S,
     return true;
 
   // For a Constant, check for a multiple of the given factor.
-  if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
-    if (!C->getValue()->getValue().srem(Factor)) {
-      ConstantInt *CI =
-        ConstantInt::get(C->getValue()->getValue().sdiv(Factor));
+  if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
+    ConstantInt *CI =
+      ConstantInt::get(C->getValue()->getValue().sdiv(Factor));
+    // If the quotient is zero and the remainder is non-zero, reject
+    // the value at this scale. It will be considered for subsequent
+    // smaller scales.
+    if (C->isZero() || !CI->isZero()) {
       SCEVHandle Div = SE.getConstant(CI);
       S = Div;
+      Remainder =
+        SE.getAddExpr(Remainder,
+                      SE.getConstant(C->getValue()->getValue().srem(Factor)));
       return true;
     }
+  }
 
   // In a Mul, check if there is a constant operand which is a multiple
   // of the given factor.
@@ -180,11 +190,14 @@ static bool FactorOutConstant(SCEVHandle &S,
 
   // In an AddRec, check if both start and step are divisible.
   if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
-    SCEVHandle Start = A->getStart();
-    if (!FactorOutConstant(Start, Factor, SE))
-      return false;
     SCEVHandle Step = A->getStepRecurrence(SE);
-    if (!FactorOutConstant(Step, Factor, SE))
+    SCEVHandle StepRem = SE.getIntegerSCEV(0, Step->getType());
+    if (!FactorOutConstant(Step, StepRem, Factor, SE))
+      return false;
+    if (!StepRem->isZero())
+      return false;
+    SCEVHandle Start = A->getStart();
+    if (!FactorOutConstant(Start, Remainder, Factor, SE))
       return false;
     S = SE.getAddRecExpr(Start, Step, A->getLoop());
     return true;
@@ -253,8 +266,10 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
       // If the scale size is not 0, attempt to factor out a scale.
       if (ElSize != 0) {
         SCEVHandle Op = Ops[i];
-        if (FactorOutConstant(Op, ElSize, SE)) {
+        SCEVHandle Remainder = SE.getIntegerSCEV(0, Op->getType());
+        if (FactorOutConstant(Op, Remainder, ElSize, SE)) {
           ScaledOps.push_back(Op); // Op now has ElSize factored out.
+          NewOps.push_back(Remainder);
           continue;
         }
       }
