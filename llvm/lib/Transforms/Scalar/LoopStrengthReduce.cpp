@@ -2005,11 +2005,16 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         ConstantInt *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
         NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
       }
+      NewOffset = CondUse->getOffset();
+      if (CondUse->isSigned())
+        NewOffset = SE->getNoopOrSignExtend(CondUse->getOffset(), NewCmpTy);
+      else
+        NewOffset = SE->getNoopOrZeroExtend(CondUse->getOffset(), NewCmpTy);
       NewOffset = TyBits == NewTyBits
-        ? SE->getMulExpr(CondUse->getOffset(),
+        ? SE->getMulExpr(NewOffset,
                          SE->getConstant(ConstantInt::get(CmpTy, Scale)))
         : SE->getConstant(ConstantInt::get(NewCmpIntTy,
-          cast<SCEVConstant>(CondUse->getOffset())->getValue()
+          cast<SCEVConstant>(NewOffset)->getValue()
             ->getSExtValue()*Scale));
       break;
     }
