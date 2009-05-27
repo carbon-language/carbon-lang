@@ -26,5 +26,6 @@ add_llvm_library(LLVMSupport
   StringPool.cpp
   SystemUtils.cpp
   Timer.cpp
+  Triple.cpp
   raw_ostream.cpp
   )
