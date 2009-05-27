@@ -973,7 +973,7 @@ def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                     [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>;
 
 // Load, store, and memory fence
-def SFENCE : PSI<0xAE, MRM7m, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>;
+def SFENCE : PSI<0xAE, MRM7r, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>;
 
 // MXCSR register
 def LDMXCSR : PSI<0xAE, MRM2m, (outs), (ins i32mem:$src),
