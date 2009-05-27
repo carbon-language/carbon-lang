@@ -37,10 +37,10 @@ class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   bool IgnoreResult;
 
 public:
-  AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool volatileDest,
-                 bool IgnoreResult)
+  AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool v,
+                 bool ignore)
     : CGF(cgf), Builder(CGF.Builder),
-      DestPtr(destPtr), VolatileDest(volatileDest), IgnoreResult(IgnoreResult) {
+      DestPtr(destPtr), VolatileDest(v), IgnoreResult(ignore) {
   }
 
   //===--------------------------------------------------------------------===//
