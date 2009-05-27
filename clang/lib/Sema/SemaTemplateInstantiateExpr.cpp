@@ -108,7 +108,6 @@ TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
-  // FIXME: Recast this in terms of Sema::InstantiateDeclRef.
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
@@ -141,7 +140,7 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   }
 
   ValueDecl *NewD 
-    = dyn_cast_or_null<ValueDecl>(SemaRef.InstantiateDeclRef(D, TemplateArgs));
+    = dyn_cast_or_null<ValueDecl>(SemaRef.InstantiateCurrentDeclRef(D));
   if (!NewD)
     return SemaRef.ExprError();
 

@@ -24,6 +24,9 @@ namespace N {
               K1 k1 = K1Val;
               Kind1 = K1Val;
               Outer::Inner::InnerTemplate<type>::VeryInner::Kind2 = K2Val;
+
+              InnerTemplate t;
+              InnerTemplate<type> t2;
             }
           };
         };

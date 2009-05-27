@@ -2250,8 +2250,7 @@ public:
                                      FunctionDecl *Function);
   void InstantiateVariableDefinition(VarDecl *Var);
 
-  NamedDecl *
-  InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs);
+  NamedDecl *InstantiateCurrentDeclRef(NamedDecl *D);
   
   // Simple function for cloning expressions.
   template<typename T> 

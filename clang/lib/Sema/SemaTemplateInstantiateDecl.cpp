@@ -671,8 +671,8 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
   return 0;
 }
 
-/// \brief Find the instantiation of the given declaration with the
-/// given template arguments.
+/// \brief Find the instantiation of the given declaration within the
+/// current instantiation.
 ///
 /// This routine is intended to be used when \p D is a declaration
 /// referenced from within a template, that needs to mapped into the
@@ -695,10 +695,9 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
 /// In the instantiation of X<int>::getKind(), we need to map the
 /// EnumConstantDecl for KnownValue (which refers to
 /// X<T>::<Kind>::KnownValue) to its instantiation
-/// (X<int>::<Kind>::KnownValue). InstantiateDeclRef() performs this
-/// mapping, given the template arguments 'int'.
-NamedDecl *
-Sema::InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs) {
+/// (X<int>::<Kind>::KnownValue). InstantiateCurrentDeclRef() performs
+/// this mapping from within the instantiation of X<int>.
+NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
   DeclContext *ParentDC = D->getDeclContext();
   if (isa<ParmVarDecl>(D) || ParentDC->isFunctionOrMethod()) {
     // D is a local of some kind. Look into the map of local
@@ -707,7 +706,7 @@ Sema::InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs)
   }
 
   if (NamedDecl *ParentDecl = dyn_cast<NamedDecl>(ParentDC)) {
-    ParentDecl = InstantiateDeclRef(ParentDecl, TemplateArgs);
+    ParentDecl = InstantiateCurrentDeclRef(ParentDecl);
     if (!ParentDecl)
       return 0;
 
@@ -740,20 +739,27 @@ Sema::InstantiateDeclRef(NamedDecl *D, const TemplateArgumentList &TemplateArgs)
     D = Result;
   }
 
-  // D itself might be a class template that we need to instantiate
-  // with the given template arguments.
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D))
-    if (ClassTemplateDecl *ClassTemplate = Record->getDescribedClassTemplate()) {
-      QualType InjectedClassName 
-        = ClassTemplate->getInjectedClassNameType(Context);
-      QualType InstantiatedType = InstantiateType(InjectedClassName,
-                                                  TemplateArgs,
-                                                  Record->getLocation(), 
-                                                  Record->getDeclName());
-      if (InstantiatedType.isNull())
-        return 0;
-      if (const RecordType *RT = InstantiatedType->getAsRecordType())
-        D = RT->getDecl();
+    if (ClassTemplateDecl *ClassTemplate 
+          = Record->getDescribedClassTemplate()) {
+      // When the declaration D was parsed, it referred to the current
+      // instantiation. Therefore, look through the current context,
+      // which contains actual instantiations, to find the
+      // instantiation of the "current instantiation" that D refers
+      // to. Alternatively, we could just instantiate the
+      // injected-class-name with the current template arguments, but
+      // such an instantiation is far more expensive.
+      for (DeclContext *DC = CurContext; !DC->isFileContext(); 
+           DC = DC->getParent()) {
+        if (ClassTemplateSpecializationDecl *Spec 
+              = dyn_cast<ClassTemplateSpecializationDecl>(DC))
+          if (Context.getCanonicalDecl(Spec->getSpecializedTemplate())
+              == Context.getCanonicalDecl(ClassTemplate))
+            return Spec;
+      }
+
+      assert(false && 
+             "Unable to find declaration for the current instantiation");
     }
 
   return D;

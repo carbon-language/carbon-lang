@@ -407,8 +407,8 @@ QualType
 TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
                                                  unsigned Quals) const {
   TypedefDecl *Typedef 
-    = cast_or_null<TypedefDecl>(SemaRef.InstantiateDeclRef(T->getDecl(), 
-                                                           TemplateArgs));
+    = cast_or_null<TypedefDecl>(
+                           SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
   if (!Typedef)
     return QualType();
   
@@ -440,8 +440,7 @@ QualType
 TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
                                                 unsigned Quals) const {
   RecordDecl *Record 
-    = cast_or_null<RecordDecl>(SemaRef.InstantiateDeclRef(T->getDecl(), 
-                                                          TemplateArgs));
+    = cast_or_null<RecordDecl>(SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
   if (!Record)
     return QualType();
   
@@ -452,8 +451,7 @@ QualType
 TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T,
                                               unsigned Quals) const {
   EnumDecl *Enum 
-    = cast_or_null<EnumDecl>(SemaRef.InstantiateDeclRef(T->getDecl(), 
-                                                        TemplateArgs));
+    = cast_or_null<EnumDecl>(SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
   if (!Enum)
     return QualType();
   
