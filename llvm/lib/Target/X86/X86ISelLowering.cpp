@@ -55,8 +55,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   X86ScalarSSEf32 = Subtarget->hasSSE1();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
-  bool Fast = false;
-
   RegInfo = TM.getRegisterInfo();
   TD = getTargetData();
 
@@ -410,16 +408,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // cases we handle.
     addLegalFPImmediate(APFloat(+0.0)); // xorpd
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
-
-    // Floating truncations from f80 and extensions to f80 go through memory.
-    // If optimizing, we lie about this though and handle it in
-    // InstructionSelectPreprocess so that dagcombine2 can hack on these.
-    if (Fast) {
-      setConvertAction(MVT::f32, MVT::f80, Expand);
-      setConvertAction(MVT::f64, MVT::f80, Expand);
-      setConvertAction(MVT::f80, MVT::f32, Expand);
-      setConvertAction(MVT::f80, MVT::f64, Expand);
-    }
   } else if (!UseSoftFloat && X86ScalarSSEf32) {
     // Use SSE for f32, x87 for f64.
     // Set up the FP register classes.
@@ -449,18 +437,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
     addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
 
-    // SSE <-> X87 conversions go through memory.  If optimizing, we lie about
-    // this though and handle it in InstructionSelectPreprocess so that
-    // dagcombine2 can hack on these.
-    if (Fast) {
-      setConvertAction(MVT::f32, MVT::f64, Expand);
-      setConvertAction(MVT::f32, MVT::f80, Expand);
-      setConvertAction(MVT::f80, MVT::f32, Expand);
-      setConvertAction(MVT::f64, MVT::f32, Expand);
-      // And x87->x87 truncations also.
-      setConvertAction(MVT::f80, MVT::f64, Expand);
-    }
-
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
@@ -475,15 +451,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::UNDEF,     MVT::f32, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-
-    // Floating truncations go through memory.  If optimizing, we lie about
-    // this though and handle it in InstructionSelectPreprocess so that
-    // dagcombine2 can hack on these.
-    if (Fast) {
-      setConvertAction(MVT::f80, MVT::f32, Expand);
-      setConvertAction(MVT::f64, MVT::f32, Expand);
-      setConvertAction(MVT::f80, MVT::f64, Expand);
-    }
 
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);

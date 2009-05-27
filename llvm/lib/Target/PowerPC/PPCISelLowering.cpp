@@ -71,9 +71,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setIndexedStoreAction(ISD::PRE_INC, MVT::i32, Legal);
   setIndexedStoreAction(ISD::PRE_INC, MVT::i64, Legal);
 
-  // Shortening conversions involving ppcf128 get expanded (2 regs -> 1 reg)
-  setConvertAction(MVT::ppcf128, MVT::f64, Expand);
-  setConvertAction(MVT::ppcf128, MVT::f32, Expand);
   // This is used in the ppcf128->int sequence.  Note it has different semantics
   // from FP_ROUND:  that rounds to nearest, this rounds to zero.
   setOperationAction(ISD::FP_ROUND_INREG, MVT::ppcf128, Custom);
