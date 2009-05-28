@@ -953,7 +953,7 @@ let Constraints = "$src1 = $dst" in {
 def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
                      "movmskps\t{$src, $dst|$dst, $src}",
                      [(set GR32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
-def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
+def MOVMSKPDrr : PDI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
                      "movmskpd\t{$src, $dst|$dst, $src}",
                      [(set GR32:$dst, (int_x86_sse2_movmsk_pd VR128:$src))]>;
 
