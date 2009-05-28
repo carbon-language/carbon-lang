@@ -2885,7 +2885,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   // Emit the lock opcode prefix as needed.
   if (Desc->TSFlags & X86II::LOCK) ++FinalSize;
 
-  // Emit segment overrid opcode prefix as needed.
+  // Emit segment override opcode prefix as needed.
   switch (Desc->TSFlags & X86II::SegOvrMask) {
   case X86II::FS:
   case X86II::GS:
@@ -2943,7 +2943,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::T8:  // 0F 38
     ++FinalSize;
     break;
-  case X86II::TA:    // 0F 3A
+  case X86II::TA:  // 0F 3A
     ++FinalSize;
     break;
   }
@@ -3087,11 +3087,15 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::MRM4r: case X86II::MRM5r:
   case X86II::MRM6r: case X86II::MRM7r:
     ++FinalSize;
-    // Special handling of lfence and mfence. 
     if (Desc->getOpcode() == X86::LFENCE ||
-        Desc->getOpcode() == X86::MFENCE)
+        Desc->getOpcode() == X86::MFENCE) {
+      // Special handling of lfence and mfence;
       FinalSize += sizeRegModRMByte();
-    else {
+    } else if (Desc->getOpcode() == X86::MONITOR ||
+               Desc->getOpcode() == X86::MWAIT) {
+      // Special handling of monitor and mwait.
+      FinalSize += sizeRegModRMByte() + 1; // +1 for the opcode.
+    } else {
       ++CurOp;
       FinalSize += sizeRegModRMByte();
     }

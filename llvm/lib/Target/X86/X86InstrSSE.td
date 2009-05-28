@@ -2504,9 +2504,9 @@ let Constraints = "$src1 = $dst" in {
 }
 
 // Thread synchronization
-def MONITOR : I<0xC8, RawFrm, (outs), (ins), "monitor",
+def MONITOR : I<0x01, MRM1r, (outs), (ins), "monitor",
                 [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
-def MWAIT   : I<0xC9, RawFrm, (outs), (ins), "mwait",
+def MWAIT   : I<0x01, MRM1r, (outs), (ins), "mwait",
                 [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
 
 // vector_shuffle v1, <undef> <1, 1, 3, 3>
