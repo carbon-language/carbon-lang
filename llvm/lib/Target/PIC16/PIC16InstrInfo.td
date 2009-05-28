@@ -452,12 +452,13 @@ let isCall = 1,
             [(set GPR:$dest, (PIC16callw (PIC16Connect GPR:$func, PCLATHR:$pc)))]>;
 }
 
-let Uses = [STATUS] in
+let Uses = [STATUS], isBranch = 1, isTerminator = 1, hasDelaySlot = 0 in
 def pic16brcond: ControlFormat<0x0, (outs), (ins brtarget:$dst, CCOp:$cc),
                           "b$cc $dst",
                           [(PIC16Brcond bb:$dst, imm:$cc)]>;
 
 // Unconditional branch.
+let isBranch = 1, isTerminator = 1, hasDelaySlot = 0 in
 def br_uncond: ControlFormat<0x0, (outs), (ins brtarget:$dst),
                           "goto $dst",
                           [(br bb:$dst)]>;
