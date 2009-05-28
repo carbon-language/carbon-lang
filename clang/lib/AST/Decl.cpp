@@ -528,19 +528,6 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
-bool TagDecl::isDependentType() const {
-  if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this))
-    if (Record->getDescribedClassTemplate())
-      return true;
-    
-  if (const TagDecl *TD = dyn_cast_or_null<TagDecl>(getDeclContext()))
-    return TD->isDependentType();
-
-  // FIXME: Tag types declared function templates are dependent types.
-  // FIXME: Look through block scopes.
-  return false;
-}
-
 void TagDecl::startDefinition() {
   TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());
   TagT->decl.setPointer(this);

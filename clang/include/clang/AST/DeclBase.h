@@ -441,6 +441,10 @@ public:
     return DeclKind == Decl::Namespace;
   }
 
+  /// \brief Determines whether this context is dependent on a
+  /// template parameter.
+  bool isDependentContext() const;
+
   /// isTransparentContext - Determines whether this context is a
   /// "transparent" context, meaning that the members declared in this
   /// context are semantically declared in the nearest enclosing

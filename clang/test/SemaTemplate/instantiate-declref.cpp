@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 namespace N {
   struct Outer {
     struct Inner {

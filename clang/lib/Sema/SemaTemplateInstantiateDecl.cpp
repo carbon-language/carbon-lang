@@ -97,6 +97,9 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
     Typedef->setInvalidDecl();
 
   Owner->addDecl(SemaRef.Context, Typedef);
+  if (Owner->isFunctionOrMethod())
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Typedef);
+    
   return Typedef;
 }
 
@@ -211,6 +214,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
   Owner->addDecl(SemaRef.Context, Enum);
+  if (Owner->isFunctionOrMethod())
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Enum);
   Enum->startDefinition();
 
   llvm::SmallVector<Sema::DeclPtrTy, 16> Enumerators;
@@ -276,6 +281,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
     Record->setInstantiationOfMemberClass(D);
 
   Owner->addDecl(SemaRef.Context, Record);
+  if (Owner->isFunctionOrMethod())
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Record);
   return Record;
 }
 

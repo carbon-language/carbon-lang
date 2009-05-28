@@ -396,6 +396,21 @@ void DeclContext::DestroyDecls(ASTContext &C) {
     (*D++)->Destroy(C);
 }
 
+bool DeclContext::isDependentContext() const {
+  if (isFileContext())
+    return false;
+
+  if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this))
+    if (Record->getDescribedClassTemplate())
+      return true;
+
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this))
+    if (Function->getDescribedFunctionTemplate())
+      return true;
+  
+  return getParent() && getParent()->isDependentContext();
+}
+
 bool DeclContext::isTransparentContext() const {
   if (DeclKind == Decl::Enum)
     return true; // FIXME: Check for C++0x scoped enums

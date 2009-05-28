@@ -1081,7 +1081,7 @@ public:
   /// \brief Whether this declaration declares a type that is
   /// dependent, i.e., a type that somehow depends on template
   /// parameters.
-  bool isDependentType() const;
+  bool isDependentType() const { return isDependentContext(); }
 
   /// @brief Starts the definition of this tag declaration.
   /// 
