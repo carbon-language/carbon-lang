@@ -178,9 +178,8 @@ void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
 }
 
 void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
-  assert(CGF.getContext().typesAreCompatible(
-                          E->getSubExpr()->getType().getUnqualifiedType(),
-                          E->getType().getUnqualifiedType()) &&
+  assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
+                                                 E->getType()) &&
          "Implicit cast types must be compatible");
   Visit(E->getSubExpr());
 }
@@ -226,9 +225,8 @@ void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // For an assignment to work, the value on the right has
   // to be compatible with the value on the left.
-  assert(CGF.getContext().typesAreCompatible(
-             E->getLHS()->getType().getUnqualifiedType(),
-             E->getRHS()->getType().getUnqualifiedType())
+  assert(CGF.getContext().hasSameUnqualifiedType(E->getLHS()->getType(),
+                                                 E->getRHS()->getType())
          && "Invalid assignment");
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
@@ -378,8 +376,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     if (E->getNumInits() > 0) {
       QualType T1 = E->getType();
       QualType T2 = E->getInit(0)->getType();
-      if (CGF.getContext().getCanonicalType(T1).getUnqualifiedType() == 
-          CGF.getContext().getCanonicalType(T2).getUnqualifiedType()) {
+      if (CGF.getContext().hasSameUnqualifiedType(T1, T2)) {
         EmitAggLoadOfLValue(E->getInit(0));
         return;
       }
