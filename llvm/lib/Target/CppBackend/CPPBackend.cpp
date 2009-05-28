@@ -465,15 +465,20 @@ namespace {
         
         HANDLE_ATTR(SExt);
         HANDLE_ATTR(ZExt);
-        HANDLE_ATTR(StructRet);
-        HANDLE_ATTR(InReg);
         HANDLE_ATTR(NoReturn);
+        HANDLE_ATTR(InReg);
+        HANDLE_ATTR(StructRet);
         HANDLE_ATTR(NoUnwind);
-        HANDLE_ATTR(ByVal);
         HANDLE_ATTR(NoAlias);
+        HANDLE_ATTR(ByVal);
         HANDLE_ATTR(Nest);
         HANDLE_ATTR(ReadNone);
         HANDLE_ATTR(ReadOnly);
+        HANDLE_ATTR(NoInline);
+        HANDLE_ATTR(AlwaysInline);
+        HANDLE_ATTR(OptimizeForSize);
+        HANDLE_ATTR(StackProtect);
+        HANDLE_ATTR(StackProtectReq);
         HANDLE_ATTR(NoCapture);
 #undef HANDLE_ATTR
         assert(attrs == 0 && "Unhandled attribute!");
