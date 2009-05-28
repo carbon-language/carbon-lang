@@ -4,6 +4,7 @@
 
 template<typename T>
 class dynarray {
+public:
   dynarray() { Start = Last = End = 0; }
 
   dynarray(const dynarray &other) {
