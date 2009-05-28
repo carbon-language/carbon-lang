@@ -1908,7 +1908,7 @@ defm PMINUB : PDI_binop_rm_int<0xDA, "pminub", int_x86_sse2_pminu_b, 1>;
 defm PMINSW : PDI_binop_rm_int<0xEA, "pminsw", int_x86_sse2_pmins_w, 1>;
 defm PMAXUB : PDI_binop_rm_int<0xDE, "pmaxub", int_x86_sse2_pmaxu_b, 1>;
 defm PMAXSW : PDI_binop_rm_int<0xEE, "pmaxsw", int_x86_sse2_pmaxs_w, 1>;
-defm PSADBW : PDI_binop_rm_int<0xE0, "psadbw", int_x86_sse2_psad_bw, 1>;
+defm PSADBW : PDI_binop_rm_int<0xF6, "psadbw", int_x86_sse2_psad_bw, 1>;
 
 
 defm PSLLW : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw",

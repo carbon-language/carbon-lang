@@ -258,7 +258,7 @@ defm MMX_PMINSW  : MMXI_binop_rm_int<0xEA, "pminsw", int_x86_mmx_pmins_w, 1>;
 defm MMX_PMAXUB  : MMXI_binop_rm_int<0xDE, "pmaxub", int_x86_mmx_pmaxu_b, 1>;
 defm MMX_PMAXSW  : MMXI_binop_rm_int<0xEE, "pmaxsw", int_x86_mmx_pmaxs_w, 1>;
 
-defm MMX_PSADBW  : MMXI_binop_rm_int<0xE0, "psadbw", int_x86_mmx_psad_bw, 1>;
+defm MMX_PSADBW  : MMXI_binop_rm_int<0xF6, "psadbw", int_x86_mmx_psad_bw, 1>;
 
 // Logical Instructions
 defm MMX_PAND : MMXI_binop_rm_v1i64<0xDB, "pand", and, 1>;
