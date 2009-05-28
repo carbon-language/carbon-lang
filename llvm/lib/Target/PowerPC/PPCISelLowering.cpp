@@ -2789,12 +2789,12 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   // Not FP? Not a fsel.
   if (!Op.getOperand(0).getValueType().isFloatingPoint() ||
       !Op.getOperand(2).getValueType().isFloatingPoint())
-    return SDValue();
+    return Op;
 
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
 
   // Cannot handle SETEQ/SETNE.
-  if (CC == ISD::SETEQ || CC == ISD::SETNE) return SDValue();
+  if (CC == ISD::SETEQ || CC == ISD::SETNE) return Op;
 
   MVT ResVT = Op.getValueType();
   MVT CmpVT = Op.getOperand(0).getValueType();
@@ -2854,7 +2854,7 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
       Cmp = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Cmp);
       return DAG.getNode(PPCISD::FSEL, dl, ResVT, Cmp, TV, FV);
   }
-  return SDValue();
+  return Op;
 }
 
 // FIXME: Split this code up when LegalizeDAGTypes lands.
