@@ -1425,10 +1425,8 @@ SDValue PIC16TargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) {
       return DAG.getNode(Op.getOpcode(), dl, MVT::i8, Op.getOperand(MemOp ^ 1),
                          NewVal);
   }
-  else if (Op.getOpcode() == ISD::ADD)
-    return Op;
   else
-    return SDValue();
+    return Op;
 }
 
 SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
@@ -1439,7 +1437,7 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
   // Nothing to do if the first operand is already a direct load and it has
   // only one use.
   if (isDirectLoad(Op.getOperand(0)) && Op.getOperand(0).hasOneUse())
-    return SDValue();
+    return Op;
 
   // Put first operand on stack.
   SDValue NewVal = ConvertToMemOperand (Op.getOperand(0), DAG, dl);
