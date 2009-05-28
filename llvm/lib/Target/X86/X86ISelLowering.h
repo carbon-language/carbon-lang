@@ -466,6 +466,11 @@ namespace llvm {
     virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const;
     virtual bool isZExtFree(MVT VT1, MVT VT2) const;
 
+    /// isNarrowingProfitable - Return true if it's profitable to narrow
+    /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
+    /// from i32 to i8 but not from i32 to i16.
+    virtual bool isNarrowingProfitable(MVT VT1, MVT VT2) const;
+
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask

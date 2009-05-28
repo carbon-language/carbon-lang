@@ -1420,6 +1420,13 @@ public:
     return false;
   }
 
+  /// isNarrowingProfitable - Return true if it's profitable to narrow
+  /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
+  /// from i32 to i8 but not from i32 to i16.
+  virtual bool isNarrowingProfitable(MVT VT1, MVT VT2) const {
+    return true;
+  }
+
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //

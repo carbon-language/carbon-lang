@@ -41,6 +41,7 @@ using namespace llvm;
 STATISTIC(NodesCombined   , "Number of dag nodes combined");
 STATISTIC(PreIndexedNodes , "Number of pre-indexed nodes created");
 STATISTIC(PostIndexedNodes, "Number of post-indexed nodes created");
+STATISTIC(OpsNarrowed     , "Number of load/op/store narrowed");
 
 namespace {
   static cl::opt<bool>
@@ -222,6 +223,7 @@ namespace {
     SDValue BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDValue LHS, SDValue RHS, DebugLoc DL);
     SDValue ReduceLoadWidth(SDNode *N);
+    SDValue ReduceLoadOpStoreWidth(SDNode *N);
 
     SDValue GetDemandedBits(SDValue V, const APInt &Mask);
 
@@ -4900,6 +4902,96 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   return SDValue();
 }
 
+
+/// ReduceLoadOpStoreWidth - Look for sequence of load / op / store where op is
+/// one of 'or', 'xor', and 'and' of immediates. If 'op' is only touching some
+/// of the loaded bits, try narrowing the load and store if it would end up
+/// being a win for performance or code size.
+SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
+  StoreSDNode *ST  = cast<StoreSDNode>(N);
+  SDValue Chain = ST->getChain();
+  SDValue Value = ST->getValue();
+  SDValue Ptr   = ST->getBasePtr();
+  MVT VT = Value.getValueType();
+
+  if (ST->isTruncatingStore() || VT.isVector() || !Value.hasOneUse())
+    return SDValue(0, 0);
+
+  unsigned Opc = Value.getOpcode();
+  if ((Opc != ISD::OR && Opc != ISD::XOR && Opc != ISD::AND) ||
+      Value.getOperand(1).getOpcode() != ISD::Constant)
+    return SDValue(0, 0);
+
+  SDValue N0 = Value.getOperand(0);
+  if (ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse()) {
+    LoadSDNode *LD = cast<LoadSDNode>(N0);
+    if (LD->getBasePtr() != Ptr/* || Chain != N0.getValue(1)*/)
+      return SDValue(0, 0);
+
+    // Find the type to narrow it the load / op / store to.
+    SDValue N1 = Value.getOperand(1);
+    unsigned BitWidth = N1.getValueSizeInBits();
+    APInt Imm = cast<ConstantSDNode>(N1)->getAPIntValue();
+    if (Opc == ISD::AND)
+      Imm ^= APInt::getAllOnesValue(BitWidth);
+    unsigned ShAmt = Imm.countTrailingZeros();
+    unsigned MSB = BitWidth - Imm.countLeadingZeros() - 1;
+    unsigned NewBW = NextPowerOf2(MSB - ShAmt);
+    MVT NewVT = MVT::getIntegerVT(NewBW);
+    while (NewBW < BitWidth &&
+           !(TLI.isTypeLegal(NewVT) &&
+             TLI.isOperationLegalOrCustom(Opc, NewVT) &&
+             TLI.isNarrowingProfitable(VT, NewVT))) {
+      NewBW = NextPowerOf2(NewBW);
+      NewVT = MVT::getIntegerVT(NewBW);
+    }
+    if (NewBW == BitWidth)
+      return SDValue(0, 0);
+
+    // If the lsb changed does not start at the type bitwidth boundary,
+    // start at the previous one.
+    if (ShAmt % NewBW)
+      ShAmt = (((ShAmt + NewBW - 1) / NewBW) * NewBW) - NewBW;
+    APInt Mask = APInt::getBitsSet(BitWidth, ShAmt, ShAmt + NewBW);
+    if ((Imm & Mask) == Imm) {
+      APInt NewImm = (Imm & Mask).lshr(ShAmt).trunc(NewBW);
+      if (Opc == ISD::AND)
+        NewImm ^= APInt::getAllOnesValue(NewBW);
+      uint64_t PtrOff = ShAmt / 8;
+      // For big endian targets, we need to adjust the offset to the pointer to
+      // load the correct bytes.
+      if (TLI.isBigEndian())
+        PtrOff = (BitWidth - NewBW) / 8 - PtrOff;
+
+      unsigned NewAlign = MinAlign(LD->getAlignment(), PtrOff);
+      SDValue NewPtr = DAG.getNode(ISD::ADD, LD->getDebugLoc(),
+                                   Ptr.getValueType(), Ptr,
+                                   DAG.getConstant(PtrOff, Ptr.getValueType()));
+      SDValue NewLD = DAG.getLoad(NewVT, N0.getDebugLoc(),
+                                  LD->getChain(), NewPtr,
+                                  LD->getSrcValue(), LD->getSrcValueOffset(),
+                                  LD->isVolatile(), NewAlign);
+      SDValue NewVal = DAG.getNode(Opc, Value.getDebugLoc(), NewVT, NewLD,
+                                   DAG.getConstant(NewImm, NewVT));
+      SDValue NewST = DAG.getStore(Chain, N->getDebugLoc(),
+                                   NewVal, NewPtr,
+                                   ST->getSrcValue(), ST->getSrcValueOffset(),
+                                   ST->isVolatile(), NewAlign);
+
+      AddToWorkList(NewPtr.getNode());
+      AddToWorkList(NewLD.getNode());
+      AddToWorkList(NewVal.getNode());
+      WorkListRemover DeadNodes(*this);
+      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), NewLD.getValue(1),
+                                    &DeadNodes);
+      ++OpsNarrowed;
+      return NewST;
+    }
+  }
+
+  return SDValue(0, 0);
+}
+
 SDValue DAGCombiner::visitSTORE(SDNode *N) {
   StoreSDNode *ST  = cast<StoreSDNode>(N);
   SDValue Chain = ST->getChain();
@@ -5086,7 +5178,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
                              ST->isVolatile(), ST->getAlignment());
   }
 
-  return SDValue();
+  return ReduceLoadOpStoreWidth(N);
 }
 
 SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {

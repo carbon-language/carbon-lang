@@ -6877,6 +6877,11 @@ bool X86TargetLowering::isZExtFree(MVT VT1, MVT VT2) const {
   return VT1 == MVT::i32 && VT2 == MVT::i64 && Subtarget->is64Bit();
 }
 
+bool X86TargetLowering::isNarrowingProfitable(MVT VT1, MVT VT2) const {
+  // i16 instructions are longer (0x66 prefix) and potentially slower.
+  return !(VT1 == MVT::i32 && VT2 == MVT::i16);
+}
+
 /// isShuffleMaskLegal - Targets can use this to indicate that they only
 /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
