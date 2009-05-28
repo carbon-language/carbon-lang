@@ -445,20 +445,38 @@ sub SendData{
     $file = $_[1];
     $variables=$_[2];
 
-    $port=80;
-    $socketaddr= sockaddr_in $port, inet_aton $host or die "Bad hostname\n";
-    socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or
-      die "Bad socket\n";
-    connect SOCK, $socketaddr or die "Bad connection\n";
-    select((select(SOCK), $| = 1)[0]);
+    # Write out the "...-sentdata.txt" file.
 
-    #creating content here
+    my $sentdata="";
+    foreach $x (keys (%$variables)){
+        $value = $variables->{$x};
+        $sentdata.= "$x  => $value\n";
+    }
+    WriteFile "$Prefix-sentdata.txt", $sentdata;
+
+    if (!($SUBMITAUX eq "")) {
+      system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
+    }
+
+    # Create the content to send to the server.
+
     my $content;
     foreach $key (keys (%$variables)){
         $value = $variables->{$key};
         $value =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
         $content .= "$key=$value&";
     }
+
+    # Send the data to the server.
+    # 
+    # FIXME: This code should be more robust?
+    
+    $port=80;
+    $socketaddr= sockaddr_in $port, inet_aton $host or die "Bad hostname\n";
+    socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or
+      die "Bad socket\n";
+    connect SOCK, $socketaddr or die "Bad connection\n";
+    select((select(SOCK), $| = 1)[0]);
 
     $length = length($content);
 
@@ -474,17 +492,6 @@ sub SendData{
         $result  .= $_;
     }
     close(SOCK);
-
-    my $sentdata="";
-    foreach $x (keys (%$variables)){
-        $value = $variables->{$x};
-        $sentdata.= "$x  => $value\n";
-    }
-    WriteFile "$Prefix-sentdata.txt", $sentdata;
-
-    if (!($SUBMITAUX eq "")) {
-      system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
-    }
 
     return $result;
 }
