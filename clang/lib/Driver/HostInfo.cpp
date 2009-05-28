@@ -74,7 +74,8 @@ DarwinHostInfo::DarwinHostInfo(const Driver &D, const llvm::Triple& Triple)
   : HostInfo(D, Triple) {
   
   assert((getArchName() == "i386" || getArchName() == "x86_64" || 
-          getArchName() == "powerpc" || getArchName() == "powerpc64") &&
+          getArchName() == "powerpc" || getArchName() == "powerpc64" ||
+          getArchName() == "arm") &&
          "Unknown Darwin arch.");
 
   assert(memcmp(&getOSName()[0], "darwin", 6) == 0 &&
