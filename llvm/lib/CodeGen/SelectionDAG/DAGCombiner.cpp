@@ -4937,6 +4937,8 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     APInt Imm = cast<ConstantSDNode>(N1)->getAPIntValue();
     if (Opc == ISD::AND)
       Imm ^= APInt::getAllOnesValue(BitWidth);
+    if (Imm == 0 || Imm.isAllOnesValue())
+      return SDValue();
     unsigned ShAmt = Imm.countTrailingZeros();
     unsigned MSB = BitWidth - Imm.countLeadingZeros() - 1;
     unsigned NewBW = NextPowerOf2(MSB - ShAmt);
