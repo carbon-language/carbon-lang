@@ -69,6 +69,7 @@ public:
     RValue ER;
     ER.V1 = V;
     ER.Flavor = Scalar;
+    ER.Volatile = false;
     return ER;
   }
   static RValue getComplex(llvm::Value *V1, llvm::Value *V2) {
@@ -76,6 +77,7 @@ public:
     ER.V1 = V1;
     ER.V2 = V2;
     ER.Flavor = Complex;
+    ER.Volatile = false;
     return ER;
   }
   static RValue getComplex(const std::pair<llvm::Value *, llvm::Value *> &C) {
@@ -83,6 +85,7 @@ public:
     ER.V1 = C.first;
     ER.V2 = C.second;
     ER.Flavor = Complex;
+    ER.Volatile = false;
     return ER;
   }
   // FIXME: Aggregate rvalues need to retain information about whether they are
