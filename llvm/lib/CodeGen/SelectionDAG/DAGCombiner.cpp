@@ -4909,24 +4909,27 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
 /// being a win for performance or code size.
 SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
   StoreSDNode *ST  = cast<StoreSDNode>(N);
+  if (ST->isVolatile())
+    return SDValue();
+
   SDValue Chain = ST->getChain();
   SDValue Value = ST->getValue();
   SDValue Ptr   = ST->getBasePtr();
   MVT VT = Value.getValueType();
 
   if (ST->isTruncatingStore() || VT.isVector() || !Value.hasOneUse())
-    return SDValue(0, 0);
+    return SDValue();
 
   unsigned Opc = Value.getOpcode();
   if ((Opc != ISD::OR && Opc != ISD::XOR && Opc != ISD::AND) ||
       Value.getOperand(1).getOpcode() != ISD::Constant)
-    return SDValue(0, 0);
+    return SDValue();
 
   SDValue N0 = Value.getOperand(0);
   if (ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse()) {
     LoadSDNode *LD = cast<LoadSDNode>(N0);
-    if (LD->getBasePtr() != Ptr/* || Chain != N0.getValue(1)*/)
-      return SDValue(0, 0);
+    if (LD->getBasePtr() != Ptr)
+      return SDValue();
 
     // Find the type to narrow it the load / op / store to.
     SDValue N1 = Value.getOperand(1);
@@ -4939,14 +4942,13 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     unsigned NewBW = NextPowerOf2(MSB - ShAmt);
     MVT NewVT = MVT::getIntegerVT(NewBW);
     while (NewBW < BitWidth &&
-           !(TLI.isTypeLegal(NewVT) &&
-             TLI.isOperationLegalOrCustom(Opc, NewVT) &&
+           !(TLI.isOperationLegalOrCustom(Opc, NewVT) &&
              TLI.isNarrowingProfitable(VT, NewVT))) {
       NewBW = NextPowerOf2(NewBW);
       NewVT = MVT::getIntegerVT(NewBW);
     }
-    if (NewBW == BitWidth)
-      return SDValue(0, 0);
+    if (NewBW >= BitWidth)
+      return SDValue();
 
     // If the lsb changed does not start at the type bitwidth boundary,
     // start at the previous one.
@@ -4961,9 +4963,13 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
       // For big endian targets, we need to adjust the offset to the pointer to
       // load the correct bytes.
       if (TLI.isBigEndian())
-        PtrOff = (BitWidth - NewBW) / 8 - PtrOff;
+        PtrOff = (BitWidth + 7 - NewBW) / 8 - PtrOff;
 
       unsigned NewAlign = MinAlign(LD->getAlignment(), PtrOff);
+      if (NewAlign <
+          TLI.getTargetData()->getABITypeAlignment(NewVT.getTypeForMVT()))
+        return SDValue();
+
       SDValue NewPtr = DAG.getNode(ISD::ADD, LD->getDebugLoc(),
                                    Ptr.getValueType(), Ptr,
                                    DAG.getConstant(PtrOff, Ptr.getValueType()));
@@ -4976,7 +4982,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
       SDValue NewST = DAG.getStore(Chain, N->getDebugLoc(),
                                    NewVal, NewPtr,
                                    ST->getSrcValue(), ST->getSrcValueOffset(),
-                                   ST->isVolatile(), NewAlign);
+                                   false, NewAlign);
 
       AddToWorkList(NewPtr.getNode());
       AddToWorkList(NewLD.getNode());
@@ -4989,7 +4995,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     }
   }
 
-  return SDValue(0, 0);
+  return SDValue();
 }
 
 SDValue DAGCombiner::visitSTORE(SDNode *N) {
