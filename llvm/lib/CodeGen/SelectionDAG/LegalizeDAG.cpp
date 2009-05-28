@@ -761,12 +761,20 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   }
   case ISD::LOAD:
   case ISD::STORE:
-  case ISD::FORMAL_ARGUMENTS:
-  case ISD::CALL:
+    // FIXME: Model these properly.  LOAD and STORE are complicated, and
+    // STORE expects the unlegalized operand in some cases.
+    SimpleFinishLegalizing = false;
+    break;
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END:
-    // These instructions have properties that aren't modeled in the
-    // generic codepath
+    // FIXME: This shouldn't be necessary.  These nodes have special properties
+    // dealing with the recursive nature of legalization.  Removing this
+    // special case should be done as part of making LegalizeDAG non-recursive.
+    SimpleFinishLegalizing = false;
+    break;
+  case ISD::CALL:
+    // FIXME: Legalization for calls requires custom-lowering the call before
+    // legalizing the operands!  (I haven't looked into precisely why.)
     SimpleFinishLegalizing = false;
     break;
   case ISD::EXTRACT_ELEMENT:
@@ -790,6 +798,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::TRAMPOLINE:
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
+  case ISD::FORMAL_ARGUMENTS:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be custom-lowered.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -892,7 +901,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
-  case ISD::FORMAL_ARGUMENTS:
   case ISD::CALL:
     // The only option for this is to custom lower it.
     Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
@@ -1534,74 +1542,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     break;
   }
-  case ISD::SETCC:
-    Tmp1 = Node->getOperand(0);
-    Tmp2 = Node->getOperand(1);
-    Tmp3 = Node->getOperand(2);
-    LegalizeSetCC(Node->getValueType(0), Tmp1, Tmp2, Tmp3, dl);
-
-    // If we had to Expand the SetCC operands into a SELECT node, then it may
-    // not always be possible to return a true LHS & RHS.  In this case, just
-    // return the value we legalized, returned in the LHS
-    if (Tmp2.getNode() == 0) {
-      Result = Tmp1;
-      break;
-    }
-
-    switch (TLI.getOperationAction(ISD::SETCC, Tmp1.getValueType())) {
-    default: assert(0 && "Cannot handle this action for SETCC yet!");
-    case TargetLowering::Custom:
-      isCustom = true;
-      // FALLTHROUGH.
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-      if (isCustom) {
-        Tmp4 = TLI.LowerOperation(Result, DAG);
-        if (Tmp4.getNode()) Result = Tmp4;
-      }
-      break;
-    case TargetLowering::Promote: {
-      // First step, figure out the appropriate operation to use.
-      // Allow SETCC to not be supported for all legal data types
-      // Mostly this targets FP
-      MVT NewInTy = Node->getOperand(0).getValueType();
-      MVT OldVT = NewInTy; OldVT = OldVT;
-
-      // Scan for the appropriate larger type to use.
-      while (1) {
-        NewInTy = (MVT::SimpleValueType)(NewInTy.getSimpleVT()+1);
-
-        assert(NewInTy.isInteger() == OldVT.isInteger() &&
-               "Fell off of the edge of the integer world");
-        assert(NewInTy.isFloatingPoint() == OldVT.isFloatingPoint() &&
-               "Fell off of the edge of the floating point world");
-
-        // If the target supports SETCC of this type, use it.
-        if (TLI.isOperationLegalOrCustom(ISD::SETCC, NewInTy))
-          break;
-      }
-      if (NewInTy.isInteger())
-        assert(0 && "Cannot promote Legal Integer SETCC yet");
-      else {
-        Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NewInTy, Tmp1);
-        Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NewInTy, Tmp2);
-      }
-      Tmp1 = LegalizeOp(Tmp1);
-      Tmp2 = LegalizeOp(Tmp2);
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-      Result = LegalizeOp(Result);
-      break;
-    }
-    case TargetLowering::Expand:
-      // Expand a setcc node into a select_cc of the same condition, lhs, and
-      // rhs that selects between const 1 (true) and const 0 (false).
-      MVT VT = Node->getValueType(0);
-      Result = DAG.getNode(ISD::SELECT_CC, dl, VT, Tmp1, Tmp2,
-                           DAG.getConstant(1, VT), DAG.getConstant(0, VT),
-                           Tmp3);
-      break;
-    }
-    break;
   }
 
   assert(Result.getValueType() == Op.getValueType() &&
@@ -3017,6 +2957,26 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     }
     Results.push_back(Tmp1);
     break;
+  case ISD::SETCC: {
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = Node->getOperand(1);
+    Tmp3 = Node->getOperand(2);
+    LegalizeSetCC(Node->getValueType(0), Tmp1, Tmp2, Tmp3, dl);
+
+    // If we expanded the SETCC into an AND/OR, return the new node
+    if (Tmp2.getNode() == 0) {
+      Results.push_back(Tmp1);
+      break;
+    }
+
+    // Otherwise, SETCC for the given comparison type must be completely
+    // illegal; expand it into a SELECT_CC.
+    MVT VT = Node->getValueType(0);
+    Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, VT, Tmp1, Tmp2,
+                       DAG.getConstant(1, VT), DAG.getConstant(0, VT), Tmp3);
+    Results.push_back(Tmp1);
+    break;
+  }
   case ISD::GLOBAL_OFFSET_TABLE:
   case ISD::GlobalAddress:
   case ISD::GlobalTLSAddress:
@@ -3134,6 +3094,36 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     Tmp1 = ShuffleWithNarrowerEltType(NVT, OVT, dl, Tmp1, Tmp2, Mask);
     Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Tmp1);
     Results.push_back(Tmp1);
+    break;
+  }
+  case ISD::SETCC: {
+    // First step, figure out the appropriate operation to use.
+    // Allow SETCC to not be supported for all legal data types
+    // Mostly this targets FP
+    MVT NewInTy = Node->getOperand(0).getValueType();
+    MVT OldVT = NewInTy; OldVT = OldVT;
+
+    // Scan for the appropriate larger type to use.
+    while (1) {
+      NewInTy = (MVT::SimpleValueType)(NewInTy.getSimpleVT()+1);
+
+      assert(NewInTy.isInteger() == OldVT.isInteger() &&
+              "Fell off of the edge of the integer world");
+      assert(NewInTy.isFloatingPoint() == OldVT.isFloatingPoint() &&
+              "Fell off of the edge of the floating point world");
+
+      // If the target supports SETCC of this type, use it.
+      if (TLI.isOperationLegalOrCustom(ISD::SETCC, NewInTy))
+        break;
+    }
+    if (NewInTy.isInteger())
+      assert(0 && "Cannot promote Legal Integer SETCC yet");
+    else {
+      Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NewInTy, Tmp1);
+      Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NewInTy, Tmp2);
+    }
+    Results.push_back(DAG.getNode(ISD::SETCC, dl, Node->getValueType(0),
+                                  Tmp1, Tmp2, Node->getOperand(2)));
     break;
   }
   }
