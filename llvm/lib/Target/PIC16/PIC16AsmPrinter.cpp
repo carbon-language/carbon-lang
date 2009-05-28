@@ -48,7 +48,12 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   CurrentFnName = Mang->getValueName(F);
 
   // Emit the function variables.
-  emitFunctionData(MF);
+  EmitFunctionFrame(MF);
+
+  // Emit function begin debug directives
+  DbgInfo.EmitFunctBeginDI(F);
+
+  EmitAutos(CurrentFnName);
   const char *codeSection = PAN::getCodeSectionName(CurrentFnName).c_str();
  
   const Section *fCodeSection = TAI->getNamedSection(codeSection,
@@ -64,6 +69,10 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit function start label.
   O << CurrentFnName << ":\n";
 
+  // For emitting line directives, we need to keep track of the current
+  // source line. When it changes then only emit the line directive.
+  unsigned CurLine = 0;
+  O << "\n"; 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
@@ -73,9 +82,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << '\n';
     }
     
-    // For emitting line directives, we need to keep track of the current
-    // source line. When it changes then only emit the line directive.
-    unsigned CurLine = 0;
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Emit the line directive if source line changed.
@@ -92,6 +98,9 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
+  
+  // Emit function end debug directives.
+  DbgInfo.EmitFunctEndDI(F, CurLine);
   return false;  // we didn't modify anything.
 }
 
@@ -172,10 +181,12 @@ void PIC16AsmPrinter::printLibcallDecls(void) {
 
 bool PIC16AsmPrinter::doInitialization (Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
+  DbgInfo.EmitFileDirective(M);
+
   // FIXME:: This is temporary solution to generate the include file.
   // The processor should be passed to llc as in input and the header file
   // should be generated accordingly.
-  O << "\t#include P16F1937.INC\n";
+  O << "\n\t#include P16F1937.INC\n";
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   assert(MMI);
   DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
@@ -194,7 +205,7 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
   EmitIData(M);
   EmitUData(M);
   EmitRomData(M);
-  EmitAutos(M);
+  DbgInfo.PopulateFunctsDI(M); 
   return Result;
 }
 
@@ -273,14 +284,14 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   printLibcallDecls();
-  EmitVarDebugInfo(M);
-  O << "\t" << ".EOF\n";
-  O << "\t" << "END\n";
+  DbgInfo.EmitVarDebugInfo(M);
+  O << "\n\t" << ".EOF";
+  O << "\n\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
   return Result;
 }
 
-void PIC16AsmPrinter::emitFunctionData(MachineFunction &MF) {
+void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   std::string FuncName = Mang->getValueName(F);
   const TargetData *TD = TM.getTargetData();
@@ -364,70 +375,30 @@ void PIC16AsmPrinter::EmitUData (Module &M) {
   }
 }
 
-void PIC16AsmPrinter::EmitAutos (Module &M)
+void PIC16AsmPrinter::EmitAutos (std::string FunctName)
 {
   // Section names for all globals are already set.
 
   const TargetData *TD = TM.getTargetData();
 
-  // Now print all Autos sections.
+  // Now print Autos section for this function.
+  std::string SectionName = PAN::getAutosSectionName(FunctName);
   std::vector <PIC16Section *>AutosSections = PTAI->AutosSections;
   for (unsigned i = 0; i < AutosSections.size(); i++) {
     O << "\n";
-    SwitchToSection(AutosSections[i]->S_);
-    std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
-    for (unsigned j = 0; j < Items.size(); j++) {
-      std::string VarName = Mang->getValueName(Items[j]);
-      Constant *C = Items[j]->getInitializer();
-      const Type *Ty = C->getType();
-      unsigned Size = TD->getTypeAllocSize(Ty);
-      // Emit memory reserve directive.
-      O << VarName << "  RES  " << Size << "\n";
-    }
-  }
-}
-
-void PIC16AsmPrinter::EmitVarDebugInfo(Module &M) {
-  GlobalVariable *Root = M.getGlobalVariable("llvm.dbg.global_variables");
-  if (!Root)
-    return;
-
-  O << TAI->getCommentString() << " Debug Information:";
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI) {
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI) {
-      DIGlobalVariable DIGV(cast<GlobalVariable>(*UUI));
-      DIType Ty = DIGV.getType();
-      unsigned short TypeNo = 0;
-      bool HasAux = false;
-      int Aux[20] = { 0 };
-      std::string TypeName = "";
-      std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getName();
-      DbgInfo.PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TypeName);
-      // Emit debug info only if type information is availaible.
-      if (TypeNo != PIC16Dbg::T_NULL) {
-        O << "\n\t.type " << VarName << ", " << TypeNo;
-        short ClassNo = DbgInfo.getClass(DIGV);
-        O << "\n\t.class " << VarName << ", " << ClassNo;
-        if (HasAux) {
-          if (TypeName != "") {
-           // Emit debug info for structure and union objects after
-           // .dim directive supports structure/union tag name in aux entry.
-           /* O << "\n\t.dim " << VarName << ", 1," << TypeName;
-            for (int i = 0; i<20; i++)
-              O << "," << Aux[i];*/
-          }
-          else {
-            O << "\n\t.dim " << VarName << ", 1" ;
-            for (int i = 0; i<20; i++)
-              O << "," << Aux[i];
-          }
-        }
+    if (AutosSections[i]->S_->getName() == SectionName) { 
+      SwitchToSection(AutosSections[i]->S_);
+      std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
+      for (unsigned j = 0; j < Items.size(); j++) {
+        std::string VarName = Mang->getValueName(Items[j]);
+        Constant *C = Items[j]->getInitializer();
+        const Type *Ty = C->getType();
+        unsigned Size = TD->getTypeAllocSize(Ty);
+        // Emit memory reserve directive.
+        O << VarName << "  RES  " << Size << "\n";
       }
+      break;
     }
   }
-  O << "\n";
 }
 

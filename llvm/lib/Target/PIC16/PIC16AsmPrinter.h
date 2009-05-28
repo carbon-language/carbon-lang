@@ -32,7 +32,7 @@ namespace llvm {
     explicit PIC16AsmPrinter(raw_ostream &O, PIC16TargetMachine &TM,
                              const TargetAsmInfo *T, CodeGenOpt::Level OL,
                              bool V)
-      : AsmPrinter(O, TM, T, OL, V) {
+      : AsmPrinter(O, TM, T, OL, V), DbgInfo(O,T) {
       PTLI = TM.getTargetLowering();
       PTAI = static_cast<const PIC16TargetAsmInfo *> (T);
     }
@@ -51,12 +51,10 @@ namespace llvm {
     void EmitDefinedVars (Module &M);
     void EmitIData (Module &M);
     void EmitUData (Module &M);
-    void EmitAutos (Module &M);
+    void EmitAutos (std::string FunctName);
     void EmitRomData (Module &M);
-    void emitFunctionData(MachineFunction &MF);
+    void EmitFunctionFrame(MachineFunction &MF);
     void printLibcallDecls(void);
-    void EmitVarDebugInfo (Module &M);
-
     protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);

@@ -14,7 +14,10 @@
 #ifndef PIC16DBG_H
 #define PIC16DBG_H
 
-#include "llvm/Analysis/DebugInfo.h" 
+#include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Module.h"
+#include "llvm/Target/TargetAsmInfo.h" 
+#include <map>
 
 namespace llvm {
   namespace PIC16Dbg {
@@ -80,14 +83,32 @@ namespace llvm {
       C_SECTION,
       C_EFCN = 255
     };
+    enum SymbolSize {
+      AuxSize =20
+    };
   }
 
+  class raw_ostream;
+
   class PIC16DbgInfo {
+    std::map <std::string, DISubprogram *> FunctNameMap;
+    raw_ostream &O;
+    const TargetAsmInfo *TAI;
   public:
+     PIC16DbgInfo(raw_ostream &o, const TargetAsmInfo *T) : O(o), TAI(T) {}
+    ~PIC16DbgInfo();
     void PopulateDebugInfo(DIType Ty, unsigned short &TypeNo, bool &HasAux,
                            int Aux[], std::string &TypeName);
     unsigned GetTypeDebugNumber(std::string &type);
     short getClass(DIGlobalVariable DIGV);
+    void PopulateFunctsDI(Module &M);
+    DISubprogram *getFunctDI(std::string FunctName);
+    void EmitFunctBeginDI(const Function *F);
+    void EmitFunctEndDI(const Function *F, unsigned Line);
+    void EmitAuxEntry(const std::string VarName, int Aux[], int num);
+    inline void EmitSymbol(std::string Name, int Class);
+    void EmitVarDebugInfo(Module &M);
+    void EmitFileDirective(Module &M);
   };
 } // end namespace llvm;
 #endif

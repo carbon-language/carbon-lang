@@ -47,6 +47,9 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   ROSection = new PIC16Section(getReadOnlySection());
   ExternalVarDecls = new PIC16Section(getNamedSection("ExternalVarDecls"));
   ExternalVarDefs = new PIC16Section(getNamedSection("ExternalVarDefs"));
+  // Set it to false because we weed to generate c file name and not bc file
+  // name.
+  HasSingleParameterDotFile = false;
 }
 
 const char *PIC16TargetAsmInfo::getRomDirective(unsigned size) const
