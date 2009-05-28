@@ -27,7 +27,8 @@ use Socket;
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -nodejagnu       Do not run feature or regression tests
-#  -parallel        Run two parallel jobs with GNU Make.
+#  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
+#  -parallel-jobs   The number of parallel Make jobs to use (default is two).
 #  -release         Build an LLVM Release version
 #  -release-asserts Build an LLVM ReleaseAsserts version
 #  -enable-llcbeta  Enable testing of beta features in llc.
@@ -133,6 +134,7 @@ $SUBMITSERVER = "llvm.org";
 $SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.php";
 $SUBMITAUX="";
 $SUBMIT = 1;
+$PARALLELJOBS = "2";
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
@@ -145,7 +147,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-noremoveresults$/){ $NOREMOVERESULTS = 1; next; }
   if (/^-notest$/)         { $NOTEST = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
-  if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
+  if (/^-parallel-jobs$/)  { $PARALLELJOBS = "$ARGV[0]"; shift; next;}
+  if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j$PARALLELJOBS -l3.0"; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
   if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
