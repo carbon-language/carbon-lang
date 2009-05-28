@@ -1196,7 +1196,7 @@ CallOverdefined:
      
       // If we can constant fold this, mark the result of the call as a
       // constant.
-      if (Constant *C = ConstantFoldCall(F, &Operands[0], Operands.size())) {
+      if (Constant *C = ConstantFoldCall(F, Operands.data(), Operands.size())) {
         markConstant(I, C);
         return;
       }
