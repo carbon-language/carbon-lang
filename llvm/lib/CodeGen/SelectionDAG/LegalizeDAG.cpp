@@ -740,15 +740,31 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Action = TLI.getOperationAction(Node->getOpcode(), InnerType);
     break;
   }
+  case ISD::SELECT_CC:
+  case ISD::SETCC:
+  case ISD::BR_CC: {
+    unsigned CCOperand = Node->getOpcode() == ISD::SELECT_CC ? 4 :
+                         Node->getOpcode() == ISD::SETCC ? 2 : 1;
+    unsigned CompareOperand = Node->getOpcode() == ISD::BR_CC ? 2 : 0;
+    MVT OpVT = Node->getOperand(CompareOperand).getValueType();
+    ISD::CondCode CCCode =
+        cast<CondCodeSDNode>(Node->getOperand(CCOperand))->get();
+    Action = TLI.getCondCodeAction(CCCode, OpVT);
+    if (Action == TargetLowering::Legal) {
+      if (Node->getOpcode() == ISD::SELECT_CC)
+        Action = TLI.getOperationAction(Node->getOpcode(),
+                                        Node->getValueType(0));
+      else
+        Action = TLI.getOperationAction(Node->getOpcode(), OpVT);
+    }
+    break;
+  }
   case ISD::LOAD:
   case ISD::STORE:
-  case ISD::BR_CC:
   case ISD::FORMAL_ARGUMENTS:
   case ISD::CALL:
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END:
-  case ISD::SELECT_CC:
-  case ISD::SETCC:
     // These instructions have properties that aren't modeled in the
     // generic codepath
     SimpleFinishLegalizing = false;
@@ -2215,31 +2231,17 @@ SDValue SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDValue LegalOp,
     assert(NewInTy.isInteger() && "Ran out of possibilities!");
 
     // If the target supports SINT_TO_FP of this type, use it.
-    switch (TLI.getOperationAction(ISD::SINT_TO_FP, NewInTy)) {
-      default: break;
-      case TargetLowering::Legal:
-        if (!TLI.isTypeLegal(NewInTy))
-          break;  // Can't use this datatype.
-        // FALL THROUGH.
-      case TargetLowering::Custom:
-        OpToUse = ISD::SINT_TO_FP;
-        break;
+    if (TLI.isOperationLegalOrCustom(ISD::SINT_TO_FP, NewInTy)) {
+      OpToUse = ISD::SINT_TO_FP;
+      break;
     }
-    if (OpToUse) break;
     if (isSigned) continue;
 
     // If the target supports UINT_TO_FP of this type, use it.
-    switch (TLI.getOperationAction(ISD::UINT_TO_FP, NewInTy)) {
-      default: break;
-      case TargetLowering::Legal:
-        if (!TLI.isTypeLegal(NewInTy))
-          break;  // Can't use this datatype.
-        // FALL THROUGH.
-      case TargetLowering::Custom:
-        OpToUse = ISD::UINT_TO_FP;
-        break;
+    if (TLI.isOperationLegalOrCustom(ISD::UINT_TO_FP, NewInTy)) {
+      OpToUse = ISD::UINT_TO_FP;
+      break;
     }
-    if (OpToUse) break;
 
     // Otherwise, try a larger type.
   }
@@ -2270,31 +2272,15 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
     NewOutTy = (MVT::SimpleValueType)(NewOutTy.getSimpleVT()+1);
     assert(NewOutTy.isInteger() && "Ran out of possibilities!");
 
-    // If the target supports FP_TO_SINT returning this type, use it.
-    switch (TLI.getOperationAction(ISD::FP_TO_SINT, NewOutTy)) {
-    default: break;
-    case TargetLowering::Legal:
-      if (!TLI.isTypeLegal(NewOutTy))
-        break;  // Can't use this datatype.
-      // FALL THROUGH.
-    case TargetLowering::Custom:
+    if (TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NewOutTy)) {
       OpToUse = ISD::FP_TO_SINT;
       break;
     }
-    if (OpToUse) break;
 
-    // If the target supports FP_TO_UINT of this type, use it.
-    switch (TLI.getOperationAction(ISD::FP_TO_UINT, NewOutTy)) {
-    default: break;
-    case TargetLowering::Legal:
-      if (!TLI.isTypeLegal(NewOutTy))
-        break;  // Can't use this datatype.
-      // FALL THROUGH.
-    case TargetLowering::Custom:
+    if (TLI.isOperationLegalOrCustom(ISD::FP_TO_UINT, NewOutTy)) {
       OpToUse = ISD::FP_TO_UINT;
       break;
     }
-    if (OpToUse) break;
 
     // Otherwise, try a larger type.
   }
@@ -2302,16 +2288,6 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
 
   // Okay, we found the operation and type to use.
   SDValue Operation = DAG.getNode(OpToUse, dl, NewOutTy, LegalOp);
-
-  // If the operation produces an invalid type, it must be custom lowered.  Use
-  // the target lowering hooks to expand it.  Just keep the low part of the
-  // expanded operation, we know that we're truncating anyway.
-  if (getTypeAction(NewOutTy) == Expand) {
-    SmallVector<SDValue, 2> Results;
-    TLI.ReplaceNodeResults(Operation.getNode(), Results, DAG);
-    assert(Results.size() == 1 && "Incorrect FP_TO_XINT lowering!");
-    Operation = Results[0];
-  }
 
   // Truncate the result of the extended FP_TO_*INT operation to the desired
   // size.
@@ -2844,13 +2820,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
     Tmp2 = Node->getOperand(0);
     Tmp3 = Node->getOperand(1);
-    if (TLI.getOperationAction(DivOpc, VT) == TargetLowering::Legal) {
+    if (TLI.isOperationLegalOrCustom(DivRemOpc, VT)) {
+      Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
+    } else if (TLI.isOperationLegalOrCustom(DivOpc, VT)) {
       // X % Y -> X-X/Y*Y
       Tmp1 = DAG.getNode(DivOpc, dl, VT, Tmp2, Tmp3);
       Tmp1 = DAG.getNode(ISD::MUL, dl, VT, Tmp1, Tmp3);
       Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Tmp2, Tmp1);
-    } else if (TLI.isOperationLegalOrCustom(DivRemOpc, VT)) {
-      Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
     } else if (isSigned) {
       Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SREM_I16, RTLIB::SREM_I32,
                               RTLIB::SREM_I64, RTLIB::SREM_I128);
