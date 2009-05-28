@@ -471,9 +471,16 @@ bool TokenLexer::PasteTokens(Token &Tok) {
         }
       
         // Do not emit the warning when preprocessing assembler code.
-        if (!PP.getLangOptions().AsmPreprocessor)
-          PP.Diag(PasteOpLoc, diag::err_pp_bad_paste)
+        if (!PP.getLangOptions().AsmPreprocessor) {
+          // Explicitly convert the token location to have proper instantiation
+          // information so that the user knows where it came from.
+          SourceManager &SM = PP.getSourceManager();
+          SourceLocation Loc =
+            SM.createInstantiationLoc(PasteOpLoc, InstantiateLocStart,
+                                      InstantiateLocEnd, 2);
+          PP.Diag(Loc, diag::err_pp_bad_paste)
             << std::string(Buffer.begin(), Buffer.end());
+        }
         
         // Do not consume the RHS.
         --CurToken;
