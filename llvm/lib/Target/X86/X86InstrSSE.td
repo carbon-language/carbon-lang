@@ -2758,7 +2758,7 @@ defm PSIGNB      : SS3I_binop_rm_int_8 <0x08, "psignb",
 defm PSIGNW      : SS3I_binop_rm_int_16<0x09, "psignw",
                                         int_x86_ssse3_psign_w,
                                         int_x86_ssse3_psign_w_128>;
-defm PSIGND      : SS3I_binop_rm_int_32<0x09, "psignd",
+defm PSIGND      : SS3I_binop_rm_int_32<0x0A, "psignd",
                                         int_x86_ssse3_psign_d,
                                         int_x86_ssse3_psign_d_128>;
 
