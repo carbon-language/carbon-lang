@@ -2109,9 +2109,13 @@ int main(int argc, char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
-  
+
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
+  
+  if (Verbose)
+    fprintf(stderr, "clang-cc version 1.0 based upon " PACKAGE_STRING
+            " hosted on " LLVM_HOSTTRIPLE "\n");
   
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
@@ -2271,10 +2275,6 @@ int main(int argc, char **argv) {
     HeaderInfo.ClearFileInfo();
     DiagClient->setLangOptions(0);
   }
-
-  if (Verbose)
-    fprintf(stderr, "clang version 1.0 based upon " PACKAGE_STRING
-            " hosted on " LLVM_HOSTTRIPLE "\n");
 
   if (!NoCaretDiagnostics)
     if (unsigned NumDiagnostics = Diags.getNumDiagnostics())
