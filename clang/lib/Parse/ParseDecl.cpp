@@ -1460,8 +1460,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TK = Action::TK_Declaration;
   else
     TK = Action::TK_Reference;
+  bool Owned = false;
   DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK,
-                                       StartLoc, SS, Name, NameLoc, Attr, AS);
+                                       StartLoc, SS, Name, NameLoc, Attr, AS,
+                                       Owned);
   
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
@@ -1469,7 +1471,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // TODO: semantic analysis on the declspec for enums.
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec,
-                         TagDecl.getAs<void>()))
+                         TagDecl.getAs<void>(), Owned))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
 }
 

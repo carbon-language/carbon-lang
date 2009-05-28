@@ -2835,8 +2835,16 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
  
-  QualType parmDeclType = GetTypeForDeclarator(D, S);
+  TagDecl *OwnedDecl = 0;
+  QualType parmDeclType = GetTypeForDeclarator(D, S, /*Skip=*/0, &OwnedDecl);
   
+  if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
+    // C++ [dcl.fct]p6:
+    //   Types shall not be defined in return or parameter types.
+    Diag(OwnedDecl->getLocation(), diag::err_type_defined_in_param_type)
+      << Context.getTypeDeclType(OwnedDecl);
+  }
+
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
@@ -3316,11 +3324,13 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
 Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
-                               AttributeList *Attr, AccessSpecifier AS) {
+                               AttributeList *Attr, AccessSpecifier AS,
+                               bool &OwnedDecl) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");
 
+  OwnedDecl = false;
   TagDecl::TagKind Kind;
   switch (TagSpec) {
   default: assert(0 && "Unknown tag type!");
@@ -3645,6 +3655,7 @@ CreateNewDecl:
     CurContext->addDecl(Context, New);
   }
 
+  OwnedDecl = true;
   return DeclPtrTy::make(New);
 }
 

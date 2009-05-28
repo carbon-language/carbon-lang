@@ -114,7 +114,8 @@ private:
   /*TSC*/unsigned TypeSpecComplex : 2;
   /*TSS*/unsigned TypeSpecSign : 2;
   /*TST*/unsigned TypeSpecType : 5;
-  
+  bool TypeSpecOwned : 1;
+
   // type-qualifiers
   unsigned TypeQualifiers : 3;  // Bitwise OR of TQ.
   
@@ -129,7 +130,7 @@ private:
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
   /// these.
-  ActionBase::TypeTy *TypeRep;  
+  void *TypeRep;  
   
   // attributes.
   AttributeList *AttrList;
@@ -168,6 +169,7 @@ public:
       TypeSpecComplex(TSC_unspecified),
       TypeSpecSign(TSS_unspecified),
       TypeSpecType(TST_unspecified),
+      TypeSpecOwned(false),
       TypeQualifiers(TSS_unspecified),
       FS_inline_specified(false),
       FS_virtual_specified(false),
@@ -201,6 +203,7 @@ public:
   TSC getTypeSpecComplex() const { return (TSC)TypeSpecComplex; }
   TSS getTypeSpecSign() const { return (TSS)TypeSpecSign; }
   TST getTypeSpecType() const { return (TST)TypeSpecType; }
+  bool isTypeSpecOwned() const { return TypeSpecOwned; }
   void *getTypeRep() const { return TypeRep; }
   
   const SourceRange &getSourceRange() const { return Range; }
@@ -272,7 +275,7 @@ public:
   bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
-                       void *Rep = 0);
+                       void *Rep = 0, bool Owned = false);
   bool SetTypeSpecError();
 
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,

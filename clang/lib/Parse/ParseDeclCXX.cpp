@@ -479,6 +479,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // FIXME: When TK == TK_Reference and we have a template-id, we need
   // to turn that template-id into a type.
 
+  bool Owned = false;
   if (TemplateId && TK != Action::TK_Reference) {
     // Explicit specialization, class template partial specialization,
     // or explicit instantiation.
@@ -582,7 +583,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, 
-                                       Name, NameLoc, Attr, AS);
+                                       Name, NameLoc, Attr, AS, Owned);
   }
 
   // Parse the optional base clause (C++ only).
@@ -608,7 +609,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   }
   
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
-                         TagOrTempResult.get().getAs<void>()))
+                         TagOrTempResult.get().getAs<void>(), Owned))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
   
   if (DS.isFriendSpecified())

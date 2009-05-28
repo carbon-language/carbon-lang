@@ -195,7 +195,8 @@ namespace {
     virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
-                               AttributeList *Attr, AccessSpecifier AS) {
+                               AttributeList *Attr, AccessSpecifier AS,
+                               bool &Owned) {
       // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
       // is (struct/union/enum/class).
       Out << __FUNCTION__ << "\n";

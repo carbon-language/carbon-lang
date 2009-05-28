@@ -2357,8 +2357,9 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                  SourceLocation NameLoc,
                                  AttributeList *Attr) {
 
+  bool Owned = false;
   DeclPtrTy TagD = ActOnTag(S, TagSpec, Action::TK_Reference,
-                            KWLoc, SS, Name, NameLoc, Attr, AS_none);
+                            KWLoc, SS, Name, NameLoc, Attr, AS_none, Owned);
   if (!TagD)
     return true;
 

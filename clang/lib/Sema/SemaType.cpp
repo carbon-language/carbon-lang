@@ -604,7 +604,12 @@ QualType Sema::BuildFunctionType(QualType T,
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
-QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
+///
+/// If OwnedDecl is non-NULL, and this declarator's decl-specifier-seq
+/// owns the declaration of a type (e.g., the definition of a struct
+/// type), then *OwnedDecl will receive the owned declaration.
+QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
+                                    TagDecl **OwnedDecl) {
   bool OmittedReturnType = false;
 
   if (D.getContext() == Declarator::BlockLiteralContext
@@ -637,6 +642,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
       T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid);
       if (isInvalid)
         D.setInvalidType(true);
+      else if (OwnedDecl && DS.isTypeSpecOwned())
+        *OwnedDecl = cast<TagDecl>((Decl *)DS.getTypeRep());
     }
     break;
   }
@@ -715,6 +722,15 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip) {
         Diag(DeclType.Loc, diag::err_func_returning_array_function) << T;
         T = Context.IntTy;
         D.setInvalidType(true);
+      }
+
+      if (getLangOptions().CPlusPlus && D.getDeclSpec().isTypeSpecOwned()) {
+        // C++ [dcl.fct]p6:
+        //   Types shall not be defined in return or parameter types.
+        TagDecl *Tag = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
+        if (Tag->isDefinition())
+          Diag(Tag->getLocation(), diag::err_type_defined_in_result_type)
+            << Context.getTypeDeclType(Tag);
       }
 
       if (FTI.NumArgs == 0) {
@@ -971,13 +987,23 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
-  QualType T = GetTypeForDeclarator(D, S);
+  TagDecl *OwnedTag = 0;
+  QualType T = GetTypeForDeclarator(D, S, /*Skip=*/0, &OwnedTag);
   if (D.isInvalidType())
     return true;
 
-  // Check that there are no default arguments (C++ only).
-  if (getLangOptions().CPlusPlus)
+  if (getLangOptions().CPlusPlus) {
+    // Check that there are no default arguments (C++ only).
     CheckExtraCXXDefaultArguments(D);
+
+    // C++0x [dcl.type]p3:
+    //   A type-specifier-seq shall not define a class or enumeration
+    //   unless it appears in the type-id of an alias-declaration
+    //   (7.1.3).
+    if (OwnedTag && OwnedTag->isDefinition())
+      Diag(OwnedTag->getLocation(), diag::err_type_defined_in_type_specifier)
+        << Context.getTypeDeclType(OwnedTag);
+  }
 
   return T.getAsOpaquePtr();
 }

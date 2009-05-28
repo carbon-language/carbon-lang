@@ -346,7 +346,8 @@ public:
                              QualType *ParamTypes, unsigned NumParamTypes,
                              bool Variadic, unsigned Quals,
                              SourceLocation Loc, DeclarationName Entity);
-  QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0);
+  QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0,
+                                TagDecl **OwnedDecl = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);
 
   QualType ObjCGetTypeForMethodDefinition(DeclPtrTy D);
@@ -444,7 +445,8 @@ public:
   virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
-                             AttributeList *Attr, AccessSpecifier AS);
+                             AttributeList *Attr, AccessSpecifier AS,
+                             bool &OwnedDecl);
   
   virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,

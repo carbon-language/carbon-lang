@@ -253,6 +253,13 @@ def err_abstract_type_in_decl : Error<
 def err_allocation_of_abstract_type : Error<
   "allocation of an object of abstract type %0">;
   
+def err_type_defined_in_type_specifier : Error<
+  "%0 can not be defined in a type specifier">;
+def err_type_defined_in_result_type : Error<
+  "%0 can not be defined in the result type of a function">;
+def err_type_defined_in_param_type : Error<
+  "%0 can not be defined in a parameter type">;
+
 def note_pure_virtual_function : Note<
   "pure virtual function %0">;
 
