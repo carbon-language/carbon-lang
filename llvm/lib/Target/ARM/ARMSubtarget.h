@@ -30,15 +30,21 @@ protected:
     None, VFPv2, VFPv3, NEON
   };
 
+  enum ThumbTypeEnum {
+    ThumbNone,
+    Thumb1,
+    Thumb2
+  };
+
   /// ARMArchVersion - ARM architecture version: V4T (base), V5T, V5TE,
-  /// V6, V7A.
+  /// V6, V6T2, V7A.
   ARMArchEnum ARMArchVersion;
 
   /// ARMFPUType - Floating Point Unit type.
   ARMFPEnum ARMFPUType;
 
-  /// IsThumb - True if we are in thumb mode, false if in ARM mode.
-  bool IsThumb;
+  /// ThumbMode - ARM if in ARM mode, otherwise indicates Thumb version.
+  ThumbTypeEnum ThumbMode;
 
   /// UseThumbBacktraces - True if we use thumb style backtraces.
   bool UseThumbBacktraces;
@@ -66,7 +72,7 @@ protected:
   /// This constructor initializes the data members to match that
   /// of the specified module.
   ///
-  ARMSubtarget(const Module &M, const std::string &FS, bool thumb);
+  ARMSubtarget(const Module &M, const std::string &FS, bool isThumb);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.
@@ -96,7 +102,8 @@ protected:
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
-  bool isThumb() const { return IsThumb; }
+  bool isThumb() const { return ThumbMode >= Thumb1; }
+  bool isThumb2() const { return ThumbMode >= Thumb2; }
 
   bool useThumbBacktraces() const { return UseThumbBacktraces; }
   bool isR9Reserved() const { return IsR9Reserved; }

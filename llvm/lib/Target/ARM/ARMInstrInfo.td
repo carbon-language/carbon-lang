@@ -90,11 +90,12 @@ def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
 //
-def HasV5T  : Predicate<"Subtarget->hasV5TOps()">;
-def HasV5TE : Predicate<"Subtarget->hasV5TEOps()">;
-def HasV6   : Predicate<"Subtarget->hasV6Ops()">;
-def IsThumb : Predicate<"Subtarget->isThumb()">;
-def IsARM   : Predicate<"!Subtarget->isThumb()">;
+def HasV5T   : Predicate<"Subtarget->hasV5TOps()">;
+def HasV5TE  : Predicate<"Subtarget->hasV5TEOps()">;
+def HasV6    : Predicate<"Subtarget->hasV6Ops()">;
+def IsThumb  : Predicate<"Subtarget->isThumb()">;
+def IsThumb2 : Predicate<"Subtarget->isThumb2()">;
+def IsARM    : Predicate<"!Subtarget->isThumb()">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.

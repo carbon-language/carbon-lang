@@ -31,11 +31,13 @@ def ArchV6      : SubtargetFeature<"v6", "ARMArchVersion", "V6",
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A">;
 def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
-                                   "Enable VFP2 instructions ">;
+                                   "Enable VFP2 instructions">;
 def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",
-                                   "Enable VFP3 instructions ">;
+                                   "Enable VFP3 instructions">;
 def FeatureNEON : SubtargetFeature<"neon", "ARMFPUType", "NEON",
-                                   "Enable NEON instructions ">;
+                                   "Enable NEON instructions">;
+def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
+                                     "Enable Thumb2 instructions">;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -90,8 +92,11 @@ def : Proc<"arm1176jzf-s",    [ArchV6, FeatureVFP2]>;
 def : Proc<"mpcorenovfp",     [ArchV6]>;
 def : Proc<"mpcore",          [ArchV6, FeatureVFP2]>;
 
-def : Proc<"cortex-a8",       [ArchV7A, FeatureNEON]>;
-def : Proc<"cortex-a9",       [ArchV7A, FeatureNEON]>;
+def : Proc<"arm1156t2-s",     [ArchV6, FeatureThumb2]>;
+def : Proc<"arm1156t2f-s",    [ArchV6, FeatureThumb2, FeatureVFP2]>;
+
+def : Proc<"cortex-a8",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : Proc<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

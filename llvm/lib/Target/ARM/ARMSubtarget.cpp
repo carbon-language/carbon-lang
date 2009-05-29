@@ -16,10 +16,11 @@
 #include "llvm/Module.h"
 using namespace llvm;
 
-ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS, bool thumb)
+ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
+                           bool isThumb)
   : ARMArchVersion(V4T)
   , ARMFPUType(None)
-  , IsThumb(thumb)
+  , ThumbMode((isThumb ? Thumb1 : ThumbNone))
   , UseThumbBacktraces(false)
   , IsR9Reserved(false)
   , stackAlignment(4)
@@ -36,19 +37,26 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS, bool thumb)
   const std::string& TT = M.getTargetTriple();
   unsigned Len = TT.length();
   unsigned Idx = 0;
+
   if (Len >= 5 && TT.substr(0, 4) == "armv")
     Idx = 4;
   else if (Len >= 6 && TT.substr(0, 6) == "thumb") {
-    IsThumb = true;
+    isThumb = true;
     if (Len >= 7 && TT[5] == 'v')
       Idx = 6;
   }
   if (Idx) {
     unsigned SubVer = TT[Idx];
     if (SubVer > '4' && SubVer <= '9') {
-      if (SubVer >= '6')
+      if (SubVer >= '7') {
+        ARMArchVersion = V7A;
+        if (isThumb)
+          ThumbMode = Thumb2;
+      } else if (SubVer == '6') {
         ARMArchVersion = V6;
-      else if (SubVer == '5') {
+        if (isThumb && Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
+          ThumbMode = Thumb2;
+      } else if (SubVer == '5') {
         ARMArchVersion = V5T;
         if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
           ARMArchVersion = V5TE;
