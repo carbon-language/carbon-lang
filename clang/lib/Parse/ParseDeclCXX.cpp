@@ -970,7 +970,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    Actions.FinalizeDeclaratorGroup(CurScope, DeclsInGroup.data(),
+    Actions.FinalizeDeclaratorGroup(CurScope, DS, DeclsInGroup.data(),
                                     DeclsInGroup.size());
     return;
   }

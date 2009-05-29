@@ -291,7 +291,8 @@ public:
 
   /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
   /// gives the actions implementation a chance to process the group as a whole.
-  virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
+  virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec& DS,
+                                                 DeclPtrTy *Group,
                                                  unsigned NumDecls) {
     return DeclGroupPtrTy();
   }

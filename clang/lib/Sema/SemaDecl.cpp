@@ -2754,10 +2754,14 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
   }
 }
 
-Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, DeclPtrTy *Group,
+Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
+                                                   DeclPtrTy *Group,
                                                    unsigned NumDecls) {
   llvm::SmallVector<Decl*, 8> Decls;
-  
+
+  if (DS.isTypeSpecOwned())
+    Decls.push_back((Decl*)DS.getTypeRep());
+
   for (unsigned i = 0; i != NumDecls; ++i)
     if (Decl *D = Group[i].getAs<Decl>())
       Decls.push_back(D);

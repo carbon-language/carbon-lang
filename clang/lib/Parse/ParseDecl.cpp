@@ -437,7 +437,8 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     ParseDeclarator(D);
   }
   
-  return Actions.FinalizeDeclaratorGroup(CurScope, DeclsInGroup.data(),
+  return Actions.FinalizeDeclaratorGroup(CurScope, D.getDeclSpec(),
+                                         DeclsInGroup.data(),
                                          DeclsInGroup.size());
 }
 
