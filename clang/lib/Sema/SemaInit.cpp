@@ -909,7 +909,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
     if (!maxElementsKnown && elementIndex > maxElements)
       maxElements = elementIndex;
   }
-  if (DeclType->isIncompleteArrayType()) {
+  if (!hadError && DeclType->isIncompleteArrayType()) {
     // If this is an incomplete array type, the actual type needs to
     // be calculated here.
     llvm::APSInt Zero(maxElements.getBitWidth(), maxElements.isUnsigned());
