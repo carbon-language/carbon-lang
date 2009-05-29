@@ -214,7 +214,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   Owner->addDecl(SemaRef.Context, Enum);
   Enum->startDefinition();
 
-  llvm::SmallVector<Sema::DeclPtrTy, 16> Enumerators;
+  llvm::SmallVector<Sema::DeclPtrTy, 4> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
   for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(SemaRef.Context),
@@ -288,7 +288,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 
   Sema::LocalInstantiationScope Scope(SemaRef);
 
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
@@ -331,7 +331,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   Sema::LocalInstantiationScope Scope(SemaRef);
 
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
@@ -378,7 +378,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   Sema::LocalInstantiationScope Scope(SemaRef);
 
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
@@ -409,7 +409,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   Sema::LocalInstantiationScope Scope(SemaRef);
 
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
@@ -505,7 +505,7 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
 
   // Instantiate the function parameters
   TemplateDeclInstantiator ParamInstantiator(SemaRef, 0, TemplateArgs);
-  llvm::SmallVector<QualType, 16> ParamTys;
+  llvm::SmallVector<QualType, 4> ParamTys;
   for (FunctionDecl::param_iterator P = D->param_begin(), 
                                  PEnd = D->param_end();
        P != PEnd; ++P) {

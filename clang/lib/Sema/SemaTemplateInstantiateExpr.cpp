@@ -575,7 +575,7 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitVAArgExpr(VAArgExpr *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitInitListExpr(InitListExpr *E) {
-  ExprVector Inits(SemaRef);
+  ASTOwningVector<&ActionBase::DeleteExpr, 4> Inits(SemaRef);
   for (unsigned I = 0, N = E->getNumInits(); I != N; ++I) {
     OwningExprResult Init = Visit(E->getInit(I));
     if (Init.isInvalid())
@@ -597,7 +597,7 @@ TemplateExprInstantiator::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
     return SemaRef.ExprError();
 
   // Instantiate the designators.
-  ExprVector ArrayExprs(SemaRef); // Expresses used in array designators
+  ASTOwningVector<&ActionBase::DeleteExpr, 4> ArrayExprs(SemaRef);
   for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
                                              DEnd = E->designators_end();
        D != DEnd; ++D) {

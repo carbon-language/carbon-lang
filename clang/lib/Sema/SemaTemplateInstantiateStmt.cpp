@@ -60,7 +60,7 @@ namespace {
 //  Common/C statements
 //===----------------------------------------------------------------------===/
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
-  llvm::SmallVector<Decl *, 8> Decls;
+  llvm::SmallVector<Decl *, 4> Decls;
   for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
        D != DEnd; ++D) {
     Decl *Instantiated = SemaRef.InstantiateDecl(*D, SemaRef.CurContext, 

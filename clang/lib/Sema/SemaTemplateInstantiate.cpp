@@ -378,7 +378,7 @@ InstantiateFunctionProtoType(const FunctionProtoType *T,
   if (ResultType.isNull())
     return ResultType;
 
-  llvm::SmallVector<QualType, 16> ParamTypes;
+  llvm::SmallVector<QualType, 4> ParamTypes;
   for (FunctionProtoType::arg_type_iterator Param = T->arg_type_begin(),
                                          ParamEnd = T->arg_type_end(); 
        Param != ParamEnd; ++Param) {
@@ -497,7 +497,7 @@ TemplateTypeInstantiator::
 InstantiateTemplateSpecializationType(
                                   const TemplateSpecializationType *T,
                                   unsigned Quals) const {
-  llvm::SmallVector<TemplateArgument, 16> InstantiatedTemplateArgs;
+  llvm::SmallVector<TemplateArgument, 4> InstantiatedTemplateArgs;
   InstantiatedTemplateArgs.reserve(T->getNumArgs());
   for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
        Arg != ArgEnd; ++Arg) {
@@ -669,7 +669,7 @@ Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
                                 CXXRecordDecl *Pattern,
                                 const TemplateArgumentList &TemplateArgs) {
   bool Invalid = false;
-  llvm::SmallVector<CXXBaseSpecifier*, 8> InstantiatedBases;
+  llvm::SmallVector<CXXBaseSpecifier*, 4> InstantiatedBases;
   for (ClassTemplateSpecializationDecl::base_class_iterator 
          Base = Pattern->bases_begin(), BaseEnd = Pattern->bases_end();
        Base != BaseEnd; ++Base) {
@@ -767,7 +767,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   if (InstantiateBaseSpecifiers(Instantiation, Pattern, TemplateArgs))
     Invalid = true;
 
-  llvm::SmallVector<DeclPtrTy, 32> Fields;
+  llvm::SmallVector<DeclPtrTy, 4> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(Context),
          MemberEnd = Pattern->decls_end(Context); 
        Member != MemberEnd; ++Member) {
