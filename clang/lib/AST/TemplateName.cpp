@@ -14,6 +14,7 @@
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -38,23 +39,27 @@ bool TemplateName::isDependent() const {
   return true;
 }
 
-void TemplateName::print(llvm::raw_ostream &OS, bool SuppressNNS) const {
+void 
+TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
+                    bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     OS << Template->getIdentifier()->getName();
   else if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
     if (!SuppressNNS)
-      QTN->getQualifier()->print(OS);
+      QTN->getQualifier()->print(OS, Policy);
     if (QTN->hasTemplateKeyword())
       OS << "template ";
     OS << QTN->getTemplateDecl()->getIdentifier()->getName();
   } else if (DependentTemplateName *DTN = getAsDependentTemplateName()) {
     if (!SuppressNNS)
-      DTN->getQualifier()->print(OS);
+      DTN->getQualifier()->print(OS, Policy);
     OS << "template ";
     OS << DTN->getName()->getName();
   }
 }
 
 void TemplateName::dump() const {
-  print(llvm::errs());
+  PrintingPolicy Policy;
+  Policy.CPlusPlus = true;
+  print(llvm::errs(), Policy);
 }

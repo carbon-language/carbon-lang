@@ -26,6 +26,7 @@ namespace clang {
 class ASTContext;
 class NamespaceDecl;
 class IdentifierInfo;
+class PrintingPolicy;
 class Type;
 
 /// \brief Represents a C++ nested name specifier, such as
@@ -163,7 +164,7 @@ public:
 
   /// \brief Print this nested name specifier to the given output
   /// stream.
-  void print(llvm::raw_ostream &OS) const;
+  void print(llvm::raw_ostream &OS, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(Prefix.getOpaqueValue());

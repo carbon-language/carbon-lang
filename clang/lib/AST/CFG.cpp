@@ -1525,23 +1525,26 @@ class VISIBILITY_HIDDEN CFGBlockTerminatorPrint
   
   llvm::raw_ostream& OS;
   StmtPrinterHelper* Helper;
+  PrintingPolicy Policy;
+
 public:
-  CFGBlockTerminatorPrint(llvm::raw_ostream& os, StmtPrinterHelper* helper)
-    : OS(os), Helper(helper) {}
+  CFGBlockTerminatorPrint(llvm::raw_ostream& os, StmtPrinterHelper* helper,
+                          const PrintingPolicy &Policy = PrintingPolicy())
+    : OS(os), Helper(helper), Policy(Policy) {}
   
   void VisitIfStmt(IfStmt* I) {
     OS << "if ";
-    I->getCond()->printPretty(OS,Helper);
+    I->getCond()->printPretty(OS,Helper,Policy);
   }
   
   // Default case.
-  void VisitStmt(Stmt* Terminator) { Terminator->printPretty(OS); }
+  void VisitStmt(Stmt* Terminator) { Terminator->printPretty(OS, Helper, Policy); }
   
   void VisitForStmt(ForStmt* F) {
     OS << "for (" ;
     if (F->getInit()) OS << "...";
     OS << "; ";
-    if (Stmt* C = F->getCond()) C->printPretty(OS,Helper);
+    if (Stmt* C = F->getCond()) C->printPretty(OS, Helper, Policy);
     OS << "; ";
     if (F->getInc()) OS << "...";
     OS << ")";
@@ -1549,33 +1552,33 @@ public:
   
   void VisitWhileStmt(WhileStmt* W) {
     OS << "while " ;
-    if (Stmt* C = W->getCond()) C->printPretty(OS,Helper);
+    if (Stmt* C = W->getCond()) C->printPretty(OS, Helper, Policy);
   }
   
   void VisitDoStmt(DoStmt* D) {
     OS << "do ... while ";
-    if (Stmt* C = D->getCond()) C->printPretty(OS,Helper);
+    if (Stmt* C = D->getCond()) C->printPretty(OS, Helper, Policy);
   }
   
   void VisitSwitchStmt(SwitchStmt* Terminator) {
     OS << "switch ";
-    Terminator->getCond()->printPretty(OS,Helper);
+    Terminator->getCond()->printPretty(OS, Helper, Policy);
   }
   
   void VisitConditionalOperator(ConditionalOperator* C) {
-    C->getCond()->printPretty(OS,Helper);
+    C->getCond()->printPretty(OS, Helper, Policy);
     OS << " ? ... : ...";  
   }
   
   void VisitChooseExpr(ChooseExpr* C) {
     OS << "__builtin_choose_expr( ";
-    C->getCond()->printPretty(OS,Helper);
+    C->getCond()->printPretty(OS, Helper, Policy);
     OS << " )";
   }
   
   void VisitIndirectGotoStmt(IndirectGotoStmt* I) {
     OS << "goto *";
-    I->getTarget()->printPretty(OS,Helper);
+    I->getTarget()->printPretty(OS, Helper, Policy);
   }
   
   void VisitBinaryOperator(BinaryOperator* B) {
@@ -1584,7 +1587,7 @@ public:
       return;
     }
     
-    B->getLHS()->printPretty(OS,Helper);
+    B->getLHS()->printPretty(OS, Helper, Policy);
     
     switch (B->getOpcode()) {
       case BinaryOperator::LOr:
@@ -1599,7 +1602,7 @@ public:
   }
   
   void VisitExpr(Expr* E) {
-    E->printPretty(OS,Helper);
+    E->printPretty(OS, Helper, Policy);
   }                                                       
 };
   
@@ -1629,7 +1632,7 @@ void print_stmt(llvm::raw_ostream&OS, StmtPrinterHelper* Helper, Stmt* Terminato
     }  
   }
   
-  Terminator->printPretty(OS, Helper);
+  Terminator->printPretty(OS, Helper, /*FIXME:*/PrintingPolicy());
   
   // Expressions need a newline.
   if (isa<Expr>(Terminator)) OS << '\n';
@@ -1662,10 +1665,10 @@ void print_block(llvm::raw_ostream& OS, const CFG* cfg, const CFGBlock& B,
       OS << L->getName();
     else if (CaseStmt* C = dyn_cast<CaseStmt>(Terminator)) {
       OS << "case ";
-      C->getLHS()->printPretty(OS);
+      C->getLHS()->printPretty(OS, Helper, /*FIXME:*/PrintingPolicy());
       if (C->getRHS()) {
         OS << " ... ";
-        C->getRHS()->printPretty(OS);
+        C->getRHS()->printPretty(OS, Helper, /*FIXME:*/PrintingPolicy());
       }
     }  
     else if (isa<DefaultStmt>(Terminator))
@@ -1703,7 +1706,7 @@ void print_block(llvm::raw_ostream& OS, const CFG* cfg, const CFGBlock& B,
     
     if (Helper) Helper->setBlockID(-1);
     
-    CFGBlockTerminatorPrint TPrinter(OS,Helper);
+    CFGBlockTerminatorPrint TPrinter(OS, Helper, /*FIXME*/PrintingPolicy());
     TPrinter.Visit(const_cast<Stmt*>(B.getTerminator()));
     OS << '\n';
   }

@@ -150,7 +150,9 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   uint64_t Align = M->getContext().getTypeAlign(BT);
   uint64_t Offset = 0;
   
-  return DebugFactory.CreateBasicType(Unit, BT->getName(), Unit, 0, Size, Align,
+  return DebugFactory.CreateBasicType(Unit, 
+                      BT->getName(M->getContext().getLangOptions().CPlusPlus),
+                                      Unit, 0, Size, Align,
                                       Offset, /*flags*/ 0, Encoding);
 }
 

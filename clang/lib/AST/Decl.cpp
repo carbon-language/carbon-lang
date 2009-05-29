@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/IdentifierTable.h"
 #include <vector>
 
@@ -224,10 +225,13 @@ std::string NamedDecl::getQualifiedNameAsString() const {
     if (const ClassTemplateSpecializationDecl *Spec 
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+      PrintingPolicy Policy;
+      Policy.CPlusPlus = true;
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                            TemplateArgs.getFlatArgumentList(),
-                                           TemplateArgs.flat_size());
+                                           TemplateArgs.flat_size(),
+                                           Policy);
       Names.push_back(Spec->getIdentifier()->getName() + TemplateArgsStr);
     } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
       Names.push_back(ND->getNameAsString());

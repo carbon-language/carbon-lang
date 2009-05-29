@@ -396,7 +396,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
          E = BD->param_end(); AI != E; ++AI) {
       if (AI != BD->param_begin()) S += ", ";
       ParamStr = (*AI)->getNameAsString();
-      (*AI)->getType().getAsStringInternal(ParamStr);
+      (*AI)->getType().getAsStringInternal(ParamStr, Context->PrintingPolicy);
       S += ParamStr;
     }
     if (FT->isVariadic()) {
@@ -413,7 +413,8 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
        E = BlockByRefDecls.end(); I != E; ++I) {
     S += "  ";
     std::string Name = (*I)->getNameAsString();
-    Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
+    Context->getPointerType((*I)->getType()).getAsStringInternal(Name,
+                                                     Context->PrintingPolicy);
     S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by ref\n";
   }    
   // Next, emit a declaration for all "by copy" declarations.
@@ -434,7 +435,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     if (isBlockPointerType((*I)->getType()))
       S += "struct __block_impl *";
     else
-      (*I)->getType().getAsStringInternal(Name);
+      (*I)->getType().getAsStringInternal(Name, Context->PrintingPolicy);
     S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by copy\n";
   }
   std::string RewrittenStr = RewrittenBlockExprs[CE];
@@ -515,8 +516,8 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
-        (*I)->getType().getAsStringInternal(FieldName);
-        (*I)->getType().getAsStringInternal(ArgName);
+        (*I)->getType().getAsStringInternal(FieldName, Context->PrintingPolicy);
+        (*I)->getType().getAsStringInternal(ArgName, Context->PrintingPolicy);
         Constructor += ", " + ArgName;
       }
       S += FieldName + ";\n";
@@ -541,8 +542,10 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
-        Context->getPointerType((*I)->getType()).getAsStringInternal(FieldName);
-        Context->getPointerType((*I)->getType()).getAsStringInternal(ArgName);
+        Context->getPointerType((*I)->getType()).getAsStringInternal(FieldName,
+                                                       Context->PrintingPolicy);
+        Context->getPointerType((*I)->getType()).getAsStringInternal(ArgName,
+                                                       Context->PrintingPolicy);
         Constructor += ", " + ArgName;
       }
       S += FieldName + "; // by ref\n";
@@ -947,7 +950,8 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
   std::string FunkTypeStr;
   
   // Get a pointer to the function type so we can cast appropriately.
-  Context->getPointerType(QualType(Exp->getFunctionType(),0)).getAsStringInternal(FunkTypeStr);
+  Context->getPointerType(QualType(Exp->getFunctionType(),0))
+    .getAsStringInternal(FunkTypeStr, Context->PrintingPolicy);
   
   // Rewrite the closure block with a compound literal. The first cast is
   // to prevent warnings from the C compiler.

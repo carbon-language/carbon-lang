@@ -44,6 +44,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   BuiltinInfo.InitializeTargetBuiltins(Target);
   if (InitializeBuiltins)
     this->InitializeBuiltins(idents);
+  PrintingPolicy.CPlusPlus = LangOpts.CPlusPlus;
 }
 
 ASTContext::~ASTContext() {

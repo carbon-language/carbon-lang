@@ -13,4 +13,6 @@ void test(bool b)
   b++; // expected-warning {{incrementing expression of type bool is deprecated}}
   --b; // expected-error {{cannot decrement expression of type bool}}
   b--; // expected-error {{cannot decrement expression of type bool}}
+
+  bool *b1 = (int *)0; // expected-error{{expected 'bool *'}}
 }

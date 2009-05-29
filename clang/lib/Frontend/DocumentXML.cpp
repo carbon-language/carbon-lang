@@ -194,7 +194,7 @@ void DocumentXML::finalize()
     // don't use the get methods as they strip of typedef infos
     if (const BuiltinType *BT = dyn_cast<BuiltinType>(i->first)) {
       addSubNode("FundamentalType");
-      addAttribute("name", BT->getName());
+      addAttribute("name", BT->getName(Ctx->getLangOptions().CPlusPlus));
     }
     else if (const PointerType *PT = dyn_cast<PointerType>(i->first)) {
       addSubNode("PointerType");

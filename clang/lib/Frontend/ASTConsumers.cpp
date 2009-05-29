@@ -20,6 +20,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Streams.h"
@@ -35,10 +36,13 @@ namespace {
   class DeclPrinter {
   public:
     llvm::raw_ostream& Out;
+    PrintingPolicy Policy;
     unsigned Indentation;
 
-    DeclPrinter(llvm::raw_ostream* out) : Out(out ? *out : llvm::errs()),
-                                          Indentation(0) {}
+    DeclPrinter(llvm::raw_ostream* out,
+                const PrintingPolicy &Policy = PrintingPolicy()) 
+      : Out(out ? *out : llvm::errs()), Policy(Policy),
+        Indentation(0) {}
     DeclPrinter() : Out(llvm::errs()), Indentation(0) {}
     virtual ~DeclPrinter();
     
@@ -84,7 +88,7 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     // FIXME: Pass a context here so we can use getBody()
     if (FD->getBodyIfAvailable()) {
       Out << ' ';
-      FD->getBodyIfAvailable()->printPretty(Out, 0, Indentation, true);
+      FD->getBodyIfAvailable()->printPretty(Out, 0, Policy);
       Out << '\n';
     }
   } else if (isa<ObjCMethodDecl>(D)) {
@@ -162,7 +166,7 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     PrintLinkageSpec(LSD);
   } else if (FileScopeAsmDecl *AD = dyn_cast<FileScopeAsmDecl>(D)) {
     Out << "asm(";
-    AD->getAsmString()->printPretty(Out);
+    AD->getAsmString()->printPretty(Out, 0, Policy);
     Out << ")\n";
   } else if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
     Print(ND);
@@ -193,12 +197,12 @@ void DeclPrinter::Print(NamedDecl *ND) {
     }
     std::string Name = ND->getNameAsString();
     // This forms: "int a".
-    dyn_cast<ValueDecl>(ND)->getType().getAsStringInternal(Name);
+    dyn_cast<ValueDecl>(ND)->getType().getAsStringInternal(Name, Policy);
     Out << Name;
     if (VarDecl *Var = dyn_cast<VarDecl>(ND)) {
       if (Var->getInit()) {
         Out << " = ";
-        Var->getInit()->printPretty(Out);
+        Var->getInit()->printPretty(Out, 0, Policy);
       }
     }
     Out << ";\n";
@@ -252,7 +256,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
       std::string ParamStr;
       if (HasBody) ParamStr = FD->getParamDecl(i)->getNameAsString();
       
-      FT->getArgType(i).getAsStringInternal(ParamStr);
+      FT->getArgType(i).getAsStringInternal(ParamStr, Policy);
       Proto += ParamStr;
     }
     
@@ -266,7 +270,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
     Proto += "()";
   }
 
-  AFT->getResultType().getAsStringInternal(Proto);
+  AFT->getResultType().getAsStringInternal(Proto, Policy);
   Out << Proto;
   
   if (!FD->getBodyIfAvailable())
@@ -276,7 +280,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
 
 void DeclPrinter::PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getNameAsString();
-  TD->getUnderlyingType().getAsStringInternal(S);
+  TD->getUnderlyingType().getAsStringInternal(S, Policy);
   Out << "typedef " << S << ";\n";
 }
 
@@ -358,7 +362,7 @@ void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
     PrintObjCMethodDecl(OMD);
     if (OMD->getBody()) {
       Out << ' ';
-      OMD->getBody()->printPretty(Out);
+      OMD->getBody()->printPretty(Out, 0, Policy);
       Out << '\n';
     }
   }
@@ -371,7 +375,7 @@ void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
     PrintObjCMethodDecl(OMD);
     if (OMD->getBody()) {
       Out << ' ';
-      OMD->getBody()->printPretty(Out);
+      OMD->getBody()->printPretty(Out, 0, Policy);
       Out << '\n';
     }
   }

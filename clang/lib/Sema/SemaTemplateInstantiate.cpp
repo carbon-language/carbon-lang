@@ -149,7 +149,8 @@ void Sema::PrintInstantiationStack() {
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                                       Active->TemplateArgs, 
-                                                      Active->NumTemplateArgs);
+                                                      Active->NumTemplateArgs,
+                                                      Context.PrintingPolicy);
       Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
                    diag::note_default_arg_instantiation_here)
         << (Template->getNameAsString() + TemplateArgsStr)

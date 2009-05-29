@@ -20,6 +20,7 @@
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
@@ -143,6 +144,7 @@ public:
   SelectorTable &Selectors;
   DeclarationNameTable DeclarationNames;
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
+  clang::PrintingPolicy PrintingPolicy;
 
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }
@@ -207,7 +209,7 @@ public:
 
   void PrintStats() const;
   const std::vector<Type*>& getTypes() const { return Types; }
-  
+
   //===--------------------------------------------------------------------===//
   //                           Type Constructors
   //===--------------------------------------------------------------------===//

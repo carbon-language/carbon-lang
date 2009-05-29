@@ -17,6 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -895,11 +896,11 @@ bool Type::isNullPtrType() const {
   return false;
 }
 
-const char *BuiltinType::getName() const {
+const char *BuiltinType::getName(bool CPlusPlus) const {
   switch (getKind()) {
   default: assert(0 && "Unknown builtin type!");
   case Void:              return "void";
-  case Bool:              return "_Bool";
+  case Bool:              return CPlusPlus? "bool" : "_Bool";
   case Char_S:            return "char";
   case Char_U:            return "char";
   case SChar:             return "signed char";
@@ -1099,8 +1100,9 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
 //===----------------------------------------------------------------------===//
 
 void QualType::dump(const char *msg) const {
+  PrintingPolicy Policy;
   std::string R = "identifier";
-  getAsStringInternal(R);
+  getAsStringInternal(R, Policy);
   if (msg)
     fprintf(stderr, "%s: %s\n", msg, R.c_str());
   else
@@ -1112,7 +1114,7 @@ void QualType::dump() const {
 
 void Type::dump() const {
   std::string S = "identifier";
-  getAsStringInternal(S);
+  getAsStringInternal(S, PrintingPolicy());
   fprintf(stderr, "%s\n", S.c_str());
 }
 
@@ -1129,7 +1131,15 @@ static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
     S += (NonePrinted+" restrict"), NonePrinted = false;
 }
 
-void QualType::getAsStringInternal(std::string &S) const {
+std::string QualType::getAsString() const {
+  std::string S;
+  getAsStringInternal(S, PrintingPolicy());
+  return S;
+}
+
+void 
+QualType::getAsStringInternal(std::string &S, 
+                              const PrintingPolicy &Policy) const {
   if (isNull()) {
     S += "NULL TYPE";
     return;
@@ -1145,20 +1155,21 @@ void QualType::getAsStringInternal(std::string &S) const {
       S = TQS;
   }
 
-  getTypePtr()->getAsStringInternal(S);
+  getTypePtr()->getAsStringInternal(S, Policy);
 }
 
-void BuiltinType::getAsStringInternal(std::string &S) const {
+void BuiltinType::getAsStringInternal(std::string &S, 
+                                      const PrintingPolicy &Policy) const {
   if (S.empty()) {
-    S = getName();
+    S = getName(Policy.CPlusPlus);
   } else {
     // Prefix the basic type, e.g. 'int X'.
     S = ' ' + S;
-    S = getName() + S;
+    S = getName(Policy.CPlusPlus) + S;
   }
 }
 
-void FixedWidthIntType::getAsStringInternal(std::string &S) const {
+void FixedWidthIntType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   // FIXME: Once we get bitwidth attribute, write as
   // "int __attribute__((bitwidth(x)))".
   std::string prefix = "__clang_fixedwidth";
@@ -1173,12 +1184,12 @@ void FixedWidthIntType::getAsStringInternal(std::string &S) const {
 }
 
 
-void ComplexType::getAsStringInternal(std::string &S) const {
-  ElementType->getAsStringInternal(S);
+void ComplexType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
+  ElementType->getAsStringInternal(S, Policy);
   S = "_Complex " + S;
 }
 
-void ExtQualType::getAsStringInternal(std::string &S) const {
+void ExtQualType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   bool NeedsSpace = false;
   if (AddressSpace) {
     S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
@@ -1194,10 +1205,10 @@ void ExtQualType::getAsStringInternal(std::string &S) const {
       S += "strong";
     S += ")))";
   }
-  BaseType->getAsStringInternal(S);
+  BaseType->getAsStringInternal(S, Policy);
 }
 
-void PointerType::getAsStringInternal(std::string &S) const {
+void PointerType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S = '*' + S;
   
   // Handle things like 'int (*A)[4];' correctly.
@@ -1205,15 +1216,15 @@ void PointerType::getAsStringInternal(std::string &S) const {
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
   
-  getPointeeType().getAsStringInternal(S);
+  getPointeeType().getAsStringInternal(S, Policy);
 }
 
-void BlockPointerType::getAsStringInternal(std::string &S) const {
+void BlockPointerType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S = '^' + S;
-  PointeeType.getAsStringInternal(S);
+  PointeeType.getAsStringInternal(S, Policy);
 }
 
-void LValueReferenceType::getAsStringInternal(std::string &S) const {
+void LValueReferenceType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S = '&' + S;
 
   // Handle things like 'int (&A)[4];' correctly.
@@ -1221,10 +1232,10 @@ void LValueReferenceType::getAsStringInternal(std::string &S) const {
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
 
-  getPointeeType().getAsStringInternal(S);
+  getPointeeType().getAsStringInternal(S, Policy);
 }
 
-void RValueReferenceType::getAsStringInternal(std::string &S) const {
+void RValueReferenceType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S = "&&" + S;
 
   // Handle things like 'int (&&A)[4];' correctly.
@@ -1232,12 +1243,12 @@ void RValueReferenceType::getAsStringInternal(std::string &S) const {
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
 
-  getPointeeType().getAsStringInternal(S);
+  getPointeeType().getAsStringInternal(S, Policy);
 }
 
-void MemberPointerType::getAsStringInternal(std::string &S) const {
+void MemberPointerType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   std::string C;
-  Class->getAsStringInternal(C);
+  Class->getAsStringInternal(C, Policy);
   C += "::*";
   S = C + S;
 
@@ -1246,24 +1257,24 @@ void MemberPointerType::getAsStringInternal(std::string &S) const {
   if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
 
-  getPointeeType().getAsStringInternal(S);
+  getPointeeType().getAsStringInternal(S, Policy);
 }
 
-void ConstantArrayType::getAsStringInternal(std::string &S) const {
+void ConstantArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += '[';
   S += llvm::utostr(getSize().getZExtValue());
   S += ']';
   
-  getElementType().getAsStringInternal(S);
+  getElementType().getAsStringInternal(S, Policy);
 }
 
-void IncompleteArrayType::getAsStringInternal(std::string &S) const {
+void IncompleteArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += "[]";
 
-  getElementType().getAsStringInternal(S);
+  getElementType().getAsStringInternal(S, Policy);
 }
 
-void VariableArrayType::getAsStringInternal(std::string &S) const {
+void VariableArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += '[';
   
   if (getIndexTypeQualifier()) {
@@ -1279,15 +1290,15 @@ void VariableArrayType::getAsStringInternal(std::string &S) const {
   if (getSizeExpr()) {
     std::string SStr;
     llvm::raw_string_ostream s(SStr);
-    getSizeExpr()->printPretty(s);
+    getSizeExpr()->printPretty(s, 0, Policy);
     S += s.str();
   }
   S += ']';
   
-  getElementType().getAsStringInternal(S);
+  getElementType().getAsStringInternal(S, Policy);
 }
 
-void DependentSizedArrayType::getAsStringInternal(std::string &S) const {
+void DependentSizedArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += '[';
   
   if (getIndexTypeQualifier()) {
@@ -1303,57 +1314,57 @@ void DependentSizedArrayType::getAsStringInternal(std::string &S) const {
   if (getSizeExpr()) {
     std::string SStr;
     llvm::raw_string_ostream s(SStr);
-    getSizeExpr()->printPretty(s);
+    getSizeExpr()->printPretty(s, 0, Policy);
     S += s.str();
   }
   S += ']';
   
-  getElementType().getAsStringInternal(S);
+  getElementType().getAsStringInternal(S, Policy);
 }
 
-void VectorType::getAsStringInternal(std::string &S) const {
+void VectorType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   // FIXME: We prefer to print the size directly here, but have no way
   // to get the size of the type.
   S += " __attribute__((__vector_size__(";
   S += llvm::utostr_32(NumElements); // convert back to bytes.
   S += " * sizeof(" + ElementType.getAsString() + "))))";
-  ElementType.getAsStringInternal(S);
+  ElementType.getAsStringInternal(S, Policy);
 }
 
-void ExtVectorType::getAsStringInternal(std::string &S) const {
+void ExtVectorType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += " __attribute__((ext_vector_type(";
   S += llvm::utostr_32(NumElements);
   S += ")))";
-  ElementType.getAsStringInternal(S);
+  ElementType.getAsStringInternal(S, Policy);
 }
 
-void TypeOfExprType::getAsStringInternal(std::string &InnerString) const {
+void TypeOfExprType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(e) X'.
     InnerString = ' ' + InnerString;
   std::string Str;
   llvm::raw_string_ostream s(Str);
-  getUnderlyingExpr()->printPretty(s);
+  getUnderlyingExpr()->printPretty(s, 0, Policy);
   InnerString = "typeof " + s.str() + InnerString;
 }
 
-void TypeOfType::getAsStringInternal(std::string &InnerString) const {
+void TypeOfType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(t) X'.
     InnerString = ' ' + InnerString;
   std::string Tmp;
-  getUnderlyingType().getAsStringInternal(Tmp);
+  getUnderlyingType().getAsStringInternal(Tmp, Policy);
   InnerString = "typeof(" + Tmp + ")" + InnerString;
 }
 
-void FunctionNoProtoType::getAsStringInternal(std::string &S) const {
+void FunctionNoProtoType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())
     S = "(" + S + ")";
   
   S += "()";
-  getResultType().getAsStringInternal(S);
+  getResultType().getAsStringInternal(S, Policy);
 }
 
-void FunctionProtoType::getAsStringInternal(std::string &S) const {
+void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())
     S = "(" + S + ")";
@@ -1362,7 +1373,7 @@ void FunctionProtoType::getAsStringInternal(std::string &S) const {
   std::string Tmp;
   for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
     if (i) S += ", ";
-    getArgType(i).getAsStringInternal(Tmp);
+    getArgType(i).getAsStringInternal(Tmp, Policy);
     S += Tmp;
     Tmp.clear();
   }
@@ -1377,17 +1388,17 @@ void FunctionProtoType::getAsStringInternal(std::string &S) const {
   }
   
   S += ")";
-  getResultType().getAsStringInternal(S);
+  getResultType().getAsStringInternal(S, Policy);
 }
 
 
-void TypedefType::getAsStringInternal(std::string &InnerString) const {
+void TypedefType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
-void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
+void TemplateTypeParmType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'parmname X'.
     InnerString = ' ' + InnerString;
 
@@ -1398,9 +1409,11 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString) const {
     InnerString = Name->getName() + InnerString;
 }
 
-std::string TemplateSpecializationType::PrintTemplateArgumentList(
-                                              const TemplateArgument *Args,
-                                              unsigned NumArgs) {
+std::string 
+TemplateSpecializationType::PrintTemplateArgumentList(
+                                                  const TemplateArgument *Args,
+                                                  unsigned NumArgs,
+                                                  const PrintingPolicy &Policy) {
   std::string SpecString;
   SpecString += '<';
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
@@ -1411,7 +1424,7 @@ std::string TemplateSpecializationType::PrintTemplateArgumentList(
     std::string ArgString;
     switch (Args[Arg].getKind()) {
     case TemplateArgument::Type:
-      Args[Arg].getAsType().getAsStringInternal(ArgString);
+      Args[Arg].getAsType().getAsStringInternal(ArgString, Policy);
       break;
 
     case TemplateArgument::Declaration:
@@ -1424,7 +1437,7 @@ std::string TemplateSpecializationType::PrintTemplateArgumentList(
 
     case TemplateArgument::Expression: {
       llvm::raw_string_ostream s(ArgString);
-      Args[Arg].getAsExpr()->printPretty(s);
+      Args[Arg].getAsExpr()->printPretty(s, 0, Policy);
       break;
     }
     }
@@ -1451,35 +1464,33 @@ std::string TemplateSpecializationType::PrintTemplateArgumentList(
 
 void 
 TemplateSpecializationType::
-getAsStringInternal(std::string &InnerString) const {
+getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   std::string SpecString;
 
   {
     llvm::raw_string_ostream OS(SpecString);
-    Template.print(OS);
+    Template.print(OS, Policy);
   }
 
-  SpecString += PrintTemplateArgumentList(getArgs(), getNumArgs());
+  SpecString += PrintTemplateArgumentList(getArgs(), getNumArgs(), Policy);
   if (InnerString.empty())
     InnerString.swap(SpecString);
   else
     InnerString = SpecString + ' ' + InnerString;
 }
 
-void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
+void QualifiedNameType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   std::string MyString;
 
   {
     llvm::raw_string_ostream OS(MyString);
-    NNS->print(OS);
+    NNS->print(OS, Policy);
   }
   
   std::string TypeStr;
-  if (const TagType *TagT = dyn_cast<TagType>(NamedType.getTypePtr())) {
-    // Suppress printing of 'enum', 'struct', 'union', or 'class'.
-    TagT->getAsStringInternal(TypeStr, true);
-  } else
-    NamedType.getAsStringInternal(TypeStr);
+  PrintingPolicy InnerPolicy(Policy);
+  InnerPolicy.SuppressTagKind = true;
+  NamedType.getAsStringInternal(TypeStr, InnerPolicy);
 
   MyString += TypeStr;
   if (InnerString.empty())
@@ -1488,20 +1499,22 @@ void QualifiedNameType::getAsStringInternal(std::string &InnerString) const {
     InnerString = MyString + ' ' + InnerString;
 }
 
-void TypenameType::getAsStringInternal(std::string &InnerString) const {
+void TypenameType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   std::string MyString;
 
   {
     llvm::raw_string_ostream OS(MyString);
     OS << "typename ";
-    NNS->print(OS);
+    NNS->print(OS, Policy);
 
     if (const IdentifierInfo *Ident = getIdentifier())
       OS << Ident->getName();
     else if (const TemplateSpecializationType *Spec = getTemplateId()) {
-      Spec->getTemplateName().print(OS, true);
+      Spec->getTemplateName().print(OS, Policy, true);
       OS << TemplateSpecializationType::PrintTemplateArgumentList(
-                                         Spec->getArgs(), Spec->getNumArgs());
+                                                               Spec->getArgs(), 
+                                                            Spec->getNumArgs(),
+                                                               Policy);
     }
   }
   
@@ -1511,14 +1524,15 @@ void TypenameType::getAsStringInternal(std::string &InnerString) const {
     InnerString = MyString + ' ' + InnerString;
 }
 
-void ObjCInterfaceType::getAsStringInternal(std::string &InnerString) const {
+void ObjCInterfaceType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
-void ObjCQualifiedInterfaceType::getAsStringInternal(
-                                  std::string &InnerString) const {
+void 
+ObjCQualifiedInterfaceType::getAsStringInternal(std::string &InnerString,
+                                           const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   std::string ObjCQIString = getDecl()->getNameAsString();
@@ -1535,7 +1549,7 @@ void ObjCQualifiedInterfaceType::getAsStringInternal(
   InnerString = ObjCQIString + InnerString;
 }
 
-void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString) const {
+void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   std::string ObjCQIString = "id";
@@ -1549,16 +1563,11 @@ void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString) const {
   InnerString = ObjCQIString + InnerString;
 }
 
-void TagType::getAsStringInternal(std::string &InnerString) const {
-  getAsStringInternal(InnerString, false);
-}
-
-void TagType::getAsStringInternal(std::string &InnerString,
-                                  bool SuppressTagKind) const {
+void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   
-  const char *Kind = SuppressTagKind? 0 : getDecl()->getKindName();
+  const char *Kind = Policy.SuppressTagKind? 0 : getDecl()->getKindName();
   const char *ID;
   if (const IdentifierInfo *II = getDecl()->getIdentifier())
     ID = II->getName();
@@ -1577,7 +1586,8 @@ void TagType::getAsStringInternal(std::string &InnerString,
     std::string TemplateArgsStr 
       = TemplateSpecializationType::PrintTemplateArgumentList(
                                             TemplateArgs.getFlatArgumentList(),
-                                            TemplateArgs.flat_size());
+                                            TemplateArgs.flat_size(),
+                                                              Policy);
     InnerString = TemplateArgsStr + InnerString;
   }
 
@@ -1597,7 +1607,8 @@ void TagType::getAsStringInternal(std::string &InnerString,
         std::string TemplateArgsStr
           = TemplateSpecializationType::PrintTemplateArgumentList(
                                            TemplateArgs.getFlatArgumentList(),
-                                           TemplateArgs.flat_size());
+                                           TemplateArgs.flat_size(),
+                                           Policy);
         MyPart = Spec->getIdentifier()->getName() + TemplateArgsStr;
       } else if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
         if (TypedefDecl *Typedef = Tag->getTypedefForAnonDecl())

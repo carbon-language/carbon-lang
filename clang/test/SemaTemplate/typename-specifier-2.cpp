@@ -18,7 +18,7 @@ int i;
 // 'aka' telling us that we're dealing with an int**. Should we fix
 // getDesugaredType to dig through pointers and such?
 bind_metafun<add_pointer, int>::type::type ip = &i;
-bind_metafun<add_pointer, float>::type::type fp = &i; // expected-error{{incompatible type initializing 'int *', expected 'bind_metafun<struct add_pointer, float>::type::type' (aka 'float *')}}
+bind_metafun<add_pointer, float>::type::type fp = &i; // expected-error{{incompatible type initializing 'int *', expected 'bind_metafun<add_pointer, float>::type::type' (aka 'float *')}}
 
 
 template<typename T>

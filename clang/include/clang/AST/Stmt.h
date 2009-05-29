@@ -17,6 +17,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
 #include "llvm/ADT/SmallVector.h"
@@ -35,7 +36,6 @@ namespace clang {
   class SourceManager;
   class StringLiteral;
   class SwitchStmt;
-  class PrinterHelper;
   
   //===----------------------------------------------------------------------===//
   // ExprIterator - Iterators for iterating over Stmt* arrays that contain
@@ -187,8 +187,9 @@ public:
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
   void dumpPretty() const;
-  void printPretty(llvm::raw_ostream &OS, PrinterHelper* = NULL, unsigned = 0,
-                   bool NoIndent=false) const;
+  void printPretty(llvm::raw_ostream &OS, PrinterHelper* = 0, 
+                   const PrintingPolicy &Policy = PrintingPolicy(),
+                   unsigned Indentation = 0) const;
   
   /// viewAST - Visualize an AST rooted at this Stmt* using GraphViz.  Only
   ///   works on systems with GraphViz (Mac OS X) or dot+gv installed.

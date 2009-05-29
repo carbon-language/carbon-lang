@@ -66,6 +66,7 @@ namespace clang {
   class StmtIteratorBase;
   class TemplateArgument;
   class QualifiedNameType;
+  class PrintingPolicy;
 
   // Provide forward declarations for all of the *Type classes
 #define TYPE(Class, Base) class Class##Type;
@@ -180,12 +181,14 @@ public:
   bool operator!=(const QualType &RHS) const {
     return Value != RHS.Value;
   }
-  std::string getAsString() const {
+  std::string getAsString() const;
+
+  std::string getAsString(const PrintingPolicy &Policy) const {
     std::string S;
-    getAsStringInternal(S);
+    getAsStringInternal(S, Policy);
     return S;
   }
-  void getAsStringInternal(std::string &Str) const;
+  void getAsStringInternal(std::string &Str, const PrintingPolicy &Policy) const;
   
   void dump(const char *s) const;
   void dump() const;
@@ -483,7 +486,7 @@ public:
 
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   void dump() const;
-  virtual void getAsStringInternal(std::string &InnerString) const = 0;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const = 0;
   static bool classof(const Type *) { return true; }
 };
 
@@ -516,7 +519,7 @@ public:
   QualType::GCAttrTypes getObjCGCAttr() const { return GCAttrType; }
   unsigned getAddressSpace() const { return AddressSpace; }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getBaseType(), AddressSpace, GCAttrType);
@@ -573,9 +576,9 @@ public:
       TypeKind(K) {}
   
   Kind getKind() const { return TypeKind; }
-  const char *getName() const;
+  const char *getName(bool CPlusPlus) const;
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
@@ -596,7 +599,7 @@ public:
   bool isSigned() const { return Signed; }
   const char *getName() const;
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == FixedWidthInt; }
   static bool classof(const FixedWidthIntType *) { return true; }
@@ -615,7 +618,7 @@ class ComplexType : public Type, public llvm::FoldingSetNode {
 public:
   QualType getElementType() const { return ElementType; }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
     
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType());
@@ -639,7 +642,7 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 public:
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   QualType getPointeeType() const { return PointeeType; }
 
@@ -670,7 +673,7 @@ public:
   // Get the pointee type. Pointee is required to always be a function type.
   QualType getPointeeType() const { return PointeeType; }
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
     
   void Profile(llvm::FoldingSetNodeID &ID) {
       Profile(ID, getPointeeType());
@@ -720,7 +723,7 @@ class LValueReferenceType : public ReferenceType {
   }
   friend class ASTContext; // ASTContext creates these
 public:
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == LValueReference;
@@ -736,7 +739,7 @@ class RValueReferenceType : public ReferenceType {
   }
   friend class ASTContext; // ASTContext creates these
 public:
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == RValueReference;
@@ -764,7 +767,7 @@ public:
 
   const Type *getClass() const { return Class; }
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType(), getClass());
@@ -844,7 +847,7 @@ class ConstantArrayType : public ArrayType {
   friend class ASTContext;  // ASTContext creates these.
 public:
   const llvm::APInt &getSize() const { return Size; }
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getSize(), 
@@ -874,7 +877,7 @@ class IncompleteArrayType : public ArrayType {
   friend class ASTContext;  // ASTContext creates these.
 public:
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == IncompleteArray; 
@@ -928,7 +931,7 @@ public:
     return (Expr*) SizeExpr;
   }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   static bool classof(const Type *T) { 
     return T->getTypeClass() == VariableArray; 
@@ -971,7 +974,7 @@ public:
     return (Expr*) SizeExpr;
   }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   static bool classof(const Type *T) { 
     return T->getTypeClass() == DependentSizedArray; 
@@ -1010,7 +1013,7 @@ public:
   QualType getElementType() const { return ElementType; }
   unsigned getNumElements() const { return NumElements; } 
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getNumElements(), getTypeClass());
@@ -1078,7 +1081,7 @@ public:
       return unsigned(idx-1) < NumElements;
     return false;
   }
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ExtVector; 
@@ -1134,7 +1137,7 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
 public:
   // No additional state past what FunctionType provides.
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getResultType());
@@ -1237,7 +1240,7 @@ public:
     return exception_begin() + NumExceptions;
   }
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
@@ -1273,7 +1276,7 @@ public:
   /// looking through the typedefs for B will give you "const volatile A".
   QualType LookThroughTypedefs() const;
     
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
   static bool classof(const TypedefType *) { return true; }
@@ -1287,7 +1290,7 @@ class TypeOfExprType : public Type {
 public:
   Expr *getUnderlyingExpr() const { return TOExpr; }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExpr; }
   static bool classof(const TypeOfExprType *) { return true; }
@@ -1304,7 +1307,7 @@ class TypeOfType : public Type {
 public:
   QualType getUnderlyingType() const { return TOType; }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOf; }
   static bool classof(const TypeOfType *) { return true; }
@@ -1331,9 +1334,7 @@ public:
   bool isBeingDefined() const { return decl.getInt(); }
   void setBeingDefined(bool Def) { decl.setInt(Def? 1 : 0); }
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
-  void getAsStringInternal(std::string &InnerString,
-                           bool SuppressTagKind) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
@@ -1414,7 +1415,7 @@ public:
   unsigned getIndex() const { return Index; }
   IdentifierInfo *getName() const { return Name; }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Depth, Index, Name);
@@ -1475,7 +1476,8 @@ public:
   /// \brief Print a template argument list, including the '<' and '>'
   /// enclosing the template arguments.
   static std::string PrintTemplateArgumentList(const TemplateArgument *Args,
-                                               unsigned NumArgs);
+                                               unsigned NumArgs,
+                                               const PrintingPolicy &Policy);
 
   typedef const TemplateArgument * iterator;
 
@@ -1497,7 +1499,7 @@ public:
   /// \precondition @c isArgType(Arg)
   const TemplateArgument &getArg(unsigned Idx) const;
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Template, getArgs(), NumArgs);
@@ -1540,7 +1542,7 @@ public:
   /// \brief Retrieve the type named by the qualified-id.
   QualType getNamedType() const { return NamedType; }
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, NNS, NamedType);
@@ -1616,7 +1618,7 @@ public:
     return Name.dyn_cast<const TemplateSpecializationType *>();
   }
 
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, NNS, Name);
@@ -1663,7 +1665,7 @@ public:
   /// interface type, or 0 if there are none.
   inline unsigned getNumProtocols() const;
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ObjCInterface ||
            T->getTypeClass() == ObjCQualifiedInterface; 
@@ -1697,7 +1699,7 @@ public:
   qual_iterator qual_begin() const { return Protocols.begin(); }
   qual_iterator qual_end() const   { return Protocols.end(); }
                                      
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, 
@@ -1757,7 +1759,7 @@ public:
   qual_iterator qual_begin() const { return Protocols.begin(); }
   qual_iterator qual_end() const   { return Protocols.end(); }
     
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
     
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID,

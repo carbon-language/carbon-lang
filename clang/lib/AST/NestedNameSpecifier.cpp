@@ -14,6 +14,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
@@ -104,9 +105,11 @@ bool NestedNameSpecifier::isDependent() const {
 
 /// \brief Print this nested name specifier to the given output
 /// stream.
-void NestedNameSpecifier::print(llvm::raw_ostream &OS) const {
+void 
+NestedNameSpecifier::print(llvm::raw_ostream &OS, 
+                           const PrintingPolicy &Policy) const {
   if (getPrefix())
-    getPrefix()->print(OS);
+    getPrefix()->print(OS, Policy);
 
   switch (getKind()) {
   case Identifier:
@@ -134,10 +137,9 @@ void NestedNameSpecifier::print(llvm::raw_ostream &OS) const {
     if (const QualifiedNameType *QualT = dyn_cast<QualifiedNameType>(T))
       T = QualT->getNamedType().getTypePtr();
     
-    if (const TagType *TagT = dyn_cast<TagType>(T))
-      TagT->getAsStringInternal(TypeStr, true);
-    else
-      T->getAsStringInternal(TypeStr);
+    PrintingPolicy InnerPolicy(Policy);
+    InnerPolicy.SuppressTagKind = true;
+    T->getAsStringInternal(TypeStr, InnerPolicy);
     OS << TypeStr;
     break;
   }
@@ -152,5 +154,7 @@ void NestedNameSpecifier::Destroy(ASTContext &Context) {
 }
 
 void NestedNameSpecifier::dump() {
-  print(llvm::errs());
+  PrintingPolicy Policy;
+  Policy.CPlusPlus = true;
+  print(llvm::errs(), Policy);
 }

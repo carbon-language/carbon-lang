@@ -29,14 +29,20 @@ namespace  {
   class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
     llvm::raw_ostream &OS;
     unsigned IndentLevel;
-    bool NoIndent;
     clang::PrinterHelper* Helper;
+    PrintingPolicy Policy;
+
   public:
-    StmtPrinter(llvm::raw_ostream &os, PrinterHelper* helper, unsigned I=0,
-                bool noIndent=false) :
-      OS(os), IndentLevel(I), NoIndent(noIndent), Helper(helper) {}
+    StmtPrinter(llvm::raw_ostream &os, PrinterHelper* helper, 
+                const PrintingPolicy &Policy = PrintingPolicy(),
+                unsigned Indentation = 0)
+      : OS(os), IndentLevel(Indentation), Helper(helper), Policy(Policy) {}
     
-    void PrintStmt(Stmt *S, int SubIndent = 1) {
+    void PrintStmt(Stmt *S) {
+      PrintStmt(S, Policy.Indentation);
+    }
+
+    void PrintStmt(Stmt *S, int SubIndent) {
       IndentLevel += SubIndent;
       if (S && isa<Expr>(S)) {
         // If this is an expr used in a stmt context, indent and newline it.
@@ -66,10 +72,8 @@ namespace  {
     }
     
     llvm::raw_ostream &Indent(int Delta = 0) {
-      if (!NoIndent) {
-        for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
-          OS << "  ";
-      } else NoIndent = false;
+      for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
+        OS << "  ";
       return OS;
     }
     
@@ -123,7 +127,7 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
     }
     
     std::string Name = VD->getNameAsString();
-    VD->getType().getAsStringInternal(Name);
+    VD->getType().getAsStringInternal(Name, Policy);
     OS << Name;
     
     // If this is a vardecl with an initializer, emit it.
@@ -531,12 +535,12 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
 void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {  
   NamedDecl *D = Node->getDecl();
 
-  Node->getQualifier()->print(OS);
+  Node->getQualifier()->print(OS, Policy);
   OS << D->getNameAsString();
 }
 
 void StmtPrinter::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *Node) {  
-  Node->getQualifier()->print(OS);
+  Node->getQualifier()->print(OS, Policy);
   OS << Node->getDeclName().getAsString();
 }
 
@@ -1065,11 +1069,11 @@ void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   std::string TypeS;
   if (Expr *Size = E->getArraySize()) {
     llvm::raw_string_ostream s(TypeS);
-    Size->printPretty(s);
+    Size->printPretty(s, Helper, Policy);
     s.flush();
     TypeS = "[" + TypeS + "]";
   }
-  E->getAllocatedType().getAsStringInternal(TypeS);
+  E->getAllocatedType().getAsStringInternal(TypeS, Policy);
   OS << TypeS;
   if (E->isParenTypeId())
     OS << ")";
@@ -1221,7 +1225,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
          E = BD->param_end(); AI != E; ++AI) {
       if (AI != BD->param_begin()) OS << ", ";
       ParamStr = (*AI)->getNameAsString();
-      (*AI)->getType().getAsStringInternal(ParamStr);
+      (*AI)->getType().getAsStringInternal(ParamStr, Policy);
       OS << ParamStr;
     }
     
@@ -1242,17 +1246,18 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty() const {
-  printPretty(llvm::errs());
+  printPretty(llvm::errs(), 0, PrintingPolicy());
 }
 
 void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper,
-                       unsigned I, bool NoIndent) const {
+                       const PrintingPolicy &Policy,
+                       unsigned Indentation) const {
   if (this == 0) {
     OS << "<NULL>";
     return;
   }
 
-  StmtPrinter P(OS, Helper, I, NoIndent);
+  StmtPrinter P(OS, Helper, Policy, Indentation);
   P.Visit(const_cast<Stmt*>(this));
 }
 

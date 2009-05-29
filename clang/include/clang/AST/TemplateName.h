@@ -26,6 +26,7 @@ namespace clang {
 class DependentTemplateName;
 class IdentifierInfo;
 class NestedNameSpecifier;
+class PrintingPolicy;
 class QualifiedTemplateName;
 class TemplateDecl;
 
@@ -103,7 +104,8 @@ public:
   /// \param SuppressNNS if true, don't print the
   /// nested-name-specifier that precedes the template name (if it has
   /// one).
-  void print(llvm::raw_ostream &OS, bool SuppressNNS = false) const;
+  void print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
+             bool SuppressNNS = false) const;
 
   /// \brief Debugging aid that dumps the template name to standard
   /// error.

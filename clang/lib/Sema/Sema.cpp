@@ -38,7 +38,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
 
     // FIXME: Playing with std::string is really slow.
-    S = Ty.getAsString();
+    S = Ty.getAsString(Context.PrintingPolicy);
     
     // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
     // level of the sugar so that the type is more obvious to the user.
