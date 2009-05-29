@@ -261,3 +261,5 @@ void test_matrix() {
     13.0f, 14.0f, 15.0f, 16.0f 
   };
 }
+
+char badchararray[1] = { badchararray[0], "asdf" }; // expected-warning {{excess elements in array initializer}} expected-error {{initializer element is not a compile-time constant}}

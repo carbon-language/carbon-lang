@@ -529,15 +529,16 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
 
   if (Index < IList->getNumInits()) {
     // We have leftover initializers
-    if (IList->getNumInits() > 0 &&
-        IsStringInit(IList->getInit(Index), T, SemaRef.Context)) {
+    if (StructuredIndex == 1 &&
+        IsStringInit(StructuredList->getInit(0), T, SemaRef.Context)) {
       unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
-      if (SemaRef.getLangOptions().CPlusPlus)
+      if (SemaRef.getLangOptions().CPlusPlus) {
         DK = diag::err_excess_initializers_in_char_array_initializer;
+        hadError = true;
+      }
       // Special-case
       SemaRef.Diag(IList->getInit(Index)->getLocStart(), DK)
         << IList->getInit(Index)->getSourceRange();
-      hadError = true; 
     } else if (!T->isIncompleteType()) {
       // Don't complain for incomplete types, since we'll get an error
       // elsewhere
@@ -550,8 +551,10 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
         4;
 
       unsigned DK = diag::warn_excess_initializers;
-      if (SemaRef.getLangOptions().CPlusPlus)
-          DK = diag::err_excess_initializers;
+      if (SemaRef.getLangOptions().CPlusPlus) {
+        DK = diag::err_excess_initializers;
+        hadError = true;
+      }
 
       SemaRef.Diag(IList->getInit(Index)->getLocStart(), DK)
         << initKind << IList->getInit(Index)->getSourceRange();
