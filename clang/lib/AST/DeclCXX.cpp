@@ -187,6 +187,23 @@ void CXXRecordDecl::addConversionFunction(ASTContext &Context,
   Conversions.addOverload(ConvDecl);
 }
 
+const CXXDestructorDecl *
+CXXRecordDecl::getDestructor(ASTContext &Context) {
+  QualType ClassType = Context.getTypeDeclType(this);
+
+  DeclarationName Name 
+    = Context.DeclarationNames.getCXXDestructorName(ClassType);
+
+  DeclContext::lookup_iterator I, E;
+  llvm::tie(I, E) = lookup(Context, Name); 
+  assert(I != E && "Did not find a destructor!");
+  
+  const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(*I);
+  assert(++I == E && "Found more than one destructor!");
+  
+  return Dtor;
+}
+
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,

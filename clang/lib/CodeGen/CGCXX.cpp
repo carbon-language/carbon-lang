@@ -166,6 +166,14 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   EmitCXXMemberCall(D, Callee, This, ArgBeg, ArgEnd);
 }
 
+void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *D, 
+                                            CXXDtorType Type,
+                                            llvm::Value *This) {
+  llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(D, Type);
+  
+  EmitCXXMemberCall(D, Callee, This, 0, 0);
+}
+
 void 
 CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest, 
                                       const CXXConstructExpr *E) {

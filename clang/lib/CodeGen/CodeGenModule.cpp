@@ -576,6 +576,8 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());
+  else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
+    EmitCXXDestructor(DD, GD.getDtorType());
   else if (isa<FunctionDecl>(D))
     EmitGlobalFunctionDefinition(GD);
   else if (const VarDecl *VD = dyn_cast<VarDecl>(D))

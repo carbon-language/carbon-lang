@@ -37,6 +37,7 @@ namespace llvm {
 
 namespace clang {
   class ASTContext;
+  class CXXDestructorDecl;
   class Decl;
   class EnumConstantDecl;
   class FunctionDecl;
@@ -476,6 +477,9 @@ public:
                               CallExpr::const_arg_iterator ArgBeg,
                               CallExpr::const_arg_iterator ArgEnd);
 
+  void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
+                             llvm::Value *This);
+  
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

@@ -439,6 +439,9 @@ public:
     TemplateOrInstantiation = Template;
   }
 
+  /// getDestructor - Returns the destructor decl for this class.
+  const CXXDestructorDecl *getDestructor(ASTContext &Context);
+  
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.
