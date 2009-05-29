@@ -3538,6 +3538,10 @@ def : Pat<(srl_su GR16:$src, (i8 8)),
                               x86_subreg_8bit_hi)),
             x86_subreg_16bit)>,
       Requires<[In32BitMode]>;
+def : Pat<(i32 (zext (srl_su GR16:$src, (i8 8)))),
+          (MOVZX32rr8 (EXTRACT_SUBREG (COPY_TO_REGCLASS GR16:$src, GR16_ABCD),
+                                      x86_subreg_8bit_hi))>,
+      Requires<[In32BitMode]>;
 def : Pat<(and (srl_su GR32:$src, (i8 8)), (i32 255)),
           (MOVZX32rr8 (EXTRACT_SUBREG (COPY_TO_REGCLASS GR32:$src, GR32_ABCD),
                                       x86_subreg_8bit_hi))>,
