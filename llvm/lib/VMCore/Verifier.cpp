@@ -1244,8 +1244,7 @@ void Verifier::visitInstruction(Instruction &I) {
   if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
     for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
          UI != UE; ++UI)
-      Assert1(*UI != (User*)&I ||
-              !DT->dominates(&BB->getParent()->getEntryBlock(), BB),
+      Assert1(*UI != (User*)&I || !DT->isReachableFromEntry(BB),
               "Only PHI nodes may reference their own value!", &I);
   }
   
@@ -1306,67 +1305,67 @@ void Verifier::visitInstruction(Instruction &I) {
       BasicBlock *OpBlock = Op->getParent();
 
       // Check that a definition dominates all of its uses.
-      if (!isa<PHINode>(I)) {
+      if (InvokeInst *II = dyn_cast<InvokeInst>(Op)) {
         // Invoke results are only usable in the normal destination, not in the
         // exceptional destination.
-        if (InvokeInst *II = dyn_cast<InvokeInst>(Op)) {
-          OpBlock = II->getNormalDest();
-          
-          Assert2(OpBlock != II->getUnwindDest(),
-                  "No uses of invoke possible due to dominance structure!",
-                  Op, II);
-          
+        BasicBlock *NormalDest = II->getNormalDest();
+
+        Assert2(NormalDest != II->getUnwindDest(),
+                "No uses of invoke possible due to dominance structure!",
+                Op, &I);
+
+        // PHI nodes differ from other nodes because they actually "use" the
+        // value in the predecessor basic blocks they correspond to.
+        BasicBlock *UseBlock = BB;
+        if (isa<PHINode>(I))
+          UseBlock = cast<BasicBlock>(I.getOperand(i+1));
+
+        if (isa<PHINode>(I) && UseBlock == OpBlock) {
+          // Special case of a phi node in the normal destination or the unwind
+          // destination.
+          Assert2(BB == NormalDest || !DT->isReachableFromEntry(UseBlock),
+                  "Invoke result not available in the unwind destination!",
+                  Op, &I);
+        } else {
+          Assert2(DT->dominates(NormalDest, UseBlock) ||
+                  !DT->isReachableFromEntry(UseBlock),
+                  "Invoke result does not dominate all uses!", Op, &I);
+
           // If the normal successor of an invoke instruction has multiple
-          // predecessors, then the normal edge from the invoke is critical, so
-          // the invoke value can only be live if the destination block
-          // dominates all of it's predecessors (other than the invoke) or if
-          // the invoke value is only used by a phi in the successor.
-          if (!OpBlock->getSinglePredecessor() &&
-              DT->dominates(&BB->getParent()->getEntryBlock(), BB)) {
-            // The first case we allow is if the use is a PHI operand in the
-            // normal block, and if that PHI operand corresponds to the invoke's
-            // block.
-            bool Bad = true;
-            if (PHINode *PN = dyn_cast<PHINode>(&I))
-              if (PN->getParent() == OpBlock &&
-                  PN->getIncomingBlock(i/2) == Op->getParent())
-                Bad = false;
-            
+          // predecessors, then the normal edge from the invoke is critical,
+          // so the invoke value can only be live if the destination block
+          // dominates all of it's predecessors (other than the invoke).
+          if (!NormalDest->getSinglePredecessor() &&
+              DT->isReachableFromEntry(UseBlock))
             // If it is used by something non-phi, then the other case is that
-            // 'OpBlock' dominates all of its predecessors other than the
+            // 'NormalDest' dominates all of its predecessors other than the
             // invoke.  In this case, the invoke value can still be used.
-            if (Bad) {
-              Bad = false;
-              for (pred_iterator PI = pred_begin(OpBlock),
-                   E = pred_end(OpBlock); PI != E; ++PI) {
-                if (*PI != II->getParent() && !DT->dominates(OpBlock, *PI)) {
-                  Bad = true;
-                  break;
-                }
+            for (pred_iterator PI = pred_begin(NormalDest),
+                 E = pred_end(NormalDest); PI != E; ++PI)
+              if (*PI != II->getParent() && !DT->dominates(NormalDest, *PI) &&
+                  DT->isReachableFromEntry(*PI)) {
+                CheckFailed("Invoke result does not dominate all uses!", Op,&I);
+                return;
               }
-            }
-            Assert2(!Bad,
-                    "Invoke value defined on critical edge but not dead!", &I,
-                    Op);
-          }
-        } else if (OpBlock == BB) {
+        }
+      } else if (isa<PHINode>(I)) {
+        // PHI nodes are more difficult than other nodes because they actually
+        // "use" the value in the predecessor basic blocks they correspond to.
+        BasicBlock *PredBB = cast<BasicBlock>(I.getOperand(i+1));
+        Assert2(DT->dominates(OpBlock, PredBB) ||
+                !DT->isReachableFromEntry(PredBB),
+                "Instruction does not dominate all uses!", Op, &I);
+      } else {
+        if (OpBlock == BB) {
           // If they are in the same basic block, make sure that the definition
           // comes before the use.
-          Assert2(InstsInThisBlock.count(Op) ||
-                  !DT->dominates(&BB->getParent()->getEntryBlock(), BB),
+          Assert2(InstsInThisBlock.count(Op) || !DT->isReachableFromEntry(BB),
                   "Instruction does not dominate all uses!", Op, &I);
         }
 
         // Definition must dominate use unless use is unreachable!
         Assert2(InstsInThisBlock.count(Op) || DT->dominates(Op, &I) ||
-                !DT->dominates(&BB->getParent()->getEntryBlock(), BB),
-                "Instruction does not dominate all uses!", Op, &I);
-      } else {
-        // PHI nodes are more difficult than other nodes because they actually
-        // "use" the value in the predecessor basic blocks they correspond to.
-        BasicBlock *PredBB = cast<BasicBlock>(I.getOperand(i+1));
-        Assert2(DT->dominates(OpBlock, PredBB) ||
-                !DT->dominates(&BB->getParent()->getEntryBlock(), PredBB),
+                !DT->isReachableFromEntry(BB),
                 "Instruction does not dominate all uses!", Op, &I);
       }
     } else if (isa<InlineAsm>(I.getOperand(i))) {
