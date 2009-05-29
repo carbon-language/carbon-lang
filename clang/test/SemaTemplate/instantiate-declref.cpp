@@ -40,13 +40,20 @@ template struct N::Outer::Inner::InnerTemplate<INT>::UeberInner; // expected-err
 
 namespace N2 {
   struct Outer2 {
-    template<typename T>
+    template<typename T, typename U = T>
     struct Inner {
       void foo() {
         enum { K1Val = sizeof(T) } k1;
-        enum K2 { K2Val = sizeof(T)*2 };
+        enum K2 { K2Val = sizeof(T)*2 } k2a;
 
-        K2 k2 = K2Val;
+        K2 k2b = K2Val;
+
+        struct S { T x, y; } s1;
+        struct { U x, y; } s2;
+        s1.x = s2.x; // expected-error{{incompatible}}
+
+        typedef T type;
+        type t2 = s1.x;
 
         Inner i1;
         i1.foo();
@@ -57,4 +64,5 @@ namespace N2 {
   };
 }
 
-// FIXME: template struct N2::Outer2::Inner<float>;
+template struct N2::Outer2::Inner<float>;
+template struct N2::Outer2::Inner<int*, float*>; // expected-note{{instantiation}}
