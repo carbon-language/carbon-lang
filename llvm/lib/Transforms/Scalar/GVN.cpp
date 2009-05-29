@@ -1125,6 +1125,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                                 LI->getAlignment(),
                                 UnavailablePred->getTerminator());
   
+  SmallPtrSet<Instruction*, 4> &p = phiMap[LI->getPointerOperand()];
+  for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
+       I != E; ++I)
+    ValuesPerBlock.push_back(std::make_pair((*I)->getParent(), *I));
+  
   DenseMap<BasicBlock*, Value*> BlockReplValues;
   BlockReplValues.insert(ValuesPerBlock.begin(), ValuesPerBlock.end());
   BlockReplValues[UnavailablePred] = NewLoad;
