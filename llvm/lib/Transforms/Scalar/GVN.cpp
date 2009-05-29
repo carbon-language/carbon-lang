@@ -1158,8 +1158,18 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   MemDepResult dep = MD->getDependency(L);
   
   // If the value isn't available, don't do anything!
-  if (dep.isClobber())
+  if (dep.isClobber()) {
+    DEBUG(
+      // fast print dep, using operator<< on instruction would be too slow
+      DOUT << "GVN: load ";
+      WriteAsOperand(*DOUT.stream(), L);
+      Instruction *I = dep.getInst();
+      DOUT << " is clobbered by " << I->getOpcodeName() << " instruction ";
+      WriteAsOperand(*DOUT.stream(), I, false);
+      DOUT << "\n";
+    );
     return false;
+  }
 
   // If it is defined in another block, try harder.
   if (dep.isNonLocal())
