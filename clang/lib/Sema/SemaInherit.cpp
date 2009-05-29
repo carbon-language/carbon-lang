@@ -175,10 +175,12 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
     // type to see if we've found a member that meets the search
     // criteria.
     bool FoundPathToThisBase = false;
-    if (Criteria.LookupBase) {
+    switch (Criteria.Kind) {
+    case MemberLookupCriteria::LK_Base:
       FoundPathToThisBase 
         = (Context.getCanonicalType(BaseSpec->getType()) == Criteria.Base);
-    } else {
+      break;
+    case MemberLookupCriteria::LK_NamedMember:
       Paths.ScratchPath.Decls = BaseRecord->lookup(Context, Criteria.Name);
       while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
         if (isAcceptableLookupResult(*Paths.ScratchPath.Decls.first,
@@ -188,6 +190,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
         }
         ++Paths.ScratchPath.Decls.first;
       }
+      break;
     }
 
     if (FoundPathToThisBase) {
