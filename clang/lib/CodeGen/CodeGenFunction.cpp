@@ -487,6 +487,8 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
     }
     
     return SizeEntry;
+  } else if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty)) {
+    EmitVLASize(CAT->getElementType());
   } else if (const PointerType *PT = Ty->getAsPointerType())
     EmitVLASize(PT->getPointeeType());
   else {
