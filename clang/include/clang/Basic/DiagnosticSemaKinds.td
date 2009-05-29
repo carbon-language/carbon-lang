@@ -268,6 +268,11 @@ def err_deleted_non_function : Error<
 def err_deleted_decl_not_first : Error<
   "deleted definition must be first declaration">;
 
+// C++ exception specifications
+def err_distant_exception_spec : Error<
+  "exception specifications are not allowed beyond a single level "
+  "of indirection">;
+
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
   "%0 redeclared with '%1' access">;

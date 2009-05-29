@@ -682,14 +682,35 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
              .getQualifiedType(DeclType.Cls.TypeQuals));
       break;
     case DeclaratorChunk::Pointer:
+      // Verify that we're not building a pointer to pointer to function with
+      // exception specification.
+      if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
+        Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
+        D.setInvalidType(true);
+        // Build the type anyway.
+      }
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
       break;
     case DeclaratorChunk::Reference:
+      // Verify that we're not building a reference to pointer to function with
+      // exception specification.
+      if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
+        Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
+        D.setInvalidType(true);
+        // Build the type anyway.
+      }
       T = BuildReferenceType(T, DeclType.Ref.LValueRef,
                              DeclType.Ref.HasRestrict ? QualType::Restrict : 0,
                              DeclType.Loc, Name);
       break;
     case DeclaratorChunk::Array: {
+      // Verify that we're not building an array of pointers to function with
+      // exception specification.
+      if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
+        Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
+        D.setInvalidType(true);
+        // Build the type anyway.
+      }
       DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       Expr *ArraySize = static_cast<Expr*>(ATI.NumElts);
       ArrayType::ArraySizeModifier ASM;
@@ -834,6 +855,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
       break;
     }
     case DeclaratorChunk::MemberPointer:
+      // Verify that we're not building a pointer to pointer to function with
+      // exception specification.
+      if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
+        Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
+        D.setInvalidType(true);
+        // Build the type anyway.
+      }
       // The scope spec must refer to a class, or be dependent.
       DeclContext *DC = computeDeclContext(DeclType.Mem.Scope());
       QualType ClsType;
@@ -923,6 +951,24 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
     ProcessTypeAttributeList(T, Attrs);
   
   return T;
+}
+
+/// CheckDistantExceptionSpec - Check if the given type is a pointer or pointer
+/// to member to a function with an exception specification. This means that
+/// it is invalid to add another level of indirection.
+bool Sema::CheckDistantExceptionSpec(QualType T) {
+  if (const PointerType *PT = T->getAsPointerType())
+    T = PT->getPointeeType();
+  else if (const MemberPointerType *PT = T->getAsMemberPointerType())
+    T = PT->getPointeeType();
+  else
+    return false;
+
+  const FunctionProtoType *FnT = T->getAsFunctionProtoType();
+  if (!FnT)
+    return false;
+
+  return FnT->hasExceptionSpec();
 }
 
 /// ObjCGetTypeForMethodDefinition - Builds the type for a method definition
