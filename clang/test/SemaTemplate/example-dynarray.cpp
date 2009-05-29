@@ -1,6 +1,14 @@
 // RUN: clang-cc -fsyntax-only -verify %s
+#include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
+
+// Placement new requires <new> to be included, but we don't support that yet.
+void* operator new(size_t, void* ptr) throw() {
+  return ptr;
+}
+void operator delete(void*, void*) throw() {
+}
 
 template<typename T>
 class dynarray {
@@ -11,10 +19,8 @@ public:
     Start = (T*)malloc(sizeof(T) * other.size());
     Last = End = Start + other.size();
 
-    // FIXME: Use placement new, below
     for (unsigned I = 0, N = other.size(); I != N; ++I)
-      Start[I] = other[I];
-      // new (Start + I) T(other[I]);
+      new (Start + I) T(other[I]);
   }
   
   ~dynarray() {
@@ -24,11 +30,9 @@ public:
   dynarray &operator=(const dynarray &other) {
     T* NewStart = (T*)malloc(sizeof(T) * other.size());
 
-    // FIXME: Use placement new, below
     for (unsigned I = 0, N = other.size(); I != N; ++I)
-      NewStart[I] = other[I];
-      // new (Start + I) T(other[I]);
-    
+      new (Start + I) T(other[I]);
+
     // FIXME: destroy everything in Start
     free(Start);
     Start = NewStart;
@@ -49,8 +53,7 @@ public:
 
       unsigned Size = size();
       for (unsigned I = 0; I != Size; ++I)
-        // FIXME: new (NewStart + I) T(Start[I])
-        NewStart[I] = Start[I];
+        new (NewStart + I) T(Start[I]);
 
       // FIXME: destruct old values
       free(Start);
@@ -60,8 +63,7 @@ public:
       End = Start + NewCapacity;
     }
 
-    // FIXME: new (Last) T(value);
-    *Last = value;
+    new (Last) T(value);
     ++Last;
   }
 
@@ -100,8 +102,8 @@ struct Point {
 
 // FIXME: remove these when we have implicit instantiation for member
 // functions of class templates.
-template struct dynarray<int>;
-template struct dynarray<Point>;
+template class dynarray<int>;
+template class dynarray<Point>;
 
 int main() {
   dynarray<int> di;
