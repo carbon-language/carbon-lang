@@ -51,3 +51,6 @@ int f4(int a[*][*]);
 int pr2044(int b) {int (*c(void))[b];**c() = 2;} // expected-error {{variably modified type}}
 int pr2044b;
 int (*pr2044c(void))[pr2044b]; // expected-error {{variably modified type}}
+
+const int f5_ci = 1;
+void f5() { char a[][f5_ci] = {""}; }
