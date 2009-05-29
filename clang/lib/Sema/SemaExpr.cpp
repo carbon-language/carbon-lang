@@ -818,6 +818,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   //   An id-expression is type-dependent if it contains:
   //     -- a nested-name-specifier that contains a class-name that
   //        names a dependent type.
+  // FIXME: Member of the current instantiation.
   if (SS && isDependentScopeSpecifier(*SS)) {
     return Owned(new (Context) UnresolvedDeclRefExpr(Name, Context.DependentTy,
                                                      Loc, SS->getRange(), 
@@ -962,17 +963,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       if (!DType.isNull()) {
         // The pointer is type- and value-dependent if it points into something
         // dependent.
-        bool Dependent = false;
-        for (; DC; DC = DC->getParent()) {
-          // FIXME: could stop early at namespace scope.
-          if (DC->isRecord()) {
-            CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
-            if (Context.getTypeDeclType(Record)->isDependentType()) {
-              Dependent = true;
-              break;
-            }
-          }
-        }
+        bool Dependent = DC->isDependentContext();
         return Owned(BuildDeclRefExpr(D, DType, Loc, Dependent, Dependent, SS));
       }
     }
@@ -1083,6 +1074,9 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // Warn about constructs like:
     //   if (void *X = foo()) { ... } else { X }.
     // In the else block, the pointer is always false.
+
+    // FIXME: In a template instantiation, we don't have scope
+    // information to check this property.
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
       Scope *CheckS = S;
       while (CheckS) {
