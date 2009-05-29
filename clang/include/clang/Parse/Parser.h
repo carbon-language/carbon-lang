@@ -772,7 +772,8 @@ private:
   OwningExprResult ParseThrowExpression();
   // EndLoc is filled with the location of the last token of the specification.
   bool ParseExceptionSpecification(SourceLocation &EndLoc,
-                                   std::vector<TypeTy*> &Exceptions,
+                                   llvm::SmallVector<TypeTy*, 2> &Exceptions,
+                                   llvm::SmallVector<SourceRange, 2> &Ranges,
                                    bool &hasAnyExceptionSpec);
 
   //===--------------------------------------------------------------------===//
@@ -1057,7 +1058,7 @@ private:
   TPResult TryParseFunctionDeclarator();
   TPResult TryParseBracketDeclarator();
 
-  TypeResult ParseTypeName();
+  TypeResult ParseTypeName(SourceRange *Range = 0);
   void ParseBlockId();
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the attribute list.

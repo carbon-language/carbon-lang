@@ -35,6 +35,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
                                              bool hasExceptionSpec,
                                              bool hasAnyExceptionSpec,
                                              ActionBase::TypeTy **Exceptions,
+                                             SourceRange *ExceptionRanges,
                                              unsigned NumExceptions,
                                              SourceLocation Loc,
                                              Declarator &TheDeclarator) {
@@ -72,9 +73,11 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
   }
   // new[] an exception array if needed
   if (NumExceptions) {
-    I.Fun.Exceptions = new ActionBase::TypeTy*[NumExceptions];
-    memcpy(I.Fun.Exceptions, Exceptions,
-           sizeof(ActionBase::TypeTy*)*NumExceptions);
+    I.Fun.Exceptions = new DeclaratorChunk::TypeAndRange[NumExceptions];
+    for (unsigned i = 0; i != NumExceptions; ++i) {
+      I.Fun.Exceptions[i].Ty = Exceptions[i];
+      I.Fun.Exceptions[i].Range = ExceptionRanges[i];
+    }
   }
   return I;
 }

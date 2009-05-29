@@ -518,7 +518,12 @@ struct DeclaratorChunk {
       : Ident(ident), IdentLoc(iloc), Param(param), 
         DefaultArgTokens(DefArgTokens) {}
   };
-  
+
+  struct TypeAndRange {
+    ActionBase::TypeTy *Ty;
+    SourceRange Range;
+  };
+
   struct FunctionTypeInfo {
     /// hasPrototype - This is true if the function had at least one typed
     /// argument.  If the function is () or (a,b,c), then it has no prototype,
@@ -559,9 +564,10 @@ struct DeclaratorChunk {
     /// there are no arguments specified.
     ParamInfo *ArgInfo;
 
-    /// Exceptions - This is a pointer to a new[]'d array of TypeTy pointers
-    /// that contains the types in the function's exception specification.
-    ActionBase::TypeTy **Exceptions;
+    /// Exceptions - This is a pointer to a new[]'d array of TypeAndRange
+    /// objects that contain the types in the function's exception
+    /// specification and their locations.
+    TypeAndRange *Exceptions;
 
     /// freeArgs - reset the argument list to having zero arguments.  This is
     /// used in various places for error recovery.
@@ -700,6 +706,7 @@ struct DeclaratorChunk {
                                      unsigned TypeQuals, bool hasExceptionSpec,
                                      bool hasAnyExceptionSpec,
                                      ActionBase::TypeTy **Exceptions,
+                                     SourceRange *ExceptionRanges,
                                      unsigned NumExceptions, SourceLocation Loc,
                                      Declarator &TheDeclarator);
   

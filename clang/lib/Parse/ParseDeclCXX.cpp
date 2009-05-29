@@ -1191,7 +1191,10 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
 ///         type-id-list ',' type-id
 ///
 bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
-                                         std::vector<TypeTy*> &Exceptions,
+                                         llvm::SmallVector<TypeTy*, 2>
+                                             &Exceptions,
+                                         llvm::SmallVector<SourceRange, 2>
+                                             &Ranges,
                                          bool &hasAnyExceptionSpec) {
   assert(Tok.is(tok::kw_throw) && "expected throw");
   
@@ -1214,10 +1217,13 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
   }
 
   // Parse the sequence of type-ids.
+  SourceRange Range;
   while (Tok.isNot(tok::r_paren)) {
-    TypeResult Res(ParseTypeName());
-    if (!Res.isInvalid())
+    TypeResult Res(ParseTypeName(&Range));
+    if (!Res.isInvalid()) {
       Exceptions.push_back(Res.get());
+      Ranges.push_back(Range);
+    }
     if (Tok.is(tok::comma))
       ConsumeToken();
     else

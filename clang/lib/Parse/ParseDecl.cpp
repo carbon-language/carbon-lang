@@ -27,15 +27,17 @@ using namespace clang;
 ///         specifier-qualifier-list abstract-declarator[opt]
 ///
 /// Called type-id in C++.
-Action::TypeResult Parser::ParseTypeName() {
+Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
-  
+
   // Parse the abstract-declarator, if present.
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
-  
+  if (Range)
+    *Range = DeclaratorInfo.getSourceRange();
+
   if (DeclaratorInfo.isInvalidType())
     return true;
 
@@ -2273,9 +2275,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     DeclSpec DS;
     bool hasExceptionSpec = false;
     bool hasAnyExceptionSpec = false;
-    // FIXME: Does an empty vector ever allocate? Exception specifications are
-    // extremely rare, so we want something like a SmallVector<TypeTy*, 0>. :-)
-    std::vector<TypeTy*> Exceptions;
+    llvm::SmallVector<TypeTy*, 2> Exceptions;
+    llvm::SmallVector<SourceRange, 2> ExceptionRanges;
     if (getLang().CPlusPlus) {
       ParseTypeQualifierListOpt(DS, false /*no attributes*/);
       if (!DS.getSourceRange().getEnd().isInvalid())
@@ -2284,7 +2285,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // Parse exception-specification[opt].
       if (Tok.is(tok::kw_throw)) {
         hasExceptionSpec = true;
-        ParseExceptionSpecification(Loc, Exceptions, hasAnyExceptionSpec);
+        ParseExceptionSpecification(Loc, Exceptions, ExceptionRanges,
+                                    hasAnyExceptionSpec);
+        assert(Exceptions.size() == ExceptionRanges.size() &&
+               "Produced different number of exception types and ranges.");
       }
     }
 
@@ -2297,14 +2301,14 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                DS.getTypeQualifiers(),
                                                hasExceptionSpec,
                                                hasAnyExceptionSpec,
-                                               Exceptions.empty() ? 0 :
-                                                 &Exceptions[0],
+                                               Exceptions.data(),
+                                               ExceptionRanges.data(),
                                                Exceptions.size(),
                                                LParenLoc, D),
                   Loc);
     return;
-  } 
-  
+  }
+
   // Alternatively, this parameter list may be an identifier list form for a
   // K&R-style function:  void foo(a,b,c)
   if (!getLang().CPlusPlus && Tok.is(tok::identifier)) {
@@ -2445,9 +2449,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   DeclSpec DS;
   bool hasExceptionSpec = false;
   bool hasAnyExceptionSpec = false;
-  // FIXME: Does an empty vector ever allocate? Exception specifications are
-  // extremely rare, so we want something like a SmallVector<TypeTy*, 0>. :-)
-  std::vector<TypeTy*> Exceptions;
+  llvm::SmallVector<TypeTy*, 2> Exceptions;
+  llvm::SmallVector<SourceRange, 2> ExceptionRanges;
   if (getLang().CPlusPlus) {
     // Parse cv-qualifier-seq[opt].
     ParseTypeQualifierListOpt(DS, false /*no attributes*/);
@@ -2457,7 +2460,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // Parse exception-specification[opt].
     if (Tok.is(tok::kw_throw)) {
       hasExceptionSpec = true;
-      ParseExceptionSpecification(Loc, Exceptions, hasAnyExceptionSpec);
+      ParseExceptionSpecification(Loc, Exceptions, ExceptionRanges,
+                                  hasAnyExceptionSpec);
+      assert(Exceptions.size() == ExceptionRanges.size() &&
+             "Produced different number of exception types and ranges.");
     }
   }
 
@@ -2468,8 +2474,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              DS.getTypeQualifiers(),
                                              hasExceptionSpec,
                                              hasAnyExceptionSpec,
-                                             Exceptions.empty() ? 0 :
-                                               &Exceptions[0],
+                                             Exceptions.data(),
+                                             ExceptionRanges.data(),
                                              Exceptions.size(), LParenLoc, D),
                 Loc);
 }
@@ -2545,7 +2551,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
                                              SourceLocation(),
                                              &ParamInfo[0], ParamInfo.size(),
                                              /*TypeQuals*/0,
-                                             /*exception*/false, false, 0, 0,
+                                             /*exception*/false, false, 0, 0, 0,
                                              LParenLoc, D),
                 RLoc);
 }

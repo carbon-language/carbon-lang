@@ -760,13 +760,17 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
           // function takes no arguments.
           llvm::SmallVector<QualType, 4> Exceptions;
           Exceptions.reserve(FTI.NumExceptions);
-          for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei)
-            Exceptions.push_back(
-              QualType::getFromOpaquePtr(FTI.Exceptions[ei]));
+          for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
+            QualType ET = QualType::getFromOpaquePtr(FTI.Exceptions[ei].Ty);
+            // Check that the type is valid for an exception spec, and drop it
+            // if not.
+            if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
+              Exceptions.push_back(ET);
+          }
           T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, FTI.TypeQuals,
                                       FTI.hasExceptionSpec,
                                       FTI.hasAnyExceptionSpec,
-                                      FTI.NumExceptions, Exceptions.data());
+                                      Exceptions.size(), Exceptions.data());
         } else if (FTI.isVariadic) {
           // We allow a zero-parameter variadic function in C if the
           // function is marked with the "overloadable"
@@ -843,14 +847,19 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
 
         llvm::SmallVector<QualType, 4> Exceptions;
         Exceptions.reserve(FTI.NumExceptions);
-        for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei)
-          Exceptions.push_back(QualType::getFromOpaquePtr(FTI.Exceptions[ei]));
+        for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
+          QualType ET = QualType::getFromOpaquePtr(FTI.Exceptions[ei].Ty);
+          // Check that the type is valid for an exception spec, and drop it if
+          // not.
+          if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
+            Exceptions.push_back(ET);
+        }
 
         T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(),
                                     FTI.isVariadic, FTI.TypeQuals,
                                     FTI.hasExceptionSpec,
                                     FTI.hasAnyExceptionSpec,
-                                    FTI.NumExceptions, Exceptions.data());
+                                    Exceptions.size(), Exceptions.data());
       }
       break;
     }
@@ -951,6 +960,43 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
     ProcessTypeAttributeList(T, Attrs);
   
   return T;
+}
+
+/// CheckSpecifiedExceptionType - Check if the given type is valid in an
+/// exception specification. Incomplete types, or pointers to incomplete types
+/// other than void are not allowed.
+bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
+  // FIXME: This may not correctly work with the fix for core issue 437,
+  // where a class's own type is considered complete within its body.
+
+  // C++ 15.4p2: A type denoted in an exception-specification shall not denote
+  //   an incomplete type.
+  if (T->isIncompleteType())
+    return Diag(Range.getBegin(), diag::err_incomplete_in_exception_spec)
+      << Range << T << /*direct*/0;
+
+  // C++ 15.4p2: A type denoted in an exception-specification shall not denote
+  //   an incomplete type a pointer or reference to an incomplete type, other
+  //   than (cv) void*.
+  // The standard does not mention member pointers, but it has to mean them too.
+  int kind;
+  if (const PointerType* IT = T->getAsPointerType()) {
+    T = IT->getPointeeType();
+    kind = 1;
+  } else if (const MemberPointerType* IT = T->getAsMemberPointerType()) {
+    T = IT->getPointeeType();
+    kind = 2;
+  } else if (const ReferenceType* IT = T->getAsReferenceType()) {
+    T = IT->getPointeeType();
+    kind = 3;
+  } else
+    return false;
+
+  if (T->isIncompleteType() && !T->isVoidType())
+    return Diag(Range.getBegin(), diag::err_incomplete_in_exception_spec)
+      << Range << T << /*indirect*/kind;
+
+  return false;
 }
 
 /// CheckDistantExceptionSpec - Check if the given type is a pointer or pointer

@@ -1481,7 +1481,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false, 
                                                        SourceLocation(),
                                                        0, 0, 0,
-                                                       false, false, 0, 0,
+                                                       false, false, 0, 0, 0,
                                                        CaretLoc, ParamInfo),
                           CaretLoc);
 
