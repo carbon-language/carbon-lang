@@ -29,3 +29,9 @@ f(int count)
   if (a[0] != 3) {
   }
 }
+
+void g(int count) {
+  // Make sure we emit sizes correctly in some obscure cases
+  int (*a[5])[count];
+  int (*b)[][count];
+}
