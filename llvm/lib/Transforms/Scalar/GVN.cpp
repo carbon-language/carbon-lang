@@ -1165,7 +1165,10 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
       WriteAsOperand(*DOUT.stream(), L);
       Instruction *I = dep.getInst();
       DOUT << " is clobbered by " << I->getOpcodeName() << " instruction ";
-      WriteAsOperand(*DOUT.stream(), I, false);
+      if (I->getType()->isFirstClassType())
+        WriteAsOperand(*DOUT.stream(), I, false);
+      else
+        DOUT << *I;
       DOUT << "\n";
     );
     return false;
