@@ -727,7 +727,7 @@ public:
 
   /// EmitScalarExpr - Emit the computation of the specified expression of LLVM
   /// scalar type, returning the result.
-  llvm::Value *EmitScalarExpr(const Expr *E);
+  llvm::Value *EmitScalarExpr(const Expr *E , bool IgnoreResultAssign=false);
 
   /// EmitScalarConversion - Emit a conversion from the specified type to the
   /// specified destination type, both of which are LLVM scalar types.
@@ -749,7 +749,10 @@ public:
 
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.
-  ComplexPairTy EmitComplexExpr(const Expr *E);
+  ComplexPairTy EmitComplexExpr(const Expr *E, bool IgnoreReal = false,
+                                bool IgnoreImag = false,
+                                bool IgnoreRealAssign = false,
+                                bool IgnoreImagAssign = false);
 
   /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
   /// of complex type, storing into the specified Value*.

@@ -210,7 +210,7 @@ void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
-  CGF.EmitAnyExpr(E->getLHS());
+  CGF.EmitAnyExpr(E->getLHS(), 0, false, true);
   CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
 }
 
@@ -311,6 +311,7 @@ void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
+  // FIXME: Ignore result?
   // FIXME: Are initializers affected by volatile?
   if (isa<ImplicitValueInitExpr>(E)) {
     EmitNullInitializationToLValue(LV, E->getType());

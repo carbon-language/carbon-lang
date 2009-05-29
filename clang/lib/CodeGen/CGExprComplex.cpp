@@ -33,14 +33,44 @@ class VISIBILITY_HIDDEN ComplexExprEmitter
   : public StmtVisitor<ComplexExprEmitter, ComplexPairTy> {
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;
+  // True is we should ignore the value of a
+  bool IgnoreReal;
+  bool IgnoreImag;
+  // True if we should ignore the value of a=b
+  bool IgnoreRealAssign;
+  bool IgnoreImagAssign;
 public:
-  ComplexExprEmitter(CodeGenFunction &cgf) : CGF(cgf), Builder(CGF.Builder) {
+  ComplexExprEmitter(CodeGenFunction &cgf, bool ir=false, bool ii=false,
+                     bool irn=false, bool iin=false)
+    : CGF(cgf), Builder(CGF.Builder), IgnoreReal(ir), IgnoreImag(ii),
+    IgnoreRealAssign(irn), IgnoreImagAssign(iin) {
   }
 
   
   //===--------------------------------------------------------------------===//
   //                               Utilities
   //===--------------------------------------------------------------------===//
+
+  bool TestAndClearIgnoreReal() {
+    bool I = IgnoreReal;
+    IgnoreReal = false;
+    return I;
+  }
+  bool TestAndClearIgnoreImag() {
+    bool I = IgnoreImag;
+    IgnoreImag = false;
+    return I;
+  }
+  bool TestAndClearIgnoreRealAssign() {
+    bool I = IgnoreRealAssign;
+    IgnoreRealAssign = false;
+    return I;
+  }
+  bool TestAndClearIgnoreImagAssign() {
+    bool I = IgnoreImagAssign;
+    IgnoreImagAssign = false;
+    return I;
+  }
 
   /// EmitLoadOfLValue - Given an expression with complex type that represents a
   /// value l-value, this method emits the address of the l-value, then loads
@@ -111,6 +141,10 @@ public:
   }
   ComplexPairTy VisitUnaryDeref(const Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitUnaryPlus     (const UnaryOperator *E) {
+    TestAndClearIgnoreReal();
+    TestAndClearIgnoreImag();
+    TestAndClearIgnoreRealAssign();
+    TestAndClearIgnoreImagAssign();
     return Visit(E->getSubExpr());
   }
   ComplexPairTy VisitUnaryMinus    (const UnaryOperator *E);
@@ -206,19 +240,25 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
   llvm::SmallString<64> Name(SrcPtr->getNameStart(),
                              SrcPtr->getNameStart()+SrcPtr->getNameLen());
   
-  Name += ".realp";
-  llvm::Value *RealPtr = Builder.CreateStructGEP(SrcPtr, 0, Name.c_str());
+  llvm::Value *Real=0, *Imag=0;
 
-  Name.pop_back();  // .realp -> .real
-  llvm::Value *Real = Builder.CreateLoad(RealPtr, isVolatile, Name.c_str());
-  
-  Name.resize(Name.size()-4); // .real -> .imagp
-  Name += "imagp";
-  
-  llvm::Value *ImagPtr = Builder.CreateStructGEP(SrcPtr, 1, Name.c_str());
+  if (!IgnoreReal) {
+    Name += ".realp";
+    llvm::Value *RealPtr = Builder.CreateStructGEP(SrcPtr, 0, Name.c_str());
 
-  Name.pop_back();  // .imagp -> .imag
-  llvm::Value *Imag = Builder.CreateLoad(ImagPtr, isVolatile, Name.c_str());
+    Name.pop_back();  // .realp -> .real
+    Real = Builder.CreateLoad(RealPtr, isVolatile, Name.c_str());
+    Name.resize(Name.size()-4); // .real -> .imagp
+  }
+  
+  if (!IgnoreImag) {
+    Name += "imagp";
+  
+    llvm::Value *ImagPtr = Builder.CreateStructGEP(SrcPtr, 1, Name.c_str());
+
+    Name.pop_back();  // .imagp -> .imag
+    Imag = Builder.CreateLoad(ImagPtr, isVolatile, Name.c_str());
+  }
   return ComplexPairTy(Real, Imag);
 }
 
@@ -331,6 +371,10 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
 }
 
 ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+  TestAndClearIgnoreRealAssign();
+  TestAndClearIgnoreImagAssign();
   ComplexPairTy Op = Visit(E->getSubExpr());
   llvm::Value *ResR = Builder.CreateNeg(Op.first,  "neg.r");
   llvm::Value *ResI = Builder.CreateNeg(Op.second, "neg.i");
@@ -338,6 +382,10 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+  TestAndClearIgnoreRealAssign();
+  TestAndClearIgnoreImagAssign();
   // ~(a+ib) = a + i*-b
   ComplexPairTy Op = Visit(E->getSubExpr());
   llvm::Value *ResI = Builder.CreateNeg(Op.second, "conj.i");
@@ -404,6 +452,10 @@ ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
 
 ComplexExprEmitter::BinOpInfo 
 ComplexExprEmitter::EmitBinOps(const BinaryOperator *E) {
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+  TestAndClearIgnoreRealAssign();
+  TestAndClearIgnoreImagAssign();
   BinOpInfo Ops;
   Ops.LHS = Visit(E->getLHS());
   Ops.RHS = Visit(E->getRHS());
@@ -416,21 +468,28 @@ ComplexExprEmitter::EmitBinOps(const BinaryOperator *E) {
 ComplexPairTy ComplexExprEmitter::
 EmitCompoundAssign(const CompoundAssignOperator *E,
                    ComplexPairTy (ComplexExprEmitter::*Func)(const BinOpInfo&)){
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+  bool ignreal = TestAndClearIgnoreRealAssign();
+  bool ignimag = TestAndClearIgnoreImagAssign();
   QualType LHSTy = E->getLHS()->getType(), RHSTy = E->getRHS()->getType();
-  
-  // Load the LHS and RHS operands.
-  LValue LHSLV = CGF.EmitLValue(E->getLHS());
 
   BinOpInfo OpInfo;
+  
+  // Load the RHS and LHS operands.
+  // __block variables need to have the rhs evaluated first, plus this should
+  // improve codegen a little.  It is possible for the RHS to be complex or
+  // scalar.
   OpInfo.Ty = E->getComputationResultType();
-
-  // We know the LHS is a complex lvalue.
-  OpInfo.LHS = EmitLoadOfComplex(LHSLV.getAddress(), LHSLV.isVolatileQualified());
-  OpInfo.LHS = EmitComplexToComplexCast(OpInfo.LHS, LHSTy, OpInfo.Ty);
-    
-  // It is possible for the RHS to be complex or scalar.
   OpInfo.RHS = EmitCast(E->getRHS(), OpInfo.Ty);
   
+  LValue LHSLV = CGF.EmitLValue(E->getLHS());
+
+
+  // We know the LHS is a complex lvalue.
+  OpInfo.LHS=EmitLoadOfComplex(LHSLV.getAddress(),LHSLV.isVolatileQualified());
+  OpInfo.LHS=EmitComplexToComplexCast(OpInfo.LHS, LHSTy, OpInfo.Ty);
+    
   // Expand the binary operator.
   ComplexPairTy Result = (this->*Func)(OpInfo);
   
@@ -439,10 +498,19 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   
   // Store the result value into the LHS lvalue.
   EmitStoreOfComplex(Result, LHSLV.getAddress(), LHSLV.isVolatileQualified());
-  return Result;
+  // And now return the LHS
+  IgnoreReal = ignreal;
+  IgnoreImag = ignimag;
+  IgnoreRealAssign = ignreal;
+  IgnoreImagAssign = ignimag;
+  return EmitLoadOfComplex(LHSLV.getAddress(), LHSLV.isVolatileQualified());
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+  bool ignreal = TestAndClearIgnoreRealAssign();
+  bool ignimag = TestAndClearIgnoreImagAssign();
   assert(CGF.getContext().getCanonicalType(E->getLHS()->getType()) ==
          CGF.getContext().getCanonicalType(E->getRHS()->getType()) &&
          "Invalid assignment");
@@ -454,7 +522,12 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   
   // Store into it.
   EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
-  return Val;
+  // And now return the LHS
+  IgnoreReal = ignreal;
+  IgnoreImag = ignimag;
+  IgnoreRealAssign = ignreal;
+  IgnoreImagAssign = ignimag;
+  return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
@@ -465,6 +538,10 @@ ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
+  TestAndClearIgnoreReal();
+  TestAndClearIgnoreImag();
+  TestAndClearIgnoreRealAssign();
+  TestAndClearIgnoreImagAssign();
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
@@ -509,6 +586,12 @@ ComplexPairTy ComplexExprEmitter::VisitChooseExpr(ChooseExpr *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
+    bool Ignore = TestAndClearIgnoreReal();
+    (void)Ignore;
+    assert (Ignore == false && "init list ignored");
+    Ignore = TestAndClearIgnoreImag();
+    (void)Ignore;
+    assert (Ignore == false && "init list ignored");
   if (E->getNumInits())
     return Visit(E->getInit(0));
 
@@ -541,11 +624,14 @@ ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
 
 /// EmitComplexExpr - Emit the computation of the specified expression of
 /// complex type, ignoring the result.
-ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E) {
+ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E, bool IgnoreReal,
+                                               bool IgnoreImag, bool IgnoreRealAssign, bool IgnoreImagAssign) {
   assert(E && E->getType()->isAnyComplexType() &&
          "Invalid complex expression to emit");
   
-  return ComplexExprEmitter(*this).Visit(const_cast<Expr*>(E));
+  return ComplexExprEmitter(*this, IgnoreReal, IgnoreImag, IgnoreRealAssign,
+                            IgnoreImagAssign)
+    .Visit(const_cast<Expr*>(E));
 }
 
 /// EmitComplexExprIntoAddr - Emit the computation of the specified expression

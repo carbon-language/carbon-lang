@@ -51,9 +51,10 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
 RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc, 
                                     bool isAggLocVolatile, bool IgnoreResult) {
   if (!hasAggregateLLVMType(E->getType()))
-    return RValue::get(EmitScalarExpr(E));
+    return RValue::get(EmitScalarExpr(E, IgnoreResult));
   else if (E->getType()->isAnyComplexType())
-    return RValue::getComplex(EmitComplexExpr(E));
+    return RValue::getComplex(EmitComplexExpr(E, false, false,
+                                              IgnoreResult, IgnoreResult));
   
   EmitAggExpr(E, AggLoc, isAggLocVolatile, IgnoreResult);
   return RValue::getAggregate(AggLoc, isAggLocVolatile);
