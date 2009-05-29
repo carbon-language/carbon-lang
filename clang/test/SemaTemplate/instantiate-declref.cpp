@@ -55,6 +55,9 @@ namespace N2 {
         typedef T type;
         type t2 = s1.x;
 
+        typedef struct { T z; } type2;
+        type2 t3 = { s1.x };
+
         Inner i1;
         i1.foo();
         Inner<T> i2;
