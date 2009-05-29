@@ -1096,6 +1096,8 @@ public:
       Define(Defs, "__SOFTFP__");
     }
     Define(Defs, "__ARMEL__");
+    Define(Defs, "__APCS_32__");
+    Define(Defs, "__VFP_FP__");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
