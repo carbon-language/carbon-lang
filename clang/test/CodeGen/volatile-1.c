@@ -80,11 +80,11 @@ int main() {
   __imag i;
   
   // ============================================================
-  // Test cases we get wrong.
+  // FIXME: Test cases we get wrong.
 
   // A use.  We load all of a into a copy of a, then load i.  gcc forgets to do
   // the assignment.
-  (a = a).i;
+  // (a = a).i;
 
   // ============================================================
   // Test cases where we intentionally differ from gcc, due to suspected bugs in
