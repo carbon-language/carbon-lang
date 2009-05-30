@@ -17,6 +17,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Compiler.h"
 #include <cstring>
 
@@ -1320,13 +1321,13 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
       if (!S->isWide()) {
         const llvm::fltSemantics &Sem =
           Info.Ctx.getFloatTypeSemantics(E->getType());
-        char *s = (char *)malloc (S->getByteLength()+1);
-        memcpy(s,  S->getStrData(), S->getByteLength());
-        s[S->getByteLength()] = 0;
+        llvm::SmallString<16> s;
+        s.append(S->getStrData(), S->getStrData() + S->getByteLength());
+        s += '\0';
         long l;
         char *endp;
-        l = strtol(S->getStrData(), &endp, 0);
-        if (endp != (S->getStrData() + S->getByteLength()))
+        l = strtol(&s[0], &endp, 0);
+        if (endp != s.end()-1)
           return false;
         unsigned type = (unsigned int)l;;
         Result = llvm::APFloat::getNaN(Sem, false, type);
