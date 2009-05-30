@@ -98,7 +98,7 @@ namespace llvm {
       return "Mach-O Writer";
     }
 
-    typedef std::vector<unsigned char> DataBuffer;
+    typedef std::vector<uint8_t> DataBuffer;
   protected:
     /// Output stream to send the resultant object file to.
     ///

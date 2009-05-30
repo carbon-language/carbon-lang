@@ -60,7 +60,7 @@ public:
   
   /// getGOTBase - If this is managing a Global Offset Table, this method should
   /// return a pointer to its base.
-  virtual unsigned char *getGOTBase() const = 0;
+  virtual uint8_t *getGOTBase() const = 0;
   
   /// SetDlsymTable - If the JIT must be able to relocate stubs after they have
   /// been emitted, potentially because they are being copied to a process
@@ -89,8 +89,8 @@ public:
   /// emit the function, so it doesn't pass in the size.  Instead, this method
   /// is required to pass back a "valid size".  The JIT will be careful to not
   /// write more than the returned ActualSize bytes of memory. 
-  virtual unsigned char *startFunctionBody(const Function *F, 
-                                           uintptr_t &ActualSize) = 0;
+  virtual uint8_t *startFunctionBody(const Function *F, 
+                                     uintptr_t &ActualSize) = 0;
   
   /// allocateStub - This method is called by the JIT to allocate space for a
   /// function stub (used to handle limited branch displacements) while it is
@@ -100,9 +100,8 @@ public:
   /// thunk for it.  The stub should be "close" to the current function body,
   /// but should not be included in the 'actualsize' returned by
   /// startFunctionBody.
-  virtual unsigned char *allocateStub(const GlobalValue* F, unsigned StubSize,
-                                      unsigned Alignment) =0;
-  
+  virtual uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
+                                unsigned Alignment) = 0;
   
   /// endFunctionBody - This method is called when the JIT is done codegen'ing
   /// the specified function.  At this point we know the size of the JIT
@@ -110,11 +109,11 @@ public:
   /// the startFunctionBody method) and FunctionEnd which is a pointer to the 
   /// actual end of the function.  This method should mark the space allocated
   /// and remember where it is in case the client wants to deallocate it.
-  virtual void endFunctionBody(const Function *F, unsigned char *FunctionStart,
-                               unsigned char *FunctionEnd) = 0;
+  virtual void endFunctionBody(const Function *F, uint8_t *FunctionStart,
+                               uint8_t *FunctionEnd) = 0;
 
   /// allocateSpace - Allocate a memory block of the given size.
-  virtual unsigned char *allocateSpace(intptr_t Size, unsigned Alignment) = 0;
+  virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) = 0;
   
   /// deallocateMemForFunction - Free JIT memory for the specified function.
   /// This is never called when the JIT is currently emitting a function.
@@ -122,14 +121,13 @@ public:
   
   /// startExceptionTable - When we finished JITing the function, if exception
   /// handling is set, we emit the exception table.
-  virtual unsigned char* startExceptionTable(const Function* F,
-                                             uintptr_t &ActualSize) = 0;
+  virtual uint8_t* startExceptionTable(const Function* F,
+                                       uintptr_t &ActualSize) = 0;
   
   /// endExceptionTable - This method is called when the JIT is done emitting
   /// the exception table.
-  virtual void endExceptionTable(const Function *F, unsigned char *TableStart,
-                                 unsigned char *TableEnd, 
-                                 unsigned char* FrameRegister) = 0;
+  virtual void endExceptionTable(const Function *F, uint8_t *TableStart,
+                                 uint8_t *TableEnd, uint8_t* FrameRegister) = 0;
 };
 
 } // end namespace llvm.

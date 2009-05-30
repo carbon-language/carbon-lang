@@ -847,7 +847,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         break;
       }
     } else if (PC->getType()->isSingleValueType()) {
-      unsigned char *ptr = (unsigned char *)PA;
+      uint8_t *ptr = (uint8_t *)PA;
       switch (PC->getType()->getTypeID()) {
       case Type::IntegerTyID: {
         unsigned NumBits = cast<IntegerType>(PC->getType())->getBitWidth();
