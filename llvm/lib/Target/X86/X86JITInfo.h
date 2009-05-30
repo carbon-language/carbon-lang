@@ -15,6 +15,7 @@
 #define X86JITINFO_H
 
 #include "llvm/Function.h"
+#include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
@@ -37,23 +38,23 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
-    /// emitGlobalValueIndirectSym - Use the specified MachineCodeEmitter object
+    /// emitGlobalValueIndirectSym - Use the specified JITCodeEmitter object
     /// to emit an indirect symbol which contains the address of the specified
     /// ptr.
     virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
-                                             MachineCodeEmitter &MCE);
+                                             JITCodeEmitter &JCE);
 
-    /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
+    /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
     virtual void *emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE);
+                                   JITCodeEmitter &JCE);
 
-    /// emitFunctionStubAtAddr - Use the specified MachineCodeEmitter object to
+    /// emitFunctionStubAtAddr - Use the specified JITCodeEmitter object to
     /// emit a small native function that simply calls Fn. Emit the stub into
     /// the supplied buffer.
     virtual void emitFunctionStubAtAddr(const Function* F, void *Fn,
-                                        void *Buffer, MachineCodeEmitter &MCE);
+                                        void *Buffer, JITCodeEmitter &JCE);
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.

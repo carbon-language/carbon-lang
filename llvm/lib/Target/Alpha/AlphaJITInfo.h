@@ -27,7 +27,7 @@ namespace llvm {
     { useGOT = true; }
 
     virtual void *emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE);
+                                   JITCodeEmitter &JCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
     virtual void relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase);

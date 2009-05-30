@@ -18,7 +18,7 @@
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Streams.h"
@@ -141,16 +141,16 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
 }
 
 void *ARMJITInfo::emitGlobalValueIndirectSym(const GlobalValue *GV, void *Ptr,
-                                             MachineCodeEmitter &MCE) {
-  MCE.startGVStub(GV, 4, 4);
-  MCE.emitWordLE((intptr_t)Ptr);
-  void *PtrAddr = MCE.finishGVStub(GV);
+                                             JITCodeEmitter &JCE) {
+  JCE.startGVStub(GV, 4, 4);
+  JCE.emitWordLE((intptr_t)Ptr);
+  void *PtrAddr = JCE.finishGVStub(GV);
   addIndirectSymAddr(Ptr, (intptr_t)PtrAddr);
   return PtrAddr;
 }
 
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE) {
+                                   JITCodeEmitter &JCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
@@ -160,7 +160,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
       intptr_t LazyPtr = getIndirectSymAddr(Fn);
       if (!LazyPtr) {
         // In PIC mode, the function stub is loading a lazy-ptr.
-        LazyPtr= (intptr_t)emitGlobalValueIndirectSym((GlobalValue*)F, Fn, MCE);
+        LazyPtr= (intptr_t)emitGlobalValueIndirectSym((GlobalValue*)F, Fn, JCE);
         if (F)
           DOUT << "JIT: Indirect symbol emitted at [" << LazyPtr << "] for GV '"
                << F->getName() << "'\n";
@@ -168,19 +168,19 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
           DOUT << "JIT: Stub emitted at [" << LazyPtr
                << "] for external function at '" << Fn << "'\n";
       }
-      MCE.startGVStub(F, 16, 4);
-      intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
-      MCE.emitWordLE(0xe59fc004);            // ldr pc, [pc, #+4]
-      MCE.emitWordLE(0xe08fc00c);            // L_func$scv: add ip, pc, ip
-      MCE.emitWordLE(0xe59cf000);            // ldr pc, [ip]
-      MCE.emitWordLE(LazyPtr - (Addr+4+8));  // func - (L_func$scv+8)
+      JCE.startGVStub(F, 16, 4);
+      intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
+      JCE.emitWordLE(0xe59fc004);            // ldr pc, [pc, #+4]
+      JCE.emitWordLE(0xe08fc00c);            // L_func$scv: add ip, pc, ip
+      JCE.emitWordLE(0xe59cf000);            // ldr pc, [ip]
+      JCE.emitWordLE(LazyPtr - (Addr+4+8));  // func - (L_func$scv+8)
       sys::Memory::InvalidateInstructionCache((void*)Addr, 16);
     } else {
       // The stub is 8-byte size and 4-aligned.
-      MCE.startGVStub(F, 8, 4);
-      intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
-      MCE.emitWordLE(0xe51ff004);    // ldr pc, [pc, #-4]
-      MCE.emitWordLE((intptr_t)Fn);  // addr of function
+      JCE.startGVStub(F, 8, 4);
+      intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
+      JCE.emitWordLE(0xe51ff004);    // ldr pc, [pc, #-4]
+      JCE.emitWordLE((intptr_t)Fn);  // addr of function
       sys::Memory::InvalidateInstructionCache((void*)Addr, 8);
     }
   } else {
@@ -191,22 +191,22 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     //
     // Branch and link to the compilation callback.
     // The stub is 16-byte size and 4-byte aligned.
-    MCE.startGVStub(F, 16, 4);
-    intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
+    JCE.startGVStub(F, 16, 4);
+    intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
     // Save LR so the callback can determine which stub called it.
     // The compilation callback is responsible for popping this prior
     // to returning.
-    MCE.emitWordLE(0xe92d4000); // push {lr}
+    JCE.emitWordLE(0xe92d4000); // push {lr}
     // Set the return address to go back to the start of this stub.
-    MCE.emitWordLE(0xe24fe00c); // sub lr, pc, #12
+    JCE.emitWordLE(0xe24fe00c); // sub lr, pc, #12
     // Invoke the compilation callback.
-    MCE.emitWordLE(0xe51ff004); // ldr pc, [pc, #-4]
+    JCE.emitWordLE(0xe51ff004); // ldr pc, [pc, #-4]
     // The address of the compilation callback.
-    MCE.emitWordLE((intptr_t)ARMCompilationCallback);
+    JCE.emitWordLE((intptr_t)ARMCompilationCallback);
     sys::Memory::InvalidateInstructionCache((void*)Addr, 16);
   }
 
-  return MCE.finishGVStub(F);
+  return JCE.finishGVStub(F);
 }
 
 intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {

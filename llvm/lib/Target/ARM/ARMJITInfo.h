@@ -55,17 +55,17 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
-    /// emitGlobalValueIndirectSym - Use the specified MachineCodeEmitter object
+    /// emitGlobalValueIndirectSym - Use the specified JITCodeEmitter object
     /// to emit an indirect symbol which contains the address of the specified
     /// ptr.
     virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
-                                            MachineCodeEmitter &MCE);
+                                            JITCodeEmitter &JCE);
 
-    /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
+    /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
     virtual void *emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE);
+                                   JITCodeEmitter &JCE);
 
     /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
@@ -86,7 +86,7 @@ namespace llvm {
 
     /// allocateSeparateGVMemory - If true, globals should be placed in
     /// separately allocated heap memory rather than in the same
-    /// code memory allocated by MachineCodeEmitter.
+    /// code memory allocated by JITCodeEmitter.
     virtual bool allocateSeparateGVMemory() const {
 #ifdef __APPLE__
       return true;

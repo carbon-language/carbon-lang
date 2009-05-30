@@ -186,6 +186,38 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   return false;
 }
 
+bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel,
+                                      bool DumpAsm, JITCodeEmitter &JCE) {
+  // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
+  // FIXME: This should be moved to TargetJITInfo!!
+  if (Subtarget.isPPC64()) {
+    // We use PIC codegen in ppc64 mode, because otherwise we'd have to use many
+    // instructions to materialize arbitrary global variable + function +
+    // constant pool addresses.
+    setRelocationModel(Reloc::PIC_);
+    // Temporary workaround for the inability of PPC64 JIT to handle jump
+    // tables.
+    DisableJumpTables = true;      
+  } else {
+    setRelocationModel(Reloc::Static);
+  }
+  
+  // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
+  // writing?
+  Subtarget.SetJITMode();
+  
+  // Machine code emitter pass for PowerPC.
+  PM.add(createPPCJITCodeEmitterPass(*this, JCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+  }
+
+  return false;
+}
+
 bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool DumpAsm, MachineCodeEmitter &MCE) {
@@ -199,3 +231,18 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
 
   return false;
 }
+
+bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool DumpAsm, JITCodeEmitter &JCE) {
+  // Machine code emitter pass for PowerPC.
+  PM.add(createPPCJITCodeEmitterPass(*this, JCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+  }
+
+  return false;
+}
+

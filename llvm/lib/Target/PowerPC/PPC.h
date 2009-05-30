@@ -33,6 +33,8 @@ FunctionPass *createPPCAsmPrinterPass(raw_ostream &OS,
                                       CodeGenOpt::Level OptLevel, bool Verbose);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
+FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
+                                       JITCodeEmitter &MCE);
 } // end namespace llvm;
 
 // Defines symbolic names for PowerPC registers.  This defines a mapping from

@@ -16,7 +16,6 @@
 #include "PPCRelocations.h"
 #include "PPCTargetMachine.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
@@ -330,51 +329,51 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 #endif
 
 void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE) {
+                                   JITCodeEmitter &JCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)PPC32CompilationCallback && 
       Fn != (void*)(intptr_t)PPC64CompilationCallback) {
-    MCE.startGVStub(F, 7*4);
-    intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
-    MCE.emitWordBE(0);
-    MCE.emitWordBE(0);
-    MCE.emitWordBE(0);
-    MCE.emitWordBE(0);
-    MCE.emitWordBE(0);
-    MCE.emitWordBE(0);
-    MCE.emitWordBE(0);
+    JCE.startGVStub(F, 7*4);
+    intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
+    JCE.emitWordBE(0);
+    JCE.emitWordBE(0);
+    JCE.emitWordBE(0);
+    JCE.emitWordBE(0);
+    JCE.emitWordBE(0);
+    JCE.emitWordBE(0);
+    JCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
     sys::Memory::InvalidateInstructionCache((void*)Addr, 7*4);
-    return MCE.finishGVStub(F);
+    return JCE.finishGVStub(F);
   }
 
-  MCE.startGVStub(F, 10*4);
-  intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
+  JCE.startGVStub(F, 10*4);
+  intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
   if (is64Bit) {
-    MCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
-    MCE.emitWordBE(0x7d6802a6);     // mflr r11
-    MCE.emitWordBE(0xf9610060);     // std r11, 96(r1)
+    JCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
+    JCE.emitWordBE(0x7d6802a6);     // mflr r11
+    JCE.emitWordBE(0xf9610060);     // std r11, 96(r1)
   } else if (TM.getSubtargetImpl()->isMachoABI()){
-    MCE.emitWordBE(0x9421ffe0);     // stwu r1,-32(r1)
-    MCE.emitWordBE(0x7d6802a6);     // mflr r11
-    MCE.emitWordBE(0x91610028);     // stw r11, 40(r1)
+    JCE.emitWordBE(0x9421ffe0);     // stwu r1,-32(r1)
+    JCE.emitWordBE(0x7d6802a6);     // mflr r11
+    JCE.emitWordBE(0x91610028);     // stw r11, 40(r1)
   } else {
-    MCE.emitWordBE(0x9421ffe0);     // stwu r1,-32(r1)
-    MCE.emitWordBE(0x7d6802a6);     // mflr r11
-    MCE.emitWordBE(0x91610024);     // stw r11, 36(r1)
+    JCE.emitWordBE(0x9421ffe0);     // stwu r1,-32(r1)
+    JCE.emitWordBE(0x7d6802a6);     // mflr r11
+    JCE.emitWordBE(0x91610024);     // stw r11, 36(r1)
   }
-  intptr_t BranchAddr = (intptr_t)MCE.getCurrentPCValue();
-  MCE.emitWordBE(0);
-  MCE.emitWordBE(0);
-  MCE.emitWordBE(0);
-  MCE.emitWordBE(0);
-  MCE.emitWordBE(0);
-  MCE.emitWordBE(0);
-  MCE.emitWordBE(0);
+  intptr_t BranchAddr = (intptr_t)JCE.getCurrentPCValue();
+  JCE.emitWordBE(0);
+  JCE.emitWordBE(0);
+  JCE.emitWordBE(0);
+  JCE.emitWordBE(0);
+  JCE.emitWordBE(0);
+  JCE.emitWordBE(0);
+  JCE.emitWordBE(0);
   EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
   sys::Memory::InvalidateInstructionCache((void*)Addr, 10*4);
-  return MCE.finishGVStub(F);
+  return JCE.finishGVStub(F);
 }
 
 

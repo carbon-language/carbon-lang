@@ -18,7 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -546,7 +546,7 @@ static void RemoveFunctionFromSymbolTable(void *FnStart) {
 namespace {
   /// JITEmitter - The JIT implementation of the MachineCodeEmitter, which is
   /// used to output functions to memory for execution.
-  class JITEmitter : public MachineCodeEmitter {
+  class JITEmitter : public JITCodeEmitter {
     JITMemoryManager *MemMgr;
 
     // When outputting a function stub in the context of some other function, we
@@ -1289,7 +1289,7 @@ void JITEmitter::deallocateMemForFunction(Function *F) {
 
 void* JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
   if (BufferBegin)
-    return MachineCodeEmitter::allocateSpace(Size, Alignment);
+    return JITCodeEmitter::allocateSpace(Size, Alignment);
 
   // create a new memory block if there is no active one.
   // care must be taken so that BufferBegin is invalidated when a
@@ -1460,7 +1460,7 @@ uintptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
 //  Public interface to this file
 //===----------------------------------------------------------------------===//
 
-MachineCodeEmitter *JIT::createEmitter(JIT &jit, JITMemoryManager *JMM) {
+JITCodeEmitter *JIT::createEmitter(JIT &jit, JITMemoryManager *JMM) {
   return new JITEmitter(jit, JMM);
 }
 
@@ -1487,13 +1487,13 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
     return Addr;
   
   // Get a stub if the target supports it.
-  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
   JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
   return JE->getJITResolver().getFunctionStub(F);
 }
 
 void JIT::registerMachineCodeInfo(MachineCodeInfo *mc) {
-  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
   JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
 
   JE->setMachineCodeInfo(mc);
@@ -1501,7 +1501,7 @@ void JIT::registerMachineCodeInfo(MachineCodeInfo *mc) {
 
 void JIT::updateFunctionStub(Function *F) {
   // Get the empty stub we generated earlier.
-  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
   JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
   void *Stub = JE->getJITResolver().getFunctionStub(F);
 
@@ -1515,7 +1515,7 @@ void JIT::updateFunctionStub(Function *F) {
 /// that were emitted during code generation.
 ///
 void JIT::updateDlsymStubTable() {
-  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
   JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
   
   SmallVector<GlobalValue*, 8> GVs;
@@ -1553,11 +1553,11 @@ void JIT::updateDlsymStubTable() {
   JE->startGVStub(0, offset, 4);
   
   // Emit the number of records
-  MCE->emitInt32(nStubs);
+  JE->emitInt32(nStubs);
   
   // Emit the string offsets
   for (unsigned i = 0; i != nStubs; ++i)
-    MCE->emitInt32(Offsets[i]);
+    JE->emitInt32(Offsets[i]);
   
   // Emit the pointers.  Verify that they are at least 2-byte aligned, and set
   // the low bit to 0 == GV, 1 == Function, so that the client code doing the
@@ -1571,26 +1571,26 @@ void JIT::updateDlsymStubTable() {
       Ptr |= (intptr_t)1;
            
     if (sizeof(Ptr) == 8)
-      MCE->emitInt64(Ptr);
+      JE->emitInt64(Ptr);
     else
-      MCE->emitInt32(Ptr);
+      JE->emitInt32(Ptr);
   }
   for (StringMapConstIterator<void*> i = ExtFns.begin(), e = ExtFns.end(); 
        i != e; ++i) {
     intptr_t Ptr = (intptr_t)i->second | 1;
 
     if (sizeof(Ptr) == 8)
-      MCE->emitInt64(Ptr);
+      JE->emitInt64(Ptr);
     else
-      MCE->emitInt32(Ptr);
+      JE->emitInt32(Ptr);
   }
   
   // Emit the strings.
   for (unsigned i = 0; i != GVs.size(); ++i)
-    MCE->emitString(GVs[i]->getName());
+    JE->emitString(GVs[i]->getName());
   for (StringMapConstIterator<void*> i = ExtFns.begin(), e = ExtFns.end(); 
        i != e; ++i)
-    MCE->emitString(i->first());
+    JE->emitString(i->first());
   
   // Tell the JIT memory manager where it is.  The JIT Memory Manager will
   // deallocate space for the old one, if one existed.
@@ -1609,7 +1609,7 @@ void JIT::freeMachineCodeForFunction(Function *F) {
     RemoveFunctionFromSymbolTable(OldPtr);
 
   // Free the actual memory for the function body and related stuff.
-  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
-  cast<JITEmitter>(MCE)->deallocateMemForFunction(F);
+  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
+  cast<JITEmitter>(JCE)->deallocateMemForFunction(F);
 }
 

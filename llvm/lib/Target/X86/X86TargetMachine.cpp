@@ -248,11 +248,54 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   return false;
 }
 
+bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel,
+                                      bool DumpAsm, JITCodeEmitter &JCE) {
+  // FIXME: Move this to TargetJITInfo!
+  // On Darwin, do not override 64-bit setting made in X86TargetMachine().
+  if (DefRelocModel == Reloc::Default && 
+        (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit()))
+    setRelocationModel(Reloc::Static);
+  
+  // 64-bit JIT places everything in the same buffer except external functions.
+  // On Darwin, use small code model but hack the call instruction for 
+  // externals.  Elsewhere, do not assume globals are in the lower 4G.
+  if (Subtarget.is64Bit()) {
+    if (Subtarget.isTargetDarwin())
+      setCodeModel(CodeModel::Small);
+    else
+      setCodeModel(CodeModel::Large);
+  }
+
+  PM.add(createX86JITCodeEmitterPass(*this, JCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+  }
+
+  return false;
+}
+
 bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool DumpAsm,
                                             MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+  }
+
+  return false;
+}
+
+bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool DumpAsm,
+                                            JITCodeEmitter &JCE) {
+  PM.add(createX86JITCodeEmitterPass(*this, JCE));
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)

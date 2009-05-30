@@ -103,9 +103,24 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
     PM.add(createAlphaCodePrinterPass(errs(), *this, OptLevel, true));
   return false;
 }
+bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                        CodeGenOpt::Level OptLevel,
+                                        bool DumpAsm, JITCodeEmitter &JCE) {
+  PM.add(createAlphaJITCodeEmitterPass(*this, JCE));
+  if (DumpAsm)
+    PM.add(createAlphaCodePrinterPass(errs(), *this, OptLevel, true));
+  return false;
+}
 bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               CodeGenOpt::Level OptLevel,
                                               bool DumpAsm,
                                               MachineCodeEmitter &MCE) {
   return addCodeEmitter(PM, OptLevel, DumpAsm, MCE);
 }
+bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                              CodeGenOpt::Level OptLevel,
+                                              bool DumpAsm,
+                                              JITCodeEmitter &JCE) {
+  return addCodeEmitter(PM, OptLevel, DumpAsm, JCE);
+}
+

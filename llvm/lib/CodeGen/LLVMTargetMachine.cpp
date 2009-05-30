@@ -109,6 +109,23 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   return false; // success!
 }
 
+/// addPassesToEmitFileFinish - If the passes to emit the specified file had to
+/// be split up (e.g., to add an object writer pass), this method can be used to
+/// finish up adding passes to emit the file, if necessary.
+bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
+                                                  JITCodeEmitter *JCE,
+                                                  CodeGenOpt::Level OptLevel) {
+  if (JCE)
+    addSimpleCodeEmitter(PM, OptLevel, PrintEmittedAsm, *JCE);
+
+  PM.add(createGCInfoDeleter());
+
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
+  return false; // success!
+}
+
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
 /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
 /// actually outputting the machine code and resolving things like the address
@@ -126,6 +143,32 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   addCodeEmitter(PM, OptLevel, PrintEmittedAsm, MCE);
+
+  PM.add(createGCInfoDeleter());
+
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
+  return false; // success!
+}
+
+/// addPassesToEmitMachineCode - Add passes to the specified pass manager to
+/// get machine code emitted.  This uses a MachineCodeEmitter object to handle
+/// actually outputting the machine code and resolving things like the address
+/// of functions.  This method should returns true if machine code emission is
+/// not supported.
+///
+bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
+                                                   JITCodeEmitter &JCE,
+                                                   CodeGenOpt::Level OptLevel) {
+  // Add common CodeGen passes.
+  if (addCommonCodeGenPasses(PM, OptLevel))
+    return true;
+
+  if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
+  addCodeEmitter(PM, OptLevel, PrintEmittedAsm, JCE);
 
   PM.add(createGCInfoDeleter());
 

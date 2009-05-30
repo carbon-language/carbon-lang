@@ -65,10 +65,16 @@ public:
                                   bool Verbose, raw_ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               bool DumpAsm, MachineCodeEmitter &MCE);
+  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
+                              bool DumpAsm, JITCodeEmitter &JCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
                                     MachineCodeEmitter &MCE);
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
+                                    CodeGenOpt::Level OptLevel,
+                                    bool DumpAsm,
+                                    JITCodeEmitter &JCE);
 };
 
 } // end namespace llvm

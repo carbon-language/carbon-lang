@@ -23,6 +23,7 @@ namespace llvm {
 class ARMTargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
+class JITCodeEmitter;
 class raw_ostream;
 
 // Enums corresponding to ARM condition codes
@@ -96,6 +97,17 @@ FunctionPass *createARMCodePrinterPass(raw_ostream &O,
                                        bool Verbose);
 FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
+
+FunctionPass *createARMCodeEmitterPass(
+    ARMTargetMachine &TM, MachineCodeEmitter &MCE);
+/*
+template< class machineCodeEmitter>
+FunctionPass *createARMCodeEmitterPass(
+    ARMTargetMachine &TM, machineCodeEmitter &MCE);
+*/
+FunctionPass *createARMJITCodeEmitterPass(
+    ARMTargetMachine &TM, JITCodeEmitter &JCE);
+
 FunctionPass *createARMLoadStoreOptimizationPass();
 FunctionPass *createARMConstantIslandPass();
 

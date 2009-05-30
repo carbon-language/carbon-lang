@@ -16,7 +16,7 @@
 #include "JITDwarfEmitter.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -34,7 +34,7 @@ JITDwarfEmitter::JITDwarfEmitter(JIT& theJit) : Jit(theJit) {}
 
 
 unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F, 
-                                               MachineCodeEmitter& mce,
+                                               JITCodeEmitter& jce,
                                                unsigned char* StartFunction,
                                                unsigned char* EndFunction) {
   const TargetMachine& TM = F.getTarget();
@@ -42,7 +42,7 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
   needsIndirectEncoding = TM.getTargetAsmInfo()->getNeedsIndirectEncoding();
   stackGrowthDirection = TM.getFrameInfo()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
-  MCE = &mce;
+  JCE = &jce;
   
   unsigned char* ExceptionTable = EmitExceptionTable(&F, StartFunction,
                                                      EndFunction);
@@ -81,15 +81,15 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     }
     
     intptr_t LabelPtr = 0;
-    if (LabelID) LabelPtr = MCE->getLabelAddress(LabelID);
+    if (LabelID) LabelPtr = JCE->getLabelAddress(LabelID);
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();
     
     // Advance row if new location.
     if (BaseLabelPtr && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
-      MCE->emitByte(dwarf::DW_CFA_advance_loc4);
-      MCE->emitInt32(LabelPtr - BaseLabelPtr);
+      JCE->emitByte(dwarf::DW_CFA_advance_loc4);
+      JCE->emitInt32(LabelPtr - BaseLabelPtr);
       
       BaseLabelID = LabelID; 
       BaseLabelPtr = LabelPtr;
@@ -100,23 +100,23 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
       if (!Src.isReg()) {
         if (Src.getReg() == MachineLocation::VirtualFP) {
-          MCE->emitByte(dwarf::DW_CFA_def_cfa_offset);
+          JCE->emitByte(dwarf::DW_CFA_def_cfa_offset);
         } else {
-          MCE->emitByte(dwarf::DW_CFA_def_cfa);
-          MCE->emitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), true));
+          JCE->emitByte(dwarf::DW_CFA_def_cfa);
+          JCE->emitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), true));
         }
         
         int Offset = -Src.getOffset();
         
-        MCE->emitULEB128Bytes(Offset);
+        JCE->emitULEB128Bytes(Offset);
       } else {
         assert(0 && "Machine move no supported yet.");
       }
     } else if (Src.isReg() &&
       Src.getReg() == MachineLocation::VirtualFP) {
       if (Dst.isReg()) {
-        MCE->emitByte(dwarf::DW_CFA_def_cfa_register);
-        MCE->emitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), true));
+        JCE->emitByte(dwarf::DW_CFA_def_cfa_register);
+        JCE->emitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), true));
       } else {
         assert(0 && "Machine move no supported yet.");
       }
@@ -125,16 +125,16 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
       int Offset = Dst.getOffset() / stackGrowth;
       
       if (Offset < 0) {
-        MCE->emitByte(dwarf::DW_CFA_offset_extended_sf);
-        MCE->emitULEB128Bytes(Reg);
-        MCE->emitSLEB128Bytes(Offset);
+        JCE->emitByte(dwarf::DW_CFA_offset_extended_sf);
+        JCE->emitULEB128Bytes(Reg);
+        JCE->emitSLEB128Bytes(Offset);
       } else if (Reg < 64) {
-        MCE->emitByte(dwarf::DW_CFA_offset + Reg);
-        MCE->emitULEB128Bytes(Offset);
+        JCE->emitByte(dwarf::DW_CFA_offset + Reg);
+        JCE->emitULEB128Bytes(Offset);
       } else {
-        MCE->emitByte(dwarf::DW_CFA_offset_extended);
-        MCE->emitULEB128Bytes(Reg);
-        MCE->emitULEB128Bytes(Offset);
+        JCE->emitByte(dwarf::DW_CFA_offset_extended);
+        JCE->emitULEB128Bytes(Reg);
+        JCE->emitULEB128Bytes(Offset);
       }
     }
   }
@@ -403,24 +403,24 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   // Begin the exception table.
-  MCE->emitAlignment(4);
+  JCE->emitAlignment(4);
   for (unsigned i = 0; i != SizeAlign; ++i) {
-    MCE->emitByte(0);
+    JCE->emitByte(0);
     // Asm->EOL("Padding");
   }
   
-  unsigned char* DwarfExceptionTable = (unsigned char*)MCE->getCurrentPCValue();
+  unsigned char* DwarfExceptionTable = (unsigned char*)JCE->getCurrentPCValue();
 
   // Emit the header.
-  MCE->emitByte(dwarf::DW_EH_PE_omit);
+  JCE->emitByte(dwarf::DW_EH_PE_omit);
   // Asm->EOL("LPStart format (DW_EH_PE_omit)");
-  MCE->emitByte(dwarf::DW_EH_PE_absptr);
+  JCE->emitByte(dwarf::DW_EH_PE_absptr);
   // Asm->EOL("TType format (DW_EH_PE_absptr)");
-  MCE->emitULEB128Bytes(TypeOffset);
+  JCE->emitULEB128Bytes(TypeOffset);
   // Asm->EOL("TType base offset");
-  MCE->emitByte(dwarf::DW_EH_PE_udata4);
+  JCE->emitByte(dwarf::DW_EH_PE_udata4);
   // Asm->EOL("Call site format (DW_EH_PE_udata4)");
-  MCE->emitULEB128Bytes(SizeSites);
+  JCE->emitULEB128Bytes(SizeSites);
   // Asm->EOL("Call-site table length");
 
   // Emit the landing pad site information.
@@ -431,32 +431,32 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
 
     if (!S.BeginLabel) {
       BeginLabelPtr = (intptr_t)StartFunction;
-      MCE->emitInt32(0);
+      JCE->emitInt32(0);
     } else {
-      BeginLabelPtr = MCE->getLabelAddress(S.BeginLabel);
-      MCE->emitInt32(BeginLabelPtr - (intptr_t)StartFunction);
+      BeginLabelPtr = JCE->getLabelAddress(S.BeginLabel);
+      JCE->emitInt32(BeginLabelPtr - (intptr_t)StartFunction);
     }
 
     // Asm->EOL("Region start");
 
     if (!S.EndLabel) {
       EndLabelPtr = (intptr_t)EndFunction;
-      MCE->emitInt32((intptr_t)EndFunction - BeginLabelPtr);
+      JCE->emitInt32((intptr_t)EndFunction - BeginLabelPtr);
     } else {
-      EndLabelPtr = MCE->getLabelAddress(S.EndLabel);
-      MCE->emitInt32(EndLabelPtr - BeginLabelPtr);
+      EndLabelPtr = JCE->getLabelAddress(S.EndLabel);
+      JCE->emitInt32(EndLabelPtr - BeginLabelPtr);
     }
     //Asm->EOL("Region length");
 
     if (!S.PadLabel) {
-      MCE->emitInt32(0);
+      JCE->emitInt32(0);
     } else {
-      unsigned PadLabelPtr = MCE->getLabelAddress(S.PadLabel);
-      MCE->emitInt32(PadLabelPtr - (intptr_t)StartFunction);
+      unsigned PadLabelPtr = JCE->getLabelAddress(S.PadLabel);
+      JCE->emitInt32(PadLabelPtr - (intptr_t)StartFunction);
     }
     // Asm->EOL("Landing pad");
 
-    MCE->emitULEB128Bytes(S.Action);
+    JCE->emitULEB128Bytes(S.Action);
     // Asm->EOL("Action");
   }
 
@@ -464,9 +464,9 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   for (unsigned I = 0, N = Actions.size(); I != N; ++I) {
     ActionEntry &Action = Actions[I];
 
-    MCE->emitSLEB128Bytes(Action.ValueForTypeID);
+    JCE->emitSLEB128Bytes(Action.ValueForTypeID);
     //Asm->EOL("TypeInfo index");
-    MCE->emitSLEB128Bytes(Action.NextAction);
+    JCE->emitSLEB128Bytes(Action.NextAction);
     //Asm->EOL("Next action");
   }
 
@@ -476,15 +476,15 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
     
     if (GV) {
       if (TD->getPointerSize() == sizeof(int32_t)) {
-        MCE->emitInt32((intptr_t)Jit.getOrEmitGlobalVariable(GV));
+        JCE->emitInt32((intptr_t)Jit.getOrEmitGlobalVariable(GV));
       } else {
-        MCE->emitInt64((intptr_t)Jit.getOrEmitGlobalVariable(GV));
+        JCE->emitInt64((intptr_t)Jit.getOrEmitGlobalVariable(GV));
       }
     } else {
       if (TD->getPointerSize() == sizeof(int32_t))
-        MCE->emitInt32(0);
+        JCE->emitInt32(0);
       else
-        MCE->emitInt64(0);
+        JCE->emitInt64(0);
     }
     // Asm->EOL("TypeInfo");
   }
@@ -492,11 +492,11 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   // Emit the filter typeids.
   for (unsigned j = 0, M = FilterIds.size(); j < M; ++j) {
     unsigned TypeID = FilterIds[j];
-    MCE->emitULEB128Bytes(TypeID);
+    JCE->emitULEB128Bytes(TypeID);
     //Asm->EOL("Filter TypeInfo index");
   }
   
-  MCE->emitAlignment(4);
+  JCE->emitAlignment(4);
 
   return DwarfExceptionTable;
 }
@@ -507,48 +507,48 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
           PointerSize : -PointerSize;
   
-  unsigned char* StartCommonPtr = (unsigned char*)MCE->getCurrentPCValue();
+  unsigned char* StartCommonPtr = (unsigned char*)JCE->getCurrentPCValue();
   // EH Common Frame header
-  MCE->allocateSpace(4, 0);
-  unsigned char* FrameCommonBeginPtr = (unsigned char*)MCE->getCurrentPCValue();
-  MCE->emitInt32((int)0);
-  MCE->emitByte(dwarf::DW_CIE_VERSION);
-  MCE->emitString(Personality ? "zPLR" : "zR");
-  MCE->emitULEB128Bytes(1);
-  MCE->emitSLEB128Bytes(stackGrowth);
-  MCE->emitByte(RI->getDwarfRegNum(RI->getRARegister(), true));
+  JCE->allocateSpace(4, 0);
+  unsigned char* FrameCommonBeginPtr = (unsigned char*)JCE->getCurrentPCValue();
+  JCE->emitInt32((int)0);
+  JCE->emitByte(dwarf::DW_CIE_VERSION);
+  JCE->emitString(Personality ? "zPLR" : "zR");
+  JCE->emitULEB128Bytes(1);
+  JCE->emitSLEB128Bytes(stackGrowth);
+  JCE->emitByte(RI->getDwarfRegNum(RI->getRARegister(), true));
   
   if (Personality) {
     // Augmentation Size: 3 small ULEBs of one byte each, and the personality
     // function which size is PointerSize.
-    MCE->emitULEB128Bytes(3 + PointerSize); 
+    JCE->emitULEB128Bytes(3 + PointerSize); 
     
     // We set the encoding of the personality as direct encoding because we use
     // the function pointer. The encoding is not relative because the current
     // PC value may be bigger than the personality function pointer.
     if (PointerSize == 4) {
-      MCE->emitByte(dwarf::DW_EH_PE_sdata4); 
-      MCE->emitInt32(((intptr_t)Jit.getPointerToGlobal(Personality)));
+      JCE->emitByte(dwarf::DW_EH_PE_sdata4); 
+      JCE->emitInt32(((intptr_t)Jit.getPointerToGlobal(Personality)));
     } else {
-      MCE->emitByte(dwarf::DW_EH_PE_sdata8);
-      MCE->emitInt64(((intptr_t)Jit.getPointerToGlobal(Personality)));
+      JCE->emitByte(dwarf::DW_EH_PE_sdata8);
+      JCE->emitInt64(((intptr_t)Jit.getPointerToGlobal(Personality)));
     }
     
-    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
       
   } else {
-    MCE->emitULEB128Bytes(1);
-    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    JCE->emitULEB128Bytes(1);
+    JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
   }
 
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
   EmitFrameMoves(0, Moves);
-  MCE->emitAlignment(PointerSize);
+  JCE->emitAlignment(PointerSize);
   
-  MCE->emitInt32At((uintptr_t*)StartCommonPtr, 
-              (uintptr_t)((unsigned char*)MCE->getCurrentPCValue() - 
+  JCE->emitInt32At((uintptr_t*)StartCommonPtr, 
+              (uintptr_t)((unsigned char*)JCE->getCurrentPCValue() - 
                           FrameCommonBeginPtr));
 
   return StartCommonPtr;
@@ -564,46 +564,46 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
   unsigned PointerSize = TD->getPointerSize();
   
   // EH frame header.
-  unsigned char* StartEHPtr = (unsigned char*)MCE->getCurrentPCValue();
-  MCE->allocateSpace(4, 0);
-  unsigned char* FrameBeginPtr = (unsigned char*)MCE->getCurrentPCValue();
+  unsigned char* StartEHPtr = (unsigned char*)JCE->getCurrentPCValue();
+  JCE->allocateSpace(4, 0);
+  unsigned char* FrameBeginPtr = (unsigned char*)JCE->getCurrentPCValue();
   // FDE CIE Offset
-  MCE->emitInt32(FrameBeginPtr - StartCommonPtr);
-  MCE->emitInt32(StartFunction - (unsigned char*)MCE->getCurrentPCValue());
-  MCE->emitInt32(EndFunction - StartFunction);
+  JCE->emitInt32(FrameBeginPtr - StartCommonPtr);
+  JCE->emitInt32(StartFunction - (unsigned char*)JCE->getCurrentPCValue());
+  JCE->emitInt32(EndFunction - StartFunction);
 
   // If there is a personality and landing pads then point to the language
   // specific data area in the exception table.
   if (MMI->getPersonalityIndex()) {
-    MCE->emitULEB128Bytes(4);
+    JCE->emitULEB128Bytes(4);
         
     if (!MMI->getLandingPads().empty()) {
-      MCE->emitInt32(ExceptionTable - (unsigned char*)MCE->getCurrentPCValue());
+      JCE->emitInt32(ExceptionTable - (unsigned char*)JCE->getCurrentPCValue());
     } else {
-      MCE->emitInt32((int)0);
+      JCE->emitInt32((int)0);
     }
   } else {
-    MCE->emitULEB128Bytes(0);
+    JCE->emitULEB128Bytes(0);
   }
       
   // Indicate locations of function specific  callee saved registers in
   // frame.
   EmitFrameMoves((intptr_t)StartFunction, MMI->getFrameMoves());
       
-  MCE->emitAlignment(PointerSize);
+  JCE->emitAlignment(PointerSize);
   
   // Indicate the size of the table
-  MCE->emitInt32At((uintptr_t*)StartEHPtr, 
-              (uintptr_t)((unsigned char*)MCE->getCurrentPCValue() - 
+  JCE->emitInt32At((uintptr_t*)StartEHPtr, 
+              (uintptr_t)((unsigned char*)JCE->getCurrentPCValue() - 
                           StartEHPtr));
   
   // Double zeroes for the unwind runtime
   if (PointerSize == 8) {
-    MCE->emitInt64(0);
-    MCE->emitInt64(0);
+    JCE->emitInt64(0);
+    JCE->emitInt64(0);
   } else {
-    MCE->emitInt32(0);
-    MCE->emitInt32(0);
+    JCE->emitInt32(0);
+    JCE->emitInt32(0);
   }
 
   
@@ -611,7 +611,7 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
 }
 
 unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
-                                         MachineCodeEmitter& mce,
+                                         JITCodeEmitter& jce,
                                          unsigned char* StartFunction,
                                          unsigned char* EndFunction) {
   const TargetMachine& TM = F.getTarget();
@@ -619,7 +619,7 @@ unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
   needsIndirectEncoding = TM.getTargetAsmInfo()->getNeedsIndirectEncoding();
   stackGrowthDirection = TM.getFrameInfo()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
-  MCE = &mce;
+  JCE = &jce;
   unsigned FinalSize = 0;
   
   FinalSize += GetExceptionTableSizeInBytes(&F);
@@ -733,7 +733,7 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
     }
     
     intptr_t LabelPtr = 0;
-    if (LabelID) LabelPtr = MCE->getLabelAddress(LabelID);
+    if (LabelID) LabelPtr = JCE->getLabelAddress(LabelID);
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();

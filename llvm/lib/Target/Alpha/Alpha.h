@@ -32,6 +32,8 @@ namespace llvm {
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);
   FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
                                            MachineCodeEmitter &MCE);
+  FunctionPass *createAlphaJITCodeEmitterPass(AlphaTargetMachine &TM,
+                                           JITCodeEmitter &JCE);
   FunctionPass *createAlphaLLRPPass(AlphaTargetMachine &tm);
   FunctionPass *createAlphaBranchSelectionPass();
 

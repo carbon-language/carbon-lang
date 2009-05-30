@@ -19,7 +19,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -214,8 +214,8 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
 
   jitstate = new JITState(MP);
 
-  // Initialize MCE
-  MCE = createEmitter(*this, JMM);
+  // Initialize JCE
+  JCE = createEmitter(*this, JMM);
 
   // Add target data
   MutexGuard locked(lock);
@@ -224,7 +224,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
-  if (TM.addPassesToEmitMachineCode(PM, *MCE, OptLevel)) {
+  if (TM.addPassesToEmitMachineCode(PM, *JCE, OptLevel)) {
     cerr << "Target does not support machine code emission!\n";
     abort();
   }
@@ -253,7 +253,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
 
 JIT::~JIT() {
   delete jitstate;
-  delete MCE;
+  delete JCE;
   delete &TM;
 }
 
@@ -273,7 +273,7 @@ void JIT::addModuleProvider(ModuleProvider *MP) {
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *MCE, CodeGenOpt::Default)) {
+    if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
       cerr << "Target does not support machine code emission!\n";
       abort();
     }
@@ -306,7 +306,7 @@ Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
     
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *MCE, CodeGenOpt::Default)) {
+    if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
       cerr << "Target does not support machine code emission!\n";
       abort();
     }
@@ -338,7 +338,7 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
     
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *MCE, CodeGenOpt::Default)) {
+    if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
       cerr << "Target does not support machine code emission!\n";
       abort();
     }
@@ -654,7 +654,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
         Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
       }
     } else {
-      Ptr = MCE->allocateSpace(S, A);
+      Ptr = JCE->allocateSpace(S, A);
     }
     addGlobalMapping(GV, Ptr);
     EmitGlobalVariable(GV);

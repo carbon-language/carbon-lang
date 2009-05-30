@@ -51,7 +51,7 @@ public:
 class JIT : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
-  MachineCodeEmitter *MCE; // MCE object
+  JITCodeEmitter *JCE; // JCE object
 
   JITState *jitstate;
 
@@ -147,7 +147,7 @@ public:
   void addPendingFunction(Function *F);
   
   /// getCodeEmitter - Return the code emitter this JIT is emitting into.
-  MachineCodeEmitter *getCodeEmitter() const { return MCE; }
+  JITCodeEmitter *getCodeEmitter() const { return JCE; }
   
   static ExecutionEngine *createJIT(ModuleProvider *MP, std::string *Err,
                                     JITMemoryManager *JMM,
@@ -158,7 +158,7 @@ public:
   void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0);
 
 private:
-  static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
+  static JITCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
   void registerMachineCodeInfo(MachineCodeInfo *MCI);
   void runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked);
   void updateFunctionStub(Function *F);

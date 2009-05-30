@@ -16,7 +16,6 @@
 #include "X86Relocations.h"
 #include "X86Subtarget.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Compiler.h"
 #include <cstdlib>
@@ -430,20 +429,20 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 }
 
 void *X86JITInfo::emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
-                                             MachineCodeEmitter &MCE) {
+                                             JITCodeEmitter &JCE) {
 #if defined (X86_64_JIT)
-  MCE.startGVStub(GV, 8, 8);
-  MCE.emitWordLE((unsigned)(intptr_t)ptr);
-  MCE.emitWordLE((unsigned)(((intptr_t)ptr) >> 32));
+  JCE.startGVStub(GV, 8, 8);
+  JCE.emitWordLE((unsigned)(intptr_t)ptr);
+  JCE.emitWordLE((unsigned)(((intptr_t)ptr) >> 32));
 #else
-  MCE.startGVStub(GV, 4, 4);
-  MCE.emitWordLE((intptr_t)ptr);
+  JCE.startGVStub(GV, 4, 4);
+  JCE.emitWordLE((intptr_t)ptr);
 #endif
-  return MCE.finishGVStub(GV);
+  return JCE.finishGVStub(GV);
 }
 
 void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE) {
+                                   JITCodeEmitter &JCE) {
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
 #if defined (X86_32_JIT) && !defined (_MSC_VER)
@@ -454,55 +453,55 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
 #endif
   if (NotCC) {
 #if defined (X86_64_JIT)
-    MCE.startGVStub(F, 13, 4);
-    MCE.emitByte(0x49);          // REX prefix
-    MCE.emitByte(0xB8+2);        // movabsq r10
-    MCE.emitWordLE((unsigned)(intptr_t)Fn);
-    MCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
-    MCE.emitByte(0x41);          // REX prefix
-    MCE.emitByte(0xFF);          // jmpq *r10
-    MCE.emitByte(2 | (4 << 3) | (3 << 6));
+    JCE.startGVStub(F, 13, 4);
+    JCE.emitByte(0x49);          // REX prefix
+    JCE.emitByte(0xB8+2);        // movabsq r10
+    JCE.emitWordLE((unsigned)(intptr_t)Fn);
+    JCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
+    JCE.emitByte(0x41);          // REX prefix
+    JCE.emitByte(0xFF);          // jmpq *r10
+    JCE.emitByte(2 | (4 << 3) | (3 << 6));
 #else
-    MCE.startGVStub(F, 5, 4);
-    MCE.emitByte(0xE9);
-    MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+    JCE.startGVStub(F, 5, 4);
+    JCE.emitByte(0xE9);
+    JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
 #endif
-    return MCE.finishGVStub(F);
+    return JCE.finishGVStub(F);
   }
 
 #if defined (X86_64_JIT)
-  MCE.startGVStub(F, 14, 4);
-  MCE.emitByte(0x49);          // REX prefix
-  MCE.emitByte(0xB8+2);        // movabsq r10
-  MCE.emitWordLE((unsigned)(intptr_t)Fn);
-  MCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
-  MCE.emitByte(0x41);          // REX prefix
-  MCE.emitByte(0xFF);          // callq *r10
-  MCE.emitByte(2 | (2 << 3) | (3 << 6));
+  JCE.startGVStub(F, 14, 4);
+  JCE.emitByte(0x49);          // REX prefix
+  JCE.emitByte(0xB8+2);        // movabsq r10
+  JCE.emitWordLE((unsigned)(intptr_t)Fn);
+  JCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
+  JCE.emitByte(0x41);          // REX prefix
+  JCE.emitByte(0xFF);          // callq *r10
+  JCE.emitByte(2 | (2 << 3) | (3 << 6));
 #else
-  MCE.startGVStub(F, 6, 4);
-  MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
+  JCE.startGVStub(F, 6, 4);
+  JCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
-  MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+  JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
 #endif
 
-  MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
-  return MCE.finishGVStub(F);
+  JCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
+  return JCE.finishGVStub(F);
 }
 
 void X86JITInfo::emitFunctionStubAtAddr(const Function* F, void *Fn, void *Stub,
-                                        MachineCodeEmitter &MCE) {
+                                        JITCodeEmitter &JCE) {
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
-  MCE.startGVStub(F, Stub, 5);
-  MCE.emitByte(0xE9);
+  JCE.startGVStub(F, Stub, 5);
+  JCE.emitByte(0xE9);
 #if defined (X86_64_JIT)
-  assert(((((intptr_t)Fn-MCE.getCurrentPCValue()-5) << 32) >> 32) == 
-          ((intptr_t)Fn-MCE.getCurrentPCValue()-5) 
+  assert(((((intptr_t)Fn-JCE.getCurrentPCValue()-5) << 32) >> 32) == 
+          ((intptr_t)Fn-JCE.getCurrentPCValue()-5) 
          && "PIC displacement does not fit in displacement field!");
 #endif
-  MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
-  MCE.finishGVStub(F);
+  JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
+  JCE.finishGVStub(F);
 }
 
 /// getPICJumpTableEntry - Returns the value of the jumptable entry for the

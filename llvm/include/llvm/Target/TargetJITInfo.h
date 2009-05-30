@@ -23,7 +23,7 @@
 namespace llvm {
   class Function;
   class GlobalValue;
-  class MachineCodeEmitter;
+  class JITCodeEmitter;
   class MachineRelocation;
 
   /// TargetJITInfo - Target specific information required by the Just-In-Time
@@ -39,29 +39,29 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New) = 0;
 
-    /// emitGlobalValueIndirectSym - Use the specified MachineCodeEmitter object
+    /// emitGlobalValueIndirectSym - Use the specified JITCodeEmitter object
     /// to emit an indirect symbol which contains the address of the specified
     /// ptr.
     virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
-                                             MachineCodeEmitter &MCE) {
+                                             JITCodeEmitter &JCE) {
       assert(0 && "This target doesn't implement emitGlobalValueIndirectSym!");
       return 0;
     }
 
-    /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
+    /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.  Return the address of the resultant function.
     virtual void *emitFunctionStub(const Function* F, void *Fn,
-                                   MachineCodeEmitter &MCE) {
+                                   JITCodeEmitter &JCE) {
       assert(0 && "This target doesn't implement emitFunctionStub!");
       return 0;
     }
     
-    /// emitFunctionStubAtAddr - Use the specified MachineCodeEmitter object to
+    /// emitFunctionStubAtAddr - Use the specified JITCodeEmitter object to
     /// emit a small native function that simply calls Fn. Emit the stub into
     /// the supplied buffer.
     virtual void emitFunctionStubAtAddr(const Function* F, void *Fn,
-                                        void *Buffer, MachineCodeEmitter &MCE) {
+                                        void *Buffer, JITCodeEmitter &JCE) {
       assert(0 && "This target doesn't implement emitFunctionStubAtAddr!");
     }
 
@@ -125,7 +125,7 @@ namespace llvm {
 
     /// allocateSeparateGVMemory - If true, globals should be placed in
     /// separately allocated heap memory rather than in the same
-    /// code memory allocated by MachineCodeEmitter.
+    /// code memory allocated by JITCodeEmitter.
     virtual bool allocateSeparateGVMemory() const { return false; }
   protected:
     bool useGOT;
