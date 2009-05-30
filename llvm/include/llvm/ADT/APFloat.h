@@ -188,8 +188,13 @@ namespace llvm {
     static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
       return APFloat(Sem, fcInfinity, Negative);
     }
+    /// getNaN - Factory for QNaN values.
+    ///
+    /// \param Negative - True iff the NaN generated should be negative.
+    /// \param type - The unspecified fill bits for creating the NaN, 0 by
+    /// default.
     static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
-                          long unsigned type=0) {
+                          unsigned type = 0) {
       return APFloat(Sem, fcNaN, Negative, type);
     }
 
