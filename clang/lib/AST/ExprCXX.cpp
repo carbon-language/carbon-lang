@@ -237,7 +237,7 @@ const char *CXXNamedCastExpr::getCastName() const {
 }
 
 CXXTemporary *CXXTemporary::Create(ASTContext &C, 
-                                   CXXDestructorDecl *Destructor) {
+                                   const CXXDestructorDecl *Destructor) {
   // FIXME: Allocate using the ASTContext.
   return new CXXTemporary(Destructor);
 }
@@ -248,7 +248,7 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   assert(SubExpr->getType()->isRecordType() && 
          "Expression bound to a temporary must have record type!");
 
-  return new CXXBindTemporaryExpr(Temp, SubExpr);
+  return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
 
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd,

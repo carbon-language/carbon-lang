@@ -415,13 +415,14 @@ public:
 /// CXXTemporary - Represents a C++ temporary.
 class CXXTemporary {
   /// Destructor - The destructor that needs to be called.
-  CXXDestructorDecl *Destructor;
+  const CXXDestructorDecl *Destructor;
   
-  CXXTemporary(CXXDestructorDecl *destructor)
+  CXXTemporary(const CXXDestructorDecl *destructor)
     : Destructor(destructor) { }
 
 public:
-  static CXXTemporary *Create(ASTContext &C, CXXDestructorDecl *Destructor);
+  static CXXTemporary *Create(ASTContext &C, 
+                              const CXXDestructorDecl *Destructor);
 };
 
 /// CXXBindTemporaryExpr - Represents binding an expression to a temporary, 
