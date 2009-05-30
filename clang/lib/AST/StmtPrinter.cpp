@@ -28,15 +28,17 @@ using namespace clang;
 namespace  {
   class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
     llvm::raw_ostream &OS;
+    ASTContext &Context;
     unsigned IndentLevel;
     clang::PrinterHelper* Helper;
     PrintingPolicy Policy;
 
   public:
-    StmtPrinter(llvm::raw_ostream &os, PrinterHelper* helper, 
+    StmtPrinter(llvm::raw_ostream &os, ASTContext &C, PrinterHelper* helper, 
                 const PrintingPolicy &Policy = PrintingPolicy(),
                 unsigned Indentation = 0)
-      : OS(os), IndentLevel(Indentation), Helper(helper), Policy(Policy) {}
+      : OS(os), Context(C), IndentLevel(Indentation), Helper(helper),
+        Policy(Policy) {}
     
     void PrintStmt(Stmt *S) {
       PrintStmt(S, Policy.Indentation);
@@ -112,7 +114,7 @@ void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
 }
 
 void StmtPrinter::PrintRawDecl(Decl *D) {
-  D->print(OS, *(ASTContext*)0, Policy, IndentLevel);
+  D->print(OS, Context, Policy, IndentLevel);
 }
 
 void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
@@ -121,7 +123,7 @@ void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
   for ( ; Begin != End; ++Begin) 
     Decls.push_back(*Begin);
 
-  Decl::printGroup(Decls.data(), Decls.size(), OS, *(ASTContext*)0, Policy,
+  Decl::printGroup(Decls.data(), Decls.size(), OS, Context, Policy,
                    IndentLevel);
 }
 
@@ -1203,11 +1205,12 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
 
-void Stmt::dumpPretty() const {
-  printPretty(llvm::errs(), 0, PrintingPolicy());
+void Stmt::dumpPretty(ASTContext& Context) const {
+  printPretty(llvm::errs(), Context, 0, PrintingPolicy());
 }
 
-void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper,
+void Stmt::printPretty(llvm::raw_ostream &OS, ASTContext& Context,
+                       PrinterHelper* Helper,
                        const PrintingPolicy &Policy,
                        unsigned Indentation) const {
   if (this == 0) {
@@ -1220,7 +1223,7 @@ void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper,
     return;
   }
   
-  StmtPrinter P(OS, Helper, Policy, Indentation);
+  StmtPrinter P(OS, Context, Helper, Policy, Indentation);
   P.Visit(const_cast<Stmt*>(this));
 }
 

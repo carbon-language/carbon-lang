@@ -172,6 +172,11 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
   for (DeclContext::decl_iterator D = DC->decls_begin(Context),
          DEnd = DC->decls_end(Context);
        D != DEnd; ++D) {
+    if (!Policy.Dump) {
+      // Skip over implicit declarations in pretty-printing mode.
+      if (D->isImplicit()) continue;
+    }
+
     // The next bits of code handles stuff like "struct {int x;} a,b"; we're
     // forced to merge the declarations because there's no other way to
     // refer to the struct in question.  This limited merging is safe without
@@ -274,7 +279,7 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   Out << D->getNameAsString();
   if (Expr *Init = D->getInitExpr()) {
     Out << " = ";
-    Init->printPretty(Out, 0, Policy, Indentation);
+    Init->printPretty(Out, Context, 0, Policy, Indentation);
   }
 }
 
@@ -347,7 +352,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     } else
       Out << ' ';
 
-    D->getBody(Context)->printPretty(Out, 0, Policy, Indentation);
+    D->getBody(Context)->printPretty(Out, Context, 0, Policy, Indentation);
     Out << '\n';
   }
 }
@@ -362,7 +367,7 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
 
   if (D->isBitField()) {
     Out << " : ";
-    D->getBitWidth()->printPretty(Out, 0, Policy, Indentation);
+    D->getBitWidth()->printPretty(Out, Context, 0, Policy, Indentation);
   }
 }
 
@@ -384,7 +389,7 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
       Out << "(";
     else
       Out << " = ";
-    D->getInit()->printPretty(Out, 0, Policy, Indentation);
+    D->getInit()->printPretty(Out, Context, 0, Policy, Indentation);
     if (D->hasCXXDirectInitializer())
       Out << ")";
   }
@@ -396,7 +401,7 @@ void DeclPrinter::VisitParmVarDecl(ParmVarDecl *D) {
 
 void DeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   Out << "__asm (";
-  D->getAsmString()->printPretty(Out, 0, Policy, Indentation);
+  D->getAsmString()->printPretty(Out, Context, 0, Policy, Indentation);
   Out << ")";
 }
 
@@ -475,7 +480,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   
   if (OMD->getBody()) {
     Out << ' ';
-    OMD->getBody()->printPretty(Out, 0, Policy);
+    OMD->getBody()->printPretty(Out, Context, 0, Policy);
     Out << '\n';
   }
 }
