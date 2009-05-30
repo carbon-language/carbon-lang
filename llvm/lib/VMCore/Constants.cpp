@@ -1664,7 +1664,7 @@ void UndefValue::destroyConstant() {
 //
 
 MDString::MDString(const char *begin, const char *end)
-  : Constant(Type::EmptyStructTy, MDStringVal, 0, 0),
+  : Constant(Type::MetadataTy, MDStringVal, 0, 0),
     StrBegin(begin), StrEnd(end) {}
 
 static ManagedStatic<StringMap<MDString*> > MDStringCache;
@@ -1689,7 +1689,7 @@ void MDString::destroyConstant() {
 static ManagedStatic<FoldingSet<MDNode> > MDNodeSet;
 
 MDNode::MDNode(Value*const* Vals, unsigned NumVals)
-  : Constant(Type::EmptyStructTy, MDNodeVal, 0, 0) {
+  : Constant(Type::MetadataTy, MDNodeVal, 0, 0) {
   for (unsigned i = 0; i != NumVals; ++i)
     Node.push_back(ElementVH(Vals[i], this));
 }

@@ -200,6 +200,7 @@ void TypePrinting::CalcTypeName(const Type *Ty,
   case Type::FP128TyID:     OS << "fp128"; break;
   case Type::PPC_FP128TyID: OS << "ppc_fp128"; break;
   case Type::LabelTyID:     OS << "label"; break;
+  case Type::MetadataTyID:  OS << "metadata"; break;
   case Type::IntegerTyID:
     OS << 'i' << cast<IntegerType>(Ty)->getBitWidth();
     break;

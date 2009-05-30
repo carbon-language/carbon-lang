@@ -26,6 +26,7 @@ module TypeKind = struct
   | Fp128
   | Ppc_fp128
   | Label
+  | Metadata
   | Integer
   | Function
   | Struct
@@ -840,3 +841,4 @@ let rec string_of_lltype ty =
   | TypeKind.Double -> "double"
   | TypeKind.Float -> "float"
   | TypeKind.Void -> "void"
+  | TypeKind.Metadata -> "metadata"

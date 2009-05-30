@@ -498,6 +498,9 @@ bool BitcodeReader::ParseTypeTable() {
     case bitc::TYPE_CODE_OPAQUE:    // OPAQUE
       ResultTy = 0;
       break;
+    case bitc::TYPE_CODE_METADATA:  // METADATA
+      ResultTy = Type::MetadataTy;
+      break;
     case bitc::TYPE_CODE_INTEGER:   // INTEGER: [width]
       if (Record.size() < 1)
         return Error("Invalid Integer type record");

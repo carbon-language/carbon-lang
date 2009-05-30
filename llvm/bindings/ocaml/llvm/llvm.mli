@@ -61,6 +61,7 @@ module TypeKind : sig
   | Fp128
   | Ppc_fp128
   | Label
+  | Metadata
   | Integer
   | Function
   | Struct

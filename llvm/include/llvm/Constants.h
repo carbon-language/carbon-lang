@@ -860,10 +860,10 @@ public:
   ///
   const char *end() const { return StrEnd; }
 
-  /// getType() specialization - Type is always an empty struct.
+  /// getType() specialization - Type is always MetadataTy.
   ///
   inline const Type *getType() const {
-    return Type::EmptyStructTy;
+    return Type::MetadataTy;
   }
 
   /// isNullValue - Return true if this is the value that would be returned by

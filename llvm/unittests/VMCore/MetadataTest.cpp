@@ -50,7 +50,7 @@ TEST(MDStringTest, PrintingSimple) {
 
   std::ostringstream oss;
   s->print(oss);
-  EXPECT_STREQ("{ } !\"testing 1 2 3\"", oss.str().c_str());
+  EXPECT_STREQ("metadata !\"testing 1 2 3\"", oss.str().c_str());
 }
 
 // Test printing of MDString with non-printable characters.
@@ -59,7 +59,7 @@ TEST(MDStringTest, PrintingComplex) {
   MDString *s = MDString::get(str+0, str+5);
   std::ostringstream oss;
   s->print(oss);
-  EXPECT_STREQ("{ } !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
+  EXPECT_STREQ("metadata !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
 }
 
 // Test the two constructors, and containing other Constants.
@@ -94,8 +94,10 @@ TEST(MDNodeTest, Simple) {
   std::ostringstream oss1, oss2;
   n1->print(oss1);
   n2->print(oss2);
-  EXPECT_STREQ("{ } !{{ } !\"abc\", i8 0, { } !\"123\"}", oss1.str().c_str());
-  EXPECT_STREQ("{ } !{{ } !{{ } !\"abc\", i8 0, { } !\"123\"}}",
+  EXPECT_STREQ("metadata !{metadata !\"abc\", i8 0, metadata !\"123\"}",
+               oss1.str().c_str());
+  EXPECT_STREQ("metadata !{metadata !{metadata !\"abc\", i8 0, "
+                                     "metadata !\"123\"}}",
                oss2.str().c_str());
 }
 
@@ -132,6 +134,6 @@ TEST(MDNodeTest, Delete) {
 
   std::ostringstream oss;
   wvh->print(oss);
-  EXPECT_STREQ("{ } !{null}", oss.str().c_str());
+  EXPECT_STREQ("metadata !{null}", oss.str().c_str());
 }
 }

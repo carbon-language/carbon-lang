@@ -16,6 +16,8 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instruction.h"
+#include "llvm/MDNode.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
@@ -33,7 +35,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
     if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
-        isa<UndefValue>(C))
+        isa<UndefValue>(C) || isa<MDString>(C))
       return VMSlot = C;           // Primitive constants map directly
     else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
       for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
@@ -100,6 +102,27 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
       }
       return VM[V] = C;
       
+    } else if (MDNode *N = dyn_cast<MDNode>(C)) {
+      for (MDNode::const_elem_iterator b = N->elem_begin(), i = b,
+             e = N->elem_end(); i != e; ++i) {
+        if (!*i) continue;
+
+        Value *MV = MapValue(*i, VM);
+        if (MV != *i) {
+          // This MDNode must contain a reference to a global, make a new MDNode
+          // and return it.
+	  SmallVector<Value*, 8> Values;
+          Values.reserve(N->getNumElements());
+          for (MDNode::const_elem_iterator j = b; j != i; ++j)
+            Values.push_back(*j);
+          Values.push_back(MV);
+          for (++i; i != e; ++i)
+            Values.push_back(MapValue(*i, VM));
+          return VM[V] = MDNode::get(Values.data(), Values.size());
+        }
+      }
+      return VM[V] = C;
+
     } else {
       assert(0 && "Unknown type of constant!");
     }

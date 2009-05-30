@@ -75,16 +75,17 @@ public:
     FP128TyID,       ///<  4: 128 bit floating point type (112-bit mantissa)
     PPC_FP128TyID,   ///<  5: 128 bit floating point type (two 64-bits)
     LabelTyID,       ///<  6: Labels
+    MetadataTyID,    ///<  7: Metadata
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
-    IntegerTyID,     ///<  7: Arbitrary bit width integers
-    FunctionTyID,    ///<  8: Functions
-    StructTyID,      ///<  9: Structures
-    ArrayTyID,       ///< 10: Arrays
-    PointerTyID,     ///< 11: Pointers
-    OpaqueTyID,      ///< 12: Opaque: type with unknown structure
-    VectorTyID,      ///< 13: SIMD 'packed' format, or other vector type
+    IntegerTyID,     ///<  8: Arbitrary bit width integers
+    FunctionTyID,    ///<  9: Functions
+    StructTyID,      ///< 10: Structures
+    ArrayTyID,       ///< 11: Arrays
+    PointerTyID,     ///< 12: Pointers
+    OpaqueTyID,      ///< 13: Opaque: type with unknown structure
+    VectorTyID,      ///< 14: SIMD 'packed' format, or other vector type
 
     NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = LabelTyID,
@@ -326,7 +327,7 @@ public:
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
   //
-  static const Type *VoidTy, *LabelTy, *FloatTy, *DoubleTy, *EmptyStructTy;
+  static const Type *VoidTy, *LabelTy, *FloatTy, *DoubleTy, *MetadataTy;
   static const Type *X86_FP80Ty, *FP128Ty, *PPC_FP128Ty;
   static const IntegerType *Int1Ty, *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
 

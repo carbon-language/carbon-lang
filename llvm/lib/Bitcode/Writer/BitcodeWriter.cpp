@@ -206,6 +206,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     case Type::PPC_FP128TyID: Code = bitc::TYPE_CODE_PPC_FP128; break;
     case Type::LabelTyID:  Code = bitc::TYPE_CODE_LABEL;  break;
     case Type::OpaqueTyID: Code = bitc::TYPE_CODE_OPAQUE; break;
+    case Type::MetadataTyID: Code = bitc::TYPE_CODE_METADATA; break;
     case Type::IntegerTyID:
       // INTEGER: [width]
       Code = bitc::TYPE_CODE_INTEGER;

@@ -97,6 +97,7 @@ const Type *Type::getPrimitiveType(TypeID IDNumber) {
   case FP128TyID     : return FP128Ty;
   case PPC_FP128TyID : return PPC_FP128Ty;
   case LabelTyID     : return LabelTy;
+  case MetadataTyID  : return MetadataTy;
   default:
     return 0;
   }
@@ -276,6 +277,7 @@ const Type *Type::X86_FP80Ty   = new Type(Type::X86_FP80TyID);
 const Type *Type::FP128Ty      = new Type(Type::FP128TyID);
 const Type *Type::PPC_FP128Ty  = new Type(Type::PPC_FP128TyID);
 const Type *Type::LabelTy      = new Type(Type::LabelTyID);
+const Type *Type::MetadataTy   = new Type(Type::MetadataTyID);
 
 namespace {
   struct BuiltinIntegerType : public IntegerType {
@@ -288,9 +290,6 @@ const IntegerType *Type::Int16Ty = new BuiltinIntegerType(16);
 const IntegerType *Type::Int32Ty = new BuiltinIntegerType(32);
 const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 
-const Type *Type::EmptyStructTy = StructType::get(NULL, NULL);
-
-
 //===----------------------------------------------------------------------===//
 //                          Derived Type Constructors
 //===----------------------------------------------------------------------===//
@@ -298,9 +297,13 @@ const Type *Type::EmptyStructTy = StructType::get(NULL, NULL);
 /// isValidReturnType - Return true if the specified type is valid as a return
 /// type.
 bool FunctionType::isValidReturnType(const Type *RetTy) {
-  if (RetTy->isFirstClassType())
+  if (RetTy->isFirstClassType()) {
+    if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
+      return PTy->getElementType() != Type::MetadataTy;
     return true;
-  if (RetTy == Type::VoidTy || isa<OpaqueType>(RetTy))
+  }
+  if (RetTy == Type::VoidTy || RetTy == Type::MetadataTy ||
+      isa<OpaqueType>(RetTy))
     return true;
   
   // If this is a multiple return case, verify that each return is a first class
@@ -330,6 +333,9 @@ FunctionType::FunctionType(const Type *Result,
   for (unsigned i = 0; i != Params.size(); ++i) {
     assert((Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])) &&
            "Function arguments must be value types!");
+    assert((!isa<PointerType>(Params[i]) ||
+            cast<PointerType>(Params[i])->getElementType() != Type::MetadataTy)
+           && "Attempt to use metadata* as function argument type!");
     new (&ContainedTys[i+1]) PATypeHandle(Params[i], this);
     isAbstract |= Params[i]->isAbstract();
   }
@@ -348,6 +354,10 @@ StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
     assert(Types[i] && "<null> type for structure field!");
     assert(Types[i] != Type::VoidTy && "Void type for structure field!");
     assert(Types[i] != Type::LabelTy && "Label type for structure field!");
+    assert(Types[i] != Type::MetadataTy && "Metadata type for structure field");
+    assert((!isa<PointerType>(Types[i]) ||
+            cast<PointerType>(Types[i])->getElementType() != Type::MetadataTy)
+           && "Type 'metadata*' is invalid for structure field.");
     new (&ContainedTys[i]) PATypeHandle(Types[i], this);
     isAbstract |= Types[i]->isAbstract();
   }
@@ -1043,6 +1053,10 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
   assert(ElementType && "Can't get array of <null> types!");
   assert(ElementType != Type::VoidTy && "Array of void is not valid!");
   assert(ElementType != Type::LabelTy && "Array of labels is not valid!");
+  assert(ElementType != Type::MetadataTy && "Array of metadata is not valid!");
+  assert((!isa<PointerType>(ElementType) ||
+          cast<PointerType>(ElementType)->getElementType() != Type::MetadataTy)
+         && "Array of metadata* is not valid!");
 
   ArrayValType AVT(ElementType, NumElements);
   ArrayType *AT = ArrayTypes->get(AVT);
@@ -1204,6 +1218,9 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(ValueType != Type::VoidTy &&
          "Pointer to void is not valid, use i8* instead!");
   assert(ValueType != Type::LabelTy && "Pointer to label is not valid!");
+  assert((!isa<PointerType>(ValueType) ||
+          cast<PointerType>(ValueType)->getElementType() != Type::MetadataTy)
+         && "Pointer to metadata* is not valid!");
   PointerValType PVT(ValueType, AddressSpace);
 
   PointerType *PT = PointerTypes->get(PVT);

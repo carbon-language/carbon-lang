@@ -280,6 +280,7 @@ namespace {
                      bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
                              const Value *V);
+    bool VerifyMDNode(const MDNode *N);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -339,37 +340,6 @@ static RegisterPass<Verifier> X("verify", "Module Verifier");
 #define Assert4(C, M, V1, V2, V3, V4) \
   do { if (!(C)) { CheckFailed(M, V1, V2, V3, V4); return; } } while (0)
 
-/// Check whether or not a Value is metadata or made up of a constant
-/// expression involving metadata.
-static bool isMetadata(Value *X) {
-  SmallPtrSet<Value *, 8> Visited;
-  SmallVector<Value *, 8> Queue;
-  Queue.push_back(X);
-
-  while (!Queue.empty()) {
-    Value *V = Queue.back();
-    Queue.pop_back();
-    if (!Visited.insert(V))
-      continue;
-
-    if (isa<MDString>(V) || isa<MDNode>(V))
-      return true;
-    if (!isa<ConstantExpr>(V))
-      continue;
-    ConstantExpr *CE = cast<ConstantExpr>(V);
-
-    if (CE->getType() != Type::EmptyStructTy)
-      continue;
-
-    // The only constant expression that works on metadata type is select.
-    if (CE->getOpcode() != Instruction::Select) return false;
-
-    Queue.push_back(CE->getOperand(1));
-    Queue.push_back(CE->getOperand(2));
-  }
-  return false;
-}
-
 void Verifier::visit(Instruction &I) {
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
     Assert1(I.getOperand(i) != 0, "Operand is null", &I);
@@ -406,6 +376,30 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
     Assert1(GV.getInitializer()->getType() == GV.getType()->getElementType(),
             "Global variable initializer type does not match global "
             "variable type!", &GV);
+
+    // Verify that any metadata used in a global initializer points only to
+    // other globals.
+    if (MDNode *FirstNode = dyn_cast<MDNode>(GV.getInitializer())) {
+      if (VerifyMDNode(FirstNode)) {
+        SmallVector<const MDNode *, 4> NodesToAnalyze;
+        NodesToAnalyze.push_back(FirstNode);
+        while (!NodesToAnalyze.empty()) {
+          const MDNode *N = NodesToAnalyze.back();
+          NodesToAnalyze.pop_back();
+
+          for (MDNode::const_elem_iterator I = N->elem_begin(),
+                 E = N->elem_end(); I != E; ++I)
+            if (const Value *V = *I) {
+              if (const MDNode *Next = dyn_cast<MDNode>(V))
+                NodesToAnalyze.push_back(Next);
+              else
+                Assert3(isa<Constant>(V),
+                        "reference to instruction from global metadata node",
+                        &GV, N, V);
+            }
+        }
+      }
+    }
   } else {
     Assert1(GV.hasExternalLinkage() || GV.hasDLLImportLinkage() ||
             GV.hasExternalWeakLinkage(),
@@ -583,6 +577,12 @@ void Verifier::visitFunction(Function &F) {
     break;
   }
   
+  bool isLLVMdotName = F.getName().size() >= 5 &&
+                       F.getName().substr(0, 5) == "llvm.";
+  if (!isLLVMdotName)
+    Assert1(F.getReturnType() != Type::MetadataTy,
+            "Function may not return metadata unless it's an intrinsic", &F);
+
   // Check that the argument values match the function type for this function...
   unsigned i = 0;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
@@ -592,6 +592,9 @@ void Verifier::visitFunction(Function &F) {
             I, FT->getParamType(i));
     Assert1(I->getType()->isFirstClassType(),
             "Function arguments must have first-class types!", I);
+    if (!isLLVMdotName)
+      Assert2(I->getType() != Type::MetadataTy,
+              "Function takes metadata but isn't an intrinsic", I, &F);
   }
 
   if (F.isDeclaration()) {
@@ -601,9 +604,7 @@ void Verifier::visitFunction(Function &F) {
   } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
     // is not legal to define intrinsics.
-    if (F.getName().size() >= 5)
-      Assert1(F.getName().substr(0, 5) != "llvm.",
-              "llvm intrinsics cannot be defined!", &F);
+    Assert1(!isLLVMdotName, "llvm intrinsics cannot be defined!", &F);
     
     // Check the entry node
     BasicBlock *Entry = &F.getEntryBlock();
@@ -682,7 +683,6 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
             "Found return instr that returns non-void in Function of void "
             "return type!", &RI, F->getReturnType());
   else if (N == 1 && F->getReturnType() == RI.getOperand(0)->getType()) {
-    Assert1(!isMetadata(RI.getOperand(0)), "Invalid use of metadata!", &RI);
     // Exactly one return value and it matches the return type. Good.
   } else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
     // The return type is a struct; check for multiple return values.
@@ -730,8 +730,6 @@ void Verifier::visitSelectInst(SelectInst &SI) {
 
   Assert1(SI.getTrueValue()->getType() == SI.getType(),
           "Select values must have same type as select instruction!", &SI);
-  Assert1(!isMetadata(SI.getOperand(1)) && !isMetadata(SI.getOperand(2)),
-          "Invalid use of metadata!", &SI);
   visitInstruction(SI);
 }
 
@@ -987,13 +985,6 @@ void Verifier::visitPHINode(PHINode &PN) {
     Assert1(PN.getType() == PN.getIncomingValue(i)->getType(),
             "PHI node operands are not the same type as the result!", &PN);
 
-  // Check that it's not a PHI of metadata.
-  if (PN.getType() == Type::EmptyStructTy) {
-    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-      Assert1(!isMetadata(PN.getIncomingValue(i)),
-              "Invalid use of metadata!", &PN);
-  }
-
   // All other PHI node constraints are checked in the visitBasicBlock method.
 
   visitInstruction(PN);
@@ -1024,14 +1015,6 @@ void Verifier::VerifyCallSite(CallSite CS) {
             "Call parameter type does not match function signature!",
             CS.getArgument(i), FTy->getParamType(i), I);
 
-  if (CS.getCalledValue()->getNameLen() < 5 ||
-      strncmp(CS.getCalledValue()->getNameStart(), "llvm.", 5) != 0) {
-    // Verify that none of the arguments are metadata...
-    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-      Assert2(!isMetadata(CS.getArgument(i)), "Invalid use of metadata!",
-              CS.getArgument(i), I);
-  }
-
   const AttrListPtr &Attrs = CS.getAttributes();
 
   Assert1(VerifyAttributeCount(Attrs, CS.arg_size()),
@@ -1051,6 +1034,17 @@ void Verifier::VerifyCallSite(CallSite CS) {
       Assert1(!VArgI, "Attribute " + Attribute::getAsString(VArgI) +
               " cannot be used for vararg call arguments!", I);
     }
+
+  // Verify that there's no metadata unless it's a direct call to an intrinsic.
+  if (!CS.getCalledFunction() || CS.getCalledFunction()->getName().size() < 5 ||
+      CS.getCalledFunction()->getName().substr(0, 5) != "llvm.") {
+    Assert1(FTy->getReturnType() != Type::MetadataTy,
+            "Only intrinsics may return metadata", I);
+    for (FunctionType::param_iterator PI = FTy->param_begin(),
+           PE = FTy->param_end(); PI != PE; ++PI)
+      Assert1(PI->get() != Type::MetadataTy, "Function has metadata parameter "
+              "but isn't an intrinsic", I);
+  }
 
   visitInstruction(*I);
 }
@@ -1120,6 +1114,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   // Check that the operands are the right type
   Assert1(Op0Ty->isIntOrIntVector() || isa<PointerType>(Op0Ty),
           "Invalid operand types for ICmp instruction", &IC);
+
   visitInstruction(IC);
 }
 
@@ -1195,6 +1190,7 @@ void Verifier::visitLoadInst(LoadInst &LI) {
     cast<PointerType>(LI.getOperand(0)->getType())->getElementType();
   Assert2(ElTy == LI.getType(),
           "Load result type does not match pointer operand type!", &LI, ElTy);
+  Assert1(ElTy != Type::MetadataTy, "Can't load metadata!", &LI);
   visitInstruction(LI);
 }
 
@@ -1203,7 +1199,7 @@ void Verifier::visitStoreInst(StoreInst &SI) {
     cast<PointerType>(SI.getOperand(1)->getType())->getElementType();
   Assert2(ElTy == SI.getOperand(0)->getType(),
           "Stored value type does not match pointer operand type!", &SI, ElTy);
-  Assert1(!isMetadata(SI.getOperand(0)), "Invalid use of metadata!", &SI);
+  Assert1(ElTy != Type::MetadataTy, "Can't store metadata!", &SI);
   visitInstruction(SI);
 }
 
@@ -1264,6 +1260,17 @@ void Verifier::visitInstruction(Instruction &I) {
               && isa<StructType>(I.getType())),
           "Instruction returns a non-scalar type!", &I);
 
+  // Check that the instruction doesn't produce metadata or metadata*. Calls
+  // all already checked against the callee type.
+  Assert1(I.getType() != Type::MetadataTy ||
+          isa<CallInst>(I) || isa<InvokeInst>(I),
+          "Invalid use of metadata!", &I);
+
+  if (const PointerType *PTy = dyn_cast<PointerType>(I.getType()))
+    Assert1(PTy->getElementType() != Type::MetadataTy,
+            "Instructions may not produce pointer to metadata.", &I);
+
+
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.  If the use is not an
   // instruction, it is an error!
@@ -1284,6 +1291,11 @@ void Verifier::visitInstruction(Instruction &I) {
     if (!I.getOperand(i)->getType()->isFirstClassType()) {
       Assert1(0, "Instruction operands must be first-class values!", &I);
     }
+
+    if (const PointerType *PTy =
+            dyn_cast<PointerType>(I.getOperand(i)->getType()))
+      Assert1(PTy->getElementType() != Type::MetadataTy,
+              "Invalid use of metadata pointer.", &I);
     
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {
       // Check to make sure that the "address of" an intrinsic function is never
@@ -1676,6 +1688,44 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
   // Check parameter attributes.
   Assert1(F->getAttributes() == Intrinsic::getAttributes(ID),
           "Intrinsic has wrong parameter attributes!", F);
+}
+
+/// Verify that an MDNode is not cyclic.
+bool Verifier::VerifyMDNode(const MDNode *N) {
+  if (N->elem_empty()) return true;
+
+  // The current DFS path through the nodes. Node and element number.
+  typedef std::pair<const MDNode *, MDNode::const_elem_iterator> Edge;
+  SmallVector<Edge, 8> Path;
+
+  Path.push_back(std::make_pair(N, N->elem_begin()));
+  while (!Path.empty()) {
+    Edge &e = Path.back();
+    const MDNode *&e_N = e.first;
+    MDNode::const_elem_iterator &e_I = e.second;
+
+    if (e_N->elem_end() == e_I) {
+      Path.pop_back();
+      continue;
+    }
+
+    for (MDNode::const_elem_iterator e_E = e_N->elem_end(); e_I != e_E; ++e_I) {
+      if (const MDNode *C = dyn_cast_or_null<MDNode>(e_I->operator Value*())) {
+        // Is child MDNode C already in the Path?
+        for (SmallVectorImpl<Edge>::iterator I = Path.begin(), E = Path.end();
+             I != E; ++I) {
+          if (I->first != C) {
+            CheckFailed("MDNode is cyclic.", C);
+            return false;
+          }
+        }
+
+        Path.push_back(std::make_pair(C, C->elem_begin()));
+        break;
+      }
+    }
+  }
+  return true;
 }
 
 

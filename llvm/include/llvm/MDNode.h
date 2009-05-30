@@ -88,6 +88,10 @@ public:
     return Node.size();
   }
 
+  bool elem_empty() const {
+    return Node.empty();
+  }
+
   const_elem_iterator elem_begin() const {
     return Node.begin();
   }
@@ -96,10 +100,10 @@ public:
     return Node.end();
   }
 
-  /// getType() specialization - Type is always an empty struct.
+  /// getType() specialization - Type is always MetadataTy.
   ///
   inline const Type *getType() const {
-    return Type::EmptyStructTy;
+    return Type::MetadataTy;
   }
 
   /// isNullValue - Return true if this is the value that would be returned by
