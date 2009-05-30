@@ -205,7 +205,8 @@ namespace clang {
     /// LookupKind - the kind of lookup we're doing.
     enum LookupKind {
       LK_Base,
-      LK_NamedMember
+      LK_NamedMember,
+      LK_OverriddenMember
     };
     
     /// MemberLookupCriteria - Constructs member lookup criteria to
@@ -220,6 +221,9 @@ namespace clang {
                                   unsigned IDNS) 
       : Kind(LK_NamedMember), Name(Name), NameKind(NameKind), IDNS(IDNS) { }
 
+    explicit MemberLookupCriteria(CXXMethodDecl *MD)
+      : Kind(LK_OverriddenMember), Method(MD) { }
+    
     /// Kind - The kind of lookup we're doing.
     /// LK_Base if we are looking for a base class (whose
     /// type is Base). LK_NamedMember if we are looking for a named member of
@@ -236,6 +240,8 @@ namespace clang {
 
     Sema::LookupNameKind NameKind;
     unsigned IDNS;
+    
+    CXXMethodDecl *Method;
   };
 }
 

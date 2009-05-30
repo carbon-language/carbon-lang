@@ -2145,23 +2145,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Look for virtual methods in base classes that this method might override.
 
     BasePaths Paths;
-    // FIXME: This will not include hidden member functions.
     if (LookupInBases(cast<CXXRecordDecl>(DC), 
-                      MemberLookupCriteria(Name, LookupMemberName, 
-                                           // FIXME: Shouldn't IDNS_Member be
-                                           // enough here?
-                                           Decl::IDNS_Member | 
-                                           Decl::IDNS_Ordinary), Paths)) {
+                      MemberLookupCriteria(NewMD), Paths)) {
       for (BasePaths::decl_iterator I = Paths.found_decls_begin(), 
            E = Paths.found_decls_end(); I != E; ++I) {
         if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
-          OverloadedFunctionDecl::function_iterator MatchedDecl;
-          // FIXME: Is this OK? Should it be done by LookupInBases?
-          if (IsOverload(NewMD, OldMD, MatchedDecl))
-            continue;
-          if (!OldMD->isVirtual())
-            continue;
-         
           if (!CheckOverridingFunctionReturnType(NewMD, OldMD))
             NewMD->addOverriddenMethod(OldMD);
         }

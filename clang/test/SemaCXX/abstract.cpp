@@ -95,3 +95,26 @@ public:
 };
 
 bar x;
+
+// <rdar://problem/6902298>
+class A
+{
+public:
+	virtual void release() = 0;
+	virtual void release(int count) = 0;
+	virtual void retain() = 0;
+};
+
+class B : public A
+{
+public:
+	virtual void release();
+	virtual void release(int count);
+	virtual void retain();
+};
+
+void foo(void)
+{
+	B b;
+}
+

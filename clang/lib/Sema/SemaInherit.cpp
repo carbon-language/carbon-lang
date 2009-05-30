@@ -191,6 +191,22 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
         ++Paths.ScratchPath.Decls.first;
       }
       break;
+    case MemberLookupCriteria::LK_OverriddenMember:
+      Paths.ScratchPath.Decls = 
+        BaseRecord->lookup(Context, Criteria.Method->getDeclName());
+      while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
+        CXXMethodDecl *MD = 
+          cast<CXXMethodDecl>(*Paths.ScratchPath.Decls.first);
+
+        OverloadedFunctionDecl::function_iterator MatchedDecl;
+        if (MD->isVirtual() && !IsOverload(Criteria.Method, MD, MatchedDecl)) {
+          FoundPathToThisBase = true;
+          break;
+        }
+        
+        ++Paths.ScratchPath.Decls.first;
+      }
+      break;
     }
 
     if (FoundPathToThisBase) {
