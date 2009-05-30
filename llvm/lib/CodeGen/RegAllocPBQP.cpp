@@ -729,7 +729,7 @@ void PBQPRegAlloc::finalizeAlloc() const {
 
   // First allocate registers for the empty intervals.
   for (LiveIntervalSet::const_iterator
-	 itr = emptyVRegIntervals.begin(), end = emptyVRegIntervals.end();
+         itr = emptyVRegIntervals.begin(), end = emptyVRegIntervals.end();
          itr != end; ++itr) {
     LiveInterval *li = *itr;
 

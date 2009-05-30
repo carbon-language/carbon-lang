@@ -271,52 +271,52 @@ static int
 test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
     const char *dir, const char *bin)
 {
-	struct stat sb;
+  struct stat sb;
 
-	snprintf(buf, PATH_MAX, "%s//%s", dir, bin);
-	if (realpath(buf, ret) == NULL)
-		return (1);
-	if (stat(buf, &sb) != 0)
-		return (1);
-	
-	return (0);
+  snprintf(buf, PATH_MAX, "%s//%s", dir, bin);
+  if (realpath(buf, ret) == NULL)
+    return (1);
+  if (stat(buf, &sb) != 0)
+    return (1);
+
+  return (0);
 }
 
 static char *
 getprogpath(char ret[PATH_MAX], const char *bin)
 {
-	char *pv, *s, *t, buf[PATH_MAX];
+  char *pv, *s, *t, buf[PATH_MAX];
 
-	/* First approach: absolute path. */
-	if (bin[0] == '/') {
-		if (test_dir(buf, ret, "/", bin) == 0)
-			return (ret);
-		return (NULL);
-	}
+  /* First approach: absolute path. */
+  if (bin[0] == '/') {
+    if (test_dir(buf, ret, "/", bin) == 0)
+      return (ret);
+    return (NULL);
+  }
 
-	/* Second approach: relative path. */
-	if (strchr(bin, '/') != NULL) {
-		if (getcwd(buf, PATH_MAX) == NULL)
-			return (NULL);
-		if (test_dir(buf, ret, buf, bin) == 0)
-			return (ret);
-		return (NULL);
-	}
+  /* Second approach: relative path. */
+  if (strchr(bin, '/') != NULL) {
+    if (getcwd(buf, PATH_MAX) == NULL)
+      return (NULL);
+    if (test_dir(buf, ret, buf, bin) == 0)
+      return (ret);
+    return (NULL);
+  }
 
-	/* Third approach: $PATH */
-	if ((pv = getenv("PATH")) == NULL)
-		return (NULL);
-	s = pv = strdup(pv);
-	if (pv == NULL)
-		return (NULL);
-	while ((t = strsep(&s, ":")) != NULL) {
-		if (test_dir(buf, ret, t, bin) == 0) {
-			free(pv);
-			return (ret);
-		}
-	}
-	free(pv);
-	return (NULL);
+  /* Third approach: $PATH */
+  if ((pv = getenv("PATH")) == NULL)
+    return (NULL);
+  s = pv = strdup(pv);
+  if (pv == NULL)
+    return (NULL);
+  while ((t = strsep(&s, ":")) != NULL) {
+    if (test_dir(buf, ret, t, bin) == 0) {
+      free(pv);
+      return (ret);
+    }
+  }
+  free(pv);
+  return (NULL);
 }
 #endif
 
@@ -341,7 +341,7 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   int err = dladdr(MainAddr, &DLInfo);
   if (err == 0)
     return Path();
-  
+
   // If the filename is a symlink, we need to resolve and return the location of
   // the actual executable.
   char link_path[MAXPATHLEN];
@@ -874,4 +874,3 @@ void Path::UnMapFilePages(const char *BasePtr, uint64_t FileSize) {
 }
 
 } // end llvm namespace
-

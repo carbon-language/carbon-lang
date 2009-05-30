@@ -50,17 +50,17 @@ def SDT_XCoreAddress    : SDTypeProfile<1, 1,
                             [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 def pcrelwrapper : SDNode<"XCoreISD::PCRelativeWrapper", SDT_XCoreAddress,
-	                   []>;
+                           []>;
 
 def dprelwrapper : SDNode<"XCoreISD::DPRelativeWrapper", SDT_XCoreAddress,
-	                   []>;
+                           []>;
 
 def cprelwrapper : SDNode<"XCoreISD::CPRelativeWrapper", SDT_XCoreAddress,
-	                   []>;
+                           []>;
 
 def SDT_XCoreStwsp    : SDTypeProfile<0, 2, [SDTCisInt<1>]>;
-def XCoreStwsp         : SDNode<"XCoreISD::STWSP", SDT_XCoreStwsp,
-	                   [SDNPHasChain]>;
+def XCoreStwsp        : SDNode<"XCoreISD::STWSP", SDT_XCoreStwsp,
+                               [SDNPHasChain]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_XCoreCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;

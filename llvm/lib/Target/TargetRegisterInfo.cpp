@@ -23,9 +23,9 @@ using namespace llvm;
 TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
                              int CFSO, int CFDO,
-			     const unsigned* subregs, const unsigned subregsize,
+                             const unsigned* subregs, const unsigned subregsize,
                          const unsigned* superregs, const unsigned superregsize,
-			 const unsigned* aliases, const unsigned aliasessize)
+                         const unsigned* aliases, const unsigned aliasessize)
   : SubregHash(subregs), SubregHashSize(subregsize),
     SuperregHash(superregs), SuperregHashSize(superregsize),
     AliasesHash(aliases), AliasesHashSize(aliasessize),

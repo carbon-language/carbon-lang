@@ -1522,7 +1522,7 @@ unsigned ARMRegisterInfo::getEHHandlerRegister() const {
 }
 
 int ARMRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-	return ARMGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
+  return ARMGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
 #include "ARMGenRegisterInfo.inc"

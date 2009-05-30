@@ -6974,7 +6974,7 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
 
   // Insert instructions into newMBB based on incoming instruction
   assert(bInstr->getNumOperands() < X86AddrNumOperands + 4 &&
-	 "unexpected number of operands");
+         "unexpected number of operands");
   DebugLoc dl = bInstr->getDebugLoc();
   MachineOperand& destOper = bInstr->getOperand(0);
   MachineOperand* argOpers[2 + X86AddrNumOperands];
@@ -7084,7 +7084,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   // Insert instructions into newMBB based on incoming instruction
   // There are 8 "real" operands plus 9 implicit def/uses, ignored here.
   assert(bInstr->getNumOperands() < X86AddrNumOperands + 14 &&
-	 "unexpected number of operands");
+         "unexpected number of operands");
   MachineOperand& dest1Oper = bInstr->getOperand(0);
   MachineOperand& dest2Oper = bInstr->getOperand(1);
   MachineOperand* argOpers[2 + X86AddrNumOperands];
@@ -7131,7 +7131,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
 
   int valArgIndx = lastAddrIndx + 1;
   assert((argOpers[valArgIndx]->isReg() ||
-	  argOpers[valArgIndx]->isImm()) &&
+          argOpers[valArgIndx]->isImm()) &&
          "invalid operand");
   unsigned t5 = F->getRegInfo().createVirtualRegister(RC);
   unsigned t6 = F->getRegInfo().createVirtualRegister(RC);
@@ -7143,9 +7143,9 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     MIB.addReg(tt1);
   (*MIB).addOperand(*argOpers[valArgIndx]);
   assert(argOpers[valArgIndx + 1]->isReg() ==
-	 argOpers[valArgIndx]->isReg());
+         argOpers[valArgIndx]->isReg());
   assert(argOpers[valArgIndx + 1]->isImm() ==
-	 argOpers[valArgIndx]->isImm());
+         argOpers[valArgIndx]->isImm());
   if (argOpers[valArgIndx + 1]->isReg())
     MIB = BuildMI(newMBB, dl, TII->get(regOpcH), t6);
   else
@@ -7226,7 +7226,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   DebugLoc dl = mInstr->getDebugLoc();
   // Insert instructions into newMBB based on incoming instruction
   assert(mInstr->getNumOperands() < X86AddrNumOperands + 4 &&
-	 "unexpected number of operands");
+         "unexpected number of operands");
   MachineOperand& destOper = mInstr->getOperand(0);
   MachineOperand* argOpers[2 + X86AddrNumOperands];
   int numArgs = mInstr->getNumOperands() - 1;

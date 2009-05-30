@@ -969,12 +969,6 @@ DbgScope *DwarfDebug::getOrCreateScope(GlobalVariable *V) {
   DbgScope *Parent = NULL;
   DIBlock Block(V);
 
-  // Don't create a new scope if we already created one for an inlined function.
-  DenseMap<const GlobalVariable *, DbgScope *>::iterator
-    II = AbstractInstanceRootMap.find(V);
-  if (II != AbstractInstanceRootMap.end())
-    return LexicalScopeStack.back();
-
   if (!Block.isNull()) {
     DIDescriptor ParentDesc = Block.getContext();
     Parent =
@@ -1030,6 +1024,8 @@ void DwarfDebug::ConstructDbgScope(DbgScope *ParentScope,
       AddLabel(Die, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
                DWLabel("func_end", SubprogramCount));
 
+    // Add the scope's contents.
+    ConstructDbgScope(ConcreteInst, StartID, EndID, Die, Unit);
     ParentDie->AddChild(Die);
   }
 

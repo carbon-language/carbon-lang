@@ -431,8 +431,8 @@ void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-				MachineBasicBlock::iterator MI,
-			const std::vector<CalleeSavedInfo> &CSI) const
+                                               MachineBasicBlock::iterator MI,
+                                  const std::vector<CalleeSavedInfo> &CSI) const
 {
   if (CSI.empty()) {
     return true;

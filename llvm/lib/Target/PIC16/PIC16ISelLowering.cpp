@@ -535,7 +535,7 @@ void PIC16TargetLowering::GetExpandedParts(SDValue Op, SelectionDAG &DAG,
   // Extract the lo component.
   Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NewVT, Op,
                    DAG.getConstant(0, MVT::i8));
-		   
+
   // extract the hi component
   Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NewVT, Op,
                    DAG.getConstant(1, MVT::i8));

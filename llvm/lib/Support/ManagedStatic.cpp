@@ -42,7 +42,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
     ManagedStaticMutex->release();
   } else {
     assert(Ptr == 0 && DeleterFn == 0 && Next == 0 &&
-	   "Partially initialized ManagedStatic!?");
+           "Partially initialized ManagedStatic!?");
     Ptr = Creator ? Creator() : 0;
     DeleterFn = Deleter;
   

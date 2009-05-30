@@ -451,7 +451,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         break;
       case TLSModel::LocalDynamic:
         // O << "@TLSLD"; // local dynamic not implemented
-	O << "@TLSGD";
+        O << "@TLSGD";
         break;
       case TLSModel::InitialExec:
         if (Subtarget->is64Bit()) {
@@ -465,7 +465,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         if (Subtarget->is64Bit())
           O << "@TPOFF";
         else
-	  O << "@NTPOFF";
+          O << "@NTPOFF";
         break;
       default:
         assert (0 && "Unknown TLS model");

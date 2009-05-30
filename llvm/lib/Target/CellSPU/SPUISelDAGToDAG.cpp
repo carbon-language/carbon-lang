@@ -872,12 +872,12 @@ SPUDAGToDAGISel::Select(SDValue Op) {
     } else if (OpVT == MVT::v2f64) {
       Opc = SPU::XORfnegvec;
       signMask = emitBuildVector(CurDAG->getNode(ISD::BUILD_VECTOR, dl,
-						 MVT::v2i64,
+                                                 MVT::v2i64,
                                                  negConst, negConst));
     }
 
     return CurDAG->getTargetNode(Opc, dl, OpVT,
-				 Op.getOperand(0), SDValue(signMask, 0));
+                                 Op.getOperand(0), SDValue(signMask, 0));
   } else if (Opc == ISD::FABS) {
     if (OpVT == MVT::f64) {
       SDNode *signMask = SelectI64Constant(0x7fffffffffffffffULL, MVT::i64, dl);

@@ -5616,8 +5616,8 @@ void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
 
 typedef SmallPtrSet<const SDNode *, 128> VisitedSDNodeSet;
 static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
-		       const SelectionDAG *G, VisitedSDNodeSet &once) {
-  if (!once.insert(N))	// If we've been here before, return now.
+                       const SelectionDAG *G, VisitedSDNodeSet &once) {
+  if (!once.insert(N))          // If we've been here before, return now.
     return;
   // Dump the current SDNode, but don't end the line yet.
   OS << std::string(indent, ' ');
@@ -5631,10 +5631,10 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
       // This child has no grandchildren; print it inline right here.
       child->printr(OS, G);
       once.insert(child);
-    } else {	// Just the address.  FIXME: also print the child's opcode
+    } else {          // Just the address.  FIXME: also print the child's opcode
       OS << (void*)child;
       if (unsigned RN = N->getOperand(i).getResNo())
-	OS << ":" << RN;
+        OS << ":" << RN;
     }
   }
   OS << "\n";

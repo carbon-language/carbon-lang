@@ -49,7 +49,7 @@ namespace llvm {
       RRF,           // Rotate right through carry
       CALL,          // PIC16 Call instruction 
       CALLW,         // PIC16 CALLW instruction 
-      SUBCC,	     // Compare for equality or inequality.
+      SUBCC,         // Compare for equality or inequality.
       SELECT_ICC,    // Psuedo to be caught in schedular and expanded to brcond.
       BRCOND,        // Conditional branch.
       Dummy
