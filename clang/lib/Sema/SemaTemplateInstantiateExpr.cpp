@@ -1007,15 +1007,7 @@ TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
     Args.push_back(ArgInst.takeAs<Expr>());
   }
 
-
-  VarDecl *Var = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
-                                                            SemaRef.CurContext,
-                                                               TemplateArgs));
-  if (!Var)
-    return SemaRef.ExprError();
-
-  SemaRef.CurrentInstantiationScope->InstantiatedLocal(E->getVarDecl(), Var);
-  return SemaRef.Owned(CXXConstructExpr::Create(SemaRef.Context, Var, T,
+  return SemaRef.Owned(CXXConstructExpr::Create(SemaRef.Context, T,
                                                 E->getConstructor(), 
                                                 E->isElidable(),
                                                 Args.takeAs<Expr>(), 

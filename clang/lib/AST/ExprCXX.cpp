@@ -251,35 +251,33 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
 
-CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd,
+CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                CXXConstructorDecl *Cons,
                                                QualType writtenTy,
                                                SourceLocation tyBeginLoc, 
                                                Expr **Args,
                                                unsigned NumArgs, 
                                                SourceLocation rParenLoc)
-  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, vd, writtenTy, Cons, 
+  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, writtenTy, Cons, 
                      false, Args, NumArgs), 
   TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {
 }
 
-CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, VarDecl *VD, 
-                                           QualType T, CXXConstructorDecl *D,  
-                                           bool Elidable,
+CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T, 
+                                           CXXConstructorDecl *D, bool Elidable,
                                            Expr **Args, unsigned NumArgs) {
-  return new (C) CXXConstructExpr(C, CXXConstructExprClass, VD, T, D, Elidable, 
+  return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, D, Elidable, 
                                   Args, NumArgs);
 }
 
-CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, VarDecl *vd, 
-                                   QualType T, CXXConstructorDecl *D, 
-                                   bool elidable,
+CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T, 
+                                   CXXConstructorDecl *D, bool elidable,
                                    Expr **args, unsigned numargs) 
 : Expr(SC, T,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
-  VD(vd), Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
+  Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
     if (NumArgs > 0) {
       Args = new (C) Stmt*[NumArgs];
       for (unsigned i = 0; i < NumArgs; ++i)

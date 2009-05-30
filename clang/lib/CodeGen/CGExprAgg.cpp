@@ -292,17 +292,9 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 
 void
 AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
-  llvm::Value *V = DestPtr;
-  
-  if (!V) {
-    assert(isa<CXXTempVarDecl>(E->getVarDecl()) && 
-           "Must have a temp var decl when there's no destination!");
-    
-    V = CGF.CreateTempAlloca(CGF.ConvertType(E->getVarDecl()->getType()), 
-                             "tmpvar");
-  }
-  
-  CGF.EmitCXXConstructExpr(V, E);
+  assert(DestPtr && "Must have somewhere to emit into!");
+
+  CGF.EmitCXXConstructExpr(DestPtr, E);
 }
 
 void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {

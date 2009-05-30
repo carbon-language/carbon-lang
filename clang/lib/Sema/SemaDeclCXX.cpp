@@ -1800,7 +1800,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
-  Expr *Temp = CXXConstructExpr::Create(Context, VD, DeclInitType, Constructor, 
+  Expr *Temp = CXXConstructExpr::Create(Context, DeclInitType, Constructor, 
                                         false, Exprs, NumExprs);
   VD->setInit(Context, Temp);
 }

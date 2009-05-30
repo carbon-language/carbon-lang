@@ -458,7 +458,6 @@ public:
 
 /// CXXConstructExpr - Represents a call to a C++ constructor.
 class CXXConstructExpr : public Expr {
-  VarDecl *VD;
   CXXConstructorDecl *Constructor;
 
   bool Elidable;
@@ -468,19 +467,18 @@ class CXXConstructExpr : public Expr {
 
   
 protected:
-  CXXConstructExpr(ASTContext &C, StmtClass SC, VarDecl *vd, QualType T, 
+  CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T, 
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs);
   ~CXXConstructExpr() { } 
 
 public:
-  static CXXConstructExpr *Create(ASTContext &C, VarDecl *VD, QualType T,
+  static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   CXXConstructorDecl *D, bool Elidable, 
                                   Expr **Args, unsigned NumArgs);
   
   void Destroy(ASTContext &C);
   
-  VarDecl* getVarDecl() const { return VD; }
   CXXConstructorDecl* getConstructor() const { return Constructor; }
 
   /// \brief Whether this construction is elidable.
@@ -558,10 +556,10 @@ class CXXTemporaryObjectExpr : public CXXConstructExpr {
   SourceLocation RParenLoc;
 
 public:
-  CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd, 
-                         CXXConstructorDecl *Cons, QualType writtenTy,
-                         SourceLocation tyBeginLoc, Expr **Args,
-                         unsigned NumArgs, SourceLocation rParenLoc);
+  CXXTemporaryObjectExpr(ASTContext &C, CXXConstructorDecl *Cons, 
+                         QualType writtenTy, SourceLocation tyBeginLoc, 
+                         Expr **Args,unsigned NumArgs, 
+                         SourceLocation rParenLoc);
 
   ~CXXTemporaryObjectExpr() { } 
 

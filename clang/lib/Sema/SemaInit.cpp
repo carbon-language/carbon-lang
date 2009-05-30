@@ -174,8 +174,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         if (!Constructor)
           return true;
         
-        Init = CXXConstructExpr::Create(Context, 0, DeclType, Constructor, 
-                                        false, &Init, 1);
+        Init = CXXConstructExpr::Create(Context, DeclType, Constructor, false, 
+                                        &Init, 1);
         return false;
       }
       

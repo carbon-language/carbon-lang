@@ -208,7 +208,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       
       exprs.release();
       
-      Expr *E = new (Context) CXXTemporaryObjectExpr(Context, Temp, Constructor, 
+      Expr *E = new (Context) CXXTemporaryObjectExpr(Context, Constructor, 
                                                      Ty, TyBeginLoc, Exprs,
                                                      NumExprs, RParenLoc);
       return MaybeBindToTemporary(E);
@@ -883,9 +883,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
     
-    CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, ToType);
     // FIXME: Keep track of whether the copy constructor is elidable or not.
-    From = CXXConstructExpr::Create(Context, Temp, ToType, 
+    From = CXXConstructExpr::Create(Context, ToType, 
                                     SCS.CopyConstructor, false, &From, 1);
     return false;
   }
