@@ -22,7 +22,7 @@ namespace clang {
 
   class CXXConstructorDecl;
   class CXXDestructorDecl;
-  class CXXTempVarDecl;
+  class CXXTemporary;
 
 //===--------------------------------------------------------------------===//
 // C++ Expressions.
@@ -1010,12 +1010,12 @@ public:
 class CXXExprWithTemporaries : public Expr {
   Stmt *SubExpr;
     
-  CXXTempVarDecl **Decls;
-  unsigned NumDecls;
+  CXXTemporary **Temps;
+  unsigned NumTemps;
 
 public:
-  CXXExprWithTemporaries(Expr *subexpr, CXXTempVarDecl **decls, 
-                         unsigned numdecls);
+  CXXExprWithTemporaries(Expr *subexpr, CXXTemporary **temps, 
+                         unsigned numtemps);
   ~CXXExprWithTemporaries();
 
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }

@@ -82,6 +82,7 @@ namespace clang {
   class ObjCContainerDecl;
   class BasePaths;
   struct MemberLookupCriteria;
+  class CXXTemporary;
 
 /// BlockSemaInfo - When a block is being parsed, this contains information
 /// about the block.  It is pointed to from Sema::CurBlock.
@@ -165,7 +166,7 @@ public:
 
   /// ExprTemporaries - This is the stack of temporaries that are created by 
   /// the current full expression.
-  llvm::SmallVector<CXXTempVarDecl*, 8> ExprTemporaries;
+  llvm::SmallVector<CXXTemporary*, 8> ExprTemporaries;
 
   /// CurFunctionNeedsScopeChecking - This is set to true when a function or
   /// ObjC method body contains a VLA or an ObjC try block, which introduce

@@ -203,11 +203,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       if (!Constructor)
         return ExprError();
 
-      CXXTempVarDecl *Temp = CXXTempVarDecl::Create(Context, CurContext, Ty);
-      ExprTemporaries.push_back(Temp);
-      
       exprs.release();
-      
       Expr *E = new (Context) CXXTemporaryObjectExpr(Context, Constructor, 
                                                      Ty, TyBeginLoc, Exprs,
                                                      NumExprs, RParenLoc);

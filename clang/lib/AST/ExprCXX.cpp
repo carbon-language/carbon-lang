@@ -294,20 +294,20 @@ void CXXConstructExpr::Destroy(ASTContext &C) {
 }
 
 CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr, 
-                                               CXXTempVarDecl **decls, 
-                                               unsigned numdecls)
+                                               CXXTemporary **temps, 
+                                               unsigned numtemps)
 : Expr(CXXExprWithTemporariesClass, subexpr->getType(),
        subexpr->isTypeDependent(), subexpr->isValueDependent()), 
-  SubExpr(subexpr), Decls(0), NumDecls(numdecls) {
-  if (NumDecls > 0) {
-    Decls = new CXXTempVarDecl*[NumDecls];
-    for (unsigned i = 0; i < NumDecls; ++i)
-      Decls[i] = decls[i];
+  SubExpr(subexpr), Temps(0), NumTemps(numtemps) {
+  if (NumTemps > 0) {
+    Temps = new CXXTemporary*[NumTemps];
+    for (unsigned i = 0; i < NumTemps; ++i)
+      Temps[i] = temps[i];
   }
 }
 
 CXXExprWithTemporaries::~CXXExprWithTemporaries() {
-  delete[] Decls;
+  delete[] Temps;
 }
 
 // CXXBindTemporaryExpr
