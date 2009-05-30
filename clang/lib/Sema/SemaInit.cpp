@@ -119,8 +119,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
 
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
-                                 DeclarationName InitEntity,
-                                 bool DirectInit, VarDecl *VD) {
+                                 DeclarationName InitEntity, bool DirectInit) {
   if (DeclType->isDependentType() || 
       Init->isTypeDependent() || Init->isValueDependent())
     return false;
@@ -175,10 +174,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         if (!Constructor)
           return true;
         
-        // FIXME: What do do if VD is null here?
-        if (VD)
-          Init = CXXConstructExpr::Create(Context, VD, DeclType, Constructor, 
-                                          false, &Init, 1);
+        Init = CXXConstructExpr::Create(Context, 0, DeclType, Constructor, 
+                                        false, &Init, 1);
         return false;
       }
       
