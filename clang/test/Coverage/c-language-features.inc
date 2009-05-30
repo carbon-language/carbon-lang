@@ -140,6 +140,7 @@ void f4(int a0, int a1, int a2, va_list ap) {
   int t32 = __real (t32_cond ? t32_a : t32_b);
 
   struct { int x, y; } t33, *t34, t35[12], t36(int, float);
+  float t37, *t38, t39[9], t40(double);
 }
 
 // Extended vectors

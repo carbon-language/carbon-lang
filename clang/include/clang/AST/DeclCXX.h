@@ -878,6 +878,14 @@ class UsingDirectiveDecl : public NamedDecl {
   /// SourceLocation - Location of 'namespace' token.
   SourceLocation NamespaceLoc;
 
+  /// \brief The source range that covers the nested-name-specifier
+  /// preceding the namespace name.
+  SourceRange QualifierRange;
+
+  /// \brief The nested-name-specifier that precedes the namespace
+  /// name, if any.
+  NestedNameSpecifier *Qualifier;
+
   /// IdentLoc - Location of nominated namespace-name identifier.
   // FIXME: We don't store location of scope specifier.
   SourceLocation IdentLoc;
@@ -898,16 +906,27 @@ class UsingDirectiveDecl : public NamedDecl {
 
   UsingDirectiveDecl(DeclContext *DC, SourceLocation L,
                      SourceLocation NamespcLoc,
+                     SourceRange QualifierRange,
+                     NestedNameSpecifier *Qualifier,
                      SourceLocation IdentLoc,
                      NamespaceDecl *Nominated,
                      DeclContext *CommonAncestor)
     : NamedDecl(Decl::UsingDirective, DC, L, getName()),
-      NamespaceLoc(NamespcLoc), IdentLoc(IdentLoc),
+      NamespaceLoc(NamespcLoc), QualifierRange(QualifierRange), 
+      Qualifier(Qualifier), IdentLoc(IdentLoc), 
       NominatedNamespace(Nominated? Nominated->getOriginalNamespace() : 0),
       CommonAncestor(CommonAncestor) {
   }
 
 public:
+  /// \brief Retrieve the source range of the nested-name-specifier
+  /// that qualifiers the namespace name.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// \brief Retrieve the nested-name-specifier that qualifies the
+  /// name of the namespace.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+
   /// getNominatedNamespace - Returns namespace nominated by using-directive.
   NamespaceDecl *getNominatedNamespace() { return NominatedNamespace; }
 
@@ -929,6 +948,8 @@ public:
   static UsingDirectiveDecl *Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation L,
                                     SourceLocation NamespaceLoc,
+                                    SourceRange QualifierRange,
+                                    NestedNameSpecifier *Qualifier,
                                     SourceLocation IdentLoc,
                                     NamespaceDecl *Nominated,
                                     DeclContext *CommonAncestor);

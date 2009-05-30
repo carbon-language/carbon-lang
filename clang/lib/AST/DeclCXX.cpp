@@ -402,11 +402,13 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceLocation L,
                                                SourceLocation NamespaceLoc,
+                                               SourceRange QualifierRange,
+                                               NestedNameSpecifier *Qualifier,
                                                SourceLocation IdentLoc,
                                                NamespaceDecl *Used,
                                                DeclContext *CommonAncestor) {
-  return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, IdentLoc,
-                                    Used, CommonAncestor);
+  return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, QualifierRange, 
+                                    Qualifier, IdentLoc, Used, CommonAncestor);
 }
 
 NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC, 

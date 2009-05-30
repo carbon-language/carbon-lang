@@ -51,12 +51,15 @@ namespace {
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
+    void VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
+    void VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D);
+    void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
-    void VisitObjCClassDecl(ObjCClassDecl *D);
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
+    void VisitObjCClassDecl(ObjCClassDecl *D);
     void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
@@ -402,6 +405,10 @@ void DeclPrinter::VisitParmVarDecl(ParmVarDecl *D) {
   VisitVarDecl(D);
 }
 
+void DeclPrinter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
+  VisitVarDecl(D);
+}
+
 void DeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   Out << "__asm (";
   D->getAsmString()->printPretty(Out, Context, 0, Policy, Indentation);
@@ -411,6 +418,18 @@ void DeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
 //----------------------------------------------------------------------------
 // C++ declarations
 //----------------------------------------------------------------------------
+void DeclPrinter::VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D) {
+  assert(false && 
+         "OverloadedFunctionDecls aren't really decls and are never printed");
+}
+
+void DeclPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+  Out << "using namespace ";
+  if (D->getQualifier())
+    D->getQualifier()->print(Out, Policy);
+  Out << D->getNominatedNamespace()->getNameAsString();
+}
+
 void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
   Out << "namespace " << D->getNameAsString() << " {\n";
   VisitDeclContext(D);

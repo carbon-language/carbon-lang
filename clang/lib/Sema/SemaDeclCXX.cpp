@@ -1711,8 +1711,12 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
     while (CommonAncestor && !CommonAncestor->Encloses(CurContext))
       CommonAncestor = CommonAncestor->getParent();
 
-    UDir = UsingDirectiveDecl::Create(Context, CurContext, UsingLoc,
-                                      NamespcLoc, IdentLoc,
+    UDir = UsingDirectiveDecl::Create(Context, 
+                                      CurContext, UsingLoc,
+                                      NamespcLoc, 
+                                      SS.getRange(),
+                                      (NestedNameSpecifier *)SS.getScopeRep(),
+                                      IdentLoc,
                                       cast<NamespaceDecl>(NS),
                                       CommonAncestor);
     PushUsingDirective(S, UDir);
