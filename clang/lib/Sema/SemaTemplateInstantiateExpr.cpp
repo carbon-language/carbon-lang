@@ -982,7 +982,7 @@ TemplateExprInstantiator::VisitCXXBindTemporaryExpr(
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
-  return move(SubExpr);
+  return SemaRef.MaybeBindToTemporary(SubExpr.takeAs<Expr>());
 }
 
 Sema::OwningExprResult 
