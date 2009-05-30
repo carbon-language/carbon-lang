@@ -174,7 +174,7 @@ namespace llvm {
     // Constructors.
     APFloat(const fltSemantics &, const char *);
     APFloat(const fltSemantics &, integerPart);
-    APFloat(const fltSemantics &, fltCategory, bool negative);
+    APFloat(const fltSemantics &, fltCategory, bool negative, unsigned type=0);
     explicit APFloat(double d);
     explicit APFloat(float f);
     explicit APFloat(const APInt &, bool isIEEE = false);
@@ -188,8 +188,9 @@ namespace llvm {
     static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
       return APFloat(Sem, fcInfinity, Negative);
     }
-    static APFloat getNaN(const fltSemantics &Sem, bool Negative = false) {
-      return APFloat(Sem, fcNaN, Negative);
+    static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
+                          long unsigned type=0) {
+      return APFloat(Sem, fcNaN, Negative, type);
     }
 
     /// Profile - Used to insert APFloat objects, or objects that contain
@@ -296,7 +297,7 @@ namespace llvm {
     opStatus modSpecials(const APFloat &);
 
     /* Miscellany.  */
-    void makeNaN(void);
+    void makeNaN(unsigned = 0);
     opStatus normalize(roundingMode, lostFraction);
     opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
     cmpResult compareAbsoluteValue(const APFloat &) const;
