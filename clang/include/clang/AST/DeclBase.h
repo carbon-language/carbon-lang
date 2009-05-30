@@ -314,6 +314,10 @@ public:
              unsigned Indentation = 0);
   void print(llvm::raw_ostream &Out, ASTContext &Context, 
              const PrintingPolicy &Policy, unsigned Indentation = 0);
+  static void printGroup(Decl** Begin, unsigned NumDecls,
+                         llvm::raw_ostream &Out, ASTContext &Context, 
+                         const PrintingPolicy &Policy,
+                         unsigned Indentation = 0);
   void dump(ASTContext &Context);
 
 private:

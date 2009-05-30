@@ -1168,7 +1168,7 @@ QualType::getAsStringInternal(std::string &S,
     return;
   }
 
-  if (Policy.SuppressTypeSpecifiers && getTypePtr()->isSpecifierType())
+  if (Policy.SuppressSpecifiers && getTypePtr()->isSpecifierType())
     return;
 
   // Print qualifiers as appropriate.
@@ -1398,7 +1398,7 @@ void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy
   S += "(";
   std::string Tmp;
   PrintingPolicy ParamPolicy(Policy);
-  ParamPolicy.SuppressTypeSpecifiers = false;
+  ParamPolicy.SuppressSpecifiers = false;
   for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
     if (i) S += ", ";
     getArgType(i).getAsStringInternal(Tmp, ParamPolicy);
@@ -1592,6 +1592,9 @@ void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString, const Pr
 }
 
 void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
+  if (Policy.SuppressTag)
+    return;
+
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   

@@ -34,8 +34,8 @@ public:
 struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
   PrintingPolicy() 
-    : Indentation(2), CPlusPlus(false), SuppressTypeSpecifiers(false),
-      SuppressTagKind(false), Dump(false), OwnedTag(0) { }
+    : Indentation(2), CPlusPlus(false), SuppressSpecifiers(false),
+      SuppressTag(false), SuppressTagKind(false), Dump(false) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
@@ -44,8 +44,8 @@ struct PrintingPolicy {
   /// printing C code).
   bool CPlusPlus : 1;
 
-  /// \brief Whether we should suppress printing of the actual type
-  /// specifiers within the type that we are printing.
+  /// \brief Whether we should suppress printing of the actual specifiers for
+  /// the given type or declaration.
   ///
   /// This flag is only used when we are printing declarators beyond
   /// the first declarator within a declaration group. For example, given:
@@ -54,11 +54,21 @@ struct PrintingPolicy {
   /// const int *x, *y;
   /// \endcode
   ///
-  /// SuppressTypeSpecifiers will be false when printing the
+  /// SuppressSpecifiers will be false when printing the
   /// declaration for "x", so that we will print "int *x"; it will be
   /// \c true when we print "y", so that we suppress printing the
   /// "const int" type specifier and instead only print the "*y".
-  bool SuppressTypeSpecifiers : 1;
+  bool SuppressSpecifiers : 1;
+
+  /// \brief Whether type printing should skip printing the actual tag type.
+  ///
+  /// This is used when the caller needs to print a tag definition in front
+  /// of the type, as in constructs like the following:
+  ///
+  /// \code
+  /// typedef struct { int x, y; } Point;
+  /// \endcode
+  bool SuppressTag : 1;
 
   /// \brief If we are printing a tag type, suppresses printing of the
   /// kind of tag, e.g., "struct", "union", "enum".
@@ -69,23 +79,6 @@ struct PrintingPolicy {
   /// and pretty-printing involves printing something similar to
   /// source code.
   bool Dump : 1;
-
-  /// \brief If we are printing a type where the tag type (e.g., a
-  /// class or enum type) was declared or defined within the type
-  /// itself, OwnedTag will point at the declaration node owned by
-  /// this type.
-  ///
-  /// Owned tags occur when a tag type is defined as part of the
-  /// declaration specifiers of another declarator, e.g.,
-  ///
-  /// \code
-  /// typedef struct { int x, y; } Point;
-  /// \endcode
-  ///
-  /// Here, the anonymous struct definition is owned by the type of
-  /// Point. The actual representation uses a DeclGroup to store both
-  /// the RecordDecl and the TypedefDecl.
-  TagDecl *OwnedTag;
 };
 
 } // end namespace clang

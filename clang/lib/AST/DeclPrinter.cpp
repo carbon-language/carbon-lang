@@ -32,6 +32,7 @@ namespace {
     unsigned Indentation;
 
     llvm::raw_ostream& Indent();
+    void ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls);
 
   public:
     DeclPrinter(llvm::raw_ostream &Out, ASTContext &Context, 
@@ -79,6 +80,67 @@ void Decl::print(llvm::raw_ostream &Out, ASTContext &Context,
   Printer.Visit(this);
 }
 
+static QualType GetBaseType(QualType T) {
+  // FIXME: This should be on the Type class!
+  QualType BaseType = T;
+  while (!BaseType->isSpecifierType()) {
+    if (isa<TypedefType>(BaseType))
+      break;
+    else if (const PointerType* PTy = BaseType->getAsPointerType())
+      BaseType = PTy->getPointeeType();
+    else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
+      BaseType = ATy->getElementType();
+    else if (const FunctionType* FTy = BaseType->getAsFunctionType())
+      BaseType = FTy->getResultType();
+    else
+      assert(0 && "Unknown declarator!");
+  }
+  return BaseType;
+}
+
+static QualType getDeclType(Decl* D) {
+  if (TypedefDecl* TDD = dyn_cast<TypedefDecl>(D))
+    return TDD->getUnderlyingType();
+  if (ValueDecl* VD = dyn_cast<ValueDecl>(D))
+    return VD->getType();
+  return QualType();
+}
+
+void Decl::printGroup(Decl** Begin, unsigned NumDecls,
+                      llvm::raw_ostream &Out, ASTContext &Context, 
+                      const PrintingPolicy &Policy,
+                      unsigned Indentation) {
+  if (NumDecls == 1) {
+    (*Begin)->print(Out, Context, Policy, Indentation);
+    return;
+  }
+
+  Decl** End = Begin + NumDecls;
+  TagDecl* TD = dyn_cast<TagDecl>(*Begin);
+  if (TD)
+    ++Begin;
+
+  PrintingPolicy SubPolicy(Policy);
+  if (TD && TD->isDefinition()) {
+    TD->print(Out, Context, Policy, Indentation);
+    Out << " ";
+    SubPolicy.SuppressTag = true;
+  }
+
+  bool isFirst = true;
+  for ( ; Begin != End; ++Begin) {
+    if (isFirst) {
+      SubPolicy.SuppressSpecifiers = false;
+      isFirst = false;
+    } else {
+      if (!isFirst) Out << ", ";
+      SubPolicy.SuppressSpecifiers = true;
+    }
+
+    (*Begin)->print(Out, Context, SubPolicy, Indentation);
+  }
+}
+
 void Decl::dump(ASTContext &Context) {
   print(llvm::errs(), Context);
 }
@@ -89,6 +151,15 @@ llvm::raw_ostream& DeclPrinter::Indent() {
   return Out;
 }
 
+void DeclPrinter::ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls) {
+  this->Indent();
+  Decl::printGroup(Decls.data(), Decls.size(), Out, Context,
+                   Policy, Indentation);
+  Out << ";\n";
+  Decls.clear();
+
+}
+
 //----------------------------------------------------------------------------
 // Common C declarations
 //----------------------------------------------------------------------------
@@ -97,9 +168,38 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
   if (Indent)
     Indentation += Policy.Indentation;
 
+  llvm::SmallVector<Decl*, 2> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(Context),
          DEnd = DC->decls_end(Context);
        D != DEnd; ++D) {
+    // The next bits of code handles stuff like "struct {int x;} a,b"; we're
+    // forced to merge the declarations because there's no other way to
+    // refer to the struct in question.  This limited merging is safe without
+    // a bunch of other checks because it only merges declarations directly
+    // referring to the tag, not typedefs.
+    //
+    // Check whether the current declaration should be grouped with a previous
+    // unnamed struct.
+    QualType CurDeclType = getDeclType(*D);
+    if (!Decls.empty() && !CurDeclType.isNull()) {
+      QualType BaseType = GetBaseType(CurDeclType);
+      if (!BaseType.isNull() && isa<TagType>(BaseType) &&
+          cast<TagType>(BaseType)->getDecl() == Decls[0]) {
+        Decls.push_back(*D);
+        continue;
+      }
+    }
+
+    // If we have a merged group waiting to be handled, handle it now.
+    if (!Decls.empty())
+      ProcessDeclGroup(Decls);
+
+    // If the current declaration is an unnamed tag type, save it
+    // so we can merge it with the subsequent declaration(s) using it.
+    if (isa<TagDecl>(*D) && !cast<TagDecl>(*D)->getIdentifier()) {
+      Decls.push_back(*D);
+      continue;
+    }
     this->Indent();
     Visit(*D);
     
@@ -130,6 +230,9 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     Out << "\n";
   }
 
+  if (!Decls.empty())
+    ProcessDeclGroup(Decls);
+
   if (Indent)
     Indentation -= Policy.Indentation;
 }
@@ -141,7 +244,9 @@ void DeclPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
 void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
   std::string S = D->getNameAsString();
   D->getUnderlyingType().getAsStringInternal(S, Policy);
-  Out << "typedef " << S;
+  if (!Policy.SuppressSpecifiers)
+    Out << "typedef ";
+  Out << S;
 }
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
@@ -153,8 +258,10 @@ void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
 void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
   // print a free standing tag decl (e.g. "struct x;"). 
   Out << D->getKindName();
-  Out << " ";
-  Out << D->getNameAsString();
+  if (D->getIdentifier()) {
+    Out << " ";
+    Out << D->getNameAsString();
+  }
   
   if (D->isDefinition()) {
     Out << " {\n";
@@ -172,15 +279,17 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 }
 
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) { 
-  switch (D->getStorageClass()) {
-  case FunctionDecl::None: break;
-  case FunctionDecl::Extern: Out << "extern "; break;
-  case FunctionDecl::Static: Out << "static "; break;
-  case FunctionDecl::PrivateExtern: Out << "__private_extern__ "; break;
-  }
+  if (!Policy.SuppressSpecifiers) {
+    switch (D->getStorageClass()) {
+    case FunctionDecl::None: break;
+    case FunctionDecl::Extern: Out << "extern "; break;
+    case FunctionDecl::Static: Out << "static "; break;
+    case FunctionDecl::PrivateExtern: Out << "__private_extern__ "; break;
+    }
 
-  if (D->isInline())           Out << "inline ";
-  if (D->isVirtualAsWritten()) Out << "virtual ";
+    if (D->isInline())           Out << "inline ";
+    if (D->isVirtualAsWritten()) Out << "virtual ";
+  }
 
   std::string Proto = D->getNameAsString();
   if (isa<FunctionType>(D->getType().getTypePtr())) {
@@ -202,6 +311,12 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       if (FT->isVariadic()) {
         if (D->getNumParams()) POut << ", ";
         POut << "...";
+      }
+    } else if (D->isThisDeclarationADefinition() && !D->hasPrototype()) {
+      for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
+        if (i)
+          Proto += ", ";
+        Proto += D->getParamDecl(i)->getNameAsString();
       }
     }
 
@@ -238,7 +353,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 }
 
 void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
-  if (D->isMutable())
+  if (!Policy.SuppressSpecifiers && D->isMutable())
     Out << "mutable ";
 
   std::string Name = D->getNameAsString();
@@ -252,10 +367,10 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
 }
 
 void DeclPrinter::VisitVarDecl(VarDecl *D) {
-  if (D->getStorageClass() != VarDecl::None)
+  if (!Policy.SuppressSpecifiers && D->getStorageClass() != VarDecl::None)
     Out << VarDecl::getStorageClassSpecifierString(D->getStorageClass()) << " ";
 
-  if (D->isThreadSpecified())
+  if (!Policy.SuppressSpecifiers && D->isThreadSpecified())
     Out << "__thread ";
 
   std::string Name = D->getNameAsString();

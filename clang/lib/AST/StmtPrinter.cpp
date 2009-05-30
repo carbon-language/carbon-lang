@@ -57,14 +57,9 @@ namespace  {
       IndentLevel -= SubIndent;
     }
 
-    QualType GetBaseType(QualType T);
-    void PrintBaseType(QualType T, TagDecl* TD);
-    void PrintDeclIdentifier(NamedDecl* ND);
     void PrintRawCompoundStmt(CompoundStmt *S);
     void PrintRawDecl(Decl *D);
     void PrintRawDeclStmt(DeclStmt *S);
-    void PrintFieldDecl(FieldDecl *FD);
-    void PrintEnumConstantDecl(EnumConstantDecl *ECD);
     void PrintRawIfStmt(IfStmt *If);
     void PrintRawCXXCatchStmt(CXXCatchStmt *Catch);
     
@@ -116,190 +111,18 @@ void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
   Indent() << "}";
 }
 
-QualType StmtPrinter::GetBaseType(QualType T) {
-  // FIXME: This should be on the Type class!
-  QualType BaseType = T;
-  while (!BaseType->isSpecifierType()) {
-    if (isa<TypedefType>(BaseType))
-      break;
-    else if (const PointerType* PTy = BaseType->getAsPointerType())
-      BaseType = PTy->getPointeeType();
-    else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
-      BaseType = ATy->getElementType();
-    else if (const FunctionType* FTy = BaseType->getAsFunctionType())
-      BaseType = FTy->getResultType();
-    else
-      assert(0 && "Unknown declarator!");
-  }
-  return BaseType;
-}
-
-void StmtPrinter::PrintBaseType(QualType BaseType, TagDecl* TD) {
-  std::string BaseString;
-  if (TD && TD->isDefinition()) {
-    // FIXME: This is an ugly hack; perhaps we can expose something better
-    // from Type.h?
-    if (BaseType.isConstQualified())
-      OS << "const ";
-    PrintRawDecl(TD);
-    OS << " ";
-  } else {
-    BaseType.getAsStringInternal(BaseString, Policy);
-    OS << BaseString << " ";
-  }
-}
-
-void StmtPrinter::PrintDeclIdentifier(NamedDecl* ND) {
-  std::string Name = ND->getNameAsString();
-
-  QualType Ty;
-  if (TypedefDecl* TDD = dyn_cast<TypedefDecl>(ND)) {
-    Ty = TDD->getUnderlyingType();
-  } else if (ValueDecl* VD = dyn_cast<ValueDecl>(ND)) {
-    Ty = VD->getType();
-  } else {
-    assert(0 && "Unexpected decl");
-  }
-
-  PrintingPolicy SubPolicy(Policy);
-  SubPolicy.SuppressTypeSpecifiers = true;
-  Ty.getAsStringInternal(Name, SubPolicy);
-  OS << Name;
-}
-
 void StmtPrinter::PrintRawDecl(Decl *D) {
-  // FIXME: Need to complete/beautify this... this code simply shows the
-  // nodes are where they need to be.
-  if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
-    OS << "typedef " << localType->getUnderlyingType().getAsString();
-    OS << " " << localType->getNameAsString();
-  } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-    // Emit storage class for vardecls.
-    if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-      if (V->getStorageClass() != VarDecl::None)
-        OS << VarDecl::getStorageClassSpecifierString(V->getStorageClass()) 
-           << ' ';
-    }
-    
-    std::string Name = VD->getNameAsString();
-    VD->getType().getAsStringInternal(Name, Policy);
-    OS << Name;
-    
-    // If this is a vardecl with an initializer, emit it.
-    if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-      if (V->getInit()) {
-        OS << " = ";
-        PrintExpr(V->getInit());
-      }
-    }
-  } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
-    // print a free standing tag decl (e.g. "struct x;"). 
-    OS << TD->getKindName();
-    OS << " ";
-    if (const IdentifierInfo *II = TD->getIdentifier())
-      OS << II->getName();
-    if (TD->isDefinition()) {
-      if (RecordDecl *RD = dyn_cast<RecordDecl>(TD)) {
-        OS << "{\n";
-        IndentLevel += 1;
-        // FIXME: The context passed to field_begin/field_end should
-        // never be NULL!
-        ASTContext *Context = 0;
-        for (RecordDecl::field_iterator i = RD->field_begin(*Context);
-             i != RD->field_end(*Context); ++i)
-          PrintFieldDecl(*i);
-        IndentLevel -= 1;
-        Indent() << "}";
-      } else if (EnumDecl *ED = dyn_cast<EnumDecl>(TD)) {
-        OS << "{\n";
-        IndentLevel += 1;
-        // FIXME: The context shouldn't be NULL!
-        ASTContext *Context = 0;
-        for (EnumDecl::enumerator_iterator i = ED->enumerator_begin(*Context);
-             i != ED->enumerator_end(*Context); ++i)
-          PrintEnumConstantDecl(*i);
-        IndentLevel -= 1;
-        Indent() << "}";
-      }
-    }
-  } else {
-    assert(0 && "Unexpected decl");
-  }
-}
-
-void StmtPrinter::PrintFieldDecl(FieldDecl *FD) {
-  Indent();
-  QualType BaseType = GetBaseType(FD->getType());
-  PrintBaseType(BaseType, 0);
-  PrintDeclIdentifier(FD);
-  if (FD->isBitField()) {
-    OS << " : ";
-    PrintExpr(FD->getBitWidth());
-  }
-  OS << ";\n";
-}
-
-void StmtPrinter::PrintEnumConstantDecl(EnumConstantDecl *ECD) {
-  Indent() << ECD->getNameAsString();
-  if (ECD->getInitExpr()) {
-    OS << " = ";
-    PrintExpr(ECD->getInitExpr());
-  }
-  OS << ",\n";
+  D->print(OS, *(ASTContext*)0, Policy, IndentLevel);
 }
 
 void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
   DeclStmt::decl_iterator Begin = S->decl_begin(), End = S->decl_end();
+  llvm::SmallVector<Decl*, 2> Decls;
+  for ( ; Begin != End; ++Begin) 
+    Decls.push_back(*Begin);
 
-  TagDecl* TD = dyn_cast<TagDecl>(*Begin);
-  if (TD)
-    ++Begin;
-
-  if (Begin == End) {
-    PrintRawDecl(TD);
-    return;
-  }
-
-  if (isa<TypedefDecl>(*Begin))
-    OS << "typedef ";
-  else if (VarDecl *V = dyn_cast<VarDecl>(*Begin)) {
-    switch (V->getStorageClass()) {
-    default: assert(0 && "Unknown storage class!");
-    case VarDecl::None:          break;
-    case VarDecl::Auto:          OS << "auto "; break;
-    case VarDecl::Register:      OS << "register "; break;
-    case VarDecl::Extern:        OS << "extern "; break;
-    case VarDecl::Static:        OS << "static "; break; 
-    case VarDecl::PrivateExtern: OS << "__private_extern__ "; break; 
-    }
-  } else if (FunctionDecl *V = dyn_cast<FunctionDecl>(*Begin)) {
-    switch (V->getStorageClass()) {
-    default: assert(0 && "Unknown storage class!");
-    case FunctionDecl::None:          break;
-    case FunctionDecl::Extern:        OS << "extern "; break;
-    case FunctionDecl::Static:        OS << "static "; break; 
-    case FunctionDecl::PrivateExtern: OS << "__private_extern__ "; break; 
-    }
-  } else {
-    assert(0 && "Unhandled decl");
-  }
-
-  QualType BaseType;
-  if (ValueDecl* VD = dyn_cast<ValueDecl>(*Begin)) {
-    BaseType = VD->getType();
-  } else {
-    BaseType = cast<TypedefDecl>(*Begin)->getUnderlyingType();
-  }
-  BaseType = GetBaseType(BaseType);
-  PrintBaseType(BaseType, TD);
-
-  bool isFirst = true;
-  for ( ; Begin != End; ++Begin) {
-    if (!isFirst) OS << ", ";
-    else isFirst = false;
-
-    PrintDeclIdentifier(cast<NamedDecl>(*Begin));
-  }
+  Decl::printGroup(Decls.data(), Decls.size(), OS, *(ASTContext*)0, Policy,
+                   IndentLevel);
 }
 
 void StmtPrinter::VisitNullStmt(NullStmt *Node) {
@@ -1042,7 +865,7 @@ void StmtPrinter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *Node) {
 }
 
 void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
-  OS << "va_arg(";
+  OS << "__builtin_va_arg(";
   PrintExpr(Node->getSubExpr());
   OS << ", ";
   OS << Node->getType().getAsString();
