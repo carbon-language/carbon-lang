@@ -1787,7 +1787,9 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
   }
   
   NamespaceAliasDecl *AliasDecl = 
-    NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc, Alias, 
+    NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc, 
+                               Alias, SS.getRange(), 
+                               (NestedNameSpecifier *)SS.getScopeRep(),
                                IdentLoc, R);
   
   CurContext->addDecl(Context, AliasDecl);

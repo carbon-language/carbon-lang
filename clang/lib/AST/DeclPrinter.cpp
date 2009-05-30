@@ -55,6 +55,7 @@ namespace {
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
     void VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
+    void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
@@ -433,6 +434,13 @@ void DeclPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   if (D->getQualifier())
     D->getQualifier()->print(Out, Policy);
   Out << D->getNominatedNamespace()->getNameAsString();
+}
+
+void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  Out << "namespace " << D->getNameAsString() << " = ";
+  if (D->getQualifier())
+    D->getQualifier()->print(Out, Policy);
+  Out << D->getAliasedNamespace()->getNameAsString();
 }
 
 void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {

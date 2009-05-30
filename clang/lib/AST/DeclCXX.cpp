@@ -415,10 +415,12 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceLocation L, 
                                                SourceLocation AliasLoc, 
                                                IdentifierInfo *Alias, 
+                                               SourceRange QualifierRange,
+                                               NestedNameSpecifier *Qualifier,
                                                SourceLocation IdentLoc, 
                                                NamedDecl *Namespace) {
-  return new (C) NamespaceAliasDecl(DC, L, AliasLoc, Alias, IdentLoc, 
-                                    Namespace);
+  return new (C) NamespaceAliasDecl(DC, L, AliasLoc, Alias, QualifierRange, 
+                                    Qualifier, IdentLoc, Namespace);
 }
 
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,

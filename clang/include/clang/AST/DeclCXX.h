@@ -970,9 +970,16 @@ public:
 /// @endcode
 class NamespaceAliasDecl : public NamedDecl {
   SourceLocation AliasLoc;
+
+  /// \brief The source range that covers the nested-name-specifier
+  /// preceding the namespace name.
+  SourceRange QualifierRange;
+
+  /// \brief The nested-name-specifier that precedes the namespace
+  /// name, if any.
+  NestedNameSpecifier *Qualifier;
   
   /// IdentLoc - Location of namespace identifier.
-  /// FIXME: We don't store location of scope specifier.
   SourceLocation IdentLoc;
   
   /// Namespace - The Decl that this alias points to. Can either be a 
@@ -981,11 +988,21 @@ class NamespaceAliasDecl : public NamedDecl {
   
   NamespaceAliasDecl(DeclContext *DC, SourceLocation L, 
                      SourceLocation AliasLoc, IdentifierInfo *Alias, 
+                     SourceRange QualifierRange,
+                     NestedNameSpecifier *Qualifier,
                      SourceLocation IdentLoc, NamedDecl *Namespace)
     : NamedDecl(Decl::NamespaceAlias, DC, L, Alias), AliasLoc(AliasLoc), 
+      QualifierRange(QualifierRange), Qualifier(Qualifier),
       IdentLoc(IdentLoc), Namespace(Namespace) { }
 
 public:
+  /// \brief Retrieve the source range of the nested-name-specifier
+  /// that qualifiers the namespace name.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// \brief Retrieve the nested-name-specifier that qualifies the
+  /// name of the namespace.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
 
   NamespaceDecl *getNamespace() {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(Namespace))
@@ -997,10 +1014,16 @@ public:
   const NamespaceDecl *getNamespace() const {
     return const_cast<NamespaceAliasDecl*>(this)->getNamespace();
   }
-  
+
+  /// \brief Retrieve the namespace that this alias refers to, which
+  /// may either be a NamespaceDecl or a NamespaceAliasDecl.
+  NamedDecl *getAliasedNamespace() const { return Namespace; }
+
   static NamespaceAliasDecl *Create(ASTContext &C, DeclContext *DC, 
                                     SourceLocation L, SourceLocation AliasLoc, 
                                     IdentifierInfo *Alias, 
+                                    SourceRange QualifierRange,
+                                    NestedNameSpecifier *Qualifier,
                                     SourceLocation IdentLoc, 
                                     NamedDecl *Namespace);
   

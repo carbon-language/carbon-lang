@@ -10,3 +10,5 @@ namespace std {
 
 using namespace std::debug;
 using namespace std;
+
+namespace safestl = ::std::debug;
