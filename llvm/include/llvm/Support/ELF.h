@@ -113,7 +113,8 @@ enum {
   EM_PPC = 20,     // PowerPC
   EM_ARM = 40,     // ARM
   EM_ALPHA = 41,   // DEC Alpha
-  EM_SPARCV9 = 43  // SPARC V9
+  EM_SPARCV9 = 43, // SPARC V9
+  EM_X86_64 = 62   // AMD64
 };
 
 // Object file classes.
