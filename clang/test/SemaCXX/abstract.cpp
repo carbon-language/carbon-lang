@@ -118,3 +118,11 @@ void foo(void)
 	B b;
 }
 
+struct K {
+ int f;
+ virtual ~K();
+};
+
+struct L : public K {
+ void f();
+};
