@@ -419,10 +419,12 @@ class CXXTemporary {
   
   CXXTemporary(const CXXDestructorDecl *destructor)
     : Destructor(destructor) { }
+  ~CXXTemporary() { }
 
 public:
   static CXXTemporary *Create(ASTContext &C, 
                               const CXXDestructorDecl *Destructor);
+  void Destroy(ASTContext &C);
 };
 
 /// CXXBindTemporaryExpr - Represents binding an expression to a temporary, 
@@ -435,13 +437,18 @@ class CXXBindTemporaryExpr : public Expr {
   CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr) 
    : Expr(CXXBindTemporaryExprClass,
           subexpr->getType()), Temp(temp), SubExpr(subexpr) { }
-  
+  ~CXXBindTemporaryExpr() { } 
+
 public:
   static CXXBindTemporaryExpr *Create(ASTContext &C, CXXTemporary *Temp, 
                                       Expr* SubExpr);
+  void Destroy(ASTContext &C);
+  
+  CXXTemporary *getTemporary() { return Temp; }
   
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+  void setSubExpr(Expr *E) { SubExpr = E; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
 
@@ -1013,13 +1020,26 @@ class CXXExprWithTemporaries : public Expr {
   CXXTemporary **Temps;
   unsigned NumTemps;
 
-public:
   CXXExprWithTemporaries(Expr *subexpr, CXXTemporary **temps, 
                          unsigned numtemps);
   ~CXXExprWithTemporaries();
-
+  
+public:
+  static CXXExprWithTemporaries *Create(ASTContext &C, Expr *SubExpr,
+                                        CXXTemporary **Temps, 
+                                        unsigned NumTemps);
+  void Destroy(ASTContext &C);
+  
+  unsigned getNumTemporaries() const { return NumTemps; }
+  CXXTemporary *getTemporary(unsigned i) {
+    assert(i < NumTemps && "Index out of range");
+    return Temps[i];
+  }
+  void removeLastTemporary() { NumTemps--; }
+  
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+  void setSubExpr(Expr *E) { SubExpr = E; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
 

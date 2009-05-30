@@ -1547,9 +1547,9 @@ Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
 
   if (FullExpr && !ExprTemporaries.empty()) {
     // Create a cleanup expr.
-    FullExpr = 
-      new (Context) CXXExprWithTemporaries(FullExpr, &ExprTemporaries[0],
-                                           ExprTemporaries.size());
+    FullExpr = CXXExprWithTemporaries::Create(Context, FullExpr,
+                                              &ExprTemporaries[0], 
+                                              ExprTemporaries.size());
     ExprTemporaries.clear();
   }
 

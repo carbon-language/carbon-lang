@@ -238,8 +238,12 @@ const char *CXXNamedCastExpr::getCastName() const {
 
 CXXTemporary *CXXTemporary::Create(ASTContext &C, 
                                    const CXXDestructorDecl *Destructor) {
-  // FIXME: Allocate using the ASTContext.
-  return new CXXTemporary(Destructor);
+  return new (C) CXXTemporary(Destructor);
+}
+
+void CXXTemporary::Destroy(ASTContext &C) {
+  this->~CXXTemporary();
+  C.Deallocate(this);
 }
 
 CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C, 
@@ -249,6 +253,12 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
          "Expression bound to a temporary must have record type!");
 
   return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
+}
+
+void CXXBindTemporaryExpr::Destroy(ASTContext &C) {
+  Temp->Destroy(C);
+  this->~CXXBindTemporaryExpr();
+  C.Deallocate(this);
 }
 
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
@@ -304,6 +314,19 @@ CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr,
     for (unsigned i = 0; i < NumTemps; ++i)
       Temps[i] = temps[i];
   }
+}
+
+CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C, 
+                                                       Expr *SubExpr,
+                                                       CXXTemporary **Temps, 
+                                                       unsigned NumTemps) {
+  return new (C) CXXExprWithTemporaries(SubExpr, Temps, NumTemps);
+}
+
+void CXXExprWithTemporaries::Destroy(ASTContext &C) {
+  DestroyChildren(C);
+  this->~CXXExprWithTemporaries();
+  C.Deallocate(this);
 }
 
 CXXExprWithTemporaries::~CXXExprWithTemporaries() {
