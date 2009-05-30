@@ -1544,9 +1544,8 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
-  assert(FullExpr && "Null full expr!");
- 
-  if (!ExprTemporaries.empty()) {
+
+  if (FullExpr && !ExprTemporaries.empty()) {
     // Create a cleanup expr.
     FullExpr = 
       new (Context) CXXExprWithTemporaries(FullExpr, &ExprTemporaries[0],
