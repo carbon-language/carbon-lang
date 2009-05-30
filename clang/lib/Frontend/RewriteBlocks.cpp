@@ -724,7 +724,7 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   BlockCall += "((struct __block_impl *)";
   std::string closureExprBufStr;
   llvm::raw_string_ostream closureExprBuf(closureExprBufStr);
-  Exp->getCallee()->printPretty(closureExprBuf);
+  Exp->getCallee()->printPretty(closureExprBuf, *Context);
   BlockCall += closureExprBuf.str();
   BlockCall += ")->FuncPtr)";
   
@@ -735,7 +735,7 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
        E = Exp->arg_end(); I != E; ++I) {
     std::string syncExprBufS;
     llvm::raw_string_ostream Buf(syncExprBufS);
-    (*I)->printPretty(Buf);
+    (*I)->printPretty(Buf, *Context);
     BlockCall += ", " + Buf.str();
   }
   return BlockCall;

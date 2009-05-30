@@ -171,7 +171,7 @@ namespace {
       // Get the new text.
       std::string SStr;
       llvm::raw_string_ostream S(SStr);
-      New->printPretty(S);
+      New->printPretty(S, *Context);
       const std::string &Str = S.str();
 
       // If replacement succeeded or warning disabled return with no warning.
@@ -1514,7 +1514,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
                                                 SourceLocation());
   std::string syncExprBufS;
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
-  syncExpr->printPretty(syncExprBuf);
+  syncExpr->printPretty(syncExprBuf, *Context);
   buf += syncExprBuf.str();
   buf += ");\n";
   buf += "  if (_rethrow) objc_exception_throw(_rethrow);\n";
@@ -2143,7 +2143,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   // The pretty printer for StringLiteral handles escape characters properly.
   std::string prettyBufS;
   llvm::raw_string_ostream prettyBuf(prettyBufS);
-  Exp->getString()->printPretty(prettyBuf);
+  Exp->getString()->printPretty(prettyBuf, *Context);
   Preamble += prettyBuf.str();
   Preamble += ",";
   // The minus 2 removes the begin/end double quotes.
@@ -4526,7 +4526,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     // Get the new text.
     std::string SStr;
     llvm::raw_string_ostream Buf(SStr);
-    Replacement->printPretty(Buf);
+    Replacement->printPretty(Buf, *Context);
     const std::string &Str = Buf.str();
 
     printf("CAST = %s\n", &Str[0]);
