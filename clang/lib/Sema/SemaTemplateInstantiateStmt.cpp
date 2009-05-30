@@ -130,7 +130,7 @@ TemplateStmtInstantiator::VisitReturnStmt(ReturnStmt *S) {
       return SemaRef.StmtError();
   }
   
-  return SemaRef.ActOnReturnStmt(S->getReturnLoc(), move(Result));
+  return SemaRef.ActOnReturnStmt(S->getReturnLoc(), FullExpr(Result));
 }
 
 Sema::OwningStmtResult 

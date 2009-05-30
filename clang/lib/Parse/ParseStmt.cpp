@@ -1071,7 +1071,7 @@ Parser::OwningStmtResult Parser::ParseReturnStatement() {
       return StmtError();
     }
   }
-  return Actions.ActOnReturnStmt(ReturnLoc, move(R));
+  return Actions.ActOnReturnStmt(ReturnLoc, Actions.FullExpr(R));
 }
 
 /// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this

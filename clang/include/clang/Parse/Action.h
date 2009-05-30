@@ -551,7 +551,7 @@ public:
     return StmtEmpty();
   }
   virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                           ExprArg RetValExp) {
+                                           FullExprArg RetValExp) {
     return StmtEmpty();
   }
   virtual OwningStmtResult ActOnAsmStmt(SourceLocation AsmLoc,
