@@ -196,8 +196,6 @@ enum ProgActions {
   ASTPrint,                     // Parse ASTs and print them.
   ASTPrintXML,                  // Parse ASTs and print them in XML.
   ASTDump,                      // Parse ASTs and dump them.
-  ASTDumpFull,                  // Parse ASTs and dump them, including the 
-                                // contents of a PCH file.
   ASTView,                      // Parse ASTs and view them in Graphviz.
   PrintDeclContext,             // Print DeclContext and their Decls.
   ParsePrintCallbacks,          // Parse and print each callback.
@@ -241,8 +239,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and then print them in XML format"),
              clEnumValN(ASTDump, "ast-dump",
                         "Build ASTs and then debug dump them"),
-             clEnumValN(ASTDumpFull, "ast-dump-full",
-                        "Build ASTs and then debug dump them, including PCH"),
              clEnumValN(ASTView, "ast-view",
                         "Build ASTs and view them with GraphViz"),
              clEnumValN(PrintDeclContext, "print-decl-contexts",
@@ -1770,15 +1766,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
 
   case ASTDump:
-    Consumer.reset(CreateASTDumper(false));
+    Consumer.reset(CreateASTDumper());
     break;
 
-  case ASTDumpFull:
-    Consumer.reset(CreateASTDumper(true));
-    break;
-    
   case ASTView:
-    Consumer.reset(CreateASTViewer());   
+    Consumer.reset(CreateASTViewer());
     break;
 
   case PrintDeclContext:

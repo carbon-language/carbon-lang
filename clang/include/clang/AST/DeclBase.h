@@ -310,6 +310,12 @@ public:
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
 
+  void print(llvm::raw_ostream &Out, ASTContext &Context, 
+             unsigned Indentation = 0);
+  void print(llvm::raw_ostream &Out, ASTContext &Context, 
+             const PrintingPolicy &Policy, unsigned Indentation = 0);
+  void dump(ASTContext &Context);
+
 private:
   const Attr *getAttrsImpl() const;
 

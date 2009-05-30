@@ -12,6 +12,7 @@ add_clang_library(clangAST
   DeclCXX.cpp
   DeclGroup.cpp
   DeclObjC.cpp
+  DeclPrinter.cpp
   DeclTemplate.cpp
   ExprConstant.cpp
   Expr.cpp

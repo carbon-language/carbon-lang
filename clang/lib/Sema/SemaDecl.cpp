@@ -4416,6 +4416,8 @@ Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
                                             ExprArg expr) {
   StringLiteral *AsmString = cast<StringLiteral>(expr.takeAs<Expr>());
 
-  return DeclPtrTy::make(FileScopeAsmDecl::Create(Context, CurContext,
-                                                  Loc, AsmString));
+  FileScopeAsmDecl *New = FileScopeAsmDecl::Create(Context, CurContext,
+                                                   Loc, AsmString);
+  CurContext->addDecl(Context, New);
+  return DeclPtrTy::make(New);
 }

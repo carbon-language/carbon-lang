@@ -35,7 +35,7 @@ struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
   PrintingPolicy() 
     : Indentation(2), CPlusPlus(false), SuppressTypeSpecifiers(false),
-      SuppressTagKind(false), OwnedTag(0) { }
+      SuppressTagKind(false), Dump(false), OwnedTag(0) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
@@ -63,6 +63,12 @@ struct PrintingPolicy {
   /// \brief If we are printing a tag type, suppresses printing of the
   /// kind of tag, e.g., "struct", "union", "enum".
   bool SuppressTagKind : 1;
+
+  /// \brief True when we are "dumping" rather than "pretty-printing",
+  /// where dumping involves printing the internal details of the AST
+  /// and pretty-printing involves printing something similar to
+  /// source code.
+  bool Dump : 1;
 
   /// \brief If we are printing a type where the tag type (e.g., a
   /// class or enum type) was declared or defined within the type

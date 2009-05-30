@@ -566,6 +566,8 @@ void DocumentXML::PrintDecl(Decl *D)
       case LinkageSpecDecl::lang_cxx:  addAttribute("lang", "CXX");  break;
       default:                         assert(0 && "Unexpected lang id");
     }
+  } else if (isa<FileScopeAsmDecl>(D)) {
+    // FIXME: Implement this
   } else {
     assert(0 && "Unexpected decl");
   }

@@ -87,6 +87,7 @@ void f4(int a0, int a1, int a2, va_list ap) {
   int t0 = a0 ? a1 : a2;
   float t1 = (float) a0;
   ipair t2 = {1, 2};
+  ipair t2a = { .second = 2 };
   int t3 = sizeof(ipair);
   ipair t4;
   t4 = (ipair) {1, 2};

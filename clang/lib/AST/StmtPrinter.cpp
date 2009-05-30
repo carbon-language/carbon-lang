@@ -816,7 +816,7 @@ void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
     PrintExpr(Node->getLHS());
     OS << " : ";
   }
-  else { // Handle GCC extention where LHS can be NULL.
+  else { // Handle GCC extension where LHS can be NULL.
     OS << " ?: ";
   }
   
@@ -903,7 +903,15 @@ void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
 }
 
 void StmtPrinter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *Node) {
-  OS << "/*implicit*/" << Node->getType().getAsString() << "()";
+  if (Policy.CPlusPlus)
+    OS << "/*implicit*/" << Node->getType().getAsString(Policy) << "()";
+  else {
+    OS << "/*implicit*/(" << Node->getType().getAsString(Policy) << ")";
+    if (Node->getType()->isRecordType())
+      OS << "{}";
+    else
+      OS << 0;
+  }
 }
 
 void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
@@ -1257,6 +1265,11 @@ void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper,
     return;
   }
 
+  if (Policy.Dump) {
+    dump();
+    return;
+  }
+  
   StmtPrinter P(OS, Helper, Policy, Indentation);
   P.Visit(const_cast<Stmt*>(this));
 }

@@ -45,10 +45,8 @@ ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS);
 ASTConsumer *CreateASTPrinterXML(llvm::raw_ostream* OS);
 
 // AST dumper: dumps the raw AST in human-readable form to stderr; this is
-// intended for debugging. A normal dump is done with FullDump = false;
-// with FullDump = true, the dumper waits until the end of the translation
-// unit to dump the AST.
-ASTConsumer *CreateASTDumper(bool FullDump);
+// intended for debugging.
+ASTConsumer *CreateASTDumper();
 
 // Graphical AST viewer: for each function definition, creates a graph of
 // the AST and displays it with the graph viewer "dotty".  Also outputs

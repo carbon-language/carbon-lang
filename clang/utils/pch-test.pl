@@ -22,7 +22,7 @@ sub testfiles($$) {
       print(".");
       $code = system("clang-cc -emit-pch -x $language -o $file.pch $file > /dev/null 2>&1");
       if ($code == 0) {
-        $code = system("clang-cc -include-pch $file.pch -x $language -ast-dump-full /dev/null > /dev/null 2>&1");
+        $code = system("clang-cc -include-pch $file.pch -x $language -ast-dump /dev/null > /dev/null 2>&1");
         if ($code == 0) {
           $passed++;
         } elsif (($code & 0xFF) == SIGINT) {
