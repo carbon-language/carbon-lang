@@ -189,6 +189,17 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
                          E->arg_begin(), E->arg_end());
 }
 
+RValue 
+CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
+                                            llvm::Value *AggLoc,
+                                            bool isAggLocVolatile) {
+  RValue RV = EmitAnyExpr(E->getSubExpr(), AggLoc, isAggLocVolatile);
+  
+  // FIXME: Handle the temporaries.
+  
+  return RV;
+}
+
 static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
                                    ASTContext &Context) {
   // The class has base classes - we don't support that right now.

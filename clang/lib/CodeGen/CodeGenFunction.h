@@ -653,7 +653,8 @@ public:
   LValue EmitBlockDeclRefLValue(const BlockDeclRefExpr *E);
 
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
-
+  LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
+  
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
@@ -783,6 +784,10 @@ public:
 
   void EmitCXXConstructExpr(llvm::Value *Dest, const CXXConstructExpr *E);
   
+  RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
+                                    llvm::Value *AggLoc = 0, 
+                                    bool isAggLocVolatile = false);
+                                  
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//

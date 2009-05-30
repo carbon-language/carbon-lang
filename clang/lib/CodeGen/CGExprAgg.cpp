@@ -105,6 +105,7 @@ public:
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
   }
+  void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
   void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
 
@@ -290,16 +291,36 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   EmitFinalDestCopy(VE, LValue::MakeAddr(ArgPtr, 0));
 }
 
+void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
+  llvm::Value *Val = DestPtr;
+  
+  if (!Val) {
+    // Create a temporary variable.
+    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+
+    // FIXME: volatile
+    CGF.EmitAggExpr(E->getSubExpr(), Val, false);
+  } else 
+    Visit(E->getSubExpr());
+  
+  // FIXME: Record the value and dest ptr.
+  Val->dump();
+}
+
 void
 AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
-  assert(DestPtr && "Must have somewhere to emit into!");
+  llvm::Value *Val = DestPtr;
+  
+  if (!Val) {
+    // Create a temporary variable.
+    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+  }
 
-  CGF.EmitCXXConstructExpr(DestPtr, E);
+  CGF.EmitCXXConstructExpr(Val, E);
 }
 
 void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
-  // FIXME: Do something with the temporaries!
-  Visit(E->getSubExpr());
+  CGF.EmitCXXExprWithTemporaries(E, DestPtr, VolatileDest);
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
