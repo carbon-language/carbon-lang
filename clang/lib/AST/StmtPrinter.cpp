@@ -982,6 +982,11 @@ void StmtPrinter::VisitShuffleVectorExpr(ShuffleVectorExpr *Node) {
 }
 
 void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
+  if (Node->getSyntacticForm()) {
+    Visit(Node->getSyntacticForm());
+    return;
+  }
+
   OS << "{ ";
   for (unsigned i = 0, e = Node->getNumInits(); i != e; ++i) {
     if (i) OS << ", ";

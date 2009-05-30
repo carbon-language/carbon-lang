@@ -108,7 +108,14 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     if (isa<FunctionDecl>(*D) && 
         cast<FunctionDecl>(*D)->isThisDeclarationADefinition())
       Terminator = 0;
-    else if (isa<NamespaceDecl>(*D) || isa<LinkageSpecDecl>(*D))
+    else if (isa<ObjCMethodDecl>(*D) && cast<ObjCMethodDecl>(*D)->getBody())
+      Terminator = 0;
+    else if (isa<NamespaceDecl>(*D) || isa<LinkageSpecDecl>(*D) ||
+             isa<ObjCImplementationDecl>(*D) || 
+             isa<ObjCInterfaceDecl>(*D) ||
+             isa<ObjCProtocolDecl>(*D) ||
+             isa<ObjCCategoryImplDecl>(*D) ||
+             isa<ObjCCategoryDecl>(*D))
       Terminator = 0;
     else if (isa<EnumConstantDecl>(*D)) {
       DeclContext::decl_iterator Next = D;
@@ -323,14 +330,13 @@ void DeclPrinter::VisitObjCClassDecl(ObjCClassDecl *D) {
     if (I != D->begin()) Out << ", ";
     Out << (*I)->getNameAsString();
   }
-  Out << ";\n";
 }
 
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isInstanceMethod())
-    Out << "\n- ";
+    Out << "- ";
   else 
-    Out << "\n+ ";
+    Out << "+ ";
   if (!OMD->getResultType().isNull())
     Out << '(' << OMD->getResultType().getAsString() << ")";
   
@@ -356,8 +362,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
     Out << ' ';
     OMD->getBody()->printPretty(Out, 0, Policy);
     Out << '\n';
-  } else
-    Out << ";";
+  }
 }
 
 void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
@@ -368,9 +373,9 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
     Out << "@implementation " << I << " : " << SID->getNameAsString();
   else
     Out << "@implementation " << I;
-  
-  VisitDeclContext(OID);
-  Out << "@end\n";
+  Out << "\n";
+  VisitDeclContext(OID, false);
+  Out << "@end";
 }
 
 void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
@@ -391,21 +396,22 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   }
   
   if (!Protocols.empty())
-    Out << ">";
-  Out << '\n';
+    Out << "> ";
   
   if (OID->ivar_size() > 0) {
-    Out << '{';
+    Out << "{\n";
+    Indentation += Policy.Indentation;
     for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
-      Out << '\t' << (*I)->getType().getAsString(Policy)
+      Indent() << (*I)->getType().getAsString(Policy)
           << ' '  << (*I)->getNameAsString() << ";\n";      
     }
+    Indentation -= Policy.Indentation;
     Out << "}\n";
   }
   
   VisitDeclContext(OID, false);
-  Out << "@end\n";
+  Out << "@end";
   // FIXME: implement the rest...
 }
 
@@ -417,35 +423,30 @@ void DeclPrinter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
     if (I != D->protocol_begin()) Out << ", ";
     Out << (*I)->getNameAsString();
   }
-  Out << ";\n";
 }
 
 void DeclPrinter::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
   Out << "@protocol " << PID->getNameAsString() << '\n';
-  
-  for (ObjCProtocolDecl::prop_iterator I = PID->prop_begin(Context),
-       E = PID->prop_end(Context); I != E; ++I)
-    VisitObjCPropertyDecl(*I);
-  Out << "@end\n";
-  // FIXME: implement the rest...
+  VisitDeclContext(PID, false);
+  Out << "@end";
 }
 
 void DeclPrinter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
   Out << "@implementation "
       << PID->getClassInterface()->getNameAsString()
-      << '(' << PID->getNameAsString() << ");\n";  
+      << '(' << PID->getNameAsString() << ")\n";  
 
   VisitDeclContext(PID, false);
-  Out << "@end\n";
+  Out << "@end";
   // FIXME: implement the rest...
 }
 
 void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
   Out << "@interface " 
       << PID->getClassInterface()->getNameAsString()
-      << '(' << PID->getNameAsString() << ");\n";
+      << '(' << PID->getNameAsString() << ")\n";
   VisitDeclContext(PID, false);
-  Out << "@end\n";
+  Out << "@end";
   
   // FIXME: implement the rest...
 }
@@ -514,17 +515,14 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
   }
   Out << ' ' << PDecl->getType().getAsString(Policy)
   << ' ' << PDecl->getNameAsString();
-    
-  Out << ";\n";
 }
 
 void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
   if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize)
-    Out << "\n@synthesize ";
+    Out << "@synthesize ";
   else
-    Out << "\n@dynamic ";
+    Out << "@dynamic ";
   Out << PID->getPropertyDecl()->getNameAsString();
   if (PID->getPropertyIvarDecl())
     Out << "=" << PID->getPropertyIvarDecl()->getNameAsString();
-  Out << ";\n";
 }
