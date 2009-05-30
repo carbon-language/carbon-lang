@@ -178,6 +178,11 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     if (!Policy.Dump) {
       // Skip over implicit declarations in pretty-printing mode.
       if (D->isImplicit()) continue;
+      // FIXME: Ugly hack so we don't pretty-print the builtin declaration
+      // of __builtin_va_list.  There should be some other way to check that.
+      if (isa<NamedDecl>(*D) && cast<NamedDecl>(*D)->getNameAsString() ==
+          "__builtin_va_list")
+        continue;
     }
 
     // The next bits of code handles stuff like "struct {int x;} a,b"; we're
