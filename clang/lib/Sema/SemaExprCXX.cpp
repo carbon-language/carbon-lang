@@ -207,10 +207,11 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       ExprTemporaries.push_back(Temp);
       
       exprs.release();
-      return Owned(new (Context) CXXTemporaryObjectExpr(Context, Temp, 
-                                                        Constructor, Ty,
-                                                        TyBeginLoc,  Exprs,
-                                                        NumExprs, RParenLoc));
+      
+      Expr *E = new (Context) CXXTemporaryObjectExpr(Context, Temp, Constructor, 
+                                                     Ty, TyBeginLoc, Exprs,
+                                                     NumExprs, RParenLoc);
+      return MaybeBindToTemporary(E);
     }
 
     // Fall through to value-initialize an object of class type that
@@ -1527,6 +1528,22 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
       return Composite2;
   }
   return QualType();
+}
+
+Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
+  const RecordType *RT = E->getType()->getAsRecordType();
+  if (!RT)
+    return Owned(E);
+  
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  if (RD->hasTrivialDestructor())
+    return Owned(E);
+  
+  CXXTemporary *Temp = CXXTemporary::Create(Context, 
+                                            RD->getDestructor(Context));
+
+  // FIXME: Add the temporary to the temporaries vector.
+  return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {

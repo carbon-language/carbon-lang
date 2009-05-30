@@ -1494,7 +1494,12 @@ public:
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
-  
+
+  /// MaybeBindToTemporary - If the passed in expression has a record type with
+  /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise
+  /// it simply returns the passed in expression.
+  OwningExprResult MaybeBindToTemporary(Expr *E);
+
   /// InitializationKind - Represents which kind of C++ initialization
   /// [dcl.init] a routine is to perform.
   enum InitializationKind {
