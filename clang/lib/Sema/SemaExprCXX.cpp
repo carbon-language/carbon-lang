@@ -1536,7 +1536,8 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   
   CXXTemporary *Temp = CXXTemporary::Create(Context, 
                                             RD->getDestructor(Context));
-
+  ExprTemporaries.push_back(Temp);
+  
   // FIXME: Add the temporary to the temporaries vector.
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }
