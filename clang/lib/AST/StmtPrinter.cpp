@@ -1029,7 +1029,7 @@ void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   std::string TypeS;
   if (Expr *Size = E->getArraySize()) {
     llvm::raw_string_ostream s(TypeS);
-    Size->printPretty(s, Helper, Policy);
+    Size->printPretty(s, Context, Helper, Policy);
     s.flush();
     TypeS = "[" + TypeS + "]";
   }
