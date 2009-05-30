@@ -439,15 +439,6 @@ void StaticAssertDecl::Destroy(ASTContext& C) {
 StaticAssertDecl::~StaticAssertDecl() {
 }
 
-CXXTempVarDecl *CXXTempVarDecl::Create(ASTContext &C, DeclContext *DC,
-                                       QualType T) {
-  assert((T->isDependentType() || 
-          isa<CXXRecordDecl>(T->getAsRecordType()->getDecl())) &&
-         "CXXTempVarDecl must either have a dependent type "
-         "or a C++ record type!");
-  return new (C) CXXTempVarDecl(DC, T);
-}
-
 static const char *getAccessName(AccessSpecifier AS) {
   switch (AS) {
     default:

@@ -208,7 +208,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCForwardProtocol:
     case Block:
     case TranslationUnit:
-    case CXXTempVar:
 
     // Aren't looked up?
     case UsingDirective:
