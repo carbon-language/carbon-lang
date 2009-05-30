@@ -360,7 +360,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D) {
         SkipUntil(tok::semi, true, true);
         return DeclPtrTy();
       }
-      Actions.AddInitializerToDecl(ThisDecl, move(Init));
+      Actions.AddInitializerToDecl(ThisDecl, Actions.FullExpr(Init));
     }
   } else if (Tok.is(tok::l_paren)) {
     // Parse C++ direct initializer: '(' expression-list ')'

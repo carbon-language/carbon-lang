@@ -409,7 +409,7 @@ public:
   virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
                                                  SourceLocation EqualLoc);
   virtual void ActOnParamDefaultArgumentError(DeclPtrTy param);
-  virtual void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init);
+  virtual void AddInitializerToDecl(DeclPtrTy dcl, FullExprArg init);
   void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit);
   void ActOnUninitializedDecl(DeclPtrTy dcl);
   virtual void SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc);
