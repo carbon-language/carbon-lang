@@ -231,7 +231,10 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
   FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl());
   if (!FD) // FIXME: deal with other kinds of member expressions
     return APValue();
-    
+
+  if (FD->getType()->isReferenceType())
+    return APValue();
+
   // FIXME: This is linear time.
   unsigned i = 0;
   for (RecordDecl::field_iterator Field = RD->field_begin(Info.Ctx),
@@ -1047,7 +1050,7 @@ unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
   // Get information about the alignment.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
 
-  // FIXME: Why do we ask for the preferred alignment?
+  // __alignof is defined to return the preferred alignment.
   return Info.Ctx.getPreferredTypeAlign(T.getTypePtr()) / CharSize;
 }
 

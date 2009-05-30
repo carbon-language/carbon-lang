@@ -1034,6 +1034,8 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                               llvm::PointerType::get(FieldTy, AS), 
                               "tmp");
   }
+  if (Field->getType()->isReferenceType())
+    V = Builder.CreateLoad(V, "tmp");
 
   QualType::GCAttrTypes attr = QualType::GCNone;
   if (CGM.getLangOptions().ObjC1 &&
