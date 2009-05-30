@@ -18,6 +18,8 @@
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Compiler.h"
+#include <cstring>
+
 using namespace clang;
 using llvm::APSInt;
 using llvm::APFloat;
@@ -1311,14 +1313,23 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
   case Builtin::BI__builtin_nan:
   case Builtin::BI__builtin_nanf:
   case Builtin::BI__builtin_nanl:
-    // If this is __builtin_nan("") turn this into a simple nan, otherwise we
+    // If this is __builtin_nan() turn this into a nan, otherwise we
     // can't constant fold it.
     if (const StringLiteral *S = 
         dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenCasts())) {
-      if (!S->isWide() && S->getByteLength() == 0) { // empty string.
+      if (!S->isWide()) {
         const llvm::fltSemantics &Sem =
           Info.Ctx.getFloatTypeSemantics(E->getType());
-        Result = llvm::APFloat::getNaN(Sem);
+        char *s = (char *)malloc (S->getByteLength()+1);
+        memcpy(s,  S->getStrData(), S->getByteLength());
+        s[S->getByteLength()] = 0;
+        long l;
+        char *endp;
+        l = strtol(S->getStrData(), &endp, 0);
+        if (endp != (S->getStrData() + S->getByteLength()))
+          return false;
+        unsigned type = (unsigned int)l;;
+        Result = llvm::APFloat::getNaN(Sem, false, type);
         return true;
       }
     }
