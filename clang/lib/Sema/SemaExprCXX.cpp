@@ -1542,6 +1542,47 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }
 
+// FIXME: This doesn't handle casts yet.
+Expr *Sema::RemoveOutermostTemporaryBinding(Expr *E) {
+  const RecordType *RT = E->getType()->getAsRecordType();
+  if (!RT)
+    return E;
+  
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  if (RD->hasTrivialDestructor())
+    return E;
+  
+  /// The expr passed in must be a CXXExprWithTemporaries.
+  CXXExprWithTemporaries *TempExpr = dyn_cast<CXXExprWithTemporaries>(E);
+  if (!TempExpr)
+    return E;
+  
+  Expr *SubExpr = TempExpr->getSubExpr();
+  if (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(SubExpr)) {
+    assert(BE->getTemporary() == 
+             TempExpr->getTemporary(TempExpr->getNumTemporaries() - 1) &&
+           "Found temporary is not last in list!");
+
+    Expr *BindSubExpr = BE->getSubExpr();
+    BE->setSubExpr(0);
+    
+    if (TempExpr->getNumTemporaries() == 1) {
+      // There's just one temporary left, so we don't need the TempExpr node.
+      TempExpr->Destroy(Context);
+      return BindSubExpr;
+    } else {
+      TempExpr->removeLastTemporary();
+      TempExpr->setSubExpr(BindSubExpr);
+      BE->Destroy(Context);
+    }
+    
+    return E;
+  } 
+  
+  // FIXME: We might need to handle other expressions here.
+  return E;
+}
+
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
 
