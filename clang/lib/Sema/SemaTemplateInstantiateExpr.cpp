@@ -976,6 +976,16 @@ TemplateExprInstantiator::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
 }
 
 Sema::OwningExprResult 
+TemplateExprInstantiator::VisitCXXBindTemporaryExpr(
+                                                  CXXBindTemporaryExpr *E) {
+  OwningExprResult SubExpr = Visit(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return SemaRef.ExprError();
+
+  return move(SubExpr);
+}
+
+Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
   assert(!cast<CXXRecordDecl>(E->getConstructor()->getDeclContext())
            ->isDependentType() && "Dependent constructor shouldn't be here");

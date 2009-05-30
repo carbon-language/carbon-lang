@@ -423,7 +423,38 @@ class CXXTemporary {
 public:
   static CXXTemporary *Create(ASTContext &C, CXXDestructorDecl *Destructor);
 };
+
+/// CXXBindTemporaryExpr - Represents binding an expression to a temporary, 
+/// so its destructor can be called later.
+class CXXBindTemporaryExpr : public Expr {
+  CXXTemporary *Temp;
   
+  Stmt *SubExpr;
+
+  CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr) 
+   : Expr(CXXBindTemporaryExprClass,
+          subexpr->getType()), Temp(temp), SubExpr(subexpr) { }
+  
+public:
+  static CXXBindTemporaryExpr *Create(ASTContext &C, CXXTemporary *Temp, 
+                                      Expr* SubExpr);
+  
+  const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
+  Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXBindTemporaryExprClass;
+  }
+  static bool classof(const CXXBindTemporaryExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 /// CXXConstructExpr - Represents a call to a C++ constructor.
 class CXXConstructExpr : public Expr {
   VarDecl *VD;

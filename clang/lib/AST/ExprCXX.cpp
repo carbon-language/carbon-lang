@@ -242,6 +242,15 @@ CXXTemporary *CXXTemporary::Create(ASTContext &C,
   return new CXXTemporary(Destructor);
 }
 
+CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C, 
+                                                   CXXTemporary *Temp,
+                                                   Expr* SubExpr) {
+  assert(SubExpr->getType()->isRecordType() && 
+         "Expression bound to a temporary must have record type!");
+
+  return new CXXBindTemporaryExpr(Temp, SubExpr);
+}
+
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd,
                                                CXXConstructorDecl *Cons,
                                                QualType writtenTy,
@@ -301,6 +310,15 @@ CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr,
 
 CXXExprWithTemporaries::~CXXExprWithTemporaries() {
   delete[] Decls;
+}
+
+// CXXBindTemporaryExpr
+Stmt::child_iterator CXXBindTemporaryExpr::child_begin() {
+  return &SubExpr;
+}
+
+Stmt::child_iterator CXXBindTemporaryExpr::child_end() { 
+  return &SubExpr + 1;
 }
 
 // CXXConstructExpr
