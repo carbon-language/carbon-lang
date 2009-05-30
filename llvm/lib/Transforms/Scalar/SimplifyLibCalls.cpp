@@ -878,7 +878,7 @@ struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
     if (Len == 1) { // memcmp(S1,S2,1) -> *LHS - *RHS
       Value *LHSV = B.CreateLoad(CastToCStr(LHS, B), "lhsv");
       Value *RHSV = B.CreateLoad(CastToCStr(RHS, B), "rhsv");
-      return B.CreateZExt(B.CreateSub(LHSV, RHSV, "chardiff"), CI->getType());
+      return B.CreateSExt(B.CreateSub(LHSV, RHSV, "chardiff"), CI->getType());
     }
 
     // memcmp(S1,S2,2) != 0 -> (*(short*)LHS ^ *(short*)RHS)  != 0
