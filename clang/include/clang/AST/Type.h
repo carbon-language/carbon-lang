@@ -484,6 +484,10 @@ public:
   /// incomplete types.
   bool isConstantSizeType() const;
 
+  /// isSpecifierType - Returns true if this type can be represented by some
+  /// set of type specifiers.
+  bool isSpecifierType() const;
+
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   void dump() const;
   virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const = 0;

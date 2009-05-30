@@ -896,6 +896,19 @@ bool Type::isNullPtrType() const {
   return false;
 }
 
+bool Type::isSpecifierType() const {
+  // Note that this intentionally does not use the canonical type.
+  switch (getTypeClass()) {
+  case Builtin:
+  case Record:
+  case Enum:
+  case Typedef:
+    return true;
+  default:
+    return false;
+  }
+}
+
 const char *BuiltinType::getName(bool CPlusPlus) const {
   switch (getKind()) {
   default: assert(0 && "Unknown builtin type!");
@@ -1144,7 +1157,10 @@ QualType::getAsStringInternal(std::string &S,
     S += "NULL TYPE";
     return;
   }
-  
+
+  if (Policy.SuppressTypeSpecifiers && getTypePtr()->isSpecifierType())
+    return;
+
   // Print qualifiers as appropriate.
   if (unsigned Tq = getCVRQualifiers()) {
     std::string TQS;
@@ -1371,9 +1387,11 @@ void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy
   
   S += "(";
   std::string Tmp;
+  PrintingPolicy ParamPolicy(Policy);
+  ParamPolicy.SuppressTypeSpecifiers = false;
   for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
     if (i) S += ", ";
-    getArgType(i).getAsStringInternal(Tmp, Policy);
+    getArgType(i).getAsStringInternal(Tmp, ParamPolicy);
     S += Tmp;
     Tmp.clear();
   }
