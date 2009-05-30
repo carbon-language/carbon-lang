@@ -236,6 +236,12 @@ const char *CXXNamedCastExpr::getCastName() const {
   }
 }
 
+CXXTemporary *CXXTemporary::Create(ASTContext &C, 
+                                   CXXDestructorDecl *Destructor) {
+  // FIXME: Allocate using the ASTContext.
+  return new CXXTemporary(Destructor);
+}
+
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C, VarDecl *vd,
                                                CXXConstructorDecl *Cons,
                                                QualType writtenTy,

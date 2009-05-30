@@ -21,6 +21,7 @@
 namespace clang {
 
   class CXXConstructorDecl;
+  class CXXDestructorDecl;
   class CXXTempVarDecl;
 
 //===--------------------------------------------------------------------===//
@@ -411,6 +412,18 @@ public:
   virtual child_iterator child_end();
 };
 
+/// CXXTemporary - Represents a C++ temporary.
+class CXXTemporary {
+  /// Destructor - The destructor that needs to be called.
+  CXXDestructorDecl *Destructor;
+  
+  CXXTemporary(CXXDestructorDecl *destructor)
+    : Destructor(destructor) { }
+
+public:
+  static CXXTemporary *Create(ASTContext &C, CXXDestructorDecl *Destructor);
+};
+  
 /// CXXConstructExpr - Represents a call to a C++ constructor.
 class CXXConstructExpr : public Expr {
   VarDecl *VD;
