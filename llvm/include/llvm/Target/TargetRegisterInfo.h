@@ -284,10 +284,10 @@ protected:
                      int CallFrameDestroyOpcode = -1,
                      const unsigned* subregs = 0,
                      const unsigned subregsize = 0,
-		     const unsigned* superregs = 0,
-		     const unsigned superregsize = 0,
-		     const unsigned* aliases = 0,
-		     const unsigned aliasessize = 0);
+                     const unsigned* superregs = 0,
+                     const unsigned superregsize = 0,
+                     const unsigned* aliases = 0,
+                     const unsigned aliasessize = 0);
   virtual ~TargetRegisterInfo();
 public:
 
@@ -392,9 +392,9 @@ public:
     size_t index = (regA + regB * 37) & (AliasesHashSize-1);
     unsigned ProbeAmt = 0;
     while (AliasesHash[index*2] != 0 &&
-	   AliasesHash[index*2+1] != 0) {
+           AliasesHash[index*2+1] != 0) {
       if (AliasesHash[index*2] == regA && AliasesHash[index*2+1] == regB)
-	return true;
+        return true;
 
       index = (index + ProbeAmt) & (AliasesHashSize-1);
       ProbeAmt += 2;

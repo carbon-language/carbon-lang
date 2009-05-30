@@ -22,7 +22,7 @@ namespace llvm {
 
     typedef uint32_t cas_flag;
     cas_flag CompareAndSwap(volatile cas_flag* ptr,
-    	                      cas_flag new_value,
+                            cas_flag new_value,
                             cas_flag old_value);
   }
 }
