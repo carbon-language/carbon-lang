@@ -654,6 +654,7 @@ public:
 
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
+  LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
   
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);

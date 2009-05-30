@@ -191,8 +191,10 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXConditionDeclLValue(cast<CXXConditionDeclExpr>(E));
   case Expr::CXXTemporaryObjectExprClass:
   case Expr::CXXConstructExprClass:
-      return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
-      
+    return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
+  case Expr::CXXBindTemporaryExprClass:
+    return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
+
   case Expr::ObjCMessageExprClass:
     return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
   case Expr::ObjCIvarRefExprClass: 
@@ -1205,6 +1207,15 @@ LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
   llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), "tmp");
   EmitCXXConstructExpr(Temp, E);
   return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers());
+}
+
+LValue
+CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
+  LValue LV = EmitLValue(E->getSubExpr());
+  
+  // FIXME: Record the value and dest ptr.
+  
+  return LV;
 }
 
 LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {

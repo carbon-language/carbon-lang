@@ -304,7 +304,6 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
     Visit(E->getSubExpr());
   
   // FIXME: Record the value and dest ptr.
-  Val->dump();
 }
 
 void
