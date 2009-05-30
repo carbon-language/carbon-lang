@@ -12,3 +12,10 @@ using namespace std::debug;
 using namespace std;
 
 namespace safestl = ::std::debug;
+
+class Base1 { 
+};
+
+class Base2 { };
+
+class Derived1 : Base1, virtual public Base2 { };

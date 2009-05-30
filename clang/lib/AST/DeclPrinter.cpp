@@ -54,9 +54,10 @@ namespace {
     void VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
     void VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D);
+    void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
-    void VisitNamespaceDecl(NamespaceDecl *D);
+    void VisitCXXRecordDecl(CXXRecordDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
@@ -270,7 +271,6 @@ void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
 }
 
 void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
-  // print a free standing tag decl (e.g. "struct x;"). 
   Out << D->getKindName();
   if (D->getIdentifier()) {
     Out << " ";
@@ -429,6 +429,12 @@ void DeclPrinter::VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D) {
          "OverloadedFunctionDecls aren't really decls and are never printed");
 }
 
+void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
+  Out << "namespace " << D->getNameAsString() << " {\n";
+  VisitDeclContext(D);
+  Indent() << "}";
+}
+
 void DeclPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   Out << "using namespace ";
   if (D->getQualifier())
@@ -443,10 +449,42 @@ void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   Out << D->getAliasedNamespace()->getNameAsString();
 }
 
-void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
-  Out << "namespace " << D->getNameAsString() << " {\n";
-  VisitDeclContext(D);
-  Indent() << "}";
+void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  Out << D->getKindName();
+  if (D->getIdentifier()) {
+    Out << " ";
+    Out << D->getNameAsString();
+  }
+  
+  if (D->isDefinition()) {
+    // Print the base classes
+    if (D->getNumBases()) {
+      Out << " : ";
+      for(CXXRecordDecl::base_class_iterator Base = D->bases_begin(),
+                                          BaseEnd = D->bases_end();
+          Base != BaseEnd; ++Base) {
+        if (Base != D->bases_begin())
+          Out << ", ";
+
+        if (Base->isVirtual())
+          Out << "virtual ";
+
+        switch(Base->getAccessSpecifierAsWritten()) {
+        case AS_none:      break;
+        case AS_public:    Out << "public "; break;
+        case AS_protected: Out << "protected "; break;
+        case AS_private:   Out << " private "; break;
+        }
+
+        Out << Base->getType().getAsString(Policy);
+      }
+    }
+
+    // Print the class definition
+    Out << " {\n";
+    VisitDeclContext(D);
+    Indent() << "}";
+  }  
 }
 
 void DeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
@@ -493,7 +531,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   else 
     Out << "+ ";
   if (!OMD->getResultType().isNull())
-    Out << '(' << OMD->getResultType().getAsString() << ")";
+    Out << '(' << OMD->getResultType().getAsString(Policy) << ")";
   
   std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;
@@ -502,7 +540,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
     // FIXME: selector is missing here!    
     pos = name.find_first_of(":", lastPos);
     Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << (*PI)->getType().getAsString() << ")"
+    Out << ":(" << (*PI)->getType().getAsString(Policy) << ")"
         << (*PI)->getNameAsString(); 
     lastPos = pos + 1;
   }
