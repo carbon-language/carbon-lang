@@ -903,6 +903,16 @@ bool Type::isSpecifierType() const {
   case Record:
   case Enum:
   case Typedef:
+  case Complex:
+  case TypeOfExpr:
+  case TypeOf:
+  case TemplateTypeParm:
+  case TemplateSpecialization:
+  case QualifiedName:
+  case Typename:
+  case ObjCInterface:
+  case ObjCQualifiedInterface:
+  case ObjCQualifiedId:
     return true;
   default:
     return false;

@@ -255,6 +255,11 @@ void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
   if (TD)
     ++Begin;
 
+  if (Begin == End) {
+    PrintRawDecl(TD);
+    return;
+  }
+
   if (isa<TypedefDecl>(*Begin))
     OS << "typedef ";
   else if (VarDecl *V = dyn_cast<VarDecl>(*Begin)) {
