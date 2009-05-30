@@ -296,6 +296,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     if (D->isVirtualAsWritten()) Out << "virtual ";
   }
 
+  PrintingPolicy SubPolicy(Policy);
+  SubPolicy.SuppressSpecifiers = false;
   std::string Proto = D->getNameAsString();
   if (isa<FunctionType>(D->getType().getTypePtr())) {
     const FunctionType *AFT = D->getType()->getAsFunctionType();
@@ -307,7 +309,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     Proto += "(";
     if (FT) {
       llvm::raw_string_ostream POut(Proto);
-      DeclPrinter ParamPrinter(POut, Context, Policy, Indentation);
+      DeclPrinter ParamPrinter(POut, Context, SubPolicy, Indentation);
       for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
         if (i) POut << ", ";
         ParamPrinter.VisitParmVarDecl(D->getParamDecl(i));
@@ -342,17 +344,18 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       // This is a K&R function definition, so we need to print the
       // parameters.
       Out << '\n';
+      DeclPrinter ParamPrinter(Out, Context, SubPolicy, Indentation);
       Indentation += Policy.Indentation;
       for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
         Indent();
-        VisitParmVarDecl(D->getParamDecl(i));
+        ParamPrinter.VisitParmVarDecl(D->getParamDecl(i));
         Out << ";\n";
       }
       Indentation -= Policy.Indentation;
     } else
       Out << ' ';
 
-    D->getBody(Context)->printPretty(Out, Context, 0, Policy, Indentation);
+    D->getBody(Context)->printPretty(Out, Context, 0, SubPolicy, Indentation);
     Out << '\n';
   }
 }
