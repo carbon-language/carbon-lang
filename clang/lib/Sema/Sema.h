@@ -1501,6 +1501,17 @@ public:
   /// it simply returns the passed in expression.
   OwningExprResult MaybeBindToTemporary(Expr *E);
 
+  /// RemoveOutermostTemporaryBinding - Remove and destroy the outermost
+  /// CXXBindToTemporaryExpr if necessary. This is used when we want to not
+  /// destroy a temporary when a full expression has been evaluated. 
+  /// For example:
+  ///
+  /// const T& t = T(10, T());
+  ///
+  /// Here the outermost T needs to be destroyed when t goes out of scope, but
+  /// the innermost T needs to be destroyed when the expr has been evaluated.  
+  Expr *RemoveOutermostTemporaryBinding(Expr *E);
+  
   /// InitializationKind - Represents which kind of C++ initialization
   /// [dcl.init] a routine is to perform.
   enum InitializationKind {
