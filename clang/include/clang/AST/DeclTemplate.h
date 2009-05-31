@@ -24,6 +24,7 @@ class TemplateParameterList;
 class TemplateDecl;
 class FunctionTemplateDecl;
 class ClassTemplateDecl;
+class ClassTemplatePartialSpecializationDecl;
 class TemplateTypeParmDecl;
 class NonTypeTemplateParmDecl;
 class TemplateTemplateParmDecl;
@@ -619,7 +620,8 @@ enum TemplateSpecializationKind {
   /// has not yet been declared, defined, or instantiated.
   TSK_Undeclared = 0,
   /// This template specialization was declared or defined by an
-  /// explicit specialization (C++ [temp.expl.spec]).
+  /// explicit specialization (C++ [temp.expl.spec]) or partial
+  /// specialization (C++ [temp.class.spec]).
   TSK_ExplicitSpecialization,
   /// This template specialization was implicitly instantiated from a
   /// template. (C++ [temp.inst]).
@@ -654,7 +656,8 @@ class ClassTemplateSpecializationDecl
   /// Really a value of type TemplateSpecializationKind.
   unsigned SpecializationKind : 2;
 
-  ClassTemplateSpecializationDecl(ASTContext &Context,
+protected:
+  ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                   DeclContext *DC, SourceLocation L,
                                   ClassTemplateDecl *SpecializedTemplate,
                                   TemplateArgument *TemplateArgs,
@@ -686,14 +689,14 @@ public:
     SpecializationKind = TSK;
   }
 
-  void Profile(llvm::FoldingSetNodeID &ID) const {
-    Profile(ID, TemplateArgs.getFlatArgumentList(), TemplateArgs.flat_size());
-  }
-
   /// \brief Sets the type of this specialization as it was written by
   /// the user. This will be a class template specialization type.
   void setTypeAsWritten(QualType T) {
     TypeForDecl = T.getTypePtr();
+  }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    Profile(ID, TemplateArgs.getFlatArgumentList(), TemplateArgs.flat_size());
   }
 
   static void 
@@ -704,10 +707,56 @@ public:
   }
 
   static bool classof(const Decl *D) { 
-    return D->getKind() == ClassTemplateSpecialization;
+    return D->getKind() == ClassTemplateSpecialization ||
+           D->getKind() == ClassTemplatePartialSpecialization;
   }
 
   static bool classof(const ClassTemplateSpecializationDecl *) {
+    return true;
+  }
+
+  static bool classof(const ClassTemplatePartialSpecializationDecl *) {
+    return true;
+  }
+};
+
+class ClassTemplatePartialSpecializationDecl 
+  : public ClassTemplateSpecializationDecl 
+{
+  /// \brief The list of template parameters 
+  TemplateParameterList* TemplateParams;
+
+  ClassTemplatePartialSpecializationDecl(ASTContext &Context,
+                                         DeclContext *DC, SourceLocation L,
+                                         TemplateParameterList *Params,
+                                         ClassTemplateDecl *SpecializedTemplate,
+                                         TemplateArgument *TemplateArgs,
+                                         unsigned NumTemplateArgs)
+    : ClassTemplateSpecializationDecl(Context, ClassTemplatePartialSpecialization,
+                                      DC, L, SpecializedTemplate, TemplateArgs,
+                                      NumTemplateArgs),
+      TemplateParams(Params) { }
+
+public:
+  static ClassTemplatePartialSpecializationDecl *
+  Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
+         TemplateParameterList *Params,
+         ClassTemplateDecl *SpecializedTemplate,
+         TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+         ClassTemplatePartialSpecializationDecl *PrevDecl);
+
+  /// Get the list of template parameters
+  TemplateParameterList *getTemplateParameters() const {
+    return TemplateParams;
+  }
+
+  // FIXME: Add Profile support!
+
+  static bool classof(const Decl *D) { 
+    return D->getKind() == ClassTemplatePartialSpecialization;
+  }
+
+  static bool classof(const ClassTemplatePartialSpecializationDecl *) {
     return true;
   }
 };
@@ -721,6 +770,11 @@ protected:
     /// \brief The class template specializations for this class
     /// template, including explicit specializations and instantiations.
     llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+
+    /// \brief The class template partial specializations for this class
+    /// template.
+    llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> 
+      PartialSpecializations;
 
     /// \brief The injected-class-name type for this class template.
     QualType InjectedClassNameType;
@@ -766,6 +820,13 @@ public:
   /// \brief Retrieve the set of specializations of this class template.
   llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
     return CommonPtr->Specializations;
+  }
+
+  /// \brief Retrieve the set of partial specializations of this class
+  /// template.
+  llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
+  getPartialSpecializations() {
+    return CommonPtr->PartialSpecializations;
   }
 
   /// \brief Retrieve the type of the injected-class-name for this

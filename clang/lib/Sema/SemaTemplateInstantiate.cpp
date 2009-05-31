@@ -822,14 +822,34 @@ Sema::InstantiateClassTemplateSpecialization(
   if (ClassTemplateSpec->getSpecializationKind() != TSK_Undeclared)
     return true;
 
-  // FIXME: Push this class template instantiation onto the instantiation stack,
-  // checking for recursion that exceeds a certain depth.
-
-  // FIXME: Perform class template partial specialization to select the best
-  // template.
   ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
-
   CXXRecordDecl *Pattern = Template->getTemplatedDecl();
+  const TemplateArgumentList *TemplateArgs 
+    = &ClassTemplateSpec->getTemplateArgs();
+
+  // Determine whether any class template partial specializations
+  // match the given template arguments.
+  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> Matched;
+  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator 
+         Partial = Template->getPartialSpecializations().begin(),
+         PartialEnd = Template->getPartialSpecializations().end();
+       Partial != PartialEnd;
+       ++Partial) {
+    if (DeduceTemplateArguments(&*Partial, ClassTemplateSpec->getTemplateArgs()))
+      Matched.push_back(&*Partial);
+  }
+
+  if (Matched.size() == 1) {
+    Pattern = Matched[0];
+    // FIXME: set TemplateArgs to the template arguments of the
+    // partial specialization, instantiated with the deduced template
+    // arguments.
+  } else if (Matched.size() > 1) {
+    // FIXME: Implement partial ordering of class template partial
+    // specializations.
+    Diag(ClassTemplateSpec->getLocation(), 
+         diag::unsup_template_partial_spec_ordering);
+  }
 
   // Note that this is an instantiation.  
   ClassTemplateSpec->setSpecializationKind(
@@ -837,8 +857,7 @@ Sema::InstantiateClassTemplateSpecialization(
                                              : TSK_ImplicitInstantiation);
 
   return InstantiateClass(ClassTemplateSpec->getLocation(),
-                          ClassTemplateSpec, Pattern,
-                          ClassTemplateSpec->getTemplateArgs(),
+                          ClassTemplateSpec, Pattern, *TemplateArgs,
                           ExplicitInstantiation);
 }
 

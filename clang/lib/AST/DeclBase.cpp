@@ -212,6 +212,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     // Aren't looked up?
     case UsingDirective:
     case ClassTemplateSpecialization:
+    case ClassTemplatePartialSpecialization:
       return 0;
   }
 }
@@ -398,6 +399,9 @@ void DeclContext::DestroyDecls(ASTContext &C) {
 bool DeclContext::isDependentContext() const {
   if (isFileContext())
     return false;
+
+  if (isa<ClassTemplatePartialSpecializationDecl>(this))
+    return true;
 
   if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this))
     if (Record->getDescribedClassTemplate())

@@ -733,8 +733,9 @@ def err_template_spec_needs_header : Error<
   "template specialization requires 'template<>'">;
 def err_template_spec_extra_headers : Error<
   "template specialization must have a single 'template<>' header">;
-def unsup_template_partial_spec : Error<
-  "class template partial specialization is not yet supported">;
+def unsup_template_partial_spec_ordering : Error<
+  "partial ordering of class template partial specializations is not yet "
+  "supported">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "class template specialization of %0 must occur in the global scope">;
 def err_template_spec_decl_out_of_scope : Error<

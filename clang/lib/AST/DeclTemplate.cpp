@@ -268,12 +268,12 @@ TemplateArgumentList::~TemplateArgumentList() {
 // ClassTemplateSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
 ClassTemplateSpecializationDecl::
-ClassTemplateSpecializationDecl(ASTContext &Context,
+ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                 DeclContext *DC, SourceLocation L,
                                 ClassTemplateDecl *SpecializedTemplate,
                                 TemplateArgument *TemplateArgs,
                                 unsigned NumTemplateArgs)
-  : CXXRecordDecl(ClassTemplateSpecialization, 
+  : CXXRecordDecl(DK, 
                   SpecializedTemplate->getTemplatedDecl()->getTagKind(), 
                   DC, L,
                   // FIXME: Should we use DeclarationName for the name of
@@ -292,10 +292,33 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
                                         unsigned NumTemplateArgs,
                                    ClassTemplateSpecializationDecl *PrevDecl) {
   ClassTemplateSpecializationDecl *Result
-    = new (Context)ClassTemplateSpecializationDecl(Context, DC, L, 
+    = new (Context)ClassTemplateSpecializationDecl(Context, 
+                                                   ClassTemplateSpecialization,
+                                                   DC, L, 
                                                    SpecializedTemplate,
                                                    TemplateArgs, 
                                                    NumTemplateArgs);
+  Context.getTypeDeclType(Result, PrevDecl);
+  return Result;
+}
+
+//===----------------------------------------------------------------------===//
+// ClassTemplatePartialSpecializationDecl Implementation
+//===----------------------------------------------------------------------===//
+ClassTemplatePartialSpecializationDecl *
+ClassTemplatePartialSpecializationDecl::
+Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
+       TemplateParameterList *Params,
+       ClassTemplateDecl *SpecializedTemplate,
+       TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+       ClassTemplatePartialSpecializationDecl *PrevDecl) {
+  ClassTemplatePartialSpecializationDecl *Result
+    = new (Context)ClassTemplatePartialSpecializationDecl(Context, 
+                                                          DC, L, Params,
+                                                          SpecializedTemplate,
+                                                          TemplateArgs, 
+                                                          NumTemplateArgs);
+  Result->setSpecializationKind(TSK_ExplicitSpecialization);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }

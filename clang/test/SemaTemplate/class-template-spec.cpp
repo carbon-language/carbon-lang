@@ -52,9 +52,6 @@ A<char>::A() { }
 // Diagnose specialization errors
 struct A<double> { }; // expected-error{{template specialization requires 'template<>'}}
 
-template<typename T> // expected-error{{class template partial specialization is not yet supported}}
-struct A<T*> { };
-
 template<> struct ::A<double>;
 
 namespace N {

@@ -2000,6 +2000,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   ClassTemplateDecl *ClassTemplate 
     = cast<ClassTemplateDecl>(Name.getAsTemplateDecl());
 
+  bool isPartialSpecialization = false;
+
   // Check the validity of the template headers that introduce this
   // template.
   // FIXME: Once we have member templates, we'll need to check
@@ -2017,11 +2019,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       return true;
     }
 
-    if (TemplateParams->size() > 0) {
-      // FIXME: No support for class template partial specialization.
-      Diag(TemplateParams->getTemplateLoc(), diag::unsup_template_partial_spec);
-      return true;
-    }
+    // FIXME: We'll need more checks, here!
+    if (TemplateParams->size() > 0)
+      isPartialSpecialization = true;
   }
 
   // Check that the specialization uses the same tag kind as the
@@ -2061,14 +2061,26 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
             ClassTemplate->getTemplateParameters()->size()) &&
          "Converted template argument list is too short!");
   
-  // Find the class template specialization declaration that
+  // Find the class template (partial) specialization declaration that
   // corresponds to these arguments.
   llvm::FoldingSetNodeID ID;
-  ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
-                                           ConvertedTemplateArgs.size());
+  if (isPartialSpecialization)
+    // FIXME: Template parameter list matters, too
+    ClassTemplatePartialSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
+                                                    ConvertedTemplateArgs.size());
+  else
+    ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
+                                             ConvertedTemplateArgs.size());
   void *InsertPos = 0;
-  ClassTemplateSpecializationDecl *PrevDecl
-    = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+  ClassTemplateSpecializationDecl *PrevDecl = 0;
+
+  if (isPartialSpecialization)
+    PrevDecl
+      = ClassTemplate->getPartialSpecializations().FindNodeOrInsertPos(ID, 
+                                                                    InsertPos);
+  else
+    PrevDecl
+      = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
 
   ClassTemplateSpecializationDecl *Specialization = 0;
 
@@ -2088,6 +2100,31 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     Specialization = PrevDecl;
     Specialization->setLocation(TemplateNameLoc);
     PrevDecl = 0;
+  } else if (isPartialSpecialization) {
+    // FIXME: extra checking for partial specializations
+
+    // Create a new class template partial specialization declaration node.
+    TemplateParameterList *TemplateParams 
+      = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
+    ClassTemplatePartialSpecializationDecl *PrevPartial
+      = cast_or_null<ClassTemplatePartialSpecializationDecl>(PrevDecl);
+    ClassTemplatePartialSpecializationDecl *Partial 
+      = ClassTemplatePartialSpecializationDecl::Create(Context, 
+                                             ClassTemplate->getDeclContext(),
+                                                TemplateNameLoc,
+                                                TemplateParams,
+                                                ClassTemplate,
+                                                &ConvertedTemplateArgs[0],
+                                                ConvertedTemplateArgs.size(),
+                                                PrevPartial);
+
+    if (PrevPartial) {
+      ClassTemplate->getPartialSpecializations().RemoveNode(PrevPartial);
+      ClassTemplate->getPartialSpecializations().GetOrInsertNode(Partial);
+    } else {
+      ClassTemplate->getPartialSpecializations().InsertNode(Partial, InsertPos);
+    }
+    Specialization = Partial;
   } else {
     // Create a new class template specialization declaration node for
     // this explicit specialization.
@@ -2119,7 +2156,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       // instantiation with a special diagnostic.
       SourceRange Range(TemplateNameLoc, RAngleLoc);
       Diag(TemplateNameLoc, diag::err_redefinition) 
-        << Specialization << Range;
+        << Context.getTypeDeclType(Specialization) << Range;
       Diag(Def->getLocation(), diag::note_previous_definition);
       Specialization->setInvalidDecl();
       return true;
@@ -2525,4 +2562,90 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     Diag(Referenced->getLocation(), diag::note_typename_refers_here)
       << Name;
   return QualType();
+}
+
+// FIXME: Move to SemaTemplateDeduction.cpp
+bool 
+Sema::DeduceTemplateArguments(QualType Param, QualType Arg,
+                             llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
+  // We only want to look at the canonical types, since typedefs and
+  // sugar are not part of template argument deduction.
+  Param = Context.getCanonicalType(Param);
+  Arg = Context.getCanonicalType(Arg);
+
+  // If the parameter type is not dependent, just compare the types
+  // directly.
+  if (!Param->isDependentType())
+    return Param == Arg;
+
+  // FIXME: Use a visitor or switch to handle all of the kinds of
+  // types that the parameter may be.
+  if (const TemplateTypeParmType *TemplateTypeParm 
+        = Param->getAsTemplateTypeParmType()) {
+    (void)TemplateTypeParm; // FIXME: use this
+    // The argument type can not be less qualified than the parameter
+    // type.
+    if (Param.isMoreQualifiedThan(Arg))
+      return false;
+
+    unsigned Quals = Arg.getCVRQualifiers() & ~Param.getCVRQualifiers();
+    QualType DeducedType = Arg.getQualifiedType(Quals);
+    // FIXME: actually save the deduced type, and check that this
+    // deduction is consistent.
+    return true;
+  }
+
+  if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
+    return false;
+
+  if (const PointerType *PointerParam = Param->getAsPointerType()) {
+    const PointerType *PointerArg = Arg->getAsPointerType();
+    if (!PointerArg)
+      return false;
+
+    return DeduceTemplateArguments(PointerParam->getPointeeType(),
+                                   PointerArg->getPointeeType(),
+                                   Deduced);
+  }
+
+  // FIXME: Many more cases to go (to go).
+  return false;
+}
+
+bool
+Sema::DeduceTemplateArguments(const TemplateArgument &Param,
+                              const TemplateArgument &Arg,
+                             llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
+  assert(Param.getKind() == Arg.getKind() &&
+         "Template argument kind mismatch during deduction");
+  switch (Param.getKind()) {
+  case TemplateArgument::Type: 
+    return DeduceTemplateArguments(Param.getAsType(), Arg.getAsType(),
+                                   Deduced);
+
+  default:
+    return false;
+  }
+}
+
+bool 
+Sema::DeduceTemplateArguments(const TemplateArgumentList &ParamList,
+                              const TemplateArgumentList &ArgList,
+                              llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
+  assert(ParamList.size() == ArgList.size());
+  for (unsigned I = 0, N = ParamList.size(); I != N; ++I) {
+    if (!DeduceTemplateArguments(ParamList[I], ArgList[I], Deduced))
+      return false;
+  }
+  return true;
+}
+
+
+bool 
+Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
+                              const TemplateArgumentList &TemplateArgs) {
+  llvm::SmallVector<TemplateArgument, 4> Deduced;
+  Deduced.resize(Partial->getTemplateParameters()->size());
+  return DeduceTemplateArguments(Partial->getTemplateArgs(), TemplateArgs, 
+                                 Deduced);
 }

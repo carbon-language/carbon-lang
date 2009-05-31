@@ -449,7 +449,8 @@ public:
 
   static bool classof(const Decl *D) { 
     return D->getKind() == CXXRecord || 
-           D->getKind() == ClassTemplateSpecialization; 
+           D->getKind() == ClassTemplateSpecialization ||
+           D->getKind() == ClassTemplatePartialSpecialization; 
   }
   static bool classof(const CXXRecordDecl *D) { return true; }
   static bool classof(const ClassTemplateSpecializationDecl *D) { 
