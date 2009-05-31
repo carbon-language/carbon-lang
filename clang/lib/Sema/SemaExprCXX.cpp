@@ -508,6 +508,11 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
       return true;
   }
 
+  // FindAllocationOverload can change the passed in arguments, so we need to
+  // copy them back.
+  if (NumPlaceArgs > 0)
+    std::copy(&AllocArgs[1], AllocArgs.end(), PlaceArgs);
+  
   // FIXME: This is leaked on error. But so much is currently in Sema that it's
   // easier to clean it in one go.
   AllocArgs[0]->Destroy(Context);
