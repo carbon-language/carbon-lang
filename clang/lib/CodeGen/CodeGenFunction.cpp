@@ -652,7 +652,13 @@ void CodeGenFunction::EmitCleanupBlock()
 {
   CleanupBlockInfo Info = PopCleanupBlock();
   
-  EmitBlock(Info.CleanupBlock);
+  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+  if (CurBB && !CurBB->getTerminator() && 
+      Info.CleanupBlock->getNumUses() == 0) {
+    CurBB->getInstList().splice(CurBB->end(), Info.CleanupBlock->getInstList());
+    delete Info.CleanupBlock;
+  } else 
+    EmitBlock(Info.CleanupBlock);
   
   if (Info.SwitchBlock)
     EmitBlock(Info.SwitchBlock);
