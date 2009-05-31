@@ -321,8 +321,8 @@ inline unsigned Log2_32_Ceil(uint32_t Value) {
   return 32-CountLeadingZeros_32(Value-1);
 }
 
-/// Log2_64 - This function returns the ceil log base 2 of the specified value,
-/// 64 if the value is zero. (64 bit edition.)
+/// Log2_64_Ceil - This function returns the ceil log base 2 of the specified
+/// value, 64 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64_Ceil(uint64_t Value) {
   return 64-CountLeadingZeros_64(Value-1);
 }
