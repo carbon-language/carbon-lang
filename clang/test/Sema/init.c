@@ -1,5 +1,6 @@
 // RUN: clang-cc %s -verify -fsyntax-only
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef void (* fp)(void);
@@ -122,3 +123,6 @@ ivector4 vtest4 = __imag__ (ivector4){1};
 uintptr_t ptrasintadd1 = (uintptr_t)&a - 4;
 uintptr_t ptrasintadd2 = (uintptr_t)&a + 4;
 uintptr_t ptrasintadd3 = 4 + (uintptr_t)&a;
+
+// PR4285
+const wchar_t widestr[] = L"asdf";

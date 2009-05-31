@@ -44,17 +44,19 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
   // Otherwise we can only handle string literals.
   StringLiteral *SL = dyn_cast<StringLiteral>(Init);
   if (SL == 0) return 0;
-  
+
+  QualType ElemTy = Context.getCanonicalType(AT->getElementType());
   // char array can be initialized with a narrow string.
   // Only allow char x[] = "foo";  not char x[] = L"foo";
   if (!SL->isWide())
-    return AT->getElementType()->isCharType() ? Init : 0;
+    return ElemTy->isCharType() ? Init : 0;
 
-  // wchar_t array can be initialized with a wide string: C99 6.7.8p15:
-  // "An array with element type compatible with wchar_t may be initialized by a
-  // wide string literal, optionally enclosed in braces."
-  if (Context.typesAreCompatible(Context.getWCharType(), AT->getElementType()))
-    // Only allow wchar_t x[] = L"foo";  not wchar_t x[] = "foo";
+  // wchar_t array can be initialized with a wide string: C99 6.7.8p15 (with
+  // correction from DR343): "An array with element type compatible with a
+  // qualified or unqualified version of wchar_t may be initialized by a wide
+  // string literal, optionally enclosed in braces."
+  if (Context.typesAreCompatible(Context.getWCharType(),
+                                 ElemTy.getUnqualifiedType()))
     return Init;
   
   return 0;
