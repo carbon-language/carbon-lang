@@ -13,4 +13,6 @@ void t2(int* a) {
 
 void t3() {
   int *a = new int(10);
+  _Complex int* b = new _Complex int(10i);
+  
 }
