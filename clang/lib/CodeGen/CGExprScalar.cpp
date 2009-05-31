@@ -283,8 +283,7 @@ public:
   }      
     
   Value *VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
-    // FIXME: Do something with the temporaries!
-    return Visit(E->getSubExpr());
+    return CGF.EmitCXXExprWithTemporaries(E).getScalarVal();
   }
       
   // Binary Operators.
