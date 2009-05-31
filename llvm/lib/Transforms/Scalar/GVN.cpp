@@ -1055,11 +1055,29 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // that we only have to insert *one* load (which means we're basically moving
   // the load, not inserting a new one).
   
-  // Everything we do here is based on local predecessors of LI's block.  If it
-  // only has one predecessor, bail now.
+  SmallPtrSet<BasicBlock *, 4> Blockers;
+  for (unsigned i = 0, e = UnavailableBlocks.size(); i != e; ++i)
+    Blockers.insert(UnavailableBlocks[i]);
+
+  // Lets find first basic block with more than one predecessor.  Walk backwards
+  // through predecessors if needed.
   BasicBlock *LoadBB = LI->getParent();
-  if (LoadBB->getSinglePredecessor())
-    return false;
+  BasicBlock *TmpBB = LoadBB;
+
+  bool isSinglePred = false;
+  while (TmpBB->getSinglePredecessor()) {
+    isSinglePred = true;
+    TmpBB = TmpBB->getSinglePredecessor();
+    if (!TmpBB) // If haven't found any, bail now.
+      return false;
+    if (TmpBB == LoadBB) // Infinite (unreachable) loop.
+      return false;
+    if (Blockers.count(TmpBB))
+      return false;
+  }
+  
+  assert(TmpBB);
+  LoadBB = TmpBB;
   
   // If we have a repl set with LI itself in it, this means we have a loop where
   // at least one of the values is LI.  Since this means that we won't be able
@@ -1069,6 +1087,23 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     if (ValuesPerBlock[i].second == LI)
       return false;
   
+  if (isSinglePred) {
+    bool isHot = false;
+    for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
+      if (Instruction *I = dyn_cast<Instruction>(ValuesPerBlock[i].second))
+	// "Hot" Instruction is in some loop (because it dominates its dep. 
+	// instruction).
+	if (DT->dominates(LI, I)) { 
+	  isHot = true;
+	  break;
+	}
+
+    // We are interested only in "hot" instructions. We don't want to do any
+    // mis-optimizations here.
+    if (!isHot)
+      return false;
+  }
+
   // Okay, we have some hope :).  Check to see if the loaded value is fully
   // available in all but one predecessor.
   // FIXME: If we could restructure the CFG, we could make a common pred with
