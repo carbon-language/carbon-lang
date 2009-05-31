@@ -162,9 +162,7 @@ LiveValues::Memo &LiveValues::compute(const Value *V) {
     }
 
     // Climb the immediate dominator tree from the use to the definition
-    // and mark all intermediate blocks as live-through. Don't do this if
-    // the user is a PHI because such users may not be dominated by the
-    // definition.
+    // and mark all intermediate blocks as live-through.
     for (; BB != DefBB; BB = getImmediateDominator(BB, DT)) {
       if (BB != UseBB && !M.LiveThrough.insert(BB))
         break;
