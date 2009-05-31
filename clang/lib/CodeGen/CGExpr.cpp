@@ -1213,7 +1213,7 @@ LValue
 CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
   LValue LV = EmitLValue(E->getSubExpr());
   
-  // FIXME: Record the value and dest ptr.
+  PushCXXTemporary(E->getTemporary(), LV.getAddress());
   
   return LV;
 }

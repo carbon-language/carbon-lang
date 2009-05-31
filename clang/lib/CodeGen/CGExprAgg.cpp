@@ -303,7 +303,7 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   } else 
     Visit(E->getSubExpr());
   
-  // FIXME: Record the value and dest ptr.
+  CGF.PushCXXTemporary(E->getTemporary(), Val);
 }
 
 void

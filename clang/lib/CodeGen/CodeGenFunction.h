@@ -239,6 +239,8 @@ private:
   /// 'this' declaration.
   ImplicitParamDecl *CXXThisDecl;
   
+  llvm::SmallVector<const CXXTemporary*, 4> LiveTemporaries;
+  
 public:
   CodeGenFunction(CodeGenModule &cgm);
 
@@ -479,6 +481,8 @@ public:
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              llvm::Value *This);
+  
+  void PushCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
   
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
