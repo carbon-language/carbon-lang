@@ -550,7 +550,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // asserted on, though, since invalid decls are left in there.)
     for (unsigned i = 1; i < NumArgs; ++i) {
       // FIXME: Passing word to diagnostic.
-      if (PerformCopyInitialization(Args[i-1],
+      if (PerformCopyInitialization(Args[i],
                                     FnDecl->getParamDecl(i)->getType(),
                                     "passing"))
         return true;

@@ -21,6 +21,7 @@ struct V : U
 void* operator new(size_t); // expected-note 2 {{candidate}}
 void* operator new(size_t, int*); // expected-note 3 {{candidate}}
 void* operator new(size_t, float*); // expected-note 3 {{candidate}}
+void* operator new(size_t, S); // expected-note 2 {{candidate}}
 
 void good_news()
 {
@@ -39,6 +40,8 @@ void good_news()
   U *pu = new (ps) U;
   // FIXME: Inherited functions are not looked up currently.
   //V *pv = new (ps) V;
+  
+  pi = new (S(1.0f, 2)) int;
 }
 
 struct abstract {
