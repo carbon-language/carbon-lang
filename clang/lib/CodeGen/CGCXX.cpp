@@ -227,8 +227,78 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
 }
 
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
-  ErrorUnsupported(E, "new expression");
-  return llvm::UndefValue::get(ConvertType(E->getType()));
+  if (E->isArray()) {
+    ErrorUnsupported(E, "new[] expression");
+    return llvm::UndefValue::get(ConvertType(E->getType()));
+  }
+  
+  QualType AllocType = E->getAllocatedType();
+  FunctionDecl *NewFD = E->getOperatorNew();
+  const FunctionProtoType *NewFTy = NewFD->getType()->getAsFunctionProtoType();
+  
+  CallArgList NewArgs;
+
+  // The allocation size is the first argument.
+  QualType SizeTy = getContext().getSizeType();
+  llvm::Value *AllocSize = 
+    llvm::ConstantInt::get(ConvertType(SizeTy), 
+                           getContext().getTypeSize(AllocType) / 8);
+
+  NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));
+  
+  // Emit the rest of the arguments.
+  // FIXME: Ideally, this should just use EmitCallArgs.
+  CXXNewExpr::const_arg_iterator NewArg = E->placement_arg_begin();
+
+  // First, use the types from the function type.
+  // We start at 1 here because the first argument (the allocation size)
+  // has already been emitted.
+  for (unsigned i = 1, e = NewFTy->getNumArgs(); i != e; ++i, ++NewArg) {
+    QualType ArgType = NewFTy->getArgType(i);
+    
+    assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
+           getTypePtr() == 
+           getContext().getCanonicalType(NewArg->getType()).getTypePtr() && 
+           "type mismatch in call argument!");
+    
+    NewArgs.push_back(std::make_pair(EmitCallArg(*NewArg, ArgType), 
+                                     ArgType));
+    
+  }
+  
+  // Either we've emitted all the call args, or we have a call to a 
+  // variadic function.
+  assert((NewArg == E->placement_arg_end() || NewFTy->isVariadic()) && 
+         "Extra arguments in non-variadic function!");
+  
+  // If we still have any arguments, emit them using the type of the argument.
+  for (CXXNewExpr::const_arg_iterator NewArgEnd = E->placement_arg_end(); 
+       NewArg != NewArgEnd; ++NewArg) {
+    QualType ArgType = NewArg->getType();
+    NewArgs.push_back(std::make_pair(EmitCallArg(*NewArg, ArgType),
+                                     ArgType));
+  }
+
+  // Emit the call to new.
+  RValue RV = 
+    EmitCall(CGM.getTypes().getFunctionInfo(NewFTy->getResultType(), NewArgs),
+             CGM.GetAddrOfFunction(GlobalDecl(NewFD)),
+             NewArgs, NewFD);
+
+  llvm::Value *V = Builder.CreateBitCast(RV.getScalarVal(), 
+                                         ConvertType(E->getType()));
+
+  if (E->hasInitializer()) {
+    ErrorUnsupported(E, "new expression with initializer");
+    return llvm::UndefValue::get(ConvertType(E->getType()));
+  }
+  
+  if (!AllocType->isPODType()) {
+    ErrorUnsupported(E, "new expression with non-POD type");
+    return llvm::UndefValue::get(ConvertType(E->getType()));
+  }    
+    
+  return V;
 }
 
 static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
