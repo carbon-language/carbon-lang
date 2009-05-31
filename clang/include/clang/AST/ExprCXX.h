@@ -425,6 +425,8 @@ public:
   static CXXTemporary *Create(ASTContext &C, 
                               const CXXDestructorDecl *Destructor);
   void Destroy(ASTContext &C);
+  
+  const CXXDestructorDecl *getDestructor() const { return Destructor; }
 };
 
 /// CXXBindTemporaryExpr - Represents binding an expression to a temporary, 
@@ -445,7 +447,8 @@ public:
   void Destroy(ASTContext &C);
   
   CXXTemporary *getTemporary() { return Temp; }
-  
+  const CXXTemporary *getTemporary() const { return Temp; }
+
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   void setSubExpr(Expr *E) { SubExpr = E; }
@@ -1035,10 +1038,15 @@ public:
     assert(i < NumTemps && "Index out of range");
     return Temps[i];
   }
+  const CXXTemporary *getTemporary(unsigned i) const {
+    assert(i < NumTemps && "Index out of range");
+    return Temps[i];
+  }
+  
   void removeLastTemporary() { NumTemps--; }
   
-  const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+  const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   void setSubExpr(Expr *E) { SubExpr = E; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
