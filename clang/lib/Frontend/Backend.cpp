@@ -250,7 +250,8 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       break;
     }
     
-    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, 0, OptLevel)) {
+    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, (MachineCodeEmitter *)0,
+                                      OptLevel)) {
       Error = "Unable to interface with target machine!\n";
       return false;
     }
