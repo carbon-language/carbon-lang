@@ -666,7 +666,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
       break;
     case bitc::VST_CODE_ENTRY: {  // VST_ENTRY: [valueid, namechar x N]
       if (ConvertToString(Record, 1, ValueName))
-        return Error("Invalid TST_ENTRY record");
+        return Error("Invalid VST_ENTRY record");
       unsigned ValueID = Record[0];
       if (ValueID >= ValueList.size())
         return Error("Invalid Value ID in VST_ENTRY record");
