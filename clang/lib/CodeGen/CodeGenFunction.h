@@ -484,6 +484,8 @@ public:
   
   void PushCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
   
+  llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
+  
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

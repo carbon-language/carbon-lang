@@ -285,6 +285,9 @@ public:
   Value *VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
     return CGF.EmitCXXExprWithTemporaries(E).getScalarVal();
   }
+  Value *VisitCXXNewExpr(const CXXNewExpr *E) {
+    return CGF.EmitCXXNewExpr(E);
+  }
       
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {

@@ -226,6 +226,11 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
   return RV;
 }
 
+llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
+  ErrorUnsupported(E, "new expression");
+  return llvm::UndefValue::get(ConvertType(E->getType()));
+}
+
 static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
                                    ASTContext &Context) {
   // The class has base classes - we don't support that right now.
