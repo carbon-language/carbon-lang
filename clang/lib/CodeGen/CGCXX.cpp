@@ -285,20 +285,29 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
              CGM.GetAddrOfFunction(GlobalDecl(NewFD)),
              NewArgs, NewFD);
 
-  llvm::Value *V = Builder.CreateBitCast(RV.getScalarVal(), 
-                                         ConvertType(E->getType()));
+  llvm::Value *NewPtr = Builder.CreateBitCast(RV.getScalarVal(), 
+                                              ConvertType(E->getType()));
 
-  if (E->hasInitializer()) {
-    ErrorUnsupported(E, "new expression with initializer");
-    return llvm::UndefValue::get(ConvertType(E->getType()));
+  if (AllocType->isPODType()) {
+    if (E->getNumConstructorArgs() != 0) {
+      assert(E->getNumConstructorArgs() == 1 && 
+             "Can only have one argument to initializer of POD type.");
+
+      const Expr *Init = E->getConstructorArg(0);
+    
+      if (!hasAggregateLLVMType(AllocType)) {
+        Builder.CreateStore(EmitScalarExpr(Init), NewPtr);
+      } else {
+        ErrorUnsupported(E, "new expression");
+        return llvm::UndefValue::get(ConvertType(E->getType()));
+      }
+    }
+    
+    return NewPtr;
   }
   
-  if (!AllocType->isPODType()) {
-    ErrorUnsupported(E, "new expression with non-POD type");
-    return llvm::UndefValue::get(ConvertType(E->getType()));
-  }    
-    
-  return V;
+  ErrorUnsupported(E, "new expression with non-POD type");
+  return llvm::UndefValue::get(ConvertType(E->getType()));
 }
 
 static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 

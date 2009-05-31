@@ -10,3 +10,7 @@ void* operator new(unsigned long, void*) throw();
 void t2(int* a) {
   int* b = new (a) int;
 }
+
+void t3() {
+  int *a = new int(10);
+}
