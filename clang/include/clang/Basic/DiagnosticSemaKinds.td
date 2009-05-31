@@ -269,12 +269,14 @@ def err_deleted_decl_not_first : Error<
   "deleted definition must be first declaration">;
 
 // C++ exception specifications
+def err_exception_spec_in_typedef : Error<
+  "exception specifications are not allowed in typedefs">;
 def err_distant_exception_spec : Error<
   "exception specifications are not allowed beyond a single level "
   "of indirection">;
 def err_incomplete_in_exception_spec : Error<
-  "%select{|pointer to |member pointer to |reference to }1incomplete type %0 "
-  "is not allowed in exception specification">;
+  "%select{|pointer to |reference to }1incomplete type %0 is not allowed "
+  "in exception specification">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<

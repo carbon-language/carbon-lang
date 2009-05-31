@@ -737,7 +737,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
       // does not have a K&R-style identifier list), then the arguments are part
       // of the type, otherwise the argument list is ().
       const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
-      
+
       // C99 6.7.5.3p1: The return type may not be a function or array type.
       if (T->isArrayType() || T->isFunctionType()) {
         Diag(DeclType.Loc, diag::err_func_returning_array_function) << T;
@@ -753,6 +753,12 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
           Diag(Tag->getLocation(), diag::err_type_defined_in_result_type)
             << Context.getTypeDeclType(Tag);
       }
+
+      // Exception specs are not allowed in typedefs. Complain, but add it
+      // anyway.
+      if (FTI.hasExceptionSpec &&
+          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+        Diag(FTI.getThrowLoc(), diag::err_exception_spec_in_typedef);
 
       if (FTI.NumArgs == 0) {
         if (getLangOptions().CPlusPlus) {
@@ -978,17 +984,13 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   // C++ 15.4p2: A type denoted in an exception-specification shall not denote
   //   an incomplete type a pointer or reference to an incomplete type, other
   //   than (cv) void*.
-  // The standard does not mention member pointers, but it has to mean them too.
   int kind;
   if (const PointerType* IT = T->getAsPointerType()) {
     T = IT->getPointeeType();
     kind = 1;
-  } else if (const MemberPointerType* IT = T->getAsMemberPointerType()) {
-    T = IT->getPointeeType();
-    kind = 2;
   } else if (const ReferenceType* IT = T->getAsReferenceType()) {
     T = IT->getPointeeType();
-    kind = 3;
+    kind = 2;
   } else
     return false;
 

@@ -8,7 +8,7 @@ void (*fp)() throw (int);
 // Function taking reference to function with spec
 void g(void pfa() throw(int));
 // Typedef for pointer to function with spec
-typedef int (*pf)() throw(int); // xpected-error spec-on-typedef
+typedef int (*pf)() throw(int); // expected-error {{specifications are not allowed in typedefs}}
 
 // Some more:
 // Function returning function with spec

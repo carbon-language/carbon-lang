@@ -33,6 +33,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
                                              unsigned NumArgs,
                                              unsigned TypeQuals,
                                              bool hasExceptionSpec,
+                                             SourceLocation ThrowLoc,
                                              bool hasAnyExceptionSpec,
                                              ActionBase::TypeTy **Exceptions,
                                              SourceRange *ExceptionRanges,
@@ -50,6 +51,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
   I.Fun.NumArgs          = NumArgs;
   I.Fun.ArgInfo          = 0;
   I.Fun.hasExceptionSpec = hasExceptionSpec;
+  I.Fun.ThrowLoc         = ThrowLoc.getRawEncoding();
   I.Fun.hasAnyExceptionSpec = hasAnyExceptionSpec;
   I.Fun.NumExceptions    = NumExceptions;
   I.Fun.Exceptions       = 0;

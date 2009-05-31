@@ -559,6 +559,10 @@ struct DeclaratorChunk {
     /// the function has one.
     unsigned NumExceptions;
 
+    /// ThrowLoc - When hasExceptionSpec is true, the location of the throw
+    /// keyword introducing the spec.
+    unsigned ThrowLoc;
+
     /// ArgInfo - This is a pointer to a new[]'d array of ParamInfo objects that
     /// describe the arguments for this function declarator.  This is null if
     /// there are no arguments specified.
@@ -587,6 +591,9 @@ struct DeclaratorChunk {
 
     SourceLocation getEllipsisLoc() const {
       return SourceLocation::getFromRawEncoding(EllipsisLoc);
+    }
+    SourceLocation getThrowLoc() const {
+      return SourceLocation::getFromRawEncoding(ThrowLoc);
     }
   };
 
@@ -704,6 +711,7 @@ struct DeclaratorChunk {
                                      SourceLocation EllipsisLoc,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
                                      unsigned TypeQuals, bool hasExceptionSpec,
+                                     SourceLocation ThrowLoc,
                                      bool hasAnyExceptionSpec,
                                      ActionBase::TypeTy **Exceptions,
                                      SourceRange *ExceptionRanges,

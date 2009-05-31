@@ -2274,6 +2274,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // cv-qualifier-seq[opt].
     DeclSpec DS;
     bool hasExceptionSpec = false;
+    SourceLocation ThrowLoc;
     bool hasAnyExceptionSpec = false;
     llvm::SmallVector<TypeTy*, 2> Exceptions;
     llvm::SmallVector<SourceRange, 2> ExceptionRanges;
@@ -2285,6 +2286,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // Parse exception-specification[opt].
       if (Tok.is(tok::kw_throw)) {
         hasExceptionSpec = true;
+        ThrowLoc = Tok.getLocation();
         ParseExceptionSpecification(Loc, Exceptions, ExceptionRanges,
                                     hasAnyExceptionSpec);
         assert(Exceptions.size() == ExceptionRanges.size() &&
@@ -2299,7 +2301,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                SourceLocation(),
                                                /*arglist*/ 0, 0,
                                                DS.getTypeQualifiers(),
-                                               hasExceptionSpec,
+                                               hasExceptionSpec, ThrowLoc,
                                                hasAnyExceptionSpec,
                                                Exceptions.data(),
                                                ExceptionRanges.data(),
@@ -2448,6 +2450,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   DeclSpec DS;
   bool hasExceptionSpec = false;
+  SourceLocation ThrowLoc;
   bool hasAnyExceptionSpec = false;
   llvm::SmallVector<TypeTy*, 2> Exceptions;
   llvm::SmallVector<SourceRange, 2> ExceptionRanges;
@@ -2460,6 +2463,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // Parse exception-specification[opt].
     if (Tok.is(tok::kw_throw)) {
       hasExceptionSpec = true;
+      ThrowLoc = Tok.getLocation();
       ParseExceptionSpecification(Loc, Exceptions, ExceptionRanges,
                                   hasAnyExceptionSpec);
       assert(Exceptions.size() == ExceptionRanges.size() &&
@@ -2472,7 +2476,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              EllipsisLoc,
                                              ParamInfo.data(), ParamInfo.size(),
                                              DS.getTypeQualifiers(),
-                                             hasExceptionSpec,
+                                             hasExceptionSpec, ThrowLoc,
                                              hasAnyExceptionSpec,
                                              Exceptions.data(),
                                              ExceptionRanges.data(),
@@ -2551,7 +2555,8 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
                                              SourceLocation(),
                                              &ParamInfo[0], ParamInfo.size(),
                                              /*TypeQuals*/0,
-                                             /*exception*/false, false, 0, 0, 0,
+                                             /*exception*/false,
+                                             SourceLocation(), false, 0, 0, 0,
                                              LParenLoc, D),
                 RLoc);
 }
