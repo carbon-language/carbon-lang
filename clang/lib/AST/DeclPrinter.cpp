@@ -481,6 +481,7 @@ void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
     }
 
     // Print the class definition
+    // FIXME: Doesn't print access specifiers, e.g., "public:"
     Out << " {\n";
     VisitDeclContext(D);
     Indent() << "}";
