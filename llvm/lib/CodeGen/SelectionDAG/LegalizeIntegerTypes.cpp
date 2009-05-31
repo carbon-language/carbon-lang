@@ -35,7 +35,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   SDValue Res = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, N->getValueType(ResNo), true))
+  if (CustomLowerNode(N, N->getValueType(ResNo), true))
     return;
 
   switch (N->getOpcode()) {
@@ -654,7 +654,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Promote integer operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (CustomLowerResults(N, N->getOperand(OpNo).getValueType(), false))
+  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
     return false;
 
   switch (N->getOpcode()) {
@@ -968,7 +968,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDValue();
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerResults(N, N->getValueType(ResNo), true))
+  if (CustomLowerNode(N, N->getValueType(ResNo), true))
     return;
 
   switch (N->getOpcode()) {
@@ -2006,7 +2006,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand integer operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (CustomLowerResults(N, N->getOperand(OpNo).getValueType(), false))
+  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
     return false;
 
   switch (N->getOpcode()) {

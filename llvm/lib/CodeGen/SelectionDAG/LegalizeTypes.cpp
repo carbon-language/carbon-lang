@@ -867,7 +867,7 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
   return DAG.getLoad(DestVT, dl, Store, StackPtr, NULL, 0);
 }
 
-/// CustomLowerResults - Replace the node's results with custom code provided
+/// CustomLowerNode - Replace the node's results with custom code provided
 /// by the target and return "true", or do nothing and return "false".
 /// The last parameter is FALSE if we are dealing with a node with legal
 /// result types and illegal operand. The second parameter denotes the type of
@@ -875,8 +875,7 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
 /// The last parameter being TRUE means we are dealing with a
 /// node with illegal result types. The second parameter denotes the type of
 /// illegal ResNo in that case.
-bool DAGTypeLegalizer::CustomLowerResults(SDNode *N, MVT VT,
-                                          bool LegalizeResult) {
+bool DAGTypeLegalizer::CustomLowerNode(SDNode *N, MVT VT, bool LegalizeResult) {
   // See if the target wants to custom lower this node.
   if (TLI.getOperationAction(N->getOpcode(), VT) != TargetLowering::Custom)
     return false;

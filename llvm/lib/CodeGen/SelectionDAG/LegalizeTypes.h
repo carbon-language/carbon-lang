@@ -186,7 +186,7 @@ private:
   SDValue BitConvertToInteger(SDValue Op);
   SDValue BitConvertVectorToIntegerVector(SDValue Op);
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
-  bool CustomLowerResults(SDNode *N, MVT VT, bool LegalizeResult);
+  bool CustomLowerNode(SDNode *N, MVT VT, bool LegalizeResult);
   SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
   SDValue JoinIntegers(SDValue Lo, SDValue Hi);
   SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);
