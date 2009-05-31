@@ -93,8 +93,9 @@ bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
              !Context.getLangOptions().CPlusPlus ||
              // "main" is not mangled in C++
              FD->isMain() ||
-             // No mangling in an "implicit extern C" header.
-             Context.getSourceManager().getFileCharacteristic(FD->getLocation())
+             // No mangling in an "implicit extern C" header. 
+             (FD->getLocation().isValid() && 
+              Context.getSourceManager().getFileCharacteristic(FD->getLocation()))
                == SrcMgr::C_ExternCSystem ||
              // No name mangling in a C linkage specification.
              isInCLinkageSpecification(FD))
