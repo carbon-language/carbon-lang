@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t
+// RUN: clang-cc %s -emit-llvm -o %t &&
 
 void t1() {
   int* a = new int;
@@ -15,6 +15,7 @@ struct S {
   int a;
 };
 
+// POD types.
 void t3() {
   int *a = new int(10);
   _Complex int* b = new _Complex int(10i);
@@ -22,4 +23,25 @@ void t3() {
   S s;
   s.a = 10;
   S *sp = new S(s);
+}
+
+// Non-POD
+struct T {
+  T();
+  int a;
+};
+
+void t4() {
+  // RUN: grep "call void @_ZN1TC1Ev" %t | count 1 &&
+  T *t = new T;
+}
+
+struct T2 {
+  int a;
+  T2(int, int);
+};
+
+void t5() { 
+  // RUN: grep "call void @_ZN2T2C1Eii" %t | count 1 
+  T2 *t2 = new T2(10, 10);
 }

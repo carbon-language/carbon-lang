@@ -1225,6 +1225,9 @@ public:
     assert(i < NumExceptions && "Invalid exception number!");
     return exception_begin()[i];
   }
+  bool hasEmptyExceptionSpec() const { 
+    return hasExceptionSpec() && getNumExceptions() == 0;
+  }
 
   bool isVariadic() const { return getSubClassData(); }
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }

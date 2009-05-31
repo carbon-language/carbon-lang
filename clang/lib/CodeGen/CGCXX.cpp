@@ -285,11 +285,23 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
              CGM.GetAddrOfFunction(GlobalDecl(NewFD)),
              NewArgs, NewFD);
 
-  llvm::Value *NewPtr = Builder.CreateBitCast(RV.getScalarVal(), 
-                                              ConvertType(E->getType()));
+  // If an allocation function is declared with an empty exception specification
+  // it returns null to indicate failure to allocate storage. [expr.new]p13.
+  // (We don't need to check for null when there's no new initializer and
+  // we're allocating a POD type).
+  bool NullCheckResult = NewFTy->hasEmptyExceptionSpec() &&
+    !(AllocType->isPODType() && !E->hasInitializer());
 
+  if (NullCheckResult) {
+    ErrorUnsupported(E, "new expr that needs to be null checked");
+    return llvm::UndefValue::get(ConvertType(E->getType()));
+  }
+  
+  llvm::Value *NewPtr = 
+    Builder.CreateBitCast(RV.getScalarVal(), ConvertType(E->getType()));
+  
   if (AllocType->isPODType()) {
-    if (E->getNumConstructorArgs() != 0) {
+    if (E->hasInitializer()) {
       assert(E->getNumConstructorArgs() == 1 && 
              "Can only have one argument to initializer of POD type.");
 
@@ -302,12 +314,16 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
       else
         EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
     }
+  } else {
+    // Call the constructor.    
+    CXXConstructorDecl *Ctor = E->getConstructor();
     
-    return NewPtr;
+    EmitCXXConstructorCall(Ctor, Ctor_Complete, NewPtr, 
+                           E->constructor_arg_begin(), 
+                           E->constructor_arg_end());
   }
-  
-  ErrorUnsupported(E, "new expression with non-POD type");
-  return llvm::UndefValue::get(ConvertType(E->getType()));
+
+  return NewPtr;
 }
 
 static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
