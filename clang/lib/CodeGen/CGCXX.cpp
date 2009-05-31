@@ -299,10 +299,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
         Builder.CreateStore(EmitScalarExpr(Init), NewPtr);
       else if (AllocType->isAnyComplexType())
         EmitComplexExprIntoAddr(Init, NewPtr, AllocType.isVolatileQualified());
-      else {
-        ErrorUnsupported(E, "new expression");
-        return llvm::UndefValue::get(ConvertType(E->getType()));
-      }
+      else
+        EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
     }
     
     return NewPtr;

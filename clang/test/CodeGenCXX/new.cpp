@@ -11,8 +11,15 @@ void t2(int* a) {
   int* b = new (a) int;
 }
 
+struct S {
+  int a;
+};
+
 void t3() {
   int *a = new int(10);
   _Complex int* b = new _Complex int(10i);
   
+  S s;
+  s.a = 10;
+  S *sp = new S(s);
 }
