@@ -1588,11 +1588,11 @@ def : Pat<(i8 (trunc GR16:$src)),
       Requires<[In64BitMode]>;
 
 // h-register tricks.
-// For now, be conservative and only the extract if the value is immediately
-// zero-extended or stored, which are somewhat common cases. This uses a bunch
-// of code to prevent a register requiring a REX prefix from being allocated in
-// the same instruction as the h register, as there's currently no way to
-// describe this requirement to the register allocator.
+// For now, be conservative on x86-64 and use an h-register extract only if the
+// value is immediately zero-extended or stored, which are somewhat common
+// cases. This uses a bunch of code to prevent a register requiring a REX prefix
+// from being allocated in the same instruction as the h register, as there's
+// currently no way to describe this requirement to the register allocator.
 
 // h-register extract and zero-extend.
 def : Pat<(and (srl_su GR64:$src, (i8 8)), (i64 255)),
