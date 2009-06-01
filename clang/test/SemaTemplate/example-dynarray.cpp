@@ -31,7 +31,7 @@ public:
     T* NewStart = (T*)malloc(sizeof(T) * other.size());
 
     for (unsigned I = 0, N = other.size(); I != N; ++I)
-      new (Start + I) T(other[I]);
+      new (NewStart + I) T(other[I]);
 
     // FIXME: destroy everything in Start
     free(Start);
