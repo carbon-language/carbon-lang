@@ -220,7 +220,8 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
 bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm, MachineCodeEmitter &MCE) {
+                                            bool DumpAsm, 
+                                            MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
   if (DumpAsm) {
@@ -234,7 +235,8 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
 
 bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm, JITCodeEmitter &JCE) {
+                                            bool DumpAsm,
+                                            JITCodeEmitter &JCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
   if (DumpAsm) {

@@ -116,7 +116,7 @@ unsigned X86_64TargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
-X86_32TargetMachine::X86_32TargetMachine(const Module &M, const std::string &FS) 
+X86_32TargetMachine::X86_32TargetMachine(const Module &M, const std::string &FS)
   : X86TargetMachine(M, FS, false) {
 }
 
@@ -221,7 +221,8 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm, MachineCodeEmitter &MCE) {
+                                      bool DumpAsm, 
+                                      MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
   if (DefRelocModel == Reloc::Default && 
@@ -250,7 +251,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm, JITCodeEmitter &JCE) {
+                                      bool DumpAsm,
+                                      JITCodeEmitter &JCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
   if (DefRelocModel == Reloc::Default && 

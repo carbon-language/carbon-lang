@@ -36,22 +36,22 @@ using namespace llvm;
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {
-template< class machineCodeEmitter>
+template<class CodeEmitter>
   class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     const TargetData    *TD;
     X86TargetMachine    &TM;
-    machineCodeEmitter  &MCE;
+    CodeEmitter         &MCE;
     intptr_t PICBaseOffset;
     bool Is64BitMode;
     bool IsPIC;
   public:
     static char ID;
-    explicit Emitter(X86TargetMachine &tm, machineCodeEmitter &mce)
+    explicit Emitter(X86TargetMachine &tm, CodeEmitter &mce)
       : MachineFunctionPass(&ID), II(0), TD(0), TM(tm), 
       MCE(mce), PICBaseOffset(0), Is64BitMode(false),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
-    Emitter(X86TargetMachine &tm, machineCodeEmitter &mce,
+    Emitter(X86TargetMachine &tm, CodeEmitter &mce,
             const X86InstrInfo &ii, const TargetData &td, bool is64)
       : MachineFunctionPass(&ID), II(&ii), TD(&td), TM(tm), 
       MCE(mce), PICBaseOffset(0), Is64BitMode(is64),
@@ -99,8 +99,8 @@ template< class machineCodeEmitter>
     bool gvNeedsNonLazyPtr(const GlobalValue *GV);
   };
 
-template< class machineCodeEmitter>
-  char Emitter<machineCodeEmitter>::ID = 0;
+template<class CodeEmitter>
+  char Emitter<CodeEmitter>::ID = 0;
 }
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
@@ -108,21 +108,19 @@ template< class machineCodeEmitter>
 
 namespace llvm {
 	
-FunctionPass *createX86CodeEmitterPass(
-    X86TargetMachine &TM, MachineCodeEmitter &MCE)
-{
+FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM,
+                                       MachineCodeEmitter &MCE) {
   return new Emitter<MachineCodeEmitter>(TM, MCE);
 }
-FunctionPass *createX86JITCodeEmitterPass(
-    X86TargetMachine &TM, JITCodeEmitter &JCE)
-{
+FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
+                                          JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
 }
 
 } // end namespace llvm
 
-template< class machineCodeEmitter>
-bool Emitter<machineCodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
+template<class CodeEmitter>
+bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
  
   MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
   
@@ -156,8 +154,8 @@ bool Emitter<machineCodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
 /// necessary to resolve the address of this block later and emits a dummy
 /// value.
 ///
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
   // Remember where this reference was and where it is to so we can
   // deal with it later.
   MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
@@ -168,8 +166,8 @@ void Emitter<machineCodeEmitter>::emitPCRelativeBlockAddress(MachineBasicBlock *
 /// emitGlobalAddress - Emit the specified address to the code stream assuming
 /// this is part of a "take the address of a global" instruction.
 ///
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                                 intptr_t Disp /* = 0 */,
                                 intptr_t PCAdj /* = 0 */,
                                 bool NeedStub /* = false */,
@@ -195,8 +193,9 @@ void Emitter<machineCodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Re
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitExternalSymbolAddress(const char *ES,
+                                                     unsigned Reloc) {
   intptr_t RelocCST = (Reloc == X86::reloc_picrel_word) ? PICBaseOffset : 0;
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                  Reloc, ES, RelocCST));
@@ -209,8 +208,8 @@ void Emitter<machineCodeEmitter>::emitExternalSymbolAddress(const char *ES, unsi
 /// emitConstPoolAddress - Arrange for the address of an constant pool
 /// to be emitted to the current location in the function, and allow it to be PC
 /// relative.
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
                                    intptr_t Disp /* = 0 */,
                                    intptr_t PCAdj /* = 0 */) {
   intptr_t RelocCST = 0;
@@ -230,8 +229,8 @@ void Emitter<machineCodeEmitter>::emitConstPoolAddress(unsigned CPI, unsigned Re
 /// emitJumpTableAddress - Arrange for the address of a jump table to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
                                    intptr_t PCAdj /* = 0 */) {
   intptr_t RelocCST = 0;
   if (Reloc == X86::reloc_picrel_word)
@@ -247,8 +246,8 @@ void Emitter<machineCodeEmitter>::emitJumpTableAddress(unsigned JTI, unsigned Re
     MCE.emitWordLE(0);
 }
 
-template< class machineCodeEmitter>
-unsigned Emitter<machineCodeEmitter>::getX86RegNum(unsigned RegNo) const {
+template<class CodeEmitter>
+unsigned Emitter<CodeEmitter>::getX86RegNum(unsigned RegNo) const {
   return II->getRegisterInfo().getX86RegNum(RegNo);
 }
 
@@ -258,24 +257,27 @@ inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
   return RM | (RegOpcode << 3) | (Mod << 6);
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeFld){
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitRegModRMByte(unsigned ModRMReg,
+                                            unsigned RegOpcodeFld){
   MCE.emitByte(ModRMByte(3, RegOpcodeFld, getX86RegNum(ModRMReg)));
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitRegModRMByte(unsigned RegOpcodeFld) {
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitRegModRMByte(unsigned RegOpcodeFld) {
   MCE.emitByte(ModRMByte(3, RegOpcodeFld, 0));
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitSIBByte(unsigned SS, unsigned Index, unsigned Base) {
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitSIBByte(unsigned SS, 
+                                       unsigned Index,
+                                       unsigned Base) {
   // SIB byte is in the same format as the ModRMByte...
   MCE.emitByte(ModRMByte(SS, Index, Base));
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitConstant(uint64_t Val, unsigned Size) {
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitConstant(uint64_t Val, unsigned Size) {
   // Output the constant in little endian byte order...
   for (unsigned i = 0; i != Size; ++i) {
     MCE.emitByte(Val & 255);
@@ -289,16 +291,16 @@ static bool isDisp8(int Value) {
   return Value == (signed char)Value;
 }
 
-template< class machineCodeEmitter>
-bool Emitter<machineCodeEmitter>::gvNeedsNonLazyPtr(const GlobalValue *GV) {
+template<class CodeEmitter>
+bool Emitter<CodeEmitter>::gvNeedsNonLazyPtr(const GlobalValue *GV) {
   // For Darwin, simulate the linktime GOT by using the same non-lazy-pointer
   // mechanism as 32-bit mode.
   return (!Is64BitMode || TM.getSubtarget<X86Subtarget>().isTargetDarwin()) &&
     TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
                                     int DispVal, intptr_t PCAdj) {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
@@ -332,8 +334,8 @@ void Emitter<machineCodeEmitter>::emitDisplacementField(const MachineOperand *Re
   }
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
                                unsigned Op, unsigned RegOpcodeField,
                                intptr_t PCAdj) {
   const MachineOperand &Op3 = MI.getOperand(Op+3);
@@ -450,8 +452,8 @@ void Emitter<machineCodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
-template< class machineCodeEmitter>
-void Emitter<machineCodeEmitter>::emitInstruction(
+template<class CodeEmitter>
+void Emitter<CodeEmitter>::emitInstruction(
                               const MachineInstr &MI,
                               const TargetInstrDesc *Desc) {
   DOUT << MI;
@@ -672,7 +674,8 @@ void Emitter<machineCodeEmitter>::emitInstruction(
                      getX86RegNum(MI.getOperand(CurOp).getReg()));
     CurOp += 2;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcMem: {
@@ -692,7 +695,8 @@ void Emitter<machineCodeEmitter>::emitInstruction(
                      PCAdj);
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(Desc));
     break;
   }
 

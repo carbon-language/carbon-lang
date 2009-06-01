@@ -51,7 +51,7 @@ public:
 class JIT : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
-  JITCodeEmitter *JCE; // JCE object
+  JITCodeEmitter *JCE;     // JCE object
 
   JITState *jitstate;
 

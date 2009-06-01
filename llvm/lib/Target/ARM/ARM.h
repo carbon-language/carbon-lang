@@ -98,15 +98,10 @@ FunctionPass *createARMCodePrinterPass(raw_ostream &O,
 FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 
-FunctionPass *createARMCodeEmitterPass(
-    ARMTargetMachine &TM, MachineCodeEmitter &MCE);
-/*
-template< class machineCodeEmitter>
-FunctionPass *createARMCodeEmitterPass(
-    ARMTargetMachine &TM, machineCodeEmitter &MCE);
-*/
-FunctionPass *createARMJITCodeEmitterPass(
-    ARMTargetMachine &TM, JITCodeEmitter &JCE);
+FunctionPass *createARMCodeEmitterPass( ARMTargetMachine &TM,
+                                        MachineCodeEmitter &MCE);
+FunctionPass *createARMJITCodeEmitterPass( ARMTargetMachine &TM, 
+                                           JITCodeEmitter &JCE);
 
 FunctionPass *createARMLoadStoreOptimizationPass();
 FunctionPass *createARMConstantIslandPass();
