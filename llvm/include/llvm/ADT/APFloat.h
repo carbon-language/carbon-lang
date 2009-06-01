@@ -192,7 +192,7 @@ namespace llvm {
     ///
     /// \param Negative - True iff the NaN generated should be negative.
     /// \param type - The unspecified fill bits for creating the NaN, 0 by
-    /// default.
+    /// default.  The value is truncated as necessary.
     static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
                           unsigned type = 0) {
       return APFloat(Sem, fcNaN, Negative, type);
