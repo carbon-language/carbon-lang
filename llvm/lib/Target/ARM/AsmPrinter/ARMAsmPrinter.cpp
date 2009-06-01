@@ -820,7 +820,9 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF()) {
     // CPU Type
-    O << "\t.cpu " << Subtarget->getCPUString() << '\n';
+    std::string CPUString = Subtarget->getCPUString();
+    if (CPUString != "generic")
+      O << "\t.cpu " << CPUString << '\n';
 
     // FIXME: Emit FPU type
     if (Subtarget->hasVFP2())
