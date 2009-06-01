@@ -1409,10 +1409,10 @@ SDValue PIC16TargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) {
     // Put one value on stack.
     SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG, dl);
     
-    // ADDC and ADDE produces two results.
+    // ADDC and ADDE produce two results.
     SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
 
-    // ADDE has three operands, the last one is a flag.
+    // ADDE has three operands, the last one is the carry bit.
     if (Op.getOpcode() == ISD::ADDE)
       return DAG.getNode(Op.getOpcode(), dl, Tys, Op.getOperand(MemOp ^ 1),
                          NewVal, Op.getOperand(2));
