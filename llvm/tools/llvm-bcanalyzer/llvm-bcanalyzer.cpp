@@ -171,6 +171,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::TYPE_CODE_X86_FP80:  return "X86_FP80";
     case bitc::TYPE_CODE_FP128:     return "FP128";
     case bitc::TYPE_CODE_PPC_FP128: return "PPC_FP128";
+    case bitc::TYPE_CODE_METADATA:  return "METADATA";
     }
     
   case bitc::CONSTANTS_BLOCK_ID:
@@ -194,6 +195,9 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::CST_CODE_CE_SHUFFLEVEC: return "CE_SHUFFLEVEC";
     case bitc::CST_CODE_CE_CMP:        return "CE_CMP";
     case bitc::CST_CODE_INLINEASM:     return "INLINEASM";
+    case bitc::CST_CODE_CE_SHUFVEC_EX: return "CE_SHUFVEC_EX";
+    case bitc::CST_CODE_MDSTRING:      return "MDSTRING";
+    case bitc::CST_CODE_MDNODE:        return "MDNODE";
     }        
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {
