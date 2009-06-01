@@ -324,6 +324,14 @@ public:
     return getNode(ISD::CopyToReg, dl, MVT::Other, Chain,
                    getRegister(Reg, N.getValueType()), N);
   }
+  // This version of getCopyToReg has the register (and its type) as an
+  // explicit output.
+  SDValue getCopyToReg(SDValue Chain, DebugLoc dl, MVT VT, unsigned Reg,
+                       SDValue N) {
+    SDVTList VTs = getVTList(MVT::Other, VT);
+    SDValue Ops[] = { Chain, getRegister(Reg, VT), N};
+    return getNode(ISD::CopyToReg, dl, VTs, Ops, 3);
+  }
 
   // This version of the getCopyToReg method takes an extra operand, which
   // indicates that there is potentially an incoming flag value (if Flag is not

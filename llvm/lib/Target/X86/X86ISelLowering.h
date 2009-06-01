@@ -243,6 +243,14 @@ namespace llvm {
       ADD, SUB, SMUL, UMUL,
       INC, DEC,
 
+      // ADDC, SUBC - Arithmetic operations setting carry bit.  The normal
+      // arithmetic operations do this, but they represent it as Flag, and
+      // we want the i32 EFLAGS register here.
+      ADDC, SUBC,
+
+      // ADDE, SUBE - Arithmetic operations with extra FLAGS (EFLAGS) inputs.
+      ADDE, SUBE,
+
       // MUL_IMM - X86 specific multiply by immediate.
       MUL_IMM
     };
@@ -576,7 +584,9 @@ namespace llvm {
 
     std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
                                                bool isSigned);
-    
+
+    SDValue LowerADDSUBC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerADDSUBE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG);

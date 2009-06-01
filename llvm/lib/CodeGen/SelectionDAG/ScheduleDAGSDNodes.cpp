@@ -268,6 +268,13 @@ unsigned ScheduleDAGSDNodes::ComputeMemOperandsEnd(SDNode *Node) {
   unsigned N = Node->getNumOperands();
   while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
     --N;
+  // Skip hard registers set as a side effect (i.e. not result 0).
+  while (N && Node->getOperand(N - 1).getOpcode() == ISD::CopyToReg &&
+         Node->getOperand(N-1).getResNo() != 0 &&
+         !TargetRegisterInfo::isVirtualRegister(
+                dyn_cast<RegisterSDNode>(Node->getOperand(N-1).getOperand(1))
+                ->getReg()))
+    --N;
   if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
     --N; // Ignore chain if it exists.
   return N;

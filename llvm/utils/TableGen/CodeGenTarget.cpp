@@ -385,6 +385,13 @@ bool CodeGenTarget::isLittleEndianEncoding() const {
   return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
+/// supportsHasI1 - Return whether this target supports the implicit I1,
+/// rather than Flags, for ADDC/ADDE
+///
+bool CodeGenTarget::supportsHasI1() const {
+  return getInstructionSet()->getValueAsBit("supportsHasI1");
+}
+
 //===----------------------------------------------------------------------===//
 // ComplexPattern implementation
 //

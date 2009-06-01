@@ -326,6 +326,11 @@ class InstrInfo {
   // Sparc manual specifies its instructions in the format [31..0] (big), while
   // PowerPC specifies them using the format [0..31] (little).
   bit isLittleEndianEncoding = 0;
+
+  // Targets that can support the HasI1 argument on ADDC and ADDE, rather than
+  // Flag, have this bit set.  This is transitional and should go away when all
+  // targets have been switched over.
+  bit supportsHasI1 = 0;
 }
 
 // Standard Instructions.

@@ -399,9 +399,13 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
     } else if (PropList[i]->getName() == "SDNPHasChain") {
       Properties |= 1 << SDNPHasChain;
     } else if (PropList[i]->getName() == "SDNPOutFlag") {
-      Properties |= 1 << SDNPOutFlag;
+      Properties |= 1 << SDNPOutFlag; 
+      assert(!(Properties & (1<<SDNPOutI1)) && 
+             "Can't handle OutFlag and OutI1");
     } else if (PropList[i]->getName() == "SDNPInFlag") {
       Properties |= 1 << SDNPInFlag;
+      assert(!(Properties & (1<<SDNPInI1)) && 
+             "Can't handle InFlag and InI1");
     } else if (PropList[i]->getName() == "SDNPOptInFlag") {
       Properties |= 1 << SDNPOptInFlag;
     } else if (PropList[i]->getName() == "SDNPMayStore") {
@@ -412,6 +416,14 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
       Properties |= 1 << SDNPSideEffect;
     } else if (PropList[i]->getName() == "SDNPMemOperand") {
       Properties |= 1 << SDNPMemOperand;
+    } else if (PropList[i]->getName() == "SDNPInI1") {
+      Properties |= 1 << SDNPInI1;
+      assert(!(Properties & (1<<SDNPInFlag)) && 
+             "Can't handle InFlag and InI1");
+    } else if (PropList[i]->getName() == "SDNPOutI1") {
+      Properties |= 1 << SDNPOutI1;
+      assert(!(Properties & (1<<SDNPOutFlag)) && 
+             "Can't handle OutFlag and OutI1");
     } else {
       cerr << "Unknown SD Node property '" << PropList[i]->getName()
            << "' on node '" << R->getName() << "'!\n";
