@@ -244,7 +244,7 @@ Select(SDValue N)
       SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, dl, VT, 
                                                SDValue(Carry,0), RHS);
 
-      return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, MVT::Flag, 
+      return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, MVT::Flag,
                                   LHS, SDValue(AddCarry,0));
     }
 
