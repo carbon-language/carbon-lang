@@ -765,6 +765,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // promoted types of the parameters from the K&R definition differ
   // from the types in the prototype. GCC then keeps the types from
   // the prototype.
+  //
+  // If a variadic prototype is followed by a non-variadic K&R definition,
+  // the K&R definition becomes variadic.  This is sort of an edge case, but
+  // it's legal per the standard depending on how you read C99 6.7.5.3p15 and
+  // C99 6.9.1p8.
   if (!getLangOptions().CPlusPlus &&
       Old->hasPrototype() && !New->hasPrototype() &&
       New->getType()->getAsFunctionProtoType() &&
@@ -777,12 +782,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       = New->getType()->getAsFunctionProtoType();
     
     // Determine whether this is the GNU C extension.
-    bool GNUCompatible = 
-      Context.typesAreCompatible(OldProto->getResultType(),
-                                 NewProto->getResultType()) &&
-      (OldProto->isVariadic() == NewProto->isVariadic());
+    QualType MergedReturn = Context.mergeTypes(OldProto->getResultType(),
+                                               NewProto->getResultType());
+    bool LooseCompatible = !MergedReturn.isNull();
     for (unsigned Idx = 0, End = Old->getNumParams(); 
-         GNUCompatible && Idx != End; ++Idx) {
+         LooseCompatible && Idx != End; ++Idx) {
       ParmVarDecl *OldParm = Old->getParamDecl(Idx);
       ParmVarDecl *NewParm = New->getParamDecl(Idx);
       if (Context.typesAreCompatible(OldParm->getType(), 
@@ -795,10 +799,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         Warnings.push_back(Warn);
         ArgTypes.push_back(NewParm->getType());
       } else
-        GNUCompatible = false;
+        LooseCompatible = false;
     }
 
-    if (GNUCompatible) {
+    if (LooseCompatible) {
       for (unsigned Warn = 0; Warn < Warnings.size(); ++Warn) {
         Diag(Warnings[Warn].NewParm->getLocation(),
              diag::ext_param_promoted_not_compatible_with_prototype)
@@ -808,10 +812,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
              diag::note_previous_declaration);
       }
 
-      New->setType(Context.getFunctionType(NewProto->getResultType(),
-                                           &ArgTypes[0], ArgTypes.size(),
-                                           NewProto->isVariadic(),
-                                           NewProto->getTypeQuals()));
+      New->setType(Context.getFunctionType(MergedReturn, &ArgTypes[0],
+                                           ArgTypes.size(),
+                                           OldProto->isVariadic(), 0));
       return MergeCompatibleFunctionDecls(New, Old);
     }
 

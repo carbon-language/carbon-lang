@@ -2670,9 +2670,14 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       // Check if we have too few/too many template arguments, based
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
-      if (FDecl->getBody(Context, Def) && NumArgs != Def->param_size())
-        Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
-          << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
+      if (FDecl->getBody(Context, Def) && NumArgs != Def->param_size()) {
+        const FunctionProtoType *Proto =
+            Def->getType()->getAsFunctionProtoType();
+        if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size())) {
+          Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
+            << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
+        }
+      }
     }
 
     // Promote the arguments (C99 6.5.2.2p6).
