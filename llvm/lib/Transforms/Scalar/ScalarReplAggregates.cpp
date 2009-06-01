@@ -903,11 +903,13 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   
   // If this isn't a store of an integer to the whole alloca, it may be a store
   // to the first element.  Just ignore the store in this case and normal SROA
-  // will handle it.  We don't handle types here that have tail padding, like
-  // an alloca of type {i1}.
+  // will handle it.
   if (!isa<IntegerType>(SrcVal->getType()) ||
-      TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
+      TD->getTypeAllocSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     return;
+  // Handle tail padding by extending the operand
+  if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
+    SrcVal = new ZExtInst(SrcVal, IntegerType::get(AllocaSizeBits), "", SI);
 
   DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
 
@@ -1016,10 +1018,9 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
   
   // If this isn't a load of the whole alloca to an integer, it may be a load
   // of the first element.  Just ignore the load in this case and normal SROA
-  // will handle it.  We don't handle types here that have tail padding, like
-  // an alloca of type {i1}.
+  // will handle it.
   if (!isa<IntegerType>(LI->getType()) ||
-      TD->getTypeSizeInBits(LI->getType()) != AllocaSizeBits)
+      TD->getTypeAllocSizeInBits(LI->getType()) != AllocaSizeBits)
     return;
   
   DOUT << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << *LI;
@@ -1035,7 +1036,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     ArrayEltBitOffset = TD->getTypeAllocSizeInBits(ArrayEltTy);
   }    
     
-  Value *ResultVal = Constant::getNullValue(LI->getType());
+  Value *ResultVal = Constant::getNullValue(IntegerType::get(AllocaSizeBits));
   
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
@@ -1082,7 +1083,11 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
 
     ResultVal = BinaryOperator::CreateOr(SrcField, ResultVal, "", LI);
   }
-  
+
+  // Handle tail padding by truncating the result
+  if (TD->getTypeSizeInBits(LI->getType()) != AllocaSizeBits)
+    ResultVal = new TruncInst(ResultVal, LI->getType(), "", LI);
+
   LI->replaceAllUsesWith(ResultVal);
   LI->eraseFromParent();
 }
