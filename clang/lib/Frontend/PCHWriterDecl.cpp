@@ -485,7 +485,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     }
 
     // Determine the ID for this declaration
-    pch::DeclID& ID = DeclIDs[D];
+    pch::DeclID &ID = DeclIDs[D];
     if (ID == 0)
       ID = DeclIDs.size();
 
