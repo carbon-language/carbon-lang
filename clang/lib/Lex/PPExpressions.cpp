@@ -221,8 +221,12 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
     // Character literals are always int or wchar_t, expand to intmax_t.
     TargetInfo &TI = PP.getTargetInfo();
-    unsigned NumBits = TI.getCharWidth(Literal.isWide());
-    
+    unsigned NumBits;
+    if (Literal.isMultiChar())
+      NumBits = TI.getIntWidth();
+    else
+      NumBits = TI.getCharWidth(Literal.isWide());
+
     // Set the width.
     llvm::APSInt Val(NumBits);
     // Set the value.

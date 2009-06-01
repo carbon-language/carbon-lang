@@ -680,6 +680,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       PP.Diag(Loc, diag::ext_multichar_character_literal);
     else
       PP.Diag(Loc, diag::ext_four_char_character_literal);
+    IsMultiChar = true;
   }
 
   // Transfer the value from APInt to uint64_t

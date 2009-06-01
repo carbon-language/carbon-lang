@@ -126,6 +126,7 @@ private:
 class CharLiteralParser {
   uint64_t Value;
   bool IsWide;
+  bool IsMultiChar;
   bool HadError;
 public:
   CharLiteralParser(const char *begin, const char *end,
@@ -133,6 +134,7 @@ public:
 
   bool hadError() const { return HadError; }
   bool isWide() const { return IsWide; }
+  bool isMultiChar() const { return IsMultiChar; }
   uint64_t getValue() const { return Value; }
 };
 
