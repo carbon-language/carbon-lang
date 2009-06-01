@@ -3020,8 +3020,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSCan.getCVRQualifiers() != RHSCan.getCVRQualifiers())
     return QualType();
 
-  Type::TypeClass LHSClass = LHSCan.getUnqualifiedType()->getTypeClass();
-  Type::TypeClass RHSClass = RHSCan.getUnqualifiedType()->getTypeClass();
+  Type::TypeClass LHSClass = LHSCan->getTypeClass();
+  Type::TypeClass RHSClass = RHSCan->getTypeClass();
 
   // We want to consider the two function types to be the same for these
   // comparisons, just force one to the other.
