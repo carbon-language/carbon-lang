@@ -1025,7 +1025,7 @@ bool BitcodeReader::ParseConstants() {
       for (unsigned i = 0; i != Size; i += 2) {
         const Type *Ty = getTypeByID(Record[i], false);
         if (Ty != Type::VoidTy)
-          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], Ty));
+          Elts.push_back(ValueList.getValueFwdRef(Record[i+1], Ty));
         else
           Elts.push_back(NULL);
       }
