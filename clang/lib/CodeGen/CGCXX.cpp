@@ -315,7 +315,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
   
   if (AllocType->isPODType()) {
-    if (E->hasInitializer()) {
+    if (E->getNumConstructorArgs() > 0) {
       assert(E->getNumConstructorArgs() == 1 && 
              "Can only have one argument to initializer of POD type.");
 

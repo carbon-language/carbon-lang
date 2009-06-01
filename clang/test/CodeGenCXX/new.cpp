@@ -50,3 +50,7 @@ int *t6() {
   // Null check.
   return new (0) int(10);
 }
+
+void t7() {
+  new int();
+}
