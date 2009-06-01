@@ -77,13 +77,19 @@ private:
     void                    addDefinedDataSymbol(llvm::GlobalValue* v, 
                                                         llvm::Mangler &mangler);
     void                    addAsmGlobalSymbol(const char *);
+    void                    addObjCClass(llvm::GlobalVariable* clgv);
+    void                    addObjCCategory(llvm::GlobalVariable* clgv);
+    void                    addObjCClassRef(llvm::GlobalVariable* clgv);
+    bool                    objcClassNameFromExpression(llvm::Constant* c, 
+                                                    std::string& name);
+
     static bool             isTargetMatch(llvm::MemoryBuffer* memBuffer, 
                                                     const char* triplePrefix);
-    
+
     static LTOModule*       makeLTOModule(llvm::MemoryBuffer* buffer, 
                                                         std::string& errMsg);
     static llvm::MemoryBuffer* makeBuffer(const void* mem, size_t length);
-                                                        
+
     typedef llvm::StringMap<uint8_t> StringSet;
     
     struct NameAndAttributes { 
