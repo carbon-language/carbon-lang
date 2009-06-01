@@ -45,3 +45,8 @@ void t5() {
   // RUN: grep "call void @_ZN2T2C1Eii" %t | count 1 
   T2 *t2 = new T2(10, 10);
 }
+
+int *t6() {
+  // Null check.
+  return new (0) int(10);
+}

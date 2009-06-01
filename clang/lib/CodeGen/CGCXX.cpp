@@ -292,13 +292,27 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   bool NullCheckResult = NewFTy->hasEmptyExceptionSpec() &&
     !(AllocType->isPODType() && !E->hasInitializer());
 
+  llvm::BasicBlock *NewNull = 0;
+  llvm::BasicBlock *NewNotNull = 0;
+  llvm::BasicBlock *NewEnd = 0;
+
+  llvm::Value *NewPtr = RV.getScalarVal();
+
   if (NullCheckResult) {
-    ErrorUnsupported(E, "new expr that needs to be null checked");
-    return llvm::UndefValue::get(ConvertType(E->getType()));
+    NewNull = createBasicBlock("new.null");
+    NewNotNull = createBasicBlock("new.notnull");
+    NewEnd = createBasicBlock("new.end");
+    
+    llvm::Value *IsNull = 
+      Builder.CreateICmpEQ(NewPtr, 
+                           llvm::Constant::getNullValue(NewPtr->getType()),
+                           "isnull");
+    
+    Builder.CreateCondBr(IsNull, NewNull, NewNotNull);
+    EmitBlock(NewNotNull);
   }
   
-  llvm::Value *NewPtr = 
-    Builder.CreateBitCast(RV.getScalarVal(), ConvertType(E->getType()));
+  NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
   
   if (AllocType->isPODType()) {
     if (E->hasInitializer()) {
@@ -323,6 +337,20 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                            E->constructor_arg_end());
   }
 
+  if (NullCheckResult) {
+    Builder.CreateBr(NewEnd);
+    EmitBlock(NewNull);
+    Builder.CreateBr(NewEnd);
+    EmitBlock(NewEnd);
+  
+    llvm::PHINode *PHI = Builder.CreatePHI(NewPtr->getType());
+    PHI->reserveOperandSpace(2);
+    PHI->addIncoming(NewPtr, NewNotNull);
+    PHI->addIncoming(llvm::Constant::getNullValue(NewPtr->getType()), NewNull);
+    
+    NewPtr = PHI;
+  }
+    
   return NewPtr;
 }
 
