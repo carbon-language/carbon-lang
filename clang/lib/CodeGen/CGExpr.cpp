@@ -711,8 +711,20 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       LV.SetGlobalObjCRef(LV, true);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
-    return LValue::MakeAddr(CGM.GetAddrOfFunction(GlobalDecl(FD)),
-                            E->getType().getCVRQualifiers(),
+    llvm::Value* V = CGM.GetAddrOfFunction(GlobalDecl(FD));
+    if (!FD->hasPrototype()) {
+      if (const FunctionProtoType *Proto =
+              FD->getType()->getAsFunctionProtoType()) {
+        // Ugly case: for a K&R-style definition, the type of the definition
+        // isn't the same as the type of a use.  Correct for this with a
+        // bitcast.
+        QualType NoProtoType =
+            getContext().getFunctionNoProtoType(Proto->getResultType());
+        NoProtoType = getContext().getPointerType(NoProtoType);
+        V = Builder.CreateBitCast(V, ConvertType(NoProtoType), "tmp");
+      }
+    }
+    return LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                             getContext().getObjCGCAttrKind(E->getType()));
   }
   else if (const ImplicitParamDecl *IPD =
