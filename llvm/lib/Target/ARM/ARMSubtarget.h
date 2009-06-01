@@ -31,7 +31,6 @@ protected:
   };
 
   enum ThumbTypeEnum {
-    ThumbNone,
     Thumb1,
     Thumb2
   };
@@ -43,7 +42,10 @@ protected:
   /// ARMFPUType - Floating Point Unit type.
   ARMFPEnum ARMFPUType;
 
-  /// ThumbMode - ARM if in ARM mode, otherwise indicates Thumb version.
+  /// IsThumb - True if we are in thumb mode, false if in ARM mode.
+  bool IsThumb;
+
+  /// ThumbMode - Indicates supported Thumb version.
   ThumbTypeEnum ThumbMode;
 
   /// UseThumbBacktraces - True if we use thumb style backtraces.
@@ -102,8 +104,8 @@ protected:
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
-  bool isThumb() const { return ThumbMode >= Thumb1; }
-  bool isThumb2() const { return ThumbMode >= Thumb2; }
+  bool isThumb() const { return IsThumb; }
+  bool isThumb2() const { return IsThumb && (ThumbMode >= Thumb2); }
 
   bool useThumbBacktraces() const { return UseThumbBacktraces; }
   bool isR9Reserved() const { return IsR9Reserved; }
