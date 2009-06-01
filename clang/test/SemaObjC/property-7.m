@@ -28,7 +28,7 @@ typedef struct _NSZone NSZone;
 
 @implementation SCMNode
   @synthesize name = _name;
-  - (void) setParent:(SCMNode*) inParent {
+  - (void) setParent:(SCMObject *__attribute__((objc_gc(weak)))) inParent {
     super.parent = inParent;
   }
 @end
