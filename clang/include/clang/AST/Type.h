@@ -1226,7 +1226,8 @@ public:
     return exception_begin()[i];
   }
   bool hasEmptyExceptionSpec() const { 
-    return hasExceptionSpec() && getNumExceptions() == 0;
+    return hasExceptionSpec() && !hasAnyExceptionSpec() && 
+      getNumExceptions() == 0;
   }
 
   bool isVariadic() const { return getSubClassData(); }
