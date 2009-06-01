@@ -254,7 +254,7 @@ public:
 
   /// isOBJCGCCandidate - Return true if this expression may be used in a read/
   /// write barrier. 
-  bool isOBJCGCCandidate() const;
+  bool isOBJCGCCandidate(ASTContext &Ctx) const;
   
   /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
   ///  its subexpression.  If that subexpression is also a ParenExpr, 

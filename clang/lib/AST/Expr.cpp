@@ -967,33 +967,41 @@ bool Expr::hasGlobalStorage() const {
 
 /// isOBJCGCCandidate - Check if an expression is objc gc'able.
 ///
-bool Expr::isOBJCGCCandidate() const {
+bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
   switch (getStmtClass()) {
   default:
     return false;
   case ObjCIvarRefExprClass:
     return true;
   case Expr::UnaryOperatorClass:
-    return cast<UnaryOperator>(this)->getSubExpr()->isOBJCGCCandidate();
+    return cast<UnaryOperator>(this)->getSubExpr()->isOBJCGCCandidate(Ctx);
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isOBJCGCCandidate();
+    return cast<ParenExpr>(this)->getSubExpr()->isOBJCGCCandidate(Ctx);
   case ImplicitCastExprClass:
-    return cast<ImplicitCastExpr>(this)->getSubExpr()->isOBJCGCCandidate();
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->isOBJCGCCandidate(Ctx);
   case CStyleCastExprClass:
-    return cast<CStyleCastExpr>(this)->getSubExpr()->isOBJCGCCandidate();
+    return cast<CStyleCastExpr>(this)->getSubExpr()->isOBJCGCCandidate(Ctx);
   case DeclRefExprClass:
   case QualifiedDeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
-    if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-      return VD->hasGlobalStorage();
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      if (VD->hasGlobalStorage())
+        return true;
+      QualType T = VD->getType();
+      // dereferencing to an object pointer is always a gc'able candidate
+      if (T->isPointerType() && 
+          Ctx.isObjCObjectPointerType(T->getAsPointerType()->getPointeeType()))
+        return true;
+        
+    }
     return false;
   }
   case MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
-    return M->getBase()->isOBJCGCCandidate();
+    return M->getBase()->isOBJCGCCandidate(Ctx);
   }
   case ArraySubscriptExprClass:
-    return cast<ArraySubscriptExpr>(this)->getBase()->isOBJCGCCandidate();
+    return cast<ArraySubscriptExpr>(this)->getBase()->isOBJCGCCandidate(Ctx);
   }
 }
 Expr* Expr::IgnoreParens() {

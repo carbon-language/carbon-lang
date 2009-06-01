@@ -1,5 +1,5 @@
 // RUN: clang-cc -triple x86_64-darwin-10 -fobjc-gc -emit-llvm -o %t %s &&
-// RUN: grep objc_assign_strongCast %t | count 3 &&
+// RUN: grep objc_assign_strongCast %t | count 4 &&
 // RUN: true
 
 @interface A
@@ -17,5 +17,11 @@ void f0(id x) {
 
 void f1(id x) {
   ((T*) &g0)->a[0] = x;
+}
+
+void f2(unsigned idx)
+{
+   id *keys;
+   keys[idx] = 0;
 }
 

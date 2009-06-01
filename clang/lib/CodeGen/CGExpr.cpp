@@ -769,7 +769,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
      if (getContext().getLangOptions().ObjC1 &&
          getContext().getLangOptions().getGCMode() != LangOptions::NonGC &&
          LV.isObjCWeak())
-       LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate());
+       LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate(getContext()));
      return LV;
     }
   case UnaryOperator::Real:
@@ -904,7 +904,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                                getContext().getObjCGCAttrKind(T));
   if (getContext().getLangOptions().ObjC1 &&
       getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
-    LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate());
+    LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate(getContext()));
   return LV;
 }
 
