@@ -19,7 +19,6 @@
 namespace llvm {
   class ConstantInt;
   class ConstantRange;
-  class APInt;
   class DominatorTree;
 
   enum SCEVTypes {
