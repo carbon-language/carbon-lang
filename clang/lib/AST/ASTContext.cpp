@@ -2785,7 +2785,7 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
     }
     // Non-pointers have none gc'able attribute regardless of the attribute
     // set on them.
-    else if (!isObjCObjectPointerType(Ty) && !Ty->isPointerType())
+    else if (!Ty->isPointerType() && !isObjCObjectPointerType(Ty))
       return QualType::GCNone;
   }
   return GCAttrs;
@@ -3033,26 +3033,45 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (RHSClass == Type::ExtQual) {
     QualType::GCAttrTypes GCAttr = RHSCan.getObjCGCAttr();
     if (GCAttr != QualType::GCNone) {
+      // __weak attribute must appear on both declarations. 
+      // FIXME. __strong attribue is redundant if other decl is an objective-c 
+      // object pointer (or decorated with __strong attribute). We can't issue 
+      // diagnostic on __strong mismatch becuase 'id' may not be
+      // available but only with its canonical type at this point. Will 
+      // visit this when 'id' becomes a concrete type.
+      if (GCAttr == QualType::Weak && LHSCan.getObjCGCAttr() != GCAttr)
+        return QualType();
+          
       RHS = QualType(cast<ExtQualType>(RHS.getDesugaredType())->getBaseType(),
                      RHS.getCVRQualifiers());
       QualType Result = mergeTypes(LHS, RHS);
-      if (Result.getObjCGCAttr() == QualType::GCNone)
-        Result = getObjCGCQualType(Result, GCAttr);
-      else if (Result.getObjCGCAttr() != GCAttr)
-        Result = QualType();
+      if (!Result.isNull()) {
+        if (Result.getObjCGCAttr() == QualType::GCNone)
+          Result = getObjCGCQualType(Result, GCAttr);
+        else if (Result.getObjCGCAttr() != GCAttr)
+          Result = QualType();
+      }
       return Result;
     }
   }
   if (LHSClass == Type::ExtQual) {
     QualType::GCAttrTypes GCAttr = LHSCan.getObjCGCAttr();
     if (GCAttr != QualType::GCNone) {
+      QualType::GCAttrTypes GCRHSAttr = RHSCan.getObjCGCAttr();
+      // __weak attribute must appear on both declarations. __strong
+      // attribue is redundant if other decl is an objective-c object pointer.
+      // See above FIXME comment.
+      if (GCAttr == QualType::Weak && GCRHSAttr != GCAttr)
+        return QualType();
       LHS = QualType(cast<ExtQualType>(LHS.getDesugaredType())->getBaseType(),
                      LHS.getCVRQualifiers());
       QualType Result = mergeTypes(LHS, RHS);
-      if (Result.getObjCGCAttr() == QualType::GCNone)
-        Result = getObjCGCQualType(Result, GCAttr);
-      else if (Result.getObjCGCAttr() != GCAttr)
-        Result = QualType();
+      if (!Result.isNull()) {
+        if (Result.getObjCGCAttr() == QualType::GCNone)
+          Result = getObjCGCQualType(Result, GCAttr);
+        else if (Result.getObjCGCAttr() != GCAttr)
+          Result = QualType();
+      }
       return Result;
     }
   }
