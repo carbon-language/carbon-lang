@@ -3028,6 +3028,20 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSClass == Type::FunctionProto) LHSClass = Type::FunctionNoProto;
   if (RHSClass == Type::FunctionProto) RHSClass = Type::FunctionNoProto;
 
+  QualType::GCAttrTypes RHSGCAttr = QualType::GCNone;
+  QualType::GCAttrTypes LHSGCAttr = QualType::GCNone;
+  if (RHSClass == Type::ExtQual) {
+    RHSGCAttr = RHSCan.getObjCGCAttr();    
+    if (RHSGCAttr != QualType::GCNone)
+      RHSClass = RHSCan.getUnqualifiedType()->getTypeClass();
+  }
+
+  if (LHSClass == Type::ExtQual) {
+    LHSGCAttr = LHSCan.getObjCGCAttr();    
+    if (LHSGCAttr != QualType::GCNone)
+      LHSClass = LHSCan.getUnqualifiedType()->getTypeClass();
+  }
+
   // Same as above for arrays
   if (LHSClass == Type::VariableArray || LHSClass == Type::IncompleteArray)
     LHSClass = Type::ConstantArray;
@@ -3125,10 +3139,16 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     QualType RHSPointee = RHS->getAsPointerType()->getPointeeType();
     QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
     if (ResultType.isNull()) return QualType();
-    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
+    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType)) {
+      if (RHSGCAttr != LHSGCAttr && RHSGCAttr != QualType::GCNone)
+        LHS = getObjCGCQualType(LHS, RHSGCAttr);
       return LHS;
-    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType))
+    }
+    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType)) {
+      if (RHSGCAttr != LHSGCAttr && LHSGCAttr != QualType::GCNone)
+        RHS = getObjCGCQualType(RHS, LHSGCAttr);
       return RHS;
+    }
     return getPointerType(ResultType);
   }
   case Type::BlockPointer:

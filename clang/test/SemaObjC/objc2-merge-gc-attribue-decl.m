@@ -1,7 +1,4 @@
 // RUN: clang-cc -triple i386-apple-darwin9 -fobjc-gc -fsyntax-only -verify %s
-// This is really dangerous!  Disabling for now until we work out what's
-// supposed to happen here.
-// XFAIL
 @interface INTF @end
 
 extern INTF* p2;
