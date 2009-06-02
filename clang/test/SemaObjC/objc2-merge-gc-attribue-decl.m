@@ -10,6 +10,3 @@ extern id p1;
 extern id CFRunLoopGetMain();
 extern __strong id CFRunLoopGetMain();
 
-extern __strong INTF* p3;
-extern id p3;
-
