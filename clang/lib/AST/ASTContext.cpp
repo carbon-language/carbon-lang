@@ -3028,18 +3028,33 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSClass == Type::FunctionProto) LHSClass = Type::FunctionNoProto;
   if (RHSClass == Type::FunctionProto) RHSClass = Type::FunctionNoProto;
 
-  QualType::GCAttrTypes RHSGCAttr = QualType::GCNone;
-  QualType::GCAttrTypes LHSGCAttr = QualType::GCNone;
+  // Strip off objc_gc attributes off the top level so they can be merged.
+  // This is a complete mess, but the attribute itself doesn't make much sense.
   if (RHSClass == Type::ExtQual) {
-    RHSGCAttr = RHSCan.getObjCGCAttr();    
-    if (RHSGCAttr != QualType::GCNone)
-      RHSClass = RHSCan.getUnqualifiedType()->getTypeClass();
+    QualType::GCAttrTypes GCAttr = RHSCan.getObjCGCAttr();
+    if (GCAttr != QualType::GCNone) {
+      RHS = QualType(cast<ExtQualType>(RHS.getDesugaredType())->getBaseType(),
+                     RHS.getCVRQualifiers());
+      QualType Result = mergeTypes(LHS, RHS);
+      if (Result.getObjCGCAttr() == QualType::GCNone)
+        Result = getObjCGCQualType(Result, GCAttr);
+      else if (Result.getObjCGCAttr() != GCAttr)
+        Result = QualType();
+      return Result;
+    }
   }
-
   if (LHSClass == Type::ExtQual) {
-    LHSGCAttr = LHSCan.getObjCGCAttr();    
-    if (LHSGCAttr != QualType::GCNone)
-      LHSClass = LHSCan.getUnqualifiedType()->getTypeClass();
+    QualType::GCAttrTypes GCAttr = LHSCan.getObjCGCAttr();
+    if (GCAttr != QualType::GCNone) {
+      LHS = QualType(cast<ExtQualType>(LHS.getDesugaredType())->getBaseType(),
+                     LHS.getCVRQualifiers());
+      QualType Result = mergeTypes(LHS, RHS);
+      if (Result.getObjCGCAttr() == QualType::GCNone)
+        Result = getObjCGCQualType(Result, GCAttr);
+      else if (Result.getObjCGCAttr() != GCAttr)
+        Result = QualType();
+      getObjCGCQualType(Result, GCAttr);
+    }
   }
 
   // Same as above for arrays
@@ -3139,16 +3154,10 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     QualType RHSPointee = RHS->getAsPointerType()->getPointeeType();
     QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
     if (ResultType.isNull()) return QualType();
-    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType)) {
-      if (RHSGCAttr != LHSGCAttr && RHSGCAttr != QualType::GCNone)
-        LHS = getObjCGCQualType(LHS, RHSGCAttr);
+    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
       return LHS;
-    }
-    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType)) {
-      if (RHSGCAttr != LHSGCAttr && LHSGCAttr != QualType::GCNone)
-        RHS = getObjCGCQualType(RHS, LHSGCAttr);
+    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType))
       return RHS;
-    }
     return getPointerType(ResultType);
   }
   case Type::BlockPointer:
