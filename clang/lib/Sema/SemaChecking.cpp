@@ -1062,6 +1062,11 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
       CurrentState = state_OrdChr;
       break;
 
+    case 'm':
+      // FIXME: Warn in situations where this isn't supported!
+      CurrentState = state_OrdChr;
+      break;
+
     // CHECK: Are we using "%n"?  Issue a warning.
     case 'n': {
       ++numConversions;
