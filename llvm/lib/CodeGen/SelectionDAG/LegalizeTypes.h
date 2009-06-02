@@ -242,8 +242,6 @@ private:
 
   // Integer Result Promotion.
   void PromoteIntegerResult(SDNode *N, unsigned ResNo);
-  SDValue PromoteIntRes_ADDSUBC(SDNode *N, unsigned ResNo);
-  SDValue PromoteIntRes_ADDSUBE(SDNode *N, unsigned ResNo);
   SDValue PromoteIntRes_AssertSext(SDNode *N);
   SDValue PromoteIntRes_AssertZext(SDNode *N);
   SDValue PromoteIntRes_Atomic1(AtomicSDNode *N);
@@ -280,7 +278,6 @@ private:
 
   // Integer Operand Promotion.
   bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);
-  SDValue PromoteIntOp_ADDSUBE(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_ANY_EXTEND(SDNode *N);
   SDValue PromoteIntOp_BIT_CONVERT(SDNode *N);
   SDValue PromoteIntOp_BUILD_PAIR(SDNode *N);

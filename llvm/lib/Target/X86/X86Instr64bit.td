@@ -383,52 +383,31 @@ def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
 let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
-def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst),
-                                    (ins GR64:$src1, GR64:$src2),
+def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst,
-                        (X86adde_flag GR64:$src1, GR64:$src2, EFLAGS)),
-                   (implicit EFLAGS)]>;
+                  [(set GR64:$dst, (adde GR64:$src1, GR64:$src2))]>;
 
-def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst),
-                                    (ins GR64:$src1, i64mem:$src2),
+def ADC64rm  : RI<0x13, MRMSrcMem , (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst,
-                        (X86adde_flag GR64:$src1, (load addr:$src2), EFLAGS)),
-                   (implicit EFLAGS)]>;
+                  [(set GR64:$dst, (adde GR64:$src1, (load addr:$src2)))]>;
 
-def ADC64ri8 : RIi8<0x83, MRM2r, (outs GR64:$dst),
-                                 (ins GR64:$src1, i64i8imm:$src2),
+def ADC64ri8 : RIi8<0x83, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst,
-                          (X86adde_flag GR64:$src1, i64immSExt8:$src2, EFLAGS)),
-                     (implicit EFLAGS)]>;
-def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), 
-                                   (ins GR64:$src1, i64i32imm:$src2),
+                    [(set GR64:$dst, (adde GR64:$src1, i64immSExt8:$src2))]>;
+def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                       "adc{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst,
-                            (X86adde_flag GR64:$src1, i64immSExt32:$src2,
-                                          EFLAGS)),
-                       (implicit EFLAGS)]>;
+                      [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
 def ADC64mr  : RI<0x11, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (X86adde_flag (load addr:$dst), GR64:$src2, EFLAGS),
-                          addr:$dst),
-                   (implicit EFLAGS)]>;
+                  [(store (adde (load addr:$dst), GR64:$src2), addr:$dst)]>;
 def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
-                 [(store (X86adde_flag (load addr:$dst), i64immSExt8:$src2,
-                                       EFLAGS), 
-                         addr:$dst),
-                  (implicit EFLAGS)]>;
+                 [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
                       "adc{q}\t{$src2, $dst|$dst, $src2}",
-                 [(store (X86adde_flag (load addr:$dst), i64immSExt8:$src2,
-                                       EFLAGS),
-                         addr:$dst),
-                  (implicit EFLAGS)]>;
+                 [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 } // Uses = [EFLAGS]
 
 let isTwoAddress = 1 in {
@@ -477,52 +456,31 @@ def SUB64mi32 : RIi32<0x81, MRM5m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
 
 let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
-def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst), 
-                                      (ins GR64:$src1, GR64:$src2),
+def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, 
-                          (X86sube_flag GR64:$src1, GR64:$src2, EFLAGS)),
-                     (implicit EFLAGS)]>;
+                    [(set GR64:$dst, (sube GR64:$src1, GR64:$src2))]>;
 
-def SBB64rm  : RI<0x1B, MRMSrcMem, (outs GR64:$dst),
-                                   (ins GR64:$src1, i64mem:$src2),
+def SBB64rm  : RI<0x1B, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                   "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst,
-                        (X86sube_flag GR64:$src1, (load addr:$src2), EFLAGS)),
-                   (implicit EFLAGS)]>;
+                  [(set GR64:$dst, (sube GR64:$src1, (load addr:$src2)))]>;
 
-def SBB64ri8 : RIi8<0x83, MRM3r, (outs GR64:$dst), 
-                                 (ins GR64:$src1, i64i8imm:$src2),
+def SBB64ri8 : RIi8<0x83, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, 
-                          (X86sube_flag GR64:$src1, i64immSExt8:$src2, EFLAGS)),
-                     (implicit EFLAGS)]>;
-def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst),
-                                   (ins GR64:$src1, i64i32imm:$src2),
+                    [(set GR64:$dst, (sube GR64:$src1, i64immSExt8:$src2))]>;
+def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
                       "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR64:$dst, 
-                            (X86sube_flag GR64:$src1, i64immSExt32:$src2,
-                                          EFLAGS)),
-                       (implicit EFLAGS)]>;
+                      [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
 def SBB64mr  : RI<0x19, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
                   "sbb{q}\t{$src2, $dst|$dst, $src2}",
-                  [(store (X86sube_flag (load addr:$dst), GR64:$src2, EFLAGS), 
-                          addr:$dst),
-                   (implicit EFLAGS)]>;
+                  [(store (sube (load addr:$dst), GR64:$src2), addr:$dst)]>;
 def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
-               [(store (X86sube_flag (load addr:$dst), i64immSExt8:$src2,
-                                     EFLAGS), 
-                       addr:$dst),
-                (implicit EFLAGS)]>;
+               [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2), 
                       "sbb{q}\t{$src2, $dst|$dst, $src2}",
-              [(store (X86sube_flag (load addr:$dst), i64immSExt32:$src2,
-                                    EFLAGS), 
-                      addr:$dst),
-               (implicit EFLAGS)]>;
+              [(store (sube (load addr:$dst), i64immSExt32:$src2), addr:$dst)]>;
 } // Uses = [EFLAGS]
 } // Defs = [EFLAGS]
 

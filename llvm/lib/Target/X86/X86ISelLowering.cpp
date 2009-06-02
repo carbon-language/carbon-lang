@@ -190,28 +190,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
   }
 
-  // ADDE and SUBE are lowered to local versions that contain EFLAGS explicitly.
-  // ADDC and SUBC are lowered to local versions so EFLAGS will be an i32
-  // rather than the Flag used by the generic patterns.
-  setOperationAction(ISD::ADDC            , MVT::i8     , Custom);
-  setOperationAction(ISD::ADDC            , MVT::i16    , Custom);
-  setOperationAction(ISD::ADDC            , MVT::i32    , Custom);
-  setOperationAction(ISD::SUBC            , MVT::i8     , Custom);
-  setOperationAction(ISD::SUBC            , MVT::i16    , Custom);
-  setOperationAction(ISD::SUBC            , MVT::i32    , Custom);
-  setOperationAction(ISD::ADDE            , MVT::i8     , Custom);
-  setOperationAction(ISD::ADDE            , MVT::i16    , Custom);
-  setOperationAction(ISD::ADDE            , MVT::i32    , Custom);
-  setOperationAction(ISD::SUBE            , MVT::i8     , Custom);
-  setOperationAction(ISD::SUBE            , MVT::i16    , Custom);
-  setOperationAction(ISD::SUBE            , MVT::i32    , Custom);
-  if (Subtarget->is64Bit()) {
-    setOperationAction(ISD::ADDC            , MVT::i64    , Custom);
-    setOperationAction(ISD::SUBC            , MVT::i64    , Custom);
-    setOperationAction(ISD::ADDE            , MVT::i64    , Custom);
-    setOperationAction(ISD::SUBE            , MVT::i64    , Custom);
-  }
-
   // Scalar integer divide and remainder are lowered to use operations that
   // produce two results, to match the available instructions. This exposes
   // the two-result form to trivial CSE, which is able to combine x/y and x%y
@@ -6497,21 +6475,6 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   return Sum;
 }
 
-SDValue X86TargetLowering::LowerADDSUBE(SDValue Op, SelectionDAG &DAG) {
-  DebugLoc dl = Op.getDebugLoc();
-  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
-  return DAG.getNode(Op.getOpcode()==ISD::ADDE ? X86ISD::ADDE : X86ISD::SUBE,
-                     dl, VTs, Op.getOperand(0), Op.getOperand(1),
-                     Op.getOperand(2).getValue(1));
-}
-
-SDValue X86TargetLowering::LowerADDSUBC(SDValue Op, SelectionDAG &DAG) {
-  DebugLoc dl = Op.getDebugLoc();
-  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
-  return DAG.getNode(Op.getOpcode()==ISD::ADDC ? X86ISD::ADD : X86ISD::SUB,
-                     dl, VTs, Op.getOperand(0), Op.getOperand(1));
-}
-
 SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   MVT T = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
@@ -6580,10 +6543,6 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ADDC:
-  case ISD::SUBC:               return LowerADDSUBC(Op,DAG);
-  case ISD::ADDE:
-  case ISD::SUBE:               return LowerADDSUBE(Op,DAG);
   case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB:    return LowerLOAD_SUB(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
@@ -6832,10 +6791,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::INC:                return "X86ISD::INC";
   case X86ISD::DEC:                return "X86ISD::DEC";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
-  case X86ISD::ADDE:               return "X86ISD::ADDE";
-  case X86ISD::SUBE:               return "X86ISD::SUBE";
-  case X86ISD::ADDC:               return "X86ISD::ADDC";
-  case X86ISD::SUBC:               return "X86ISD::SUBC";
   }
 }
 

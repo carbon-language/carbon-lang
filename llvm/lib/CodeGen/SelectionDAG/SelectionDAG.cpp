@@ -5257,6 +5257,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::EXTRACT_SUBVECTOR:   return "extract_subvector";
   case ISD::SCALAR_TO_VECTOR:    return "scalar_to_vector";
   case ISD::VECTOR_SHUFFLE:      return "vector_shuffle";
+  case ISD::CARRY_FALSE:         return "carry_false";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
   case ISD::SADDO:       return "saddo";

@@ -670,8 +670,7 @@ public:
         HasChain = true;
         FoldedChains.push_back(std::make_pair(RootName, CInfo.getNumResults()));
       }
-      if (NodeHasProperty(Child, SDNPOutFlag, CGP) ||
-          NodeHasProperty(Child, SDNPOutI1, CGP)) {
+      if (NodeHasProperty(Child, SDNPOutFlag, CGP)) {
         assert(FoldedFlag.first == "" && FoldedFlag.second == 0 &&
                "Pattern folded multiple nodes which produce flags?");
         FoldedFlag = std::make_pair(RootName,
@@ -970,10 +969,6 @@ public:
         PatternHasProperty(Pattern, SDNPInFlag, CGP);
       bool NodeHasOutFlag = isRoot &&
         PatternHasProperty(Pattern, SDNPOutFlag, CGP);
-      bool NodeHasInI1  = isRoot &&
-        PatternHasProperty(Pattern, SDNPInI1, CGP);
-      bool NodeHasOutI1 = isRoot &&
-        PatternHasProperty(Pattern, SDNPOutI1, CGP);
       bool NodeHasChain = InstPatNode &&
         PatternHasProperty(InstPatNode, SDNPHasChain, CGP);
       bool InputHasChain = isRoot &&
@@ -1059,13 +1054,10 @@ public:
 
       // Emit all the chain and CopyToReg stuff.
       bool ChainEmitted = NodeHasChain;
-      // InFlag and InI1 cannot both be set (checked in
-      // CodeGenDAGPatterns), so use the same variables for both.
-      if (NodeHasInFlag || HasImpInputs || NodeHasInI1)
+      if (NodeHasInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted,
                              InFlagDecled, ResNodeDecled, true);
-      if (NodeHasOptInFlag || NodeHasInFlag || HasImpInputs || 
-          NodeHasInI1) {
+      if (NodeHasOptInFlag || NodeHasInFlag || HasImpInputs) {
         if (!InFlagDecled) {
           emitCode("SDValue InFlag(0, 0);");
           InFlagDecled = true;
@@ -1121,7 +1113,7 @@ public:
       }
       if (NodeHasChain)
         Code += ", MVT::Other";
-      if (NodeHasOutFlag || (NodeHasOutI1 && !CGT.supportsHasI1()))
+      if (NodeHasOutFlag)
         Code += ", MVT::Flag";
 
       // Inputs.
@@ -1181,8 +1173,7 @@ public:
         }
         Code += ", &Ops" + utostr(OpsNo) + "[0], Ops" + utostr(OpsNo) +
           ".size()";
-      } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs ||
-                 NodeHasInI1)
+      } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
         AllOps.push_back("InFlag");
 
       unsigned NumOps = AllOps.size();
@@ -1216,7 +1207,7 @@ public:
         NodeOps.push_back("Tmp" + utostr(ResNo));
       } else {
 
-      if (NodeHasOutFlag || NodeHasOutI1) {
+      if (NodeHasOutFlag) {
         if (!InFlagDecled) {
           After.push_back("SDValue InFlag(ResNode, " + 
                           utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
@@ -1237,15 +1228,13 @@ public:
                              utostr(NumResults+NumDstRegs) + ")");
       }
 
-      if (NodeHasOutFlag || NodeHasOutI1) {
+      if (NodeHasOutFlag) {
         if (FoldedFlag.first != "") {
-          ReplaceFroms.push_back("SDValue(" + FoldedFlag.first + 
-                                 ".getNode(), " +
+          ReplaceFroms.push_back("SDValue(" + FoldedFlag.first + ".getNode(), " +
                                  utostr(FoldedFlag.second) + ")");
           ReplaceTos.push_back("InFlag");
         } else {
-          assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP) ||
-                 NodeHasProperty(Pattern, SDNPOutI1, CGP));
+          assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
           ReplaceFroms.push_back("SDValue(N.getNode(), " +
                                  utostr(NumPatResults + (unsigned)InputHasChain)
                                  + ")");
@@ -1262,8 +1251,7 @@ public:
       }
 
       // User does not expect the instruction would produce a chain!
-      if ((!InputHasChain && NodeHasChain) &&
-          (NodeHasOutFlag || NodeHasOutI1)) {
+      if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
         ;
       } else if (InputHasChain && !NodeHasChain) {
         // One of the inner node produces a chain.
@@ -1403,8 +1391,6 @@ private:
     unsigned OpNo =
       (unsigned) NodeHasProperty(N, SDNPHasChain, CGP);
     bool HasInFlag = NodeHasProperty(N, SDNPInFlag, CGP);
-    bool HasInI1 = NodeHasProperty(N, SDNPInI1, CGP);
-    bool InFlagDefined = false;
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
@@ -1438,41 +1424,21 @@ private:
                 emitCode("SDValue InFlag(0, 0);");
                 InFlagDecled = true;
               }
-              if (HasInI1) {
-                if (!ResNodeDecled) {
-                  emitCode("SDNode * ResNode;"); 
-                }
-                if (T.supportsHasI1())
-                  emitCode("ResNode = CurDAG->getCopyToReg(" + ChainName +
-                         ", " + RootName + ".getDebugLoc()" +
-                         ", " + getEnumName(RVT) +
-                         ", " + getQualifiedName(RR) +
-                         ", " +  RootName + utostr(OpNo) + ").getNode();");
-                else
-                  emitCode("ResNode = CurDAG->getCopyToReg(" + ChainName +
-                         ", " + RootName + ".getDebugLoc()" +
-                         ", " + getQualifiedName(RR) +
-                         ", " +  RootName + utostr(OpNo) +
-                         ", InFlag).getNode();");
-                InFlagDefined = true;
-              } else {
-                std::string Decl = (!ResNodeDecled) ? "SDNode *" : "";
-                emitCode(Decl + "ResNode = CurDAG->getCopyToReg(" + ChainName +
+              std::string Decl = (!ResNodeDecled) ? "SDNode *" : "";
+              emitCode(Decl + "ResNode = CurDAG->getCopyToReg(" + ChainName +
                        ", " + RootName + ".getDebugLoc()" +
                        ", " + getQualifiedName(RR) +
-                       ", " +  RootName + utostr(OpNo) +
-                       ", InFlag).getNode();");
-              }
+                       ", " +  RootName + utostr(OpNo) + ", InFlag).getNode();");
+              ResNodeDecled = true;
               emitCode(ChainName + " = SDValue(ResNode, 0);");
               emitCode("InFlag = SDValue(ResNode, 1);");
-              ResNodeDecled = true;
             }
           }
         }
       }
     }
 
-    if (HasInFlag || (HasInI1 && !InFlagDefined)) {
+    if (HasInFlag) {
       if (!InFlagDecled) {
         emitCode("SDValue InFlag = " + RootName +
                ".getOperand(" + utostr(OpNo) + ");");

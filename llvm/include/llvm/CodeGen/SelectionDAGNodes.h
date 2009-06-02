@@ -242,11 +242,14 @@ namespace ISD {
     // remainder result.
     SDIVREM, UDIVREM,
 
+    // CARRY_FALSE - This node is used when folding other nodes,
+    // like ADDC/SUBC, which indicate the carry result is always false.
+    CARRY_FALSE,
+
     // Carry-setting nodes for multiple precision addition and subtraction.
     // These nodes take two operands of the same value type, and produce two
     // results.  The first result is the normal add or sub result, the second
-    // result is the carry flag result (type i1 or whatever it got expanded to
-    // for the target, value 0 or 1).
+    // result is the carry flag result.
     ADDC, SUBC,
 
     // Carry-using nodes for multiple precision addition and subtraction.  These
@@ -255,8 +258,7 @@ namespace ISD {
     // produce two results; the normal result of the add or sub, and the output
     // carry flag.  These nodes both read and write a carry flag to allow them
     // to them to be chained together for add and sub of arbitrarily large
-    // values.  The carry flag (input and output) has type i1 or whatever it
-    // got expanded to for the target, and has value 0 or 1.
+    // values.
     ADDE, SUBE,
 
     // RESULT, BOOL = [SU]ADDO(LHS, RHS) - Overflow-aware nodes for addition.

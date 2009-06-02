@@ -216,8 +216,6 @@ def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
 def SDNPMayLoad     : SDNodeProperty;   // May read memory, sets 'mayLoad'.
 def SDNPSideEffect  : SDNodeProperty;   // Sets 'HasUnmodelledSideEffects'.
 def SDNPMemOperand  : SDNodeProperty;   // Touches memory, has assoc MemOperand
-def SDNPInI1        : SDNodeProperty;   // Read an extra I1 operand
-def SDNPOutI1       : SDNodeProperty;   // Write an extra I1 result
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -291,13 +289,13 @@ def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
 def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def addc       : SDNode<"ISD::ADDC"      , SDTIntBinOp,
-                        [SDNPCommutative, SDNPOutI1]>;
+                        [SDNPCommutative, SDNPOutFlag]>;
 def adde       : SDNode<"ISD::ADDE"      , SDTIntBinOp,
-                        [SDNPCommutative, SDNPInI1, SDNPOutI1]>;
+                        [SDNPCommutative, SDNPOutFlag, SDNPInFlag]>;
 def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
-                        [SDNPOutI1]>;
+                        [SDNPOutFlag]>;
 def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
-                        [SDNPInI1, SDNPOutI1]>;
+                        [SDNPOutFlag, SDNPInFlag]>;
                         
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;

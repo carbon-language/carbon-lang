@@ -98,10 +98,6 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::USUBO:       Res = PromoteIntRes_UADDSUBO(N, ResNo); break;
   case ISD::SMULO:
   case ISD::UMULO:       Res = PromoteIntRes_XMULO(N, ResNo); break;
-  case ISD::ADDC:
-  case ISD::SUBC:        Res = PromoteIntRes_ADDSUBC(N, ResNo); break;
-  case ISD::ADDE:
-  case ISD::SUBE:        Res = PromoteIntRes_ADDSUBE(N, ResNo); break;
 
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
@@ -123,35 +119,6 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   // If the result is null then the sub-method took care of registering it.
   if (Res.getNode())
     SetPromotedInteger(SDValue(N, ResNo), Res);
-}
-
-SDValue DAGTypeLegalizer::PromoteIntRes_ADDSUBC(SDNode *N, unsigned ResNo) {
-  // Only the carry bit result is expected to be promoted.
-  assert(ResNo == 1 && "Only carry bit result promotion currently supported!");
-  return PromoteIntRes_Overflow(N);
-}
-
-SDValue DAGTypeLegalizer::PromoteIntRes_ADDSUBE(SDNode *N, unsigned ResNo) {
-  // Only the carry bit result is expected to be promoted.
-  assert(ResNo == 1 && "Only carry bit result promotion currently supported!");
-  // This is a ternary operator, so clone a slightly modified
-  // PromoteIntRes_Overflow here (this is the only client).
-  if (ResNo == 1) {
-    // Simply change the return type of the boolean result.
-    MVT NVT = TLI.getTypeToTransformTo(N->getValueType(1));
-    MVT ValueVTs[] = { N->getValueType(0), NVT };
-    SDValue Ops[] = { N->getOperand(0), N->getOperand(1), N->getOperand(2) };
-    SDValue Res = DAG.getNode(N->getOpcode(), N->getDebugLoc(),
-                              DAG.getVTList(ValueVTs, 2), Ops, 3);
-
-    // Modified the sum result - switch anything that used the old sum to use
-    // the new one.
-    ReplaceValueWith(SDValue(N, 0), Res);
-  
-    return SDValue(Res.getNode(), 1);
-  }
-  assert(0 && "Do not know how to promote this operator!");
-  abort();
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_AssertSext(SDNode *N) {
@@ -452,7 +419,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_LOAD(LoadSDNode *N) {
   return Res;
 }
 
-/// Promote the overflow or carry result of an overflowing arithmetic node.
+/// Promote the overflow flag of an overflowing arithmetic node.
 SDValue DAGTypeLegalizer::PromoteIntRes_Overflow(SDNode *N) {
   // Simply change the return type of the boolean result.
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(1));
@@ -699,8 +666,6 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     assert(0 && "Do not know how to promote this operator's operand!");
     abort();
 
-  case ISD::ADDE:      
-  case ISD::SUBE:         Res = PromoteIntOp_ADDSUBE(N, OpNo); break;
   case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
   case ISD::BIT_CONVERT:  Res = PromoteIntOp_BIT_CONVERT(N); break;
   case ISD::BR_CC:        Res = PromoteIntOp_BR_CC(N, OpNo); break;
@@ -776,13 +741,6 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
     NewRHS = SExtPromotedInteger(NewRHS);
     break;
   }
-}
-
-SDValue DAGTypeLegalizer::PromoteIntOp_ADDSUBE(SDNode *N, unsigned OpNo) {
-  assert(OpNo == 2 && "Don't know how to promote this operand!");
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
-                                N->getOperand(1),
-                                GetPromotedInteger(N->getOperand(2)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_ANY_EXTEND(SDNode *N) {
@@ -1105,7 +1063,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                TLI.isOperationLegalOrCustom(ISD::ADDC,
                                             TLI.getTypeToExpandTo(NVT))) {
       // Emit this X << 1 as X+X.
-      SDVTList VTList = DAG.getVTList(NVT, MVT::i1);
+      SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
       SDValue LoOps[2] = { InL, InL };
       Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
       SDValue HiOps[3] = { InH, InH, Lo.getValue(1) };
@@ -1341,7 +1299,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                                  TLI.getTypeToExpandTo(NVT));
 
   if (hasCarry) {
-    SDVTList VTList = DAG.getVTList(NVT, MVT::i1);
+    SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
     if (N->getOpcode() == ISD::ADD) {
       Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
@@ -1386,7 +1344,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBC(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::i1);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
   SDValue LoOps[2] = { LHSL, RHSL };
   SDValue HiOps[3] = { LHSH, RHSH };
 
@@ -1400,8 +1358,8 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBC(SDNode *N,
     Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps, 3);
   }
 
-  // Legalized the second result (carry bit) - switch anything that used the
-  // result to use the new one.
+  // Legalized the flag result - switch anything that used the old flag to
+  // use the new one.
   ReplaceValueWith(SDValue(N, 1), Hi.getValue(1));
 }
 
@@ -1412,7 +1370,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::i1);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
   SDValue LoOps[3] = { LHSL, RHSL, N->getOperand(2) };
   SDValue HiOps[3] = { LHSH, RHSH };
 
@@ -1420,8 +1378,8 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   HiOps[2] = Lo.getValue(1);
   Hi = DAG.getNode(N->getOpcode(), dl, VTList, HiOps, 3);
 
-  // Legalized the second result (carry bit) - switch anything that used the
-  // result to use the new one.
+  // Legalized the flag result - switch anything that used the old flag to
+  // use the new one.
   ReplaceValueWith(SDValue(N, 1), Hi.getValue(1));
 }
 

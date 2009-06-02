@@ -43,9 +43,7 @@ enum SDNP {
   SDNPMayLoad,
   SDNPMayStore,
   SDNPSideEffect,
-  SDNPMemOperand,
-  SDNPInI1,
-  SDNPOutI1
+  SDNPMemOperand
 };
 
 // ComplexPattern attributes.
@@ -211,12 +209,10 @@ public:
   void getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
                                                 &NumberedInstructions);
 
+
   /// isLittleEndianEncoding - are instruction bit patterns defined as  [0..n]?
   ///
   bool isLittleEndianEncoding() const;
-
-  /// supportsHasI1 - does this target understand HasI1 for ADDE and ADDC?
-  bool supportsHasI1() const;
 };
 
 /// ComplexPattern - ComplexPattern info, corresponding to the ComplexPattern

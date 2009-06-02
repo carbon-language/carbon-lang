@@ -1085,7 +1085,8 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   // If the flag result is dead, turn this into an ADD.
   if (N->hasNUsesOfValue(0, 1))
     return CombineTo(N, DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N1, N0),
-                     DAG.getConstant(0, N->getValueType(1)));
+                     DAG.getNode(ISD::CARRY_FALSE,
+                                 N->getDebugLoc(), MVT::Flag));
 
   // canonicalize constant to RHS.
   if (N0C && !N1C)
@@ -1093,9 +1094,10 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
 
   // fold (addc x, 0) -> x + no carry out
   if (N1C && N1C->isNullValue())
-    return CombineTo(N, N0, DAG.getConstant(0, N1.getValueType()));
+    return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE,
+                                        N->getDebugLoc(), MVT::Flag));
 
-  // fold (addc a, b) -> (or a, b), 0 iff a and b share no bits.
+  // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
   APInt RHSZero, RHSOne;
   APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits());
@@ -1109,7 +1111,8 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
     if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
         (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
       return CombineTo(N, DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N1),
-                       DAG.getConstant(0, N1.getValueType()));
+                       DAG.getNode(ISD::CARRY_FALSE,
+                                   N->getDebugLoc(), MVT::Flag));
   }
 
   return SDValue();
@@ -1128,9 +1131,8 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
                        N1, N0, CarryIn);
 
   // fold (adde x, y, false) -> (addc x, y)
-  if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(CarryIn))
-    if (N2C->getAPIntValue()==0)
-      return DAG.getNode(ISD::ADDC, N->getDebugLoc(), N->getVTList(), N1, N0);
+  if (CarryIn.getOpcode() == ISD::CARRY_FALSE)
+    return DAG.getNode(ISD::ADDC, N->getDebugLoc(), N->getVTList(), N1, N0);
 
   return SDValue();
 }
