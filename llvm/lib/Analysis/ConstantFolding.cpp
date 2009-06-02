@@ -317,8 +317,6 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
 /// result is returned, if not, null is returned.
 Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
                                                const TargetData *TD) {
-  assert(TD && "ConstantFoldConstantExpression requires a valid TargetData.");
-
   SmallVector<Constant*, 8> Ops;
   for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
     Ops.push_back(cast<Constant>(*i));
