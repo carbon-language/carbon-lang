@@ -22,10 +22,7 @@ use Socket;
 #  -noremoveresults Do not remove the WEBDIR after it has been built.
 #  -nobuild         Do not build llvm. If tests are enabled perform them
 #                   on the llvm build specified in the build directory
-#  -notest          Do not even attempt to run the test programs. Implies
-#                   -norunningtests.
-#  -norunningtests  Do not run the Olden benchmark suite with
-#                   LARGE_PROBLEM_SIZE enabled.
+#  -notest          Do not even attempt to run the test programs.
 #  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
 #  -parallel-jobs   The number of parallel Make jobs to use (default is two).
@@ -128,7 +125,6 @@ $CONFIGUREARGS="";
 $nickname="";
 $NOTEST=0;
 $USESVN=1;
-$NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
 $SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.php";
@@ -145,8 +141,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-nocvsstats$/)     { $NOCVSSTATS = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE = 1; next; }
   if (/^-noremoveresults$/){ $NOREMOVERESULTS = 1; next; }
-  if (/^-notest$/)         { $NOTEST = 1; $NORUNNINGTESTS = 1; next; }
-  if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
+  if (/^-notest$/)         { $NOTEST = 1; next; }
+  if (/^-norunningtests$/) { next; } # Backward compatibility, ignored.
   if (/^-parallel-jobs$/)  { $PARALLELJOBS = "$ARGV[0]"; shift; next;}
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j$PARALLELJOBS -l3.0"; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
@@ -252,7 +248,6 @@ if ($BUILDTYPE ne "release" && $BUILDTYPE ne "release-asserts") {
 my $Prefix = "$WebDir/$DATE";
 my $BuildLog = "$Prefix-Build-Log.txt";
 my $COLog = "$Prefix-CVS-Log.txt";
-my $OldenTestsLog = "$Prefix-Olden-tests.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
 my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz";
@@ -1005,38 +1000,6 @@ if (!$BuildError) {
   }
 
 } #end if !$BuildError
-
-
-##############################################################
-#
-# If we built the tree successfully, runs of the Olden suite with
-# LARGE_PROBLEM_SIZE on so that we can get some "running" statistics.
-#
-##############################################################
-if (!$BuildError) {
-  if ( $VERBOSE ) { print "OLDEN TEST SUITE STAGE\n"; }
-  my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
-  $MachCodeSize) = ("","","","","","","");
-  if (!$NORUNNINGTESTS) {
-    ChangeDir( "$BuildDir/llvm/projects/llvm-test/MultiSource/Benchmarks/Olden",
-                "Olden Test Directory");
-
-    # Clean out previous results...
-    system "$NICE $MAKECMD $MAKEOPTS clean > /dev/null 2>&1";
-
-    # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE and
-    # GET_STABLE_NUMBERS enabled!
-    if( $VERBOSE ) {
-      print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out " .
-            "TEST=nightly  LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 " .
-            "> /dev/null 2>&1\n";
-    }
-    system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out " .
-           "TEST=nightly LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 " .
-           "> /dev/null 2>&1";
-    system "cp report.nightly.csv $OldenTestsLog";
-  }
-}
 
 ##############################################################
 #
