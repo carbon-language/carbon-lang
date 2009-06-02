@@ -1020,7 +1020,8 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 /// of a load) are simple enough to perform heap SRA on.  This permits GEP's
 /// that index through the array and struct field, icmps of null, and PHIs.
 static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
-                                     SmallPtrSet<PHINode*, 32> &LoadUsingPHIs) {
+                              SmallPtrSet<PHINode*, 32> &LoadUsingPHIs,
+                              SmallPtrSet<PHINode*, 32> &LoadUsingPHIsPerLoad) {
   // We permit two users of the load: setcc comparing against the null
   // pointer, and a getelementptr of a specific form.
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
@@ -1044,12 +1045,17 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
     }
     
     if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      // If we have already recursively analyzed this PHI, then it is safe.
-      if (LoadUsingPHIs.insert(PN))
+      if (!LoadUsingPHIsPerLoad.insert(PN))
+        // This means some phi nodes are dependent on each other.
+        // Avoid infinite looping!
+        return false;
+      if (!LoadUsingPHIs.insert(PN))
+        // If we have already analyzed this PHI, then it is safe.
         continue;
       
       // Make sure all uses of the PHI are simple enough to transform.
-      if (!LoadUsesSimpleEnoughForHeapSRA(PN, LoadUsingPHIs))
+      if (!LoadUsesSimpleEnoughForHeapSRA(PN,
+                                          LoadUsingPHIs, LoadUsingPHIsPerLoad))
         return false;
       
       continue;
@@ -1068,11 +1074,15 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
 static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
                                                     MallocInst *MI) {
   SmallPtrSet<PHINode*, 32> LoadUsingPHIs;
+  SmallPtrSet<PHINode*, 32> LoadUsingPHIsPerLoad;
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
        ++UI)
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
-      if (!LoadUsesSimpleEnoughForHeapSRA(LI, LoadUsingPHIs))
+    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+      if (!LoadUsesSimpleEnoughForHeapSRA(LI, LoadUsingPHIs,
+                                          LoadUsingPHIsPerLoad))
         return false;
+      LoadUsingPHIsPerLoad.clear();
+    }
   
   // If we reach here, we know that all uses of the loads and transitive uses
   // (through PHI nodes) are simple enough to transform.  However, we don't know
