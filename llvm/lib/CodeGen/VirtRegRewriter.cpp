@@ -33,15 +33,16 @@ STATISTIC(NumSUnfold , "Number of stores unfolded");
 STATISTIC(NumModRefUnfold, "Number of modref unfolded");
 
 namespace {
-  enum RewriterName { simple, local };
+  enum RewriterName { simple, local, trivial };
 }
 
 static cl::opt<RewriterName>
 RewriterOpt("rewriter",
             cl::desc("Rewriter to use: (default: local)"),
             cl::Prefix,
-            cl::values(clEnumVal(simple, "simple rewriter"),
-                       clEnumVal(local,  "local rewriter"),
+            cl::values(clEnumVal(simple,  "simple rewriter"),
+                       clEnumVal(local,   "local rewriter"),
+                       clEnumVal(trivial, "trivial rewriter"),
                        clEnumValEnd),
             cl::init(local));
 
@@ -126,6 +127,42 @@ struct VISIBILITY_HIDDEN SimpleRewriter : public VirtRegRewriter {
 
 };
  
+/// This class is intended for use with the new spilling framework only. It
+/// rewrites vreg def/uses to use the assigned preg, but does not insert any
+/// spill code.
+struct VISIBILITY_HIDDEN TrivialRewriter : public VirtRegRewriter {
+
+  bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
+                            LiveIntervals* LIs) {
+    DOUT << "********** REWRITE MACHINE CODE **********\n";
+    DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
+    MachineRegisterInfo *mri = &MF.getRegInfo();
+
+    bool changed = false;
+
+    for (LiveIntervals::iterator liItr = LIs->begin(), liEnd = LIs->end();
+         liItr != liEnd; ++liItr) {
+
+      if (TargetRegisterInfo::isVirtualRegister(liItr->first)) {
+        if (VRM.hasPhys(liItr->first)) {
+          unsigned preg = VRM.getPhys(liItr->first);
+          mri->replaceRegWith(liItr->first, preg);
+          mri->setPhysRegUsed(preg);
+          changed = true;
+        }
+      }
+      else {
+        if (!liItr->second->empty()) {
+          mri->setPhysRegUsed(liItr->first);
+        }
+      }
+    }
+    
+    return changed;
+  }
+
+};
+
 // ************************************************************************ //
 
 /// AvailableSpills - As the local rewriter is scanning and rewriting an MBB
@@ -2182,5 +2219,7 @@ llvm::VirtRegRewriter* llvm::createVirtRegRewriter() {
     return new LocalRewriter();
   case simple:
     return new SimpleRewriter();
+  case trivial:
+    return new TrivialRewriter();
   }
 }

@@ -1027,7 +1027,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         if (MBB != PInstr->getParent() &&
             InputI.liveAt(LI.getMBBStartIdx(PInstr->getParent())) &&
             InputI.expiredAt(LI.getInstructionIndex(PInstr) + 
-                             LiveIntervals::InstrSlots::NUM))
+                             LiveInterval::InstrSlots::NUM))
           InputI.removeRange(LI.getMBBStartIdx(PInstr->getParent()),
                              LI.getInstructionIndex(PInstr),
                              true);

@@ -13,8 +13,9 @@
 #include <vector>
 
 namespace llvm {
-  struct LiveInterval;
+  class LiveInterval;
   class LiveIntervals;
+  class LiveStacks;
   class MachineFunction;
   class VirtRegMap;
 
@@ -30,7 +31,7 @@ namespace llvm {
 
   /// Create and return a spiller object, as specified on the command line.
   Spiller* createSpiller(MachineFunction *mf, LiveIntervals *li,
-                         VirtRegMap *vrm);
+                         LiveStacks *ls, VirtRegMap *vrm);
 }
 
 #endif

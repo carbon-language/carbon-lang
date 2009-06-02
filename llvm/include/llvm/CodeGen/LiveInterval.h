@@ -113,6 +113,26 @@ namespace llvm {
     VNInfoList valnos;   // value#'s
 
   public:
+    
+    struct InstrSlots {
+      enum {
+        LOAD  = 0,
+        USE   = 1,
+        DEF   = 2,
+        STORE = 3,
+        NUM   = 4
+      };
+
+      static unsigned scale(unsigned slot, unsigned factor) {
+        unsigned index = slot / NUM,
+                 offset = slot % NUM;
+        assert(index <= ~0U / (factor * NUM) &&
+               "Rescaled interval would overflow");
+        return index * NUM * factor + offset;
+      }
+
+    };
+
     LiveInterval(unsigned Reg, float Weight, bool IsSS = false)
       : reg(Reg), weight(Weight), preference(0)  {
       if (IsSS)
@@ -413,6 +433,10 @@ namespace llvm {
     /// removeValNo - Remove all the ranges defined by the specified value#.
     /// Also remove the value# from value# list.
     void removeValNo(VNInfo *ValNo);
+
+    /// scaleNumbering - Renumber VNI and ranges to provide gaps for new
+    /// instructions.
+    void scaleNumbering(unsigned factor);
 
     /// getSize - Returns the sum of sizes of all the LiveRange's.
     ///

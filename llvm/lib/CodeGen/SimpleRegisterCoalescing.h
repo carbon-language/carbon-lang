@@ -133,7 +133,7 @@ namespace llvm {
       if (!li_->hasInterval(Reg))
         return 0;
       return li_->getApproximateInstructionCount(li_->getInterval(Reg)) *
-             LiveIntervals::InstrSlots::NUM;
+             LiveInterval::InstrSlots::NUM;
     }
 
     /// print - Implement the dump method.

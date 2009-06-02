@@ -359,6 +359,29 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
   }
 }
  
+/// scaleNumbering - Renumber VNI and ranges to provide gaps for new
+/// instructions.                                                   
+void LiveInterval::scaleNumbering(unsigned factor) {
+  // Scale ranges.                                                            
+  for (iterator RI = begin(), RE = end(); RI != RE; ++RI) {
+    RI->start = InstrSlots::scale(RI->start, factor);
+    RI->end = InstrSlots::scale(RI->end, factor);
+  }
+
+  // Scale VNI info.                                                          
+  for (vni_iterator VNI = vni_begin(), VNIE = vni_end(); VNI != VNIE; ++VNI) {
+    VNInfo *vni = *VNI;
+    if (vni->def != ~0U && vni->def != ~1U) {
+      vni->def = InstrSlots::scale(vni->def, factor);
+    }
+
+    for (unsigned i = 0; i < vni->kills.size(); ++i) {
+      if (vni->kills[i] != 0)
+        vni->kills[i] = InstrSlots::scale(vni->kills[i], factor);
+    }
+  }
+}
+
 /// getLiveRangeContaining - Return the live range that contains the
 /// specified index, or null if there is none.
 LiveInterval::const_iterator 

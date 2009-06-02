@@ -2598,7 +2598,7 @@ void SimpleRegisterCoalescing::releaseMemory() {
 static bool isZeroLengthInterval(LiveInterval *li) {
   for (LiveInterval::Ranges::const_iterator
          i = li->ranges.begin(), e = li->ranges.end(); i != e; ++i)
-    if (i->end - i->start > LiveIntervals::InstrSlots::NUM)
+    if (i->end - i->start > LiveInterval::InstrSlots::NUM)
       return false;
   return true;
 }

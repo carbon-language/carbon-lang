@@ -36,6 +36,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <limits>
 #include <cmath>
 using namespace llvm;
 
@@ -242,6 +243,49 @@ void LiveIntervals::computeNumbering() {
       }
     }
 }
+
+void LiveIntervals::scaleNumbering(int factor) {
+  // Need to
+  //  * scale MBB begin and end points
+  //  * scale all ranges.
+  //  * Update VNI structures.
+  //  * Scale instruction numberings 
+
+  // Scale the MBB indices.
+  Idx2MBBMap.clear();
+  for (MachineFunction::iterator MBB = mf_->begin(), MBBE = mf_->end();
+       MBB != MBBE; ++MBB) {
+    std::pair<unsigned, unsigned> &mbbIndices = MBB2IdxMap[MBB->getNumber()];
+    mbbIndices.first = InstrSlots::scale(mbbIndices.first, factor);
+    mbbIndices.second = InstrSlots::scale(mbbIndices.second, factor);
+    Idx2MBBMap.push_back(std::make_pair(mbbIndices.first, MBB)); 
+  }
+  std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
+
+  // Scale the intervals.
+  for (iterator LI = begin(), LE = end(); LI != LE; ++LI) {
+    LI->second->scaleNumbering(factor);
+  }
+
+  // Scale MachineInstrs.
+  Mi2IndexMap oldmi2iMap = mi2iMap_;
+  unsigned highestSlot = 0;
+  for (Mi2IndexMap::iterator MI = oldmi2iMap.begin(), ME = oldmi2iMap.end();
+       MI != ME; ++MI) {
+    unsigned newSlot = InstrSlots::scale(MI->second, factor);
+    mi2iMap_[MI->first] = newSlot;
+    highestSlot = std::max(highestSlot, newSlot); 
+  }
+
+  i2miMap_.clear();
+  i2miMap_.resize(highestSlot + 1);
+  for (Mi2IndexMap::iterator MI = mi2iMap_.begin(), ME = mi2iMap_.end();
+       MI != ME; ++MI) {
+    i2miMap_[MI->second] = MI->first;
+  }
+
+}
+
 
 /// runOnMachineFunction - Register allocate the whole function
 ///

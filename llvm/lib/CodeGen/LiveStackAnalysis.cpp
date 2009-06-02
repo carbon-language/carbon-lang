@@ -15,14 +15,23 @@
 
 #define DEBUG_TYPE "livestacks"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include <limits>
 using namespace llvm;
 
 char LiveStacks::ID = 0;
 static RegisterPass<LiveStacks> X("livestacks", "Live Stack Slot Analysis");
+
+void LiveStacks::scaleNumbering(int factor) {
+  // Scale the intervals.
+  for (iterator LI = begin(), LE = end(); LI != LE; ++LI) {
+    LI->second.scaleNumbering(factor);
+  }
+}
 
 void LiveStacks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();

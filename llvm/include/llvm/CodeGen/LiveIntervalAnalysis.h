@@ -92,19 +92,11 @@ namespace llvm {
 
     std::vector<MachineInstr*> ClonedMIs;
 
+    typedef LiveInterval::InstrSlots InstrSlots;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass(&ID) {}
-
-    struct InstrSlots {
-      enum {
-        LOAD  = 0,
-        USE   = 1,
-        DEF   = 2,
-        STORE = 3,
-        NUM   = 4
-      };
-    };
 
     static unsigned getBaseIndex(unsigned index) {
       return index - (index % InstrSlots::NUM);
@@ -223,6 +215,13 @@ namespace llvm {
     /// i.e. Index - InstrSlots::NUM, is not occupied.
     bool hasGapBeforeInstr(unsigned Index) {
       Index = getBaseIndex(Index - InstrSlots::NUM);
+      return getInstructionFromIndex(Index) == 0;
+    }
+
+    /// hasGapAfterInstr - Return true if the successive instruction slot,
+    /// i.e. Index + InstrSlots::Num, is not occupied.
+    bool hasGapAfterInstr(unsigned Index) {
+      Index = getBaseIndex(Index + InstrSlots::NUM);
       return getInstructionFromIndex(Index) == 0;
     }
 
@@ -393,6 +392,10 @@ namespace llvm {
 
     /// computeNumbering - Compute the index numbering.
     void computeNumbering();
+
+    /// scaleNumbering - Rescale interval numbers to introduce gaps for new
+    /// instructions
+    void scaleNumbering(int factor);
 
     /// intervalIsInOneMBB - Returns true if the specified interval is entirely
     /// within a single basic block.
