@@ -16,3 +16,15 @@ extern id WLoopGetMain();	// expected-error {{conflicting types for 'WLoopGetMai
 extern id p3;	// expected-note {{previous definition is here}}
 extern __weak id p3;	// expected-error {{redefinition of 'p3' with a different type}}
 
+extern void *p4; // expected-note {{previous definition is here}}
+extern void * __strong p4; // expected-error {{redefinition of 'p4' with a different type}}
+
+extern id p5;
+extern __strong id p5;
+
+extern char* __strong p6; // expected-note {{previous definition is here}}
+extern char* p6; // expected-error {{redefinition of 'p6' with a different type}}
+
+// FIXME. We do not issue error here because we don't put the attribute on the pointer type.
+extern __strong char* p7; 
+extern char* p7; 

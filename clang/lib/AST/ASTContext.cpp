@@ -3033,13 +3033,15 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (RHSClass == Type::ExtQual) {
     QualType::GCAttrTypes GCAttr = RHSCan.getObjCGCAttr();
     if (GCAttr != QualType::GCNone) {
+      QualType::GCAttrTypes GCLHSAttr = LHSCan.getObjCGCAttr();
       // __weak attribute must appear on both declarations. 
-      // FIXME. __strong attribue is redundant if other decl is an objective-c 
-      // object pointer (or decorated with __strong attribute). We can't issue 
-      // diagnostic on __strong mismatch becuase 'id' may not be
-      // available but only with its canonical type at this point. Will 
-      // visit this when 'id' becomes a concrete type.
-      if (GCAttr == QualType::Weak && LHSCan.getObjCGCAttr() != GCAttr)
+      // __strong attribue is redundant if other decl is an objective-c 
+      // object pointer (or decorated with __strong attribute); otherwise
+      // issue error.
+      if ((GCAttr == QualType::Weak && GCLHSAttr != GCAttr) ||
+          (GCAttr == QualType::Strong && GCLHSAttr != GCAttr &&
+           LHSCan->isPointerType() && !isObjCObjectPointerType(LHSCan) &&
+           !isObjCIdStructType(LHSCan->getAsPointerType()->getPointeeType())))
         return QualType();
           
       RHS = QualType(cast<ExtQualType>(RHS.getDesugaredType())->getBaseType(),
@@ -3059,10 +3061,15 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     if (GCAttr != QualType::GCNone) {
       QualType::GCAttrTypes GCRHSAttr = RHSCan.getObjCGCAttr();
       // __weak attribute must appear on both declarations. __strong
-      // attribue is redundant if other decl is an objective-c object pointer.
-      // See above FIXME comment.
-      if (GCAttr == QualType::Weak && GCRHSAttr != GCAttr)
+      // __strong attribue is redundant if other decl is an objective-c 
+      // object pointer (or decorated with __strong attribute); otherwise
+      // issue error.
+      if ((GCAttr == QualType::Weak && GCRHSAttr != GCAttr) ||
+          (GCAttr == QualType::Strong && GCRHSAttr != GCAttr &&
+           RHSCan->isPointerType() && !isObjCObjectPointerType(RHSCan) &&
+           !isObjCIdStructType(RHSCan->getAsPointerType()->getPointeeType())))
         return QualType();
+      
       LHS = QualType(cast<ExtQualType>(LHS.getDesugaredType())->getBaseType(),
                      LHS.getCVRQualifiers());
       QualType Result = mergeTypes(LHS, RHS);
