@@ -168,6 +168,7 @@ BUILTIN(__builtin_frame_address, "v*Ui", "n")
 BUILTIN(__builtin_flt_rounds, "i", "nc")
 BUILTIN(__builtin_setjmp, "iv**", "")
 BUILTIN(__builtin_longjmp, "vv**i", "")
+BUILTIN(__builtin_unwind_init, "v", "")
 
 // GCC Object size checking builtins
 BUILTIN(__builtin_object_size, "zv*i", "n")
