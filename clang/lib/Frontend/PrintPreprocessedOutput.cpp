@@ -87,6 +87,7 @@ public:
 private:
   unsigned CurLine;
   bool EmittedTokensOnThisLine;
+  bool EmittedMacroOnThisLine;
   SrcMgr::CharacteristicKind FileType;
   llvm::SmallString<512> CurFilename;
   bool Initialized;
@@ -100,6 +101,7 @@ public:
     CurLine = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
+    EmittedMacroOnThisLine = false;
     FileType = SrcMgr::C_User;
     Initialized = false;
   }
@@ -130,9 +132,10 @@ public:
 void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
                                              const char *Extra,
                                              unsigned ExtraLen) {
-  if (EmittedTokensOnThisLine) {
+  if (EmittedTokensOnThisLine || EmittedMacroOnThisLine) {
     OS << '\n';
     EmittedTokensOnThisLine = false;
+    EmittedMacroOnThisLine = false;
   }
 
   OS << '#' << ' ' << LineNo << ' ' << '"';
@@ -161,11 +164,12 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     
     CurLine = LineNo;
     
-    if (!EmittedTokensOnThisLine)
+    if (!EmittedTokensOnThisLine && !EmittedMacroOnThisLine)
       return true;
     
     OS << '\n';
     EmittedTokensOnThisLine = false;
+    EmittedMacroOnThisLine = false;
     return true;
   }
 
@@ -260,6 +264,7 @@ void PrintPPOutputPPCallbacks::MacroDefined(const IdentifierInfo *II,
   
   MoveToLine(MI->getDefinitionLoc());
   PrintMacroDefinition(*II, *MI, PP, OS);
+  EmittedMacroOnThisLine = true;
 }
 
 
