@@ -1307,7 +1307,17 @@ namespace {
       UIntMaxType = UnsignedLong;
       IntPtrType = SignedShort;
       PtrDiffType = SignedInt;
-      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
+      FloatWidth = 32;
+      FloatAlign = 32;
+      DoubleWidth = 32;
+      DoubleAlign = 32;
+      LongDoubleWidth = 32;
+      LongDoubleAlign = 32;
+      FloatFormat = &llvm::APFloat::IEEEsingle;
+      DoubleFormat = &llvm::APFloat::IEEEsingle;
+      LongDoubleFormat = &llvm::APFloat::IEEEsingle;
+      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-f32:32:32";
+
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
     virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 8; }
