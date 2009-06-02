@@ -376,5 +376,13 @@ LIBBUILTIN(sqrt, "dd", "fe", "math.h")
 LIBBUILTIN(sqrtl, "LdLd", "fe", "math.h")
 LIBBUILTIN(sqrtf, "ff", "fe", "math.h")
 
+LIBBUILTIN(sin, "dd", "fe", "math.h")
+LIBBUILTIN(sinl, "LdLd", "fe", "math.h")
+LIBBUILTIN(sinf, "ff", "fe", "math.h")
+
+LIBBUILTIN(cos, "dd", "fe", "math.h")
+LIBBUILTIN(cosl, "LdLd", "fe", "math.h")
+LIBBUILTIN(cosf, "ff", "fe", "math.h")
+
 #undef BUILTIN
 #undef LIBBUILTIN
