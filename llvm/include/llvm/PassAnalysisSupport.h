@@ -226,23 +226,21 @@ AnalysisType &Pass::getAnalysis(Function &F) {
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysisID(const PassInfo *PI, Function &F) {
   assert(PI && "getAnalysis for unregistered pass!");
-   assert(Resolver&&"Pass has not been inserted into a PassManager object!");
-   // PI *must* appear in AnalysisImpls.  Because the number of passes used
-   // should be a small number, we just do a linear search over a (dense)
-   // vector.
-   Pass *ResultPass = Resolver->findImplPass(this, PI, F);
-   assert (ResultPass && 
-           "getAnalysis*() called on an analysis that was not "
-           "'required' by pass!");
- 
-   // Because the AnalysisType may not be a subclass of pass (for
-   // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
-   // return pointer (because the class may multiply inherit, once from pass,
-   // once from AnalysisType).
-   //
-   AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
-   assert(Result && "Pass does not implement interface required!");
-   return *Result;
+  assert(Resolver && "Pass has not been inserted into a PassManager object!");
+  // PI *must* appear in AnalysisImpls.  Because the number of passes used
+  // should be a small number, we just do a linear search over a (dense)
+  // vector.
+  Pass *ResultPass = Resolver->findImplPass(this, PI, F);
+  assert (ResultPass &&  "Unable to find requested analysis info");
+  
+  // Because the AnalysisType may not be a subclass of pass (for
+  // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
+  // return pointer (because the class may multiply inherit, once from pass,
+  // once from AnalysisType).
+  //
+  AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
+  assert(Result && "Pass does not implement interface required!");
+  return *Result;
 }
 
 } // End llvm namespace
