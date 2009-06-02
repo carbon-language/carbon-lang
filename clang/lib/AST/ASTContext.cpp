@@ -3053,7 +3053,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
         Result = getObjCGCQualType(Result, GCAttr);
       else if (Result.getObjCGCAttr() != GCAttr)
         Result = QualType();
-      getObjCGCQualType(Result, GCAttr);
+      return Result;
     }
   }
 
