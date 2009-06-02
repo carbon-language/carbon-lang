@@ -624,8 +624,11 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // Add in the base register.
     if (AddrMode.BaseReg) {
       Value *V = AddrMode.BaseReg;
-      if (V->getType() != IntPtrTy)
+      if (isa<PointerType>(V->getType()))
         V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
+      if (V->getType() != IntPtrTy)
+        V = CastInst::CreateIntegerCast(V, IntPtrTy, /*isSigned=*/true,
+                                        "sunkaddr", InsertPt);
       if (Result)
         Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
