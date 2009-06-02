@@ -471,6 +471,8 @@ _mm_load1_ps(float *p)
   return (__m128){ *p, *p, *p, *p };
 }
 
+#define        _mm_load_ps1(p) _mm_load1_ps(p)
+
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_load_ps(float *p)
 {

@@ -446,6 +446,8 @@ _mm_load1_pd(double const *dp)
   return (__m128d){ dp[0], dp[0] };
 }
 
+#define        _mm_load_pd1(dp)        _mm_load1_pd(dp)
+
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loadr_pd(double const *dp)
 {
