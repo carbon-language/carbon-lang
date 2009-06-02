@@ -667,6 +667,10 @@ static llvm::cl::opt<bool>
 OptSize("Os", llvm::cl::desc("Optimize for size"));
 
 static llvm::cl::opt<bool>
+DisableLLVMOptimizations("disable-llvm-optzns", 
+                         llvm::cl::desc("Don't run LLVM optimization passes"));
+
+static llvm::cl::opt<bool>
 NoCommon("fno-common",
          llvm::cl::desc("Compile common globals like normal definitions"),
          llvm::cl::ValueDisallowed);
@@ -1420,16 +1424,26 @@ static void InitializeCompileOptions(CompileOptions &Opts,
                                      const llvm::StringMap<bool> &Features) {
   Opts.OptimizeSize = OptSize;
   Opts.DebugInfo = GenerateDebugInfo;
-  if (OptSize) {
-    // -Os implies -O2
-    // FIXME: Diagnose conflicting options.
-    Opts.OptimizationLevel = 2;
+
+  if (DisableLLVMOptimizations) {
+    Opts.OptimizationLevel = 0;
+    Opts.Inlining = CompileOptions::NoInlining;
   } else {
-    Opts.OptimizationLevel = OptLevel;
+    if (OptSize) {
+      // -Os implies -O2
+      Opts.OptimizationLevel = 2;
+    } else {
+      Opts.OptimizationLevel = OptLevel;
+    }
+
+    // We must always run at least the always inlining pass.
+    if (Opts.OptimizationLevel > 1)
+      Opts.Inlining = CompileOptions::NormalInlining;
+    else
+      Opts.Inlining = CompileOptions::OnlyAlwaysInlining;
   }
 
   // FIXME: There are llvm-gcc options to control these selectively.
-  Opts.InlineFunctions = (Opts.OptimizationLevel > 1);
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
   Opts.SimplifyLibCalls = !LangOpts.NoBuiltin;
 

@@ -294,10 +294,16 @@ void BackendConsumer::CreatePasses() {
       PM->add(createPruneEHPass());               // Remove dead EH info
       PM->add(createFunctionAttrsPass());         // Set readonly/readnone attrs
     }
-    if (CompileOpts.InlineFunctions)
+    switch (CompileOpts.Inlining) {
+    case CompileOptions::NoInlining:
+      break;
+    case CompileOptions::NormalInlining:
       PM->add(createFunctionInliningPass());      // Inline small functions
-    else 
+      break;
+    case CompileOptions::OnlyAlwaysInlining:
       PM->add(createAlwaysInlinerPass());         // Respect always_inline
+      break;
+    }
     if (CompileOpts.OptimizationLevel > 2)
       PM->add(createArgumentPromotionPass());     // Scalarize uninlined fn args
     if (CompileOpts.SimplifyLibCalls)
@@ -341,7 +347,16 @@ void BackendConsumer::CreatePasses() {
     if (CompileOpts.OptimizationLevel > 1 && CompileOpts.UnitAtATime)
       PM->add(createConstantMergePass());         // Merge dup global constants 
   } else {
-    PM->add(createAlwaysInlinerPass());  
+    switch (CompileOpts.Inlining) {
+    case CompileOptions::NoInlining:
+      break;
+    case CompileOptions::NormalInlining:
+      PM->add(createFunctionInliningPass());      // Inline small functions
+      break;
+    case CompileOptions::OnlyAlwaysInlining:
+      PM->add(createAlwaysInlinerPass());         // Respect always_inline
+      break;
+    }
   }
 }
 

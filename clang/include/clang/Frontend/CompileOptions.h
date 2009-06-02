@@ -23,12 +23,17 @@ namespace clang {
 /// is optimized and passed to the backend.
 class CompileOptions {
 public:
+  enum InliningMethod {
+    NoInlining,         // Perform no inlining whatsoever.
+    NormalInlining,     // Use the standard function inlining pass.
+    OnlyAlwaysInlining  // Only run the always inlining pass.
+  };
+
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC
                                   /// optimization selection.
-  unsigned InlineFunctions   : 1; /// Should functions be inlined?
   unsigned SimplifyLibCalls  : 1; /// Should standard library calls be
                                   /// treated specially.
   unsigned UnrollLoops       : 1; /// Control whether loops are unrolled.
@@ -36,6 +41,9 @@ public:
                                   /// should be run through the LLVM Verifier.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
+
+  /// Inlining - The kind of inlining to perform.
+  InliningMethod Inlining;
 
   /// CPU - An optional CPU to target.
   std::string CPU;
@@ -50,10 +58,11 @@ public:
     OptimizeSize = 0;
     DebugInfo = 0;
     UnitAtATime = 1;
-    InlineFunctions = SimplifyLibCalls = UnrollLoops = 0;
+    SimplifyLibCalls = UnrollLoops = 0;
     VerifyModule = 1;
     TimePasses = 0;
     NoCommon = 0;
+    Inlining = NoInlining;
   }  
 };
 
