@@ -268,6 +268,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType()),
                                           "tmp"));
   }
+  case Builtin::BIalloca:
   case Builtin::BI__builtin_alloca: {
     // FIXME: LLVM IR Should allow alloca with an i64 size!
     Value *Size = EmitScalarExpr(E->getArg(0));
