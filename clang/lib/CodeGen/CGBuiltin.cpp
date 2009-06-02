@@ -320,6 +320,36 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     // FIXME: There should be a target hook for this
     return RValue::get(EmitScalarExpr(E->getArg(0)));
   }
+  case Builtin::BI__builtin_unwind_init: {
+    Value *F = CGM.getIntrinsic(Intrinsic::eh_unwind_init, 0, 0);
+    return RValue::get(Builder.CreateCall(F));
+  }
+#if 0
+  // FIXME: Finish/enable when LLVM backend support stabilizes
+  case Builtin::BI__builtin_setjmp: {
+    Value *Buf = EmitScalarExpr(E->getArg(0));
+    // Store the frame pointer to the buffer
+    Value *FrameAddrF = CGM.getIntrinsic(Intrinsic::frameaddress, 0, 0);
+    Value *FrameAddr =
+        Builder.CreateCall(FrameAddrF,
+                           Constant::getNullValue(llvm::Type::Int32Ty));
+    Builder.CreateStore(FrameAddr, Buf);
+    // Call the setjmp intrinsic
+    Value *F = CGM.getIntrinsic(Intrinsic::eh_sjlj_setjmp, 0, 0);
+    const llvm::Type *DestType =
+      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Buf = Builder.CreateBitCast(Buf, DestType);
+    return RValue::get(Builder.CreateCall(F, Buf));
+  }
+  case Builtin::BI__builtin_longjmp: {
+    Value *F = CGM.getIntrinsic(Intrinsic::eh_sjlj_longjmp, 0, 0);
+    Value *Buf = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *DestType = 
+      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Buf = Builder.CreateBitCast(Buf, DestType);
+    return RValue::get(Builder.CreateCall(F, Buf));
+  }
+#endif
   case Builtin::BI__sync_fetch_and_add:
   case Builtin::BI__sync_fetch_and_sub:
   case Builtin::BI__sync_fetch_and_or:
