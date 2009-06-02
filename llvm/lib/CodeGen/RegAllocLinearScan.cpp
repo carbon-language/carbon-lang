@@ -312,93 +312,6 @@ namespace {
 static RegisterPass<RALinScan>
 X("linearscan-regalloc", "Linear Scan Register Allocator");
 
-bool validateRegAlloc(MachineFunction *mf, LiveIntervals *lis,
-                      VirtRegMap *vrm) {
-
-  MachineRegisterInfo *mri = &mf->getRegInfo();
-  const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();
-  bool allocationValid = true;
-
-
-  for (LiveIntervals::iterator itr = lis->begin(), end = lis->end();
-       itr != end; ++itr) {
-
-    LiveInterval *li = itr->second;
-
-    if (TargetRegisterInfo::isPhysicalRegister(li->reg)) {
-      continue;
-    }
-
-    if (vrm->hasPhys(li->reg)) {
-      const TargetRegisterClass *trc = mri->getRegClass(li->reg);
-      
-      if (lis->hasInterval(vrm->getPhys(li->reg))) {
-        if (li->overlaps(lis->getInterval(vrm->getPhys(li->reg)))) {
-          std::cerr << "vreg " << li->reg << " overlaps its assigned preg "
-                    << vrm->getPhys(li->reg) << "(" << tri->getName(vrm->getPhys(li->reg)) << ")\n";
-        }
-      }
-
-      TargetRegisterClass::iterator fReg =
-        std::find(trc->allocation_order_begin(*mf), trc->allocation_order_end(*mf),
-                  vrm->getPhys(li->reg));
-
-      if (fReg == trc->allocation_order_end(*mf)) {
-        std::cerr << "preg " << vrm->getPhys(li->reg) 
-                  << "(" << tri->getName(vrm->getPhys(li->reg)) << ") is not in the allocation set for vreg "
-                  << li->reg << "\n";
-        allocationValid &= false;
-      }
-    }
-    else {
-      std::cerr << "No preg for vreg " << li->reg << "\n";
-      // What about conflicting loads/stores?
-      continue;
-    }
-
-    for (LiveIntervals::iterator itr2 = next(itr); itr2 != end; ++itr2) {
-
-      LiveInterval *li2 = itr2->second;
-
-      if (li2->empty())
-        continue;
-
-      if (TargetRegisterInfo::isPhysicalRegister(li2->reg)) {
-        if (li->overlaps(*li2)) {
-          if (vrm->getPhys(li->reg) == li2->reg ||
-              tri->areAliases(vrm->getPhys(li->reg), li2->reg)) {
-            std::cerr << "vreg " << li->reg << " overlaps preg "
-                      << li2->reg << "(" << tri->getName(li2->reg) << ") which aliases "
-                      << vrm->getPhys(li->reg) << "(" << tri->getName(vrm->getPhys(li->reg)) << ")\n";
-            allocationValid &= false;
-          }
-        }
-      }
-      else {
-
-        if (!vrm->hasPhys(li2->reg)) {
-          continue;
-        }
-
-        if (li->overlaps(*li2)) {
-          if (vrm->getPhys(li->reg) == vrm->getPhys(li2->reg) ||
-              tri->areAliases(vrm->getPhys(li->reg), vrm->getPhys(li2->reg))) {
-            std::cerr << "vreg " << li->reg << " (preg " << vrm->getPhys(li->reg)
-                      << ") overlaps vreg " << li2->reg << " (preg " << vrm->getPhys(li2->reg)
-                      << ") and " << vrm->getPhys(li->reg) << " aliases " << vrm->getPhys(li2->reg) << "\n";
-            allocationValid &= false;
-          } 
-        }
-      }
-    } 
-
-  } 
-
-  return allocationValid;
-
-}
-
-
 void RALinScan::ComputeRelatedRegClasses() {
   // First pass, add all reg classes to the union, and determine at least one
   // reg class that each register is in.
@@ -525,10 +438,6 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   initIntervalSets();
 
   linearScan();
-
-  if (NewSpillFramework) {
-    bool allocValid = validateRegAlloc(mf_, li_, vrm_);
-  }
 
   // Rewrite spill code and update the PhysRegsUsed set.
   rewriter_->runOnMachineFunction(*mf_, *vrm_, li_);
