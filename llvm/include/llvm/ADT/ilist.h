@@ -481,8 +481,8 @@ private:
       L2.setTail(0);
 
       // Remove [first, last) from its old position.
-      NodeTy *First = &*first, *Prev = getPrev(First);
-      NodeTy *Next = last.getNodePtrUnchecked(), *Last = getPrev(Next);
+      NodeTy *First = &*first, *Prev = this->getPrev(First);
+      NodeTy *Next = last.getNodePtrUnchecked(), *Last = this->getPrev(Next);
       if (Prev)
         this->setNext(Prev, Next);
       else
@@ -491,7 +491,7 @@ private:
 
       // Splice [first, last) into its new position.
       NodeTy *PosNext = position.getNodePtrUnchecked();
-      NodeTy *PosPrev = getPrev(PosNext);
+      NodeTy *PosPrev = this->getPrev(PosNext);
 
       // Fix head of list...
       if (PosPrev)
@@ -504,7 +504,7 @@ private:
       this->setNext(Last, PosNext);
       this->setPrev(PosNext, Last);
 
-      transferNodesFromList(L2, First, PosNext);
+      this->transferNodesFromList(L2, First, PosNext);
 
       // Now that everything is set, restore the pointers to the list sentinels.
       L2.setTail(L2Sentinel);
