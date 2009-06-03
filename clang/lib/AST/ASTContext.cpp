@@ -828,6 +828,13 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   if (CanT.getObjCGCAttr() == GCAttr)
     return T;
   
+  if (T->isPointerType()) {
+    QualType Pointee = T->getAsPointerType()->getPointeeType();
+    if (Pointee->isPointerType()) {
+      QualType ResultType = getObjCGCQualType(Pointee, GCAttr);
+      return getPointerType(ResultType);
+    }
+  }
   // If we are composing extended qualifiers together, merge together into one
   // ExtQualType node.
   unsigned CVRQuals = T.getCVRQualifiers();
