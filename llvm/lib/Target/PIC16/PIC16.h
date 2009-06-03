@@ -300,9 +300,11 @@ namespace PIC16CC {
     case PIC16CC::LT:   return "lt";
     case PIC16CC::ULT:   return "lt";
     case PIC16CC::LE:  return "le";
+    case PIC16CC::ULE:  return "le";
     case PIC16CC::GT:  return "gt";
     case PIC16CC::UGT:  return "gt";
     case PIC16CC::GE:   return "ge";
+    case PIC16CC::UGE:   return "ge";
     }
   }
 

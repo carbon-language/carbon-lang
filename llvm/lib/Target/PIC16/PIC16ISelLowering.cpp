@@ -1557,8 +1557,8 @@ static PIC16CC::CondCodes IntCCToPIC16CC(ISD::CondCode CC) {
   case ISD::SETLT:  return PIC16CC::LT;
   case ISD::SETLE:  return PIC16CC::LE;
   case ISD::SETULT: return PIC16CC::ULT;
-  case ISD::SETULE: return PIC16CC::LE;
-  case ISD::SETUGE: return PIC16CC::GE;
+  case ISD::SETULE: return PIC16CC::ULE;
+  case ISD::SETUGE: return PIC16CC::UGE;
   case ISD::SETUGT: return PIC16CC::UGT;
   }
 }
