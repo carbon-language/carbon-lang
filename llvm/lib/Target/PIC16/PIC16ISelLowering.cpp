@@ -359,10 +359,22 @@ SDValue PIC16TargetLowering::ExpandFrameIndex(SDNode *N, SelectionDAG &DAG) {
   // Expand FrameIndex like GlobalAddress and ExternalSymbol
   // Also use Offset field for lo and hi parts. The default 
   // offset is zero.
+
+  /*
   SDValue Offset = DAG.getConstant(0, MVT::i8);
   SDValue FI = DAG.getTargetFrameIndex(Index, MVT::i8);
   SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, FI, Offset);
   SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, FI, Offset);
+  return DAG.getNode(ISD::BUILD_PAIR, dl, N->getValueType(0), Lo, Hi);
+  */
+
+  SDValue ES;
+  int FrameOffset;
+  SDValue FI = SDValue(N,0);
+  LegalizeFrameIndex(FI, DAG, ES, FrameOffset);
+  SDValue Offset = DAG.getConstant(FrameOffset, MVT::i8);
+  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, ES, Offset);
+  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, ES, Offset);
   return DAG.getNode(ISD::BUILD_PAIR, dl, N->getValueType(0), Lo, Hi);
 }
 
@@ -626,11 +638,21 @@ void PIC16TargetLowering::LegalizeAddress(SDValue Ptr, SelectionDAG &DAG,
   // Expansion of FrameIndex has Lo/Hi parts
   if (isDirectAddress(Ptr)) { 
       SDValue TFI = Ptr.getOperand(0).getOperand(0); 
+      int FrameOffset;
       if (TFI.getOpcode() == ISD::TargetFrameIndex) {
-        int FrameOffset;
         LegalizeFrameIndex(TFI, DAG, Lo, FrameOffset);
         Hi = DAG.getConstant(1, MVT::i8);
         Offset += FrameOffset; 
+        return;
+      } else if (TFI.getOpcode() == ISD::TargetExternalSymbol) {
+        // FrameIndex has already been expanded.
+        // Now just make use of its expansion
+        Lo = TFI;
+        Hi = DAG.getConstant(1, MVT::i8);
+        SDValue FOffset = Ptr.getOperand(0).getOperand(1);
+        assert (FOffset.getOpcode() == ISD::Constant && 
+                          "Invalid operand of PIC16ISD::Lo");
+        Offset += dyn_cast<ConstantSDNode>(FOffset)->getZExtValue();
         return;
       }
   }
@@ -721,7 +743,8 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
       for (iter=MemBytes; iter<ExtdBytes; ++iter) { 
         PICLoads.push_back(SRA);
       }
-    } else if (ISD::isZEXTLoad(N)) {
+    } else if (ISD::isZEXTLoad(N) || ISD::isEXTLoad(N)) {
+    //} else if (ISD::isZEXTLoad(N)) {
       // ZeroExtendedLoad -- For all ExtdBytes use constant 0
       SDValue ConstZero = DAG.getConstant(0, MVT::i8);
       for (iter=MemBytes; iter<ExtdBytes; ++iter) { 

@@ -184,3 +184,31 @@ bool PIC16InstrInfo::isMoveInstr(const MachineInstr &MI,
   return false;
 }
 
+/// InsertBranch - Insert a branch into the end of the specified
+/// MachineBasicBlock.  This operands to this method are the same as those
+/// returned by AnalyzeBranch.  This is invoked in cases where AnalyzeBranch
+/// returns success and when an unconditional branch (TBB is non-null, FBB is
+/// null, Cond is empty) needs to be inserted. It returns the number of
+/// instructions inserted.
+unsigned PIC16InstrInfo::
+InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, 
+             MachineBasicBlock *FBB,
+             const SmallVectorImpl<MachineOperand> &Cond) const {
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+
+  if (FBB == 0) { // One way branch.
+    if (Cond.empty()) {
+      // Unconditional branch?
+      DebugLoc dl = DebugLoc::getUnknownLoc();
+      BuildMI(&MBB, dl, get(PIC16::br_uncond)).addMBB(TBB);
+    }
+    return 1;
+  }
+
+  // FIXME: If the there are some conditions specified then conditional branch
+  // should be generated.   
+  // For the time being no instruction is being generated therefore
+  // returning NULL.
+  return 0;
+}

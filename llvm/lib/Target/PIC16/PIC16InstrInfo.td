@@ -189,22 +189,22 @@ def movlw : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src),
 
 // Move a Lo(TGA) to W.
 def movlw_lo_1 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
-                      "movlw LOW(${src}) + ${src2}",
+                      "movlw LOW(${src} + ${src2})",
                       [(set GPR:$dst, (PIC16Lo tglobaladdr:$src, imm:$src2 ))]>;
 
 // Move a Lo(TES) to W.
 def movlw_lo_2 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
-                      "movlw LOW(${src}) + ${src2}",
+                      "movlw LOW(${src} + ${src2})",
                       [(set GPR:$dst, (PIC16Lo texternalsym:$src, imm:$src2 ))]>;
 
 // Move a Hi(TGA) to W.
 def movlw_hi_1 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
-                      "movlw HIGH(${src}) + ${src2}",
+                      "movlw HIGH(${src} + ${src2})",
                       [(set GPR:$dst, (PIC16Hi tglobaladdr:$src, imm:$src2))]>;
 
 // Move a Hi(TES) to W.
 def movlw_hi_2 : BitFormat<12, (outs GPR:$dst), (ins i8imm:$src, i8imm:$src2),
-                      "movlw HIGH(${src}) + ${src2}",
+                      "movlw HIGH(${src} + ${src2})",
                       [(set GPR:$dst, (PIC16Hi texternalsym:$src, imm:$src2))]>;
 }
 
