@@ -47,6 +47,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   CurrentFnName = Mang->getValueName(F);
 
+  DbgInfo.EmitFileDirective(F);
   // Emit the function variables.
   EmitFunctionFrame(MF);
 
@@ -181,17 +182,11 @@ void PIC16AsmPrinter::printLibcallDecls(void) {
 
 bool PIC16AsmPrinter::doInitialization (Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
-  DbgInfo.EmitFileDirective(M);
 
   // FIXME:: This is temporary solution to generate the include file.
   // The processor should be passed to llc as in input and the header file
   // should be generated accordingly.
   O << "\n\t#include P16F1937.INC\n";
-  MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  assert(MMI);
-  DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
-  assert(DW && "Dwarf Writer is not available");
-  DW->BeginModule(&M, MMI, O, this, TAI);
 
   // Set the section names for all globals.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
@@ -199,13 +194,14 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
     I->setSection(TAI->SectionForGlobal(I)->getName());
   }
 
+  DbgInfo.EmitFileDirective(M);
   EmitFunctionDecls(M);
   EmitUndefinedVars(M);
   EmitDefinedVars(M);
   EmitIData(M);
   EmitUData(M);
   EmitRomData(M);
-  DbgInfo.PopulateFunctsDI(M); 
+  DbgInfo.PopulateFunctsDI(M);
   return Result;
 }
 
@@ -285,7 +281,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   printLibcallDecls();
   DbgInfo.EmitVarDebugInfo(M);
-  O << "\n\t" << ".EOF";
+  DbgInfo.EmitEOF();
   O << "\n\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
   return Result;

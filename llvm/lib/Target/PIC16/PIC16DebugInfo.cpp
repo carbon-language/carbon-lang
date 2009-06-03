@@ -264,7 +264,29 @@ void PIC16DbgInfo::EmitFileDirective(Module &M) {
   if (CU) {
     DICompileUnit DIUnit(CU);
     std::string Dir, FN;
-    O << "\n\t.file\t\"" << DIUnit.getDirectory(Dir) <<"/"
-      << DIUnit.getFilename(FN) << "\"" ;
+    std::string File = DIUnit.getDirectory(Dir) + "/" + DIUnit.getFilename(FN);
+    O << "\n\t.file\t\"" << File << "\"\n" ;
+    CurFile = File;
   }
 }
+
+void PIC16DbgInfo::EmitFileDirective(const Function *F) {
+  std::string FunctName = F->getName();
+  DISubprogram *SP = getFunctDI(FunctName);
+  if (SP) {
+    std::string Dir, FN;
+    DICompileUnit CU = SP->getCompileUnit();
+    std::string File = CU.getDirectory(Dir) + "/" + CU.getFilename(FN);
+    if ( File != CurFile) {
+      EmitEOF();
+      O << "\n\t.file\t\"" << File << "\"\n" ;
+      CurFile = File;
+    }
+  }
+}
+
+void PIC16DbgInfo::EmitEOF() {
+  if (CurFile != "")
+    O << "\n\t.EOF";
+}
+

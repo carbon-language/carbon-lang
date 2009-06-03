@@ -94,8 +94,11 @@ namespace llvm {
     std::map <std::string, DISubprogram *> FunctNameMap;
     raw_ostream &O;
     const TargetAsmInfo *TAI;
+    std::string CurFile;
   public:
-     PIC16DbgInfo(raw_ostream &o, const TargetAsmInfo *T) : O(o), TAI(T) {}
+    PIC16DbgInfo(raw_ostream &o, const TargetAsmInfo *T) : O(o), TAI(T) {
+      CurFile = "";  
+    }
     ~PIC16DbgInfo();
     void PopulateDebugInfo(DIType Ty, unsigned short &TypeNo, bool &HasAux,
                            int Aux[], std::string &TypeName);
@@ -109,6 +112,8 @@ namespace llvm {
     inline void EmitSymbol(std::string Name, int Class);
     void EmitVarDebugInfo(Module &M);
     void EmitFileDirective(Module &M);
+    void EmitFileDirective(const Function *F);
+    void EmitEOF();
   };
 } // end namespace llvm;
 #endif
