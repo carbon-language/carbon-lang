@@ -17,6 +17,8 @@ This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
 Please delete them.")
 endif()
 
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+
 include(FindPerl)
 
 set(LLVM_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -54,6 +56,16 @@ else( MSVC )
 endif( MSVC )
 
 option(LLVM_ENABLE_THREADS "Use threads if available." ON)
+
+if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
+  option(LLVM_ENABLE_ASSERTS "Enable asserts" OFF)
+else()
+  option(LLVM_ENABLE_ASSERTS "Enable asserts" ON)
+endif()
+
+if( LLVM_ENABLE_ASSERTS )
+  add_definitions( -D_DEBUG -UNDEBUG )
+endif()
 
 if( LLVM_TARGETS_TO_BUILD STREQUAL "all" )
   set( LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS} )

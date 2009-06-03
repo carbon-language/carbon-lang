@@ -248,6 +248,10 @@
   <dt><b>LLVM_ENABLE_THREADS</b>:BOOL</dt>
   <dd>Build with threads support, if available. Defaults to ON.</dd>
 
+  <dt><b>LLVM_ENABLE_ASSERTS</b>:BOOL</dt>
+  <dd>Enables code asserts. Defaults to ON if and only if
+    CMAKE_BUILD_TYPE is <i>Release</i>.</dd>
+
   <dt><b>LLVM_ENABLE_PIC</b>:BOOL</dt>
   <dd>Add the <i>-fPIC</i> flag to the compiler command-line, if the
     compiler supports this flag. Some systems, like Windows, does not
