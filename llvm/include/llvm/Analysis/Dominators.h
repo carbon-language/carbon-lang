@@ -270,12 +270,17 @@ protected:
         NewBBIDom = PredBlocks[i];
         break;
       }
-    assert(i != PredBlocks.size() && "No reachable preds?");
+
+    // It's possible that none of the predecessors of NewBB are reachable;
+    // in that case, NewBB itself is unreachable, so nothing needs to be
+    // changed.
+    if (!NewBBIDom)
+      return;
+
     for (i = i + 1; i < PredBlocks.size(); ++i) {
       if (DT.isReachableFromEntry(PredBlocks[i]))
         NewBBIDom = DT.findNearestCommonDominator(NewBBIDom, PredBlocks[i]);
     }
-    assert(NewBBIDom && "No immediate dominator found??");
 
     // Create the new dominator tree node... and set the idom of NewBB.
     DomTreeNodeBase<NodeT> *NewBBNode = DT.addNewBlock(NewBB, NewBBIDom);
