@@ -321,7 +321,7 @@ bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT,
 /// X86SelectAddress - Attempt to fill in an address from the given value.
 ///
 bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
-  User *U;
+  User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     Opcode = I->getOpcode();
