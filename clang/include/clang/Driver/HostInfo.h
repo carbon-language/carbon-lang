@@ -28,10 +28,10 @@ namespace driver {
 /// being run from. For testing purposes, the HostInfo used by the
 /// driver may differ from the actual host.
 class HostInfo {
+protected:
   const Driver &TheDriver;
   const llvm::Triple Triple;
 
-protected:
   HostInfo(const Driver &D, const llvm::Triple &_Triple);
 
 public:
