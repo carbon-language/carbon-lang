@@ -141,26 +141,6 @@
 ; RUN: not grep @PLTOFF %t
 ; RUN: grep {call	\\\*} %t | count 10
 ; RUN: not grep {%rip} %t
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=static -code-model=small > %t
-; RUN: not grep leal %t
-; RUN: grep movl %t | count 91
-; RUN: not grep addl %t
-; RUN: not grep subl %t
-; RUN: grep leaq %t | count 70
-; RUN: grep movq %t | count 56
-; RUN: grep addq %t | count 20
-; RUN: grep subq %t | count 14
-; RUN: not grep movabs %t
-; RUN: not grep largecomm %t
-; RUN: not grep _GLOBAL_OFFSET_TABLE_ %t
-; RUN: not grep @GOT %t
-; RUN: not grep @GOTOFF %t
-; RUN: not grep @GOTPCREL %t
-; RUN: not grep @GOTPLT %t
-; RUN: not grep @PLT %t
-; RUN: not grep @PLTOFF %t
-; RUN: grep {call	\\\*} %t | count 10
-; RUN: grep {%rip} %t | count 139
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=dynamic-no-pic -code-model=small > %t
 ; RUN: not grep leal %t
 ; RUN: grep movl %t | count 95

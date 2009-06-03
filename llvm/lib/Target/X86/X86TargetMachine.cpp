@@ -213,6 +213,13 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           raw_ostream &Out) {
+  // FIXME: Move this somewhere else!
+  // On Darwin, override 64-bit static relocation to pic_ since the
+  // assembler doesn't support it.
+  if (DefRelocModel == Reloc::Static &&
+      Subtarget.isTargetDarwin() && Subtarget.is64Bit())
+    setRelocationModel(Reloc::PIC_);
+
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
     PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
