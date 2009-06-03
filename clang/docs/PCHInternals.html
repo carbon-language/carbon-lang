@@ -103,8 +103,8 @@ below.</p>
 <p>The metadata block contains several records that provide
 information about how the precompiled header was built. This metadata
 is primarily used to validate the use of a precompiled header. For
-example, a precompiled header built for x86 (32-bit) cannot be used
-when compiling for x86-64 (64-bit). The metadata block contains
+example, a precompiled header built for a 32-bit x86 target cannot be used
+when compiling for a 64-bit x86 target. The metadata block contains
 information about:</p>
 
 <dl>
@@ -292,7 +292,32 @@ function.</p>
 in Clang's abstract syntax tree (<code>ForStmt</code>,
 <code>CallExpr</code>, etc.) has a corresponding record type in the
 precompiled header, which contains the serialized representation of
-that statement or expression. </p>
+that statement or expression. Each substatement or subexpression
+within an expression is stored as a separate record (which keeps most
+records to a fixed size). Within the precompiled header, the
+subexpressions of an expression are stored prior to the expression
+that owns those expression, using a form of <a
+href="http://en.wikipedia.org/wiki/Reverse_Polish_notation">Reverse
+Polish Notation</a>. For example, an expression <code>3 - 4 + 5</code>
+would be represented as follows:</p>
+
+<table border="1">
+  <tr><td><code>IntegerLiteral(3)</code></td></tr>
+  <tr><td><code>IntegerLiteral(4)</code></td></tr>
+  <tr><td><code>BinaryOperator(-)</code></td></tr>
+  <tr><td><code>IntegerLiteral(5)</code></td></tr>
+  <tr><td><code>BinaryOperator(+)</code></td></tr>
+  <tr><td>STOP</td></tr>
+</table>
+
+<p>When reading this representation, Clang evaluates each expression
+record it encounters, builds the appropriate abstract synax tree node,
+and then pushes that expression on to a stack. When a record contains <i>N</i>
+subexpressions--<code>BinaryOperator</code> has two of them--those
+expressions are popped from the top of the stack. The special STOP
+code indicates that we have reached the end of a serialized expression
+or statement; other expression or statement records may follow, but
+they are part of a different expression.</p>
 
 <h3 name="idtable">Identifier Table Block</h3>
 
