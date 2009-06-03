@@ -113,10 +113,6 @@ namespace {
   /// SelectionDAG operations.
   ///
   class VISIBILITY_HIDDEN X86DAGToDAGISel : public SelectionDAGISel {
-    /// TM - Keep a reference to X86TargetMachine.
-    ///
-    X86TargetMachine &TM;
-
     /// X86Lowering - This object fully describes how to lower LLVM code to an
     /// X86-specific SelectionDAG.
     X86TargetLowering &X86Lowering;
@@ -136,8 +132,8 @@ namespace {
   public:
     explicit X86DAGToDAGISel(X86TargetMachine &tm, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(tm, OptLevel),
-        TM(tm), X86Lowering(*TM.getTargetLowering()),
-        Subtarget(&TM.getSubtarget<X86Subtarget>()),
+        X86Lowering(*tm.getTargetLowering()),
+        Subtarget(&tm.getSubtarget<X86Subtarget>()),
         OptForSize(false) {}
 
     virtual const char *getPassName() const {
@@ -242,6 +238,18 @@ namespace {
     /// initialize the global base register, if necessary.
     ///
     SDNode *getGlobalBaseReg();
+
+    /// getTargetMachine - Return a reference to the TargetMachine, casted
+    /// to the target-specific type.
+    const X86TargetMachine &getTargetMachine() {
+      return static_cast<const X86TargetMachine &>(TM);
+    }
+
+    /// getInstrInfo - Return a reference to the TargetInstrInfo, casted
+    /// to the target-specific type.
+    const X86InstrInfo *getInstrInfo() {
+      return getTargetMachine().getInstrInfo();
+    }
 
 #ifndef NDEBUG
     unsigned Indent;
@@ -674,6 +682,8 @@ bool X86DAGToDAGISel::MatchLoad(SDValue N, X86ISelAddressMode &AM) {
 }
 
 bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
+  bool SymbolicAddressesAreRIPRel =
+    getTargetMachine().symbolicAddressesAreRIPRel();
   bool is64Bit = Subtarget->is64Bit();
   DOUT << "Wrapper: 64bit " << is64Bit;
   DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
@@ -684,7 +694,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
 
   // Base and index reg must be 0 in order to use rip as base.
   bool canUsePICRel = !AM.Base.Reg.getNode() && !AM.IndexReg.getNode();
-  if (is64Bit && !canUsePICRel && TM.symbolicAddressesAreRIPRel())
+  if (is64Bit && !canUsePICRel && SymbolicAddressesAreRIPRel)
     return true;
 
   if (AM.hasSymbolicDisplacement())
@@ -698,7 +708,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     uint64_t Offset = G->getOffset();
     if (!is64Bit || isInt32(AM.Disp + Offset)) {
       GlobalValue *GV = G->getGlobal();
-      bool isRIPRel = TM.symbolicAddressesAreRIPRel();
+      bool isRIPRel = SymbolicAddressesAreRIPRel;
       if (N0.getOpcode() == llvm::ISD::TargetGlobalTLSAddress) {
         TLSModel::Model model =
           getTLSModel (GV, TM.getRelocationModel());
@@ -716,16 +726,16 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.CP = CP->getConstVal();
       AM.Align = CP->getAlignment();
       AM.Disp += Offset;
-      AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+      AM.isRIPRel = SymbolicAddressesAreRIPRel;
       return false;
     }
   } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
     AM.ES = S->getSymbol();
-    AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+    AM.isRIPRel = SymbolicAddressesAreRIPRel;
     return false;
   } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
     AM.JT = J->getIndex();
-    AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+    AM.isRIPRel = SymbolicAddressesAreRIPRel;
     return false;
   }
 
@@ -1300,7 +1310,7 @@ bool X86DAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
 ///
 SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   MachineFunction *MF = CurBB->getParent();
-  unsigned GlobalBaseReg = TM.getInstrInfo()->getGlobalBaseReg(MF);
+  unsigned GlobalBaseReg = getInstrInfo()->getGlobalBaseReg(MF);
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
 
