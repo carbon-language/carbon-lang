@@ -909,13 +909,13 @@ def err_array_init_list_required : Error<
   "initialization with '{...}' expected for array">;
 def err_excess_initializers : Error<
   "excess elements in %select{array|vector|scalar|union|struct}0 initializer">;
-def warn_excess_initializers : Warning<
+def warn_excess_initializers : ExtWarn<
   "excess elements in %select{array|vector|scalar|union|struct}0 initializer">;
 def err_excess_initializers_in_char_array_initializer : Error<
   "excess elements in char array initializer">;
-def warn_excess_initializers_in_char_array_initializer : Warning<
+def warn_excess_initializers_in_char_array_initializer : ExtWarn<
   "excess elements in char array initializer">;
-def warn_initializer_string_for_char_array_too_long : Warning<
+def warn_initializer_string_for_char_array_too_long : ExtWarn<
   "initializer-string for char array is too long">;
 def warn_braces_around_scalar_init : Warning<
   "braces around scalar initializer">;
@@ -1029,7 +1029,7 @@ def err_offsetof_record_type : Error<
 def err_offsetof_array_type : Error<"offsetof requires array type, %0 invalid">;
 def ext_offsetof_extended_field_designator : Extension<
   "using extended field designator is an extension">;
-def warn_offsetof_non_pod_type : Warning<"offset of on non-POD type %0">,
+def warn_offsetof_non_pod_type : ExtWarn<"offset of on non-POD type %0">,
   InGroup<InvalidOffsetof>;
 
 def warn_floatingpoint_eq : Warning<
@@ -1130,11 +1130,11 @@ def err_typecheck_sub_ptr_object : Error<
   "subtraction of pointer %0 requires pointee to be a complete object type">;
 def err_typecheck_sub_ptr_compatible : Error<
   "%0 and %1 are not pointers to compatible types">;
-def ext_typecheck_comparison_of_pointer_integer : Warning<
+def ext_typecheck_comparison_of_pointer_integer : ExtWarn<
   "comparison between pointer and integer (%0 and %1)">;
-def ext_typecheck_comparison_of_distinct_pointers : Warning<
+def ext_typecheck_comparison_of_distinct_pointers : ExtWarn<
   "comparison of distinct pointer types (%0 and %1)">;
-def ext_typecheck_cond_incompatible_operands : Warning<
+def ext_typecheck_cond_incompatible_operands : ExtWarn<
   "incompatible operand types (%0 and %1)">;
 def err_typecheck_comparison_of_distinct_pointers : Error<
   "comparison of distinct pointer types (%0 and %1)">;
@@ -1443,9 +1443,9 @@ def err_typecheck_cond_incompatible_operands : Error<
   "incompatible operand types (%0 and %1)">;
 def err_cast_selector_expr : Error<
   "cannot type cast @selector expression">;
-def warn_typecheck_cond_incompatible_pointers : Warning<
+def warn_typecheck_cond_incompatible_pointers : ExtWarn<
   "pointer type mismatch (%0 and %1)">;
-def warn_typecheck_cond_pointer_integer_mismatch : Warning<
+def warn_typecheck_cond_pointer_integer_mismatch : ExtWarn<
   "pointer/integer type mismatch in conditional expression (%0 and %1)">;
 def err_typecheck_choose_expr_requires_constant : Error<
   "'__builtin_choose_expr' requires a constant expression">;
@@ -1789,9 +1789,12 @@ def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
 def warn_receiver_forward_class : Warning<
     "receiver %0 is a forward class and corresponding @interface may not exist">;
 def note_method_sent_forward_class : Note<"method %0 is used for the forward class">;
-def warn_missing_declspec : Warning<
+def warn_missing_declspec : ExtWarn<
   "declaration specifier missing, defaulting to 'int'">;
 def warn_missing_type_specifier : Warning<
+  "type specifier missing, defaults to 'int'">,
+  InGroup<ImplicitInt>;
+def warn_missing_type_specifier_c99 : ExtWarn<
   "type specifier missing, defaults to 'int'">,
   InGroup<ImplicitInt>;
 def err_decimal_unsupported : Error<
