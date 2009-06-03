@@ -562,6 +562,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_dD);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
+  Args.AddAllArgValues(CmdArgs, options::OPT_mllvm);
 
   if (Output.getType() == types::TY_Dependencies) {
     // Handled with other dependency code.

@@ -493,6 +493,7 @@ OPTION("-mdynamic-no-pic", mdynamic_no_pic, Joined, m_Group, INVALID, "q", 0, 0,
 OPTION("-mfix-and-continue", mfix_and_continue, Flag, clang_ignored_m_Group, INVALID, "", 0, 0, 0)
 OPTION("-miphoneos-version-min=", miphoneos_version_min_EQ, Joined, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-mkernel", mkernel, Flag, m_Group, INVALID, "", 0, 0, 0)
+OPTION("-mllvm", mllvm, Separate, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-mmacosx-version-min=", mmacosx_version_min_EQ, Joined, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-mmmx", mmmx, Flag, m_x86_Features_Group, INVALID, "", 0, 0, 0)
 OPTION("-mno-3dnowa", mno_3dnowa, Flag, m_x86_Features_Group, INVALID, "", 0, 0, 0)
