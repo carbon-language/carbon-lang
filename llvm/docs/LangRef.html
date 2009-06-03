@@ -2403,9 +2403,10 @@ cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown
 exception.  Additionally, this is important for implementation of
 '<tt>catch</tt>' clauses in high-level languages that support them.</p>
 
-<p>It is not valid to reference the return value of an invoke call from
-anywhere not dominated by the normal label, since an unwind does not
-provide a return value.</p>
+<p>For the purposes of the SSA form, the definition of the value
+returned by the '<tt>invoke</tt>' instruction is deemed to occur on
+the edge from the current block to the "normal" label. If the callee
+unwinds then no return value is available.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4517,6 +4518,11 @@ may be used as the label arguments.</p>
 <p>There must be no non-phi instructions between the start of a basic
 block and the PHI instructions: i.e. PHI instructions must be first in
 a basic block.</p>
+
+<p>For the purposes of the SSA form, the use of each incoming value is
+deemed to occur on the edge from the corresponding predecessor block
+to the current block (but after any definition of an '<tt>invoke</tt>'
+instruction's return value on the same edge).</p>
 
 <h5>Semantics:</h5>
 
