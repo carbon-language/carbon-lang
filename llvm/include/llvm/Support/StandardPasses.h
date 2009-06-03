@@ -115,7 +115,7 @@ namespace llvm {
       PM->add(createReassociatePass());           // Reassociate expressions
       PM->add(createLoopRotatePass());            // Rotate Loop
       PM->add(createLICMPass());                  // Hoist loop invariants
-      PM->add(createLoopUnswitchPass(OptimizeSize ? true : false));
+      PM->add(createLoopUnswitchPass(OptimizeSize));
       PM->add(createLoopIndexSplitPass());        // Split loop index
       PM->add(createInstructionCombiningPass());  
       PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
