@@ -242,20 +242,6 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     }
   }
 
-  // There was an earlier def of a super-register. Add implicit def to that MI.
-  //
-  //   A: EAX = ...
-  //   B: ... = AX
-  //
-  // Add implicit def to A if there isn't a use of AX (or EAX) before B.
-  if (!PhysRegUse[Reg]) {
-    MachineInstr *Def = PhysRegDef[Reg];
-    if (Def && !Def->modifiesRegister(Reg))
-      Def->addOperand(MachineOperand::CreateReg(Reg,
-                                                true  /*IsDef*/,
-                                                true  /*IsImp*/));
-  }
-  
   // Remember this use.
   PhysRegUse[Reg]  = MI;
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
