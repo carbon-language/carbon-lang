@@ -465,17 +465,6 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
       // Compute the final addrec to expand into code.
       SCEVHandle AR = IU->getReplacementExpr(*UI);
 
-      // FIXME: It is an extremely bad idea to indvar substitute anything more
-      // complex than affine induction variables.  Doing so will put expensive
-      // polynomial evaluations inside of the loop, and the str reduction pass
-      // currently can only reduce affine polynomials.  For now just disable
-      // indvar subst on anything more complex than an affine addrec, unless
-      // it can be expanded to a trivial value.
-      if (!Stride->isLoopInvariant(L) &&
-          !isa<SCEVConstant>(AR) &&
-          L->contains(User->getParent()))
-        continue;
-
       Value *NewVal = 0;
       if (AR->isLoopInvariant(L)) {
         BasicBlock::iterator I = Rewriter.getInsertionPoint();
@@ -487,6 +476,15 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         Rewriter.setInsertionPoint(I);
         ++NumReplaced;
       } else {
+        // FIXME: It is an extremely bad idea to indvar substitute anything more
+        // complex than affine induction variables.  Doing so will put expensive
+        // polynomial evaluations inside of the loop, and the str reduction pass
+        // currently can only reduce affine polynomials.  For now just disable
+        // indvar subst on anything more complex than an affine addrec, unless
+        // it can be expanded to a trivial value.
+        if (!Stride->isLoopInvariant(L))
+          continue;
+
         const Type *IVTy = Offset->getType();
         const Type *UseTy = Op->getType();
 
@@ -520,7 +518,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         // induction variable, still in the canonical induction variable's
         // type, so that all expanded arithmetic is done in the same type.
         SCEVHandle NewAR = SE->getAddRecExpr(SE->getIntegerSCEV(0, LargestType),
-                                           PromotedStride, L);
+                                             PromotedStride, L);
         // Add the PromotedOffset as a separate step, because it may not be
         // loop-invariant.
         NewAR = SE->getAddExpr(NewAR, PromotedOffset);
