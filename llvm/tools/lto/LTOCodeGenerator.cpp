@@ -304,6 +304,20 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
         if ( march == NULL )
             return true;
 
+        // The relocation model is actually a static member of TargetMachine
+        // and needs to be set before the TargetMachine is instantiated.
+        switch( _codeModel ) {
+        case LTO_CODEGEN_PIC_MODEL_STATIC:
+            TargetMachine::setRelocationModel(Reloc::Static);
+            break;
+        case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
+            TargetMachine::setRelocationModel(Reloc::PIC_);
+            break;
+        case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
+            TargetMachine::setRelocationModel(Reloc::DynamicNoPIC);
+            break;
+        }
+
         // construct LTModule, hand over ownership of module and target
         std::string FeatureStr =
           getFeatureString(_linker.getModule()->getTargetTriple().c_str());
@@ -362,19 +376,6 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
      // If target supports exception handling then enable it now.
     if ( _target->getTargetAsmInfo()->doesSupportExceptionHandling() )
         llvm::ExceptionHandling = true;
-
-    // set codegen model
-    switch( _codeModel ) {
-        case LTO_CODEGEN_PIC_MODEL_STATIC:
-            _target->setRelocationModel(Reloc::Static);
-            break;
-        case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-            _target->setRelocationModel(Reloc::PIC_);
-            break;
-        case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-            _target->setRelocationModel(Reloc::DynamicNoPIC);
-            break;
-    }
 
     // if options were requested, set them
     if ( !_codegenOptions.empty() )
