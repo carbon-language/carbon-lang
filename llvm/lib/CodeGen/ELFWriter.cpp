@@ -32,6 +32,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ELFWriter.h"
+#include "ELFCodeEmitter.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/DerivedTypes.h"
@@ -61,149 +62,10 @@ MachineCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
 }
 
 //===----------------------------------------------------------------------===//
-//                       ELFCodeEmitter Implementation
-//===----------------------------------------------------------------------===//
-
-namespace llvm {
-  /// ELFCodeEmitter - This class is used by the ELFWriter to emit the code for
-  /// functions to the ELF file.
-  class ELFCodeEmitter : public MachineCodeEmitter {
-    ELFWriter &EW;
-    TargetMachine &TM;
-    ELFWriter::ELFSection *ES;  // Section to write to.
-    std::vector<unsigned char> *OutBuffer;
-    size_t FnStart;
-  public:
-    explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM), OutBuffer(0) {}
-
-    void startFunction(MachineFunction &F);
-    bool finishFunction(MachineFunction &F);
-
-    void addRelocation(const MachineRelocation &MR) {
-      assert(0 && "relo not handled yet!");
-    }
-    
-    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
-    }
-
-    virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {
-      assert(0 && "CP not implementated yet!");
-      return 0;
-    }
-    virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const {
-      assert(0 && "JT not implementated yet!");
-      return 0;
-    }
-
-    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
-      assert(0 && "JT not implementated yet!");
-      return 0;
-    }
-
-    virtual uintptr_t getLabelAddress(uint64_t Label) const {
-      assert(0 && "Label address not implementated yet!");
-      abort();
-      return 0;
-    }
-
-    virtual void emitLabel(uint64_t LabelID) {
-      assert(0 && "emit Label not implementated yet!");
-      abort();
-    }
-
-
-    virtual void setModuleInfo(llvm::MachineModuleInfo* MMI) { }
-
-
-    /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
-    void startGVStub(const GlobalValue* F, unsigned StubSize,
-                     unsigned Alignment = 1) {
-      assert(0 && "JIT specific function called!");
-      abort();
-    }
-    void startGVStub(const GlobalValue* F,  void *Buffer, unsigned StubSize) {
-      assert(0 && "JIT specific function called!");
-      abort();
-    }
-    void *finishGVStub(const GlobalValue *F) {
-      assert(0 && "JIT specific function called!");
-      abort();
-      return 0;
-    }
-  };
-}
-
-/// startFunction - This callback is invoked when a new machine function is
-/// about to be emitted.
-void ELFCodeEmitter::startFunction(MachineFunction &F) {
-  // Align the output buffer to the appropriate alignment.
-  unsigned Align = 16;   // FIXME: GENERICIZE!!
-  // Get the ELF Section that this function belongs in.
-  ES = &EW.getSection(".text", ELFWriter::ELFSection::SHT_PROGBITS,
-                      ELFWriter::ELFSection::SHF_EXECINSTR |
-                      ELFWriter::ELFSection::SHF_ALLOC);
-  OutBuffer = &ES->SectionData;
-  cerr << "FIXME: This code needs to be updated for changes in the "
-       << "CodeEmitter interfaces.  In particular, this should set "
-       << "BufferBegin/BufferEnd/CurBufferPtr, not deal with OutBuffer!";
-  abort();
-
-  // Upgrade the section alignment if required.
-  if (ES->Align < Align) ES->Align = Align;
-
-  // Add padding zeros to the end of the buffer to make sure that the
-  // function will start on the correct byte alignment within the section.
-  OutputBuffer OB(*OutBuffer,
-                  TM.getTargetData()->getPointerSizeInBits() == 64,
-                  TM.getTargetData()->isLittleEndian());
-  OB.align(Align);
-  FnStart = OutBuffer->size();
-}
-
-/// finishFunction - This callback is invoked after the function is completely
-/// finished.
-bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
-  // We now know the size of the function, add a symbol to represent it.
-  ELFWriter::ELFSym FnSym(F.getFunction());
-
-  // Figure out the binding (linkage) of the symbol.
-  switch (F.getFunction()->getLinkage()) {
-  default:
-    // appending linkage is illegal for functions.
-    assert(0 && "Unknown linkage type!");
-  case GlobalValue::ExternalLinkage:
-    FnSym.SetBind(ELFWriter::ELFSym::STB_GLOBAL);
-    break;
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-    FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
-    break;
-  case GlobalValue::PrivateLinkage:
-    assert (0 && "PrivateLinkage should not be in the symbol table.");
-  case GlobalValue::InternalLinkage:
-    FnSym.SetBind(ELFWriter::ELFSym::STB_LOCAL);
-    break;
-  }
-
-  ES->Size = OutBuffer->size();
-
-  FnSym.SetType(ELFWriter::ELFSym::STT_FUNC);
-  FnSym.SectionIdx = ES->SectionIdx;
-  FnSym.Value = FnStart;   // Value = Offset from start of Section.
-  FnSym.Size = OutBuffer->size()-FnStart;
-
-  // Finally, add it to the symtab.
-  EW.SymbolTable.push_back(FnSym);
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
 //                          ELFWriter Implementation
 //===----------------------------------------------------------------------===//
 
-ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm) 
+ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   : MachineFunctionPass(&ID), O(o), TM(tm) {
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
