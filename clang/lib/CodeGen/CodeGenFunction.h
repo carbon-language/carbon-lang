@@ -239,7 +239,30 @@ private:
   /// 'this' declaration.
   ImplicitParamDecl *CXXThisDecl;
   
-  llvm::SmallVector<const CXXTemporary*, 4> LiveTemporaries;
+  /// CXXLiveTemporaryInfo - Holds information about a live C++ temporary.
+  struct CXXLiveTemporaryInfo {
+    /// Temporary - The live temporary.
+    const CXXTemporary *Temporary;
+    
+    /// ThisPtr - The pointer to the temporary.
+    llvm::Value *ThisPtr;
+    
+    /// DtorBlock - The destructor block.
+    llvm::BasicBlock *DtorBlock;
+    
+    /// CondPtr - If this is a conditional temporary, this is the pointer to
+    /// the condition variable that states whether the destructor should be
+    /// called or not.
+    llvm::Value *CondPtr;
+    
+    CXXLiveTemporaryInfo(const CXXTemporary *temporary,
+                         llvm::Value *thisptr, llvm::Value *condptr,
+                         llvm::BasicBlock *dtorblock) 
+      : Temporary(temporary), ThisPtr(thisptr), DtorBlock(dtorblock), 
+      CondPtr(condptr) { }
+  };
+  
+  llvm::SmallVector<CXXLiveTemporaryInfo, 4> LiveTemporaries;
   
 public:
   CodeGenFunction(CodeGenModule &cgm);

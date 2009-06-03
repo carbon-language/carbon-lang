@@ -17,7 +17,7 @@ using namespace CodeGen;
 
 void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary, 
                                        llvm::Value *Ptr) {
-  LiveTemporaries.push_back(Temporary);
+  LiveTemporaries.push_back(CXXLiveTemporaryInfo(Temporary, Ptr, 0, 0));
   
   // Make a cleanup scope and emit the destructor.
   {
@@ -40,7 +40,7 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
   
   // Go through the temporaries backwards.
   for (unsigned i = E->getNumTemporaries(); i != 0; --i) {
-    assert(LiveTemporaries.back() == E->getTemporary(i - 1));
+    assert(LiveTemporaries.back().Temporary == E->getTemporary(i - 1));
     LiveTemporaries.pop_back();
   }
 
