@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
@@ -33,8 +34,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/IPO.h"
 using namespace clang;
 using namespace llvm;
 
@@ -265,99 +264,31 @@ void BackendConsumer::CreatePasses() {
   if (CompileOpts.VerifyModule)
     getPerFunctionPasses()->add(createVerifierPass());
 
-  if (CompileOpts.OptimizationLevel > 0) {
-    FunctionPassManager *PM = getPerFunctionPasses();
-    PM->add(createCFGSimplificationPass());
-    if (CompileOpts.OptimizationLevel == 1)
-      PM->add(createPromoteMemoryToRegisterPass());
-    else
-      PM->add(createScalarReplAggregatesPass());
-    PM->add(createInstructionCombiningPass());
+  // Assume that standard function passes aren't run for -O0.
+  if (CompileOpts.OptimizationLevel > 0)
+    llvm::createStandardFunctionPasses(getPerFunctionPasses(),
+                                       CompileOpts.OptimizationLevel);
+
+  llvm::Pass *InliningPass = 0;
+  switch (CompileOpts.Inlining) {
+  case CompileOptions::NoInlining: break;
+  case CompileOptions::NormalInlining:
+    InliningPass = createFunctionInliningPass();      // Inline small functions
+    break;
+  case CompileOptions::OnlyAlwaysInlining:
+    InliningPass = createAlwaysInlinerPass();         // Respect always_inline
+    break;
   }
 
   // For now we always create per module passes.
   PassManager *PM = getPerModulePasses();
-  if (CompileOpts.OptimizationLevel > 0) {
-    if (CompileOpts.UnitAtATime)
-      PM->add(createRaiseAllocationsPass());      // call %malloc -> malloc inst
-    PM->add(createCFGSimplificationPass());       // Clean up disgusting code
-    PM->add(createPromoteMemoryToRegisterPass()); // Kill useless allocas
-    if (CompileOpts.UnitAtATime) {
-      PM->add(createGlobalOptimizerPass());       // Optimize out global vars
-      PM->add(createGlobalDCEPass());             // Remove unused fns and globs
-      PM->add(createIPConstantPropagationPass()); // IP Constant Propagation
-      PM->add(createDeadArgEliminationPass());    // Dead argument elimination
-    }
-    PM->add(createInstructionCombiningPass());    // Clean up after IPCP & DAE
-    PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
-    if (CompileOpts.UnitAtATime) {
-      PM->add(createPruneEHPass());               // Remove dead EH info
-      PM->add(createFunctionAttrsPass());         // Set readonly/readnone attrs
-    }
-    switch (CompileOpts.Inlining) {
-    case CompileOptions::NoInlining:
-      break;
-    case CompileOptions::NormalInlining:
-      PM->add(createFunctionInliningPass());      // Inline small functions
-      break;
-    case CompileOptions::OnlyAlwaysInlining:
-      PM->add(createAlwaysInlinerPass());         // Respect always_inline
-      break;
-    }
-    if (CompileOpts.OptimizationLevel > 2)
-      PM->add(createArgumentPromotionPass());     // Scalarize uninlined fn args
-    if (CompileOpts.SimplifyLibCalls)
-      PM->add(createSimplifyLibCallsPass());      // Library Call Optimizations
-    PM->add(createInstructionCombiningPass());    // Cleanup for scalarrepl.
-    PM->add(createJumpThreadingPass());           // Thread jumps.
-    PM->add(createCFGSimplificationPass());       // Merge & remove BBs
-    PM->add(createScalarReplAggregatesPass());    // Break up aggregate allocas
-    PM->add(createInstructionCombiningPass());    // Combine silly seq's
-    PM->add(createCondPropagationPass());         // Propagate conditionals
-    PM->add(createTailCallEliminationPass());     // Eliminate tail calls
-    PM->add(createCFGSimplificationPass());       // Merge & remove BBs
-    PM->add(createReassociatePass());             // Reassociate expressions
-    PM->add(createLoopRotatePass());              // Rotate Loop
-    PM->add(createLICMPass());                    // Hoist loop invariants
-    PM->add(createLoopUnswitchPass(CompileOpts.OptimizeSize ? true : false));
-//    PM->add(createLoopIndexSplitPass());          // Split loop index
-    PM->add(createInstructionCombiningPass());  
-    PM->add(createIndVarSimplifyPass());          // Canonicalize indvars
-    PM->add(createLoopDeletionPass());            // Delete dead loops
-    if (CompileOpts.UnrollLoops)
-      PM->add(createLoopUnrollPass());            // Unroll small loops
-    PM->add(createInstructionCombiningPass());    // Clean up after the unroller
-    PM->add(createGVNPass());                     // Remove redundancies
-    PM->add(createMemCpyOptPass());               // Remove memcpy / form memset
-    PM->add(createSCCPPass());                    // Constant prop with SCCP
-    
-    // Run instcombine after redundancy elimination to exploit opportunities
-    // opened up by them.
-    PM->add(createInstructionCombiningPass());
-    PM->add(createCondPropagationPass());         // Propagate conditionals
-    PM->add(createDeadStoreEliminationPass());    // Delete dead stores
-    PM->add(createAggressiveDCEPass());           // Delete dead instructions
-    PM->add(createCFGSimplificationPass());       // Merge & remove BBs
-
-    if (CompileOpts.UnitAtATime) {
-      PM->add(createStripDeadPrototypesPass());   // Get rid of dead prototypes
-      PM->add(createDeadTypeEliminationPass());   // Eliminate dead types
-    }
-
-    if (CompileOpts.OptimizationLevel > 1 && CompileOpts.UnitAtATime)
-      PM->add(createConstantMergePass());         // Merge dup global constants 
-  } else {
-    switch (CompileOpts.Inlining) {
-    case CompileOptions::NoInlining:
-      break;
-    case CompileOptions::NormalInlining:
-      PM->add(createFunctionInliningPass());      // Inline small functions
-      break;
-    case CompileOptions::OnlyAlwaysInlining:
-      PM->add(createAlwaysInlinerPass());         // Respect always_inline
-      break;
-    }
-  }
+  llvm::createStandardModulePasses(PM, CompileOpts.OptimizationLevel, 
+                                   CompileOpts.OptimizeSize, 
+                                   CompileOpts.UnitAtATime,
+                                   CompileOpts.UnrollLoops,
+                                   CompileOpts.SimplifyLibCalls,
+                                   /*HaveExceptions=*/true,
+                                   InliningPass);
 }
 
 /// EmitAssembly - Handle interaction with LLVM backend to generate
@@ -366,7 +297,6 @@ void BackendConsumer::EmitAssembly() {
   // Silently ignore if we weren't initialized for some reason.
   if (!TheModule || !TheTargetData)
     return;
-  
   
   TimeRegion Region(CompileOpts.TimePasses ? &CodeGenerationTime : 0);
 
