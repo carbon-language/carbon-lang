@@ -356,7 +356,7 @@ LIBBUILTIN(fprintf, "iP*cC*.",    "fp:1:", "stdio.h")
 LIBBUILTIN(snprintf, "ic*zcC*.",  "fp:2:", "stdio.h")
 LIBBUILTIN(sprintf, "ic*cC*.",    "fp:1:", "stdio.h")
 LIBBUILTIN(vprintf, "icC*a",      "fP:0:", "stdio.h")
-LIBBUILTIN(vfprintf, "iP*cC*a",   "fP:1:", "stdio.h")
+LIBBUILTIN(vfprintf, "i.",        "fP:1:", "stdio.h")
 LIBBUILTIN(vsnprintf, "ic*zcC*a", "fP:2:", "stdio.h")
 LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
 
