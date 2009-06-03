@@ -107,7 +107,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       if (DS.isEmpty()) {
         if (DeclLoc.isInvalid())
           DeclLoc = DS.getSourceRange().getBegin();
-        Diag(DeclLoc, diag::warn_missing_declspec)
+        Diag(DeclLoc, diag::ext_missing_declspec)
           << DS.getSourceRange()
         << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
                                                  "int");
@@ -125,7 +125,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
         Diag(DeclLoc, diag::err_missing_type_specifier)
           << DS.getSourceRange();
       else
-        Diag(DeclLoc, diag::warn_missing_type_specifier)
+        Diag(DeclLoc, diag::ext_missing_type_specifier)
           << DS.getSourceRange();
 
       // FIXME: If we could guarantee that the result would be well-formed, it

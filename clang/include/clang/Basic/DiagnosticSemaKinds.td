@@ -1789,12 +1789,9 @@ def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
 def warn_receiver_forward_class : Warning<
     "receiver %0 is a forward class and corresponding @interface may not exist">;
 def note_method_sent_forward_class : Note<"method %0 is used for the forward class">;
-def warn_missing_declspec : ExtWarn<
+def ext_missing_declspec : ExtWarn<
   "declaration specifier missing, defaulting to 'int'">;
-def warn_missing_type_specifier : Warning<
-  "type specifier missing, defaults to 'int'">,
-  InGroup<ImplicitInt>;
-def warn_missing_type_specifier_c99 : ExtWarn<
+def ext_missing_type_specifier : ExtWarn<
   "type specifier missing, defaults to 'int'">,
   InGroup<ImplicitInt>;
 def err_decimal_unsupported : Error<
