@@ -24,9 +24,10 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
@@ -389,59 +390,9 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
     // Add an appropriate TargetData instance for this module...
     passes.add(new TargetData(*_target->getTargetData()));
     
-    // Propagate constants at call sites into the functions they call.  This
-    // opens opportunities for globalopt (and inlining) by substituting function
-    // pointers passed as arguments to direct uses of functions.  
-    passes.add(createIPSCCPPass());
-
-    // Now that we internalized some globals, see if we can hack on them!
-    passes.add(createGlobalOptimizerPass());
-
-    // Linking modules together can lead to duplicated global constants, only
-    // keep one copy of each constant...
-    passes.add(createConstantMergePass());
-
-    // Remove unused arguments from functions...
-    passes.add(createDeadArgEliminationPass());
-
-    // Reduce the code after globalopt and ipsccp.  Both can open up significant
-    // simplification opportunities, and both can propagate functions through
-    // function pointers.  When this happens, we often have to resolve varargs
-    // calls, etc, so let instcombine do this.
-    passes.add(createInstructionCombiningPass());
-    if (!DisableInline)
-        passes.add(createFunctionInliningPass()); // Inline small functions
-    passes.add(createPruneEHPass());              // Remove dead EH info
-    passes.add(createGlobalDCEPass());            // Remove dead functions
-
-    // If we didn't decide to inline a function, check to see if we can
-    // transform it to pass arguments by value instead of by reference.
-    passes.add(createArgumentPromotionPass());
-
-    // The IPO passes may leave cruft around.  Clean up after them.
-    passes.add(createInstructionCombiningPass());
-    passes.add(createJumpThreadingPass());        // Thread jumps.
-    passes.add(createScalarReplAggregatesPass()); // Break up allocas
-
-    // Run a few AA driven optimizations here and now, to cleanup the code.
-    passes.add(createFunctionAttrsPass());        // Add nocapture
-    passes.add(createGlobalsModRefPass());        // IP alias analysis
-    passes.add(createLICMPass());                 // Hoist loop invariants
-    passes.add(createGVNPass());                  // Remove common subexprs
-    passes.add(createMemCpyOptPass());            // Remove dead memcpy's
-    passes.add(createDeadStoreEliminationPass()); // Nuke dead stores
-
-    // Cleanup and simplify the code after the scalar optimizations.
-    passes.add(createInstructionCombiningPass());
-    passes.add(createJumpThreadingPass());        // Thread jumps.
-    passes.add(createPromoteMemoryToRegisterPass()); // Cleanup after threading.
-
-
-    // Delete basic blocks, which optimization passes may have killed...
-    passes.add(createCFGSimplificationPass());
-
-    // Now that we have optimized the program, discard unreachable functions...
-    passes.add(createGlobalDCEPass());
+    createStandardLTOPasses(&passes, /*Internalize=*/ false, !DisableInline,
+                            /*RunSecondGlobalOpt=*/ false, 
+                            /*VerifyEach=*/ false);
 
     // Make sure everything is still good.
     passes.add(createVerifierPass());

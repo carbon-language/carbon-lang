@@ -20,6 +20,8 @@
 #define LLVM_SUPPORT_STANDARDPASSES_H
 
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 
@@ -52,6 +54,22 @@ namespace llvm {
                                                 bool SimplifyLibCalls,
                                                 bool HaveExceptions,
                                                 Pass *InliningPass);
+
+  /// createStandardLTOPasses - Add the standard list of module passes suitable
+  /// for link time optimization.
+  ///
+  /// Internalize - Run the internalize pass.
+  /// RunInliner - Use a function inlining pass.
+  /// RunSecondGlobalOpt - Run the global optimizer pass twice.
+  /// VerifyEach - Run the verifier after each pass.
+  //
+  // FIXME: RunSecondGlobalOpt should go away once we resolve which of LTO or
+  // llvm-ld is better.
+  static inline void createStandardLTOPasses(PassManager *PM,
+                                             bool Internalize,
+                                             bool RunInliner,
+                                             bool RunSecondGlobalOpt,
+                                             bool VerifyEach);
 
   // Implementations
 
@@ -143,6 +161,89 @@ namespace llvm {
       if (OptimizationLevel > 1 && UnitAtATime)
         PM->add(createConstantMergePass());       // Merge dup global constants
     }
+  }
+
+  static inline void addOnePass(PassManager *PM, Pass *P, bool AndVerify) {
+    PM->add(P);
+
+    if (AndVerify)
+      PM->add(createVerifierPass());
+  }
+
+  static inline void createStandardLTOPasses(PassManager *PM,
+                                             bool Internalize,
+                                             bool RunInliner,
+                                             bool RunSecondGlobalOpt,
+                                             bool VerifyEach) {
+    // Now that composite has been compiled, scan through the module, looking
+    // for a main function.  If main is defined, mark all other functions
+    // internal.
+    if (Internalize)
+      addOnePass(PM, createInternalizePass(true), VerifyEach);
+
+    // Propagate constants at call sites into the functions they call.  This
+    // opens opportunities for globalopt (and inlining) by substituting function
+    // pointers passed as arguments to direct uses of functions.  
+    addOnePass(PM, createIPSCCPPass(), VerifyEach);
+
+    // Now that we internalized some globals, see if we can hack on them!
+    addOnePass(PM, createGlobalOptimizerPass(), VerifyEach);
+    
+    // Linking modules together can lead to duplicated global constants, only
+    // keep one copy of each constant...
+    addOnePass(PM, createConstantMergePass(), VerifyEach);
+    
+    // Remove unused arguments from functions...
+    addOnePass(PM, createDeadArgEliminationPass(), VerifyEach);
+
+    // Reduce the code after globalopt and ipsccp.  Both can open up significant
+    // simplification opportunities, and both can propagate functions through
+    // function pointers.  When this happens, we often have to resolve varargs
+    // calls, etc, so let instcombine do this.
+    addOnePass(PM, createInstructionCombiningPass(), VerifyEach);
+
+    // Inline small functions
+    if (RunInliner)
+      addOnePass(PM, createFunctionInliningPass(), VerifyEach);
+
+    addOnePass(PM, createPruneEHPass(), VerifyEach);   // Remove dead EH info.
+    // Optimize globals again.
+    if (RunSecondGlobalOpt)
+      addOnePass(PM, createGlobalOptimizerPass(), VerifyEach);
+    addOnePass(PM, createGlobalDCEPass(), VerifyEach); // Remove dead functions.
+
+    // If we didn't decide to inline a function, check to see if we can
+    // transform it to pass arguments by value instead of by reference.
+    addOnePass(PM, createArgumentPromotionPass(), VerifyEach);
+
+    // The IPO passes may leave cruft around.  Clean up after them.
+    addOnePass(PM, createInstructionCombiningPass(), VerifyEach);
+    addOnePass(PM, createJumpThreadingPass(), VerifyEach);
+    // Break up allocas
+    addOnePass(PM, createScalarReplAggregatesPass(), VerifyEach);
+
+    // Run a few AA driven optimizations here and now, to cleanup the code.
+    addOnePass(PM, createFunctionAttrsPass(), VerifyEach); // Add nocapture.
+    addOnePass(PM, createGlobalsModRefPass(), VerifyEach); // IP alias analysis.
+
+    addOnePass(PM, createLICMPass(), VerifyEach);      // Hoist loop invariants.
+    addOnePass(PM, createGVNPass(), VerifyEach);       // Remove redundancies.
+    addOnePass(PM, createMemCpyOptPass(), VerifyEach); // Remove dead memcpys.
+    // Nuke dead stores.
+    addOnePass(PM, createDeadStoreEliminationPass(), VerifyEach);
+
+    // Cleanup and simplify the code after the scalar optimizations.
+    addOnePass(PM, createInstructionCombiningPass(), VerifyEach);
+
+    addOnePass(PM, createJumpThreadingPass(), VerifyEach);
+    // Cleanup jump threading.
+    addOnePass(PM, createPromoteMemoryToRegisterPass(), VerifyEach);
+    
+    // Delete basic blocks, which optimization passes may have killed...
+    addOnePass(PM, createCFGSimplificationPass(), VerifyEach);
+
+    // Now that we have optimized the program, discard unreachable functions.
+    addOnePass(PM, createGlobalDCEPass(), VerifyEach);
   }
 }
 
