@@ -256,8 +256,8 @@ private:
     llvm::Value *CondPtr;
     
     CXXLiveTemporaryInfo(const CXXTemporary *temporary,
-                         llvm::Value *thisptr, llvm::Value *condptr,
-                         llvm::BasicBlock *dtorblock) 
+                         llvm::Value *thisptr, llvm::BasicBlock *dtorblock,
+                         llvm::Value *condptr)
       : Temporary(temporary), ThisPtr(thisptr), DtorBlock(dtorblock), 
       CondPtr(condptr) { }
   };
@@ -506,6 +506,7 @@ public:
                              llvm::Value *This);
   
   void PushCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
+  void PopCXXTemporary();
   
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   

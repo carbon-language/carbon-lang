@@ -17,17 +17,31 @@ using namespace CodeGen;
 
 void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary, 
                                        llvm::Value *Ptr) {
-  LiveTemporaries.push_back(CXXLiveTemporaryInfo(Temporary, Ptr, 0, 0));
-  
-  // Make a cleanup scope and emit the destructor.
-  {
-    CleanupScope Scope(*this);
-   
-    EmitCXXDestructorCall(Temporary->getDestructor(), Dtor_Complete, Ptr);
-  }
+  llvm::BasicBlock *DtorBlock = createBasicBlock("temp.dtor");
+    
+  LiveTemporaries.push_back(CXXLiveTemporaryInfo(Temporary, Ptr, DtorBlock, 0));
 }
 
-RValue 
+void CodeGenFunction::PopCXXTemporary() {
+  const CXXLiveTemporaryInfo& Info = LiveTemporaries.back();
+  
+  CleanupBlockInfo CleanupInfo = PopCleanupBlock();
+  assert(CleanupInfo.CleanupBlock == Info.DtorBlock && 
+         "Cleanup block mismatch!");
+  assert(!CleanupInfo.SwitchBlock && 
+         "Should not have a switch block for temporary cleanup!");
+  assert(!CleanupInfo.EndBlock && 
+         "Should not have an end block for temporary cleanup!");
+  
+  EmitBlock(Info.DtorBlock);
+
+  EmitCXXDestructorCall(Info.Temporary->getDestructor(),
+                        Dtor_Complete, Info.ThisPtr);
+
+  LiveTemporaries.pop_back();
+}
+
+RValue
 CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                             llvm::Value *AggLoc,
                                             bool isAggLocVolatile) {
