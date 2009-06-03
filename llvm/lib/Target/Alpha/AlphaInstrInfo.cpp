@@ -13,7 +13,9 @@
 
 #include "Alpha.h"
 #include "AlphaInstrInfo.h"
+#include "AlphaMachineFunctionInfo.h"
 #include "AlphaGenInstrInfo.inc"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -448,3 +450,54 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   return false;
 }
 
+/// getGlobalBaseReg - Return a virtual register initialized with the
+/// the global base register value. Output instructions required to
+/// initialize the register in the function entry block, if necessary.
+///
+unsigned AlphaInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
+  AlphaMachineFunctionInfo *AlphaFI = MF->getInfo<AlphaMachineFunctionInfo>();
+  unsigned GlobalBaseReg = AlphaFI->getGlobalBaseReg();
+  if (GlobalBaseReg != 0)
+    return GlobalBaseReg;
+
+  // Insert the set of GlobalBaseReg into the first MBB of the function
+  MachineBasicBlock &FirstMBB = MF->front();
+  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+
+  GlobalBaseReg = RegInfo.createVirtualRegister(&Alpha::GPRCRegClass);
+  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, Alpha::R29,
+                              &Alpha::GPRCRegClass, &Alpha::GPRCRegClass);
+  assert(Ok && "Couldn't assign to global base register!");
+  RegInfo.addLiveIn(Alpha::R29);
+
+  AlphaFI->setGlobalBaseReg(GlobalBaseReg);
+  return GlobalBaseReg;
+}
+
+/// getGlobalRetAddr - Return a virtual register initialized with the
+/// the global base register value. Output instructions required to
+/// initialize the register in the function entry block, if necessary.
+///
+unsigned AlphaInstrInfo::getGlobalRetAddr(MachineFunction *MF) const {
+  AlphaMachineFunctionInfo *AlphaFI = MF->getInfo<AlphaMachineFunctionInfo>();
+  unsigned GlobalRetAddr = AlphaFI->getGlobalRetAddr();
+  if (GlobalRetAddr != 0)
+    return GlobalRetAddr;
+
+  // Insert the set of GlobalRetAddr into the first MBB of the function
+  MachineBasicBlock &FirstMBB = MF->front();
+  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+
+  GlobalRetAddr = RegInfo.createVirtualRegister(&Alpha::GPRCRegClass);
+  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalRetAddr, Alpha::R26,
+                              &Alpha::GPRCRegClass, &Alpha::GPRCRegClass);
+  assert(Ok && "Couldn't assign to global return address register!");
+  RegInfo.addLiveIn(Alpha::R26);
+
+  AlphaFI->setGlobalRetAddr(GlobalRetAddr);
+  return GlobalRetAddr;
+}

@@ -185,8 +185,20 @@ namespace {
 #include "AlphaGenDAGISel.inc"
     
 private:
-    SDValue getGlobalBaseReg();
-    SDValue getGlobalRetAddr();
+    /// getTargetMachine - Return a reference to the TargetMachine, casted
+    /// to the target-specific type.
+    const AlphaTargetMachine &getTargetMachine() {
+      return static_cast<const AlphaTargetMachine &>(TM);
+    }
+
+    /// getInstrInfo - Return a reference to the TargetInstrInfo, casted
+    /// to the target-specific type.
+    const AlphaInstrInfo *getInstrInfo() {
+      return getTargetMachine().getInstrInfo();
+    }
+
+    SDNode *getGlobalBaseReg();
+    SDNode *getGlobalRetAddr();
     void SelectCALL(SDValue Op);
 
   };
@@ -195,34 +207,18 @@ private:
 /// getGlobalBaseReg - Output the instructions required to put the
 /// GOT address into a register.
 ///
-SDValue AlphaDAGToDAGISel::getGlobalBaseReg() {
-  unsigned GP = 0;
-  for(MachineRegisterInfo::livein_iterator ii = RegInfo->livein_begin(), 
-        ee = RegInfo->livein_end(); ii != ee; ++ii)
-    if (ii->first == Alpha::R29) {
-      GP = ii->second;
-      break;
-    }
-  assert(GP && "GOT PTR not in liveins");
-  // FIXME is there anywhere sensible to get a DebugLoc here?
-  return CurDAG->getCopyFromReg(CurDAG->getEntryNode(), 
-                                DebugLoc::getUnknownLoc(), GP, MVT::i64);
+SDNode *AlphaDAGToDAGISel::getGlobalBaseReg() {
+  MachineFunction *MF = BB->getParent();
+  unsigned GlobalBaseReg = getInstrInfo()->getGlobalBaseReg(MF);
+  return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
 
-/// getRASaveReg - Grab the return address
+/// getGlobalRetAddr - Grab the return address.
 ///
-SDValue AlphaDAGToDAGISel::getGlobalRetAddr() {
-  unsigned RA = 0;
-  for(MachineRegisterInfo::livein_iterator ii = RegInfo->livein_begin(), 
-        ee = RegInfo->livein_end(); ii != ee; ++ii)
-    if (ii->first == Alpha::R26) {
-      RA = ii->second;
-      break;
-    }
-  assert(RA && "RA PTR not in liveins");
-  // FIXME is there anywhere sensible to get a DebugLoc here?
-  return CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
-                               DebugLoc::getUnknownLoc(), RA, MVT::i64);
+SDNode *AlphaDAGToDAGISel::getGlobalRetAddr() {
+  MachineFunction *MF = BB->getParent();
+  unsigned GlobalRetAddr = getInstrInfo()->getGlobalRetAddr(MF);
+  return CurDAG->getRegister(GlobalRetAddr, TLI.getPointerTy()).getNode();
 }
 
 /// InstructionSelect - This callback is invoked by
@@ -256,16 +252,10 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
                                 CurDAG->getTargetFrameIndex(FI, MVT::i32),
                                 getI64Imm(0));
   }
-  case ISD::GLOBAL_OFFSET_TABLE: {
-    SDValue Result = getGlobalBaseReg();
-    ReplaceUses(Op, Result);
-    return NULL;
-  }
-  case AlphaISD::GlobalRetAddr: {
-    SDValue Result = getGlobalRetAddr();
-    ReplaceUses(Op, Result);
-    return NULL;
-  }
+  case ISD::GLOBAL_OFFSET_TABLE:
+    return getGlobalBaseReg();
+  case AlphaISD::GlobalRetAddr:
+    return getGlobalRetAddr();
   
   case AlphaISD::DivCall: {
     SDValue Chain = CurDAG->getEntryNode();
@@ -315,7 +305,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
     ConstantInt *C = ConstantInt::get(Type::Int64Ty, uval);
     SDValue CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     SDNode *Tmp = CurDAG->getTargetNode(Alpha::LDAHr, dl, MVT::i64, CPI,
-                                        getGlobalBaseReg());
+                                        SDValue(getGlobalBaseReg(), 0));
     return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
                                 CPI, SDValue(Tmp, 0), CurDAG->getEntryNode());
   }
@@ -503,7 +493,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
    // Finally, once everything is in registers to pass to the call, emit the
    // call itself.
    if (Addr.getOpcode() == AlphaISD::GPRelLo) {
-     SDValue GOT = getGlobalBaseReg();
+     SDValue GOT = SDValue(getGlobalBaseReg(), 0);
      Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R29, GOT, InFlag);
      InFlag = Chain.getValue(1);
      Chain = SDValue(CurDAG->getTargetNode(Alpha::BSR, dl, MVT::Other, 

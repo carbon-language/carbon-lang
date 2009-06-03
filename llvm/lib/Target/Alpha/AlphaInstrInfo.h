@@ -90,6 +90,18 @@ public:
                   MachineBasicBlock::iterator MI) const;
   bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+
+  /// getGlobalBaseReg - Return a virtual register initialized with the
+  /// the global base register value. Output instructions required to
+  /// initialize the register in the function entry block, if necessary.
+  ///
+  unsigned getGlobalBaseReg(MachineFunction *MF) const;
+
+  /// getGlobalRetAddr - Return a virtual register initialized with the
+  /// the global return address register value. Output instructions required to
+  /// initialize the register in the function entry block, if necessary.
+  ///
+  unsigned getGlobalRetAddr(MachineFunction *MF) const;
 };
 
 }

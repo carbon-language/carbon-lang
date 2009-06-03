@@ -941,9 +941,6 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
-  // GP must be live into PIC and non-PIC call target.
-  AddLiveIn(MF, Mips::GP, Mips::CPURegsRegisterClass);
-
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);

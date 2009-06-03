@@ -223,9 +223,6 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   SDValue Root = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
 
-  AddLiveIn(MF, Alpha::R29, &Alpha::GPRCRegClass); //GP
-  AddLiveIn(MF, Alpha::R26, &Alpha::GPRCRegClass); //RA
-
   unsigned args_int[] = {
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {

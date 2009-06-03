@@ -75,11 +75,16 @@ private:
   /// holds the virtual register into which the sret argument is passed.
   unsigned SRetReturnReg;
 
+  /// GlobalBaseReg - keeps track of the virtual register initialized for
+  /// use as the global base register. This is used for PIC in some PIC
+  /// relocation models.
+  unsigned GlobalBaseReg;
+
 public:
   MipsFunctionInfo(MachineFunction& MF) 
   : FPStackOffset(0), RAStackOffset(0), CPUTopSavedRegOff(0), 
     FPUTopSavedRegOff(0), GPHolder(-1,-1), HasLoadArgs(false), 
-    HasStoreVarArgs(false), SRetReturnReg(0)
+    HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0)
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -124,6 +129,9 @@ public:
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }
+
+  unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
+  void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
 };
 
 } // end of namespace llvm

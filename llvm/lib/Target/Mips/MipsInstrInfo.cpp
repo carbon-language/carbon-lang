@@ -13,8 +13,10 @@
 
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
+#include "MipsMachineFunction.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "MipsGenInstrInfo.inc"
 
 using namespace llvm;
@@ -620,4 +622,31 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
           "Invalid Mips branch condition!");
   Cond[0].setImm(GetOppositeBranchCondition((Mips::CondCode)Cond[0].getImm()));
   return false;
+}
+
+/// getGlobalBaseReg - Return a virtual register initialized with the
+/// the global base register value. Output instructions required to
+/// initialize the register in the function entry block, if necessary.
+///
+unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
+  MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
+  unsigned GlobalBaseReg = MipsFI->getGlobalBaseReg();
+  if (GlobalBaseReg != 0)
+    return GlobalBaseReg;
+
+  // Insert the set of GlobalBaseReg into the first MBB of the function
+  MachineBasicBlock &FirstMBB = MF->front();
+  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+
+  GlobalBaseReg = RegInfo.createVirtualRegister(Mips::CPURegsRegisterClass);
+  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, Mips::GP,
+                              Mips::CPURegsRegisterClass,
+                              Mips::CPURegsRegisterClass);
+  assert(Ok && "Couldn't assign to global base register!");
+  RegInfo.addLiveIn(Mips::GP);
+
+  MipsFI->setGlobalBaseReg(GlobalBaseReg);
+  return GlobalBaseReg;
 }
