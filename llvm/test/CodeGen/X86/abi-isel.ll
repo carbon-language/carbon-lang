@@ -146,7 +146,7 @@
 ; RUN: grep movl %t | count 91
 ; RUN: not grep addl %t
 ; RUN: not grep subl %t
-; RUN: grep leaq %t | count 81
+; RUN: grep leaq %t | count 70
 ; RUN: grep movq %t | count 56
 ; RUN: grep addq %t | count 20
 ; RUN: grep subq %t | count 14
@@ -160,7 +160,7 @@
 ; RUN: not grep @PLT %t
 ; RUN: not grep @PLTOFF %t
 ; RUN: grep {call	\\\*} %t | count 10
-; RUN: grep {%rip} %t | count 150
+; RUN: grep {%rip} %t | count 139
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=dynamic-no-pic -code-model=small > %t
 ; RUN: not grep leal %t
 ; RUN: grep movl %t | count 95

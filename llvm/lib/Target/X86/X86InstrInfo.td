@@ -237,7 +237,6 @@ def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
-def IsNotDarwin  : Predicate<"!Subtarget->isTargetDarwin()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
