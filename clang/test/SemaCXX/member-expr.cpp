@@ -28,6 +28,6 @@ struct B {
  A *f0();
 };
 int f0(B *b) {
-  return b->f0->f0; // expected-error{{member reference base type 'struct A *(void)' is not a structure or union}} \
+  return b->f0->f0; // expected-error{{member reference base type 'struct A *()' is not a structure or union}} \
   // expected-note{{perhaps you meant to call this function}}
 }

@@ -60,7 +60,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
         // Not va_list.
         Ty.getUnqualifiedType() != Context.getBuiltinVaListType()) {
       S = "'"+S+"' (aka '";
-      S += DesugaredTy.getAsString();
+      S += DesugaredTy.getAsString(Context.PrintingPolicy);
       S += "')";
       Output.append(S.begin(), S.end());
       return;

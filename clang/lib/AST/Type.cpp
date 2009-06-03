@@ -1410,7 +1410,7 @@ void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy
     if (getNumArgs())
       S += ", ";
     S += "...";
-  } else if (getNumArgs() == 0) {
+  } else if (getNumArgs() == 0 && !Policy.CPlusPlus) {
     // Do not emit int() if we have a proto, emit 'int(void)'.
     S += "void";
   }
