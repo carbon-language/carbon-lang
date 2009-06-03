@@ -754,13 +754,6 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
             // instructions.
     Info.setAllowsRegister();
     return true;
-  case 'Y':
-    ++Name;
-    if (*Name == 't') {
-      Info.setAllowsRegister();
-      return true;
-    }
-    return false;
   }
 }
 
