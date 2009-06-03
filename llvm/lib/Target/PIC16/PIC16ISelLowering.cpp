@@ -354,7 +354,8 @@ SDValue PIC16TargetLowering::ExpandFrameIndex(SDNode *N, SelectionDAG &DAG) {
   FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(SDValue(N,0));
   // FIXME there isn't really debug info here
   DebugLoc dl = FR->getDebugLoc();
-  int Index = FR->getIndex();
+  // FIXME: Not used.
+  // int Index = FR->getIndex();
 
   // Expand FrameIndex like GlobalAddress and ExternalSymbol
   // Also use Offset field for lo and hi parts. The default 
