@@ -128,7 +128,7 @@ vice-versa).</dd>
 
   <dt>Original file name</dt>
   <dd>The full path of the header that was used to generate the
-precompiled header.</dd> </dl>
+precompiled header.</dd>
 
   <dt>Predefines buffer</dt>
   <dd>Although not explicitly stored as part of the metadata, the
@@ -139,7 +139,9 @@ platform, and command-line options. For example, the predefines buffer
 will contain "<code>#define __STDC__ 1</code>" when we are compiling C
 without Microsoft extensions. The predefines buffer itself is stored
 within the <a href="#sourcemgr">source manager block</a>, but its
-contents are verified along with the rest of the metadata.</dd> </dl>
+contents are verified along with the rest of the metadata.</dd>
+
+</dl>
 
 <h3 name="sourcemgr">Source Manager Block</h3>
 
@@ -274,6 +276,24 @@ the name-lookup and iteration behavior described above:</p>
   contain relatively few declarations in the common case.</li>
 </ul>
 
+<h3 name"stmt">Statements and Expressions</h3>
+
+<p>Statements and expressions are stored in the precompiled header in
+both the <a href="#types">types</a> and the <a
+ href="#decls">declarations</a> blocks, because every statement or
+expression will be associated with either a type or declaration. The
+actual statement and expression records are stored immediately
+following the declaration or type that owns the statement or
+expression. For example, the statement representing the body of a
+function will be stored directly following the declaration of the
+function.</p>
+
+<p>As with types and declarations, each statement and expression kind
+in Clang's abstract syntax tree (<code>ForStmt</code>,
+<code>CallExpr</code>, etc.) has a corresponding record type in the
+precompiled header, which contains the serialized representation of
+that statement or expression. </p>
+
 <h3 name="idtable">Identifier Table Block</h3>
 
 <p>The identifier table block contains an on-disk hash table that maps
@@ -299,13 +319,35 @@ contains:</p>
 mechanism introduces itself into the identifier table as an external
 lookup source. Thus, when the user program refers to an identifier
 that has not yet been seen, Clang will perform a lookup into the
-on-disk hash table ... FINISH THIS!
+identifier table. If an identifier is found, its contents---macro definitions, flags, top-level declarations, etc.---will be deserialized, at which point the corresponding <code>IdentifierInfo</code> structure will have the same contents it would have after parsing the headers in the precompiled header.</p>
 
-<p>A separate table provides a mapping from the numeric representation
-of identifiers used in the PCH file to the location within the on-disk
+<p>Within the PCH file, the identifiers used to name declarations are represented with an integral value. A separate table provides a mapping from this integral value (the identifier ID) to the location within the on-disk
 hash table where that identifier is stored. This mapping is used when
 deserializing the name of a declaration, the identifier of a token, or
 any other construct in the PCH file that refers to a name.</p>
+
+<h3 name="method-pool">Method Pool Block</h3>
+
+<p>The method pool block is represented as an on-disk hash table that
+serves two purposes: it provides a mapping from the names of
+Objective-C selectors to the set of Objective-C instance and class
+methods that have that particular selector (which is required for
+semantic analysis in Objective-C) and also stores all of the selectors
+used by entities within the precompiled header. The design of the
+method pool is similar to that of the <a href="#idtable">identifier
+table</a>: the first time a particular selector is formed during the
+compilation of the program, Clang will search in the on-disk hash
+table of selectors; if found, Clang will read the Objective-C methods
+associated with that selector into the appropriate front-end data
+structure (<code>Sema::InstanceMethodPool</code> and
+<code>Sema::FactoryMethodPool</code> for instance and class methods,
+respectively).</p>
+
+<p>As with identifiers, selectors are represented by numeric values
+within the PCH file. A separate index maps these numeric selector
+values to the offset of the selector within the on-disk hash table,
+and will be used when de-serializing an Objective-C method declaration
+(or other Objective-C construct) that refers to the selector.</p>
 
 </div>
 
