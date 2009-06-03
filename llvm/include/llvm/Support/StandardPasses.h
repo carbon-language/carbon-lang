@@ -60,15 +60,10 @@ namespace llvm {
   ///
   /// Internalize - Run the internalize pass.
   /// RunInliner - Use a function inlining pass.
-  /// RunSecondGlobalOpt - Run the global optimizer pass twice.
   /// VerifyEach - Run the verifier after each pass.
-  //
-  // FIXME: RunSecondGlobalOpt should go away once we resolve which of LTO or
-  // llvm-ld is better.
   static inline void createStandardLTOPasses(PassManager *PM,
                                              bool Internalize,
                                              bool RunInliner,
-                                             bool RunSecondGlobalOpt,
                                              bool VerifyEach);
 
   // Implementations
@@ -173,7 +168,6 @@ namespace llvm {
   static inline void createStandardLTOPasses(PassManager *PM,
                                              bool Internalize,
                                              bool RunInliner,
-                                             bool RunSecondGlobalOpt,
                                              bool VerifyEach) {
     // Now that composite has been compiled, scan through the module, looking
     // for a main function.  If main is defined, mark all other functions
@@ -207,8 +201,8 @@ namespace llvm {
       addOnePass(PM, createFunctionInliningPass(), VerifyEach);
 
     addOnePass(PM, createPruneEHPass(), VerifyEach);   // Remove dead EH info.
-    // Optimize globals again.
-    if (RunSecondGlobalOpt)
+    // Optimize globals again if we ran the inliner.
+    if (RunInliner)
       addOnePass(PM, createGlobalOptimizerPass(), VerifyEach);
     addOnePass(PM, createGlobalDCEPass(), VerifyEach); // Remove dead functions.
 

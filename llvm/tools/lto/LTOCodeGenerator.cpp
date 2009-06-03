@@ -391,7 +391,6 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
     passes.add(new TargetData(*_target->getTargetData()));
     
     createStandardLTOPasses(&passes, /*Internalize=*/ false, !DisableInline,
-                            /*RunSecondGlobalOpt=*/ false, 
                             /*VerifyEach=*/ false);
 
     // Make sure everything is still good.

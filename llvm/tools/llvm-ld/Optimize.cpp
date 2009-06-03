@@ -94,7 +94,7 @@ void Optimize(Module* M) {
 
   if (!DisableOptimizations)
     createStandardLTOPasses(&Passes, !DisableInternalize, !DisableInline,
-                            /*RunSecondGlobalOpt=*/true, VerifyEach);
+                            VerifyEach);
 
   // If the -s or -S command line options were specified, strip the symbols out
   // of the resulting program to make it smaller.  -s and -S are GNU ld options
