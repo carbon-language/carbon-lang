@@ -33,7 +33,8 @@
         <li><a href="#method-pool">Method Pool Block</a></li>
       </ul>
     </li>
- </ul>
+    <li><a href="#tendrils">Precompiled Header Integration Points</a></li>
+</ul>
     
 <h2 id="usage">Using Precompiled Headers with <tt>clang-cc</tt></h2>
 
@@ -393,7 +394,59 @@ values to the offset of the selector within the on-disk hash table,
 and will be used when de-serializing an Objective-C method declaration
 (or other Objective-C construct) that refers to the selector.</p>
 
-<h2 id="tendrils"></h2>
+<h2 id="tendrils">Precompiled Header Integration Points</h2>
+
+<p>The "lazy" deserialization behavior of precompiled headers requires
+their integration into several completely different submodules of
+Clang. For example, lazily deserializing the declarations during name
+lookup requires that the name-lookup routines be able to query the
+precompiled header to find entities within the PCH file.</p>
+
+<p>For each Clang data structure that requires direct interaction with
+the precompiled header logic, there is an abstract class that provides
+the interface between the two modules. The <code>PCHReader</code>
+class, which handles the loading of a precompiled header, inherits
+from all of these abstract classes to provide lazy deserialization of
+Clang's data structures. <code>PCHReader</code> implements the
+following abstract classes:</p>
+
+<dl>
+  <dt><code>StatSysCallCache</code></dt>
+  <dd>This abstract interface is associated with the
+    <code>FileManager</code> class, and is used whenever the file
+    manager is going to perform a <code>stat()</code> system call.</dd>
+    
+  <dt><code>ExternalSLocEntrySource</code></dt>
+  <dd>This abstract interface is associated with the
+    <code>SourceManager</code> class, and is used whenever the
+    <a href="#sourcemgr">source manager</a> needs to load the details
+    of a file, buffer, or macro instantiation.</dd>
+
+  <dt><code>IdentifierInfoLookup</code></dt>
+  <dd>This abstract interface is associated with the
+    <code>IdentifierTable</code> class, and is used whenever the
+    program source refers to an identifier that has not yet been seen.
+    In this case, the precompiled header implementation searches for
+    this identifier within its <a href="#idtable">identifier table</a>
+    to load any top-level declarations or macros associated with that
+    identifier.</dd>
+
+  <dt><code>ExternalASTSource</code></dt>
+  <dd>This abstract interface is associated with the
+    <code>ASTContext</code> class, and is used whenever the abstract
+    syntax tree nodes need to loaded from the precompiled header. It
+    provides the ability to de-serialize declarations and types
+    identified by their numeric values, read the bodies of functions
+    when required, and read the declarations stored within a
+    declaration context (either for iteration or for name lookup).</dd>
+    
+  <dt><code>ExternalSemaSource</code></dt>
+  <dd>This abstract interface is associated with the <code>Sema</code>
+    class, and is used whenever semantic analysis needs to read
+    information from the <a href="#methodpool">global method
+    pool</a>.</dd>
+</dl>
+
 </div>
 
 </html>
