@@ -33,7 +33,8 @@
         <li><a href="#method-pool">Method Pool Block</a></li>
       </ul>
     </li>
-    <li><a href="#tendrils">Precompiled Header Integration Points</a></li>
+    <li><a href="#tendrils">Precompiled Header Integration
+    Points</a></li>
 </ul>
     
 <h2 id="usage">Using Precompiled Headers with <tt>clang-cc</tt></h2>
@@ -104,7 +105,37 @@ entity (and those entities it depends on) are deserialized from the
 PCH file. With this approach, the cost of using a precompiled header
 for a translation unit is proportional to the amount of code actually
 used from the header, rather than being proportional to the size of
-the header itself.</p> </body>
+the header itself.</p> 
+
+<p>When given the <code>-print-stats</code> option, Clang produces
+statistics describing how much of the precompiled header was actually
+loaded from disk. For a simple "Hello, World!" program that includes
+the Apple <code>Cocoa.h</code> header (which is built as a precompiled
+header), this option illustrates how little of the actual precompiled
+header is required:</p>
+
+<pre>
+*** PCH Statistics:
+  933 stat cache hits
+  4 stat cache misses
+  895/39981 source location entries read (2.238563%)
+  19/15315 types read (0.124061%)
+  20/82685 declarations read (0.024188%)
+  154/58070 identifiers read (0.265197%)
+  0/7260 selectors read (0.000000%)
+  0/30842 statements read (0.000000%)
+  4/8400 macros read (0.047619%)
+  1/4995 lexical declcontexts read (0.020020%)
+  0/4413 visible declcontexts read (0.000000%)
+  0/7230 method pool entries read (0.000000%)
+  0 method pool misses
+</pre>
+
+<p>For this small program, only a tiny fraction of the source
+locations, types, declarations, identifiers, and macros were actually
+deserialized from the precompiled header. These statistics can be
+useful to determine whether the precompiled header implementation can
+be improved by making more of the implementation lazy.</p>
 
 <h2 id="contents">Precompiled Header Contents</h2>
 
@@ -117,6 +148,14 @@ either a block or a record within <a
  href="http://llvm.org/docs/BitCodeFormat.html">LLVM's bitstream
 format</a>. The contents of each of these logical blocks are described
 below.</p>
+
+<p>For a given precompiled header, the <a
+href="http://llvm.org/cmds/llvm-bcanalyzer.html"><code>llvm-bcanalyzer</code></a>
+utility can be used to examine the actual structure of the bitstream
+for the precompiled header. This information can be used both to help
+understand the structure of the precompiled header and to isolate
+areas where precompiled headers can still be optimized, e.g., through
+the introduction of abbreviations.</p>
 
 <h3 id="metadata">Metadata Block</h3>
 
@@ -449,4 +488,5 @@ following abstract classes:</p>
 
 </div>
 
+</body>
 </html>
