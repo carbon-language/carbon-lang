@@ -152,6 +152,7 @@ $ llvm-gcc -use-gold-plugin a.o b.o -o main # &lt;-- link with LLVMgold plugin
     binutils):
     <pre class="doc_code">
 export CC="$PREFIX/bin/llvm-gcc -use-gold-plugin"
+export CXX="$PREFIX/bin/llvm-g++ -use-gold-plugin"
 export AR="$PREFIX/bin/ar --plugin libLLVMgold.so"
 export NM="$PREFIX/bin/nm --plugin libLLVMgold.so"
 export RANLIB=/bin/true #ranlib is not needed, and doesn't support .bc files in .a
