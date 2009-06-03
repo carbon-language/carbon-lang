@@ -680,8 +680,6 @@ def : Pat<(v4i16 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
 def : Pat<(v8i8 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
                                                   (iPTR 0))))),
           (v8i8 (MMX_MOVDQ2Qrr VR128:$src))>;
-def : Pat<(v2i32 (bitconvert (f64 FR64:$src))),
-          (v2i32 (MMX_MOVDQ2Qrr VR128:$src))>;
 
 // CMOV* - Used to implement the SELECT DAG operation.  Expanded by the
 // scheduler into a branch sequence.
