@@ -551,7 +551,7 @@ namespace {
 
     // When outputting a function stub in the context of some other function, we
     // save BufferBegin/BufferEnd/CurBufferPtr here.
-    uint8_t *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
+    unsigned char *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
 
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
@@ -1056,11 +1056,11 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   
   // FnStart is the start of the text, not the start of the constant pool and
   // other per-function data.
-  uint8_t *FnStart =
-    (uint8_t *)TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
+  unsigned char *FnStart =
+    (unsigned char *)TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
 
   // FnEnd is the end of the function's machine code.
-  uint8_t *FnEnd = CurBufferPtr;
+  unsigned char *FnEnd = CurBufferPtr;
 
   if (!Relocations.empty()) {
     CurFn = F.getFunction();
@@ -1183,7 +1183,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     } else {
       DOUT << "JIT: Binary code:\n";
       DOUT << std::hex;
-      uint8_t* q = FnStart;
+      unsigned char* q = FnStart;
       for (int i = 0; q < FnEnd; q += 4, ++i) {
         if (i == 4)
           i = 0;
@@ -1221,7 +1221,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
                                                              ActualSize);
     BufferEnd = BufferBegin+ActualSize;
-    uint8_t* FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd);
+    unsigned char* FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd);
     MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr,
                               FrameRegister);
     BufferBegin = SavedBufferBegin;
@@ -1416,7 +1416,7 @@ void JITEmitter::startGVStub(const GlobalValue* GV, void *Buffer,
   SavedBufferEnd = BufferEnd;
   SavedCurBufferPtr = CurBufferPtr;
   
-  BufferBegin = CurBufferPtr = (uint8_t *)Buffer;
+  BufferBegin = CurBufferPtr = (unsigned char *)Buffer;
   BufferEnd = BufferBegin+StubSize+1;
 }
 

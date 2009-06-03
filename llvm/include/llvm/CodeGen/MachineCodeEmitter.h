@@ -50,14 +50,14 @@ class MachineCodeEmitter {
 protected:
   /// BufferBegin/BufferEnd - Pointers to the start and end of the memory
   /// allocated for this code buffer.
-  uint8_t *BufferBegin, *BufferEnd;
+  unsigned char *BufferBegin, *BufferEnd;
   
   /// CurBufferPtr - Pointer to the next byte of memory to fill when emitting 
   /// code.  This is guranteed to be in the range [BufferBegin,BufferEnd].  If
   /// this pointer is at BufferEnd, it will never move due to code emission, and
   /// all code emission requests will be ignored (this is the buffer overflow
   /// condition).
-  uint8_t *CurBufferPtr;
+  unsigned char *CurBufferPtr;
 
 public:
   virtual ~MachineCodeEmitter() {}
@@ -96,7 +96,7 @@ public:
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.
   ///
-  void emitByte(uint8_t B) {
+  void emitByte(unsigned char B) {
     if (CurBufferPtr != BufferEnd)
       *CurBufferPtr++ = B;
   }
@@ -106,10 +106,10 @@ public:
   ///
   void emitWordLE(unsigned W) {
     if (4 <= BufferEnd-CurBufferPtr) {
-      *CurBufferPtr++ = (uint8_t)(W >>  0);
-      *CurBufferPtr++ = (uint8_t)(W >>  8);
-      *CurBufferPtr++ = (uint8_t)(W >> 16);
-      *CurBufferPtr++ = (uint8_t)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
     } else {
       CurBufferPtr = BufferEnd;
     }
@@ -120,10 +120,10 @@ public:
   ///
   void emitWordBE(unsigned W) {
     if (4 <= BufferEnd-CurBufferPtr) {
-      *CurBufferPtr++ = (uint8_t)(W >> 24);
-      *CurBufferPtr++ = (uint8_t)(W >> 16);
-      *CurBufferPtr++ = (uint8_t)(W >>  8);
-      *CurBufferPtr++ = (uint8_t)(W >>  0);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
     } else {
       CurBufferPtr = BufferEnd;
     }
@@ -134,14 +134,14 @@ public:
   ///
   void emitDWordLE(uint64_t W) {
     if (8 <= BufferEnd-CurBufferPtr) {
-      *CurBufferPtr++ = (uint8_t)(W >>  0);
-      *CurBufferPtr++ = (uint8_t)(W >>  8);
-      *CurBufferPtr++ = (uint8_t)(W >> 16);
-      *CurBufferPtr++ = (uint8_t)(W >> 24);
-      *CurBufferPtr++ = (uint8_t)(W >> 32);
-      *CurBufferPtr++ = (uint8_t)(W >> 40);
-      *CurBufferPtr++ = (uint8_t)(W >> 48);
-      *CurBufferPtr++ = (uint8_t)(W >> 56);
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >> 32);
+      *CurBufferPtr++ = (unsigned char)(W >> 40);
+      *CurBufferPtr++ = (unsigned char)(W >> 48);
+      *CurBufferPtr++ = (unsigned char)(W >> 56);
     } else {
       CurBufferPtr = BufferEnd;
     }
@@ -152,14 +152,14 @@ public:
   ///
   void emitDWordBE(uint64_t W) {
     if (8 <= BufferEnd-CurBufferPtr) {
-      *CurBufferPtr++ = (uint8_t)(W >> 56);
-      *CurBufferPtr++ = (uint8_t)(W >> 48);
-      *CurBufferPtr++ = (uint8_t)(W >> 40);
-      *CurBufferPtr++ = (uint8_t)(W >> 32);
-      *CurBufferPtr++ = (uint8_t)(W >> 24);
-      *CurBufferPtr++ = (uint8_t)(W >> 16);
-      *CurBufferPtr++ = (uint8_t)(W >>  8);
-      *CurBufferPtr++ = (uint8_t)(W >>  0);
+      *CurBufferPtr++ = (unsigned char)(W >> 56);
+      *CurBufferPtr++ = (unsigned char)(W >> 48);
+      *CurBufferPtr++ = (unsigned char)(W >> 40);
+      *CurBufferPtr++ = (unsigned char)(W >> 32);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
     } else {
       CurBufferPtr = BufferEnd;
     }
@@ -173,8 +173,8 @@ public:
     if(Alignment <= (uintptr_t)(BufferEnd-CurBufferPtr)) {
       // Move the current buffer ptr up to the specified alignment.
       CurBufferPtr =
-        (uint8_t*)(((uintptr_t)CurBufferPtr+Alignment-1) &
-                   ~(uintptr_t)(Alignment-1));
+        (unsigned char*)(((uintptr_t)CurBufferPtr+Alignment-1) &
+                         ~(uintptr_t)(Alignment-1));
     } else {
       CurBufferPtr = BufferEnd;
     }
@@ -185,7 +185,7 @@ public:
   /// written to the output stream.
   void emitULEB128Bytes(unsigned Value) {
     do {
-      uint8_t Byte = Value & 0x7f;
+      unsigned char Byte = Value & 0x7f;
       Value >>= 7;
       if (Value) Byte |= 0x80;
       emitByte(Byte);
@@ -194,12 +194,12 @@ public:
   
   /// emitSLEB128Bytes - This callback is invoked when a SLEB128 needs to be
   /// written to the output stream.
-  void emitSLEB128Bytes(int32_t Value) {
-    int32_t Sign = Value >> (8 * sizeof(Value) - 1);
+  void emitSLEB128Bytes(int Value) {
+    int Sign = Value >> (8 * sizeof(Value) - 1);
     bool IsMore;
   
     do {
-      uint8_t Byte = Value & 0x7f;
+      unsigned char Byte = Value & 0x7f;
       Value >>= 7;
       IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
       if (IsMore) Byte |= 0x80;
@@ -212,14 +212,14 @@ public:
   void emitString(const std::string &String) {
     for (unsigned i = 0, N = static_cast<unsigned>(String.size());
          i < N; ++i) {
-      uint8_t C = String[i];
+      unsigned char C = String[i];
       emitByte(C);
     }
     emitByte(0);
   }
   
   /// emitInt32 - Emit a int32 directive.
-  void emitInt32(int32_t Value) {
+  void emitInt32(int Value) {
     if (4 <= BufferEnd-CurBufferPtr) {
       *((uint32_t*)CurBufferPtr) = Value;
       CurBufferPtr += 4;
