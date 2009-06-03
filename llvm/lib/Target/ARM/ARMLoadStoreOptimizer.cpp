@@ -697,7 +697,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // LDM/STM ops.
         for (unsigned i = 0, e = MBBII.size(); i < e; ++i)
           if (mergeBaseUpdateLSMultiple(MBB, MBBII[i], Advance, MBBI))
-            NumMerges++;
+            ++NumMerges;
         NumMerges += MBBII.size();
 
         // Try folding preceeding/trailing base inc/dec into those load/store
@@ -705,10 +705,17 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         for (unsigned i = 0; i != NumMemOps; ++i)
           if (!MemOps[i].Merged)
             if (mergeBaseUpdateLoadStore(MBB, MemOps[i].MBBI, TII,Advance,MBBI))
-              NumMerges++;
+              ++NumMerges;
 
         // RS may be pointing to an instruction that's deleted. 
         RS->skipTo(prior(MBBI));
+      } else if (NumMemOps == 1) {
+        // Try folding preceeding/trailing base inc/dec into the single
+        // load/store.
+        if (mergeBaseUpdateLoadStore(MBB, MemOps[0].MBBI, TII, Advance, MBBI)) {
+          ++NumMerges;
+          RS->skipTo(prior(MBBI));
+        }
       }
 
       CurrBase = 0;
