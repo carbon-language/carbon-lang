@@ -166,12 +166,12 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 
 void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
   // GCC union extension
-  if (E->getType()->isUnionType()) {
-    RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, 
-                                             *SD->field_begin(CGF.getContext()),
-                                             true, 0);
-    EmitInitializationToLValue(E->getSubExpr(), FieldLoc);
+  if (E->getSubExpr()->getType()->isScalarType()) {
+    QualType PtrTy =
+        CGF.getContext().getPointerType(E->getSubExpr()->getType());
+    llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
+                                                 CGF.ConvertType(PtrTy));
+    EmitInitializationToLValue(E->getSubExpr(), LValue::MakeAddr(CastPtr, 0));
     return;
   }
 

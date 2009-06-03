@@ -7,6 +7,7 @@ union u { int i; double d; };
 
 void foo() {
   union u ola = (union u) 351;
+  union u olb = (union u) 1.0;
 }
 
 union u w = (union u)2;
