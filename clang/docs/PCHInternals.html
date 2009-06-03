@@ -16,7 +16,26 @@
   view, please see the <a
    href="UsersManual.html#precompiledheaders">User's Manual</a>.</p>
 
-<h2>Using precompiled headers with <tt>clang-cc</tt></h2>
+  <p><b>Table of Contents</b></p>
+  <ul>
+    <li><a href="#usage">Using Precompiled Headers with
+    <tt>clang-cc</tt></a></li>
+    <li><a href="#philosophy">Design Philosophy</a></li>
+    <li><a href="#contents">Precompiled Header Contents</a>
+      <ul>
+        <li><a href="#metadata">Metadata Block</a></li>
+        <li><a href="#sourcemgr">Source Manager Block</a></li>
+        <li><a href="#preprocessor">Preprocessor Block</a></li>
+        <li><a href="#types">Types Block</a></li>
+        <li><a href="#decls">Declarations Block</a></li>
+        <li><a href="#stmt">Statements and Expressions</a></li>
+        <li><a href="#idtable">Identifier Table Block</a></li>
+        <li><a href="#method-pool">Method Pool Block</a></li>
+      </ul>
+    </li>
+ </ul>
+    
+<h2 id="usage">Using Precompiled Headers with <tt>clang-cc</tt></h2>
 
 <p>The low-level Clang compiler, <tt>clang-cc</tt>, supports two command
 line options for generating and using PCH files.<p>
@@ -36,7 +55,7 @@ with the <b><tt>-include-pch</tt></b> option:</p>
   $ clang-cc -include-pch test.h.pch test.c -o test.s
 </pre>
 
-<h2>PCH Design Philosophy</h2>
+<h2 id="philosophy">Design Philosophy</h2>
   
 <p>Precompiled headers are meant to improve overall compile times for
   projects, so the design of precompiled headers is entirely driven by
@@ -86,7 +105,7 @@ for a translation unit is proportional to the amount of code actually
 used from the header, rather than being proportional to the size of
 the header itself.</p> </body>
 
-<h2>Precompiled Header Contents</h2>
+<h2 id="contents">Precompiled Header Contents</h2>
 
 <img src="PCHLayout.png" align="right" alt="Precompiled header layout">
 
@@ -98,7 +117,7 @@ either a block or a record within <a
 format</a>. The contents of each of these logical blocks are described
 below.</p>
 
-<h3 name="metadata">Metadata Block</h3>
+<h3 id="metadata">Metadata Block</h3>
 
 <p>The metadata block contains several records that provide
 information about how the precompiled header was built. This metadata
@@ -143,7 +162,7 @@ contents are verified along with the rest of the metadata.</dd>
 
 </dl>
 
-<h3 name="sourcemgr">Source Manager Block</h3>
+<h3 id="sourcemgr">Source Manager Block</h3>
 
 <p>The source manager block contains the serialized representation of
 Clang's <a
@@ -176,7 +195,7 @@ system calls performed when building the precompiled header. The
 latter is particularly useful in reducing system time when searching
 for include files.</p>
 
-<h3 name="preprocessor">Preprocessor Block</h3>
+<h3 id="preprocessor">Preprocessor Block</h3>
 
 <p>The preprocessor block contains the serialized representation of
 the preprocessor. Specifically, it contains all of the macros that
@@ -187,7 +206,7 @@ name of the macro first occurs in the program. This lazy loading of
 macro definitions is trigged by lookups into the <a
  href="#idtable">identifier table</a>.</p>
 
-<h3 name="types">Types Block</h3>
+<h3 id="types">Types Block</h3>
 
 <p>The types block contains the serialized representation of all of
 the types referenced in the translation unit. Each Clang type node
@@ -213,7 +232,7 @@ Clang's <a
  href="http://clang.llvm.org/docs/InternalsManual.html#Type">QualType</a>
 class.</p>
 
-<h3 name="decls">Declarations Block</h3>
+<h3 id="decls">Declarations Block</h3>
 
 <p>The declarations block contains the serialized representation of
 all of the declarations referenced in the translation unit. Each Clang
@@ -276,7 +295,7 @@ the name-lookup and iteration behavior described above:</p>
   contain relatively few declarations in the common case.</li>
 </ul>
 
-<h3 name"stmt">Statements and Expressions</h3>
+<h3 id="stmt">Statements and Expressions</h3>
 
 <p>Statements and expressions are stored in the precompiled header in
 both the <a href="#types">types</a> and the <a
@@ -319,7 +338,7 @@ code indicates that we have reached the end of a serialized expression
 or statement; other expression or statement records may follow, but
 they are part of a different expression.</p>
 
-<h3 name="idtable">Identifier Table Block</h3>
+<h3 id="idtable">Identifier Table Block</h3>
 
 <p>The identifier table block contains an on-disk hash table that maps
 each identifier mentioned within the precompiled header to the
@@ -351,7 +370,7 @@ hash table where that identifier is stored. This mapping is used when
 deserializing the name of a declaration, the identifier of a token, or
 any other construct in the PCH file that refers to a name.</p>
 
-<h3 name="method-pool">Method Pool Block</h3>
+<h3 id="method-pool">Method Pool Block</h3>
 
 <p>The method pool block is represented as an on-disk hash table that
 serves two purposes: it provides a mapping from the names of
@@ -374,6 +393,7 @@ values to the offset of the selector within the on-disk hash table,
 and will be used when de-serializing an Objective-C method declaration
 (or other Objective-C construct) that refers to the selector.</p>
 
+<h2 id="tendrils"></h2>
 </div>
 
 </html>
