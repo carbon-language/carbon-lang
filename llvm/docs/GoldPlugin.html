@@ -14,6 +14,7 @@
   <li><a href="#usage">Usage</a>
   <ul>
     <li><a href="#example1">Example of link time optimization</a></li>
+    <li><a href="#lto_autotools">Quickstart for using LTO with autotooled projects</a></li>
   </ul></li>
   <li><a href="#licensing">Licensing</a></li>
 </ol>
@@ -133,6 +134,34 @@ $ llvm-gcc -use-gold-plugin a.o b.o -o main # &lt;-- link with LLVMgold plugin
   leading LLVM to delete that function. However, unlike in the
   <a href="http://llvm.org/docs/LinkTimeOptimization.html#example1">libLTO
   example</a> gold does not currently eliminate foo4.</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="lto_autotools">Quickstart for using LTO with autotooled projects</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+  <p><tt>gold</tt>, <tt>ar</tt> and <tt>nm</tt> all support plugins now, so everything should be
+  in place for an easy to use LTO build of autotooled projects:</p>
+  <ul>
+    <li>Follow the instructions <a href="#build">on how to build libLLVMgold.so</a>.</li>
+    <li>Install the newly built binutils to <tt>$PREFIX</tt></li>
+    <li>Copy <tt>Release/lib/libLLVMgold.so</tt> to
+    <tt>$PREFIX/libexec/gcc/x86_64-unknown-linux-gnu/4.2.1/</tt> and
+    <tt>$PREFIX/lib/bfd-plugins/</tt></li>
+    <li>Set environment variables (<tt>$PREFIX</tt> is where you installed llvm-gcc and
+    binutils):
+    <pre class="doc_code">
+export CC="$PREFIX/bin/llvm-gcc -use-gold-plugin"
+export AR="$PREFIX/bin/ar --plugin libLLVMgold.so"
+export NM="$PREFIX/bin/nm --plugin libLLVMgold.so"
+export RANLIB=/bin/true #ranlib is not needed, and doesn't support .bc files in .a
+export CFLAGS="-O4"
+     </pre>
+     </li>
+     <li>Configure &amp; build the project as usual: <tt>./configure &amp;&amp; make &amp;&amp; make check</tt> </li>
+   </ul>
+   <p> The environment variable settings may work for non-autotooled projects
+   too, but you may need to set the <tt>LD</tt> environment variable as well.</p>
 </div>
 
 <!--=========================================================================-->
