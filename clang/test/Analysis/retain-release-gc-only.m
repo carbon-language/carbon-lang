@@ -101,6 +101,11 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 
 CFTypeRef CFMakeCollectable(CFTypeRef cf) ;
 
+static __inline__ __attribute__((always_inline)) id NSMakeCollectable(CFTypeRef 
+cf) {
+    return cf ? (id)CFMakeCollectable(cf) : ((void*)0);
+}
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -124,6 +129,31 @@ void f3() {
   CFRetain(A);
 }
 
+void f3b() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  CFMakeCollectable(A);
+}
+
+
+void f4() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{leak}}
+  NSMakeCollectable(A);
+  CFRetain(A);
+}
+
+void f4b() {
+  CFMutableArrayRef A = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+  NSMakeCollectable(A);
+}
+
+void f5() {
+  id x = [NSMakeCollectable(CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks)) autorelease]; // no-warning
+}
+
+void f5b() {
+  id x = [(id) CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks) autorelease]; // expected-warning{{leak}}
+}
+
 // Test return of non-owned objects in contexts where an owned object
 // is expected.
 @interface TestReturnNotOwnedWhenExpectedOwned
@@ -133,7 +163,7 @@ void f3() {
 
 @implementation TestReturnNotOwnedWhenExpectedOwned
 - (NSString*)newString {
-  NSString *s = [NSString stringWithUTF8String:"hello"]; // expected-warning{{Potential leak (when using garbage collection) of an object allocated on line 136 and stored into 's'}}
+  NSString *s = [NSString stringWithUTF8String:"hello"]; // expected-warning{{Potential leak (when using garbage collection) of an object allocated}}
   CFRetain(s);
   return s;
 }
