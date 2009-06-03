@@ -9,8 +9,10 @@
 //
 // This file defines the TargetFolder class, a helper for IRBuilder.
 // It provides IRBuilder with a set of methods for creating constants with
-// target dependent folding.  For general constant creation and folding,
-// use ConstantExpr and the routines in llvm/Analysis/ConstantFolding.h.
+// target dependent folding, in addition to the same target-independent
+// folding that the ConstantFolder class provides.  For general constant
+// creation and folding, use ConstantExpr and the routines in
+// llvm/Analysis/ConstantFolding.h.
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,18 +28,18 @@ class TargetData;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {
-  const TargetData &TD;
+  const TargetData *TD;
 
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      if (Constant *CF = ConstantFoldConstantExpression(CE, &TD))
+      if (Constant *CF = ConstantFoldConstantExpression(CE, TD))
         return CF;
     return C;
   }
 
 public:
-  TargetFolder(const TargetData &TheTD) : TD(TheTD) {}
+  explicit TargetFolder(const TargetData *TheTD) : TD(TheTD) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators
