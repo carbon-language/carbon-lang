@@ -1717,7 +1717,7 @@ def err_typecheck_statement_requires_integer : Error<
 def err_multiple_default_labels_defined : Error<
   "multiple default labels in one switch">;
 def warn_empty_if_body : Warning<
-  "if statement has empty body">;
+  "if statement has empty body">, InGroup<EmptyBody>;
 def err_va_start_used_in_non_variadic_function : Error<
   "'va_start' used in function with fixed args">;
 def warn_second_parameter_of_va_start_not_last_named_argument : Warning<
