@@ -5,6 +5,7 @@ add_clang_library(clangCodeGen
   CGBlocks.cpp
   CGCall.cpp
   CGCXX.cpp
+  CGCXXTemp.cpp
   CGDebugInfo.cpp
   CGDecl.cpp
   CGExprAgg.cpp
