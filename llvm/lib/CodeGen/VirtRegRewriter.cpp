@@ -411,9 +411,11 @@ static void InvalidateKill(unsigned Reg,
                            std::vector<MachineOperand*> &KillOps) {
   if (RegKills[Reg]) {
     KillOps[Reg]->setIsKill(false);
-    KillOps[Reg] = NULL;
-    RegKills.reset(Reg);
-    for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
+    // KillOps[Reg] might be a def of a super-register.
+    unsigned KReg = KillOps[Reg]->getReg();
+    KillOps[KReg] = NULL;
+    RegKills.reset(KReg);
+    for (const unsigned *SR = TRI->getSubRegisters(KReg); *SR; ++SR) {
       if (RegKills[*SR]) {
         KillOps[*SR]->setIsKill(false);
         KillOps[*SR] = NULL;
@@ -516,8 +518,18 @@ static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
       // That can't be right. Register is killed but not re-defined and it's
       // being reused. Let's fix that.
       KillOps[Reg]->setIsKill(false);
-      KillOps[Reg] = NULL;
-      RegKills.reset(Reg);
+      // KillOps[Reg] might be a def of a super-register.
+      unsigned KReg = KillOps[Reg]->getReg();
+      KillOps[KReg] = NULL;
+      RegKills.reset(KReg);
+
+      // Must be a def of a super-register. Its other sub-regsters are no
+      // longer killed as well.
+      for (const unsigned *SR = TRI->getSubRegisters(KReg); *SR; ++SR) {
+        KillOps[*SR] = NULL;
+        RegKills.reset(*SR);
+      }
+
       if (!MI.isRegTiedToDefOperand(i))
         // Unless it's a two-address operand, this is the new kill.
         MO.setIsKill();
@@ -1090,6 +1102,8 @@ private:
       VRM.RemoveMachineInstrFromMaps(&NextMI);
       MBB.erase(&NextMI);
       ++NumModRefUnfold;
+      if (NextMII == MBB.end())
+        break;
     } while (FoldsStackSlotModRef(*NextMII, SS, PhysReg, TII, TRI, VRM));
 
     // Store the value back into SS.
