@@ -228,7 +228,7 @@
 #cmakedefine HAVE_MALLOC_MALLOC_H ${HAVE_MALLOC_MALLOC_H}
 
 /* Define to 1 if you have the `malloc_zone_statistics' function. */
-#undef HAVE_MALLOC_ZONE_STATISTICS
+#cmakedefine HAVE_MALLOC_ZONE_STATISTICS ${HAVE_MALLOC_ZONE_STATISTICS}
 
 /* Define to 1 if you have the `memcpy' function. */
 #undef HAVE_MEMCPY

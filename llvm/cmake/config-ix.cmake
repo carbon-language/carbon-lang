@@ -58,6 +58,8 @@ check_symbol_exists(isnan math.h HAVE_ISNAN_IN_MATH_H)
 check_symbol_exists(ceilf math.h HAVE_CEILF)
 check_symbol_exists(floorf math.h HAVE_FLOORF)
 check_symbol_exists(mallinfo malloc.h HAVE_MALLINFO)
+check_symbol_exists(malloc_zone_statistics malloc/malloc.h
+                    HAVE_MALLOC_ZONE_STATISTICS)
 check_symbol_exists(pthread_mutex_lock pthread.h HAVE_PTHREAD_MUTEX_LOCK)
 check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
 
