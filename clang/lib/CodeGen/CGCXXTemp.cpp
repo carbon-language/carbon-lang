@@ -20,6 +20,8 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
   llvm::BasicBlock *DtorBlock = createBasicBlock("temp.dtor");
     
   LiveTemporaries.push_back(CXXLiveTemporaryInfo(Temporary, Ptr, DtorBlock, 0));
+
+  PushCleanupBlock(DtorBlock);
 }
 
 void CodeGenFunction::PopCXXTemporary() {
