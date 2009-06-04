@@ -1049,6 +1049,10 @@ TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx) {
     switch (Args[Idx].getKind()) {
+    case TemplateArgument::Null:
+      assert(false && "Should not have a NULL template argument");
+      break;
+        
     case TemplateArgument::Type:
       if (Args[Idx].getAsType()->isDependentType())
         return true;

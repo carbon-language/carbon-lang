@@ -66,15 +66,42 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
   if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
     return false;
 
-  if (const PointerType *PointerParam = Param->getAsPointerType()) {
-    const PointerType *PointerArg = Arg->getAsPointerType();
-    if (!PointerArg)
-      return false;
+  switch (Param->getTypeClass()) {
+    case Type::Pointer: {
+      const PointerType *PointerArg = Arg->getAsPointerType();
+      if (!PointerArg)
+        return false;
+      
+      return DeduceTemplateArguments(Context,
+                                   cast<PointerType>(Param)->getPointeeType(),
+                                     PointerArg->getPointeeType(),
+                                     Deduced);
+    }
+      
+    case Type::LValueReference: {
+      const LValueReferenceType *ReferenceArg = Arg->getAsLValueReferenceType();
+      if (!ReferenceArg)
+        return false;
+      
+      return DeduceTemplateArguments(Context,
+                           cast<LValueReferenceType>(Param)->getPointeeType(),
+                                     ReferenceArg->getPointeeType(),
+                                     Deduced);
+    }
 
-    return DeduceTemplateArguments(Context,
-                                   PointerParam->getPointeeType(),
-                                   PointerArg->getPointeeType(),
-                                   Deduced);
+    case Type::RValueReference: {
+      const RValueReferenceType *ReferenceArg = Arg->getAsRValueReferenceType();
+      if (!ReferenceArg)
+        return false;
+      
+      return DeduceTemplateArguments(Context,
+                           cast<RValueReferenceType>(Param)->getPointeeType(),
+                                     ReferenceArg->getPointeeType(),
+                                     Deduced);
+    }
+      
+    default:
+      break;
   }
 
   // FIXME: Many more cases to go (to go).
