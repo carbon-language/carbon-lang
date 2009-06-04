@@ -154,7 +154,7 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   // Do not accept an all-undef vector.
   if (i == e) return false;
 
-  // Do not accept build_vectors that aren't all constants or which have non-~0
+  // Do not accept build_vectors that aren't all constants or which have non-0
   // elements.
   SDValue Zero = N->getOperand(i);
   if (isa<ConstantSDNode>(Zero)) {
@@ -166,7 +166,7 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   } else
     return false;
 
-  // Okay, we have at least one ~0 value, check to see if the rest match or are
+  // Okay, we have at least one 0 value, check to see if the rest match or are
   // undefs.
   for (++i; i != e; ++i)
     if (N->getOperand(i) != Zero &&
