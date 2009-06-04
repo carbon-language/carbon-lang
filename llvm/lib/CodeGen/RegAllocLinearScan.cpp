@@ -542,6 +542,24 @@ void RALinScan::linearScan()
     // Ignore splited live intervals.
     if (!isPhys && vrm_->getPreSplitReg(cur.reg))
       continue;
+
+    // A register defined by an implicit_def can be liveout the def BB and livein
+    // to a use BB. Add it to the livein set of the use BB's.
+    if (!isPhys && cur.empty()) {
+      if (MachineInstr *DefMI = mri_->getVRegDef(cur.reg)) {
+        assert(DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF);
+        MachineBasicBlock *DefMBB = DefMI->getParent();
+        SmallPtrSet<MachineBasicBlock*, 4> Seen;
+        Seen.insert(DefMBB);
+        for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(cur.reg),
+               re = mri_->reg_end(); ri != re; ++ri) {
+          MachineInstr *UseMI = &*ri;
+          MachineBasicBlock *UseMBB = UseMI->getParent();
+          if (Seen.insert(UseMBB))
+            UseMBB->addLiveIn(Reg);
+        }
+      }
+    }
     for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
          I != E; ++I) {
       const LiveRange &LR = *I;
