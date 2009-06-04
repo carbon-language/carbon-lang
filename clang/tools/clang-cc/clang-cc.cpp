@@ -329,7 +329,7 @@ MessageLength("fmessage-length",
 	      llvm::cl::value_desc("N"));
 
 static llvm::cl::opt<bool>
-NoColorDiagnostic("fno-color-diagnostic",
+NoColorDiagnostic("fno-color-diagnostics",
 	      llvm::cl::desc("Don't use colors when showing diagnostics "
                              "(automatically turned off if output is not a "
                              "terminal)."));

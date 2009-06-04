@@ -539,6 +539,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_fdiagnostics_show_option, 
                    options::OPT_fno_diagnostics_show_option))
     CmdArgs.push_back("-fdiagnostics-show-option");
+  if (!Args.hasFlag(options::OPT_fcolor_diagnostics,
+                   options::OPT_fno_color_diagnostics))
+    CmdArgs.push_back("-fno-color-diagnostics");
 
   // -fdollars-in-identifiers default varies depending on platform and
   // language; only pass if specified.
