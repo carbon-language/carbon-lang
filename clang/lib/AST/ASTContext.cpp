@@ -613,6 +613,20 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
   CollectLocalObjCIvars(this, OI, Fields);
 }
 
+/// ShallowCollectObjCIvars -
+/// Collect all ivars, including those synthesized, in the current class.
+///
+void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
+                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
+                                 bool CollectSynthesized) {
+  for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
+         E = OI->ivar_end(); I != E; ++I) {
+     Ivars.push_back(*I);
+  }
+  if (CollectSynthesized)
+    CollectSynthesizedIvars(OI, Ivars);
+}
+
 void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
   for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(*this),
@@ -645,6 +659,38 @@ void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
   }
 }
 
+unsigned ASTContext::CountProtocolSynthesizedIvars(const ObjCProtocolDecl *PD) {
+  unsigned count = 0;
+  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(*this),
+       E = PD->prop_end(*this); I != E; ++I)
+    if ((*I)->getPropertyIvarDecl())
+      ++count;
+
+  // Also look into nested protocols.
+  for (ObjCProtocolDecl::protocol_iterator P = PD->protocol_begin(),
+       E = PD->protocol_end(); P != E; ++P)
+    count += CountProtocolSynthesizedIvars(*P);
+  return count;
+}
+
+unsigned ASTContext::CountSynthesizedIvars(const ObjCInterfaceDecl *OI)
+{
+  unsigned count = 0;
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*this),
+       E = OI->prop_end(*this); I != E; ++I) {
+    if ((*I)->getPropertyIvarDecl())
+      ++count;
+  }
+  // Also look into interface's protocol list for properties declared
+  // in the protocol and whose ivars are synthesized.
+  for (ObjCInterfaceDecl::protocol_iterator P = OI->protocol_begin(),
+       PE = OI->protocol_end(); P != PE; ++P) {
+    ObjCProtocolDecl *PD = (*P);
+    count += CountProtocolSynthesizedIvars(PD);
+  }
+  return count;
+}
+
 /// getInterfaceLayoutImpl - Get or compute information about the
 /// layout of the given interface.
 ///
@@ -664,14 +710,13 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   unsigned FieldCount = D->ivar_size();
   // Add in synthesized ivar count if laying out an implementation.
   if (Impl) {
-    llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-    CollectSynthesizedIvars(D, Ivars);
-    FieldCount += Ivars.size();
+    unsigned SynthCount = CountSynthesizedIvars(D);
+    FieldCount += SynthCount;
     // If there aren't any sythesized ivars then reuse the interface
     // entry. Note we can't cache this because we simply free all
     // entries later; however we shouldn't look up implementations
     // frequently.
-    if (FieldCount == D->ivar_size())
+    if (SynthCount == 0)
       return getObjCLayout(D, 0);
   }
 
@@ -701,20 +746,11 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   // Layout each ivar sequentially.
   unsigned i = 0;
-  for (ObjCInterfaceDecl::ivar_iterator IVI = D->ivar_begin(), 
-       IVE = D->ivar_end(); IVI != IVE; ++IVI) {
-    const ObjCIvarDecl* Ivar = (*IVI);
-    NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
-  }
-  // And synthesized ivars, if this is an implementation.
-  if (Impl) {
-    // FIXME. Do we need to colltect twice?
-    llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-    CollectSynthesizedIvars(D, Ivars);
-    for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
-      NewEntry->LayoutField(Ivars[k], i++, false, StructPacking, *this);
-  }
-  
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  ShallowCollectObjCIvars(D, Ivars, Impl);
+  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
+       NewEntry->LayoutField(Ivars[k], i++, false, StructPacking, *this);
+ 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
   NewEntry->FinalizeLayout();

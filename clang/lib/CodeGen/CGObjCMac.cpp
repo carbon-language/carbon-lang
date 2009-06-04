@@ -47,14 +47,8 @@ static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
   // ASTContext::getObjCLayout is implemented. This should be fixed to
   // get the information from the layout directly.
   Index = 0;
-  for (ObjCInterfaceDecl::ivar_iterator IVI = OID->ivar_begin(), 
-         IVE = OID->ivar_end(); IVI != IVE; ++IVI, ++Index)
-    if (OIVD == *IVI)
-      return OID;
-  
-  // Also look in synthesized ivars.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  Context.CollectSynthesizedIvars(OID, Ivars);
+  Context.ShallowCollectObjCIvars(OID, Ivars);
   for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
     if (OIVD == Ivars[k])
       return OID;
@@ -908,15 +902,6 @@ protected:
                                           unsigned Align,
                                           bool AddToUsed);
 
-  /// GetNamedIvarList - Return the list of ivars in the interface
-  /// itself (not including super classes and not including unnamed
-  /// bitfields).
-  /// 
-  /// For the non-fragile ABI, this also includes synthesized property
-  /// ivars.
-  void GetNamedIvarList(const ObjCInterfaceDecl *OID,
-                        llvm::SmallVector<ObjCIvarDecl*, 16> &Res) const;
-  
   CodeGen::RValue EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
                                         QualType ResultType,
                                         llvm::Value *Sel,
@@ -2198,10 +2183,13 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
   
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  GetNamedIvarList(OID, OIvars);
+  CGM.getContext().ShallowCollectObjCIvars(OID, OIvars);
     
   for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
     ObjCIvarDecl *IVD = OIvars[i];
+    // Ignore unnamed bit-fields.
+    if (!IVD->getDeclName())
+      continue;    
     Ivar[0] = GetMethodVarName(IVD->getIdentifier());
     Ivar[1] = GetMethodVarType(IVD);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
@@ -4696,25 +4684,6 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
 /// }
 ///
 
-void CGObjCCommonMac::GetNamedIvarList(const ObjCInterfaceDecl *OID,
-                              llvm::SmallVector<ObjCIvarDecl*, 16> &Res) const {
-  for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
-         E = OID->ivar_end(); I != E; ++I) {
-    // Ignore unnamed bit-fields.
-    if (!(*I)->getDeclName())
-      continue;
-
-     Res.push_back(*I);
-  }
-  
-  // Also save synthesize ivars.
-  // FIXME. Why can't we just use passed in Res small vector?
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  CGM.getContext().CollectSynthesizedIvars(OID, Ivars);
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
-    Res.push_back(Ivars[k]);
-}
-
 llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                                             const ObjCImplementationDecl *ID) {
   
@@ -4727,10 +4696,13 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   
   // Collect declared and synthesized ivars in a small vector.
   llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  GetNamedIvarList(OID, OIvars);
+  CGM.getContext().ShallowCollectObjCIvars(OID, OIvars);
     
   for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
     ObjCIvarDecl *IVD = OIvars[i];
+    // Ignore unnamed bit-fields.
+    if (!IVD->getDeclName())
+      continue;
     Ivar[0] = EmitIvarOffsetVar(ID->getClassInterface(), IVD, 
                                 ComputeIvarBaseOffset(CGM, ID, IVD));
     Ivar[1] = GetMethodVarName(IVD->getIdentifier());

@@ -1544,14 +1544,8 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
 static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
                                                   const ObjCInterfaceDecl *OID,
                                                   const ObjCIvarDecl *OIVD) {
-  for (ObjCInterfaceDecl::ivar_iterator IVI = OID->ivar_begin(), 
-         IVE = OID->ivar_end(); IVI != IVE; ++IVI)
-    if (OIVD == *IVI)
-      return OID;
-  
-  // Also look in synthesized ivars.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  Context.CollectSynthesizedIvars(OID, Ivars);
+  Context.ShallowCollectObjCIvars(OID, Ivars);
   for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
     if (OIVD == Ivars[k])
       return OID;

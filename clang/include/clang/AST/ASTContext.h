@@ -539,11 +539,16 @@ public:
 
   void CollectObjCIvars(const ObjCInterfaceDecl *OI,
                         llvm::SmallVectorImpl<FieldDecl*> &Fields);
-  
+
+  void ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
+                               llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
+                               bool CollectSynthesized = true);
   void CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
   void CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
+  unsigned CountSynthesizedIvars(const ObjCInterfaceDecl *OI);
+  unsigned CountProtocolSynthesizedIvars(const ObjCProtocolDecl *PD);
 
   //===--------------------------------------------------------------------===//
   //                            Type Operators
