@@ -67,3 +67,14 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
 
   return RV;
 }
+
+void 
+CodeGenFunction::PushConditionalTempDestruction() {
+  // Store the current number of live temporaries.
+  ConditionalTempDestructionStack.push_back(LiveTemporaries.size());
+}
+
+void CodeGenFunction::PopConditionalTempDestruction() {
+  ConditionalTempDestructionStack.pop_back();
+}
+  

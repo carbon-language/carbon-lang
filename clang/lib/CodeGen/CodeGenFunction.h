@@ -160,6 +160,20 @@ public:
   /// this behavior for branches?
   void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
 
+  /// PushConditionalTempDestruction - Should be called before a conditional 
+  /// part of an expression is emitted. For example, before the RHS of the
+  /// expression below is emitted:
+  /// 
+  /// b && f(T());
+  ///
+  /// This is used to make sure that any temporaryes created in the conditional
+  /// branch are only destroyed if the branch is taken.
+  void PushConditionalTempDestruction();
+  
+  /// PopConditionalTempDestruction - Should be called after a conditional 
+  /// part of an expression has been emitted.
+  void PopConditionalTempDestruction();
+  
 private:
   CGDebugInfo* DebugInfo;
 
@@ -263,6 +277,11 @@ private:
   };
   
   llvm::SmallVector<CXXLiveTemporaryInfo, 4> LiveTemporaries;
+
+  /// ConditionalTempDestructionStack - Contains the number of live temporaries 
+  /// when PushConditionalTempDestruction was called. This is used so that
+  /// we know how many temporaries were created by a certain expression.
+  llvm::SmallVector<size_t, 4> ConditionalTempDestructionStack;
   
 public:
   CodeGenFunction(CodeGenModule &cgm);
