@@ -235,3 +235,62 @@ unsigned Process::StandardErrColumns() {
 
   return getColumns(2);
 }
+
+static bool terminalHasColors() {
+  if (const char *term = std::getenv("TERM")) {
+    // Most modern terminals support ANSI escape sequences for colors.
+    // We could check terminfo, or have a list of known terms that support
+    // colors, but that would be overkill.
+    // The user can always ask for no colors by setting TERM to dumb, or
+    // using a commandline flag.
+    return strcmp(term, "dumb") != 0;
+  }
+  return false;
+}
+
+bool Process::StandardOutHasColors() {
+  if (!StandardOutIsDisplayed())
+    return false;
+  return terminalHasColors();
+}
+
+bool Process::StandardErrHasColors() {
+  if (!StandardErrIsDisplayed())
+    return false;
+  return terminalHasColors();
+}
+
+bool Process::ColorNeedsFlush() {
+  // No, we use ANSI escape sequences.
+  return false;
+}
+
+#define COLOR(FGBG, CODE, BOLD) "\033[0;" BOLD FGBG CODE "m"
+
+#define ALLCOLORS(FGBG,BOLD) {\
+    COLOR(FGBG, "0", BOLD),\
+    COLOR(FGBG, "1", BOLD),\
+    COLOR(FGBG, "2", BOLD),\
+    COLOR(FGBG, "3", BOLD),\
+    COLOR(FGBG, "4", BOLD),\
+    COLOR(FGBG, "5", BOLD),\
+    COLOR(FGBG, "6", BOLD),\
+    COLOR(FGBG, "7", BOLD)\
+  }
+
+static const char* colorcodes[2][2][8] = {
+ { ALLCOLORS("3",""), ALLCOLORS("3","1;") },
+ { ALLCOLORS("4",""), ALLCOLORS("4","1;") }
+};
+
+const char *Process::OutputColor(char code, bool bold, bool bg) {
+  return colorcodes[bg?1:0][bold?1:0][code&7];
+}
+
+const char *Process::OutputBold(bool bg) {
+  return "\033[1m";
+}
+
+const char *Process::ResetColor() {
+  return "\033[0m";
+}

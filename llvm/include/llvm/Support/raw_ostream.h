@@ -45,6 +45,19 @@ private:
   bool Unbuffered;
 
 public:
+  // color order matches ANSI escape sequence, don't change
+  enum Colors {
+    BLACK=0,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    SAVEDCOLOR
+  };
+
   explicit raw_ostream(bool unbuffered=false) : Unbuffered(unbuffered) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
@@ -167,6 +180,20 @@ public:
   // Formatted output, see the format() function in Support/Format.h.
   raw_ostream &operator<<(const format_object_base &Fmt);
 
+  /// Changes the foreground color of text that will be output from this point
+  /// forward.
+  /// @param colors ANSI color to use, the special SAVEDCOLOR can be used to
+  /// change only the bold attribute, and keep colors untouched
+  /// @param bold bold/brighter text, default false
+  /// @param bg if true change the background, default: change foreground
+  /// @returns itself so it can be used within << invocations
+  virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
+                                   bool  bg=false) { return *this; }
+
+  /// Resets the colors to terminal defaults. Call this when you are done
+  /// outputting colored text, or before program exit.
+  virtual raw_ostream &resetColor() { return *this; }
+
   //===--------------------------------------------------------------------===//
   // Subclass Interface
   //===--------------------------------------------------------------------===//
@@ -243,6 +270,10 @@ public:
   /// seek - Flushes the stream and repositions the underlying file descriptor
   ///  positition to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
+
+  virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
+                                   bool bg=false);
+  virtual raw_ostream &resetColor();
 };
 
 /// raw_stdout_ostream - This is a stream that always prints to stdout.

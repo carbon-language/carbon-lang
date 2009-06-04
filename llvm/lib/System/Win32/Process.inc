@@ -147,4 +147,70 @@ unsigned Process::StandardErrColumns() {
   return Columns;
 }
 
+// it always has colors
+bool Process::StandardErrHasColors() {
+  return StandardErrIsDisplayed();
+}
+
+bool Process::StandardOutHasColors() {
+  return StandardOutIsDisplayed();
+}
+namespace {
+class DefaultColors
+{
+  private:
+    WORD defaultColor;
+  public:
+    DefaultColors()
+     :defaultColor(GetCurrentColor()) {}
+    static unsigned GetCurrentColor() {
+      CONSOLE_SCREEN_BUFFER_INFO csbi;
+      if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+        return csbi.wAttributes;
+      return 0;
+    }
+    WORD operator()() const { return defaultColor; }
+};
+
+DefaultColors defaultColors;
+}
+
+bool Process::ColorNeedsFlush() {
+  return true;
+}
+
+const char *Process::OutputBold(bool bg) {
+  WORD colors = DefaultColors::GetCurrentColor();
+  if (bg)
+    colors |= BACKGROUND_INTENSITY;
+  else
+    colors |= FOREGROUND_INTENSITY;
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colors);
+  return 0;
+}
+
+const char *Process::OutputColor(char code, bool bold, bool bg) {
+  WORD colors;
+  if (bg) {
+    colors = ((code&1) ? BACKGROUND_RED : 0) |
+      ((code&2) ? BACKGROUND_GREEN : 0 ) |
+      ((code&4) ? BACKGROUND_BLUE : 0);
+    if (bold)
+      colors |= BACKGROUND_INTENSITY;
+  } else {
+    colors = ((code&1) ? FOREGROUND_RED : 0) |
+      ((code&2) ? FOREGROUND_GREEN : 0 ) |
+      ((code&4) ? FOREGROUND_BLUE : 0);
+    if (bold)
+      colors |= FOREGROUND_INTENSITY;
+  }
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colors);
+  return 0;
+}
+
+const char *Process::ResetColor() {
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultColors());
+  return 0;
+}
+
 }

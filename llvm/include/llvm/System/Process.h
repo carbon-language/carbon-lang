@@ -107,6 +107,35 @@ namespace sys {
       /// console, or if the number of columns cannot be determined,
       /// this routine returns zero.
       static unsigned StandardErrColumns();
+
+      /// This function determines whether the terminal connected to standard
+      /// output supports colors. If standard output is not connected to a
+      /// terminal, this function returns false.
+      static bool StandardOutHasColors();
+
+      /// This function determines whether the terminal connected to standard
+      /// error supports colors. If standard error is not connected to a
+      /// terminal, this function returns false.
+      static bool StandardErrHasColors();
+
+      /// Whether changing colors requires the output to be flushed.
+      /// This is needed on systems that don't support escape sequences for
+      /// changing colors.
+      static bool ColorNeedsFlush();
+
+      /// This function returns the colorcode escape sequences, and sets Len to
+      /// the length of the escape sequence.
+      /// If ColorNeedsFlush() is true then this function will change the colors
+      /// and return an empty escape sequence. In that case it is the
+      /// responsibility of the client to flush the output stream prior to
+      /// calling this function.
+      static const char *OutputColor(char c, bool bold, bool bg);
+
+      /// Same as OutputColor, but only enables the bold attribute.
+      static const char *OutputBold(bool bg);
+
+      /// Resets the terminals colors, or returns an escape sequence to do so.
+      static const char *ResetColor();
     /// @}
   };
 }

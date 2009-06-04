@@ -14,6 +14,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
 #include "llvm/System/Program.h"
+#include "llvm/System/Process.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
@@ -299,6 +300,35 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   flush();
   pos = lseek(FD, off, SEEK_SET);
   return pos;  
+}
+
+raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
+                                         bool bg) {
+  if (sys::Process::ColorNeedsFlush())
+    flush();
+  const char *colorcode =
+    (colors == SAVEDCOLOR) ? sys::Process::OutputBold(bg)
+    : sys::Process::OutputColor(colors, bold, bg);
+  if (colorcode) {
+    unsigned len = strlen(colorcode);
+    write(colorcode, len);
+    // don't account colors towards output characters
+    pos -= len;
+  }
+  return *this;
+}
+
+raw_ostream &raw_fd_ostream::resetColor() {
+  if (sys::Process::ColorNeedsFlush())
+    flush();
+  const char *colorcode = sys::Process::ResetColor();
+  if (colorcode) {
+    unsigned len = strlen(colorcode);
+    write(colorcode, len);
+    // don't account colors towards output characters
+    pos -= len;
+  }
+  return *this;
 }
 
 //===----------------------------------------------------------------------===//
