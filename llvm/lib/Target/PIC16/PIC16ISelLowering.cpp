@@ -105,6 +105,7 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setOperationAction(ISD::ADDC,    MVT::i8,  Custom);
   setOperationAction(ISD::SUBE,    MVT::i8,  Custom);
   setOperationAction(ISD::SUBC,    MVT::i8,  Custom);
+  setOperationAction(ISD::SUB,    MVT::i8,  Custom);
   setOperationAction(ISD::ADD,    MVT::i8,  Custom);
   setOperationAction(ISD::ADD,    MVT::i16, Custom);
 
