@@ -2807,16 +2807,19 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
     case ISD::ADDC:
     case ISD::ADDE:
     case ISD::SUB:
-    case ISD::FADD:
-    case ISD::FSUB:
-    case ISD::FMUL:
-    case ISD::FDIV:
-    case ISD::FREM:
     case ISD::UDIV:
     case ISD::SDIV:
     case ISD::UREM:
     case ISD::SREM:
       return N2;       // fold op(arg1, undef) -> undef
+    case ISD::FADD:
+    case ISD::FSUB:
+    case ISD::FMUL:
+    case ISD::FDIV:
+    case ISD::FREM:
+      if (UnsafeFPMath)
+        return N2;
+      break;
     case ISD::MUL:
     case ISD::AND:
     case ISD::SRL:

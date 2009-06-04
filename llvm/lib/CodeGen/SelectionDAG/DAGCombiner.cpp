@@ -4019,6 +4019,9 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   // fold (fmul A, 0) -> 0
   if (UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
     return N1;
+  // fold (fmul A, 0) -> 0, vector edition.
+  if (UnsafeFPMath && ISD::isBuildVectorAllZeros(N1.getNode()))
+    return N1;
   // fold (fmul X, 2.0) -> (fadd X, X)
   if (N1CFP && N1CFP->isExactlyValue(+2.0))
     return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N0);

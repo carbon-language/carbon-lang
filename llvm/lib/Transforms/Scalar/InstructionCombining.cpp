@@ -2585,7 +2585,9 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0);
 
-  if (isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
+  // TODO: If Op1 is undef and Op0 is finite, return zero.
+  if (!I.getType()->isFPOrFPVector() &&
+      isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // Simplify mul instructions with a constant RHS...
@@ -2612,16 +2614,14 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
                  ConstantInt::get(Op0->getType(), Val.logBase2()));
       }
     } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
-      if (Op1F->isNullValue())
-        return ReplaceInstUsesWith(I, Op1);
+      // TODO: If Op1 is zero and Op0 is finite, return zero.
 
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
       if (Op1F->isExactlyValue(1.0))
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
     } else if (isa<VectorType>(Op1->getType())) {
-      if (isa<ConstantAggregateZero>(Op1))
-        return ReplaceInstUsesWith(I, Op1);
+      // TODO: If Op1 is all zeros and Op0 is all finite, return all zeros.
 
       if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
         if (Op1V->isAllOnesValue())              // X * -1 == 0 - X
