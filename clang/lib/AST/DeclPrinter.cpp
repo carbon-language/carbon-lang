@@ -508,8 +508,50 @@ void DeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 }
 
 void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {
-  // TODO: Write template parameters.
-  Out << "template <...> ";
+  Out << "template <";
+  
+  TemplateParameterList *Params = D->getTemplateParameters();
+  for (unsigned i = 0, e = Params->size(); i != e; ++i) {
+    if (i != 0)
+      Out << ", ";
+    
+    const Decl *Param = Params->getParam(i);
+    if (const TemplateTypeParmDecl *TTP = 
+          dyn_cast<TemplateTypeParmDecl>(Param)) {
+      
+      QualType ParamType = 
+        Context.getTypeDeclType(const_cast<TemplateTypeParmDecl*>(TTP));
+
+      if (TTP->wasDeclaredWithTypename())
+        Out << "typename ";
+      else
+        Out << "class ";
+
+      Out << ParamType.getAsString(Policy);
+
+      if (TTP->hasDefaultArgument()) {
+        Out << " = ";
+        Out << TTP->getDefaultArgument().getAsString(Policy);
+      };
+    } else if (const NonTypeTemplateParmDecl *NTTP = 
+                 dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+      Out << NTTP->getType().getAsString(Policy);
+
+      if (IdentifierInfo *Name = NTTP->getIdentifier()) {
+        Out << ' ';
+        Out << Name->getName();
+      }
+      
+      if (NTTP->hasDefaultArgument()) {
+        Out << " = ";
+        NTTP->getDefaultArgument()->printPretty(Out, Context, 0, Policy, 
+                                                Indentation);
+      }
+    }
+  }
+  
+  Out << "> ";
+
   Visit(D->getTemplatedDecl());
 }
 
