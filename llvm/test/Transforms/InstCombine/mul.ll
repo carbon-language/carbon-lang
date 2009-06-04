@@ -83,11 +83,3 @@ define internal void @test13(<4 x float>*) {
 	store <4 x float> %3, <4 x float>* %0, align 1
 	ret void
 }
-
-define internal void @test14(<4 x float>*) {
-	load <4 x float>* %0, align 1
-	mul <4 x float> %2, zeroinitializer
-	store <4 x float> %3, <4 x float>* %0, align 1
-	ret void
-}
-
