@@ -33,99 +33,21 @@ STATISTIC(NumSUnfold , "Number of stores unfolded");
 STATISTIC(NumModRefUnfold, "Number of modref unfolded");
 
 namespace {
-  enum RewriterName { simple, local, trivial };
+  enum RewriterName { local, trivial };
 }
 
 static cl::opt<RewriterName>
 RewriterOpt("rewriter",
             cl::desc("Rewriter to use: (default: local)"),
             cl::Prefix,
-            cl::values(clEnumVal(simple,  "simple rewriter"),
-                       clEnumVal(local,   "local rewriter"),
+            cl::values(clEnumVal(local,   "local rewriter"),
                        clEnumVal(trivial, "trivial rewriter"),
                        clEnumValEnd),
             cl::init(local));
 
 VirtRegRewriter::~VirtRegRewriter() {}
 
- 
-// ****************************** //
-// Simple Spiller Implementation  //
-// ****************************** //
 
-struct VISIBILITY_HIDDEN SimpleRewriter : public VirtRegRewriter {
-
-  bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
-                            LiveIntervals* LIs) {
-    DOUT << "********** REWRITE MACHINE CODE **********\n";
-    DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
-    const TargetMachine &TM = MF.getTarget();
-    const TargetInstrInfo &TII = *TM.getInstrInfo();
-    const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
-
-
-    // LoadedRegs - Keep track of which vregs are loaded, so that we only load
-    // each vreg once (in the case where a spilled vreg is used by multiple
-    // operands).  This is always smaller than the number of operands to the
-    // current machine instr, so it should be small.
-    std::vector<unsigned> LoadedRegs;
-
-    for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
-         MBBI != E; ++MBBI) {
-      DOUT << MBBI->getBasicBlock()->getName() << ":\n";
-      MachineBasicBlock &MBB = *MBBI;
-      for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
-           MII != E; ++MII) {
-        MachineInstr &MI = *MII;
-        for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-          MachineOperand &MO = MI.getOperand(i);
-          if (MO.isReg() && MO.getReg()) {
-            if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-              unsigned VirtReg = MO.getReg();
-              unsigned SubIdx = MO.getSubReg();
-              unsigned PhysReg = VRM.getPhys(VirtReg);
-              unsigned RReg = SubIdx ? TRI.getSubReg(PhysReg, SubIdx) : PhysReg;
-              if (!VRM.isAssignedReg(VirtReg)) {
-                int StackSlot = VRM.getStackSlot(VirtReg);
-                const TargetRegisterClass* RC = 
-                                             MF.getRegInfo().getRegClass(VirtReg);
-                
-                if (MO.isUse() &&
-                    std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
-                             == LoadedRegs.end()) {
-                  TII.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
-                  MachineInstr *LoadMI = prior(MII);
-                  VRM.addSpillSlotUse(StackSlot, LoadMI);
-                  LoadedRegs.push_back(VirtReg);
-                  ++NumLoads;
-                  DOUT << '\t' << *LoadMI;
-                }
-
-                if (MO.isDef()) {
-                  TII.storeRegToStackSlot(MBB, next(MII), PhysReg, true,   
-                                          StackSlot, RC);
-                  MachineInstr *StoreMI = next(MII);
-                  VRM.addSpillSlotUse(StackSlot, StoreMI);
-                  ++NumStores;
-                }
-              }
-              MF.getRegInfo().setPhysRegUsed(RReg);
-              MI.getOperand(i).setReg(RReg);
-              MI.getOperand(i).setSubReg(0);
-            } else {
-              MF.getRegInfo().setPhysRegUsed(MO.getReg());
-            }
-          }
-        }
-
-        DOUT << '\t' << MI;
-        LoadedRegs.clear();
-      }
-    }
-    return true;
-  }
-
-};
  
 /// This class is intended for use with the new spilling framework only. It
 /// rewrites vreg def/uses to use the assigned preg, but does not insert any
@@ -2231,8 +2153,6 @@ llvm::VirtRegRewriter* llvm::createVirtRegRewriter() {
   default: assert(0 && "Unreachable!");
   case local:
     return new LocalRewriter();
-  case simple:
-    return new SimpleRewriter();
   case trivial:
     return new TrivialRewriter();
   }
