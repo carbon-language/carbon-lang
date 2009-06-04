@@ -8,6 +8,11 @@
     <a href="/index.html">About</a>
     <a href="/features.html">Features</a>
     <a href="/comparison.html">Comparisons</a>
+    <a href="/docs/UsersManual.html">Users Manual</a>
+  </div>
+
+  <div class="submenu">
+    <label>Clang Development</label>
     <a href="/get_started.html">Get&nbsp;Started</a>
     <a href="/get_involved.html">Get&nbsp;Involved</a>
     <a href="/OpenProjects.html">Open&nbsp;Projects</a>

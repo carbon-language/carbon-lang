@@ -600,6 +600,12 @@ in structures.  This is for a few of reasons: one, it is tricky
 to implement, two, the extension is completely undocumented, and three, the
 extension appears to be very rarely used.</p>
 
+<p>clang does not support duplicate definitions of a function where one is
+inline. This complicates clients of the AST which normally can expect there is
+at most one definition for each function. Source code using this feature should
+be changed to define the inline and out-of-line definitions in separate
+translation units.</p>
+
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="c_ms">Microsoft extensions</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
