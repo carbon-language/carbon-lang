@@ -550,6 +550,8 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   if (ParseParenExprOrCondition(CondExp))
     return StmtError();
 
+  FullExprArg FullCondExp(Actions.FullExpr(CondExp));
+  
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
@@ -631,7 +633,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement() {
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Actions.ActOnIfStmt(IfLoc, Actions.FullExpr(CondExp), move(ThenStmt), 
+  return Actions.ActOnIfStmt(IfLoc, FullCondExp, move(ThenStmt), 
                              ElseLoc, move(ElseStmt));
 }
 
@@ -752,6 +754,8 @@ Parser::OwningStmtResult Parser::ParseWhileStatement() {
   if (ParseParenExprOrCondition(Cond))
     return StmtError();
 
+  FullExprArg FullCond(Actions.FullExpr(Cond));
+  
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
@@ -776,7 +780,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement() {
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnWhileStmt(WhileLoc, Actions.FullExpr(Cond), move(Body));
+  return Actions.ActOnWhileStmt(WhileLoc, FullCond, move(Body));
 }
 
 /// ParseDoStatement

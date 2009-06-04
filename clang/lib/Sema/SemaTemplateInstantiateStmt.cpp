@@ -194,6 +194,8 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitIfStmt(IfStmt *S) {
   if (Cond.isInvalid())
     return SemaRef.StmtError();
 
+  Sema::FullExprArg FullCond(FullExpr(Cond));
+  
   // Instantiate the "then" branch.
   OwningStmtResult Then = SemaRef.InstantiateStmt(S->getThen(), TemplateArgs);
   if (Then.isInvalid())
@@ -204,7 +206,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitIfStmt(IfStmt *S) {
   if (Else.isInvalid())
     return SemaRef.StmtError();
 
-  return SemaRef.ActOnIfStmt(S->getIfLoc(), FullExpr(Cond), move(Then),
+  return SemaRef.ActOnIfStmt(S->getIfLoc(), FullCond, move(Then),
                              S->getElseLoc(), move(Else));
 }
 
@@ -236,12 +238,14 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitWhileStmt(WhileStmt *S) {
   if (Cond.isInvalid())
     return SemaRef.StmtError();
 
+  Sema::FullExprArg FullCond(FullExpr(Cond));
+  
   // Instantiate the body
   OwningStmtResult Body = SemaRef.InstantiateStmt(S->getBody(), TemplateArgs);
   if (Body.isInvalid())
     return SemaRef.StmtError();
 
-  return SemaRef.ActOnWhileStmt(S->getWhileLoc(), FullExpr(Cond), move(Body));
+  return SemaRef.ActOnWhileStmt(S->getWhileLoc(), FullCond, move(Body));
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitDoStmt(DoStmt *S) {
