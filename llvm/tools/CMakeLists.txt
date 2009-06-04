@@ -2,9 +2,9 @@
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
 
-if( NOT MSVC )
-  add_subdirectory(llvm-config)
-endif( NOT MSVC )
+if (NOT USE_EXPLICIT_DEPENDENCIES)
+ add_subdirectory(llvm-config)
+endif()
 
 add_subdirectory(opt)
 add_subdirectory(llvm-as)

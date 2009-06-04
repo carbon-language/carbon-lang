@@ -90,6 +90,24 @@ endforeach(c)
 
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
+# The USE_EXPLICIT_DEPENDENCIES variable will be TRUE to indicate that
+# we should use the library dependencies explicitly specified in the
+# CMakeLists.txt files rather than those determined by
+# llvm-config. This value must be true for non-make and IDE
+# generators.
+if (MSVC_IDE)
+  set(DEFAULT_USE_EXPLICIT_DEPENDENCIES ON)
+elseif (XCODE)
+  set(DEFAULT_USE_EXPLICIT_DEPENDENCIES ON)
+else ()
+ set(DEFAULT_USE_EXPLICIT_DEPENDENCIES OFF)
+endif ()
+
+option(USE_EXPLICIT_DEPENDENCIES 
+  "Use explicit dependencies instead of llvm-config" 
+  ${DEFAULT_USE_EXPLICIT_DEPENDENCIES})
+mark_as_advanced(USE_EXPLICIT_DEPENDENCIES)
+
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
