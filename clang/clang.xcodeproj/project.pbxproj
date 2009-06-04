@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		03F50AC60D416EAA00B9CF60 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 03F50AC50D416EAA00B9CF60 /* Targets.cpp */; };
+		1A14D3A70FD78A3F00DA2835 /* DeclPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A14D3A60FD78A3F00DA2835 /* DeclPrinter.cpp */; };
 		1A2193CE0F45EEB700C0713D /* Mangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2193CC0F45EEB700C0713D /* Mangle.cpp */; };
 		1A2A54B50FD1DD1C00F4CE45 /* AnalysisConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A40FD1DD1C00F4CE45 /* AnalysisConsumer.cpp */; };
 		1A2A54B60FD1DD1C00F4CE45 /* ASTConsumers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */; };
@@ -322,6 +323,7 @@
 /* Begin PBXFileReference section */
 		035611470DA6A45C00D2EF2A /* DeclBase.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclBase.h; path = clang/AST/DeclBase.h; sourceTree = "<group>"; tabWidth = 2; };
 		03F50AC50D416EAA00B9CF60 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = Targets.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1A14D3A60FD78A3F00DA2835 /* DeclPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DeclPrinter.cpp; path = lib/AST/DeclPrinter.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A2193CB0F45EEB700C0713D /* ABIInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ABIInfo.h; path = lib/CodeGen/ABIInfo.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A2193CC0F45EEB700C0713D /* Mangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Mangle.cpp; path = lib/CodeGen/Mangle.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A2193CD0F45EEB700C0713D /* Mangle.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Mangle.h; path = lib/CodeGen/Mangle.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1196,6 +1198,7 @@
 				3538FDB70ED24A4E005EC283 /* DeclarationName.cpp */,
 				35EE48AF0E0C4CCA00715C54 /* DeclCXX.cpp */,
 				358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */,
+				1A14D3A60FD78A3F00DA2835 /* DeclPrinter.cpp */,
 				DE38CF260D8C9E6C00A273B6 /* DeclObjC.cpp */,
 				DEB076CE0F3A222200F5A2BE /* DeclTemplate.cpp */,
 				DE0FCB330A9C21F100248FD5 /* Expr.cpp */,
@@ -1695,6 +1698,7 @@
 				1A2A54C50FD1DD1C00F4CE45 /* Warnings.cpp in Sources */,
 				1A6FE7090FD6F85800E00CA9 /* CGCXXTemp.cpp in Sources */,
 				BDF87CF70FD746F300BBF872 /* SemaTemplateDeduction.cpp in Sources */,
+				1A14D3A70FD78A3F00DA2835 /* DeclPrinter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
