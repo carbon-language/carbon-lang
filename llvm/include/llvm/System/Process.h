@@ -123,8 +123,7 @@ namespace sys {
       /// changing colors.
       static bool ColorNeedsFlush();
 
-      /// This function returns the colorcode escape sequences, and sets Len to
-      /// the length of the escape sequence.
+      /// This function returns the colorcode escape sequences.
       /// If ColorNeedsFlush() is true then this function will change the colors
       /// and return an empty escape sequence. In that case it is the
       /// responsibility of the client to flush the output stream prior to

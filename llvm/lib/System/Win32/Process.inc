@@ -147,7 +147,7 @@ unsigned Process::StandardErrColumns() {
   return Columns;
 }
 
-// it always has colors
+// It always has colors.
 bool Process::StandardErrHasColors() {
   return StandardErrIsDisplayed();
 }
@@ -155,6 +155,7 @@ bool Process::StandardErrHasColors() {
 bool Process::StandardOutHasColors() {
   return StandardOutIsDisplayed();
 }
+
 namespace {
 class DefaultColors
 {
