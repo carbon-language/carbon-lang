@@ -20,6 +20,20 @@
 #include <algorithm>
 using namespace clang;
 
+static const enum llvm::raw_ostream::Colors noteColor =
+  llvm::raw_ostream::BLACK;
+static const enum llvm::raw_ostream::Colors fixitColor =
+  llvm::raw_ostream::GREEN;
+static const enum llvm::raw_ostream::Colors caretColor =
+  llvm::raw_ostream::GREEN;
+static const enum llvm::raw_ostream::Colors warningColor =
+  llvm::raw_ostream::MAGENTA;
+static const enum llvm::raw_ostream::Colors errorColor = llvm::raw_ostream::RED;
+static const enum llvm::raw_ostream::Colors fatalColor = llvm::raw_ostream::RED;
+// used for changing only the bold attribute
+static const enum llvm::raw_ostream::Colors savedColor =
+  llvm::raw_ostream::SAVEDCOLOR;
+
 /// \brief Number of spaces to indent when word-wrapping.
 const unsigned WordWrapIndentation = 6;
 
@@ -396,12 +410,22 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   
   // Emit what we have computed.
   OS << SourceLine << '\n';
+
+  if (UseColors)
+    OS.changeColor(caretColor, true);
   OS << CaretLine << '\n';
+  if (UseColors)
+    OS.resetColor();
 
   if (!FixItInsertionLine.empty()) {
+    if (UseColors)
+      // Print fixit line in color
+      OS.changeColor(fixitColor, false);
     if (PrintRangeInfo) 
       OS << ' ';
     OS << FixItInsertionLine << '\n';
+    if (UseColors)
+      OS.resetColor();
   }
 }
 
@@ -598,6 +622,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     
     // Compute the column number.
     if (ShowLocation) {
+      if (UseColors)
+        OS.changeColor(savedColor, true);
       OS << PLoc.getFilename() << ':' << LineNo << ':';
       if (ShowColumn)
         if (unsigned ColNo = PLoc.getColumn())
@@ -638,6 +664,19 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
           OS << ':';
       }
       OS << ' ';
+      if (UseColors)
+        OS.resetColor();
+    }
+  }
+
+  if (UseColors) {
+    // Print diagnostic category in bold and color
+    switch (Level) {
+    case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
+    case Diagnostic::Note:    OS.changeColor(noteColor, true); break;
+    case Diagnostic::Warning: OS.changeColor(warningColor, true); break;
+    case Diagnostic::Error:   OS.changeColor(errorColor, true); break;
+    case Diagnostic::Fatal:   OS.changeColor(fatalColor, true); break;
     }
   }
   
@@ -648,7 +687,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   case Diagnostic::Error:   OS << "error: "; break;
   case Diagnostic::Fatal:   OS << "fatal error: "; break;
   }
-  
+
+  if (UseColors)
+    OS.resetColor();
+
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
   
@@ -659,6 +701,16 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       OutStr += ']';
     }
   
+  if (UseColors) {
+    // Print warnings, errors and fatal errors in bold, no color
+    switch (Level) {
+    case Diagnostic::Warning: OS.changeColor(savedColor, true); break;
+    case Diagnostic::Error:   OS.changeColor(savedColor, true); break;
+    case Diagnostic::Fatal:   OS.changeColor(savedColor, true); break;
+    default: break; //don't bold notes
+    }
+  }
+
   if (MessageLength) {
     // We will be word-wrapping the error message, so compute the
     // column number where we currently are (after printing the
@@ -669,6 +721,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     OS.write(OutStr.begin(), OutStr.size());
   }
   OS << '\n';
+  if (UseColors)
+    OS.resetColor();
   
   // If caret diagnostics are enabled and we have location, we want to
   // emit the caret.  However, we only do this if the location moved

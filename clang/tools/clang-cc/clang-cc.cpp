@@ -328,6 +328,11 @@ MessageLength("fmessage-length",
 			     "within N columns or fewer, when possible."),
 	      llvm::cl::value_desc("N"));
 
+static llvm::cl::opt<bool>
+NoColorDiagnostic("fno-color-diagnostic",
+	      llvm::cl::desc("Don't use colors when showing diagnostics "
+                             "(automatically turned off if output is not a "
+                             "terminal)."));
 //===----------------------------------------------------------------------===//
 // C++ Visualization.
 //===----------------------------------------------------------------------===//
@@ -2150,6 +2155,10 @@ int main(int argc, char **argv) {
     if (MessageLength.getNumOccurrences() == 0)
       MessageLength.setValue(llvm::sys::Process::StandardErrColumns());
 
+    if (!NoColorDiagnostic) {
+      NoColorDiagnostic.setValue(!llvm::sys::Process::StandardErrHasColors());
+    }
+
     DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
                                                !NoCaretDiagnostics,
@@ -2157,7 +2166,8 @@ int main(int argc, char **argv) {
                                                PrintSourceRangeInfo,
                                                PrintDiagnosticOption,
                                                !NoDiagnosticsFixIt,
-                                               MessageLength));
+                                               MessageLength,
+                                               !NoColorDiagnostic));
   } else {
     DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
   }
