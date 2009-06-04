@@ -398,7 +398,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
     }
 
     ++NumCoalesce;
-    return SrcReg;
+    return PhysReg;
   }
 
   return Reg;
@@ -555,8 +555,11 @@ void RALinScan::linearScan()
                re = mri_->reg_end(); ri != re; ++ri) {
           MachineInstr *UseMI = &*ri;
           MachineBasicBlock *UseMBB = UseMI->getParent();
-          if (Seen.insert(UseMBB))
+          if (Seen.insert(UseMBB)) {
+            assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
+                   "Adding a virtual register to livein set?");
             UseMBB->addLiveIn(Reg);
+          }
         }
       }
     }
@@ -565,8 +568,11 @@ void RALinScan::linearScan()
       const LiveRange &LR = *I;
       if (li_->findLiveInMBBs(LR.start, LR.end, LiveInMBBs)) {
         for (unsigned i = 0, e = LiveInMBBs.size(); i != e; ++i)
-          if (LiveInMBBs[i] != EntryMBB)
+          if (LiveInMBBs[i] != EntryMBB) {
+            assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
+                   "Adding a virtual register to livein set?");
             LiveInMBBs[i]->addLiveIn(Reg);
+          }
         LiveInMBBs.clear();
       }
     }
