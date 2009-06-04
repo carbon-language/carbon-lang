@@ -23,8 +23,8 @@ namespace clang {
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
-static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
-                               const char *Command = "#define ") {
+static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
+  const char *Command = "#define ";
   Buf.insert(Buf.end(), Command, Command+strlen(Command));
   if (const char *Equal = strchr(Macro, '=')) {
     // Turn the = into ' '.
