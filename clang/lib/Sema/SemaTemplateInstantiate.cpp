@@ -503,6 +503,10 @@ InstantiateTemplateSpecializationType(
   for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
        Arg != ArgEnd; ++Arg) {
     switch (Arg->getKind()) {
+    case TemplateArgument::Null:
+      assert(false && "Should never have a NULL template argument");
+      break;
+        
     case TemplateArgument::Type: {
       QualType T = SemaRef.InstantiateType(Arg->getAsType(), 
                                            TemplateArgs, 

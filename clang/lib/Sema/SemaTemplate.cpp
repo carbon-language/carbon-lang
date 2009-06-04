@@ -750,6 +750,10 @@ static void CanonicalizeTemplateArguments(const TemplateArgument *TemplateArgs,
   Canonical.reserve(NumTemplateArgs);
   for (unsigned Idx = 0; Idx < NumTemplateArgs; ++Idx) {
     switch (TemplateArgs[Idx].getKind()) {
+    case TemplateArgument::Null:
+      assert(false && "Should never see a NULL template argument here");
+      break;
+        
     case TemplateArgument::Expression:
       // FIXME: Build canonical expression (!)
       Canonical.push_back(TemplateArgs[Idx]);
@@ -765,11 +769,13 @@ static void CanonicalizeTemplateArguments(const TemplateArgument *TemplateArgs,
       Canonical.push_back(TemplateArgument(SourceLocation(),
                                            *TemplateArgs[Idx].getAsIntegral(),
                                         TemplateArgs[Idx].getIntegralType()));
+      break;
 
     case TemplateArgument::Type: {
       QualType CanonType 
         = Context.getCanonicalType(TemplateArgs[Idx].getAsType());
       Canonical.push_back(TemplateArgument(SourceLocation(), CanonType));
+      break;
     }
     }
   }
@@ -1092,6 +1098,10 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       }
 
       switch (Arg.getKind()) {
+      case TemplateArgument::Null:
+        assert(false && "Should never see a NULL template argument here");
+        break;
+          
       case TemplateArgument::Expression: {
         Expr *E = Arg.getAsExpr();
         if (CheckTemplateArgument(NTTP, NTTPType, E, &Converted))
@@ -1131,6 +1141,10 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         = cast<TemplateTemplateParmDecl>(*Param);
      
       switch (Arg.getKind()) {
+      case TemplateArgument::Null:
+        assert(false && "Should never see a NULL template argument here");
+        break;
+          
       case TemplateArgument::Expression: {
         Expr *ArgExpr = Arg.getAsExpr();
         if (ArgExpr && isa<DeclRefExpr>(ArgExpr) &&
@@ -2562,90 +2576,4 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     Diag(Referenced->getLocation(), diag::note_typename_refers_here)
       << Name;
   return QualType();
-}
-
-// FIXME: Move to SemaTemplateDeduction.cpp
-bool 
-Sema::DeduceTemplateArguments(QualType Param, QualType Arg,
-                             llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
-  // We only want to look at the canonical types, since typedefs and
-  // sugar are not part of template argument deduction.
-  Param = Context.getCanonicalType(Param);
-  Arg = Context.getCanonicalType(Arg);
-
-  // If the parameter type is not dependent, just compare the types
-  // directly.
-  if (!Param->isDependentType())
-    return Param == Arg;
-
-  // FIXME: Use a visitor or switch to handle all of the kinds of
-  // types that the parameter may be.
-  if (const TemplateTypeParmType *TemplateTypeParm 
-        = Param->getAsTemplateTypeParmType()) {
-    (void)TemplateTypeParm; // FIXME: use this
-    // The argument type can not be less qualified than the parameter
-    // type.
-    if (Param.isMoreQualifiedThan(Arg))
-      return false;
-
-    unsigned Quals = Arg.getCVRQualifiers() & ~Param.getCVRQualifiers();
-    QualType DeducedType = Arg.getQualifiedType(Quals);
-    // FIXME: actually save the deduced type, and check that this
-    // deduction is consistent.
-    return true;
-  }
-
-  if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
-    return false;
-
-  if (const PointerType *PointerParam = Param->getAsPointerType()) {
-    const PointerType *PointerArg = Arg->getAsPointerType();
-    if (!PointerArg)
-      return false;
-
-    return DeduceTemplateArguments(PointerParam->getPointeeType(),
-                                   PointerArg->getPointeeType(),
-                                   Deduced);
-  }
-
-  // FIXME: Many more cases to go (to go).
-  return false;
-}
-
-bool
-Sema::DeduceTemplateArguments(const TemplateArgument &Param,
-                              const TemplateArgument &Arg,
-                             llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
-  assert(Param.getKind() == Arg.getKind() &&
-         "Template argument kind mismatch during deduction");
-  switch (Param.getKind()) {
-  case TemplateArgument::Type: 
-    return DeduceTemplateArguments(Param.getAsType(), Arg.getAsType(),
-                                   Deduced);
-
-  default:
-    return false;
-  }
-}
-
-bool 
-Sema::DeduceTemplateArguments(const TemplateArgumentList &ParamList,
-                              const TemplateArgumentList &ArgList,
-                              llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
-  assert(ParamList.size() == ArgList.size());
-  for (unsigned I = 0, N = ParamList.size(); I != N; ++I) {
-    if (!DeduceTemplateArguments(ParamList[I], ArgList[I], Deduced))
-      return false;
-  }
-  return true;
-}
-
-
-bool 
-Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
-                              const TemplateArgumentList &TemplateArgs) {
-  llvm::SmallVector<TemplateArgument, 4> Deduced;
-  Deduced.resize(Partial->getTemplateParameters()->size());
-  return DeduceTemplateArguments(Partial->getTemplateArgs(), TemplateArgs, 
-                                 Deduced);
 }

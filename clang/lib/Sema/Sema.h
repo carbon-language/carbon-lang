@@ -2019,14 +2019,6 @@ public:
                              const IdentifierInfo &II,
                              SourceRange Range);
 
-  bool DeduceTemplateArguments(QualType Param, QualType Arg,
-                               llvm::SmallVectorImpl<TemplateArgument> &Deduced);
-  bool DeduceTemplateArguments(const TemplateArgument &Param,
-                               const TemplateArgument &Arg,
-                               llvm::SmallVectorImpl<TemplateArgument> &Deduced);
-  bool DeduceTemplateArguments(const TemplateArgumentList &ParamList,
-                               const TemplateArgumentList &ArgList,
-                               llvm::SmallVectorImpl<TemplateArgument> &Deduced);
   bool DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
                                const TemplateArgumentList &TemplateArgs);
                              

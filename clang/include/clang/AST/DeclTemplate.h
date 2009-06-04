@@ -390,20 +390,21 @@ class TemplateArgument {
 public:
   /// \brief The type of template argument we're storing.
   enum ArgKind {
+    Null = 0,
     /// The template argument is a type. It's value is stored in the
     /// TypeOrValue field.
-    Type = 0,
+    Type = 1,
     /// The template argument is a declaration
-    Declaration = 1,
+    Declaration = 2,
     /// The template argument is an integral value stored in an llvm::APSInt.
-    Integral = 2,
+    Integral = 3,
     /// The template argument is a value- or type-dependent expression
     /// stored in an Expr*.
-    Expression = 3
+    Expression = 4
   } Kind;
 
   /// \brief Construct an empty, invalid template argument.
-  TemplateArgument() : TypeOrValue(0), StartLoc(), Kind(Type) { }
+  TemplateArgument() : TypeOrValue(0), StartLoc(), Kind(Null) { }
 
   /// \brief Construct a template type argument.
   TemplateArgument(SourceLocation Loc, QualType T) : Kind(Type) {
@@ -484,6 +485,9 @@ public:
   /// \brief Return the kind of stored template argument.
   ArgKind getKind() const { return Kind; }
 
+  /// \brief Determine whether this template argument has no value.
+  bool isNull() const { return Kind == Null; }
+  
   /// \brief Retrieve the template argument as a type.
   QualType getAsType() const {
     if (Kind != Type)
@@ -534,6 +538,9 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddInteger(Kind);
     switch (Kind) {
+    case Null:
+      break;
+        
     case Type:
       getAsType().Profile(ID);
       break;
