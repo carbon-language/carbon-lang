@@ -257,9 +257,9 @@ namespace {
     // When emitting code into a memory block, this is the block.
     MemoryRangeHeader *CurBlock;
     
-    unsigned char *CurStubPtr, *StubBase;
-    unsigned char *GOTBase;      // Target Specific reserved memory
-    void *DlsymTable;            // Stub external symbol information
+    uint8_t *CurStubPtr, *StubBase;
+    uint8_t *GOTBase;     // Target Specific reserved memory
+    void *DlsymTable;     // Stub external symbol information
 
     // Centralize memory block allocation.
     sys::MemoryBlock getNewMemoryBlock(unsigned size);
@@ -273,12 +273,12 @@ namespace {
     void AllocateGOT();
     void SetDlsymTable(void *);
     
-    unsigned char *allocateStub(const GlobalValue* F, unsigned StubSize,
-                                unsigned Alignment);
+    uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
+                          unsigned Alignment);
     
     /// startFunctionBody - When a function starts, allocate a block of free
     /// executable memory, returning a pointer to it and its actual size.
-    unsigned char *startFunctionBody(const Function *F, uintptr_t &ActualSize) {
+    uint8_t *startFunctionBody(const Function *F, uintptr_t &ActualSize) {
       
       FreeRangeHeader* candidateBlock = FreeMemoryList;
       FreeRangeHeader* head = FreeMemoryList;
@@ -301,18 +301,18 @@ namespace {
       // Allocate the entire memory block.
       FreeMemoryList = candidateBlock->AllocateBlock();
       ActualSize = CurBlock->BlockSize-sizeof(MemoryRangeHeader);
-      return (unsigned char *)(CurBlock+1);
+      return (uint8_t *)(CurBlock+1);
     }
     
     /// endFunctionBody - The function F is now allocated, and takes the memory
     /// in the range [FunctionStart,FunctionEnd).
-    void endFunctionBody(const Function *F, unsigned char *FunctionStart,
-                         unsigned char *FunctionEnd) {
+    void endFunctionBody(const Function *F, uint8_t *FunctionStart,
+                         uint8_t *FunctionEnd) {
       assert(FunctionEnd > FunctionStart);
-      assert(FunctionStart == (unsigned char *)(CurBlock+1) &&
+      assert(FunctionStart == (uint8_t *)(CurBlock+1) &&
              "Mismatched function start/end!");
 
-      uintptr_t BlockSize = FunctionEnd - (unsigned char *)CurBlock;
+      uintptr_t BlockSize = FunctionEnd - (uint8_t *)CurBlock;
       FunctionBlocks[F] = CurBlock;
 
       // Release the memory at the end of this block that isn't needed.
@@ -320,17 +320,17 @@ namespace {
     }
 
     /// allocateSpace - Allocate a memory block of the given size.
-    unsigned char *allocateSpace(intptr_t Size, unsigned Alignment) {
+    uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
       CurBlock = FreeMemoryList;
       FreeMemoryList = FreeMemoryList->AllocateBlock();
 
-      unsigned char *result = (unsigned char *)CurBlock+1;
+      uint8_t *result = (uint8_t *)CurBlock+1;
 
       if (Alignment == 0) Alignment = 1;
-      result = (unsigned char*)(((intptr_t)result+Alignment-1) &
+      result = (uint8_t*)(((intptr_t)result+Alignment-1) &
                ~(intptr_t)(Alignment-1));
 
-      uintptr_t BlockSize = result + Size - (unsigned char *)CurBlock;
+      uintptr_t BlockSize = result + Size - (uint8_t *)CurBlock;
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
 
       return result;
@@ -338,28 +338,26 @@ namespace {
 
     /// startExceptionTable - Use startFunctionBody to allocate memory for the 
     /// function's exception table.
-    unsigned char* startExceptionTable(const Function* F, 
-                                       uintptr_t &ActualSize) {
+    uint8_t* startExceptionTable(const Function* F, uintptr_t &ActualSize) {
       return startFunctionBody(F, ActualSize);
     }
 
     /// endExceptionTable - The exception table of F is now allocated, 
     /// and takes the memory in the range [TableStart,TableEnd).
-    void endExceptionTable(const Function *F, unsigned char *TableStart,
-                           unsigned char *TableEnd, 
-                           unsigned char* FrameRegister) {
+    void endExceptionTable(const Function *F, uint8_t *TableStart,
+                           uint8_t *TableEnd, uint8_t* FrameRegister) {
       assert(TableEnd > TableStart);
-      assert(TableStart == (unsigned char *)(CurBlock+1) &&
+      assert(TableStart == (uint8_t *)(CurBlock+1) &&
              "Mismatched table start/end!");
       
-      uintptr_t BlockSize = TableEnd - (unsigned char *)CurBlock;
+      uintptr_t BlockSize = TableEnd - (uint8_t *)CurBlock;
       TableBlocks[F] = CurBlock;
 
       // Release the memory at the end of this block that isn't needed.
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
     }
     
-    unsigned char *getGOTBase() const {
+    uint8_t *getGOTBase() const {
       return GOTBase;
     }
     
@@ -433,7 +431,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager() {
   sys::MemoryBlock MemBlock = getNewMemoryBlock(16 << 20);
 #endif
 
-  unsigned char *MemBase = static_cast<unsigned char*>(MemBlock.base());
+  uint8_t *MemBase = static_cast<uint8_t*>(MemBlock.base());
 
   // Allocate stubs backwards from the base, allocate functions forward
   // from the base.
@@ -492,7 +490,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager() {
 
 void DefaultJITMemoryManager::AllocateGOT() {
   assert(GOTBase == 0 && "Cannot allocate the got multiple times");
-  GOTBase = new unsigned char[sizeof(void*) * 8192];
+  GOTBase = new uint8_t[sizeof(void*) * 8192];
   HasGOT = true;
 }
 
@@ -508,12 +506,12 @@ DefaultJITMemoryManager::~DefaultJITMemoryManager() {
   Blocks.clear();
 }
 
-unsigned char *DefaultJITMemoryManager::allocateStub(const GlobalValue* F,
+uint8_t *DefaultJITMemoryManager::allocateStub(const GlobalValue* F,
                                                      unsigned StubSize,
                                                      unsigned Alignment) {
   CurStubPtr -= StubSize;
-  CurStubPtr = (unsigned char*)(((intptr_t)CurStubPtr) &
-                                ~(intptr_t)(Alignment-1));
+  CurStubPtr = (uint8_t*)(((intptr_t)CurStubPtr) &
+                          ~(intptr_t)(Alignment-1));
   if (CurStubPtr < StubBase) {
     // FIXME: allocate a new block
     fprintf(stderr, "JIT ran out of memory for function stubs!\n");
