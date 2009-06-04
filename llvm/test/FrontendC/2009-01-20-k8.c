@@ -1,4 +1,4 @@
 // RUN: %llvmgcc %s -S -march=k8
-// XTARGET: x86,darwin
 // XFAIL: *
+// XTARGET: x86,i386,i686
 long double x;
