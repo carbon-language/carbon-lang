@@ -249,6 +249,7 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
     std::string targetTriple = _linker.getModule()->getTargetTriple();
     args.push_back(tool.c_str());
     if ( targetTriple.find("darwin") != targetTriple.size() ) {
+        // darwin specific command line options
         if (strncmp(targetTriple.c_str(), "i386-apple-", 11) == 0) {
             args.push_back("-arch");
             args.push_back("i386");
@@ -286,6 +287,9 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
             args.push_back("-arch");
             args.push_back("armv6");
         }
+        // add -static to assembler command line when code model requires
+        if ( (_assemblerPath != NULL) && (_codeModel == LTO_CODEGEN_PIC_MODEL_STATIC) )
+            args.push_back("-static");
     }
     if ( needsCompilerOptions ) {
         args.push_back("-c");
