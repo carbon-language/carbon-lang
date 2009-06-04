@@ -332,25 +332,31 @@ BUILTIN(__sync_fetch_and_max, "ii*i", "n")
 BUILTIN(__sync_fetch_and_umin, "UiUi*Ui", "n")
 BUILTIN(__sync_fetch_and_umax, "UiUi*Ui", "n")
 
-// Builtin library functions
-LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h")
+// C99 library functions
+// C99 stdlib.h
 LIBBUILTIN(calloc, "v*zz",        "f",     "stdlib.h")
 LIBBUILTIN(malloc, "v*z",         "f",     "stdlib.h")
 LIBBUILTIN(realloc, "v*v*z",      "f",     "stdlib.h")
+// C99 string.h
 LIBBUILTIN(memcpy, "v*v*vC*z",    "f",     "string.h")
 LIBBUILTIN(memmove, "v*v*vC*z",   "f",     "string.h")
-LIBBUILTIN(memset, "v*v*iz",      "f",     "string.h")
-LIBBUILTIN(strcat, "c*c*cC*",     "f",     "string.h")
-LIBBUILTIN(strchr, "c*cC*i",      "f",     "string.h")
 LIBBUILTIN(strcpy, "c*c*cC*",     "f",     "string.h")
-LIBBUILTIN(strcspn, "zcC*cC*",    "f",     "string.h")
-LIBBUILTIN(strlen, "zcC*",        "f",     "string.h")
-LIBBUILTIN(strncat, "c*c*cC*z",   "f",     "string.h")
 LIBBUILTIN(strncpy, "c*c*cC*z",   "f",     "string.h")
+LIBBUILTIN(strcat, "c*c*cC*",     "f",     "string.h")
+LIBBUILTIN(strncat, "c*c*cC*z",   "f",     "string.h")
+LIBBUILTIN(strxfrm, "zc*cC*z",    "f",     "string.h")
+LIBBUILTIN(memchr, "v*vC*iz",     "f",     "string.h")
+LIBBUILTIN(strchr, "c*cC*i",      "f",     "string.h")
+LIBBUILTIN(strcspn, "zcC*cC*",    "f",     "string.h")
 LIBBUILTIN(strpbrk, "c*cC*cC*",   "f",     "string.h")
 LIBBUILTIN(strrchr, "c*cC*i",     "f",     "string.h")
 LIBBUILTIN(strspn, "zcC*cC*",     "f",     "string.h")
 LIBBUILTIN(strstr, "c*cC*cC*",    "f",     "string.h")
+LIBBUILTIN(strtok, "c*c*cC*",     "f",     "string.h")
+LIBBUILTIN(memset, "v*v*iz",      "f",     "string.h")
+LIBBUILTIN(strerror, "c*i",       "f",     "string.h")
+LIBBUILTIN(strlen, "zcC*",        "f",     "string.h")
+// C99 stdio.h
 LIBBUILTIN(printf, "icC*.",       "fp:0:", "stdio.h")
 LIBBUILTIN(fprintf, "iP*cC*.",    "fp:1:", "stdio.h")
 LIBBUILTIN(snprintf, "ic*zcC*.",  "fp:2:", "stdio.h")
@@ -359,6 +365,13 @@ LIBBUILTIN(vprintf, "icC*a",      "fP:0:", "stdio.h")
 LIBBUILTIN(vfprintf, "i.",        "fP:1:", "stdio.h")
 LIBBUILTIN(vsnprintf, "ic*zcC*a", "fP:2:", "stdio.h")
 LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
+
+// Non-C library functions
+// FIXME: Non-C-standard stuff shouldn't be builtins in non-GNU mode!
+LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h")
+// POSIX strings.h
+LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h")
+LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h")
 
 // FIXME: This type isn't very correct, it should be
 //   id objc_msgSend(id, SEL)
