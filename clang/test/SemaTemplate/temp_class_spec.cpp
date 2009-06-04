@@ -49,3 +49,33 @@ int is_same0[is_same<int, int>::value? 1 : -1];
 int is_same1[is_same<int, INT>::value? 1 : -1];
 int is_same2[is_same<const int, int>::value? -1 : 1];
 int is_same3[is_same<int_ptr, int>::value? -1 : 1];
+
+template<typename T>
+struct is_incomplete_array {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_incomplete_array<T[]> {
+  static const bool value = true;
+};
+
+int incomplete_array0[is_incomplete_array<int>::value ? -1 : 1];
+int incomplete_array1[is_incomplete_array<int[1]>::value ? -1 : 1];
+int incomplete_array2[is_incomplete_array<bool[]>::value ? 1 : -1];
+int incomplete_array3[is_incomplete_array<int[]>::value ? 1 : -1];
+
+template<typename T>
+struct is_array_with_4_elements {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_array_with_4_elements<T[4]> {
+  static const bool value = true;
+};
+
+int array_with_4_elements0[is_array_with_4_elements<int[]>::value ? -1 : 1];
+int array_with_4_elements1[is_array_with_4_elements<int[1]>::value ? -1 : 1];
+int array_with_4_elements2[is_array_with_4_elements<int[4]>::value ? 1 : -1];
+int array_with_4_elements3[is_array_with_4_elements<int[4][2]>::value ? 1 : -1];

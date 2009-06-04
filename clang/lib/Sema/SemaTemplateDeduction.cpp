@@ -100,6 +100,35 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
                                      Deduced);
     }
       
+    case Type::IncompleteArray: {
+      const IncompleteArrayType *IncompleteArrayArg = 
+        Context.getAsIncompleteArrayType(Arg);
+      if (!IncompleteArrayArg)
+        return false;
+      
+      return DeduceTemplateArguments(Context,
+                     Context.getAsIncompleteArrayType(Param)->getElementType(),
+                                     IncompleteArrayArg->getElementType(),
+                                     Deduced);
+    }
+    
+    case Type::ConstantArray: {
+      const ConstantArrayType *ConstantArrayArg = 
+        Context.getAsConstantArrayType(Arg);
+      if (!ConstantArrayArg)
+        return false;
+      
+      const ConstantArrayType *ConstantArrayParm = 
+        Context.getAsConstantArrayType(Param);
+      if (ConstantArrayArg->getSize() != ConstantArrayParm->getSize())
+        return false;
+      
+      return DeduceTemplateArguments(Context,
+                                     ConstantArrayParm->getElementType(),
+                                     ConstantArrayArg->getElementType(),
+                                     Deduced);
+    }
+
     default:
       break;
   }
