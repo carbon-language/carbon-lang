@@ -1452,7 +1452,8 @@ VisitConditionalOperator(const ConditionalOperator *E) {
                                CGF.getContext().BoolTy);
     Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
   }
-  
+
+  CGF.PushConditionalTempDestruction();
   CGF.EmitBlock(LHSBlock);
   
   // Handle the GNU extension for missing LHS.
@@ -1462,12 +1463,15 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   else    // Perform promotions, to handle cases like "short ?: int"
     LHS = EmitScalarConversion(CondVal, E->getCond()->getType(), E->getType());
   
+  CGF.PopConditionalTempDestruction();
   LHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
   
+  CGF.PushConditionalTempDestruction();
   CGF.EmitBlock(RHSBlock);
   
   Value *RHS = Visit(E->getRHS());
+  CGF.PopConditionalTempDestruction();
   RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
   
