@@ -227,15 +227,14 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
     setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
-    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
+    // This is just the low 32 bits of a (signed) fp->i64 conversion.
+    // We cannot do this with Promote because i64 is not a legal type.
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
 
     // FIXME: disable this lowered code.  This generates 64-bit register values,
     // and we don't model the fact that the top part is clobbered by calls.  We
     // need to flag these together so that the value isn't live across a call.
     //setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
-
-    // To take advantage of the above i64 FP_TO_SINT, promote i32 FP_TO_UINT
-    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Promote);
   } else {
     // PowerPC does not have FP_TO_UINT on 32-bit implementations.
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
@@ -2858,7 +2857,7 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 }
 
 // FIXME: Split this code up when LegalizeDAGTypes lands.
-SDValue PPCTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG,
+SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                                            DebugLoc dl) {
   assert(Op.getOperand(0).getValueType().isFloatingPoint());
   SDValue Src = Op.getOperand(0);
@@ -2867,9 +2866,11 @@ SDValue PPCTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG,
 
   SDValue Tmp;
   switch (Op.getValueType().getSimpleVT()) {
-  default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
+  default: assert(0 && "Unhandled FP_TO_INT type in custom expander!");
   case MVT::i32:
-    Tmp = DAG.getNode(PPCISD::FCTIWZ, dl, MVT::f64, Src);
+    Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIWZ :
+                                                         PPCISD::FCTIDZ, 
+                      dl, MVT::f64, Src);
     break;
   case MVT::i64:
     Tmp = DAG.getNode(PPCISD::FCTIDZ, dl, MVT::f64, Src);
@@ -3740,7 +3741,8 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     return LowerDYNAMIC_STACKALLOC(Op, DAG, PPCSubTarget);
 
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
-  case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG,
+  case ISD::FP_TO_UINT:
+  case ISD::FP_TO_SINT:         return LowerFP_TO_INT(Op, DAG,
                                                        Op.getDebugLoc());
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
@@ -3834,7 +3836,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::FP_TO_SINT:
-    Results.push_back(LowerFP_TO_SINT(SDValue(N, 0), DAG, dl));
+    Results.push_back(LowerFP_TO_INT(SDValue(N, 0), DAG, dl));
     return;
   }
 }
