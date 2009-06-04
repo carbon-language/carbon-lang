@@ -355,20 +355,10 @@ SDValue PIC16TargetLowering::ExpandFrameIndex(SDNode *N, SelectionDAG &DAG) {
   FrameIndexSDNode *FR = dyn_cast<FrameIndexSDNode>(SDValue(N,0));
   // FIXME there isn't really debug info here
   DebugLoc dl = FR->getDebugLoc();
-  // FIXME: Not used.
-  // int Index = FR->getIndex();
 
   // Expand FrameIndex like GlobalAddress and ExternalSymbol
   // Also use Offset field for lo and hi parts. The default 
   // offset is zero.
-
-  /*
-  SDValue Offset = DAG.getConstant(0, MVT::i8);
-  SDValue FI = DAG.getTargetFrameIndex(Index, MVT::i8);
-  SDValue Lo = DAG.getNode(PIC16ISD::Lo, dl, MVT::i8, FI, Offset);
-  SDValue Hi = DAG.getNode(PIC16ISD::Hi, dl, MVT::i8, FI, Offset);
-  return DAG.getNode(ISD::BUILD_PAIR, dl, N->getValueType(0), Lo, Hi);
-  */
 
   SDValue ES;
   int FrameOffset;
