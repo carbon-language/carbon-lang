@@ -65,3 +65,4 @@ static const struct a V1 = (struct a){ 1, 2};
 EVAL_EXPR(30, (int)(_Complex float)((1<<30)-1) == (1<<30) ? 1 : -1)
 EVAL_EXPR(31, (int*)0 == (int*)0 ? 1 : -1)
 EVAL_EXPR(32, (int*)0 != (int*)0 ? -1 : 1)
+EVAL_EXPR(33, (void*)0 - (void*)0 == 0 ? 1 : -1)
