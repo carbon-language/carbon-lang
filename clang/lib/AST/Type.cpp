@@ -1455,6 +1455,10 @@ TemplateSpecializationType::PrintTemplateArgumentList(
     // Print the argument into a string.
     std::string ArgString;
     switch (Args[Arg].getKind()) {
+    case TemplateArgument::Null:
+      assert(false && "Null template argument");
+      break;
+
     case TemplateArgument::Type:
       Args[Arg].getAsType().getAsStringInternal(ArgString, Policy);
       break;
