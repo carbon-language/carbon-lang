@@ -58,13 +58,22 @@ endif( MSVC )
 option(LLVM_ENABLE_THREADS "Use threads if available." ON)
 
 if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
-  option(LLVM_ENABLE_ASSERTS "Enable asserts" OFF)
+  option(LLVM_ENABLE_ASSERTIONS "Enable assertions" OFF)
 else()
-  option(LLVM_ENABLE_ASSERTS "Enable asserts" ON)
+  option(LLVM_ENABLE_ASSERTIONS "Enable assertions" ON)
 endif()
 
-if( LLVM_ENABLE_ASSERTS )
-  add_definitions( -D_DEBUG -UNDEBUG )
+if( LLVM_ENABLE_ASSERTIONS )
+  add_definitions( -D_DEBUG )
+  # On Release builds cmake automatically defines NDEBUG, so we
+  # explicitly undefine it:
+  if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
+    add_definitions( -UNDEBUG )
+  endif()
+else()
+  if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
+    add_definitions( -DNDEBUG )
+  endif()
 endif()
 
 if( LLVM_TARGETS_TO_BUILD STREQUAL "all" )
