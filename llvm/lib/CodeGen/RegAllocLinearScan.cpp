@@ -1192,7 +1192,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // The earliest start of a Spilled interval indicates up to where
   // in handled we need to roll back
   
-  unsigned earliestStart = cur->beginNumber();
   LiveInterval *earliestStartInterval = cur;
 
   // Spill live intervals of virtual regs mapped to the physical register we
@@ -1206,19 +1205,10 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     LiveInterval *sli = spillIs.back();
     spillIs.pop_back();
     DOUT << "\t\t\tspilling(a): " << *sli << '\n';
-    earliestStart = std::min(earliestStart, sli->beginNumber());
     earliestStartInterval =
       (earliestStartInterval->beginNumber() < sli->beginNumber()) ?
          earliestStartInterval : sli;
-    
-    if (earliestStartInterval->beginNumber()!=earliestStart) {
-      epicFail |= true;
-      std::cerr << "What the 1 - "
-      		<< "earliestStart = " << earliestStart
-      		<< "earliestStartInterval = " << earliestStartInterval->beginNumber()
-      		<< "\n";
-    }
-   
+       
     std::vector<LiveInterval*> newIs;
     if (!NewSpillFramework) {
       newIs = li_->addIntervalsForSpills(*sli, spillIs, loopInfo, *vrm_);
@@ -1229,20 +1219,12 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);
 
-    if (earliestStartInterval->beginNumber()!=earliestStart) {
-      epicFail |= true;
-      std::cerr << "What the 2 - "
-      		<< "earliestStart = " << earliestStart
-      		<< "earliestStartInterval = " << earliestStartInterval->beginNumber()
-      		<< "\n";
-    }
-
     if (epicFail) {
       //abort();
     }
   }
 
-  earliestStart = earliestStartInterval->beginNumber();
+  unsigned earliestStart = earliestStartInterval->beginNumber();
 
   DOUT << "\t\trolling back to: " << earliestStart << '\n';
 
