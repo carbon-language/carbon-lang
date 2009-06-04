@@ -1290,8 +1290,10 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
        PI != PE; ++PI)
     PN->addIncoming(llvm::ConstantInt::getFalse(), *PI);
   
+  CGF.PushConditionalTempDestruction();
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
+  CGF.PopConditionalTempDestruction();
   
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
@@ -1335,9 +1337,13 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
        PI != PE; ++PI)
     PN->addIncoming(llvm::ConstantInt::getTrue(), *PI);
 
+  CGF.PushConditionalTempDestruction();
+
   // Emit the RHS condition as a bool value.
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
+  
+  CGF.PopConditionalTempDestruction();
   
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
