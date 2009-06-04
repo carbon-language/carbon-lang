@@ -210,6 +210,14 @@ void lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path)
 }
 
 //
+// sets the path to the assembler tool
+//
+void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path)
+{
+    cg->setAssemblerPath(path);
+}
+
+//
 // adds to a list of all global symbols that must exist in the final
 // generated code.  If a function is not listed there, it might be
 // inlined into every usage and optimized away.

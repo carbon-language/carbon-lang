@@ -72,7 +72,7 @@ LTOCodeGenerator::LTOCodeGenerator()
     : _linker("LinkTimeOptimizer", "ld-temp.o"), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-      _nativeObjectFile(NULL), _gccPath(NULL)
+      _nativeObjectFile(NULL), _gccPath(NULL), _assemblerPath(NULL)
 {
 
 }
@@ -126,6 +126,13 @@ void LTOCodeGenerator::setGccPath(const char* path)
     if ( _gccPath )
         delete _gccPath;
     _gccPath = new sys::Path(path);
+}
+
+void LTOCodeGenerator::setAssemblerPath(const char* path)
+{
+    if ( _assemblerPath )
+        delete _assemblerPath;
+    _assemblerPath = new sys::Path(path);
 }
 
 void LTOCodeGenerator::addMustPreserveSymbol(const char* sym)
@@ -220,13 +227,18 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
 bool LTOCodeGenerator::assemble(const std::string& asmPath, 
                                 const std::string& objPath, std::string& errMsg)
 {
-    sys::Path gcc;
-    if ( _gccPath ) {
-        gcc = *_gccPath;
+    sys::Path tool;
+    bool needsCompilerOptions = true;
+    if ( _assemblerPath ) {
+        tool = *_assemblerPath;
+        needsCompilerOptions = false;
+    }
+    else if ( _gccPath ) {
+        tool = *_gccPath;
     } else {
         // find compiler driver
-        gcc = sys::Program::FindProgramByName("gcc");
-        if ( gcc.isEmpty() ) {
+        tool = sys::Program::FindProgramByName("gcc");
+        if ( tool.isEmpty() ) {
             errMsg = "can't locate gcc";
             return true;
         }
@@ -235,7 +247,7 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
     // build argument list
     std::vector<const char*> args;
     std::string targetTriple = _linker.getModule()->getTargetTriple();
-    args.push_back(gcc.c_str());
+    args.push_back(tool.c_str());
     if ( targetTriple.find("darwin") != targetTriple.size() ) {
         if (strncmp(targetTriple.c_str(), "i386-apple-", 11) == 0) {
             args.push_back("-arch");
@@ -275,16 +287,18 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
             args.push_back("armv6");
         }
     }
-    args.push_back("-c");
-    args.push_back("-x");
-    args.push_back("assembler");
+    if ( needsCompilerOptions ) {
+        args.push_back("-c");
+        args.push_back("-x");
+        args.push_back("assembler");
+    }
     args.push_back("-o");
     args.push_back(objPath.c_str());
     args.push_back(asmPath.c_str());
     args.push_back(0);
 
     // invoke assembler
-    if ( sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 0, 0, &errMsg) ) {
+    if ( sys::Program::ExecuteAndWait(tool, &args[0], 0, 0, 0, 0, &errMsg) ) {
         errMsg = "error in assembly";    
         return true;
     }

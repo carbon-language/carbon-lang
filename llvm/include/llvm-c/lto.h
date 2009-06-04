@@ -19,6 +19,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define LTO_API_VERSION 3
+
 typedef enum {
     LTO_SYMBOL_ALIGNMENT_MASK         = 0x0000001F,    /* log2 of alignment */
     LTO_SYMBOL_PERMISSIONS_MASK       = 0x000000E0,    
@@ -205,6 +207,14 @@ lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model);
  */
 extern void
 lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path);
+
+
+/**
+ * Sets the location of the assembler tool to run. If not set, libLTO
+ * will use gcc to invoke the assembler.
+ */
+extern void
+lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path);
 
 
 /**

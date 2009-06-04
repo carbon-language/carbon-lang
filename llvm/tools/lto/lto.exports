@@ -20,4 +20,5 @@ _lto_codegen_set_debug_model
 _lto_codegen_set_pic_model
 _lto_codegen_write_merged_modules
 _lto_codegen_debug_options
+_lto_codegen_set_assembler_path
 
