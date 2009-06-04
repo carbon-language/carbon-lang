@@ -59,6 +59,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "ssp ";
   if (Attrs & Attribute::StackProtectReq)
     Result += "sspreq ";
+  if (Attrs & Attribute::NoRedZone)
+    Result += "noredzone ";
   if (Attrs & Attribute::Alignment) {
     Result += "align ";
     Result += utostr(Attribute::getAlignmentFromAttrs(Attrs));

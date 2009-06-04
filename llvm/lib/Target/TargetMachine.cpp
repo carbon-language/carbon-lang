@@ -41,7 +41,6 @@ namespace llvm {
   bool RealignStack;
   bool DisableJumpTables;
   bool StrongPHIElim;
-  bool DisableRedZone;
   bool AsmVerbosityDefault(false);
 }
 
@@ -162,11 +161,6 @@ static cl::opt<bool, true>
 EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
   cl::desc("Use strong PHI elimination."),
   cl::location(StrongPHIElim),
-  cl::init(false));
-static cl::opt<bool, true>
-DisableRedZoneOption("disable-red-zone",
-  cl::desc("Do not emit code that uses the red zone."),
-  cl::location(DisableRedZone),
   cl::init(false));
 
 //---------------------------------------------------------------------------

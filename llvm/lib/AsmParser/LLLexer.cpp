@@ -547,6 +547,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(optsize);
   KEYWORD(ssp);
   KEYWORD(sspreq);
+  KEYWORD(noredzone);
 
   KEYWORD(type);
   KEYWORD(opaque);

@@ -908,6 +908,7 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   // If we are a leaf function, and use up to 224 bytes of stack space,
   // don't have a frame pointer, calls, or dynamic alloca then we do not need
   // to adjust the stack pointer (we fit in the Red Zone).
+  bool DisableRedZone = MF.getFunction()->hasFnAttr(Attribute::NoRedZone);
   if (!DisableRedZone &&
       FrameSize <= 224 &&                          // Fits in red zone.
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.

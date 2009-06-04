@@ -730,7 +730,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     case lltok::kw_optsize:      Attrs |= Attribute::OptimizeForSize; break;
     case lltok::kw_ssp:          Attrs |= Attribute::StackProtect; break;
     case lltok::kw_sspreq:       Attrs |= Attribute::StackProtectReq; break;
-
+    case lltok::kw_noredzone:    Attrs |= Attribute::NoRedZone; break;
         
     case lltok::kw_align: {
       unsigned Alignment;

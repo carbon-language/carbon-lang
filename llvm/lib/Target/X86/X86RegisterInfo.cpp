@@ -751,6 +751,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // function, and use up to 128 bytes of stack space, don't have a frame
   // pointer, calls, or dynamic alloca then we do not need to adjust the
   // stack pointer (we fit in the Red Zone).
+  bool DisableRedZone = Fn->hasFnAttr(Attribute::NoRedZone);
   if (Is64Bit && !DisableRedZone &&
       !needsStackRealignment(MF) &&
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.

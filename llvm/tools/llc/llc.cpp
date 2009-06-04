@@ -100,6 +100,11 @@ cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
                        cl::desc("Do not verify input module"));
 
 
+static cl::opt<bool>
+DisableRedZone("disable-red-zone",
+  cl::desc("Do not emit code that uses the red zone."),
+  cl::init(false));
+
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
@@ -336,8 +341,11 @@ int main(int argc, char **argv) {
     // Run our queue of passes all at once now, efficiently.
     // TODO: this could lazily stream functions out of the module.
     for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
-      if (!I->isDeclaration())
+      if (!I->isDeclaration()) {
+        if (DisableRedZone)
+          I->addFnAttr(Attribute::NoRedZone);
         Passes.run(*I);
+      }
 
     Passes.doFinalization();
   }

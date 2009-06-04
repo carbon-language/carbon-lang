@@ -80,6 +80,7 @@ namespace lltok {
     kw_optsize,
     kw_ssp,
     kw_sspreq,
+    kw_noredzone,
 
     kw_type,
     kw_opaque,

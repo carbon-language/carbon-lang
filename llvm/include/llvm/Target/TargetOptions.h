@@ -117,10 +117,6 @@ namespace llvm {
   /// wth earlier copy coalescing.
   extern bool StrongPHIElim;
 
-  /// DisableRedZone - This flag disables use of the "Red Zone" on
-  /// targets which would otherwise have one.
-  extern bool DisableRedZone;
-
 } // End llvm namespace
 
 #endif
