@@ -530,7 +530,7 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     if (isAM2)
       // STR_PRE, STR_POST;
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
-        .addReg(MO.getReg(), getKillRegState(BaseKill))
+        .addReg(MO.getReg(), getKillRegState(MO.isKill()))
         .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
     else
       // FSTMS, FSTMD
@@ -709,6 +709,13 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 
         // RS may be pointing to an instruction that's deleted. 
         RS->skipTo(prior(MBBI));
+      } else if (NumMemOps == 1) {
+        // Try folding preceeding/trailing base inc/dec into the single
+        // load/store.
+        if (mergeBaseUpdateLoadStore(MBB, MemOps[0].MBBI, TII, Advance, MBBI)) {
+          ++NumMerges;
+          RS->forward(prior(MBBI));
+        }
       }
 
       CurrBase = 0;
