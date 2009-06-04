@@ -64,45 +64,35 @@ void Interpreter::initializeExecutionEngine() {
      Dest.TY##Val = Src1.TY##Val OP Src2.TY##Val; \
      break
 
-#define IMPLEMENT_INTEGER_BINOP1(OP, TY) \
-   case Type::IntegerTyID: { \
-     Dest.IntVal = Src1.IntVal OP Src2.IntVal; \
-     break; \
-   }
-
-
-static void executeAddInst(GenericValue &Dest, GenericValue Src1, 
-                           GenericValue Src2, const Type *Ty) {
+static void executeFAddInst(GenericValue &Dest, GenericValue Src1,
+                            GenericValue Src2, const Type *Ty) {
   switch (Ty->getTypeID()) {
-    IMPLEMENT_INTEGER_BINOP1(+, Ty);
     IMPLEMENT_BINARY_OPERATOR(+, Float);
     IMPLEMENT_BINARY_OPERATOR(+, Double);
   default:
-    cerr << "Unhandled type for Add instruction: " << *Ty << "\n";
+    cerr << "Unhandled type for FAdd instruction: " << *Ty << "\n";
     abort();
   }
 }
 
-static void executeSubInst(GenericValue &Dest, GenericValue Src1, 
-                           GenericValue Src2, const Type *Ty) {
+static void executeFSubInst(GenericValue &Dest, GenericValue Src1,
+                            GenericValue Src2, const Type *Ty) {
   switch (Ty->getTypeID()) {
-    IMPLEMENT_INTEGER_BINOP1(-, Ty);
     IMPLEMENT_BINARY_OPERATOR(-, Float);
     IMPLEMENT_BINARY_OPERATOR(-, Double);
   default:
-    cerr << "Unhandled type for Sub instruction: " << *Ty << "\n";
+    cerr << "Unhandled type for FSub instruction: " << *Ty << "\n";
     abort();
   }
 }
 
-static void executeMulInst(GenericValue &Dest, GenericValue Src1, 
-                           GenericValue Src2, const Type *Ty) {
+static void executeFMulInst(GenericValue &Dest, GenericValue Src1,
+                            GenericValue Src2, const Type *Ty) {
   switch (Ty->getTypeID()) {
-    IMPLEMENT_INTEGER_BINOP1(*, Ty);
     IMPLEMENT_BINARY_OPERATOR(*, Float);
     IMPLEMENT_BINARY_OPERATOR(*, Double);
   default:
-    cerr << "Unhandled type for Mul instruction: " << *Ty << "\n";
+    cerr << "Unhandled type for FMul instruction: " << *Ty << "\n";
     abort();
   }
 }
@@ -550,11 +540,14 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   GenericValue R;   // Result
 
   switch (I.getOpcode()) {
-  case Instruction::Add:   executeAddInst  (R, Src1, Src2, Ty); break;
-  case Instruction::Sub:   executeSubInst  (R, Src1, Src2, Ty); break;
-  case Instruction::Mul:   executeMulInst  (R, Src1, Src2, Ty); break;
-  case Instruction::FDiv:  executeFDivInst (R, Src1, Src2, Ty); break;
-  case Instruction::FRem:  executeFRemInst (R, Src1, Src2, Ty); break;
+  case Instruction::Add:   R.IntVal = Src1.IntVal + Src2.IntVal; break;
+  case Instruction::Sub:   R.IntVal = Src1.IntVal - Src2.IntVal; break;
+  case Instruction::Mul:   R.IntVal = Src1.IntVal * Src2.IntVal; break;
+  case Instruction::FAdd:  executeFAddInst(R, Src1, Src2, Ty); break;
+  case Instruction::FSub:  executeFSubInst(R, Src1, Src2, Ty); break;
+  case Instruction::FMul:  executeFMulInst(R, Src1, Src2, Ty); break;
+  case Instruction::FDiv:  executeFDivInst(R, Src1, Src2, Ty); break;
+  case Instruction::FRem:  executeFRemInst(R, Src1, Src2, Ty); break;
   case Instruction::UDiv:  R.IntVal = Src1.IntVal.udiv(Src2.IntVal); break;
   case Instruction::SDiv:  R.IntVal = Src1.IntVal.sdiv(Src2.IntVal); break;
   case Instruction::URem:  R.IntVal = Src1.IntVal.urem(Src2.IntVal); break;
@@ -1258,18 +1251,21 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
   GenericValue Dest;
   const Type * Ty = CE->getOperand(0)->getType();
   switch (CE->getOpcode()) {
-  case Instruction::Add:  executeAddInst (Dest, Op0, Op1, Ty); break;
-  case Instruction::Sub:  executeSubInst (Dest, Op0, Op1, Ty); break;
-  case Instruction::Mul:  executeMulInst (Dest, Op0, Op1, Ty); break;
+  case Instruction::Add:  Dest.IntVal = Op0.IntVal + Op1.IntVal; break;
+  case Instruction::Sub:  Dest.IntVal = Op0.IntVal - Op1.IntVal; break;
+  case Instruction::Mul:  Dest.IntVal = Op0.IntVal * Op1.IntVal; break;
+  case Instruction::FAdd: executeFAddInst(Dest, Op0, Op1, Ty); break;
+  case Instruction::FSub: executeFSubInst(Dest, Op0, Op1, Ty); break;
+  case Instruction::FMul: executeFMulInst(Dest, Op0, Op1, Ty); break;
   case Instruction::FDiv: executeFDivInst(Dest, Op0, Op1, Ty); break;
   case Instruction::FRem: executeFRemInst(Dest, Op0, Op1, Ty); break;
   case Instruction::SDiv: Dest.IntVal = Op0.IntVal.sdiv(Op1.IntVal); break;
   case Instruction::UDiv: Dest.IntVal = Op0.IntVal.udiv(Op1.IntVal); break;
   case Instruction::URem: Dest.IntVal = Op0.IntVal.urem(Op1.IntVal); break;
   case Instruction::SRem: Dest.IntVal = Op0.IntVal.srem(Op1.IntVal); break;
-  case Instruction::And:  Dest.IntVal = Op0.IntVal.And(Op1.IntVal); break;
-  case Instruction::Or:   Dest.IntVal = Op0.IntVal.Or(Op1.IntVal); break;
-  case Instruction::Xor:  Dest.IntVal = Op0.IntVal.Xor(Op1.IntVal); break;
+  case Instruction::And:  Dest.IntVal = Op0.IntVal & Op1.IntVal; break;
+  case Instruction::Or:   Dest.IntVal = Op0.IntVal | Op1.IntVal; break;
+  case Instruction::Xor:  Dest.IntVal = Op0.IntVal ^ Op1.IntVal; break;
   case Instruction::Shl:  
     Dest.IntVal = Op0.IntVal.shl(Op1.IntVal.getZExtValue());
     break;

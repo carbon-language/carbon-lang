@@ -1835,8 +1835,11 @@ bool LLParser::ParseValID(ValID &ID) {
       
   // Binary Operators.
   case lltok::kw_add:
+  case lltok::kw_fadd:
   case lltok::kw_sub:
+  case lltok::kw_fsub:
   case lltok::kw_mul:
+  case lltok::kw_fmul:
   case lltok::kw_udiv:
   case lltok::kw_sdiv:
   case lltok::kw_fdiv:
@@ -2400,8 +2403,13 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
-  case lltok::kw_mul:    return ParseArithmetic(Inst, PFS, KeywordVal, 0);
-      
+  case lltok::kw_mul:
+    // API compatibility: Accept either integer or floating-point types.
+    return ParseArithmetic(Inst, PFS, KeywordVal, 0);
+  case lltok::kw_fadd:
+  case lltok::kw_fsub:
+  case lltok::kw_fmul:    return ParseArithmetic(Inst, PFS, KeywordVal, 2);
+
   case lltok::kw_udiv:
   case lltok::kw_sdiv:
   case lltok::kw_urem:

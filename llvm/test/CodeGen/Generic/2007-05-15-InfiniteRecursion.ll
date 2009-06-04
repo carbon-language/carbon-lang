@@ -71,10 +71,10 @@ cond_next159.i:		; preds = %cond_true356.i.preheader
 	%tmp178.i = add i32 %tmp116117.i, -128		; <i32> [#uses=2]
 	%tmp181.i = mul i32 %tmp178.i, %tmp178.i		; <i32> [#uses=1]
 	%tmp181182.i = sitofp i32 %tmp181.i to float		; <float> [#uses=1]
-	%tmp199200.pn.in.i = mul float %tmp181182.i, 0.000000e+00		; <float> [#uses=1]
+	%tmp199200.pn.in.i = fmul float %tmp181182.i, 0.000000e+00		; <float> [#uses=1]
 	%tmp199200.pn.i = fpext float %tmp199200.pn.in.i to double		; <double> [#uses=1]
-	%tmp201.pn.i = sub double 1.000000e+00, %tmp199200.pn.i		; <double> [#uses=1]
-	%factor.2.in.i = mul double 0.000000e+00, %tmp201.pn.i		; <double> [#uses=1]
+	%tmp201.pn.i = fsub double 1.000000e+00, %tmp199200.pn.i		; <double> [#uses=1]
+	%factor.2.in.i = fmul double 0.000000e+00, %tmp201.pn.i		; <double> [#uses=1]
 	%factor.2.i = fptrunc double %factor.2.in.i to float		; <float> [#uses=1]
 	br i1 false, label %cond_next312.i, label %cond_false222.i
 

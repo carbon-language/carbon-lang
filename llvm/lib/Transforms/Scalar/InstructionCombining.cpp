@@ -167,8 +167,11 @@ namespace {
     //   otherwise    - Change was made, replace I with returned instruction
     //
     Instruction *visitAdd(BinaryOperator &I);
+    Instruction *visitFAdd(BinaryOperator &I);
     Instruction *visitSub(BinaryOperator &I);
+    Instruction *visitFSub(BinaryOperator &I);
     Instruction *visitMul(BinaryOperator &I);
+    Instruction *visitFMul(BinaryOperator &I);
     Instruction *visitURem(BinaryOperator &I);
     Instruction *visitSRem(BinaryOperator &I);
     Instruction *visitFRem(BinaryOperator &I);
@@ -403,7 +406,8 @@ X("instcombine", "Combine redundant instructions");
 //   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
 static unsigned getComplexity(Value *V) {
   if (isa<Instruction>(V)) {
-    if (BinaryOperator::isNeg(V) || BinaryOperator::isNot(V))
+    if (BinaryOperator::isNeg(V) || BinaryOperator::isFNeg(V) ||
+        BinaryOperator::isNot(V))
       return 3;
     return 4;
   }
@@ -572,6 +576,25 @@ static inline Value *dyn_castNegVal(Value *V) {
   if (ConstantVector *C = dyn_cast<ConstantVector>(V))
     if (C->getType()->getElementType()->isInteger())
       return ConstantExpr::getNeg(C);
+
+  return 0;
+}
+
+// dyn_castFNegVal - Given a 'fsub' instruction, return the RHS of the
+// instruction if the LHS is a constant negative zero (which is the 'negate'
+// form).
+//
+static inline Value *dyn_castFNegVal(Value *V) {
+  if (BinaryOperator::isFNeg(V))
+    return BinaryOperator::getFNegArgument(V);
+
+  // Constants can be considered to be negated values if they can be folded.
+  if (ConstantFP *C = dyn_cast<ConstantFP>(V))
+    return ConstantExpr::getFNeg(C);
+
+  if (ConstantVector *C = dyn_cast<ConstantVector>(V))
+    if (C->getType()->getElementType()->isFloatingPoint())
+      return ConstantExpr::getFNeg(C);
 
   return 0;
 }
@@ -1733,12 +1756,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           default: assert(0 && "Case stmts out of sync!");
           case Intrinsic::x86_sse_sub_ss:
           case Intrinsic::x86_sse2_sub_sd:
-            TmpV = InsertNewInstBefore(BinaryOperator::CreateSub(LHS, RHS,
+            TmpV = InsertNewInstBefore(BinaryOperator::CreateFSub(LHS, RHS,
                                                         II->getName()), *II);
             break;
           case Intrinsic::x86_sse_mul_ss:
           case Intrinsic::x86_sse2_mul_sd:
-            TmpV = InsertNewInstBefore(BinaryOperator::CreateMul(LHS, RHS,
+            TmpV = InsertNewInstBefore(BinaryOperator::CreateFMul(LHS, RHS,
                                                          II->getName()), *II);
             break;
           }
@@ -2052,14 +2075,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, RHS);
 
     // X + 0 --> X
-    if (!I.getType()->isFPOrFPVector()) { // NOTE: -0 + +0 = +0.
-      if (RHSC->isNullValue())
-        return ReplaceInstUsesWith(I, LHS);
-    } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
-      if (CFP->isExactlyValue(ConstantFP::getNegativeZero
-                              (I.getType())->getValueAPF()))
-        return ReplaceInstUsesWith(I, LHS);
-    }
+    if (RHSC->isNullValue())
+      return ReplaceInstUsesWith(I, LHS);
 
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       // X + (signbit) --> X ^ signbit
@@ -2317,11 +2334,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         return SelectInst::Create(SI->getCondition(), A, N);
     }
   }
-  
-  // Check for X+0.0.  Simplify it to X if we know X is not -0.0.
-  if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS))
-    if (CFP->getValueAPF().isPosZero() && CannotBeNegativeZero(LHS))
-      return ReplaceInstUsesWith(I, LHS);
 
   // Check for (add (sext x), y), see if we can merge this into an
   // integer add followed by a sext.
@@ -2359,7 +2371,42 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       }
     }
   }
-  
+
+  return Changed ? &I : 0;
+}
+
+Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
+  bool Changed = SimplifyCommutative(I);
+  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+
+  if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
+    // X + 0 --> X
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
+      if (CFP->isExactlyValue(ConstantFP::getNegativeZero
+                              (I.getType())->getValueAPF()))
+        return ReplaceInstUsesWith(I, LHS);
+    }
+
+    if (isa<PHINode>(LHS))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
+  }
+
+  // -A + B  -->  B - A
+  // -A + -B  -->  -(A + B)
+  if (Value *LHSV = dyn_castFNegVal(LHS))
+    return BinaryOperator::CreateFSub(RHS, LHSV);
+
+  // A + -B  -->  A - B
+  if (!isa<Constant>(RHS))
+    if (Value *V = dyn_castFNegVal(RHS))
+      return BinaryOperator::CreateFSub(LHS, V);
+
+  // Check for X+0.0.  Simplify it to X if we know X is not -0.0.
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS))
+    if (CFP->getValueAPF().isPosZero() && CannotBeNegativeZero(LHS))
+      return ReplaceInstUsesWith(I, LHS);
+
   // Check for (add double (sitofp x), y), see if we can merge this into an
   // integer add followed by a promotion.
   if (SIToFPInst *LHSConv = dyn_cast<SIToFPInst>(LHS)) {
@@ -2407,8 +2454,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Op0 == Op1 &&                        // sub X, X  -> 0
-      !I.getType()->isFPOrFPVector())
+  if (Op0 == Op1)                        // sub X, X  -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // If this is a 'B = x-(-A)', change to B = x+A...
@@ -2469,8 +2515,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     return BinaryOperator::CreateXor(Op0, Op1);
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
-    if (Op1I->getOpcode() == Instruction::Add &&
-        !Op0->getType()->isFPOrFPVector()) {
+    if (Op1I->getOpcode() == Instruction::Add) {
       if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
         return BinaryOperator::CreateNeg(Op1I->getOperand(1), I.getName());
       else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
@@ -2487,8 +2532,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression
       // is not used by anyone else...
       //
-      if (Op1I->getOpcode() == Instruction::Sub &&
-          !Op1I->getType()->isFPOrFPVector()) {
+      if (Op1I->getOpcode() == Instruction::Sub) {
         // Swap the two operands of the subexpr...
         Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
         Op1I->setOperand(0, IIOp1);
@@ -2526,18 +2570,17 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     }
   }
 
-  if (!Op0->getType()->isFPOrFPVector())
-    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
-      if (Op0I->getOpcode() == Instruction::Add) {
-        if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
-          return ReplaceInstUsesWith(I, Op0I->getOperand(1));
-        else if (Op0I->getOperand(1) == Op1)        // (X+Y)-Y == X
-          return ReplaceInstUsesWith(I, Op0I->getOperand(0));
-      } else if (Op0I->getOpcode() == Instruction::Sub) {
-        if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
-          return BinaryOperator::CreateNeg(Op0I->getOperand(1), I.getName());
-      }
+  if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
+    if (Op0I->getOpcode() == Instruction::Add) {
+      if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
+        return ReplaceInstUsesWith(I, Op0I->getOperand(1));
+      else if (Op0I->getOperand(1) == Op1)        // (X+Y)-Y == X
+        return ReplaceInstUsesWith(I, Op0I->getOperand(0));
+    } else if (Op0I->getOpcode() == Instruction::Sub) {
+      if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
+        return BinaryOperator::CreateNeg(Op0I->getOperand(1), I.getName());
     }
+  }
 
   ConstantInt *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
@@ -2548,6 +2591,40 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (X == dyn_castFoldableMul(Op1, C2))
       return BinaryOperator::CreateMul(X, Subtract(C1, C2));
   }
+  return 0;
+}
+
+Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  // If this is a 'B = x-(-A)', change to B = x+A...
+  if (Value *V = dyn_castFNegVal(Op1))
+    return BinaryOperator::CreateFAdd(Op0, V);
+
+  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
+    if (Op1I->getOpcode() == Instruction::FAdd) {
+      if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
+        return BinaryOperator::CreateFNeg(Op1I->getOperand(1), I.getName());
+      else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
+        return BinaryOperator::CreateFNeg(Op1I->getOperand(0), I.getName());
+    }
+
+    if (Op1I->hasOneUse()) {
+      // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression
+      // is not used by anyone else...
+      //
+      if (Op1I->getOpcode() == Instruction::FSub) {
+        // Swap the two operands of the subexpr...
+        Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
+        Op1I->setOperand(0, IIOp1);
+        Op1I->setOperand(1, IIOp0);
+
+        // Create the new top level fadd instruction...
+        return BinaryOperator::CreateFAdd(Op0, Op1);
+      }
+    }
+  }
+
   return 0;
 }
 
@@ -2613,13 +2690,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         return BinaryOperator::CreateShl(Op0,
                  ConstantInt::get(Op0->getType(), Val.logBase2()));
       }
-    } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
-      // TODO: If Op1 is zero and Op0 is finite, return zero.
-
-      // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
-      // ANSI says we can drop signals, so we can do this anyway." (from GCC)
-      if (Op1F->isExactlyValue(1.0))
-        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
     } else if (isa<VectorType>(Op1->getType())) {
       // TODO: If Op1 is all zeros and Op0 is all finite, return all zeros.
 
@@ -2629,9 +2699,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
         // As above, vector X*splat(1.0) -> X in all defined cases.
         if (Constant *Splat = Op1V->getSplatValue()) {
-          if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
-            if (F->isExactlyValue(1.0))
-              return ReplaceInstUsesWith(I, Op0);
           if (ConstantInt *CI = dyn_cast<ConstantInt>(Splat))
             if (CI->equalsInt(1))
               return ReplaceInstUsesWith(I, Op0);
@@ -2751,6 +2818,45 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       }
     }
   }
+
+  return Changed ? &I : 0;
+}
+
+Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
+  bool Changed = SimplifyCommutative(I);
+  Value *Op0 = I.getOperand(0);
+
+  // Simplify mul instructions with a constant RHS...
+  if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
+    if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
+      // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
+      // ANSI says we can drop signals, so we can do this anyway." (from GCC)
+      if (Op1F->isExactlyValue(1.0))
+        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
+    } else if (isa<VectorType>(Op1->getType())) {
+      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
+        // As above, vector X*splat(1.0) -> X in all defined cases.
+        if (Constant *Splat = Op1V->getSplatValue()) {
+          if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
+            if (F->isExactlyValue(1.0))
+              return ReplaceInstUsesWith(I, Op0);
+        }
+      }
+    }
+
+    // Try to fold constant mul into select arguments.
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
+        return R;
+
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
+  }
+
+  if (Value *Op0v = dyn_castFNegVal(Op0))     // -X * -Y = X*Y
+    if (Value *Op1v = dyn_castFNegVal(I.getOperand(1)))
+      return BinaryOperator::CreateFMul(Op0v, Op1v);
 
   return Changed ? &I : 0;
 }
@@ -8562,17 +8668,17 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
   if (Instruction *I = commonCastTransforms(CI))
     return I;
   
-  // If we have fptrunc(add (fpextend x), (fpextend y)), where x and y are
+  // If we have fptrunc(fadd (fpextend x), (fpextend y)), where x and y are
   // smaller than the destination type, we can eliminate the truncate by doing
-  // the add as the smaller type.  This applies to add/sub/mul/div as well as
+  // the add as the smaller type.  This applies to fadd/fsub/fmul/fdiv as well as
   // many builtins (sqrt, etc).
   BinaryOperator *OpI = dyn_cast<BinaryOperator>(CI.getOperand(0));
   if (OpI && OpI->hasOneUse()) {
     switch (OpI->getOpcode()) {
     default: break;
-    case Instruction::Add:
-    case Instruction::Sub:
-    case Instruction::Mul:
+    case Instruction::FAdd:
+    case Instruction::FSub:
+    case Instruction::FMul:
     case Instruction::FDiv:
     case Instruction::FRem:
       const Type *SrcTy = OpI->getType();
@@ -9322,11 +9428,15 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
         // Turn select C, (X+Y), (X-Y) --> (X+(select C, Y, (-Y))).  This is
         // even legal for FP.
-        if (TI->getOpcode() == Instruction::Sub &&
-            FI->getOpcode() == Instruction::Add) {
+        if ((TI->getOpcode() == Instruction::Sub &&
+             FI->getOpcode() == Instruction::Add) ||
+            (TI->getOpcode() == Instruction::FSub &&
+             FI->getOpcode() == Instruction::FAdd)) {
           AddOp = FI; SubOp = TI;
-        } else if (FI->getOpcode() == Instruction::Sub &&
-                   TI->getOpcode() == Instruction::Add) {
+        } else if ((FI->getOpcode() == Instruction::Sub &&
+                    TI->getOpcode() == Instruction::Add) ||
+                   (FI->getOpcode() == Instruction::FSub &&
+                    TI->getOpcode() == Instruction::FAdd)) {
           AddOp = TI; SubOp = FI;
         }
 

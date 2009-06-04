@@ -1502,29 +1502,43 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
+/// AdjustIType - Map Add, Sub, and Mul to FAdd, FSub, and FMul when the
+/// type is floating-point, to help provide compatibility with an older API.
+///
+static BinaryOperator::BinaryOps AdjustIType(BinaryOperator::BinaryOps iType,
+                                             const Type *Ty) {
+  // API compatibility: Adjust integer opcodes to floating-point opcodes.
+  if (Ty->isFPOrFPVector()) {
+    if (iType == BinaryOperator::Add) iType = BinaryOperator::FAdd;
+    else if (iType == BinaryOperator::Sub) iType = BinaryOperator::FSub;
+    else if (iType == BinaryOperator::Mul) iType = BinaryOperator::FMul;
+  }
+  return iType;
+}
+
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
                                const Type *Ty, const std::string &Name,
                                Instruction *InsertBefore)
-  : Instruction(Ty, iType,
+  : Instruction(Ty, AdjustIType(iType, Ty),
                 OperandTraits<BinaryOperator>::op_begin(this),
                 OperandTraits<BinaryOperator>::operands(this),
                 InsertBefore) {
   Op<0>() = S1;
   Op<1>() = S2;
-  init(iType);
+  init(AdjustIType(iType, Ty));
   setName(Name);
 }
 
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
                                const Type *Ty, const std::string &Name,
                                BasicBlock *InsertAtEnd)
-  : Instruction(Ty, iType,
+  : Instruction(Ty, AdjustIType(iType, Ty),
                 OperandTraits<BinaryOperator>::op_begin(this),
                 OperandTraits<BinaryOperator>::operands(this),
                 InsertAtEnd) {
   Op<0>() = S1;
   Op<1>() = S2;
-  init(iType);
+  init(AdjustIType(iType, Ty));
   setName(Name);
 }
 
@@ -1537,12 +1551,19 @@ void BinaryOperator::init(BinaryOps iType) {
 #ifndef NDEBUG
   switch (iType) {
   case Add: case Sub:
-  case Mul: 
+  case Mul:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || getType()->isFloatingPoint() ||
-            isa<VectorType>(getType())) &&
-          "Tried to create an arithmetic operation on a non-arithmetic type!");
+    assert(getType()->isIntOrIntVector() &&
+           "Tried to create an integer operation on a non-integer type!");
+    break;
+  case FAdd: case FSub:
+  case FMul:
+    assert(getType() == LHS->getType() &&
+           "Arithmetic operation should return same type as operands!");
+    assert(getType()->isFPOrFPVector() &&
+           "Tried to create a floating-point operation on a "
+           "non-floating-point type!");
     break;
   case UDiv: 
   case SDiv: 
@@ -1631,6 +1652,22 @@ BinaryOperator *BinaryOperator::CreateNeg(Value *Op, const std::string &Name,
                             Op->getType(), Name, InsertAtEnd);
 }
 
+BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const std::string &Name,
+                                           Instruction *InsertBefore) {
+  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  return new BinaryOperator(Instruction::FSub,
+                            zero, Op,
+                            Op->getType(), Name, InsertBefore);
+}
+
+BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const std::string &Name,
+                                           BasicBlock *InsertAtEnd) {
+  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  return new BinaryOperator(Instruction::FSub,
+                            zero, Op,
+                            Op->getType(), Name, InsertAtEnd);
+}
+
 BinaryOperator *BinaryOperator::CreateNot(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
@@ -1679,6 +1716,14 @@ bool BinaryOperator::isNeg(const Value *V) {
   return false;
 }
 
+bool BinaryOperator::isFNeg(const Value *V) {
+  if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
+    if (Bop->getOpcode() == Instruction::FSub)
+      return Bop->getOperand(0) ==
+             ConstantExpr::getZeroValueForNegationExpr(Bop->getType());
+  return false;
+}
+
 bool BinaryOperator::isNot(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     return (Bop->getOpcode() == Instruction::Xor &&
@@ -1694,6 +1739,15 @@ Value *BinaryOperator::getNegArgument(Value *BinOp) {
 
 const Value *BinaryOperator::getNegArgument(const Value *BinOp) {
   return getNegArgument(const_cast<Value*>(BinOp));
+}
+
+Value *BinaryOperator::getFNegArgument(Value *BinOp) {
+  assert(isFNeg(BinOp) && "getFNegArgument from non-'fneg' instruction!");
+  return cast<BinaryOperator>(BinOp)->getOperand(1);
+}
+
+const Value *BinaryOperator::getFNegArgument(const Value *BinOp) {
+  return getFNegArgument(const_cast<Value*>(BinOp));
 }
 
 Value *BinaryOperator::getNotArgument(Value *BinOp) {

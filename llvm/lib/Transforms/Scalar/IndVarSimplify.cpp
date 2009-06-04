@@ -754,7 +754,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   BinaryOperator *Incr =
     dyn_cast<BinaryOperator>(PH->getIncomingValue(BackEdge));
   if (!Incr) return;
-  if (Incr->getOpcode() != Instruction::Add) return;
+  if (Incr->getOpcode() != Instruction::FAdd) return;
   ConstantFP *IncrValue = NULL;
   unsigned IncrVIndex = 1;
   if (Incr->getOperand(1) == PH)

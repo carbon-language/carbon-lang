@@ -139,7 +139,7 @@ b341:
 	%r353 = getelementptr float* bitcast ([128 x i64]* @i6000 to float*), i64 %r352
 	%r354 = load float* %r353
 	%r362 = load float* bitcast ([128 x i64]* @i6000 to float*)
-	%r363 = add float 0.000000e+00, %r362
+	%r363 = fadd float 0.000000e+00, %r362
 	%r370 = load float* bitcast ([128 x i64]* @i6000 to float*)
 	%r376 = icmp slt i64 %r16, 0
 	br i1 %r376, label %b377, label %a35b
@@ -155,11 +155,11 @@ a35b:
 	%e785 = shl i64 %w1865, 0
 	%b1877 = mul i64 %w1865, 0
 	%s795 = add i64 %b1877, 0
-	%r399 = add float %r354, 0.000000e+00
-	%r402 = add float %r370, 0.000000e+00
-	%r403 = add float %r348, 0.000000e+00
+	%r399 = fadd float %r354, 0.000000e+00
+	%r402 = fadd float %r370, 0.000000e+00
+	%r403 = fadd float %r348, 0.000000e+00
 	%r411 = add i64 %s795, 0
-	%r431 = add float %r362, 0.000000e+00
+	%r431 = fadd float %r362, 0.000000e+00
 	%r454 = add i64 %e785, 0
 	%r457 = add i64 %e785, 0
 	%r459 = icmp slt i64 %r457, 0
@@ -230,21 +230,21 @@ a45b714:
 	%r750 = add i64 %r717, 0
 	%r751 = getelementptr float* bitcast ([128 x i64]* @i6000 to float*), i64 %r750
 	%r752 = load float* %r751
-	%r753 = add float %r752, %r746
-	%r754 = add float %r728, %r722
-	%r755 = add float %r734, %r754
-	%r756 = add float %r755, %r740
-	%r757 = add float %r753, %r756
-	%r759 = add float %r757, %r540
+	%r753 = fadd float %r752, %r746
+	%r754 = fadd float %r728, %r722
+	%r755 = fadd float %r734, %r754
+	%r756 = fadd float %r755, %r740
+	%r757 = fadd float %r753, %r756
+	%r759 = fadd float %r757, %r540
 	%r770 = add i64 %r717, 0
 	%r771 = getelementptr float* bitcast ([128 x i64]* @i6000 to float*), i64 %r770
 	%r772 = load float* %r771
 	%r776 = add i64 %r717, 0
 	%r777 = getelementptr float* bitcast ([128 x i64]* @i6000 to float*), i64 %r776
 	%r778 = load float* %r777
-	%r781 = add float %r363, %r772
-	%r782 = add float %r781, %r778
-	%r783 = add float %r551, %r782
+	%r781 = fadd float %r363, %r772
+	%r782 = fadd float %r781, %r778
+	%r783 = fadd float %r551, %r782
 	br label %b712
 a57b:
 	br i1 %r335, label %a66b, label %b1086
@@ -310,10 +310,10 @@ a53b1019:
 	%r1035 = load float* %r1034
 	%r1037 = bitcast i8* %c22010 to float*
 	%r1040 = getelementptr float* %r1037, i64 %r1025
-	%r1044 = add float %r864, %r1035
-	%r1046 = add float %r870, %r1027
-	%r1047 = add float %r1044, %r1046
-	%r1048 = add float %r851, %r1047
+	%r1044 = fadd float %r864, %r1035
+	%r1046 = fadd float %r870, %r1027
+	%r1047 = fadd float %r1044, %r1046
+	%r1048 = fadd float %r851, %r1047
 	%v1886 = add i64 %w1885, 0
 	%u1890 = icmp slt i64 %v1886, %b1889
 	br i1 %u1890, label %b1016, label %a53b1019
@@ -341,7 +341,7 @@ b1117:
 	%r1132 = bitcast i8* %c22012 to float*
 	%r1134 = getelementptr float* %r1132, i64 %w1915
 	%r1135 = load float* %r1134
-	%r1136 = add float %r1123, %r1135
+	%r1136 = fadd float %r1123, %r1135
 	%r1138 = icmp slt i64 %r1114, 0
 	br i1 %r1138, label %b1139, label %a63b
 b1139:
@@ -387,7 +387,7 @@ b1263:
 a63b1266:
 	%w1944 = phi i64 [ 0, %a63b1266q ], [ %v1945, %a63b1266 ]
 	%s1377 = phi i64 [ %s1374, %a63b1266q ], [ %r1297, %a63b1266 ]
-	%r1282 = add float %r1136, 0.000000e+00
+	%r1282 = fadd float %r1136, 0.000000e+00
 	%r1297 = add i64 %s1377, 0
 	%v1945 = add i64 %w1944, 0
 	%u1949 = icmp slt i64 %v1945, %b1948
@@ -418,7 +418,7 @@ a74b:
 	%r1379 = add i64 %s1543, 0
 	%r1403 = add i64 %r1355, 0
 	%r1422 = add i64 %r1348, 0
-	%r1526 = add float %r1372, 0.000000e+00
+	%r1526 = fadd float %r1372, 0.000000e+00
 	%r1573 = add i64 %w1958, 0
 	%r1581 = icmp slt i64 %r1573, 0
 	%v1959 = add i64 %w1958, 0
@@ -448,10 +448,10 @@ a97b:
 	%r1763 = load float* %r1762
 	%r1767 = add i64 %r1622, 0
 	%r1768 = getelementptr float* bitcast ([128 x i64]* @i6000 to float*), i64 %r1767
-	%r1772 = add float %r1763, 0.000000e+00
-	%r1773 = add float %r1772, 0.000000e+00
-	%r1809 = add float %r1757, 0.000000e+00
-	%r1810 = add float %r1773, %r1809
+	%r1772 = fadd float %r1763, 0.000000e+00
+	%r1773 = fadd float %r1772, 0.000000e+00
+	%r1809 = fadd float %r1757, 0.000000e+00
+	%r1810 = fadd float %r1773, %r1809
 	store float %r1810, float* %r1768
 	%r1818 = add i64 %w1970, 0
 	%r1826 = icmp slt i64 %r1818, 0

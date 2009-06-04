@@ -7,7 +7,7 @@ define internal float @foo() {
 
 define float @bar() {
         %tmp1 = call float (...)* bitcast (float ()* @foo to float (...)*)( )
-        %tmp2 = mul float %tmp1, 1.000000e+01           ; <float> [#uses=1]
+        %tmp2 = fmul float %tmp1, 1.000000e+01           ; <float> [#uses=1]
         ret float %tmp2
 }
 

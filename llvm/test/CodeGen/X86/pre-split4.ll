@@ -10,14 +10,14 @@ bb:		; preds = %bb, %entry
 	%Flint.0.reg2mem.0 = phi double [ 0.000000e+00, %entry ], [ %5, %bb ]		; <double> [#uses=1]
 	%twoThrd.0.reg2mem.0 = phi double [ 0.000000e+00, %entry ], [ %1, %bb ]		; <double> [#uses=1]
 	%0 = tail call double @llvm.pow.f64(double 0x3FE5555555555555, double 0.000000e+00)		; <double> [#uses=1]
-	%1 = add double %0, %twoThrd.0.reg2mem.0		; <double> [#uses=1]
+	%1 = fadd double %0, %twoThrd.0.reg2mem.0		; <double> [#uses=1]
 	%2 = tail call double @sin(double %k.0.reg2mem.0) nounwind readonly		; <double> [#uses=1]
-	%3 = mul double 0.000000e+00, %2		; <double> [#uses=1]
+	%3 = fmul double 0.000000e+00, %2		; <double> [#uses=1]
 	%4 = fdiv double 1.000000e+00, %3		; <double> [#uses=1]
         store double %Flint.0.reg2mem.0, double* null
         store double %twoThrd.0.reg2mem.0, double* null
-	%5 = add double %4, %Flint.0.reg2mem.0		; <double> [#uses=1]
-	%6 = add double %k.0.reg2mem.0, 1.000000e+00		; <double> [#uses=1]
+	%5 = fadd double %4, %Flint.0.reg2mem.0		; <double> [#uses=1]
+	%6 = fadd double %k.0.reg2mem.0, 1.000000e+00		; <double> [#uses=1]
 	br label %bb
 }
 

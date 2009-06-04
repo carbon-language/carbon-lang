@@ -20,8 +20,8 @@ define i16 @test1(float %f) nounwind {
 }
 
 define i16 @test2(float %f) nounwind {
-	%tmp28 = sub float %f, 1.000000e+00		; <float> [#uses=1]
-	%tmp37 = mul float %tmp28, 5.000000e-01		; <float> [#uses=1]
+	%tmp28 = fsub float %f, 1.000000e+00		; <float> [#uses=1]
+	%tmp37 = fmul float %tmp28, 5.000000e-01		; <float> [#uses=1]
 	%tmp375 = insertelement <4 x float> undef, float %tmp37, i32 0		; <<4 x float>> [#uses=1]
 	%tmp48 = tail call <4 x float> @llvm.x86.sse.min.ss( <4 x float> %tmp375, <4 x float> < float 6.553500e+04, float undef, float undef, float undef > )		; <<4 x float>> [#uses=1]
 	%tmp59 = tail call <4 x float> @llvm.x86.sse.max.ss( <4 x float> %tmp48, <4 x float> < float 0.000000e+00, float undef, float undef, float undef > )		; <<4 x float>> [#uses=1]

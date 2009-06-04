@@ -19,12 +19,12 @@ bb:		; preds = %bb9.i, %entry
 	br i1 %1, label %bb9.i, label %bb13.i
 
 bb9.i:		; preds = %bb
-	%2 = sub double %.rle4, %0		; <double> [#uses=0]
+	%2 = fsub double %.rle4, %0		; <double> [#uses=0]
 	%3 = tail call double @asin(double 0.000000e+00) nounwind readonly		; <double> [#uses=0]
-	%4 = mul double 0.000000e+00, %0		; <double> [#uses=1]
+	%4 = fmul double 0.000000e+00, %0		; <double> [#uses=1]
 	%5 = tail call double @tan(double 0.000000e+00) nounwind readonly		; <double> [#uses=0]
-	%6 = mul double %4, 0.000000e+00		; <double> [#uses=1]
-	%7 = add double %6, 0.000000e+00		; <double> [#uses=1]
+	%6 = fmul double %4, 0.000000e+00		; <double> [#uses=1]
+	%7 = fadd double %6, 0.000000e+00		; <double> [#uses=1]
 	br i1 false, label %return, label %bb
 
 bb13.i:		; preds = %bb

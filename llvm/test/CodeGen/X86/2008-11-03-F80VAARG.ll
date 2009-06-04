@@ -12,6 +12,6 @@ define x86_fp80 @test(...) nounwind {
 	call void @llvm.va_start(i8* %v1)
 	%t1 = va_arg i8** %ap, x86_fp80		; <x86_fp80> [#uses=1]
 	%t2 = va_arg i8** %ap, x86_fp80		; <x86_fp80> [#uses=1]
-	%t = add x86_fp80 %t1, %t2		; <x86_fp80> [#uses=1]
+	%t = fadd x86_fp80 %t1, %t2		; <x86_fp80> [#uses=1]
 	ret x86_fp80 %t
 }

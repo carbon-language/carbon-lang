@@ -11,7 +11,7 @@ bb:		; preds = %entry
 
 bb1:		; preds = %bb, %entry
 	%f_addr.0 = phi float [ %1, %bb ], [ %f, %entry ]		; <float> [#uses=1]
-	%2 = mul float %f_addr.0, %g		; <float> [#uses=1]
+	%2 = fmul float %f_addr.0, %g		; <float> [#uses=1]
 	ret float %2
 }
 

@@ -13,7 +13,7 @@ bb5:		; preds = %bb3
 	%u.in.mask = and i64 %x14, -4294967296		; <i64> [#uses=1]
 	%.ins = or i64 0, %u.in.mask		; <i64> [#uses=1]
 	%0 = bitcast i64 %.ins to double		; <double> [#uses=1]
-	%1 = sub double %x, %0		; <double> [#uses=1]
+	%1 = fsub double %x, %0		; <double> [#uses=1]
 	%2 = fptosi double %1 to i32		; <i32> [#uses=1]
 	%3 = add i32 %2, 0		; <i32> [#uses=1]
 	%4 = zext i32 %3 to i64		; <i64> [#uses=1]

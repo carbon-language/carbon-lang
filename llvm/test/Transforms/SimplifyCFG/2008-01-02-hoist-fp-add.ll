@@ -15,7 +15,7 @@ entry:
 	br i1 %toBool, label %cond_true, label %cond_next
 
 cond_true:		; preds = %entry
-	%tmp7 = add double %tmp, %Z		; <double> [#uses=1]
+	%tmp7 = fadd double %tmp, %Z		; <double> [#uses=1]
 	br label %cond_next
 
 cond_next:		; preds = %cond_true, %entry

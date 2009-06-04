@@ -1000,8 +1000,11 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       Out << ')';
       return;
     case Instruction::Add:
+    case Instruction::FAdd:
     case Instruction::Sub:
+    case Instruction::FSub:
     case Instruction::Mul:
+    case Instruction::FMul:
     case Instruction::SDiv:
     case Instruction::UDiv:
     case Instruction::FDiv:
@@ -1020,9 +1023,12 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       bool NeedsClosingParens = printConstExprCast(CE, Static); 
       printConstantWithCast(CE->getOperand(0), CE->getOpcode());
       switch (CE->getOpcode()) {
-      case Instruction::Add: Out << " + "; break;
-      case Instruction::Sub: Out << " - "; break;
-      case Instruction::Mul: Out << " * "; break;
+      case Instruction::Add:
+      case Instruction::FAdd: Out << " + "; break;
+      case Instruction::Sub:
+      case Instruction::FSub: Out << " - "; break;
+      case Instruction::Mul:
+      case Instruction::FMul: Out << " * "; break;
       case Instruction::URem:
       case Instruction::SRem: 
       case Instruction::FRem: Out << " % "; break;
@@ -1322,8 +1328,6 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE, bool Static) {
   case Instruction::Mul:
     // We need to cast integer arithmetic so that it is always performed
     // as unsigned, to avoid undefined behavior on overflow.
-    if (!Ty->isIntOrIntVector()) break;
-    // FALL THROUGH
   case Instruction::LShr:
   case Instruction::URem: 
   case Instruction::UDiv: NeedsExplicitCast = true; break;
@@ -1387,8 +1391,6 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
     case Instruction::Mul:
       // We need to cast integer arithmetic so that it is always performed
       // as unsigned, to avoid undefined behavior on overflow.
-      if (!OpTy->isIntOrIntVector()) break;
-      // FALL THROUGH
     case Instruction::LShr:
     case Instruction::UDiv:
     case Instruction::URem:
@@ -1505,8 +1507,6 @@ bool CWriter::writeInstructionCast(const Instruction &I) {
   case Instruction::Mul:
     // We need to cast integer arithmetic so that it is always performed
     // as unsigned, to avoid undefined behavior on overflow.
-    if (!Ty->isIntOrIntVector()) break;
-    // FALL THROUGH
   case Instruction::LShr:
   case Instruction::URem: 
   case Instruction::UDiv: 
@@ -1552,8 +1552,6 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
     case Instruction::Mul:
       // We need to cast integer arithmetic so that it is always performed
       // as unsigned, to avoid undefined behavior on overflow.
-      if (!OpTy->isIntOrIntVector()) break;
-      // FALL THROUGH
     case Instruction::LShr:
     case Instruction::UDiv:
     case Instruction::URem: // Cast to unsigned first
@@ -2602,9 +2600,13 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
   // If this is a negation operation, print it out as such.  For FP, we don't
   // want to print "-0.0 - X".
-  if (BinaryOperator::isNeg(&I)) {
+  if (BinaryOperator::isNeg(&I) || BinaryOperator::isFNeg(&I)) {
     Out << "-(";
     writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
+    Out << ")";
+  } else if (BinaryOperator::isFNeg(&I)) {
+    Out << "-(";
+    writeOperand(BinaryOperator::getFNegArgument(cast<BinaryOperator>(&I)));
     Out << ")";
   } else if (I.getOpcode() == Instruction::FRem) {
     // Output a call to fmod/fmodf instead of emitting a%b
@@ -2630,9 +2632,12 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     writeOperandWithCast(I.getOperand(0), I.getOpcode());
 
     switch (I.getOpcode()) {
-    case Instruction::Add:  Out << " + "; break;
-    case Instruction::Sub:  Out << " - "; break;
-    case Instruction::Mul:  Out << " * "; break;
+    case Instruction::Add:
+    case Instruction::FAdd: Out << " + "; break;
+    case Instruction::Sub:
+    case Instruction::FSub: Out << " - "; break;
+    case Instruction::Mul:
+    case Instruction::FMul: Out << " * "; break;
     case Instruction::URem:
     case Instruction::SRem:
     case Instruction::FRem: Out << " % "; break;

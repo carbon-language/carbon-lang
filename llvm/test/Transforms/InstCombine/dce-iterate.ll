@@ -18,7 +18,7 @@ entry:
         %c = lshr i960 %sz101112.ins, 320               ; <i960> [#uses=1]
         %d = trunc i960 %c to i64               ; <i64> [#uses=1]
         %e = bitcast i64 %d to double           ; <double> [#uses=1]
-        %f = add double %b, %e
+        %f = fadd double %b, %e
 
         ret double %e
 }

@@ -5,7 +5,7 @@
 
 define i32 @test1(float %x) nounwind  {
 entry:
-	%tmp2 = sub float -0.000000e+00, %x		; <float> [#uses=1]
+	%tmp2 = fsub float -0.000000e+00, %x		; <float> [#uses=1]
 	%tmp210 = bitcast float %tmp2 to i32		; <i32> [#uses=1]
 	ret i32 %tmp210
 }

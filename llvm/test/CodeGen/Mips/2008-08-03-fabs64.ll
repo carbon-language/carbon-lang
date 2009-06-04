@@ -9,7 +9,7 @@ define double @A(double %c, double %d) nounwind readnone  {
 entry:
 	tail call double @fabs( double %c ) nounwind readnone 		; <double>:0 [#uses=1]
 	tail call double @fabs( double %d ) nounwind readnone 		; <double>:0 [#uses=1]
-  add double %0, %1
+  fadd double %0, %1
   ret double %2
 }
 

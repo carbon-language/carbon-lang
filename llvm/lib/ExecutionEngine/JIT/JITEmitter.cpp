@@ -891,8 +891,11 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
       break;
     }
     case Instruction::Add:
+    case Instruction::FAdd:
     case Instruction::Sub:
+    case Instruction::FSub:
     case Instruction::Mul:
+    case Instruction::FMul:
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::URem:

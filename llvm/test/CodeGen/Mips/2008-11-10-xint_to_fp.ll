@@ -21,12 +21,12 @@ entry:
 	load i16* %3, align 2		; <i16>:4 [#uses=1]
 	uitofp i16 %4 to double		; <double>:5 [#uses=1]
 	tail call double @ldexp( double %5, i32 -32 ) nounwind		; <double>:6 [#uses=1]
-	add double %2, %6		; <double>:7 [#uses=1]
+	fadd double %2, %6		; <double>:7 [#uses=1]
 	getelementptr i16* %xseed, i32 2		; <i16*>:8 [#uses=1]
 	load i16* %8, align 2		; <i16>:9 [#uses=1]
 	uitofp i16 %9 to double		; <double>:10 [#uses=1]
 	tail call double @ldexp( double %10, i32 -16 ) nounwind		; <double>:11 [#uses=1]
-	add double %7, %11		; <double>:12 [#uses=1]
+	fadd double %7, %11		; <double>:12 [#uses=1]
 	ret double %12
 }
 
@@ -45,11 +45,11 @@ entry:
 	load i16* %4, align 2		; <i16>:5 [#uses=1]
 	uitofp i16 %5 to double		; <double>:6 [#uses=1]
 	tail call double @ldexp( double %6, i32 -32 ) nounwind		; <double>:7 [#uses=1]
-	add double %3, %7		; <double>:8 [#uses=1]
+	fadd double %3, %7		; <double>:8 [#uses=1]
 	getelementptr i16* %xseed, i32 2		; <i16*>:9 [#uses=1]
 	load i16* %9, align 2		; <i16>:10 [#uses=1]
 	uitofp i16 %10 to double		; <double>:11 [#uses=1]
 	tail call double @ldexp( double %11, i32 -16 ) nounwind		; <double>:12 [#uses=1]
-	add double %8, %12		; <double>:13 [#uses=1]
+	fadd double %8, %12		; <double>:13 [#uses=1]
 	ret double %13
 }

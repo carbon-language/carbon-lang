@@ -48,11 +48,20 @@ public:
   Constant *CreateAdd(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getAdd(LHS, RHS));
   }
+  Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
+    return Fold(ConstantExpr::getFAdd(LHS, RHS));
+  }
   Constant *CreateSub(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getSub(LHS, RHS));
   }
+  Constant *CreateFSub(Constant *LHS, Constant *RHS) const {
+    return Fold(ConstantExpr::getFSub(LHS, RHS));
+  }
   Constant *CreateMul(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getMul(LHS, RHS));
+  }
+  Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
+    return Fold(ConstantExpr::getFMul(LHS, RHS));
   }
   Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getUDiv(LHS, RHS));
@@ -102,6 +111,9 @@ public:
 
   Constant *CreateNeg(Constant *C) const {
     return Fold(ConstantExpr::getNeg(C));
+  }
+  Constant *CreateFNeg(Constant *C) const {
+    return Fold(ConstantExpr::getFNeg(C));
   }
   Constant *CreateNot(Constant *C) const {
     return Fold(ConstantExpr::getNot(C));

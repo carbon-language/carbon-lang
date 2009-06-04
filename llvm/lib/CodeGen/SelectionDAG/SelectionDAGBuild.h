@@ -469,9 +469,12 @@ private:
 
   void visitBinary(User &I, unsigned OpCode);
   void visitShift(User &I, unsigned Opcode);
-  void visitAdd(User &I);
-  void visitSub(User &I);
-  void visitMul(User &I);
+  void visitAdd(User &I)  { visitBinary(I, ISD::ADD); }
+  void visitFAdd(User &I) { visitBinary(I, ISD::FADD); }
+  void visitSub(User &I)  { visitBinary(I, ISD::SUB); }
+  void visitFSub(User &I);
+  void visitMul(User &I)  { visitBinary(I, ISD::MUL); }
+  void visitFMul(User &I) { visitBinary(I, ISD::FMUL); }
   void visitURem(User &I) { visitBinary(I, ISD::UREM); }
   void visitSRem(User &I) { visitBinary(I, ISD::SREM); }
   void visitFRem(User &I) { visitBinary(I, ISD::FREM); }

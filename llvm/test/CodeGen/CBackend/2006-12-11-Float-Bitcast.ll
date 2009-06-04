@@ -23,7 +23,7 @@ define double @test4(i64 %L) {
 
 define double @test5(double %D) {
         %X = bitcast double %D to double                ; <double> [#uses=1]
-        %Y = add double %X, 2.000000e+00                ; <double> [#uses=1]
+        %Y = fadd double %X, 2.000000e+00                ; <double> [#uses=1]
         %Z = bitcast double %Y to i64           ; <i64> [#uses=1]
         %res = bitcast i64 %Z to double         ; <double> [#uses=1]
         ret double %res
@@ -31,7 +31,7 @@ define double @test5(double %D) {
 
 define float @test6(float %F) {
         %X = bitcast float %F to float          ; <float> [#uses=1]
-        %Y = add float %X, 2.000000e+00         ; <float> [#uses=1]
+        %Y = fadd float %X, 2.000000e+00         ; <float> [#uses=1]
         %Z = bitcast float %Y to i32            ; <i32> [#uses=1]
         %res = bitcast i32 %Z to float          ; <float> [#uses=1]
         ret float %res

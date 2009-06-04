@@ -18,8 +18,8 @@ bb:		; preds = %bb, %bb.preheader
 	%tmp45 = sitofp i32 %tmp4 to float		; <float> [#uses=1]
 	%tmp8 = getelementptr float* %y, i32 %i.0.reg2mem.0		; <float*> [#uses=1]
 	%tmp9 = load float* %tmp8, align 4		; <float> [#uses=1]
-	%tmp11 = mul float %tmp9, %tmp45		; <float> [#uses=1]
-	%tmp14 = add float %tmp11, %res.0.reg2mem.0		; <float> [#uses=2]
+	%tmp11 = fmul float %tmp9, %tmp45		; <float> [#uses=1]
+	%tmp14 = fadd float %tmp11, %res.0.reg2mem.0		; <float> [#uses=2]
 	%indvar.next = add i32 %i.0.reg2mem.0, 1		; <i32> [#uses=2]
 	%exitcond = icmp eq i32 %indvar.next, %umax		; <i1> [#uses=1]
 	br i1 %exitcond, label %bb23, label %bb

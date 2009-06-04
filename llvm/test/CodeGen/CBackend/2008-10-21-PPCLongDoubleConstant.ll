@@ -20,7 +20,7 @@ entry:
 	br label %bb4
 
 bb4:		; preds = %bb5.split, %bb4, %entry
-	%0 = fcmp ogt ppc_fp128 0xM00000000000000000000000000000000, select (i1 fcmp olt (ppc_fp128 fpext (double 0x3C447AE147AE147B to ppc_fp128), ppc_fp128 mul (ppc_fp128 0xM00000000000000010000000000000000, ppc_fp128 0xM40140000000000000000000000000000)), ppc_fp128 mul (ppc_fp128 0xM00000000000000010000000000000000, ppc_fp128 0xM40140000000000000000000000000000), ppc_fp128 fpext (double 0x3C447AE147AE147B to ppc_fp128))		; <i1> [#uses=1]
+	%0 = fcmp ogt ppc_fp128 0xM00000000000000000000000000000000, select (i1 fcmp olt (ppc_fp128 fpext (double 0x3C447AE147AE147B to ppc_fp128), ppc_fp128 fmul (ppc_fp128 0xM00000000000000010000000000000000, ppc_fp128 0xM40140000000000000000000000000000)), ppc_fp128 fmul (ppc_fp128 0xM00000000000000010000000000000000, ppc_fp128 0xM40140000000000000000000000000000), ppc_fp128 fpext (double 0x3C447AE147AE147B to ppc_fp128))		; <i1> [#uses=1]
 	br i1 %0, label %bb4, label %bb5.split
 
 bb5.split:		; preds = %bb4

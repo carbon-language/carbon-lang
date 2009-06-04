@@ -573,8 +573,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       return GV;
     }
     case Instruction::Add:
+    case Instruction::FAdd:
     case Instruction::Sub:
+    case Instruction::FSub:
     case Instruction::Mul:
+    case Instruction::FMul:
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::URem:
@@ -605,11 +608,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       case Type::FloatTyID:
         switch (CE->getOpcode()) {
           default: assert(0 && "Invalid float opcode"); abort();
-          case Instruction::Add:  
+          case Instruction::FAdd:
             GV.FloatVal = LHS.FloatVal + RHS.FloatVal; break;
-          case Instruction::Sub:  
+          case Instruction::FSub:
             GV.FloatVal = LHS.FloatVal - RHS.FloatVal; break;
-          case Instruction::Mul:  
+          case Instruction::FMul:
             GV.FloatVal = LHS.FloatVal * RHS.FloatVal; break;
           case Instruction::FDiv: 
             GV.FloatVal = LHS.FloatVal / RHS.FloatVal; break;
@@ -620,11 +623,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       case Type::DoubleTyID:
         switch (CE->getOpcode()) {
           default: assert(0 && "Invalid double opcode"); abort();
-          case Instruction::Add:  
+          case Instruction::FAdd:
             GV.DoubleVal = LHS.DoubleVal + RHS.DoubleVal; break;
-          case Instruction::Sub:  
+          case Instruction::FSub:
             GV.DoubleVal = LHS.DoubleVal - RHS.DoubleVal; break;
-          case Instruction::Mul:  
+          case Instruction::FMul:
             GV.DoubleVal = LHS.DoubleVal * RHS.DoubleVal; break;
           case Instruction::FDiv: 
             GV.DoubleVal = LHS.DoubleVal / RHS.DoubleVal; break;
@@ -638,15 +641,15 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         APFloat apfLHS = APFloat(LHS.IntVal);
         switch (CE->getOpcode()) {
           default: assert(0 && "Invalid long double opcode"); abort();
-          case Instruction::Add:  
+          case Instruction::FAdd:
             apfLHS.add(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
             GV.IntVal = apfLHS.bitcastToAPInt();
             break;
-          case Instruction::Sub:  
+          case Instruction::FSub:
             apfLHS.subtract(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
             GV.IntVal = apfLHS.bitcastToAPInt();
             break;
-          case Instruction::Mul:  
+          case Instruction::FMul:
             apfLHS.multiply(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
             GV.IntVal = apfLHS.bitcastToAPInt();
             break;

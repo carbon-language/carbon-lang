@@ -15,7 +15,7 @@ define void @splat(%f4* %P, %f4* %Q, float %X) nounwind {
         %tmp4 = insertelement %f4 %tmp2, float %X, i32 2                ; <%f4> [#uses=1]
         %tmp6 = insertelement %f4 %tmp4, float %X, i32 3                ; <%f4> [#uses=1]
         %q = load %f4* %Q               ; <%f4> [#uses=1]
-        %R = add %f4 %q, %tmp6          ; <%f4> [#uses=1]
+        %R = fadd %f4 %q, %tmp6          ; <%f4> [#uses=1]
         store %f4 %R, %f4* %P
         ret void
 }

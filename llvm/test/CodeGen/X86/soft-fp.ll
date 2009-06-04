@@ -22,6 +22,6 @@ declare void @llvm.va_end(i8*) nounwind
 
 define float @t2(float %a, float %b) nounwind readnone {
 entry:
-	%0 = add float %a, %b		; <float> [#uses=1]
+	%0 = fadd float %a, %b		; <float> [#uses=1]
 	ret float %0
 }

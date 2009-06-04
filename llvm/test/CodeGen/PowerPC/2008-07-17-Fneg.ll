@@ -7,7 +7,7 @@ entry:
 	br i1 false, label %bb3, label %bb4
 
 bb3:		; preds = %entry
-	sub ppc_fp128 0xM80000000000000000000000000000000, 0xM00000000000000000000000000000000		; <ppc_fp128>:0 [#uses=1]
+	fsub ppc_fp128 0xM80000000000000000000000000000000, 0xM00000000000000000000000000000000		; <ppc_fp128>:0 [#uses=1]
 	fptoui ppc_fp128 %0 to i32		; <i32>:1 [#uses=1]
 	zext i32 %1 to i64		; <i64>:2 [#uses=1]
 	sub i64 0, %2		; <i64>:3 [#uses=1]

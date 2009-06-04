@@ -15,7 +15,7 @@ entry:
 	%tmp = load float* @f		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
 	%tmp2 = load double* @d		; <double> [#uses=1]
-	%tmp3 = mul double %tmp1, %tmp2		; <double> [#uses=1]
+	%tmp3 = fmul double %tmp1, %tmp2		; <double> [#uses=1]
 	%tmp4 = fpext double %tmp3 to x86_fp80		; <x86_fp80> [#uses=1]
 	store x86_fp80 %tmp4, x86_fp80* @ld
 	br label %return

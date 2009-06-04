@@ -865,8 +865,11 @@ namespace {
         Out << "Constant* " << constName << " = ConstantExpr::";
         switch (CE->getOpcode()) {
         case Instruction::Add:    Out << "getAdd(";  break;
+        case Instruction::FAdd:   Out << "getFAdd(";  break;
         case Instruction::Sub:    Out << "getSub("; break;
+        case Instruction::FSub:   Out << "getFSub("; break;
         case Instruction::Mul:    Out << "getMul("; break;
+        case Instruction::FMul:   Out << "getFMul("; break;
         case Instruction::UDiv:   Out << "getUDiv("; break;
         case Instruction::SDiv:   Out << "getSDiv("; break;
         case Instruction::FDiv:   Out << "getFDiv("; break;
@@ -1159,8 +1162,11 @@ namespace {
       break;
     }
     case Instruction::Add:
+    case Instruction::FAdd:
     case Instruction::Sub:
+    case Instruction::FSub:
     case Instruction::Mul:
+    case Instruction::FMul:
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::FDiv:
@@ -1176,8 +1182,11 @@ namespace {
       Out << "BinaryOperator* " << iName << " = BinaryOperator::Create(";
       switch (I->getOpcode()) {
       case Instruction::Add: Out << "Instruction::Add"; break;
+      case Instruction::FAdd: Out << "Instruction::FAdd"; break;
       case Instruction::Sub: Out << "Instruction::Sub"; break;
+      case Instruction::FSub: Out << "Instruction::FSub"; break;
       case Instruction::Mul: Out << "Instruction::Mul"; break;
+      case Instruction::FMul: Out << "Instruction::FMul"; break;
       case Instruction::UDiv:Out << "Instruction::UDiv"; break;
       case Instruction::SDiv:Out << "Instruction::SDiv"; break;
       case Instruction::FDiv:Out << "Instruction::FDiv"; break;

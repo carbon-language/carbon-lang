@@ -3,8 +3,8 @@
 ; RUN:   grep fmul | count 1
 
 define double @foo(double %X) {
-        %tmp1 = mul double %X, 1.23
-        %tmp2 = mul double %tmp1, 4.124
+        %tmp1 = fmul double %X, 1.23
+        %tmp2 = fmul double %tmp1, 4.124
         ret double %tmp2
 }
 

@@ -6,7 +6,7 @@ define void @test() nounwind  {
 entry:
 	%tmp = load float* @X, align 4		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
-	%tmp3 = add double %tmp1, 0.000000e+00		; <double> [#uses=1]
+	%tmp3 = fadd double %tmp1, 0.000000e+00		; <double> [#uses=1]
 	%tmp34 = fptrunc double %tmp3 to float		; <float> [#uses=1]
 	store float %tmp34, float* @X, align 4
 	ret void
@@ -28,7 +28,7 @@ define void @test4() nounwind  {
 entry:
 	%tmp = load float* @X, align 4		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
-	%tmp2 = sub double -0.000000e+00, %tmp1		; <double> [#uses=1]
+	%tmp2 = fsub double -0.000000e+00, %tmp1		; <double> [#uses=1]
 	%tmp34 = fptrunc double %tmp2 to float		; <float> [#uses=1]
 	store float %tmp34, float* @X, align 4
 	ret void

@@ -89,8 +89,11 @@
       <li><a href="#binaryops">Binary Operations</a>
         <ol>
           <li><a href="#i_add">'<tt>add</tt>' Instruction</a></li>
+          <li><a href="#i_fadd">'<tt>fadd</tt>' Instruction</a></li>
           <li><a href="#i_sub">'<tt>sub</tt>' Instruction</a></li>
+          <li><a href="#i_fsub">'<tt>fsub</tt>' Instruction</a></li>
           <li><a href="#i_mul">'<tt>mul</tt>' Instruction</a></li>
+          <li><a href="#i_fmul">'<tt>fmul</tt>' Instruction</a></li>
           <li><a href="#i_udiv">'<tt>udiv</tt>' Instruction</a></li>
           <li><a href="#i_sdiv">'<tt>sdiv</tt>' Instruction</a></li>
           <li><a href="#i_fdiv">'<tt>fdiv</tt>' Instruction</a></li>
@@ -2503,16 +2506,15 @@ The result value has the same type as its operands.</p>
 <h5>Arguments:</h5>
 
 <p>The two arguments to the '<tt>add</tt>' instruction must be <a
- href="#t_integer">integer</a>, <a href="#t_floating">floating point</a>, or
- <a href="#t_vector">vector</a> values. Both arguments must have identical
- types.</p>
+ href="#t_integer">integer</a> or
+ <a href="#t_vector">vector</a> of integer values. Both arguments must
+ have identical types.</p>
 
 <h5>Semantics:</h5>
 
-<p>The value produced is the integer or floating point sum of the two
-operands.</p>
+<p>The value produced is the integer sum of the two operands.</p>
 
-<p>If an integer sum has unsigned overflow, the result returned is the
+<p>If the sum has unsigned overflow, the result returned is the
 mathematical result modulo 2<sup>n</sup>, where n is the bit width of
 the result.</p>
 
@@ -2523,6 +2525,39 @@ instruction is appropriate for both signed and unsigned integers.</p>
 
 <pre>
   &lt;result&gt; = add i32 4, %var          <i>; yields {i32}:result = 4 + %var</i>
+</pre>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_fadd">'<tt>fadd</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = fadd &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>fadd</tt>' instruction returns the sum of its two operands.</p>
+
+<h5>Arguments:</h5>
+
+<p>The two arguments to the '<tt>fadd</tt>' instruction must be
+<a href="#t_floating">floating point</a> or <a href="#t_vector">vector</a> of
+floating point values. Both arguments must have identical types.</p>
+
+<h5>Semantics:</h5>
+
+<p>The value produced is the floating point sum of the two operands.</p>
+
+<h5>Example:</h5>
+
+<pre>
+  &lt;result&gt; = fadd float 4.0, %var          <i>; yields {float}:result = 4.0 + %var</i>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
@@ -2550,16 +2585,14 @@ representations.</p>
 <h5>Arguments:</h5>
 
 <p>The two arguments to the '<tt>sub</tt>' instruction must be <a
- href="#t_integer">integer</a>, <a href="#t_floating">floating point</a>,
- or <a href="#t_vector">vector</a> values.  Both arguments must have identical
- types.</p>
+ href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of
+ integer values.  Both arguments must have identical types.</p>
 
 <h5>Semantics:</h5>
 
-<p>The value produced is the integer or floating point difference of
-the two operands.</p>
+<p>The value produced is the integer difference of the two operands.</p>
 
-<p>If an integer difference has unsigned overflow, the result returned is the
+<p>If the difference has unsigned overflow, the result returned is the
 mathematical result modulo 2<sup>n</sup>, where n is the bit width of
 the result.</p>
 
@@ -2570,6 +2603,45 @@ instruction is appropriate for both signed and unsigned integers.</p>
 <pre>
   &lt;result&gt; = sub i32 4, %var          <i>; yields {i32}:result = 4 - %var</i>
   &lt;result&gt; = sub i32 0, %val          <i>; yields {i32}:result = -%var</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_fsub">'<tt>fsub</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = fsub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>fsub</tt>' instruction returns the difference of its two
+operands.</p>
+
+<p>Note that the '<tt>fsub</tt>' instruction is used to represent the
+'<tt>fneg</tt>' instruction present in most other intermediate
+representations.</p>
+
+<h5>Arguments:</h5>
+
+<p>The two arguments to the '<tt>fsub</tt>' instruction must be <a
+ <a href="#t_floating">floating point</a> or <a href="#t_vector">vector</a>
+ of floating point values.  Both arguments must have identical types.</p>
+
+<h5>Semantics:</h5>
+
+<p>The value produced is the floating point difference of the two operands.</p>
+
+<h5>Example:</h5>
+<pre>
+  &lt;result&gt; = fsub float 4.0, %var           <i>; yields {float}:result = 4.0 - %var</i>
+  &lt;result&gt; = fsub float -0.0, %val          <i>; yields {float}:result = -%var</i>
 </pre>
 </div>
 
@@ -2590,16 +2662,14 @@ operands.</p>
 <h5>Arguments:</h5>
 
 <p>The two arguments to the '<tt>mul</tt>' instruction must be <a
-href="#t_integer">integer</a>, <a href="#t_floating">floating point</a>,
-or <a href="#t_vector">vector</a> values.  Both arguments must have identical
-types.</p>
+href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
  
 <h5>Semantics:</h5>
 
-<p>The value produced is the integer or floating point product of the
-two operands.</p>
+<p>The value produced is the integer product of the two operands.</p>
 
-<p>If the result of an integer multiplication has unsigned overflow,
+<p>If the result of the multiplication has unsigned overflow,
 the result returned is the mathematical result modulo 
 2<sup>n</sup>, where n is the bit width of the result.</p>
 <p>Because LLVM integers use a two's complement representation, and the
@@ -2610,6 +2680,35 @@ should be sign-extended or zero-extended as appropriate to the
 width of the full product.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = mul i32 4, %var          <i>; yields {i32}:result = 4 * %var</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_fmul">'<tt>fmul</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = fmul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The  '<tt>fmul</tt>' instruction returns the product of its two
+operands.</p>
+
+<h5>Arguments:</h5>
+
+<p>The two arguments to the '<tt>fmul</tt>' instruction must be
+<a href="#t_floating">floating point</a> or <a href="#t_vector">vector</a>
+of floating point values.  Both arguments must have identical types.</p>
+
+<h5>Semantics:</h5>
+
+<p>The value produced is the floating point product of the two operands.</p>
+
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = fmul float 4.0, %var          <i>; yields {float}:result = 4.0 * %var</i>
 </pre>
 </div>
 

@@ -5,22 +5,22 @@
 
 
 define double @foo_add(double %P) {
-	%tmp.1 = add double %P, 1.230000e+02		; <double> [#uses=1]
+	%tmp.1 = fadd double %P, 1.230000e+02		; <double> [#uses=1]
 	ret double %tmp.1
 }
 
 define double @foo_mul(double %P) {
-	%tmp.1 = mul double %P, 1.230000e+02		; <double> [#uses=1]
+	%tmp.1 = fmul double %P, 1.230000e+02		; <double> [#uses=1]
 	ret double %tmp.1
 }
 
 define double @foo_sub(double %P) {
-	%tmp.1 = sub double %P, 1.230000e+02		; <double> [#uses=1]
+	%tmp.1 = fsub double %P, 1.230000e+02		; <double> [#uses=1]
 	ret double %tmp.1
 }
 
 define double @foo_subr(double %P) {
-	%tmp.1 = sub double 1.230000e+02, %P		; <double> [#uses=1]
+	%tmp.1 = fsub double 1.230000e+02, %P		; <double> [#uses=1]
 	ret double %tmp.1
 }
 

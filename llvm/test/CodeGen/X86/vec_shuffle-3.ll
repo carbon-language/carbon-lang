@@ -5,8 +5,8 @@
 define <4 x float> @test1(<4 x float>* %x, <4 x float>* %y) {
         %tmp = load <4 x float>* %y             ; <<4 x float>> [#uses=2]
         %tmp5 = load <4 x float>* %x            ; <<4 x float>> [#uses=2]
-        %tmp9 = add <4 x float> %tmp5, %tmp             ; <<4 x float>> [#uses=1]
-        %tmp21 = sub <4 x float> %tmp5, %tmp            ; <<4 x float>> [#uses=1]
+        %tmp9 = fadd <4 x float> %tmp5, %tmp             ; <<4 x float>> [#uses=1]
+        %tmp21 = fsub <4 x float> %tmp5, %tmp            ; <<4 x float>> [#uses=1]
         %tmp27 = shufflevector <4 x float> %tmp9, <4 x float> %tmp21, <4 x i32> < i32 0, i32 1, i32 4, i32 5 >                ; <<4 x float>> [#uses=1]
         ret <4 x float> %tmp27
 }

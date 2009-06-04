@@ -45,7 +45,7 @@ cond_true.i34.i:		; preds = %xit.i
 cond_next.i79.i:		; preds = %xit.i
 	%phitmp167.i = fptosi double 0.000000e+00 to i64		; <i64> [#uses=1]
 	%tmp142143.i = fpext float %tmp6162.i.i to double		; <double> [#uses=1]
-	%tmp2.i139.i = add double %tmp142143.i, 5.000000e-01		; <double> [#uses=1]
+	%tmp2.i139.i = fadd double %tmp142143.i, 5.000000e-01		; <double> [#uses=1]
 	%tmp23.i140.i = fptosi double %tmp2.i139.i to i64		; <i64> [#uses=1]
 	br i1 false, label %cond_true.i143.i, label %round_coord.exit148.i
 
@@ -60,7 +60,7 @@ round_coord.exit148.i:		; preds = %cond_true.i143.i, %cond_next.i79.i
 	%tmp144149.i = phi i32 [ 32767, %cond_next.i79.i ], [ -32767, %cond_true.i143.i ]		; <i32> [#uses=1]
 	store i32 %tmp144149.i, i32* null, align 8
 	%tmp147148.i = fpext float %tmp67.i15.i to double		; <double> [#uses=1]
-	%tmp2.i128.i = add double %tmp147148.i, 5.000000e-01		; <double> [#uses=1]
+	%tmp2.i128.i = fadd double %tmp147148.i, 5.000000e-01		; <double> [#uses=1]
 	%tmp23.i129.i = fptosi double %tmp2.i128.i to i64		; <i64> [#uses=2]
 	%tmp5.i130.i = icmp slt i64 %tmp23.i129.i, 32768		; <i1> [#uses=1]
 	br i1 %tmp5.i130.i, label %cond_true.i132.i, label %round_coord.exit137.i

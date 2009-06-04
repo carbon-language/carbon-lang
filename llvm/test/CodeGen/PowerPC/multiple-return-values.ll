@@ -3,7 +3,7 @@
 
 define {i64, float} @bar(i64 %a, float %b) {
         %y = add i64 %a, 7
-        %z = add float %b, 7.0
+        %z = fadd float %b, 7.0
 	ret i64 %y, float %z
 }
 

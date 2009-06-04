@@ -101,8 +101,11 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
 
   // Standard binary operators...
   case Add: return "add";
+  case FAdd: return "fadd";
   case Sub: return "sub";
+  case FSub: return "fsub";
   case Mul: return "mul";
+  case FMul: return "fmul";
   case UDiv: return "udiv";
   case SDiv: return "sdiv";
   case FDiv: return "fdiv";
@@ -330,19 +333,13 @@ bool Instruction::mayThrow() const {
 
 /// isAssociative - Return true if the instruction is associative:
 ///
-///   Associative operators satisfy:  x op (y op z) === (x op y) op z)
+///   Associative operators satisfy:  x op (y op z) === (x op y) op z
 ///
-/// In LLVM, the Add, Mul, And, Or, and Xor operators are associative, when not
-/// applied to floating point types.
+/// In LLVM, the Add, Mul, And, Or, and Xor operators are associative.
 ///
 bool Instruction::isAssociative(unsigned Opcode, const Type *Ty) {
-  if (Opcode == And || Opcode == Or || Opcode == Xor)
-    return true;
-
-  // Add/Mul reassociate unless they are FP or FP vectors.
-  if (Opcode == Add || Opcode == Mul)
-    return !Ty->isFPOrFPVector();
-  return 0;
+  return Opcode == And || Opcode == Or || Opcode == Xor ||
+         Opcode == Add || Opcode == Mul;
 }
 
 /// isCommutative - Return true if the instruction is commutative:
@@ -355,7 +352,9 @@ bool Instruction::isAssociative(unsigned Opcode, const Type *Ty) {
 bool Instruction::isCommutative(unsigned op) {
   switch (op) {
   case Add:
+  case FAdd:
   case Mul:
+  case FMul:
   case And:
   case Or:
   case Xor:

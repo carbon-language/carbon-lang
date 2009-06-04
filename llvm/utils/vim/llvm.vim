@@ -22,7 +22,8 @@ syn match   llvmType /\<i\d\+\>/
 " Instructions.
 " The true and false tokens can be used for comparison opcodes, but it's
 " much more common for these tokens to be used for boolean constants.
-syn keyword llvmStatement add sub mul sdiv udiv fdiv srem urem frem
+syn keyword llvmStatement add fadd sub fsub mul fmul
+syn keyword llvmStatement sdiv udiv fdiv srem urem frem
 syn keyword llvmStatement and or xor
 syn keyword llvmStatement icmp fcmp
 syn keyword llvmStatement eq ne ugt uge ult ule sgt sge slt sle

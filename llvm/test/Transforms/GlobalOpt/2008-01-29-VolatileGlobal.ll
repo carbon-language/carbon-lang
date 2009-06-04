@@ -4,6 +4,6 @@
 define double @foo() nounwind  {
 entry:
 	%tmp1 = volatile load double* @t0.1441, align 8		; <double> [#uses=2]
-	%tmp4 = mul double %tmp1, %tmp1		; <double> [#uses=1]
+	%tmp4 = fmul double %tmp1, %tmp1		; <double> [#uses=1]
 	ret double %tmp4
 }

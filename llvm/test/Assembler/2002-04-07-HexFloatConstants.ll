@@ -11,6 +11,6 @@
 ; RUN: diff %t.1 %t.2
 
 define double @test() {
-        %tmp = mul double 7.200000e+101, 0x427F4000             ; <double> [#uses=1]
+        %tmp = fmul double 7.200000e+101, 0x427F4000             ; <double> [#uses=1]
         ret double %tmp
 }

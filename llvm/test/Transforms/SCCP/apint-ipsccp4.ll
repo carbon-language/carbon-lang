@@ -35,10 +35,10 @@ define float @All()
   %B = fcmp oge float %A, 1.0
   br i1 %B, label %T, label %F
 T:
-  %C = add float %A, 1.0
+  %C = fadd float %A, 1.0
   br label %exit
 F:
-  %D = add float %A, 2.0
+  %D = fadd float %A, 2.0
   br label %exit
 exit:
   %E = phi float [%C, %T], [%D, %F]

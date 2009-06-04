@@ -16,7 +16,7 @@ define float @test1(float %X) {
 
 define double @test2(double %X) {
         %Y = fcmp oge double %X, -0.0
-        %Z = sub double -0.0, %X
+        %Z = fsub double -0.0, %X
         %Q = select i1 %Y, double %X, double %Z
         ret double %Q
 }

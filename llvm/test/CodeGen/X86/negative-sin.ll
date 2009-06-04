@@ -5,8 +5,8 @@ declare double @sin(double %f)
 
 define double @foo(double %e)
 {
-  %f = sub double 0.0, %e
+  %f = fsub double 0.0, %e
   %g = call double @sin(double %f)
-  %h = sub double 0.0, %g
+  %h = fsub double 0.0, %g
   ret double %h
 }

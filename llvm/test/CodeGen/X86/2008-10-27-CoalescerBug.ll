@@ -26,7 +26,7 @@ bb22.preheader:		; preds = %bb24.preheader, %bb22.preheader
 	br label %bb22.preheader
 
 bb25:		; preds = %bb24.preheader
-	%7 = mul double 0.000000e+00, %6		; <double> [#uses=0]
+	%7 = fmul double 0.000000e+00, %6		; <double> [#uses=0]
 	%8 = add i32 %i3.122100, 0		; <i32> [#uses=1]
 	%9 = icmp sgt i32 %8, 0		; <i1> [#uses=1]
 	br i1 %9, label %bb3, label %bb24.preheader
@@ -37,7 +37,7 @@ bb24.preheader:		; preds = %bb25, %bb18
 	br i1 %10, label %bb25, label %bb22.preheader
 
 bb30.loopexit:		; preds = %bb
-	%11 = mul double 0.000000e+00, 0x401921FB54442D1C		; <double> [#uses=1]
+	%11 = fmul double 0.000000e+00, 0x401921FB54442D1C		; <double> [#uses=1]
 	br label %bb3
 }
 

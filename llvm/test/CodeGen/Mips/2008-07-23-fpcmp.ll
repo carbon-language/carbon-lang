@@ -11,7 +11,7 @@ entry:
 	br i1 %0, label %bb, label %bb2
 
 bb:		; preds = %entry
-	add float %a, 1.000000e+00		; <float>:1 [#uses=1]
+	fadd float %a, 1.000000e+00		; <float>:1 [#uses=1]
 	ret float %1
 
 bb2:		; preds = %entry

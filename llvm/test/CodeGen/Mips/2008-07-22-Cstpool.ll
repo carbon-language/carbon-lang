@@ -6,7 +6,7 @@ target triple = "mipsallegrexel-psp-elf"
 
 define float @F(float %a) nounwind {
 entry:
-	add float %a, 0x4011333340000000		; <float>:0 [#uses=1]
-	add float %0, 0x4010666660000000		; <float>:1 [#uses=1]
+	fadd float %a, 0x4011333340000000		; <float>:0 [#uses=1]
+	fadd float %0, 0x4010666660000000		; <float>:1 [#uses=1]
 	ret float %1
 }

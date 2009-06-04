@@ -5,19 +5,19 @@ target triple = "powerpc-apple-darwin8"
 
 define ppc_fp128 @plus(ppc_fp128 %x, ppc_fp128 %y) {
 entry:
-	%tmp3 = add ppc_fp128 %x, %y		; <ppc_fp128> [#uses=1]
+	%tmp3 = fadd ppc_fp128 %x, %y		; <ppc_fp128> [#uses=1]
 	ret ppc_fp128 %tmp3
 }
 
 define ppc_fp128 @minus(ppc_fp128 %x, ppc_fp128 %y) {
 entry:
-	%tmp3 = sub ppc_fp128 %x, %y		; <ppc_fp128> [#uses=1]
+	%tmp3 = fsub ppc_fp128 %x, %y		; <ppc_fp128> [#uses=1]
 	ret ppc_fp128 %tmp3
 }
 
 define ppc_fp128 @times(ppc_fp128 %x, ppc_fp128 %y) {
 entry:
-	%tmp3 = mul ppc_fp128 %x, %y		; <ppc_fp128> [#uses=1]
+	%tmp3 = fmul ppc_fp128 %x, %y		; <ppc_fp128> [#uses=1]
 	ret ppc_fp128 %tmp3
 }
 

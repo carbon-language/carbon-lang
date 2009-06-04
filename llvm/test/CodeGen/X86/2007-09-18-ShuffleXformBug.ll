@@ -22,7 +22,7 @@ entry:
 
 	%tmp1406.i1367.i = shufflevector <4 x float> %tmp2723.i1170.i, <4 x float> undef, <4 x i32> < i32 2, i32 2, i32 2, i32 2 >		; <<4 x float>> [#uses=1]
 	%tmp84.i1413.i = load <4 x float>* %.sub6235.i		; <<4 x float>> [#uses=1]
-	%tmp89.i1415.i = mul <4 x float> %tmp84.i1413.i, %tmp1406.i1367.i		; <<4 x float>> [#uses=1]
+	%tmp89.i1415.i = fmul <4 x float> %tmp84.i1413.i, %tmp1406.i1367.i		; <<4 x float>> [#uses=1]
 	store <4 x float> %tmp89.i1415.i, <4 x float>* %.sub.i
         ret i16 0
 }

@@ -28,7 +28,7 @@ define <4 x float> @test3(<4 x float> %V) {
 entry:
         %tmp8 = shufflevector <4 x float> %V, <4 x float> undef,
                                         <4 x i32> < i32 3, i32 2, i32 1, i32 0 >
-        %add = add <4 x float> %tmp8, %V
+        %add = fadd <4 x float> %tmp8, %V
         ret <4 x float> %add
 }
 

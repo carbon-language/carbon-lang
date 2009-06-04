@@ -16,7 +16,7 @@ bb28.i:		; preds = %bb28.i, %entry
 	br i1 false, label %bb502.loopexit.i, label %bb28.i
 
 bb.nph53.i:		; preds = %bb502.loopexit.i
-	%tmp354.i = sub double -0.000000e+00, %tmp10.i4		; <double> [#uses=0]
+	%tmp354.i = fsub double -0.000000e+00, %tmp10.i4		; <double> [#uses=0]
 	br label %bb244.i
 
 bb244.i:		; preds = %bb244.i, %bb.nph53.i

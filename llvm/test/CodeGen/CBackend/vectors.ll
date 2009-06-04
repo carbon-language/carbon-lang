@@ -14,7 +14,7 @@ define i32 @test2(<4 x i32> %a, i32 %b) {
 }
 
 define <4 x float> @test3(<4 x float> %Y) {
-	%Z = add <4 x float> %Y, %Y
+	%Z = fadd <4 x float> %Y, %Y
 	%X = shufflevector <4 x float> zeroinitializer, <4 x float> %Z, <4 x i32> < i32 0, i32 5, i32 6, i32 7 >
 	ret <4 x float> %X
 }

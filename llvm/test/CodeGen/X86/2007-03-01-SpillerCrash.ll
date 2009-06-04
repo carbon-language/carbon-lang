@@ -3,12 +3,12 @@
 
 define void @test() nounwind {
 test.exit:
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:0 [#uses=4]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:0 [#uses=4]
 	load <4 x float>* null		; <<4 x float>>:1 [#uses=1]
 	shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> < i32 3, i32 3, i32 3, i32 3 >		; <<4 x float>>:2 [#uses=1]
-	mul <4 x float> %0, %2		; <<4 x float>>:3 [#uses=1]
-	sub <4 x float> zeroinitializer, %3		; <<4 x float>>:4 [#uses=1]
-	mul <4 x float> %4, zeroinitializer		; <<4 x float>>:5 [#uses=2]
+	fmul <4 x float> %0, %2		; <<4 x float>>:3 [#uses=1]
+	fsub <4 x float> zeroinitializer, %3		; <<4 x float>>:4 [#uses=1]
+	fmul <4 x float> %4, zeroinitializer		; <<4 x float>>:5 [#uses=2]
 	bitcast <4 x float> zeroinitializer to <4 x i32>		; <<4 x i32>>:6 [#uses=1]
 	and <4 x i32> %6, < i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647 >		; <<4 x i32>>:7 [#uses=1]
 	bitcast <4 x i32> %7 to <4 x float>		; <<4 x float>>:8 [#uses=2]
@@ -23,13 +23,13 @@ test.exit:
 	br i1 false, label %19, label %13
 
 ; <label>:13		; preds = %12
-	sub float -0.000000e+00, 0.000000e+00		; <float>:14 [#uses=1]
+	fsub float -0.000000e+00, 0.000000e+00		; <float>:14 [#uses=1]
 	%tmp207 = extractelement <4 x float> zeroinitializer, i32 0		; <float> [#uses=1]
 	%tmp208 = extractelement <4 x float> zeroinitializer, i32 2		; <float> [#uses=1]
-	sub float -0.000000e+00, %tmp208		; <float>:15 [#uses=1]
+	fsub float -0.000000e+00, %tmp208		; <float>:15 [#uses=1]
 	%tmp155 = extractelement <4 x float> zeroinitializer, i32 0		; <float> [#uses=1]
 	%tmp156 = extractelement <4 x float> zeroinitializer, i32 2		; <float> [#uses=1]
-	sub float -0.000000e+00, %tmp156		; <float>:16 [#uses=1]
+	fsub float -0.000000e+00, %tmp156		; <float>:16 [#uses=1]
 	br label %19
 
 ; <label>:17		; preds = %11
@@ -54,7 +54,7 @@ test.exit:
 	insertelement <4 x float> %31, float %25, i32 2		; <<4 x float>>:32 [#uses=1]
 	insertelement <4 x float> %32, float %25, i32 3		; <<4 x float>>:33 [#uses=1]
 	fdiv <4 x float> %33, zeroinitializer		; <<4 x float>>:34 [#uses=1]
-	mul <4 x float> %34, < float 5.000000e-01, float 5.000000e-01, float 5.000000e-01, float 5.000000e-01 >		; <<4 x float>>:35 [#uses=1]
+	fmul <4 x float> %34, < float 5.000000e-01, float 5.000000e-01, float 5.000000e-01, float 5.000000e-01 >		; <<4 x float>>:35 [#uses=1]
 	insertelement <4 x float> undef, float %22, i32 0		; <<4 x float>>:36 [#uses=1]
 	insertelement <4 x float> %36, float %21, i32 1		; <<4 x float>>:37 [#uses=0]
 	br i1 false, label %foo.exit, label %38
@@ -64,17 +64,17 @@ test.exit:
 	fcmp ogt float %39, 0.000000e+00		; <i1>:40 [#uses=1]
 	extractelement <4 x float> %0, i32 2		; <float>:41 [#uses=1]
 	extractelement <4 x float> %0, i32 1		; <float>:42 [#uses=1]
-	sub float -0.000000e+00, %42		; <float>:43 [#uses=2]
+	fsub float -0.000000e+00, %42		; <float>:43 [#uses=2]
 	%tmp189 = extractelement <4 x float> %5, i32 2		; <float> [#uses=1]
 	br i1 %40, label %44, label %46
 
 ; <label>:44		; preds = %38
-	sub float -0.000000e+00, %tmp189		; <float>:45 [#uses=0]
+	fsub float -0.000000e+00, %tmp189		; <float>:45 [#uses=0]
 	br label %foo.exit
 
 ; <label>:46		; preds = %38
 	%tmp192 = extractelement <4 x float> %5, i32 1		; <float> [#uses=1]
-	sub float -0.000000e+00, %tmp192		; <float>:47 [#uses=1]
+	fsub float -0.000000e+00, %tmp192		; <float>:47 [#uses=1]
 	br label %foo.exit
 
 foo.exit:		; preds = %46, %44, %19

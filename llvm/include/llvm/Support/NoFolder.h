@@ -39,11 +39,20 @@ public:
   Value *CreateAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateAdd(LHS, RHS);
   }
+  Value *CreateFAdd(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateFAdd(LHS, RHS);
+  }
   Value *CreateSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSub(LHS, RHS);
   }
+  Value *CreateFSub(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateFSub(LHS, RHS);
+  }
   Value *CreateMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateMul(LHS, RHS);
+  }
+  Value *CreateFMul(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateFMul(LHS, RHS);
   }
   Value *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateUDiv(LHS, RHS);

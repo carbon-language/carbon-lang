@@ -59,7 +59,8 @@ cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 /// two values.
 namespace {
   struct VISIBILITY_HIDDEN Expression {
-    enum ExpressionOpcode { ADD, SUB, MUL, UDIV, SDIV, FDIV, UREM, SREM, 
+    enum ExpressionOpcode { ADD, FADD, SUB, FSUB, MUL, FMUL,
+                            UDIV, SDIV, FDIV, UREM, SREM,
                             FREM, SHL, LSHR, ASHR, AND, OR, XOR, ICMPEQ, 
                             ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE, 
                             ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ, 
@@ -200,8 +201,11 @@ Expression::ExpressionOpcode ValueTable::getOpcode(BinaryOperator* BO) {
   default: // THIS SHOULD NEVER HAPPEN
     assert(0 && "Binary operator with unknown opcode?");
   case Instruction::Add:  return Expression::ADD;
+  case Instruction::FAdd: return Expression::FADD;
   case Instruction::Sub:  return Expression::SUB;
+  case Instruction::FSub: return Expression::FSUB;
   case Instruction::Mul:  return Expression::MUL;
+  case Instruction::FMul: return Expression::FMUL;
   case Instruction::UDiv: return Expression::UDIV;
   case Instruction::SDiv: return Expression::SDIV;
   case Instruction::FDiv: return Expression::FDIV;

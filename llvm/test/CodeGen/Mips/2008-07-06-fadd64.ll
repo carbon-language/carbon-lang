@@ -5,6 +5,6 @@ target triple = "mipsallegrexel-psp-elf"
 
 define double @dofloat(double %a, double %b) nounwind {
 entry:
-	add double %a, %b		; <double>:0 [#uses=1]
+	fadd double %a, %b		; <double>:0 [#uses=1]
 	ret double %0
 }

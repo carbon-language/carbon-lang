@@ -6,7 +6,7 @@ define float @tst1(float %a, float %b) {
 }
 
 define double @tst2(double %a, float %b, float %c) {
-	%tmp1 = add float %b, %c
+	%tmp1 = fadd float %b, %c
 	%tmp2 = fpext float %tmp1 to double
 	%tmp = tail call double @copysign( double %a, double %tmp2 )
 	ret double %tmp

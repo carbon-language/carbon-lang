@@ -13,7 +13,7 @@ entry:
 	%tmp = load float* @f		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
 	%tmp2 = load double* @d		; <double> [#uses=1]
-	%tmp3 = mul double %tmp1, %tmp2		; <double> [#uses=1]
+	%tmp3 = fmul double %tmp1, %tmp2		; <double> [#uses=1]
 	%tmp4 = fpext double %tmp3 to fp128		; <fp128> [#uses=1]
 	store fp128 %tmp4, fp128* @ld
 	br label %return

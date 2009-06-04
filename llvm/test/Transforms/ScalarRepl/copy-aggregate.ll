@@ -25,7 +25,7 @@ define float @test2(i128 %V) nounwind {
 	%B = getelementptr {[4 x float]}* %X, i32 0, i32 0, i32 3
 	%a = load float* %A
 	%b = load float* %B
-	%c = add float %a, %b
+	%c = fadd float %a, %b
 	ret float %c
 }
 

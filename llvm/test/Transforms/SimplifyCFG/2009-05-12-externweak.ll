@@ -29,7 +29,7 @@ bb3:		; preds = %bb2, %bb1
 	store i32 %storemerge, i32* @j
 	%1 = sitofp i32 %storemerge to double		; <double> [#uses=1]
 	%2 = call double @sin(double %1) nounwind readonly		; <double> [#uses=1]
-	%3 = add double %2, %d.0		; <double> [#uses=1]
+	%3 = fadd double %2, %d.0		; <double> [#uses=1]
 	%4 = add i32 %l.0, 1		; <i32> [#uses=1]
 	br label %bb4
 

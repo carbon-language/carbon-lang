@@ -17,15 +17,15 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%0 = tail call double @asin(double 0.000000e+00) nounwind readonly		; <double> [#uses=1]
-	%1 = add double 0.000000e+00, %0		; <double> [#uses=2]
+	%1 = fadd double 0.000000e+00, %0		; <double> [#uses=2]
 	%2 = tail call double @asin(double 0.000000e+00) nounwind readonly		; <double> [#uses=1]
-	%3 = sub double %1, %2		; <double> [#uses=2]
+	%3 = fsub double %1, %2		; <double> [#uses=2]
 	store double %3, double* @axis_slope_angle, align 8
 	%4 = fdiv double %1, 2.000000e+00		; <double> [#uses=1]
 	%5 = tail call double @sin(double %4) nounwind readonly		; <double> [#uses=1]
-	%6 = mul double 0.000000e+00, %5		; <double> [#uses=1]
+	%6 = fmul double 0.000000e+00, %5		; <double> [#uses=1]
 	%7 = tail call double @tan(double %3) nounwind readonly		; <double> [#uses=0]
-	%8 = add double 0.000000e+00, %6		; <double> [#uses=1]
+	%8 = fadd double 0.000000e+00, %6		; <double> [#uses=1]
 	store double %8, double* @object_distance, align 8
 	br label %bb
 

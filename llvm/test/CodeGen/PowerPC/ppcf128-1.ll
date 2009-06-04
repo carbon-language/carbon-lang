@@ -14,7 +14,7 @@ entry:
 	store ppc_fp128 %y, ppc_fp128* %y_addr
 	%tmp1 = load ppc_fp128* %x_addr, align 16		; <ppc_fp128> [#uses=1]
 	%tmp2 = load ppc_fp128* %y_addr, align 16		; <ppc_fp128> [#uses=1]
-	%tmp3 = add ppc_fp128 %tmp1, %tmp2		; <ppc_fp128> [#uses=1]
+	%tmp3 = fadd ppc_fp128 %tmp1, %tmp2		; <ppc_fp128> [#uses=1]
 	store ppc_fp128 %tmp3, ppc_fp128* %tmp, align 16
 	%tmp4 = load ppc_fp128* %tmp, align 16		; <ppc_fp128> [#uses=1]
 	store ppc_fp128 %tmp4, ppc_fp128* %retval, align 16
@@ -36,7 +36,7 @@ entry:
 	store ppc_fp128 %y, ppc_fp128* %y_addr
 	%tmp1 = load ppc_fp128* %x_addr, align 16		; <ppc_fp128> [#uses=1]
 	%tmp2 = load ppc_fp128* %y_addr, align 16		; <ppc_fp128> [#uses=1]
-	%tmp3 = sub ppc_fp128 %tmp1, %tmp2		; <ppc_fp128> [#uses=1]
+	%tmp3 = fsub ppc_fp128 %tmp1, %tmp2		; <ppc_fp128> [#uses=1]
 	store ppc_fp128 %tmp3, ppc_fp128* %tmp, align 16
 	%tmp4 = load ppc_fp128* %tmp, align 16		; <ppc_fp128> [#uses=1]
 	store ppc_fp128 %tmp4, ppc_fp128* %retval, align 16
@@ -58,7 +58,7 @@ entry:
 	store ppc_fp128 %y, ppc_fp128* %y_addr
 	%tmp1 = load ppc_fp128* %x_addr, align 16		; <ppc_fp128> [#uses=1]
 	%tmp2 = load ppc_fp128* %y_addr, align 16		; <ppc_fp128> [#uses=1]
-	%tmp3 = mul ppc_fp128 %tmp1, %tmp2		; <ppc_fp128> [#uses=1]
+	%tmp3 = fmul ppc_fp128 %tmp1, %tmp2		; <ppc_fp128> [#uses=1]
 	store ppc_fp128 %tmp3, ppc_fp128* %tmp, align 16
 	%tmp4 = load ppc_fp128* %tmp, align 16		; <ppc_fp128> [#uses=1]
 	store ppc_fp128 %tmp4, ppc_fp128* %retval, align 16

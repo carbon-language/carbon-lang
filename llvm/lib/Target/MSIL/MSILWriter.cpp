@@ -1060,12 +1060,15 @@ void MSILWriter::printInstruction(const Instruction* Inst) {
     break;
   // Binary
   case Instruction::Add:
+  case Instruction::FAdd:
     printBinaryInstruction("add",Left,Right);
     break;
   case Instruction::Sub:
+  case Instruction::FSub:
     printBinaryInstruction("sub",Left,Right);
     break;
-  case Instruction::Mul:  
+  case Instruction::Mul:
+  case Instruction::FMul:
     printBinaryInstruction("mul",Left,Right);
     break;
   case Instruction::UDiv:
@@ -1322,12 +1325,15 @@ void MSILWriter::printConstantExpr(const ConstantExpr* CE) {
     printSelectInstruction(CE->getOperand(0),CE->getOperand(1),CE->getOperand(2));
     break;
   case Instruction::Add:
+  case Instruction::FAdd:
     printBinaryInstruction("add",left,right);
     break;
   case Instruction::Sub:
+  case Instruction::FSub:
     printBinaryInstruction("sub",left,right);
     break;
   case Instruction::Mul:
+  case Instruction::FMul:
     printBinaryInstruction("mul",left,right);
     break;
   case Instruction::UDiv:

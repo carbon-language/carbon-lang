@@ -12,7 +12,7 @@ define double @testfunc(i32 %i, double %j) {
 	%t3 = load i32* %I		; <i32> [#uses=1]
 	%t4 = sitofp i32 %t3 to double		; <double> [#uses=1]
 	%t5 = load double* %J		; <double> [#uses=1]
-	%t6 = mul double %t4, %t5		; <double> [#uses=1]
+	%t6 = fmul double %t4, %t5		; <double> [#uses=1]
 	ret double %t6
 }
 

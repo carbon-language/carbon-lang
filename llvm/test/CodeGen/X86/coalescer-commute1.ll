@@ -15,7 +15,7 @@ bb:		; preds = %bb, %entry
 	%tmp2 = getelementptr i32* %source, i32 %neuron.0		; <i32*> [#uses=1]
 	%tmp3 = load i32* %tmp2, align 4		; <i32> [#uses=1]
 	%tmp34 = sitofp i32 %tmp3 to float		; <float> [#uses=1]
-	%tmp6 = add float %tmp34, %thesum.0		; <float> [#uses=2]
+	%tmp6 = fadd float %tmp34, %thesum.0		; <float> [#uses=2]
 	%indvar.next = add i32 %neuron.0, 1		; <i32> [#uses=2]
 	%exitcond = icmp eq i32 %indvar.next, %tmp10		; <i1> [#uses=1]
 	br i1 %exitcond, label %bb13, label %bb

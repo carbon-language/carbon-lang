@@ -14,7 +14,7 @@ bb:
 	%t0 = and i64 %indvar, 65535
 	%t1 = getelementptr double* %p, i64 %t0
 	%t2 = load double* %t1, align 8
-	%t3 = mul double %t2, 2.2
+	%t3 = fmul double %t2, 2.2
 	store double %t3, double* %t1, align 8
 	%i.04 = trunc i64 %indvar to i16
 	%t4 = add i16 %i.04, 1

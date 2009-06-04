@@ -11,7 +11,7 @@ cond_next33:		; preds = %0
 	%tmp58.i = or i32 0, %tmp61.i.upgrd.1		; <i32> [#uses=1]
 	%tmp62.i = or i32 %tmp58.i, 0		; <i32> [#uses=1]
 	%tmp62.i.upgrd.2 = sitofp i32 %tmp62.i to double		; <double> [#uses=1]
-	%tmp64.i = add double %tmp62.i.upgrd.2, %tmp44.i		; <double> [#uses=1]
+	%tmp64.i = fadd double %tmp62.i.upgrd.2, %tmp44.i		; <double> [#uses=1]
 	%tmp68.i = call double @foo( double %tmp64.i, i32 0 )		; <double> [#uses=0]
 	ret i32 0
 }

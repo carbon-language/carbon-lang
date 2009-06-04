@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:   grep {sub float}
+; RUN:   grep {fadd float}
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:   grep {mul float}
+; RUN:   grep {fmul float}
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   not grep {insertelement.*0.00}
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
@@ -26,7 +26,7 @@ entry:
 }
 
 define i32 @test2(float %f) {
-        %tmp5 = mul float %f, %f
+        %tmp5 = fmul float %f, %f
         %tmp9 = insertelement <4 x float> undef, float %tmp5, i32 0             
         %tmp10 = insertelement <4 x float> %tmp9, float 0.000000e+00, i32 1    
         %tmp11 = insertelement <4 x float> %tmp10, float 0.000000e+00, i32 2  

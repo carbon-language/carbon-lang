@@ -14,7 +14,7 @@ entry:
 	%tmp30 = icmp sgt i32 %delta, 0		; <i1> [#uses=1]
 	br i1 %tmp30, label %bb33, label %bb87.preheader
 bb33:		; preds = %entry
-	%tmp28 = add float 0.000000e+00, %tmp24		; <float> [#uses=1]
+	%tmp28 = fadd float 0.000000e+00, %tmp24		; <float> [#uses=1]
 	%tmp35 = fcmp ogt float %tmp28, 1.800000e+01		; <i1> [#uses=1]
 	br i1 %tmp35, label %bb38, label %bb87.preheader
 bb38:		; preds = %bb33
@@ -24,7 +24,7 @@ bb43:		; preds = %bb38
 	store i32 %tmp53, i32* null, align 4
 	ret void
 bb50:		; preds = %bb38
-	%tmp56 = sub float 1.800000e+01, %tmp24		; <float> [#uses=1]
+	%tmp56 = fsub float 1.800000e+01, %tmp24		; <float> [#uses=1]
 	%tmp57 = fcmp ugt float 0.000000e+00, %tmp56		; <i1> [#uses=1]
 	br i1 %tmp57, label %bb64, label %bb87.preheader
 bb64:		; preds = %bb50

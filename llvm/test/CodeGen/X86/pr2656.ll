@@ -12,9 +12,9 @@ entry:
 	%tmp1 = load float* %tmp		; <float> [#uses=1]
 	%tmp2 = getelementptr %struct.anon* %p, i32 0, i32 1		; <float*> [#uses=1]
 	%tmp3 = load float* %tmp2		; <float> [#uses=1]
-	%neg = sub float -0.000000e+00, %tmp1		; <float> [#uses=1]
+	%neg = fsub float -0.000000e+00, %tmp1		; <float> [#uses=1]
 	%conv = fpext float %neg to double		; <double> [#uses=1]
-	%neg4 = sub float -0.000000e+00, %tmp3		; <float> [#uses=1]
+	%neg4 = fsub float -0.000000e+00, %tmp3		; <float> [#uses=1]
 	%conv5 = fpext float %neg4 to double		; <double> [#uses=1]
 	%call = call i32 (...)* @printf( i8* getelementptr ([17 x i8]* @.str, i32 0, i32 0), double %conv, double %conv5 )		; <i32> [#uses=0]
 	ret void

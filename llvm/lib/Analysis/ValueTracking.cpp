@@ -771,7 +771,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   if (I == 0) return false;
   
   // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
-  if (I->getOpcode() == Instruction::Add &&
+  if (I->getOpcode() == Instruction::FAdd &&
       isa<ConstantFP>(I->getOperand(1)) && 
       cast<ConstantFP>(I->getOperand(1))->isNullValue())
     return true;

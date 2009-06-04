@@ -20,7 +20,7 @@ define i32 @test3(i32 %A) {
 
 define double @test4(double %A) {
         ; This is safe for FP
-        %B = mul double 1.000000e+00, %A                ; <double> [#uses=1]
+        %B = fmul double 1.000000e+00, %A                ; <double> [#uses=1]
         ret double %B
 }
 
@@ -79,7 +79,7 @@ define i32 @test12(i8 %a, i32 %b) {
 ; PR2642
 define internal void @test13(<4 x float>*) {
 	load <4 x float>* %0, align 1
-	mul <4 x float> %2, < float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00 >
+	fmul <4 x float> %2, < float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00 >
 	store <4 x float> %3, <4 x float>* %0, align 1
 	ret void
 }

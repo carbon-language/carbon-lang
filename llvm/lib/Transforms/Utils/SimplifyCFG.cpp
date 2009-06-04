@@ -419,9 +419,6 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       case Instruction::LShr:
       case Instruction::AShr:
       case Instruction::ICmp:
-      case Instruction::FCmp:
-        if (I->getOperand(0)->getType()->isFPOrFPVector())
-          return false;  // FP arithmetic might trap.
         break;   // These are all cheap and non-trapping instructions.
       }
 
@@ -1012,9 +1009,8 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   default: return false;  // Not safe / profitable to hoist.
   case Instruction::Add:
   case Instruction::Sub:
-    // FP arithmetic might trap. Not worth doing for vector ops.
-    if (HInst->getType()->isFloatingPoint() 
-        || isa<VectorType>(HInst->getType()))
+    // Not worth doing for vector ops.
+    if (isa<VectorType>(HInst->getType()))
       return false;
     break;
   case Instruction::And:

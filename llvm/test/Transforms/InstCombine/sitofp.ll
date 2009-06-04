@@ -36,7 +36,7 @@ define i32 @test6(i32 %A) {
 	%C = and i32 %A, 32		; <i32> [#uses=1]
 	%D = sitofp i32 %B to double		; <double> [#uses=1]
 	%E = sitofp i32 %C to double		; <double> [#uses=1]
-	%F = add double %D, %E		; <double> [#uses=1]
+	%F = fadd double %D, %E		; <double> [#uses=1]
 	%G = fptosi double %F to i32		; <i32> [#uses=1]
 	ret i32 %G
 }

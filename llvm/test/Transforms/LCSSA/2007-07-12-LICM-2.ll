@@ -5,10 +5,10 @@ entry:
 
 bb7:		; preds = %bb7, %entry
 	%tmp39 = load <4 x float>* null		; <<4 x float>> [#uses=1]
-	%tmp40 = add <4 x float> %tmp39, < float 2.000000e+00, float 3.000000e+00, float 1.000000e+00, float 0.000000e+00 >		; <<4 x float>> [#uses=1]
-	%tmp43 = add <4 x float> %tmp40, < float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 2.000000e+00 >		; <<4 x float>> [#uses=1]
-	%tmp46 = add <4 x float> %tmp43, < float 3.000000e+00, float 0.000000e+00, float 2.000000e+00, float 4.000000e+00 >		; <<4 x float>> [#uses=1]
-	%tmp49 = add <4 x float> %tmp46, < float 0.000000e+00, float 4.000000e+00, float 6.000000e+00, float 1.000000e+00 >		; <<4 x float>> [#uses=1]
+	%tmp40 = fadd <4 x float> %tmp39, < float 2.000000e+00, float 3.000000e+00, float 1.000000e+00, float 0.000000e+00 >		; <<4 x float>> [#uses=1]
+	%tmp43 = fadd <4 x float> %tmp40, < float 1.000000e+00, float 1.000000e+00, float 0.000000e+00, float 2.000000e+00 >		; <<4 x float>> [#uses=1]
+	%tmp46 = fadd <4 x float> %tmp43, < float 3.000000e+00, float 0.000000e+00, float 2.000000e+00, float 4.000000e+00 >		; <<4 x float>> [#uses=1]
+	%tmp49 = fadd <4 x float> %tmp46, < float 0.000000e+00, float 4.000000e+00, float 6.000000e+00, float 1.000000e+00 >		; <<4 x float>> [#uses=1]
 	store <4 x float> %tmp49, <4 x float>* null
 	br i1 false, label %bb7, label %bb56
 

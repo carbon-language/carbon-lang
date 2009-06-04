@@ -6,7 +6,7 @@
 
 define float @negfp(float %a, float %b) {
 entry:
-	%sub = sub float %a, %b		; <float> [#uses=1]
-	%neg = sub float -0.000000e+00, %sub		; <float> [#uses=1]
+	%sub = fsub float %a, %b		; <float> [#uses=1]
+	%neg = fsub float -0.000000e+00, %sub		; <float> [#uses=1]
 	ret float %neg
 }

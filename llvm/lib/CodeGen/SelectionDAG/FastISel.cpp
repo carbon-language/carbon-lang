@@ -639,18 +639,18 @@ FastISel::FastEmitBranch(MachineBasicBlock *MSucc) {
 bool
 FastISel::SelectOperator(User *I, unsigned Opcode) {
   switch (Opcode) {
-  case Instruction::Add: {
-    ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FADD : ISD::ADD;
-    return SelectBinaryOp(I, Opc);
-  }
-  case Instruction::Sub: {
-    ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FSUB : ISD::SUB;
-    return SelectBinaryOp(I, Opc);
-  }
-  case Instruction::Mul: {
-    ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FMUL : ISD::MUL;
-    return SelectBinaryOp(I, Opc);
-  }
+  case Instruction::Add:
+    return SelectBinaryOp(I, ISD::ADD);
+  case Instruction::FAdd:
+    return SelectBinaryOp(I, ISD::FADD);
+  case Instruction::Sub:
+    return SelectBinaryOp(I, ISD::SUB);
+  case Instruction::FSub:
+    return SelectBinaryOp(I, ISD::FSUB);
+  case Instruction::Mul:
+    return SelectBinaryOp(I, ISD::MUL);
+  case Instruction::FMul:
+    return SelectBinaryOp(I, ISD::FMUL);
   case Instruction::SDiv:
     return SelectBinaryOp(I, ISD::SDIV);
   case Instruction::UDiv:

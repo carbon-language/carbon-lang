@@ -40,7 +40,7 @@ bb28:		; preds = %bb14
 
 bb30:		; preds = %bb36, %bb28
 	%m.1.reg2mem.0 = phi i32 [ %m.0, %bb36 ], [ 0, %bb28 ]		; <i32> [#uses=1]
-	%1 = mul double 0.000000e+00, %0		; <double> [#uses=1]
+	%1 = fmul double 0.000000e+00, %0		; <double> [#uses=1]
 	%2 = fptosi double %1 to i32		; <i32> [#uses=1]
 	br i1 false, label %bb36, label %bb35
 

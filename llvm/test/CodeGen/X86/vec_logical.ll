@@ -4,7 +4,7 @@
 ; RUN: grep movaps %t | count 2
 
 define void @t(<4 x float> %A) {
-	%tmp1277 = sub <4 x float> < float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00 >, %A
+	%tmp1277 = fsub <4 x float> < float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00 >, %A
 	store <4 x float> %tmp1277, <4 x float>* null
 	ret void
 }

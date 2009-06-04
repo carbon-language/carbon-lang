@@ -22,7 +22,7 @@ bb:		; preds = %entry
 bb19:		; preds = %bb, %entry
 	%data15.0 = phi double* [ %7, %bb ], [ %3, %entry ]		; <double*> [#uses=5]
 	%8 = sitofp i32 %len to double		; <double> [#uses=1]
-	%9 = sub double %8, 1.000000e+00		; <double> [#uses=1]
+	%9 = fsub double %8, 1.000000e+00		; <double> [#uses=1]
 	%10 = fdiv double 2.000000e+00, %9		; <double> [#uses=1]
 	store double %10, double* %c, align 8
 	%11 = ashr i32 %len, 1		; <i32> [#uses=3]

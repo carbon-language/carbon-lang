@@ -11,7 +11,7 @@ bb:
 	%i.03 = add i64 %indvar, %n
 	%0 = getelementptr double* %d, i64 %i.03
 	%1 = load double* %0, align 8
-	%2 = mul double %1, 3.000000e+00
+	%2 = fmul double %1, 3.000000e+00
 	store double %2, double* %0, align 8
 	%indvar.next = add i64 %indvar, 1
 	%exitcond = icmp eq i64 %indvar.next, 0

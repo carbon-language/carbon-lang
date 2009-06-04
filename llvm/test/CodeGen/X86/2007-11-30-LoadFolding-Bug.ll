@@ -41,8 +41,8 @@ bb.i28.i:		; preds = %bb.i28.i, %cond_next36.i
 	%x.0.i21.i = select i1 %tmp4.i19.i, i32 %tmp1.i18.i, i32 0		; <i32> [#uses=1]
 	%tmp41.sum.i = add i32 %j.0.reg2mem.0.i16.i, 2		; <i32> [#uses=0]
 	%tmp1213.i23.i = sitofp i32 %x.0.i21.i to double		; <double> [#uses=1]
-	%tmp15.i24.i = sub double 0.000000e+00, %tmp1213.i23.i		; <double> [#uses=1]
-	%tmp16.i25.i = mul double 0.000000e+00, %tmp15.i24.i		; <double> [#uses=1]
+	%tmp15.i24.i = fsub double 0.000000e+00, %tmp1213.i23.i		; <double> [#uses=1]
+	%tmp16.i25.i = fmul double 0.000000e+00, %tmp15.i24.i		; <double> [#uses=1]
 	%indvar.next39.i = add i32 %j.0.reg2mem.0.i16.i, 2		; <i32> [#uses=2]
 	%exitcond40.i = icmp eq i32 %indvar.next39.i, %tmp8.i14.i		; <i1> [#uses=1]
 	br i1 %exitcond40.i, label %mp_unexp_d2mp.exit29.i, label %bb.i28.i

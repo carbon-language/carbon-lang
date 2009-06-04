@@ -33,23 +33,23 @@ bb5.i.i31:		; preds = %bb3.i27
 	br i1 %tmp10.i.i30, label %bb13.i.i37, label %bb30.i.i43
 
 bb13.i.i37:		; preds = %bb5.i.i31
-	%tmp15.i.i32 = sub double -0.000000e+00, %tmp22.i25		; <double> [#uses=1]
+	%tmp15.i.i32 = fsub double -0.000000e+00, %tmp22.i25		; <double> [#uses=1]
 	%tmp17.i.i33 = fdiv double %tmp15.i.i32, %tmp12.i23		; <double> [#uses=3]
-	%tmp20.i4.i = mul double %tmp17.i.i33, %tmp17.i.i33		; <double> [#uses=1]
-	%tmp21.i.i34 = add double %tmp20.i4.i, 1.000000e+00		; <double> [#uses=1]
+	%tmp20.i4.i = fmul double %tmp17.i.i33, %tmp17.i.i33		; <double> [#uses=1]
+	%tmp21.i.i34 = fadd double %tmp20.i4.i, 1.000000e+00		; <double> [#uses=1]
 	%tmp22.i.i35 = call double @llvm.sqrt.f64( double %tmp21.i.i34 ) nounwind 		; <double> [#uses=1]
 	%tmp23.i5.i = fdiv double 1.000000e+00, %tmp22.i.i35		; <double> [#uses=2]
-	%tmp28.i.i36 = mul double %tmp23.i5.i, %tmp17.i.i33		; <double> [#uses=1]
+	%tmp28.i.i36 = fmul double %tmp23.i5.i, %tmp17.i.i33		; <double> [#uses=1]
 	br label %Givens.exit.i49
 
 bb30.i.i43:		; preds = %bb5.i.i31
-	%tmp32.i.i38 = sub double -0.000000e+00, %tmp12.i23		; <double> [#uses=1]
+	%tmp32.i.i38 = fsub double -0.000000e+00, %tmp12.i23		; <double> [#uses=1]
 	%tmp34.i.i39 = fdiv double %tmp32.i.i38, %tmp22.i25		; <double> [#uses=3]
-	%tmp37.i6.i = mul double %tmp34.i.i39, %tmp34.i.i39		; <double> [#uses=1]
-	%tmp38.i.i40 = add double %tmp37.i6.i, 1.000000e+00		; <double> [#uses=1]
+	%tmp37.i6.i = fmul double %tmp34.i.i39, %tmp34.i.i39		; <double> [#uses=1]
+	%tmp38.i.i40 = fadd double %tmp37.i6.i, 1.000000e+00		; <double> [#uses=1]
 	%tmp39.i7.i = call double @llvm.sqrt.f64( double %tmp38.i.i40 ) nounwind 		; <double> [#uses=1]
 	%tmp40.i.i41 = fdiv double 1.000000e+00, %tmp39.i7.i		; <double> [#uses=2]
-	%tmp45.i.i42 = mul double %tmp40.i.i41, %tmp34.i.i39		; <double> [#uses=1]
+	%tmp45.i.i42 = fmul double %tmp40.i.i41, %tmp34.i.i39		; <double> [#uses=1]
 	br label %Givens.exit.i49
 
 Givens.exit.i49:		; preds = %bb3.i27.Givens.exit.i49_crit_edge, %bb30.i.i43, %bb13.i.i37

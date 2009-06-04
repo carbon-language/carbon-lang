@@ -39,10 +39,10 @@ define void @test_abs(float* %P, double* %D) {
 
 define void @test_add(float* %P, double* %D) {
 	%a = load float* %P		; <float> [#uses=2]
-	%b = add float %a, %a		; <float> [#uses=1]
+	%b = fadd float %a, %a		; <float> [#uses=1]
 	store float %b, float* %P
 	%A = load double* %D		; <double> [#uses=2]
-	%B = add double %A, %A		; <double> [#uses=1]
+	%B = fadd double %A, %A		; <double> [#uses=1]
 	store double %B, double* %D
 	ret void
 }
@@ -61,8 +61,8 @@ define void @test_fma(float* %P1, float* %P2, float* %P3) {
 	%a1 = load float* %P1		; <float> [#uses=1]
 	%a2 = load float* %P2		; <float> [#uses=1]
 	%a3 = load float* %P3		; <float> [#uses=1]
-	%X = mul float %a1, %a2		; <float> [#uses=1]
-	%Y = sub float %X, %a3		; <float> [#uses=1]
+	%X = fmul float %a1, %a2		; <float> [#uses=1]
+	%Y = fsub float %X, %a3		; <float> [#uses=1]
 	store float %Y, float* %P1
 	ret void
 }

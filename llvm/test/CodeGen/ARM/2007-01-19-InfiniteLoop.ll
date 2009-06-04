@@ -35,8 +35,8 @@ cond_next589:		; preds = %cond_next489
 	%tmp612 = load i32* null		; <i32> [#uses=1]
 	%tmp629 = load i32* null		; <i32> [#uses=1]
 	%tmp629a = sitofp i32 %tmp629 to double		; <double> [#uses=1]
-	%tmp631 = mul double %tmp629a, 0.000000e+00		; <double> [#uses=1]
-	%tmp632 = add double 0.000000e+00, %tmp631		; <double> [#uses=1]
+	%tmp631 = fmul double %tmp629a, 0.000000e+00		; <double> [#uses=1]
+	%tmp632 = fadd double 0.000000e+00, %tmp631		; <double> [#uses=1]
 	%tmp642 = call fastcc i32 @sign( i32 %tmp576, i32 %tmp561 )		; <i32> [#uses=1]
 	%tmp650 = mul i32 %tmp606, %tmp642		; <i32> [#uses=1]
 	%tmp656 = mul i32 %tmp650, %tmp612		; <i32> [#uses=1]
@@ -46,8 +46,8 @@ cond_next589:		; preds = %cond_next489
 	%tmp666 = sub i32 %tmp660, %tmp496		; <i32> [#uses=1]
 	%tmp667 = sitofp i32 %tmp666 to double		; <double> [#uses=2]
 	call void @levrun_linfo_inter( i32 %tmp576, i32 0, i32* null, i32* null )
-	%tmp671 = mul double %tmp667, %tmp667		; <double> [#uses=1]
-	%tmp675 = add double %tmp671, 0.000000e+00		; <double> [#uses=1]
+	%tmp671 = fmul double %tmp667, %tmp667		; <double> [#uses=1]
+	%tmp675 = fadd double %tmp671, 0.000000e+00		; <double> [#uses=1]
 	%tmp678 = fcmp oeq double %tmp632, %tmp675		; <i1> [#uses=1]
 	br i1 %tmp678, label %cond_true679, label %cond_false693
 

@@ -8,7 +8,7 @@ entry:
 	%iz = alloca { x86_fp80, x86_fp80 }		; <{ x86_fp80, x86_fp80 }*> [#uses=3]
 	%tmp1 = getelementptr { x86_fp80, x86_fp80 }* %z, i32 0, i32 1		; <x86_fp80*> [#uses=1]
 	%tmp2 = load x86_fp80* %tmp1, align 16		; <x86_fp80> [#uses=1]
-	%tmp3 = sub x86_fp80 0xK80000000000000000000, %tmp2		; <x86_fp80> [#uses=1]
+	%tmp3 = fsub x86_fp80 0xK80000000000000000000, %tmp2		; <x86_fp80> [#uses=1]
 	%tmp4 = getelementptr { x86_fp80, x86_fp80 }* %iz, i32 0, i32 1		; <x86_fp80*> [#uses=1]
 	%real = getelementptr { x86_fp80, x86_fp80 }* %iz, i32 0, i32 0		; <x86_fp80*> [#uses=1]
 	%tmp6 = getelementptr { x86_fp80, x86_fp80 }* %z, i32 0, i32 0		; <x86_fp80*> [#uses=1]

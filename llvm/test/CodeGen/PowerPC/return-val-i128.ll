@@ -14,7 +14,7 @@ entry:
 	br i1 %toBool, label %bb, label %bb8
 bb:		; preds = %entry
 	%tmp4 = load float* %a_addr, align 4		; <float> [#uses=1]
-	%tmp5 = sub float -0.000000e+00, %tmp4		; <float> [#uses=1]
+	%tmp5 = fsub float -0.000000e+00, %tmp4		; <float> [#uses=1]
 	%tmp6 = call i128 @__fixunssfDI( float %tmp5 ) nounwind 		; <i128> [#uses=1]
 	%tmp7 = sub i128 0, %tmp6		; <i128> [#uses=1]
 	store i128 %tmp7, i128* %tmp, align 16

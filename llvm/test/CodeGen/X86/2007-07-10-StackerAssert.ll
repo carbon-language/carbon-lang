@@ -27,7 +27,7 @@ bb383:		; preds = %bb164
 
 cond_true425:		; preds = %bb383
 	%tmp430 = load float* null		; <float> [#uses=1]
-	%tmp432 = sub float %tmp430, %tmp408		; <float> [#uses=1]
+	%tmp432 = fsub float %tmp430, %tmp408		; <float> [#uses=1]
 	%tmp432433 = fpext float %tmp432 to double		; <double> [#uses=1]
 	%tmp434435 = fpext float %tmp408 to double		; <double> [#uses=1]
 	call void (i8*, ...)* @PR_LogPrint( i8* getelementptr ([56 x i8]* @.str97, i32 0, i32 0), double 0.000000e+00, double %tmp434435, double %tmp432433 )

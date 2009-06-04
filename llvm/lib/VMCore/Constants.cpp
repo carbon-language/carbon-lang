@@ -775,25 +775,45 @@ const SmallVector<unsigned, 4> &ConstantExpr::getIndices() const {
 /// specify the full Instruction::OPCODE identifier.
 ///
 Constant *ConstantExpr::getNeg(Constant *C) {
+  // API compatibility: Adjust integer opcodes to floating-point opcodes.
+  if (C->getType()->isFPOrFPVector())
+    return getFNeg(C);
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NEG a nonintegral value!");
   return get(Instruction::Sub,
              ConstantExpr::getZeroValueForNegationExpr(C->getType()),
              C);
 }
+Constant *ConstantExpr::getFNeg(Constant *C) {
+  assert(C->getType()->isFPOrFPVector() &&
+         "Cannot FNEG a non-floating-point value!");
+  return get(Instruction::FSub,
+             ConstantExpr::getZeroValueForNegationExpr(C->getType()),
+             C);
+}
 Constant *ConstantExpr::getNot(Constant *C) {
-  assert((isa<IntegerType>(C->getType()) ||
-            cast<VectorType>(C->getType())->getElementType()->isInteger()) &&
-          "Cannot NOT a nonintegral value!");
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NOT a nonintegral value!");
   return get(Instruction::Xor, C,
              Constant::getAllOnesValue(C->getType()));
 }
 Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
   return get(Instruction::Add, C1, C2);
 }
+Constant *ConstantExpr::getFAdd(Constant *C1, Constant *C2) {
+  return get(Instruction::FAdd, C1, C2);
+}
 Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
   return get(Instruction::Sub, C1, C2);
 }
+Constant *ConstantExpr::getFSub(Constant *C1, Constant *C2) {
+  return get(Instruction::FSub, C1, C2);
+}
 Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
   return get(Instruction::Mul, C1, C2);
+}
+Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2) {
+  return get(Instruction::FMul, C1, C2);
 }
 Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2) {
   return get(Instruction::UDiv, C1, C2);
@@ -2142,15 +2162,28 @@ Constant *ConstantExpr::getCompareTy(unsigned short predicate,
 }
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+  // API compatibility: Adjust integer opcodes to floating-point opcodes.
+  if (C1->getType()->isFPOrFPVector()) {
+    if (Opcode == Instruction::Add) Opcode = Instruction::FAdd;
+    else if (Opcode == Instruction::Sub) Opcode = Instruction::FSub;
+    else if (Opcode == Instruction::Mul) Opcode = Instruction::FMul;
+  }
 #ifndef NDEBUG
   switch (Opcode) {
-  case Instruction::Add: 
+  case Instruction::Add:
   case Instruction::Sub:
-  case Instruction::Mul: 
+  case Instruction::Mul:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
-            isa<VectorType>(C1->getType())) &&
-           "Tried to create an arithmetic operation on a non-arithmetic type!");
+    assert(C1->getType()->isIntOrIntVector() &&
+           "Tried to create an integer operation on a non-integer type!");
+    break;
+  case Instruction::FAdd:
+  case Instruction::FSub:
+  case Instruction::FMul:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert(C1->getType()->isFPOrFPVector() &&
+           "Tried to create a floating-point operation on a "
+           "non-floating-point type!");
     break;
   case Instruction::UDiv: 
   case Instruction::SDiv: 

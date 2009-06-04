@@ -11,7 +11,7 @@ bb:		; preds = %bb, %cond_true10
 	%tmp52 = bitcast <4 x float> %tmp49 to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp53 = call <4 x i32> @llvm.x86.sse2.psll.d( <4 x i32> %tmp52, <4 x i32> < i32 8, i32 undef, i32 undef, i32 undef > )		; <<4 x i32>> [#uses=1]
 	%tmp105 = bitcast <4 x i32> %tmp53 to <4 x float>		; <<4 x float>> [#uses=1]
-	%tmp108 = sub <4 x float> zeroinitializer, %tmp105		; <<4 x float>> [#uses=0]
+	%tmp108 = fsub <4 x float> zeroinitializer, %tmp105		; <<4 x float>> [#uses=0]
 	br label %bb
 
 return:		; preds = %entry

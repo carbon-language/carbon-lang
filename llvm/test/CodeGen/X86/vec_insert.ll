@@ -5,7 +5,7 @@ define void @test(<4 x float>* %F, i32 %I) {
 	%tmp = load <4 x float>* %F		; <<4 x float>> [#uses=1]
 	%f = sitofp i32 %I to float		; <float> [#uses=1]
 	%tmp1 = insertelement <4 x float> %tmp, float %f, i32 0		; <<4 x float>> [#uses=2]
-	%tmp18 = add <4 x float> %tmp1, %tmp1		; <<4 x float>> [#uses=1]
+	%tmp18 = fadd <4 x float> %tmp1, %tmp1		; <<4 x float>> [#uses=1]
 	store <4 x float> %tmp18, <4 x float>* %F
 	ret void
 }

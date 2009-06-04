@@ -6,7 +6,7 @@
 
 define void @test1(<4 x float>* %F, float* %f) nounwind {
 	%tmp = load <4 x float>* %F		; <<4 x float>> [#uses=2]
-	%tmp7 = add <4 x float> %tmp, %tmp		; <<4 x float>> [#uses=1]
+	%tmp7 = fadd <4 x float> %tmp, %tmp		; <<4 x float>> [#uses=1]
 	%tmp2 = extractelement <4 x float> %tmp7, i32 0		; <float> [#uses=1]
 	store float %tmp2, float* %f
 	ret void
@@ -14,7 +14,7 @@ define void @test1(<4 x float>* %F, float* %f) nounwind {
 
 define float @test2(<4 x float>* %F, float* %f) nounwind {
 	%tmp = load <4 x float>* %F		; <<4 x float>> [#uses=2]
-	%tmp7 = add <4 x float> %tmp, %tmp		; <<4 x float>> [#uses=1]
+	%tmp7 = fadd <4 x float> %tmp, %tmp		; <<4 x float>> [#uses=1]
 	%tmp2 = extractelement <4 x float> %tmp7, i32 2		; <float> [#uses=1]
 	ret float %tmp2
 }
@@ -29,7 +29,7 @@ define void @test3(float* %R, <4 x float>* %P1) nounwind {
 define double @test4(double %A) nounwind {
 	%tmp1 = call <2 x double> @foo( )		; <<2 x double>> [#uses=1]
 	%tmp2 = extractelement <2 x double> %tmp1, i32 1		; <double> [#uses=1]
-	%tmp3 = add double %tmp2, %A		; <double> [#uses=1]
+	%tmp3 = fadd double %tmp2, %A		; <double> [#uses=1]
 	ret double %tmp3
 }
 

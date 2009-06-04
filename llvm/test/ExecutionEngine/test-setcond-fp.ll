@@ -3,10 +3,10 @@
 
 
 define i32 @main() {
-	%double1 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=6]
-	%double2 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=6]
-	%float1 = add float 0.000000e+00, 0.000000e+00		; <float> [#uses=6]
-	%float2 = add float 0.000000e+00, 0.000000e+00		; <float> [#uses=6]
+	%double1 = fadd double 0.000000e+00, 0.000000e+00		; <double> [#uses=6]
+	%double2 = fadd double 0.000000e+00, 0.000000e+00		; <double> [#uses=6]
+	%float1 = fadd float 0.000000e+00, 0.000000e+00		; <float> [#uses=6]
+	%float2 = fadd float 0.000000e+00, 0.000000e+00		; <float> [#uses=6]
 	%test49 = fcmp oeq float %float1, %float2		; <i1> [#uses=0]
 	%test50 = fcmp oge float %float1, %float2		; <i1> [#uses=0]
 	%test51 = fcmp ogt float %float1, %float2		; <i1> [#uses=0]

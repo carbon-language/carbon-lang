@@ -601,7 +601,7 @@ entry:
 	%tmp21362 = icmp eq i32 0, 0		; <i1> [#uses=2]
 	%tmp216 = sitofp i32 %pn_restart.0.ph to float		; <float> [#uses=1]
 	%tmp216.upgrd.177 = fpext float %tmp216 to double		; <double> [#uses=1]
-	%tmp217 = add double %tmp216.upgrd.177, 1.000000e+00		; <double> [#uses=1]
+	%tmp217 = fadd double %tmp216.upgrd.177, 1.000000e+00		; <double> [#uses=1]
 	%tmp835 = icmp sgt i32 %pn_restart.0.ph, 9		; <i1> [#uses=0]
 	store i32 0, i32* @nodes
 	store i32 0, i32* @qnodes

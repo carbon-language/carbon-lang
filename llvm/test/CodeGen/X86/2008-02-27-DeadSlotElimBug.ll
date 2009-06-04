@@ -24,20 +24,20 @@ bb35:		; preds = %bb24, %entry
 	%tmp42 = sdiv i32 %i, 9		; <i32> [#uses=1]
 	%tmp43 = add i32 %tmp42, -1		; <i32> [#uses=1]
 	%tmp4344 = sitofp i32 %tmp43 to double		; <double> [#uses=1]
-	%tmp17.i76 = mul double %tmp4344, 0.000000e+00		; <double> [#uses=1]
+	%tmp17.i76 = fmul double %tmp4344, 0.000000e+00		; <double> [#uses=1]
 	%tmp48 = sdiv i32 %i, 3		; <i32> [#uses=1]
 	%tmp49 = srem i32 %tmp48, 3		; <i32> [#uses=1]
 	%tmp50 = add i32 %tmp49, -1		; <i32> [#uses=1]
 	%tmp5051 = sitofp i32 %tmp50 to double		; <double> [#uses=1]
-	%tmp17.i63 = mul double %tmp5051, 0.000000e+00		; <double> [#uses=1]
+	%tmp17.i63 = fmul double %tmp5051, 0.000000e+00		; <double> [#uses=1]
 	%tmp55 = srem i32 %i, 3		; <i32> [#uses=1]
 	%tmp56 = add i32 %tmp55, -1		; <i32> [#uses=1]
 	%tmp5657 = sitofp i32 %tmp56 to double		; <double> [#uses=1]
 	%tmp15.i49 = getelementptr %struct.Lattice* %this, i32 0, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp16.i50 = load double* %tmp15.i49, align 4		; <double> [#uses=1]
-	%tmp17.i = mul double %tmp5657, %tmp16.i50		; <double> [#uses=1]
-	%tmp20.i39 = add double %tmp17.i, %tmp17.i63		; <double> [#uses=1]
-	%tmp20.i23 = add double %tmp20.i39, %tmp17.i76		; <double> [#uses=1]
+	%tmp17.i = fmul double %tmp5657, %tmp16.i50		; <double> [#uses=1]
+	%tmp20.i39 = fadd double %tmp17.i, %tmp17.i63		; <double> [#uses=1]
+	%tmp20.i23 = fadd double %tmp20.i39, %tmp17.i76		; <double> [#uses=1]
 	br i1 false, label %bb58.preheader, label %bb81
 
 bb58.preheader:		; preds = %bb35
@@ -55,7 +55,7 @@ bb58:		; preds = %bb58, %bb58.preheader
 	%tmp95.i = and i32 %tmp88.i, -268435456		; <i32> [#uses=1]
 	%tmp97.i = or i32 0, %tmp95.i		; <i32> [#uses=1]
 	store i32 %tmp97.i, i32* %tmp25.i, align 1
-	%tmp6.i = add double 0.000000e+00, %tmp20.i23		; <double> [#uses=0]
+	%tmp6.i = fadd double 0.000000e+00, %tmp20.i23		; <double> [#uses=0]
 	%exitcond96 = icmp eq i32 0, %smax		; <i1> [#uses=1]
 	br i1 %exitcond96, label %bb81, label %bb58
 

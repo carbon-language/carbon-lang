@@ -77,9 +77,12 @@ static unsigned GetEncodedCastOpcode(unsigned Opcode) {
 static unsigned GetEncodedBinaryOpcode(unsigned Opcode) {
   switch (Opcode) {
   default: assert(0 && "Unknown binary instruction!");
-  case Instruction::Add:  return bitc::BINOP_ADD;
-  case Instruction::Sub:  return bitc::BINOP_SUB;
-  case Instruction::Mul:  return bitc::BINOP_MUL;
+  case Instruction::Add:
+  case Instruction::FAdd: return bitc::BINOP_ADD;
+  case Instruction::Sub:
+  case Instruction::FSub: return bitc::BINOP_SUB;
+  case Instruction::Mul:
+  case Instruction::FMul: return bitc::BINOP_MUL;
   case Instruction::UDiv: return bitc::BINOP_UDIV;
   case Instruction::FDiv:
   case Instruction::SDiv: return bitc::BINOP_SDIV;

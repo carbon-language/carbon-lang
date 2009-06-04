@@ -2268,7 +2268,8 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       /* create new increment. '++d' in above example. */
       ConstantFP *CFP = ConstantFP::get(DestTy, C->getZExtValue());
       BinaryOperator *NewIncr = 
-        BinaryOperator::Create(Incr->getOpcode(),
+        BinaryOperator::Create(Incr->getOpcode() == Instruction::Add ?
+                                 Instruction::FAdd : Instruction::FSub,
                                NewPH, CFP, "IV.S.next.", Incr);
 
       NewPH->addIncoming(NewInit, PH->getIncomingBlock(Entry));

@@ -157,15 +157,33 @@ inline BinaryOp_match<LHS, RHS, Instruction::Add> m_Add(const LHS &L,
 }
 
 template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::FAdd> m_FAdd(const LHS &L,
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::FAdd>(L, R);
+}
+
+template<typename LHS, typename RHS>
 inline BinaryOp_match<LHS, RHS, Instruction::Sub> m_Sub(const LHS &L,
                                                         const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Sub>(L, R);
 }
 
 template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::FSub> m_FSub(const LHS &L,
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::FSub>(L, R);
+}
+
+template<typename LHS, typename RHS>
 inline BinaryOp_match<LHS, RHS, Instruction::Mul> m_Mul(const LHS &L,
                                                         const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Mul>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::FMul> m_FMul(const LHS &L,
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::FMul>(L, R);
 }
 
 template<typename LHS, typename RHS>
@@ -492,6 +510,35 @@ private:
 
 template<typename LHS>
 inline neg_match<LHS> m_Neg(const LHS &L) { return L; }
+
+
+template<typename LHS_t>
+struct fneg_match {
+  LHS_t L;
+
+  fneg_match(const LHS_t &LHS) : L(LHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      if (I->getOpcode() == Instruction::FSub)
+        return matchIfFNeg(I->getOperand(0), I->getOperand(1));
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      if (CE->getOpcode() == Instruction::FSub)
+        return matchIfFNeg(CE->getOperand(0), CE->getOperand(1));
+    if (ConstantFP *CF = dyn_cast<ConstantFP>(V))
+      return L.match(ConstantExpr::getFNeg(CF));
+    return false;
+  }
+private:
+  bool matchIfFNeg(Value *LHS, Value *RHS) {
+    return LHS == ConstantExpr::getZeroValueForNegationExpr(LHS->getType()) &&
+           L.match(RHS);
+  }
+};
+
+template<typename LHS>
+inline fneg_match<LHS> m_FNeg(const LHS &L) { return L; }
 
 
 //===----------------------------------------------------------------------===//

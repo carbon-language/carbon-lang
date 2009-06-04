@@ -6,7 +6,7 @@
 
 define float @bar(<4 x float> %v) {
   %s = extractelement <4 x float> %v, i32 3
-  %t = add float %s, 1.0
+  %t = fadd float %s, 1.0
   ret float %t
 }
 define float @baz(<4 x float> %v) {

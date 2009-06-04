@@ -1766,7 +1766,7 @@ _ZL13random_doublev.exit:		; preds = %bb.i, %bb7
 	call void @llvm.dbg.stoppoint(i32 75, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit to %0*))
 	%22 = load i32* @_ZZL13random_doublevE4seed, align 4		; <i32> [#uses=2]
 	%23 = sitofp i32 %22 to double		; <double> [#uses=1]
-	%24 = mul double %23, 0x3E340000002813D9		; <double> [#uses=1]
+	%24 = fmul double %23, 0x3E340000002813D9		; <double> [#uses=1]
 	call void @llvm.dbg.stoppoint(i32 76, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit to %0*))
 	%25 = xor i32 %22, 123459876		; <i32> [#uses=1]
 	store i32 %25, i32* @_ZZL13random_doublevE4seed, align 4
@@ -1803,7 +1803,7 @@ bb8:		; preds = %bb.i1, %_ZL13random_doublev.exit
 	call void @llvm.dbg.stoppoint(i32 75, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit to %0*))
 	%38 = load i32* @_ZZL13random_doublevE4seed, align 4		; <i32> [#uses=2]
 	%39 = sitofp i32 %38 to double		; <double> [#uses=1]
-	%40 = mul double %39, 0x3E340000002813D9		; <double> [#uses=1]
+	%40 = fmul double %39, 0x3E340000002813D9		; <double> [#uses=1]
 	call void @llvm.dbg.stoppoint(i32 76, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit to %0*))
 	%41 = xor i32 %38, 123459876		; <i32> [#uses=1]
 	store i32 %41, i32* @_ZZL13random_doublevE4seed, align 4
@@ -2110,16 +2110,16 @@ entry:
 	%real7 = load double* %real6, align 8		; <double> [#uses=4]
 	%imag8 = getelementptr %1* %memtmp1, i32 0, i32 1		; <double*> [#uses=1]
 	%imag9 = load double* %imag8, align 8		; <double> [#uses=4]
-	%21 = mul double %real3, %real7		; <double> [#uses=1]
-	%22 = mul double %imag5, %imag9		; <double> [#uses=1]
-	%23 = add double %21, %22		; <double> [#uses=1]
-	%24 = mul double %real7, %real7		; <double> [#uses=1]
-	%25 = mul double %imag9, %imag9		; <double> [#uses=1]
-	%26 = add double %24, %25		; <double> [#uses=2]
+	%21 = fmul double %real3, %real7		; <double> [#uses=1]
+	%22 = fmul double %imag5, %imag9		; <double> [#uses=1]
+	%23 = fadd double %21, %22		; <double> [#uses=1]
+	%24 = fmul double %real7, %real7		; <double> [#uses=1]
+	%25 = fmul double %imag9, %imag9		; <double> [#uses=1]
+	%26 = fadd double %24, %25		; <double> [#uses=2]
 	%27 = fdiv double %23, %26		; <double> [#uses=1]
-	%28 = mul double %imag5, %real7		; <double> [#uses=1]
-	%29 = mul double %real3, %imag9		; <double> [#uses=1]
-	%30 = sub double %28, %29		; <double> [#uses=1]
+	%28 = fmul double %imag5, %real7		; <double> [#uses=1]
+	%29 = fmul double %real3, %imag9		; <double> [#uses=1]
+	%30 = fsub double %28, %29		; <double> [#uses=1]
 	%31 = fdiv double %30, %26		; <double> [#uses=1]
 	%real10 = getelementptr %1* %0, i32 0, i32 0		; <double*> [#uses=1]
 	store double %27, double* %real10, align 8
@@ -2227,12 +2227,12 @@ entry:
 	%real9 = load double* %real8, align 8		; <double> [#uses=2]
 	%imag10 = getelementptr %1* %memtmp3, i32 0, i32 1		; <double*> [#uses=1]
 	%imag11 = load double* %imag10, align 8		; <double> [#uses=2]
-	%27 = mul double %real5, %real9		; <double> [#uses=1]
-	%28 = mul double %imag7, %imag11		; <double> [#uses=1]
-	%29 = sub double %27, %28		; <double> [#uses=1]
-	%30 = mul double %real5, %imag11		; <double> [#uses=1]
-	%31 = mul double %real9, %imag7		; <double> [#uses=1]
-	%32 = add double %30, %31		; <double> [#uses=1]
+	%27 = fmul double %real5, %real9		; <double> [#uses=1]
+	%28 = fmul double %imag7, %imag11		; <double> [#uses=1]
+	%29 = fsub double %27, %28		; <double> [#uses=1]
+	%30 = fmul double %real5, %imag11		; <double> [#uses=1]
+	%31 = fmul double %real9, %imag7		; <double> [#uses=1]
+	%32 = fadd double %30, %31		; <double> [#uses=1]
 	%real12 = getelementptr %1* %0, i32 0, i32 0		; <double*> [#uses=1]
 	store double %29, double* %real12, align 8
 	%imag13 = getelementptr %1* %0, i32 0, i32 1		; <double*> [#uses=1]
@@ -2384,10 +2384,10 @@ entry:
 	call void @llvm.dbg.stoppoint(i32 444, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit5 to %0*))
 	%0 = call double* @_ZNKSt7complexIdE4imagEv(%"struct.std::complex<double>"* %__x) nounwind		; <double*> [#uses=1]
 	%1 = load double* %0, align 8		; <double> [#uses=1]
-	%2 = sub double -0.000000e+00, %1		; <double> [#uses=1]
+	%2 = fsub double -0.000000e+00, %1		; <double> [#uses=1]
 	%3 = call double* @_ZNKSt7complexIdE4realEv(%"struct.std::complex<double>"* %__x) nounwind		; <double*> [#uses=1]
 	%4 = load double* %3, align 8		; <double> [#uses=1]
-	%5 = sub double -0.000000e+00, %4		; <double> [#uses=1]
+	%5 = fsub double -0.000000e+00, %4		; <double> [#uses=1]
 	call void @_ZNSt7complexIdEC1Edd(%"struct.std::complex<double>"* %agg.result, double %5, double %2) nounwind
 	call void @llvm.dbg.region.end(%0* bitcast (%llvm.dbg.subprogram.type* @llvm.dbg.subprogram576 to %0*))
 	ret void
@@ -2497,16 +2497,16 @@ entry:
 	%real9 = load double* %real8, align 8		; <double> [#uses=4]
 	%imag10 = getelementptr %1* %memtmp3, i32 0, i32 1		; <double*> [#uses=1]
 	%imag11 = load double* %imag10, align 8		; <double> [#uses=4]
-	%27 = mul double %real5, %real9		; <double> [#uses=1]
-	%28 = mul double %imag7, %imag11		; <double> [#uses=1]
-	%29 = add double %27, %28		; <double> [#uses=1]
-	%30 = mul double %real9, %real9		; <double> [#uses=1]
-	%31 = mul double %imag11, %imag11		; <double> [#uses=1]
-	%32 = add double %30, %31		; <double> [#uses=2]
+	%27 = fmul double %real5, %real9		; <double> [#uses=1]
+	%28 = fmul double %imag7, %imag11		; <double> [#uses=1]
+	%29 = fadd double %27, %28		; <double> [#uses=1]
+	%30 = fmul double %real9, %real9		; <double> [#uses=1]
+	%31 = fmul double %imag11, %imag11		; <double> [#uses=1]
+	%32 = fadd double %30, %31		; <double> [#uses=2]
 	%33 = fdiv double %29, %32		; <double> [#uses=1]
-	%34 = mul double %imag7, %real9		; <double> [#uses=1]
-	%35 = mul double %real5, %imag11		; <double> [#uses=1]
-	%36 = sub double %34, %35		; <double> [#uses=1]
+	%34 = fmul double %imag7, %real9		; <double> [#uses=1]
+	%35 = fmul double %real5, %imag11		; <double> [#uses=1]
+	%36 = fsub double %34, %35		; <double> [#uses=1]
 	%37 = fdiv double %36, %32		; <double> [#uses=1]
 	%real12 = getelementptr %1* %0, i32 0, i32 0		; <double*> [#uses=1]
 	store double %33, double* %real12, align 8
@@ -2554,7 +2554,7 @@ entry:
 	%1 = load double* %0, align 4		; <double> [#uses=1]
 	%2 = call double* @_ZNKSt7complexIdE4realEv(%"struct.std::complex<double>"* %__z) nounwind		; <double*> [#uses=1]
 	%3 = load double* %2, align 8		; <double> [#uses=1]
-	%4 = add double %1, %3		; <double> [#uses=1]
+	%4 = fadd double %1, %3		; <double> [#uses=1]
 	%5 = getelementptr %"struct.std::complex<double>"* %this, i32 0, i32 0, i32 0		; <double*> [#uses=1]
 	store double %4, double* %5, align 4
 	call void @llvm.dbg.stoppoint(i32 1271, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit5 to %0*))
@@ -2562,7 +2562,7 @@ entry:
 	%7 = load double* %6, align 4		; <double> [#uses=1]
 	%8 = call double* @_ZNKSt7complexIdE4imagEv(%"struct.std::complex<double>"* %__z) nounwind		; <double*> [#uses=1]
 	%9 = load double* %8, align 8		; <double> [#uses=1]
-	%10 = add double %7, %9		; <double> [#uses=1]
+	%10 = fadd double %7, %9		; <double> [#uses=1]
 	%11 = getelementptr %"struct.std::complex<double>"* %this, i32 0, i32 0, i32 1		; <double*> [#uses=1]
 	store double %10, double* %11, align 4
 	call void @llvm.dbg.stoppoint(i32 1272, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit5 to %0*))
@@ -2599,7 +2599,7 @@ entry:
 	%1 = load double* %0, align 4		; <double> [#uses=1]
 	%2 = call double* @_ZNKSt7complexIdE4realEv(%"struct.std::complex<double>"* %__z) nounwind		; <double*> [#uses=1]
 	%3 = load double* %2, align 8		; <double> [#uses=1]
-	%4 = sub double %1, %3		; <double> [#uses=1]
+	%4 = fsub double %1, %3		; <double> [#uses=1]
 	%5 = getelementptr %"struct.std::complex<double>"* %this, i32 0, i32 0, i32 0		; <double*> [#uses=1]
 	store double %4, double* %5, align 4
 	call void @llvm.dbg.stoppoint(i32 1280, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit5 to %0*))
@@ -2607,7 +2607,7 @@ entry:
 	%7 = load double* %6, align 4		; <double> [#uses=1]
 	%8 = call double* @_ZNKSt7complexIdE4imagEv(%"struct.std::complex<double>"* %__z) nounwind		; <double*> [#uses=1]
 	%9 = load double* %8, align 8		; <double> [#uses=1]
-	%10 = sub double %7, %9		; <double> [#uses=1]
+	%10 = fsub double %7, %9		; <double> [#uses=1]
 	%11 = getelementptr %"struct.std::complex<double>"* %this, i32 0, i32 0, i32 1		; <double*> [#uses=1]
 	store double %10, double* %11, align 4
 	call void @llvm.dbg.stoppoint(i32 1281, i32 0, %0* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit5 to %0*))

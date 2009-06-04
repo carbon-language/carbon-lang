@@ -34,8 +34,8 @@ forbody:		; preds = %forcond
 	%arrayidx6 = getelementptr <3 x float>* %tmp5, i32 %tmp4		; <<3 x float>*> [#uses=1]
 	%tmp7 = load <3 x float>* %arrayidx6		; <<3 x float>> [#uses=1]
 	%tmp8 = load <3 x float>* %v		; <<3 x float>> [#uses=1]
-	%mul = mul <3 x float> %tmp7, %tmp8		; <<3 x float>> [#uses=1]
-	%add = add <3 x float> %mul, < float 0x409EE02900000000, float 0x409EE02900000000, float 0x409EE02900000000 >		; <<3 x float>> [#uses=1]
+	%mul = fmul <3 x float> %tmp7, %tmp8		; <<3 x float>> [#uses=1]
+	%add = fadd <3 x float> %mul, < float 0x409EE02900000000, float 0x409EE02900000000, float 0x409EE02900000000 >		; <<3 x float>> [#uses=1]
 	store <3 x float> %add, <3 x float>* %arrayidx
 	br label %forinc
 

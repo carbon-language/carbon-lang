@@ -704,10 +704,14 @@ public:
   /// specify the full Instruction::OPCODE identifier.
   ///
   static Constant *getNeg(Constant *C);
+  static Constant *getFNeg(Constant *C);
   static Constant *getNot(Constant *C);
   static Constant *getAdd(Constant *C1, Constant *C2);
+  static Constant *getFAdd(Constant *C1, Constant *C2);
   static Constant *getSub(Constant *C1, Constant *C2);
+  static Constant *getFSub(Constant *C1, Constant *C2);
   static Constant *getMul(Constant *C1, Constant *C2);
+  static Constant *getFMul(Constant *C1, Constant *C2);
   static Constant *getUDiv(Constant *C1, Constant *C2);
   static Constant *getSDiv(Constant *C1, Constant *C2);
   static Constant *getFDiv(Constant *C1, Constant *C2);

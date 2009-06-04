@@ -11,12 +11,12 @@ define float @f1(float %a) {
 
 define float @f2(float* %v, float %u) {
         %tmp = load float* %v           ; <float> [#uses=1]
-        %tmp1 = add float %tmp, %u              ; <float> [#uses=1]
+        %tmp1 = fadd float %tmp, %u              ; <float> [#uses=1]
         ret float %tmp1
 }
 
 define void @f3(float %a, float %b, float* %v) {
-        %tmp = add float %a, %b         ; <float> [#uses=1]
+        %tmp = fadd float %a, %b         ; <float> [#uses=1]
         store float %tmp, float* %v
         ret void
 }

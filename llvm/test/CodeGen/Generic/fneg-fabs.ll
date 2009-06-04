@@ -1,12 +1,12 @@
 ; RUN: llvm-as < %s | llc
 
 define double @fneg(double %X) {
-        %Y = sub double -0.000000e+00, %X               ; <double> [#uses=1]
+        %Y = fsub double -0.000000e+00, %X               ; <double> [#uses=1]
         ret double %Y
 }
 
 define float @fnegf(float %X) {
-        %Y = sub float -0.000000e+00, %X                ; <float> [#uses=1]
+        %Y = fsub float -0.000000e+00, %X                ; <float> [#uses=1]
         ret float %Y
 }
 

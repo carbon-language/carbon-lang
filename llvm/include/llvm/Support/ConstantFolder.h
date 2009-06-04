@@ -32,11 +32,20 @@ public:
   Constant *CreateAdd(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getAdd(LHS, RHS);
   }
+  Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getFAdd(LHS, RHS);
+  }
   Constant *CreateSub(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getSub(LHS, RHS);
   }
+  Constant *CreateFSub(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getFSub(LHS, RHS);
+  }
   Constant *CreateMul(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getMul(LHS, RHS);
+  }
+  Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getFMul(LHS, RHS);
   }
   Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getUDiv(LHS, RHS);
@@ -86,6 +95,9 @@ public:
 
   Constant *CreateNeg(Constant *C) const {
     return ConstantExpr::getNeg(C);
+  }
+  Constant *CreateFNeg(Constant *C) const {
+    return ConstantExpr::getFNeg(C);
   }
   Constant *CreateNot(Constant *C) const {
     return ConstantExpr::getNot(C);

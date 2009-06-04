@@ -17,7 +17,7 @@ define void @test3() {
 
 define void @test4() {
         %tmp1 = tail call float asm "", "=x,0,~{dirflag},~{fpsr},~{flags}"( float 0x47EFFFFFE0000000 ); <float> [#uses=1]
-        %tmp4 = sub float %tmp1, 0x3810000000000000             ; <float> [#uses=1]
+        %tmp4 = fsub float %tmp1, 0x3810000000000000             ; <float> [#uses=1]
         tail call void asm sideeffect "", "x,~{dirflag},~{fpsr},~{flags}"( float %tmp4 )
         ret void
 }

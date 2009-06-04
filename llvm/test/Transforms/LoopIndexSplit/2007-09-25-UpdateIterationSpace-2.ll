@@ -9,7 +9,7 @@ entry:
 
 bb.preheader:		; preds = %entry
 	%tmp3031 = fpext float %contribution to double		; <double> [#uses=1]
-	%tmp32 = mul double %tmp3031, 5.000000e-01		; <double> [#uses=1]
+	%tmp32 = fmul double %tmp3031, 5.000000e-01		; <double> [#uses=1]
 	%tmp3839 = fpext float %sigmal to double		; <double> [#uses=1]
 	br label %bb
 
@@ -24,19 +24,19 @@ bb:		; preds = %cond_next45, %bb.preheader
 cond_true9:		; preds = %bb
 	%tmp12 = getelementptr float* %x, i32 %i.01.0		; <float*> [#uses=1]
 	%tmp13 = load float* %tmp12, align 4		; <float> [#uses=1]
-	%tmp15 = sub float %xcen, %tmp13		; <float> [#uses=1]
+	%tmp15 = fsub float %xcen, %tmp13		; <float> [#uses=1]
 	%tmp16 = tail call float @fabsf(float %tmp15)		; <float> [#uses=1]
 	%tmp18 = fdiv float %tmp16, %sigmal		; <float> [#uses=1]
 	%tmp21 = load float** %y, align 4		; <float*> [#uses=2]
 	%tmp27 = getelementptr float* %tmp21, i32 %k.06.0		; <float*> [#uses=1]
 	%tmp28 = load float* %tmp27, align 4		; <float> [#uses=1]
 	%tmp2829 = fpext float %tmp28 to double		; <double> [#uses=1]
-	%tmp34 = sub float -0.000000e+00, %tmp18		; <float> [#uses=1]
+	%tmp34 = fsub float -0.000000e+00, %tmp18		; <float> [#uses=1]
 	%tmp3435 = fpext float %tmp34 to double		; <double> [#uses=1]
 	%tmp36 = tail call double @exp(double %tmp3435)		; <double> [#uses=1]
-	%tmp37 = mul double %tmp32, %tmp36		; <double> [#uses=1]
+	%tmp37 = fmul double %tmp32, %tmp36		; <double> [#uses=1]
 	%tmp40 = fdiv double %tmp37, %tmp3839		; <double> [#uses=1]
-	%tmp41 = add double %tmp2829, %tmp40		; <double> [#uses=1]
+	%tmp41 = fadd double %tmp2829, %tmp40		; <double> [#uses=1]
 	%tmp4142 = fptrunc double %tmp41 to float		; <float> [#uses=1]
 	%tmp44 = getelementptr float* %tmp21, i32 %k.06.0		; <float*> [#uses=1]
 	store float %tmp4142, float* %tmp44, align 4

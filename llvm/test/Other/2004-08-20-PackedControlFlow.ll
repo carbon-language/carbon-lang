@@ -12,7 +12,7 @@ C:              ; preds = %B
         ret void
 
 B:              ; preds = %A
-        %t2 = add %v4f %t0, %t0         ; <%v4f> [#uses=1]
+        %t2 = fadd %v4f %t0, %t0         ; <%v4f> [#uses=1]
         br label %C
 
 A:              ; preds = %0

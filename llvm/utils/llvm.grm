@@ -53,7 +53,8 @@ FPVAL               ::= ESAPINTVAL ^ "." ^ EUAPINTVAL | "0x" ^ HexDigitSeq ;
 The rest of this file is derived directly from llvmAsmParser.y.
 *)
 
-ArithmeticOps ::= add | sub | mul | udiv | sdiv | fdiv | urem | srem | frem ;
+ArithmeticOps ::= add | fadd | sub | fsub | mul | fmul |
+                  udiv | sdiv | fdiv | urem | srem | frem ;
 LogicalOps    ::= shl | lshr | ashr | and | or | xor;
 CastOps       ::= trunc | zext | sext | fptrunc | fpext | bitcast |
                   uitofp | sitofp | fptoui | fptosi | inttoptr | ptrtoint ;

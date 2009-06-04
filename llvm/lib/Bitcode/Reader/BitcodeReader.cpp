@@ -104,9 +104,12 @@ static int GetDecodedCastOpcode(unsigned Val) {
 static int GetDecodedBinaryOpcode(unsigned Val, const Type *Ty) {
   switch (Val) {
   default: return -1;
-  case bitc::BINOP_ADD:  return Instruction::Add;
-  case bitc::BINOP_SUB:  return Instruction::Sub;
-  case bitc::BINOP_MUL:  return Instruction::Mul;
+  case bitc::BINOP_ADD:
+    return Ty->isFPOrFPVector() ? Instruction::FAdd : Instruction::Add;
+  case bitc::BINOP_SUB:
+    return Ty->isFPOrFPVector() ? Instruction::FSub : Instruction::Sub;
+  case bitc::BINOP_MUL:
+    return Ty->isFPOrFPVector() ? Instruction::FMul : Instruction::Mul;
   case bitc::BINOP_UDIV: return Instruction::UDiv;
   case bitc::BINOP_SDIV:
     return Ty->isFPOrFPVector() ? Instruction::FDiv : Instruction::SDiv;

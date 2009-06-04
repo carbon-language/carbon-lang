@@ -14,7 +14,7 @@ entry:
 	%tmp2 = tail call double @fabs( double %tmp1 )		; <double> [#uses=1]
 	%tmp3 = load double* @G, align 16		; <double> [#uses=1]
 	%tmp4 = tail call double @fabs( double %tmp3 )		; <double> [#uses=1]
-	%tmp6 = add double %tmp4, %tmp2		; <double> [#uses=1]
+	%tmp6 = fadd double %tmp4, %tmp2		; <double> [#uses=1]
 	store double %tmp6, double* %P, align 8
 	ret void
 }

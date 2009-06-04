@@ -1009,7 +1009,7 @@ struct VISIBILITY_HIDDEN PowOpt : public LibCallOptimization {
     if (Op2C->isExactlyValue(1.0))  // pow(x, 1.0) -> x
       return Op1;
     if (Op2C->isExactlyValue(2.0))  // pow(x, 2.0) -> x*x
-      return B.CreateMul(Op1, Op1, "pow2");
+      return B.CreateFMul(Op1, Op1, "pow2");
     if (Op2C->isExactlyValue(-1.0)) // pow(x, -1.0) -> 1.0/x
       return B.CreateFDiv(ConstantFP::get(CI->getType(), 1.0), Op1, "powrecip");
     return 0;

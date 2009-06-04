@@ -17,7 +17,7 @@ entry:
         %c = lshr i192 %sy222324.ins, 128               ; <i192> [#uses=1]
         %d = trunc i192 %c to i64               ; <i64> [#uses=1]
         %e = bitcast i64 %d to double           ; <double> [#uses=1]
-        %f = add double %b, %e
+        %f = fadd double %b, %e
 
 ;        ret double %e
         ret double %f

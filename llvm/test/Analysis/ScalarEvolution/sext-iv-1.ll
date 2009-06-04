@@ -18,7 +18,7 @@ bb1:		; preds = %bb1, %bb1.thread
 	%2 = sext i9 %1 to i64		; <i64> [#uses=1]
 	%3 = getelementptr double* %x, i64 %2		; <double*> [#uses=1]
 	%4 = load double* %3, align 8		; <double> [#uses=1]
-	%5 = mul double %4, 3.900000e+00		; <double> [#uses=1]
+	%5 = fmul double %4, 3.900000e+00		; <double> [#uses=1]
 	%6 = sext i7 %0 to i64		; <i64> [#uses=1]
 	%7 = getelementptr double* %x, i64 %6		; <double*> [#uses=1]
 	store double %5, double* %7, align 8
@@ -41,7 +41,7 @@ bb1:		; preds = %bb1, %bb1.thread
 	%2 = sext i9 %1 to i64		; <i64> [#uses=1]
 	%3 = getelementptr double* %x, i64 %2		; <double*> [#uses=1]
 	%4 = load double* %3, align 8		; <double> [#uses=1]
-	%5 = mul double %4, 3.900000e+00		; <double> [#uses=1]
+	%5 = fmul double %4, 3.900000e+00		; <double> [#uses=1]
 	%6 = sext i8 %0 to i64		; <i64> [#uses=1]
 	%7 = getelementptr double* %x, i64 %6		; <double*> [#uses=1]
 	store double %5, double* %7, align 8
@@ -64,7 +64,7 @@ bb1:		; preds = %bb1, %bb1.thread
 	%2 = sext i9 %1 to i64		; <i64> [#uses=1]
 	%3 = getelementptr double* %x, i64 %2		; <double*> [#uses=1]
 	%4 = load double* %3, align 8		; <double> [#uses=1]
-	%5 = mul double %4, 3.900000e+00		; <double> [#uses=1]
+	%5 = fmul double %4, 3.900000e+00		; <double> [#uses=1]
 	%6 = sext i8 %0 to i64		; <i64> [#uses=1]
 	%7 = getelementptr double* %x, i64 %6		; <double*> [#uses=1]
 	store double %5, double* %7, align 8
@@ -87,7 +87,7 @@ bb1:		; preds = %bb1, %bb1.thread
 	%2 = sext i9 %1 to i64		; <i64> [#uses=1]
 	%3 = getelementptr double* %x, i64 %2		; <double*> [#uses=1]
 	%4 = load double* %3, align 8		; <double> [#uses=1]
-	%5 = mul double %4, 3.900000e+00		; <double> [#uses=1]
+	%5 = fmul double %4, 3.900000e+00		; <double> [#uses=1]
 	%6 = sext i8 %0 to i64		; <i64> [#uses=1]
 	%7 = getelementptr double* %x, i64 %6		; <double*> [#uses=1]
 	store double %5, double* %7, align 8

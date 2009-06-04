@@ -21,7 +21,7 @@ define <4 x float> @test2() nounwind {
 	%mrv = call {<4 x float>, <4 x float>} asm "set $0, $1", "=x,=x"()
 	%a = getresult {<4 x float>, <4 x float>} %mrv, 0
 	%b = getresult {<4 x float>, <4 x float>} %mrv, 1
-	%c = add <4 x float> %a, %b
+	%c = fadd <4 x float> %a, %b
 	ret <4 x float> %c
 }
 

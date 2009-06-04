@@ -22,10 +22,10 @@ bb2:		; preds = %bb1, %bb, %entry
 	%5 = lshr i64 %u_addr.0, 32		; <i64> [#uses=1]
 	%6 = trunc i64 %5 to i32		; <i32> [#uses=1]
 	%7 = uitofp i32 %6 to double		; <double> [#uses=1]
-	%8 = mul double %7, 0x41F0000000000000		; <double> [#uses=1]
+	%8 = fmul double %7, 0x41F0000000000000		; <double> [#uses=1]
 	%9 = trunc i64 %u_addr.0 to i32		; <i32> [#uses=1]
 	%10 = uitofp i32 %9 to double		; <double> [#uses=1]
-	%11 = add double %10, %8		; <double> [#uses=1]
+	%11 = fadd double %10, %8		; <double> [#uses=1]
 	%12 = fptrunc double %11 to float		; <float> [#uses=1]
 	ret float %12
 }

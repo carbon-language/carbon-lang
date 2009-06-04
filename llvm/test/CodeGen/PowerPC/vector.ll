@@ -14,7 +14,7 @@
 define void @test_f1(%f1* %P, %f1* %Q, %f1* %S) {
         %p = load %f1* %P               ; <%f1> [#uses=1]
         %q = load %f1* %Q               ; <%f1> [#uses=1]
-        %R = add %f1 %p, %q             ; <%f1> [#uses=1]
+        %R = fadd %f1 %p, %q             ; <%f1> [#uses=1]
         store %f1 %R, %f1* %S
         ret void
 }
@@ -22,7 +22,7 @@ define void @test_f1(%f1* %P, %f1* %Q, %f1* %S) {
 define void @test_f2(%f2* %P, %f2* %Q, %f2* %S) {
         %p = load %f2* %P               ; <%f2> [#uses=1]
         %q = load %f2* %Q               ; <%f2> [#uses=1]
-        %R = add %f2 %p, %q             ; <%f2> [#uses=1]
+        %R = fadd %f2 %p, %q             ; <%f2> [#uses=1]
         store %f2 %R, %f2* %S
         ret void
 }
@@ -30,7 +30,7 @@ define void @test_f2(%f2* %P, %f2* %Q, %f2* %S) {
 define void @test_f4(%f4* %P, %f4* %Q, %f4* %S) {
         %p = load %f4* %P               ; <%f4> [#uses=1]
         %q = load %f4* %Q               ; <%f4> [#uses=1]
-        %R = add %f4 %p, %q             ; <%f4> [#uses=1]
+        %R = fadd %f4 %p, %q             ; <%f4> [#uses=1]
         store %f4 %R, %f4* %S
         ret void
 }
@@ -38,7 +38,7 @@ define void @test_f4(%f4* %P, %f4* %Q, %f4* %S) {
 define void @test_f8(%f8* %P, %f8* %Q, %f8* %S) {
         %p = load %f8* %P               ; <%f8> [#uses=1]
         %q = load %f8* %Q               ; <%f8> [#uses=1]
-        %R = add %f8 %p, %q             ; <%f8> [#uses=1]
+        %R = fadd %f8 %p, %q             ; <%f8> [#uses=1]
         store %f8 %R, %f8* %S
         ret void
 }
@@ -46,7 +46,7 @@ define void @test_f8(%f8* %P, %f8* %Q, %f8* %S) {
 define void @test_fmul(%f8* %P, %f8* %Q, %f8* %S) {
         %p = load %f8* %P               ; <%f8> [#uses=1]
         %q = load %f8* %Q               ; <%f8> [#uses=1]
-        %R = mul %f8 %p, %q             ; <%f8> [#uses=1]
+        %R = fmul %f8 %p, %q             ; <%f8> [#uses=1]
         store %f8 %R, %f8* %S
         ret void
 }
@@ -63,7 +63,7 @@ define void @test_div(%f8* %P, %f8* %Q, %f8* %S) {
 
 define void @test_cst(%f4* %P, %f4* %S) {
         %p = load %f4* %P               ; <%f4> [#uses=1]
-        %R = add %f4 %p, < float 0x3FB99999A0000000, float 1.000000e+00, float
+        %R = fadd %f4 %p, < float 0x3FB99999A0000000, float 1.000000e+00, float
  2.000000e+00, float 4.500000e+00 >             ; <%f4> [#uses=1]
         store %f4 %R, %f4* %S
         ret void
@@ -71,14 +71,14 @@ define void @test_cst(%f4* %P, %f4* %S) {
 
 define void @test_zero(%f4* %P, %f4* %S) {
         %p = load %f4* %P               ; <%f4> [#uses=1]
-        %R = add %f4 %p, zeroinitializer                ; <%f4> [#uses=1]
+        %R = fadd %f4 %p, zeroinitializer                ; <%f4> [#uses=1]
         store %f4 %R, %f4* %S
         ret void
 }
 
 define void @test_undef(%f4* %P, %f4* %S) {
         %p = load %f4* %P               ; <%f4> [#uses=1]
-        %R = add %f4 %p, undef          ; <%f4> [#uses=1]
+        %R = fadd %f4 %p, undef          ; <%f4> [#uses=1]
         store %f4 %R, %f4* %S
         ret void
 }
@@ -116,7 +116,7 @@ define double @test_extract_elt2(%d8* %P) {
 
 define void @test_cast_1(%f4* %b, %i4* %a) {
         %tmp = load %f4* %b             ; <%f4> [#uses=1]
-        %tmp2 = add %f4 %tmp, < float 1.000000e+00, float 2.000000e+00, float 
+        %tmp2 = fadd %f4 %tmp, < float 1.000000e+00, float 2.000000e+00, float
 3.000000e+00, float 4.000000e+00 >              ; <%f4> [#uses=1]
         %tmp3 = bitcast %f4 %tmp2 to %i4                ; <%i4> [#uses=1]
         %tmp4 = add %i4 %tmp3, < i32 1, i32 2, i32 3, i32 4 >           
@@ -140,7 +140,7 @@ define void @splat(%f4* %P, %f4* %Q, float %X) {
         %tmp4 = insertelement %f4 %tmp2, float %X, i32 2    
         %tmp6 = insertelement %f4 %tmp4, float %X, i32 3   
         %q = load %f4* %Q               ; <%f4> [#uses=1]
-        %R = add %f4 %q, %tmp6          ; <%f4> [#uses=1]
+        %R = fadd %f4 %q, %tmp6          ; <%f4> [#uses=1]
         store %f4 %R, %f4* %P
         ret void
 }

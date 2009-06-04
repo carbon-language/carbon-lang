@@ -21,7 +21,7 @@ define void @test4(double %X) {
 }
 
 define void @test5(double %X) {
-        %Y = add double %X, 123.0
+        %Y = fadd double %X, 123.0
         call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( double %Y)
         ret void
 }

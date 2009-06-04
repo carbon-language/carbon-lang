@@ -21,7 +21,7 @@ bb56:		; preds = %bb48
 
 
 bb174:		; preds = %bb144, %bb114
-	%tmp191 = mul x86_fp80 0xK00000000000000000000, 0xK3FFE8000000000000000		; <x86_fp80> [#uses=1]
+	%tmp191 = fmul x86_fp80 0xK00000000000000000000, 0xK3FFE8000000000000000		; <x86_fp80> [#uses=1]
 	br label %bb196
 
 bb196:		; preds = %bb174, %bb56, %bb40

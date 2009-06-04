@@ -288,7 +288,7 @@ invcont1640:		; preds = %tmp9.i3799.noexc
 			to label %invcont1642 unwind label %lpad3845		; <i8*> [#uses=0]
 
 invcont1642:		; preds = %invcont1640
-	%tmp18.i3770 = sub double %tmp3.i3778, 0.000000e+00		; <double> [#uses=0]
+	%tmp18.i3770 = fsub double %tmp3.i3778, 0.000000e+00		; <double> [#uses=0]
 	invoke fastcc void @_ZN7mrScene9AddObjectEP9mrSurfaceRK8ggStringS4_i( %struct.mrScene* %this, %struct.ggBRDF* null, %struct.ggString* null, %struct.ggString* null, i32 0 )
 			to label %bb3743 unwind label %lpad3845
 

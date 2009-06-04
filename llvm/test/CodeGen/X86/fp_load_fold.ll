@@ -5,25 +5,25 @@
 
 define double @test_add(double %X, double* %P) {
 	%Y = load double* %P		; <double> [#uses=1]
-	%R = add double %X, %Y		; <double> [#uses=1]
+	%R = fadd double %X, %Y		; <double> [#uses=1]
 	ret double %R
 }
 
 define double @test_mul(double %X, double* %P) {
 	%Y = load double* %P		; <double> [#uses=1]
-	%R = mul double %X, %Y		; <double> [#uses=1]
+	%R = fmul double %X, %Y		; <double> [#uses=1]
 	ret double %R
 }
 
 define double @test_sub(double %X, double* %P) {
 	%Y = load double* %P		; <double> [#uses=1]
-	%R = sub double %X, %Y		; <double> [#uses=1]
+	%R = fsub double %X, %Y		; <double> [#uses=1]
 	ret double %R
 }
 
 define double @test_subr(double %X, double* %P) {
 	%Y = load double* %P		; <double> [#uses=1]
-	%R = sub double %Y, %X		; <double> [#uses=1]
+	%R = fsub double %Y, %X		; <double> [#uses=1]
 	ret double %R
 }
 

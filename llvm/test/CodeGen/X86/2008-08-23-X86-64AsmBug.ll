@@ -13,7 +13,7 @@ bb151:		; preds = %entry
 
 bb163:		; preds = %bb151, %entry
 	%tmp366 = load double* null, align 8		; <double> [#uses=1]
-	%tmp368 = mul double %tmp366, 0.000000e+00		; <double> [#uses=1]
+	%tmp368 = fmul double %tmp366, 0.000000e+00		; <double> [#uses=1]
 	%tmp368226 = bitcast double %tmp368 to i64		; <i64> [#uses=1]
 	br label %bb5.i
 

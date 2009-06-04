@@ -9,8 +9,8 @@ define void @testConsts(i32 %N, float %X) {
         %a = add i32 %N, 1              ; <i32> [#uses=0]
         %i = add i32 %N, 12345678               ; <i32> [#uses=0]
         %b = add i16 4, 3               ; <i16> [#uses=0]
-        %c = add float %X, 0.000000e+00         ; <float> [#uses=0]
-        %d = add float %X, 0x400921CAC0000000           ; <float> [#uses=0]
+        %c = fadd float %X, 0.000000e+00         ; <float> [#uses=0]
+        %d = fadd float %X, 0x400921CAC0000000           ; <float> [#uses=0]
         %f = add i32 -1, 10             ; <i32> [#uses=0]
         %g = add i16 20, -1             ; <i16> [#uses=0]
         %j = add i16 -1, 30             ; <i16> [#uses=0]
@@ -126,8 +126,8 @@ define void @testfloatbool(float %x, float %y) {
         br label %Top
 
 Top:            ; preds = %Top, %0
-        %p = add float %x, %y           ; <float> [#uses=1]
-        %z = sub float %x, %y           ; <float> [#uses=1]
+        %p = fadd float %x, %y           ; <float> [#uses=1]
+        %z = fsub float %x, %y           ; <float> [#uses=1]
         %b = fcmp ole float %p, %z              ; <i1> [#uses=2]
         %c = xor i1 %b, true            ; <i1> [#uses=0]
         br i1 %b, label %Top, label %goon

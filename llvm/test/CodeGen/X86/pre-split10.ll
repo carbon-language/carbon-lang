@@ -7,9 +7,9 @@ entry:
 bb14.i:		; preds = %bb14.i, %entry
 	%i8.0.reg2mem.0.i = phi i32 [ 0, %entry ], [ %0, %bb14.i ]		; <i32> [#uses=1]
 	%0 = add i32 %i8.0.reg2mem.0.i, 1		; <i32> [#uses=2]
-	%1 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=1]
-	%2 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=1]
-	%3 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=1]
+	%1 = fadd double 0.000000e+00, 0.000000e+00		; <double> [#uses=1]
+	%2 = fadd double 0.000000e+00, 0.000000e+00		; <double> [#uses=1]
+	%3 = fadd double 0.000000e+00, 0.000000e+00		; <double> [#uses=1]
 	%exitcond75.i = icmp eq i32 %0, 32		; <i1> [#uses=1]
 	br i1 %exitcond75.i, label %bb24.i, label %bb14.i
 
@@ -37,13 +37,13 @@ bb7.i.i:		; preds = %bb35.preheader.i, %bb5.i.i
 	br label %bb35.preheader.i
 
 bb35.preheader.i:		; preds = %bb7.i.i, %bb33.i
-	%9 = sub double 0.000000e+00, %4		; <double> [#uses=1]
+	%9 = fsub double 0.000000e+00, %4		; <double> [#uses=1]
 	store double %9, double* null, align 8
-	%10 = sub double 0.000000e+00, %5		; <double> [#uses=1]
+	%10 = fsub double 0.000000e+00, %5		; <double> [#uses=1]
 	store double %10, double* null, align 8
-	%11 = sub double 0.000000e+00, %6		; <double> [#uses=1]
+	%11 = fsub double 0.000000e+00, %6		; <double> [#uses=1]
 	store double %11, double* null, align 8
-	%12 = sub double 0.000000e+00, %7		; <double> [#uses=1]
+	%12 = fsub double 0.000000e+00, %7		; <double> [#uses=1]
 	store double %12, double* null, align 8
 	br i1 false, label %bb7.i.i, label %bb5.i.i
 }

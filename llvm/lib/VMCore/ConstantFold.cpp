@@ -602,10 +602,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       return Constant::getNullValue(C1->getType());
     case Instruction::UDiv:
     case Instruction::SDiv:
-    case Instruction::FDiv:
     case Instruction::URem:
     case Instruction::SRem:
-    case Instruction::FRem:
       if (!isa<UndefValue>(C2))                    // undef / X -> 0
         return Constant::getNullValue(C1->getType());
       return const_cast<Constant*>(C2);            // X / undef -> undef
@@ -783,13 +781,13 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       switch (Opcode) {
       default:                   
         break;
-      case Instruction::Add:
+      case Instruction::FAdd:
         (void)C3V.add(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(C3V);
-      case Instruction::Sub:     
+      case Instruction::FSub:
         (void)C3V.subtract(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(C3V);
-      case Instruction::Mul:
+      case Instruction::FMul:
         (void)C3V.multiply(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(C3V);
       case Instruction::FDiv:
@@ -808,12 +806,18 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       switch (Opcode) {
       default:
         break;
-      case Instruction::Add: 
+      case Instruction::Add:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getAdd);
-      case Instruction::Sub: 
+      case Instruction::FAdd:
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFAdd);
+      case Instruction::Sub:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSub);
-      case Instruction::Mul: 
+      case Instruction::FSub:
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFSub);
+      case Instruction::Mul:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getMul);
+      case Instruction::FMul:
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFMul);
       case Instruction::UDiv:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getUDiv);
       case Instruction::SDiv:
@@ -851,7 +855,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     // other way if possible.
     switch (Opcode) {
     case Instruction::Add:
+    case Instruction::FAdd:
     case Instruction::Mul:
+    case Instruction::FMul:
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
@@ -862,6 +868,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::LShr:
     case Instruction::AShr:
     case Instruction::Sub:
+    case Instruction::FSub:
     case Instruction::SDiv:
     case Instruction::UDiv:
     case Instruction::FDiv:

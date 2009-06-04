@@ -3,9 +3,9 @@
 
 define hidden void @__mulxc3({ x86_fp80, x86_fp80 }* noalias nocapture sret %agg.result, x86_fp80 %a, x86_fp80 %b, x86_fp80 %c, x86_fp80 %d) nounwind {
 entry:
-	%0 = mul x86_fp80 %b, %d		; <x86_fp80> [#uses=1]
-	%1 = sub x86_fp80 0xK00000000000000000000, %0		; <x86_fp80> [#uses=1]
-	%2 = add x86_fp80 0xK00000000000000000000, 0xK00000000000000000000		; <x86_fp80> [#uses=1]
+	%0 = fmul x86_fp80 %b, %d		; <x86_fp80> [#uses=1]
+	%1 = fsub x86_fp80 0xK00000000000000000000, %0		; <x86_fp80> [#uses=1]
+	%2 = fadd x86_fp80 0xK00000000000000000000, 0xK00000000000000000000		; <x86_fp80> [#uses=1]
 	%3 = fcmp uno x86_fp80 %1, 0xK00000000000000000000		; <i1> [#uses=1]
 	%4 = fcmp uno x86_fp80 %2, 0xK00000000000000000000		; <i1> [#uses=1]
 	%or.cond = and i1 %3, %4		; <i1> [#uses=1]

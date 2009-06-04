@@ -842,20 +842,6 @@ void SelectionDAGLowering::visit(unsigned Opcode, User &I) {
   }
 }
 
-void SelectionDAGLowering::visitAdd(User &I) {
-  if (I.getType()->isFPOrFPVector())
-    visitBinary(I, ISD::FADD);
-  else
-    visitBinary(I, ISD::ADD);
-}
-
-void SelectionDAGLowering::visitMul(User &I) {
-  if (I.getType()->isFPOrFPVector())
-    visitBinary(I, ISD::FMUL);
-  else
-    visitBinary(I, ISD::MUL);
-}
-
 SDValue SelectionDAGLowering::getValue(const Value *V) {
   SDValue &N = NodeMap[V];
   if (N.getNode()) return N;
@@ -2161,37 +2147,33 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
 }
 
 
-void SelectionDAGLowering::visitSub(User &I) {
+void SelectionDAGLowering::visitFSub(User &I) {
   // -0.0 - X --> fneg
   const Type *Ty = I.getType();
   if (isa<VectorType>(Ty)) {
     if (ConstantVector *CV = dyn_cast<ConstantVector>(I.getOperand(0))) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
       const Type *ElTy = DestTy->getElementType();
-      if (ElTy->isFloatingPoint()) {
-        unsigned VL = DestTy->getNumElements();
-        std::vector<Constant*> NZ(VL, ConstantFP::getNegativeZero(ElTy));
-        Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
-        if (CV == CNZ) {
-          SDValue Op2 = getValue(I.getOperand(1));
-          setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
-                                   Op2.getValueType(), Op2));
-          return;
-        }
-      }
-    }
-  }
-  if (Ty->isFloatingPoint()) {
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
-      if (CFP->isExactlyValue(ConstantFP::getNegativeZero(Ty)->getValueAPF())) {
+      unsigned VL = DestTy->getNumElements();
+      std::vector<Constant*> NZ(VL, ConstantFP::getNegativeZero(ElTy));
+      Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
+      if (CV == CNZ) {
         SDValue Op2 = getValue(I.getOperand(1));
         setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
                                  Op2.getValueType(), Op2));
         return;
       }
+    }
   }
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
+    if (CFP->isExactlyValue(ConstantFP::getNegativeZero(Ty)->getValueAPF())) {
+      SDValue Op2 = getValue(I.getOperand(1));
+      setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
+                               Op2.getValueType(), Op2));
+      return;
+    }
 
-  visitBinary(I, Ty->isFPOrFPVector() ? ISD::FSUB : ISD::SUB);
+  visitBinary(I, ISD::FSUB);
 }
 
 void SelectionDAGLowering::visitBinary(User &I, unsigned OpCode) {

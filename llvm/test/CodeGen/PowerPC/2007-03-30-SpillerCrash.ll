@@ -604,10 +604,10 @@ xPIF.exit:		; preds = %.critedge7898, %xOperationInitMasks.exit
 	shufflevector <4 x float> %583, <4 x float> undef, <4 x i32> < i32 3, i32 3, i32 3, i32 3 >		; <<4 x float>>:589 [#uses=1]
 	shufflevector <4 x float> %585, <4 x float> undef, <4 x i32> < i32 3, i32 3, i32 3, i32 3 >		; <<4 x float>>:590 [#uses=1]
 	shufflevector <4 x float> %588, <4 x float> undef, <4 x i32> < i32 3, i32 3, i32 3, i32 3 >		; <<4 x float>>:591 [#uses=1]
-	mul <4 x float> zeroinitializer, %589		; <<4 x float>>:592 [#uses=0]
-	mul <4 x float> zeroinitializer, %590		; <<4 x float>>:593 [#uses=0]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:594 [#uses=1]
-	mul <4 x float> zeroinitializer, %591		; <<4 x float>>:595 [#uses=0]
+	fmul <4 x float> zeroinitializer, %589		; <<4 x float>>:592 [#uses=0]
+	fmul <4 x float> zeroinitializer, %590		; <<4 x float>>:593 [#uses=0]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:594 [#uses=1]
+	fmul <4 x float> zeroinitializer, %591		; <<4 x float>>:595 [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 4, i32 0		; <<4 x float>*>:596 [#uses=2]
 	load <4 x float>* %596		; <<4 x float>>:597 [#uses=0]
 	store <4 x float> zeroinitializer, <4 x float>* %596
@@ -621,8 +621,8 @@ xPIF.exit:		; preds = %.critedge7898, %xOperationInitMasks.exit
 	load <4 x float>* null		; <<4 x float>>:604 [#uses=1]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 4, i32 2		; <<4 x float>*>:605 [#uses=1]
 	load <4 x float>* %605		; <<4 x float>>:606 [#uses=1]
-	sub <4 x float> zeroinitializer, %604		; <<4 x float>>:607 [#uses=2]
-	sub <4 x float> zeroinitializer, %606		; <<4 x float>>:608 [#uses=2]
+	fsub <4 x float> zeroinitializer, %604		; <<4 x float>>:607 [#uses=2]
+	fsub <4 x float> zeroinitializer, %606		; <<4 x float>>:608 [#uses=2]
 	call i32 @llvm.ppc.altivec.vcmpequw.p( i32 0, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer )		; <i32>:609 [#uses=0]
 	br i1 false, label %617, label %610
 
@@ -672,21 +672,21 @@ xST.exit400:		; preds = %633, %625, %610
 	load <4 x float>* null		; <<4 x float>>:638 [#uses=2]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 0, i32 2		; <<4 x float>*>:639 [#uses=0]
 	load <4 x float>* null		; <<4 x float>>:640 [#uses=2]
-	mul <4 x float> %638, %638		; <<4 x float>>:641 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:642 [#uses=0]
-	mul <4 x float> %640, %640		; <<4 x float>>:643 [#uses=2]
+	fmul <4 x float> %638, %638		; <<4 x float>>:641 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:642 [#uses=0]
+	fmul <4 x float> %640, %640		; <<4 x float>>:643 [#uses=2]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> < i32 1, i32 1, i32 1, i32 1 >		; <<4 x float>>:644 [#uses=0]
 	shufflevector <4 x float> %643, <4 x float> undef, <4 x i32> < i32 1, i32 1, i32 1, i32 1 >		; <<4 x float>>:645 [#uses=1]
-	add <4 x float> %645, %643		; <<4 x float>>:646 [#uses=0]
+	fadd <4 x float> %645, %643		; <<4 x float>>:646 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> < i32 2, i32 2, i32 2, i32 2 >		; <<4 x float>>:647 [#uses=1]
 	shufflevector <4 x float> %641, <4 x float> undef, <4 x i32> < i32 2, i32 2, i32 2, i32 2 >		; <<4 x float>>:648 [#uses=1]
-	add <4 x float> zeroinitializer, %647		; <<4 x float>>:649 [#uses=2]
-	add <4 x float> zeroinitializer, %648		; <<4 x float>>:650 [#uses=0]
-	add <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:651 [#uses=2]
+	fadd <4 x float> zeroinitializer, %647		; <<4 x float>>:649 [#uses=2]
+	fadd <4 x float> zeroinitializer, %648		; <<4 x float>>:650 [#uses=0]
+	fadd <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:651 [#uses=2]
 	call <4 x float> @llvm.ppc.altivec.vrsqrtefp( <4 x float> %649 )		; <<4 x float>>:652 [#uses=1]
-	mul <4 x float> %652, %649		; <<4 x float>>:653 [#uses=1]
+	fmul <4 x float> %652, %649		; <<4 x float>>:653 [#uses=1]
 	call <4 x float> @llvm.ppc.altivec.vrsqrtefp( <4 x float> %651 )		; <<4 x float>>:654 [#uses=1]
-	mul <4 x float> %654, %651		; <<4 x float>>:655 [#uses=0]
+	fmul <4 x float> %654, %651		; <<4 x float>>:655 [#uses=0]
 	icmp eq i32 0, 0		; <i1>:656 [#uses=1]
 	br i1 %656, label %665, label %657
 
@@ -721,9 +721,9 @@ xST.exit402:		; preds = %669, %657
 	load <4 x float>* null		; <<4 x float>>:676 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:677 [#uses=1]
 	shufflevector <4 x float> %675, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:678 [#uses=1]
-	mul <4 x float> zeroinitializer, %677		; <<4 x float>>:679 [#uses=0]
-	mul <4 x float> zeroinitializer, %678		; <<4 x float>>:680 [#uses=0]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:681 [#uses=1]
+	fmul <4 x float> zeroinitializer, %677		; <<4 x float>>:679 [#uses=0]
+	fmul <4 x float> zeroinitializer, %678		; <<4 x float>>:680 [#uses=0]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:681 [#uses=1]
 	icmp eq i32 0, 0		; <i1>:682 [#uses=1]
 	br i1 %682, label %689, label %683
 
@@ -750,7 +750,7 @@ xST.exit405:		; preds = %689, %683
 	load <4 x float>* null		; <<4 x float>>:698 [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 5, i32 2		; <<4 x float>*>:699 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:700 [#uses=1]
-	add <4 x float> zeroinitializer, %700		; <<4 x float>>:701 [#uses=0]
+	fadd <4 x float> zeroinitializer, %700		; <<4 x float>>:701 [#uses=0]
 	load <4 x i32>* %.sub7896		; <<4 x i32>>:702 [#uses=1]
 	call i32 @llvm.ppc.altivec.vcmpequw.p( i32 0, <4 x i32> %702, <4 x i32> zeroinitializer )		; <i32>:703 [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 1, i32 1		; <<4 x float>*>:704 [#uses=2]
@@ -769,7 +769,7 @@ xST.exit405:		; preds = %689, %683
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 4, i32 2		; <<4 x float>*>:714 [#uses=1]
 	load <4 x float>* %714		; <<4 x float>>:715 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:716 [#uses=0]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:717 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:717 [#uses=1]
 	load <4 x i32>* %.sub7896		; <<4 x i32>>:718 [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 5, i32 0		; <<4 x float>*>:719 [#uses=1]
 	store <4 x float> zeroinitializer, <4 x float>* %719
@@ -791,10 +791,10 @@ xST.exit405:		; preds = %689, %683
 	load <4 x float>* %732		; <<4 x float>>:733 [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 4, i32 3		; <<4 x float>*>:734 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:735 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:736 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:737 [#uses=1]
-	mul <4 x float> zeroinitializer, %735		; <<4 x float>>:738 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:739 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:736 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:737 [#uses=1]
+	fmul <4 x float> zeroinitializer, %735		; <<4 x float>>:738 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:739 [#uses=1]
 	call i32 @llvm.ppc.altivec.vcmpequw.p( i32 0, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer )		; <i32>:740 [#uses=1]
 	icmp eq i32 %740, 0		; <i1>:741 [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 4, i32 0		; <<4 x float>*>:742 [#uses=2]
@@ -821,9 +821,9 @@ xST.exit405:		; preds = %689, %683
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 4, i32 3		; <<4 x float>*>:761 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:762 [#uses=0]
 	shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:763 [#uses=1]
-	add <4 x float> %757, zeroinitializer		; <<4 x float>>:764 [#uses=0]
-	add <4 x float> %758, %763		; <<4 x float>>:765 [#uses=0]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:766 [#uses=1]
+	fadd <4 x float> %757, zeroinitializer		; <<4 x float>>:764 [#uses=0]
+	fadd <4 x float> %758, %763		; <<4 x float>>:765 [#uses=0]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:766 [#uses=1]
 	br i1 false, label %773, label %767
 
 ; <label>:767		; preds = %xST.exit405
@@ -841,7 +841,7 @@ xST.exit405:		; preds = %689, %683
 xST.exit422:		; preds = %773, %767
 	%.07267 = phi <4 x float> [ %766, %767 ], [ undef, %773 ]		; <<4 x float>> [#uses=0]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 0, i32 3		; <<4 x float>*>:774 [#uses=0]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:775 [#uses=0]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:775 [#uses=0]
 	icmp eq i32 0, 0		; <i1>:776 [#uses=1]
 	br i1 %776, label %780, label %777
 
@@ -1295,7 +1295,7 @@ xST.exit469:		; preds = %1027, %1025, %1005
 	%.07489 = phi <4 x float> [ %1002, %1005 ], [ %.17490, %1027 ], [ %.17490, %1025 ]		; <<4 x float>> [#uses=1]
 	load <4 x float>* null		; <<4 x float>>:1029 [#uses=0]
 	load <4 x float>* null		; <<4 x float>>:1030 [#uses=0]
-	sub <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1031 [#uses=1]
+	fsub <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1031 [#uses=1]
 	br i1 false, label %1037, label %1032
 
 ; <label>:1032		; preds = %xST.exit469
@@ -1368,8 +1368,8 @@ xST.exit472:		; preds = %1050, %1048, %1032
 
 xST.exit474:		; preds = %1059, %1058, %1051
 	load <4 x float>* null		; <<4 x float>>:1060 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1061 [#uses=1]
-	mul <4 x float> %1060, zeroinitializer		; <<4 x float>>:1062 [#uses=2]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1061 [#uses=1]
+	fmul <4 x float> %1060, zeroinitializer		; <<4 x float>>:1062 [#uses=2]
 	br i1 false, label %1065, label %1063
 
 ; <label>:1063		; preds = %xST.exit474
@@ -1556,8 +1556,8 @@ xST.exit489:		; preds = %1109, %1108, %1101
 
 xST.exit492:		; preds = %1118, %1117, %1110
 	load <4 x float>* null		; <<4 x float>>:1119 [#uses=1]
-	mul <4 x float> %1119, zeroinitializer		; <<4 x float>>:1120 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1121 [#uses=1]
+	fmul <4 x float> %1119, zeroinitializer		; <<4 x float>>:1120 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1121 [#uses=1]
 	br i1 false, label %1123, label %1122
 
 ; <label>:1122		; preds = %xST.exit492
@@ -1591,8 +1591,8 @@ xST.exit495:		; preds = %1130, %1129, %1122
 	%.07582 = phi <4 x float> [ %1121, %1122 ], [ %.17583, %1130 ], [ %.17583, %1129 ]		; <<4 x float>> [#uses=1]
 	%.07590 = phi <4 x float> [ %1120, %1122 ], [ %.17591, %1130 ], [ %.17591, %1129 ]		; <<4 x float>> [#uses=1]
 	load <4 x float>* null		; <<4 x float>>:1131 [#uses=1]
-	add <4 x float> %1131, zeroinitializer		; <<4 x float>>:1132 [#uses=1]
-	add <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1133 [#uses=1]
+	fadd <4 x float> %1131, zeroinitializer		; <<4 x float>>:1132 [#uses=1]
+	fadd <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1133 [#uses=1]
 	br i1 false, label %1135, label %1134
 
 ; <label>:1134		; preds = %xST.exit495
@@ -1633,10 +1633,10 @@ xST.exit498:		; preds = %1142, %1141, %1134
 	shufflevector <4 x float> %1143, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:1148 [#uses=1]
 	shufflevector <4 x float> %1145, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:1149 [#uses=1]
 	shufflevector <4 x float> %1147, <4 x float> undef, <4 x i32> zeroinitializer		; <<4 x float>>:1150 [#uses=1]
-	mul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1151 [#uses=1]
-	mul <4 x float> zeroinitializer, %1148		; <<4 x float>>:1152 [#uses=1]
-	mul <4 x float> zeroinitializer, %1149		; <<4 x float>>:1153 [#uses=1]
-	mul <4 x float> zeroinitializer, %1150		; <<4 x float>>:1154 [#uses=1]
+	fmul <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1151 [#uses=1]
+	fmul <4 x float> zeroinitializer, %1148		; <<4 x float>>:1152 [#uses=1]
+	fmul <4 x float> zeroinitializer, %1149		; <<4 x float>>:1153 [#uses=1]
+	fmul <4 x float> zeroinitializer, %1150		; <<4 x float>>:1154 [#uses=1]
 	br i1 false, label %1156, label %1155
 
 ; <label>:1155		; preds = %xST.exit498
@@ -1676,10 +1676,10 @@ xST.exit501:		; preds = %1163, %1162, %1155
 	load <4 x float>* %1165		; <<4 x float>>:1166 [#uses=1]
 	getelementptr [193 x [4 x <4 x float>]]* null, i32 0, i32 0, i32 3		; <<4 x float>*>:1167 [#uses=1]
 	load <4 x float>* %1167		; <<4 x float>>:1168 [#uses=1]
-	add <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1169 [#uses=1]
-	add <4 x float> zeroinitializer, %1164		; <<4 x float>>:1170 [#uses=1]
-	add <4 x float> zeroinitializer, %1166		; <<4 x float>>:1171 [#uses=1]
-	add <4 x float> zeroinitializer, %1168		; <<4 x float>>:1172 [#uses=1]
+	fadd <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1169 [#uses=1]
+	fadd <4 x float> zeroinitializer, %1164		; <<4 x float>>:1170 [#uses=1]
+	fadd <4 x float> zeroinitializer, %1166		; <<4 x float>>:1171 [#uses=1]
+	fadd <4 x float> zeroinitializer, %1168		; <<4 x float>>:1172 [#uses=1]
 	br i1 false, label %1174, label %1173
 
 ; <label>:1173		; preds = %xST.exit501
@@ -1714,7 +1714,7 @@ xST.exit504:		; preds = %1181, %1180, %1173
 	%.07726 = phi <4 x float> [ %1171, %1173 ], [ %.17727, %1181 ], [ %.17727, %1180 ]		; <<4 x float>> [#uses=1]
 	%.07730 = phi <4 x float> [ %1170, %1173 ], [ %.17731, %1181 ], [ %.17731, %1180 ]		; <<4 x float>> [#uses=1]
 	%.07734 = phi <4 x float> [ %1169, %1173 ], [ %.17735, %1181 ], [ %.17735, %1180 ]		; <<4 x float>> [#uses=1]
-	add <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1182 [#uses=1]
+	fadd <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>>:1182 [#uses=1]
 	br i1 false, label %1184, label %1183
 
 ; <label>:1183		; preds = %xST.exit504

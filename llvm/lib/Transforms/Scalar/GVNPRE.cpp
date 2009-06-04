@@ -55,7 +55,8 @@ namespace {
 /// two values.
 
 struct Expression {
-  enum ExpressionOpcode { ADD, SUB, MUL, UDIV, SDIV, FDIV, UREM, SREM, 
+  enum ExpressionOpcode { ADD, FADD, SUB, FSUB, MUL, FMUL,
+                          UDIV, SDIV, FDIV, UREM, SREM,
                           FREM, SHL, LSHR, ASHR, AND, OR, XOR, ICMPEQ, 
                           ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE, 
                           ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ, 
@@ -202,10 +203,16 @@ Expression::ExpressionOpcode
   switch(BO->getOpcode()) {
     case Instruction::Add:
       return Expression::ADD;
+    case Instruction::FAdd:
+      return Expression::FADD;
     case Instruction::Sub:
       return Expression::SUB;
+    case Instruction::FSub:
+      return Expression::FSUB;
     case Instruction::Mul:
       return Expression::MUL;
+    case Instruction::FMul:
+      return Expression::FMUL;
     case Instruction::UDiv:
       return Expression::UDIV;
     case Instruction::SDiv:

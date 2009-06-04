@@ -477,12 +477,12 @@ invcont3:		; preds = %bb2
 	unreachable
 
 bb4:		; preds = %invcont
-	%3 = mul x86_fp80 %0, 0xK40008000000000000000		; <x86_fp80> [#uses=1]
+	%3 = fmul x86_fp80 %0, 0xK40008000000000000000		; <x86_fp80> [#uses=1]
 	%4 = fcmp ult x86_fp80 %3, 0xKC0068000000000000000		; <i1> [#uses=1]
 	br i1 %4, label %bb8, label %bb6
 
 bb6:		; preds = %bb4
-	%5 = mul x86_fp80 %0, 0xK40008000000000000000		; <x86_fp80> [#uses=1]
+	%5 = fmul x86_fp80 %0, 0xK40008000000000000000		; <x86_fp80> [#uses=1]
 	%6 = fcmp ugt x86_fp80 %5, 0xK4005FE00000000000000		; <i1> [#uses=1]
 	br i1 %6, label %bb8, label %bb10
 
@@ -494,16 +494,16 @@ invcont9:		; preds = %bb8
 	unreachable
 
 bb10:		; preds = %bb6
-	%7 = mul x86_fp80 %0, 0xK40008000000000000000		; <x86_fp80> [#uses=3]
+	%7 = fmul x86_fp80 %0, 0xK40008000000000000000		; <x86_fp80> [#uses=3]
 	%8 = fcmp ult x86_fp80 %7, 0xK00000000000000000000		; <i1> [#uses=1]
 	br i1 %8, label %bb13, label %bb12
 
 bb12:		; preds = %bb10
-	%9 = add x86_fp80 %7, 0xK3FFDFFFFFFFFFFFFFFFF		; <x86_fp80> [#uses=1]
+	%9 = fadd x86_fp80 %7, 0xK3FFDFFFFFFFFFFFFFFFF		; <x86_fp80> [#uses=1]
 	br label %bb14
 
 bb13:		; preds = %bb10
-	%10 = sub x86_fp80 %7, 0xK3FFDFFFFFFFFFFFFFFFF		; <x86_fp80> [#uses=1]
+	%10 = fsub x86_fp80 %7, 0xK3FFDFFFFFFFFFFFFFFFF		; <x86_fp80> [#uses=1]
 	br label %bb14
 
 bb14:		; preds = %bb13, %bb12

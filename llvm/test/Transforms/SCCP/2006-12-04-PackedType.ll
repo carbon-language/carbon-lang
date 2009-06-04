@@ -112,7 +112,7 @@ cond_true93:		; preds = %entry
 	%tmp.upgrd.1 = getelementptr %struct.GLDContextRec* %ctx, i32 0, i32 31, i32 14		; <i32*> [#uses=1]
 	%tmp95 = load i32* %tmp.upgrd.1		; <i32> [#uses=1]
 	%tmp95.upgrd.2 = sitofp i32 %tmp95 to float		; <float> [#uses=1]
-	%tmp108 = mul float undef, %tmp95.upgrd.2		; <float> [#uses=1]
+	%tmp108 = fmul float undef, %tmp95.upgrd.2		; <float> [#uses=1]
 	br label %cond_next116
 cond_next116:		; preds = %cond_true93, %entry
 	%point_size.2 = phi float [ %tmp108, %cond_true93 ], [ undef, %entry ]		; <float> [#uses=2]
@@ -130,7 +130,7 @@ cond_true462:		; preds = %cond_true458
 cond_true467:		; preds = %cond_true462
 	ret void
 cond_next484:		; preds = %cond_next116
-	%tmp486 = mul float %point_size.2, 5.000000e-01		; <float> [#uses=1]
+	%tmp486 = fmul float %point_size.2, 5.000000e-01		; <float> [#uses=1]
 	br label %cond_next487
 cond_next487:		; preds = %cond_next484, %cond_true462, %cond_true458
 	%radius.0 = phi float [ %tmp486, %cond_next484 ], [ 5.000000e-01, %cond_true458 ], [ 5.000000e-01, %cond_true462 ]		; <float> [#uses=2]

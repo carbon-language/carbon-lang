@@ -175,17 +175,35 @@ public:
         return Folder.CreateAdd(LC, RC);
     return Insert(BinaryOperator::CreateAdd(LHS, RHS), Name);
   }
+  Value *CreateFAdd(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateFAdd(LC, RC);
+    return Insert(BinaryOperator::CreateFAdd(LHS, RHS), Name);
+  }
   Value *CreateSub(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Folder.CreateSub(LC, RC);
     return Insert(BinaryOperator::CreateSub(LHS, RHS), Name);
   }
+  Value *CreateFSub(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateFSub(LC, RC);
+    return Insert(BinaryOperator::CreateFSub(LHS, RHS), Name);
+  }
   Value *CreateMul(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Folder.CreateMul(LC, RC);
     return Insert(BinaryOperator::CreateMul(LHS, RHS), Name);
+  }
+  Value *CreateFMul(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateMul(LC, RC);
+    return Insert(BinaryOperator::CreateFMul(LHS, RHS), Name);
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
