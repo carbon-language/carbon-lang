@@ -182,6 +182,11 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
     Define(Defs, "__strong", "");
   else
     Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
+
+  if (Opts.Static)
+    Define(Defs, "__STATIC__");
+  else
+    Define(Defs, "__DYNAMIC__");
 }
 
 static void getDarwinOSXDefines(std::vector<char> &Defs, const char *Triple) {

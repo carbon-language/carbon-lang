@@ -403,11 +403,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // command line options or something.
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
 
-  if (LangOpts.Static)
-    DefineBuiltinMacro(Buf, "__STATIC__=1");
-  else
-    DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
-
   if (LangOpts.GNUInline)
     DefineBuiltinMacro(Buf, "__GNUC_GNU_INLINE__=1");
   else
