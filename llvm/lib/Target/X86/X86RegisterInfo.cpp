@@ -754,7 +754,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (Is64Bit && !DisableRedZone &&
       !needsStackRealignment(MF) &&
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
-      !MFI->hasCalls()) {                          // No calls.
+      !MFI->hasCalls() &&                          // No calls.
+      !Subtarget->isTargetWin64()) {               // Win64 has no Red Zone
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (hasFP(MF)) MinSize += SlotSize;
     StackSize = std::max(MinSize,
