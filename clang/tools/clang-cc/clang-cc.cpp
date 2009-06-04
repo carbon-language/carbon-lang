@@ -1395,6 +1395,12 @@ TargetCPU("mcpu",
 static llvm::cl::list<std::string>
 TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
 
+
+static llvm::cl::opt<bool>
+DisableRedZone("disable-red-zone",
+               llvm::cl::desc("Do not emit code that uses the red zone."),
+               llvm::cl::init(false));
+
 /// ComputeTargetFeatures - Recompute the target feature list to only
 /// be the list of things that are enabled, based on the target cpu
 /// and feature list.
@@ -1471,6 +1477,8 @@ static void InitializeCompileOptions(CompileOptions &Opts,
   
   // Handle -ftime-report.
   Opts.TimePasses = TimeReport;
+
+  Opts.DisableRedZone = DisableRedZone;
 }
 
 //===----------------------------------------------------------------------===//

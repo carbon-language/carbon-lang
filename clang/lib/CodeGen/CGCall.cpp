@@ -21,6 +21,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Frontend/CompileOptions.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CallSite.h"
@@ -1750,6 +1751,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     else if (TargetDecl->hasAttr<PureAttr>())
       FuncAttrs |= llvm::Attribute::ReadOnly;
   }
+
+  if (CompileOpts.DisableRedZone)
+    FuncAttrs |= llvm::Attribute::NoRedZone;
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
