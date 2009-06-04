@@ -2009,16 +2009,24 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction &MF = *MBB.getParent();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  X86FI->setCalleeSavedFrameSize(CSI.size() * SlotSize);
+  unsigned CalleeFrameSize = 0;
   
   unsigned Opc = is64Bit ? X86::PUSH64r : X86::PUSH32r;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
+    const TargetRegisterClass *RegClass = CSI[i-1].getRegClass();
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
-    BuildMI(MBB, MI, DL, get(Opc))
-      .addReg(Reg, RegState::Kill);
+    if (RegClass != &X86::VR128RegClass) {
+      CalleeFrameSize += SlotSize;
+      BuildMI(MBB, MI, DL, get(Opc))
+        .addReg(Reg, RegState::Kill);
+    } else {
+      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(), RegClass);
+    }
   }
+
+  X86FI->setCalleeSavedFrameSize(CalleeFrameSize);
   return true;
 }
 
@@ -2036,7 +2044,12 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned Opc = is64Bit ? X86::POP64r : X86::POP32r;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    BuildMI(MBB, MI, DL, get(Opc), Reg);
+    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
+    if (RegClass != &X86::VR128RegClass) {
+      BuildMI(MBB, MI, DL, get(Opc), Reg);
+    } else {
+      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RegClass);
+    }
   }
   return true;
 }
