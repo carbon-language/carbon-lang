@@ -105,6 +105,11 @@ DisableRedZone("disable-red-zone",
   cl::desc("Do not emit code that uses the red zone."),
   cl::init(false));
 
+static cl::opt<bool>
+NoImplicitFloats("no-implicit-float",
+  cl::desc("Don't generate implicit floating point instructions (x86-only)"),
+  cl::init(false));
+
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
@@ -344,6 +349,8 @@ int main(int argc, char **argv) {
       if (!I->isDeclaration()) {
         if (DisableRedZone)
           I->addFnAttr(Attribute::NoRedZone);
+        if (NoImplicitFloats)
+          I->addFnAttr(Attribute::NoImplicitFloat);
         Passes.run(*I);
       }
 

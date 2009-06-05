@@ -81,6 +81,7 @@ namespace lltok {
     kw_ssp,
     kw_sspreq,
     kw_noredzone,
+    kw_noimplicitfloat,
 
     kw_type,
     kw_opaque,

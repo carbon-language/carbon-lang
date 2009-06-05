@@ -868,11 +868,14 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
 /// determining it.
 MVT
 X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                       bool isSrcConst, bool isSrcStr) const {
+                                       bool isSrcConst, bool isSrcStr,
+                                       SelectionDAG &DAG) const {
   // FIXME: This turns off use of xmm stores for memset/memcpy on targets like
   // linux.  This is because the stack realignment code can't handle certain
   // cases like PR2962.  This should be removed when PR2962 is fixed.
-  if (!NoImplicitFloat && Subtarget->getStackAlignment() >= 16) {
+  const Function *F = DAG.getMachineFunction().getFunction();
+  bool NoImplicitFloatOps = F->hasFnAttr(Attribute::NoImplicitFloat);
+  if (!NoImplicitFloatOps && Subtarget->getStackAlignment() >= 16) {
     if ((isSrcConst || isSrcStr) && Subtarget->hasSSE2() && Size >= 16)
       return MVT::v4i32;
     if ((isSrcConst || isSrcStr) && Subtarget->hasSSE1() && Size >= 16)
@@ -1404,11 +1407,12 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs,
                                                        TotalNumXMMRegs);
 
+      bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
       assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
              "SSE register cannot be used when SSE is disabled!");
-      assert(!(NumXMMRegs && UseSoftFloat && NoImplicitFloat) &&
+      assert(!(NumXMMRegs && UseSoftFloat && NoImplicitFloatOps) &&
              "SSE register cannot be used when SSE is disabled!");
-      if (UseSoftFloat || NoImplicitFloat || !Subtarget->hasSSE1())
+      if (UseSoftFloat || NoImplicitFloatOps || !Subtarget->hasSSE1())
         // Kernel mode asks for SSE to be disabled, so don't push them
         // on the stack.
         TotalNumXMMRegs = 0;
@@ -8281,7 +8285,10 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   if (VT.getSizeInBits() != 64)
     return SDValue();
 
-  bool F64IsLegal = !UseSoftFloat && !NoImplicitFloat && Subtarget->hasSSE2();
+  const Function *F = DAG.getMachineFunction().getFunction();
+  bool NoImplicitFloatOps = F->hasFnAttr(Attribute::NoImplicitFloat);
+  bool F64IsLegal = !UseSoftFloat && !NoImplicitFloatOps 
+    && Subtarget->hasSSE2();
   if ((VT.isVector() ||
        (VT == MVT::i64 && F64IsLegal && !Subtarget->is64Bit())) &&
       isa<LoadSDNode>(St->getValue()) &&

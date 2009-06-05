@@ -85,11 +85,6 @@ GenerateSoftFloatCalls("soft-float",
   cl::location(UseSoftFloat),
   cl::init(false));
 static cl::opt<bool, true>
-GenerateNoImplicitFloats("no-implicit-float",
-  cl::desc("Don't generate implicit floating point instructions (x86-only)"),
-  cl::location(NoImplicitFloat),
-  cl::init(false));
-static cl::opt<bool, true>
 DontPlaceZerosInBSS("nozero-initialized-in-bss",
   cl::desc("Don't place zero-initialized symbols into bss section"),
   cl::location(NoZerosInBSS),

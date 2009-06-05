@@ -55,6 +55,8 @@ const Attributes Alignment = 31<<16; ///< Alignment of parameter (5 bits)
                                      // 0 means unaligned different from align 1
 const Attributes NoCapture = 1<<21; ///< Function creates no aliases of pointer
 const Attributes NoRedZone = 1<<22; /// disable redzone
+const Attributes NoImplicitFloat = 1<<23; /// disable implicit floating point
+                                          /// instructions.
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
@@ -62,7 +64,7 @@ const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 /// @brief Attributes that only apply to function.
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly | 
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
-  NoRedZone;
+  NoRedZone | NoImplicitFloat;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;

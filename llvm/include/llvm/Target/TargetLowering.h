@@ -632,7 +632,8 @@ public:
   /// It returns MVT::iAny if SelectionDAG should be responsible for
   /// determining it.
   virtual MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                  bool isSrcConst, bool isSrcStr) const {
+                                  bool isSrcConst, bool isSrcStr,
+                                  SelectionDAG &DAG) const {
     return MVT::iAny;
   }
   

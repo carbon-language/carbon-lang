@@ -378,7 +378,8 @@ namespace llvm {
     /// determining it.
     virtual
     MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
-                            bool isSrcConst, bool isSrcStr) const;
+                            bool isSrcConst, bool isSrcStr,
+                            SelectionDAG &DAG) const;
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
