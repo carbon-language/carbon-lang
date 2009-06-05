@@ -578,7 +578,7 @@ class TemplateArgumentListBuilder {
   llvm::SmallVector<TemplateArgument, 16> Args;
 
 public:
-  // FIXME: Should use index array size.
+  // FIXME: Should use the  index array size.
   size_t size() const { return Args.size(); }
 
   size_t flatSize() const { return Args.size(); }
@@ -691,14 +691,13 @@ protected:
   ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                   DeclContext *DC, SourceLocation L,
                                   ClassTemplateDecl *SpecializedTemplate,
-                                  TemplateArgument *TemplateArgs,
-                                  unsigned NumTemplateArgs);
+                                  TemplateArgumentListBuilder &Builder);
                                   
 public:
   static ClassTemplateSpecializationDecl *
   Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
          ClassTemplateDecl *SpecializedTemplate,
-         TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+         TemplateArgumentListBuilder &Builder,
          ClassTemplateSpecializationDecl *PrevDecl);
 
   /// \brief Retrieve the template that this specialization specializes.
@@ -761,11 +760,9 @@ class ClassTemplatePartialSpecializationDecl
                                          DeclContext *DC, SourceLocation L,
                                          TemplateParameterList *Params,
                                          ClassTemplateDecl *SpecializedTemplate,
-                                         TemplateArgument *TemplateArgs,
-                                         unsigned NumTemplateArgs)
+                                         TemplateArgumentListBuilder &Builder)
     : ClassTemplateSpecializationDecl(Context, ClassTemplatePartialSpecialization,
-                                      DC, L, SpecializedTemplate, TemplateArgs,
-                                      NumTemplateArgs),
+                                      DC, L, SpecializedTemplate, Builder),
       TemplateParams(Params) { }
 
 public:
@@ -773,7 +770,7 @@ public:
   Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
          TemplateParameterList *Params,
          ClassTemplateDecl *SpecializedTemplate,
-         TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+         TemplateArgumentListBuilder &Builder,
          ClassTemplatePartialSpecializationDecl *PrevDecl);
 
   /// Get the list of template parameters

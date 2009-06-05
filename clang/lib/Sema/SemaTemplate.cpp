@@ -856,8 +856,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                     ClassTemplate->getDeclContext(),
                                     TemplateLoc,
                                     ClassTemplate,
-                                    ConvertedTemplateArgs.getFlatArgumentList(),
-                                    ConvertedTemplateArgs.flatSize(), 0);
+                                    ConvertedTemplateArgs, 0);
       ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
       Decl->setLexicalDeclContext(CurContext);
     }
@@ -2129,12 +2128,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     ClassTemplatePartialSpecializationDecl *Partial 
       = ClassTemplatePartialSpecializationDecl::Create(Context, 
                                              ClassTemplate->getDeclContext(),
-                                                TemplateNameLoc,
-                                                TemplateParams,
-                                                ClassTemplate,
-                                    ConvertedTemplateArgs.getFlatArgumentList(),
-                                               ConvertedTemplateArgs.flatSize(),
-                                                PrevPartial);
+                                                       TemplateNameLoc,
+                                                       TemplateParams,
+                                                       ClassTemplate,
+                                                       ConvertedTemplateArgs,
+                                                       PrevPartial);
 
     if (PrevPartial) {
       ClassTemplate->getPartialSpecializations().RemoveNode(PrevPartial);
@@ -2150,9 +2148,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       = ClassTemplateSpecializationDecl::Create(Context, 
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
-                                                ClassTemplate,
-                                    ConvertedTemplateArgs.getFlatArgumentList(),
-                                               ConvertedTemplateArgs.flatSize(),
+                                                ClassTemplate, 
+                                                ConvertedTemplateArgs,
                                                 PrevDecl);
 
     if (PrevDecl) {
@@ -2331,9 +2328,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                              ClassTemplate->getDeclContext(),
                                                   TemplateNameLoc,
                                                   ClassTemplate,
-                                    ConvertedTemplateArgs.getFlatArgumentList(),
-                                               ConvertedTemplateArgs.flatSize(),
-                                                  0);
+                                                  ConvertedTemplateArgs, 0);
       Specialization->setLexicalDeclContext(CurContext);
       CurContext->addDecl(Context, Specialization);
       return DeclPtrTy::make(Specialization);
@@ -2359,9 +2354,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
                                                 ClassTemplate,
-                                    ConvertedTemplateArgs.getFlatArgumentList(),
-                                                ConvertedTemplateArgs.flatSize(),
-                                                0);
+                                                ConvertedTemplateArgs, 0);
 
     ClassTemplate->getSpecializations().InsertNode(Specialization, 
                                                    InsertPos);

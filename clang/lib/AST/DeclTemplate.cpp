@@ -271,8 +271,7 @@ ClassTemplateSpecializationDecl::
 ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                 DeclContext *DC, SourceLocation L,
                                 ClassTemplateDecl *SpecializedTemplate,
-                                TemplateArgument *TemplateArgs,
-                                unsigned NumTemplateArgs)
+                                TemplateArgumentListBuilder &Builder)
   : CXXRecordDecl(DK, 
                   SpecializedTemplate->getTemplatedDecl()->getTagKind(), 
                   DC, L,
@@ -280,7 +279,8 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                   // class template specializations?
                   SpecializedTemplate->getIdentifier()),
     SpecializedTemplate(SpecializedTemplate),
-    TemplateArgs(Context, TemplateArgs, NumTemplateArgs, /*CopyArgs=*/true),
+    TemplateArgs(Context, Builder.getFlatArgumentList(), Builder.flatSize(), 
+                 /*CopyArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
 }
                   
@@ -288,16 +288,14 @@ ClassTemplateSpecializationDecl *
 ClassTemplateSpecializationDecl::Create(ASTContext &Context, 
                                         DeclContext *DC, SourceLocation L,
                                         ClassTemplateDecl *SpecializedTemplate,
-                                        TemplateArgument *TemplateArgs, 
-                                        unsigned NumTemplateArgs,
+                                        TemplateArgumentListBuilder &Builder,
                                    ClassTemplateSpecializationDecl *PrevDecl) {
   ClassTemplateSpecializationDecl *Result
     = new (Context)ClassTemplateSpecializationDecl(Context, 
                                                    ClassTemplateSpecialization,
                                                    DC, L, 
                                                    SpecializedTemplate,
-                                                   TemplateArgs, 
-                                                   NumTemplateArgs);
+                                                   Builder);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }
@@ -310,14 +308,13 @@ ClassTemplatePartialSpecializationDecl::
 Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
        TemplateParameterList *Params,
        ClassTemplateDecl *SpecializedTemplate,
-       TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+       TemplateArgumentListBuilder &Builder,
        ClassTemplatePartialSpecializationDecl *PrevDecl) {
   ClassTemplatePartialSpecializationDecl *Result
     = new (Context)ClassTemplatePartialSpecializationDecl(Context, 
                                                           DC, L, Params,
                                                           SpecializedTemplate,
-                                                          TemplateArgs, 
-                                                          NumTemplateArgs);
+                                                          Builder);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
