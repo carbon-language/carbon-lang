@@ -811,7 +811,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
   // Check that the template argument list is well-formed for this
   // template.
-  llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
+  TemplateArgumentListBuilder ConvertedTemplateArgs;
   if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
                                 TemplateArgs, NumTemplateArgs, RAngleLoc,
                                 ConvertedTemplateArgs))
@@ -835,15 +835,16 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     //   template<typename T, typename U = T> struct A;
     TemplateName CanonName = Context.getCanonicalTemplateName(Name);
     CanonType = Context.getTemplateSpecializationType(CanonName, 
-                                                    &ConvertedTemplateArgs[0],
-                                                ConvertedTemplateArgs.size());
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                    ConvertedTemplateArgs.flatSize());
   } else if (ClassTemplateDecl *ClassTemplate 
                = dyn_cast<ClassTemplateDecl>(Template)) {
     // Find the class template specialization declaration that
     // corresponds to these arguments.
     llvm::FoldingSetNodeID ID;
-    ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
-                                             ConvertedTemplateArgs.size());
+    ClassTemplateSpecializationDecl::Profile(ID, 
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                    ConvertedTemplateArgs.flatSize());
     void *InsertPos = 0;
     ClassTemplateSpecializationDecl *Decl
       = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
@@ -852,12 +853,11 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
       // specialization. Create the canonical declaration and add it to
       // the set of specializations.
       Decl = ClassTemplateSpecializationDecl::Create(Context, 
-                                           ClassTemplate->getDeclContext(),
-                                                     TemplateLoc,
-                                                     ClassTemplate,
-                                                     &ConvertedTemplateArgs[0],
-                                                  ConvertedTemplateArgs.size(),
-                                                     0);
+                                    ClassTemplate->getDeclContext(),
+                                    TemplateLoc,
+                                    ClassTemplate,
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                    ConvertedTemplateArgs.flatSize(), 0);
       ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
       Decl->setLexicalDeclContext(CurContext);
     }
@@ -955,7 +955,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                      const TemplateArgument *TemplateArgs,
                                      unsigned NumTemplateArgs,
                                      SourceLocation RAngleLoc,
-                          llvm::SmallVectorImpl<TemplateArgument> &Converted) {
+                                     TemplateArgumentListBuilder &Converted) {
   TemplateParameterList *Params = Template->getTemplateParameters();
   unsigned NumParams = Params->size();
   unsigned NumArgs = NumTemplateArgs;
@@ -1004,12 +1004,13 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         // on the previously-computed template arguments.
         if (ArgType->isDependentType()) {
           InstantiatingTemplate Inst(*this, TemplateLoc, 
-                                     Template, &Converted[0], 
-                                     Converted.size(),
+                                     Template, Converted.getFlatArgumentList(),
+                                     Converted.flatSize(),
                                      SourceRange(TemplateLoc, RAngleLoc));
 
-          TemplateArgumentList TemplateArgs(Context, &Converted[0],
-                                            Converted.size(), 
+          TemplateArgumentList TemplateArgs(Context, 
+                                            Converted.getFlatArgumentList(),
+                                            Converted.flatSize(), 
                                             /*CopyArgs=*/false);
           ArgType = InstantiateType(ArgType, TemplateArgs,
                                     TTP->getDefaultArgumentLoc(),
@@ -1075,12 +1076,13 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       if (NTTPType->isDependentType()) {
         // Instantiate the type of the non-type template parameter.
         InstantiatingTemplate Inst(*this, TemplateLoc, 
-                                   Template, &Converted[0], 
-                                   Converted.size(),
+                                   Template, Converted.getFlatArgumentList(),
+                                   Converted.flatSize(),
                                    SourceRange(TemplateLoc, RAngleLoc));
 
-        TemplateArgumentList TemplateArgs(Context, &Converted[0],
-                                          Converted.size(), 
+        TemplateArgumentList TemplateArgs(Context, 
+                                          Converted.getFlatArgumentList(),
+                                          Converted.flatSize(), 
                                           /*CopyArgs=*/false);
         NTTPType = InstantiateType(NTTPType, TemplateArgs,
                                    NTTP->getLocation(),
@@ -1393,7 +1395,7 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
 /// of this argument will be added to the end of the Converted vector.
 bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                  QualType InstantiatedParamType, Expr *&Arg, 
-                         llvm::SmallVectorImpl<TemplateArgument> *Converted) {
+                                 TemplateArgumentListBuilder *Converted) {
   SourceLocation StartLoc = Arg->getSourceRange().getBegin();
 
   // If either the parameter has a dependent type or the argument is
@@ -2065,7 +2067,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
 
   // Check that the template argument list is well-formed for this
   // template.
-  llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
+  TemplateArgumentListBuilder ConvertedTemplateArgs;
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 &TemplateArgs[0], TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
@@ -2080,11 +2082,13 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   llvm::FoldingSetNodeID ID;
   if (isPartialSpecialization)
     // FIXME: Template parameter list matters, too
-    ClassTemplatePartialSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
-                                                    ConvertedTemplateArgs.size());
+    ClassTemplatePartialSpecializationDecl::Profile(ID, 
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                              ConvertedTemplateArgs.flatSize());
   else
-    ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
-                                             ConvertedTemplateArgs.size());
+    ClassTemplateSpecializationDecl::Profile(ID,
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                             ConvertedTemplateArgs.flatSize());
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl = 0;
 
@@ -2128,8 +2132,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                                 TemplateNameLoc,
                                                 TemplateParams,
                                                 ClassTemplate,
-                                                &ConvertedTemplateArgs[0],
-                                                ConvertedTemplateArgs.size(),
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                               ConvertedTemplateArgs.flatSize(),
                                                 PrevPartial);
 
     if (PrevPartial) {
@@ -2147,8 +2151,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
                                                 ClassTemplate,
-                                                &ConvertedTemplateArgs[0],
-                                                ConvertedTemplateArgs.size(),
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                               ConvertedTemplateArgs.flatSize(),
                                                 PrevDecl);
 
     if (PrevDecl) {
@@ -2269,7 +2273,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
 
   // Check that the template argument list is well-formed for this
   // template.
-  llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
+  TemplateArgumentListBuilder ConvertedTemplateArgs;
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 TemplateArgs.data(), TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
@@ -2282,8 +2286,9 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   // Find the class template specialization declaration that
   // corresponds to these arguments.
   llvm::FoldingSetNodeID ID;
-  ClassTemplateSpecializationDecl::Profile(ID, &ConvertedTemplateArgs[0],
-                                           ConvertedTemplateArgs.size());
+  ClassTemplateSpecializationDecl::Profile(ID, 
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                           ConvertedTemplateArgs.flatSize());
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl
     = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
@@ -2326,8 +2331,8 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                              ClassTemplate->getDeclContext(),
                                                   TemplateNameLoc,
                                                   ClassTemplate,
-                                                  &ConvertedTemplateArgs[0],
-                                                  ConvertedTemplateArgs.size(),
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                               ConvertedTemplateArgs.flatSize(),
                                                   0);
       Specialization->setLexicalDeclContext(CurContext);
       CurContext->addDecl(Context, Specialization);
@@ -2354,8 +2359,8 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
                                                 ClassTemplate,
-                                                &ConvertedTemplateArgs[0],
-                                                ConvertedTemplateArgs.size(),
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                                ConvertedTemplateArgs.flatSize(),
                                                 0);
 
     ClassTemplate->getSpecializations().InsertNode(Specialization, 

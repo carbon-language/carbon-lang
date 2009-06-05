@@ -573,6 +573,20 @@ public:
   }
 };
 
+/// \brief A helper class for making template argument lists.
+class TemplateArgumentListBuilder {
+  llvm::SmallVector<TemplateArgument, 16> Args;
+
+public:
+  // FIXME: Should use index array size.
+  size_t size() const { return Args.size(); }
+
+  size_t flatSize() const { return Args.size(); }
+    
+  TemplateArgument *getFlatArgumentList() { return Args.data(); }
+  void push_back(const TemplateArgument& Arg) { Args.push_back(Arg); }
+};
+
 /// \brief A template argument list.
 ///
 /// FIXME: In the future, this class will be extended to support
@@ -588,7 +602,6 @@ class TemplateArgumentList {
   /// \brief The number of template arguments in this template
   /// argument list.
   unsigned NumArguments;
-
 
 public:
   TemplateArgumentList(ASTContext &Context,

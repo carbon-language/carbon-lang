@@ -20,6 +20,7 @@
 #include "SemaOverload.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/Action.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1971,7 +1972,7 @@ public:
                                  const TemplateArgument *TemplateArgs,
                                  unsigned NumTemplateArgs,
                                  SourceLocation RAngleLoc,
-                       llvm::SmallVectorImpl<TemplateArgument> &Converted);
+                                 TemplateArgumentListBuilder &Converted);
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
                              SourceLocation ArgLoc);
@@ -1980,7 +1981,7 @@ public:
   bool CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member);
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, 
                              QualType InstantiatedParamType, Expr *&Arg,
-                       llvm::SmallVectorImpl<TemplateArgument> *Converted = 0);
+                             TemplateArgumentListBuilder *Converted = 0);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,
