@@ -5,6 +5,8 @@
 // Header stuff.
 //===----------------------------------------------------------------------===//
 
+typedef struct objc_class *Class;
+
 typedef unsigned int __darwin_natural_t;
 typedef struct {} div_t;
 typedef unsigned long UInt32;
@@ -56,6 +58,7 @@ typedef struct _NSZone NSZone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end
 @interface NSObject <NSObject> {}
+- (Class)class;
 + (id)alloc;
 + (id)allocWithZone:(NSZone *)zone;
 @end   typedef float CGFloat;
@@ -169,6 +172,28 @@ void f5b() {
 }
 - (CFMutableArrayRef)newArray{
    return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+@end
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6948053> False positive: object substitution during -init*
+//   methods warns about returning +0 when using -fobjc-gc-only
+//===----------------------------------------------------------------------===//
+
+@interface MyClassRdar6948053 : NSObject
+- (id) init;
++ (id) shared;
+@end
+
+@implementation MyClassRdar6948053
++(id) shared {
+  return (id) 0;
+}
+- (id) init
+{
+  Class myClass = [self class];  
+  [self release];
+  return [[myClass shared] retain]; // no-warning
 }
 @end
 
