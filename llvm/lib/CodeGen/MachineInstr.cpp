@@ -28,7 +28,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/FoldingSet.h"
-#include <ostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

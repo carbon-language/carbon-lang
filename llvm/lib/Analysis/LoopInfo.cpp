@@ -24,7 +24,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <algorithm>
-#include <ostream>
 using namespace llvm;
 
 char LoopInfo::ID = 0;

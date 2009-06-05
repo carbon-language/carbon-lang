@@ -20,7 +20,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include <ostream>
 using namespace llvm;
 
 static TimerGroup &getDwarfTimerGroup() {

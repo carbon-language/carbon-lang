@@ -80,7 +80,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include <ostream>
 #include <algorithm>
 using namespace llvm;
 

@@ -19,7 +19,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
-#include <ostream>
 using namespace llvm;
 
 STATISTIC(TotalInsts , "Number of instructions (of all types)");
