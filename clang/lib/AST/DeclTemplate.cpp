@@ -240,6 +240,7 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
 //===----------------------------------------------------------------------===//
 void TemplateArgumentListBuilder::push_back(const TemplateArgument& Arg) {
   switch (Arg.getKind()) {
+  default: break;
   case TemplateArgument::Type:
     assert(Arg.getAsType()->isCanonical() && "Type must be canonical!");
     break;
