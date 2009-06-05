@@ -1093,7 +1093,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::FRem:
     Assert1(B.getType()->isFPOrFPVector(),
             "Floating-point arithmetic operators only work with "
-            "integral types!", &B);
+            "floating-point types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Floating-point arithmetic operators must have same type "
             "for operands and result!", &B);
