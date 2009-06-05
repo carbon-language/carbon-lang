@@ -168,6 +168,12 @@ namespace llvm {
       return *SN;
     }
 
+    ELFSection &getTextSection() {
+      return getSection(".text", ELFWriter::ELFSection::SHT_PROGBITS,
+                        ELFWriter::ELFSection::SHF_EXECINSTR |
+                        ELFWriter::ELFSection::SHF_ALLOC);
+    }
+
     ELFSection &getDataSection() {
       return getSection(".data", ELFSection::SHT_PROGBITS,
                         ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
