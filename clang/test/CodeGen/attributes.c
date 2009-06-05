@@ -14,7 +14,7 @@
 // RUN: grep '@t13 =.*section "SECT"' %t &&
 // RUN: grep '@t14.x =.*section "SECT"' %t
 // RUN: grep 'declare extern_weak i32 @t15()' %t &&
-// RUN: grep '@t16 = extern_weak global i32' %t
+// RUN: grep '@t16 = extern_weak global i32' %t &&
 
 void t1() __attribute__((noreturn));
 void t1() {}
@@ -56,4 +56,14 @@ int t17() {
   return t15() + t16;
 }
 
+// RUN: grep '@t18 = global i[0-9]* 1, align .*' %t &&
+extern int t18 __attribute__((weak_import));
+int t18 = 1;
 
+// RUN: grep 'define i[0-9]* @t19() nounwind {' %t &&
+extern int t19(void) __attribute__((weak_import));
+int t19(void) {
+  return 10;
+}
+
+// RUN: true

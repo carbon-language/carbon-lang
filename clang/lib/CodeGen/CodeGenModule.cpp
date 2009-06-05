@@ -298,7 +298,7 @@ void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
     GV->setLinkage(llvm::Function::InternalLinkage);
   } else if (D->hasAttr<DLLExportAttr>()) {
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
+  } else if (D->hasAttr<WeakAttr>()) {
     GV->setLinkage(llvm::Function::WeakAnyLinkage);
   } else if (Linkage == GVA_C99Inline) {
     // In C99 mode, 'inline' functions are guaranteed to have a strong
@@ -853,7 +853,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setLinkage(llvm::Function::DLLImportLinkage);
   else if (D->hasAttr<DLLExportAttr>())
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
+  else if (D->hasAttr<WeakAttr>())
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
   else if (!CompileOpts.NoCommon &&
            (!D->hasExternalStorage() && !D->getInit()))
