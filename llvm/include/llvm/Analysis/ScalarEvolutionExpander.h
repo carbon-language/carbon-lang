@@ -60,12 +60,7 @@ namespace llvm {
     /// canonical induction variable of the specified type for the specified
     /// loop (inserting one if there is none).  A canonical induction variable
     /// starts at zero and steps by one on each iteration.
-    Value *getOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty){
-      assert(Ty->isInteger() && "Can only insert integer induction variables!");
-      SCEVHandle H = SE.getAddRecExpr(SE.getIntegerSCEV(0, Ty),
-                                      SE.getIntegerSCEV(1, Ty), L);
-      return expand(H);
-    }
+    Value *getOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty);
 
     /// addInsertedValue - Remember the specified instruction as being the
     /// canonical form for the specified SCEV.

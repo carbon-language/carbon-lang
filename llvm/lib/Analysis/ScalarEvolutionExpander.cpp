@@ -644,3 +644,16 @@ Value *SCEVExpander::expand(const SCEV *S) {
   InsertedExpressions[S] = V;
   return V;
 }
+
+/// getOrInsertCanonicalInductionVariable - This method returns the
+/// canonical induction variable of the specified type for the specified
+/// loop (inserting one if there is none).  A canonical induction variable
+/// starts at zero and steps by one on each iteration.
+Value *
+SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
+                                                    const Type *Ty) {
+  assert(Ty->isInteger() && "Can only insert integer induction variables!");
+  SCEVHandle H = SE.getAddRecExpr(SE.getIntegerSCEV(0, Ty),
+                                  SE.getIntegerSCEV(1, Ty), L);
+  return expand(H);
+}
