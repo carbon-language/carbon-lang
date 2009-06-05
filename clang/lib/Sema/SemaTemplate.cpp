@@ -2271,7 +2271,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   // template.
   llvm::SmallVector<TemplateArgument, 16> ConvertedTemplateArgs;
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
-                                &TemplateArgs[0], TemplateArgs.size(),
+                                TemplateArgs.data(), TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
     return true;
 

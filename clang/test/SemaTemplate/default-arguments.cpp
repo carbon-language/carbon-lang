@@ -10,3 +10,6 @@ X<> *x3; // expected-error{{too few template arguments for class template 'X'}}
 template<typename U = float, int M> struct X;
 
 X<> *x4;
+
+template<typename T = int> struct Z;
+template struct Z<>;
