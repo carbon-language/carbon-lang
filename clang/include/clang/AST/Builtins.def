@@ -369,6 +369,11 @@ LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
 // Non-C library functions
 // FIXME: Non-C-standard stuff shouldn't be builtins in non-GNU mode!
 LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h")
+// POSIX string.h
+LIBBUILTIN(stpcpy, "c*c*cC*",     "f",     "string.h")
+LIBBUILTIN(stpncpy, "c*c*cC*z",   "f",     "string.h")
+LIBBUILTIN(strdup, "c*cC*",       "f",     "string.h")
+LIBBUILTIN(strndup, "c*cC*z",     "f",     "string.h")
 // POSIX strings.h
 LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h")
 LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h")
