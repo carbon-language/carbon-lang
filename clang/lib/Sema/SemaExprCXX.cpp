@@ -1588,16 +1588,26 @@ Expr *Sema::RemoveOutermostTemporaryBinding(Expr *E) {
   return E;
 }
 
+Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr, 
+                                              bool DestroyTemps) {
+  assert(SubExpr && "sub expression can't be null!");
+  
+  if (ExprTemporaries.empty())
+    return SubExpr;
+  
+  Expr *E = CXXExprWithTemporaries::Create(Context, SubExpr,
+                                           &ExprTemporaries[0], 
+                                           ExprTemporaries.size(),
+                                           DestroyTemps);
+  ExprTemporaries.clear();
+  
+  return E;
+}
+
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
-
-  if (FullExpr && !ExprTemporaries.empty()) {
-    // Create a cleanup expr.
-    FullExpr = CXXExprWithTemporaries::Create(Context, FullExpr,
-                                              &ExprTemporaries[0], 
-                                              ExprTemporaries.size());
-    ExprTemporaries.clear();
-  }
+  if (FullExpr)
+    FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr);
 
   return Owned(FullExpr);
 }

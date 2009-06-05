@@ -1023,14 +1023,17 @@ class CXXExprWithTemporaries : public Expr {
   CXXTemporary **Temps;
   unsigned NumTemps;
 
-  CXXExprWithTemporaries(Expr *subexpr, CXXTemporary **temps, 
-                         unsigned numtemps);
+  bool DestroyTemps;
+  
+  CXXExprWithTemporaries(Expr *SubExpr, CXXTemporary **Temps, 
+                         unsigned NumTemps, bool DestroyTemps);
   ~CXXExprWithTemporaries();
   
 public:
   static CXXExprWithTemporaries *Create(ASTContext &C, Expr *SubExpr,
                                         CXXTemporary **Temps, 
-                                        unsigned NumTemps);
+                                        unsigned NumTemps,
+                                        bool DestroyTems);
   void Destroy(ASTContext &C);
   
   unsigned getNumTemporaries() const { return NumTemps; }

@@ -1630,6 +1630,12 @@ public:
                                                TypeTy *Ty,
                                                SourceLocation RParen);
 
+  /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is 
+  /// non-empty, will create a new CXXExprWithTemporaries expression.
+  /// Otherwise, just returs the passed in expression.
+  Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr, 
+                                          bool DestroyTemps = true);
+  
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);
 
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
