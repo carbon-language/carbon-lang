@@ -1007,10 +1007,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                      Converted.flatSize(),
                                      SourceRange(TemplateLoc, RAngleLoc));
 
-          TemplateArgumentList TemplateArgs(Context, 
-                                            Converted.getFlatArgumentList(),
-                                            Converted.flatSize(), 
-                                            /*CopyArgs=*/false);
+          TemplateArgumentList TemplateArgs(Context, Converted,
+                                            /*CopyArgs=*/false,
+                                            /*FlattenArgs=*/false);
           ArgType = InstantiateType(ArgType, TemplateArgs,
                                     TTP->getDefaultArgumentLoc(),
                                     TTP->getDeclName());
@@ -1079,10 +1078,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                    Converted.flatSize(),
                                    SourceRange(TemplateLoc, RAngleLoc));
 
-        TemplateArgumentList TemplateArgs(Context, 
-                                          Converted.getFlatArgumentList(),
-                                          Converted.flatSize(), 
-                                          /*CopyArgs=*/false);
+        TemplateArgumentList TemplateArgs(Context, Converted,
+                                          /*CopyArgs=*/false,
+                                          /*FlattenArgs=*/false);
         NTTPType = InstantiateType(NTTPType, TemplateArgs,
                                    NTTP->getLocation(),
                                    NTTP->getDeclName());

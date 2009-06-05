@@ -605,9 +605,8 @@ class TemplateArgumentList {
 
 public:
   TemplateArgumentList(ASTContext &Context,
-                       TemplateArgument *TemplateArgs,
-                       unsigned NumTemplateArgs,
-                       bool CopyArgs);
+                       TemplateArgumentListBuilder &Builder,
+                       bool CopyArgs, bool FlattenArgs);
 
   ~TemplateArgumentList();
 

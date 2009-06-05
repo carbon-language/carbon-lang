@@ -239,25 +239,25 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
 // TemplateArgumentList Implementation
 //===----------------------------------------------------------------------===//
 TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
-                                           TemplateArgument *TemplateArgs,
-                                           unsigned NumTemplateArgs,
-                                           bool CopyArgs)
-  : NumArguments(NumTemplateArgs) {
+                                           TemplateArgumentListBuilder &Builder,
+                                           bool CopyArgs, bool FlattenArgs)
+  : NumArguments(Builder.flatSize()) {
   if (!CopyArgs) {
-    Arguments.setPointer(TemplateArgs);
+    Arguments.setPointer(Builder.getFlatArgumentList());
     Arguments.setInt(1);
     return;
   }
 
-  unsigned Size = sizeof(TemplateArgument) * NumTemplateArgs;
+  
+  unsigned Size = sizeof(TemplateArgument) * Builder.flatSize();
   unsigned Align = llvm::AlignOf<TemplateArgument>::Alignment;
   void *Mem = Context.Allocate(Size, Align);
   Arguments.setPointer((TemplateArgument *)Mem);
   Arguments.setInt(0);
 
   TemplateArgument *Args = (TemplateArgument *)Mem;
-  for (unsigned I = 0; I != NumTemplateArgs; ++I)
-    new (Args + I) TemplateArgument(TemplateArgs[I]);
+  for (unsigned I = 0; I != NumArguments; ++I)
+    new (Args + I) TemplateArgument(Builder.getFlatArgumentList()[I]);
 }
 
 TemplateArgumentList::~TemplateArgumentList() {
@@ -279,8 +279,7 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                   // class template specializations?
                   SpecializedTemplate->getIdentifier()),
     SpecializedTemplate(SpecializedTemplate),
-    TemplateArgs(Context, Builder.getFlatArgumentList(), Builder.flatSize(), 
-                 /*CopyArgs=*/true),
+    TemplateArgs(Context, Builder, /*CopyArgs=*/true, /*FlattenArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
 }
                   

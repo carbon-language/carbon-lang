@@ -384,6 +384,12 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
     }
   }
   
-  return new (Context) TemplateArgumentList(Context, Deduced.data(),
-                                            Deduced.size(), /*CopyArgs=*/true);
+  // FIXME: This is terrible. DeduceTemplateArguments should use a 
+  // TemplateArgumentListBuilder directly.
+  TemplateArgumentListBuilder Builder;
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I)
+    Builder.push_back(Deduced[I]);
+  
+  return new (Context) TemplateArgumentList(Context, Builder, /*CopyArgs=*/true,
+                                            /*FlattenArgs=*/true);
 }
