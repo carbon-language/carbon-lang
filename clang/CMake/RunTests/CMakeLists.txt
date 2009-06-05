@@ -6,7 +6,7 @@
 #   CLANG_TEST_RUNNER: The TestRunner.sh shell script, which is used to test
 #   Clang.
 #
-#   CLANG_TEST_GLOB_PATTERN: Set to a GLOB pattern to identify the kind of
+#   CLANG_TEST_GLOB_PATTERNS: Set to a GLOB pattern to identify the kind of
 #   tests, e.g., *.cpp for C++ tests.
 #
 #   LLVM_TOOLS_PATH: The directory where the Clang and LLVM tool
@@ -27,17 +27,24 @@ macro(compute_test_name var filename)
   set(${var} "${test_lastpath}-${test_name}")
 endmacro()
 
-# FIXME: Total hack!
+# FIXME: This is a hack to make sure that there is a proper "clean" target.
+# There must be a better way.
 file(WRITE dummy.c "int dummy() { return 0; }")
 add_library(dummy dummy.c)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "dummy.c")
 
+# Set the path appropriately
 set(PATH $ENV{PATH})
 set(PATH "${LLVM_TOOLS_PATH}:${LLVM_SCRIPTS_PATH}:${PATH}")
-message(STATUS "Globbing for tests with ${CLANG_TEST_GLOB_PATTERN}")
-file(GLOB_RECURSE tests ${CLANG_TEST_GLOB_PATTERN})
+
+# Find the test files
+string(REPLACE ":" ";" CLANG_TEST_GLOB_PATTERNS ${CLANG_TEST_GLOB_PATTERNS})
+separate_arguments(CLANG_TEST_GLOB_PATTERNS)
+file(GLOB_RECURSE tests ${CLANG_TEST_GLOB_PATTERNS})
+
+# Add individual tests for each file we found.
 foreach(test ${tests})
   compute_test_name(testname ${test})
-  message(STATUS "Adding test ${testname} with file ${test}")
   add_test(${testname} ${CLANG_TEST_RUNNER} ${test})
   set_tests_properties(${testname} PROPERTIES
     ENVIRONMENT "PATH=${PATH}")
