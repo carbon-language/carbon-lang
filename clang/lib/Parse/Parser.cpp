@@ -39,6 +39,10 @@ Parser::Parser(Preprocessor &pp, Action &actions)
           PragmaUnusedHandler(&PP.getIdentifierTable().get("unused"), actions,
                               *this));
   PP.AddPragmaHandler(0, UnusedHandler.get());
+
+  WeakHandler.reset(new
+          PragmaWeakHandler(&PP.getIdentifierTable().get("weak"), actions));
+  PP.AddPragmaHandler(0, WeakHandler.get());
 }
 
 /// If a crash happens while the parser is active, print out a line indicating
@@ -288,6 +292,8 @@ Parser::~Parser() {
   PackHandler.reset();
   PP.RemovePragmaHandler(0, UnusedHandler.get());
   UnusedHandler.reset();
+  PP.RemovePragmaHandler(0, WeakHandler.get());
+  WeakHandler.reset();
 }
 
 /// Initialize - Warm up the parser.

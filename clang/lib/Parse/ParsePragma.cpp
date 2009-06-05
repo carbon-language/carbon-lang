@@ -100,6 +100,12 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
     return;
   }
 
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::eom)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "pack";
+    return;
+  }
+
   SourceLocation RParenLoc = Tok.getLocation();
   Actions.ActOnPragmaPack(Kind, Name, Alignment.release(), PackLoc,
                           LParenLoc, RParenLoc);
@@ -172,11 +178,60 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_punc);
     return;
   }
-  
+
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::eom)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) <<
+        "unused";
+    return;
+  }
+
   // Verify that we have a location for the right parenthesis.
   assert(RParenLoc.isValid() && "Valid '#pragma unused' must have ')'");
   assert(!Ex.empty() && "Valid '#pragma unused' must have arguments");
 
   // Perform the action to handle the pragma.    
   Actions.ActOnPragmaUnused(&Ex[0], Ex.size(), UnusedLoc, LParenLoc, RParenLoc);
+}
+
+// #pragma weak identifier
+// #pragma weak identifier '=' identifier
+void PragmaWeakHandler::HandlePragma(Preprocessor &PP, Token &WeakTok) {
+  // FIXME: Should we be expanding macros here? My guess is no.
+  SourceLocation WeakLoc = WeakTok.getLocation();
+
+  Token Tok;
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier) << "weak";
+    return;
+  }
+
+  IdentifierInfo *WeakName = Tok.getIdentifierInfo(), *AliasName = 0;
+  SourceLocation WeakNameLoc = Tok.getLocation(), AliasNameLoc;
+
+  PP.Lex(Tok);
+  if (Tok.is(tok::equal)) {
+    PP.Lex(Tok);
+    if (Tok.isNot(tok::identifier)) {
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier) 
+          << "weak";
+      return;
+    }
+    AliasName = Tok.getIdentifierInfo();
+    AliasNameLoc = Tok.getLocation();
+    PP.Lex(Tok);
+  }
+
+  if (Tok.isNot(tok::eom)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "weak";
+    return;
+  }
+
+  if (AliasName) {
+    Actions.ActOnPragmaWeakAlias(WeakName, AliasName, WeakLoc, WeakNameLoc,
+                                 AliasNameLoc);
+  } else {
+    Actions.ActOnPragmaWeakID(WeakName, WeakLoc, WeakNameLoc);
+  }
 }

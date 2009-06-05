@@ -1756,7 +1756,23 @@ public:
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc) {
     return;
-  }  
+  }
+
+  /// ActOnPragmaPack - Called on well formed #pragma weak ident.
+  virtual void ActOnPragmaWeakID(IdentifierInfo* WeakName,
+                                 SourceLocation PragmaLoc,
+                                 SourceLocation WeakNameLoc) {
+    return;
+  }
+
+  /// ActOnPragmaPack - Called on well formed #pragma weak ident = ident.
+  virtual void ActOnPragmaWeakAlias(IdentifierInfo* WeakName,
+                                    IdentifierInfo* AliasName,
+                                    SourceLocation PragmaLoc,
+                                    SourceLocation WeakNameLoc,
+                                    SourceLocation AliasNameLoc) {
+    return;
+  }
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

@@ -39,6 +39,15 @@ public:
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);  
 };  
 
+class PragmaWeakHandler : public PragmaHandler {
+  Action &Actions;
+public:
+  PragmaWeakHandler(const IdentifierInfo *N, Action &A)
+    : PragmaHandler(N), Actions(A) {}
+  
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);  
+};
+
 }  // end namespace clang
 
 #endif

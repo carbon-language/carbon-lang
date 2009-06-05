@@ -264,6 +264,8 @@ def warn_pragma_expected_rparen : Warning<
   "missing ')' after '#pragma %0' - ignoring">;
 def warn_pragma_expected_identifier : Warning<
   "expected identifier in '#pragma %0' - ignored">;  
+def warn_pragma_extra_tokens_at_eol : Warning<
+  "extra tokens at end of '#pragma %0' - ignored">; 
 // - #pragma pack
 def warn_pragma_pack_invalid_action : Warning<
   "unknown action for '#pragma pack' - ignored">;
