@@ -2449,7 +2449,19 @@ public:
                                  SourceLocation PragmaLoc, 
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc);
-  
+
+  /// ActOnPragmaPack - Called on well formed #pragma weak ident.
+  virtual void ActOnPragmaWeakID(IdentifierInfo* WeakName,
+                                 SourceLocation PragmaLoc,
+                                 SourceLocation WeakNameLoc);
+
+  /// ActOnPragmaPack - Called on well formed #pragma weak ident = ident.
+  virtual void ActOnPragmaWeakAlias(IdentifierInfo* WeakName,
+                                    IdentifierInfo* AliasName,
+                                    SourceLocation PragmaLoc,
+                                    SourceLocation WeakNameLoc,
+                                    SourceLocation AliasNameLoc);
+
   /// getPragmaPackAlignment() - Return the current alignment as specified by
   /// the current #pragma pack directive, or 0 if none is currently active.
   unsigned getPragmaPackAlignment() const;

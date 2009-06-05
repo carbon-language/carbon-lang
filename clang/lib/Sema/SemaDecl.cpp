@@ -4414,3 +4414,33 @@ Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
   CurContext->addDecl(Context, New);
   return DeclPtrTy::make(New);
 }
+
+void Sema::ActOnPragmaWeakID(IdentifierInfo* Name,
+                             SourceLocation PragmaLoc,
+                             SourceLocation NameLoc) {
+  Decl *PrevDecl = LookupName(TUScope, Name, LookupOrdinaryName);
+
+  // FIXME: This implementation is an ugly hack!
+  if (PrevDecl) {
+    PrevDecl->addAttr(::new (Context) WeakAttr());
+    return;
+  }
+  Diag(PragmaLoc, diag::err_unsupported_pragma_weak);
+  return;
+}
+
+void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
+                                IdentifierInfo* AliasName,
+                                SourceLocation PragmaLoc,
+                                SourceLocation NameLoc,
+                                SourceLocation AliasNameLoc) {
+  Decl *PrevDecl = LookupName(TUScope, Name, LookupOrdinaryName);
+
+  // FIXME: This implementation is an ugly hack!
+  if (PrevDecl) {
+    PrevDecl->addAttr(::new (Context) AliasAttr(AliasName->getName()));
+    return;
+  }
+  Diag(PragmaLoc, diag::err_unsupported_pragma_weak);
+  return;
+}

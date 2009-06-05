@@ -131,6 +131,8 @@ def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">;
 
 def warn_pragma_unused_expected_localvar : Warning<
   "only local variables can be arguments to '#pragma unused'">;
+def err_unsupported_pragma_weak : Error<
+  "using '#pragma weak' to refer to an undeclared identifier is not yet supported">;
 
 /// Objective-C parser diagnostics
 def err_duplicate_class_def : Error<
