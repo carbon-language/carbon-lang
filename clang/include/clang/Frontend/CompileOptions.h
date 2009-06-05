@@ -42,6 +42,7 @@ public:
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned DisableRedZone    : 1; /// Set when -mno-red-zone is enabled.
+  unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
 
   /// Inlining - The kind of inlining to perform.
   InliningMethod Inlining;
@@ -65,6 +66,7 @@ public:
     NoCommon = 0;
     Inlining = NoInlining;
     DisableRedZone = 0;
+    NoImplicitFloat = 0;
   }  
 };
 

@@ -1406,6 +1406,11 @@ DisableRedZone("disable-red-zone",
                llvm::cl::desc("Do not emit code that uses the red zone."),
                llvm::cl::init(false));
 
+static llvm::cl::opt<bool>
+NoImplicitFloat("no-implicit-float",
+  llvm::cl::desc("Don't generate implicit floating point instructions (x86-only)"),
+  llvm::cl::init(false));
+
 /// ComputeTargetFeatures - Recompute the target feature list to only
 /// be the list of things that are enabled, based on the target cpu
 /// and feature list.
@@ -1484,6 +1489,7 @@ static void InitializeCompileOptions(CompileOptions &Opts,
   Opts.TimePasses = TimeReport;
 
   Opts.DisableRedZone = DisableRedZone;
+  Opts.NoImplicitFloat = NoImplicitFloat;
 }
 
 //===----------------------------------------------------------------------===//

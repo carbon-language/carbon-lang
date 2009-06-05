@@ -1755,6 +1755,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   if (CompileOpts.DisableRedZone)
     FuncAttrs |= llvm::Attribute::NoRedZone;
+  if (CompileOpts.NoImplicitFloat)
+    FuncAttrs |= llvm::Attribute::NoImplicitFloat;
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
