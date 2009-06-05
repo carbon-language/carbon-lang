@@ -1638,13 +1638,7 @@ static void CreateCoercedStore(llvm::Value *Src,
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(DstTy);
 
   // If store is legal, just bitcast the src pointer.
-  if (SrcSize >= DstSize) {
-    // Generally SrcSize is never greater than DstSize, since this means we are
-    // losing bits. However, this can happen in cases where the structure has
-    // additional padding, for example due to a user specified alignment.
-    //
-    // FIXME: Assert that we aren't truncating non-padding bits when have access
-    // to that information.
+  if (SrcSize <= DstSize) {
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
     // FIXME: Use better alignment / avoid requiring aligned store.
@@ -1652,6 +1646,13 @@ static void CreateCoercedStore(llvm::Value *Src,
   } else {
     // Otherwise do coercion through memory. This is stupid, but
     // simple.
+
+    // Generally SrcSize is never greater than DstSize, since this means we are
+    // losing bits. However, this can happen in cases where the structure has
+    // additional padding, for example due to a user specified alignment.
+    //
+    // FIXME: Assert that we aren't truncating non-padding bits when have access
+    // to that information.
     llvm::Value *Tmp = CGF.CreateTempAlloca(SrcTy);
     CGF.Builder.CreateStore(Src, Tmp);
     llvm::Value *Casted = 

@@ -82,4 +82,10 @@ void f16(float a, float b, float c, float d, float e, float f, float g, float h,
 void f17(float a, float b, float c, float d, float e, float f, float g, float h,
          long double X) {}
 
+// Check for valid coercion.
+// RUN: grep '.1 = bitcast i64. .tmp to .struct.f18_s0.' %t &&
+// RUN: grep '.2 = load .struct.f18_s0. .1, align 1' %t &&
+// RUN: grep 'store .struct.f18_s0 .2, .struct.f18_s0. .f18_arg1' %t &&
+void f18(int a, struct f18_s0 { int f0; } f18_arg1) {}
+
 // RUN: true
