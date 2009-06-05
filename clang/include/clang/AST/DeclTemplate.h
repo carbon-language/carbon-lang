@@ -577,14 +577,16 @@ public:
 class TemplateArgumentListBuilder {
   llvm::SmallVector<TemplateArgument, 16> Args;
 
+  ASTContext &Context;
 public:
+  TemplateArgumentListBuilder(ASTContext &Context) : Context(Context) { }
+  
   // FIXME: Should use the  index array size.
   size_t size() const { return Args.size(); }
-
   size_t flatSize() const { return Args.size(); }
-    
+
+  void push_back(const TemplateArgument& Arg);
   TemplateArgument *getFlatArgumentList() { return Args.data(); }
-  void push_back(const TemplateArgument& Arg) { Args.push_back(Arg); }
 };
 
 /// \brief A template argument list.

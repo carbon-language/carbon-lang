@@ -386,7 +386,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   
   // FIXME: This is terrible. DeduceTemplateArguments should use a 
   // TemplateArgumentListBuilder directly.
-  TemplateArgumentListBuilder Builder;
+  TemplateArgumentListBuilder Builder(Context);
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I)
     Builder.push_back(Deduced[I]);
   

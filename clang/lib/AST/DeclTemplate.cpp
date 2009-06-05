@@ -236,6 +236,19 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
 }
 
 //===----------------------------------------------------------------------===//
+// TemplateArgumentListBuilder Implementation
+//===----------------------------------------------------------------------===//
+void TemplateArgumentListBuilder::push_back(const TemplateArgument& Arg) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Type:
+    assert(Arg.getAsType()->isCanonical() && "Type must be canonical!");
+    break;
+  }
+  
+  Args.push_back(Arg);
+}
+
+//===----------------------------------------------------------------------===//
 // TemplateArgumentList Implementation
 //===----------------------------------------------------------------------===//
 TemplateArgumentList::TemplateArgumentList(ASTContext &Context,

@@ -811,7 +811,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
   // Check that the template argument list is well-formed for this
   // template.
-  TemplateArgumentListBuilder ConvertedTemplateArgs;
+  TemplateArgumentListBuilder ConvertedTemplateArgs(Context);
   if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
                                 TemplateArgs, NumTemplateArgs, RAngleLoc,
                                 ConvertedTemplateArgs))
@@ -2064,7 +2064,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
 
   // Check that the template argument list is well-formed for this
   // template.
-  TemplateArgumentListBuilder ConvertedTemplateArgs;
+  TemplateArgumentListBuilder ConvertedTemplateArgs(Context);
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 &TemplateArgs[0], TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
@@ -2268,7 +2268,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
 
   // Check that the template argument list is well-formed for this
   // template.
-  TemplateArgumentListBuilder ConvertedTemplateArgs;
+  TemplateArgumentListBuilder ConvertedTemplateArgs(Context);
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 TemplateArgs.data(), TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
