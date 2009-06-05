@@ -87,6 +87,7 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                             bool isAggLocVolatile) {
   // Keep track of the current cleanup stack depth.
   size_t CleanupStackDepth = CleanupEntries.size();
+  (void) CleanupStackDepth;
 
   unsigned OldNumLiveTemporaries = LiveTemporaries.size();
   
@@ -114,9 +115,8 @@ void CodeGenFunction::PopConditionalTempDestruction() {
   
   // Pop temporaries.
   while (LiveTemporaries.size() > NumLiveTemporaries) {
-    const CXXLiveTemporaryInfo& TempInfo = LiveTemporaries.back();
-
-    assert(TempInfo.CondPtr && "Conditional temporary must have a cond ptr!");
+    assert(LiveTemporaries.back().CondPtr && 
+           "Conditional temporary must have a cond ptr!");
 
     PopCXXTemporary();
   }  
