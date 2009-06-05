@@ -1,6 +1,7 @@
 
 # include checks
 include(CheckIncludeFile)
+check_include_file(alloca.h HAVE_ALLOCA_H)
 check_include_file(argz.h HAVE_ARGZ_H)
 check_include_file(assert.h HAVE_ASSERT_H)
 check_include_file(dirent.h HAVE_DIRENT_H)
@@ -34,6 +35,7 @@ check_include_file(sys/resource.h HAVE_SYS_RESOURCE_H)
 check_include_file(sys/stat.h HAVE_SYS_STAT_H)
 check_include_file(sys/time.h HAVE_SYS_TIME_H)
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
+check_include_file(sys/wait.h HAVE_SYS_WAIT_H)
 check_include_file(termios.h HAVE_TERMIOS_H)
 check_include_file(unistd.h HAVE_UNISTD_H)
 check_include_file(utime.h HAVE_UTIME_H)
@@ -47,6 +49,7 @@ check_library_exists(dl dlopen "" HAVE_LIBDL)
 # function checks
 include(CheckSymbolExists)
 include(CheckFunctionExists)
+check_symbol_exists(alloca alloca.h HAVE_ALLOCA)
 check_symbol_exists(getpagesize unistd.h HAVE_GETPAGESIZE)
 check_symbol_exists(getrusage sys/resource.h HAVE_GETRUSAGE)
 check_symbol_exists(setrlimit sys/resource.h HAVE_SETRLIMIT)
