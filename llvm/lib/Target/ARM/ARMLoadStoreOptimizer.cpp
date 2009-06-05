@@ -64,11 +64,11 @@ namespace {
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;
 
-    SmallVector<MachineBasicBlock::iterator, 4>
-    MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
-                 int Opcode, unsigned Size,
-                 ARMCC::CondCodes Pred, unsigned PredReg,
-                 unsigned Scratch, MemOpQueue &MemOps);
+    void MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
+                      int Opcode, unsigned Size,
+                      ARMCC::CondCodes Pred, unsigned PredReg,
+                      unsigned Scratch, MemOpQueue &MemOps,
+                      SmallVector<MachineBasicBlock::iterator, 4> &Merges);
 
     void AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps);
     bool LoadStoreMultipleOpti(MachineBasicBlock &MBB);
@@ -185,12 +185,12 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
 
 /// MergeLDR_STR - Merge a number of load / store instructions into one or more
 /// load / store multiple instructions.
-SmallVector<MachineBasicBlock::iterator, 4>
+void
 ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
-                              unsigned Base, int Opcode, unsigned Size,
-                              ARMCC::CondCodes Pred, unsigned PredReg,
-                              unsigned Scratch, MemOpQueue &MemOps) {
-  SmallVector<MachineBasicBlock::iterator, 4> Merges;
+                          unsigned Base, int Opcode, unsigned Size,
+                          ARMCC::CondCodes Pred, unsigned PredReg,
+                          unsigned Scratch, MemOpQueue &MemOps,
+                          SmallVector<MachineBasicBlock::iterator, 4> &Merges) {
   bool isAM4 = Opcode == ARM::LDR || Opcode == ARM::STR;
   int Offset = MemOps[SIndex].Offset;
   int SOffset = Offset;
@@ -224,10 +224,9 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
           MemOps[j].Merged = true;
         }
       }
-      SmallVector<MachineBasicBlock::iterator, 4> Merges2 =
-        MergeLDR_STR(MBB, i, Base, Opcode, Size, Pred, PredReg, Scratch,MemOps);
-      Merges.append(Merges2.begin(), Merges2.end());
-      return Merges;
+      MergeLDR_STR(MBB, i, Base, Opcode, Size, Pred, PredReg, Scratch,
+                   MemOps, Merges);
+      return;
     }
 
     if (MemOps[i].Position > Pos) {
@@ -246,7 +245,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
     }
   }
 
-  return Merges;
+  return;
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate
@@ -590,6 +589,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   ARMCC::CondCodes CurrPred = ARMCC::AL;
   unsigned CurrPredReg = 0;
   unsigned Position = 0;
+  SmallVector<MachineBasicBlock::iterator,4> Merges;
 
   RS->enterBasicBlock(&MBB);
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
@@ -689,16 +689,16 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         RS->forward(prior(MBBI));
 
         // Merge ops.
-        SmallVector<MachineBasicBlock::iterator,4> MBBII =
-          MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize,
-                       CurrPred, CurrPredReg, Scratch, MemOps);
+        Merges.clear();
+        MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize,
+                     CurrPred, CurrPredReg, Scratch, MemOps, Merges);
 
         // Try folding preceeding/trailing base inc/dec into the generated
         // LDM/STM ops.
-        for (unsigned i = 0, e = MBBII.size(); i < e; ++i)
-          if (mergeBaseUpdateLSMultiple(MBB, MBBII[i], Advance, MBBI))
+        for (unsigned i = 0, e = Merges.size(); i < e; ++i)
+          if (mergeBaseUpdateLSMultiple(MBB, Merges[i], Advance, MBBI))
             ++NumMerges;
-        NumMerges += MBBII.size();
+        NumMerges += Merges.size();
 
         // Try folding preceeding/trailing base inc/dec into those load/store
         // that were not merged to form LDM/STM ops.
