@@ -33,8 +33,8 @@ class AlphaMachineFunctionInfo : public MachineFunctionInfo {
 public:
   AlphaMachineFunctionInfo() : GlobalBaseReg(0), GlobalRetAddr(0) {}
 
-  AlphaMachineFunctionInfo(MachineFunction &MF) : GlobalBaseReg(0),
-                                                  GlobalRetAddr(0) {}
+  explicit AlphaMachineFunctionInfo(MachineFunction &MF) : GlobalBaseReg(0),
+                                                           GlobalRetAddr(0) {}
 
   unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
   void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }

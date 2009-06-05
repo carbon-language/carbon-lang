@@ -28,7 +28,8 @@ class MSP430MachineFunctionInfo : public MachineFunctionInfo {
 public:
   MSP430MachineFunctionInfo() : CalleeSavedFrameSize(0) {}
 
-  MSP430MachineFunctionInfo(MachineFunction &MF) : CalleeSavedFrameSize(0) {}
+  explicit MSP430MachineFunctionInfo(MachineFunction &MF)
+    : CalleeSavedFrameSize(0) {}
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
   void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }

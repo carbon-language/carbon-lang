@@ -24,7 +24,7 @@ public:
   // by this machinefunction? (used to compute the appropriate
   // entry in the 'alloc' instruction at the top of the
   // machinefunction)
-  IA64FunctionInfo(MachineFunction& MF) { outRegsUsed=0; };
+  explicit IA64FunctionInfo(MachineFunction& MF) { outRegsUsed=0; };
 
 };
 

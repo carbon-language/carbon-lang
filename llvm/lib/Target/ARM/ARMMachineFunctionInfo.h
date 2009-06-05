@@ -100,7 +100,7 @@ public:
     GPRCS1Frames(0), GPRCS2Frames(0), DPRCSFrames(0),
     JumpTableUId(0), ConstPoolEntryUId(0) {}
 
-  ARMFunctionInfo(MachineFunction &MF) :
+  explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     Align(isThumb ? 1U : 2U),
     VarArgsRegSaveSize(0), HasStackFrame(false),

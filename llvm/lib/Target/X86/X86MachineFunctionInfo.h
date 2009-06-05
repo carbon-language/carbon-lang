@@ -73,14 +73,15 @@ public:
                              SRetReturnReg(0),
                              GlobalBaseReg(0) {}
   
-  X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
-                                                CalleeSavedFrameSize(0),
-                                                BytesToPopOnReturn(0),
-                                                DecorationStyle(None),
-                                                ReturnAddrIndex(0),
-                                                TailCallReturnAddrDelta(0),
-                                                SRetReturnReg(0),
-                                                GlobalBaseReg(0) {}
+  explicit X86MachineFunctionInfo(MachineFunction &MF)
+    : ForceFramePointer(false),
+      CalleeSavedFrameSize(0),
+      BytesToPopOnReturn(0),
+      DecorationStyle(None),
+      ReturnAddrIndex(0),
+      TailCallReturnAddrDelta(0),
+      SRetReturnReg(0),
+      GlobalBaseReg(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }

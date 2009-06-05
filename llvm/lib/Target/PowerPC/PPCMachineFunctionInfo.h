@@ -59,7 +59,7 @@ private:
   bool HasFastCall;
 
 public:
-  PPCFunctionInfo(MachineFunction &MF) 
+  explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
       SpillsCR(false),

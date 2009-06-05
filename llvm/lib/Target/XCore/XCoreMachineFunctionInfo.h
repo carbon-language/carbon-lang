@@ -40,7 +40,7 @@ public:
     FPSpillSlot(0),
     VarArgsFrameIndex(0) {}
   
-  XCoreFunctionInfo(MachineFunction &MF) :
+  explicit XCoreFunctionInfo(MachineFunction &MF) :
     UsesLR(false),
     LRSpillSlot(0),
     FPSpillSlot(0),
