@@ -654,6 +654,9 @@ NeXTRuntime("fnext-runtime",
             llvm::cl::desc("Generate output compatible with the NeXT "
                            "runtime"));
 
+static llvm::cl::opt<bool>
+CharIsSigned("fsigned-char",
+    llvm::cl::desc("Force char to be a signed/unsigned type"));
 
 
 static llvm::cl::opt<bool>
@@ -812,6 +815,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.Exceptions = Exceptions;
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
+  if (CharIsSigned.getPosition())
+    Options.CharIsSigned = CharIsSigned;
 
   if (!AllowBuiltins)
     Options.NoBuiltin = 1;
