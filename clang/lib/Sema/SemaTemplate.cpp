@@ -2371,7 +2371,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   // arguments in the specialization.
   QualType WrittenTy 
     = Context.getTemplateSpecializationType(Name, 
-                                            &TemplateArgs[0],
+                                            TemplateArgs.data(),
                                             TemplateArgs.size(),
                                   Context.getTypeDeclType(Specialization));
   Specialization->setTypeAsWritten(WrittenTy);

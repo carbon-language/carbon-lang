@@ -11,5 +11,5 @@ template<typename U = float, int M> struct X;
 
 X<> *x4;
 
-template<typename T = int> struct Z;
+template<typename T = int> struct Z { };
 template struct Z<>;
