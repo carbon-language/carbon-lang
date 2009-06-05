@@ -833,21 +833,23 @@ Sema::InstantiateClassTemplateSpecialization(
 
   // Determine whether any class template partial specializations
   // match the given template arguments.
-  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> Matched;
+  typedef std::pair<ClassTemplatePartialSpecializationDecl *,
+                    TemplateArgumentList *> MatchResult;
+  llvm::SmallVector<MatchResult, 4> Matched;
   for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator 
          Partial = Template->getPartialSpecializations().begin(),
          PartialEnd = Template->getPartialSpecializations().end();
        Partial != PartialEnd;
        ++Partial) {
-    if (DeduceTemplateArguments(&*Partial, ClassTemplateSpec->getTemplateArgs()))
-      Matched.push_back(&*Partial);
+    if (TemplateArgumentList *Deduced 
+          = DeduceTemplateArguments(&*Partial, 
+                                    ClassTemplateSpec->getTemplateArgs()))
+      Matched.push_back(std::make_pair(&*Partial, Deduced));
   }
 
   if (Matched.size() == 1) {
-    Pattern = Matched[0];
-    // FIXME: set TemplateArgs to the template arguments of the
-    // partial specialization, instantiated with the deduced template
-    // arguments.
+    Pattern = Matched[0].first;
+    TemplateArgs = Matched[0].second;
   } else if (Matched.size() > 1) {
     // FIXME: Implement partial ordering of class template partial
     // specializations.
@@ -860,9 +862,17 @@ Sema::InstantiateClassTemplateSpecialization(
                         ExplicitInstantiation? TSK_ExplicitInstantiation 
                                              : TSK_ImplicitInstantiation);
 
-  return InstantiateClass(ClassTemplateSpec->getLocation(),
-                          ClassTemplateSpec, Pattern, *TemplateArgs,
-                          ExplicitInstantiation);
+  bool Result = InstantiateClass(ClassTemplateSpec->getLocation(),
+                                 ClassTemplateSpec, Pattern, *TemplateArgs,
+                                 ExplicitInstantiation);
+  
+  for (unsigned I = 0, N = Matched.size(); I != N; ++I) {
+    // FIXME: Implement TemplateArgumentList::Destroy!
+    //    if (Matched[I].first != Pattern)
+    //      Matched[I].second->Destroy(Context);
+  }
+  
+  return Result;
 }
 
 /// \brief Instantiate the definitions of all of the member of the

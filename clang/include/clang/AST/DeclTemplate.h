@@ -203,6 +203,9 @@ public:
 
   /// Get the position of the template parameter within its parameter list.
   unsigned getPosition() const { return Position; }
+  
+  /// Get the index of the template parameter within its parameter list.
+  unsigned getIndex() const { return Position; }
 };
 
 /// TemplateTypeParmDecl - Declaration of a template type parameter,
@@ -299,7 +302,8 @@ public:
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
-
+  using TemplateParmPosition::getIndex;
+    
   /// \brief Determine whether this template parameter has a default
   /// argument.
   bool hasDefaultArgument() const { return DefaultArgument; }
@@ -350,7 +354,8 @@ public:
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
-
+  using TemplateParmPosition::getIndex;
+    
   /// \brief Determine whether this template parameter has a default
   /// argument.
   bool hasDefaultArgument() const { return DefaultArgument; }
@@ -522,6 +527,12 @@ public:
 
     return QualType::getFromOpaquePtr(Integer.Type);
   }
+
+  void setIntegralType(QualType T) {
+    assert(Kind == Integral && 
+           "Cannot set the integral type of a non-integral template argument");
+    Integer.Type = T.getAsOpaquePtr();
+  };
 
   /// \brief Retrieve the template argument as an expression.
   Expr *getAsExpr() const {

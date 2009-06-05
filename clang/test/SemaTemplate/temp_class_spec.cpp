@@ -51,6 +51,19 @@ int is_same2[is_same<const int, int>::value? -1 : 1];
 int is_same3[is_same<int_ptr, int>::value? -1 : 1];
 
 template<typename T>
+struct remove_reference {
+  typedef T type;
+};
+
+template<typename T>
+struct remove_reference<T&> {
+  typedef T type;
+};
+
+int remove_ref0[is_same<remove_reference<int>::type, int>::value? 1 : -1];
+int remove_ref1[is_same<remove_reference<int&>::type, int>::value? 1 : -1];
+                
+template<typename T>
 struct is_incomplete_array {
   static const bool value = false;
 };
@@ -79,3 +92,13 @@ int array_with_4_elements0[is_array_with_4_elements<int[]>::value ? -1 : 1];
 int array_with_4_elements1[is_array_with_4_elements<int[1]>::value ? -1 : 1];
 int array_with_4_elements2[is_array_with_4_elements<int[4]>::value ? 1 : -1];
 int array_with_4_elements3[is_array_with_4_elements<int[4][2]>::value ? 1 : -1];
+
+template<typename T>
+struct get_array_size;
+
+template<typename T, unsigned N>
+struct get_array_size<T[N]> {
+  static const unsigned value = N;
+};
+
+int array_size0[get_array_size<int[12]>::value == 12? 1 : -1];

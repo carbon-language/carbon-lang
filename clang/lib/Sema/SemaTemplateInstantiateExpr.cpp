@@ -119,12 +119,13 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
                                           T->isWideCharType(),
                                           T, 
                                        E->getSourceRange().getBegin()));
-    else if (T->isBooleanType())
+    if (T->isBooleanType())
       return SemaRef.Owned(new (SemaRef.Context) CXXBoolLiteralExpr(
                                           Arg.getAsIntegral()->getBoolValue(),
                                                  T, 
                                        E->getSourceRange().getBegin()));
 
+    assert(Arg.getAsIntegral()->getBitWidth() == SemaRef.Context.getIntWidth(T));
     return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
                                                  *Arg.getAsIntegral(),
                                                  T, 

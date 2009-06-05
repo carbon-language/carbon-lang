@@ -2019,8 +2019,9 @@ public:
                              const IdentifierInfo &II,
                              SourceRange Range);
 
-  bool DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
-                               const TemplateArgumentList &TemplateArgs);
+  TemplateArgumentList *
+  DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
+                          const TemplateArgumentList &TemplateArgs);
                              
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation
@@ -2227,7 +2228,7 @@ public:
 
   QualType InstantiateType(QualType T, const TemplateArgumentList &TemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);
-
+  
   OwningExprResult InstantiateExpr(Expr *E, 
                                    const TemplateArgumentList &TemplateArgs);
 
