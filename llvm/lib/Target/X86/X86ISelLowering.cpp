@@ -7675,8 +7675,9 @@ static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
     if (Elt.getOpcode() == ISD::UNDEF)
       continue;
 
-    if (!TLI.isConsecutiveLoad(Elt.getNode(), Base,
-                               EVT.getSizeInBits()/8, i, MFI))
+    LoadSDNode *LD = cast<LoadSDNode>(Elt);
+    LoadSDNode *LDBase = cast<LoadSDNode>(Base);
+    if (!TLI.isConsecutiveLoad(LD, LDBase, EVT.getSizeInBits()/8, i, MFI))
       return false;
   }
   return true;
@@ -7751,44 +7752,82 @@ static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
 
   MVT VT = N->getValueType(0);
   MVT EVT = VT.getVectorElementType();
-  if ((EVT != MVT::i64 && EVT != MVT::f64) || Subtarget->is64Bit())
-    // We are looking for load i64 and zero extend. We want to transform
-    // it before legalizer has a chance to expand it. Also look for i64
-    // BUILD_PAIR bit casted to f64.
-    return SDValue();
-  // This must be an insertion into a zero vector.
-  SDValue HighElt = N->getOperand(1);
-  if (!isZeroNode(HighElt))
-    return SDValue();
-
-  // Value must be a load.
-  SDNode *Base = N->getOperand(0).getNode();
-  if (!isa<LoadSDNode>(Base)) {
-    if (Base->getOpcode() != ISD::BIT_CONVERT)
+  
+  // Before or during type legalization, we want to try and convert a
+  // build_vector of an i64 load and a zero value into vzext_movl before the 
+  // legalizer can break it up.  
+  // FIXME: does the case below remove the need to do this?
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer()) {
+    if ((EVT != MVT::i64 && EVT != MVT::f64) || Subtarget->is64Bit())
       return SDValue();
-    Base = Base->getOperand(0).getNode();
-    if (!isa<LoadSDNode>(Base))
+    
+    // This must be an insertion into a zero vector.
+    SDValue HighElt = N->getOperand(1);
+    if (!isZeroNode(HighElt))
       return SDValue();
+    
+    // Value must be a load.
+    SDNode *Base = N->getOperand(0).getNode();
+    if (!isa<LoadSDNode>(Base)) {
+      if (Base->getOpcode() != ISD::BIT_CONVERT)
+        return SDValue();
+      Base = Base->getOperand(0).getNode();
+      if (!isa<LoadSDNode>(Base))
+        return SDValue();
+    }
+    
+    // Transform it into VZEXT_LOAD addr.
+    LoadSDNode *LD = cast<LoadSDNode>(Base);
+    
+    // Load must not be an extload.
+    if (LD->getExtensionType() != ISD::NON_EXTLOAD)
+      return SDValue();
+    
+    // Load type should legal type so we don't have to legalize it.
+    if (!TLI.isTypeLegal(VT))
+      return SDValue();
+    
+    SDVTList Tys = DAG.getVTList(VT, MVT::Other);
+    SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
+    SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
+    TargetLowering::TargetLoweringOpt TLO(DAG);
+    TLO.CombineTo(SDValue(Base, 1), ResNode.getValue(1));
+    DCI.CommitTargetLoweringOpt(TLO);
+    return ResNode;
   }
 
-  // Transform it into VZEXT_LOAD addr.
-  LoadSDNode *LD = cast<LoadSDNode>(Base);
+  // The type legalizer will have broken apart v2i64 build_vector created during
+  // widening before the code which handles that case is run.  Look for build
+  // vector (load, load + 4, 0/undef, 0/undef)
+  if (VT == MVT::v4i32 || VT == MVT::v4f32) {
+    LoadSDNode *LD0 = dyn_cast<LoadSDNode>(N->getOperand(0));
+    LoadSDNode *LD1 = dyn_cast<LoadSDNode>(N->getOperand(1));
+    if (!LD0 || !LD1)
+      return SDValue();
+    if (LD0->getExtensionType() != ISD::NON_EXTLOAD ||
+        LD1->getExtensionType() != ISD::NON_EXTLOAD)
+      return SDValue();
+    // Make sure the second elt is a consecutive load.
+    if (!TLI.isConsecutiveLoad(LD1, LD0, EVT.getSizeInBits()/8, 1,
+                               DAG.getMachineFunction().getFrameInfo()))
+      return SDValue();
 
-  // Load must not be an extload.
-  if (LD->getExtensionType() != ISD::NON_EXTLOAD)
-    return SDValue();
-
-  // Load type should legal type so we don't have to legalize it.
-  if (!TLI.isTypeLegal(VT))
-    return SDValue();
-
-  SDVTList Tys = DAG.getVTList(VT, MVT::Other);
-  SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
-  SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
-  TargetLowering::TargetLoweringOpt TLO(DAG);
-  TLO.CombineTo(SDValue(Base, 1), ResNode.getValue(1));
-  DCI.CommitTargetLoweringOpt(TLO);
-  return ResNode;
+    SDValue N2 = N->getOperand(2);
+    SDValue N3 = N->getOperand(3);
+    if (!isZeroNode(N2) && N2.getOpcode() != ISD::UNDEF)
+      return SDValue();
+    if (!isZeroNode(N3) && N3.getOpcode() != ISD::UNDEF)
+      return SDValue();
+    
+    SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
+    SDValue Ops[] = { LD0->getChain(), LD0->getBasePtr() };
+    SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
+    TargetLowering::TargetLoweringOpt TLO(DAG);
+    TLO.CombineTo(SDValue(LD0, 1), ResNode.getValue(1));
+    DCI.CommitTargetLoweringOpt(TLO);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, ResNode);
+  }
+  return SDValue();
 }
 
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.

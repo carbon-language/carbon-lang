@@ -3626,30 +3626,29 @@ static SDNode *getBuildPairElt(SDNode *N, unsigned i) {
 SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, MVT VT) {
   assert(N->getOpcode() == ISD::BUILD_PAIR);
 
-  SDNode *LD1 = getBuildPairElt(N, 0);
-  if (!ISD::isNON_EXTLoad(LD1) || !LD1->hasOneUse())
+  LoadSDNode *LD1 = dyn_cast<LoadSDNode>(getBuildPairElt(N, 0));
+  LoadSDNode *LD2 = dyn_cast<LoadSDNode>(getBuildPairElt(N, 1));
+  if (!LD1 || !LD2 || !ISD::isNON_EXTLoad(LD1) || !LD1->hasOneUse())
     return SDValue();
   MVT LD1VT = LD1->getValueType(0);
-  SDNode *LD2 = getBuildPairElt(N, 1);
   const MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
 
   if (ISD::isNON_EXTLoad(LD2) &&
       LD2->hasOneUse() &&
       // If both are volatile this would reduce the number of volatile loads.
       // If one is volatile it might be ok, but play conservative and bail out.
-      !cast<LoadSDNode>(LD1)->isVolatile() &&
-      !cast<LoadSDNode>(LD2)->isVolatile() &&
+      !LD1->isVolatile() &&
+      !LD2->isVolatile() &&
       TLI.isConsecutiveLoad(LD2, LD1, LD1VT.getSizeInBits()/8, 1, MFI)) {
-    LoadSDNode *LD = cast<LoadSDNode>(LD1);
-    unsigned Align = LD->getAlignment();
+    unsigned Align = LD1->getAlignment();
     unsigned NewAlign = TLI.getTargetData()->
       getABITypeAlignment(VT.getTypeForMVT());
 
     if (NewAlign <= Align &&
         (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT)))
-      return DAG.getLoad(VT, N->getDebugLoc(), LD->getChain(), LD->getBasePtr(),
-                         LD->getSrcValue(), LD->getSrcValueOffset(),
-                         false, Align);
+      return DAG.getLoad(VT, N->getDebugLoc(), LD1->getChain(),
+                         LD1->getBasePtr(), LD1->getSrcValue(),
+                         LD1->getSrcValueOffset(), false, Align);
   }
 
   return SDValue();

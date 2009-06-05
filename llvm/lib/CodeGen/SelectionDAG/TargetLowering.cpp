@@ -2070,13 +2070,13 @@ bool TargetLowering::isGAPlusOffset(SDNode *N, GlobalValue* &GA,
 }
 
 
-/// isConsecutiveLoad - Return true if LD (which must be a LoadSDNode) is
-/// loading 'Bytes' bytes from a location that is 'Dist' units away from the
-/// location that the 'Base' load is loading from.
-bool TargetLowering::isConsecutiveLoad(SDNode *LD, SDNode *Base,
-                                       unsigned Bytes, int Dist,
+/// isConsecutiveLoad - Return true if LD is loading 'Bytes' bytes from a 
+/// location that is 'Dist' units away from the location that the 'Base' load 
+/// is loading from.
+bool TargetLowering::isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base, 
+                                       unsigned Bytes, int Dist, 
                                        const MachineFrameInfo *MFI) const {
-  if (LD->getOperand(0).getNode() != Base->getOperand(0).getNode())
+  if (LD->getChain() != Base->getChain())
     return false;
   MVT VT = LD->getValueType(0);
   if (VT.getSizeInBits() / 8 != Bytes)
@@ -2093,6 +2093,11 @@ bool TargetLowering::isConsecutiveLoad(SDNode *LD, SDNode *Base,
     int BFS = MFI->getObjectSize(BFI);
     if (FS != BFS || FS != (int)Bytes) return false;
     return MFI->getObjectOffset(FI) == (MFI->getObjectOffset(BFI) + Dist*Bytes);
+  }
+  if (Loc.getOpcode() == ISD::ADD && Loc.getOperand(0) == BaseLoc) {
+    ConstantSDNode *V = dyn_cast<ConstantSDNode>(Loc.getOperand(1));
+    if (V && (V->getSExtValue() == Dist*Bytes))
+      return true;
   }
 
   GlobalValue *GV1 = NULL;

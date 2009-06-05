@@ -825,11 +825,11 @@ public:
   virtual bool
   isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) const;
 
-  /// isConsecutiveLoad - Return true if LD (which must be a LoadSDNode) is
-  /// loading 'Bytes' bytes from a location that is 'Dist' units away from the
-  /// location that the 'Base' load is loading from.
-  bool isConsecutiveLoad(SDNode *LD, SDNode *Base, unsigned Bytes, int Dist,
-                         const MachineFrameInfo *MFI) const;
+  /// isConsecutiveLoad - Return true if LD is loading 'Bytes' bytes from a 
+  /// location that is 'Dist' units away from the location that the 'Base' load 
+  /// is loading from.
+  bool isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base, unsigned Bytes,
+                         int Dist, const MachineFrameInfo *MFI) const;
 
   /// PerformDAGCombine - This method will be invoked for all target nodes and
   /// for any target-independent nodes that the target has registered with
