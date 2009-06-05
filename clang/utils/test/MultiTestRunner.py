@@ -249,6 +249,10 @@ def main():
     parser.add_option("", "--debug-do-not-test", dest="debugDoNotTest",
                       help="DEBUG: Skip running actual test script",
                       action="store_true", default=False)
+    parser.add_option("", "--path", dest="path",
+                      help="Additional paths to add to testing environment",
+                      action="store", type=str, default=None)
+                      
     (opts, args) = parser.parse_args()
 
     if not args:
@@ -269,7 +273,10 @@ def main():
         random.shuffle(tests)
     if opts.maxTests is not None:
         tests = tests[:opts.maxTests]
-
+    if opts.path is not None:
+        os.environ["PATH"] = opts.path + ":" + os.environ["PATH"];
+        print "Current PATH is: ", os.environ["PATH"]
+    
     extra = ''
     if len(tests) != len(allTests):
         extra = ' of %d'%(len(allTests),)

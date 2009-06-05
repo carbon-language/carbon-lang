@@ -2,40 +2,52 @@ find_file(CLANG_TEST_RUNNER TestRunner.sh PATHS ${CMAKE_CURRENT_SOURCE_DIR}
   DOC "Clang's regression testing script")
 mark_as_advanced(CLANG_TEST_RUNNER)
 
-get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
+set(CLANG_TEST_DIRECTORIES
+  "Analysis"
+  "CodeGen"
+  "CodeGenCXX"
+  "CodeGenObjC"
+  "Coverage"
+  "Driver"
+  "FixIt"
+  "Frontend"
+  "Lexer"
+  "Misc"
+  "PCH"
+  "Parser"
+  "Preprocessor"
+  "Rewriter"
+  "Sema"
+  "SemaCXX"
+  "SemaObjC"
+  "SemaObjCXX"
+  "SemaTemplate")
 
-macro(add_clang_test_suite language target)
-  set(PATTERNS)
-  foreach (extension ${ARGN})
-    set(PATTERNS "${PATTERNS}:${CMAKE_CURRENT_SOURCE_DIR}/*.${extension}")
+include(FindPythonInterp)
+if(PYTHONINTERP_FOUND)
+  get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
+  set(TESTING_EXTRA_PATHS
+      "${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}:${LLVM_SOURCE_DIR}/test/Scripts")
+  set(all_testdirs)
+  foreach(testdir ${CLANG_TEST_DIRECTORIES})
+   add_custom_target(clang-test-${testdir} 
+      ${PYTHON_EXECUTABLE} 
+      ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
+      -s
+      "--path=${TESTING_EXTRA_PATHS}"
+      ${CMAKE_CURRENT_SOURCE_DIR}/${testdir}/
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMENT "Running Clang regression tests in ${testdir}")
+
+    list(APPEND all_testdirs ${CMAKE_CURRENT_SOURCE_DIR}/${testdir}/)
   endforeach()
 
-  if (${language} STREQUAL "ALL")
-    set(TEST_COMMENT "Running Clang regression tests")
-  else()
-    set(TEST_COMMENT "Running Clang ${language} regression tests")
-  endif ()
-
-  add_custom_target(${target}
-    ${CMAKE_CTEST_COMMAND}
-    --build-and-test
-    ${LLVM_SOURCE_DIR}/tools/clang/CMake/RunTests
-    ${CMAKE_CURRENT_BINARY_DIR}/${target}
-    --build-generator ${CMAKE_GENERATOR}
-    --build-makeprogram ${CMAKE_MAKE_PROGRAM}
-    --build-project ClangTest
-    --build-target test
-    --build-options 
-    "-DCLANG_TEST_RUNNER=${CLANG_TEST_RUNNER}"
-    "-DCLANG_TEST_GLOB_PATTERNS=${PATTERNS}"
-    "-DLLVM_TOOLS_PATH=${LLVM_TOOLS_PATH}"
-    "-DLLVM_SCRIPTS_PATH=${LLVM_SOURCE_DIR}/test/Scripts"
-    COMMENT ${TEST_COMMENT})
-endmacro(add_clang_test_suite)
-
-add_clang_test_suite(C clang-test-c c)
-add_clang_test_suite(Objective-C clang-test-objc m)
-add_clang_test_suite(C++ clang-test-cxx cpp)
-add_clang_test_suite(Objective-C++ clang-test-objcxx mm)
-add_clang_test_suite(Assembler clang-test-asm S)
-add_clang_test_suite(ALL clang-test c m cpp mm S)
+  add_custom_target(clang-test
+    ${PYTHON_EXECUTABLE} 
+    ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
+    "--path=${TESTING_EXTRA_PATHS}"
+    ${all_testdirs}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS clang clang-cc
+    COMMENT "Running Clang regression tests")
+endif()  
