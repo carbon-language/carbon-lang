@@ -232,7 +232,9 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
     Types[4] = PtrToInt8Ty;
     Types[5] = PtrToInt8Ty;
   }
-  // FIXME: Align this on at least an Align boundary.
+  // FIXME: Align this on at least an Align boundary, assert if we can't.
+  assert((Align <= unsigned(Target.getPointerAlign(0))/8)
+         && "Can't align more thqn pointer yet");
   Types[needsCopyDispose*2 + 4] = LTy;
   return llvm::StructType::get(Types, false);
 }
@@ -244,22 +246,22 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
   bool isByRef = D.hasAttr<BlocksAttr>();
   bool needsDispose = false;
+  unsigned Align = 0;
 
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
       // A normal fixed sized variable becomes an alloca in the entry block.
       const llvm::Type *LTy = ConvertTypeForMem(Ty);
+      Align = getContext().getDeclAlignInBytes(&D);
       if (isByRef)
-        LTy = BuildByRefType(Ty, getContext().getDeclAlignInBytes(&D));
+        LTy = BuildByRefType(Ty, Align);
       llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
       Alloc->setName(D.getNameAsString().c_str());
       
       if (isByRef)
-        Alloc->setAlignment(std::max(getContext().getDeclAlignInBytes(&D),
-                                     unsigned(Target.getPointerAlign(0) / 8)));
-      else
-        Alloc->setAlignment(getContext().getDeclAlignInBytes(&D));
+        Align = std::max(Align, unsigned(Target.getPointerAlign(0) / 8));
+      Alloc->setAlignment(Align);
       DeclPtr = Alloc;
     } else {
       // Targets that don't support recursion emit locals as globals.
@@ -401,11 +403,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
       BlockHasCopyDispose = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
-      Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag),
+      Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag, Align),
                           copy_helper);
 
       llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
-      Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag),
+      Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag,
+                                                  Align),
                           destroy_helper);
     }
   }

@@ -98,6 +98,9 @@ public:
   llvm::Value *BlockObjectDispose;
   const llvm::Type *PtrToInt8Ty;
 
+  std::map<uint64_t, llvm::Constant *> AssignCache;
+  std::map<uint64_t, llvm::Constant *> DestroyCache;
+
   BlockModule(ASTContext &C, llvm::Module &M, const llvm::TargetData &TD,
               CodeGenTypes &T, CodeGenModule &CodeGen)
     : Context(C), TheModule(M), TheTargetData(TD), Types(T),
@@ -131,8 +134,9 @@ public:
                                       variable */
     BLOCK_FIELD_IS_WEAK     = 16,  /* declared __weak, only used in byref copy
                                       helpers */
-    BLOCK_BYREF_CALLER      = 128  /* called from __block (byref) copy/dispose
+    BLOCK_BYREF_CALLER      = 128,  /* called from __block (byref) copy/dispose
                                       support routines */
+    BLOCK_BYREF_CURRENT_MAX = 256
   };
 
   /// BlockInfo - Information to generate a block literal.
@@ -199,8 +203,10 @@ public:
   llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag);
   llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, int);
 
-  llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T, int flag);
-  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, int flag);
+  llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T, int flag,
+                                       unsigned Align);
+  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, int flag,
+                                          unsigned Align);
 
   llvm::Value *getBlockObjectAssign();
   llvm::Value *getBlockObjectDispose();

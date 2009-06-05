@@ -724,6 +724,8 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
+  // FIXME: We'd like to put these into a mergable by content, with
+  // internal linkage.
   std::string Name = std::string("__copy_helper_block_");
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
@@ -803,6 +805,8 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
+  // FIXME: We'd like to put these into a mergable by content, with
+  // internal linkage.
   std::string Name = std::string("__destroy_helper_block_");
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
@@ -889,6 +893,8 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
 
+  // FIXME: We'd like to put these into a mergable by content, with
+  // internal linkage.
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                            Name,
@@ -950,6 +956,8 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
 
+  // FIXME: We'd like to put these into a mergable by content, with
+  // internal linkage.
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                            Name,
@@ -980,13 +988,36 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
 }
 
 llvm::Constant *BlockFunction::BuildbyrefCopyHelper(const llvm::Type *T,
-                                                    int flag) {
-  return CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, flag);
+                                                    int flag, unsigned Align) {
+  // All alignments below that of pointer alignment collpase down to just
+  // pointer alignment, as we always have at least that much alignment to begin
+  // with.
+  Align /= unsigned(CGF.Target.getPointerAlign(0)/8);
+  // As an optimization, we only generate a single function of each kind we
+  // might need.  We need a different one for each alignment and for each
+  // setting of flags.  We mix Align and flag to get the kind.
+  uint64_t kind = (uint64_t)Align*BLOCK_BYREF_CURRENT_MAX + flag;
+  llvm::Constant *& Entry = CGM.AssignCache[kind];
+  if (Entry)
+    return Entry;
+  return Entry=CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, flag);
 }
 
 llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
-                                                       int flag) {
-  return CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, flag);
+                                                       int flag,
+                                                       unsigned Align) {
+  // All alignments below that of pointer alignment collpase down to just
+  // pointer alignment, as we always have at least that much alignment to begin
+  // with.
+  Align /= unsigned(CGF.Target.getPointerAlign(0)/8);
+  // As an optimization, we only generate a single function of each kind we
+  // might need.  We need a different one for each alignment and for each
+  // setting of flags.  We mix Align and flag to get the kind.
+  uint64_t kind = (uint64_t)Align*BLOCK_BYREF_CURRENT_MAX + flag;
+  llvm::Constant *& Entry = CGM.DestroyCache[kind];
+  if (Entry)
+    return Entry;
+  return Entry=CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, flag);
 }
 
 llvm::Value *BlockFunction::getBlockObjectDispose() {
