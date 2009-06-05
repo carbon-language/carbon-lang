@@ -367,7 +367,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   sprintf(MacroBuf, "__POINTER_WIDTH__=%d", (int)TI.getPointerWidth(0));
   DefineBuiltinMacro(Buf, MacroBuf);
   
-  if (!TI.isCharSigned())
+  if (!LangOpts.CharIsSigned)
     DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");  
 
   // Define fixed-sized integer types for stdint.h

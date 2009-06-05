@@ -130,6 +130,9 @@ def warn_pch_compiler_options_mismatch : Error<
 def warn_pch_access_control : Error<
     "C++ access control was %select{disabled|enabled}0 in the PCH file but "
     "is currently %select{disabled|enabled}1">;
+def warn_pch_char_signed : Error<
+    "char was %select{unsigned|signed}0 in the PCH file but "
+    "is currently %select{unsigned|signed}1">;
 
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;

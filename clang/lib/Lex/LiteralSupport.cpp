@@ -691,7 +691,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   // character constants are not sign extended in the this implementation:
   // '\xFF\xFF' = 65536 and '\x0\xFF' = 255, which matches GCC.
   if (!IsWide && NumCharsSoFar == 1 && (Value & 128) &&
-      PP.getTargetInfo().isCharSigned())
+      PP.getLangOptions().CharIsSigned)
     Value = (signed char)Value;
 }
 

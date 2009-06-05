@@ -143,7 +143,7 @@ void ASTContext::InitBuiltinTypes() {
   // C99 6.2.5p2.
   InitBuiltinType(BoolTy,              BuiltinType::Bool);
   // C99 6.2.5p3.
-  if (Target.isCharSigned())
+  if (LangOpts.CharIsSigned)
     InitBuiltinType(CharTy,            BuiltinType::Char_S);
   else
     InitBuiltinType(CharTy,            BuiltinType::Char_U);

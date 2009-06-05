@@ -38,7 +38,6 @@ class TargetInfo {
 protected:
   // Target values set by the ctor of the actual target implementation.  Default
   // values are specified by the TargetInfo constructor.
-  bool CharIsSigned;
   bool TLSSupported;
   unsigned char PointerWidth, PointerAlign;
   unsigned char WCharWidth, WCharAlign;
@@ -88,11 +87,6 @@ public:
   IntType getIntPtrType() const { return IntPtrType; }
   IntType getWCharType() const { return WCharType; }
 
-  /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
-  /// treated as 'unsigned char'.  This is implementation defined according to
-  /// C99 6.2.5p15.  In our implementation, this is target-specific.
-  bool isCharSigned() const { return CharIsSigned; }
-  
   /// getPointerWidth - Return the width of pointers on this target, for the
   /// specified address space.
   uint64_t getPointerWidth(unsigned AddrSpace) const {

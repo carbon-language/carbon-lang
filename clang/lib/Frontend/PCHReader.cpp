@@ -1521,6 +1521,7 @@ bool PCHReader::ParseLanguageOptions(
   PARSE_LANGOPT_IMPORTANT(GNUInline, diag::warn_pch_gnu_inline);
   PARSE_LANGOPT_IMPORTANT(NoInline, diag::warn_pch_no_inline);
   PARSE_LANGOPT_IMPORTANT(AccessControl, diag::warn_pch_access_control);
+  PARSE_LANGOPT_IMPORTANT(CharIsSigned, diag::warn_pch_char_signed);
   if ((LangOpts.getGCMode() != 0) != (Record[Idx] != 0)) {
     Diag(diag::warn_pch_gc_mode) 
       << (unsigned)Record[Idx] << LangOpts.getGCMode();

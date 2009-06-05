@@ -232,7 +232,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // Set the value.
     Val = Literal.getValue();
     // Set the signedness.
-    Val.setIsUnsigned(!TI.isCharSigned());
+    Val.setIsUnsigned(!PP.getLangOptions().CharIsSigned);
     
     if (Result.Val.getBitWidth() > Val.getBitWidth()) {
       Result.Val = Val.extend(Result.Val.getBitWidth());

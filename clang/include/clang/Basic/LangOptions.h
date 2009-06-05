@@ -79,6 +79,7 @@ public:
 
   unsigned AccessControl     : 1; // Whether C++ access control should 
                                   // be enabled.
+  unsigned CharIsSigned      : 1; // Whether char is a signed or unsigned type
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -136,6 +137,8 @@ public:
 
     GNUInline = 0;
     NoInline = 0;
+
+    CharIsSigned = 1;
 
     MainFileName = 0;
   }
