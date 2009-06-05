@@ -1168,12 +1168,19 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   if (!FD)
     return;
 
+	QualType RetTy = FD->getResultType();
+	
   // Determine if there is a special return effect for this method.
-  if (isTrackedObjCObjectType(FD->getResultType())) {
+  if (isTrackedObjCObjectType(RetTy)) {
     if (FD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
     }
-    else if (FD->getAttr<CFReturnsRetainedAttr>()) {
+		else if (FD->getAttr<CFReturnsRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+		}
+	}
+	else if (RetTy->getAsPointerType()) {
+		if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
   }

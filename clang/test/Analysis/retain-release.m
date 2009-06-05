@@ -704,5 +704,31 @@ void test_attr_1(TestOwnershipAttr *X) {
 void test_attr_1b(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
 }
-//<<SLICER
+
+@interface MyClassTestCFAttr : NSObject {}
+- (NSDate*) returnsCFRetained __attribute__((cf_returns_retained));
+- (NSDate*) alsoReturnsRetained;
+- (NSDate*) returnsNSRetained __attribute__((ns_returns_retained));
+@end
+
+__attribute__((cf_returns_retained))
+CFDateRef returnsRetainedCFDate()  {
+  return CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+}
+
+@implementation MyClassTestCFAttr
+- (NSDate*) returnsCFRetained {
+  return (NSDate*) returnsRetainedCFDate(); // No leak.
+}
+
+- (NSDate*) alsoReturnsRetained {
+  return (NSDate*) returnsRetainedCFDate(); // expected-warning{{leak}}
+}
+
+- (NSDate*) returnsNSRetained {
+  return (NSDate*) returnsRetainedCFDate(); // no-warning
+}
+@end
+
+
 
