@@ -1746,7 +1746,9 @@ void DAGTypeLegalizer::ExpandIntRes_SDIV(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i32)
+  if (VT == MVT::i16)
+    LC = RTLIB::SDIV_I16;
+  else if (VT == MVT::i32)
     LC = RTLIB::SDIV_I32;
   else if (VT == MVT::i64)
     LC = RTLIB::SDIV_I64;
@@ -1908,7 +1910,9 @@ void DAGTypeLegalizer::ExpandIntRes_SREM(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i32)
+  if (VT == MVT::i16)
+    LC = RTLIB::SREM_I16;
+  else if (VT == MVT::i32)
     LC = RTLIB::SREM_I32;
   else if (VT == MVT::i64)
     LC = RTLIB::SREM_I64;
@@ -1937,7 +1941,9 @@ void DAGTypeLegalizer::ExpandIntRes_UDIV(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i32)
+  if (VT == MVT::i16)
+    LC = RTLIB::UDIV_I16;
+  else if (VT == MVT::i32)
     LC = RTLIB::UDIV_I32;
   else if (VT == MVT::i64)
     LC = RTLIB::UDIV_I64;
@@ -1955,7 +1961,9 @@ void DAGTypeLegalizer::ExpandIntRes_UREM(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i32)
+  if (VT == MVT::i16)
+    LC = RTLIB::UREM_I16;
+  else if (VT == MVT::i32)
     LC = RTLIB::UREM_I32;
   else if (VT == MVT::i64)
     LC = RTLIB::UREM_I64;
