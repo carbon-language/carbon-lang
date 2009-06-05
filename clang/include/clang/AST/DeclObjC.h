@@ -330,6 +330,7 @@ public:
   // Get the local instance/class method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(ASTContext &Context, Selector Sel) const;
   ObjCMethodDecl *getClassMethod(ASTContext &Context, Selector Sel) const;
+  ObjCIvarDecl *getIvarDecl(ASTContext &Context, IdentifierInfo *Id) const;
 
   ObjCMethodDecl *
   getMethod(ASTContext &Context, Selector Sel, bool isInstance) const {

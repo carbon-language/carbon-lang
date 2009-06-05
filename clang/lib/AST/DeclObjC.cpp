@@ -42,6 +42,19 @@ void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
 // ObjCInterfaceDecl
 //===----------------------------------------------------------------------===//
 
+/// getIvarDecl - This method looks up an ivar in this ContextDecl.
+///
+ObjCIvarDecl *
+ObjCContainerDecl::getIvarDecl(ASTContext &Context, IdentifierInfo *Id) const {
+  lookup_const_iterator Ivar, IvarEnd;
+  for (llvm::tie(Ivar, IvarEnd) = lookup(Context, Id);
+       Ivar != IvarEnd; ++Ivar) {
+    if (ObjCIvarDecl *ivar = dyn_cast<ObjCIvarDecl>(*Ivar))
+      return ivar;
+  }
+  return 0;
+}
+
 // Get the local instance method declared in this interface.
 ObjCMethodDecl *
 ObjCContainerDecl::getInstanceMethod(ASTContext &Context, Selector Sel) const {
@@ -139,12 +152,9 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
   ASTContext &Context, IdentifierInfo *ID, ObjCInterfaceDecl *&clsDeclared) {
   ObjCInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
-    for (ivar_iterator I = ClassDecl->ivar_begin(), E = ClassDecl->ivar_end();
-         I != E; ++I) {
-      if ((*I)->getIdentifier() == ID) {
-        clsDeclared = ClassDecl;
-        return *I;
-      }
+    if (ObjCIvarDecl *I = ClassDecl->getIvarDecl(Context, ID)) {
+      clsDeclared = ClassDecl;
+      return I;
     }
     // look into properties.
     for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(Context),

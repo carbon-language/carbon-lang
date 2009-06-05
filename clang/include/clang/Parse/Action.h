@@ -417,6 +417,7 @@ public:
   }
   
   virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
+                              DeclPtrTy IntfDecl,
                               Declarator &D, ExprTy *BitfieldWidth,
                               tok::ObjCKeywordKind visibility) {
     return DeclPtrTy();

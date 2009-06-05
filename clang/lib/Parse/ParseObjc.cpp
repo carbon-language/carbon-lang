@@ -891,6 +891,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
       // Install the declarator into interfaceDecl.
       DeclPtrTy Field = Actions.ActOnIvar(CurScope,
                                           DS.getSourceRange().getBegin(),
+                                          interfaceDecl,
                                           FD.D, FD.BitfieldSize, visibility);
       AllIvarDecls.push_back(Field);
     }

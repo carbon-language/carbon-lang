@@ -220,6 +220,7 @@ namespace {
     }
   
     virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
+                                DeclPtrTy IntfDecl,
                                 Declarator &D, ExprTy *BitfieldWidth,
                                 tok::ObjCKeywordKind visibility) {
       Out << __FUNCTION__ << "\n";
