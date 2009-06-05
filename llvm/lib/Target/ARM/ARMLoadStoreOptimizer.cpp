@@ -64,6 +64,10 @@ namespace {
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;
 
+    bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                  int Offset, unsigned Base, bool BaseKill, int Opcode,
+                  ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
+                  DebugLoc dl, SmallVector<std::pair<unsigned, bool>, 8> &Regs);
     void MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
                       int Opcode, unsigned Size,
                       ARMCC::CondCodes Pred, unsigned PredReg,
@@ -111,13 +115,13 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
 /// mergeOps - Create and insert a LDM or STM with Base as base register and
 /// registers in Regs as the register operands that would be loaded / stored.
 /// It returns true if the transformation is done. 
-static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                     int Offset, unsigned Base, bool BaseKill, int Opcode,
-                     ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
-                     SmallVector<std::pair<unsigned, bool>, 8> &Regs,
-                     const TargetInstrInfo *TII) {
-  // FIXME would it be better to take a DL from one of the loads arbitrarily?
-  DebugLoc dl = DebugLoc::getUnknownLoc();
+bool
+ARMLoadStoreOpt::mergeOps(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator MBBI,
+                          int Offset, unsigned Base, bool BaseKill,
+                          int Opcode, ARMCC::CondCodes Pred,
+                          unsigned PredReg, unsigned Scratch, DebugLoc dl,
+                          SmallVector<std::pair<unsigned, bool>, 8> &Regs) {
   // Only a single register to load / store. Don't bother.
   unsigned NumRegs = Regs.size();
   if (NumRegs <= 1)
@@ -196,9 +200,10 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   int SOffset = Offset;
   unsigned Pos = MemOps[SIndex].Position;
   MachineBasicBlock::iterator Loc = MemOps[SIndex].MBBI;
-  unsigned PReg = MemOps[SIndex].MBBI->getOperand(0).getReg();
+  DebugLoc dl = Loc->getDebugLoc();
+  unsigned PReg = Loc->getOperand(0).getReg();
   unsigned PRegNum = ARMRegisterInfo::getRegisterNumbering(PReg);
-  bool isKill = MemOps[SIndex].MBBI->getOperand(0).isKill();
+  bool isKill = Loc->getOperand(0).isKill();
 
   SmallVector<std::pair<unsigned,bool>, 8> Regs;
   Regs.push_back(std::make_pair(PReg, isKill));
@@ -217,7 +222,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
     } else {
       // Can't merge this in. Try merge the earlier ones first.
       if (mergeOps(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
-                   Scratch, Regs, TII)) {
+                   Scratch, dl, Regs)) {
         Merges.push_back(prior(Loc));
         for (unsigned j = SIndex; j < i; ++j) {
           MBB.erase(MemOps[j].MBBI);
@@ -237,7 +242,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
 
   bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
   if (mergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
-               Scratch, Regs, TII)) {
+               Scratch, dl, Regs)) {
     Merges.push_back(prior(Loc));
     for (unsigned i = SIndex, e = MemOps.size(); i != e; ++i) {
       MBB.erase(MemOps[i].MBBI);
