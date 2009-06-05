@@ -2462,24 +2462,15 @@ void ScalarEvolution::forgetLoopPHIs(const Loop *L) {
 ScalarEvolution::BackedgeTakenInfo
 ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   // If the loop has a non-one exit block count, we can't analyze it.
-  SmallVector<BasicBlock*, 8> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() != 1) return UnknownValue;
+  BasicBlock *ExitBlock = L->getExitBlock();
+  if (!ExitBlock)
+    return UnknownValue;
 
   // Okay, there is one exit block.  Try to find the condition that causes the
   // loop to be exited.
-  BasicBlock *ExitBlock = ExitBlocks[0];
-
-  BasicBlock *ExitingBlock = 0;
-  for (pred_iterator PI = pred_begin(ExitBlock), E = pred_end(ExitBlock);
-       PI != E; ++PI)
-    if (L->contains(*PI)) {
-      if (ExitingBlock == 0)
-        ExitingBlock = *PI;
-      else
-        return UnknownValue;   // More than one block exiting!
-    }
-  assert(ExitingBlock && "No exits from loop, something is broken!");
+  BasicBlock *ExitingBlock = L->getExitingBlock();
+  if (!ExitingBlock)
+    return UnknownValue;   // More than one block exiting!
 
   // Okay, we've computed the exiting block.  See what condition causes us to
   // exit.
