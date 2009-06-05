@@ -4439,6 +4439,7 @@ void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
   // FIXME: This implementation is an ugly hack!
   if (PrevDecl) {
     PrevDecl->addAttr(::new (Context) AliasAttr(AliasName->getName()));
+    PrevDecl->addAttr(::new (Context) WeakAttr());
     return;
   }
   Diag(PragmaLoc, diag::err_unsupported_pragma_weak);

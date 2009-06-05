@@ -2451,12 +2451,12 @@ public:
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc);
 
-  /// ActOnPragmaPack - Called on well formed #pragma weak ident.
+  /// ActOnPragmaWeakID - Called on well formed #pragma weak ident.
   virtual void ActOnPragmaWeakID(IdentifierInfo* WeakName,
                                  SourceLocation PragmaLoc,
                                  SourceLocation WeakNameLoc);
 
-  /// ActOnPragmaPack - Called on well formed #pragma weak ident = ident.
+  /// ActOnPragmaWeakAlias - Called on well formed #pragma weak ident = ident.
   virtual void ActOnPragmaWeakAlias(IdentifierInfo* WeakName,
                                     IdentifierInfo* AliasName,
                                     SourceLocation PragmaLoc,

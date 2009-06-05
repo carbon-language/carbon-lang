@@ -1750,7 +1750,7 @@ public:
     return;
   }
   
-  /// ActOnPragmaPack - Called on well formed #pragma pack(...).
+  /// ActOnPragmaUnused - Called on well formed #pragma unused(...).
   virtual void ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
                                  SourceLocation PragmaLoc, 
                                  SourceLocation LParenLoc,
@@ -1758,14 +1758,14 @@ public:
     return;
   }
 
-  /// ActOnPragmaPack - Called on well formed #pragma weak ident.
+  /// ActOnPragmaWeakID - Called on well formed #pragma weak ident.
   virtual void ActOnPragmaWeakID(IdentifierInfo* WeakName,
                                  SourceLocation PragmaLoc,
                                  SourceLocation WeakNameLoc) {
     return;
   }
 
-  /// ActOnPragmaPack - Called on well formed #pragma weak ident = ident.
+  /// ActOnPragmaWeakAlias - Called on well formed #pragma weak ident = ident.
   virtual void ActOnPragmaWeakAlias(IdentifierInfo* WeakName,
                                     IdentifierInfo* AliasName,
                                     SourceLocation PragmaLoc,
