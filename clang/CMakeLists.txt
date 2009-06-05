@@ -54,3 +54,4 @@ add_subdirectory(lib)
 add_subdirectory(tools)
 
 # TODO: docs.
+add_subdirectory(test)
