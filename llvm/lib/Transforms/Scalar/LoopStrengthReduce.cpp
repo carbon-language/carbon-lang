@@ -2425,24 +2425,14 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
 
   // Get the terminating condition for the loop if possible (this isn't
   // necessarily in the latch, or a block that's a predecessor of the header).
-  SmallVector<BasicBlock*, 8> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() != 1) return;
+  if (!L->getExitBlock())
+    return; // More than one loop exit blocks.
 
   // Okay, there is one exit block.  Try to find the condition that causes the
   // loop to be exited.
-  BasicBlock *ExitBlock = ExitBlocks[0];
-
-  BasicBlock *ExitingBlock = 0;
-  for (pred_iterator PI = pred_begin(ExitBlock), E = pred_end(ExitBlock);
-       PI != E; ++PI)
-    if (L->contains(*PI)) {
-      if (ExitingBlock == 0)
-        ExitingBlock = *PI;
-      else
-        return; // More than one block exiting!
-    }
-  assert(ExitingBlock && "No exits from loop, something is broken!");
+  BasicBlock *ExitingBlock = L->getExitingBlock();
+  if (!ExitingBlock)
+    return; // More than one block exiting!
 
   // Okay, we've computed the exiting block.  See what condition causes us to
   // exit.
