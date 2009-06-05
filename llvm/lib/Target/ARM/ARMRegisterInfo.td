@@ -103,28 +103,28 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
   let MethodBodies = [{
     // FP is R11, R9 is available.
     static const unsigned ARM_GPR_AO_1[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
       ARM::R8, ARM::R9, ARM::R10,
       ARM::R11 };
     // FP is R11, R9 is not available.
     static const unsigned ARM_GPR_AO_2[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
       ARM::R8, ARM::R10,
       ARM::R11 };
     // FP is R7, R9 is available.
     static const unsigned ARM_GPR_AO_3[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6,
       ARM::R8, ARM::R9, ARM::R10,ARM::R11,
       ARM::R7 };
     // FP is R7, R9 is not available.
     static const unsigned ARM_GPR_AO_4[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6,
       ARM::R8, ARM::R10,ARM::R11,
@@ -186,7 +186,7 @@ def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
   // scavenging.
   let MethodBodies = [{
     static const unsigned THUMB_tGPR_AO[] = {
-      ARM::R2, ARM::R1, ARM::R0,
+      ARM::R0, ARM::R1, ARM::R2,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
 
     // FP is R7, only low registers available.

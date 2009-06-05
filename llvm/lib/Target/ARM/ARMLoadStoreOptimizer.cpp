@@ -64,7 +64,7 @@ namespace {
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;
 
-    bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+    bool MergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                   int Offset, unsigned Base, bool BaseKill, int Opcode,
                   ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
                   DebugLoc dl, SmallVector<std::pair<unsigned, bool>, 8> &Regs);
@@ -112,11 +112,11 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
   return 0;
 }
 
-/// mergeOps - Create and insert a LDM or STM with Base as base register and
+/// MergeOps - Create and insert a LDM or STM with Base as base register and
 /// registers in Regs as the register operands that would be loaded / stored.
 /// It returns true if the transformation is done. 
 bool
-ARMLoadStoreOpt::mergeOps(MachineBasicBlock &MBB,
+ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI,
                           int Offset, unsigned Base, bool BaseKill,
                           int Opcode, ARMCC::CondCodes Pred,
@@ -221,7 +221,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
       PRegNum = RegNum;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
-      if (mergeOps(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
+      if (MergeOps(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
                    Scratch, dl, Regs)) {
         Merges.push_back(prior(Loc));
         for (unsigned j = SIndex; j < i; ++j) {
@@ -241,7 +241,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   }
 
   bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
-  if (mergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
+  if (MergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
                Scratch, dl, Regs)) {
     Merges.push_back(prior(Loc));
     for (unsigned i = SIndex, e = MemOps.size(); i != e; ++i) {
