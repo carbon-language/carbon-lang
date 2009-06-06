@@ -114,19 +114,19 @@ _mm_hsub_epi16(__m128i a, __m128i b)
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_hsub_epi32(__m128i a, __m128i b)
 {
-    return (__m128i)__builtin_ia32_psubd128((__v4si)a, (__v4si)b);
+    return (__m128i)__builtin_ia32_phsubd128((__v4si)a, (__v4si)b);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_hsub_pi16(__m64 a, __m64 b)
 {
-    return (__m64)__builtin_ia32_psubw((__v4hi)a, (__v4hi)b);
+    return (__m64)__builtin_ia32_phsubw((__v4hi)a, (__v4hi)b);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_hsub_pi32(__m64 a, __m64 b)
 {
-    return (__m64)__builtin_ia32_psubd((__v2si)a, (__v2si)b);
+    return (__m64)__builtin_ia32_phsubd((__v2si)a, (__v2si)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
