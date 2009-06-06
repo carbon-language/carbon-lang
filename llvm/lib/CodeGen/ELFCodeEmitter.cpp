@@ -71,7 +71,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
 /// finished.
 bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Add a symbol to represent the function.
-  ELFWriter::ELFSym FnSym(MF.getFunction());
+  ELFSym FnSym(MF.getFunction());
 
   // Figure out the binding (linkage) of the symbol.
   switch (MF.getFunction()->getLinkage()) {
@@ -79,23 +79,23 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
     // appending linkage is illegal for functions.
     assert(0 && "Unknown linkage type!");
   case GlobalValue::ExternalLinkage:
-    FnSym.SetBind(ELFWriter::ELFSym::STB_GLOBAL);
+    FnSym.SetBind(ELFSym::STB_GLOBAL);
     break;
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
+    FnSym.SetBind(ELFSym::STB_WEAK);
     break;
   case GlobalValue::PrivateLinkage:
     assert (0 && "PrivateLinkage should not be in the symbol table.");
   case GlobalValue::InternalLinkage:
-    FnSym.SetBind(ELFWriter::ELFSym::STB_LOCAL);
+    FnSym.SetBind(ELFSym::STB_LOCAL);
     break;
   }
 
   // Set the symbol type as a function
-  FnSym.SetType(ELFWriter::ELFSym::STT_FUNC);
+  FnSym.SetType(ELFSym::STT_FUNC);
 
   FnSym.SectionIdx = ES->SectionIdx;
   FnSym.Size = CurBufferPtr-FnStartPtr;

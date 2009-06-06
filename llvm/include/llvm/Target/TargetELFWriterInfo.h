@@ -25,9 +25,23 @@ namespace llvm {
     // e_machine member of the ELF header.
     unsigned short EMachine;
   public:
+
+    // Machine architectures
     enum MachineType {
-      NoMachine,
-      EM_386 = 3
+      EM_NONE = 0,     // No machine
+      EM_M32 = 1,      // AT&T WE 32100
+      EM_SPARC = 2,    // SPARC
+      EM_386 = 3,      // Intel 386
+      EM_68K = 4,      // Motorola 68000
+      EM_88K = 5,      // Motorola 88000
+      EM_486 = 6,      // Intel 486 (deprecated)
+      EM_860 = 7,      // Intel 80860
+      EM_MIPS = 8,     // MIPS R3000
+      EM_PPC = 20,     // PowerPC
+      EM_ARM = 40,     // ARM
+      EM_ALPHA = 41,   // DEC Alpha
+      EM_SPARCV9 = 43, // SPARC V9
+      EM_X86_64 = 62   // AMD64
     };
 
     explicit TargetELFWriterInfo(MachineType machine) : EMachine(machine) {}

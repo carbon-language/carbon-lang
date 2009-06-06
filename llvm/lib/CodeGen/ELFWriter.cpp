@@ -33,6 +33,7 @@
 
 #include "ELFWriter.h"
 #include "ELFCodeEmitter.h"
+#include "ELF.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/DerivedTypes.h"
@@ -67,7 +68,8 @@ MachineCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
 
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   : MachineFunctionPass(&ID), O(o), TM(tm) {
-  e_flags = 0;    // e_flags defaults to 0, no flags.
+  e_flags = 0;  // e_flags defaults to 0, no flags.
+  e_machine = TM.getELFWriterInfo()->getEMachine();
 
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData()->isLittleEndian();
@@ -90,24 +92,39 @@ bool ELFWriter::doInitialization(Module &M) {
   std::vector<unsigned char> &FH = FileHeader;
   OutputBuffer FHOut(FH, is64Bit, isLittleEndian);
 
-  FHOut.outbyte(0x7F);                     // EI_MAG0
-  FHOut.outbyte('E');                      // EI_MAG1
-  FHOut.outbyte('L');                      // EI_MAG2
-  FHOut.outbyte('F');                      // EI_MAG3
-  FHOut.outbyte(is64Bit ? 2 : 1);          // EI_CLASS
-  FHOut.outbyte(isLittleEndian ? 1 : 2);   // EI_DATA
-  FHOut.outbyte(1);                        // EI_VERSION
-  FH.resize(16);                         // EI_PAD up to 16 bytes.
+  unsigned ElfClass = is64Bit ? ELFCLASS64 : ELFCLASS32;
+  unsigned ElfEndian = isLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
 
-  // This should change for shared objects.
-  FHOut.outhalf(1);                 // e_type = ET_REL
-  FHOut.outhalf(TM.getELFWriterInfo()->getEMachine()); // target-defined
-  FHOut.outword(1);                 // e_version = 1
-  FHOut.outaddr(0);                 // e_entry = 0 -> no entry point in .o file
-  FHOut.outaddr(0);                 // e_phoff = 0 -> no program header for .o
+  // ELF Header
+  // ----------
+  // Fields e_shnum e_shstrndx are only known after all section have
+  // been emitted. They locations in the ouput buffer are recorded so
+  // to be patched up later.
+  //
+  // Note
+  // ----
+  // FHOut.outaddr method behaves differently for ELF32 and ELF64 writing
+  // 4 bytes in the former and 8 in the last for *_off and *_addr elf types
 
-  ELFHeader_e_shoff_Offset = FH.size();
-  FHOut.outaddr(0);                 // e_shoff
+  FHOut.outbyte(0x7f); // e_ident[EI_MAG0]
+  FHOut.outbyte('E');  // e_ident[EI_MAG1]
+  FHOut.outbyte('L');  // e_ident[EI_MAG2]
+  FHOut.outbyte('F');  // e_ident[EI_MAG3]
+
+  FHOut.outbyte(ElfClass);   // e_ident[EI_CLASS]
+  FHOut.outbyte(ElfEndian);  // e_ident[EI_DATA]
+  FHOut.outbyte(EV_CURRENT); // e_ident[EI_VERSION]
+
+  FH.resize(16);  // e_ident[EI_NIDENT-EI_PAD]
+
+  FHOut.outhalf(ET_REL);     // e_type
+  FHOut.outhalf(e_machine);  // e_machine = target
+  FHOut.outword(EV_CURRENT); // e_version
+  FHOut.outaddr(0);          // e_entry = 0 -> no entry point in .o file
+  FHOut.outaddr(0);          // e_phoff = 0 -> no program header for .o
+
+  ELFHdr_e_shoff_Offset = FH.size();
+  FHOut.outaddr(0);                 // e_shoff = sec hdr table off in bytes
   FHOut.outword(e_flags);           // e_flags = whatever the target wants
 
   FHOut.outhalf(is64Bit ? 64 : 52); // e_ehsize = ELF header size
@@ -115,14 +132,16 @@ bool ELFWriter::doInitialization(Module &M) {
   FHOut.outhalf(0);                 // e_phnum     = # prog header entries = 0
   FHOut.outhalf(is64Bit ? 64 : 40); // e_shentsize = sect hdr entry size
 
+  // e_shnum     = # of section header ents
+  ELFHdr_e_shnum_Offset = FH.size();
+  FHOut.outhalf(0);
 
-  ELFHeader_e_shnum_Offset = FH.size();
-  FHOut.outhalf(0);                 // e_shnum     = # of section header ents
-  ELFHeader_e_shstrndx_Offset = FH.size();
-  FHOut.outhalf(0);                 // e_shstrndx  = Section # of '.shstrtab'
+  // e_shstrndx  = Section # of '.shstrtab'
+  ELFHdr_e_shstrndx_Offset = FH.size();
+  FHOut.outhalf(0);
 
   // Add the null section, which is required to be first in the file.
-  getSection("", 0, 0);
+  getSection("", ELFSection::SHT_NULL, 0);
 
   // Start up the symbol table.  The first entry in the symtab is the null
   // entry.
@@ -334,7 +353,7 @@ void ELFWriter::EmitSectionTableStringTable() {
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
   OutputBuffer FHOut(FileHeader, is64Bit, isLittleEndian);
-  FHOut.fixhalf(SHStrTab.SectionIdx, ELFHeader_e_shstrndx_Offset);
+  FHOut.fixhalf(SHStrTab.SectionIdx, ELFHdr_e_shstrndx_Offset);
 
   // Set the NameIdx of each section in the string table and emit the bytes for
   // the string table.
@@ -386,11 +405,11 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Now that we know where all of the sections will be emitted, set the e_shnum
   // entry in the ELF header.
   OutputBuffer FHOut(FileHeader, is64Bit, isLittleEndian);
-  FHOut.fixhalf(NumSections, ELFHeader_e_shnum_Offset);
+  FHOut.fixhalf(NumSections, ELFHdr_e_shnum_Offset);
 
   // Now that we know the offset in the file of the section table, update the
   // e_shoff address in the ELF header.
-  FHOut.fixaddr(FileOff, ELFHeader_e_shoff_Offset);
+  FHOut.fixaddr(FileOff, ELFHdr_e_shoff_Offset);
 
   // Now that we know all of the data in the file header, emit it and all of the
   // sections!
