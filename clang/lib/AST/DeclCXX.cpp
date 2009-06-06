@@ -326,7 +326,7 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
   //   const volatile X&, and either there are no other parameters
   //   or else all other parameters have default arguments (8.3.6).
   if ((getNumParams() < 1) ||
-      (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() == 0))
+      (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()))
     return false;
 
   const ParmVarDecl *Param = getParamDecl(0);
@@ -363,7 +363,7 @@ bool CXXConstructorDecl::isConvertingConstructor() const {
   return (getNumParams() == 0 && 
           getType()->getAsFunctionProtoType()->isVariadic()) ||
          (getNumParams() == 1) ||
-         (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() != 0);
+         (getNumParams() > 1 && getParamDecl(1)->hasDefaultArg());
 }
 
 CXXDestructorDecl *

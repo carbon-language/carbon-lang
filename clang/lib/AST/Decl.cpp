@@ -489,7 +489,7 @@ void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
 unsigned FunctionDecl::getMinRequiredArguments() const {
   unsigned NumRequiredArgs = getNumParams();
   while (NumRequiredArgs > 0
-         && getParamDecl(NumRequiredArgs-1)->getDefaultArg())
+         && getParamDecl(NumRequiredArgs-1)->hasDefaultArg())
     --NumRequiredArgs;
 
   return NumRequiredArgs;

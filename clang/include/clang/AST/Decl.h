@@ -515,10 +515,22 @@ public:
     objcDeclQualifier = QTVal;
   }
     
-  const Expr *getDefaultArg() const { return DefaultArg; }
-  Expr *getDefaultArg() { return DefaultArg; }
+  const Expr *getDefaultArg() const { 
+    assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
+    return DefaultArg; 
+  }
+  Expr *getDefaultArg() { 
+    assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
+    return DefaultArg; 
+  }
   void setDefaultArg(Expr *defarg) { DefaultArg = defarg; }
 
+  /// hasDefaultArg - Determines whether this parameter has a default argument,
+  /// either parsed or not.
+  bool hasDefaultArg() const {
+    return DefaultArg != 0;
+  }
+  
   /// hasUnparsedDefaultArg - Determines whether this parameter has a
   /// default argument that has not yet been parsed. This will occur
   /// during the processing of a C++ class whose member functions have

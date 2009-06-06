@@ -1357,7 +1357,7 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
   if (!Constructor->isInvalidDecl() &&
       ((Constructor->getNumParams() == 1) || 
        (Constructor->getNumParams() > 1 && 
-        Constructor->getParamDecl(1)->getDefaultArg() != 0))) {
+        Constructor->getParamDecl(1)->hasDefaultArg()))) {
     QualType ParamType = Constructor->getParamDecl(0)->getType();
     QualType ClassTy = Context.getTagDeclType(ClassDecl);
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
