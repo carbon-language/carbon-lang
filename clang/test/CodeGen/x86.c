@@ -13,11 +13,3 @@ void test1() {
   asm ("" : "=a" (d1), "=b" (d2) :
        "c" (0), "d" (0), "S" (0), "D" (0), "t" (0), "u" (0));
 }
-
-
-// rdar://6803924
-typedef double T __attribute__ ((__vector_size__ (16)));
-T test2(T va) {
-  return __builtin_ia32_shufpd(va, va, 3);
-}
-

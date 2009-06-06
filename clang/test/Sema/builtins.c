@@ -32,15 +32,6 @@ void test7() {
 }
 
 
-typedef __attribute__(( ext_vector_type(16) )) unsigned char uchar16;
-
-// rdar://5905347
-unsigned char test8( short v ) {
-  uchar16 c;
-  return __builtin_ia32_vec_ext_v4si( c );  // expected-error {{too few arguments to function}}
-}
-
-
 // atomics.
 
 unsigned char test9(short v) {
