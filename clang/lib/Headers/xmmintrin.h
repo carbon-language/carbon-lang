@@ -634,7 +634,7 @@ _mm_insert_pi16(__m64 a, int d, int n)
 {
    __v4hi b = (__v4hi)a;
    b[n & 3] = d;
-   return b;
+   return (__m64)b;
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))

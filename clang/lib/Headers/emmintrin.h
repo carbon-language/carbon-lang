@@ -129,25 +129,25 @@ _mm_max_pd(__m128d a, __m128d b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_and_pd(__m128d a, __m128d b)
 {
-  return (__m128)((__v4si)a & (__v4si)b);
+  return (__m128d)((__v4si)a & (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_andnot_pd(__m128d a, __m128d b)
 {
-  return (__m128)(~(__v4si)a & (__v4si)b);
+  return (__m128d)(~(__v4si)a & (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_or_pd(__m128d a, __m128d b)
 {
-  return (__m128)((__v4si)a | (__v4si)b);
+  return (__m128d)((__v4si)a | (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_xor_pd(__m128d a, __m128d b)
 {
-  return (__m128)((__v4si)a ^ (__v4si)b);
+  return (__m128d)((__v4si)a ^ (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -1190,7 +1190,7 @@ _mm_insert_epi16(__m128i a, int b, int imm)
 {
   __v8hi c = (__v8hi)a;
   c[imm & 7] = b;
-  return c;
+  return (__m128i)c;
 }
 
 static inline int __attribute__((__always_inline__, __nodebug__))
