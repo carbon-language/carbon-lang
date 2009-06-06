@@ -38,7 +38,8 @@ typedef float __m128 __attribute__((__vector_size__(16)));
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_add_ss(__m128 a, __m128 b)
 {
-  return __builtin_ia32_addss(a, b);
+  a[0] += b[0];
+  return a;
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
@@ -50,7 +51,8 @@ _mm_add_ps(__m128 a, __m128 b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_sub_ss(__m128 a, __m128 b)
 {
-  return __builtin_ia32_subss(a, b);
+  a[0] -= b[0];
+  return a;
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
@@ -62,7 +64,8 @@ _mm_sub_ps(__m128 a, __m128 b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_mul_ss(__m128 a, __m128 b)
 {
-  return __builtin_ia32_mulss(a, b);
+  a[0] *= b[0];
+  return a;
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
@@ -74,7 +77,8 @@ _mm_mul_ps(__m128 a, __m128 b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_div_ss(__m128 a, __m128 b)
 {
-  return __builtin_ia32_divss(a, b);
+  a[0] /= b[0];
+  return a;
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
@@ -146,25 +150,29 @@ _mm_max_ps(__m128 a, __m128 b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_and_ps(__m128 a, __m128 b)
 {
-  return __builtin_ia32_andps(a, b);
+  typedef int __v4si __attribute__((__vector_size__(16)));
+  return (__m128)((__v4si)a & (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_andnot_ps(__m128 a, __m128 b)
 {
-  return __builtin_ia32_andnps(a, b);
+  typedef int __v4si __attribute__((__vector_size__(16)));
+  return (__m128)(~(__v4si)a & (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_or_ps(__m128 a, __m128 b)
 {
-  return __builtin_ia32_orps(a, b);
+  typedef int __v4si __attribute__((__vector_size__(16)));
+  return (__m128)((__v4si)a | (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_xor_ps(__m128 a, __m128 b)
 {
-  return __builtin_ia32_xorps(a, b);
+  typedef int __v4si __attribute__((__vector_size__(16)));
+  return (__m128)((__v4si)a ^ ~(__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
@@ -389,11 +397,15 @@ _mm_cvtss_si32(__m128 a)
   return __builtin_ia32_cvtss2si(a);
 }
 
+#ifdef __x86_64__
+
 static inline long long __attribute__((__always_inline__, __nodebug__))
 _mm_cvtss_si64(__m128 a)
 {
   return __builtin_ia32_cvtss2si64(a);
 }
+
+#endif
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cvtps_pi32(__m128 a)
@@ -404,13 +416,13 @@ _mm_cvtps_pi32(__m128 a)
 static inline int __attribute__((__always_inline__, __nodebug__))
 _mm_cvttss_si32(__m128 a)
 {
-  return __builtin_ia32_cvttss2si(a);
+  return a[0];
 }
 
 static inline long long __attribute__((__always_inline__, __nodebug__))
 _mm_cvttss_si64(__m128 a)
 {
-  return __builtin_ia32_cvttss2si64(a);
+  return a[0];
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
@@ -422,7 +434,8 @@ _mm_cvttps_pi32(__m128 a)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cvtsi32_ss(__m128 a, int b)
 {
-  return __builtin_ia32_cvtsi2ss(a, b);
+  a[0] = b;
+  return a;
 }
 
 #ifdef __x86_64__
@@ -430,7 +443,8 @@ _mm_cvtsi32_ss(__m128 a, int b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cvtsi64_ss(__m128 a, long long b)
 {
-  return __builtin_ia32_cvtsi642ss(a, b);
+  a[0] = b;
+  return a;
 }
 
 #endif
@@ -456,6 +470,13 @@ _mm_loadh_pi(__m128 a, __m64 const *p)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_loadl_pi(__m128 a, __m64 const *p)
 {
+#if 0
+  // FIXME: This should work, but gives really crappy code at the moment
+  __m128 b;
+  b[0] = *(float*)p;
+  b[1] = *((float*)p+1);
+  return __builtin_shufflevector(a, b, 0, 1, 4, 5);
+#endif
   return __builtin_ia32_loadlps(a, (__v2si *)p);
 }
 
@@ -604,26 +625,17 @@ _mm_sfence(void)
 static inline int __attribute__((__always_inline__, __nodebug__))
 _mm_extract_pi16(__m64 a, int n)
 {
-  /* FIXME: 
-   * This should force n to be an immediate.
-   * This does not use the PEXTRW instruction. From looking at the LLVM source, the
-     instruction doesn't seem to be hooked up. 
-   * The code could probably be made better :)
-   */
   __v4hi b = (__v4hi)a;
-  return b[(n == 0) ? 0 : (n == 1 ? 1 : (n == 2 ? 2 : 3))];
+  return (unsigned short)b[n & 3];
 }
 
-/* FIXME: Implement this. We could add a __builtin_insertelement function that's similar to
-   the already existing __builtin_shufflevector.
-*/
-/*
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_insert_pi16(__m64 a, int d, int n)
 {
-   return (__m64){ 0LL };
+   __v4hi b = (__v4hi)a;
+   b[n & 3] = d;
+   return b;
 }
-*/
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_max_pi16(__m64 a, __m64 b)

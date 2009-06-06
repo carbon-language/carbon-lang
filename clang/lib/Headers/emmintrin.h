@@ -40,7 +40,8 @@ typedef char __v16qi __attribute__((__vector_size__(16)));
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_add_sd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_addsd(a, b);
+  a[0] += b[0];
+  return a;
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -52,7 +53,8 @@ _mm_add_pd(__m128d a, __m128d b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_sub_sd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_subsd(a, b);
+  a[0] -= b[0];
+  return a;
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -64,7 +66,8 @@ _mm_sub_pd(__m128d a, __m128d b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_mul_sd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_mulsd(a, b);
+  a[0] *= b[0];
+  return a;
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -76,7 +79,8 @@ _mm_mul_pd(__m128d a, __m128d b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_div_sd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_divsd(a, b);
+  a[0] /= b[0];
+  return a;
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -125,25 +129,25 @@ _mm_max_pd(__m128d a, __m128d b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_and_pd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_andpd(a, b);
+  return (__m128)((__v4si)a & (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_andnot_pd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_andnpd(a, b);
+  return (__m128)(~(__v4si)a & (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_or_pd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_orpd(a, b);
+  return (__m128)((__v4si)a | (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_xor_pd(__m128d a, __m128d b)
 {
-  return __builtin_ia32_xorpd(a, b);
+  return (__m128)((__v4si)a ^ (__v4si)b);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -383,7 +387,8 @@ _mm_cvtsd_si32(__m128d a)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cvtsd_ss(__m128 a, __m128d b)
 {
-  return __builtin_ia32_cvtsd2ss(a, b);
+  a[0] = b[0];
+  return a;
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
@@ -395,7 +400,8 @@ _mm_cvtsi32_sd(__m128d a, int b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_cvtss_sd(__m128d a, __m128 b)
 {
-  return __builtin_ia32_cvtss2sd(a, b);
+  a[0] = b[0];
+  return a;
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
@@ -407,7 +413,7 @@ _mm_cvttpd_epi32(__m128d a)
 static inline int __attribute__((__always_inline__, __nodebug__))
 _mm_cvttsd_si32(__m128d a)
 {
-  return __builtin_ia32_cvttsd2si(a);
+  return a[0];
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
@@ -747,25 +753,25 @@ _mm_subs_epu16(__m128i a, __m128i b)
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_and_si128(__m128i a, __m128i b)
 {
-  return __builtin_ia32_pand128(a, b);
+  return a & b;
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_andnot_si128(__m128i a, __m128i b)
 {
-  return __builtin_ia32_pandn128(a, b);
+  return ~a & b;
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_or_si128(__m128i a, __m128i b)
 {
-  return __builtin_ia32_por128(a, b);
+  return a | b;
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_xor_si128(__m128i a, __m128i b)
 {
-  return __builtin_ia32_pxor128(a, b);
+  return a ^ b;
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
@@ -934,7 +940,8 @@ _mm_cmplt_epi32(__m128i a, __m128i b)
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_cvtsi64_sd(__m128d a, long long b)
 {
-  return __builtin_ia32_cvtsi642sd(a, b);
+  a[0] = b;
+  return a;
 }
 
 static inline long long __attribute__((__always_inline__, __nodebug__))
@@ -946,7 +953,7 @@ _mm_cvtsd_si64(__m128d a)
 static inline long long __attribute__((__always_inline__, __nodebug__))
 _mm_cvttsd_si64(__m128d a)
 {
-  return __builtin_ia32_cvttsd2si64(a);
+  return a[0];
 }
 #endif
 
@@ -1181,7 +1188,9 @@ _mm_extract_epi16(__m128i a, int imm)
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_insert_epi16(__m128i a, int b, int imm)
 {
-  return (__m128i)__builtin_ia32_vec_set_v8hi((__v8hi)a, b, imm);
+  __v8hi c = (__v8hi)a;
+  c[imm & 7] = b;
+  return c;
 }
 
 static inline int __attribute__((__always_inline__, __nodebug__))
@@ -1257,7 +1266,7 @@ _mm_movpi64_pi64(__m64 a)
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_move_epi64(__m128i a)
 {
-  return (__m128i){ a[0], 0 };
+  return __builtin_shufflevector(a, (__m128i){ 0 }, 0, 2);
 }
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))

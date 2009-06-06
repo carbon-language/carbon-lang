@@ -415,13 +415,13 @@ _mm_set1_pi32(int __i)
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_set1_pi16(short __s)
 {
-    return (__m64)(__v4hi){ __s };
+    return (__m64)(__v4hi){ __s, __s, __s, __s };
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_set1_pi8(char __b)
 {
-    return (__m64)(__v8qi){ __b };
+    return (__m64)(__v8qi){ __b, __b, __b, __b, __b, __b, __b, __b };
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
