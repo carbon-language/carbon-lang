@@ -12579,6 +12579,12 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
     }
   }
 
+  unsigned VWidth = cast<VectorType>(VecOp->getType())->getNumElements();
+  APInt UndefElts(VWidth, 0);
+  APInt AllOnesEltMask(APInt::getAllOnesValue(VWidth));
+  if (SimplifyDemandedVectorElts(&IE, AllOnesEltMask, UndefElts))
+    return &IE;
+
   return 0;
 }
 
