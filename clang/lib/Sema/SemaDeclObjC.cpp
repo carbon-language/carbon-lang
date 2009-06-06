@@ -1996,10 +1996,15 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(Context, PropertyIvar, ClassDeclared);
     if (!Ivar) {
-      Ivar = ObjCIvarDecl::Create(Context, CurContext, PropertyLoc, 
+      DeclContext *EnclosingContext = cast_or_null<DeclContext>(IDecl);
+      assert(EnclosingContext && 
+             "null DeclContext for synthesized ivar - ActOnPropertyImplDecl");
+      Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, PropertyLoc, 
                                   PropertyIvar, PropType, 
                                   ObjCIvarDecl::Public,
                                   (Expr *)0);
+      Ivar->setLexicalDeclContext(IDecl);
+      IDecl->addDecl(Context, Ivar);
       property->setPropertyIvarDecl(Ivar);
       if (!getLangOptions().ObjCNonFragileABI)
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;

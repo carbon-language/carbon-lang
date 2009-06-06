@@ -156,16 +156,6 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
       clsDeclared = ClassDecl;
       return I;
     }
-    // look into properties.
-    for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(Context),
-         E = ClassDecl->prop_end(Context); I != E; ++I) {
-      ObjCPropertyDecl *PDecl = (*I);
-      if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl())
-        if (IV->getIdentifier() == ID) {
-          clsDeclared = ClassDecl;
-          return IV;
-        }
-    }
     ClassDecl = ClassDecl->getSuperClass();
   }
   return NULL;
