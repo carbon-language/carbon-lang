@@ -241,14 +241,10 @@ bool IPCP::PropagateConstantReturn(Function &F) {
    
     for (Value::use_iterator I = Call->use_begin(), E = Call->use_end();
          I != E;) {
-      Instruction *Ins = dyn_cast<Instruction>(*I);
+      Instruction *Ins = cast<Instruction>(*I);
 
       // Increment now, so we can remove the use
       ++I;
-
-      // Not an instruction? Ignore
-      if (!Ins)
-        continue;
 
       // Find the index of the retval to replace with
       int index = -1;

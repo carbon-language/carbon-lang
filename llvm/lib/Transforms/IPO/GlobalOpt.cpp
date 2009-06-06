@@ -932,8 +932,7 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
                                                       GlobalVariable *GV,
                                               SmallPtrSet<PHINode*, 8> &PHIs) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    Instruction *Inst = dyn_cast<Instruction>(*UI);
-    if (Inst == 0) return false;
+    Instruction *Inst = cast<Instruction>(*UI);
     
     if (isa<LoadInst>(Inst) || isa<CmpInst>(Inst)) {
       continue; // Fine, ignore.

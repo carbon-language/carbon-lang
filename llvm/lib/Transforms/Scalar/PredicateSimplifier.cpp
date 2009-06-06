@@ -1525,12 +1525,12 @@ namespace {
         Instruction *I2 = dyn_cast<Instruction>(R);
         if (I2 && below(I2)) {
           std::vector<Instruction *> ToNotify;
-          for (Value::use_iterator UI = R->use_begin(), UE = R->use_end();
+          for (Value::use_iterator UI = I2->use_begin(), UE = I2->use_end();
                UI != UE;) {
             Use &TheUse = UI.getUse();
             ++UI;
-            if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser()))
-              ToNotify.push_back(I);
+            Instruction *I = cast<Instruction>(TheUse.getUser());
+            ToNotify.push_back(I);
           }
 
           DOUT << "Simply removing " << *I2
@@ -1658,10 +1658,9 @@ namespace {
           ++UI;
           Value *V = TheUse.getUser();
           if (!V->use_empty()) {
-            if (Instruction *Inst = dyn_cast<Instruction>(V)) {
-              if (aboveOrBelow(Inst))
-                opsToDef(Inst);
-            }
+            Instruction *Inst = cast<Instruction>(V);
+            if (aboveOrBelow(Inst))
+              opsToDef(Inst);
           }
         }
       }
@@ -2262,10 +2261,9 @@ namespace {
                    UE = O.LHS->use_end(); UI != UE;) {
                 Use &TheUse = UI.getUse();
                 ++UI;
-                if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-                  if (aboveOrBelow(I))
-                    opsToDef(I);
-                }
+                Instruction *I = cast<Instruction>(TheUse.getUser());
+                if (aboveOrBelow(I))
+                  opsToDef(I);
               }
             }
             if (Instruction *I2 = dyn_cast<Instruction>(O.RHS)) {
@@ -2277,10 +2275,9 @@ namespace {
                    UE = O.RHS->use_end(); UI != UE;) {
                 Use &TheUse = UI.getUse();
                 ++UI;
-                if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-                  if (aboveOrBelow(I))
-                    opsToDef(I);
-                }
+                Instruction *I = cast<Instruction>(TheUse.getUser());
+                if (aboveOrBelow(I))
+                  opsToDef(I);
               }
             }
           }

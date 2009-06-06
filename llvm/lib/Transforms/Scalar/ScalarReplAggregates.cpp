@@ -1228,7 +1228,8 @@ void SROA::CleanupAllocaUsers(AllocationInst *AI) {
     User *U = *UI++;
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U))
       CleanupGEP(GEPI);
-    else if (Instruction *I = dyn_cast<Instruction>(U)) {
+    else {
+      Instruction *I = cast<Instruction>(U);
       SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
       if (!isa<StoreInst>(I) && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
         // Safe to remove debug info uses.
