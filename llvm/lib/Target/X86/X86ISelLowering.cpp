@@ -2428,9 +2428,10 @@ bool X86::isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N) {
 /// specifies a shuffle of elements that is suitable for input to MOVSS,
 /// MOVSD, and MOVD, i.e. setting the lowest element.
 static bool isMOVLMask(const SmallVectorImpl<int> &Mask, MVT VT) {
-  int NumElts = VT.getVectorNumElements();
-  if (NumElts != 2 && NumElts != 4)
+  if (VT.getVectorElementType().getSizeInBits() < 32)
     return false;
+
+  int NumElts = VT.getVectorNumElements();
   
   if (!isUndefOrEqual(Mask[0], NumElts))
     return false;
@@ -3082,7 +3083,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   }
 
   // Special case for single non-zero, non-undef, element.
-  if (NumNonZero == 1 && NumElems <= 4) {
+  if (NumNonZero == 1) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDValue Item = Op.getOperand(Idx);
 
@@ -3123,15 +3124,24 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     // If we have a constant or non-constant insertion into the low element of
     // a vector, we can do this with SCALAR_TO_VECTOR + shuffle of zero into
     // the rest of the elements.  This will be matched as movd/movq/movss/movsd
-    // depending on what the source datatype is.  Because we can only get here
-    // when NumElems <= 4, this only needs to handle i32/f32/i64/f64.
-    if (Idx == 0 &&
-        // Don't do this for i64 values on x86-32.
-        (EVT != MVT::i64 || Subtarget->is64Bit())) {
-      Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
-      // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
-      return getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0,
-                                         Subtarget->hasSSE2(), DAG);
+    // depending on what the source datatype is.
+    if (Idx == 0) {
+      if (NumZero == 0) {
+        return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
+      } else if (EVT == MVT::i32 || EVT == MVT::f32 || EVT == MVT::f64 ||
+          (EVT == MVT::i64 && Subtarget->is64Bit())) {
+        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
+        // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
+        return getShuffleVectorZeroOrUndef(Item, 0, true, Subtarget->hasSSE2(),
+                                           DAG);
+      } else if (EVT == MVT::i16 || EVT == MVT::i8) {
+        Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
+        MVT MiddleVT = VT.getSizeInBits() == 64 ? MVT::v2i32 : MVT::v4i32;
+        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MiddleVT, Item);
+        Item = getShuffleVectorZeroOrUndef(Item, 0, true,
+                                           Subtarget->hasSSE2(), DAG);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Item);
+      }
     }
 
     // Is it a vector logical left shift?
