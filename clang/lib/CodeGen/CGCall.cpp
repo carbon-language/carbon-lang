@@ -314,6 +314,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   case ABIArgInfo::Expand:
     assert(0 && "Invalid ABI kind for return argument");
 
+  case ABIArgInfo::Extend:
   case ABIArgInfo::Direct:
     ResultType = ConvertType(RetTy);
     break;
@@ -353,7 +354,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
       ArgTys.push_back(llvm::PointerType::getUnqual(LTy));
       break;
     }
-      
+
+    case ABIArgInfo::Extend:
     case ABIArgInfo::Direct:
       ArgTys.push_back(ConvertType(it->type));
       break;
@@ -394,14 +396,14 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   unsigned Index = 1;
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
+  case ABIArgInfo::Extend:
+   if (RetTy->isSignedIntegerType()) {
+     RetAttrs |= llvm::Attribute::SExt;
+   } else if (RetTy->isUnsignedIntegerType()) {
+     RetAttrs |= llvm::Attribute::ZExt;
+   }
+   // FALLTHROUGH
   case ABIArgInfo::Direct:
-    if (RetTy->isPromotableIntegerType()) {
-      if (RetTy->isSignedIntegerType()) {
-        RetAttrs |= llvm::Attribute::SExt;
-      } else if (RetTy->isUnsignedIntegerType()) {
-        RetAttrs |= llvm::Attribute::ZExt;
-      }
-    }
     break;
 
   case ABIArgInfo::Indirect:
@@ -452,15 +454,15 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       FuncAttrs &= ~(llvm::Attribute::ReadOnly |
                      llvm::Attribute::ReadNone);
       break;
-      
+
+    case ABIArgInfo::Extend:
+     if (ParamType->isSignedIntegerType()) {
+       Attributes |= llvm::Attribute::SExt;
+     } else if (ParamType->isUnsignedIntegerType()) {
+       Attributes |= llvm::Attribute::ZExt;
+     }
+     // FALLS THROUGH
     case ABIArgInfo::Direct:
-      if (ParamType->isPromotableIntegerType()) {
-        if (ParamType->isSignedIntegerType()) {
-          Attributes |= llvm::Attribute::SExt;
-        } else if (ParamType->isUnsignedIntegerType()) {
-          Attributes |= llvm::Attribute::ZExt;
-        }
-      }
       if (RegParm > 0 &&
           (ParamType->isIntegerType() || ParamType->isPointerType())) {
         RegParm -=
@@ -536,7 +538,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       EmitParmDecl(*Arg, V);      
       break;
     }
-      
+
+    case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
@@ -618,10 +621,10 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
   llvm::Value *RV = 0;
 
   // Functions with no result always return void.
-  if (ReturnValue) { 
+  if (ReturnValue) {
     QualType RetTy = FI.getReturnType();
     const ABIArgInfo &RetAI = FI.getReturnInfo();
-    
+
     switch (RetAI.getKind()) {
     case ABIArgInfo::Indirect:
       if (RetTy->isAnyComplexType()) {
@@ -630,11 +633,12 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
         EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
       } else {
-        EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(), 
+        EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(),
                           false, RetTy);
       }
       break;
 
+    case ABIArgInfo::Extend:
     case ABIArgInfo::Direct:
       // The internal return value temp always will have
       // pointer-to-return-type type.
@@ -705,6 +709,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       }
       break;
 
+    case ABIArgInfo::Extend:
     case ABIArgInfo::Direct:
       if (RV.isScalar()) {
         Args.push_back(RV.getScalarVal());
@@ -791,6 +796,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       return RValue::getAggregate(Args[0]);
     return RValue::get(EmitLoadOfScalar(Args[0], false, RetTy));
 
+  case ABIArgInfo::Extend:
   case ABIArgInfo::Direct:
     if (RetTy->isAnyComplexType()) {
       llvm::Value *Real = Builder.CreateExtractValue(CI, 0);

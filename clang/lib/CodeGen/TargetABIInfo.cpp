@@ -28,6 +28,9 @@ void ABIArgInfo::dump() const {
   case Direct:
     fprintf(stderr, "Direct");
     break;
+  case Extend:
+    fprintf(stderr, "Extend");
+    break;
   case Ignore:
     fprintf(stderr, "Ignore");
     break;
@@ -342,7 +345,8 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
     return ABIArgInfo::getIndirect(0);
   } else {
-    return ABIArgInfo::getDirect();
+    return (RetTy->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 }
 
@@ -371,7 +375,8 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 
     return ABIArgInfo::getIndirect(0);
   } else {
-    return ABIArgInfo::getDirect();
+    return (Ty->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 }
 
@@ -750,8 +755,8 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     // Integer and pointer types will end up in a general purpose
     // register.
     if (Ty->isIntegralType() || Ty->isPointerType())
-      return ABIArgInfo::getDirect();
-
+      return (Ty->isPromotableIntegerType() ?
+              ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   } else if (CoerceTo == llvm::Type::DoubleTy) {
     // FIXME: It would probably be better to make CGFunctionInfo only map using
     // canonical types than to canonize here.
@@ -771,7 +776,8 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
   if (!CodeGenFunction::hasAggregateLLVMType(Ty))
-    return ABIArgInfo::getDirect();
+    return (Ty->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 
   // FIXME: Set alignment correctly.
   return ABIArgInfo::getIndirect(0);
@@ -1267,7 +1273,8 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context) const {
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
                                             ASTContext &Context) const {
   if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
-    return ABIArgInfo::getDirect();
+    return (Ty->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
   // FIXME: This is kind of nasty... but there isn't much choice because the ARM
   // backend doesn't support byval.
@@ -1299,7 +1306,8 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
       return ABIArgInfo::getCoerce(llvm::Type::Int32Ty);
     return ABIArgInfo::getIndirect(0);
   } else {
-    return ABIArgInfo::getDirect();
+    return (RetTy->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 }
 
@@ -1335,7 +1343,8 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
     return ABIArgInfo::getIndirect(0);
   } else {
-    return ABIArgInfo::getDirect();
+    return (RetTy->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 }
 
@@ -1344,7 +1353,8 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     return ABIArgInfo::getIndirect(0);
   } else {
-    return ABIArgInfo::getDirect();
+    return (Ty->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 }
 

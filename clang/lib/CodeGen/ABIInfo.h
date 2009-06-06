@@ -44,6 +44,9 @@ namespace clang {
                  /// converted LLVM type. Complex and structure types
                  /// are passed using first class aggregates.
 
+      Extend,    /// Valid only for integer argument types. Same as 'direct'
+                 /// but also emit a zero/sign extension attribute.
+
       Indirect,  /// Pass the argument indirectly via a hidden pointer
                  /// with the specified alignment (0 indicates default
                  /// alignment).
@@ -79,6 +82,9 @@ namespace clang {
     static ABIArgInfo getDirect() {
       return ABIArgInfo(Direct);
     }
+    static ABIArgInfo getExtend() {
+      return ABIArgInfo(Extend);
+    }
     static ABIArgInfo getIgnore() {
       return ABIArgInfo(Ignore);
     }
@@ -94,6 +100,7 @@ namespace clang {
 
     Kind getKind() const { return TheKind; }
     bool isDirect() const { return TheKind == Direct; }
+    bool isExtend() const { return TheKind == Extend; }
     bool isIgnore() const { return TheKind == Ignore; }
     bool isCoerce() const { return TheKind == Coerce; }
     bool isIndirect() const { return TheKind == Indirect; }
