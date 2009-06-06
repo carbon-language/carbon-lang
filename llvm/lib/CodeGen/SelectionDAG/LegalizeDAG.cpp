@@ -2460,23 +2460,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(ExpandExtractFromVectorThroughStack(SDValue(Node, 0)));
     break;
   case ISD::CONCAT_VECTORS: {
-    // Use extract/insert/build vector for now. We might try to be
-    // more clever later.
-    SmallVector<SDValue, 8> Ops;
-    unsigned NumOperands = Node->getNumOperands();
-    for (unsigned i=0; i < NumOperands; ++i) {
-      SDValue SubOp = Node->getOperand(i);
-      MVT VVT = SubOp.getNode()->getValueType(0);
-      MVT EltVT = VVT.getVectorElementType();
-      unsigned NumSubElem = VVT.getVectorNumElements();
-      for (unsigned j=0; j < NumSubElem; ++j) {
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, SubOp,
-                                  DAG.getIntPtrConstant(j)));
-      }
-    }
-    Tmp1 = DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0),
-                       &Ops[0], Ops.size());
-    Results.push_back(Tmp1);
+    Results.push_back(ExpandVectorBuildThroughStack(Node));
     break;
   }
   case ISD::SCALAR_TO_VECTOR:
