@@ -1047,7 +1047,7 @@ public:
   LookupResult LookupName(Scope *S, DeclarationName Name, 
                           LookupNameKind NameKind, 
                           bool RedeclarationOnly = false,
-                          bool AllowBuiltinCreation = true,
+                          bool AllowBuiltinCreation = false,
                           SourceLocation Loc = SourceLocation());
   LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
                                    LookupNameKind NameKind, 
@@ -1056,7 +1056,7 @@ public:
                                 DeclarationName Name,
                                 LookupNameKind NameKind, 
                                 bool RedeclarationOnly = false,
-                                bool AllowBuiltinCreation = true,
+                                bool AllowBuiltinCreation = false,
                                 SourceLocation Loc = SourceLocation());
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
