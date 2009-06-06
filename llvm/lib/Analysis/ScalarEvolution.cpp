@@ -1771,7 +1771,7 @@ const Type *ScalarEvolution::getEffectiveSCEVType(const Type *Ty) const {
 }
 
 SCEVHandle ScalarEvolution::getCouldNotCompute() {
-  return UnknownValue;
+  return CouldNotCompute;
 }
 
 /// hasSCEV - Return true if the SCEV for this value has already been
@@ -2395,7 +2395,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
     BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
   if (Pair.second) {
     BackedgeTakenInfo ItCount = ComputeBackedgeTakenCount(L);
-    if (ItCount.Exact != UnknownValue) {
+    if (ItCount.Exact != CouldNotCompute) {
       assert(ItCount.Exact->isLoopInvariant(L) &&
              ItCount.Max->isLoopInvariant(L) &&
              "Computed trip count isn't loop invariant for loop!");
@@ -2464,20 +2464,20 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   // If the loop has a non-one exit block count, we can't analyze it.
   BasicBlock *ExitBlock = L->getExitBlock();
   if (!ExitBlock)
-    return UnknownValue;
+    return CouldNotCompute;
 
   // Okay, there is one exit block.  Try to find the condition that causes the
   // loop to be exited.
   BasicBlock *ExitingBlock = L->getExitingBlock();
   if (!ExitingBlock)
-    return UnknownValue;   // More than one block exiting!
+    return CouldNotCompute;   // More than one block exiting!
 
   // Okay, we've computed the exiting block.  See what condition causes us to
   // exit.
   //
   // FIXME: we should be able to handle switch instructions (with a single exit)
   BranchInst *ExitBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
-  if (ExitBr == 0) return UnknownValue;
+  if (ExitBr == 0) return CouldNotCompute;
   assert(ExitBr->isConditional() && "If unconditional, it can't be in loop!");
   
   // At this point, we know we have a conditional branch that determines whether
@@ -2493,7 +2493,7 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   if (ExitBr->getSuccessor(0) != L->getHeader() &&
       ExitBr->getSuccessor(1) != L->getHeader() &&
       ExitBr->getParent() != L->getHeader())
-    return UnknownValue;
+    return CouldNotCompute;
   
   ICmpInst *ExitCond = dyn_cast<ICmpInst>(ExitBr->getCondition());
 
@@ -2647,11 +2647,11 @@ SCEVHandle ScalarEvolution::
 ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
                                              const Loop *L,
                                              ICmpInst::Predicate predicate) {
-  if (LI->isVolatile()) return UnknownValue;
+  if (LI->isVolatile()) return CouldNotCompute;
 
   // Check to see if the loaded pointer is a getelementptr of a global.
   GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(LI->getOperand(0));
-  if (!GEP) return UnknownValue;
+  if (!GEP) return CouldNotCompute;
 
   // Make sure that it is really a constant global we are gepping, with an
   // initializer, and make sure the first IDX is really 0.
@@ -2659,7 +2659,7 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
   if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
       GEP->getNumOperands() < 3 || !isa<Constant>(GEP->getOperand(1)) ||
       !cast<Constant>(GEP->getOperand(1))->isNullValue())
-    return UnknownValue;
+    return CouldNotCompute;
 
   // Okay, we allow one non-constant index into the GEP instruction.
   Value *VarIdx = 0;
@@ -2669,7 +2669,7 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
     if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i))) {
       Indexes.push_back(CI);
     } else if (!isa<ConstantInt>(GEP->getOperand(i))) {
-      if (VarIdx) return UnknownValue;  // Multiple non-constant idx's.
+      if (VarIdx) return CouldNotCompute;  // Multiple non-constant idx's.
       VarIdx = GEP->getOperand(i);
       VarIdxNum = i-2;
       Indexes.push_back(0);
@@ -2686,7 +2686,7 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
   if (!IdxExpr || !IdxExpr->isAffine() || IdxExpr->isLoopInvariant(L) ||
       !isa<SCEVConstant>(IdxExpr->getOperand(0)) ||
       !isa<SCEVConstant>(IdxExpr->getOperand(1)))
-    return UnknownValue;
+    return CouldNotCompute;
 
   unsigned MaxSteps = MaxBruteForceIterations;
   for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
@@ -2713,7 +2713,7 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
       return getConstant(ItCst);   // Found terminating iteration!
     }
   }
-  return UnknownValue;
+  return CouldNotCompute;
 }
 
 
@@ -2852,11 +2852,11 @@ getConstantEvolutionLoopExitValue(PHINode *PN, const APInt& BEs, const Loop *L){
 /// constant number of times (the condition evolves only from constants),
 /// try to evaluate a few iterations of the loop until we get the exit
 /// condition gets a value of ExitWhen (true or false).  If we cannot
-/// evaluate the trip count of the loop, return UnknownValue.
+/// evaluate the trip count of the loop, return CouldNotCompute.
 SCEVHandle ScalarEvolution::
 ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
   PHINode *PN = getConstantEvolvingPHI(Cond, L);
-  if (PN == 0) return UnknownValue;
+  if (PN == 0) return CouldNotCompute;
 
   // Since the loop is canonicalized, the PHI node must have two entries.  One
   // entry must be a constant (coming in from outside of the loop), and the
@@ -2864,11 +2864,11 @@ ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen)
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
   Constant *StartCST =
     dyn_cast<Constant>(PN->getIncomingValue(!SecondIsBackedge));
-  if (StartCST == 0) return UnknownValue;  // Must be a constant.
+  if (StartCST == 0) return CouldNotCompute;  // Must be a constant.
 
   Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
   PHINode *PN2 = getConstantEvolvingPHI(BEValue, L);
-  if (PN2 != PN) return UnknownValue;  // Not derived from same PHI.
+  if (PN2 != PN) return CouldNotCompute;  // Not derived from same PHI.
 
   // Okay, we find a PHI node that defines the trip count of this loop.  Execute
   // the loop symbolically to determine when the condition gets a value of
@@ -2881,7 +2881,7 @@ ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen)
       dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, PHIVal));
 
     // Couldn't symbolically evaluate.
-    if (!CondVal) return UnknownValue;
+    if (!CondVal) return CouldNotCompute;
 
     if (CondVal->getValue() == uint64_t(ExitWhen)) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
@@ -2892,12 +2892,12 @@ ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen)
     // Compute the value of the PHI node for the next iteration.
     Constant *NextPHI = EvaluateExpression(BEValue, PHIVal);
     if (NextPHI == 0 || NextPHI == PHIVal)
-      return UnknownValue;  // Couldn't evaluate or not making progress...
+      return CouldNotCompute;   // Couldn't evaluate or not making progress...
     PHIVal = NextPHI;
   }
 
   // Too many iterations were needed to evaluate.
-  return UnknownValue;
+  return CouldNotCompute;
 }
 
 /// getSCEVAtScope - Return a SCEV expression handle for the specified value
@@ -3052,7 +3052,7 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
       // To evaluate this recurrence, we need to know how many times the AddRec
       // loop iterates.  Compute this now.
       SCEVHandle BackedgeTakenCount = getBackedgeTakenCount(AddRec->getLoop());
-      if (BackedgeTakenCount == UnknownValue) return AddRec;
+      if (BackedgeTakenCount == CouldNotCompute) return AddRec;
 
       // Then, evaluate the AddRec.
       return AddRec->evaluateAtIteration(BackedgeTakenCount, *this);
@@ -3201,18 +3201,18 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 }
 
 /// HowFarToZero - Return the number of times a backedge comparing the specified
-/// value to zero will execute.  If not computable, return UnknownValue.
+/// value to zero will execute.  If not computable, return CouldNotCompute.
 SCEVHandle ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // If the value is a constant
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     // If the value is already zero, the branch will execute zero times.
     if (C->getValue()->isZero()) return C;
-    return UnknownValue;  // Otherwise it will loop infinitely.
+    return CouldNotCompute;  // Otherwise it will loop infinitely.
   }
 
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(V);
   if (!AddRec || AddRec->getLoop() != L)
-    return UnknownValue;
+    return CouldNotCompute;
 
   if (AddRec->isAffine()) {
     // If this is an affine expression, the execution count of this branch is
@@ -3274,12 +3274,12 @@ SCEVHandle ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
     }
   }
 
-  return UnknownValue;
+  return CouldNotCompute;
 }
 
 /// HowFarToNonZero - Return the number of times a backedge checking the
 /// specified value for nonzero will execute.  If not computable, return
-/// UnknownValue
+/// CouldNotCompute
 SCEVHandle ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   // Loops that look like: while (X == 0) are very strange indeed.  We don't
   // handle them yet except for the trivial case.  This could be expanded in the
@@ -3290,12 +3290,12 @@ SCEVHandle ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     if (!C->getValue()->isNullValue())
       return getIntegerSCEV(0, C->getType());
-    return UnknownValue;  // Otherwise it will loop infinitely.
+    return CouldNotCompute;  // Otherwise it will loop infinitely.
   }
 
   // We could implement others, but I really doubt anyone writes loops like
   // this, and if they did, they would already be constant folded.
-  return UnknownValue;
+  return CouldNotCompute;
 }
 
 /// getLoopPredecessor - If the given loop's header has exactly one unique
@@ -3446,16 +3446,16 @@ bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
 
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
-/// UnknownValue.
+/// CouldNotCompute.
 ScalarEvolution::BackedgeTakenInfo ScalarEvolution::
 HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                  const Loop *L, bool isSigned) {
   // Only handle:  "ADDREC < LoopInvariant".
-  if (!RHS->isLoopInvariant(L)) return UnknownValue;
+  if (!RHS->isLoopInvariant(L)) return CouldNotCompute;
 
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(LHS);
   if (!AddRec || AddRec->getLoop() != L)
-    return UnknownValue;
+    return CouldNotCompute;
 
   if (AddRec->isAffine()) {
     // FORNOW: We only support unit strides.
@@ -3466,7 +3466,7 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     // TODO: handle non-constant strides.
     const SCEVConstant *CStep = dyn_cast<SCEVConstant>(Step);
     if (!CStep || CStep->isZero())
-      return UnknownValue;
+      return CouldNotCompute;
     if (CStep->isOne()) {
       // With unit stride, the iteration never steps past the limit value.
     } else if (CStep->getValue()->getValue().isStrictlyPositive()) {
@@ -3477,19 +3477,19 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
           APInt Max = APInt::getSignedMaxValue(BitWidth);
           if ((Max - CStep->getValue()->getValue())
                 .slt(CLimit->getValue()->getValue()))
-            return UnknownValue;
+            return CouldNotCompute;
         } else {
           APInt Max = APInt::getMaxValue(BitWidth);
           if ((Max - CStep->getValue()->getValue())
                 .ult(CLimit->getValue()->getValue()))
-            return UnknownValue;
+            return CouldNotCompute;
         }
       } else
         // TODO: handle non-constant limit values below.
-        return UnknownValue;
+        return CouldNotCompute;
     } else
       // TODO: handle negative strides below.
-      return UnknownValue;
+      return CouldNotCompute;
 
     // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
     // m.  So, we count the number of iterations in which {n,+,s} < m is true.
@@ -3536,7 +3536,7 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     return BackedgeTakenInfo(BECount, MaxBECount);
   }
 
-  return UnknownValue;
+  return CouldNotCompute;
 }
 
 /// getNumIterationsInRange - Return the number of iterations of this loop that
@@ -3724,7 +3724,7 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //===----------------------------------------------------------------------===//
 
 ScalarEvolution::ScalarEvolution()
-  : FunctionPass(&ID), UnknownValue(new SCEVCouldNotCompute()) {
+  : FunctionPass(&ID), CouldNotCompute(new SCEVCouldNotCompute()) {
 }
 
 bool ScalarEvolution::runOnFunction(Function &F) {

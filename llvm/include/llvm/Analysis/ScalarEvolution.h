@@ -227,9 +227,9 @@ namespace llvm {
     ///
     TargetData *TD;
 
-    /// UnknownValue - This SCEV is used to represent unknown trip counts and
-    /// things.
-    SCEVHandle UnknownValue;
+    /// CouldNotCompute - This SCEV is used to represent unknown trip
+    /// counts and things.
+    SCEVHandle CouldNotCompute;
 
     /// Scalars - This is a cache of the scalars we have analyzed so far.
     ///
@@ -322,23 +322,23 @@ namespace llvm {
     /// a constant number of times (the condition evolves only from constants),
     /// try to evaluate a few iterations of the loop until we get the exit
     /// condition gets a value of ExitWhen (true or false).  If we cannot
-    /// evaluate the trip count of the loop, return UnknownValue.
+    /// evaluate the trip count of the loop, return CouldNotCompute.
     SCEVHandle ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond,
                                                      bool ExitWhen);
 
     /// HowFarToZero - Return the number of times a backedge comparing the
     /// specified value to zero will execute.  If not computable, return
-    /// UnknownValue.
+    /// CouldNotCompute.
     SCEVHandle HowFarToZero(const SCEV *V, const Loop *L);
 
     /// HowFarToNonZero - Return the number of times a backedge checking the
     /// specified value for nonzero will execute.  If not computable, return
-    /// UnknownValue.
+    /// CouldNotCompute.
     SCEVHandle HowFarToNonZero(const SCEV *V, const Loop *L);
 
     /// HowManyLessThans - Return the number of times a backedge containing the
     /// specified less-than comparison will execute.  If not computable, return
-    /// UnknownValue. isSigned specifies whether the less-than is signed.
+    /// CouldNotCompute. isSigned specifies whether the less-than is signed.
     BackedgeTakenInfo HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                        const Loop *L, bool isSigned);
 
