@@ -116,6 +116,8 @@ private:
   /// result.
   SDValue LegalizeOp(SDValue O);
 
+  SDValue OptimizeFloatStore(StoreSDNode *ST);
+
   /// PerformInsertVectorEltInMemory - Some target cannot handle a variable
   /// insertion index for the INSERT_VECTOR_ELT instruction.  In this case, it
   /// is necessary to spill the vector being inserted into to memory, perform
@@ -165,6 +167,7 @@ private:
   SDValue ExpandBitCount(unsigned Opc, SDValue Op, DebugLoc dl);
 
   SDValue ExpandExtractFromVectorThroughStack(SDValue Op);
+  SDValue ExpandVectorBuildThroughStack(SDNode* Node);
 
   void ExpandNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
   void PromoteNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
@@ -679,6 +682,59 @@ ExpandINSERT_VECTOR_ELT(SDValue Vec, SDValue Val, SDValue Idx, DebugLoc dl) {
     }
   }
   return PerformInsertVectorEltInMemory(Vec, Val, Idx, dl);
+}
+
+SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
+  // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
+  // FIXME: We shouldn't do this for TargetConstantFP's.
+  // FIXME: move this to the DAG Combiner!  Note that we can't regress due
+  // to phase ordering between legalized code and the dag combiner.  This
+  // probably means that we need to integrate dag combiner and legalizer
+  // together.
+  // We generally can't do this one for long doubles.
+  SDValue Tmp1 = ST->getChain();
+  SDValue Tmp2 = ST->getBasePtr();
+  SDValue Tmp3;
+  int SVOffset = ST->getSrcValueOffset();
+  unsigned Alignment = ST->getAlignment();
+  bool isVolatile = ST->isVolatile();
+  DebugLoc dl = ST->getDebugLoc();
+  if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
+    if (CFP->getValueType(0) == MVT::f32 &&
+        getTypeAction(MVT::i32) == Legal) {
+      Tmp3 = DAG.getConstant(CFP->getValueAPF().
+                                      bitcastToAPInt().zextOrTrunc(32),
+                              MVT::i32);
+      return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
+                          SVOffset, isVolatile, Alignment);
+    } else if (CFP->getValueType(0) == MVT::f64) {
+      // If this target supports 64-bit registers, do a single 64-bit store.
+      if (getTypeAction(MVT::i64) == Legal) {
+        Tmp3 = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
+                                  zextOrTrunc(64), MVT::i64);
+        return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
+                            SVOffset, isVolatile, Alignment);
+      } else if (getTypeAction(MVT::i32) == Legal && !ST->isVolatile()) {
+        // Otherwise, if the target supports 32-bit registers, use 2 32-bit
+        // stores.  If the target supports neither 32- nor 64-bits, this
+        // xform is certainly not worth it.
+        const APInt &IntVal =CFP->getValueAPF().bitcastToAPInt();
+        SDValue Lo = DAG.getConstant(APInt(IntVal).trunc(32), MVT::i32);
+        SDValue Hi = DAG.getConstant(IntVal.lshr(32).trunc(32), MVT::i32);
+        if (TLI.isBigEndian()) std::swap(Lo, Hi);
+
+        Lo = DAG.getStore(Tmp1, dl, Lo, Tmp2, ST->getSrcValue(),
+                          SVOffset, isVolatile, Alignment);
+        Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
+                            DAG.getIntPtrConstant(4));
+        Hi = DAG.getStore(Tmp1, dl, Hi, Tmp2, ST->getSrcValue(), SVOffset+4,
+                          isVolatile, MinAlign(Alignment, 4U));
+
+        return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
+      }
+    }
+  }
+  return SDValue();
 }
 
 /// LegalizeOp - We know that the specified value has a legal type, and
@@ -1293,50 +1349,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     bool isVolatile = ST->isVolatile();
 
     if (!ST->isTruncatingStore()) {
-      // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
-      // FIXME: We shouldn't do this for TargetConstantFP's.
-      // FIXME: move this to the DAG Combiner!  Note that we can't regress due
-      // to phase ordering between legalized code and the dag combiner.  This
-      // probably means that we need to integrate dag combiner and legalizer
-      // together.
-      // We generally can't do this one for long doubles.
-      if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
-        if (CFP->getValueType(0) == MVT::f32 &&
-            getTypeAction(MVT::i32) == Legal) {
-          Tmp3 = DAG.getConstant(CFP->getValueAPF().
-                                          bitcastToAPInt().zextOrTrunc(32),
-                                  MVT::i32);
-          Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                SVOffset, isVolatile, Alignment);
-          break;
-        } else if (CFP->getValueType(0) == MVT::f64) {
-          // If this target supports 64-bit registers, do a single 64-bit store.
-          if (getTypeAction(MVT::i64) == Legal) {
-            Tmp3 = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
-                                     zextOrTrunc(64), MVT::i64);
-            Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
-                                  SVOffset, isVolatile, Alignment);
-            break;
-          } else if (getTypeAction(MVT::i32) == Legal && !ST->isVolatile()) {
-            // Otherwise, if the target supports 32-bit registers, use 2 32-bit
-            // stores.  If the target supports neither 32- nor 64-bits, this
-            // xform is certainly not worth it.
-            const APInt &IntVal =CFP->getValueAPF().bitcastToAPInt();
-            SDValue Lo = DAG.getConstant(APInt(IntVal).trunc(32), MVT::i32);
-            SDValue Hi = DAG.getConstant(IntVal.lshr(32).trunc(32), MVT::i32);
-            if (TLI.isBigEndian()) std::swap(Lo, Hi);
-
-            Lo = DAG.getStore(Tmp1, dl, Lo, Tmp2, ST->getSrcValue(),
-                              SVOffset, isVolatile, Alignment);
-            Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
-                               DAG.getIntPtrConstant(4));
-            Hi = DAG.getStore(Tmp1, dl, Hi, Tmp2, ST->getSrcValue(), SVOffset+4,
-                              isVolatile, MinAlign(Alignment, 4U));
-
-            Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
-            break;
-          }
-        }
+      if (SDNode *OptStore = OptimizeFloatStore(ST).getNode()) {
+        Result = SDValue(OptStore, 0);
+        break;
       }
 
       {
@@ -1508,6 +1523,46 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
 
   return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, NULL, 0);
+}
+
+SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
+  // We can't handle this case efficiently.  Allocate a sufficiently
+  // aligned object on the stack, store each element into it, then load
+  // the result as a vector.
+  // Create the stack frame object.
+  MVT VT = Node->getValueType(0);
+  MVT OpVT = Node->getOperand(0).getValueType();
+  DebugLoc dl = Node->getDebugLoc();
+  SDValue FIPtr = DAG.CreateStackTemporary(VT);
+  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(FI);
+
+  // Emit a store of each element to the stack slot.
+  SmallVector<SDValue, 8> Stores;
+  unsigned TypeByteSize = OpVT.getSizeInBits() / 8;
+  // Store (in the right endianness) the elements to memory.
+  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+    // Ignore undef elements.
+    if (Node->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+
+    unsigned Offset = TypeByteSize*i;
+
+    SDValue Idx = DAG.getConstant(Offset, FIPtr.getValueType());
+    Idx = DAG.getNode(ISD::ADD, dl, FIPtr.getValueType(), FIPtr, Idx);
+
+    Stores.push_back(DAG.getStore(DAG.getEntryNode(), dl, Node->getOperand(i),
+                                  Idx, SV, Offset));
+  }
+
+  SDValue StoreChain;
+  if (!Stores.empty())    // Not all undef elements?
+    StoreChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                             &Stores[0], Stores.size());
+  else
+    StoreChain = DAG.getEntryNode();
+
+  // Result is a load from the stack slot.
+  return DAG.getLoad(VT, dl, StoreChain, FIPtr, SV, 0);
 }
 
 SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
@@ -1853,40 +1908,8 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     }
   }
 
-  // Otherwise, we can't handle this case efficiently.  Allocate a sufficiently
-  // aligned object on the stack, store each element into it, then load
-  // the result as a vector.
-  // Create the stack frame object.
-  SDValue FIPtr = DAG.CreateStackTemporary(VT);
-  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
-  const Value *SV = PseudoSourceValue::getFixedStack(FI);
-
-  // Emit a store of each element to the stack slot.
-  SmallVector<SDValue, 8> Stores;
-  unsigned TypeByteSize = OpVT.getSizeInBits() / 8;
-  // Store (in the right endianness) the elements to memory.
-  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-    // Ignore undef elements.
-    if (Node->getOperand(i).getOpcode() == ISD::UNDEF) continue;
-
-    unsigned Offset = TypeByteSize*i;
-
-    SDValue Idx = DAG.getConstant(Offset, FIPtr.getValueType());
-    Idx = DAG.getNode(ISD::ADD, dl, FIPtr.getValueType(), FIPtr, Idx);
-
-    Stores.push_back(DAG.getStore(DAG.getEntryNode(), dl, Node->getOperand(i),
-                                  Idx, SV, Offset));
-  }
-
-  SDValue StoreChain;
-  if (!Stores.empty())    // Not all undef elements?
-    StoreChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                             &Stores[0], Stores.size());
-  else
-    StoreChain = DAG.getEntryNode();
-
-  // Result is a load from the stack slot.
-  return DAG.getLoad(VT, dl, StoreChain, FIPtr, SV, 0);
+  // Otherwise, we can't handle this case efficiently.
+  return ExpandVectorBuildThroughStack(Node);
 }
 
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value
