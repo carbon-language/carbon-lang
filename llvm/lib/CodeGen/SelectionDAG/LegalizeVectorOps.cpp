@@ -129,6 +129,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   if (!HasVectorValue)
     return TranslateLegalizeResults(Op, Result);
 
+  MVT QueryType;
   switch (Op.getOpcode()) {
   default:
     return TranslateLegalizeResults(Op, Result);
@@ -162,8 +163,6 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::ANY_EXTEND:
   case ISD::TRUNCATE:
   case ISD::SIGN_EXTEND:
-  case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::FNEG:
@@ -183,10 +182,15 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::FRINT:
   case ISD::FNEARBYINT:
   case ISD::FFLOOR:
+    QueryType = Node->getValueType(0);
+    break;
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
+    QueryType = Node->getOperand(0).getValueType();
     break;
   }
 
-  switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+  switch (TLI.getOperationAction(Node->getOpcode(), QueryType)) {
   case TargetLowering::Promote:
     // "Promote" the operation by bitcasting
     Result = PromoteVectorOp(Op);
