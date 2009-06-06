@@ -20,7 +20,7 @@ namespace llvm {
 
   class X86ELFWriterInfo : public TargetELFWriterInfo {
   public:
-    X86ELFWriterInfo();
+    X86ELFWriterInfo(bool is64Bit);
     virtual ~X86ELFWriterInfo();
   };
 

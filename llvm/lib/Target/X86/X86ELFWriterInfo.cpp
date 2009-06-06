@@ -14,5 +14,6 @@
 #include "X86ELFWriterInfo.h"
 using namespace llvm;
 
-X86ELFWriterInfo::X86ELFWriterInfo() : TargetELFWriterInfo(EM_386) {}
+X86ELFWriterInfo::X86ELFWriterInfo(bool is64Bit) :
+  TargetELFWriterInfo(is64Bit ? EM_X86_64 : EM_386) {}
 X86ELFWriterInfo::~X86ELFWriterInfo() {}
