@@ -550,6 +550,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FLOG10, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FEXP, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FEXP2, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FP_TO_UINT, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FP_TO_SINT, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::UINT_TO_FP, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::SINT_TO_FP, (MVT::SimpleValueType)VT, Expand);
   }
 
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
@@ -734,6 +738,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v2f64, Custom);
     setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
 
+    setOperationAction(ISD::FP_TO_SINT,         MVT::v4i32, Legal);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v4i32, Legal);
+    if (!DisableMMX && Subtarget->hasMMX()) {
+      setOperationAction(ISD::FP_TO_SINT,         MVT::v2i32, Custom);
+      setOperationAction(ISD::SINT_TO_FP,         MVT::v2i32, Custom);
+    }
   }
 
   if (Subtarget->hasSSE41()) {
@@ -4558,6 +4568,14 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   MVT SrcVT = Op.getOperand(0).getValueType();
+
+  if (SrcVT.isVector()) {
+    if (SrcVT == MVT::v2i32 && Op.getValueType() == MVT::v2f64) {
+      return Op;
+    }
+    return SDValue();
+  }
+
   assert(SrcVT.getSimpleVT() <= MVT::i64 && SrcVT.getSimpleVT() >= MVT::i16 &&
          "Unknown SINT_TO_FP to lower!");
 
@@ -4849,6 +4867,14 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
 }
 
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
+  if (Op.getValueType().isVector()) {
+    if (Op.getValueType() == MVT::v2i32 &&
+        Op.getOperand(0).getValueType() == MVT::v2f64) {
+      return Op;
+    }
+    return SDValue();
+  }
+
   std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, true);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
   // If FP_TO_INTHelper failed, the node is actually supposed to be Legal.
