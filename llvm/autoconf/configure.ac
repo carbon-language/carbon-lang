@@ -279,7 +279,7 @@ dnl===-----------------------------------------------------------------------===
 
 dnl --enable-optimized : check whether they want to do an optimized build:
 AC_ARG_ENABLE(optimized, AS_HELP_STRING(
- [--enable-optimized,Compile with optimizations enabled (default is NO)]),,enableval=$optimize)
+ --enable-optimized,[Compile with optimizations enabled (default is NO)]),,enableval=$optimize)
 if test ${enableval} = "no" ; then
   AC_SUBST(ENABLE_OPTIMIZED,[[]])
 else
@@ -288,7 +288,7 @@ fi
 
 dnl --enable-profiling : check whether they want to do a profile build:
 AC_ARG_ENABLE(profiling, AS_HELP_STRING(
- [--enable-profiling,Compile with profiling enabled (default is NO)]),,enableval="no")
+ --enable-profiling,[Compile with profiling enabled (default is NO)]),,enableval="no")
 if test ${enableval} = "no" ; then
   AC_SUBST(ENABLE_PROFILING,[[]])
 else
@@ -297,7 +297,7 @@ fi
 
 dnl --enable-assertions : check whether they want to turn on assertions or not:
 AC_ARG_ENABLE(assertions,AS_HELP_STRING(
-  [--enable-assertions,Compile with assertion checks enabled (default is YES)]),, enableval="yes")
+  --enable-assertions,[Compile with assertion checks enabled (default is YES)]),, enableval="yes")
 if test ${enableval} = "yes" ; then
   AC_SUBST(DISABLE_ASSERTIONS,[[]])
 else
@@ -306,7 +306,7 @@ fi
 
 dnl --enable-expensive-checks : check whether they want to turn on expensive debug checks:
 AC_ARG_ENABLE(expensive-checks,AS_HELP_STRING(
-  [--enable-expensive-checks,Compile with expensive debug checks enabled (default is NO)]),, enableval="no")
+  --enable-expensive-checks,[Compile with expensive debug checks enabled (default is NO)]),, enableval="no")
 if test ${enableval} = "yes" ; then
   AC_SUBST(ENABLE_EXPENSIVE_CHECKS,[[ENABLE_EXPENSIVE_CHECKS=1]])
   AC_SUBST(EXPENSIVE_CHECKS,[[yes]])
@@ -317,7 +317,7 @@ fi
 
 dnl --enable-debug-runtime : should runtime libraries have debug symbols?
 AC_ARG_ENABLE(debug-runtime,
-   AS_HELP_STRING([--enable-debug-runtime,Build runtime libs with debug symbols (default is NO)]),,enableval=no)
+   AS_HELP_STRING(--enable-debug-runtime,[Build runtime libs with debug symbols (default is NO)]),,enableval=no)
 if test ${enableval} = "no" ; then
   AC_SUBST(DEBUG_RUNTIME,[[]])
 else
@@ -553,6 +553,16 @@ if test "x$WITH_BINUTILS_INCDIR" != xdefault ; then
   fi
 fi
 
+dnl --enable-libffi : check whether the user wants to turn off libffi:
+AC_ARG_ENABLE(libffi,AS_HELP_STRING(
+  --enable-libffi,[Check for the presence of libffi (default is YES)]),,
+  enableval=yes)
+case "$enableval" in
+  yes) llvm_cv_enable_libffi="yes" ;;
+  no)  llvm_cv_enable_libffi="no"  ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-libffi. Use "yes" or "no"]) ;;
+esac
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -769,9 +779,11 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
 dnl libffi is optional; used to call external functions from the interpreter
-AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
-               [Define if libffi is available on this platform.]),
-               AC_MSG_WARN([libffi not found - disabling external calls from interpreter]))
+if test "$llvm_cv_enable_libffi" = "yes" ; then
+  AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
+                 [Define if libffi is available on this platform.]),
+                 AC_MSG_WARN([libffi not found - disabling external calls from interpreter]))
+fi
 
 dnl mallinfo is optional; the code can compile (minus features) without it
 AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
@@ -836,7 +848,9 @@ else
 fi
 
 dnl Try to find ffi.h.
-AC_CHECK_HEADERS([ffi.h ffi/ffi.h])
+if test "$llvm_cv_enable_libffi" = "yes" ; then
+  AC_CHECK_HEADERS([ffi.h ffi/ffi.h])
+fi
 
 dnl===-----------------------------------------------------------------------===
 dnl===
