@@ -843,14 +843,16 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // The index must always be an integer, which is not an aggregate.  Emit it.
   llvm::Value *Idx = EmitScalarExpr(E->getIdx());
-  
+  QualType IdxTy  = E->getIdx()->getType();
+  bool IdxSigned = IdxTy->isSignedIntegerType();
+
   // If the base is a vector type, then we are forming a vector element lvalue
   // with this subscript.
   if (E->getBase()->getType()->isVectorType()) {
     // Emit the vector as an lvalue to get its address.
     LValue LHS = EmitLValue(E->getBase());
     assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
-    // FIXME: This should properly sign/zero/extend or truncate Idx to i32.
+    Idx = Builder.CreateIntCast(Idx, llvm::Type::Int32Ty, IdxSigned, "vidx");
     return LValue::MakeVectorElt(LHS.getAddress(), Idx,
       E->getBase()->getType().getCVRQualifiers());
   }
@@ -859,8 +861,6 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   llvm::Value *Base = EmitScalarExpr(E->getBase());
   
   // Extend or truncate the index type to 32 or 64-bits.
-  QualType IdxTy  = E->getIdx()->getType();
-  bool IdxSigned = IdxTy->isSignedIntegerType();
   unsigned IdxBitwidth = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
   if (IdxBitwidth != LLVMPointerWidth)
     Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(LLVMPointerWidth),
