@@ -605,13 +605,6 @@ let AddedComplexity = 15 in {
             (MMX_PUNPCKLDQrr VR64:$src, (MMX_V_SET0))>;
 }
 
-// Scalar to v4i16 / v8i8. The source may be a GR32, but only the lower
-// 8 or 16-bits matter.
-def : Pat<(bc_v8i8  (v2i32 (scalar_to_vector GR32:$src))),
-          (MMX_MOVD64rr GR32:$src)>;
-def : Pat<(bc_v4i16 (v2i32 (scalar_to_vector GR32:$src))),
-          (MMX_MOVD64rr GR32:$src)>;
-
 // Patterns to perform canonical versions of vector shuffling.
 let AddedComplexity = 10 in {
   def : Pat<(v8i8  (mmx_unpckl_undef VR64:$src, (undef))),
