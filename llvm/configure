@@ -1533,12 +1533,15 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-optimized
-  --enable-profiling
-  --enable-assertions
+  --enable-optimized      Compile with optimizations enabled (default is NO)
+  --enable-profiling      Compile with profiling enabled (default is NO)
+  --enable-assertions     Compile with assertion checks enabled (default is
+                          YES)
   --enable-expensive-checks
-
-  --enable-debug-runtime
+                          Compile with expensive debug checks enabled (default
+                          is NO)
+  --enable-debug-runtime  Build runtime libs with debug symbols (default is
+                          NO)
   --enable-jit            Enable Just In Time Compiling (default is YES)
   --enable-doxygen        Build doxygen documentation (default is NO)
   --enable-threads        Use threads if available (default is YES)
@@ -1550,6 +1553,7 @@ Optional Features:
                           %a (default is YES)
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
+  --enable-libffi         Check for the presence of libffi (default is YES)
   --enable-ltdl-install   install libltdl
   --enable-shared[=PKGS]  build shared libraries
                           [default=yes]
@@ -5110,6 +5114,21 @@ echo "$as_me: error: Invalid path to directory containing plugin-api.h." >&2;}
    { (exit 1); exit 1; }; };
   fi
 fi
+
+# Check whether --enable-libffi was given.
+if test "${enable_libffi+set}" = set; then
+  enableval=$enable_libffi;
+else
+  enableval=yes
+fi
+
+case "$enableval" in
+  yes) llvm_cv_enable_libffi="yes" ;;
+  no)  llvm_cv_enable_libffi="no"  ;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libffi. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-libffi. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 
 
 ac_ext=c
@@ -10575,7 +10594,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10578 "configure"
+#line 10597 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12719,7 +12738,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 12722 "configure"' > conftest.$ac_ext
+  echo '#line 12741 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -14437,11 +14456,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14440: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14459: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14444: \$? = $ac_status" >&5
+   echo "$as_me:14463: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14705,11 +14724,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14708: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14727: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14712: \$? = $ac_status" >&5
+   echo "$as_me:14731: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14809,11 +14828,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14812: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14831: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14816: \$? = $ac_status" >&5
+   echo "$as_me:14835: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17261,7 +17280,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17264 "configure"
+#line 17283 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17361,7 +17380,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17364 "configure"
+#line 17383 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19729,11 +19748,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19732: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19751: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:19736: \$? = $ac_status" >&5
+   echo "$as_me:19755: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -19833,11 +19852,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19836: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19855: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:19840: \$? = $ac_status" >&5
+   echo "$as_me:19859: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21403,11 +21422,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21406: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21425: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21410: \$? = $ac_status" >&5
+   echo "$as_me:21429: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -21507,11 +21526,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21510: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21529: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21514: \$? = $ac_status" >&5
+   echo "$as_me:21533: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23742,11 +23761,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23745: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23764: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23749: \$? = $ac_status" >&5
+   echo "$as_me:23768: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -24010,11 +24029,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24013: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24032: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:24017: \$? = $ac_status" >&5
+   echo "$as_me:24036: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -24114,11 +24133,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24117: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24136: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:24121: \$? = $ac_status" >&5
+   echo "$as_me:24140: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -27473,7 +27492,8 @@ echo "$as_me: WARNING: dlopen() not found - disabling plugin support" >&2;}
 fi
 
 
-{ echo "$as_me:$LINENO: checking for library containing ffi_call" >&5
+if test "$llvm_cv_enable_libffi" = "yes" ; then
+  { echo "$as_me:$LINENO: checking for library containing ffi_call" >&5
 echo $ECHO_N "checking for library containing ffi_call... $ECHO_C" >&6; }
 if test "${ac_cv_search_ffi_call+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -27579,6 +27599,7 @@ else
 echo "$as_me: WARNING: libffi not found - disabling external calls from interpreter" >&2;}
 fi
 
+fi
 
 { echo "$as_me:$LINENO: checking for library containing mallinfo" >&5
 echo $ECHO_N "checking for library containing mallinfo... $ECHO_C" >&6; }
@@ -29824,6 +29845,7 @@ else
 
 fi
 
+if test "$llvm_cv_enable_libffi" = "yes" ; then
 
 
 for ac_header in ffi.h ffi/ffi.h
@@ -29994,6 +30016,7 @@ fi
 
 done
 
+fi
 
 
 
