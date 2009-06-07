@@ -205,7 +205,7 @@ public:
   inline bool isAbstract() const { return Abstract; }
 
   /// canLosslesslyBitCastTo - Return true if this type could be converted 
-  /// with a lossless BitCast to type 'Ty'. For example, uint to int. BitCasts 
+  /// with a lossless BitCast to type 'Ty'. For example, i8* to i32*. BitCasts 
   /// are valid for types of the same size only where no re-interpretation of 
   /// the bits is done.
   /// @brief Determine if this type could be losslessly bitcast to Ty

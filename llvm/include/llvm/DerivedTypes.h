@@ -159,6 +159,10 @@ public:
   /// type.
   static bool isValidReturnType(const Type *RetTy);
 
+  /// isValidArgumentType - Return true if the specified type is valid as an
+  /// argument type.
+  static bool isValidArgumentType(const Type *ArgTy);
+
   inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ContainedTys[0]; }
 
@@ -231,6 +235,10 @@ public:
   /// Note that this method always returns a non-packed struct.  To get
   /// an empty struct, pass NULL, NULL.
   static StructType *get(const Type *type, ...) END_WITH_NULL;
+
+  /// isValidElementType - Return true if the specified type is valid as a
+  /// element type.
+  static bool isValidElementType(const Type *ElemTy);
 
   // Iterator access to the elements
   typedef Type::subtype_iterator element_iterator;
@@ -331,6 +339,10 @@ public:
   ///
   static ArrayType *get(const Type *ElementType, uint64_t NumElements);
 
+  /// isValidElementType - Return true if the specified type is valid as a
+  /// element type.
+  static bool isValidElementType(const Type *ElemTy);
+
   inline uint64_t getNumElements() const { return NumElements; }
 
   // Implement the AbstractTypeUser interface.
@@ -391,6 +403,10 @@ public:
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
+  /// isValidElementType - Return true if the specified type is valid as a
+  /// element type.
+  static bool isValidElementType(const Type *ElemTy);
+
   /// @brief Return the number of elements in the Vector type.
   inline unsigned getNumElements() const { return NumElements; }
 
@@ -430,6 +446,10 @@ public:
   static PointerType *getUnqual(const Type *ElementType) {
     return PointerType::get(ElementType, 0);
   }
+
+  /// isValidElementType - Return true if the specified type is valid as a
+  /// element type.
+  static bool isValidElementType(const Type *ElemTy);
 
   /// @brief Return the address space of the Pointer type.
   inline unsigned getAddressSpace() const { return AddressSpace; }
