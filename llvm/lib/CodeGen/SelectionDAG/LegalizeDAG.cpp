@@ -1785,48 +1785,41 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 /// support the operation, but do support the resultant vector type.
 SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   unsigned NumElems = Node->getNumOperands();
-  SDValue SplatValue = Node->getOperand(0);
+  SDValue Value1, Value2;
   DebugLoc dl = Node->getDebugLoc();
   MVT VT = Node->getValueType(0);
-  MVT OpVT = SplatValue.getValueType();
+  MVT OpVT = Node->getOperand(0).getValueType();
   MVT EltVT = VT.getVectorElementType();
 
   // If the only non-undef value is the low element, turn this into a
   // SCALAR_TO_VECTOR node.  If this is { X, X, X, X }, determine X.
   bool isOnlyLowElement = true;
-
-  // FIXME: it would be far nicer to change this into map<SDValue,uint64_t>
-  // and use a bitmask instead of a list of elements.
-  // FIXME: this doesn't treat <0, u, 0, u> for example, as a splat.
-  std::map<SDValue, std::vector<unsigned> > Values;
-  Values[SplatValue].push_back(0);
+  bool MoreThanTwoValues = false;
   bool isConstant = true;
-  if (!isa<ConstantFPSDNode>(SplatValue) && !isa<ConstantSDNode>(SplatValue) &&
-      SplatValue.getOpcode() != ISD::UNDEF)
-    isConstant = false;
-
-  for (unsigned i = 1; i < NumElems; ++i) {
+  for (unsigned i = 0; i < NumElems; ++i) {
     SDValue V = Node->getOperand(i);
-    Values[V].push_back(i);
-    if (V.getOpcode() != ISD::UNDEF)
+    if (V.getOpcode() == ISD::UNDEF)
+      continue;
+    if (i > 0)
       isOnlyLowElement = false;
-    if (SplatValue != V)
-      SplatValue = SDValue(0, 0);
-
-    // If this isn't a constant element or an undef, we can't use a constant
-    // pool load.
-    if (!isa<ConstantFPSDNode>(V) && !isa<ConstantSDNode>(V) &&
-        V.getOpcode() != ISD::UNDEF)
+    if (!isa<ConstantFPSDNode>(V) && !isa<ConstantSDNode>(V))
       isConstant = false;
+
+    if (!Value1.getNode()) {
+      Value1 = V;
+    } else if (!Value2.getNode()) {
+      if (V != Value1)
+        Value2 = V;
+    } else if (V != Value1 && V != Value2) {
+      MoreThanTwoValues = true;
+    }
   }
 
-  if (isOnlyLowElement) {
-    // If the low element is an undef too, then this whole things is an undef.
-    if (Node->getOperand(0).getOpcode() == ISD::UNDEF)
-      return DAG.getUNDEF(VT);
-    // Otherwise, turn this into a scalar_to_vector node.
+  if (!Value1.getNode())
+    return DAG.getUNDEF(VT);
+
+  if (isOnlyLowElement)
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Node->getOperand(0));
-  }
 
   // If all elements are constants, create a load from the constant pool.
   if (isConstant) {
@@ -1852,59 +1845,25 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
                        false, Alignment);
   }
 
-  if (SplatValue.getNode()) {   // Splat of one value?
-    // Build the shuffle constant vector: <0, 0, 0, 0>
-    SmallVector<int, 8> ZeroVec(NumElems, 0);
-
-    // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
-    if (TLI.isShuffleMaskLegal(ZeroVec, Node->getValueType(0))) {
+  if (!MoreThanTwoValues) {
+    SmallVector<int, 8> ShuffleVec(NumElems, -1);
+    for (unsigned i = 0; i < NumElems; ++i) {
+      SDValue V = Node->getOperand(i);
+      if (V.getOpcode() == ISD::UNDEF)
+        continue;
+      ShuffleVec[i] = V == Value1 ? 0 : NumElems;
+    }
+    if (TLI.isShuffleMaskLegal(ShuffleVec, Node->getValueType(0))) {
       // Get the splatted value into the low element of a vector register.
-      SDValue LowValVec =
-        DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, SplatValue);
+      SDValue Vec1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value1);
+      SDValue Vec2;
+      if (Value2.getNode())
+        Vec2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value2);
+      else
+        Vec2 = DAG.getUNDEF(VT);
 
       // Return shuffle(LowValVec, undef, <0,0,0,0>)
-      return DAG.getVectorShuffle(VT, dl, LowValVec, DAG.getUNDEF(VT),
-                                  &ZeroVec[0]);
-    }
-  }
-
-  // If there are only two unique elements, we may be able to turn this into a
-  // vector shuffle.
-  if (Values.size() == 2) {
-    // Get the two values in deterministic order.
-    SDValue Val1 = Node->getOperand(1);
-    SDValue Val2;
-    std::map<SDValue, std::vector<unsigned> >::iterator MI = Values.begin();
-    if (MI->first != Val1)
-      Val2 = MI->first;
-    else
-      Val2 = (++MI)->first;
-
-    // If Val1 is an undef, make sure it ends up as Val2, to ensure that our
-    // vector shuffle has the undef vector on the RHS.
-    if (Val1.getOpcode() == ISD::UNDEF)
-      std::swap(Val1, Val2);
-
-    // Build the shuffle constant vector: e.g. <0, 4, 0, 4>
-    SmallVector<int, 8> ShuffleMask(NumElems, -1);
-
-    // Set elements of the shuffle mask for Val1.
-    std::vector<unsigned> &Val1Elts = Values[Val1];
-    for (unsigned i = 0, e = Val1Elts.size(); i != e; ++i)
-      ShuffleMask[Val1Elts[i]] = 0;
-
-    // Set elements of the shuffle mask for Val2.
-    std::vector<unsigned> &Val2Elts = Values[Val2];
-    for (unsigned i = 0, e = Val2Elts.size(); i != e; ++i)
-      if (Val2.getOpcode() != ISD::UNDEF)
-        ShuffleMask[Val2Elts[i]] = NumElems;
-
-    // If the target supports SCALAR_TO_VECTOR and this shuffle mask, use it.
-    if (TLI.isOperationLegalOrCustom(ISD::SCALAR_TO_VECTOR, VT) &&
-        TLI.isShuffleMaskLegal(ShuffleMask, VT)) {
-      Val1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Val1);
-      Val2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Val2);
-      return DAG.getVectorShuffle(VT, dl, Val1, Val2, &ShuffleMask[0]);
+      return DAG.getVectorShuffle(VT, dl, Vec1, Vec2, ShuffleVec.data());
     }
   }
 

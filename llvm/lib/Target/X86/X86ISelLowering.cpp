@@ -7691,13 +7691,15 @@ static bool isBaseAlignmentOfN(unsigned N, SDNode *Base,
 }
 
 static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
-                                     MVT EVT, SDNode *&Base,
+                                     MVT EVT, LoadSDNode *&LDBase,
+                                     unsigned &LastLoadedElt,
                                      SelectionDAG &DAG, MachineFrameInfo *MFI,
                                      const TargetLowering &TLI) {
-  Base = NULL;
+  LDBase = NULL;
+  LastLoadedElt = -1;
   for (unsigned i = 0; i < NumElems; ++i) {
     if (N->getMaskElt(i) < 0) {
-      if (!Base)
+      if (!LDBase)
         return false;
       continue;
     }
@@ -7706,19 +7708,20 @@ static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
     if (!Elt.getNode() ||
         (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.getNode())))
       return false;
-    if (!Base) {
-      Base = Elt.getNode();
-      if (Base->getOpcode() == ISD::UNDEF)
+    if (!LDBase) {
+      if (Elt.getNode()->getOpcode() == ISD::UNDEF)
         return false;
+      LDBase = cast<LoadSDNode>(Elt.getNode());
+      LastLoadedElt = i;
       continue;
     }
     if (Elt.getOpcode() == ISD::UNDEF)
       continue;
 
     LoadSDNode *LD = cast<LoadSDNode>(Elt);
-    LoadSDNode *LDBase = cast<LoadSDNode>(Base);
     if (!TLI.isConsecutiveLoad(LD, LDBase, EVT.getSizeInBits()/8, i, MFI))
       return false;
+    LastLoadedElt = i;
   }
   return true;
 }
@@ -7736,6 +7739,9 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   MVT EVT = VT.getVectorElementType();
   ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
   unsigned NumElems = VT.getVectorNumElements();
+
+  if (VT.getSizeInBits() != 128)
+    return SDValue();
 
   // For x86-32 machines, if we see an insert and then a shuffle in a v2i64
   // where the upper half is 0, it is advantageous to rewrite it as a build
@@ -7764,107 +7770,24 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
 
   // Try to combine a vector_shuffle into a 128-bit load.
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-  SDNode *Base = NULL;
-  if (!EltsFromConsecutiveLoads(SVN, NumElems, EVT, Base, DAG, MFI, TLI))
+  LoadSDNode *LD = NULL;
+  unsigned LastLoadedElt;
+  if (!EltsFromConsecutiveLoads(SVN, NumElems, EVT, LD, LastLoadedElt, DAG,
+                                MFI, TLI))
     return SDValue();
 
-  LoadSDNode *LD = cast<LoadSDNode>(Base);
-  if (isBaseAlignmentOfN(16, Base->getOperand(1).getNode(), TLI))
+  if (LastLoadedElt == NumElems - 1) {
+    if (isBaseAlignmentOfN(16, LD->getBasePtr().getNode(), TLI))
+      return DAG.getLoad(VT, dl, LD->getChain(), LD->getBasePtr(),
+                         LD->getSrcValue(), LD->getSrcValueOffset(),
+                         LD->isVolatile());
     return DAG.getLoad(VT, dl, LD->getChain(), LD->getBasePtr(),
                        LD->getSrcValue(), LD->getSrcValueOffset(),
-                       LD->isVolatile());
-  return DAG.getLoad(VT, dl, LD->getChain(), LD->getBasePtr(),
-                     LD->getSrcValue(), LD->getSrcValueOffset(),
-                     LD->isVolatile(), LD->getAlignment());
-}
-
-/// PerformBuildVectorCombine - build_vector 0,(load i64 / f64) -> movq / movsd.
-static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
-                                         TargetLowering::DAGCombinerInfo &DCI,
-                                         const X86Subtarget *Subtarget,
-                                         const TargetLowering &TLI) {
-  unsigned NumOps = N->getNumOperands();
-  DebugLoc dl = N->getDebugLoc();
-
-  // Ignore single operand BUILD_VECTOR.
-  if (NumOps == 1)
-    return SDValue();
-
-  MVT VT = N->getValueType(0);
-  MVT EVT = VT.getVectorElementType();
-  
-  // Before or during type legalization, we want to try and convert a
-  // build_vector of an i64 load and a zero value into vzext_movl before the 
-  // legalizer can break it up.  
-  // FIXME: does the case below remove the need to do this?
-  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer()) {
-    if ((EVT != MVT::i64 && EVT != MVT::f64) || Subtarget->is64Bit())
-      return SDValue();
-    
-    // This must be an insertion into a zero vector.
-    SDValue HighElt = N->getOperand(1);
-    if (!isZeroNode(HighElt))
-      return SDValue();
-    
-    // Value must be a load.
-    SDNode *Base = N->getOperand(0).getNode();
-    if (!isa<LoadSDNode>(Base)) {
-      if (Base->getOpcode() != ISD::BIT_CONVERT)
-        return SDValue();
-      Base = Base->getOperand(0).getNode();
-      if (!isa<LoadSDNode>(Base))
-        return SDValue();
-    }
-    
-    // Transform it into VZEXT_LOAD addr.
-    LoadSDNode *LD = cast<LoadSDNode>(Base);
-    
-    // Load must not be an extload.
-    if (LD->getExtensionType() != ISD::NON_EXTLOAD)
-      return SDValue();
-    
-    // Load type should legal type so we don't have to legalize it.
-    if (!TLI.isTypeLegal(VT))
-      return SDValue();
-    
-    SDVTList Tys = DAG.getVTList(VT, MVT::Other);
+                       LD->isVolatile(), LD->getAlignment());
+  } else if (NumElems == 4 && LastLoadedElt == 1) {
+    SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
     SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
     SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
-    TargetLowering::TargetLoweringOpt TLO(DAG);
-    TLO.CombineTo(SDValue(Base, 1), ResNode.getValue(1));
-    DCI.CommitTargetLoweringOpt(TLO);
-    return ResNode;
-  }
-
-  // The type legalizer will have broken apart v2i64 build_vector created during
-  // widening before the code which handles that case is run.  Look for build
-  // vector (load, load + 4, 0/undef, 0/undef)
-  if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-    LoadSDNode *LD0 = dyn_cast<LoadSDNode>(N->getOperand(0));
-    LoadSDNode *LD1 = dyn_cast<LoadSDNode>(N->getOperand(1));
-    if (!LD0 || !LD1)
-      return SDValue();
-    if (LD0->getExtensionType() != ISD::NON_EXTLOAD ||
-        LD1->getExtensionType() != ISD::NON_EXTLOAD)
-      return SDValue();
-    // Make sure the second elt is a consecutive load.
-    if (!TLI.isConsecutiveLoad(LD1, LD0, EVT.getSizeInBits()/8, 1,
-                               DAG.getMachineFunction().getFrameInfo()))
-      return SDValue();
-
-    SDValue N2 = N->getOperand(2);
-    SDValue N3 = N->getOperand(3);
-    if (!isZeroNode(N2) && N2.getOpcode() != ISD::UNDEF)
-      return SDValue();
-    if (!isZeroNode(N3) && N3.getOpcode() != ISD::UNDEF)
-      return SDValue();
-    
-    SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
-    SDValue Ops[] = { LD0->getChain(), LD0->getBasePtr() };
-    SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
-    TargetLowering::TargetLoweringOpt TLO(DAG);
-    TLO.CombineTo(SDValue(LD0, 1), ResNode.getValue(1));
-    DCI.CommitTargetLoweringOpt(TLO);
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT, ResNode);
   }
   return SDValue();
@@ -8466,14 +8389,25 @@ static SDValue PerformBTCombine(SDNode *N,
   return SDValue();
 }
 
+static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
+  SDValue Op = N->getOperand(0);
+  if (Op.getOpcode() == ISD::BIT_CONVERT)
+    Op = Op.getOperand(0);
+  MVT VT = N->getValueType(0), OpVT = Op.getValueType();
+  if (Op.getOpcode() == X86ISD::VZEXT_LOAD &&
+      VT.getVectorElementType().getSizeInBits() == 
+      OpVT.getVectorElementType().getSizeInBits()) {
+    return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT, Op);
+  }
+  return SDValue();
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, *this);
-  case ISD::BUILD_VECTOR:
-    return PerformBuildVectorCombine(N, DAG, DCI, Subtarget, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
@@ -8485,6 +8419,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
+  case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   }
 
   return SDValue();
