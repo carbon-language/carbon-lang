@@ -7743,31 +7743,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   if (VT.getSizeInBits() != 128)
     return SDValue();
 
-  // For x86-32 machines, if we see an insert and then a shuffle in a v2i64
-  // where the upper half is 0, it is advantageous to rewrite it as a build
-  // vector of (0, val) so it can use movq.
-  if (VT == MVT::v2i64) {
-    SDValue In[2];
-    In[0] = N->getOperand(0);
-    In[1] = N->getOperand(1);
-    int Idx0 = SVN->getMaskElt(0);
-    int Idx1 = SVN->getMaskElt(1);
-    // FIXME: can we take advantage of undef index?
-    if (Idx0 >= 0 && Idx1 >= 0 &&
-        In[Idx0/2].getOpcode() == ISD::INSERT_VECTOR_ELT &&
-        In[Idx1/2].getOpcode() == ISD::BUILD_VECTOR) {
-      ConstantSDNode* InsertVecIdx =
-                             dyn_cast<ConstantSDNode>(In[Idx0/2].getOperand(2));
-      if (InsertVecIdx &&
-          InsertVecIdx->getZExtValue() == (unsigned)(Idx0 % 2) &&
-          isZeroNode(In[Idx1/2].getOperand(Idx1 % 2))) {
-        return DAG.getNode(ISD::BUILD_VECTOR, dl, VT,
-                           In[Idx0/2].getOperand(1),
-                           In[Idx1/2].getOperand(Idx1 % 2));
-      }
-    }
-  }
-
   // Try to combine a vector_shuffle into a 128-bit load.
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   LoadSDNode *LD = NULL;
