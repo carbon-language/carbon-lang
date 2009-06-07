@@ -347,9 +347,6 @@ FileID SourceManager::createFileID(const ContentCache *File,
                                    SrcMgr::CharacteristicKind FileCharacter,
                                    unsigned PreallocatedID,
                                    unsigned Offset) {
-  SLocEntry NewEntry = SLocEntry::get(NextOffset, 
-                                      FileInfo::get(IncludePos, File,
-                                                    FileCharacter));
   if (PreallocatedID) {
     // If we're filling in a preallocated ID, just load in the file
     // entry and return.
