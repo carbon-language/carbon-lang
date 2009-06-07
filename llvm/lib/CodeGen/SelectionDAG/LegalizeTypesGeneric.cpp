@@ -92,6 +92,26 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
     }
   }
 
+  if (InVT.isVector() && OutVT.isInteger()) {
+    // Handle cases like i64 = BIT_CONVERT v1i64 on x86, where the operand
+    // is legal but the result is not.
+    MVT NVT = MVT::getVectorVT(TLI.getTypeToTransformTo(OutVT), 2);
+
+    if (isTypeLegal(NVT)) {
+      SDValue CastInOp = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, InOp);
+      MVT EltNVT = NVT.getVectorElementType();
+      Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltNVT, CastInOp,
+                       DAG.getIntPtrConstant(0));
+      Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltNVT, CastInOp,
+                       DAG.getIntPtrConstant(1));
+
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      
+      return;
+    }
+  }
+
   // Lower the bit-convert to a store/load from the stack.
   assert(NOutVT.isByteSized() && "Expanded type not byte sized!");
 
