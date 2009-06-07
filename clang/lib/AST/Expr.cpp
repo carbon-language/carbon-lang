@@ -1556,6 +1556,22 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
   RBracloc = RBrac;
 }
 
+ObjCStringLiteral* ObjCStringLiteral::Clone(ASTContext &C) const {
+  // Clone the string literal.
+  StringLiteral *NewString = 
+    String ? cast<StringLiteral>(String)->Clone(C) : 0;
+  
+  return new (C) ObjCStringLiteral(NewString, getType(), AtLoc);
+}
+
+ObjCSelectorExpr *ObjCSelectorExpr::Clone(ASTContext &C) const {
+  return new (C) ObjCSelectorExpr(getType(), SelName, AtLoc, RParenLoc);
+}
+
+ObjCProtocolExpr *ObjCProtocolExpr::Clone(ASTContext &C) const {
+  return new (C) ObjCProtocolExpr(getType(), Protocol, AtLoc, RParenLoc);
+}
+
 // constructor for class messages. 
 // FIXME: clsName should be typed to ObjCInterfaceType
 ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,

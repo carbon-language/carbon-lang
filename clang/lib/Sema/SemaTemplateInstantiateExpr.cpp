@@ -1216,9 +1216,8 @@ TemplateExprInstantiator::VisitCXXUnresolvedMemberExpr(
 // Objective-C Expressions
 //----------------------------------------------------------------------------
 Sema::OwningExprResult 
-TemplateExprInstantiator::VisitObjCStringLiteral(ObjCStringLiteral *E) { 
-  assert(false && "FIXME: Template instantiations for ObjC expressions");
-  return SemaRef.ExprError();
+TemplateExprInstantiator::VisitObjCStringLiteral(ObjCStringLiteral *E) {
+  return SemaRef.Owned(E->Clone(SemaRef.Context));
 }
 
 Sema::OwningExprResult 
@@ -1243,14 +1242,12 @@ TemplateExprInstantiator::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitObjCSelectorExpr(ObjCSelectorExpr *E) { 
-  assert(false && "FIXME: Template instantiations for ObjC expressions");
-  return SemaRef.ExprError();
+  return SemaRef.Owned(E->Clone(SemaRef.Context));
 }
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitObjCProtocolExpr(ObjCProtocolExpr *E) { 
-  assert(false && "FIXME: Template instantiations for ObjC expressions");
-  return SemaRef.ExprError();
+  return SemaRef.Owned(E->Clone(SemaRef.Context));
 }
 
 Sema::OwningExprResult 
