@@ -898,6 +898,8 @@ do { \
   (row3) = _mm_movelh_ps(tmp3, tmp1); \
 } while (0)
 
+#include <emmintrin.h>
+
 #endif /* __SSE__ */
 
 #endif /* __XMMINTRIN_H */
