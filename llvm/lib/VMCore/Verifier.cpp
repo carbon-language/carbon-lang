@@ -280,7 +280,6 @@ namespace {
                      bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
                              const Value *V);
-    bool VerifyMDNode(const MDNode *N);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -380,24 +379,22 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
     // Verify that any metadata used in a global initializer points only to
     // other globals.
     if (MDNode *FirstNode = dyn_cast<MDNode>(GV.getInitializer())) {
-      if (VerifyMDNode(FirstNode)) {
-        SmallVector<const MDNode *, 4> NodesToAnalyze;
-        NodesToAnalyze.push_back(FirstNode);
-        while (!NodesToAnalyze.empty()) {
-          const MDNode *N = NodesToAnalyze.back();
-          NodesToAnalyze.pop_back();
+      SmallVector<const MDNode *, 4> NodesToAnalyze;
+      NodesToAnalyze.push_back(FirstNode);
+      while (!NodesToAnalyze.empty()) {
+        const MDNode *N = NodesToAnalyze.back();
+        NodesToAnalyze.pop_back();
 
-          for (MDNode::const_elem_iterator I = N->elem_begin(),
-                 E = N->elem_end(); I != E; ++I)
-            if (const Value *V = *I) {
-              if (const MDNode *Next = dyn_cast<MDNode>(V))
-                NodesToAnalyze.push_back(Next);
-              else
-                Assert3(isa<Constant>(V),
-                        "reference to instruction from global metadata node",
-                        &GV, N, V);
-            }
-        }
+        for (MDNode::const_elem_iterator I = N->elem_begin(),
+               E = N->elem_end(); I != E; ++I)
+          if (const Value *V = *I) {
+            if (const MDNode *Next = dyn_cast<MDNode>(V))
+              NodesToAnalyze.push_back(Next);
+            else
+              Assert3(isa<Constant>(V),
+                      "reference to instruction from global metadata node",
+                      &GV, N, V);
+          }
       }
     }
   } else {
@@ -1706,44 +1703,6 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
   // Check parameter attributes.
   Assert1(F->getAttributes() == Intrinsic::getAttributes(ID),
           "Intrinsic has wrong parameter attributes!", F);
-}
-
-/// Verify that an MDNode is not cyclic.
-bool Verifier::VerifyMDNode(const MDNode *N) {
-  if (N->elem_empty()) return true;
-
-  // The current DFS path through the nodes. Node and element number.
-  typedef std::pair<const MDNode *, MDNode::const_elem_iterator> Edge;
-  SmallVector<Edge, 8> Path;
-
-  Path.push_back(std::make_pair(N, N->elem_begin()));
-  while (!Path.empty()) {
-    Edge &e = Path.back();
-    const MDNode *&e_N = e.first;
-    MDNode::const_elem_iterator &e_I = e.second;
-
-    if (e_N->elem_end() == e_I) {
-      Path.pop_back();
-      continue;
-    }
-
-    for (MDNode::const_elem_iterator e_E = e_N->elem_end(); e_I != e_E; ++e_I) {
-      if (const MDNode *C = dyn_cast_or_null<MDNode>(e_I->operator Value*())) {
-        // Is child MDNode C already in the Path?
-        for (SmallVectorImpl<Edge>::iterator I = Path.begin(), E = Path.end();
-             I != E; ++I) {
-          if (I->first != C) {
-            CheckFailed("MDNode is cyclic.", C);
-            return false;
-          }
-        }
-
-        Path.push_back(std::make_pair(C, C->elem_begin()));
-        break;
-      }
-    }
-  }
-  return true;
 }
 
 
