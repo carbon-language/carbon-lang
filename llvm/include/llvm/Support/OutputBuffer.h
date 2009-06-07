@@ -134,11 +134,22 @@ namespace llvm {
       P[2] = (X >> (isLittleEndian ? 16 :  8)) & 255;
       P[3] = (X >> (isLittleEndian ? 24 :  0)) & 255;
     }
+    void fixxword(uint64_t X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 56)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 48)) & 255;
+      P[2] = (X >> (isLittleEndian ? 16 : 40)) & 255;
+      P[3] = (X >> (isLittleEndian ? 24 : 32)) & 255;
+      P[4] = (X >> (isLittleEndian ? 32 : 24)) & 255;
+      P[5] = (X >> (isLittleEndian ? 40 : 16)) & 255;
+      P[6] = (X >> (isLittleEndian ? 48 :  8)) & 255;
+      P[7] = (X >> (isLittleEndian ? 56 :  0)) & 255;
+    }
     void fixaddr(uint64_t X, unsigned Offset) {
       if (!is64Bit)
         fixword((unsigned)X, Offset);
       else
-        assert(0 && "Emission of 64-bit data not implemented yet!");
+        fixxword(X, Offset);
     }
 
     unsigned char &operator[](unsigned Index) {

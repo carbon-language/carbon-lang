@@ -20,8 +20,24 @@ namespace llvm {
   /// emit the code for functions to the ELF file.
   class ELFCodeEmitter : public MachineCodeEmitter {
     ELFWriter &EW;
+
+    /// Target machine description
     TargetMachine &TM;
-    ELFSection *ES;  // Section to write to.
+
+    /// Section containing code for functions
+    ELFSection *ES;
+
+    /// Relocations - These are the relocations that the function needs, as
+    /// emitted.
+    std::vector<MachineRelocation> Relocations;
+
+    /// MBBLocations - This vector is a mapping from MBB ID's to their address.
+    /// It is filled in by the StartMachineBasicBlock callback and queried by
+    /// the getMachineBasicBlockAddress callback.
+    std::vector<uintptr_t> MBBLocations;
+
+    /// FnStartPtr - Pointer to the start location of the current function
+    /// in the buffer
     uint8_t *FnStartPtr;
   public:
     explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM) {}
@@ -30,10 +46,19 @@ namespace llvm {
     bool finishFunction(MachineFunction &F);
 
     void addRelocation(const MachineRelocation &MR) {
-      assert(0 && "relo not handled yet!");
+      Relocations.push_back(MR);
     }
 
     virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
+      if (MBBLocations.size() <= (unsigned)MBB->getNumber())
+        MBBLocations.resize((MBB->getNumber()+1)*2);
+      MBBLocations[MBB->getNumber()] = getCurrentPCOffset();
+    }
+
+    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) {
+      assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
+             MBBLocations[MBB->getNumber()] && "MBB not emitted!");
+      return MBBLocations[MBB->getNumber()];
     }
 
     virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {

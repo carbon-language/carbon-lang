@@ -14,6 +14,7 @@
 #ifndef ELFWRITER_H
 #define ELFWRITER_H
 
+#include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "ELF.h"
 #include <list>
@@ -46,15 +47,12 @@ namespace llvm {
 
   protected:
     /// Output stream to send the resultant object file to.
-    ///
     raw_ostream &O;
 
     /// Target machine description.
-    ///
     TargetMachine &TM;
 
     /// Mang - The object used to perform name mangling for this module.
-    ///
     Mangler *Mang;
 
     /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
@@ -62,19 +60,8 @@ namespace llvm {
     ELFCodeEmitter *MCE;
 
     //===------------------------------------------------------------------===//
-    // Properties to be set by the derived class ctor, used to configure the
-    // ELFWriter.
-
-    // e_machine - This field is the target specific value to emit as the
-    // e_machine member of the ELF header.
-    unsigned short e_machine;
-
-    // e_flags - The machine flags for the target.  This defaults to zero.
-    unsigned e_flags;
-
-    //===------------------------------------------------------------------===//
     // Properties inferred automatically from the target machine.
-    //
+    //===------------------------------------------------------------------===//
 
     /// is64Bit/isLittleEndian - This information is inferred from the target
     /// machine directly, indicating whether to emit a 32- or 64-bit ELF file.
@@ -94,6 +81,9 @@ namespace llvm {
     // changed into something much more efficient later (and the bitcode writer
     // as well!).
     DataBuffer FileHeader;
+
+    /// ElfHdr - Hold information about the ELF Header
+    ELFHeader *ElfHdr;
 
     /// SectionList - This is the list of sections that we have emitted to the
     /// file.  Once the file has been completely built, the section header table
@@ -140,6 +130,11 @@ namespace llvm {
     /// local symbols first in the list).
     std::vector<ELFSym> SymbolTable;
 
+    /// PendingSyms - This is a list of externally defined symbols that we have
+    /// been asked to emit, but have not seen a reference to.  When a reference
+    /// is seen, the symbol will move from this list to the SymbolTable.
+    SetVector<GlobalValue*> PendingGlobals;
+
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of
     // the offset in ELFHeader of these various pieces to update and other
@@ -149,9 +144,8 @@ namespace llvm {
     unsigned ELFHdr_e_shnum_Offset;     // e_shnum    in ELF header.
   private:
     void EmitGlobal(GlobalVariable *GV);
-
     void EmitSymbolTable();
-
+    void EmitRelocations();
     void EmitSectionTableStringTable();
     void OutputSectionsAndSectionTable();
   };

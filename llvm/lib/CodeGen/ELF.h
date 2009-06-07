@@ -21,6 +21,7 @@
 #ifndef CODEGEN_ELF_H
 #define CODEGEN_ELF_H
 
+#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Support/DataTypes.h"
 #include <cstring>
 
@@ -62,6 +63,36 @@ namespace llvm {
   enum {
     EV_NONE = 0,
     EV_CURRENT = 1
+  };
+
+  struct ELFHeader {
+    // e_machine - This field is the target specific value to emit as the
+    // e_machine member of the ELF header.
+    unsigned short e_machine;
+
+    // e_flags - The machine flags for the target.  This defaults to zero.
+    unsigned e_flags;
+
+    // e_size - Holds the ELF header's size in bytes
+    unsigned e_ehsize;
+
+    // Endianess and ELF Class (64 or 32 bits)
+    unsigned ByteOrder;
+    unsigned ElfClass;
+
+    unsigned getByteOrder() const { return ByteOrder; }
+    unsigned getElfClass() const { return ElfClass; }
+    unsigned getSize() const { return e_ehsize; }
+    unsigned getMachine() const { return e_machine; }
+    unsigned getFlags() const { return e_flags; }
+
+    ELFHeader(unsigned short machine, unsigned flags,
+              bool is64Bit, bool isLittleEndian)
+      : e_machine(machine), e_flags(flags) {
+        ByteOrder = is64Bit ? ELFCLASS64 : ELFCLASS32;
+        ElfClass  = isLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
+        e_ehsize  = is64Bit ? 64 : 52;
+      }
   };
 
   /// ELFSection - This struct contains information about each section that is
@@ -118,11 +149,11 @@ namespace llvm {
 
     // Special section indices.
     enum {
-      SHN_UNDEF     = 0,      // Undefined, missing, irrelevant, or meaningless
+      SHN_UNDEF     = 0,      // Undefined, missing, irrelevant
       SHN_LORESERVE = 0xff00, // Lowest reserved index
       SHN_LOPROC    = 0xff00, // Lowest processor-specific index
       SHN_HIPROC    = 0xff1f, // Highest processor-specific index
-      SHN_ABS       = 0xfff1, // Symbol has absolute value; does not need relocation
+      SHN_ABS       = 0xfff1, // Symbol has absolute value; no relocation
       SHN_COMMON    = 0xfff2, // FORTRAN COMMON or C external global variables
       SHN_HIRESERVE = 0xffff  // Highest reserved index
     };
@@ -133,6 +164,15 @@ namespace llvm {
     /// SectionData - The actual data for this section which we are building
     /// up for emission to the file.
     std::vector<unsigned char> SectionData;
+
+    /// Relocations - The relocations that we have encountered so far in this 
+    /// section that we will need to convert to MachORelocation entries when
+    /// the file is written.
+    std::vector<MachineRelocation> Relocations;
+
+    /// Section Header Size 
+    static unsigned getSectionHdrSize(bool is64Bit)
+      { return is64Bit ? 64 : 40; }
 
     ELFSection(const std::string &name)
       : Name(name), Type(0), Flags(0), Addr(0), Offset(0), Size(0),
@@ -167,7 +207,7 @@ namespace llvm {
       STT_FILE = 4 
     };
 
-    ELFSym(const GlobalValue *gv) : GV(gv), Value(0),
+    ELFSym(const GlobalValue *gv) : GV(gv), NameIdx(0), Value(0),
                                     Size(0), Info(0), Other(0),
                                     SectionIdx(ELFSection::SHN_UNDEF) {}
 

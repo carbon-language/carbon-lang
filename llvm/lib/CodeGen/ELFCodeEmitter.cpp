@@ -73,6 +73,9 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Add a symbol to represent the function.
   ELFSym FnSym(MF.getFunction());
 
+  // Update Section Size
+  ES->Size = CurBufferPtr - BufferBegin;
+
   // Figure out the binding (linkage) of the symbol.
   switch (MF.getFunction()->getLinkage()) {
   default:
@@ -106,8 +109,29 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Finally, add it to the symtab.
   EW.SymbolTable.push_back(FnSym);
 
-  // Update Section Size
-  ES->Size = CurBufferPtr - BufferBegin;
+  // Relocations
+  // -----------
+  // If we have emitted any relocations to function-specific objects such as 
+  // basic blocks, constant pools entries, or jump tables, record their
+  // addresses now so that we can rewrite them with the correct addresses
+  // later.
+  for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
+    MachineRelocation &MR = Relocations[i];
+    intptr_t Addr;
+
+    if (MR.isBasicBlock()) {
+      Addr = getMachineBasicBlockAddress(MR.getBasicBlock());
+      MR.setConstantVal(ES->SectionIdx);
+      MR.setResultPointer((void*)Addr);
+    } else if (MR.isGlobalValue()) {
+      EW.PendingGlobals.insert(MR.getGlobalValue());
+    } else {
+      assert(0 && "Unhandled relocation type");
+    }
+    ES->Relocations.push_back(MR);
+  }
+  Relocations.clear();
+
   return false;
 }
 
