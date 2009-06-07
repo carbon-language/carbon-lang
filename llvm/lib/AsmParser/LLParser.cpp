@@ -1149,7 +1149,9 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
       Lex.Lex();
     }
 
-    if (!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy))
+    if ((!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy)) ||
+        (isa<PointerType>(ArgTy) &&
+         cast<PointerType>(ArgTy)->getElementType() == Type::MetadataTy))
       return Error(TypeLoc, "invalid type for function argument");
     
     ArgList.push_back(ArgInfo(TypeLoc, ArgTy, Attrs, Name));
