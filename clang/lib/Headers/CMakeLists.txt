@@ -1,12 +1,21 @@
 set(files
-  iso646.h
-  mmintrin.h
-  stdarg.h
-  stdbool.h
-  stddef.h
-  )
+  emmintrin.h	
+  float.h		
+  iso646.h	
+  limits.h	
+  mm_malloc.h	
+  mmintrin.h	
+  pmmintrin.h	
+  stdarg.h	
+  stdbool.h	
+  stddef.h	
+  stdint.h	
+  tgmath.h
+  tmmintrin.h
+  xmmintrin.h)
 
-set(output_dir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../Headers)
+#FIXME: Centralize Clang version info
+set(output_dir ${LLVM_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/clang/1.0/include)
 
 foreach( f ${files} )
   set( src ${CMAKE_CURRENT_SOURCE_DIR}/${f} )
