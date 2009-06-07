@@ -45,6 +45,7 @@ namespace {
 
   bool generate_api_file = false;
   const char *gcc_path = NULL;
+  const char *as_path = NULL;
 
   struct claimed_file {
     lto_module_t M;
@@ -108,6 +109,13 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
                        "Discarding %s", tv->tv_u.tv_string);
           } else {
             gcc_path = strdup(tv->tv_u.tv_string + 4);
+          }
+        } else if (strncmp("as=", tv->tv_u.tv_string, 3) == 0) {
+          if (as_path) {
+            (*message)(LDPL_WARNING, "Path to as specified twice. "
+                       "Discarding %s", tv->tv_u.tv_string);
+          } else {
+            as_path = strdup(tv->tv_u.tv_string + 3);
           }
         } else {
           (*message)(LDPL_WARNING, "Ignoring flag %s", tv->tv_u.tv_string);
@@ -346,6 +354,8 @@ ld_plugin_status all_symbols_read_hook(void) {
   lto_codegen_set_debug_model(cg, LTO_DEBUG_MODEL_DWARF);
   if (gcc_path)
     lto_codegen_set_gcc_path(cg, gcc_path);
+  if (as_path)
+    lto_codegen_set_assembler_path(cg, as_path);
 
   size_t bufsize = 0;
   const char *buffer = static_cast<const char *>(lto_codegen_compile(cg,
