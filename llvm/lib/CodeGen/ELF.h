@@ -89,8 +89,8 @@ namespace llvm {
     ELFHeader(unsigned short machine, unsigned flags,
               bool is64Bit, bool isLittleEndian)
       : e_machine(machine), e_flags(flags) {
-        ByteOrder = is64Bit ? ELFCLASS64 : ELFCLASS32;
-        ElfClass  = isLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
+        ElfClass  = is64Bit ? ELFCLASS64 : ELFCLASS32;
+        ByteOrder = isLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
         e_ehsize  = is64Bit ? 64 : 52;
       }
   };
