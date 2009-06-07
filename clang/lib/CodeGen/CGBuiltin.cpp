@@ -782,29 +782,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateStore(Ops[1], Ops[0]);
   }
-  case X86::BI__builtin_ia32_loadlv4si: {
-    // load i64
-    const llvm::Type *EltTy = llvm::Type::Int64Ty;
-    llvm::Type *PtrTy = llvm::PointerType::getUnqual(EltTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
-    Ops[0] = Builder.CreateLoad(Ops[0], "load");
-    
-    // scalar to vector: insert i64 into 2 x i64 undef
-    llvm::Type *VecTy = llvm::VectorType::get(EltTy, 2);
-    llvm::Value *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    Ops[0] = Builder.CreateInsertElement(llvm::UndefValue::get(VecTy),
-                                         Ops[0], Zero, "s2v");
-
-    // shuffle into zero vector.
-    std::vector<llvm::Constant *>Elts;
-    Elts.resize(2, llvm::ConstantInt::get(EltTy, 0));
-    llvm::Value *ZV = ConstantVector::get(Elts);
-    Ops[0] = EmitShuffleVector(ZV, Ops[0], 2, 1, "loadl");
-    
-    // bitcast to result.
-    return Builder.CreateBitCast(Ops[0], 
-                                 llvm::VectorType::get(llvm::Type::Int32Ty, 4));
-  }
   }
 }
 

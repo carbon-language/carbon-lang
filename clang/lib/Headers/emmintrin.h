@@ -1020,7 +1020,7 @@ _mm_loadu_si128(__m128i const *p)
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_loadl_epi64(__m128i const *p)
 {
-  return (__m128i)__builtin_ia32_loadlv4si((__v2si *)p);
+  return (__m128i) { *(long long*)p, 0};
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))

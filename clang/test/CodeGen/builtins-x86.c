@@ -325,14 +325,9 @@ void f0() {
   tmp_V8s = __builtin_ia32_pmaddwd128(tmp_V8s, tmp_V8s);
   (void) __builtin_ia32_monitor(tmp_vp, tmp_Ui, tmp_Ui);
   (void) __builtin_ia32_mwait(tmp_Ui, tmp_Ui);
-#ifdef USE_ALL
-  tmp_V4f = __builtin_ia32_movshdup(tmp_V4f);
-  tmp_V4f = __builtin_ia32_movsldup(tmp_V4f);
-#endif
   tmp_V16c = __builtin_ia32_lddqu(tmp_cCp);
   tmp_V2LLi = __builtin_ia32_palignr128(tmp_V2LLi, tmp_V2LLi, imm_i);
   tmp_V1LLi = __builtin_ia32_palignr(tmp_V1LLi, tmp_V1LLi, imm_i);
-  tmp_V4i = __builtin_ia32_loadlv4si(tmp_V2ip);
   (void) __builtin_ia32_storelv4si(tmp_V2ip, tmp_V2LLi);
 #ifdef USE_SSE4
   tmp_V16c = __builtin_ia32_pblendvb128(tmp_V16c, tmp_V16c, tmp_V16c);
