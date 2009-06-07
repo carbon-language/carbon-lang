@@ -250,8 +250,6 @@ void f0() {
   (void) __builtin_ia32_maskmovq(tmp_V8c, tmp_V8c, tmp_cp);
   tmp_V4f = __builtin_ia32_loadups(tmp_fCp);
   (void) __builtin_ia32_storeups(tmp_fp, tmp_V4f);
-  tmp_V4f = __builtin_ia32_loadhps(tmp_V4f, tmp_V2ip);
-  tmp_V4f = __builtin_ia32_loadlps(tmp_V4f, tmp_V2ip);
   (void) __builtin_ia32_storehps(tmp_V2ip, tmp_V4f);
   (void) __builtin_ia32_storelps(tmp_V2ip, tmp_V4f);
   tmp_i = __builtin_ia32_movmskps(tmp_V4f);
@@ -270,8 +268,6 @@ void f0() {
   (void) __builtin_ia32_maskmovdqu(tmp_V16c, tmp_V16c, tmp_cp);
   tmp_V2d = __builtin_ia32_loadupd(tmp_dCp);
   (void) __builtin_ia32_storeupd(tmp_dp, tmp_V2d);
-  tmp_V2d = __builtin_ia32_loadhpd(tmp_V2d, tmp_dCp);
-  tmp_V2d = __builtin_ia32_loadlpd(tmp_V2d, tmp_dCp);
   tmp_i = __builtin_ia32_movmskpd(tmp_V2d);
   tmp_i = __builtin_ia32_pmovmskb128(tmp_V16c);
   (void) __builtin_ia32_movnti(tmp_ip, tmp_i);

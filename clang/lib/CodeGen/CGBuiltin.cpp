@@ -764,28 +764,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse2_cmp_sd);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), "cmpsd");
   }
-  case X86::BI__builtin_ia32_loadlps:
-  case X86::BI__builtin_ia32_loadhps: {
-    // FIXME: This should probably be represented as 
-    // shuffle (dst, (v4f32 (insert undef, (load i64), 0)), shuf mask hi/lo)
-    const llvm::Type *EltTy = llvm::Type::DoubleTy;
-    const llvm::Type *VecTy = llvm::VectorType::get(EltTy, 2);
-    const llvm::Type *OrigTy = Ops[0]->getType();
-    unsigned Index = BuiltinID == X86::BI__builtin_ia32_loadlps ? 0 : 1;
-    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Index);
-    Ops[1] = Builder.CreateBitCast(Ops[1], llvm::PointerType::getUnqual(EltTy));
-    Ops[1] = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-    Ops[0] = Builder.CreateInsertElement(Ops[0], Ops[1], Idx, "loadps");
-    return Builder.CreateBitCast(Ops[0], OrigTy, "loadps");
-  }
-  case X86::BI__builtin_ia32_loadlpd:
-  case X86::BI__builtin_ia32_loadhpd: {
-    Ops[1] = Builder.CreateLoad(Ops[1], "tmp");
-    unsigned Index = BuiltinID == X86::BI__builtin_ia32_loadlpd ? 0 : 1;
-    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Index);
-    return Builder.CreateInsertElement(Ops[0], Ops[1], Idx, "loadpd");
-  }
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
     const llvm::Type *EltTy = llvm::Type::Int64Ty;

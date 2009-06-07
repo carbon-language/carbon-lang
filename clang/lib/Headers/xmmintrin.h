@@ -464,20 +464,19 @@ _mm_cvtss_f32(__m128 a)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_loadh_pi(__m128 a, __m64 const *p)
 {
-  return __builtin_ia32_loadhps(a, (__v2si *)p);
+  __m128 b;
+  b[0] = *(float*)p;
+  b[1] = *((float*)p+1);
+  return __builtin_shufflevector(a, b, 0, 1, 4, 5);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_loadl_pi(__m128 a, __m64 const *p)
 {
-#if 0
-  // FIXME: This should work, but gives really crappy code at the moment
   __m128 b;
   b[0] = *(float*)p;
   b[1] = *((float*)p+1);
-  return __builtin_shufflevector(a, b, 0, 1, 4, 5);
-#endif
-  return __builtin_ia32_loadlps(a, (__v2si *)p);
+  return __builtin_shufflevector(a, b, 4, 5, 2, 3);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
@@ -898,8 +897,6 @@ do { \
   (row2) = _mm_movelh_ps(tmp1, tmp3); \
   (row3) = _mm_movelh_ps(tmp3, tmp1); \
 } while (0)
-
-#include <emmintrin.h>
 
 #endif /* __SSE__ */
 
