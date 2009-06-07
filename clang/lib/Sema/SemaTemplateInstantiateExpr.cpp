@@ -1222,9 +1222,17 @@ TemplateExprInstantiator::VisitObjCStringLiteral(ObjCStringLiteral *E) {
 }
 
 Sema::OwningExprResult 
-TemplateExprInstantiator::VisitObjCEncodeExpr(ObjCEncodeExpr *E) { 
-  assert(false && "FIXME: Template instantiations for ObjC expressions");
-  return SemaRef.ExprError();
+TemplateExprInstantiator::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
+  QualType EncodedType = SemaRef.InstantiateType(E->getEncodedType(),
+                                                 TemplateArgs,
+                                                 /*FIXME:*/E->getAtLoc(),
+                                                 DeclarationName());
+  if (EncodedType.isNull())
+    return SemaRef.ExprError();
+  
+  return SemaRef.Owned(SemaRef.BuildObjCEncodeExpression(E->getAtLoc(), 
+                                                         EncodedType, 
+                                                         E->getRParenLoc()));
 }
 
 Sema::OwningExprResult 

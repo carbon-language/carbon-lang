@@ -1696,6 +1696,10 @@ public:
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                             ExprTy **Strings,
                                             unsigned NumStrings);
+  
+  Expr *BuildObjCEncodeExpression(SourceLocation AtLoc, 
+                                  QualType EncodedType,
+                                  SourceLocation RParenLoc);                                    
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                SourceLocation EncodeLoc,
                                                SourceLocation LParenLoc,

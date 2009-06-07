@@ -92,6 +92,29 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   return new (Context) ObjCStringLiteral(S, Ty, AtLocs[0]);
 }
 
+Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc, 
+                                      QualType EncodedType,
+                                      SourceLocation RParenLoc) {
+  QualType StrTy;
+  if (EncodedType->isDependentType()) 
+    StrTy = Context.DependentTy;
+  else {
+    std::string Str;
+    Context.getObjCEncodingForType(EncodedType, Str);
+
+    // The type of @encode is the same as the type of the corresponding string,
+    // which is an array type.
+    StrTy = Context.CharTy;
+    // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
+    if (getLangOptions().CPlusPlus)
+      StrTy.addConst();
+    StrTy = Context.getConstantArrayType(StrTy, llvm::APInt(32, Str.size()+1),
+                                         ArrayType::Normal, 0);
+  }
+  
+  return new (Context) ObjCEncodeExpr(StrTy, EncodedType, AtLoc, RParenLoc);
+}
+
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation EncodeLoc,
                                                  SourceLocation LParenLoc,
@@ -99,19 +122,7 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation RParenLoc) {
   QualType EncodedType = QualType::getFromOpaquePtr(ty);
 
-  std::string Str;
-  Context.getObjCEncodingForType(EncodedType, Str);
-
-  // The type of @encode is the same as the type of the corresponding string,
-  // which is an array type.
-  QualType StrTy = Context.CharTy;
-  // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
-  if (getLangOptions().CPlusPlus)
-    StrTy.addConst();
-  StrTy = Context.getConstantArrayType(StrTy, llvm::APInt(32, Str.size()+1),
-                                       ArrayType::Normal, 0);
-  
-  return new (Context) ObjCEncodeExpr(StrTy, EncodedType, AtLoc, RParenLoc);
+  return BuildObjCEncodeExpression(AtLoc, EncodedType, RParenLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,

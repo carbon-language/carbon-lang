@@ -64,7 +64,8 @@ class ObjCEncodeExpr : public Expr {
 public:
   ObjCEncodeExpr(QualType T, QualType ET, 
                  SourceLocation at, SourceLocation rp)
-    : Expr(ObjCEncodeExprClass, T), EncType(ET), AtLoc(at), RParenLoc(rp) {}
+    : Expr(ObjCEncodeExprClass, T, ET->isDependentType(), 
+           ET->isDependentType()), EncType(ET), AtLoc(at), RParenLoc(rp) {}
   
   explicit ObjCEncodeExpr(EmptyShell Empty) : Expr(ObjCEncodeExprClass, Empty){}
 
