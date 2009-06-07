@@ -166,7 +166,7 @@ namespace llvm {
     std::vector<unsigned char> SectionData;
 
     /// Relocations - The relocations that we have encountered so far in this 
-    /// section that we will need to convert to MachORelocation entries when
+    /// section that we will need to convert to Elf relocation entries when
     /// the file is written.
     std::vector<MachineRelocation> Relocations;
 

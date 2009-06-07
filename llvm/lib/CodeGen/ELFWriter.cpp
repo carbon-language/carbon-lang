@@ -290,7 +290,6 @@ void ELFWriter::EmitSymbolTable() {
 
   // Set the zero'th symbol to a null byte, as required.
   StrTabOut.outbyte(0);
-  //SymbolTable[0].NameIdx = 0;
   unsigned Index = 1;
   for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
     // Use the name mangler to uniquify the LLVM symbol.
