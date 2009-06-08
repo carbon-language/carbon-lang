@@ -350,7 +350,7 @@ public:
   LegalizeAction getOperationAction(unsigned Op, MVT VT) const {
     if (VT.isExtended()) return Expand;
     assert(Op < array_lengthof(OpActions) &&
-           (unsigned)VT.getSimpleVT() < sizeof(OpActions[0])*4 &&
+           (unsigned)VT.getSimpleVT() < sizeof(OpActions[0])*8 &&
            "Table isn't big enough!");
     return (LegalizeAction)((OpActions[Op] >> (2*VT.getSimpleVT())) & 3);
   }
@@ -417,11 +417,10 @@ public:
   /// for it.
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, MVT VT) const {
-    assert(IdxMode < array_lengthof(IndexedModeActions[0]) &&
-           (unsigned)VT.getSimpleVT() < sizeof(IndexedModeActions[0][0])*4 &&
+    assert( IdxMode < array_lengthof(IndexedModeActions[0][0]) &&
+           ((unsigned)VT.getSimpleVT()) < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    return (LegalizeAction)((IndexedModeActions[0][IdxMode] >>
-                             (2*VT.getSimpleVT())) & 3);
+    return (LegalizeAction)((IndexedModeActions[(unsigned)VT.getSimpleVT()][0][IdxMode]));
   }
 
   /// isIndexedLoadLegal - Return true if the specified indexed load is legal
@@ -438,11 +437,10 @@ public:
   /// for it.
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, MVT VT) const {
-    assert(IdxMode < array_lengthof(IndexedModeActions[1]) &&
-           (unsigned)VT.getSimpleVT() < sizeof(IndexedModeActions[1][0])*4 &&
+    assert(IdxMode < array_lengthof(IndexedModeActions[0][1]) &&
+           (unsigned)VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    return (LegalizeAction)((IndexedModeActions[1][IdxMode] >>
-                             (2*VT.getSimpleVT())) & 3);
+    return (LegalizeAction)((IndexedModeActions[(unsigned)VT.getSimpleVT()][1][IdxMode]));
   }  
 
   /// isIndexedStoreLegal - Return true if the specified indexed load is legal
@@ -942,7 +940,7 @@ protected:
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT VT,
                           LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(OpActions[0])*4 &&
+    assert((unsigned)VT.getSimpleVT() < sizeof(OpActions[0])*8 &&
            Op < array_lengthof(OpActions) && "Table isn't big enough!");
     OpActions[Op] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
     OpActions[Op] |= (uint64_t)Action << VT.getSimpleVT()*2;
@@ -978,11 +976,10 @@ protected:
   /// TargetLowering.cpp
   void setIndexedLoadAction(unsigned IdxMode, MVT VT,
                             LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(IndexedModeActions[0])*4 &&
-           IdxMode < array_lengthof(IndexedModeActions[0]) &&
+    assert((unsigned)VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+           IdxMode < array_lengthof(IndexedModeActions[0][0]) &&
            "Table isn't big enough!");
-    IndexedModeActions[0][IdxMode] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
-    IndexedModeActions[0][IdxMode] |= (uint64_t)Action << VT.getSimpleVT()*2;
+    IndexedModeActions[(unsigned)VT.getSimpleVT()][0][IdxMode] = (uint8_t)Action;
   }
   
   /// setIndexedStoreAction - Indicate that the specified indexed store does or
@@ -991,11 +988,10 @@ protected:
   /// TargetLowering.cpp
   void setIndexedStoreAction(unsigned IdxMode, MVT VT,
                              LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(IndexedModeActions[1][0])*4 &&
-           IdxMode < array_lengthof(IndexedModeActions[1]) &&
+    assert((unsigned)VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+           IdxMode < array_lengthof(IndexedModeActions[0][1] ) &&
            "Table isn't big enough!");
-    IndexedModeActions[1][IdxMode] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
-    IndexedModeActions[1][IdxMode] |= (uint64_t)Action << VT.getSimpleVT()*2;
+    IndexedModeActions[(unsigned)VT.getSimpleVT()][1][IdxMode] = (uint8_t)Action;
   }
   
   /// setConvertAction - Indicate that the specified conversion does or does
@@ -1581,10 +1577,13 @@ private:
   /// indicates how instruction selection should deal with the store.
   uint64_t TruncStoreActions[MVT::LAST_VALUETYPE];
 
-  /// IndexedModeActions - For each indexed mode and each value type, keep a
-  /// pair of LegalizeAction that indicates how instruction selection should
-  /// deal with the load / store.
-  uint64_t IndexedModeActions[2][ISD::LAST_INDEXED_MODE];
+  /// IndexedModeActions - For each indexed mode and each value type,
+  /// keep a pair of LegalizeAction that indicates how instruction
+  /// selection should deal with the load / store.  The first
+  /// dimension is the value_type for the reference.  The second
+  /// dimension is the load [0] vs. store[1].  The third dimension
+  /// represents the various modes for load store.
+  uint8_t IndexedModeActions[MVT::LAST_VALUETYPE][2][ISD::LAST_INDEXED_MODE];
   
   /// ConvertActions - For each conversion from source type to destination type,
   /// keep a LegalizeAction that indicates how instruction selection should
