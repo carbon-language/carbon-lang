@@ -23,7 +23,7 @@ class Module;
 class ARMSubtarget : public TargetSubtarget {
 protected:
   enum ARMArchEnum {
-    V4T, V5T, V5TE, V6, V7A
+    V4T, V5T, V5TE, V6, V6T2, V7A
   };
 
   enum ARMFPEnum {
@@ -92,6 +92,7 @@ protected:
   bool hasV5TOps()  const { return ARMArchVersion >= V5T;  }
   bool hasV5TEOps() const { return ARMArchVersion >= V5TE; }
   bool hasV6Ops()   const { return ARMArchVersion >= V6;   }
+  bool hasV6T2Ops() const { return ARMArchVersion >= V6T2; }
   bool hasV7Ops()   const { return ARMArchVersion >= V7A;  }
 
   bool hasVFP2() const { return ARMFPUType >= VFPv2; }

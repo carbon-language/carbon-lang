@@ -28,6 +28,8 @@ def ArchV5TE    : SubtargetFeature<"v5te", "ARMArchVersion", "V5TE",
                                    "ARM v5TE, v5TEj, v5TExp">;
 def ArchV6      : SubtargetFeature<"v6", "ARMArchVersion", "V6",
                                    "ARM v6">;
+def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
+                                   "ARM v6t2">;
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A">;
 def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
@@ -92,9 +94,11 @@ def : Proc<"arm1176jzf-s",    [ArchV6, FeatureVFP2]>;
 def : Proc<"mpcorenovfp",     [ArchV6]>;
 def : Proc<"mpcore",          [ArchV6, FeatureVFP2]>;
 
-def : Proc<"arm1156t2-s",     [ArchV6, FeatureThumb2]>;
-def : Proc<"arm1156t2f-s",    [ArchV6, FeatureThumb2, FeatureVFP2]>;
+// V6T2 Processors.
+def : Proc<"arm1156t2-s",     [ArchV6T2, FeatureThumb2]>;
+def : Proc<"arm1156t2f-s",    [ArchV6T2, FeatureThumb2, FeatureVFP2]>;
 
+// V7 Processors.
 def : Proc<"cortex-a8",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 def : Proc<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
