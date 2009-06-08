@@ -244,6 +244,11 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
     Opts.ObjCNonFragileABI = 1;
 }
 
+/// GetWindowsLanguageOptions - Set the default language options for Windows.
+static void GetWindowsLanguageOptions(LangOptions &Opts,
+                                     const char *Triple) {
+  Opts.Microsoft = true;
+}
 
 //===----------------------------------------------------------------------===//
 // Specific target implementations.
@@ -924,9 +929,8 @@ public:
   WindowsX86_32TargetInfo(const std::string& triple)
     : X86_32TargetInfo(triple) {
     TLSSupported = false;
-    // FIXME: Fix wchar_t.
-    // FIXME: We should probably enable -fms-extensions by default for
-    // this target.
+    WCharType = SignedShort;
+    WCharWidth = WCharAlign = 16;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -937,6 +941,11 @@ public:
     DefineStd(Defines, "WINNT", Opts);
     Define(Defines, "_X86_");
     Define(Defines, "__MSVCRT__");
+  }
+
+  virtual void getDefaultLangOptions(LangOptions &Opts) {
+    X86_32TargetInfo::getDefaultLangOptions(Opts);
+    GetWindowsLanguageOptions(Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace

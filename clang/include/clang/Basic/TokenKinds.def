@@ -341,7 +341,6 @@ ALIAS("__attribute__", __attribute, KEYALL)
 ALIAS("__const"      , const      , KEYALL)
 ALIAS("__const__"    , const      , KEYALL)
 ALIAS("__alignof__"  , __alignof  , KEYALL)
-ALIAS("_asm"         , asm        , KEYMS)
 ALIAS("__asm"        , asm        , KEYALL)
 ALIAS("__asm__"      , asm        , KEYALL)
 ALIAS("__complex"    , _Complex   , KEYALL)
@@ -359,6 +358,11 @@ ALIAS("__typeof__"   , typeof     , KEYALL)
 ALIAS("__volatile"   , volatile   , KEYALL)
 ALIAS("__volatile__" , volatile   , KEYALL)
 
+// Microsoft extensions which should be disabled in strict conformance mode
+ALIAS("_asm"         , asm        , KEYMS)
+ALIAS("_cdecl"       , __cdecl    , KEYMS)
+ALIAS("_fastcall"    , __fastcall , KEYMS)
+ALIAS("_stdcall"     , __stdcall  , KEYMS)
 
 //===----------------------------------------------------------------------===//
 // Objective-C @-preceeded keywords.

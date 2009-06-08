@@ -310,7 +310,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Filter out some microsoft extensions when trying to parse in ms-compat
   // mode. 
   if (LangOpts.Microsoft) {
-    DefineBuiltinMacro(Buf, "_cdecl=__cdecl");
     DefineBuiltinMacro(Buf, "__int8=__INT8_TYPE__");
     DefineBuiltinMacro(Buf, "__int16=__INT16_TYPE__");
     DefineBuiltinMacro(Buf, "__int32=__INT32_TYPE__");

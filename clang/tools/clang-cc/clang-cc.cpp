@@ -808,7 +808,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   
   if (PascalStrings.getPosition())
     Options.PascalStrings = PascalStrings;
-  Options.Microsoft = MSExtensions;
+  if (MSExtensions.getPosition())
+    Options.Microsoft = MSExtensions;
   Options.WritableStrings = WritableStrings;
   if (NoLaxVectorConversions.getPosition())
       Options.LaxVectorConversions = 0;
