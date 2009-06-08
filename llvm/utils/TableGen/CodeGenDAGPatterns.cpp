@@ -2025,7 +2025,7 @@ void CodeGenDAGPatterns::ParsePatterns() {
           }
         }
         else {
-          ListTy - TArg->getType();
+          ListTy = TArg->getType();
         }
       }
       ListInit *LI = new ListInit(Values, new ListRecTy(ListTy));

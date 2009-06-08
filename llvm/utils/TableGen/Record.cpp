@@ -18,6 +18,7 @@
 #include <ios>
 #include <sys/types.h>
 #include <regex.h>
+#include <sstream>
 
 using namespace llvm;
 
@@ -1034,6 +1035,69 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
+
+  case PATSUBST: {
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    StringInit *MHSs = dynamic_cast<StringInit*>(MHS);
+    StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
+
+    if (LHSs && MHSs && RHSs) {
+      regex_t compiled;
+      int err = regcomp (&compiled, LHSs->getValue().c_str(), REG_EXTENDED);
+      if (err != 0) {
+        size_t length = regerror (err, &compiled, NULL, 0);
+        char *buffer = new char[length];
+        (void) regerror (err, &compiled, buffer, length);
+        std::string errmsg = buffer;
+        delete[] buffer;
+        regfree(&compiled);
+        throw errmsg;
+      }
+      regmatch_t matches[10];
+      int result = regexec(&compiled, RHSs->getValue().c_str(), 10, matches, 0);
+      if (result == REG_ESPACE) {
+        size_t length = regerror (err, &compiled, NULL, 0);
+        char *buffer = new char[length];
+        (void) regerror (err, &compiled, buffer, length);
+        std::string errmsg = buffer;
+        delete[] buffer;
+        regfree(&compiled);
+        throw errmsg;
+      }
+      regfree(&compiled);
+      if (result == 0) {
+        // Parse the substitution string looking for $1, $2, etc. and
+        // substitute strings.  If there are no $1, etc. just replace
+        // the whole string.
+        std::string replacement = MHSs->getValue();
+        size_t pos = replacement.find("$");
+        while (pos != std::string::npos && pos+1 < replacement.size()) {
+          if (std::isdigit(replacement[pos+1])) {
+            std::string sidx(&replacement[pos+1], 1);
+            std::istringstream str(sidx);
+            int idx;
+            if (str >> idx) {              
+              replacement.replace(pos, 2, RHSs->getValue(), matches[idx].rm_so,
+                                  matches[idx].rm_eo - matches[idx].rm_so);
+            }
+            else {
+              throw "unexpected failure in patsubst index calculation";
+            }
+          }
+          else if (replacement[pos+1] == '$') {
+            replacement.replace(pos, 2, "$");
+          }
+          pos = replacement.find("$", pos+1);
+        }
+        return new StringInit(replacement);
+      }
+      else {
+        // No match, just pass the string through
+        return RHSs;
+      }
+    }
+    break;
+  }  
   }
 
   return this;
@@ -1069,6 +1133,7 @@ std::string TernOpInit::getAsString() const {
   std::string Result;
   switch (Opc) {
   case SUBST: Result = "!subst"; break;
+  case PATSUBST: Result = "!patsubst"; break;
   case FOREACH: Result = "!foreach"; break; 
   case IF: Result = "!if"; break; 
  }

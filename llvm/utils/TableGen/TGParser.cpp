@@ -878,6 +878,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
   case tgtok::XIf:
   case tgtok::XForEach:
+  case tgtok::XPatSubst:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     TernOpInit::TernaryOp Code;
     RecTy *Type = 0;
@@ -895,6 +896,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
       break;
     case tgtok::XSubst:
       Code = TernOpInit::SUBST;
+      break;
+    case tgtok::XPatSubst:
+      Code = TernOpInit::PATSUBST;
       break;
     }
     if (Lex.getCode() != tgtok::l_paren) {
@@ -969,6 +973,10 @@ Init *TGParser::ParseOperation(Record *CurRec) {
       Type = RHSt->getType();
       break;
     }
+    case tgtok::XPatSubst: {
+      Type = new StringRecTy;
+      break;
+    }      
     }
     return (new TernOpInit(Code, LHS, MHS, RHS, Type))->Fold(CurRec, CurMultiClass);
   }
@@ -1277,6 +1285,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
   case tgtok::XNameConcat:  // Value ::= !binop '(' Value ',' Value ')'
   case tgtok::XIf:
   case tgtok::XForEach:
+  case tgtok::XPatSubst:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     return ParseOperation(CurRec);
     break;

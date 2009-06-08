@@ -417,6 +417,10 @@ aborts with an error. </dd>
 <dt><tt>!subst(a, b, c)</tt></dt>
   <dd>If 'a' and 'b' are of string type or are symbol references, substitute 
 'b' for 'a' in 'c.'  This operation is analogous to $(subst) in GNU make.</dd>
+<dt><tt>!patsubst(a, b, c)</tt></dt>
+  <dd>patch regular expression 'a' against string 'c' and substitute string 'b' on 
+a match.  'b' may contain placeholders of the form $&lt;digit&gt;, where 
+&lt;digit&gt; is a number 1-9.</dd>
 <dt><tt>!regmatch(a, b)</tt></dt>
   <dd>An integer {0,1} indicating whether string 'b' matched regular expression
 'a.'</dd>
