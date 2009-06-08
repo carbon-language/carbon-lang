@@ -43,8 +43,17 @@ void Clang::AddPreprocessingOptions(const Driver &D,
                                     ArgStringList &CmdArgs,
                                     const InputInfo &Output,
                                     const InputInfoList &Inputs) const {
-  // Handle dependency file generation.
   Arg *A;
+
+  if ((A = Args.getLastArg(options::OPT_C)) ||
+      (A = Args.getLastArg(options::OPT_CC))) {
+    if (!Args.hasArg(options::OPT_E))
+      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << A->getAsString(Args) << "-E";
+    A->render(Args, CmdArgs);
+  }
+
+  // Handle dependency file generation.
   if ((A = Args.getLastArg(options::OPT_M)) ||
       (A = Args.getLastArg(options::OPT_MM)) ||
       (A = Args.getLastArg(options::OPT_MD)) ||
