@@ -3003,8 +3003,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
         compositeType = Context.getObjCIdType();
       } else if (LHSBPT || RHSBPT) {
         if (!sameKind
-            || !Context.typesAreBlockCompatible(lhptee.getUnqualifiedType(),
-                                                rhptee.getUnqualifiedType()))
+            || !Context.typesAreCompatible(lhptee.getUnqualifiedType(),
+                                           rhptee.getUnqualifiedType()))
           Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
             << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
         return QualType();
@@ -3218,7 +3218,7 @@ Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
   if (lhptee.getCVRQualifiers() != rhptee.getCVRQualifiers())
     ConvTy = CompatiblePointerDiscardsQualifiers;
 
-  if (!Context.typesAreBlockCompatible(lhptee, rhptee))
+  if (!Context.typesAreCompatible(lhptee, rhptee))
     return IncompatibleBlockPointer;
   return ConvTy;
 }
@@ -3978,7 +3978,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     QualType rpointee = rType->getAsBlockPointerType()->getPointeeType();
 
     if (!LHSIsNull && !RHSIsNull &&
-        !Context.typesAreBlockCompatible(lpointee, rpointee)) {
+        !Context.typesAreCompatible(lpointee, rpointee)) {
       Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }

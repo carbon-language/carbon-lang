@@ -696,7 +696,6 @@ public:
                                              
   /// Compatibility predicates used to check assignment expressions.
   bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
-  bool typesAreBlockCompatible(QualType lhs, QualType rhs);
   
   bool isObjCIdType(QualType T) const {
     return T == ObjCIdType;
