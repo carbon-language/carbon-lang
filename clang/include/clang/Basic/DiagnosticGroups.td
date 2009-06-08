@@ -85,9 +85,10 @@ def Trigraphs : DiagGroup<"trigraphs">;
 def : DiagGroup<"type-limits">;
 def Uninitialized  : DiagGroup<"uninitialized">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
-def : DiagGroup<"unused-function">;
-def : DiagGroup<"unused-label">;
-def : DiagGroup<"unused-parameter">;
+def UnusedArgument : DiagGroup<"unused-argument">;
+def UnusedFunction : DiagGroup<"unused-function">;
+def UnusedLabel : DiagGroup<"unused-label">;
+def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
 def UnusedVariable : DiagGroup<"unused-variable">;
 def : DiagGroup<"variadic-macros">;
@@ -97,6 +98,10 @@ def : DiagGroup<"write-strings">;
 
 // Aggregation warning settings.
 
+
+def Unused : DiagGroup<"unused",
+                       [UnusedArgument, UnusedFunction, UnusedLabel,
+                        UnusedParameter, UnusedValue, UnusedVariable]>;
 
 // Format settings.
 def Format : DiagGroup<"format", [FormatExtraArgs, FormatZeroLength, NonNull]>;
