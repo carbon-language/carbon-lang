@@ -18,9 +18,9 @@ using namespace clang;
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
                              ActionBase::ExprTy **ExprList, unsigned numArgs,
-                             AttributeList *n)
+                             AttributeList *n, bool declspec)
   : AttrName(aName), AttrLoc(aLoc), ParmName(pName), ParmLoc(pLoc),
-    NumArgs(numArgs), Next(n) {
+    NumArgs(numArgs), Next(n), DeclspecAttribute(declspec) {
   
   if (numArgs == 0)
     Args = 0;

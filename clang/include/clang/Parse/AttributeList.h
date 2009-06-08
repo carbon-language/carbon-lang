@@ -38,13 +38,14 @@ class AttributeList {
   ActionBase::ExprTy **Args;
   unsigned NumArgs;
   AttributeList *Next;
+  bool DeclspecAttribute;
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
   void operator=(const AttributeList &); // DO NOT IMPLEMENT
 public:
   AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
                 ActionBase::ExprTy **args, unsigned numargs,
-                AttributeList *Next);
+                AttributeList *Next, bool declspec = false);
   ~AttributeList();
   
   enum Kind {              // Please keep this list alphabetized.
@@ -103,6 +104,7 @@ public:
   IdentifierInfo *getName() const { return AttrName; }
   SourceLocation getLoc() const { return AttrLoc; }
   IdentifierInfo *getParameterName() const { return ParmName; }
+  bool isDeclspecAttribute() const { return DeclspecAttribute; }
   
   Kind getKind() const { return getKind(getName()); }
   static Kind getKind(const IdentifierInfo *Name);

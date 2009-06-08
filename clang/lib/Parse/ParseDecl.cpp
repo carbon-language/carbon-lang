@@ -200,18 +200,50 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
   return CurrAttr;
 }
 
-/// FuzzyParseMicrosoftDeclSpec. When -fms-extensions is enabled, this
-/// routine is called to skip/ignore tokens that comprise the MS declspec.
-void Parser::FuzzyParseMicrosoftDeclSpec() {
+/// ParseMicrosoftDeclSpec - Parse an __declspec construct
+///
+/// [MS] decl-specifier:
+///             __declspec ( extended-decl-modifier-seq )
+///
+/// [MS] extended-decl-modifier-seq:
+///             extended-decl-modifier[opt]
+///             extended-decl-modifier extended-decl-modifier-seq
+
+AttributeList* Parser::ParseMicrosoftDeclSpec() {
   assert(Tok.is(tok::kw___declspec) && "Not a declspec!");
+
+  AttributeList *CurrAttr = 0;
   ConsumeToken();
-  if (Tok.is(tok::l_paren)) {
-    unsigned short savedParenCount = ParenCount;
-    do {
-      ConsumeAnyToken();
-    } while (ParenCount > savedParenCount && Tok.isNot(tok::eof));
-  } 
-  return;
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+                       "declspec")) {
+    SkipUntil(tok::r_paren, true); // skip until ) or ;
+    return CurrAttr;
+  }
+  while (Tok.is(tok::identifier) || Tok.is(tok::kw_restrict)) {
+    IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+    SourceLocation AttrNameLoc = ConsumeToken();
+    if (Tok.is(tok::l_paren)) {
+      ConsumeParen();
+      // FIXME: This doesn't parse __declspec(property(get=get_func_name))
+      // correctly.
+      OwningExprResult ArgExpr(ParseAssignmentExpression());
+      if (!ArgExpr.isInvalid()) {
+        ExprTy* ExprList = ArgExpr.take();
+        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+                                     SourceLocation(), &ExprList, 1,
+                                     CurrAttr, true);
+      }
+      if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+        SkipUntil(tok::r_paren, false);
+    } else {
+      CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, SourceLocation(),
+                                   0, 0, CurrAttr, true);
+    }
+  }
+  if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+    SkipUntil(tok::r_paren, false);
+  // FIXME: Return the attributes once we have some Sema support!
+  return 0;
 }
 
 /// ParseDeclaration - Parse a full 'declaration', which consists of
@@ -809,7 +841,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___declspec:
       if (!PP.getLangOptions().Microsoft)
         goto DoneWithDeclSpec;
-      FuzzyParseMicrosoftDeclSpec();
+      DS.AddAttributes(ParseMicrosoftDeclSpec());
       continue;
       
     // Microsoft single token adornments.

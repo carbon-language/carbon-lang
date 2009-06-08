@@ -410,7 +410,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   // If declspecs exist after tag, parse them.
   if (Tok.is(tok::kw___declspec) && PP.getLangOptions().Microsoft)
-    FuzzyParseMicrosoftDeclSpec();
+    // FIXME: Need to do something with the attributes!
+    ParseMicrosoftDeclSpec();
   
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;

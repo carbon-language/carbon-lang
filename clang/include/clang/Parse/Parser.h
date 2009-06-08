@@ -1064,7 +1064,7 @@ private:
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the attribute list.
   AttributeList *ParseAttributes(SourceLocation *EndLoc = 0);
-  void FuzzyParseMicrosoftDeclSpec();
+  AttributeList *ParseMicrosoftDeclSpec();
   void ParseTypeofSpecifier(DeclSpec &DS);
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
