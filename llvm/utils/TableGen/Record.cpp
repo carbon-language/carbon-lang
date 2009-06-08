@@ -16,6 +16,8 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
 #include <ios>
+#include <sys/types.h>
+#include <regex.h>
 
 using namespace llvm;
 
@@ -671,6 +673,36 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
+  case REGMATCH: {
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
+    if (LHSs && RHSs) {
+      regex_t compiled;
+      int err = regcomp (&compiled, LHSs->getValue().c_str(), REG_EXTENDED);
+      if (err != 0) {
+        size_t length = regerror (err, &compiled, NULL, 0);
+        char *buffer = new char[length];
+        (void) regerror (err, &compiled, buffer, length);
+        std::string errmsg = buffer;
+        delete[] buffer;
+        regfree(&compiled);
+        throw errmsg;
+      }
+      int result = regexec(&compiled, RHSs->getValue().c_str(), 0, NULL, 0);
+      if (result == REG_ESPACE) {
+        size_t length = regerror (err, &compiled, NULL, 0);
+        char *buffer = new char[length];
+        (void) regerror (err, &compiled, buffer, length);
+        std::string errmsg = buffer;
+        delete[] buffer;
+        regfree(&compiled);
+        throw errmsg;
+      }
+      regfree(&compiled);
+      return new IntInit(result == 0);
+    }    
+    break;
+  }
   case SHL:
   case SRA:
   case SRL: {
@@ -710,6 +742,7 @@ std::string BinOpInit::getAsString() const {
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;
   case STRCONCAT: Result = "!strconcat"; break;
+  case REGMATCH: Result = "!regmatch"; break;
   case NAMECONCAT: 
     Result = "!nameconcat<" + getType()->getAsString() + ">"; break;
   }
