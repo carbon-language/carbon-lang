@@ -1,0 +1,28 @@
+<div id="menu">
+  <div>
+    <a href="http://llvm.org/">LLVM Home</a>
+    <a href="http://clang.llvm.org/">Clang Home</a>    
+  </div>
+
+  <div class="submenu">
+    <label>Quick Links</label>
+    <a href="/index.html">About the Analyzer</a>
+    <a href="/filing_bugs.html">Filing Bugs</a>    
+  </div>
+    
+  <div class="submenu">
+    <label>User Manual</label>
+<!--      <a href="/design_philosphy.html">Design&nbsp;Philosophy</a> -->
+      <a href="/installation.html">Obtaining&nbsp;the&nbsp;Analyzer</a>
+      <a href="/scan_build.html">Running&nbsp;the&nbsp;Analyzer</tt></a>
+      <a href="/available_checks.html">Available&nbsp;Checks</a>
+<!--      <a href="/false_positives.html">False&nbsp;Positives</a> -->
+      <a href="/annotations.html">Source-level Annotations</a>
+  </div>
+
+  <div class="submenu">
+    <label>Clang Mailing Lists</label>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>
+  </div>
+</div>

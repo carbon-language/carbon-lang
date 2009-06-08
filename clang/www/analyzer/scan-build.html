@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Running the Analyzer</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
+  <style>  
+    thead {
+      background-color:#eee; color:#666666;
+      font-weight: bold; cursor: default;
+      text-align:center;
+      border-top: 2px solid #cccccc;
+      border-bottom: 2px solid #cccccc;
+      font-weight: bold; font-family: Verdana
+    } 
+    table { border: 1px #cccccc solid }
+    table { border-collapse: collapse; border-spacing: 0px }
+    table { margin-left:0px; margin-top:20px; margin-bottom:20px }
+    td { border-bottom: 1px #cccccc dotted }
+    td { padding:5px; padding-left:8px; padding-right:8px }
+    td { text-align:left; font-size:9pt }
+    td.View   { padding-left: 10px }  
+  </style>
+</head>
+<body>
+
+<!--#include virtual="menu.html.incl"-->
+
+<div id="content">
+
+<h1>Running the Analyzer</h1>
+
+<p>While the static analyzer engine can be used as a library, many users will
+likely use the command-line interface to the analyzer to analyze projects. There
+are essentially two commands one can use the run the analyzer:</p>
+
+<ul>
+<li><b>scan-build</b>: The <tt>scan-build</tt> command can be used to analyze
+an entire project.</li>
+<li><b>clang</b>: The <tt>clang</tt> command is both Clang's compiler and
+static analysis driver. This can be used both to compile and analyze
+individual source files.
+</ul>
+
+<h3>Contents</h3>
+
+<ul>
+<li><a href="#scanbuild">scan-build</a></li>
+ <ul>
+  <li><a href="#scanbuild_basicusage">Basic Usage</a></li>
+  <li><a href="#scanbuild_otheroptions">Other Options</a></li>
+  <li><a href="#scanbuild_output">Output of scan-build</a></li>
+ </ul>
+<li><a href="#recommendedguidelines">Recommended Usage Guidelines</a></li>
+ <ul>
+  <li><a href="#recommended_debug">Always Analyze a Project in its &quot;Debug&quot; Configuration</a></li>
+  <li><a href="#recommended_verbose">Use Verbose Output when Debugging scan-build</a></li>
+  <li><a href="#recommended_autoconf">Run './configure' through scan-build</a></li>
+ </ul>
+</ul>
+
+<h2 id="scanbuild">scan-build</h2>
+
+<p>The <tt>scan-build</tt> command can be used to analyze an entire project by
+essentially interposing on a project's build process. This means that to run the
+analyzer using <tt>scan-build</tt>, you will use <tt>scan-build</tt> to analyze
+the source files compiled by <tt>gcc</tt> during a project build. This means
+that any files that are not compiled will also not be analyzed.</p>
+
+<h3 id="scanbuild_basicusage">Basic Usage</h3>
+
+<p>Basic usage of <tt>scan-build</tt> is designed to be simple: just place the
+word &quot;scan-build&quot; in front of your build command:</p>
+
+<pre class="code_example">
+$ <span class="code_highlight">scan-build</span> make
+$ <span class="code_highlight">scan-build</span> xcodebuild
+</pre>
+
+<p>In the first case <tt>scan-build</tt> analyzes the code of a project built
+with <tt>make</tt> and in the second case <tt>scan-build</tt> analyzes a project
+built using <tt>xcodebuild</tt>.<p>
+  
+<p>Here is the general format for invoking <tt>scan-build</tt>:</p>
+
+<pre class="code_example">
+$ <span class="code_highlight">scan-build</span> <i>[scan-build options]</i> <span class="code_highlight">&lt;command&gt;</span> <i>[command options]</i>
+</pre>
+
+<p>Operationally, <tt>scan-build</tt> literally runs <command> with all of the
+subsequent options passed to it. For example, one can pass <nobr><tt>-j4</tt></nobr> to
+<tt>make</tt> get a parallel build over 4 cores:</p>
+
+<pre class="code_example">
+$ scan-build make <span class="code_highlight">-j4</span>
+</pre>
+
+<p>In almost all cases, <tt>scan-build</tt> makes no effort to interpret the
+options after the build command; it simply passes them through. In general,
+<tt>scan-build</tt> should support parallel builds, but <b>not distributed
+builds</b>.</p>
+
+<p>It is also possible to use <tt>scan-build</tt> to analyze specific
+files:</p>
+
+<pre class="code_example">
+ $ scan-build gcc -c <span class="code_highlight">t1.c t2.c</span>
+</pre>
+
+<p>This example causes the files <tt>t1.c</tt> and <tt>t2.c</tt> to be analyzed.
+</p>
+
+<h3 id="scanbuild_otheroptions">Other Options</h3>
+
+<p>As mentioned above, extra options can be passed to <tt>scan-build</tt>. These
+options prefix the build command. For example:</p>
+
+<pre class="code_example">
+ $ scan-build <span class="code_highlight">-k -V</span> make
+ $ scan-build <span class="code_highlight">-k -V</span> xcodebuild
+</pre>
+
+<p>Here is a subset of useful options:</p>
+
+<table>
+<thead><tr><td>Option</td><td>Description</td></tr></thead>
+
+<tr><td><b>-o</b></td><td>Target directory for HTML report files. Subdirectories
+will be created as needed to represent separate "runs" of the analyzer. If this
+option is not specified, a directory is created in <tt>/tmp</tt> to store the
+reports.</td><tr>
+
+<tr><td><b>-h</b><br><i><nobr>(or no arguments)</nobr></i></td><td>Display all
+<tt>scan-build</tt> options.</td></tr>
+
+<tr><td><b>-k</b><br><nobr><b>--keep-going</b></nobr></td><td>Add a "keep on
+going" option to the specified build command. <p>This option currently supports
+<tt>make</tt> and <tt>xcodebuild</tt>.</p> <p>This is a convenience option; one
+can specify this behavior directly using build options.</p></td></tr>
+
+<tr><td><b>-v<b></td><td>Verbose output from scan-build and the analyzer. <b>A
+second and third "-v" increases verbosity</b>, and is useful for filing bug
+reports against the analyzer.</td></tr>
+
+<tr><td><b>-V</b></td><td>View analysis results in a web browser when the build
+command completes.</td></tr> </table>
+
+<p>A complete list of options can be obtained by running <tt>scan-build</tt>
+with no arguments.</p>
+
+<h3 id="scanbuild_output">Output of scan-build</h3>
+
+<p>
+The output of scan-build is a set of HTML files, each one which represents a
+separate bug report. A single <tt>index.html</tt> file is generated for
+surveying all of the bugs. You can then just open <tt>index.html</tt> in a web
+browser to view the bug reports.
+</p>
+
+<p>
+Where the HTML files are generated is specified with a <b>-o</b> option to
+<tt>scan-build</tt>. If <b>-o</b> isn't specified, a directory in <tt>/tmp</tt>
+is created to store the files (<tt>scan-build</tt> will print a message telling
+you where they are). If you want to view the reports immediately after the build
+completes, pass <b>-V</b> to <tt>scan-build</tt>.
+</p>
+
+
+<h2 id="recommendedguidelines">Recommended Usage Guidelines</h2>
+
+<p>This section describes a few recommendations with running the analyzer.</p>
+
+<h3 id="recommended_debug">Always Analyze a Project in its &quot;Debug&quot; Configuration</h3>
+
+<p>Most projects can be built in a &quot;debug&quot; mode that enables assertions.
+Assertions are picked up by the static analyzer to prune infeasible paths, which
+in some cases can greatly reduce the number of false positives (bogus error
+reports) emitted by the tool.</p>
+
+<h3 id="recommend_verbose">Use Verbose Output when Debugging scan-build</h3>
+
+<p><tt>scan-build</tt> takes a <b>-v</b> option to emit verbose output about
+what it's doing; two <b>-v</b> options emit more information. Redirecting the
+output of <tt>scan-build</tt> to a text file (make sure to redirect standard
+error) is useful for filing bug reports against <tt>scan-build</tt> or the
+analyzer, as we can see the exact options (and files) passed to the analyzer.
+For more comprehensible logs, don't perform a parallel build.</p>
+
+<h3 id="recommended_autoconf">Run './configure' through scan-build</h3>
+
+<p>If an analyzed project uses an autoconf generated <tt>configure</tt> script,
+you will probably need to run <tt>configure</tt> script through
+<tt>scan-build</tt> in order to analyze the project.</p>
+
+<p><b>Example</b></p>
+
+<pre class="code_example">
+$ scan-build ./configure
+$ scan-build make
+</pre>
+
+<p>The reason <tt>configure</tt> also needs to be run through
+<tt>scan-build</tt> is because <tt>scan-build</tt> scans your source files by
+<i>interposing</i> on the compiler. This interposition is currently done by
+<tt>scan-build</tt> temporarily setting the environment variable <tt>CC</tt> to
+<tt>ccc-analyzer</tt>. The program <tt>ccc-analyzer</tt> acts like a fake
+compiler, forwarding its command line arguments over to <tt>gcc</tt> to perform
+regular compilation and <tt>clang</tt> to perform static analysis.</p>
+
+<p>Running <tt>configure</tt> typically generates makefiles that have hardwired
+paths to the compiler, and by running <tt>configure</tt> through
+<tt>scan-build</tt> that path is set to <tt>ccc-analyzer</tt>.</p.>
+
+<!-- 
+<h2 id="Debugging">Debugging the Analyzer</h2>
+
+<p>This section provides information on debugging the analyzer, and troubleshooting
+it when you have problems analyzing a particular project.</p>
+
+<h3>How it Works</h3>
+
+<p>To analyze a project, <tt>scan-build</tt> simply sets the environment variable
+<tt>CC</tt> to the full path to <tt>ccc-analyzer</tt>. It also sets a few other
+environment variables to communicate to <tt>ccc-analyzer</tt> where to dump HTML
+report files.</p>
+
+<p>Some Makefiles (or equivalent project files) hardcode the compiler; for such
+projects simply overriding <tt>CC</tt> won't cause <tt>ccc-analyzer</tt> to be
+called. This will cause the compiled code <b>to not be analyzed.</b></p> If you
+find that your code isn't being analyzed, check to see if <tt>CC</tt> is
+hardcoded. If this is the case, you can hardcode it instead to the <b>full
+path</b> to <tt>ccc-analyzer</tt>.</p>
+
+<p>When applicable, you can also run <tt>./configure</tt> for a project through
+<tt>scan-build</tt> so that configure sets up the location of <tt>CC</tt> based
+on the environment passed in from <tt>scan-build</tt>:
+
+<pre>
+  $ scan-build <b>./configure</b>
+</pre>
+
+<p><tt>scan-build</tt> has special knowledge about <tt>configure</tt>, so it in
+most cases will not actually analyze the configure tests run by
+<tt>configure</tt>.</p>
+
+<p>Under the hood, <tt>ccc-analyzer</tt> directly invokes <tt>gcc</tt> to
+compile the actual code in addition to running the analyzer (which occurs by it
+calling <tt>clang</tt>). <tt>ccc-analyzer</tt> tries to correctly forward all
+the arguments over to <tt>gcc</tt>, but this may not work perfectly (please
+report bugs of this kind).
+ -->
+
+</div>
+</body>
+</html>
+
