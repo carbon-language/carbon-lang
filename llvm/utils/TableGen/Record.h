@@ -442,7 +442,10 @@ public:
   virtual bool baseClassOf(const RecordRecTy *RHS) const;
 };
 
-
+/// resolveTypes - Find a common type that T1 and T2 convert to.  
+/// Return 0 if no such type exists.
+///
+RecTy *resolveTypes(RecTy *T1, RecTy *T2);
 
 //===----------------------------------------------------------------------===//
 //  Initializer Classes
@@ -618,10 +621,10 @@ public:
 
 /// IntInit - 7 - Represent an initalization by a literal integer value.
 ///
-class IntInit : public Init {
+class IntInit : public TypedInit {
   int64_t Value;
 public:
-  explicit IntInit(int64_t V) : Value(V) {}
+  explicit IntInit(int64_t V) : TypedInit(new IntRecTy), Value(V) {}
 
   int64_t getValue() const { return Value; }
 
@@ -631,6 +634,25 @@ public:
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
 
   virtual std::string getAsString() const;
+
+  /// resolveBitReference - This method is used to implement
+  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
+  /// simply return the resolved value, otherwise we return null.
+  ///
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) {
+    assert(0 && "Illegal bit reference off int");
+    return 0;
+  }
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt) {
+    assert(0 && "Illegal element reference off int");
+    return 0;
+  }
 };
 
 
@@ -688,17 +710,18 @@ public:
 
 /// ListInit - [AL, AH, CL] - Represent a list of defs
 ///
-class ListInit : public Init {
+class ListInit : public TypedInit {
   std::vector<Init*> Values;
 public:
   typedef std::vector<Init*>::iterator       iterator;
   typedef std::vector<Init*>::const_iterator const_iterator;
 
-  explicit ListInit(std::vector<Init*> &Vs) {
+  explicit ListInit(std::vector<Init*> &Vs, RecTy *EltTy)
+    : TypedInit(new ListRecTy(EltTy)) {
     Values.swap(Vs);
   }
-  explicit ListInit(iterator Start, iterator End)
-    : Values(Start, End) {}
+  explicit ListInit(iterator Start, iterator End, RecTy *EltTy)
+      : TypedInit(new ListRecTy(EltTy)), Values(Start, End) {}
 
   unsigned getSize() const { return Values.size(); }
   Init *getElement(unsigned i) const {
@@ -730,6 +753,22 @@ public:
 
   inline size_t         size () const { return Values.size();  }
   inline bool           empty() const { return Values.empty(); }
+
+  /// resolveBitReference - This method is used to implement
+  /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
+  /// simply return the resolved value, otherwise we return null.
+  ///
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) {
+    assert(0 && "Illegal bit reference off list");
+    return 0;
+  }
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt);
 };
 
 

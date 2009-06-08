@@ -191,7 +191,12 @@ Init *ListRecTy::convertValue(ListInit *LI) {
     else
       return 0;
 
-  return new ListInit(Elements);
+  ListRecTy *LType = dynamic_cast<ListRecTy*>(LI->getType());
+  if (LType == 0) {
+    return 0;
+  }
+
+  return new ListInit(Elements, new ListRecTy(Ty));
 }
 
 Init *ListRecTy::convertValue(TypedInit *TI) {
@@ -269,6 +274,57 @@ Init *RecordRecTy::convertValue(TypedInit *TI) {
 
 bool RecordRecTy::baseClassOf(const RecordRecTy *RHS) const {
   return Rec == RHS->getRecord() || RHS->getRecord()->isSubClassOf(Rec);
+}
+
+
+/// resolveTypes - Find a common type that T1 and T2 convert to.  
+/// Return 0 if no such type exists.
+///
+RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
+  if (!T1->typeIsConvertibleTo(T2)) {
+    if (!T2->typeIsConvertibleTo(T1)) {
+      // If one is a Record type, check superclasses
+      RecordRecTy *RecTy1 = dynamic_cast<RecordRecTy*>(T1);
+      if (RecTy1) {
+        // See if T2 inherits from a type T1 also inherits from
+        const std::vector<Record *> &T1SuperClasses = RecTy1->getRecord()->getSuperClasses();
+        for(std::vector<Record *>::const_iterator i = T1SuperClasses.begin(),
+              iend = T1SuperClasses.end();
+            i != iend;
+            ++i) {
+          RecordRecTy *SuperRecTy1 = new RecordRecTy(*i);
+          RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
+          if (NewType1 != 0) {
+            if (NewType1 != SuperRecTy1) {
+              delete SuperRecTy1;
+            }
+            return NewType1;
+          }
+        }
+      }
+      RecordRecTy *RecTy2 = dynamic_cast<RecordRecTy*>(T2);
+      if (RecTy2) {
+        // See if T1 inherits from a type T2 also inherits from
+        const std::vector<Record *> &T2SuperClasses = RecTy2->getRecord()->getSuperClasses();
+        for(std::vector<Record *>::const_iterator i = T2SuperClasses.begin(),
+              iend = T2SuperClasses.end();
+            i != iend;
+            ++i) {
+          RecordRecTy *SuperRecTy2 = new RecordRecTy(*i);
+          RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
+          if (NewType2 != 0) {
+            if (NewType2 != SuperRecTy2) {
+              delete SuperRecTy2;
+            }
+            return NewType2;
+          }
+        }
+      }
+      return 0;
+    }
+    return T2;
+  }
+  return T1;
 }
 
 
@@ -400,7 +456,7 @@ Init *ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
       return 0;
     Vals.push_back(getElement(Elements[i]));
   }
-  return new ListInit(Vals);
+  return new ListInit(Vals, getType());
 }
 
 Record *ListInit::getElementAsRecord(unsigned i) const {
@@ -428,8 +484,18 @@ Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) {
   }
 
   if (Changed)
-    return new ListInit(Resolved);
+    return new ListInit(Resolved, getType());
   return this;
+}
+
+Init *ListInit::resolveListElementReference(Record &R, const RecordVal *IRV,
+                                           unsigned Elt) {
+  if (Elt >= getSize())
+    return 0;  // Out of range reference.
+  Init *E = getElement(Elt);
+  if (!dynamic_cast<UnsetInit*>(E))  // If the element is set
+    return E;                        // Replace the VarListElementInit with it.
+  return 0;
 }
 
 std::string ListInit::getAsString() const {
@@ -540,7 +606,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         assert(0 && "Empty list in cdr");
         return 0;
       }
-      ListInit *Result = new ListInit(LHSl->begin()+1, LHSl->end());
+      ListInit *Result = new ListInit(LHSl->begin()+1, LHSl->end(), LHSl->getType());
       return Result;
     }
     break;
@@ -555,6 +621,16 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         return new IntInit(0);
       }
     }
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    if (LHSs) {
+      if (LHSs->getValue().empty()) {
+        return new IntInit(1);
+      }
+      else {
+        return new IntInit(0);
+      }
+    }
+    
     break;
   }
   }
@@ -667,8 +743,8 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
       if (Record *D = Records.getDef(Name))
         return new DefInit(D);
 
-      cerr << "Variable not defined: '" + Name + "'\n";
-      assert(0 && "Variable not found");
+      cerr << "Variable not defined in !nameconcat: '" + Name + "'\n";
+      assert(0 && "Variable not found in !nameconcat");
       return 0;
     }
     break;
@@ -881,7 +957,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
           delete NewOp;
         }
       }
-      return new ListInit(NewList);
+      return new ListInit(NewList, MHSl->getType());
     }
   }
   return 0;
@@ -1027,7 +1103,7 @@ Init *TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
   ListInits.reserve(Elements.size());
   for (unsigned i = 0, e = Elements.size(); i != e; ++i)
     ListInits.push_back(new VarListElementInit(this, Elements[i]));
-  return new ListInit(ListInits);
+  return new ListInit(ListInits, T);
 }
 
 

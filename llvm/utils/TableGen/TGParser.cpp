@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <algorithm>
+#include <sstream>
 
 #include "TGParser.h"
 #include "Record.h"
@@ -396,7 +397,7 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
     return Result;
   }
   
-  Result.TemplateArgs = ParseValueList(CurRec);
+  Result.TemplateArgs = ParseValueList(CurRec, Result.Rec);
   if (Result.TemplateArgs.empty()) {
     Result.Rec = 0;   // Error parsing value list.
     return Result;
@@ -438,7 +439,7 @@ ParseSubMultiClassReference(MultiClass *CurMC) {
     return Result;
   }
 
-  Result.TemplateArgs = ParseValueList(&CurMC->Rec);
+  Result.TemplateArgs = ParseValueList(&CurMC->Rec, &Result.MC->Rec);
   if (Result.TemplateArgs.empty()) {
     Result.MC = 0;   // Error parsing value list.
     return Result;
@@ -728,21 +729,28 @@ Init *TGParser::ParseOperation(Record *CurRec) {
         || Code == UnOpInit::CDR
         || Code == UnOpInit::LNULL) {
       ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
+      StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
       TypedInit *LHSt = dynamic_cast<TypedInit*>(LHS);
-      if (LHSl == 0 && LHSt == 0) {
-        TokError("expected list type argument in unary operator");
+      if (LHSl == 0 && LHSs == 0 && LHSt == 0) {
+        TokError("expected list or string type argument in unary operator");
         return 0;
       }
       if (LHSt) {
         ListRecTy *LType = dynamic_cast<ListRecTy*>(LHSt->getType());
-        if (LType == 0) {
-          TokError("expected list type argumnet in unary operator");
+        StringRecTy *SType = dynamic_cast<StringRecTy*>(LHSt->getType());
+        if (LType == 0 && SType == 0) {
+          TokError("expected list or string type argumnet in unary operator");
           return 0;
         }
       }
 
       if (Code == UnOpInit::CAR
           || Code == UnOpInit::CDR) {
+        if (LHSl == 0 && LHSt == 0) {
+          TokError("expected list type argumnet in unary operator");
+          return 0;
+        }
+        
         if (LHSl && LHSl->getSize() == 0) {
           TokError("empty list argument in unary operator");
           return 0;
@@ -1017,7 +1025,7 @@ RecTy *TGParser::ParseOperatorType(void) {
 ///   SimpleValue ::= SRLTOK '(' Value ',' Value ')'
 ///   SimpleValue ::= STRCONCATTOK '(' Value ',' Value ')'
 ///
-Init *TGParser::ParseSimpleValue(Record *CurRec) {
+Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
   Init *R = 0;
   switch (Lex.getCode()) {
   default: TokError("Unknown token when parsing a value"); break;
@@ -1049,15 +1057,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       TokError("expected non-empty value list");
       return 0;
     }
-    std::vector<Init*> ValueList = ParseValueList(CurRec);
-    if (ValueList.empty()) return 0;
-    
-    if (Lex.getCode() != tgtok::greater) {
-      TokError("expected '>' at end of value list");
-      return 0;
-    }
-    Lex.Lex();  // eat the '>'
-    
+
     // This is a CLASS<initvalslist> expression.  This is supposed to synthesize
     // a new anonymous definition, deriving from CLASS<initvalslist> with no
     // body.
@@ -1066,6 +1066,15 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       Error(NameLoc, "Expected a class name, got '" + Name + "'");
       return 0;
     }
+
+    std::vector<Init*> ValueList = ParseValueList(CurRec, Class);
+    if (ValueList.empty()) return 0;
+    
+    if (Lex.getCode() != tgtok::greater) {
+      TokError("expected '>' at end of value list");
+      return 0;
+    }
+    Lex.Lex();  // eat the '>'
     
     // Create the new record, set it as CurRec temporarily.
     static unsigned AnonCounter = 0;
@@ -1114,8 +1123,22 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     Lex.Lex(); // eat the '['
     std::vector<Init*> Vals;
     
+    RecTy *DeducedEltTy = 0;
+    ListRecTy *GivenListTy = 0;
+    
+    if (ItemType != 0) {
+      ListRecTy *ListType = dynamic_cast<ListRecTy*>(ItemType);
+      if (ListType == 0) {
+        std::stringstream s;
+        s << "Type mismatch for list, expected list type, got " 
+          << ItemType->getAsString();
+        TokError(s.str());
+      }
+      GivenListTy = ListType;
+    }    
+
     if (Lex.getCode() != tgtok::r_square) {
-      Vals = ParseValueList(CurRec);
+      Vals = ParseValueList(CurRec, 0, GivenListTy ? GivenListTy->getElementType() : 0);
       if (Vals.empty()) return 0;
     }
     if (Lex.getCode() != tgtok::r_square) {
@@ -1123,7 +1146,77 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
       return 0;
     }
     Lex.Lex();  // eat the ']'
-    return new ListInit(Vals);
+
+    RecTy *GivenEltTy = 0;
+    if (Lex.getCode() == tgtok::less) {
+      // Optional list element type
+      Lex.Lex();  // eat the '<'
+
+      GivenEltTy = ParseType();
+      if (GivenEltTy == 0) {
+        // Couldn't parse element type
+        return 0;
+      }
+
+      if (Lex.getCode() != tgtok::greater) {
+        TokError("expected '>' at end of list element type");
+        return 0;
+      }
+      Lex.Lex();  // eat the '>'
+    }
+
+    // Check elements
+    RecTy *EltTy = 0;
+    for (std::vector<Init *>::iterator i = Vals.begin(), ie = Vals.end();
+         i != ie;
+         ++i) {
+      TypedInit *TArg = dynamic_cast<TypedInit*>(*i);
+      if (TArg == 0) {
+        TokError("Untyped list element");
+        return 0;
+      }
+      if (EltTy != 0) {
+        EltTy = resolveTypes(EltTy, TArg->getType());
+        if (EltTy == 0) {
+          TokError("Incompatible types in list elements");
+          return 0;
+        }
+      }
+      else {
+        EltTy = TArg->getType();
+      }
+    }
+
+    if (GivenEltTy != 0) {
+      if (EltTy != 0) {
+        // Verify consistency
+        if (!EltTy->typeIsConvertibleTo(GivenEltTy)) {
+          TokError("Incompatible types in list elements");
+          return 0;
+        }
+      }
+      EltTy = GivenEltTy;
+    }
+
+    if (EltTy == 0) {
+      if (ItemType == 0) {
+        TokError("No type for list");
+        return 0;
+      }
+      DeducedEltTy = GivenListTy->getElementType();
+   }
+    else {
+      // Make sure the deduced type is compatible with the given type
+      if (GivenListTy) {
+        if (!EltTy->typeIsConvertibleTo(GivenListTy->getElementType())) {
+          TokError("Element type mismatch for list");
+          return 0;
+        }
+      }
+      DeducedEltTy = EltTy;
+    }
+    
+    return new ListInit(Vals, DeducedEltTy);
   }
   case tgtok::l_paren: {         // Value ::= '(' IDValue DagArgList ')'
     Lex.Lex();   // eat the '('
@@ -1200,8 +1293,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
 ///   ValueSuffix ::= '[' BitList ']'
 ///   ValueSuffix ::= '.' ID
 ///
-Init *TGParser::ParseValue(Record *CurRec) {
-  Init *Result = ParseSimpleValue(CurRec);
+Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType) {
+  Init *Result = ParseSimpleValue(CurRec, ItemType);
   if (Result == 0) return 0;
   
   // Parse the suffixes now if present.
@@ -1306,15 +1399,31 @@ TGParser::ParseDagArgList(Record *CurRec) {
 ///
 ///   ValueList ::= Value (',' Value)
 ///
-std::vector<Init*> TGParser::ParseValueList(Record *CurRec) {
+std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec, RecTy *EltTy) {
   std::vector<Init*> Result;
-  Result.push_back(ParseValue(CurRec));
+  RecTy *ItemType = EltTy;
+  int ArgN = 0;
+  if (ArgsRec != 0 && EltTy == 0) {
+    const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
+    const RecordVal *RV = ArgsRec->getValue(TArgs[ArgN]);
+    assert(RV && "Template argument record not found??");
+    ItemType = RV->getType();
+    ++ArgN;
+  }
+  Result.push_back(ParseValue(CurRec, ItemType));
   if (Result.back() == 0) return std::vector<Init*>();
   
   while (Lex.getCode() == tgtok::comma) {
     Lex.Lex();  // Eat the comma
     
-    Result.push_back(ParseValue(CurRec));
+    if (ArgsRec != 0 && EltTy == 0) {
+      const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
+      const RecordVal *RV = ArgsRec->getValue(TArgs[ArgN]);
+      assert(RV && "Template argument record not found??");
+      ItemType = RV->getType();
+      ++ArgN;
+    }
+    Result.push_back(ParseValue(CurRec, ItemType));
     if (Result.back() == 0) return std::vector<Init*>();
   }
   
@@ -1369,7 +1478,7 @@ std::string TGParser::ParseDeclaration(Record *CurRec,
   if (Lex.getCode() == tgtok::equal) {
     Lex.Lex();
     TGLoc ValLoc = Lex.getLoc();
-    Init *Val = ParseValue(CurRec);
+    Init *Val = ParseValue(CurRec, Type);
     if (Val == 0 ||
         SetValue(CurRec, ValLoc, DeclName, std::vector<unsigned>(), Val))
       return "";
@@ -1447,7 +1556,13 @@ bool TGParser::ParseBodyItem(Record *CurRec) {
     return TokError("expected '=' in let expression");
   Lex.Lex();  // eat the '='.
   
-  Init *Val = ParseValue(CurRec);
+  RecordVal *Field = CurRec->getValue(FieldName);
+  if (Field == 0)
+    return TokError("Value '" + FieldName + "' unknown!");
+
+  RecTy *Type = Field->getType();
+  
+  Init *Val = ParseValue(CurRec, Type);
   if (Val == 0) return true;
   
   if (Lex.getCode() != tgtok::semi)

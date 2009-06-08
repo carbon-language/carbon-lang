@@ -2007,9 +2007,28 @@ void CodeGenDAGPatterns::ParsePatterns() {
       Pattern = new TreePattern(Patterns[i], Tree, true, *this);
     else {
       std::vector<Init*> Values;
-      for (unsigned j = 0, ee = Tree->getNumArgs(); j != ee; ++j)
+      RecTy *ListTy = 0;
+      for (unsigned j = 0, ee = Tree->getNumArgs(); j != ee; ++j) {
         Values.push_back(Tree->getArg(j));
-      ListInit *LI = new ListInit(Values);
+        TypedInit *TArg = dynamic_cast<TypedInit*>(Tree->getArg(j));
+        if (TArg == 0) {
+          cerr << "In dag: " << Tree->getAsString();
+          cerr << " --  Untyped argument in pattern\n";
+          assert(0 && "Untyped argument in pattern");
+        }
+        if (ListTy != 0) {
+          ListTy = resolveTypes(ListTy, TArg->getType());
+          if (ListTy == 0) {
+            cerr << "In dag: " << Tree->getAsString();
+            cerr << " --  Incompatible types in pattern arguments\n";
+            assert(0 && "Incompatible types in pattern arguments");
+          }
+        }
+        else {
+          ListTy - TArg->getType();
+        }
+      }
+      ListInit *LI = new ListInit(Values, new ListRecTy(ListTy));
       Pattern = new TreePattern(Patterns[i], LI, true, *this);
     }
 

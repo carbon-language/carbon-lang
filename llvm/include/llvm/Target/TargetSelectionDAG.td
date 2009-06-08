@@ -228,6 +228,7 @@ class SDNode<string opcode, SDTypeProfile typeprof,
   SDTypeProfile TypeProfile = typeprof;
 }
 
+// Special TableGen-recognized dag nodes
 def set;
 def implicit;
 def parallel;

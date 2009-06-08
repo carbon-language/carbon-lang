@@ -93,9 +93,9 @@ private:  // Parser methods.
 
   Init *ParseIDValue(Record *CurRec);
   Init *ParseIDValue(Record *CurRec, const std::string &Name, TGLoc NameLoc);
-  Init *ParseSimpleValue(Record *CurRec);
-  Init *ParseValue(Record *CurRec);
-  std::vector<Init*> ParseValueList(Record *CurRec);
+  Init *ParseSimpleValue(Record *CurRec, RecTy *ItemType = 0);
+  Init *ParseValue(Record *CurRec, RecTy *ItemType = 0);
+  std::vector<Init*> ParseValueList(Record *CurRec, Record *ArgsRec = 0, RecTy *EltTy = 0);
   std::vector<std::pair<llvm::Init*, std::string> > ParseDagArgList(Record *);
   bool ParseOptionalRangeList(std::vector<unsigned> &Ranges);
   bool ParseOptionalBitList(std::vector<unsigned> &Ranges);
