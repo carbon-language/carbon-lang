@@ -1699,6 +1699,9 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
 /// the attribute applies to decls.  If the attribute is a type attribute, just
 /// silently ignore it.
 static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
+  if (Attr.isDeclspecAttribute())
+    // FIXME: Try to deal with __declspec attributes!
+    return;
   switch (Attr.getKind()) {
   case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
   case AttributeList::AT_address_space:

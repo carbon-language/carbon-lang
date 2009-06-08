@@ -655,7 +655,10 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
-    return PP.getLangOptions().Microsoft ? TPResult::True() : TPResult::False();
+  case tok::kw___w64:
+  case tok::kw___ptr64:
+  case tok::kw___forceinline:
+    return TPResult::True();
 
     // The ambiguity resides in a simple-type-specifier/typename-specifier
     // followed by a '('. The '(' could either be the start of:

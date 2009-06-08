@@ -209,17 +209,16 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
 ///             extended-decl-modifier[opt]
 ///             extended-decl-modifier extended-decl-modifier-seq
 
-AttributeList* Parser::ParseMicrosoftDeclSpec() {
+AttributeList* Parser::ParseMicrosoftDeclSpec(AttributeList *CurrAttr) {
   assert(Tok.is(tok::kw___declspec) && "Not a declspec!");
 
-  AttributeList *CurrAttr = 0;
   ConsumeToken();
   if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
                        "declspec")) {
     SkipUntil(tok::r_paren, true); // skip until ) or ;
     return CurrAttr;
   }
-  while (Tok.is(tok::identifier) || Tok.is(tok::kw_restrict)) {
+  while (Tok.getIdentifierInfo()) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
     if (Tok.is(tok::l_paren)) {
@@ -242,8 +241,24 @@ AttributeList* Parser::ParseMicrosoftDeclSpec() {
   }
   if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
     SkipUntil(tok::r_paren, false);
-  // FIXME: Return the attributes once we have some Sema support!
-  return 0;
+  return CurrAttr;
+}
+
+AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
+  // Treat these like attributes
+  // FIXME: Allow Sema to distinguish between these and real attributes!
+  while (Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___stdcall) ||
+         Tok.is(tok::kw___cdecl)    || Tok.is(tok::kw___ptr64) ||
+         Tok.is(tok::kw___w64)) {
+    IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+    SourceLocation AttrNameLoc = ConsumeToken();
+    if (Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64))
+      // FIXME: Support these properly!
+      continue;
+    CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+                                 SourceLocation(), 0, 0, CurrAttr, true);
+  }
+  return CurrAttr;
 }
 
 /// ParseDeclaration - Parse a full 'declaration', which consists of
@@ -839,22 +854,22 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // Microsoft declspec support.
     case tok::kw___declspec:
-      if (!PP.getLangOptions().Microsoft)
-        goto DoneWithDeclSpec;
       DS.AddAttributes(ParseMicrosoftDeclSpec());
       continue;
       
     // Microsoft single token adornments.
     case tok::kw___forceinline:
+      // FIXME: Add handling here!
+      break;
+
+    case tok::kw___ptr64:
     case tok::kw___w64:
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:
-      if (!PP.getLangOptions().Microsoft)
-        goto DoneWithDeclSpec;
-      // Just ignore it.
-      break;
-      
+      DS.AddAttributes(ParseMicrosoftTypeAttributes());
+      continue;
+
     // storage-class-specifier
     case tok::kw_typedef:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Loc, PrevSpec);
@@ -1213,11 +1228,12 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     ParseTypeofSpecifier(DS);
     return true;
 
+  case tok::kw___ptr64:
+  case tok::kw___w64:
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
-    if (!PP.getLangOptions().Microsoft) return false;
-    ConsumeToken();
+    DS.AddAttributes(ParseMicrosoftTypeAttributes());
     return true;
 
   default:
@@ -1671,7 +1687,9 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
-    return PP.getLangOptions().Microsoft;
+  case tok::kw___w64:
+  case tok::kw___ptr64:
+    return true;
   }
 }
 
@@ -1769,7 +1787,10 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
-    return PP.getLangOptions().Microsoft;
+  case tok::kw___w64:
+  case tok::kw___ptr64:
+  case tok::kw___forceinline:
+    return true;
   }
 }
 
@@ -1800,14 +1821,16 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
                                  getLang())*2;
       break;
+    case tok::kw___w64:
     case tok::kw___ptr64:
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:
-      if (!PP.getLangOptions().Microsoft)
-        goto DoneWithTypeQuals;
-      // Just ignore it.
-      break;
+      if (AttributesAllowed) {
+        DS.AddAttributes(ParseMicrosoftTypeAttributes());
+        continue;
+      }
+      goto DoneWithTypeQuals;
     case tok::kw___attribute:
       if (AttributesAllowed) {
         DS.AddAttributes(ParseAttributes());
@@ -2205,9 +2228,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     RequiresArg = true;
   }
   // Eat any Microsoft extensions.
-  while ((Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
-          (Tok.is(tok::kw___fastcall))) && PP.getLangOptions().Microsoft)
-    ConsumeToken();
+  if  (Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
+       Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___w64) ||
+       Tok.is(tok::kw___ptr64)) {
+    AttrList = ParseMicrosoftTypeAttributes(AttrList);
+  }
   
   // If we haven't past the identifier yet (or where the identifier would be
   // stored, if this is an abstract declarator), then this is probably just

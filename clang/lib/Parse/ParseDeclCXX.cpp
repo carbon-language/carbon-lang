@@ -409,9 +409,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     Attr = ParseAttributes();
 
   // If declspecs exist after tag, parse them.
-  if (Tok.is(tok::kw___declspec) && PP.getLangOptions().Microsoft)
-    // FIXME: Need to do something with the attributes!
-    ParseMicrosoftDeclSpec();
+  if (Tok.is(tok::kw___declspec))
+    Attr = ParseMicrosoftDeclSpec(Attr);
   
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
