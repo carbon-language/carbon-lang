@@ -1177,6 +1177,9 @@ aspect of the data layout.  The specifications accepted are as follows: </p>
   <dt><tt>a<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the alignment for an aggregate type of a given bit
   <i>size</i>.</dd>
+  <dt><tt>s<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dd>This specifies the alignment for a stack object of a given bit
+  <i>size</i>.</dd>
 </dl>
 <p>When constructing the data layout for a given target, LLVM starts with a
 default set of specifications which are then (possibly) overriden by the
@@ -1196,6 +1199,7 @@ are given in this list:</p>
   <li><tt>v64:64:64</tt> - 64-bit vector is 64-bit aligned</li>
   <li><tt>v128:128:128</tt> - 128-bit vector is 128-bit aligned</li>
   <li><tt>a0:0:1</tt> - aggregates are 8-bit aligned</li>
+  <li><tt>s0:64:64</tt> - stack objects are 64-bit aligned</li>
 </ul>
 <p>When LLVM is determining the alignment for a given type, it uses the 
 following rules:</p>
