@@ -767,6 +767,7 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
             // x86_64 instructions.
   case 'N': // unsigned 8-bit integer constant for use with in and out
             // instructions.
+  case 'R': // "legacy" registers: ax, bx, cx, dx, di, si, sp, bp.
     Info.setAllowsRegister();
     return true;
   }
