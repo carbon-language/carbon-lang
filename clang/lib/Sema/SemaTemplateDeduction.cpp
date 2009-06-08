@@ -265,6 +265,9 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
       return false;
     }
       
+    //     type(*)(T) 
+    //     T(*)() 
+    //     T(*)(T) 
     case Type::FunctionProto: {
       const FunctionProtoType *FunctionProtoArg = 
         dyn_cast<FunctionProtoType>(Arg);
