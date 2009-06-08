@@ -219,3 +219,18 @@ def DPR : RegisterClass<"ARM", [f64], 64, [D0, D1, D2, D3, D4, D5, D6, D7, D8,
 
 // Condition code registers.
 def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
+
+//===----------------------------------------------------------------------===//
+// Subregister Set Definitions... now that we have all of the pieces, define the
+// sub registers for each register.
+//
+
+def : SubRegSet<1, [D0, D1, D2, D3, D4, D5, D6, D7,
+                    D8, D9, D10, D11, D12, D13, D14, D15],
+                   [S0, S2, S4, S6, S8, S10, S12, S14,
+                    S16, S18, S20, S22, S24, S26, S28, S30]>;
+
+def : SubRegSet<2, [D0, D1, D2, D3, D4, D5, D6, D7,
+                    D8, D9, D10, D11, D12, D13, D14, D15],
+                   [S1, S3, S5, S7, S9, S11, S13, S15,
+                    S17, S19, S21, S23, S25, S27, S29, S31]>;

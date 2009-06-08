@@ -73,6 +73,14 @@ namespace llvm {
   /// target FP instructions.
   extern bool UseSoftFloat;
 
+  /// FloatABIType - This setting is set by -float-abi=xxx option is specfied
+  /// on the command line. This setting may either be Default, Soft, or Hard.
+  /// Default selects the target's default behavior. Soft selects the ABI for
+  /// UseSoftFloat, but does not inidcate that FP hardware may not be used.
+  /// Such a combination is unfortunately popular (e.g. arm-apple-darwin).
+  /// Hard presumes that the normal FP ABI is used.
+  extern FloatABI::ABIType FloatABIType;
+
   /// NoZerosInBSS - By default some codegens place zero-initialized data to
   /// .bss section. This flag disables such behaviour (necessary, e.g. for
   /// crt*.o compiling).

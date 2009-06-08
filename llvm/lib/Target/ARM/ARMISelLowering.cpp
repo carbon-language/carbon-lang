@@ -1101,7 +1101,12 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       else
         RC = ARM::GPRRegisterClass;
 
-      if (RegVT == MVT::f64) {
+      if (FloatABIType == FloatABI::Hard) {
+        if (RegVT == MVT::f32)
+          RC = ARM::SPRRegisterClass;
+        else if (RegVT == MVT::f64)
+          RC = ARM::DPRRegisterClass;
+      } else if (RegVT == MVT::f64) {
         // f64 is passed in pairs of GPRs and must be combined.
         RegVT = MVT::i32;
       } else if (!((RegVT == MVT::i32) || (RegVT == MVT::f32)))

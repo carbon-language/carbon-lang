@@ -78,6 +78,14 @@ namespace CodeGenOpt {
   };
 }
 
+namespace FloatABI {
+  enum ABIType {
+    Default,
+    Soft,
+    Hard
+  };
+}
+
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
@@ -88,7 +96,7 @@ class TargetMachine {
   TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetMachine() : AsmInfo(0) { }
+  TargetMachine();
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtarget-derived member variable.

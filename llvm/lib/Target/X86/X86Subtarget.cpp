@@ -350,6 +350,10 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   , MaxInlineSizeThreshold(128)
   , Is64Bit(is64Bit)
   , TargetType(isELF) { // Default to ELF unless otherwise specified.
+
+  // default to hard float ABI
+  if (FloatABIType == FloatABI::Default)
+    FloatABIType = FloatABI::Hard;
     
   // Determine default and user specified characteristics
   if (!FS.empty()) {

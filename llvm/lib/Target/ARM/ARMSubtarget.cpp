@@ -14,6 +14,8 @@
 #include "ARMSubtarget.h"
 #include "ARMGenSubtarget.inc"
 #include "llvm/Module.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
@@ -28,6 +30,10 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
   , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.
   , TargetABI(ARM_ABI_APCS) {
+  // default to soft float ABI
+  if (FloatABIType == FloatABI::Default)
+    FloatABIType = FloatABI::Soft;
+
   // Determine default and user specified characteristics
 
   // Parse features string.
