@@ -134,3 +134,15 @@ int is_unary_function6[is_unary_function_with_same_return_type_as_argument_type<
 int is_unary_function7[is_unary_function_with_same_return_type_as_argument_type<int (*)(int, bool)>::value ? -1 : 1];
 int is_unary_function8[is_unary_function_with_same_return_type_as_argument_type<int (*)(bool)>::value ? -1 : 1];
 int is_unary_function9[is_unary_function_with_same_return_type_as_argument_type<int (*)(int)>::value ? 1 : -1];
+
+template<typename T>
+struct is_binary_function {
+  static const bool value = false;
+};
+
+template<typename R, typename T1, typename T2>
+struct is_binary_function<R(T1, T2)> {
+  static const bool value = true;
+};
+
+int is_binary_function0[is_binary_function<int(float, double)>::value? 1 : -1];
