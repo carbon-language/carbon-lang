@@ -606,9 +606,10 @@ translation units.</p>
 
 <p>clang has some experimental support for extensions from
 Microsoft Visual C++; to enable it, use the -fms-extensions command-line
-option.  Eventually, this will be the default for Windows targets.
-These extensions are not anywhere near complete, so please do not
-file bugs; patches are welcome, though.</p>
+option.  This is the default for Windows targets.  Note that the
+support is incomplete; enabling Microsoft extensions will silently drop
+certain constructs (including __declspec and Microsoft-style asm statements).
+</p>
 
 <li>clang does not support the Microsoft extension where anonymous
 record members can be declared using user defined typedefs.</li>
