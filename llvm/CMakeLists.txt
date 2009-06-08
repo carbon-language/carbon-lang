@@ -186,11 +186,26 @@ if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
 
 if( MSVC )
+  # List of valid CRTs for MSVC
+  set(MSVC_CRT
+    MD
+    MDd)
+
+  set(LLVM_USE_CRT "" CACHE STRING "Specify VC++ CRT to use for debug/release configurations.")
   add_llvm_definitions( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS )
   add_llvm_definitions( -D_SCL_SECURE_NO_WARNINGS -DCRT_NONSTDC_NO_WARNINGS )
   add_llvm_definitions( -D_SCL_SECURE_NO_DEPRECATE )
   add_llvm_definitions( -wd4146 -wd4503 -wd4996 -wd4800 -wd4244 -wd4624 )
   add_llvm_definitions( -wd4355 -wd4715 -wd4180 -wd4345 -wd4224 )
+
+  if (NOT ${LLVM_USE_CRT} STREQUAL "")
+    list(FIND MSVC_CRT ${LLVM_USE_CRT} idx)
+    if (idx LESS 0)
+      message(FATAL_ERROR "Invalid value for LLVM_USE_CRT: ${LLVM_USE_CRT}. Valid options are one of: ${MSVC_CRT}")
+    endif (idx LESS 0)
+    add_llvm_definitions("/${LLVM_USE_CRT}")
+    message(STATUS "Using VC++ CRT: ${LLVM_USE_CRT}")
+  endif (NOT ${LLVM_USE_CRT} STREQUAL "")
 endif( MSVC )
 
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
