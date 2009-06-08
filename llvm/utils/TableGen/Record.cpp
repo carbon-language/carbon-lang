@@ -965,9 +965,25 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
 
 Init *TernOpInit::resolveReferences(Record &R, const RecordVal *RV) {
   Init *lhs = LHS->resolveReferences(R, RV);
+
+  if (Opc == IF && lhs != LHS) {
+    IntInit *Value = dynamic_cast<IntInit*>(lhs);
+    if (Value != 0) {
+      // Short-circuit
+      if (Value->getValue()) {
+        Init *mhs = MHS->resolveReferences(R, RV);
+        return (new TernOpInit(getOpcode(), lhs, mhs, RHS, getType()))->Fold(&R, 0);
+      }
+      else {
+        Init *rhs = RHS->resolveReferences(R, RV);
+        return (new TernOpInit(getOpcode(), lhs, MHS, rhs, getType()))->Fold(&R, 0);
+      }
+    }
+  }
+  
   Init *mhs = MHS->resolveReferences(R, RV);
   Init *rhs = RHS->resolveReferences(R, RV);
-  
+
   if (LHS != lhs || MHS != mhs || RHS != rhs)
     return (new TernOpInit(getOpcode(), lhs, mhs, rhs, getType()))->Fold(&R, 0);
   return Fold(&R, 0);
