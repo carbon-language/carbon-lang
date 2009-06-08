@@ -102,3 +102,35 @@ struct get_array_size<T[N]> {
 };
 
 int array_size0[get_array_size<int[12]>::value == 12? 1 : -1];
+
+template<typename T>
+struct is_unary_function {
+  static const bool value = false;
+};
+
+template<typename T, typename U>
+struct is_unary_function<T (*)(U)> {
+  static const bool value = true;
+};
+
+int is_unary_function0[is_unary_function<int>::value ? -1 : 1];
+int is_unary_function1[is_unary_function<int (*)()>::value ? -1 : 1];
+int is_unary_function2[is_unary_function<int (*)(int, bool)>::value ? -1 : 1];
+int is_unary_function3[is_unary_function<int (*)(bool)>::value ? 1 : -1];
+int is_unary_function4[is_unary_function<int (*)(int)>::value ? 1 : -1];
+
+template<typename T>
+struct is_unary_function_with_same_return_type_as_argument_type {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_unary_function_with_same_return_type_as_argument_type<T (*)(T)> {
+  static const bool value = true;
+};
+
+int is_unary_function5[is_unary_function_with_same_return_type_as_argument_type<int>::value ? -1 : 1];
+int is_unary_function6[is_unary_function_with_same_return_type_as_argument_type<int (*)()>::value ? -1 : 1];
+int is_unary_function7[is_unary_function_with_same_return_type_as_argument_type<int (*)(int, bool)>::value ? -1 : 1];
+int is_unary_function8[is_unary_function_with_same_return_type_as_argument_type<int (*)(bool)>::value ? -1 : 1];
+int is_unary_function9[is_unary_function_with_same_return_type_as_argument_type<int (*)(int)>::value ? 1 : -1];

@@ -265,6 +265,37 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
       return false;
     }
       
+    case Type::FunctionProto: {
+      const FunctionProtoType *FunctionProtoArg = 
+        dyn_cast<FunctionProtoType>(Arg);
+      if (!FunctionProtoArg)
+        return false;
+      
+      const FunctionProtoType *FunctionProtoParam = 
+        cast<FunctionProtoType>(Param);
+      
+      // Check return types.
+      if (!DeduceTemplateArguments(Context,
+                                   FunctionProtoParam->getResultType(),
+                                   FunctionProtoArg->getResultType(),
+                                   Deduced))
+        return false;
+      
+      if (FunctionProtoParam->getNumArgs() != FunctionProtoArg->getNumArgs())
+        return false;
+      
+      for (unsigned I = 0, N = FunctionProtoParam->getNumArgs(); I != N; ++I) {
+        // Check argument types.
+        if (!DeduceTemplateArguments(Context,
+                                     FunctionProtoParam->getArgType(I),
+                                     FunctionProtoArg->getArgType(I),
+                                     Deduced))
+          return false;
+      }
+      
+      return true;
+    }
+      
     default:
       break;
   }
