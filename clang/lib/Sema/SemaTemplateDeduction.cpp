@@ -276,15 +276,22 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
       
       const FunctionProtoType *FunctionProtoParam = 
         cast<FunctionProtoType>(Param);
+
+      if (FunctionProtoParam->getTypeQuals() != 
+          FunctionProtoArg->getTypeQuals())
+        return false;
       
+      if (FunctionProtoParam->getNumArgs() != FunctionProtoArg->getNumArgs())
+        return false;
+      
+      if (FunctionProtoParam->isVariadic() != FunctionProtoArg->isVariadic())
+        return false;
+
       // Check return types.
       if (!DeduceTemplateArguments(Context,
                                    FunctionProtoParam->getResultType(),
                                    FunctionProtoArg->getResultType(),
                                    Deduced))
-        return false;
-      
-      if (FunctionProtoParam->getNumArgs() != FunctionProtoArg->getNumArgs())
         return false;
       
       for (unsigned I = 0, N = FunctionProtoParam->getNumArgs(); I != N; ++I) {
