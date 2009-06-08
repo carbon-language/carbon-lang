@@ -822,6 +822,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
   }
 
+  unsigned ReadyLabelId = 0;
+  if (needsFrameMoves) {
+    // Mark effective beginning of when frame pointer is ready.
+    ReadyLabelId = MMI->NextLabelID();
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
+  }
+
   // Skip the callee-saved push instructions.
   while (MBBI != MBB.end() &&
          (MBBI->getOpcode() == X86::PUSH32r ||
@@ -831,20 +838,20 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (MBBI != MBB.end())
     DL = MBBI->getDebugLoc();
 
-  if (NumBytes) {   // Adjust stack pointer: ESP -= numbytes.
+  if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
-      // Check, whether EAX is livein for this function.
+      // Check, whether EAX is livein for this function
       bool isEAXAlive = false;
       for (MachineRegisterInfo::livein_iterator
            II = MF.getRegInfo().livein_begin(),
            EE = MF.getRegInfo().livein_end(); (II != EE) && !isEAXAlive; ++II) {
         unsigned Reg = II->first;
         isEAXAlive = (Reg == X86::EAX || Reg == X86::AX ||
-                      Reg == X86::AH  || Reg == X86::AL);
+                      Reg == X86::AH || Reg == X86::AL);
       }
 
-      // Function prologue calls _alloca to probe the stack when allocating more
-      // than 4k bytes in one go. Touching the stack at 4K increments is
+      // Function prologue calls _alloca to probe the stack when allocating
+      // more than 4k bytes in one go. Touching the stack at 4K increments is
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
       if (!isEAXAlive) {
@@ -856,14 +863,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         // Save EAX
         BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
           .addReg(X86::EAX, RegState::Kill);
-
         // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
         // allocated bytes for EAX.
-        BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
-          .addImm(NumBytes-4);
+        BuildMI(MBB, MBBI, DL, 
+                TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
         BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
           .addExternalSymbol("_alloca");
-
         // Restore EAX
         MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
                                                 X86::EAX),
@@ -875,7 +880,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // merge the two. This can be the case when tail call elimination is
       // enabled and the callee has more arguments then the caller.
       NumBytes -= mergeSPUpdates(MBB, MBBI, StackPtr, true);
-
       // If there is an ADD32ri or SUB32ri of ESP immediately after this
       // instruction, merge the two instructions.
       mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
@@ -885,13 +889,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  if (needsFrameMoves) {
-    // Mark effective beginning of when frame pointer is ready.
-    unsigned ReadyLabelId = 0;
-    ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
+  if (needsFrameMoves)
     emitFrameMoves(MF, FrameLabelId, ReadyLabelId);
-  }
 }
 
 void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
