@@ -1,5 +1,5 @@
-// RUN: tblgen %s | grep {1, 2, 3} | count 4
-// RUN: tblgen %s | grep {4, 5, 6} | count 2
+// RUN: tblgen %s | grep {\\\[1, 2, 3\\\]} | count 4
+// RUN: tblgen %s | grep {\\\[4, 5, 6\\\]} | count 2
 
 class A<list<list<int>> vals> {
   list<int> first = vals[0];
