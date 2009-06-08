@@ -52,22 +52,16 @@ td {
   </ul>
 </li>
 <li><a href="#cxx">C++ Language Features</a>
-  <ul>
-  <li>...</li>
-  </ul>
 </li>
 <li><a href="#objcxx">Objective C++ Language Features</a>
-  <ul>
-  <li>...</li>
-  </ul>
 </li>
 <li><a href="#target_features">Target-Specific Features and Limitations</a>
   <ul>
   <li><a href="#target_arch">CPU Architectures Features and Limitations</a>
     <ul>
     <li><a href="#target_arch_x86">X86</a></li>
-    <li>PPC</li>
-    <li>ARM</li>
+    <li><a href="#target_arch_arm">ARM</a></li>
+    <li><a href="#target_arch_other">Other platforms</a></li>
     </ul>
   </li>
   <li><a href="#target_os">Operating System Features and Limitations</a>
@@ -670,7 +664,37 @@ more information.</p>
 <!-- ======================== -->
 <h4 id="target_arch_x86">X86</h4>
 <!-- ======================== -->
+<p>The support for X86 (both 32-bit and 64-bit) is considered stable
+on Darwin (Mac OS/X), Linux, FreeBSD, and Dragonfly BSD: it has been tested to
+correctly compile large C and Objective-C codebases. (FIXME: Anything specific
+we want to say here? Possibly mention some LLVM x86 limitations?)
 
+<!-- ======================== -->
+<h4 id="target_arch_arm">ARM</h4>
+<!-- ======================== -->
+ARM support is mostly feature-complete, but still experimental; it hasn't
+undergone significant testing.
+
+<!-- ======================== -->
+<h4 id="target_arch_other">Other platforms</h4>
+<!-- ======================== -->
+clang currently contains some support for PPC and Sparc; however, significant
+pieces of code generation are still missing, and they haven't undergone
+significant testing.
+
+<p>clang contains some support for the embedded PIC16 processor
+(FIXME: I haven't been keeping track of this; what should this say?).
+
+<p>clang contains limited support for the MSP430 embedded processor, but both
+the clang support and the LLVM backend support are highly experimental.
+
+<p>Other platforms are completely unsupported at the moment.  Adding the
+minimal support needed for parsing and semantic analysis on a new platform
+is quite easy; see lib/Basic/Targets.cpp in the clang source tree. This level
+of support is also sufficient for conversion to LLVM IR for simple programs.
+Proper support for conversion to LLVM IR requires adding code to
+lib/CodeGen/CGCall.cpp at the moment; this is likely to change soon, though.
+Generating assembly requires a suitable LLVM backend. 
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="target_os">Operating System Features and Limitations</h3>
