@@ -68,7 +68,7 @@ def CC_ARM_AAPCS_Common : CallingConv<[
 ]>;
 
 def RetCC_ARM_AAPCS_Common : CallingConv<[
-  CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>
+  CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
   CCIfType<[i64], CCAssignToRegWithShadow<[R0, R2], [R1, R3]>>
 ]>;
 
