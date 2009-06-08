@@ -10,7 +10,7 @@ int test1() {
   if (PFR == II)	// OK
     donotwarn();
 
-  if (PFR == IFP) // expected-error {{comparison of distinct block types}}
+  if (PFR == IFP) // OK
     donotwarn();
 
   if (PFR == (int (^) (int))IFP) // OK
@@ -25,7 +25,7 @@ int test1() {
   if (!PFR)	// OK
     donotwarn();
 
-  return PFR != IFP;	// expected-error {{comparison of distinct block types}}
+  return PFR != IFP;	// OK
 }
 
 int test2(double (^S)()) {
@@ -165,7 +165,7 @@ void test17() {
 
   f(1 ? bp : vp);
   f(1 ? vp : bp);
-  f(1 ? bp : bp1); // expected-error {{incompatible operand types ('void (^)(int)' and 'void (^)()')}}
+  f(1 ? bp : bp1);
   (void)(bp > rp); // expected-error {{invalid operands}}
   (void)(bp > 0); // expected-error {{invalid operands}}
   (void)(bp > bp); // expected-error {{invalid operands}}

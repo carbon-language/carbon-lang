@@ -7,10 +7,10 @@ int main() {
   int (*FPL) (int) = FP; // C doesn't consider this an error.
   
   // For Blocks, the ASTContext::typesAreBlockCompatible() makes sure this is an error.
-  int (^PFR) (int) = IFP;	// expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int (^)(int)'}}
+  int (^PFR) (int) = IFP; // OK
 	PFR = II;	// OK
 
-	int (^IFP) () = PFR;
+	int (^IFP) () = PFR; // OK
 
 
 	const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}

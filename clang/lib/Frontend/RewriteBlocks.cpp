@@ -1011,9 +1011,7 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
        CI != E; ++CI)
     if (*CI) {
       if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
-        Stmt *newStmt = RewriteFunctionBody(CBE->getBody());
-        if (newStmt) 
-          *CI = newStmt;
+        RewriteFunctionBody(CBE->getBody());
           
         // We've just rewritten the block body in place.
         // Now we snarf the rewritten text and stash it away for later use.
@@ -1023,9 +1021,7 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
         // Do the rewrite, using S.size() which contains the rewritten size.
         ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
       } else {
-        Stmt *newStmt = RewriteFunctionBody(*CI);
-        if (newStmt) 
-          *CI = newStmt;
+        RewriteFunctionBody(*CI);
       }
     }
   // Handle specific things.

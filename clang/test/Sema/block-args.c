@@ -18,7 +18,7 @@ void test() {
   ^{return 1;}();
   ^{return 2;}(arg); // expected-error {{too many arguments to block call}}
   ^(void){return 3;}(1); // expected-error {{too many arguments to block call}}
-  ^(){return 4;}(arg);   // C style (...), ok.
+  ^(){return 4;}(arg); // expected-error {{too many arguments to block call}}
   ^(int x, ...){return 5;}(arg, arg);   // Explicit varargs, ok.
 }
 

@@ -2853,12 +2853,6 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
 /// FIXME: When the dust settles on this integration, fold this into mergeTypes.
 ///
 bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
-  const FunctionType *lbase = lhs->getAsFunctionType();
-  const FunctionType *rbase = rhs->getAsFunctionType();
-  const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
-  const FunctionProtoType *rproto = dyn_cast<FunctionProtoType>(rbase);
-  if (lproto && rproto == 0)
-    return false;
   return !mergeTypes(lhs, rhs).isNull();
 }
 

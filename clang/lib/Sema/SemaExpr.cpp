@@ -5220,7 +5220,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   QualType BlockTy;
   if (!BSI->hasPrototype)
-    BlockTy = Context.getFunctionNoProtoType(RetTy);
+    BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0);
   else
     BlockTy = Context.getFunctionType(RetTy, ArgTypes.data(), ArgTypes.size(),
                                       BSI->isVariadic, 0);
