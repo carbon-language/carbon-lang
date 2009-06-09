@@ -148,3 +148,13 @@ struct is_binary_function<R(T1, T2)> {
 };
 
 int is_binary_function0[is_binary_function<int(float, double)>::value? 1 : -1];
+
+template<typename T>
+struct is_member_pointer {
+  static const bool value = false;
+};
+
+template<typename T, typename Class>
+struct is_member_pointer<T Class::*> {
+  static const bool value = true;
+};

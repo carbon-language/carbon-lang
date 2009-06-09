@@ -349,6 +349,9 @@ public:
                              QualType *ParamTypes, unsigned NumParamTypes,
                              bool Variadic, unsigned Quals,
                              SourceLocation Loc, DeclarationName Entity);
+  QualType BuildMemberPointerType(QualType T, QualType Class, 
+                                  unsigned Quals, SourceLocation Loc, 
+                                  DeclarationName Entity);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0,
                                 TagDecl **OwnedDecl = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);

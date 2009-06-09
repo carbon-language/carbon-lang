@@ -265,9 +265,16 @@ QualType
 TemplateTypeInstantiator::
 InstantiateMemberPointerType(const MemberPointerType *T,
                              unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate MemberPointerType yet");
-  return QualType();
+  QualType PointeeType = Instantiate(T->getPointeeType());
+  if (PointeeType.isNull())
+    return QualType();
+
+  QualType ClassType = Instantiate(QualType(T->getClass(), 0));
+  if (ClassType.isNull())
+    return QualType();
+
+  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Quals, Loc, 
+                                        Entity);
 }
 
 QualType 

@@ -600,7 +600,67 @@ QualType Sema::BuildFunctionType(QualType T,
   return Context.getFunctionType(T, ParamTypes, NumParamTypes, Variadic, 
                                  Quals);
 }
-                                 
+ 
+/// \brief Build a member pointer type \c T Class::*.
+///
+/// \param T the type to which the member pointer refers.
+/// \param Class the class type into which the member pointer points.
+/// \param Quals Qualifiers applied to the member pointer type
+/// \param Loc the location where this type begins
+/// \param Entity the name of the entity that will have this member pointer type
+///
+/// \returns a member pointer type, if successful, or a NULL type if there was
+/// an error.
+QualType Sema::BuildMemberPointerType(QualType T, QualType Class, 
+                                      unsigned Quals, SourceLocation Loc, 
+                                      DeclarationName Entity) {
+  // Verify that we're not building a pointer to pointer to function with
+  // exception specification.
+  if (CheckDistantExceptionSpec(T)) {
+    Diag(Loc, diag::err_distant_exception_spec);
+
+    // FIXME: If we're doing this as part of template instantiation,
+    // we should return immediately.
+
+    // Build the type anyway, but use the canonical type so that the
+    // exception specifiers are stripped off.
+    T = Context.getCanonicalType(T);
+  }
+
+  // C++ 8.3.3p3: A pointer to member shall not pointer to ... a member
+  //   with reference type, or "cv void."
+  if (T->isReferenceType()) {
+    Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
+      << (Entity? Entity.getAsString() : "type name");
+    return QualType();
+  }
+
+  if (T->isVoidType()) {
+    Diag(Loc, diag::err_illegal_decl_mempointer_to_void)
+      << (Entity? Entity.getAsString() : "type name");
+    return QualType();
+  }
+
+  // Enforce C99 6.7.3p2: "Types other than pointer types derived from
+  // object or incomplete types shall not be restrict-qualified."
+  if ((Quals & QualType::Restrict) && !T->isIncompleteOrObjectType()) {
+    Diag(Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
+      << T;
+
+    // FIXME: If we're doing this as part of template instantiation,
+    // we should return immediately.
+    Quals &= ~QualType::Restrict;
+  }
+
+  if (!Class->isDependentType() && !Class->isRecordType()) {
+    Diag(Loc, diag::err_mempointer_in_nonclass_type) << Class;
+    return QualType();
+  }
+
+  return Context.getMemberPointerType(T, Class.getTypePtr())
+           .getQualifiedType(Quals);  
+}
+                              
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
@@ -870,57 +930,32 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
       break;
     }
     case DeclaratorChunk::MemberPointer:
-      // Verify that we're not building a pointer to pointer to function with
-      // exception specification.
-      if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
-        Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
-        D.setInvalidType(true);
-        // Build the type anyway.
-      }
       // The scope spec must refer to a class, or be dependent.
-      DeclContext *DC = computeDeclContext(DeclType.Mem.Scope());
       QualType ClsType;
-      // FIXME: Extend for dependent types when it's actually supported.
-      // See ActOnCXXNestedNameSpecifier.
-      if (CXXRecordDecl *RD = dyn_cast_or_null<CXXRecordDecl>(DC)) {
+      if (isDependentScopeSpecifier(DeclType.Mem.Scope())) {
+        NestedNameSpecifier *NNS 
+          = (NestedNameSpecifier *)DeclType.Mem.Scope().getScopeRep();
+        assert(NNS->getAsType() && "Nested-name-specifier must name a type");
+        ClsType = QualType(NNS->getAsType(), 0);
+      } else if (CXXRecordDecl *RD 
+                   = dyn_cast_or_null<CXXRecordDecl>(
+                                    computeDeclContext(DeclType.Mem.Scope()))) {
         ClsType = Context.getTagDeclType(RD);
       } else {
-        if (DC) {
-          Diag(DeclType.Mem.Scope().getBeginLoc(),
-               diag::err_illegal_decl_mempointer_in_nonclass)
-            << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name")
-            << DeclType.Mem.Scope().getRange();
-        }
+        Diag(DeclType.Mem.Scope().getBeginLoc(),
+             diag::err_illegal_decl_mempointer_in_nonclass)
+          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name")
+          << DeclType.Mem.Scope().getRange();
         D.setInvalidType(true);
-        ClsType = Context.IntTy;
       }
 
-      // C++ 8.3.3p3: A pointer to member shall not pointer to ... a member
-      //   with reference type, or "cv void."
-      if (T->isReferenceType()) {
-        Diag(DeclType.Loc, diag::err_illegal_decl_pointer_to_reference)
-          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+      if (!ClsType.isNull())
+        T = BuildMemberPointerType(T, ClsType, DeclType.Mem.TypeQuals,
+                                   DeclType.Loc, D.getIdentifier());
+      if (T.isNull()) {
+        T = Context.IntTy;
         D.setInvalidType(true);
-        T = Context.IntTy;
       }
-      if (T->isVoidType()) {
-        Diag(DeclType.Loc, diag::err_illegal_decl_mempointer_to_void)
-          << (D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
-        T = Context.IntTy;
-      }
-
-      // Enforce C99 6.7.3p2: "Types other than pointer types derived from
-      // object or incomplete types shall not be restrict-qualified."
-      if ((DeclType.Mem.TypeQuals & QualType::Restrict) &&
-          !T->isIncompleteOrObjectType()) {
-        Diag(DeclType.Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
-          << T;
-        DeclType.Mem.TypeQuals &= ~QualType::Restrict;
-      }
-
-      T = Context.getMemberPointerType(T, ClsType.getTypePtr()).
-                    getQualifiedType(DeclType.Mem.TypeQuals);
-
       break;
     }
 
