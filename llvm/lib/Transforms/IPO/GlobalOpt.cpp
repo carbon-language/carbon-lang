@@ -136,16 +136,16 @@ struct VISIBILITY_HIDDEN GlobalStatus {
 
 }
 
-/// ConstantIsDead - Return true if the specified constant is (transitively)
-/// dead.  The constant may be used by other constants (e.g. constant arrays and
-/// constant exprs) as long as they are dead, but it cannot be used by anything
-/// else.
-static bool ConstantIsDead(Constant *C) {
+// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
+// by constants itself.  Note that constants cannot be cyclic, so this test is
+// pretty easy to implement recursively.
+//
+static bool SafeToDestroyConstant(Constant *C) {
   if (isa<GlobalValue>(C)) return false;
 
   for (Value::use_iterator UI = C->use_begin(), E = C->use_end(); UI != E; ++UI)
     if (Constant *CU = dyn_cast<Constant>(*UI)) {
-      if (!ConstantIsDead(CU)) return false;
+      if (!SafeToDestroyConstant(CU)) return false;
     } else
       return false;
   return true;
@@ -233,7 +233,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
     } else if (Constant *C = dyn_cast<Constant>(*UI)) {
       GS.HasNonInstructionUser = true;
       // We might have a dead and dangling constant hanging off of here.
-      if (!ConstantIsDead(C))
+      if (!SafeToDestroyConstant(C))
         return true;
     } else {
       GS.HasNonInstructionUser = true;
@@ -338,7 +338,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
     } else if (Constant *C = dyn_cast<Constant>(U)) {
       // If we have a chain of dead constantexprs or other things dangling from
       // us, and if they are all dead, nuke them without remorse.
-      if (ConstantIsDead(C)) {
+      if (SafeToDestroyConstant(C)) {
         C->destroyConstant();
         // This could have invalidated UI, start over from scratch.
         CleanupConstantGlobalUsers(V, Init);
@@ -354,7 +354,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
 static bool isSafeSROAElementUse(Value *V) {
   // We might have a dead and dangling constant hanging off of here.
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantIsDead(C);
+    return SafeToDestroyConstant(C);
   
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;

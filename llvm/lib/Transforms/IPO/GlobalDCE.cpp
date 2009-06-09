@@ -47,7 +47,6 @@ namespace {
     void GlobalIsNeeded(GlobalValue *GV);
     void MarkUsedGlobalsAsNeeded(Constant *C);
 
-    bool SafeToDestroyConstant(Constant* C);
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
 }
@@ -210,18 +209,4 @@ bool GlobalDCE::RemoveUnusedGlobalValue(GlobalValue &GV) {
   if (GV.use_empty()) return false;
   GV.removeDeadConstantUsers();
   return GV.use_empty();
-}
-
-// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
-// by constants itself.  Note that constants cannot be cyclic, so this test is
-// pretty easy to implement recursively.
-//
-bool GlobalDCE::SafeToDestroyConstant(Constant *C) {
-  for (Value::use_iterator I = C->use_begin(), E = C->use_end(); I != E; ++I)
-    if (Constant *User = dyn_cast<Constant>(*I)) {
-      if (!SafeToDestroyConstant(User)) return false;
-    } else {
-      return false;
-    }
-  return true;
 }
