@@ -248,7 +248,7 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
     std::vector<const char*> args;
     std::string targetTriple = _linker.getModule()->getTargetTriple();
     args.push_back(tool.c_str());
-    if ( targetTriple.find("darwin") != targetTriple.size() ) {
+    if ( targetTriple.find("darwin") != std::string::npos ) {
         // darwin specific command line options
         if (strncmp(targetTriple.c_str(), "i386-apple-", 11) == 0) {
             args.push_back("-arch");
