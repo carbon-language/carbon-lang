@@ -838,55 +838,57 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (MBBI != MBB.end())
     DL = MBBI->getDebugLoc();
 
-  if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-    if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
-      // Check, whether EAX is livein for this function
-      bool isEAXAlive = false;
-      for (MachineRegisterInfo::livein_iterator
+  // Adjust stack pointer: ESP -= numbytes.
+  if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
+    // Check, whether EAX is livein for this function.
+    bool isEAXAlive = false;
+    for (MachineRegisterInfo::livein_iterator
            II = MF.getRegInfo().livein_begin(),
            EE = MF.getRegInfo().livein_end(); (II != EE) && !isEAXAlive; ++II) {
-        unsigned Reg = II->first;
-        isEAXAlive = (Reg == X86::EAX || Reg == X86::AX ||
-                      Reg == X86::AH || Reg == X86::AL);
-      }
-
-      // Function prologue calls _alloca to probe the stack when allocating
-      // more than 4k bytes in one go. Touching the stack at 4K increments is
-      // necessary to ensure that the guard pages used by the OS virtual memory
-      // manager are allocated in correct sequence.
-      if (!isEAXAlive) {
-        BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
-          .addImm(NumBytes);
-        BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-          .addExternalSymbol("_alloca");
-      } else {
-        // Save EAX
-        BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
-          .addReg(X86::EAX, RegState::Kill);
-        // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
-        // allocated bytes for EAX.
-        BuildMI(MBB, MBBI, DL, 
-                TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
-        BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-          .addExternalSymbol("_alloca");
-        // Restore EAX
-        MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
-                                                X86::EAX),
-                                        StackPtr, false, NumBytes-4);
-        MBB.insert(MBBI, MI);
-      }
-    } else {
-      // If there is an SUB32ri of ESP immediately before this instruction,
-      // merge the two. This can be the case when tail call elimination is
-      // enabled and the callee has more arguments then the caller.
-      NumBytes -= mergeSPUpdates(MBB, MBBI, StackPtr, true);
-      // If there is an ADD32ri or SUB32ri of ESP immediately after this
-      // instruction, merge the two instructions.
-      mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
-
-      if (NumBytes)
-        emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+      unsigned Reg = II->first;
+      isEAXAlive = (Reg == X86::EAX || Reg == X86::AX ||
+                    Reg == X86::AH || Reg == X86::AL);
     }
+
+    // Function prologue calls _alloca to probe the stack when allocating more
+    // than 4k bytes in one go. Touching the stack at 4K increments is necessary
+    // to ensure that the guard pages used by the OS virtual memory manager are
+    // allocated in correct sequence.
+    if (!isEAXAlive) {
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
+        .addImm(NumBytes);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
+        .addExternalSymbol("_alloca");
+    } else {
+      // Save EAX
+      BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
+        .addReg(X86::EAX, RegState::Kill);
+
+      // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
+      // allocated bytes for EAX.
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
+        .addImm(NumBytes - 4);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
+        .addExternalSymbol("_alloca");
+
+      // Restore EAX
+      MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
+                                              X86::EAX),
+                                      StackPtr, false, NumBytes - 4);
+      MBB.insert(MBBI, MI);
+    }
+  } else if (NumBytes) {
+    // If there is an SUB32ri of ESP immediately before this instruction, merge
+    // the two. This can be the case when tail call elimination is enabled and
+    // the callee has more arguments then the caller.
+    NumBytes -= mergeSPUpdates(MBB, MBBI, StackPtr, true);
+
+    // If there is an ADD32ri or SUB32ri of ESP immediately after this
+    // instruction, merge the two instructions.
+    mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
+
+    if (NumBytes)
+      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
   }
 
   if (needsFrameMoves)
