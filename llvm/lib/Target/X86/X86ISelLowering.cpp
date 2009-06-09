@@ -7696,7 +7696,7 @@ static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
                                      SelectionDAG &DAG, MachineFrameInfo *MFI,
                                      const TargetLowering &TLI) {
   LDBase = NULL;
-  LastLoadedElt = -1;
+  LastLoadedElt = -1U;
   for (unsigned i = 0; i < NumElems; ++i) {
     if (N->getMaskElt(i) < 0) {
       if (!LDBase)
