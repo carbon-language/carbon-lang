@@ -841,7 +841,7 @@ public:
 ///
 class BinOpInit : public OpInit {
 public:
-  enum BinaryOp { SHL, SRA, SRL, STRCONCAT, CONCAT, NAMECONCAT, REGMATCH };
+  enum BinaryOp { SHL, SRA, SRL, STRCONCAT, CONCAT, NAMECONCAT };
 private:
   BinaryOp Opc;
   Init *LHS, *RHS;
@@ -885,7 +885,7 @@ public:
 ///
 class TernOpInit : public OpInit {
 public:
-  enum TernaryOp { SUBST, FOREACH, IF, PATSUBST };
+  enum TernaryOp { SUBST, FOREACH, IF };
 private:
   TernaryOp Opc;
   Init *LHS, *MHS, *RHS;
