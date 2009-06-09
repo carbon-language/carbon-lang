@@ -319,8 +319,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
   if (!AnyNonZeroIndices) {
     V = InsertNoopCastOfTo(V,
                            Type::Int8Ty->getPointerTo(PTy->getAddressSpace()));
-    Value *Idx = expand(SE.getAddExpr(Ops));
-    Idx = InsertNoopCastOfTo(Idx, Ty);
+    Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
 
     // Fold a GEP with constant operands.
     if (Constant *CLHS = dyn_cast<Constant>(V))
@@ -374,8 +373,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
 
   // Emit a bunch of add instructions
   for (int i = S->getNumOperands()-2; i >= 0; --i) {
-    Value *W = expand(S->getOperand(i));
-    W = InsertNoopCastOfTo(W, Ty);
+    Value *W = expandCodeFor(S->getOperand(i), Ty);
     V = InsertBinop(Instruction::Add, V, W, InsertPt);
   }
   return V;
@@ -389,13 +387,11 @@ Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
       FirstOp = 1;
 
   int i = S->getNumOperands()-2;
-  Value *V = expand(S->getOperand(i+1));
-  V = InsertNoopCastOfTo(V, Ty);
+  Value *V = expandCodeFor(S->getOperand(i+1), Ty);
 
   // Emit a bunch of multiply instructions
   for (; i >= FirstOp; --i) {
-    Value *W = expand(S->getOperand(i));
-    W = InsertNoopCastOfTo(W, Ty);
+    Value *W = expandCodeFor(S->getOperand(i), Ty);
     V = InsertBinop(Instruction::Mul, V, W, InsertPt);
   }
 
@@ -408,8 +404,7 @@ Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
 Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
 
-  Value *LHS = expand(S->getLHS());
-  LHS = InsertNoopCastOfTo(LHS, Ty);
+  Value *LHS = expandCodeFor(S->getLHS(), Ty);
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getRHS())) {
     const APInt &RHS = SC->getValue()->getValue();
     if (RHS.isPowerOf2())
@@ -418,8 +413,7 @@ Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
                          InsertPt);
   }
 
-  Value *RHS = expand(S->getRHS());
-  RHS = InsertNoopCastOfTo(RHS, Ty);
+  Value *RHS = expandCodeFor(S->getRHS(), Ty);
   return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
 }
 
@@ -513,10 +507,9 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
   // If this is a simple linear addrec, emit it now as a special case.
   if (S->isAffine()) {   // {0,+,F} --> i*F
-    Value *F = expand(S->getOperand(1));
-    F = InsertNoopCastOfTo(F, Ty);
+    Value *F = expandCodeFor(S->getOperand(1), Ty);
     
-    // IF the step is by one, just return the inserted IV.
+    // If the step is by one, just return the inserted IV.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(F))
       if (CI->getValue() == 1)
         return I;
@@ -563,8 +556,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
 Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *V = expand(S->getOperand());
-  V = InsertNoopCastOfTo(V, SE.getEffectiveSCEVType(V->getType()));
+  Value *V = expandCodeFor(S->getOperand(),
+                           SE.getEffectiveSCEVType(S->getOperand()->getType()));
   Instruction *I = new TruncInst(V, Ty, "tmp.", InsertPt);
   InsertedValues.insert(I);
   return I;
@@ -572,8 +565,8 @@ Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
 
 Value *SCEVExpander::visitZeroExtendExpr(const SCEVZeroExtendExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *V = expand(S->getOperand());
-  V = InsertNoopCastOfTo(V, SE.getEffectiveSCEVType(V->getType()));
+  Value *V = expandCodeFor(S->getOperand(),
+                           SE.getEffectiveSCEVType(S->getOperand()->getType()));
   Instruction *I = new ZExtInst(V, Ty, "tmp.", InsertPt);
   InsertedValues.insert(I);
   return I;
@@ -581,8 +574,8 @@ Value *SCEVExpander::visitZeroExtendExpr(const SCEVZeroExtendExpr *S) {
 
 Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *V = expand(S->getOperand());
-  V = InsertNoopCastOfTo(V, SE.getEffectiveSCEVType(V->getType()));
+  Value *V = expandCodeFor(S->getOperand(),
+                           SE.getEffectiveSCEVType(S->getOperand()->getType()));
   Instruction *I = new SExtInst(V, Ty, "tmp.", InsertPt);
   InsertedValues.insert(I);
   return I;
@@ -590,11 +583,9 @@ Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
 
 Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *LHS = expand(S->getOperand(0));
-  LHS = InsertNoopCastOfTo(LHS, Ty);
+  Value *LHS = expandCodeFor(S->getOperand(0), Ty);
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
-    Value *RHS = expand(S->getOperand(i));
-    RHS = InsertNoopCastOfTo(RHS, Ty);
+    Value *RHS = expandCodeFor(S->getOperand(i), Ty);
     Instruction *ICmp =
       new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS, "tmp", InsertPt);
     InsertedValues.insert(ICmp);
@@ -607,11 +598,9 @@ Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
 
 Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *LHS = expand(S->getOperand(0));
-  LHS = InsertNoopCastOfTo(LHS, Ty);
+  Value *LHS = expandCodeFor(S->getOperand(0), Ty);
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
-    Value *RHS = expand(S->getOperand(i));
-    RHS = InsertNoopCastOfTo(RHS, Ty);
+    Value *RHS = expandCodeFor(S->getOperand(i), Ty);
     Instruction *ICmp =
       new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS, "tmp", InsertPt);
     InsertedValues.insert(ICmp);
