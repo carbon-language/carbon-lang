@@ -33,9 +33,13 @@ namespace llvm {
   struct PIC16Section {
       const Section *S_; // Connection to actual Section.
       unsigned Size;  // Total size of the objects contained.
+      bool SectionPrinted;
       std::vector<const GlobalVariable*> Items;
      
-      PIC16Section (const Section *s) { S_ = s; Size = 0; }
+      PIC16Section (const Section *s) { S_ = s; Size = 0; 
+                                        SectionPrinted = false;}
+      bool isPrinted() { return SectionPrinted ; }
+      void setPrintedStatus(bool status) { SectionPrinted = status ;} 
   };
       
   struct PIC16TargetAsmInfo : public TargetAsmInfo {

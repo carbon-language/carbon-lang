@@ -280,6 +280,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   printLibcallDecls();
+  EmitRemainingAutos();
   DbgInfo.EmitVarDebugInfo(M);
   DbgInfo.EmitEOF();
   O << "\n\t" << "END\n";
@@ -383,6 +384,8 @@ void PIC16AsmPrinter::EmitAutos (std::string FunctName)
   for (unsigned i = 0; i < AutosSections.size(); i++) {
     O << "\n";
     if (AutosSections[i]->S_->getName() == SectionName) { 
+      // Set the printing status to true
+      AutosSections[i]->setPrintedStatus(true);
       SwitchToSection(AutosSections[i]->S_);
       std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
       for (unsigned j = 0; j < Items.size(); j++) {
@@ -394,6 +397,37 @@ void PIC16AsmPrinter::EmitAutos (std::string FunctName)
         O << VarName << "  RES  " << Size << "\n";
       }
       break;
+    }
+  }
+}
+
+// Print autos that were not printed during the code printing of functions.
+// As the functions might themselves would have got deleted by the optimizer.
+void PIC16AsmPrinter::EmitRemainingAutos()
+{
+  const TargetData *TD = TM.getTargetData();
+
+  // Now print Autos section for this function.
+  std::vector <PIC16Section *>AutosSections = PTAI->AutosSections;
+  for (unsigned i = 0; i < AutosSections.size(); i++) {
+    
+    // if the section is already printed then don't print again
+    if (AutosSections[i]->isPrinted()) 
+      continue;
+
+    // Set status as printed
+    AutosSections[i]->setPrintedStatus(true);
+
+    O << "\n";
+    SwitchToSection(AutosSections[i]->S_);
+    std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
+    for (unsigned j = 0; j < Items.size(); j++) {
+      std::string VarName = Mang->getValueName(Items[j]);
+      Constant *C = Items[j]->getInitializer();
+      const Type *Ty = C->getType();
+      unsigned Size = TD->getTypeAllocSize(Ty);
+      // Emit memory reserve directive.
+      O << VarName << "  RES  " << Size << "\n";
     }
   }
 }
