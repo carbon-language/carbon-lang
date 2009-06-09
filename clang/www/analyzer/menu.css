@@ -26,13 +26,13 @@
 	display:block;
 	font-weight: bold;
 	text-align: center;
-	background-color: #EBF0FA;
+	background-color: #333333;
 }
 #menu a {
 	padding:0 .2em;
 	display:block;
 	text-align: center;
-	background-color: rgb(235,235,235);
+	background-color: #EBF0FA;
 }
 #menu a:visited {
 	color:rgb(100,50,100);
