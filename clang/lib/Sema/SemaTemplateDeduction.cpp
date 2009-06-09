@@ -20,6 +20,11 @@
 #include "llvm/Support/Compiler.h"
 using namespace clang;
 
+static bool
+DeduceTemplateArguments(ASTContext &Context, const TemplateArgument &Param,
+                        const TemplateArgument &Arg,
+                        llvm::SmallVectorImpl<TemplateArgument> &Deduced);
+
 /// \brief If the given expression is of a form that permits the deduction
 /// of a non-type template parameter, return the declaration of that
 /// non-type template parameter.
@@ -98,6 +103,24 @@ static bool DeduceNonTypeTemplateArgument(ASTContext &Context,
   
   // FIXME: Compare the expressions for equality!
   return true;
+}
+
+static bool DeduceTemplateArguments(ASTContext &Context,
+                                    TemplateName Param,
+                                    TemplateName Arg,
+                             llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
+  // FIXME: Implement template argument deduction for template
+  // template parameters.
+
+  TemplateDecl *ParamDecl = Param.getAsTemplateDecl();
+  TemplateDecl *ArgDecl = Arg.getAsTemplateDecl();
+  
+  if (!ParamDecl || !ArgDecl)
+    return false;
+
+  ParamDecl = cast<TemplateDecl>(Context.getCanonicalDecl(ParamDecl));
+  ArgDecl = cast<TemplateDecl>(Context.getCanonicalDecl(ArgDecl));
+  return ParamDecl == ArgDecl;
 }
 
 static bool DeduceTemplateArguments(ASTContext &Context, QualType Param, 
@@ -305,7 +328,86 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
       
       return true;
     }
+     
+    //     template-name<T> (wheretemplate-name refers to a class template)
+    //     template-name<i>
+    //     TT<T> (TODO)
+    //     TT<i> (TODO)
+    //     TT<> (TODO)
+    case Type::TemplateSpecialization: {
+      const TemplateSpecializationType *SpecParam
+        = cast<TemplateSpecializationType>(Param);
+
+      // Check whether the template argument is a dependent template-id.
+      // FIXME: This is untested code; it can be tested when we implement
+      // partial ordering of class template partial specializations.
+      if (const TemplateSpecializationType *SpecArg 
+            = dyn_cast<TemplateSpecializationType>(Arg)) {
+        // Perform template argument deduction for the template name.
+        if (!DeduceTemplateArguments(Context,
+                                     SpecParam->getTemplateName(),
+                                     SpecArg->getTemplateName(),
+                                     Deduced))
+          return false;
+            
+        unsigned NumArgs = SpecParam->getNumArgs();
+
+        // FIXME: When one of the template-names refers to a
+        // declaration with default template arguments, do we need to
+        // fill in those default template arguments here? Most likely,
+        // the answer is "yes", but I don't see any references. This
+        // issue may be resolved elsewhere, because we may want to
+        // instantiate default template arguments when
+        if (SpecArg->getNumArgs() != NumArgs)
+          return false;
+
+        // Perform template argument deduction on each template
+        // argument.
+        for (unsigned I = 0; I != NumArgs; ++I)
+          if (!DeduceTemplateArguments(Context,
+                                       SpecParam->getArg(I),
+                                       SpecArg->getArg(I),
+                                       Deduced))
+            return false;
+
+        return true;
+      } 
+
+      // If the argument type is a class template specialization, we
+      // perform template argument deduction using its template
+      // arguments.
+      const RecordType *RecordArg = dyn_cast<RecordType>(Arg);
+      if (!RecordArg)
+        return false;
+
+      ClassTemplateSpecializationDecl *SpecArg 
+        = dyn_cast<ClassTemplateSpecializationDecl>(RecordArg->getDecl());
+      if (!SpecArg)
+        return false;
+
+      // Perform template argument deduction for the template name.
+      if (!DeduceTemplateArguments(Context,
+                                   SpecParam->getTemplateName(),
+                                   TemplateName(SpecArg->getSpecializedTemplate()),
+                                   Deduced))
+          return false;
+
+      // FIXME: Can the # of arguments in the parameter and the argument differ?
+      unsigned NumArgs = SpecParam->getNumArgs();
+      const TemplateArgumentList &ArgArgs = SpecArg->getTemplateArgs();
+      if (NumArgs != ArgArgs.size())
+        return false;
+
+      for (unsigned I = 0; I != NumArgs; ++I)
+        if (!DeduceTemplateArguments(Context,
+                                     SpecParam->getArg(I),
+                                     ArgArgs.get(I),
+                                     Deduced))
+          return false;
       
+      return true;
+    }
+
     default:
       break;
   }
