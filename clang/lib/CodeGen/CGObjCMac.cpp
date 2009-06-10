@@ -1508,6 +1508,8 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
         BuiltinType::Kind k = BT->getKind();
         Fn = (k == BuiltinType::LongDouble) ? ObjCTypes.getSendFpretFn2(IsSuper)
               : ObjCTypes.getSendFn2(IsSuper);
+      } else {
+        Fn = ObjCTypes.getSendFn2(IsSuper);
       }
     }
     else

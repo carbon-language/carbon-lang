@@ -77,7 +77,14 @@ public:
   /// and returns the result.
   ComplexPairTy EmitLoadOfLValue(const Expr *E) {
     LValue LV = CGF.EmitLValue(E);
-    return EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
+    if (LV.isSimple())
+      return EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
+
+    if (LV.isPropertyRef())
+      return CGF.EmitObjCPropertyGet(LV.getPropertyRefExpr()).getComplexVal();
+    
+    assert(LV.isKVCRef() && "Unknown LValue type!");
+    return CGF.EmitObjCPropertyGet(LV.getKVCRefExpr()).getComplexVal();
   }
   
   /// EmitLoadOfComplex - Given a pointer to a complex value, emit code to load
@@ -107,6 +114,18 @@ public:
   
   // l-values.
   ComplexPairTy VisitDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { 
+    return EmitLoadOfLValue(E);
+  }
+  ComplexPairTy VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+    return EmitLoadOfLValue(E);
+  }
+  ComplexPairTy VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
+    return EmitLoadOfLValue(E);
+  }
+  ComplexPairTy VisitObjCMessageExpr(ObjCMessageExpr *E) {
+    return CGF.EmitObjCMessageExpr(E).getComplexVal();
+  }
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitMemberExpr(const Expr *E) { return EmitLoadOfLValue(E); }
 
@@ -522,15 +541,32 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
   // Compute the address to store into.
   LValue LHS = CGF.EmitLValue(E->getLHS());
+   
+  // Store into it, if simple.
+  if (LHS.isSimple()) {
+    EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
+
+    // And now return the LHS
+    IgnoreReal = ignreal;
+    IgnoreImag = ignimag;
+    IgnoreRealAssign = ignreal;
+    IgnoreImagAssign = ignimag;
+    return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
+  }
   
-  // Store into it.
-  EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
-  // And now return the LHS
+  // Otherwise we must have a property setter (no complex vector/bitfields).
+  if (LHS.isPropertyRef())
+    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), RValue::getComplex(Val));
+  else
+    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), RValue::getComplex(Val));
+
+  // There is no reload after a store through a method, but we need to restore
+  // the Ignore* flags.
   IgnoreReal = ignreal;
   IgnoreImag = ignimag;
   IgnoreRealAssign = ignreal;
   IgnoreImagAssign = ignimag;
-  return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
+  return Val;
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
