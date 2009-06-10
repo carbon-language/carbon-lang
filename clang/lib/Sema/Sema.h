@@ -2056,7 +2056,16 @@ public:
       /// parameter. The Entity is the template, and
       /// TemplateArgs/NumTemplateArguments provides the template
       /// arguments as specified.
-      DefaultTemplateArgumentInstantiation
+      /// FIXME: Use a TemplateArgumentList
+      DefaultTemplateArgumentInstantiation,
+
+      /// We are performing template argument deduction for a class
+      /// template partial specialization. The Entity is the class
+      /// template partial specialization, and
+      /// TemplateArgs/NumTemplateArgs provides the deduced template
+      /// arguments.
+      /// FIXME: Use a TemplateArgumentList
+      PartialSpecDeductionInstantiation
     } Kind;
 
     /// \brief The point of instantiation within the source code.
@@ -2090,6 +2099,7 @@ public:
         return true;
 
       case DefaultTemplateArgumentInstantiation:
+      case PartialSpecDeductionInstantiation:
         return X.TemplateArgs == Y.TemplateArgs;
       }
 
@@ -2142,6 +2152,15 @@ public:
     /// template-id.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           TemplateDecl *Template,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceRange InstantiationRange = SourceRange());
+
+    /// \brief Note that we are instantiating as part of template
+    /// argument deduction for a class template partial
+    /// specialization.
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          ClassTemplatePartialSpecializationDecl *PartialSpec,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange = SourceRange());

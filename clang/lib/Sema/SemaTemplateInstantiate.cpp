@@ -90,6 +90,30 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
   }
 }
 
+Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef, 
+                                         SourceLocation PointOfInstantiation,
+                          ClassTemplatePartialSpecializationDecl *PartialSpec,
+                                         const TemplateArgument *TemplateArgs,
+                                         unsigned NumTemplateArgs,
+                                         SourceRange InstantiationRange)
+  : SemaRef(SemaRef) {
+
+  Invalid = CheckInstantiationDepth(PointOfInstantiation,
+                                    InstantiationRange);
+  if (!Invalid) {
+    ActiveTemplateInstantiation Inst;
+    Inst.Kind 
+      = ActiveTemplateInstantiation::PartialSpecDeductionInstantiation;
+    Inst.PointOfInstantiation = PointOfInstantiation;
+    Inst.Entity = reinterpret_cast<uintptr_t>(PartialSpec);
+    Inst.TemplateArgs = TemplateArgs;
+    Inst.NumTemplateArgs = NumTemplateArgs;
+    Inst.InstantiationRange = InstantiationRange;
+    SemaRef.ActiveTemplateInstantiations.push_back(Inst);
+    Invalid = false;
+  }
+}
+
 void Sema::InstantiatingTemplate::Clear() {
   if (!Invalid) {
     SemaRef.ActiveTemplateInstantiations.pop_back();
@@ -157,6 +181,26 @@ void Sema::PrintInstantiationStack() {
         << Active->InstantiationRange;
       break;
     }
+
+    case ActiveTemplateInstantiation::PartialSpecDeductionInstantiation: {
+      ClassTemplatePartialSpecializationDecl *PartialSpec
+        = cast<ClassTemplatePartialSpecializationDecl>((Decl *)Active->Entity);
+      std::string TemplateArgsStr
+        = TemplateSpecializationType::PrintTemplateArgumentList(
+                        PartialSpec->getTemplateArgs().getFlatArgumentList(),
+                                  PartialSpec->getTemplateArgs().flat_size(),
+                                                      Context.PrintingPolicy);
+      // FIXME: The active template instantiation's template arguments
+      // are interesting, too. We should add something like [with T =
+      // foo, U = bar, etc.] to the string.
+      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+                   diag::note_partial_spec_deduct_instantiation_here)
+        << (PartialSpec->getSpecializedTemplate()->getNameAsString() + 
+            TemplateArgsStr)
+        << Active->InstantiationRange;
+      break;
+    }
+
     }
   }
 }

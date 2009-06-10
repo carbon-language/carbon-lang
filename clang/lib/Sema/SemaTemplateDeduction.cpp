@@ -408,6 +408,37 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
       return true;
     }
 
+    //     T type::*
+    //     T T::*
+    //     T (type::*)()
+    //     type (T::*)()
+    //     type (type::*)(T)
+    //     type (T::*)(T)
+    //     T (type::*)(T)
+    //     T (T::*)()
+    //     T (T::*)(T)
+    case Type::MemberPointer: {
+      const MemberPointerType *MemPtrParam = cast<MemberPointerType>(Param);
+      const MemberPointerType *MemPtrArg = dyn_cast<MemberPointerType>(Arg);
+      if (!MemPtrArg)
+        return false;
+
+      return DeduceTemplateArguments(Context,
+                                     MemPtrParam->getPointeeType(),
+                                     MemPtrArg->getPointeeType(),
+                                     Deduced) &&
+        DeduceTemplateArguments(Context,
+                                QualType(MemPtrParam->getClass(), 0),
+                                QualType(MemPtrArg->getClass(), 0),
+                                Deduced);
+    }
+
+    case Type::TypeOfExpr:
+    case Type::TypeOf:
+    case Type::Typename:
+      // No template argument deduction for these types
+      return true;
+
     default:
       break;
   }
@@ -491,6 +522,14 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   Deduced.resize(Partial->getTemplateParameters()->size());
   if (! ::DeduceTemplateArguments(Context, Partial->getTemplateArgs(), 
                                   TemplateArgs, Deduced))
+    return 0;
+
+  // FIXME: It isn't clear whether we want the diagnostic to point at
+  // the partial specialization itself or at the actual point of
+  // instantiation.
+  InstantiatingTemplate Inst(*this, Partial->getLocation(), Partial,
+                             Deduced.data(), Deduced.size());
+  if (Inst)
     return 0;
   
   // FIXME: Substitute the deduced template arguments into the template

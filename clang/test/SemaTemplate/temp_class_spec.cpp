@@ -158,3 +158,98 @@ template<typename T, typename Class>
 struct is_member_pointer<T Class::*> {
   static const bool value = true;
 };
+
+struct X { };
+
+int is_member_pointer0[is_member_pointer<int X::*>::value? 1 : -1];
+int is_member_pointer1[is_member_pointer<const int X::*>::value? 1 : -1];
+int is_member_pointer2[is_member_pointer<int (X::*)()>::value? 1 : -1];
+int is_member_pointer3[is_member_pointer<int (X::*)(int) const>::value? 1 : -1];
+int is_member_pointer4[is_member_pointer<int (X::**)(int) const>::value? -1 : 1];
+int is_member_pointer5[is_member_pointer<int>::value? -1 : 1];
+
+template<typename T>
+struct is_member_function_pointer {
+  static const bool value = false;
+};
+
+template<typename T, typename Class>
+struct is_member_function_pointer<T (Class::*)()> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class>
+struct is_member_function_pointer<T (Class::*)() const> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class>
+struct is_member_function_pointer<T (Class::*)() volatile> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class>
+struct is_member_function_pointer<T (Class::*)() const volatile> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class, typename A1>
+struct is_member_function_pointer<T (Class::*)(A1)> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class, typename A1>
+struct is_member_function_pointer<T (Class::*)(A1) const> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class, typename A1>
+struct is_member_function_pointer<T (Class::*)(A1) volatile> {
+  static const bool value = true;
+};
+
+template<typename T, typename Class, typename A1>
+struct is_member_function_pointer<T (Class::*)(A1) const volatile> {
+  static const bool value = true;
+};
+
+int is_member_function_pointer0[
+                          is_member_function_pointer<int X::*>::value? -1 : 1];
+int is_member_function_pointer1[
+                      is_member_function_pointer<int (X::*)()>::value? 1 : -1];
+int is_member_function_pointer2[
+                      is_member_function_pointer<X (X::*)(X&)>::value? 1 : -1];
+int is_member_function_pointer3[
+           is_member_function_pointer<int (X::*)() const>::value? 1 : -1];
+int is_member_function_pointer4[
+           is_member_function_pointer<int (X::*)(float) const>::value? 1 : -1];
+
+template<typename T, typename ValueType = T>
+struct is_nested_value_type_identity {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_nested_value_type_identity<T, typename T::value_type> {
+  static const bool value = true;
+};
+
+template<typename T>
+struct HasValueType {
+  typedef T value_type;
+};
+
+struct HasIdentityValueType {
+  typedef HasIdentityValueType value_type;
+};
+
+struct NoValueType { };
+
+// FIXME: Need substitution into the template arguments of the partial spec
+//int is_nested_value_type_identity0[
+//            is_nested_value_type_identity<HasValueType<int> >::value? -1 : 1];
+int is_nested_value_type_identity1[
+          is_nested_value_type_identity<HasIdentityValueType>::value? 1 : -1];
+// FIXME: Enable when we have SFINAE support
+//int is_nested_value_type_identity0[
+//                   is_nested_value_type_identity<NoValueType>::value? -1 : 1];
