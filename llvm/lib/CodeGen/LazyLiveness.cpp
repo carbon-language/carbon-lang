@@ -151,3 +151,4 @@ bool LazyLiveness::vregLiveIntoMBB(unsigned vreg, MachineBasicBlock* MBB) {
   
   return false;
 }
+
