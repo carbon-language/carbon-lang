@@ -56,6 +56,10 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     PP.Diag(Loc, diag::ext_nonstandard_escape) << "e";
     ResultChar = 27;
     break;
+  case 'E':
+    PP.Diag(Loc, diag::ext_nonstandard_escape) << "E";
+    ResultChar = 27;
+    break;
   case 'f':
     ResultChar = 12;
     break;
@@ -135,7 +139,6 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     PP.Diag(Loc, diag::ext_nonstandard_escape)
       << std::string()+(char)ResultChar;
     break;
-    // FALL THROUGH.
   default:
     if (isgraph(ThisTokBuf[0]))
       PP.Diag(Loc, diag::ext_unknown_escape) << std::string()+(char)ResultChar;
