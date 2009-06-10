@@ -1769,22 +1769,6 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   return false;
 }
 
-/// OnlyCalledDirectly - Return true if the specified function is only called
-/// directly.  In other words, its address is never taken.
-static bool OnlyCalledDirectly(Function *F) {
-  for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
-    Instruction *User = dyn_cast<Instruction>(*UI);
-    if (!User) return false;
-    if (!isa<CallInst>(User) && !isa<InvokeInst>(User)) return false;
-
-    // See if the function address is passed as an argument.
-    for (User::op_iterator i = User->op_begin() + 1, e = User->op_end();
-         i != e; ++i)
-      if (*i == F) return false;
-  }
-  return true;
-}
-
 /// ChangeCalleesToFastCall - Walk all of the direct calls of the specified
 /// function, changing them to FastCC.
 static void ChangeCalleesToFastCall(Function *F) {
@@ -1830,7 +1814,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       ++NumFnDeleted;
     } else if (F->hasLocalLinkage()) {
       if (F->getCallingConv() == CallingConv::C && !F->isVarArg() &&
-          OnlyCalledDirectly(F)) {
+          !F->hasAddressTaken()) {
         // If this function has C calling conventions, is not a varargs
         // function, and is only called directly, promote it to use the Fast
         // calling convention.
@@ -1841,7 +1825,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       }
 
       if (F->getAttributes().hasAttrSomewhere(Attribute::Nest) &&
-          OnlyCalledDirectly(F)) {
+          !F->hasAddressTaken()) {
         // The function is not used by a trampoline intrinsic, so it is safe
         // to remove the 'nest' attribute.
         RemoveNestAttribute(F);

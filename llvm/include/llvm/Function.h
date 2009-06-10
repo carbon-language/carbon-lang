@@ -395,6 +395,10 @@ public:
   /// including any contained basic blocks.
   ///
   void dropAllReferences();
+
+  /// hasAddressTaken - returns true if there are any uses of this function
+  /// other than direct calls or invokes to it.
+  bool hasAddressTaken() const;
 };
 
 inline ValueSymbolTable *

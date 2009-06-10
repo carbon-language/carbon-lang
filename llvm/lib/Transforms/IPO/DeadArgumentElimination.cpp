@@ -175,15 +175,8 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   if (Fn.isDeclaration() || !Fn.hasLocalLinkage()) return false;
 
   // Ensure that the function is only directly called.
-  for (Value::use_iterator I = Fn.use_begin(), E = Fn.use_end(); I != E; ++I) {
-    // If this use is anything other than a call site, give up.
-    CallSite CS = CallSite::get(*I);
-    Instruction *TheCall = CS.getInstruction();
-    if (!TheCall) return false;   // Not a direct call site?
-
-    // The addr of this function is passed to the call.
-    if (!CS.isCallee(I)) return false;
-  }
+  if (Fn.hasAddressTaken())
+    return false;
 
   // Okay, we know we can transform this function if safe.  Scan its body
   // looking for calls to llvm.vastart.

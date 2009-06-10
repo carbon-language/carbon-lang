@@ -127,17 +127,8 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
   // Second check: make sure that all callers are direct callers.  We can't
   // transform functions that have indirect callers.
-  for (Value::use_iterator UI = F->use_begin(), E = F->use_end();
-       UI != E; ++UI) {
-    CallSite CS = CallSite::get(*UI);
-    if (!CS.getInstruction())       // "Taking the address" of the function
-      return false;
-
-    // Ensure that this call site is CALLING the function, not passing it as
-    // an argument.
-    if (!CS.isCallee(UI))
-      return false;
-  }
+  if (F->hasAddressTaken())
+    return false;
 
   // Check to see which arguments are promotable.  If an argument is promotable,
   // add it to ArgsToPromote.
