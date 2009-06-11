@@ -1024,8 +1024,21 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         if (!NTTP->hasDefaultArgument())
           break;
 
-        // FIXME: Instantiate default argument
-        Arg = TemplateArgument(NTTP->getDefaultArgument());
+        InstantiatingTemplate Inst(*this, TemplateLoc, 
+                                   Template, Converted.getFlatArgumentList(),
+                                   Converted.flatSize(),
+                                   SourceRange(TemplateLoc, RAngleLoc));
+        
+        TemplateArgumentList TemplateArgs(Context, Converted,
+                                          /*CopyArgs=*/false,
+                                          /*FlattenArgs=*/false);
+
+        Sema::OwningExprResult E = InstantiateExpr(NTTP->getDefaultArgument(), 
+                                                   TemplateArgs);
+        if (E.isInvalid())
+          return true;
+        
+        Arg = TemplateArgument(E.takeAs<Expr>());
       } else {
         TemplateTemplateParmDecl *TempParm 
           = cast<TemplateTemplateParmDecl>(*Param);      
@@ -1400,7 +1413,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   // FIXME: Add template argument to Converted!
   if (InstantiatedParamType->isDependentType() || Arg->isTypeDependent()) {
     // FIXME: Produce a cloned, canonical expression?
-    Converted->push_back(TemplateArgument(Arg));
+    if (Converted)
+      Converted->push_back(TemplateArgument(Arg));
     return false;
   }
 

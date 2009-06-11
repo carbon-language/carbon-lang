@@ -13,3 +13,12 @@ X<> *x4;
 
 template<typename T = int> struct Z { };
 template struct Z<>;
+
+// PR4362
+template<class T> struct a { };
+template<> struct a<int> { static const bool v = true; };
+
+template<class T, bool = a<T>::v> struct p { }; // expected-error {{no member named 'v'}}
+
+template struct p<bool>; // expected-note {{in instantiation of default argument for 'p<bool>' required here}}
+template struct p<int>;
