@@ -148,10 +148,6 @@ N: Patrick Jenkins
 E: patjenk@wam.umd.edu
 D: Nightly Tester
 
-N: Brad Jones
-E: kungfoomaster@nondot.org
-D: Support for packed types
-
 N: Dale Johannesen
 E: dalej@apple.com
 D: ARM constant islands improvements
@@ -159,6 +155,10 @@ D: Tail merging improvements
 D: Rewrite X87 back end
 D: Use APFloat for floating point constants widely throughout compiler
 D: Implement X87 long double
+
+N: Brad Jones
+E: kungfoomaster@nondot.org
+D: Support for packed types
 
 N: Eric Kidd
 W: http://randomhacks.net/
@@ -290,8 +290,4 @@ D: Thread Local Storage implementation
 
 N: Bill Wendling
 E: isanbard@gmail.com
-D: Machine LICM
-D: Darwin exception handling
-D: MMX & SSSE3 instructions
-D: SPEC2006 support
-
+D: Bunches of stuff
