@@ -749,7 +749,13 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       Diag(Tok, diag::err_expected_expression);
       return ExprError();
     }
-    
+
+    if (SavedKind == tok::kw_typename) {
+      // postfix-expression: typename-specifier '(' expression-list[opt] ')'
+      if (!TryAnnotateTypeOrScopeToken())
+        return ExprError();
+    }
+
     // postfix-expression: simple-type-specifier '(' expression-list[opt] ')'
     //
     DeclSpec DS;
