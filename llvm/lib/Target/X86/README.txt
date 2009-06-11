@@ -482,35 +482,6 @@ _usesbb:
 
 //===---------------------------------------------------------------------===//
 
-Currently we don't have elimination of redundant stack manipulations. Consider
-the code:
-
-int %main() {
-entry:
-	call fastcc void %test1( )
-	call fastcc void %test2( sbyte* cast (void ()* %test1 to sbyte*) )
-	ret int 0
-}
-
-declare fastcc void %test1()
-
-declare fastcc void %test2(sbyte*)
-
-
-This currently compiles to:
-
-	subl $16, %esp
-	call _test5
-	addl $12, %esp
-	subl $16, %esp
-	movl $_test5, (%esp)
-	call _test6
-	addl $12, %esp
-
-The add\sub pair is really unneeded here.
-
-//===---------------------------------------------------------------------===//
-
 Consider the expansion of:
 
 define i32 @test3(i32 %X) {
@@ -899,34 +870,6 @@ __Z11no_overflowjj:
 
 Re-materialize MOV32r0 etc. with xor instead of changing them to moves if the
 condition register is dead. xor reg reg is shorter than mov reg, #0.
-
-//===---------------------------------------------------------------------===//
-
-We aren't matching RMW instructions aggressively
-enough.  Here's a reduced testcase (more in PR1160):
-
-define void @test(i32* %huge_ptr, i32* %target_ptr) {
-        %A = load i32* %huge_ptr                ; <i32> [#uses=1]
-        %B = load i32* %target_ptr              ; <i32> [#uses=1]
-        %C = or i32 %A, %B              ; <i32> [#uses=1]
-        store i32 %C, i32* %target_ptr
-        ret void
-}
-
-$ llvm-as < t.ll | llc -march=x86-64
-
-_test:
-        movl (%rdi), %eax
-        orl (%rsi), %eax
-        movl %eax, (%rsi)
-        ret
-
-That should be something like:
-
-_test:
-        movl (%rdi), %eax
-        orl %eax, (%rsi)
-        ret
 
 //===---------------------------------------------------------------------===//
 
@@ -1895,5 +1838,62 @@ processors.  GCC does two optimizations:
 The first one is done for all AMDs, Core2, and "Generic"
 The second one is done for: Atom, Pentium Pro, all AMDs, Pentium 4, Nocona,
   Core 2, and "Generic"
+
+//===---------------------------------------------------------------------===//
+
+Testcase:
+int a(int x) { return (x & 127) > 31; }
+
+Current output:
+	movl	4(%esp), %eax
+	andl	$127, %eax
+	cmpl	$31, %eax
+	seta	%al
+	movzbl	%al, %eax
+	ret
+
+Ideal output:
+	xorl	%eax, %eax
+	testl	$96, 4(%esp)
+	setne	%al
+	ret
+
+We could do this transformation in instcombine, but it's only clearly
+beneficial on platforms with a test instruction.
+
+//===---------------------------------------------------------------------===//
+Testcase:
+int x(int a) { return (a&0xf0)>>4; }
+
+Current output:
+	movl	4(%esp), %eax
+	shrl	$4, %eax
+	andl	$15, %eax
+	ret
+
+Ideal output:
+	movzbl	4(%esp), %eax
+	shrl	$4, %eax
+	ret
+
+//===---------------------------------------------------------------------===//
+
+Testcase:
+int x(int a) { return (a & 0x80) ? 0x100 : 0; }
+
+Current output:
+	testl	$128, 4(%esp)
+	setne	%al
+	movzbl	%al, %eax
+	shll	$8, %eax
+	ret
+
+Ideal output:
+	movl	4(%esp), %eax
+	addl	%eax, %eax
+	andl	$256, %eax
+	ret
+
+We generally want to fold shifted tests of a single bit into a shift+and on x86.
 
 //===---------------------------------------------------------------------===//
