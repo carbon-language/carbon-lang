@@ -243,7 +243,7 @@ public:
   }
 
   // The JIT overrides a version that actually does this.
-  virtual void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0) { }
+  virtual void runJITOnFunction(Function *, MachineCodeInfo * = 0) { }
 
   /// getGlobalValueAtAddress - Return the LLVM global value object that starts
   /// at the specified address.
