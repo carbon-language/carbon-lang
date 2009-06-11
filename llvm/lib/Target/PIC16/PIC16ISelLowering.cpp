@@ -56,6 +56,17 @@ static const char *getIntrinsicName(unsigned opcode) {
   case RTLIB::SREM_I32: Basename = "srem.i32"; break;
   case RTLIB::UREM_I16: Basename = "urem.i16"; break;
   case RTLIB::UREM_I32: Basename = "urem.i32"; break;
+
+  case RTLIB::FPTOSINT_F32_I32:
+               Basename = "f32_to_si32"; break;
+  case RTLIB::SINTTOFP_I32_F32:
+               Basename = "si32_to_f32"; break;
+               
+  case RTLIB::ADD_F32: Basename = "add.f32"; break;
+  case RTLIB::SUB_F32: Basename = "sub.f32"; break;
+  case RTLIB::MUL_F32: Basename = "mul.f32"; break;
+  case RTLIB::DIV_F32: Basename = "div.f32"; break;
+  
   }
   
   std::string prefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
@@ -113,7 +124,17 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   // Unsigned remainder lib call names
   setLibcallName(RTLIB::UREM_I16, getIntrinsicName(RTLIB::UREM_I16));
   setLibcallName(RTLIB::UREM_I32, getIntrinsicName(RTLIB::UREM_I32));
-  
+ 
+  // Floating point operations
+  setLibcallName(RTLIB::FPTOSINT_F32_I32, 
+                 getIntrinsicName(RTLIB::FPTOSINT_F32_I32));
+  setLibcallName(RTLIB::SINTTOFP_I32_F32, 
+                 getIntrinsicName(RTLIB::SINTTOFP_I32_F32));
+  setLibcallName(RTLIB::ADD_F32, getIntrinsicName(RTLIB::ADD_F32));
+  setLibcallName(RTLIB::SUB_F32, getIntrinsicName(RTLIB::SUB_F32));
+  setLibcallName(RTLIB::MUL_F32, getIntrinsicName(RTLIB::MUL_F32));
+  setLibcallName(RTLIB::DIV_F32, getIntrinsicName(RTLIB::DIV_F32));
+
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i16, Custom);
 
