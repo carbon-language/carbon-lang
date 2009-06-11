@@ -971,15 +971,31 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     
     // FIXME: This should all be refactored into a chain of "summary lookup"
     //  filters.
-    if (strcmp(FName, "IOServiceGetMatchingServices") == 0) {
-      // FIXES: <rdar://problem/6326900>
-      // This should be addressed using a API table.  This strcmp is also
-      // a little gross, but there is no need to super optimize here.
-      assert (ScratchArgs.isEmpty());
-      ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
-      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-      break;
-    }
+		switch (strlen(FName)) {
+			default: break;
+			case 17:
+				// Handle: id NSMakeCollectable(CFTypeRef)
+				if (!memcmp(FName, "NSMakeCollectable", 17)) {
+					S = (RetTy == Ctx.getObjCIdType())
+							? getUnarySummary(FT, cfmakecollectable)
+							: getPersistentStopSummary();
+				}
+				break;
+			case 28:
+				if (!memcmp(FName, "IOServiceGetMatchingServices", 28)) {
+					// FIXES: <rdar://problem/6326900>
+					// This should be addressed using a API table.  This strcmp is also
+					// a little gross, but there is no need to super optimize here.
+					assert (ScratchArgs.isEmpty());
+					ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
+					S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+				}
+				break;
+		}
+		
+		// Did we get a summary?
+		if (S)
+			break;
 
     // Enable this code once the semantics of NSDeallocateObject are resolved
     // for GC.  <rdar://problem/6619988>
@@ -992,15 +1008,6 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
         : getPersistentStopSummary();
     }
 #endif
-    
-    // Handle: id NSMakeCollectable(CFTypeRef)
-    if (strcmp(FName, "NSMakeCollectable") == 0) {
-      S = (RetTy == Ctx.getObjCIdType())
-          ? getUnarySummary(FT, cfmakecollectable)
-          : getPersistentStopSummary();
-        
-      break;
-    }
 
     if (RetTy->isPointerType()) {
       // For CoreFoundation ('CF') types.
