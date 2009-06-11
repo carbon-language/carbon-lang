@@ -1,4 +1,7 @@
 ; RUN: bugpoint %s -dce -bugpoint-deletecalls -simplifycfg -silence-passes %bugpoint_topts
+; XFAIL: powerpc-*-linux
+; END.
+; Failure on PPC Linux is due to PR4293.
 
 @.LC0 = internal global [13 x i8] c"Hello World\0A\00"          ; <[13 x i8]*> [#uses=1]
 
