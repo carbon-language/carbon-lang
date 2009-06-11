@@ -531,30 +531,36 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
                              Deduced.data(), Deduced.size());
   if (Inst)
     return 0;
-  
-  // FIXME: Substitute the deduced template arguments into the template
-  // arguments of the class template partial specialization; the resulting
-  // template arguments should match TemplateArgs exactly.
-  
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
-    TemplateArgument &Arg = Deduced[I];
 
-    // FIXME: If this template argument was not deduced, but the corresponding
-    // template parameter has a default argument, instantiate the default
-    // argument.
-    if (Arg.isNull()) // FIXME: Result->Destroy(Context);
+  // C++ [temp.deduct.type]p2:
+  //   [...] or if any template argument remains neither deduced nor
+  //   explicitly specified, template argument deduction fails.
+  TemplateArgumentListBuilder Builder(Context);
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+    if (Deduced[I].isNull())
       return 0;
-    
+
+    Builder.push_back(Deduced[I]);
+  }
+
+  // Form the template argument list from the deduced template arguments.
+  TemplateArgumentList *DeducedArgumentList 
+    = new (Context) TemplateArgumentList(Context, Builder, /*CopyArgs=*/true,
+                                         /*FlattenArgs=*/true);
+
+  // Now that we have all of the deduced template arguments, take
+  // another pass through them to convert any integral template
+  // arguments to the appropriate type.
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+    TemplateArgument &Arg = Deduced[I];    
     if (Arg.getKind() == TemplateArgument::Integral) {
-      // FIXME: Instantiate the type, but we need some context!
       const NonTypeTemplateParmDecl *Parm 
         = cast<NonTypeTemplateParmDecl>(Partial->getTemplateParameters()
                                           ->getParam(I));
-      //      QualType T = InstantiateType(Parm->getType(), *Result,
-      //                                   Parm->getLocation(), Parm->getDeclName());
-      //      if (T.isNull()) // FIXME: Result->Destroy(Context);
-      //        return 0;
-      QualType T = Parm->getType();
+      QualType T = InstantiateType(Parm->getType(), *DeducedArgumentList,
+                                   Parm->getLocation(), Parm->getDeclName());
+      if (T.isNull()) // FIXME: DeducedArgumentList->Destroy(Context);
+        return 0;
       
       // FIXME: Make sure we didn't overflow our data type!
       llvm::APSInt &Value = *Arg.getAsIntegral();
@@ -564,14 +570,134 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
       Value.setIsSigned(T->isSignedIntegerType());
       Arg.setIntegralType(T);
     }
+
+    (*DeducedArgumentList)[I] = Arg;
   }
-  
-  // FIXME: This is terrible. DeduceTemplateArguments should use a 
-  // TemplateArgumentListBuilder directly.
-  TemplateArgumentListBuilder Builder(Context);
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I)
-    Builder.push_back(Deduced[I]);
-  
-  return new (Context) TemplateArgumentList(Context, Builder, /*CopyArgs=*/true,
-                                            /*FlattenArgs=*/true);
+
+  // Substitute the deduced template arguments into the template
+  // arguments of the class template partial specialization, and
+  // verify that the instantiated template arguments are both valid
+  // and are equivalent to the template arguments originally provided
+  // to the class template.
+  ClassTemplateDecl *ClassTemplate = Partial->getSpecializedTemplate();
+  const TemplateArgumentList &PartialTemplateArgs = Partial->getTemplateArgs();
+  for (unsigned I = 0, N = PartialTemplateArgs.flat_size(); I != N; ++I) {
+    TemplateArgument InstArg = Instantiate(PartialTemplateArgs[I],
+                                           *DeducedArgumentList);
+    if (InstArg.isNull()) {
+      // FIXME: DeducedArgumentList->Destroy(Context); (or use RAII)
+      return 0;
+    }
+
+    Decl *Param 
+      = const_cast<Decl *>(ClassTemplate->getTemplateParameters()->getParam(I));
+    if (isa<TemplateTypeParmDecl>(Param)) {
+      if (InstArg.getKind() != TemplateArgument::Type ||
+          Context.getCanonicalType(InstArg.getAsType())
+            != Context.getCanonicalType(TemplateArgs[I].getAsType()))
+        // FIXME: DeducedArgumentList->Destroy(Context); (or use RAII)
+        return 0;
+    } else if (NonTypeTemplateParmDecl *NTTP 
+                 = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+      QualType T = InstantiateType(NTTP->getType(), TemplateArgs,
+                                   NTTP->getLocation(), NTTP->getDeclName());
+      if (T.isNull())
+        // FIXME: DeducedArgumentList->Destroy(Context); (or use RAII)
+        return 0;
+
+      if (InstArg.getKind() == TemplateArgument::Declaration ||
+          InstArg.getKind() == TemplateArgument::Expression) {
+        // Turn the template argument into an expression, so that we can
+        // perform type checking on it and convert it to the type of the
+        // non-type template parameter. FIXME: Will this expression be
+        // leaked? It's hard to tell, since our ownership model for
+        // expressions in template arguments is so poor.
+        Expr *E = 0;
+        if (InstArg.getKind() == TemplateArgument::Declaration) {
+          NamedDecl *D = cast<NamedDecl>(InstArg.getAsDecl());
+          QualType T = Context.OverloadTy;
+          if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+            T = VD->getType().getNonReferenceType();
+          E = new (Context) DeclRefExpr(D, T, InstArg.getLocation());
+        } else {
+          E = InstArg.getAsExpr();
+        }
+
+        // Check that the template argument can be used to initialize
+        // the corresponding template parameter.
+        if (CheckTemplateArgument(NTTP, T, E, InstArg))
+          return 0;
+      }
+
+      switch (InstArg.getKind()) {
+      case TemplateArgument::Null:
+        assert(false && "Null template arguments cannot get here");
+        return 0;
+
+      case TemplateArgument::Type:
+        assert(false && "Type/value mismatch");
+        return 0;
+
+      case TemplateArgument::Integral: {
+        llvm::APSInt &Value = *InstArg.getAsIntegral();
+        if (T->isIntegralType() || T->isEnumeralType()) {
+          QualType IntegerType = Context.getCanonicalType(T);
+          if (const EnumType *Enum = dyn_cast<EnumType>(IntegerType))
+            IntegerType = Context.getCanonicalType(
+                                           Enum->getDecl()->getIntegerType());
+
+          // Check that an unsigned parameter does not receive a negative
+          // value.
+          if (IntegerType->isUnsignedIntegerType()
+              && (Value.isSigned() && Value.isNegative()))
+            return 0;
+
+          // Check for truncation. If the number of bits in the
+          // instantiated template argument exceeds what is allowed by
+          // the type, template argument deduction fails.
+          unsigned AllowedBits = Context.getTypeSize(IntegerType);
+          if (Value.getActiveBits() > AllowedBits)
+            return 0;
+
+          if (Value.getBitWidth() != AllowedBits)
+            Value.extOrTrunc(AllowedBits);
+          Value.setIsSigned(IntegerType->isSignedIntegerType());
+
+          // Check that the instantiated value is the same as the
+          // value provided as a template argument.
+          if (Value != *TemplateArgs[I].getAsIntegral())
+            return 0;
+        } else if (T->isPointerType() || T->isMemberPointerType()) {
+          // Deal with NULL pointers that are used to initialize
+          // pointer and pointer-to-member non-type template
+          // parameters (C++0x).
+          if (TemplateArgs[I].getAsDecl()) 
+            return 0; // Not a NULL declaration
+
+          // Check that the integral value is 0, the NULL pointer
+          // constant.
+          if (Value != 0)
+            return 0;
+        } else
+          return 0;
+        break;
+      }
+
+      case TemplateArgument::Declaration:
+        if (Context.getCanonicalDecl(InstArg.getAsDecl())
+              != Context.getCanonicalDecl(TemplateArgs[I].getAsDecl()))
+          return 0;
+        break;
+
+      case TemplateArgument::Expression:
+        // FIXME: Check equality of expressions
+        break;
+      }
+    } else {
+      assert(isa<TemplateTemplateParmDecl>(Param));
+      // FIXME: Check template template arguments
+    }
+  }
+
+  return DeducedArgumentList;
 }

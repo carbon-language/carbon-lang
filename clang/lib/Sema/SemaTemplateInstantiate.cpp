@@ -185,18 +185,12 @@ void Sema::PrintInstantiationStack() {
     case ActiveTemplateInstantiation::PartialSpecDeductionInstantiation: {
       ClassTemplatePartialSpecializationDecl *PartialSpec
         = cast<ClassTemplatePartialSpecializationDecl>((Decl *)Active->Entity);
-      std::string TemplateArgsStr
-        = TemplateSpecializationType::PrintTemplateArgumentList(
-                        PartialSpec->getTemplateArgs().getFlatArgumentList(),
-                                  PartialSpec->getTemplateArgs().flat_size(),
-                                                      Context.PrintingPolicy);
       // FIXME: The active template instantiation's template arguments
       // are interesting, too. We should add something like [with T =
       // foo, U = bar, etc.] to the string.
       Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
                    diag::note_partial_spec_deduct_instantiation_here)
-        << (PartialSpec->getSpecializedTemplate()->getNameAsString() + 
-            TemplateArgsStr)
+        << Context.getTypeDeclType(PartialSpec)
         << Active->InstantiationRange;
       break;
     }
@@ -441,7 +435,7 @@ InstantiateFunctionProtoType(const FunctionProtoType *T,
     ParamTypes.push_back(P);
   }
 
-  return SemaRef.BuildFunctionType(ResultType, &ParamTypes[0], 
+  return SemaRef.BuildFunctionType(ResultType, ParamTypes.data(), 
                                    ParamTypes.size(),
                                    T->isVariadic(), T->getTypeQuals(),
                                    Loc, Entity);
@@ -567,7 +561,7 @@ InstantiateTemplateSpecializationType(
                                                       TemplateArgs);
 
   return SemaRef.CheckTemplateIdType(Name, Loc, SourceLocation(),
-                                     &InstantiatedTemplateArgs[0],
+                                     InstantiatedTemplateArgs.data(),
                                      InstantiatedTemplateArgs.size(),
                                      SourceLocation());
 }

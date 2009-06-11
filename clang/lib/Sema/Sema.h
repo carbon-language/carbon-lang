@@ -1995,7 +1995,7 @@ public:
   bool CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member);
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param, 
                              QualType InstantiatedParamType, Expr *&Arg,
-                             TemplateArgumentListBuilder *Converted = 0);
+                             TemplateArgument &Converted);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,

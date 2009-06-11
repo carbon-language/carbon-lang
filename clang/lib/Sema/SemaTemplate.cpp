@@ -297,7 +297,9 @@ void Sema::ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParamD,
   // FIXME: Implement this check! Needs a recursive walk over the types.
   
   // Check the well-formedness of the default template argument.
-  if (CheckTemplateArgument(TemplateParm, TemplateParm->getType(), Default)) {
+  TemplateArgument Converted;
+  if (CheckTemplateArgument(TemplateParm, TemplateParm->getType(), Default,
+                            Converted)) {
     TemplateParm->setInvalidDecl();
     return;
   }
@@ -1116,8 +1118,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           
       case TemplateArgument::Expression: {
         Expr *E = Arg.getAsExpr();
-        if (CheckTemplateArgument(NTTP, NTTPType, E, &Converted))
+        TemplateArgument Result;
+        if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
           Invalid = true;
+        else
+          Converted.push_back(Result);
         break;
       }
 
@@ -1401,11 +1406,10 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
 /// InstantiatedParamType is the type of the non-type template
 /// parameter after it has been instantiated.
 ///
-/// If Converted is non-NULL and no errors occur, the value
-/// of this argument will be added to the end of the Converted vector.
+/// If no error was detected, Converted receives the converted template argument.
 bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                  QualType InstantiatedParamType, Expr *&Arg, 
-                                 TemplateArgumentListBuilder *Converted) {
+                                 TemplateArgument &Converted) {
   SourceLocation StartLoc = Arg->getSourceRange().getBegin();
 
   // If either the parameter has a dependent type or the argument is
@@ -1413,8 +1417,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   // FIXME: Add template argument to Converted!
   if (InstantiatedParamType->isDependentType() || Arg->isTypeDependent()) {
     // FIXME: Produce a cloned, canonical expression?
-    if (Converted)
-      Converted->push_back(TemplateArgument(Arg));
+    Converted = TemplateArgument(Arg);
     return false;
   }
 
@@ -1479,7 +1482,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
     QualType IntegerType = Context.getCanonicalType(ParamType);
     if (const EnumType *Enum = IntegerType->getAsEnumType())
-      IntegerType = Enum->getDecl()->getIntegerType();
+      IntegerType = Context.getCanonicalType(Enum->getDecl()->getIntegerType());
 
     if (!Arg->isValueDependent()) {
       // Check that an unsigned parameter does not receive a negative
@@ -1509,21 +1512,19 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Value.setIsSigned(IntegerType->isSignedIntegerType());
     }
 
-    if (Converted) {
-      // Add the value of this argument to the list of converted
-      // arguments. We use the bitwidth and signedness of the template
-      // parameter.
-      if (Arg->isValueDependent()) {
-        // The argument is value-dependent. Create a new
-        // TemplateArgument with the converted expression.
-        Converted->push_back(TemplateArgument(Arg));
-        return false;
-      } 
-
-      Converted->push_back(TemplateArgument(StartLoc, Value,
-                      ParamType->isEnumeralType() ? ParamType : IntegerType));
+    // Add the value of this argument to the list of converted
+    // arguments. We use the bitwidth and signedness of the template
+    // parameter.
+    if (Arg->isValueDependent()) {
+      // The argument is value-dependent. Create a new
+      // TemplateArgument with the converted expression.
+      Converted = TemplateArgument(Arg);
+      return false;
     }
 
+    Converted = TemplateArgument(StartLoc, Value,
+                                 ParamType->isEnumeralType() ? ParamType 
+                                                             : IntegerType);
     return false;
   }
 
@@ -1590,11 +1591,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       if (CheckTemplateArgumentPointerToMember(Arg, Member))
         return true;
 
-      if (Converted) {
-        Member = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Member));
-        Converted->push_back(TemplateArgument(StartLoc, Member));
-      }
-
+      Member = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Member));
+      Converted = TemplateArgument(StartLoc, Member);
       return false;
     }
     
@@ -1602,10 +1600,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Converted) {
-      Entity = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Entity));
-      Converted->push_back(TemplateArgument(StartLoc, Entity));
-    }
+    Entity = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Entity));
+    Converted = TemplateArgument(StartLoc, Entity);
     return false;
   }
 
@@ -1643,11 +1639,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Converted) {
-      Entity = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Entity));
-      Converted->push_back(TemplateArgument(StartLoc, Entity));
-    }
-
+    Entity = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Entity));
+    Converted = TemplateArgument(StartLoc, Entity);
     return false;
   }
     
@@ -1687,11 +1680,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Converted) {
-      Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
-      Converted->push_back(TemplateArgument(StartLoc, Entity));
-    }
-
+    Entity = cast<NamedDecl>(Context.getCanonicalDecl(Entity));
+    Converted = TemplateArgument(StartLoc, Entity);
     return false;
   }
 
@@ -1719,11 +1709,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (CheckTemplateArgumentPointerToMember(Arg, Member))
     return true;
   
-  if (Converted) {
-    Member = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Member));
-    Converted->push_back(TemplateArgument(StartLoc, Member));
-  }
-
+  Member = cast_or_null<NamedDecl>(Context.getCanonicalDecl(Member));
+  Converted = TemplateArgument(StartLoc, Member);
   return false;
 }
 

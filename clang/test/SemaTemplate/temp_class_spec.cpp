@@ -224,6 +224,8 @@ int is_member_function_pointer3[
 int is_member_function_pointer4[
            is_member_function_pointer<int (X::*)(float) const>::value? 1 : -1];
 
+// Test substitution of non-dependent arguments back into the template
+// argument list of the class template partial specialization.
 template<typename T, typename ValueType = T>
 struct is_nested_value_type_identity {
   static const bool value = false;
@@ -245,11 +247,56 @@ struct HasIdentityValueType {
 
 struct NoValueType { };
 
-// FIXME: Need substitution into the template arguments of the partial spec
-//int is_nested_value_type_identity0[
-//            is_nested_value_type_identity<HasValueType<int> >::value? -1 : 1];
+int is_nested_value_type_identity0[
+            is_nested_value_type_identity<HasValueType<int> >::value? -1 : 1];
 int is_nested_value_type_identity1[
           is_nested_value_type_identity<HasIdentityValueType>::value? 1 : -1];
 // FIXME: Enable when we have SFINAE support
-//int is_nested_value_type_identity0[
+//int is_nested_value_type_identity2[
 //                   is_nested_value_type_identity<NoValueType>::value? -1 : 1];
+
+// FIXME: The tests that follow are stress-tests for the substitution
+// of deduced template arguments into the template argument list of a
+// partial specialization. I believe that we'll need this code for
+// substitution into function templates, but note that the examples
+// below are ill-formed and should eventually be removed.
+template<typename T, int N>
+struct is_sizeof_T {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_sizeof_T<T, sizeof(T)> {
+  static const bool value = true;
+};
+
+int is_sizeof_T0[is_sizeof_T<int, sizeof(int)>::value? 1 : -1];
+int is_sizeof_T1[is_sizeof_T<int, sizeof(char)>::value? -1 : 1];
+
+template<typename T>
+struct HasStaticOfT {
+  static T value;
+  static T other_value;
+};
+
+struct DerivedStaticOfInt : HasStaticOfT<int> { };
+
+template<typename X, typename T, T *Ptr>
+struct is_static_int_val {
+  static const bool value = false;
+};
+
+template<typename X, typename T>
+struct is_static_int_val<X, T, &X::value> {
+  static const bool value = true;
+};
+
+int is_static_int_val0[
+                 is_static_int_val<HasStaticOfT<int>, int, 
+                                   &HasStaticOfT<int>::value>::value ? 1 : -1];
+int is_static_int_val1[
+            is_static_int_val<HasStaticOfT<int>, int, 
+                              &HasStaticOfT<int>::other_value>::value ? -1 : 1];
+int is_static_int_val2[
+                 is_static_int_val<DerivedStaticOfInt, int, 
+                                   &HasStaticOfT<int>::value>::value ? 1 : -1];
