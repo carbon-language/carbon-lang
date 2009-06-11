@@ -33,8 +33,9 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return true;
 }
 
-/// runOnMachineFunction - This uses the printInstruction()
-/// method to print assembly for each instruction.
+/// runOnMachineFunction - This emits the frame section, autos section and 
+/// assembly for each instruction. Also takes care of function begin debug
+/// directive and file begin debug directive (if required) for the function.
 ///
 bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
@@ -47,20 +48,25 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   CurrentFnName = Mang->getValueName(F);
 
+  // Emit .file directive.
   DbgInfo.EmitFileDirective(F);
-  // Emit the function variables.
+
+  // Emit the function frame (args and temps).
   EmitFunctionFrame(MF);
 
-  // Emit function begin debug directives
+  // Emit function begin debug directive.
   DbgInfo.EmitFunctBeginDI(F);
 
+  // Emit the autos section of function.
   EmitAutos(CurrentFnName);
+
+  // Now emit the instructions of function in its code section.
   const char *codeSection = PAN::getCodeSectionName(CurrentFnName).c_str();
  
   const Section *fCodeSection = TAI->getNamedSection(codeSection,
                                                      SectionFlags::Code);
-  O <<  "\n";
   // Start the Code Section.
+  O <<  "\n";
   SwitchToSection (fCodeSection);
 
   // Emit the frame address of the function at the beginning of code.
@@ -77,14 +83,17 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
+
     // Print a label for the basic block.
     if (I != MF.begin()) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }
     
+    // Print a basic block.
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
+
       // Emit the line directive if source line changed.
       const DebugLoc DL = II->getDebugLoc();
       if (!DL.isUnknown()) {
@@ -102,6 +111,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   
   // Emit function end debug directives.
   DbgInfo.EmitFunctEndDI(F, CurLine);
+
   return false;  // we didn't modify anything.
 }
 
