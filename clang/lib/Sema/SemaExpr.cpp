@@ -1177,7 +1177,12 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       ValueDependent = true;
     //    - a constant with integral or enumeration type and is
     //      initialized with an expression that is value-dependent
-    //      (FIXME!).
+    else if (const VarDecl *Dcl = dyn_cast<VarDecl>(VD)) {
+      if (Dcl->getType().getCVRQualifiers() == QualType::Const &&
+          Dcl->getInit()) {
+        ValueDependent = Dcl->getInit()->isValueDependent();
+      }
+    }
   }
 
   return Owned(BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
