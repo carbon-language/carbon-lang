@@ -14,6 +14,10 @@
 #ifndef LLVM_TARGET_TARGETELFWRITERINFO_H
 #define LLVM_TARGET_TARGETELFWRITERINFO_H
 
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Function.h"
+
 namespace llvm {
 
   //===--------------------------------------------------------------------===//
@@ -21,9 +25,11 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
 
   class TargetELFWriterInfo {
+  protected:
     // EMachine - This field is the target specific value to emit as the
     // e_machine member of the ELF header.
     unsigned short EMachine;
+    TargetMachine &TM;
   public:
 
     // Machine architectures
@@ -44,10 +50,21 @@ namespace llvm {
       EM_X86_64 = 62   // AMD64
     };
 
-    explicit TargetELFWriterInfo(MachineType machine) : EMachine(machine) {}
+    explicit TargetELFWriterInfo(TargetMachine &tm) : TM(tm) {}
     virtual ~TargetELFWriterInfo() {}
 
     unsigned short getEMachine() const { return EMachine; }
+
+    /// getFunctionAlignment - Returns the alignment for function 'F', targets
+    /// with different alignment constraints should overload this method
+    virtual unsigned getFunctionAlignment(const Function *F) const {
+      const TargetData *TD = TM.getTargetData();
+      unsigned FnAlign = F->getAlignment();
+      unsigned TDAlign = TD->getPointerABIAlignment();
+      unsigned Align = std::max(FnAlign, TDAlign);
+      assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
+      return Align;
+    }
   };
 
 } // end llvm namespace

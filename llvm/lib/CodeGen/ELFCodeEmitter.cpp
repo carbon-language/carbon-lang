@@ -15,7 +15,6 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 
@@ -28,27 +27,21 @@ namespace llvm {
 /// startFunction - This callback is invoked when a new machine function is
 /// about to be emitted.
 void ELFCodeEmitter::startFunction(MachineFunction &MF) {
-  const TargetData *TD = TM.getTargetData();
-  const Function *F = MF.getFunction();
-
-  // Align the output buffer to the appropriate alignment, power of 2.
-  unsigned FnAlign = F->getAlignment();
-  unsigned TDAlign = TD->getPrefTypeAlignment(F->getType());
-  unsigned Align = std::max(FnAlign, TDAlign);
-  assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
-
   // Get the ELF Section that this function belongs in.
   ES = &EW.getTextSection();
+
+  DOUT << "processing function: " << MF.getFunction()->getName() << "\n";
 
   // FIXME: better memory management, this will be replaced by BinaryObjects
   ES->SectionData.reserve(4096);
   BufferBegin = &ES->SectionData[0];
   BufferEnd = BufferBegin + ES->SectionData.capacity();
 
-  // Upgrade the section alignment if required.
+  // Align the output buffer with function alignment, and
+  // upgrade the section alignment if required
+  unsigned Align =
+    TM.getELFWriterInfo()->getFunctionAlignment(MF.getFunction());
   if (ES->Align < Align) ES->Align = Align;
-
-  // Round the size up to the correct alignment for starting the new function.
   ES->Size = (ES->Size + (Align-1)) & (-Align);
 
   // Snaity check on allocated space for text section

@@ -21,12 +21,12 @@
 #ifndef CODEGEN_ELF_H
 #define CODEGEN_ELF_H
 
+#include "llvm/GlobalVariable.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Support/DataTypes.h"
 #include <cstring>
 
 namespace llvm {
-  class GlobalVariable;
 
   // Identification Indexes
   enum {
@@ -100,18 +100,20 @@ namespace llvm {
   /// table at the end of the file.
   struct ELFSection {
 
+    // Name of the section
+    std::string Name;
+
     // ELF specific fields
-    std::string Name;       // Name of the section.
-    unsigned NameIdx;       // Index in .shstrtab of name, once emitted.
-    unsigned Type;
-    unsigned Flags;
-    uint64_t Addr;
-    unsigned Offset;
-    unsigned Size;
-    unsigned Link;
-    unsigned Info;
-    unsigned Align;
-    unsigned EntSize;
+    unsigned NameIdx;   // sh_name - .shstrtab idx of name, once emitted.
+    unsigned Type;      // sh_type - Section contents & semantics 
+    unsigned Flags;     // sh_flags - Section flags.
+    uint64_t Addr;      // sh_addr - The mem addr this section is in.
+    unsigned Offset;    // sh_offset - Offset from the file start
+    unsigned Size;      // sh_size - The section size.
+    unsigned Link;      // sh_link - Section header table index link.
+    unsigned Info;      // sh_info - Auxillary information.
+    unsigned Align;     // sh_addralign - Alignment of section.
+    unsigned EntSize;   // sh_entsize - Size of entries in the section e
 
     // Section Header Flags
     enum {
@@ -207,9 +209,33 @@ namespace llvm {
       STT_FILE = 4 
     };
 
+    enum {
+      STV_DEFAULT = 0,  // Visibility is specified by binding type
+      STV_INTERNAL = 1, // Defined by processor supplements
+      STV_HIDDEN = 2,   // Not visible to other components
+      STV_PROTECTED = 3 // Visible in other components but not preemptable
+    };
+
     ELFSym(const GlobalValue *gv) : GV(gv), NameIdx(0), Value(0),
                                     Size(0), Info(0), Other(0),
-                                    SectionIdx(ELFSection::SHN_UNDEF) {}
+                                    SectionIdx(ELFSection::SHN_UNDEF) {
+      if (!GV)
+        return;
+
+      switch (GV->getVisibility()) {
+      default:
+        assert(0 && "unknown visibility type");
+      case GlobalValue::DefaultVisibility:
+        Other = STV_DEFAULT;
+        break;
+      case GlobalValue::HiddenVisibility:
+        Other = STV_HIDDEN;
+        break;
+      case GlobalValue::ProtectedVisibility:
+        Other = STV_PROTECTED;
+        break;
+      }
+    }
 
     void SetBind(unsigned X) {
       assert(X == (X & 0xF) && "Bind value out of range!");
@@ -219,6 +245,9 @@ namespace llvm {
       assert(X == (X & 0xF) && "Type value out of range!");
       Info = (Info & 0xF0) | X;
     }
+
+    static unsigned getEntrySize(bool is64Bit)
+      { return is64Bit ? 24 : 16; }
   };
 
 } // end namespace llvm

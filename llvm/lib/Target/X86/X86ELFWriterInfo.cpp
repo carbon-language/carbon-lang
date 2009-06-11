@@ -12,8 +12,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86ELFWriterInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/DerivedTypes.h"
 using namespace llvm;
 
-X86ELFWriterInfo::X86ELFWriterInfo(bool is64Bit) :
-  TargetELFWriterInfo(is64Bit ? EM_X86_64 : EM_386) {}
+X86ELFWriterInfo::X86ELFWriterInfo(TargetMachine &TM)
+  : TargetELFWriterInfo(TM) {
+    bool is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
+    EMachine = is64Bit ? EM_X86_64 : EM_386;
+  }
+
 X86ELFWriterInfo::~X86ELFWriterInfo() {}
+
+unsigned X86ELFWriterInfo::getFunctionAlignment(const Function *F) const {
+  unsigned FnAlign = 4;
+
+  if (F->hasFnAttr(Attribute::OptimizeForSize))
+    FnAlign = 1;
+
+  if (F->getAlignment())
+    FnAlign = Log2_32(F->getAlignment());
+
+  return (1 << FnAlign);
+}

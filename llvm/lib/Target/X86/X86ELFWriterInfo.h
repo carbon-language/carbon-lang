@@ -20,8 +20,10 @@ namespace llvm {
 
   class X86ELFWriterInfo : public TargetELFWriterInfo {
   public:
-    X86ELFWriterInfo(bool is64Bit);
+    X86ELFWriterInfo(TargetMachine &TM);
     virtual ~X86ELFWriterInfo();
+
+    virtual unsigned getFunctionAlignment(const Function *F) const;
   };
 
 } // end llvm namespace

@@ -16,15 +16,19 @@
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Support/OutputBuffer.h"
+#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetELFWriterInfo.h"
 #include "ELF.h"
 #include <list>
 #include <map>
 
 namespace llvm {
+  class ConstantStruct;
+  class ELFCodeEmitter;
   class GlobalVariable;
   class Mangler;
   class MachineCodeEmitter;
-  class ELFCodeEmitter;
   class raw_ostream;
 
   /// ELFWriter - This class implements the common target-independent code for
@@ -58,6 +62,10 @@ namespace llvm {
     /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
     /// code for functions to the .o file.
     ELFCodeEmitter *MCE;
+
+    /// TAI - Target Asm Info, provide information about section names for
+    /// globals and other target specific stuff.
+    const TargetAsmInfo *TAI;
 
     //===------------------------------------------------------------------===//
     // Properties inferred automatically from the target machine.
@@ -97,8 +105,8 @@ namespace llvm {
 
     /// getSection - Return the section with the specified name, creating a new
     /// section if one does not already exist.
-    ELFSection &getSection(const std::string &Name,
-                           unsigned Type, unsigned Flags = 0) {
+    ELFSection &getSection(const std::string &Name, unsigned Type, 
+                           unsigned Flags = 0, unsigned Align = 0) {
       ELFSection *&SN = SectionLookup[Name];
       if (SN) return *SN;
 
@@ -108,6 +116,7 @@ namespace llvm {
       SN->Type = Type;
       SN->Flags = Flags;
       SN->Link = ELFSection::SHN_UNDEF;
+      SN->Align = Align;
       return *SN;
     }
 
@@ -116,10 +125,19 @@ namespace llvm {
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
     }
 
+    ELFSection &getSymbolTableSection() {
+      return getSection(".symtab", ELFSection::SHT_SYMTAB, 0);
+    }
+
+    ELFSection &getStringTableSection() {
+      return getSection(".strtab", ELFSection::SHT_STRTAB, 0, 1);
+    }
+
     ELFSection &getDataSection() {
       return getSection(".data", ELFSection::SHT_PROGBITS,
                         ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
     }
+
     ELFSection &getBSSSection() {
       return getSection(".bss", ELFSection::SHT_NOBITS,
                         ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
@@ -144,9 +162,14 @@ namespace llvm {
     unsigned ELFHdr_e_shnum_Offset;     // e_shnum    in ELF header.
   private:
     void EmitGlobal(GlobalVariable *GV);
-    void EmitSymbolTable();
+    void EmitGlobalConstant(const Constant *C, OutputBuffer &GblCstTab);
+    void EmitGlobalConstantStruct(const ConstantStruct *CVS,
+                                  OutputBuffer &GblCstTab);
     void EmitRelocations();
+    void EmitSectionHeader(OutputBuffer &TableOut, const ELFSection &Section);
     void EmitSectionTableStringTable();
+    void EmitSymbol(OutputBuffer &SymTabOut, ELFSym &Sym);
+    void EmitSymbolTable();
     void OutputSectionsAndSectionTable();
   };
 }

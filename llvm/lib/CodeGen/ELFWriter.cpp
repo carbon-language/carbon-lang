@@ -26,9 +26,6 @@
 //  ...
 //  #N. ".shstrtab" entry - String table for the section names.
 //
-// NOTE: This code should eventually be extended to support 64-bit ELF (this
-// won't be hard), but we haven't done so yet!
-//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "elfwriter"
@@ -36,6 +33,7 @@
 #include "ELFWriter.h"
 #include "ELFCodeEmitter.h"
 #include "ELF.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/DerivedTypes.h"
@@ -44,10 +42,8 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
@@ -76,6 +72,7 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
 
   ElfHdr = new ELFHeader(TM.getELFWriterInfo()->getEMachine(), 0,
                          is64Bit, isLittleEndian);
+  TAI = TM.getTargetAsmInfo();
 
   // Create the machine code emitter object for this target.
   MCE = new ELFCodeEmitter(*this);
@@ -152,6 +149,11 @@ bool ELFWriter::doInitialization(Module &M) {
 }
 
 void ELFWriter::EmitGlobal(GlobalVariable *GV) {
+
+  // XXX: put local symbols *before* global ones!
+  const Section *S = TAI->SectionForGlobal(GV);
+  DOUT << "Section " << S->getName() << " for global " << GV->getName() << "\n";
+
   // If this is an external global, emit it now.  TODO: Note that it would be
   // better to ignore the symbol here and only add it to the symbol table if
   // referenced.
@@ -164,13 +166,13 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     return;
   }
 
-  unsigned Align = TM.getTargetData()->getPreferredAlignment(GV);
-  unsigned Size  =
-    TM.getTargetData()->getTypeAllocSize(GV->getType()->getElementType());
+  const TargetData *TD = TM.getTargetData();
+  unsigned Align = TD->getPreferredAlignment(GV);
+  Constant *CV = GV->getInitializer();
+  unsigned Size = TD->getTypeAllocSize(CV->getType());
 
-  // If this global has a zero initializer, it is part of the .bss or common
-  // section.
-  if (GV->getInitializer()->isNullValue()) {
+  // If this global has a zero initializer, go to .bss or common section.
+  if (CV->isNullValue() || isa<UndefValue>(CV)) {
     // If this global is part of the common block, add it now.  Variables are
     // part of the common block if they are zero initialized and allowed to be
     // merged with other symbols.
@@ -182,14 +184,14 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
       CommonSym.Size  = Size;
       CommonSym.SetBind(ELFSym::STB_GLOBAL);
       CommonSym.SetType(ELFSym::STT_OBJECT);
-      // TODO SOMEDAY: add ELF visibility.
       CommonSym.SectionIdx = ELFSection::SHN_COMMON;
       SymbolTable.push_back(CommonSym);
+      getSection(S->getName(), ELFSection::SHT_NOBITS,
+        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC, 1);
       return;
     }
 
     // Otherwise, this symbol is part of the .bss section.  Emit it now.
-
     // Handle alignment.  Ensure section is aligned at least as much as required
     // by this symbol.
     ELFSection &BSSSection = getBSSSection();
@@ -227,11 +229,124 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     return;
   }
 
-  // FIXME: handle .rodata
-  //assert(!GV->isConstant() && "unimp");
+  /// Emit the Global symbol to the right ELF section
+  ELFSym GblSym(GV);
+  GblSym.Size = Size;
+  GblSym.SetType(ELFSym::STT_OBJECT);
+  GblSym.SetBind(ELFSym::STB_GLOBAL);
+  unsigned Flags = S->getFlags();
+  unsigned SectType = ELFSection::SHT_PROGBITS;
+  unsigned SHdrFlags = ELFSection::SHF_ALLOC;
 
-  // FIXME: handle .data
-  //assert(0 && "unimp");
+  if (Flags & SectionFlags::Code)
+    SHdrFlags |= ELFSection::SHF_EXECINSTR;
+  if (Flags & SectionFlags::Writeable)
+    SHdrFlags |= ELFSection::SHF_WRITE;
+  if (Flags & SectionFlags::Mergeable)
+    SHdrFlags |= ELFSection::SHF_MERGE;
+  if (Flags & SectionFlags::TLS)
+    SHdrFlags |= ELFSection::SHF_TLS;
+  if (Flags & SectionFlags::Strings)
+    SHdrFlags |= ELFSection::SHF_STRINGS;
+
+  // Remove tab from section name prefix
+  std::string SectionName(S->getName());
+  size_t Pos = SectionName.find("\t");
+  if (Pos != std::string::npos)
+    SectionName.erase(Pos, 1);
+
+  // The section alignment should be bound to the element with
+  // the largest alignment
+  ELFSection &ElfS = getSection(SectionName, SectType, SHdrFlags);
+  GblSym.SectionIdx = ElfS.SectionIdx;
+  if (Align > ElfS.Align)
+    ElfS.Align = Align;
+
+  DataBuffer &GblCstBuf = ElfS.SectionData;
+  OutputBuffer GblCstTab(GblCstBuf, is64Bit, isLittleEndian);
+
+  // S.Value should contain the symbol index inside the section,
+  // and all symbols should start on their required alignment boundary
+  GblSym.Value = (GblCstBuf.size() + (Align-1)) & (-Align);
+  GblCstBuf.insert(GblCstBuf.end(), GblSym.Value-GblCstBuf.size(), 0);
+
+  // Emit the constant symbol to its section
+  EmitGlobalConstant(CV, GblCstTab);
+  SymbolTable.push_back(GblSym);
+}
+
+void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
+                                         OutputBuffer &GblCstTab) {
+
+  // Print the fields in successive locations. Pad to align if needed!
+  const TargetData *TD = TM.getTargetData();
+  unsigned Size = TD->getTypeAllocSize(CVS->getType());
+  const StructLayout *cvsLayout = TD->getStructLayout(CVS->getType());
+  uint64_t sizeSoFar = 0;
+  for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
+    const Constant* field = CVS->getOperand(i);
+
+    // Check if padding is needed and insert one or more 0s.
+    uint64_t fieldSize = TD->getTypeAllocSize(field->getType());
+    uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
+                        - cvsLayout->getElementOffset(i)) - fieldSize;
+    sizeSoFar += fieldSize + padSize;
+
+    // Now print the actual field value.
+    EmitGlobalConstant(field, GblCstTab);
+
+    // Insert padding - this may include padding to increase the size of the
+    // current field up to the ABI size (if the struct is not packed) as well
+    // as padding to ensure that the next field starts at the right offset.
+    for (unsigned p=0; p < padSize; p++)
+      GblCstTab.outbyte(0);
+  }
+  assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
+         "Layout of constant struct may be incorrect!");
+}
+
+void ELFWriter::EmitGlobalConstant(const Constant *CV, OutputBuffer &GblCstTab) {
+  const TargetData *TD = TM.getTargetData();
+  unsigned Size = TD->getTypeAllocSize(CV->getType());
+
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+    if (CVA->isString()) {
+      std::string GblStr = CVA->getAsString();
+      GblCstTab.outstring(GblStr, GblStr.length());
+    } else { // Not a string.  Print the values in successive locations
+      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
+        EmitGlobalConstant(CVA->getOperand(i), GblCstTab);
+    }
+    return;
+  } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
+    EmitGlobalConstantStruct(CVS, GblCstTab);
+    return;
+  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
+    uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+    if (CFP->getType() == Type::DoubleTy)
+      GblCstTab.outxword(Val);
+    else if (CFP->getType() == Type::FloatTy)
+      GblCstTab.outword(Val);
+    else if (CFP->getType() == Type::X86_FP80Ty) {
+      assert(0 && "X86_FP80Ty global emission not implemented");
+    } else if (CFP->getType() == Type::PPC_FP128Ty)
+      assert(0 && "PPC_FP128Ty global emission not implemented");
+    return;
+  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    if (Size == 4)
+      GblCstTab.outword(CI->getZExtValue());
+    else if (Size == 8)
+      GblCstTab.outxword(CI->getZExtValue());
+    else
+      assert(0 && "LargeInt global emission not implemented");
+    return;
+  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
+    const VectorType *PTy = CP->getType();
+    for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
+      EmitGlobalConstant(CP->getOperand(I), GblCstTab);
+    return;
+  }
+  assert(0 && "unknown global constant");
 }
 
 
@@ -243,11 +358,26 @@ bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
 /// doFinalization - Now that the module has been completely processed, emit
 /// the ELF file to 'O'.
 bool ELFWriter::doFinalization(Module &M) {
-  // Okay, the ELF header and .text sections have been completed, build the
-  // .data, .bss, and "common" sections next.
+  /// FIXME: This should be removed when moving to BinaryObjects. Since the
+  /// current ELFCodeEmiter uses CurrBuff, ... it doesn't update S.SectionData
+  /// vector size for .text sections, so this is a quick dirty fix
+  ELFSection &TS = getTextSection();
+  if (TS.Size)
+    for (unsigned e=0; e<TS.Size; ++e)
+      TS.SectionData.push_back(TS.SectionData[e]);
+
+  // Get .data and .bss section, they should always be present in the binary
+  getDataSection();
+  getBSSSection();
+
+  // build data, bss and "common" sections.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     EmitGlobal(I);
+
+  // Emit non-executable stack note
+  if (TAI->getNonexecutableStackDirective())
+    getSection(".note.GNU-stack", ELFSection::SHT_PROGBITS, 0, 1);
 
   // Emit the symbol table now, if non-empty.
   EmitSymbolTable();
@@ -274,6 +404,51 @@ bool ELFWriter::doFinalization(Module &M) {
 void ELFWriter::EmitRelocations() {
 }
 
+/// EmitSymbol - Write symbol 'Sym' to the symbol table 'SymTabOut'
+void ELFWriter::EmitSymbol(OutputBuffer &SymTabOut, ELFSym &Sym) {
+  if (is64Bit) {
+    SymTabOut.outword(Sym.NameIdx);
+    SymTabOut.outbyte(Sym.Info);
+    SymTabOut.outbyte(Sym.Other);
+    SymTabOut.outhalf(Sym.SectionIdx);
+    SymTabOut.outaddr64(Sym.Value);
+    SymTabOut.outxword(Sym.Size);
+  } else {
+    SymTabOut.outword(Sym.NameIdx);
+    SymTabOut.outaddr32(Sym.Value);
+    SymTabOut.outword(Sym.Size);
+    SymTabOut.outbyte(Sym.Info);
+    SymTabOut.outbyte(Sym.Other);
+    SymTabOut.outhalf(Sym.SectionIdx);
+  }
+}
+
+/// EmitSectionHeader - Write section 'Section' header in 'TableOut'
+/// Section Header Table
+void ELFWriter::EmitSectionHeader(OutputBuffer &TableOut, const ELFSection &S) {
+  TableOut.outword(S.NameIdx);
+  TableOut.outword(S.Type);
+  if (is64Bit) {
+    TableOut.outxword(S.Flags);
+    TableOut.outaddr(S.Addr);
+    TableOut.outaddr(S.Offset);
+    TableOut.outxword(S.Size);
+    TableOut.outword(S.Link);
+    TableOut.outword(S.Info);
+    TableOut.outxword(S.Align);
+    TableOut.outxword(S.EntSize);
+  } else {
+    TableOut.outword(S.Flags);
+    TableOut.outaddr(S.Addr);
+    TableOut.outaddr(S.Offset);
+    TableOut.outword(S.Size);
+    TableOut.outword(S.Link);
+    TableOut.outword(S.Info);
+    TableOut.outword(S.Align);
+    TableOut.outword(S.EntSize);
+  }
+}
+
 /// EmitSymbolTable - If the current symbol table is non-empty, emit the string
 /// table for it and then the symbol table itself.
 void ELFWriter::EmitSymbolTable() {
@@ -282,14 +457,13 @@ void ELFWriter::EmitSymbolTable() {
   // FIXME: compact all local symbols to the start of the symtab.
   unsigned FirstNonLocalSymbol = 1;
 
-  ELFSection &StrTab = getSection(".strtab", ELFSection::SHT_STRTAB, 0);
-  StrTab.Align = 1;
-
+  ELFSection &StrTab = getStringTableSection();
   DataBuffer &StrTabBuf = StrTab.SectionData;
   OutputBuffer StrTabOut(StrTabBuf, is64Bit, isLittleEndian);
 
   // Set the zero'th symbol to a null byte, as required.
   StrTabOut.outbyte(0);
+
   unsigned Index = 1;
   for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
     // Use the name mangler to uniquify the LLVM symbol.
@@ -315,35 +489,19 @@ void ELFWriter::EmitSymbolTable() {
 
   // Now that we have emitted the string table and know the offset into the
   // string table of each symbol, emit the symbol table itself.
-  ELFSection &SymTab = getSection(".symtab", ELFSection::SHT_SYMTAB, 0);
+  ELFSection &SymTab = getSymbolTableSection();
   SymTab.Align = is64Bit ? 8 : 4;
   SymTab.Link = StrTab.SectionIdx;      // Section Index of .strtab.
   SymTab.Info = FirstNonLocalSymbol;    // First non-STB_LOCAL symbol.
-  SymTab.EntSize = is64Bit ? 24 : 16;   // Size of each symtab entry. 
+
+  // Size of each symtab entry.
+  SymTab.EntSize = ELFSym::getEntrySize(is64Bit);
+
   DataBuffer &SymTabBuf = SymTab.SectionData;
   OutputBuffer SymTabOut(SymTabBuf, is64Bit, isLittleEndian);
 
-  if (!is64Bit) {   // 32-bit and 64-bit formats are shuffled a bit.
-    for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
-      ELFSym &Sym = SymbolTable[i];
-      SymTabOut.outword(Sym.NameIdx);
-      SymTabOut.outaddr32(Sym.Value);
-      SymTabOut.outword(Sym.Size);
-      SymTabOut.outbyte(Sym.Info);
-      SymTabOut.outbyte(Sym.Other);
-      SymTabOut.outhalf(Sym.SectionIdx);
-    }
-  } else {
-    for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
-      ELFSym &Sym = SymbolTable[i];
-      SymTabOut.outword(Sym.NameIdx);
-      SymTabOut.outbyte(Sym.Info);
-      SymTabOut.outbyte(Sym.Other);
-      SymTabOut.outhalf(Sym.SectionIdx);
-      SymTabOut.outaddr64(Sym.Value);
-      SymTabOut.outxword(Sym.Size);
-    }
-  }
+  for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i)
+    EmitSymbol(SymTabOut, SymbolTable[i]);
 
   SymTab.Size = SymTabBuf.size();
 }
@@ -393,13 +551,18 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Pass #1: Compute the file offset for each section.
   size_t FileOff = FileHeader.size();   // File header first.
 
-  // Emit all of the section data in order.
+  // Adjust alignment of all section if needed.
   for (std::list<ELFSection>::iterator I = SectionList.begin(),
          E = SectionList.end(); I != E; ++I) {
 
     // Section idx 0 has 0 offset
     if (!I->SectionIdx)
       continue;
+
+    if (!I->SectionData.size()) {
+      I->Offset = FileOff;
+      continue;
+    }
 
     // Update Section size
     if (!I->Size)
@@ -438,30 +601,24 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Emit all of the section data and build the section table itself.
   while (!SectionList.empty()) {
     const ELFSection &S = *SectionList.begin();
+    DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.Name
+         << ", Size: " << S.Size << ", Offset: " << S.Offset
+         << ", SectionData Size: " << S.SectionData.size() << "\n";
+
 
     // Align FileOff to whatever the alignment restrictions of the section are.
-    if (S.Align)
+    if (S.Align) {
       for (size_t NewFileOff = (FileOff+S.Align-1) & ~(S.Align-1);
            FileOff != NewFileOff; ++FileOff)
         O << (char)0xAB;
-    O.write((char*)&S.SectionData[0], S.Size);
+    }
 
-    DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.Name
-         << ", Size: " << S.Size << ", Offset: " << S.Offset << "\n";
+    if (S.SectionData.size()) {
+      O.write((char*)&S.SectionData[0], S.Size);
+      FileOff += S.Size;
+    }
 
-    FileOff += S.Size;
-
-    TableOut.outword(S.NameIdx);  // sh_name - Symbol table name idx
-    TableOut.outword(S.Type);     // sh_type - Section contents & semantics
-    TableOut.outaddr(S.Flags);    // sh_flags - Section flags.
-    TableOut.outaddr(S.Addr);     // sh_addr - The mem addr this section is in.
-    TableOut.outaddr(S.Offset);   // sh_offset - Offset from the file start.
-    TableOut.outaddr(S.Size);     // sh_size - The section size.
-    TableOut.outword(S.Link);     // sh_link - Section header table index link.
-    TableOut.outword(S.Info);     // sh_info - Auxillary information.
-    TableOut.outaddr(S.Align);    // sh_addralign - Alignment of section.
-    TableOut.outaddr(S.EntSize);  // sh_entsize - Size of entries in the section
-
+    EmitSectionHeader(TableOut, S);
     SectionList.pop_front();
   }
 
