@@ -1481,7 +1481,11 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::CXXDestructor:
     EmitCXXDestructors(cast<CXXDestructorDecl>(D));
     break;
-        
+
+  case Decl::StaticAssert:
+    // Nothing to do.
+    break;
+
   // Objective-C Decls
     
   // Forward declarations, no (immediate) code generation.
