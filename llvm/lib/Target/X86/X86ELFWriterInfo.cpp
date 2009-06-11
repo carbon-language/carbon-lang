@@ -12,8 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86ELFWriterInfo.h"
+#include "llvm/Function.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/DerivedTypes.h"
 using namespace llvm;
 
 X86ELFWriterInfo::X86ELFWriterInfo(TargetMachine &TM)

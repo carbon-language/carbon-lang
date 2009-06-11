@@ -5,6 +5,7 @@ add_llvm_library(LLVMTarget
   Target.cpp
   TargetAsmInfo.cpp
   TargetData.cpp
+  TargetELFWriterInfo.cpp
   TargetFrameInfo.cpp
   TargetInstrInfo.cpp
   TargetMachOWriterInfo.cpp
