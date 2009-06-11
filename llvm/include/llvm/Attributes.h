@@ -61,7 +61,8 @@ const Attributes NoImplicitFloat = 1<<23; /// disable implicit floating point
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 
-/// @brief Attributes that only apply to function.
+/// @brief Attributes that may be applied to the function itself.  These cannot
+/// be used on return values or function parameters.
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly | 
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
   NoRedZone | NoImplicitFloat;
@@ -186,7 +187,7 @@ public:
 
   /// getFnAttributes - The function attributes are returned.
   Attributes getFnAttributes() const {
-    return getAttributes(~0);
+    return getAttributes(~0U);
   }
   
   /// paramHasAttr - Return true if the specified parameter index has the

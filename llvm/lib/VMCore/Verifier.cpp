@@ -276,8 +276,8 @@ namespace {
                           int VT, unsigned ArgNo, std::string &Suffix);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned RetNum, unsigned ParamNum, ...);
-    void VerifyAttrs(Attributes Attrs, const Type *Ty,
-                     bool isReturnValue, const Value *V);
+    void VerifyParameterAttrs(Attributes Attrs, const Type *Ty,
+                              bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
                              const Value *V);
 
@@ -437,22 +437,23 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
 void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 }
 
-// VerifyAttrs - Check the given parameter attributes for an argument or return
+// VerifyParameterAttrs - Check the given attributes for an argument or return
 // value of the specified type.  The value V is printed in error messages.
-void Verifier::VerifyAttrs(Attributes Attrs, const Type *Ty, 
-                           bool isReturnValue, const Value *V) {
+void Verifier::VerifyParameterAttrs(Attributes Attrs, const Type *Ty,
+                                    bool isReturnValue, const Value *V) {
   if (Attrs == Attribute::None)
     return;
+
+  Attributes FnCheckAttr = Attrs & Attribute::FunctionOnly;
+  Assert1(!FnCheckAttr, "Attribute " + Attribute::getAsString(FnCheckAttr) +
+          " only applies to the function!", V);
 
   if (isReturnValue) {
     Attributes RetI = Attrs & Attribute::ParameterOnly;
     Assert1(!RetI, "Attribute " + Attribute::getAsString(RetI) +
             " does not apply to return values!", V);
   }
-  Attributes FnCheckAttr = Attrs & Attribute::FunctionOnly;
-  Assert1(!FnCheckAttr, "Attribute " + Attribute::getAsString(FnCheckAttr) +
-          " only applies to functions!", V);
-  
+
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = Attrs & Attribute::MutuallyIncompatible[i];
@@ -495,9 +496,9 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
     else if (Attr.Index-1 < FT->getNumParams())
       Ty = FT->getParamType(Attr.Index-1);
     else
-      break;  // VarArgs attributes, don't verify.
-    
-    VerifyAttrs(Attr.Attrs, Ty, Attr.Index == 0, V);
+      break;  // VarArgs attributes, verified elsewhere.
+
+    VerifyParameterAttrs(Attr.Attrs, Ty, Attr.Index == 0, V);
 
     if (Attr.Attrs & Attribute::Nest) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
@@ -509,10 +510,10 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
   }
 
   Attributes FAttrs = Attrs.getFnAttributes();
-  Assert1(!(FAttrs & (~Attribute::FunctionOnly)),
-          "Attribute " + Attribute::getAsString(FAttrs) +
-          " does not apply to function!", V);
-      
+  Attributes NotFn = FAttrs & (~Attribute::FunctionOnly);
+  Assert1(!NotFn, "Attribute " + Attribute::getAsString(NotFn) +
+          " does not apply to the function!", V);
+
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = FAttrs & Attribute::MutuallyIncompatible[i];
@@ -1025,7 +1026,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
       Attributes Attr = Attrs.getParamAttributes(Idx);
 
-      VerifyAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
+      VerifyParameterAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
       Attributes VArgI = Attr & Attribute::VarArgsIncompatible;
       Assert1(!VArgI, "Attribute " + Attribute::getAsString(VArgI) +
