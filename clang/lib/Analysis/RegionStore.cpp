@@ -840,7 +840,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState* St,const TypedRegion* R){
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
 
-  const RecordType* RT = cast<RecordType>(T.getTypePtr());
+  const RecordType* RT = T->getAsStructureType();
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
 
