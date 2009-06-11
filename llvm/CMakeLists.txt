@@ -222,6 +222,8 @@ set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 
 set(LLVM_TABLEGEN "tblgen" CACHE
   STRING "Native TableGen executable. Saves building one when cross-compiling.")
+# Effective tblgen executable to be used:
+set(LLVM_TABLEGEN_EXE ${LLVM_TABLEGEN})
 
 add_subdirectory(utils/TableGen)
 
