@@ -553,37 +553,11 @@ InstantiateTemplateSpecializationType(
   InstantiatedTemplateArgs.reserve(T->getNumArgs());
   for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
        Arg != ArgEnd; ++Arg) {
-    switch (Arg->getKind()) {
-    case TemplateArgument::Null:
-      assert(false && "Should never have a NULL template argument");
-      break;
-        
-    case TemplateArgument::Type: {
-      QualType T = SemaRef.InstantiateType(Arg->getAsType(), 
-                                           TemplateArgs, 
-                                           Arg->getLocation(),
-                                           DeclarationName());
-      if (T.isNull())
-        return QualType();
+    TemplateArgument InstArg = SemaRef.Instantiate(*Arg, TemplateArgs);
+    if (InstArg.isNull())
+      return QualType();
 
-      InstantiatedTemplateArgs.push_back(
-                                TemplateArgument(Arg->getLocation(), T));
-      break;
-    }
-
-    case TemplateArgument::Declaration:
-    case TemplateArgument::Integral:
-      InstantiatedTemplateArgs.push_back(*Arg);
-      break;
-
-    case TemplateArgument::Expression:
-      Sema::OwningExprResult E 
-        = SemaRef.InstantiateExpr(Arg->getAsExpr(), TemplateArgs);
-      if (E.isInvalid())
-        return QualType();
-      InstantiatedTemplateArgs.push_back(E.takeAs<Expr>());
-      break;
-    }
+    InstantiatedTemplateArgs.push_back(InstArg);
   }
 
   // FIXME: We're missing the locations of the template name, '<', and '>'.
@@ -1096,4 +1070,39 @@ Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
   // parameter, we may need to instantiate the outer contexts of that
   // Decl. However, this won't be needed until we implement member templates.
   return Name;
+}
+
+TemplateArgument Sema::Instantiate(TemplateArgument Arg, 
+                                   const TemplateArgumentList &TemplateArgs) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    assert(false && "Should never have a NULL template argument");
+    break;
+    
+  case TemplateArgument::Type: {
+    QualType T = InstantiateType(Arg.getAsType(), TemplateArgs, 
+                                 Arg.getLocation(), DeclarationName());
+    if (T.isNull())
+      return TemplateArgument();
+    
+    return TemplateArgument(Arg.getLocation(), T);
+  }
+
+  case TemplateArgument::Declaration:
+    // FIXME: Template instantiation for template template parameters.
+    return Arg;
+
+  case TemplateArgument::Integral:
+    return Arg;
+
+  case TemplateArgument::Expression: {
+    Sema::OwningExprResult E = InstantiateExpr(Arg.getAsExpr(), TemplateArgs);
+    if (E.isInvalid())
+      return TemplateArgument();
+    return TemplateArgument(E.takeAs<Expr>());
+  }
+  }
+
+  assert(false && "Unhandled template argument kind");
+  return TemplateArgument();
 }

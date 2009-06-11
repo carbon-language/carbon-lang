@@ -2307,6 +2307,8 @@ public:
   TemplateName
   InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
                           const TemplateArgumentList &TemplateArgs);
+  TemplateArgument Instantiate(TemplateArgument Arg,
+                               const TemplateArgumentList &TemplateArgs);
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function);
