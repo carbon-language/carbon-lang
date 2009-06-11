@@ -148,3 +148,13 @@ void f15() {
   if (a[1]) // no-warning
     1;
 }
+
+struct s3 p[1];
+
+// Code from postgresql.
+// Current cast logic of region store mistakenly leaves the final result region
+// an ElementRegion of type 'char'. Then load a nonloc::SymbolVal from it and
+// assigns to 'a'. 
+void f16(struct s3 *p) {
+  struct s3 a = *((struct s3*) ((char*) &p[0]));
+}

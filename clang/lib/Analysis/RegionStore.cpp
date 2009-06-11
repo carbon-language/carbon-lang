@@ -1198,6 +1198,9 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
   if (V.isUnknown())
     return KillStruct(St, R);
 
+  if (isa<nonloc::SymbolVal>(V))
+    return setDefaultValue(St, R, V);
+
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
   RecordDecl::field_iterator FI = RD->field_begin(getContext()), 
