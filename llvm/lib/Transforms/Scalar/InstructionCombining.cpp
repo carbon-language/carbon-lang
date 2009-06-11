@@ -11824,7 +11824,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   if (SI.isVolatile()) return 0;  // Don't hack volatile stores.
 
   // store X, null    -> turns into 'unreachable' in SimplifyCFG
-  if (isa<ConstantPointerNull>(Ptr)) {
+  if (isa<ConstantPointerNull>(Ptr) &&
+      cast<PointerType>(Ptr->getType())->getAddressSpace() == 0) {
     if (!isa<UndefValue>(Val)) {
       SI.setOperand(0, UndefValue::get(Val->getType()));
       if (Instruction *U = dyn_cast<Instruction>(Val))
