@@ -167,10 +167,11 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
   mbr->data = 0;
   mbr->path = filePath;
   const sys::FileStatus *FSInfo = mbr->path.getFileStatus(false, ErrMsg);
-  if (FSInfo)
-    mbr->info = *FSInfo;
-  else
+  if (!FSInfo) {
+    delete mbr;
     return true;
+  }
+  mbr->info = *FSInfo;
 
   unsigned flags = 0;
   bool hasSlash = filePath.toString().find('/') != std::string::npos;
