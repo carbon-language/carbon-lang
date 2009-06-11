@@ -168,11 +168,16 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   }
 }
 
+/// printCCOperand - Print the cond code operand.
+///
 void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
   int CC = (int)MI->getOperand(opNum).getImm();
   O << PIC16CondCodeToString((PIC16CC::CondCodes)CC);
 }
 
+/// printLibcallDecls - print the extern declarations for compiler 
+/// intrinsics.
+///
 void PIC16AsmPrinter::printLibcallDecls(void) {
   // If no libcalls used, return.
   if (LibcallDecls.empty()) return;
@@ -190,6 +195,10 @@ void PIC16AsmPrinter::printLibcallDecls(void) {
   O << TAI->getCommentString() << "External decls for libcalls - END." <<"\n";
 }
 
+/// doInitialization - Perfrom Module level initializations here.
+/// One task that we do here is to sectionize all global variables.
+/// The MemSelOptimizer pass depends on the sectionizing.
+///
 bool PIC16AsmPrinter::doInitialization (Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
@@ -215,9 +224,10 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
   return Result;
 }
 
-// Emit extern decls for functions imported from other modules, and emit
-// global declarations for function defined in this module and which are
-// available to other modules.
+/// Emit extern decls for functions imported from other modules, and emit
+/// global declarations for function defined in this module and which are
+/// available to other modules.
+///
 void PIC16AsmPrinter::EmitFunctionDecls (Module &M) {
  // Emit declarations for external functions.
   O << TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
