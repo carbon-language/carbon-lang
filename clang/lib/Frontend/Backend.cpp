@@ -272,9 +272,13 @@ void BackendConsumer::CreatePasses() {
   llvm::Pass *InliningPass = 0;
   switch (CompileOpts.Inlining) {
   case CompileOptions::NoInlining: break;
-  case CompileOptions::NormalInlining:
-    InliningPass = createFunctionInliningPass();      // Inline small functions
+  case CompileOptions::NormalInlining: {
+    // Inline small functions
+    unsigned Threshold = (CompileOpts.OptimizeSize ||
+                          CompileOpts.OptimizationLevel < 3) ? 50 : 200;
+    InliningPass = createFunctionInliningPass(Threshold);
     break;
+  }
   case CompileOptions::OnlyAlwaysInlining:
     InliningPass = createAlwaysInlinerPass();         // Respect always_inline
     break;
