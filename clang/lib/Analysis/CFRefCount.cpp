@@ -637,10 +637,10 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   ///  objects.
   RetEffect ObjCAllocRetE;
 
-	/// ObjCInitRetE - Default return effect for init methods returning Objective-C
+  /// ObjCInitRetE - Default return effect for init methods returning Objective-C
   ///  objects.
   RetEffect ObjCInitRetE;
-	
+  
   RetainSummary DefaultSummary;
   RetainSummary* StopSummary;
   
@@ -780,8 +780,8 @@ public:
      GCEnabled(gcenabled), AF(BPAlloc), ScratchArgs(AF.GetEmptyMap()),
      ObjCAllocRetE(gcenabled ? RetEffect::MakeGCNotOwned()
                              : RetEffect::MakeOwned(RetEffect::ObjC, true)),
-		 ObjCInitRetE(gcenabled ? RetEffect::MakeGCNotOwned()
-														:	RetEffect::MakeOwnedWhenTrackedReceiver()),
+     ObjCInitRetE(gcenabled ? RetEffect::MakeGCNotOwned()
+                            : RetEffect::MakeOwnedWhenTrackedReceiver()),
      DefaultSummary(AF.GetEmptyMap() /* per-argument effects (none) */,
                     RetEffect::MakeNoRet() /* return effect */,
                     MayEscape, /* default argument effect */
@@ -971,31 +971,42 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     
     // FIXME: This should all be refactored into a chain of "summary lookup"
     //  filters.
-		switch (strlen(FName)) {
-			default: break;
-			case 17:
-				// Handle: id NSMakeCollectable(CFTypeRef)
-				if (!memcmp(FName, "NSMakeCollectable", 17)) {
-					S = (RetTy == Ctx.getObjCIdType())
-							? getUnarySummary(FT, cfmakecollectable)
-							: getPersistentStopSummary();
-				}
-				break;
-			case 28:
-				if (!memcmp(FName, "IOServiceGetMatchingServices", 28)) {
-					// FIXES: <rdar://problem/6326900>
-					// This should be addressed using a API table.  This strcmp is also
-					// a little gross, but there is no need to super optimize here.
-					assert (ScratchArgs.isEmpty());
-					ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
-					S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-				}
-				break;
-		}
-		
-		// Did we get a summary?
-		if (S)
-			break;
+    switch (strlen(FName)) {
+      default: break;
+      case 17:
+        // Handle: id NSMakeCollectable(CFTypeRef)
+        if (!memcmp(FName, "NSMakeCollectable", 17)) {
+          S = (RetTy == Ctx.getObjCIdType())
+              ? getUnarySummary(FT, cfmakecollectable)
+              : getPersistentStopSummary();
+        }
+        break;
+      
+      case 27:
+        if (!memcmp(FName, "IOServiceGetMatchingService", 27)) {
+          // Part of <rdar://problem/6961230>.
+          // This should be addressed using a API table.
+          assert (ScratchArgs.isEmpty());
+          ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);         
+        }
+        break;
+
+      case 28:
+        if (!memcmp(FName, "IOServiceGetMatchingServices", 28)) {
+          // FIXES: <rdar://problem/6326900>
+          // This should be addressed using a API table.  This strcmp is also
+          // a little gross, but there is no need to super optimize here.
+          assert (ScratchArgs.isEmpty());
+          ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+        }
+        break;
+    }
+    
+    // Did we get a summary?
+    if (S)
+      break;
 
     // Enable this code once the semantics of NSDeallocateObject are resolved
     // for GC.  <rdar://problem/6619988>
@@ -1180,19 +1191,19 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   if (!FD)
     return;
 
-	QualType RetTy = FD->getResultType();
-	
+  QualType RetTy = FD->getResultType();
+  
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(RetTy)) {
     if (FD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
     }
-		else if (FD->getAttr<CFReturnsRetainedAttr>()) {
+    else if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-		}
-	}
-	else if (RetTy->getAsPointerType()) {
-		if (FD->getAttr<CFReturnsRetainedAttr>()) {
+    }
+  }
+  else if (RetTy->getAsPointerType()) {
+    if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
   }
@@ -1386,7 +1397,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
   addNSObjectMethSummary(GetNullarySelector("init", Ctx),
-												 getPersistentSummary(ObjCInitRetE, DecRefMsg));
+                         getPersistentSummary(ObjCInitRetE, DecRefMsg));
   
   // The next methods are allocators.
   RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);  
