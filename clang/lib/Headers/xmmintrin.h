@@ -898,7 +898,10 @@ do { \
   (row3) = _mm_movelh_ps(tmp3, tmp1); \
 } while (0)
 
+/* Ugly hack for backwards-compatibility (compatible with gcc) */
+#ifdef __SSE2__
 #include <emmintrin.h>
+#endif
 
 #endif /* __SSE__ */
 
