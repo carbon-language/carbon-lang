@@ -563,6 +563,11 @@ void *JIT::getPointerToFunction(Function *F) {
     return Addr;   // Check if function already code gen'd
 
   MutexGuard locked(lock);
+  
+  // Now that this thread owns the lock, check if another thread has already
+  // code gen'd the function.
+  if (void *Addr = getPointerToGlobalIfAvailable(F))
+    return Addr;  
 
   // Make sure we read in the function if it exists in this Module.
   if (F->hasNotBeenReadFromBitcode()) {
