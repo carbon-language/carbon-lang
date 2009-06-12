@@ -38,6 +38,10 @@ if (!$FLAT) {
   die "Can't find 'dot'" if (! -x "$DotPath");
 }
 
+if (defined($ENV{NM})) {
+  chomp($nmPath=$ENV{NM});
+}
+
 if (!defined($nmPath) || $nmPath eq "") {
   chomp($nmPath=`which nm`);
   die "Can't find 'nm'" if (! -x "$nmPath");
@@ -96,7 +100,7 @@ sub gen_one_entry {
     print "  <dt><b>$lib</b</dt><dd><ul>\n";
   }
   open UNDEFS, 
-    "$nmPath -g -u $Directory/$lib | sed -e 's/^[ 0]* U //' | sort | uniq |";
+    "$nmPath -u $Directory/$lib | sed -e 's/^[ 0]* U //' | sort | uniq |";
   my %DepLibs;
   while (<UNDEFS>) {
     chomp;
@@ -116,7 +120,7 @@ sub gen_one_entry {
   close UNDEFS or die "nm failed";
   unless(keys %DepLibs) {
     # above failed
-    open UNDEFS, "$nmPath -g -u $Directory/$lib |";
+    open UNDEFS, "$nmPath -u $Directory/$lib |";
     while (<UNDEFS>) {
       # to bypass non-working sed
       if ('  ' eq substr($_,0,2) and index($_,'U ')) {
