@@ -433,6 +433,21 @@ static bool DeduceTemplateArguments(ASTContext &Context, QualType Param,
                                 Deduced);
     }
 
+    //     type(^)(T) 
+    //     T(^)() 
+    //     T(^)(T) 
+    case Type::BlockPointer: {
+      const BlockPointerType *BlockPtrParam = cast<BlockPointerType>(Param);
+      const BlockPointerType *BlockPtrArg = dyn_cast<BlockPointerType>(Arg);
+      
+      if (!BlockPtrArg)
+        return false;
+      
+      return DeduceTemplateArguments(Context,
+                                     BlockPtrParam->getPointeeType(),
+                                     BlockPtrArg->getPointeeType(), Deduced);
+    }
+
     case Type::TypeOfExpr:
     case Type::TypeOf:
     case Type::Typename:

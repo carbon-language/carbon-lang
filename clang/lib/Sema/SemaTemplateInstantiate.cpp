@@ -274,9 +274,13 @@ TemplateTypeInstantiator::InstantiatePointerType(const PointerType *T,
 QualType 
 TemplateTypeInstantiator::InstantiateBlockPointerType(const BlockPointerType *T,
                                                       unsigned Quals) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate BlockPointerType yet");
-  return QualType();
+  QualType PointeeType = Instantiate(T->getPointeeType());
+  if (PointeeType.isNull())
+    return QualType();
+  
+  QualType BlockTy = SemaRef.Context.getBlockPointerType(PointeeType);
+  
+  return BlockTy.getQualifiedType(Quals);
 }
 
 QualType
