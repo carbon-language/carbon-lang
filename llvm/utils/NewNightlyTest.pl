@@ -11,8 +11,6 @@ use Socket;
 #           regressions and performance changes. Submits this information
 #           to llvm.org where it is placed into the nightlytestresults database.
 #
-# Modified heavily by Patrick Jenkins, July 2006
-#
 # Syntax:   NightlyTest.pl [OPTIONS] [CVSROOT BUILDDIR WEBDIR]
 #   where
 # OPTIONS may include one or more of the following:
@@ -26,10 +24,12 @@ use Socket;
 #  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
 #  -parallel-jobs   The number of parallel Make jobs to use (default is two).
+#  -with-clang      Checkout Clang source into tools/clang.
 #  -release         Build an LLVM Release version
 #  -release-asserts Build an LLVM ReleaseAsserts version
 #  -enable-llcbeta  Enable testing of beta features in llc.
 #  -enable-lli      Enable testing of lli (interpreter) features, default is off
+#  -disable-pic	    Disable building with Position Independent Code.
 #  -disable-llc     Disable LLC tests in the nightly tester.
 #  -disable-jit     Disable JIT tests in the nightly tester.
 #  -disable-cbe     Disable C backend tests in the nightly tester.
@@ -98,7 +98,7 @@ use Socket;
 ##############################################################
 my $HOME       = $ENV{'HOME'};
 my $SVNURL     = $ENV{"SVNURL"};
-$SVNURL        = 'https://llvm.org/svn/llvm-project' unless $SVNURL;
+$SVNURL        = 'http://llvm.org/svn/llvm-project' unless $SVNURL;
 my $CVSRootDir = $ENV{'CVSROOT'};
 $CVSRootDir    = "/home/vadve/shared/PublicCVS" unless $CVSRootDir;
 my $BuildDir   = $ENV{'BUILDDIR'};
@@ -145,6 +145,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-norunningtests$/) { next; } # Backward compatibility, ignored.
   if (/^-parallel-jobs$/)  { $PARALLELJOBS = "$ARGV[0]"; shift; next;}
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j$PARALLELJOBS -l3.0"; next; }
+  if (/^-with-clang$/)     { $WITHCLANG = 1; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
   if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
@@ -152,6 +153,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              "OPTIMIZE_OPTION=-O2";
                              $BUILDTYPE="release-asserts"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
+  if (/^-disable-pic$/)    { $CONFIGUREARGS .= " --enable-pic=no"; next; }
   if (/^-enable-lli$/)     { $PROGTESTOPTS .= " ENABLE_LLI=1";
                              $CONFIGUREARGS .= " --enable-lli"; next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
@@ -534,13 +536,20 @@ ChangeDir( $BuildDir, "checkout directory" );
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CHECKOUT STAGE:\n"; }
   if ($USESVN) {
-    my $SVNCMD = "$NICE svn co $SVNURL";
-    if ($VERBOSE) {
-      print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+      my $SVNCMD = "$NICE svn co --non-interactive $SVNURL";
+      if ($VERBOSE) {
+        print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+              "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
+      }
+      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
             "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
-    }
-    system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-          "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
+	if ($WITHCLANG) {
+	  my $SVNCMD = "$NICE svn co --non-interactive $SVNURL/cfe/trunk";
+	  if ($VERBOSE) {
+	   print "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n"; 
+	}
+	system "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n";
+	} 
   } else {
     my $CVSOPT = "";
     $CVSOPT = "-z3" # Use compression if going over ssh.
@@ -611,7 +620,7 @@ if (!$NOCVSSTATS) {
   if ($VERBOSE) { print "CHANGE HISTORY ANALYSIS STAGE\n"; }
 
   if ($USESVN) {
-    @SVNHistory = split /<logentry/, `svn log --xml --verbose -r{$DATE}:HEAD`;
+    @SVNHistory = split /<logentry/, `svn log --non-interactive --xml --verbose -r{$DATE}:HEAD`;
     # Skip very first entry because it is the XML header cruft
     shift @SVNHistory;
     my $Now = time();
@@ -717,9 +726,11 @@ if (!$NOCHECKOUT && !$NOBUILD) {
          "> $BuildLog 2>&1";
   if ( $VERBOSE ) {
     print "BUILD STAGE:\n";
+    print "(time -p $NICE $MAKECMD clean) >> $BuildLog 2>&1\n";
     print "(time -p $NICE $MAKECMD $MAKEOPTS) >> $BuildLog 2>&1\n";
   }
   # Build the entire tree, capturing the output into $BuildLog
+  system "(time -p $NICE $MAKECMD clean) >> $BuildLog 2>&1";
   system "(time -p $NICE $MAKECMD $MAKEOPTS) >> $BuildLog 2>&1";
 }
 
