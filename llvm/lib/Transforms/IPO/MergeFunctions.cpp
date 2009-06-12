@@ -478,6 +478,7 @@ static void ThunkGToF(Function *F, Function *G) {
 
   CallInst *CI = CallInst::Create(F, Args.begin(), Args.end(), "", BB);
   CI->setTailCall();
+  CI->setCallingConv(F->getCallingConv());
   if (NewG->getReturnType() == Type::VoidTy) {
     ReturnInst::Create(BB);
   } else if (CI->getType() != NewG->getReturnType()) {
@@ -492,8 +493,7 @@ static void ThunkGToF(Function *F, Function *G) {
   G->replaceAllUsesWith(NewG);
   G->eraseFromParent();
 
-  // TODO: look at direct callers to G and make them all direct callers to F
-  // iff G->hasAddressTaken() is false.
+  // TODO: look at direct callers to G and make them all direct callers to F.
 }
 
 static void AliasGToF(Function *F, Function *G) {
