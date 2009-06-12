@@ -138,6 +138,12 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
     // Find the record of the base class subobjects for this type.
     QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
     BaseType = BaseType.getUnqualifiedType();
+
+    // If a base class of the class template depends on a template-parameter, 
+    // the base class scope is not examined during unqualified name lookup.
+    // [temp.dep]p3.
+    if (BaseType->isDependentType())
+      continue;
     
     // Determine whether we need to visit this base class at all,
     // updating the count of subobjects appropriately.
