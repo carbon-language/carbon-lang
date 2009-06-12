@@ -1731,7 +1731,12 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
   //   template template argument with the corresponding parameter;
   //   partial specializations are not considered even if their
   //   parameter lists match that of the template template parameter.
-  if (!isa<ClassTemplateDecl>(Template)) {
+  //
+  // Note that we also allow template template parameters here, which
+  // will happen when we are dealing with, e.g., class template
+  // partial specializations.
+  if (!isa<ClassTemplateDecl>(Template) && 
+      !isa<TemplateTemplateParmDecl>(Template)) {
     assert(isa<FunctionTemplateDecl>(Template) && 
            "Only function templates are possible here");
     Diag(Arg->getSourceRange().getBegin(), 
@@ -2033,9 +2038,41 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       return true;
     }
 
-    // FIXME: We'll need more checks, here!
-    if (TemplateParams->size() > 0)
+    if (TemplateParams->size() > 0) {
       isPartialSpecialization = true;
+
+      // C++ [temp.class.spec]p10:
+      //   The template parameter list of a specialization shall not
+      //   contain default template argument values.
+      for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
+        Decl *Param = TemplateParams->getParam(I);
+        if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
+          if (TTP->hasDefaultArgument()) {
+            Diag(TTP->getDefaultArgumentLoc(), 
+                 diag::err_default_arg_in_partial_spec);
+            TTP->setDefaultArgument(QualType(), SourceLocation(), false);
+          }
+        } else if (NonTypeTemplateParmDecl *NTTP
+                     = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+          if (Expr *DefArg = NTTP->getDefaultArgument()) {
+            Diag(NTTP->getDefaultArgumentLoc(), 
+                 diag::err_default_arg_in_partial_spec)
+              << DefArg->getSourceRange();
+            NTTP->setDefaultArgument(0);
+            DefArg->Destroy(Context);
+          }
+        } else {
+          TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(Param);
+          if (Expr *DefArg = TTP->getDefaultArgument()) {
+            Diag(TTP->getDefaultArgumentLoc(), 
+                 diag::err_default_arg_in_partial_spec)
+              << DefArg->getSourceRange();
+            TTP->setDefaultArgument(0);
+            DefArg->Destroy(Context);
+          }
+        }
+      }
+    }
   }
 
   // Check that the specialization uses the same tag kind as the
@@ -2078,11 +2115,12 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // Find the class template (partial) specialization declaration that
   // corresponds to these arguments.
   llvm::FoldingSetNodeID ID;
-  if (isPartialSpecialization)
+  if (isPartialSpecialization) {
     // FIXME: Template parameter list matters, too
     ClassTemplatePartialSpecializationDecl::Profile(ID, 
                                     ConvertedTemplateArgs.getFlatArgumentList(),
                                               ConvertedTemplateArgs.flatSize());
+  }
   else
     ClassTemplateSpecializationDecl::Profile(ID,
                                     ConvertedTemplateArgs.getFlatArgumentList(),

@@ -742,9 +742,6 @@ def err_template_spec_needs_header : Error<
   "template specialization requires 'template<>'">;
 def err_template_spec_extra_headers : Error<
   "template specialization must have a single 'template<>' header">;
-def unsup_template_partial_spec_ordering : Error<
-  "partial ordering of class template partial specializations is not yet "
-  "supported">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "class template specialization of %0 must occur in the global scope">;
 def err_template_spec_decl_out_of_scope : Error<
@@ -758,6 +755,13 @@ def err_template_spec_redecl_out_of_scope : Error<
 def err_template_spec_redecl_global_scope : Error<
   "%select{class template specialization|explicit instantiation}0 of %1 must "
   "occur at global scope">;
+
+// C++ Class Template Partial Specialization
+def err_default_arg_in_partial_spec : Error<
+    "default template argument in a class template partial specialization">;
+def unsup_template_partial_spec_ordering : Error<
+  "partial ordering of class template partial specializations is not yet "
+  "supported">;
 
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
