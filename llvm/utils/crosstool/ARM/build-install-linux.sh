@@ -20,6 +20,7 @@ readonly CROSS_TARGET="arm-none-linux-gnueabi"
 
 readonly CODE_SOURCERY="${INSTALL_ROOT}/codesourcery"
 readonly CODE_SOURCERY_PKG_PATH="${CODE_SOURCERY_PKG_PATH:-${HOME}/codesourcery}"
+readonly CODE_SOURCERY_HTTP="http://www.codesourcery.com/sgpp/lite/arm/portal/package1787/public"
 readonly CODE_SOURCERY_PKG="arm-2007q3-51-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2"
 readonly CODE_SOURCERY_ROOT="${CODE_SOURCERY}/arm-2007q3"
 readonly CODE_SOURCERY_BIN="${CODE_SOURCERY_ROOT}/bin"
@@ -110,8 +111,16 @@ installCodeSourcery() {
   # Unpack the tarball.
   if [[ ! -d ${CODE_SOURCERY_ROOT} ]]; then
     cd ${CODE_SOURCERY}
-    runCommand "Unpacking CodeSourcery in ${CODE_SOURCERY}" \
-        tar jxf ${CODE_SOURCERY_PKG_PATH}/${CODE_SOURCERY_PKG}
+    if [[ -e ${CODE_SOURCERY_PKG_PATH}/${CODE_SOURCERY_PKG} ]]; then
+      runCommand "Unpacking CodeSourcery in ${CODE_SOURCERY}" \
+          tar jxf ${CODE_SOURCERY_PKG_PATH}/${CODE_SOURCERY_PKG}
+    else
+      echo -n "CodeSourcery tarball not found in "
+      echo "${CODE_SOURCERY_PKG_PATH}/${CODE_SOURCERY_PKG}"
+      echo -n "Fix the path or download it from "
+      echo "${CODE_SOURCERY_HTTP}/${CROSS_TARGET}/${CODE_SOURCERY_PKG}"
+      exit
+    fi
   else
     echo "CodeSourcery install dir already exists."
   fi
