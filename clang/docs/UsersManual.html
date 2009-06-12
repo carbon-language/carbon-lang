@@ -597,6 +597,8 @@ bug-reporting guidelines somewhere?).</p>
 <h3 id="c_unsupp_gcc">Intentionally unsupported GCC extensions</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
+<ul>
+
 <li>clang does not support the gcc extension that allows variable-length arrays
 in structures.  This is for a few of reasons: one, it is tricky
 to implement, two, the extension is completely undocumented, and three, the
@@ -619,6 +621,8 @@ correctly.</li>
 
 <li>clang does not support __builtin_apply and friends; this extension is
 extremely obscure and difficult to implement reliably.</li>
+
+</ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="c_ms">Microsoft extensions</h3>
