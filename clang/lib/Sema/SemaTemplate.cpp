@@ -192,7 +192,6 @@ void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
   // template-parameter that is not a template parameter pack.  
   if (Parm->isParameterPack()) {
     Diag(DefaultLoc, diag::err_template_param_pack_default_arg);
-    Parm->setInvalidDecl();
     return;
   }
   
