@@ -1308,16 +1308,6 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit constants.
   WriteModuleConstants(VE, Stream);
   
-  // If we have any aggregate values in the value table, purge them - these can
-  // only be used to initialize global variables.  Doing so makes the value
-  // namespace smaller for code in functions.
-  int NumNonAggregates = VE.PurgeAggregateValues();
-  if (NumNonAggregates != -1) {
-    SmallVector<unsigned, 1> Vals;
-    Vals.push_back(NumNonAggregates);
-    Stream.EmitRecord(bitc::MODULE_CODE_PURGEVALS, Vals);
-  }
-  
   // Emit function bodies.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isDeclaration())

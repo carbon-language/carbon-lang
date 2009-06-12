@@ -99,11 +99,6 @@ public:
     return Attributes;
   }
 
-  /// PurgeAggregateValues - If there are any aggregate values at the end of the
-  /// value list, remove them and return the count of the remaining values.  If
-  /// there are none, return -1.
-  int PurgeAggregateValues();
-  
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the ValueEnumerator!
   ///
