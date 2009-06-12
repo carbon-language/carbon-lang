@@ -163,7 +163,8 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
 
   TemplateTypeParmDecl *Param
     = TemplateTypeParmDecl::Create(Context, CurContext, Loc, 
-                                   Depth, Position, ParamName, Typename);
+                                   Depth, Position, ParamName, Typename, 
+                                   Ellipsis);
   if (Invalid)
     Param->setInvalidDecl();
 

@@ -233,6 +233,9 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// default argument.
   bool InheritedDefault : 1;
 
+  /// \brief Whether this is a parameter pack.
+  bool ParameterPack : 1;
+
   /// \brief The location of the default argument, if any.
   SourceLocation DefaultArgumentLoc;
 
@@ -240,16 +243,17 @@ class TemplateTypeParmDecl : public TypeDecl {
   QualType DefaultArgument;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
-                       bool Typename, QualType Type)
+                       bool Typename, QualType Type, bool ParameterPack)
     : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename),
-      InheritedDefault(false), DefaultArgument() { 
+      InheritedDefault(false), ParameterPack(ParameterPack), DefaultArgument() { 
     TypeForDecl = Type.getTypePtr();
   }
 
 public:
   static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L, unsigned D, unsigned P,
-                                      IdentifierInfo *Id, bool Typename);
+                                      IdentifierInfo *Id, bool Typename,
+                                      bool ParameterPack);
 
   /// \brief Whether this template type parameter was declared with
   /// the 'typename' keyword. If not, it was declared with the 'class'
@@ -279,6 +283,9 @@ public:
     DefaultArgumentLoc = DefArgLoc;
     InheritedDefault = Inherited;
   }
+
+  /// \brief Returns whether this is a parameter pack.
+  bool isParameterPack() const { return ParameterPack; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

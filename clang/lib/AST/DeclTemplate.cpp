@@ -186,9 +186,10 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L, unsigned D, unsigned P,
-                             IdentifierInfo *Id, bool Typename) {
+                             IdentifierInfo *Id, bool Typename,
+                             bool ParameterPack) {
   QualType Type = C.getTemplateTypeParmType(D, P, Id);
-  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type);
+  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type, ParameterPack);
 }
 
 //===----------------------------------------------------------------------===//
