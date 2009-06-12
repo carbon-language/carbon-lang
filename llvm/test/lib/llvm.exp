@@ -184,7 +184,7 @@ proc RunLLVMTests { test_source_files } {
 
         #split up target if more then 1 specified
         foreach target [split $targets ,] {
-          if { [regexp {\*} $target match] } {
+          if { $target == "*" } {
               if {$targetPASS != 1} {
                  set outcome XFAIL
               }
