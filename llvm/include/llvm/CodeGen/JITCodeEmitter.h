@@ -97,7 +97,7 @@ public:
   /// emitWordLE - This callback is invoked when a 32-bit word needs to be
   /// written to the output stream in little-endian format.
   ///
-  void emitWordLE(unsigned W) {
+  void emitWordLE(uint32_t W) {
     if (4 <= BufferEnd-CurBufferPtr) {
       *CurBufferPtr++ = (uint8_t)(W >>  0);
       *CurBufferPtr++ = (uint8_t)(W >>  8);
@@ -111,7 +111,7 @@ public:
   /// emitWordBE - This callback is invoked when a 32-bit word needs to be
   /// written to the output stream in big-endian format.
   ///
-  void emitWordBE(unsigned W) {
+  void emitWordBE(uint32_t W) {
     if (4 <= BufferEnd-CurBufferPtr) {
       *CurBufferPtr++ = (uint8_t)(W >> 24);
       *CurBufferPtr++ = (uint8_t)(W >> 16);
@@ -176,7 +176,7 @@ public:
 
   /// emitULEB128Bytes - This callback is invoked when a ULEB128 needs to be
   /// written to the output stream.
-  void emitULEB128Bytes(unsigned Value) {
+  void emitULEB128Bytes(uint64_t Value) {
     do {
       uint8_t Byte = Value & 0x7f;
       Value >>= 7;
@@ -187,7 +187,7 @@ public:
   
   /// emitSLEB128Bytes - This callback is invoked when a SLEB128 needs to be
   /// written to the output stream.
-  void emitSLEB128Bytes(int32_t Value) {
+  void emitSLEB128Bytes(int64_t Value) {
     int32_t Sign = Value >> (8 * sizeof(Value) - 1);
     bool IsMore;
   
@@ -212,7 +212,7 @@ public:
   }
   
   /// emitInt32 - Emit a int32 directive.
-  void emitInt32(int32_t Value) {
+  void emitInt32(uint32_t Value) {
     if (4 <= BufferEnd-CurBufferPtr) {
       *((uint32_t*)CurBufferPtr) = Value;
       CurBufferPtr += 4;
