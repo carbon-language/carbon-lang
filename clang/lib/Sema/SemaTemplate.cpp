@@ -187,6 +187,15 @@ void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
     = cast<TemplateTypeParmDecl>(TypeParam.getAs<Decl>());
   QualType Default = QualType::getFromOpaquePtr(DefaultT);
 
+  // C++0x [temp.param]p9:
+  // A default template-argument may be specified for any kind of
+  // template-parameter that is not a template parameter pack.  
+  if (Parm->isParameterPack()) {
+    Diag(DefaultLoc, diag::err_template_param_pack_default_arg);
+    Parm->setInvalidDecl();
+    return;
+  }
+  
   // C++ [temp.param]p14:
   //   A template-parameter shall not be used in its own default argument.
   // FIXME: Implement this check! Needs a recursive walk over the types.

@@ -833,6 +833,10 @@ def err_template_kw_refers_to_non_template : Error<
 def err_template_kw_refers_to_function_template : Error<
     "%0 following the 'template' keyword refers to a function template">;
 
+// C++0x Variadic Templates
+def err_template_param_pack_default_arg : Error<
+  "template parameter pack cannot have a default argument">;
+
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
 def err_unexpected_namespace : Error<
