@@ -597,25 +597,25 @@ bug-reporting guidelines somewhere?).</p>
 <h3 id="c_unsupp_gcc">Intentionally unsupported GCC extensions</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
-<p>clang does not support the gcc extension that allows variable-length arrays
+<li>clang does not support the gcc extension that allows variable-length arrays
 in structures.  This is for a few of reasons: one, it is tricky
 to implement, two, the extension is completely undocumented, and three, the
-extension appears to be rarely used.</p>
+extension appears to be rarely used.</li>
 
-<p>clang does not support duplicate definitions of a function where one is
+<li>clang does not support duplicate definitions of a function where one is
 inline. This complicates clients of the AST which normally can expect there is
 at most one definition for each function. Source code using this feature should
 be changed to define the inline and out-of-line definitions in separate
-translation units.</p>
+translation units.</li>
 
 <li>clang does not have an equivalent to gcc's "fold"; this means that
 clang doesn't accept some constructs gcc might accept in contexts where a
 constant expression is required, like "x-x" where x is a variable, or calls
 to C library functions like strlen.</li>
 
-<p>clang does not support multiple alternative constraints in inline asm; this
+<li>clang does not support multiple alternative constraints in inline asm; this
 is an extremely obscure feature which would be complicated to implement
-correctly.</p>
+correctly.</li>
 
 <li>clang does not support __builtin_apply and friends; this extension is
 extremely obscure and difficult to implement reliably.</li>
