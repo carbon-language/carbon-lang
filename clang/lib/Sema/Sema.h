@@ -1880,7 +1880,8 @@ public:
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
   TemplateDecl *AdjustDeclIfTemplate(DeclPtrTy &Decl);
 
-  virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename,
+  virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis, 
+                                       SourceLocation EllipsisLoc,
                                        SourceLocation KeyLoc,
                                        IdentifierInfo *ParamName,
                                        SourceLocation ParamNameLoc,

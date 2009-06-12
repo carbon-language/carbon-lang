@@ -1166,16 +1166,18 @@ public:
   /// ActOnTypeParameter - Called when a C++ template type parameter
   /// (e.g., "typename T") has been parsed. Typename specifies whether
   /// the keyword "typename" was used to declare the type parameter
-  /// (otherwise, "class" was used), and KeyLoc is the location of the
-  /// "class" or "typename" keyword. ParamName is the name of the
-  /// parameter (NULL indicates an unnamed template parameter) and
-  /// ParamNameLoc is the location of the parameter name (if any).
+  /// (otherwise, "class" was used), ellipsis specifies whether this is a 
+  /// C++0x parameter pack, EllipsisLoc specifies the start of the ellipsis,
+  /// and KeyLoc is the location of the "class" or "typename" keyword. 
+  //  ParamName is the name of the parameter (NULL indicates an unnamed template 
+  //  parameter) and ParamNameLoc is the location of the parameter name (if any)
   /// If the type parameter has a default argument, it will be added
   /// later via ActOnTypeParameterDefault. Depth and Position provide
   /// the number of enclosing templates (see
   /// ActOnTemplateParameterList) and the number of previous
   /// parameters within this template parameter list.
-  virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename,
+  virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis, 
+                                       SourceLocation EllipsisLoc,
                                        SourceLocation KeyLoc,
                                        IdentifierInfo *ParamName,
                                        SourceLocation ParamNameLoc,

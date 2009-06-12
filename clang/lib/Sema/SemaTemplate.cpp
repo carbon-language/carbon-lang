@@ -140,7 +140,8 @@ TemplateDecl *Sema::AdjustDeclIfTemplate(DeclPtrTy &D) {
 /// ParamName is the location of the parameter name (if any). 
 /// If the type parameter has a default argument, it will be added
 /// later via ActOnTypeParameterDefault.
-Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, 
+Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis, 
+                                         SourceLocation EllipsisLoc,
                                          SourceLocation KeyLoc,
                                          IdentifierInfo *ParamName,
                                          SourceLocation ParamNameLoc,
