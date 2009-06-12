@@ -278,9 +278,7 @@ TemplateTypeInstantiator::InstantiateBlockPointerType(const BlockPointerType *T,
   if (PointeeType.isNull())
     return QualType();
   
-  QualType BlockTy = SemaRef.Context.getBlockPointerType(PointeeType);
-  
-  return BlockTy.getQualifiedType(Quals);
+  return SemaRef.BuildBlockPointerType(PointeeType, Quals, Loc, Entity);
 }
 
 QualType

@@ -497,6 +497,8 @@ DeduceTemplateArguments(ASTContext &Context,
                                      Info, Deduced);
     }
 
+    //     (clang extension)
+    //
     //     type(^)(T) 
     //     T(^)() 
     //     T(^)(T) 

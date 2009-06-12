@@ -660,7 +660,33 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   return Context.getMemberPointerType(T, Class.getTypePtr())
            .getQualifiedType(Quals);  
 }
-                              
+ 
+/// \brief Build a block pointer type.
+///
+/// \param T The type to which we'll be building a block pointer.
+///
+/// \param Quals The cvr-qualifiers to be applied to the block pointer type.
+///
+/// \param Loc The location of the entity whose type involves this
+/// block pointer type or, if there is no such entity, the location of the
+/// type that will have block pointer type.
+///
+/// \param Entity The name of the entity that involves the block pointer
+/// type, if known.
+///
+/// \returns A suitable block pointer type, if there are no
+/// errors. Otherwise, returns a NULL type.
+QualType Sema::BuildBlockPointerType(QualType T, unsigned Quals,
+                                     SourceLocation Loc, 
+                                     DeclarationName Entity) {
+  if (!T.getTypePtr()->isFunctionType()) {
+    Diag(Loc, diag::err_nonfunction_block_type);
+    return QualType();
+  }
+  
+  return Context.getBlockPointerType(T).getQualifiedType(Quals);
+}
+
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
@@ -735,11 +761,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
       if (!LangOpts.Blocks)
         Diag(DeclType.Loc, diag::err_blocks_disable);
         
-      if (!T.getTypePtr()->isFunctionType())
-        Diag(D.getIdentifierLoc(), diag::err_nonfunction_block_type);
-      else
-        T = (Context.getBlockPointerType(T)
-             .getQualifiedType(DeclType.Cls.TypeQuals));
+      T = BuildBlockPointerType(T, DeclType.Cls.TypeQuals, D.getIdentifierLoc(), 
+                                Name);
       break;
     case DeclaratorChunk::Pointer:
       // Verify that we're not building a pointer to pointer to function with
