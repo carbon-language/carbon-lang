@@ -22,6 +22,7 @@
 using namespace llvm;
 
 char LazyLiveness::ID = 0;
+static RegisterPass<LazyLiveness> X("lazy-liveness", "Lazy Liveness Analysis");
 
 void LazyLiveness::computeBackedgeChain(MachineFunction& mf, 
                                         MachineBasicBlock* MBB) {
@@ -65,7 +66,7 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
   // Step 0: Compute preorder numbering for all MBBs.
   unsigned num = 0;
   for (df_iterator<MachineBasicBlock*> DI = df_begin(&*mf.begin());
-       DI != df_end(&*mf.end()); ++DI) {
+       DI != df_end(&*mf.begin()); ++DI) {
     preorder[*DI] = num++;
     rev_preorder.push_back(*DI);
   }
@@ -103,8 +104,10 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
     if (!backedge_target.test(preorder[*POI]))
       for (MachineBasicBlock::succ_iterator SI = (*POI)->succ_begin();
            SI != (*POI)->succ_end(); ++SI)
-        if (!backedges.count(std::make_pair(*POI, *SI)) && tv.count(*SI))
-          tv[*POI]= tv[*SI];
+        if (!backedges.count(std::make_pair(*POI, *SI)) && tv.count(*SI)) {
+          SparseBitVector<128>& PBV = tv[*POI];
+          PBV = tv[*SI];
+        }
   
   for (po_iterator<MachineBasicBlock*> POI = po_begin(&*mf.begin()),
        POE = po_end(&*mf.begin()); POI != POE; ++POI)
