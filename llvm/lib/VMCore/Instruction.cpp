@@ -218,9 +218,12 @@ bool Instruction::isIdenticalTo(const Instruction *I) const {
 }
 
 // isSameOperationAs
+// This should be kept in sync with isEquivalentOperation in
+// lib/Transforms/IPO/MergeFunctions.cpp.
 bool Instruction::isSameOperationAs(const Instruction *I) const {
-  if (getOpcode() != I->getOpcode() || getType() != I->getType() ||
-      getNumOperands() != I->getNumOperands())
+  if (getOpcode() != I->getOpcode() ||
+      getNumOperands() != I->getNumOperands() ||
+      getType() != I->getType())
     return false;
 
   // We have two instructions of identical opcode and #operands.  Check to see

@@ -180,8 +180,9 @@ static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
 
 /// isEquivalentOperation - determine whether the two operations are the same
 /// except that pointer-to-A and pointer-to-B are equivalent. This should be
-/// kept in sync with Instruction::isSameOperandAs.
-static bool isEquivalentOperation(const Instruction *I1, const Instruction *I2) {
+/// kept in sync with Instruction::isSameOperationAs.
+static bool
+isEquivalentOperation(const Instruction *I1, const Instruction *I2) {
   if (I1->getOpcode() != I2->getOpcode() ||
       I1->getNumOperands() != I2->getNumOperands() ||
       !isEquivalentType(I1->getType(), I2->getType()))
