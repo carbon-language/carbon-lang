@@ -1091,19 +1091,27 @@ stack before the local variables that's checked upon return from the function to
 see if it has been overwritten. A heuristic is used to determine if a function
 needs stack protectors or not.
 
-<p>If a function that has an <tt>ssp</tt> attribute is inlined into a function
+<br><br>If a function that has an <tt>ssp</tt> attribute is inlined into a function
 that doesn't have an <tt>ssp</tt> attribute, then the resulting function will
-have an <tt>ssp</tt> attribute.</p></dd>
+have an <tt>ssp</tt> attribute.</dd>
 
 <dt><tt>sspreq</tt></dt>
 <dd>This attribute indicates that the function should <em>always</em> emit a
 stack smashing protector. This overrides the <tt><a href="#ssp">ssp</a></tt>
 function attribute.
 
-<p>If a function that has an <tt>sspreq</tt> attribute is inlined into a
+If a function that has an <tt>sspreq</tt> attribute is inlined into a
 function that doesn't have an <tt>sspreq</tt> attribute or which has
 an <tt>ssp</tt> attribute, then the resulting function will have
-an <tt>sspreq</tt> attribute.</p></dd>
+an <tt>sspreq</tt> attribute.</dd>
+
+<dt><tt>noredzone</tt></dt>
+<dd>This attribute indicates that the code generator should not enforce red zone
+mandated by target specific ABI.</dd>
+
+<dt><tt>noimplicitfloat</tt></dt>
+<dd>This attributes disables implicit floating point instructions.</dd>
+
 </dl>
 
 </div>
