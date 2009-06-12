@@ -564,16 +564,24 @@ implemented.</li>
 <li>clang does not support nested functions; this is a complex feature which
 is infrequently used, so it is unlikely to be implemented anytime soon.</li>
 
-<li>clang does not support __builtin_apply and friends; this extension requires
-complex code generator support that does not currently exist in LLVM, and there
-is very little demand, so it is unlikely to be implemented anytime soon.</li>
-
 <li>clang does not support global register variables, this is unlikely
-to be implemented soon.</li>
+to be implemented soon because it requires additional LLVM backend support.
+</li>
 
 <li>clang does not support static initialization of flexible array
 members. This appears to be a rarely used extension, but could be
 implemented pending user demand.</li>
+
+<li>clang does not support __builtin_va_arg_pack/__builtin_va_arg_pack_len. 
+This is used rarely, but in some potentially interesting places, like the
+glibc headers, so it may be implemented pending user demand.  Note that
+because clang pretends to be like GCC 4.2, and this extension was introduced
+in 4.3, the glibc headers will not try to use this extension with clang at
+the moment.</li>
+
+<li>clang does not support the gcc extension for forward-declaring function
+parameters; this has not showed up in any real-world code yet, though, so it
+might never be implemented.</li>
 
 </ul>
 
@@ -592,13 +600,25 @@ bug-reporting guidelines somewhere?).</p>
 <p>clang does not support the gcc extension that allows variable-length arrays
 in structures.  This is for a few of reasons: one, it is tricky
 to implement, two, the extension is completely undocumented, and three, the
-extension appears to be very rarely used.</p>
+extension appears to be rarely used.</p>
 
 <p>clang does not support duplicate definitions of a function where one is
 inline. This complicates clients of the AST which normally can expect there is
 at most one definition for each function. Source code using this feature should
 be changed to define the inline and out-of-line definitions in separate
 translation units.</p>
+
+<li>clang does not have an equivalent to gcc's "fold"; this means that
+clang doesn't accept some constructs gcc might accept in contexts where a
+constant expression is required, like "x-x" where x is a variable, or calls
+to C library functions like strlen.</li>
+
+<p>clang does not support multiple alternative constraints in inline asm; this
+is an extremely obscure feature which would be complicated to implement
+correctly.</p>
+
+<li>clang does not support __builtin_apply and friends; this extension is
+extremely obscure and difficult to implement reliably.</li>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="c_ms">Microsoft extensions</h3>
