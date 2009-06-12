@@ -854,11 +854,14 @@ Sema::InstantiateClassTemplateSpecialization(
   const TemplateArgumentList *TemplateArgs 
     = &ClassTemplateSpec->getTemplateArgs();
 
-  // C++ [temp.class.spec]p7:
-  //   Partial specialization declarations themselves are not found by
-  //   name lookup. Rather, when the primary template name is used,
-  //   any previously declared partial specializations of the primary
-  //   template are also considered.
+  // C++ [temp.class.spec.match]p1:
+  //   When a class template is used in a context that requires an
+  //   instantiation of the class, it is necessary to determine
+  //   whether the instantiation is to be generated using the primary
+  //   template or one of the partial specializations. This is done by
+  //   matching the template arguments of the class template
+  //   specialization with the template argument lists of the partial
+  //   specializations.
   typedef std::pair<ClassTemplatePartialSpecializationDecl *,
                     TemplateArgumentList *> MatchResult;
   llvm::SmallVector<MatchResult, 4> Matched;
@@ -881,13 +884,28 @@ Sema::InstantiateClassTemplateSpecialization(
   }
 
   if (Matched.size() == 1) {
+    //   -- If exactly one matching specialization is found, the
+    //      instantiation is generated from that specialization.
     Pattern = Matched[0].first;
     TemplateArgs = Matched[0].second;
   } else if (Matched.size() > 1) {
+    //   -- If more than one matching specialization is found, the
+    //      partial order rules (14.5.4.2) are used to determine
+    //      whether one of the specializations is more specialized
+    //      than the others. If none of the specializations is more
+    //      specialized than all of the other matching
+    //      specializations, then the use of the class template is
+    //      ambiguous and the program is ill-formed.
     // FIXME: Implement partial ordering of class template partial
     // specializations.
     Diag(ClassTemplateSpec->getLocation(), 
          diag::unsup_template_partial_spec_ordering);
+  } else {
+    //   -- If no matches are found, the instantiation is generated
+    //      from the primary template.
+
+    // Since we initialized the pattern and template arguments from
+    // the primary template, there is nothing more we need to do here.
   }
 
   // Note that this is an instantiation.  
