@@ -1952,6 +1952,10 @@ public:
                                              SourceRange ScopeSpecifierRange,
                                              bool ExplicitInstantiation);
 
+  bool CheckClassTemplatePartialSpecializationArgs(
+                                        TemplateParameterList *TemplateParams,
+                                        const TemplateArgument *TemplateArgs);
+
   virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                    SourceLocation KWLoc, 

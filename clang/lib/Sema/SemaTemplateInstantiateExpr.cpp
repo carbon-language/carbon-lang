@@ -112,6 +112,14 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
     const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
+
+    // The template argument itself might be an expression, in which
+    // case we just return that expression.
+    if (Arg.getKind() == TemplateArgument::Expression)
+      // FIXME: Clone the expression!
+      return SemaRef.Owned(Arg.getAsExpr());
+
+    assert(Arg.getKind() == TemplateArgument::Integral);
     QualType T = Arg.getIntegralType();
     if (T->isCharType() || T->isWideCharType())
       return SemaRef.Owned(new (SemaRef.Context) CharacterLiteral(

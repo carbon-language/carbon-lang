@@ -759,6 +759,12 @@ def err_template_spec_redecl_global_scope : Error<
 // C++ Class Template Partial Specialization
 def err_default_arg_in_partial_spec : Error<
     "default template argument in a class template partial specialization">;
+def err_dependent_non_type_arg_in_partial_spec : Error<
+    "non-type template argument depends on a template parameter of the "
+    "partial specialization">;
+def err_dependent_typed_non_type_arg_in_partial_spec : Error<
+    "non-type template argument specializes a template parameter with "
+    "dependent type %0">;
 def unsup_template_partial_spec_ordering : Error<
   "partial ordering of class template partial specializations is not yet "
   "supported">;

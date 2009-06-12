@@ -2003,6 +2003,68 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
   return false;
 }
 
+/// \brief Check the non-type template arguments of a class template
+/// partial specialization according to C++ [temp.class.spec]p9.
+///
+/// \returns true if there was an error, false otherwise.
+bool Sema::CheckClassTemplatePartialSpecializationArgs(
+                                        TemplateParameterList *TemplateParams,
+                                        const TemplateArgument *TemplateArgs) {
+  // FIXME: the interface to this function will have to change to
+  // accommodate variadic templates.
+
+  for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
+    NonTypeTemplateParmDecl *Param 
+      = dyn_cast<NonTypeTemplateParmDecl>(TemplateParams->getParam(I));
+    if (!Param)
+      continue;
+    
+    Expr *ArgExpr = TemplateArgs[I].getAsExpr();
+    if (!ArgExpr)
+      continue;
+
+    // C++ [temp.class.spec]p8:
+    //   A non-type argument is non-specialized if it is the name of a
+    //   non-type parameter. All other non-type arguments are
+    //   specialized.
+    //
+    // Below, we check the two conditions that only apply to
+    // specialized non-type arguments, so skip any non-specialized
+    // arguments.
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ArgExpr))
+      if (isa<NonTypeTemplateParmDecl>(DRE->getDecl()))
+        continue;
+
+    // C++ [temp.class.spec]p9:
+    //   Within the argument list of a class template partial
+    //   specialization, the following restrictions apply:
+    //     -- A partially specialized non-type argument expression
+    //        shall not involve a template parameter of the partial
+    //        specialization except when the argument expression is a
+    //        simple identifier.
+    if (ArgExpr->isTypeDependent() || ArgExpr->isValueDependent()) {
+      Diag(ArgExpr->getLocStart(), 
+           diag::err_dependent_non_type_arg_in_partial_spec)
+        << ArgExpr->getSourceRange();
+      return true;
+    }
+
+    //     -- The type of a template parameter corresponding to a
+    //        specialized non-type argument shall not be dependent on a
+    //        parameter of the specialization.
+    if (Param->getType()->isDependentType()) {
+      Diag(ArgExpr->getLocStart(), 
+           diag::err_dependent_typed_non_type_arg_in_partial_spec)
+        << Param->getType()
+        << ArgExpr->getSourceRange();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 Sema::DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                        SourceLocation KWLoc, 
@@ -2117,6 +2179,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // corresponds to these arguments.
   llvm::FoldingSetNodeID ID;
   if (isPartialSpecialization) {
+    if (CheckClassTemplatePartialSpecializationArgs(
+                                         ClassTemplate->getTemplateParameters(),
+                                   ConvertedTemplateArgs.getFlatArgumentList()))
+      return true;
+
     // FIXME: Template parameter list matters, too
     ClassTemplatePartialSpecializationDecl::Profile(ID, 
                                     ConvertedTemplateArgs.getFlatArgumentList(),
