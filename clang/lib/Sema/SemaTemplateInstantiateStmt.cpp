@@ -260,7 +260,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitDoStmt(DoStmt *S) {
     return SemaRef.StmtError();
 
   return SemaRef.ActOnDoStmt(S->getDoLoc(), move(Body), S->getWhileLoc(),
-                             move(Cond));
+                             SourceLocation(), move(Cond), S->getRParenLoc());
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitForStmt(ForStmt *S) {

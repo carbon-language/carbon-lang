@@ -517,7 +517,10 @@ public:
     return StmtEmpty();
   }
   virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
-                                       SourceLocation WhileLoc, ExprArg Cond) {
+                                       SourceLocation WhileLoc, 
+                                       SourceLocation CondLParen,
+                                       ExprArg Cond,
+                                       SourceLocation CondRParen) {
     return StmtEmpty();
   }
   virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,

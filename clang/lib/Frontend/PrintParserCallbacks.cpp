@@ -327,7 +327,9 @@ namespace {
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
-                                         SourceLocation WhileLoc, ExprArg Cond){
+                                         SourceLocation WhileLoc, 
+                                         SourceLocation LPLoc, ExprArg Cond,
+                                         SourceLocation RPLoc){
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }

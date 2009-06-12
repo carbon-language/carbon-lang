@@ -1205,7 +1205,9 @@ public:
   virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc, 
                                           FullExprArg Cond, StmtArg Body);
   virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
-                                       SourceLocation WhileLoc, ExprArg Cond);
+                                       SourceLocation WhileLoc,
+                                       SourceLocation CondLParen, ExprArg Cond,
+                                       SourceLocation CondRParen);
 
   virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
                                         SourceLocation LParenLoc,

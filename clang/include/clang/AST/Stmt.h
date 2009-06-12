@@ -709,14 +709,14 @@ class DoStmt : public Stmt {
   Stmt* SubExprs[END_EXPR];
   SourceLocation DoLoc;
   SourceLocation WhileLoc;
+  SourceLocation RParenLoc;  // Location of final ')' in do stmt condition.
 
 public:
-  DoStmt(Stmt *body, Expr *cond, SourceLocation DL, SourceLocation WL) 
-    : Stmt(DoStmtClass), DoLoc(DL), WhileLoc(WL) {
+  DoStmt(Stmt *body, Expr *cond, SourceLocation DL, SourceLocation WL,
+         SourceLocation RP)
+    : Stmt(DoStmtClass), DoLoc(DL), WhileLoc(WL), RParenLoc(RP) {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = body;
-    DoLoc = DL;
-    WhileLoc = WL;
   }  
 
   /// \brief Build an empty do-while statement.
@@ -734,8 +734,11 @@ public:
   SourceLocation getWhileLoc() const { return WhileLoc; }
   void setWhileLoc(SourceLocation L) { WhileLoc = L; }
 
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(DoLoc, SubExprs[BODY]->getLocEnd()); 
+    return SourceRange(DoLoc, RParenLoc); 
   }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DoStmtClass; 

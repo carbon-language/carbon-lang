@@ -23,7 +23,6 @@ using namespace clang;
 
 namespace {
   class PCHStmtWriter : public StmtVisitor<PCHStmtWriter, void> {
-
     PCHWriter &Writer;
     PCHWriter::RecordData &Record;
 
@@ -197,6 +196,7 @@ void PCHStmtWriter::VisitDoStmt(DoStmt *S) {
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getDoLoc(), Record);
   Writer.AddSourceLocation(S->getWhileLoc(), Record);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
   Code = pch::STMT_DO;
 }
 

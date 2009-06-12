@@ -487,8 +487,11 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 /// successfully parsed.  Note that a successful parse can still have semantic
 /// errors in the condition.
 bool Parser::ParseParenExprOrCondition(OwningExprResult &CondExp,
-                                       bool OnlyAllowCondition) {
+                                       bool OnlyAllowCondition,
+                                       SourceLocation *LParenLocPtr,
+                                       SourceLocation *RParenLocPtr) {
   SourceLocation LParenLoc = ConsumeParen();
+  if (LParenLocPtr) *LParenLocPtr = LParenLoc;
   
   if (getLang().CPlusPlus)
     CondExp = ParseCXXCondition();
@@ -507,7 +510,8 @@ bool Parser::ParseParenExprOrCondition(OwningExprResult &CondExp,
   }
   
   // Otherwise the condition is valid or the rparen is present.
-  MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  SourceLocation RPLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  if (RParenLocPtr) *RParenLocPtr = RPLoc;
   return false;
 }
 
@@ -837,14 +841,16 @@ Parser::OwningStmtResult Parser::ParseDoStatement() {
 
   // Parse the parenthesized condition.
   OwningExprResult Cond(Actions);
-  ParseParenExprOrCondition(Cond, true);
+  SourceLocation LPLoc, RPLoc;
+  ParseParenExprOrCondition(Cond, true, &LPLoc, &RPLoc);
   
   DoScope.Exit();
 
   if (Cond.isInvalid() || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnDoStmt(DoLoc, move(Body), WhileLoc, move(Cond));
+  return Actions.ActOnDoStmt(DoLoc, move(Body), WhileLoc, LPLoc,
+                             move(Cond), RPLoc);
 }
 
 /// ParseForStatement

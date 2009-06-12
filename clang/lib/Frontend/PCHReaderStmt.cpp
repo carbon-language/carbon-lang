@@ -210,6 +210,7 @@ unsigned PCHStmtReader::VisitDoStmt(DoStmt *S) {
   S->setBody(StmtStack.back());
   S->setDoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setWhileLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 2;
 }
 

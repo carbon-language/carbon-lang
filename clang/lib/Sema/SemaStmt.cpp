@@ -568,7 +568,8 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
 
 Action::OwningStmtResult
 Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
-                  SourceLocation WhileLoc, ExprArg Cond) {
+                  SourceLocation WhileLoc, SourceLocation CondLParen,
+                  ExprArg Cond, SourceLocation CondRParen) {
   Expr *condExpr = Cond.takeAs<Expr>();
   assert(condExpr && "ActOnDoStmt(): missing expression");
 
@@ -588,7 +589,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
 
   Cond.release();
   return Owned(new (Context) DoStmt(Body.takeAs<Stmt>(), condExpr, DoLoc,
-                                    WhileLoc));
+                                    WhileLoc, CondRParen));
 }
 
 Action::OwningStmtResult

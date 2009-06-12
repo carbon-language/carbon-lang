@@ -868,7 +868,9 @@ private:
   OwningStmtResult ParseCompoundStatement(bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(OwningExprResult &CondExp,
-                                 bool OnlyAllowCondition = false);
+                                 bool OnlyAllowCondition = false,
+                                 SourceLocation *LParenLoc = 0,
+                                 SourceLocation *RParenLoc = 0);
   OwningStmtResult ParseIfStatement();
   OwningStmtResult ParseSwitchStatement();
   OwningStmtResult ParseWhileStatement();
