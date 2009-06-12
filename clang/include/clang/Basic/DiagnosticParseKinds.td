@@ -256,6 +256,9 @@ def err_typename_refers_to_non_type_template : Error<
 def err_expected_type_name_after_typename : Error<
   "expected an identifier or template-id after '::'">;
 
+def err_variadic_templates : Error<
+  "variadic templates are only allowed in C++0x">;
+
 // Language specific pragmas
 // - Generic warnings
 def warn_pragma_expected_lparen : Warning<
