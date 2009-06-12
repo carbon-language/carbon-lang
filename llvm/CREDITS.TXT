@@ -3,10 +3,10 @@ project.  If you have contributed a patch or made some other contribution to
 LLVM, please submit a patch to this file to add yourself, and it will be
 done!
 
-The list is sorted by name (second names are in alphabetical order) and
-formatted to allow easy grepping and beautification by scripts.
-The fields are: name (N), email (E), web-address (W), PGP key ID and
-fingerprint (P), description (D), and snail-mail address (S).
+The list is sorted by surname and formatted to allow easy grepping and
+beautification by scripts.  The fields are: name (N), email (E), web-address
+(W), PGP key ID and fingerprint (P), description (D), and snail-mail address
+(S).
 
 N: Vikram Adve
 E: vadve@cs.uiuc.edu
