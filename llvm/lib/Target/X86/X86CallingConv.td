@@ -215,50 +215,6 @@ def CC_X86_Win64_C : CallingConv<[
   CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 16>>
 ]>;
 
-// Tail call convention (fast): One register is reserved for target address,
-// namely R9
-def CC_X86_64_TailCall : CallingConv<[
-  // Handles byval parameters.
-  CCIfByVal<CCPassByVal<8, 8>>,
-
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
-
-  // The 'nest' parameter, if any, is passed in R10.
-  CCIfNest<CCAssignToReg<[R10]>>,
-
-  // The first 6 integer arguments are passed in integer registers.
-  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D]>>,
-  CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>,
-  
-  // The first 8 FP/Vector arguments are passed in XMM registers.
-  CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-            CCIfSubtarget<"hasSSE1()",
-            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
-
-  // The first 8 MMX (except for v1i64) vector arguments are passed in XMM
-  // registers on Darwin.
-  CCIfType<[v8i8, v4i16, v2i32, v2f32],
-            CCIfSubtarget<"isTargetDarwin()",
-            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
- 
-  // The first 8 v1i64 vector arguments are passed in GPRs on Darwin.
-  CCIfType<[v1i64],
-            CCIfSubtarget<"isTargetDarwin()",
-            CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>>,
- 
-  // Integer/FP values get stored in stack slots that are 8 bytes in size and
-  // 8-byte aligned if there are no more registers to hold them.
-  CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
-  
-  // Vectors get 16-byte stack slots that are 16-byte aligned.
-  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToStack<16, 16>>,
-
-  // __m64 vectors get 8-byte stack slots that are 8-byte aligned.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 8>>
-]>;
-
-
 //===----------------------------------------------------------------------===//
 // X86 C Calling Convention
 //===----------------------------------------------------------------------===//

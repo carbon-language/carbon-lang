@@ -171,8 +171,6 @@ CCAssignFn *X86FastISel::CCAssignFnForCall(unsigned CC, bool isTaillCall) {
   if (Subtarget->is64Bit()) {
     if (Subtarget->isTargetWin64())
       return CC_X86_Win64_C;
-    else if (CC == CallingConv::Fast && isTaillCall)
-      return CC_X86_64_TailCall;
     else
       return CC_X86_64_C;
   }

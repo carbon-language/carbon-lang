@@ -944,7 +944,7 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
     SDValue StackAdjustment = TailCall.getOperand(2);
     assert(((TargetAddress.getOpcode() == ISD::Register &&
                (cast<RegisterSDNode>(TargetAddress)->getReg() == X86::EAX ||
-                cast<RegisterSDNode>(TargetAddress)->getReg() == X86::R9)) ||
+                cast<RegisterSDNode>(TargetAddress)->getReg() == X86::R11)) ||
               TargetAddress.getOpcode() == ISD::TargetExternalSymbol ||
               TargetAddress.getOpcode() == ISD::TargetGlobalAddress) &&
              "Expecting an global address, external symbol, or register");
@@ -1171,8 +1171,6 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(unsigned CC) const {
   if (Subtarget->is64Bit()) {
     if (Subtarget->isTargetWin64())
       return CC_X86_Win64_C;
-    else if (CC == CallingConv::Fast && PerformTailCallOpt)
-      return CC_X86_64_TailCall;
     else
       return CC_X86_64_C;
   }
@@ -1799,7 +1797,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
   } else if (IsTailCall) {
-    unsigned Opc = Is64Bit ? X86::R9 : X86::EAX;
+    unsigned Opc = Is64Bit ? X86::R11 : X86::EAX;
 
     Chain = DAG.getCopyToReg(Chain,  dl,
                              DAG.getRegister(Opc, getPointerTy()),
