@@ -214,26 +214,33 @@ void RegScavenger::forward() {
   }
 
   // Process uses first.
-  BitVector UseRegs(NumPhysRegs);
+  BitVector KillRegs(NumPhysRegs);
   for (unsigned i = 0, e = UseMOs.size(); i != e; ++i) {
     const MachineOperand MO = *UseMOs[i].first;
     unsigned Reg = MO.getReg();
 
     assert(isUsed(Reg) && "Using an undefined register!");
 
-    if (MO.isKill() && !isReserved(Reg)) {
-      UseRegs.set(Reg);
+    // Kill of implicit_def defined registers are ignored. e.g.
+    // entry: 0x2029ab8, LLVM BB @0x1b06080, ID#0:
+    // Live Ins: %R0
+    //  %R0<def> = IMPLICIT_DEF
+    //  %R0<def> = IMPLICIT_DEF
+    //  STR %R0<kill>, %R0, %reg0, 0, 14, %reg0, Mem:ST(4,4) [0x1b06510 + 0]
+    //  %R1<def> = LDR %R0, %reg0, 24, 14, %reg0, Mem:LD(4,4) [0x1b065bc + 0]
+    if (MO.isKill() && !isReserved(Reg) && !isImplicitlyDefined(Reg)) {
+      KillRegs.set(Reg);
 
       // Mark sub-registers as used.
       for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            unsigned SubReg = *SubRegs; ++SubRegs)
-        UseRegs.set(SubReg);
+        KillRegs.set(SubReg);
     }
   }
 
   // Change states of all registers after all the uses are processed to guard
   // against multiple uses.
-  setUnused(UseRegs);
+  setUnused(KillRegs);
 
   // Process early clobber defs then process defs. We can have a early clobber
   // that is dead, it should not conflict with a def that happens one "slot"
