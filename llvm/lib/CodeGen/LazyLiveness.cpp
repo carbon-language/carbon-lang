@@ -62,13 +62,14 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
   preorder.clear();
   
   MRI = &mf.getRegInfo();
+  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
   
   // Step 0: Compute preorder numbering for all MBBs.
   unsigned num = 0;
-  for (df_iterator<MachineBasicBlock*> DI = df_begin(&*mf.begin());
-       DI != df_end(&*mf.begin()); ++DI) {
-    preorder[*DI] = num++;
-    rev_preorder.push_back(*DI);
+  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT.getRootNode());
+       DI != df_end(MDT.getRootNode()); ++DI) {
+    preorder[(*DI)->getBlock()] = num++;
+    rev_preorder.push_back((*DI)->getBlock());
   }
   
   // Step 1: Compute the transitive closure of the CFG, ignoring backedges.
