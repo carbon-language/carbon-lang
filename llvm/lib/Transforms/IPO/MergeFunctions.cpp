@@ -548,6 +548,7 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
                                      F->getParent());
       H->copyAttributesFrom(F);
       H->takeName(F);
+      F->replaceAllUsesWith(H);
 
       ThunkGToF(F, G);
       ThunkGToF(F, H);
