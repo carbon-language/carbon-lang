@@ -1,9 +1,9 @@
 // RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars2 | grep {\\\[2 x \\\[2 x i8\\\]\\\]}
-// RUN: %llvmgcc -m32 %s -S -emit-llvm -O0 -o - | grep svars2 | grep {i32 1} | count 1
+// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars2 | grep {, i\[\[:digit:\]\]\\+ 1)} | count 1
 // RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars3 | grep {\\\[2 x i16\\\]}
-// RUN: %llvmgcc -m32 %s -S -emit-llvm -O0 -o - | grep svars3 | grep {i32 1} | count 1
+// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars3 | grep {, i\[\[:digit:\]\]\\+ 1)} | count 1
 // RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars4 | grep {\\\[2 x \\\[2 x i8\\\]\\\]} | count 1
-// RUN: %llvmgcc -m32 %s -S -emit-llvm -O0 -o - | grep svars4 | grep {i32 1, i32 1} | count 1
+// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars4 | grep {, i\[\[:digit:\]\]\\+ 1, i\[\[:digit:\]\]\\+ 1)} | count 1
 // PR 4349
 
 union reg
