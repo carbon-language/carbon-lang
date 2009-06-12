@@ -10,8 +10,8 @@ macro(add_llvm_library name)
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
   install(TARGETS ${name}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
+    LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 endmacro(add_llvm_library name)
 
 

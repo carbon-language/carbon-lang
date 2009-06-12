@@ -38,5 +38,5 @@ macro(add_partially_linked_object lib)
     set( llvm_lib_targets ${llvm_lib_targets} ${tnplo} PARENT_SCOPE )
   endif( )
   install(FILES ${pll}
-    DESTINATION lib)
+    DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 endmacro(add_partially_linked_object lib)

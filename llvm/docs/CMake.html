@@ -217,6 +217,11 @@
   <dd>Path where LLVM will be installed if "make install" is invoked
     or the "INSTALL" target is built.</dd>
 
+  <dt><b>LLVM_LIBDIR_SUFFIX</b>:STRING</dt>
+  <dd>Extra suffix to append to the directory where libraries are to
+    be installed. On a 64-bit architecture, one could use
+    -DLLVM_LIBDIR_SUFFIX=64 to install libraries to /usr/lib64.</dd>
+
   <dt><b>CMAKE_C_FLAGS</b>:STRING</dt>
   <dd>Extra flags to use when compiling C source files.</dd>
 
