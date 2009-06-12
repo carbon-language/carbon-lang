@@ -651,7 +651,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     // Get symbol's type. It should be a pointer type.
     SymbolRef Sym = SR->getSymbol();
     QualType T = Sym->getType(getContext());
-    QualType EleTy = cast<PointerType>(T.getTypePtr())->getPointeeType();
+    QualType EleTy = T->getAsPointerType()->getPointeeType();
 
     SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
     ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR);
