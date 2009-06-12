@@ -2006,22 +2006,68 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
 /// \brief Check the non-type template arguments of a class template
 /// partial specialization according to C++ [temp.class.spec]p9.
 ///
+/// \param TemplateParams the template parameters of the primary class
+/// template.
+///
+/// \param TemplateArg the template arguments of the class template
+/// partial specialization.
+///
+/// \param MirrorsPrimaryTemplate will be set true if the class
+/// template partial specialization arguments are identical to the
+/// implicit template arguments of the primary template. This is not
+/// necessarily an error (C++0x), and it is left to the caller to diagnose
+/// this condition when it is an error.
+///
 /// \returns true if there was an error, false otherwise.
 bool Sema::CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
-                                        const TemplateArgument *TemplateArgs) {
+                                        const TemplateArgument *TemplateArgs,
+                                        bool &MirrorsPrimaryTemplate) {
   // FIXME: the interface to this function will have to change to
   // accommodate variadic templates.
-
+  MirrorsPrimaryTemplate = true;
   for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
+    // Determine whether the template argument list of the partial
+    // specialization is identical to the implicit argument list of
+    // the primary template. The caller may need to diagnostic this as
+    // an error per C++ [temp.class.spec]p9b3.
+    if (MirrorsPrimaryTemplate) {
+      if (TemplateTypeParmDecl *TTP 
+            = dyn_cast<TemplateTypeParmDecl>(TemplateParams->getParam(I))) {
+        if (Context.getCanonicalType(Context.getTypeDeclType(TTP)) !=
+              Context.getCanonicalType(TemplateArgs[I].getAsType()))
+          MirrorsPrimaryTemplate = false;
+      } else if (TemplateTemplateParmDecl *TTP
+                   = dyn_cast<TemplateTemplateParmDecl>(
+                                                 TemplateParams->getParam(I))) {
+        // FIXME: We should settle on either Declaration storage or
+        // Expression storage for template template parameters.
+        TemplateTemplateParmDecl *ArgDecl 
+          = dyn_cast_or_null<TemplateTemplateParmDecl>(
+                                                  TemplateArgs[I].getAsDecl());
+        if (!ArgDecl)
+          if (DeclRefExpr *DRE 
+                = dyn_cast_or_null<DeclRefExpr>(TemplateArgs[I].getAsExpr()))
+            ArgDecl = dyn_cast<TemplateTemplateParmDecl>(DRE->getDecl());
+
+        if (!ArgDecl ||
+            ArgDecl->getIndex() != TTP->getIndex() ||
+            ArgDecl->getDepth() != TTP->getDepth())
+          MirrorsPrimaryTemplate = false;
+      }
+    }
+
     NonTypeTemplateParmDecl *Param 
       = dyn_cast<NonTypeTemplateParmDecl>(TemplateParams->getParam(I));
-    if (!Param)
+    if (!Param) {
       continue;
-    
+    }
+
     Expr *ArgExpr = TemplateArgs[I].getAsExpr();
-    if (!ArgExpr)
+    if (!ArgExpr) {
+      MirrorsPrimaryTemplate = false;
       continue;
+    }
 
     // C++ [temp.class.spec]p8:
     //   A non-type argument is non-specialized if it is the name of a
@@ -2032,8 +2078,15 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
     // specialized non-type arguments, so skip any non-specialized
     // arguments.
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ArgExpr))
-      if (isa<NonTypeTemplateParmDecl>(DRE->getDecl()))
+      if (NonTypeTemplateParmDecl *NTTP 
+            = dyn_cast<NonTypeTemplateParmDecl>(DRE->getDecl())) {
+        if (MirrorsPrimaryTemplate && 
+            (Param->getIndex() != NTTP->getIndex() ||
+             Param->getDepth() != NTTP->getDepth()))
+          MirrorsPrimaryTemplate = false;
+
         continue;
+      }
 
     // C++ [temp.class.spec]p9:
     //   Within the argument list of a class template partial
@@ -2060,6 +2113,8 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
       Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
     }
+
+    MirrorsPrimaryTemplate = false;
   }
 
   return false;
@@ -2179,10 +2234,29 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // corresponds to these arguments.
   llvm::FoldingSetNodeID ID;
   if (isPartialSpecialization) {
+    bool MirrorsPrimaryTemplate;
     if (CheckClassTemplatePartialSpecializationArgs(
                                          ClassTemplate->getTemplateParameters(),
-                                   ConvertedTemplateArgs.getFlatArgumentList()))
+                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                         MirrorsPrimaryTemplate))
       return true;
+
+    if (MirrorsPrimaryTemplate) {
+      // C++ [temp.class.spec]p9b3:
+      //
+      //   -- The argument list of the specialization shall not be identical 
+      //      to the implicit argument list of the primary template. 
+      Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
+        << (TK == TK_Definition)
+        << CodeModificationHint::CreateRemoval(SourceRange(LAngleLoc, 
+                                                           RAngleLoc));
+      return ActOnClassTemplate(S, TagSpec, TK, KWLoc, SS,
+                                ClassTemplate->getIdentifier(),
+                                TemplateNameLoc,
+                                Attr,
+                                move(TemplateParameterLists),
+                                AS_none);
+    }
 
     // FIXME: Template parameter list matters, too
     ClassTemplatePartialSpecializationDecl::Profile(ID, 

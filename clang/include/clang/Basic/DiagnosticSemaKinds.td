@@ -765,6 +765,10 @@ def err_dependent_non_type_arg_in_partial_spec : Error<
 def err_dependent_typed_non_type_arg_in_partial_spec : Error<
     "non-type template argument specializes a template parameter with "
     "dependent type %0">;
+def err_partial_spec_args_match_primary_template : Error<
+    "class template partial specialization does not specialize any template "
+    "argument; to %select{declare|define}0 the primary template, remove the "
+    "template argument list">; 
 def unsup_template_partial_spec_ordering : Error<
   "partial ordering of class template partial specializations is not yet "
   "supported">;

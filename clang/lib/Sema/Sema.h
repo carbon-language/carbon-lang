@@ -1954,7 +1954,8 @@ public:
 
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
-                                        const TemplateArgument *TemplateArgs);
+                                        const TemplateArgument *TemplateArgs,
+                                        bool &MirrorsPrimaryTemplate);
 
   virtual DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,

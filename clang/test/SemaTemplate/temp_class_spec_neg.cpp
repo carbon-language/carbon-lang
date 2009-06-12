@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 template<typename T> struct vector;
 
 // C++ [temp.class.spec]p9
@@ -19,10 +18,14 @@ template< int X, int (*array_ptr)[X] > class A2 {}; // expected-note{{here}}
 int array[5]; 
 template< int X > class A2<X,&array> { }; // expected-error{{specializes}}
 
-// C++ [temp.class.spec]p10
 template<typename T, int N, template<typename X> class TT>
 struct Test0;
 
+//   bullet 3
+template<typename T, int N, template<typename X> class TT>
+struct Test0<T, N, TT>; // expected-error{{does not specialize}}
+
+// C++ [temp.class.spec]p10
 template<typename T = int, // expected-error{{default template argument}}
          int N = 17, // expected-error{{default template argument}}
          template<typename X> class TT = ::vector> // expected-error{{default template argument}}
