@@ -23,7 +23,7 @@ macro(add_clang_library name)
   endif(MSVC)
   install(TARGETS ${name}
     LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
+    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 endmacro(add_clang_library)
 
 macro(add_clang_executable name)
