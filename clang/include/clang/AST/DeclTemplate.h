@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
 
@@ -28,6 +29,10 @@ class ClassTemplatePartialSpecializationDecl;
 class TemplateTypeParmDecl;
 class NonTypeTemplateParmDecl;
 class TemplateTemplateParmDecl;
+
+/// \brief Stores a template parameter of any kind.
+typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
+                            TemplateTemplateParmDecl*> TemplateParameter;
 
 /// TemplateParameterList - Stores a list of template parameters for a
 /// TemplateDecl and its derived classes.
@@ -68,6 +73,11 @@ public:
   const_iterator end() const { return begin() + NumParams; }
 
   unsigned size() const { return NumParams; }
+
+  Decl* getParam(unsigned Idx) {
+    assert(Idx < size() && "Template parameter index out-of-range");
+    return begin()[Idx];
+  }
 
   const Decl* getParam(unsigned Idx) const {
     assert(Idx < size() && "Template parameter index out-of-range");

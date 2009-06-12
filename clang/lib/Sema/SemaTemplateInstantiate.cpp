@@ -864,10 +864,17 @@ Sema::InstantiateClassTemplateSpecialization(
          PartialEnd = Template->getPartialSpecializations().end();
        Partial != PartialEnd;
        ++Partial) {
-    if (TemplateArgumentList *Deduced 
+    TemplateDeductionInfo Info(Context);
+    if (TemplateDeductionResult Result
           = DeduceTemplateArguments(&*Partial, 
-                                    ClassTemplateSpec->getTemplateArgs()))
-      Matched.push_back(std::make_pair(&*Partial, Deduced));
+                                    ClassTemplateSpec->getTemplateArgs(),
+                                    Info)) {
+      // FIXME: Store the failed-deduction information for use in
+      // diagnostics, later.
+      (void)Result;
+    } else {
+      Matched.push_back(std::make_pair(&*Partial, Info.take()));
+    }
   }
 
   if (Matched.size() == 1) {
