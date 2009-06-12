@@ -1581,6 +1581,7 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
     FunctionDbgScope = NULL;
     LexicalScopeStack.clear();
     AbstractInstanceRootList.clear();
+    AbstractInstanceRootMap.clear();
   }
 
   Lines.clear();
