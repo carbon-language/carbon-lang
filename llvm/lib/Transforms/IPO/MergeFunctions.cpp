@@ -458,8 +458,8 @@ static LinkageCategory categorize(const Function *F) {
 }
 
 static void ThunkGToF(Function *F, Function *G) {
-  Function *NewG = Function::Create(G->getFunctionType(), G->getLinkage(),
-                                    "", G->getParent());
+  Function *NewG = Function::Create(G->getFunctionType(), G->getLinkage(), "",
+                                    G->getParent());
   BasicBlock *BB = BasicBlock::Create("", NewG);
 
   std::vector<Value *> Args;
@@ -539,8 +539,21 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
       }
       break;
 
-    case ExternalWeak:
-      return false;
+    case ExternalWeak: {
+      assert(catG == ExternalWeak);
+
+      // Make them both thunks to the same internal function.
+      F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
+      Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
+                                     F->getParent());
+      H->copyAttributesFrom(F);
+      H->takeName(F);
+
+      ThunkGToF(F, G);
+      ThunkGToF(F, H);
+
+      F->setLinkage(GlobalValue::InternalLinkage);
+    } break;
 
     case Internal:
       switch (catG) {
