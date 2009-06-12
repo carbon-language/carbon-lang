@@ -854,8 +854,11 @@ Sema::InstantiateClassTemplateSpecialization(
   const TemplateArgumentList *TemplateArgs 
     = &ClassTemplateSpec->getTemplateArgs();
 
-  // Determine whether any class template partial specializations
-  // match the given template arguments.
+  // C++ [temp.class.spec]p7:
+  //   Partial specialization declarations themselves are not found by
+  //   name lookup. Rather, when the primary template name is used,
+  //   any previously declared partial specializations of the primary
+  //   template are also considered.
   typedef std::pair<ClassTemplatePartialSpecializationDecl *,
                     TemplateArgumentList *> MatchResult;
   llvm::SmallVector<MatchResult, 4> Matched;

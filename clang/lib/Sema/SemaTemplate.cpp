@@ -1932,6 +1932,7 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
                                    ClassTemplateSpecializationDecl *PrevDecl,
                                             SourceLocation TemplateNameLoc,
                                             SourceRange ScopeSpecifierRange,
+                                            bool PartialSpecialization,
                                             bool ExplicitInstantiation) {
   // C++ [temp.expl.spec]p2:
   //   An explicit specialization shall be declared in the namespace
@@ -1947,8 +1948,9 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
   //   that encloses the one in which the explicit specialization was
   //   declared.
   if (CurContext->getLookupContext()->isFunctionOrMethod()) {
+    int Kind = ExplicitInstantiation? 2 : PartialSpecialization? 1 : 0;
     Diag(TemplateNameLoc, diag::err_template_spec_decl_function_scope)
-      << ExplicitInstantiation << ClassTemplate;
+      << Kind << ClassTemplate;
     return true;
   }
 
@@ -1963,11 +1965,12 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
     if (DC != TemplateContext) {
       if (isa<TranslationUnitDecl>(TemplateContext))
         Diag(TemplateNameLoc, diag::err_template_spec_decl_out_of_scope_global)
+          << PartialSpecialization
           << ClassTemplate << ScopeSpecifierRange;
       else if (isa<NamespaceDecl>(TemplateContext))
         Diag(TemplateNameLoc, diag::err_template_spec_decl_out_of_scope)
-          << ClassTemplate << cast<NamedDecl>(TemplateContext) 
-          << ScopeSpecifierRange;
+          << PartialSpecialization << ClassTemplate 
+          << cast<NamedDecl>(TemplateContext) << ScopeSpecifierRange;
 
       Diag(ClassTemplate->getLocation(), diag::note_template_decl_here);
     }
@@ -1981,16 +1984,17 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
     // FIXME:  In C++98,  we  would like  to  turn these  errors into  warnings,
     // dependent on a -Wc++0x flag.
     bool SuppressedDiag = false;
+    int Kind = ExplicitInstantiation? 2 : PartialSpecialization? 1 : 0;
     if (isa<TranslationUnitDecl>(TemplateContext)) {
       if (!ExplicitInstantiation || getLangOptions().CPlusPlus0x)
         Diag(TemplateNameLoc, diag::err_template_spec_redecl_global_scope)
-          << ExplicitInstantiation << ClassTemplate << ScopeSpecifierRange;
+          << Kind << ClassTemplate << ScopeSpecifierRange;
       else
         SuppressedDiag = true;
     } else if (isa<NamespaceDecl>(TemplateContext)) {
       if (!ExplicitInstantiation || getLangOptions().CPlusPlus0x)
         Diag(TemplateNameLoc, diag::err_template_spec_redecl_out_of_scope)
-          << ExplicitInstantiation << ClassTemplate
+          << Kind << ClassTemplate
           << cast<NamedDecl>(TemplateContext) << ScopeSpecifierRange;
       else 
         SuppressedDiag = true;
@@ -2285,6 +2289,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   if (CheckClassTemplateSpecializationScope(ClassTemplate, PrevDecl,
                                             TemplateNameLoc, 
                                             SS.getRange(),
+                                            isPartialSpecialization,
                                             /*ExplicitInstantiation=*/false))
     return true;
 
@@ -2440,6 +2445,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   if (CheckClassTemplateSpecializationScope(ClassTemplate, 0,
                                             TemplateNameLoc, 
                                             SS.getRange(),
+                                            /*PartialSpecialization=*/false,
                                             /*ExplicitInstantiation=*/true))
     return true;
 

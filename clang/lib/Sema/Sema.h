@@ -1950,6 +1950,7 @@ public:
                                     ClassTemplateSpecializationDecl *PrevDecl,
                                              SourceLocation TemplateNameLoc,
                                              SourceRange ScopeSpecifierRange,
+                                             bool PartialSpecialization,
                                              bool ExplicitInstantiation);
 
   bool CheckClassTemplatePartialSpecializationArgs(

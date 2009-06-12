@@ -743,18 +743,19 @@ def err_template_spec_needs_header : Error<
 def err_template_spec_extra_headers : Error<
   "template specialization must have a single 'template<>' header">;
 def err_template_spec_decl_out_of_scope_global : Error<
-  "class template specialization of %0 must occur in the global scope">;
+  "class template %select{|partial }0specialization of %1 must occur in the "
+  "global scope">;
 def err_template_spec_decl_out_of_scope : Error<
-  "class template specialization of %0 not in namespace %1">;
+  "class template %select{|partial }0specialization of %1 not in namespace %2">;
 def err_template_spec_decl_function_scope : Error<
-  "%select{class template specialization|explicit instantiation}0 of %1 "
-  "in function scope">;
+  "%select{class template specialization|class template partial specialization|"
+  "explicit instantiation}0 of %1 in function scope">;
 def err_template_spec_redecl_out_of_scope : Error<
-  "%select{class template specialization|explicit instantiation}0 of %1 "
-  "not in a namespace enclosing %2">;
+  "%select{class template specialization|class template partial specialization|"
+  "explicit instantiation}0 of %1 not in a namespace enclosing %2">;
 def err_template_spec_redecl_global_scope : Error<
-  "%select{class template specialization|explicit instantiation}0 of %1 must "
-  "occur at global scope">;
+  "%select{class template specialization|class template partial specialization|"
+  "explicit instantiation}0 of %1 must occur at global scope">;
 
 // C++ Class Template Partial Specialization
 def err_default_arg_in_partial_spec : Error<

@@ -255,3 +255,10 @@ int is_nested_value_type_identity1[
 //int is_nested_value_type_identity2[
 //                   is_nested_value_type_identity<NoValueType>::value? -1 : 1];
 
+
+// C++ [temp.class.spec]p4:
+template<class T1, class T2, int I> class A { }; //#1 
+template<class T, int I> class A<T, T*, I> { }; //#2 
+template<class T1, class T2, int I> class A<T1*, T2, I> { }; //#3 
+template<class T> class A<int, T*, 5> { }; //#4 
+template<class T1, class T2, int I> class A<T1, T2*, I> { }; //#5 

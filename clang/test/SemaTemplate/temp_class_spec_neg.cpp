@@ -1,8 +1,17 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 template<typename T> struct vector;
 
-// C++ [temp.class.spec]p9
+// C++ [temp.class.spec]p6:
+namespace N {
+  namespace M {
+    template<typename T> struct A; // expected-note{{here}}
+  }
+}
 
+template<typename T>
+struct N::M::A<T*> { }; // expected-error{{not in namespace}}
+
+// C++ [temp.class.spec]p9
 //   bullet 1
 template <int I, int J> struct A {}; 
 template <int I> struct A<I+5, I*2> {}; // expected-error{{depends on}} 
