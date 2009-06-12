@@ -1,5 +1,5 @@
 ; RUN: bugpoint %s -dce -bugpoint-deletecalls -simplifycfg -silence-passes %bugpoint_topts
-; XFAIL: powerpc-*-linux
+; XFAIL: powerpc-.*-linux
 ; END.
 ; Failure on PPC Linux is due to PR4293.
 
