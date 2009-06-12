@@ -125,13 +125,17 @@ static bool MarkAliveBlocks(BasicBlock *BB,
         }
       }
       
-      if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-        if (isa<ConstantPointerNull>(SI->getOperand(1)) ||
-            isa<UndefValue>(SI->getOperand(1))) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
+        Value *Ptr = SI->getOperand(1);
+        
+        if (isa<UndefValue>(Ptr) ||
+            (isa<ConstantPointerNull>(Ptr) &&
+             cast<PointerType>(Ptr->getType())->getAddressSpace() == 0)) {
           ChangeToUnreachable(SI);
           Changed = true;
           break;
         }
+      }
     }
 
     // Turn invokes that call 'nounwind' functions into ordinary calls.
