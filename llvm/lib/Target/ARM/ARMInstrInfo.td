@@ -451,7 +451,7 @@ multiclass AsXI1_bin_c_irs<bits<4> opcod, string opc, PatFrag opnode> {
 /// the function.  The first operand is the ID# for this instruction, the second
 /// is the index into the MachineConstantPool that this is, the third is the
 /// size in bytes of this constant pool entry.
-let isNotDuplicable = 1 in
+let neverHasSideEffects = 1, isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
                     i32imm:$size),
@@ -771,6 +771,7 @@ def STM : AXI4st<(outs),
 //  Move Instructions.
 //
 
+let neverHasSideEffects = 1 in
 def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm,
                  "mov", " $dst, $src", []>, UnaryDP;
 def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
@@ -946,6 +947,7 @@ def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                    [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 // Extra precision multiplies with low / high results
+let neverHasSideEffects = 1 in {
 def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
                                (ins GPR:$a, GPR:$b),
                     "smull", " $ldst, $hdst, $a, $b", []>;
@@ -967,6 +969,7 @@ def UMAAL : AMul1I <0b0000010, (outs GPR:$ldst, GPR:$hdst),
                                (ins GPR:$a, GPR:$b),
                     "umaal", " $ldst, $hdst, $a, $b", []>,
                     Requires<[IsARM, HasV6]>;
+} // neverHasSideEffects
 
 // Most significant word multiply
 def SMMUL : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),

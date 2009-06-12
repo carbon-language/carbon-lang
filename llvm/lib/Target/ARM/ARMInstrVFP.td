@@ -192,11 +192,13 @@ def FCVTSD : AI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
   let Inst{7-4}   = 0b1100;
 }
 
+let neverHasSideEffects = 1 in {
 def FCPYD  : ADuI<0b11101011, 0b0000, 0b0100, (outs DPR:$dst), (ins DPR:$a),
                  "fcpyd", " $dst, $a", []>;
 
 def FCPYS  : ASuI<0b11101011, 0b0000, 0b0100, (outs SPR:$dst), (ins SPR:$a),
                  "fcpys", " $dst, $a", []>;
+} // neverHasSideEffects
 
 def FNEGD  : ADuI<0b11101011, 0b0001, 0b0100, (outs DPR:$dst), (ins DPR:$a),
                  "fnegd", " $dst, $a",

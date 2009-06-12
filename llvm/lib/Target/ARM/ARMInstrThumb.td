@@ -298,6 +298,7 @@ def tADDrr : TI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                 "add $dst, $lhs, $rhs",
                 [(set tGPR:$dst, (add tGPR:$lhs, tGPR:$rhs))]>;
 
+let neverHasSideEffects = 1 in
 def tADDhirr : TIt<(outs tGPR:$dst), (ins GPR:$lhs, GPR:$rhs),
                    "add $dst, $rhs @ addhirr", []>;
 
@@ -387,6 +388,7 @@ def tMOVi8 : TI<(outs tGPR:$dst), (ins i32imm:$src),
 
 // Note: MOV(2) of two low regs updates the flags, so we emit this as 'cpy',
 // which is MOV(3).  This also supports high registers.
+let neverHasSideEffects = 1 in {
 def tMOVr       : TI<(outs tGPR:$dst), (ins tGPR:$src),
                       "cpy $dst, $src", []>;
 def tMOVhir2lor : TI<(outs tGPR:$dst), (ins GPR:$src),
@@ -395,6 +397,7 @@ def tMOVlor2hir : TI<(outs GPR:$dst), (ins tGPR:$src),
                       "cpy $dst, $src\t@ lor2hir", []>;
 def tMOVhir2hir : TI<(outs GPR:$dst), (ins GPR:$src),
                       "cpy $dst, $src\t@ hir2hir", []>;
+} // neverHasSideEffects
 
 def tMUL : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                "mul $dst, $rhs",
