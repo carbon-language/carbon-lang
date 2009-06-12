@@ -66,21 +66,21 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
   
   // Step 0: Compute preorder numbering for all MBBs.
   unsigned num = 0;
-  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT.getRootNode());
-       DI != df_end(MDT.getRootNode()); ++DI) {
+  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT.getRootNode()),
+       DE = df_end(MDT.getRootNode()); DI != DE; ++DI) {
     preorder[(*DI)->getBlock()] = num++;
     rev_preorder.push_back((*DI)->getBlock());
   }
   
   // Step 1: Compute the transitive closure of the CFG, ignoring backedges.
-  for (po_iterator<MachineBasicBlock*> POI = po_begin(&*mf.begin());
-       POI != po_end(&*mf.begin()); ++POI) {
+  for (po_iterator<MachineBasicBlock*> POI = po_begin(&*mf.begin()),
+       POE = po_end(&*mf.begin()); POI != POE; ++POI) {
     MachineBasicBlock* MBB = *POI;
     SparseBitVector<128>& entry = rv[MBB];
     entry.set(preorder[MBB]);
     
-    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin();
-         SI != MBB->succ_end(); ++SI) {
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
       DenseMap<MachineBasicBlock*, SparseBitVector<128> >::iterator SII = 
                                                          rv.find(*SI);
       
@@ -103,8 +103,8 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
   for (po_iterator<MachineBasicBlock*> POI = po_begin(&*mf.begin()),
        POE = po_end(&*mf.begin()); POI != POE; ++POI)
     if (!backedge_target.test(preorder[*POI]))
-      for (MachineBasicBlock::succ_iterator SI = (*POI)->succ_begin();
-           SI != (*POI)->succ_end(); ++SI)
+      for (MachineBasicBlock::succ_iterator SI = (*POI)->succ_begin(),
+           SE = (*POI)->succ_end(); SI != SE; ++SI)
         if (!backedges.count(std::make_pair(*POI, *SI)) && tv.count(*SI)) {
           SparseBitVector<128>& PBV = tv[*POI];
           PBV = tv[*SI];
@@ -123,11 +123,12 @@ bool LazyLiveness::vregLiveIntoMBB(unsigned vreg, MachineBasicBlock* MBB) {
   MachineBasicBlock* DefMBB = MRI->def_begin(vreg)->getParent();
   unsigned def = preorder[DefMBB];
   unsigned max_dom = 0;
-  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT[DefMBB]);
-       DI != df_end(MDT[DefMBB]); ++DI)
+  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT[DefMBB]),
+       DE = df_end(MDT[DefMBB]); DI != DE; ++DI) {
     if (preorder[DI->getBlock()] > max_dom) {
       max_dom = preorder[(*DI)->getBlock()];
     }
+  }
   
   if (preorder[MBB] <= def || max_dom < preorder[MBB])
     return false;
@@ -135,16 +136,16 @@ bool LazyLiveness::vregLiveIntoMBB(unsigned vreg, MachineBasicBlock* MBB) {
   SparseBitVector<128>::iterator I = tv[MBB].begin();
   while (I != tv[MBB].end() && *I <= def) ++I;
   while (I != tv[MBB].end() && *I < max_dom) {
-    for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(vreg);
-         UI != MachineRegisterInfo::use_end(); ++UI) {
+    for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(vreg),
+         UE = MachineRegisterInfo::use_end(); UI != UE; ++UI) {
       MachineBasicBlock* UseMBB = UI->getParent();
       if (rv[rev_preorder[*I]].test(preorder[UseMBB]))
         return true;
-        
+      
       unsigned t_dom = 0;
       for (df_iterator<MachineDomTreeNode*> DI =
-           df_begin(MDT[rev_preorder[*I]]);
-           DI != df_end(MDT[rev_preorder[*I]]); ++DI)
+           df_begin(MDT[rev_preorder[*I]]), DE = df_end(MDT[rev_preorder[*I]]); 
+           DI != DE; ++DI)
         if (preorder[DI->getBlock()] > t_dom) {
           max_dom = preorder[(*DI)->getBlock()];
         }
@@ -155,4 +156,3 @@ bool LazyLiveness::vregLiveIntoMBB(unsigned vreg, MachineBasicBlock* MBB) {
   
   return false;
 }
-
