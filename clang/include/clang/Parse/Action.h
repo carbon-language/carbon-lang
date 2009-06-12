@@ -916,7 +916,8 @@ public:
   /// because we're inside a class definition. Note that this default
   /// argument will be parsed later.
   virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
-                                                 SourceLocation EqualLoc) { }
+                                                 SourceLocation EqualLoc,
+                                                 SourceLocation ArgLoc) { }
 
   /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
   /// the default argument for the parameter param failed.

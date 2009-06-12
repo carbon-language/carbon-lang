@@ -2470,7 +2470,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
             DefArgToks = 0;
             Actions.ActOnParamDefaultArgumentError(Param);
           } else
-            Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc);
+            Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc, 
+                                                (*DefArgToks)[1].getLocation());
         } else {
           // Consume the '='.
           ConsumeToken();

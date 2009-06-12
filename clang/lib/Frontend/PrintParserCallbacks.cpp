@@ -701,7 +701,8 @@ namespace {
     }
 
     virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param,
-                                                   SourceLocation EqualLoc) {
+                                                   SourceLocation EqualLoc,
+                                                   SourceLocation ArgLoc) {
       Out << __FUNCTION__ << "\n";
     }
 

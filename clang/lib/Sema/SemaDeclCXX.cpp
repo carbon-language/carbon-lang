@@ -108,6 +108,8 @@ void
 Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc, 
                                 ExprArg defarg) {
   ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
+  UnparsedDefaultArgLocs.erase(Param);
+
   ExprOwningPtr<Expr> DefaultArg(this, defarg.takeAs<Expr>());
   QualType ParamType = Param->getType();
 
@@ -154,16 +156,23 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
 /// because we're inside a class definition. Note that this default
 /// argument will be parsed later.
 void Sema::ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
-                                             SourceLocation EqualLoc) {
+                                             SourceLocation EqualLoc,
+                                             SourceLocation ArgLoc) {
   ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
   if (Param)
     Param->setUnparsedDefaultArg();
+  
+  UnparsedDefaultArgLocs[Param] = ArgLoc;
 }
 
 /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
 /// the default argument for the parameter param failed.
 void Sema::ActOnParamDefaultArgumentError(DeclPtrTy param) {
-  cast<ParmVarDecl>(param.getAs<Decl>())->setInvalidDecl();
+  ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
+  
+  Param->setInvalidDecl();
+  
+  UnparsedDefaultArgLocs.erase(Param);
 }
 
 /// CheckExtraCXXDefaultArguments - Check for any extra default
@@ -285,7 +294,7 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
     // in a semantically valid state.
     for (p = 0; p <= LastMissingDefaultArg; ++p) {
       ParmVarDecl *Param = FD->getParamDecl(p);
-      if (Param->getDefaultArg()) {
+      if (Param->hasDefaultArg()) {
         if (!Param->hasUnparsedDefaultArg())
           Param->getDefaultArg()->Destroy(Context);
         Param->setDefaultArg(0);

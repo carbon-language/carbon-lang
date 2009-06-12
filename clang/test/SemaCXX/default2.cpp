@@ -115,9 +115,15 @@ void test_Z(const Z& z) {
 }
 
 struct ZZ {
-  void f(ZZ z = g()); // expected-error{{no matching constructor for initialization}}
-
   static ZZ g(int = 17);
 
+  void f(ZZ z = g()); // expected-error{{no matching constructor for initialization}}
+
   ZZ(ZZ&, int = 17); // expected-note{{candidate function}}
+};
+
+// http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#325
+class C2 {
+  static void g(int = f()); // expected-error{{use of default argument to function 'f' that is declared later in class 'C2'}}
+  static int f(int = 10); // expected-note{{default argument declared here}}
 };

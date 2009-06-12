@@ -412,8 +412,14 @@ public:
                                          SourceLocation EqualLoc,
                                          ExprArg defarg);
   virtual void ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
-                                                 SourceLocation EqualLoc);
+                                                 SourceLocation EqualLoc,
+                                                 SourceLocation ArgLoc);
   virtual void ActOnParamDefaultArgumentError(DeclPtrTy param);
+  
+  // Contains the locations of the beginning of unparsed default
+  // argument locations.
+  llvm::DenseMap<ParmVarDecl *,SourceLocation> UnparsedDefaultArgLocs;
+
   virtual void AddInitializerToDecl(DeclPtrTy dcl, FullExprArg init);
   void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit);
   void ActOnUninitializedDecl(DeclPtrTy dcl);

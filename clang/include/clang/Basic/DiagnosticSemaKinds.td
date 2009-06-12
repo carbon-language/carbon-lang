@@ -572,6 +572,11 @@ def err_param_default_argument_nonfunc : Error<
   "default arguments can only be specified for parameters in a function "
   "declaration">;
 
+def err_use_of_default_argument_to_function_declared_later : Error<
+  "use of default argument to function %0 that is declared later in class %1">;
+def note_default_argument_declared_here : Note<
+  "default argument declared here">;
+
 def ext_param_promoted_not_compatible_with_prototype : ExtWarn<
   "promoted type %0 of K&R function parameter is not compatible with the "
   "parameter type %1 declared in a previous prototype">;
