@@ -39,3 +39,7 @@ template<typename T = int, // expected-error{{default template argument}}
          int N = 17, // expected-error{{default template argument}}
          template<typename X> class TT = ::vector> // expected-error{{default template argument}}
   struct Test0<T*, N, TT> { };
+
+template<typename T> struct Test1;
+template<typename T, typename U>  // expected-note{{non-deducible}}
+  struct Test1<T*> { }; // expected-warning{{never be used}}

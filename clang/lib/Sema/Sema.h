@@ -2163,7 +2163,10 @@ public:
   DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
                           const TemplateArgumentList &TemplateArgs,
                           TemplateDeductionInfo &Info);
-                             
+                   
+  void MarkDeducedTemplateParameters(const TemplateArgumentList &TemplateArgs,
+                                     llvm::SmallVectorImpl<bool> &Deduced);
+          
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation
   //

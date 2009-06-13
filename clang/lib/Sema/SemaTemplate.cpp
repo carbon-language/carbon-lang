@@ -2328,8 +2328,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     Specialization->setLocation(TemplateNameLoc);
     PrevDecl = 0;
   } else if (isPartialSpecialization) {
-    // FIXME: extra checking for partial specializations
-
     // Create a new class template partial specialization declaration node.
     TemplateParameterList *TemplateParams 
       = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
@@ -2351,6 +2349,38 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       ClassTemplate->getPartialSpecializations().InsertNode(Partial, InsertPos);
     }
     Specialization = Partial;
+
+    // Check that all of the template parameters of the class template
+    // partial specialization are deducible from the template
+    // arguments. If not, this class template partial specialization
+    // will never be used.
+    llvm::SmallVector<bool, 8> DeducibleParams;
+    DeducibleParams.resize(TemplateParams->size());
+    MarkDeducedTemplateParameters(Partial->getTemplateArgs(), DeducibleParams);
+    unsigned NumNonDeducible = 0;
+    for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I)
+      if (!DeducibleParams[I])
+        ++NumNonDeducible;
+
+    if (NumNonDeducible) {
+      Diag(TemplateNameLoc, diag::warn_partial_specs_not_deducible)
+        << (NumNonDeducible > 1)
+        << SourceRange(TemplateNameLoc, RAngleLoc);
+      for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I) {
+        if (!DeducibleParams[I]) {
+          NamedDecl *Param = cast<NamedDecl>(TemplateParams->getParam(I));
+          if (Param->getDeclName())
+            Diag(Param->getLocation(), 
+                 diag::note_partial_spec_unused_parameter)
+              << Param->getDeclName();
+          else
+            Diag(Param->getLocation(), 
+                 diag::note_partial_spec_unused_parameter)
+              << std::string("<anonymous>");
+        }
+      }
+    }
+
   } else {
     // Create a new class template specialization declaration node for
     // this explicit specialization.

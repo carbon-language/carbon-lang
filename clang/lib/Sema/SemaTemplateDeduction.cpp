@@ -881,3 +881,178 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
 
   return TDK_Success;
 }
+
+static void 
+MarkDeducedTemplateParameters(Sema &SemaRef,
+                              const TemplateArgument &TemplateArg,
+                              llvm::SmallVectorImpl<bool> &Deduced);
+
+/// \brief Mark the template arguments that are deduced by the given
+/// expression.
+static void 
+MarkDeducedTemplateParameters(Expr *E, llvm::SmallVectorImpl<bool> &Deduced) {
+  DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
+  if (!E)
+    return;
+
+  NonTypeTemplateParmDecl *NTTP 
+    = dyn_cast<NonTypeTemplateParmDecl>(DRE->getDecl());
+  if (!NTTP)
+    return;
+
+  Deduced[NTTP->getIndex()] = true;
+}
+
+/// \brief Mark the template parameters that are deduced by the given
+/// type.
+static void 
+MarkDeducedTemplateParameters(Sema &SemaRef, QualType T,
+                              llvm::SmallVectorImpl<bool> &Deduced) {
+  // Non-dependent types have nothing deducible
+  if (!T->isDependentType())
+    return;
+
+  T = SemaRef.Context.getCanonicalType(T);
+  switch (T->getTypeClass()) {
+  case Type::ExtQual:
+    MarkDeducedTemplateParameters(SemaRef, 
+                QualType(cast<ExtQualType>(T.getTypePtr())->getBaseType(), 0),
+                                  Deduced);
+    break;
+
+  case Type::Pointer:
+    MarkDeducedTemplateParameters(SemaRef,
+                          cast<PointerType>(T.getTypePtr())->getPointeeType(),
+                                  Deduced);
+    break;
+
+  case Type::BlockPointer:
+    MarkDeducedTemplateParameters(SemaRef,
+                     cast<BlockPointerType>(T.getTypePtr())->getPointeeType(),
+                                  Deduced);
+    break;
+
+  case Type::LValueReference:
+  case Type::RValueReference:
+    MarkDeducedTemplateParameters(SemaRef,
+                        cast<ReferenceType>(T.getTypePtr())->getPointeeType(),
+                                  Deduced);
+    break;
+
+  case Type::MemberPointer: {
+    const MemberPointerType *MemPtr = cast<MemberPointerType>(T.getTypePtr());
+    MarkDeducedTemplateParameters(SemaRef, MemPtr->getPointeeType(), Deduced);
+    MarkDeducedTemplateParameters(SemaRef, QualType(MemPtr->getClass(), 0),
+                                  Deduced);
+    break;
+  }
+
+  case Type::DependentSizedArray:
+    MarkDeducedTemplateParameters(
+                 cast<DependentSizedArrayType>(T.getTypePtr())->getSizeExpr(),
+                                  Deduced);
+    // Fall through to check the element type
+
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+    MarkDeducedTemplateParameters(SemaRef,
+                            cast<ArrayType>(T.getTypePtr())->getElementType(),
+                                  Deduced);
+    break;
+
+  case Type::Vector:
+  case Type::ExtVector:
+    MarkDeducedTemplateParameters(SemaRef,
+                           cast<VectorType>(T.getTypePtr())->getElementType(),
+                                  Deduced);
+    break;
+
+  case Type::FunctionProto: {
+    const FunctionProtoType *Proto = cast<FunctionProtoType>(T.getTypePtr());
+    MarkDeducedTemplateParameters(SemaRef, Proto->getResultType(), Deduced);
+    for (unsigned I = 0, N = Proto->getNumArgs(); I != N; ++I)
+      MarkDeducedTemplateParameters(SemaRef, Proto->getArgType(I), Deduced);
+    break;
+  }
+
+  case Type::TemplateTypeParm:
+    Deduced[cast<TemplateTypeParmType>(T.getTypePtr())->getIndex()] = true;
+    break;
+
+  case Type::TemplateSpecialization: {
+    const TemplateSpecializationType *Spec 
+      = cast<TemplateSpecializationType>(T.getTypePtr());
+    if (TemplateDecl *Template = Spec->getTemplateName().getAsTemplateDecl())
+      if (TemplateTemplateParmDecl *TTP 
+            = dyn_cast<TemplateTemplateParmDecl>(Template))
+        Deduced[TTP->getIndex()] = true;
+      
+      for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
+        MarkDeducedTemplateParameters(SemaRef, Spec->getArg(I), Deduced);
+
+    break;
+  }
+
+  // None of these types have any deducible parts.
+  case Type::Builtin:
+  case Type::FixedWidthInt:
+  case Type::Complex:
+  case Type::VariableArray:
+  case Type::FunctionNoProto:
+  case Type::Record:
+  case Type::Enum:
+  case Type::Typename:
+  case Type::ObjCInterface:
+  case Type::ObjCQualifiedInterface:
+  case Type::ObjCQualifiedId:
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define DEPENDENT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    break;
+  }
+}
+
+/// \brief Mark the template parameters that are deduced by this
+/// template argument.
+static void 
+MarkDeducedTemplateParameters(Sema &SemaRef,
+                              const TemplateArgument &TemplateArg,
+                              llvm::SmallVectorImpl<bool> &Deduced) {
+  switch (TemplateArg.getKind()) {
+  case TemplateArgument::Null:
+  case TemplateArgument::Integral:
+    break;
+    
+  case TemplateArgument::Type:
+    MarkDeducedTemplateParameters(SemaRef, TemplateArg.getAsType(), Deduced);
+    break;
+
+  case TemplateArgument::Declaration:
+    if (TemplateTemplateParmDecl *TTP 
+        = dyn_cast<TemplateTemplateParmDecl>(TemplateArg.getAsDecl()))
+      Deduced[TTP->getIndex()] = true;
+    break;
+
+  case TemplateArgument::Expression:
+    MarkDeducedTemplateParameters(TemplateArg.getAsExpr(), Deduced);
+    break;
+  }
+}
+
+/// \brief Mark the template parameters can be deduced by the given
+/// template argument list.
+///
+/// \param TemplateArgs the template argument list from which template
+/// parameters will be deduced.
+///
+/// \param Deduced a bit vector whose elements will be set to \c true
+/// to indicate when the corresponding template parameter will be
+/// deduced.
+void 
+Sema::MarkDeducedTemplateParameters(const TemplateArgumentList &TemplateArgs,
+                                    llvm::SmallVectorImpl<bool> &Deduced) {
+  for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+    ::MarkDeducedTemplateParameters(*this, TemplateArgs[I], Deduced);
+}

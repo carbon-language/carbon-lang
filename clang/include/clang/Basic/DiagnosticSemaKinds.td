@@ -770,6 +770,12 @@ def err_partial_spec_args_match_primary_template : Error<
     "class template partial specialization does not specialize any template "
     "argument; to %select{declare|define}0 the primary template, remove the "
     "template argument list">; 
+def warn_partial_specs_not_deducible : Warning<
+    "class template partial specialization contains "
+    "%select{a template parameter|template parameters}0 that can not be "
+    "deduced; this partial specialization will never be used">;
+def note_partial_spec_unused_parameter : Note<
+    "non-deducible template parameter %0">;
 def unsup_template_partial_spec_ordering : Error<
   "partial ordering of class template partial specializations is not yet "
   "supported">;
