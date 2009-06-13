@@ -91,29 +91,36 @@ namespace llvm {
   class raw_ostream;
 
   class PIC16DbgInfo {
-    std::map <std::string, DISubprogram *> FunctNameMap;
     raw_ostream &O;
     const TargetAsmInfo *TAI;
     std::string CurFile;
+    // EmitDebugDirectives is set if debug information is available. Default
+    // value for it is false.
+    bool EmitDebugDirectives;
+    unsigned FunctBeginLine;
   public:
     PIC16DbgInfo(raw_ostream &o, const TargetAsmInfo *T) : O(o), TAI(T) {
-      CurFile = "";  
+      CurFile = ""; 
+      EmitDebugDirectives = false; 
     }
-    ~PIC16DbgInfo();
     void PopulateDebugInfo(DIType Ty, unsigned short &TypeNo, bool &HasAux,
                            int Aux[], std::string &TypeName);
     unsigned GetTypeDebugNumber(std::string &type);
     short getClass(DIGlobalVariable DIGV);
-    void PopulateFunctsDI(Module &M);
-    DISubprogram *getFunctDI(std::string FunctName);
     void EmitFunctBeginDI(const Function *F);
+    void Init(Module &M);
+    void EmitCompositeTypeDecls(Module &M);
     void EmitFunctEndDI(const Function *F, unsigned Line);
-    void EmitAuxEntry(const std::string VarName, int Aux[], int num);
-    inline void EmitSymbol(std::string Name, int Class);
+    void EmitAuxEntry(const std::string VarName, int Aux[], 
+                      int num = PIC16Dbg::AuxSize, std::string tag = "");
+    inline void EmitSymbol(std::string Name, short Class, 
+                           unsigned short Type = PIC16Dbg::T_NULL, 
+                           unsigned long Value = 0);
     void EmitVarDebugInfo(Module &M);
     void EmitFileDirective(Module &M);
-    void EmitFileDirective(const Function *F);
+    void EmitFileDirective(GlobalVariable *CU, bool EmitEof = true);
     void EmitEOF();
+    void SetFunctBeginLine(unsigned line);
   };
 } // end namespace llvm;
 #endif

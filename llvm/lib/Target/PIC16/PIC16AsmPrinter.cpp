@@ -48,8 +48,21 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   CurrentFnName = Mang->getValueName(F);
 
-  // Emit .file directive.
-  DbgInfo.EmitFileDirective(F);
+  // Iterate over the first basic block instructions to find if it has a
+  // DebugLoc. If so emit .file directive. Instructions such as movlw do not
+  // have valid DebugLoc, so need to iterate over instructions.
+  MachineFunction::const_iterator I = MF.begin();
+  for (MachineBasicBlock::const_iterator MBBI = I->begin(), E = I->end();
+       MBBI != E; MBBI++) {
+    const DebugLoc DLoc = MBBI->getDebugLoc();
+    if (!DLoc.isUnknown()) {
+      GlobalVariable *CU = MF.getDebugLocTuple(DLoc).CompileUnit;
+      unsigned line = MF.getDebugLocTuple(DLoc).Line;
+      DbgInfo.EmitFileDirective(CU);
+      DbgInfo.SetFunctBeginLine(line);
+      break;
+    }
+  }
 
   // Emit the function frame (args and temps).
   EmitFunctionFrame(MF);
@@ -213,14 +226,13 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
     I->setSection(TAI->SectionForGlobal(I)->getName());
   }
 
-  DbgInfo.EmitFileDirective(M);
+  DbgInfo.Init(M);
   EmitFunctionDecls(M);
   EmitUndefinedVars(M);
   EmitDefinedVars(M);
   EmitIData(M);
   EmitUData(M);
   EmitRomData(M);
-  DbgInfo.PopulateFunctsDI(M);
   return Result;
 }
 
@@ -230,7 +242,7 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
 ///
 void PIC16AsmPrinter::EmitFunctionDecls (Module &M) {
  // Emit declarations for external functions.
-  O << TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
+  O <<"\n"<<TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
     std::string Name = Mang->getValueName(I);
     if (Name.compare("@abort") == 0)
