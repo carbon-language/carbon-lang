@@ -24,9 +24,15 @@ namespace clang {
 }
 
 
-// Defined in ASTContext.cpp
+// Defined in ASTContext.h
 void *operator new(size_t Bytes, clang::ASTContext &C,
                    size_t Alignment = 16) throw ();
+
+// It is good practice to pair new/delete operators.  Also, MSVC gives many
+// warnings if a matching delete overload is not declared, even though the
+// throw() spec guarantees it will not be implicitly called.
+void operator delete(void *Ptr, clang::ASTContext &C, size_t)
+              throw ();
 
 namespace clang {
 
