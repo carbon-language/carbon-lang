@@ -140,7 +140,7 @@ template<typename T> struct Member0 {
     tp->f;
 
     this->f;
-    this.f; // expected-error{{member reference base type 'struct Member0 *const' is not a structure or union}}
+    this.f; // expected-error{{member reference base type 'Member0<T> *const' is not a structure or union}}
   }
 };
 
@@ -209,3 +209,9 @@ struct Abstract {
 template struct TryCatch0<int>; // okay
 template struct TryCatch0<Incomplete*>; // expected-note{{instantiation}}
 template struct TryCatch0<Abstract>; // expected-note{{instantiation}}
+
+// PR4383
+template<typename T> struct X;
+template<typename T> struct Y : public X<T> {
+  Y& x() { return *this; }
+};

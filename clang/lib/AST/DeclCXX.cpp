@@ -260,7 +260,12 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   // the type of this is const volatile X*.
 
   assert(isInstance() && "No 'this' for static methods!");
-  QualType ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
+
+  QualType ClassTy;
+  if (ClassTemplateDecl *TD = getParent()->getDescribedClassTemplate())
+    ClassTy = TD->getInjectedClassNameType(C);
+  else
+    ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
   ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
   return C.getPointerType(ClassTy).withConst();
 }
