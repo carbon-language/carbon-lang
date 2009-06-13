@@ -23,6 +23,9 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+static cl::opt<bool>
+EnablePreLdStOpti("arm-pre-alloc-loadstore-opti", cl::Hidden,
+                  cl::desc("Enable pre-regalloc load store optimization pass"));
 static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
                               cl::desc("Disable load store optimization pass"));
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
@@ -142,6 +145,16 @@ bool ARMTargetMachine::addInstSelector(PassManagerBase &PM,
                                        CodeGenOpt::Level OptLevel) {
   PM.add(createARMISelDag(*this));
   return false;
+}
+
+bool ARMTargetMachine::addPreRegAlloc(PassManagerBase &PM,
+                                      CodeGenOpt::Level OptLevel) {
+  if (!EnablePreLdStOpti)
+    return false;
+  // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
+  if (OptLevel != CodeGenOpt::None && !DisableLdStOpti && !Subtarget.isThumb())
+    PM.add(createARMLoadStoreOptimizationPass(true));
+  return true;
 }
 
 bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM,

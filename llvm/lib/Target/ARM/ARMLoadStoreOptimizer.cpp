@@ -17,24 +17,31 @@
 #include "ARMAddressingModes.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumLDMGened , "Number of ldm instructions generated");
 STATISTIC(NumSTMGened , "Number of stm instructions generated");
 STATISTIC(NumFLDMGened, "Number of fldm instructions generated");
 STATISTIC(NumFSTMGened, "Number of fstm instructions generated");
+STATISTIC(NumLdStMoved, "Number of load / store instructions moved");
+
+/// ARMAllocLoadStoreOpt - Post- register allocation pass the combine
+/// load / store instructions to form ldm / stm instructions.
 
 namespace {
   struct VISIBILITY_HIDDEN ARMLoadStoreOpt : public MachineFunctionPass {
@@ -79,12 +86,6 @@ namespace {
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
   };
   char ARMLoadStoreOpt::ID = 0;
-}
-
-/// createARMLoadStoreOptimizationPass - returns an instance of the load / store
-/// optimization pass.
-FunctionPass *llvm::createARMLoadStoreOptimizationPass() {
-  return new ARMLoadStoreOpt();
 }
 
 static int getLoadStoreMultipleOpcode(int Opcode) {
@@ -582,6 +583,23 @@ void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
     RS->forward(prior(Loc));
 }
 
+static int getMemoryOpOffset(const MachineInstr *MI) {
+  int Opcode = MI->getOpcode();
+  bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
+  unsigned NumOperands = MI->getDesc().getNumOperands();
+  unsigned OffField = MI->getOperand(NumOperands-3).getImm();
+  int Offset = isAM2
+    ? ARM_AM::getAM2Offset(OffField) : ARM_AM::getAM5Offset(OffField) * 4;
+  if (isAM2) {
+    if (ARM_AM::getAM2Op(OffField) == ARM_AM::sub)
+      Offset = -Offset;
+  } else {
+    if (ARM_AM::getAM5Op(OffField) == ARM_AM::sub)
+      Offset = -Offset;
+  }
+  return Offset;
+}
+
 /// LoadStoreMultipleOpti - An optimization pass to turn multiple LDR / STR
 /// ops of the same base and incrementing offset into LDM / STM ops.
 bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
@@ -606,22 +624,11 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
     bool isMemOp = isMemoryOp(MBBI);
     if (isMemOp) {
       int Opcode = MBBI->getOpcode();
-      bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
       unsigned Size = getLSMultipleTransferSize(MBBI);
       unsigned Base = MBBI->getOperand(1).getReg();
       unsigned PredReg = 0;
       ARMCC::CondCodes Pred = getInstrPredicate(MBBI, PredReg);
-      unsigned NumOperands = MBBI->getDesc().getNumOperands();
-      unsigned OffField = MBBI->getOperand(NumOperands-3).getImm();
-      int Offset = isAM2
-        ? ARM_AM::getAM2Offset(OffField) : ARM_AM::getAM5Offset(OffField) * 4;
-      if (isAM2) {
-        if (ARM_AM::getAM2Op(OffField) == ARM_AM::sub)
-          Offset = -Offset;
-      } else {
-        if (ARM_AM::getAM5Op(OffField) == ARM_AM::sub)
-          Offset = -Offset;
-      }
+      int Offset = getMemoryOpOffset(MBBI);
       // Watch out for:
       // r4 := ldr [r5]
       // r5 := ldr [r5, #4]
@@ -744,6 +751,17 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   return NumMerges > 0;
 }
 
+namespace {
+  struct OffsetCompare {
+    bool operator()(const MachineInstr *LHS, const MachineInstr *RHS) const {
+      int LOffset = getMemoryOpOffset(LHS);
+      int ROffset = getMemoryOpOffset(RHS);
+      assert(LHS == RHS || LOffset != ROffset);
+      return LOffset > ROffset;
+    }
+  };
+}
+
 /// MergeReturnIntoLDM - If this is a exit BB, try merging the return op
 /// (bx lr) into the preceeding stack restore so it directly restore the value
 /// of LR into pc.
@@ -787,4 +805,278 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
 
   delete RS;
   return Modified;
+}
+
+
+/// ARMPreAllocLoadStoreOpt - Pre- register allocation pass that move
+/// load / stores from consecutive locations close to make it more
+/// likely they will be combined later.
+
+namespace {
+  struct VISIBILITY_HIDDEN ARMPreAllocLoadStoreOpt : public MachineFunctionPass{
+    static char ID;
+    ARMPreAllocLoadStoreOpt() : MachineFunctionPass(&ID) {}
+
+    const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
+    MachineRegisterInfo *MRI;
+
+    virtual bool runOnMachineFunction(MachineFunction &Fn);
+
+    virtual const char *getPassName() const {
+      return "ARM pre- register allocation load / store optimization pass";
+    }
+
+  private:
+    bool RescheduleOps(MachineBasicBlock *MBB,
+                       SmallVector<MachineInstr*, 4> &Ops,
+                       unsigned Base, bool isLd,
+                       DenseMap<MachineInstr*, unsigned> &MI2LocMap);
+    bool RescheduleLoadStoreInstrs(MachineBasicBlock *MBB);
+  };
+  char ARMPreAllocLoadStoreOpt::ID = 0;
+}
+
+bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
+  TII = Fn.getTarget().getInstrInfo();
+  TRI = Fn.getTarget().getRegisterInfo();
+  MRI = &Fn.getRegInfo();
+
+  bool Modified = false;
+  for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
+       ++MFI)
+    Modified |= RescheduleLoadStoreInstrs(MFI);
+
+  return Modified;
+}
+
+static bool IsSafeToMove(bool isLd, unsigned Base,
+                         MachineBasicBlock::iterator I,
+                         MachineBasicBlock::iterator E,
+                         SmallPtrSet<MachineInstr*, 4> MoveOps,
+                         const TargetRegisterInfo *TRI) {
+  // Are there stores / loads / calls between them?
+  // FIXME: This is overly conservative. We should make use of alias information
+  // some day.
+  while (++I != E) {
+    const TargetInstrDesc &TID = I->getDesc();
+    if (TID.isCall() || TID.isTerminator() || TID.hasUnmodeledSideEffects())
+      return false;
+    if (isLd && TID.mayStore())
+      return false;
+    if (!isLd) {
+      if (TID.mayLoad())
+        return false;
+      // It's not safe to move the first 'str' down.
+      // str r1, [r0]
+      // strh r5, [r0]
+      // str r4, [r0, #+4]
+      if (TID.mayStore() && !MoveOps.count(&*I))
+        return false;
+    }
+    for (unsigned j = 0, NumOps = I->getNumOperands(); j != NumOps; ++j) {
+      MachineOperand &MO = I->getOperand(j);
+      if (MO.isReg() && MO.isDef() && TRI->regsOverlap(MO.getReg(), Base))
+        return false;
+    }
+  }
+  return true;
+}
+
+bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
+                                 SmallVector<MachineInstr*, 4> &Ops,
+                                 unsigned Base, bool isLd,
+                                 DenseMap<MachineInstr*, unsigned> &MI2LocMap) {
+  bool RetVal = false;
+
+  // Sort by offset (in reverse order).
+  std::sort(Ops.begin(), Ops.end(), OffsetCompare());
+
+  // The loads / stores of the same base are in order. Scan them from first to
+  // last and check for the followins:
+  // 1. Any def of base.
+  // 2. Any gaps.
+  while (Ops.size() > 1) {
+    unsigned FirstLoc = ~0U;
+    unsigned LastLoc = 0;
+    MachineInstr *FirstOp = 0;
+    MachineInstr *LastOp = 0;
+    int LastOffset = 0;
+    unsigned LastBytes = 0;
+    unsigned NumMove = 0;
+    for (int i = Ops.size() - 1; i >= 0; --i) {
+      MachineInstr *Op = Ops[i];
+      unsigned Loc = MI2LocMap[Op];
+      if (Loc <= FirstLoc) {
+        FirstLoc = Loc;
+        FirstOp = Op;
+      }
+      if (Loc >= LastLoc) {
+        LastLoc = Loc;
+        LastOp = Op;
+      }
+
+      int Offset = getMemoryOpOffset(Op);
+      unsigned Bytes = getLSMultipleTransferSize(Op);
+      if (LastBytes) {
+        if (Bytes != LastBytes || Offset != (LastOffset + (int)Bytes))
+          break;
+      }
+      LastOffset = Offset;
+      LastBytes = Bytes;
+      if (++NumMove == 4)
+        break;
+    }
+
+    if (NumMove <= 1)
+      Ops.pop_back();
+    else {
+      SmallPtrSet<MachineInstr*, 4> MoveOps;
+      for (int i = NumMove-1; i >= 0; --i)
+        MoveOps.insert(Ops[i]);
+
+      // Be conservative, if the instructions are too far apart, don't
+      // move them. We want to limit the increase of register pressure.
+      bool DoMove = (LastLoc - FirstLoc) < NumMove*4;
+      if (DoMove)
+        DoMove = IsSafeToMove(isLd, Base, FirstOp, LastOp, MoveOps, TRI);
+      if (!DoMove) {
+        for (unsigned i = 0; i != NumMove; ++i)
+          Ops.pop_back();
+      } else {
+        // This is the new location for the loads / stores.
+        MachineBasicBlock::iterator InsertPos = isLd ? FirstOp : LastOp;
+        while (InsertPos != MBB->end() && MoveOps.count(InsertPos))
+          ++InsertPos;
+        for (unsigned i = 0; i != NumMove; ++i) {
+          MachineInstr *Op = Ops.back();
+          Ops.pop_back();
+          MBB->splice(InsertPos, MBB, Op);
+        }
+
+        NumLdStMoved += NumMove;
+        RetVal = true;
+      }
+    }
+  }
+
+  return RetVal;
+}
+
+bool
+ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
+  bool RetVal = false;
+
+  DenseMap<MachineInstr*, unsigned> MI2LocMap;
+  DenseMap<unsigned, SmallVector<MachineInstr*, 4> > Base2LdsMap;
+  DenseMap<unsigned, SmallVector<MachineInstr*, 4> > Base2StsMap;
+  SmallVector<unsigned, 4> LdBases;
+  SmallVector<unsigned, 4> StBases;
+
+  unsigned Loc = 0;
+  MachineBasicBlock::iterator MBBI = MBB->begin();
+  MachineBasicBlock::iterator E = MBB->end();
+  while (MBBI != E) {
+    for (; MBBI != E; ++MBBI) {
+      MachineInstr *MI = MBBI;
+      const TargetInstrDesc &TID = MI->getDesc();
+      if (TID.isCall() || TID.isTerminator()) {
+        // Stop at barriers.
+        ++MBBI;
+        break;
+      }
+
+      MI2LocMap[MI] = Loc++;
+      if (!isMemoryOp(MI))
+        continue;
+      unsigned PredReg = 0;
+      if (getInstrPredicate(MI, PredReg) != ARMCC::AL)
+        continue;
+
+      int Opcode = MI->getOpcode();
+      bool isLd = Opcode == ARM::LDR ||
+        Opcode == ARM::FLDS || Opcode == ARM::FLDD;
+      unsigned Base = MI->getOperand(1).getReg();
+      int Offset = getMemoryOpOffset(MI);
+
+      bool StopHere = false;
+      if (isLd) {
+        DenseMap<unsigned, SmallVector<MachineInstr*, 4> >::iterator BI =
+          Base2LdsMap.find(Base);
+        if (BI != Base2LdsMap.end()) {
+          for (unsigned i = 0, e = BI->second.size(); i != e; ++i) {
+            if (Offset == getMemoryOpOffset(BI->second[i])) {
+              StopHere = true;
+              break;
+            }
+          }
+          if (!StopHere)
+            BI->second.push_back(MI);
+        } else {
+          SmallVector<MachineInstr*, 4> MIs;
+          MIs.push_back(MI);
+          Base2LdsMap[Base] = MIs;
+          LdBases.push_back(Base);
+        }
+      } else {
+        DenseMap<unsigned, SmallVector<MachineInstr*, 4> >::iterator BI =
+          Base2StsMap.find(Base);
+        if (BI != Base2StsMap.end()) {
+          for (unsigned i = 0, e = BI->second.size(); i != e; ++i) {
+            if (Offset == getMemoryOpOffset(BI->second[i])) {
+              StopHere = true;
+              break;
+            }
+          }
+          if (!StopHere)
+            BI->second.push_back(MI);
+        } else {
+          SmallVector<MachineInstr*, 4> MIs;
+          MIs.push_back(MI);
+          Base2StsMap[Base] = MIs;
+          StBases.push_back(Base);
+        }
+      }
+
+      if (StopHere) {
+        // Found a duplicate (a base+offset combination that's seen earlier). Backtrack.
+        --Loc;
+        break;
+      }
+    }
+
+    // Re-schedule loads.
+    for (unsigned i = 0, e = LdBases.size(); i != e; ++i) {
+      unsigned Base = LdBases[i];
+      SmallVector<MachineInstr*, 4> &Lds = Base2LdsMap[Base];
+      if (Lds.size() > 1)
+        RetVal |= RescheduleOps(MBB, Lds, Base, true, MI2LocMap);
+    }
+
+    // Re-schedule stores.
+    for (unsigned i = 0, e = StBases.size(); i != e; ++i) {
+      unsigned Base = StBases[i];
+      SmallVector<MachineInstr*, 4> &Sts = Base2StsMap[Base];
+      if (Sts.size() > 1)
+        RetVal |= RescheduleOps(MBB, Sts, Base, false, MI2LocMap);
+    }
+
+    if (MBBI != E) {
+      Base2LdsMap.clear();
+      Base2StsMap.clear();
+      LdBases.clear();
+      StBases.clear();
+    }
+  }
+
+  return RetVal;
+}
+
+
+/// createARMLoadStoreOptimizationPass - returns an instance of the load / store
+/// optimization pass.
+FunctionPass *llvm::createARMLoadStoreOptimizationPass(bool PreAlloc) {
+  if (PreAlloc)
+    return new ARMPreAllocLoadStoreOpt();
+  return new ARMLoadStoreOpt();
 }

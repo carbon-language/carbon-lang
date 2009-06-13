@@ -98,12 +98,12 @@ FunctionPass *createARMCodePrinterPass(raw_ostream &O,
 FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 
-FunctionPass *createARMCodeEmitterPass( ARMTargetMachine &TM,
-                                        MachineCodeEmitter &MCE);
-FunctionPass *createARMJITCodeEmitterPass( ARMTargetMachine &TM, 
-                                           JITCodeEmitter &JCE);
+FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
+                                       MachineCodeEmitter &MCE);
+FunctionPass *createARMJITCodeEmitterPass(ARMTargetMachine &TM, 
+                                          JITCodeEmitter &JCE);
 
-FunctionPass *createARMLoadStoreOptimizationPass();
+FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMConstantIslandPass();
 
 } // end namespace llvm;

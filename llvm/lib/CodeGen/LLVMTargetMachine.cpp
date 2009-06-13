@@ -240,7 +240,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createMachineLICMPass());
     PM.add(createMachineSinkingPass());
-    printAndVerify(PM, /* allowDoubleDefs= */ true);
+    printAndVerify(PM, /* allowDoubleDefs= */ false);
   }
 
   // Run pre-ra passes.
