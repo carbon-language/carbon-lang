@@ -674,7 +674,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
       //   compatible structure or union type. In the latter case, the
       //   initial value of the object, including unnamed members, is
       //   that of the expression.
-      if (ElemType->isRecordType() &&
+      if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
           SemaRef.Context.hasSameUnqualifiedType(expr->getType(), ElemType)) {
         UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
         ++Index;
