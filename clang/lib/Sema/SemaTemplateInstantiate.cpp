@@ -1014,7 +1014,7 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
     if (T.isNull())
       return 0;
 
-    if (T->isRecordType() ||
+    if (T->isDependentType() || T->isRecordType() ||
         (getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
       assert(T.getCVRQualifiers() == 0 && "Can't get cv-qualifiers here");
       return NestedNameSpecifier::Create(Context, Prefix, 
