@@ -36,14 +36,14 @@ void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
 
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
-IdentifierInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
+static IdentifierInfo *RegisterBuiltinMacro(Preprocessor &PP, const char *Name){
   // Get the identifier.
-  IdentifierInfo *Id = getIdentifierInfo(Name);
+  IdentifierInfo *Id = PP.getIdentifierInfo(Name);
   
   // Mark it as being a macro that is builtin.
-  MacroInfo *MI = AllocateMacroInfo(SourceLocation());
+  MacroInfo *MI = PP.AllocateMacroInfo(SourceLocation());
   MI->setIsBuiltinMacro();
-  setMacroInfo(Id, MI);
+  PP.setMacroInfo(Id, MI);
   return Id;
 }
 
@@ -51,17 +51,21 @@ IdentifierInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
 /// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
 /// identifier table.
 void Preprocessor::RegisterBuiltinMacros() {
-  Ident__LINE__ = RegisterBuiltinMacro("__LINE__");
-  Ident__FILE__ = RegisterBuiltinMacro("__FILE__");
-  Ident__DATE__ = RegisterBuiltinMacro("__DATE__");
-  Ident__TIME__ = RegisterBuiltinMacro("__TIME__");
-  Ident__COUNTER__ = RegisterBuiltinMacro("__COUNTER__");
-  Ident_Pragma  = RegisterBuiltinMacro("_Pragma");
+  Ident__LINE__ = RegisterBuiltinMacro(*this, "__LINE__");
+  Ident__FILE__ = RegisterBuiltinMacro(*this, "__FILE__");
+  Ident__DATE__ = RegisterBuiltinMacro(*this, "__DATE__");
+  Ident__TIME__ = RegisterBuiltinMacro(*this, "__TIME__");
+  Ident__COUNTER__ = RegisterBuiltinMacro(*this, "__COUNTER__");
+  Ident_Pragma  = RegisterBuiltinMacro(*this, "_Pragma");
   
   // GCC Extensions.
-  Ident__BASE_FILE__     = RegisterBuiltinMacro("__BASE_FILE__");
-  Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro("__INCLUDE_LEVEL__");
-  Ident__TIMESTAMP__     = RegisterBuiltinMacro("__TIMESTAMP__");
+  Ident__BASE_FILE__     = RegisterBuiltinMacro(*this, "__BASE_FILE__");
+  Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro(*this, "__INCLUDE_LEVEL__");
+  Ident__TIMESTAMP__     = RegisterBuiltinMacro(*this, "__TIMESTAMP__");
+  
+  // Clang Extensions.
+  Ident__has_feature     = RegisterBuiltinMacro(*this, "__has_feature");
+  Ident__has_builtin     = RegisterBuiltinMacro(*this, "__has_builtin");
 }
 
 /// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
@@ -469,6 +473,34 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
   TIMELoc = TmpTok.getLocation();
 }
 
+
+/// HasFeature - Return true if we recognize and implement the specified feature
+/// specified by the identifier.
+static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
+  const LangOptions &LangOpts = PP.getLangOptions();
+  
+  switch (II->getLength()) {
+  default: return false;
+  case 6:
+    if (II->isStr("blocks")) return LangOpts.Blocks;
+    return false;
+  case 22:
+    if (II->isStr("attribute_overloadable")) return true;
+    return false;
+  case 25:
+    if (II->isStr("attribute_ext_vector_type")) return true;
+    return false;
+  case 27:
+    if (II->isStr("attribute_analyzer_noreturn")) return true;
+    return false;
+  case 29:
+    if (II->isStr("attribute_ns_returns_retained")) return true;
+    if (II->isStr("attribute_cf_returns_retained")) return true;
+    return false;
+  }
+}
+
+
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
 /// as a builtin macro, handle it and return the next token as 'Tok'.
 void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
@@ -597,6 +629,43 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     
     // __COUNTER__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", CounterValue++);
+    Tok.setKind(tok::numeric_constant);
+    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
+  } else if (II == Ident__has_feature ||
+             II == Ident__has_builtin) {
+    // The argument to these two builtins should be a parenthesized identifier.
+    SourceLocation StartLoc = Tok.getLocation();
+    
+    bool IsValid = false;
+    IdentifierInfo *FeatureII = 0;
+    
+    // Read the '('.
+    Lex(Tok);
+    if (Tok.is(tok::l_paren)) {
+      // Read the identifier
+      Lex(Tok);
+      if (Tok.is(tok::identifier)) {
+        FeatureII = Tok.getIdentifierInfo();
+        
+        // Read the ')'.
+        Lex(Tok);
+        if (Tok.is(tok::r_paren))
+          IsValid = true;
+      }
+    }
+    
+    bool Value = false;
+    if (!IsValid)
+      Diag(StartLoc, diag::err_feature_check_malformed);
+    else if (II == Ident__has_builtin) {
+      // Check for a builtin is trivial. 
+      Value = FeatureII->getBuiltinID() != 0;
+    } else {
+      assert(II == Ident__has_feature && "Must be feature check");
+      Value = HasFeature(*this, FeatureII);
+    }
+    
+    sprintf(TmpBuffer, "%d", (int)Value);
     Tok.setKind(tok::numeric_constant);
     CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else {

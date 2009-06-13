@@ -205,6 +205,10 @@ def err_pp_expr_bad_token_start_expr : Error<
   "invalid token at start of a preprocessor expression">;
 def err_pp_invalid_poison : Error<"can only poison identifier tokens">;
 def err_pp_used_poisoned_id : Error<"attempt to use a poisoned identifier">;
+
+def err_feature_check_malformed : Error<
+  "builtin feature check macro requires a parenthesized identifier">;
+
 def err__Pragma_malformed : Error<
   "_Pragma takes a parenthesized string literal">;
 def err_pragma_comment_malformed : Error<

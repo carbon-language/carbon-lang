@@ -19,6 +19,7 @@ td {
 
 <ul>
 <li><a href="#intro">Introduction</a></li>
+<li><a href="#feature_check">Feature Checking Macros</a></li>
 <li><a href="#builtinmacros">Builtin Macros</a></li>
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
 <li><a href="#blocks">Blocks</a></li>
@@ -45,10 +46,71 @@ td {
 <!-- ======================================================================= -->
 
 <p>This document describes the language extensions provided by Clang.  In
-addition to the langauge extensions listed here, Clang aims to support a broad
+addition to the language extensions listed here, Clang aims to support a broad
 range of GCC extensions.  Please see the <a 
 href="http://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html">GCC manual</a> for
 more information on these extensions.</p>
+
+<!-- ======================================================================= -->
+<h2 id="feature_check">Feature Checking Macros</h2>
+<!-- ======================================================================= -->
+
+<p>Language extensions can be very useful, but only if you know you can depend
+on them.  In order to allow fine-grain features checks, we support two builtin
+function-like macros.  This allows you to directly test for a feature in your
+code without having to resort to something like autoconf or fragile "compiler
+version checks".</p>
+
+<!-- ======================================================================= -->
+<h3 id="__has_builtin">__has_builtin</h3>
+<!-- ======================================================================= -->
+
+<p>This function-like macro takes a single identifier argument that is the name
+of a builtin function.  It evaluates to 1 if the builtin is supported or 0 if
+not.  It can be used like this:</p>
+
+<blockquote>
+<pre>
+#ifndef __has_builtin         // Optional of course.
+  #define __has_builtin(x) 0  // Compatibility with non-clang compilers.
+#endif
+
+...
+#if __has_builtin(__builtin_trap)
+  __builtin_trap();
+#else
+  abort();
+#endif
+...
+</pre>
+</blockquote>
+
+
+<!-- ======================================================================= -->
+<h3 id="__has_feature">__has_feature</h3>
+<!-- ======================================================================= -->
+
+<p>This function-like macro takes a single identifier argument that is the name
+of a feature.  It evaluates to 1 if the feature is supported or 0 if not.  It
+can be used like this:</p>
+
+<blockquote>
+<pre>
+#ifndef __has_feature         // Optional of course.
+  #define __has_feature(x) 0  // Compatibility with non-clang compilers.
+#endif
+
+...
+#if __has_feature(attribute_overloadable) || \
+    __has_feature(blocks)
+...
+#endif
+...
+</pre>
+</blockquote>
+
+<p>The feature tag is described along with the language feature below.</p>
+
 
 <!-- ======================================================================= -->
 <h2 id="builtinmacros">Builtin Macros</h2>
@@ -64,6 +126,8 @@ more information on these extensions.</p>
 with V.xyzw syntax and other tidbits.  See also <a 
 href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 
+<p>Query for this feature with __has_feature(attribute_ext_vector_type).</p>
+
 <!-- ======================================================================= -->
 <h2 id="blocks">Blocks</h2>
 <!-- ======================================================================= -->
@@ -72,6 +136,9 @@ href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 href="BlockLanguageSpec.txt">BlockLanguageSpec.txt</a>.  Implementation and ABI
 details for the clang implementation are in <a 
 href="BlockImplementation.txt">BlockImplementation.txt</a>.</p>
+
+
+<p>Query for this feature with __has_feature(blocks).</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>
@@ -170,6 +237,9 @@ caveats to this use of name mangling:</p>
   it's name <i>will</i> be mangled in the same way as it would in
   C.</li>
 </ul>
+
+<p>Query for this feature with __has_feature(attribute_overloadable).</p>
+
 
 <!-- ======================================================================= -->
 <h2 id="builtins">Builtin Functions</h2>
@@ -320,7 +390,10 @@ placed at the end of function prototypes:</p>
 
 <pre>
   void foo() <b>__attribute__((analyzer_noreturn))</b>;
-</p>
+</pre>
+
+<p>Query for this feature with __has_feature(attribute_analyzer_noreturn).</p>
+
 
 </div>
 </body>
