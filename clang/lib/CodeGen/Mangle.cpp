@@ -87,19 +87,20 @@ static bool isInCLinkageSpecification(const Decl *D) {
 bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
   // Clang's "overloadable" attribute extension to C/C++ implies
   // name mangling (always).
-  if (FD->hasAttr<OverloadableAttr>()) {
-    ; // fall into mangling code unconditionally.
-  } else if (// C functions are not mangled
-             !Context.getLangOptions().CPlusPlus ||
-             // "main" is not mangled in C++
-             FD->isMain() ||
-             // No mangling in an "implicit extern C" header. 
-             (FD->getLocation().isValid() && 
-              Context.getSourceManager().getFileCharacteristic(FD->getLocation()))
-               == SrcMgr::C_ExternCSystem ||
-             // No name mangling in a C linkage specification.
-             isInCLinkageSpecification(FD))
-    return false;
+  if (!FD->hasAttr<OverloadableAttr>()) {
+    // C functions are not mangled, and "main" is never mangled.
+    if (!Context.getLangOptions().CPlusPlus || FD->isMain())
+      return false;
+    
+    // No mangling in an "implicit extern C" header. 
+    if (FD->getLocation().isValid() &&
+        Context.getSourceManager().isInExternCSystemHeader(FD->getLocation()))
+      return false;
+    
+    // No name mangling in a C linkage specification.
+    if (isInCLinkageSpecification(FD))
+      return false;
+  }
 
   // If we get here, mangle the decl name!
   Out << "_Z";
