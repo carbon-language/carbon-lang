@@ -593,6 +593,12 @@ public:
     return getFileCharacteristic(Loc) != SrcMgr::C_User;
   }
   
+  /// isInExternCSystemHeader - Returns if a SourceLocation is in an "extern C"
+  /// system header.
+  bool isInExternCSystemHeader(SourceLocation Loc) const {
+    return getFileCharacteristic(Loc) == SrcMgr::C_ExternCSystem;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Line Table Manipulation Routines
   //===--------------------------------------------------------------------===//
