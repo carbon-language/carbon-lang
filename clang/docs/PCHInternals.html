@@ -250,7 +250,7 @@ have been defined by the end of the header used to build the
 precompiled header, along with the token sequences that comprise each
 macro. The macro definitions are only read from the PCH file when the
 name of the macro first occurs in the program. This lazy loading of
-macro definitions is trigged by lookups into the <a
+macro definitions is triggered by lookups into the <a
  href="#idtable">identifier table</a>.</p>
 
 <h3 id="types">Types Block</h3>
@@ -296,8 +296,8 @@ declaration is described.</p>
 <p>Declarations in Clang's abstract syntax trees are stored
 hierarchically. At the top of the hierarchy is the translation unit
 (<code>TranslationUnitDecl</code>), which contains all of the
-declarations in the translation unit. These declarations---such as
-functions or struct types---may also contain other declarations inside
+declarations in the translation unit. These declarations (such as
+functions or struct types) may also contain other declarations inside
 them, and so on. Within Clang, each declaration is stored within a <a
 href="http://clang.llvm.org/docs/InternalsManual.html#DeclContext">declaration
 context</a>, as represented by the <code>DeclContext</code> class.
@@ -313,7 +313,7 @@ deserializing all of the declarations stored within that declaration
 context. Therefore, Clang will deserialize the translation unit
 declaration without deserializing the declarations within that
 translation unit. When required, the declarations stored within a
-declaration context will be serialized. There are two representations
+declaration context will be deserialized. There are two representations
 of the declarations within a declaration context, which correspond to
 the name-lookup and iteration behavior described above:</p>
 
@@ -410,7 +410,8 @@ contains:</p>
 mechanism introduces itself into the identifier table as an external
 lookup source. Thus, when the user program refers to an identifier
 that has not yet been seen, Clang will perform a lookup into the
-identifier table. If an identifier is found, its contents---macro definitions, flags, top-level declarations, etc.---will be deserialized, at which point the corresponding <code>IdentifierInfo</code> structure will have the same contents it would have after parsing the headers in the precompiled header.</p>
+identifier table. If an identifier is found, its contents (macro 
+definitions, flags, top-level declarations, etc.) will be deserialized, at which point the corresponding <code>IdentifierInfo</code> structure will have the same contents it would have after parsing the headers in the precompiled header.</p>
 
 <p>Within the PCH file, the identifiers used to name declarations are represented with an integral value. A separate table provides a mapping from this integral value (the identifier ID) to the location within the on-disk
 hash table where that identifier is stored. This mapping is used when
