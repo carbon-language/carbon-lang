@@ -455,7 +455,7 @@ GCC.</p>
 for headers that are directly included within a source file. For example:</p>
 
 <pre>
-  $ clang -x c-header test.h -o test.h.cth
+  $ clang -x c-header test.h -o test.h.pch
   $ cat test.c
   #include "test.h"
   $ clang test.c -o test
