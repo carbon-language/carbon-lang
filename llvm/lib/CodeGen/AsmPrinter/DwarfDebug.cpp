@@ -1670,7 +1670,11 @@ unsigned DwarfDebug::RecordRegionEnd(GlobalVariable *V) {
   DbgScope *Scope = getOrCreateScope(V);
   unsigned ID = MMI->NextLabelID();
   Scope->setEndLabelID(ID);
-  if (LexicalScopeStack.size() != 0)
+  // FIXME : region.end() may not be in the last basic block.
+  // For now, do not pop last lexical scope because next basic
+  // block may start new inlined function's body.
+  unsigned LSSize = LexicalScopeStack.size();
+  if (LSSize != 0 && LSSize != 1)
     LexicalScopeStack.pop_back();
 
   if (TimePassesIsEnabled)
