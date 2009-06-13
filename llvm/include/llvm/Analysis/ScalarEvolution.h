@@ -393,6 +393,7 @@ namespace llvm {
     SCEVHandle getTruncateExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getZeroExtendExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getSignExtendExpr(const SCEVHandle &Op, const Type *Ty);
+    SCEVHandle getAnyExtendExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getAddExpr(std::vector<SCEVHandle> &Ops);
     SCEVHandle getAddExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
       std::vector<SCEVHandle> Ops;
@@ -464,6 +465,12 @@ namespace llvm {
     /// the input value to the specified type.  If the type must be extended,
     /// it is sign extended.  The conversion must not be narrowing.
     SCEVHandle getNoopOrSignExtend(const SCEVHandle &V, const Type *Ty);
+
+    /// getNoopOrAnyExtend - Return a SCEV corresponding to a conversion of
+    /// the input value to the specified type. If the type must be extended,
+    /// it is extended with unspecified bits. The conversion must not be
+    /// narrowing.
+    SCEVHandle getNoopOrAnyExtend(const SCEVHandle &V, const Type *Ty);
 
     /// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
     /// input value to the specified type.  The conversion must not be

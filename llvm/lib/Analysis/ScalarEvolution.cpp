@@ -937,6 +937,48 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
   return Result;
 }
 
+/// getAnyExtendExpr - Return a SCEV for the given operand extended with
+/// unspecified bits out to the given type.
+///
+SCEVHandle ScalarEvolution::getAnyExtendExpr(const SCEVHandle &Op,
+                                             const Type *Ty) {
+  assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
+         "This is not an extending conversion!");
+  assert(isSCEVable(Ty) &&
+         "This is not a conversion to a SCEVable type!");
+  Ty = getEffectiveSCEVType(Ty);
+
+  // Sign-extend negative constants.
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
+    if (SC->getValue()->getValue().isNegative())
+      return getSignExtendExpr(Op, Ty);
+
+  // Peel off a truncate cast.
+  if (const SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(Op)) {
+    SCEVHandle NewOp = T->getOperand();
+    if (getTypeSizeInBits(NewOp->getType()) < getTypeSizeInBits(Ty))
+      return getAnyExtendExpr(NewOp, Ty);
+    return getTruncateOrNoop(NewOp, Ty);
+  }
+
+  // Next try a zext cast. If the cast is folded, use it.
+  SCEVHandle ZExt = getZeroExtendExpr(Op, Ty);
+  if (!isa<SCEVZeroExtendExpr>(ZExt))
+    return ZExt;
+
+  // Next try a sext cast. If the cast is folded, use it.
+  SCEVHandle SExt = getSignExtendExpr(Op, Ty);
+  if (!isa<SCEVSignExtendExpr>(SExt))
+    return SExt;
+
+  // If the expression is obviously signed, use the sext cast value.
+  if (isa<SCEVSMaxExpr>(Op))
+    return SExt;
+
+  // Absent any other information, use the zext cast value.
+  return ZExt;
+}
+
 /// getAddExpr - Get a canonical add expression, or something simpler if
 /// possible.
 SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
@@ -1901,6 +1943,23 @@ ScalarEvolution::getNoopOrSignExtend(const SCEVHandle &V, const Type *Ty) {
   if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
   return getSignExtendExpr(V, Ty);
+}
+
+/// getNoopOrAnyExtend - Return a SCEV corresponding to a conversion of
+/// the input value to the specified type. If the type must be extended,
+/// it is extended with unspecified bits. The conversion must not be
+/// narrowing.
+SCEVHandle
+ScalarEvolution::getNoopOrAnyExtend(const SCEVHandle &V, const Type *Ty) {
+  const Type *SrcTy = V->getType();
+  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
+         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+         "Cannot noop or any extend with non-integer arguments!");
+  assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
+         "getNoopOrAnyExtend cannot truncate!");
+  if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
+    return V;  // No conversion
+  return getAnyExtendExpr(V, Ty);
 }
 
 /// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
