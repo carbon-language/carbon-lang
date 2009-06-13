@@ -154,4 +154,9 @@ struct s37 { float c[1][1]; } f37(void) {}
 // RUN: grep 'define void @f38(.struct.s38. noalias sret .agg.result)' %t &&
 struct s38 { char a[3]; short b; } f38(void) {}
 
+// RUN: grep 'define void @f39(.struct.s39. byval align 16 .x)' %t &&
+typedef int v39 __attribute((vector_size(16)));
+struct s39 { v39 x; };
+void f39(struct s39 x) {}
+
 // RUN: true

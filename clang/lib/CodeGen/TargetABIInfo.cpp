@@ -159,6 +159,23 @@ static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
   return true;
 }
 
+static bool typeContainsSSEVector(const RecordDecl *RD, ASTContext &Context) {
+  for (RecordDecl::field_iterator i = RD->field_begin(Context),
+         e = RD->field_end(Context); i != e; ++i) {
+    const FieldDecl *FD = *i;
+
+    if (FD->getType()->isVectorType() &&
+        Context.getTypeSize(FD->getType()) >= 128)
+      return true;
+
+    if (const RecordType* RT = FD->getType()->getAsRecordType())
+      if (typeContainsSSEVector(RT->getDecl(), Context))
+        return true;
+  }
+
+  return false;
+}
+
 namespace {
 /// DefaultABIInfo - The default implementation for ABI specific
 /// details. This implementation provides information which results in
@@ -192,6 +209,9 @@ class X86_32ABIInfo : public ABIInfo {
   }
 
   static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context);
+
+  static unsigned getIndirectArgumentAlignment(QualType Ty,
+                                               ASTContext &Context);
 
 public:
   ABIArgInfo classifyReturnType(QualType RetTy,
@@ -350,6 +370,16 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
   }
 }
 
+unsigned X86_32ABIInfo::getIndirectArgumentAlignment(QualType Ty,
+                                                     ASTContext &Context) {
+  unsigned Align = Context.getTypeAlign(Ty);
+  if (Align < 128) return 0;
+  if (const RecordType* RT = Ty->getAsRecordType())
+    if (typeContainsSSEVector(RT->getDecl(), Context))
+      return 16;
+  return 0;
+}
+
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
                                                ASTContext &Context) const {
   // FIXME: Set alignment on indirect arguments.
@@ -357,11 +387,11 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     // Structures with flexible arrays are always indirect.
     if (const RecordType *RT = Ty->getAsStructureType())
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return ABIArgInfo::getIndirect(0);
+        return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, 
+                                                                    Context));
 
     // Ignore empty structs.
-    uint64_t Size = Context.getTypeSize(Ty);
-    if (Ty->isStructureType() && Size == 0)
+    if (Ty->isStructureType() && Context.getTypeSize(Ty) == 0)
       return ABIArgInfo::getIgnore();
 
     // Expand structs with size <= 128-bits which consist only of
@@ -373,7 +403,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
         return ABIArgInfo::getExpand();
     }
 
-    return ABIArgInfo::getIndirect(0);
+    return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, Context));
   } else {
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
