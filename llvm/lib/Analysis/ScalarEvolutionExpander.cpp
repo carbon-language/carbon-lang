@@ -16,6 +16,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
@@ -442,6 +443,34 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   const Loop *L = S->getLoop();
 
+  // First check for an existing canonical IV in a suitable type.
+  PHINode *CanonicalIV = 0;
+  if (PHINode *PN = L->getCanonicalInductionVariable())
+    if (SE.isSCEVable(PN->getType()) &&
+        isa<IntegerType>(SE.getEffectiveSCEVType(PN->getType())) &&
+        SE.getTypeSizeInBits(PN->getType()) >= SE.getTypeSizeInBits(Ty))
+      CanonicalIV = PN;
+
+  // Rewrite an AddRec in terms of the canonical induction variable, if
+  // its type is more narrow.
+  if (CanonicalIV &&
+      SE.getTypeSizeInBits(CanonicalIV->getType()) >
+      SE.getTypeSizeInBits(Ty)) {
+    SCEVHandle Start = SE.getAnyExtendExpr(S->getStart(),
+                                           CanonicalIV->getType());
+    SCEVHandle Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
+                                          CanonicalIV->getType());
+    Value *V = expand(SE.getAddRecExpr(Start, Step, S->getLoop()));
+    BasicBlock::iterator SaveInsertPt = getInsertionPoint();
+    BasicBlock::iterator NewInsertPt =
+      next(BasicBlock::iterator(cast<Instruction>(V)));
+    while (isa<PHINode>(NewInsertPt)) ++NewInsertPt;
+    V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), 0,
+                      NewInsertPt);
+    setInsertionPoint(SaveInsertPt);
+    return V;
+  }
+
   // {X,+,F} --> X + {0,+,F}
   if (!S->getStart()->isZero()) {
     std::vector<SCEVHandle> NewOps(S->getOperands());
@@ -475,6 +504,14 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   // {0,+,1} --> Insert a canonical induction variable into the loop!
   if (S->isAffine() &&
       S->getOperand(1) == SE.getIntegerSCEV(1, Ty)) {
+    // If there's a canonical IV, just use it.
+    if (CanonicalIV) {
+      assert(Ty == SE.getEffectiveSCEVType(CanonicalIV->getType()) &&
+             "IVs with types different from the canonical IV should "
+             "already have been handled!");
+      return CanonicalIV;
+    }
+
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
     BasicBlock *Header = L->getHeader();
@@ -502,18 +539,16 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     return PN;
   }
 
+  // {0,+,F} --> {0,+,1} * F
   // Get the canonical induction variable I for this loop.
-  Value *I = getOrInsertCanonicalInductionVariable(L, Ty);
+  Value *I = CanonicalIV ?
+             CanonicalIV :
+             getOrInsertCanonicalInductionVariable(L, Ty);
 
   // If this is a simple linear addrec, emit it now as a special case.
   if (S->isAffine()) {   // {0,+,F} --> i*F
     Value *F = expandCodeFor(S->getOperand(1), Ty);
-    
-    // If the step is by one, just return the inserted IV.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(F))
-      if (CI->getValue() == 1)
-        return I;
-    
+
     // If the insert point is directly inside of the loop, emit the multiply at
     // the insert point.  Otherwise, L is a loop that is a parent of the insert
     // point loop.  If we can, move the multiply to the outer most loop that it
@@ -548,9 +583,17 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   // into this folder.
   SCEVHandle IH = SE.getUnknown(I);   // Get I as a "symbolic" SCEV.
 
-  SCEVHandle V = S->evaluateAtIteration(IH, SE);
+  // Promote S up to the canonical IV type, if the cast is foldable.
+  SCEVHandle NewS = S;
+  SCEVHandle Ext = SE.getNoopOrAnyExtend(S, I->getType());
+  if (isa<SCEVAddRecExpr>(Ext))
+    NewS = Ext;
+
+  SCEVHandle V = cast<SCEVAddRecExpr>(NewS)->evaluateAtIteration(IH, SE);
   //cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
+  // Truncate the result down to the original type, if needed.
+  SCEVHandle T = SE.getTruncateOrNoop(V, Ty);
   return expand(V);
 }
 

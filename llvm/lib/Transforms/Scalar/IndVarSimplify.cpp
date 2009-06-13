@@ -168,7 +168,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = Rewriter.expandCodeFor(RHS, CmpIndVar->getType(),
+  Value *ExitCnt = Rewriter.expandCodeFor(RHS, IndVar->getType(),
                                           Preheader->getTerminator());
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
@@ -392,10 +392,31 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // in this loop, insert a canonical induction variable of the largest size.
   Value *IndVar = 0;
   if (NeedCannIV) {
+    // Check to see if the loop already has a canonical-looking induction
+    // variable. If one is present and it's wider than the planned canonical
+    // induction variable, temporarily remove it, so that the Rewriter
+    // doesn't attempt to reuse it.
+    PHINode *OldCannIV = L->getCanonicalInductionVariable();
+    if (OldCannIV) {
+      if (SE->getTypeSizeInBits(OldCannIV->getType()) >
+          SE->getTypeSizeInBits(LargestType))
+        OldCannIV->removeFromParent();
+      else
+        OldCannIV = 0;
+    }
+
     IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
+
     ++NumInserted;
     Changed = true;
     DOUT << "INDVARS: New CanIV: " << *IndVar;
+
+    // Now that the official induction variable is established, reinsert
+    // the old canonical-looking variable after it so that the IR remains
+    // consistent. It will be deleted as part of the dead-PHI deletion at
+    // the end of the pass.
+    if (OldCannIV)
+      OldCannIV->insertAfter(cast<Instruction>(IndVar));
   }
 
   // If we have a trip count expression, rewrite the loop's exit condition
@@ -459,8 +480,8 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
          E = List.end(); UI != E; ++UI) {
       SCEVHandle Offset = UI->getOffset();
       Value *Op = UI->getOperandValToReplace();
+      const Type *UseTy = Op->getType();
       Instruction *User = UI->getUser();
-      bool isSigned = UI->isSigned();
 
       // Compute the final addrec to expand into code.
       SCEVHandle AR = IU->getReplacementExpr(*UI);
@@ -471,7 +492,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         // Expand loop-invariant values in the loop preheader. They will
         // be sunk to the exit block later, if possible.
         NewVal =
-          Rewriter.expandCodeFor(AR, LargestType,
+          Rewriter.expandCodeFor(AR, UseTy,
                                  L->getLoopPreheader()->getTerminator());
         Rewriter.setInsertionPoint(I);
         ++NumReplaced;
@@ -484,74 +505,6 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         // it can be expanded to a trivial value.
         if (!Stride->isLoopInvariant(L))
           continue;
-
-        const Type *IVTy = Offset->getType();
-        const Type *UseTy = Op->getType();
-
-        // Promote the Offset and Stride up to the canonical induction
-        // variable's bit width.
-        SCEVHandle PromotedOffset = Offset;
-        SCEVHandle PromotedStride = Stride;
-        if (SE->getTypeSizeInBits(IVTy) != SE->getTypeSizeInBits(LargestType)) {
-          // It doesn't matter for correctness whether zero or sign extension
-          // is used here, since the value is truncated away below, but if the
-          // value is signed, sign extension is more likely to be folded.
-          if (isSigned) {
-            PromotedOffset = SE->getSignExtendExpr(PromotedOffset, LargestType);
-            PromotedStride = SE->getSignExtendExpr(PromotedStride, LargestType);
-          } else {
-            PromotedOffset = SE->getZeroExtendExpr(PromotedOffset, LargestType);
-            // If the stride is obviously negative, use sign extension to
-            // produce things like x-1 instead of x+255.
-            if (isa<SCEVConstant>(PromotedStride) &&
-                cast<SCEVConstant>(PromotedStride)
-                  ->getValue()->getValue().isNegative())
-              PromotedStride = SE->getSignExtendExpr(PromotedStride,
-                                                     LargestType);
-            else
-              PromotedStride = SE->getZeroExtendExpr(PromotedStride,
-                                                     LargestType);
-          }
-        }
-
-        // Create the SCEV representing the offset from the canonical
-        // induction variable, still in the canonical induction variable's
-        // type, so that all expanded arithmetic is done in the same type.
-        SCEVHandle NewAR = SE->getAddRecExpr(SE->getIntegerSCEV(0, LargestType),
-                                             PromotedStride, L);
-        // Add the PromotedOffset as a separate step, because it may not be
-        // loop-invariant.
-        NewAR = SE->getAddExpr(NewAR, PromotedOffset);
-
-        // Expand the addrec into instructions.
-        Value *V = Rewriter.expandCodeFor(NewAR);
-
-        // Insert an explicit cast if necessary to truncate the value
-        // down to the original stride type. This is done outside of
-        // SCEVExpander because in SCEV expressions, a truncate of an
-        // addrec is always folded.
-        if (LargestType != IVTy) {
-          if (SE->getTypeSizeInBits(IVTy) != SE->getTypeSizeInBits(LargestType))
-            NewAR = SE->getTruncateExpr(NewAR, IVTy);
-          if (Rewriter.isInsertedExpression(NewAR))
-            V = Rewriter.expandCodeFor(NewAR);
-          else {
-            V = Rewriter.InsertCastOfTo(CastInst::getCastOpcode(V, false,
-                                                                IVTy, false),
-                                        V, IVTy);
-            assert(!isa<SExtInst>(V) && !isa<ZExtInst>(V) &&
-                   "LargestType wasn't actually the largest type!");
-            // Force the rewriter to use this trunc whenever this addrec
-            // appears so that it doesn't insert new phi nodes or
-            // arithmetic in a different type.
-            Rewriter.addInsertedValue(V, NewAR);
-          }
-        }
-
-        DOUT << "INDVARS: Made offset-and-trunc IV for offset "
-             << *IVTy << " " << *Offset << ": ";
-        DEBUG(WriteAsOperand(*DOUT, V, false));
-        DOUT << "\n";
 
         // Now expand it into actual Instructions and patch it into place.
         NewVal = Rewriter.expandCodeFor(AR, UseTy);
