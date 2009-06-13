@@ -2005,6 +2005,10 @@ public:
                                  SourceLocation RAngleLoc,
                                  TemplateArgumentListBuilder &Converted);
 
+  bool CheckTemplateTypeArgument(TemplateTypeParmDecl *Param, 
+                                 const TemplateArgument &Arg,
+                                 TemplateArgumentListBuilder &Converted);
+
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
                              SourceLocation ArgLoc);
   bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg, 

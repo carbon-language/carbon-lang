@@ -975,6 +975,33 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
   return TemplateTy::make(Context.getDependentTemplateName(Qualifier, &Name));
 }
 
+bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param, 
+                                     const TemplateArgument &Arg,
+                                     TemplateArgumentListBuilder &Converted) {
+  // Check template type parameter.
+  if (Arg.getKind() != TemplateArgument::Type) {
+    // C++ [temp.arg.type]p1:
+    //   A template-argument for a template-parameter which is a
+    //   type shall be a type-id.
+
+    // We have a template type parameter but the template argument
+    // is not a type.
+    Diag(Arg.getLocation(), diag::err_template_arg_must_be_type);
+    Diag(Param->getLocation(), diag::note_template_param_here);
+    
+    return true;
+  }    
+
+  if (CheckTemplateArgument(Param, Arg.getAsType(), Arg.getLocation()))
+    return true;
+  
+  // Add the converted template type argument.
+  Converted.push_back(
+                 TemplateArgument(Arg.getLocation(),
+                                  Context.getCanonicalType(Arg.getAsType())));
+  return false;
+}
+
 /// \brief Check that the given template argument list is well-formed
 /// for specializing the given template.
 bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
@@ -1085,27 +1112,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
 
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
-      // Check template type parameters.
-      if (Arg.getKind() == TemplateArgument::Type) {
-        if (CheckTemplateArgument(TTP, Arg.getAsType(), Arg.getLocation()))
-          Invalid = true;
-
-        // Add the converted template type argument.
-        Converted.push_back(
-                 TemplateArgument(Arg.getLocation(),
-                                  Context.getCanonicalType(Arg.getAsType())));
-        continue;
-      }
-
-      // C++ [temp.arg.type]p1:
-      //   A template-argument for a template-parameter which is a
-      //   type shall be a type-id.
-
-      // We have a template type parameter but the template argument
-      // is not a type.
-      Diag(Arg.getLocation(), diag::err_template_arg_must_be_type);
-      Diag((*Param)->getLocation(), diag::note_template_param_here);
-      Invalid = true;
+      if (CheckTemplateTypeArgument(TTP, Arg, Converted))
+        Invalid = true;
     } else if (NonTypeTemplateParmDecl *NTTP 
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       // Check non-type template parameters.
