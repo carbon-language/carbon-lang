@@ -1198,8 +1198,10 @@ RegionStoreManager::BindStruct(const GRState* St, const TypedRegion* R, SVal V){
   if (V.isUnknown())
     return KillStruct(St, R);
 
-  if (isa<nonloc::SymbolVal>(V))
-    return setDefaultValue(St, R, V);
+  // We may get non-CompoundVal accidentally due to imprecise cast logic. Ignore
+  // them and make struct unknown.
+  if (!isa<nonloc::CompoundVal>(V))
+    return KillStruct(St, R);
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
