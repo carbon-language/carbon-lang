@@ -1,7 +1,5 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -fnext-runtime -emit-llvm -S -o - %s &&
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fnext-runtime -emit-llvm -S -o - %s
-
-#include <stdio.h>
+// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm -S -o - %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -S -o - %s
 
 @interface I0 {
 @public
