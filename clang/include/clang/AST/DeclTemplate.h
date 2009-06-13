@@ -87,7 +87,7 @@ public:
   /// \btief Returns the minimum number of arguments needed to form a
   /// template specialization. This may be fewer than the number of
   /// template parameters, if some of the parameters have default
-  /// arguments.
+  /// arguments or if there is a parameter pack.
   unsigned getMinRequiredArguments() const;
 
   SourceLocation getTemplateLoc() const { return TemplateLoc; }
@@ -610,7 +610,7 @@ public:
     assert(!isAddingFromParameterPack() && 
            "Size is not valid when adding from a parameter pack");
     
-    return Args.size(); 
+    return Indices.size() / 2;
   }
   
   size_t flatSize() const { return Args.size(); }
@@ -770,6 +770,7 @@ public:
   static void 
   Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs, 
           unsigned NumTemplateArgs) {
+    ID.AddInteger(NumTemplateArgs);
     for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
       TemplateArgs[Arg].Profile(ID);
   }

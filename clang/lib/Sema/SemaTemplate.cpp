@@ -1016,7 +1016,10 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   unsigned NumArgs = NumTemplateArgs;
   bool Invalid = false;
 
-  if (NumArgs > NumParams ||
+  bool HasParameterPack = 
+    NumParams > 0 && Params->getParam(NumParams - 1)->isTemplateParameterPack();
+  
+  if ((NumArgs > NumParams && !HasParameterPack) ||
       NumArgs < Params->getMinRequiredArguments()) {
     // FIXME: point at either the first arg beyond what we can handle,
     // or the '>', depending on whether we have too many or too few
@@ -1050,6 +1053,13 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       // Retrieve the default template argument from the template
       // parameter.
       if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
+        if (TTP->isParameterPack()) {
+          // We have an empty parameter pack.
+          Converted.BeginParameterPack();
+          Converted.EndParameterPack();
+          break;
+        }
+        
         if (!TTP->hasDefaultArgument())
           break;
 
@@ -1112,8 +1122,19 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
 
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
-      if (CheckTemplateTypeArgument(TTP, Arg, Converted))
-        Invalid = true;
+      if (TTP->isParameterPack()) {
+        Converted.BeginParameterPack();
+        // Check all the remaining arguments (if any).
+        for (; ArgIdx < NumArgs; ++ArgIdx) {
+          if (CheckTemplateTypeArgument(TTP, TemplateArgs[ArgIdx], Converted))
+            Invalid = true;
+        }
+        
+        Converted.EndParameterPack();
+      } else {
+        if (CheckTemplateTypeArgument(TTP, Arg, Converted))
+          Invalid = true;
+      }
     } else if (NonTypeTemplateParmDecl *NTTP 
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       // Check non-type template parameters.

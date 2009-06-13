@@ -50,7 +50,9 @@ unsigned TemplateParameterList::getMinRequiredArguments() const {
       ParamBegin = const_cast<TemplateParameterList *>(this)->begin();
   while (Param != ParamBegin) {
     --Param;
-    if (!(isa<TemplateTypeParmDecl>(*Param) && 
+    
+    if (!(*Param)->isTemplateParameterPack() &&
+        !(isa<TemplateTypeParmDecl>(*Param) && 
           cast<TemplateTypeParmDecl>(*Param)->hasDefaultArgument()) &&
         !(isa<NonTypeTemplateParmDecl>(*Param) &&
           cast<NonTypeTemplateParmDecl>(*Param)->hasDefaultArgument()) &&
