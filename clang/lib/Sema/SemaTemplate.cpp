@@ -2080,11 +2080,14 @@ Sema::CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
 /// \returns true if there was an error, false otherwise.
 bool Sema::CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
-                                        const TemplateArgument *TemplateArgs,
+                             const TemplateArgumentListBuilder &TemplateArgs,
                                         bool &MirrorsPrimaryTemplate) {
   // FIXME: the interface to this function will have to change to
   // accommodate variadic templates.
   MirrorsPrimaryTemplate = true;
+  
+  const TemplateArgument *ArgList = TemplateArgs.getFlatArgumentList();
+  
   for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
     // Determine whether the template argument list of the partial
     // specialization is identical to the implicit argument list of
@@ -2094,7 +2097,7 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
       if (TemplateTypeParmDecl *TTP 
             = dyn_cast<TemplateTypeParmDecl>(TemplateParams->getParam(I))) {
         if (Context.getCanonicalType(Context.getTypeDeclType(TTP)) !=
-              Context.getCanonicalType(TemplateArgs[I].getAsType()))
+              Context.getCanonicalType(ArgList[I].getAsType()))
           MirrorsPrimaryTemplate = false;
       } else if (TemplateTemplateParmDecl *TTP
                    = dyn_cast<TemplateTemplateParmDecl>(
@@ -2103,10 +2106,10 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
         // Expression storage for template template parameters.
         TemplateTemplateParmDecl *ArgDecl 
           = dyn_cast_or_null<TemplateTemplateParmDecl>(
-                                                  TemplateArgs[I].getAsDecl());
+                                                  ArgList[I].getAsDecl());
         if (!ArgDecl)
           if (DeclRefExpr *DRE 
-                = dyn_cast_or_null<DeclRefExpr>(TemplateArgs[I].getAsExpr()))
+                = dyn_cast_or_null<DeclRefExpr>(ArgList[I].getAsExpr()))
             ArgDecl = dyn_cast<TemplateTemplateParmDecl>(DRE->getDecl());
 
         if (!ArgDecl ||
@@ -2122,7 +2125,7 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
       continue;
     }
 
-    Expr *ArgExpr = TemplateArgs[I].getAsExpr();
+    Expr *ArgExpr = ArgList[I].getAsExpr();
     if (!ArgExpr) {
       MirrorsPrimaryTemplate = false;
       continue;
@@ -2281,7 +2284,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // template.
   TemplateArgumentListBuilder ConvertedTemplateArgs(Context);
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
-                                &TemplateArgs[0], TemplateArgs.size(),
+                                TemplateArgs.data(), TemplateArgs.size(),
                                 RAngleLoc, ConvertedTemplateArgs))
     return true;
 
@@ -2296,7 +2299,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     bool MirrorsPrimaryTemplate;
     if (CheckClassTemplatePartialSpecializationArgs(
                                          ClassTemplate->getTemplateParameters(),
-                                    ConvertedTemplateArgs.getFlatArgumentList(),
+                                         ConvertedTemplateArgs,
                                          MirrorsPrimaryTemplate))
       return true;
 
@@ -2456,7 +2459,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // template arguments in the specialization.
   QualType WrittenTy 
     = Context.getTemplateSpecializationType(Name, 
-                                            &TemplateArgs[0],
+                                            TemplateArgs.data(),
                                             TemplateArgs.size(),
                                   Context.getTypeDeclType(Specialization));
   Specialization->setTypeAsWritten(WrittenTy);

@@ -1959,7 +1959,7 @@ public:
 
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
-                                        const TemplateArgument *TemplateArgs,
+                              const TemplateArgumentListBuilder &TemplateArgs,
                                         bool &MirrorsPrimaryTemplate);
 
   virtual DeclResult

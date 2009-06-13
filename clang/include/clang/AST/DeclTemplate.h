@@ -623,6 +623,7 @@ public:
   /// EndParameterPack - Finish adding arguments from a parameter pack.
   void EndParameterPack();
   
+  const TemplateArgument *getFlatArgumentList() const { return Args.data(); }
   TemplateArgument *getFlatArgumentList() { return Args.data(); }
 };
 
