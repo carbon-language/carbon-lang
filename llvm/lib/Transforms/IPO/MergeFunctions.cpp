@@ -284,6 +284,20 @@ static bool equals(const BasicBlock *BB1, const BasicBlock *BB2,
     if (!isEquivalentOperation(FI, GI))
       return false;
 
+    if (isa<GetElementPtrInst>(FI)) {
+      const GetElementPtrInst *GEPF = cast<GetElementPtrInst>(FI);
+      const GetElementPtrInst *GEPG = cast<GetElementPtrInst>(GI);
+      if (GEPF->hasAllZeroIndices() && GEPG->hasAllZeroIndices()) {
+        // It's effectively a bitcast.
+        ++FI, ++GI;
+        continue;
+      }
+
+      // TODO: we only really care about the elements before the index
+      if (FI->getOperand(0)->getType() != GI->getOperand(0)->getType())
+        return false;
+    }
+
     if (ValueMap[FI] == GI) {
       ++FI, ++GI;
       continue;
