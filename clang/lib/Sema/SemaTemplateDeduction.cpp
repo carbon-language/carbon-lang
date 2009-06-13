@@ -706,177 +706,33 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   // arguments of the class template partial specialization, and
   // verify that the instantiated template arguments are both valid
   // and are equivalent to the template arguments originally provided
-  // to the class template.
+  // to the class template. 
   ClassTemplateDecl *ClassTemplate = Partial->getSpecializedTemplate();
   const TemplateArgumentList &PartialTemplateArgs = Partial->getTemplateArgs();
   for (unsigned I = 0, N = PartialTemplateArgs.flat_size(); I != N; ++I) {
-    TemplateArgument InstArg = Instantiate(PartialTemplateArgs[I],
-                                           *DeducedArgumentList);
-    if (InstArg.isNull()) {
-      Decl *Param = const_cast<Decl *>(
-                         ClassTemplate->getTemplateParameters()->getParam(I));
-      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
+    Decl *Param = const_cast<Decl *>(
+                    ClassTemplate->getTemplateParameters()->getParam(I));
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
+      TemplateArgument InstArg = Instantiate(PartialTemplateArgs[I],
+                                             *DeducedArgumentList);
+      if (InstArg.getKind() != TemplateArgument::Type) {
         Info.Param = TTP;
-      else if (NonTypeTemplateParmDecl *NTTP 
-                 = dyn_cast<NonTypeTemplateParmDecl>(Param))
-        Info.Param = NTTP;
-      else
-        Info.Param = cast<TemplateTemplateParmDecl>(Param);
-      Info.FirstArg = PartialTemplateArgs[I];
-      return TDK_SubstitutionFailure;
-    }
+        Info.FirstArg = PartialTemplateArgs[I];
+        return TDK_SubstitutionFailure;
+      }
 
-    Decl *Param 
-      = const_cast<Decl *>(ClassTemplate->getTemplateParameters()->getParam(I));
-    if (isa<TemplateTypeParmDecl>(Param)) {
-      if (InstArg.getKind() != TemplateArgument::Type ||
-          Context.getCanonicalType(InstArg.getAsType())
+      if (Context.getCanonicalType(InstArg.getAsType())
             != Context.getCanonicalType(TemplateArgs[I].getAsType())) {
-        Info.Param = cast<TemplateTypeParmDecl>(Param);
-        Info.FirstArg = TemplateArgs[I];
-        Info.SecondArg = InstArg;
-        return TDK_NonDeducedMismatch;
-      }
-    } else if (NonTypeTemplateParmDecl *NTTP 
-                 = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
-      QualType T = InstantiateType(NTTP->getType(), TemplateArgs,
-                                   NTTP->getLocation(), NTTP->getDeclName());
-      if (T.isNull()) {
-        Info.Param = NTTP;
+        Info.Param = TTP;
         Info.FirstArg = TemplateArgs[I];
         Info.SecondArg = InstArg;
         return TDK_NonDeducedMismatch;
       }
 
-      if (InstArg.getKind() == TemplateArgument::Declaration ||
-          InstArg.getKind() == TemplateArgument::Expression) {
-        // Turn the template argument into an expression, so that we can
-        // perform type checking on it and convert it to the type of the
-        // non-type template parameter. FIXME: Will this expression be
-        // leaked? It's hard to tell, since our ownership model for
-        // expressions in template arguments is so poor.
-        Expr *E = 0;
-        if (InstArg.getKind() == TemplateArgument::Declaration) {
-          NamedDecl *D = cast<NamedDecl>(InstArg.getAsDecl());
-          QualType T = Context.OverloadTy;
-          if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
-            T = VD->getType().getNonReferenceType();
-          E = new (Context) DeclRefExpr(D, T, InstArg.getLocation());
-        } else {
-          E = InstArg.getAsExpr();
-        }
-
-        // Check that the template argument can be used to initialize
-        // the corresponding template parameter.
-        if (CheckTemplateArgument(NTTP, T, E, InstArg)) {
-          // FIXME: This isn't precisely the problem, but since it
-          // can't actually happen in well-formed C++ we don't care at
-          // the moment. Revisit this when we have template argument
-          // deduction for function templates.
-          Info.Param = NTTP;
-          Info.FirstArg = TemplateArgs[I];
-          Info.SecondArg = InstArg;
-          return TDK_NonDeducedMismatch;
-        }
-      }
-
-      switch (InstArg.getKind()) {
-      case TemplateArgument::Null:
-        assert(false && "Null template arguments cannot get here");
-        return TDK_NonDeducedMismatch;
-
-      case TemplateArgument::Type:
-        assert(false && "Type/value mismatch");
-        return TDK_NonDeducedMismatch;
-
-      case TemplateArgument::Integral: {
-        llvm::APSInt &Value = *InstArg.getAsIntegral();
-        if (T->isIntegralType() || T->isEnumeralType()) {
-          QualType IntegerType = Context.getCanonicalType(T);
-          if (const EnumType *Enum = dyn_cast<EnumType>(IntegerType))
-            IntegerType = Context.getCanonicalType(
-                                           Enum->getDecl()->getIntegerType());
-
-          // Check that an unsigned parameter does not receive a negative
-          // value.
-          if (IntegerType->isUnsignedIntegerType()
-              && (Value.isSigned() && Value.isNegative())) {
-            Info.Param = NTTP;
-            Info.FirstArg = TemplateArgs[I];
-            Info.SecondArg = InstArg;
-            return TDK_NonDeducedMismatch;
-          }
-
-          // Check for truncation. If the number of bits in the
-          // instantiated template argument exceeds what is allowed by
-          // the type, template argument deduction fails.
-          unsigned AllowedBits = Context.getTypeSize(IntegerType);
-          if (Value.getActiveBits() > AllowedBits) {
-            Info.Param = NTTP;
-            Info.FirstArg = TemplateArgs[I];
-            Info.SecondArg = InstArg;
-            return TDK_NonDeducedMismatch;
-          }
-
-          if (Value.getBitWidth() != AllowedBits)
-            Value.extOrTrunc(AllowedBits);
-          Value.setIsSigned(IntegerType->isSignedIntegerType());
-
-          // Check that the instantiated value is the same as the
-          // value provided as a template argument.
-          if (Value != *TemplateArgs[I].getAsIntegral()) {
-            Info.Param = NTTP;
-            Info.FirstArg = TemplateArgs[I];
-            Info.SecondArg = InstArg;
-            return TDK_NonDeducedMismatch;
-          }
-        } else if (T->isPointerType() || T->isMemberPointerType()) {
-          // Deal with NULL pointers that are used to initialize
-          // pointer and pointer-to-member non-type template
-          // parameters (C++0x).
-          if (TemplateArgs[I].getAsDecl()) {
-            // Not a NULL declaration
-            Info.Param = NTTP;
-            Info.FirstArg = TemplateArgs[I];
-            Info.SecondArg = InstArg;
-            return TDK_NonDeducedMismatch;
-          }
-          // Check that the integral value is 0, the NULL pointer
-          // constant.
-          if (Value != 0) {
-            Info.Param = NTTP;
-            Info.FirstArg = TemplateArgs[I];
-            Info.SecondArg = InstArg;
-            return TDK_NonDeducedMismatch;
-          }
-        } else {
-          Info.Param = NTTP;
-          Info.FirstArg = TemplateArgs[I];
-          Info.SecondArg = InstArg;
-          return TDK_NonDeducedMismatch;
-        }
-
-        break;
-      }
-
-      case TemplateArgument::Declaration:
-        if (Context.getCanonicalDecl(InstArg.getAsDecl())
-              != Context.getCanonicalDecl(TemplateArgs[I].getAsDecl())) {
-          Info.Param = NTTP;
-          Info.FirstArg = TemplateArgs[I];
-          Info.SecondArg = InstArg;
-          return TDK_NonDeducedMismatch;
-        }
-        break;
-
-      case TemplateArgument::Expression:
-        // FIXME: Check equality of expressions
-        break;
-      }
-    } else {
-      assert(isa<TemplateTemplateParmDecl>(Param));
-      // FIXME: Check template template arguments
+      continue;
     }
+
+    // FIXME: Check template template arguments?
   }
 
   return TDK_Success;
