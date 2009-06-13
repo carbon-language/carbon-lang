@@ -682,10 +682,12 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // location that we would like to return into.
   QualType RetTy = CallInfo.getReturnType();
   const ABIArgInfo &RetAI = CallInfo.getReturnInfo();
-  if (CGM.ReturnTypeUsesSret(CallInfo)) {
-    // Create a temporary alloca to hold the result of the call. :(
+  
+  
+  // If the call returns a temporary with struct return, create a temporary
+  // alloca to hold the result.
+  if (CGM.ReturnTypeUsesSret(CallInfo))
     Args.push_back(CreateTempAlloca(ConvertTypeForMem(RetTy)));
-  }
   
   assert(CallInfo.arg_size() == CallArgs.size() &&
          "Mismatch between function signature & arguments.");
@@ -747,6 +749,35 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       break;
     }
   }
+  
+  // If the callee is a bitcast of a function to a varargs pointer to function
+  // type, check to see if we can remove the bitcast.  This handles some cases
+  // with unprototyped functions.
+  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Callee))
+    if (llvm::Function *CalleeF = dyn_cast<llvm::Function>(CE->getOperand(0))) {
+      const llvm::PointerType *CurPT=cast<llvm::PointerType>(Callee->getType());
+      const llvm::FunctionType *CurFT =
+        cast<llvm::FunctionType>(CurPT->getElementType());
+      const llvm::FunctionType *ActualFT = CalleeF->getFunctionType();
+      
+      if (CE->getOpcode() == llvm::Instruction::BitCast &&
+          ActualFT->getReturnType() == CurFT->getReturnType() &&
+          ActualFT->getNumParams() == CurFT->getNumParams()) {
+        bool ArgsMatch = true;
+        for (unsigned i = 0, e = ActualFT->getNumParams(); i != e; ++i)
+          if (ActualFT->getParamType(i) != CurFT->getParamType(i)) {
+            ArgsMatch = false;
+            break;
+          }
+       
+        // Strip the cast if we can get away with it.  This is a nice cleanup,
+        // but also allows us to inline the function at -O0 if it is marked
+        // always_inline.
+        if (ArgsMatch)
+          Callee = CalleeF;
+      }
+    }
+  
 
   llvm::BasicBlock *InvokeDest = getInvokeDest();
   CodeGen::AttributeListType AttributeList;
@@ -765,7 +796,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }
 
   CS.setAttributes(Attrs);
-  if (const llvm::Function *F =  dyn_cast<llvm::Function>(Callee->stripPointerCasts()))
+  if (const llvm::Function *F =
+        dyn_cast<llvm::Function>(Callee->stripPointerCasts()))
     CS.setCallingConv(F->getCallingConv());
 
   // If the call doesn't return, finish the basic block and clear the
