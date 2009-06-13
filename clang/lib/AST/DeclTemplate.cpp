@@ -247,8 +247,26 @@ void TemplateArgumentListBuilder::push_back(const TemplateArgument& Arg) {
     break;
   }
   
+  if (!isAddingFromParameterPack()) {
+    // Add begin and end indicies.
+    Indices.push_back(Args.size());
+    Indices.push_back(Args.size());
+  }
+
   Args.push_back(Arg);
 }
+
+void TemplateArgumentListBuilder::BeginParameterPack() {
+  assert(!isAddingFromParameterPack() && "Already adding to parameter pack!");
+  
+  Indices.push_back(Args.size());
+}
+
+void TemplateArgumentListBuilder::EndParameterPack() {
+  assert(isAddingFromParameterPack() && "Not adding to parameter pack!");
+  
+  Indices.push_back(Args.size());
+}  
 
 //===----------------------------------------------------------------------===//
 // TemplateArgumentList Implementation

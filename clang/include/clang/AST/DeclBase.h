@@ -298,9 +298,13 @@ public:
   static bool CollectingStats(bool Enable = false);
   static void PrintStats();
     
-  /// isTemplateParameter - Determines whether this declartion is a
+  /// isTemplateParameter - Determines whether this declaration is a
   /// template parameter.
   bool isTemplateParameter() const;
+  
+  /// isTemplateParameter - Determines whether this declaration is a
+  /// template parameter pack.
+  bool isTemplateParameterPack() const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }

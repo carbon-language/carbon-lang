@@ -592,17 +592,37 @@ public:
 
 /// \brief A helper class for making template argument lists.
 class TemplateArgumentListBuilder {
+  /// Args - contains the template arguments.
   llvm::SmallVector<TemplateArgument, 16> Args;
+  
+  llvm::SmallVector<unsigned, 32> Indices;
 
   ASTContext &Context;
+  
+  /// isAddingFromParameterPack - Returns whether we're adding arguments from
+  /// a parameter pack.
+  bool isAddingFromParameterPack() const { return Indices.size() % 2; }
+  
 public:
   TemplateArgumentListBuilder(ASTContext &Context) : Context(Context) { }
   
-  // FIXME: Should use the  index array size.
-  size_t size() const { return Args.size(); }
+  size_t size() const { 
+    assert(!isAddingFromParameterPack() && 
+           "Size is not valid when adding from a parameter pack");
+    
+    return Args.size(); 
+  }
+  
   size_t flatSize() const { return Args.size(); }
 
   void push_back(const TemplateArgument& Arg);
+  
+  /// BeginParameterPack - Start adding arguments from a parameter pack.
+  void BeginParameterPack();
+  
+  /// EndParameterPack - Finish adding arguments from a parameter pack.
+  void EndParameterPack();
+  
   TemplateArgument *getFlatArgumentList() { return Args.data(); }
 };
 

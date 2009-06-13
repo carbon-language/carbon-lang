@@ -95,6 +95,13 @@ void Decl::addDeclKind(Kind k) {
   }
 }
 
+bool Decl::isTemplateParameterPack() const {
+  if (const TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(this))
+    return TTP->isParameterPack();
+  
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // PrettyStackTraceDecl Implementation
 //===----------------------------------------------------------------------===//
