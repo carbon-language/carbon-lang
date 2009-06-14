@@ -733,8 +733,7 @@ void PBQPRegAlloc::finalizeAlloc() const {
          itr != end; ++itr) {
     LiveInterval *li = *itr;
 
-    unsigned physReg = li->preference;
-
+    unsigned physReg = vrm->getRegAllocPref(li->reg);
     if (physReg == 0) {
       const TargetRegisterClass *liRC = mri->getRegClass(li->reg);
       physReg = *liRC->allocation_order_begin(*mf);

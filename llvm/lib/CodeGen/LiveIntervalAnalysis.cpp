@@ -896,7 +896,7 @@ LiveInterval* LiveIntervals::createInterval(unsigned reg) {
 /// managing the allocated memory.
 LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
   LiveInterval *NewLI = createInterval(li->reg);
-  NewLI->Copy(*li, getVNInfoAllocator());
+  NewLI->Copy(*li, mri_, getVNInfoAllocator());
   return NewLI;
 }
 

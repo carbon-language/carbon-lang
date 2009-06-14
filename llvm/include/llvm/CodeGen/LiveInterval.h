@@ -29,6 +29,7 @@
 
 namespace llvm {
   class MachineInstr;
+  class MachineRegisterInfo;
   class TargetRegisterInfo;
   struct LiveInterval;
 
@@ -108,7 +109,6 @@ namespace llvm {
     unsigned reg;        // the register or stack slot of this interval
                          // if the top bits is set, it represents a stack slot.
     float weight;        // weight of this interval
-    unsigned short preference; // preferred register for this interval
     Ranges ranges;       // the ranges in which this register is live
     VNInfoList valnos;   // value#'s
 
@@ -134,7 +134,7 @@ namespace llvm {
     };
 
     LiveInterval(unsigned Reg, float Weight, bool IsSS = false)
-      : reg(Reg), weight(Weight), preference(0)  {
+      : reg(Reg), weight(Weight) {
       if (IsSS)
         reg = reg | (1U << (sizeof(unsigned)*CHAR_BIT-1));
     }
@@ -339,7 +339,8 @@ namespace llvm {
 
     /// Copy - Copy the specified live interval. This copies all the fields
     /// except for the register of the interval.
-    void Copy(const LiveInterval &RHS, BumpPtrAllocator &VNInfoAllocator);
+    void Copy(const LiveInterval &RHS, MachineRegisterInfo *MRI,
+              BumpPtrAllocator &VNInfoAllocator);
     
     bool empty() const { return ranges.empty(); }
 
@@ -416,7 +417,8 @@ namespace llvm {
     /// the intervals are not joinable, this aborts.
     void join(LiveInterval &Other, const int *ValNoAssignments,
               const int *RHSValNoAssignments,
-              SmallVector<VNInfo*, 16> &NewVNInfo);
+              SmallVector<VNInfo*, 16> &NewVNInfo,
+              MachineRegisterInfo *MRI);
 
     /// isInOneLiveRange - Return true if the range specified is entirely in the
     /// a single LiveRange of the live interval.

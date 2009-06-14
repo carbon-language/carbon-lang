@@ -352,7 +352,8 @@ void RALinScan::ComputeRelatedRegClasses() {
 /// different register classes or because the coalescer was overly
 /// conservative.
 unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
-  if ((cur.preference && cur.preference == Reg) || !cur.containsOneValue())
+  unsigned Preference = vrm_->getRegAllocPref(cur.reg);
+  if ((Preference && Preference == Reg) || !cur.containsOneValue())
     return Reg;
 
   VNInfo *vni = cur.begin()->valno;
@@ -584,7 +585,7 @@ void RALinScan::linearScan()
   // register allocator had to spill other registers in its register class.
   if (ls_->getNumIntervals() == 0)
     return;
-  if (!vrm_->FindUnusedRegisters(tri_, li_))
+  if (!vrm_->FindUnusedRegisters(li_))
     return;
 }
 
@@ -897,7 +898,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // This is an implicitly defined live interval, just assign any register.
   const TargetRegisterClass *RC = mri_->getRegClass(cur->reg);
   if (cur->empty()) {
-    unsigned physReg = cur->preference;
+    unsigned physReg = vrm_->getRegAllocPref(cur->reg);
     if (!physReg)
       physReg = *RC->allocation_order_begin(*mf_);
     DOUT <<  tri_->getName(physReg) << '\n';
@@ -917,7 +918,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // register class, then we should try to assign it the same register.
   // This can happen when the move is from a larger register class to a smaller
   // one, e.g. X86::mov32to32_. These move instructions are not coalescable.
-  if (!cur->preference && cur->hasAtLeastOneValue()) {
+  if (!vrm_->getRegAllocPref(cur->reg) && cur->hasAtLeastOneValue()) {
     VNInfo *vni = cur->begin()->valno;
     if (vni->def && vni->def != ~1U && vni->def != ~0U) {
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
@@ -935,7 +936,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
           if (DstSubReg)
             Reg = tri_->getMatchingSuperReg(Reg, DstSubReg, RC);
           if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
-            cur->preference = Reg;
+            mri_->setRegAllocationHint(cur->reg,
+                                       MachineRegisterInfo::RA_Preference, Reg);
         }
       }
     }
@@ -1044,7 +1046,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     if (LiveInterval *NextReloadLI = hasNextReloadInterval(cur)) {
       // "Downgrade" physReg to try to keep physReg from being allocated until
       // the next reload from the same SS is allocated. 
-      NextReloadLI->preference = physReg;
+      mri_->setRegAllocationHint(NextReloadLI->reg,
+                                 MachineRegisterInfo::RA_Preference, physReg);
       DowngradeRegister(cur, physReg);
     }
     return;
@@ -1071,7 +1074,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   // Find a register to spill.
   float minWeight = HUGE_VALF;
-  unsigned minReg = 0; /*cur->preference*/;  // Try the pref register first.
+  unsigned minReg = 0;
 
   bool Found = false;
   std::vector<std::pair<unsigned,float> > RegsWeights;
@@ -1290,7 +1293,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       // It interval has a preference, it must be defined by a copy. Clear the
       // preference now since the source interval allocation may have been
       // undone as well.
-      i->preference = 0;
+      mri_->setRegAllocationHint(i->reg, MachineRegisterInfo::RA_None, 0);
     else {
       UpgradeRegister(ii->second);
     }
@@ -1428,11 +1431,12 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
 
   // If copy coalescer has assigned a "preferred" register, check if it's
   // available first.
-  if (cur->preference) {
-    DOUT << "(preferred: " << tri_->getName(cur->preference) << ") ";
-    if (isRegAvail(cur->preference) && 
-        RC->contains(cur->preference))
-      return cur->preference;
+  unsigned Preference = vrm_->getRegAllocPref(cur->reg);
+  if (Preference) {
+    DOUT << "(preferred: " << tri_->getName(Preference) << ") ";
+    if (isRegAvail(Preference) && 
+        RC->contains(Preference))
+      return Preference;
   }
 
   if (!DowngradedRegs.empty()) {

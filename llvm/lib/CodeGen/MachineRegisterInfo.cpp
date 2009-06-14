@@ -16,6 +16,7 @@ using namespace llvm;
 
 MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
   VRegInfo.reserve(256);
+  RegAllocHints.reserve(256);
   RegClass2VRegMap.resize(TRI.getNumRegClasses()+1); // RC ID starts at 1.
   UsedPhysRegs.resize(TRI.getNumRegs());
   
@@ -64,6 +65,7 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   // Add a reg, but keep track of whether the vector reallocated or not.
   void *ArrayBase = VRegInfo.empty() ? 0 : &VRegInfo[0];
   VRegInfo.push_back(std::make_pair(RegClass, (MachineOperand*)0));
+  RegAllocHints.push_back(std::make_pair(RA_None, 0));
 
   if (!((&VRegInfo[0] == ArrayBase || VRegInfo.size() == 1)))
     // The vector reallocated, handle this now.

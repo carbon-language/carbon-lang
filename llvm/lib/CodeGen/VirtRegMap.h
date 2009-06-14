@@ -31,6 +31,7 @@ namespace llvm {
   class LiveIntervals;
   class MachineInstr;
   class MachineFunction;
+  class MachineRegisterInfo;
   class TargetInstrInfo;
   class TargetRegisterInfo;
 
@@ -47,6 +48,7 @@ namespace llvm {
                           std::pair<unsigned, ModRef> > MI2VirtMapTy;
 
   private:
+    MachineRegisterInfo *MRI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineFunction *MF;
@@ -189,6 +191,9 @@ namespace llvm {
       Virt2PhysMap.clear();
       grow();
     }
+
+    /// @brief returns the register allocation preference.
+    unsigned getRegAllocPref(unsigned virtReg);
 
     /// @brief records virtReg is a split live interval from SReg.
     void setIsSplitFromReg(unsigned virtReg, unsigned SReg) {
@@ -445,8 +450,7 @@ namespace llvm {
 
     /// FindUnusedRegisters - Gather a list of allocatable registers that
     /// have not been allocated to any virtual register.
-    bool FindUnusedRegisters(const TargetRegisterInfo *TRI,
-                             LiveIntervals* LIs);
+    bool FindUnusedRegisters(LiveIntervals* LIs);
 
     /// HasUnusedRegisters - Return true if there are any allocatable registers
     /// that have not been allocated to any virtual register.

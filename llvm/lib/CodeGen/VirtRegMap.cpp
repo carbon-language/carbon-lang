@@ -51,6 +51,7 @@ static RegisterPass<VirtRegMap>
 X("virtregmap", "Virtual Register Map");
 
 bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
+  MRI = &mf.getRegInfo();
   TII = mf.getTarget().getInstrInfo();
   TRI = mf.getTarget().getRegisterInfo();
   MF = &mf;
@@ -96,6 +97,39 @@ void VirtRegMap::grow() {
   Virt2SplitKillMap.grow(LastVirtReg);
   ReMatMap.grow(LastVirtReg);
   ImplicitDefed.resize(LastVirtReg-TargetRegisterInfo::FirstVirtualRegister+1);
+}
+
+unsigned VirtRegMap::getRegAllocPref(unsigned virtReg) {
+  std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
+    MRI->getRegAllocationHint(virtReg);
+  switch (Hint.first) {
+  default: assert(0);
+  case MachineRegisterInfo::RA_None:
+    return 0;
+  case MachineRegisterInfo::RA_Preference:
+    if (TargetRegisterInfo::isPhysicalRegister(Hint.second))
+      return Hint.second;
+    if (hasPhys(Hint.second))
+      return getPhys(Hint.second);
+  case MachineRegisterInfo::RA_PairEven: {
+    unsigned physReg = Hint.second;
+    if (TargetRegisterInfo::isPhysicalRegister(physReg))
+      return TRI->getRegisterPairEven(*MF, physReg);
+    else if (hasPhys(physReg))
+      return TRI->getRegisterPairEven(*MF, getPhys(physReg));
+    return 0;
+  }
+  case MachineRegisterInfo::RA_PairOdd: {
+    unsigned physReg = Hint.second;
+    if (TargetRegisterInfo::isPhysicalRegister(physReg))
+      return TRI->getRegisterPairOdd(*MF, physReg);
+    else if (hasPhys(physReg))
+      return TRI->getRegisterPairOdd(*MF, getPhys(physReg));
+    return 0;
+  }
+  }
+  // Shouldn't reach here.
+  return 0;
 }
 
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
@@ -213,8 +247,7 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
 
 /// FindUnusedRegisters - Gather a list of allocatable registers that
 /// have not been allocated to any virtual register.
-bool VirtRegMap::FindUnusedRegisters(const TargetRegisterInfo *TRI,
-                                     LiveIntervals* LIs) {
+bool VirtRegMap::FindUnusedRegisters(LiveIntervals* LIs) {
   unsigned NumRegs = TRI->getNumRegs();
   UnusedRegs.reset();
   UnusedRegs.resize(NumRegs);

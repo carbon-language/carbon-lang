@@ -484,6 +484,20 @@ public:
     return 0;
   }
 
+  /// getRegisterPairEven - Return the even register of the register pair that
+  /// contains the specified register.
+  virtual unsigned getRegisterPairEven(const MachineFunction &MF,
+                                       unsigned Reg) const {
+    return 0;
+  }
+
+  /// getRegisterPairOdd - Return the odd register of the register pair that
+  /// contains the specified register.
+  virtual unsigned getRegisterPairOdd(const MachineFunction &MF,
+                                      unsigned Reg) const {
+    return 0;
+  }
+
   //===--------------------------------------------------------------------===//
   // Register Class Information
   //

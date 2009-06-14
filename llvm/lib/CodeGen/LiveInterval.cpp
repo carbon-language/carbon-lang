@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
@@ -421,13 +422,13 @@ VNInfo *LiveInterval::findDefinedVNInfo(unsigned DefIdxOrReg) const {
   return VNI;
 }
 
-
 /// join - Join two live intervals (this, and other) together.  This applies
 /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
 /// the intervals are not joinable, this aborts.
 void LiveInterval::join(LiveInterval &Other, const int *LHSValNoAssignments,
                         const int *RHSValNoAssignments, 
-                        SmallVector<VNInfo*, 16> &NewVNInfo) {
+                        SmallVector<VNInfo*, 16> &NewVNInfo,
+                        MachineRegisterInfo *MRI) {
   // Determine if any of our live range values are mapped.  This is uncommon, so
   // we want to avoid the interval scan if not. 
   bool MustMapCurValNos = false;
@@ -502,8 +503,19 @@ void LiveInterval::join(LiveInterval &Other, const int *LHSValNoAssignments,
   }
 
   weight += Other.weight;
-  if (Other.preference && !preference)
-    preference = Other.preference;
+
+  // Update regalloc hint if currently there isn't one.
+  if (TargetRegisterInfo::isVirtualRegister(reg) &&
+      TargetRegisterInfo::isVirtualRegister(Other.reg)) {
+    std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
+      MRI->getRegAllocationHint(reg);
+    if (Hint.first == MachineRegisterInfo::RA_None) {
+      std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> OtherHint =
+        MRI->getRegAllocationHint(Other.reg);
+      if (OtherHint.first != MachineRegisterInfo::RA_None)
+        MRI->setRegAllocationHint(reg, OtherHint.first, OtherHint.second);
+    }
+  }
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
@@ -756,10 +768,14 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
 }
 
 void LiveInterval::Copy(const LiveInterval &RHS,
+                        MachineRegisterInfo *MRI,
                         BumpPtrAllocator &VNInfoAllocator) {
   ranges.clear();
   valnos.clear();
-  preference = RHS.preference;
+  std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
+    MRI->getRegAllocationHint(RHS.reg);
+  MRI->setRegAllocationHint(reg, Hint.first, Hint.second);
+
   weight = RHS.weight;
   for (unsigned i = 0, e = RHS.getNumValNums(); i != e; ++i) {
     const VNInfo *VNI = RHS.getValNumInfo(i);

@@ -25,6 +25,16 @@ namespace llvm {
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
 class MachineRegisterInfo {
+public:
+  /// Register allocation hints.
+  enum RegAllocHintType {
+    RA_None,                /// No preference
+    RA_Preference,          /// Prefer a particular register
+    RA_PairEven,            /// Even register of a register pair
+    RA_PairOdd              /// Odd register of a register pair
+  };
+
+private:
   /// VRegInfo - Information we keep for each virtual register.  The entries in
   /// this vector are actually converted to vreg numbers by adding the 
   /// TargetRegisterInfo::FirstVirtualRegister delta to their index.
@@ -37,6 +47,14 @@ class MachineRegisterInfo {
   /// virtual registers. For each target register class, it keeps a list of
   /// virtual registers belonging to the class.
   std::vector<std::vector<unsigned> > RegClass2VRegMap;
+
+  /// RegAllocHints - This vector records register allocation hints for virtual
+  /// registers. For each virtual register, it keeps a register and type enum
+  /// pair making up the allocation hint. For example, if the hint type is
+  /// RA_Specified, it means the virtual register prefers the specified physical
+  /// register of the hint or the physical register allocated to the virtual
+  /// register of the hint.
+  std::vector<std::pair<RegAllocHintType, unsigned> > RegAllocHints;
   
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
@@ -170,7 +188,26 @@ public:
   std::vector<unsigned> &getRegClassVirtRegs(const TargetRegisterClass *RC) {
     return RegClass2VRegMap[RC->getID()];
   }
-  
+
+  /// setRegAllocationHint - Specify a register allocation hint for the
+  /// specified virtual register.
+  void setRegAllocationHint(unsigned Reg,
+                            RegAllocHintType Type, unsigned PrefReg) {
+    Reg -= TargetRegisterInfo::FirstVirtualRegister;
+    assert(Reg < VRegInfo.size() && "Invalid vreg!");
+    RegAllocHints[Reg].first  = Type;
+    RegAllocHints[Reg].second = PrefReg;
+  }
+
+  /// getRegAllocationHint - Return the register allocation hint for the
+  /// specified virtual register.
+  std::pair<RegAllocHintType, unsigned>
+  getRegAllocationHint(unsigned Reg) const {
+    Reg -= TargetRegisterInfo::FirstVirtualRegister;
+    assert(Reg < VRegInfo.size() && "Invalid vreg!");
+    return RegAllocHints[Reg];
+  }
+
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info
   //===--------------------------------------------------------------------===//
