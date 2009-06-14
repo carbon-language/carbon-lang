@@ -142,33 +142,33 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     return ParseWhileStatement();
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
     Res = ParseDoStatement();
-    SemiError = "do/while loop";
+    SemiError = "do/while";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
     return ParseForStatement();
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
     Res = ParseGotoStatement();
-    SemiError = "goto statement";
+    SemiError = "goto";
     break;
   case tok::kw_continue:            // C99 6.8.6.2: continue-statement
     Res = ParseContinueStatement();
-    SemiError = "continue statement";
+    SemiError = "continue";
     break;
   case tok::kw_break:               // C99 6.8.6.3: break-statement
     Res = ParseBreakStatement();
-    SemiError = "break statement";
+    SemiError = "break";
     break;
   case tok::kw_return:              // C99 6.8.6.4: return-statement
     Res = ParseReturnStatement();
-    SemiError = "return statement";
+    SemiError = "return";
     break;
 
   case tok::kw_asm: {
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
     if (msAsm) return move(Res);
-    SemiError = "asm statement";
+    SemiError = "asm";
     break;
   }
 
@@ -180,7 +180,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   if (Tok.is(tok::semi)) {
     ConsumeToken();
   } else if (!Res.isInvalid()) {
-    Diag(Tok, diag::err_expected_semi_after) << SemiError;
+    Diag(Tok, diag::err_expected_semi_after_stmt) << SemiError;
     // Skip until we see a } or ;, but don't eat it.
     SkipUntil(tok::r_brace, true, true);
   }

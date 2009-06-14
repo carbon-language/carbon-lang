@@ -100,10 +100,16 @@ def err_expected_comma : Error<"expected ','">;
 def err_expected_lbrace_in_compound_literal : Error<
   "expected '{' in compound literal">;
 def err_expected_while : Error<"expected 'while' in do/while loop">;
+
 def err_expected_semi_after : Error<"expected ';' after %0">;
+def err_expected_semi_after_stmt : Error<"expected ';' after %0 statement">;
 def err_expected_semi_after_expr : Error<"expected ';' after expression">;
 def err_expected_semi_after_method_proto : Error<
   "expected ';' after method prototype">;
+def err_expected_semi_after_namespace_name : Error<
+  "expected ';' after namespace name">;
+def err_expected_semi_after_attribute_list : Error<
+  "expected ';' after attribute list">;
 def err_expected_semi_after_static_assert : Error<
   "expected ';' after static_assert">;
 def err_expected_semi_for : Error<"expected ';' in 'for' statement specifier">;
