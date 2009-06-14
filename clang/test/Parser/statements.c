@@ -54,3 +54,6 @@ void test6(void) {
    while (0);
 }
 
+int test7() {
+  return 4     // expected-error {{expected ';' after return statement}}
+}

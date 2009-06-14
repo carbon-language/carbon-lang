@@ -180,10 +180,14 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   if (Tok.is(tok::semi)) {
     ConsumeToken();
   } else if (!Res.isInvalid()) {
-    Diag(Tok, diag::err_expected_semi_after_stmt) << SemiError;
+    // If the result was valid, then we do want to diagnose this.  Use
+    // ExpectAndConsume to emit the diagnostic, even though we know it won't
+    // succeed.
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_stmt, SemiError);
     // Skip until we see a } or ;, but don't eat it.
     SkipUntil(tok::r_brace, true, true);
   }
+  
   return move(Res);
 }
 
