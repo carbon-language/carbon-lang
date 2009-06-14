@@ -72,6 +72,11 @@ public:
     return GetRecord(ID).Name;
   }
   
+  /// GetTypeString - Get the type descriptor string for the specified builtin.
+  const char *GetTypeString(unsigned ID) const {
+    return GetRecord(ID).Type;
+  }
+  
   /// isConst - Return true if this function has no side effects and doesn't
   /// read memory.
   bool isConst(unsigned ID) const {
@@ -121,13 +126,6 @@ public:
     return strchr(GetRecord(ID).Attributes, 'e') != 0;
   }
 
-  /// GetBuiltinType - Return the type for the specified builtin.
-  enum GetBuiltinTypeError {
-    GE_None, //< No error
-    GE_Missing_FILE //< Missing the FILE type from <stdio.h>
-  };
-  QualType GetBuiltinType(unsigned ID, ASTContext &Context,
-                          GetBuiltinTypeError &Error) const;
 private:
   const Info &GetRecord(unsigned ID) const;
 };

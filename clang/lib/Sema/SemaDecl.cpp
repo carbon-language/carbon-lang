@@ -416,14 +416,14 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   if (Context.BuiltinInfo.hasVAListUse(BID))
     InitBuiltinVaListType();
 
-  Builtin::Context::GetBuiltinTypeError Error;
-  QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context, Error);  
+  ASTContext::GetBuiltinTypeError Error;
+  QualType R = Context.GetBuiltinType(BID, Error);  
   switch (Error) {
-  case Builtin::Context::GE_None:
+  case ASTContext::GE_None:
     // Okay
     break;
 
-  case Builtin::Context::GE_Missing_FILE:
+  case ASTContext::GE_Missing_FILE:
     if (ForRedeclaration)
       Diag(Loc, diag::err_implicit_decl_requires_stdio)
         << Context.BuiltinInfo.GetName(BID);

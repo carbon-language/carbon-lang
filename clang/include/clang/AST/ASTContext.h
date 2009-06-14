@@ -455,6 +455,14 @@ public:
   TemplateName getDependentTemplateName(NestedNameSpecifier *NNS, 
                                         const IdentifierInfo *Name);
 
+  enum GetBuiltinTypeError {
+    GE_None,        //< No error
+    GE_Missing_FILE //< Missing the FILE type from <stdio.h>
+  };
+  
+  /// GetBuiltinType - Return the type for the specified builtin.
+  QualType GetBuiltinType(unsigned ID, GetBuiltinTypeError &Error);
+  
 private:
   QualType getFromTargetType(unsigned Type) const;
 
