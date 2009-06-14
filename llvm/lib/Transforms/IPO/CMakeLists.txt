@@ -16,6 +16,7 @@ add_llvm_library(LLVMipo
   LoopExtractor.cpp
   LowerSetJmp.cpp
   MergeFunctions.cpp
+  PartialInlining.cpp
   PartialSpecialization.cpp
   PruneEH.cpp
   RaiseAllocations.cpp
