@@ -65,6 +65,12 @@ void ClangDiagsDefsEmitter::run(std::ostream &OS) {
     } else {
       OS << ", 0";
     }
+
+    // SFINAE bit
+    if (R.getValueAsBit("SFINAE"))
+      OS << ", true";
+    else
+      OS << ", false";
     OS << ")\n";
   }
 }
