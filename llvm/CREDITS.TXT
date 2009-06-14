@@ -273,6 +273,10 @@ N: Arnold Schwaighofer
 E: arnold.schwaighofer@gmail.com
 D: Tail call optimization for the x86 backend
 
+N: Shantonu Sen
+E: ssen@apple.com
+D: Miscellaneous bug fixes
+
 N: Anand Shukla
 E: ashukla@cs.uiuc.edu
 D: The `paths' pass
