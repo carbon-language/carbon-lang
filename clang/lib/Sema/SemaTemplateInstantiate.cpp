@@ -199,6 +199,34 @@ void Sema::PrintInstantiationStack() {
   }
 }
 
+bool Sema::isSFINAEContext() const {
+  using llvm::SmallVector;
+  for (SmallVector<ActiveTemplateInstantiation, 16>::const_reverse_iterator
+         Active = ActiveTemplateInstantiations.rbegin(),
+         ActiveEnd = ActiveTemplateInstantiations.rend();
+       Active != ActiveEnd;
+       ++Active) {
+
+    switch(Active->Kind) {
+    case ActiveTemplateInstantiation::PartialSpecDeductionInstantiation:
+      // We're in a template argument deduction context, so SFINAE
+      // applies.
+      return true;
+
+    case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation:
+      // A default template argument instantiation may or may not be a
+      // SFINAE context; look further up the stack.
+      break;
+
+    case ActiveTemplateInstantiation::TemplateInstantiation:
+      // This is a template instantiation, so there is no SFINAE.
+      return false;
+    }
+  }
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===/
 // Template Instantiation for Types
 //===----------------------------------------------------------------------===/

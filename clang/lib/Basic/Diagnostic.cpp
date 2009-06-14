@@ -46,6 +46,7 @@ struct StaticDiagInfoRec {
   unsigned short DiagID;
   unsigned Mapping : 3;
   unsigned Class : 3;
+  bool SFINAE : 1;
   const char *Description;
   const char *OptionGroup;
   
@@ -58,8 +59,8 @@ struct StaticDiagInfoRec {
 };
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP) \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, DESC, GROUP },
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,SFINAE)    \
+  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, DESC, GROUP },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -68,7 +69,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticASTKinds.inc"
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
-{ 0, 0, 0, 0, 0 }
+  { 0, 0, 0, 0, 0, 0}
 };
 #undef DIAG
 
@@ -89,7 +90,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #endif
   
   // Search the diagnostic table with a binary search.
-  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0 };
+  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0 };
   
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + NumDiagEntries, Find);
@@ -113,6 +114,12 @@ const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->OptionGroup;
   return 0;
+}
+
+bool Diagnostic::isBuiltinSFINAEDiag(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->SFINAE && Info->Class != CLASS_NOTE;
+  return false;
 }
 
 /// getDiagClass - Return the class field of the diagnostic.
@@ -399,7 +406,7 @@ bool Diagnostic::setDiagnosticGroupMapping(const char *Group,
 
 /// ProcessDiag - This is the method used to report a diagnostic that is
 /// finally fully formed.
-void Diagnostic::ProcessDiag() {
+bool Diagnostic::ProcessDiag() {
   DiagnosticInfo Info(this);
     
   // Figure out the diagnostic level of this message.
@@ -449,13 +456,13 @@ void Diagnostic::ProcessDiag() {
   // If a fatal error has already been emitted, silence all subsequent
   // diagnostics.
   if (FatalErrorOccurred)
-    return;
+    return false;
 
   // If the client doesn't care about this message, don't issue it.  If this is
   // a note and the last real diagnostic was ignored, ignore it too.
   if (DiagLevel == Diagnostic::Ignored ||
       (DiagLevel == Diagnostic::Note && LastDiagLevel == Diagnostic::Ignored))
-    return;
+    return false;
 
   // If this diagnostic is in a system header and is not a clang error, suppress
   // it.
@@ -464,7 +471,7 @@ void Diagnostic::ProcessDiag() {
       Info.getLocation().getSpellingLoc().isInSystemHeader() &&
       (DiagLevel != Diagnostic::Note || LastDiagLevel == Diagnostic::Ignored)) {
     LastDiagLevel = Diagnostic::Ignored;
-    return;
+    return false;
   }
 
   if (DiagLevel >= Diagnostic::Error) {
@@ -477,6 +484,8 @@ void Diagnostic::ProcessDiag() {
   if (Client->IncludeInDiagnosticCounts()) ++NumDiagnostics;
 
   CurDiagID = ~0U;
+
+  return true;
 }
 
 

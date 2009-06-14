@@ -251,9 +251,8 @@ int is_nested_value_type_identity0[
             is_nested_value_type_identity<HasValueType<int> >::value? -1 : 1];
 int is_nested_value_type_identity1[
           is_nested_value_type_identity<HasIdentityValueType>::value? 1 : -1];
-// FIXME: Enable when we have SFINAE support
-//int is_nested_value_type_identity2[
-//                   is_nested_value_type_identity<NoValueType>::value? -1 : 1];
+int is_nested_value_type_identity2[
+                   is_nested_value_type_identity<NoValueType>::value? -1 : 1];
 
 
 // C++ [temp.class.spec]p4:

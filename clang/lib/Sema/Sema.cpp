@@ -316,7 +316,8 @@ NamedDecl *Sema::getCurFunctionOrMethodDecl() {
 }
 
 Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
-  this->Emit();
+  if (!this->Emit())
+    return;
   
   // If this is not a note, and we're in a template instantiation
   // that is different from the last template instantiation where

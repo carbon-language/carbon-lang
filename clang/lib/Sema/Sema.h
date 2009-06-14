@@ -297,11 +297,21 @@ public:
     SemaDiagnosticBuilder(DiagnosticBuilder &DB, Sema &SemaRef, unsigned DiagID)
       : DiagnosticBuilder(DB), SemaRef(SemaRef), DiagID(DiagID) { }
 
+    explicit SemaDiagnosticBuilder(Sema &SemaRef) 
+      : DiagnosticBuilder(DiagnosticBuilder::Suppress), SemaRef(SemaRef) { }
+
     ~SemaDiagnosticBuilder();
   };
 
   /// \brief Emit a diagnostic.
   SemaDiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    if (isSFINAEContext() && Diagnostic::isBuiltinSFINAEDiag(DiagID)) {
+      // If we encountered an error during template argument
+      // deduction, and that error is one of the SFINAE errors,
+      // supress the diagnostic.
+      return SemaDiagnosticBuilder(*this);
+    }
+
     DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
     return SemaDiagnosticBuilder(DB, *this, DiagID);
   }
@@ -2321,6 +2331,14 @@ public:
   };
 
   void PrintInstantiationStack();
+
+  /// \brief Determines whether we are currently in a context where
+  /// template argument substitution failures are not considered
+  /// errors.
+  ///
+  /// When this routine returns true, the emission of most diagnostics
+  /// will be suppressed and there will be no local error recovery.
+  bool isSFINAEContext() const;
 
   /// \brief A stack-allocated class that identifies which local
   /// variable declaration instantiations are present in this scope.

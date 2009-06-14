@@ -331,7 +331,7 @@ def note_overridden_virtual_function : Note<
 def err_covariant_return_inaccessible_base : Error<
   "return type of virtual function %2 is not covariant with the return type "
   "of the function it overrides "
-  "(conversion from %0 to inaccessible base class %1)">;
+  "(conversion from %0 to inaccessible base class %1)">, NoSFINAE;
 def err_covariant_return_ambiguous_derived_to_base_conv : Error<
   "return type of virtual function %3 is not covariant with the return type of "
   "the function it overrides (ambiguous conversion from derived class "
@@ -782,7 +782,8 @@ def unsup_template_partial_spec_ordering : Error<
 
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
-  "recursive template instantiation exceeded maximum depth of %0">,DefaultFatal;
+  "recursive template instantiation exceeded maximum depth of %0">,
+  DefaultFatal, NoSFINAE;
 def note_template_recursion_depth : Note<
   "use -ftemplate-depth-N to increase recursive template instantiation depth">;
 
@@ -1604,7 +1605,7 @@ def err_memptr_conv_via_virtual : Error<
 
 // C++ access control
 def err_conv_to_inaccessible_base : Error<
-  "conversion from %0 to inaccessible base class %1">;
+  "conversion from %0 to inaccessible base class %1">, NoSFINAE;
 def note_inheritance_specifier_here : Note<
   "'%0' inheritance specifier here">;
 def note_inheritance_implicitly_private_here : Note<
@@ -1851,8 +1852,10 @@ def warn_ivar_use_hidden : Warning<
   "local declaration of %0 hides instance variable">;
 def error_ivar_use_in_class_method : Error<
   "instance variable %0 accessed in class method">;
-def error_private_ivar_access : Error<"instance variable %0 is private">;
-def error_protected_ivar_access : Error<"instance variable %0 is protected">;
+def error_private_ivar_access : Error<"instance variable %0 is private">,
+    NoSFINAE;
+def error_protected_ivar_access : Error<"instance variable %0 is protected">,
+    NoSFINAE;
 def warn_maynot_respond : Warning<"%0  may not respond to %1">;
 def warn_attribute_method_def : Warning<
   "method attribute can only be specified on method declarations">;

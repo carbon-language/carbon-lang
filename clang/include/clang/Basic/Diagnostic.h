@@ -50,7 +50,7 @@ namespace clang {
 
     // Get typedefs for common diagnostics.
     enum {
-#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP) ENUM,
+#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,SFINAE) ENUM,
 #include "clang/Basic/DiagnosticCommonKinds.inc"
       NUM_BUILTIN_COMMON_DIAGNOSTICS
 #undef DIAG
@@ -313,6 +313,16 @@ public:
   /// the diagnostic, this returns null.
   static const char *getWarningOptionForDiag(unsigned DiagID);
 
+  /// \brief Determines whether the given built-in diagnostic ID is
+  /// for an error that is suppressed if it occurs during C++ template
+  /// argument deduction.
+  ///
+  /// When an error is suppressed due to SFINAE, the template argument
+  /// deduction fails but no diagnostic is emitted. Certain classes of
+  /// errors, such as those errors that involve C++ access control,
+  /// are not SFINAE errors.
+  static bool isBuiltinSFINAEDiag(unsigned DiagID);
+
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
@@ -409,7 +419,10 @@ private:
 
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.
-  void ProcessDiag();
+  ///
+  /// \returns true if the diagnostic was emitted, false if it was
+  /// suppressed.
+  bool ProcessDiag();
 };
 
 //===----------------------------------------------------------------------===//
@@ -448,14 +461,26 @@ public:
     NumCodeModificationHints = D.NumCodeModificationHints;
   }
 
+  /// \brief Simple enumeration value used to give a name to the
+  /// suppress-diagnostic constructor.
+  enum SuppressKind { Suppress };
+
+  /// \brief Create an empty DiagnosticBuilder object that represents
+  /// no actual diagnostic.
+  explicit DiagnosticBuilder(SuppressKind) 
+    : DiagObj(0), NumArgs(0), NumRanges(0), NumCodeModificationHints(0) { }
+
   /// \brief Force the diagnostic builder to emit the diagnostic now.
   ///
   /// Once this function has been called, the DiagnosticBuilder object
   /// should not be used again before it is destroyed.
-  void Emit() {
+  ///
+  /// \returns true if a diagnostic was emitted, false if the
+  /// diagnostic was suppressed.
+  bool Emit() {
     // If DiagObj is null, then its soul was stolen by the copy ctor
     // or the user called Emit().
-    if (DiagObj == 0) return;
+    if (DiagObj == 0) return false;
 
     // When emitting diagnostics, we set the final argument count into
     // the Diagnostic object.
@@ -465,13 +490,15 @@ public:
 
     // Process the diagnostic, sending the accumulated information to the
     // DiagnosticClient.
-    DiagObj->ProcessDiag();
+    bool Emitted = DiagObj->ProcessDiag();
 
     // Clear out the current diagnostic object.
     DiagObj->Clear();
 
     // This diagnostic is dead.
     DiagObj = 0;
+
+    return Emitted;
   }
 
   /// Destructor - The dtor emits the diagnostic if it hasn't already
@@ -486,28 +513,34 @@ public:
   void AddString(const std::string &S) const {
     assert(NumArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[NumArgs] = Diagnostic::ak_std_string;
-    DiagObj->DiagArgumentsStr[NumArgs++] = S;
+    if (DiagObj) {
+      DiagObj->DiagArgumentsKind[NumArgs] = Diagnostic::ak_std_string;
+      DiagObj->DiagArgumentsStr[NumArgs++] = S;
+    }
   }
   
   void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
     assert(NumArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
-    DiagObj->DiagArgumentsKind[NumArgs] = Kind;
-    DiagObj->DiagArgumentsVal[NumArgs++] = V;
+    if (DiagObj) {
+      DiagObj->DiagArgumentsKind[NumArgs] = Kind;
+      DiagObj->DiagArgumentsVal[NumArgs++] = V;
+    }
   }
   
   void AddSourceRange(const SourceRange &R) const {
     assert(NumRanges < 
            sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
            "Too many arguments to diagnostic!");
-    DiagObj->DiagRanges[NumRanges++] = &R;
+    if (DiagObj)
+      DiagObj->DiagRanges[NumRanges++] = &R;
   }    
 
   void AddCodeModificationHint(const CodeModificationHint &Hint) const {
     assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
            "Too many code modification hints!");
-    DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
+    if (DiagObj)
+      DiagObj->CodeModificationHints[NumCodeModificationHints++] = Hint;
   }
 };
 
