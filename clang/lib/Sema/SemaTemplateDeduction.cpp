@@ -632,6 +632,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   //   argument list if the template arguments of the partial
   //   specialization can be deduced from the actual template argument
   //   list (14.8.2).
+  SFINAETrap Trap(*this);
   llvm::SmallVector<TemplateArgument, 4> Deduced;
   Deduced.resize(Partial->getTemplateParameters()->size());
   if (TemplateDeductionResult Result
@@ -734,6 +735,9 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
 
     // FIXME: Check template template arguments?
   }
+
+  if (Trap.hasErrorOccurred())
+    return TDK_SubstitutionFailure;
 
   return TDK_Success;
 }

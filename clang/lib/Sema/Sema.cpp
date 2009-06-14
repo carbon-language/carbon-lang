@@ -183,7 +183,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()),
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
-    CurrentInstantiationScope(0) {
+    NumSFINAEErrors(0), CurrentInstantiationScope(0) {
   
   StdNamespace = 0;
   TUScope = 0;

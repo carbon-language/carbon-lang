@@ -256,6 +256,9 @@ public:
   /// unit.
   bool CompleteTranslationUnit;
 
+  /// \brief The number of SFINAE diagnostics that have been trapped.
+  unsigned NumSFINAEErrors;
+
   typedef llvm::DenseMap<Selector, ObjCMethodList> MethodPool;
 
   /// Instance/Factory Method Pools - allows efficient lookup when typechecking
@@ -308,8 +311,25 @@ public:
     if (isSFINAEContext() && Diagnostic::isBuiltinSFINAEDiag(DiagID)) {
       // If we encountered an error during template argument
       // deduction, and that error is one of the SFINAE errors,
-      // supress the diagnostic.
-      return SemaDiagnosticBuilder(*this);
+      // suppress the diagnostic.
+      bool Fatal = false;
+      switch (Diags.getDiagnosticLevel(DiagID)) {
+      case Diagnostic::Ignored:
+      case Diagnostic::Note:
+      case Diagnostic::Warning:
+        break;
+
+      case Diagnostic::Error:
+        ++NumSFINAEErrors;
+        break;
+
+      case Diagnostic::Fatal:
+        Fatal = true;
+        break;
+      }
+
+      if (!Fatal)
+        return SemaDiagnosticBuilder(*this);
     }
 
     DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
@@ -2339,6 +2359,24 @@ public:
   /// When this routine returns true, the emission of most diagnostics
   /// will be suppressed and there will be no local error recovery.
   bool isSFINAEContext() const;
+
+  /// \brief RAII class used to determine whether SFINAE has
+  /// trapped any errors that occur during template argument
+  /// deduction.
+  class SFINAETrap {
+    Sema &SemaRef;
+    unsigned PrevSFINAEErrors;
+  public:
+    explicit SFINAETrap(Sema &SemaRef)
+      : SemaRef(SemaRef), PrevSFINAEErrors(SemaRef.NumSFINAEErrors) { }
+
+    ~SFINAETrap() { SemaRef.NumSFINAEErrors = PrevSFINAEErrors; }
+
+    /// \brief Determine whether any SFINAE errors have been trapped.
+    bool hasErrorOccurred() const { 
+      return SemaRef.NumSFINAEErrors > PrevSFINAEErrors; 
+    }
+  };
 
   /// \brief A stack-allocated class that identifies which local
   /// variable declaration instantiations are present in this scope.
