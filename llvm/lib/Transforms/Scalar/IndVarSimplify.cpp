@@ -17,7 +17,10 @@
 //      which starts at zero and steps by one.
 //   2. The canonical induction variable is guaranteed to be the first PHI node
 //      in the loop header block.
-//   3. Any pointer arithmetic recurrences are raised to use array subscripts.
+//   3. The canonical induction variable is guaranteed to be in a wide enough
+//      type so that IV expressions need not be (directly) zero-extended or
+//      sign-extended.
+//   4. Any pointer arithmetic recurrences are raised to use array subscripts.
 //
 // If the trip count of a loop is computable, this pass also makes the following
 // changes:
