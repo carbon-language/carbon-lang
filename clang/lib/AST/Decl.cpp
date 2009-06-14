@@ -19,6 +19,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include <vector>
 

@@ -16,6 +16,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/ASTDiagnostic.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Compiler.h"

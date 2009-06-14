@@ -2002,9 +2002,10 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                       PP.getTargetInfo(),
                                       PP.getIdentifierTable(),
                                       PP.getSelectorTable(),
+                                      PP.getBuiltinInfo(),
                                       /* FreeMemory = */ !DisableFree,
-                                      /* size_reserve = */0,
-                       /* InitializeBuiltins = */ImplicitIncludePCH.empty()));
+                                      /* size_reserve = */0));
+   
   llvm::OwningPtr<PCHReader> Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
     
@@ -2298,9 +2299,15 @@ int main(int argc, char **argv) {
                               PhonyDependencyTarget);
     }
 
-    if (ImplicitIncludePCH.empty() && 
-        InitializeSourceManager(*PP.get(), InFile))
-      continue;
+    if (ImplicitIncludePCH.empty()) {
+      if (InitializeSourceManager(*PP.get(), InFile))
+        continue;
+    
+      // Initialize builtin info.
+      PP->getBuiltinInfo().InitializeBuiltins(PP->getIdentifierTable(),
+                                              PP->getTargetInfo(),
+                                              PP->getLangOptions().NoBuiltin);
+    }
 
     if (!HTMLDiag.empty())
       ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());

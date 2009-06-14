@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
@@ -32,18 +33,15 @@ enum FloatingRank {
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
-                       bool FreeMem, unsigned size_reserve,
-                       bool InitializeBuiltins) : 
+                       Builtin::Context &builtins,
+                       bool FreeMem, unsigned size_reserve) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
   ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
   FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels),
-  ExternalSource(0) {  
+  BuiltinInfo(builtins), ExternalSource(0) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
   TUDecl = TranslationUnitDecl::Create(*this);
-  BuiltinInfo.InitializeTargetBuiltins(Target);
-  if (InitializeBuiltins)
-    this->InitializeBuiltins(idents);
   PrintingPolicy.CPlusPlus = LangOpts.CPlusPlus;
 }
 
@@ -84,10 +82,6 @@ ASTContext::~ASTContext() {
     GlobalNestedNameSpecifier->Destroy(*this);
 
   TUDecl->Destroy(*this);
-}
-
-void ASTContext::InitializeBuiltins(IdentifierTable &idents) {
-  BuiltinInfo.InitializeBuiltins(idents, LangOpts.NoBuiltin);
 }
 
 void 
@@ -1979,9 +1973,8 @@ unsigned ASTContext::getIntegerRank(Type *T) {
   // There are two things which impact the integer rank: the width, and
   // the ordering of builtins.  The builtin ordering is encoded in the
   // bottom three bits; the width is encoded in the bits above that.
-  if (FixedWidthIntType* FWIT = dyn_cast<FixedWidthIntType>(T)) {
+  if (FixedWidthIntType* FWIT = dyn_cast<FixedWidthIntType>(T))
     return FWIT->getWidth() << 3;
-  }
 
   switch (cast<BuiltinType>(T)->getKind()) {
   default: assert(0 && "getIntegerRank(): not a built-in integer");

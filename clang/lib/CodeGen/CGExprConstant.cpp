@@ -17,6 +17,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/Builtins.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"

@@ -18,6 +18,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/PrettyStackTrace.h"

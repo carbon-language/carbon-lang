@@ -19,6 +19,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include <algorithm>
 using namespace clang;

@@ -30,22 +30,20 @@ const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
   return TSRecords[ID - Builtin::FirstTSBuiltin];
 }
 
-/// \brief Load all of the target builtins. This must be called
-/// prior to initializing the builtin identifiers.
-void Builtin::Context::InitializeTargetBuiltins(const TargetInfo &Target) {
-  Target.getTargetBuiltins(TSRecords, NumTSRecords);
-}
-
 /// InitializeBuiltins - Mark the identifiers for all the builtins with their
 /// appropriate builtin ID # and mark any non-portable builtin identifiers as
 /// such.
 void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
+                                          const TargetInfo &Target,
                                           bool NoBuiltins) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
     if (!BuiltinInfo[i].Suppressed &&
         (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f')))
       Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
+
+  // Get the target specific builtins from the target.
+  Target.getTargetBuiltins(TSRecords, NumTSRecords);
   
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)

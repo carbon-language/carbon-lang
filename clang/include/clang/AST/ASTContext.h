@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
-#include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Attr.h"
@@ -54,6 +53,8 @@ namespace clang {
   class FieldDecl;
   class ObjCIvarRefExpr;
   class ObjCIvarDecl;
+  
+  namespace Builtin { class Context; }
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
@@ -141,6 +142,7 @@ public:
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
+  Builtin::Context &BuiltinInfo;
   DeclarationNameTable DeclarationNames;
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
   clang::PrintingPolicy PrintingPolicy;
@@ -163,7 +165,6 @@ public:
 
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
-  Builtin::Context BuiltinInfo;
 
   // Builtin Types.
   QualType VoidTy;
@@ -180,20 +181,11 @@ public:
   QualType DependentTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
-             IdentifierTable &idents, SelectorTable &sels, 
-             bool FreeMemory = true, unsigned size_reserve=0,
-             bool InitializeBuiltins = true);
+             IdentifierTable &idents, SelectorTable &sels,
+             Builtin::Context &builtins,
+             bool FreeMemory = true, unsigned size_reserve=0);
 
   ~ASTContext();
-
-  /// \brief Initialize builtins.
-  ///
-  /// Typically, this routine will be called automatically by the
-  /// constructor. However, in certain cases (e.g., when there is a
-  /// PCH file to be loaded), the constructor does not perform
-  /// initialization for builtins. This routine can be called to
-  /// perform the initialization.
-  void InitializeBuiltins(IdentifierTable &idents);
 
   /// \brief Attach an external AST source to the AST context.
   ///

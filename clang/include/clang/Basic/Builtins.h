@@ -55,14 +55,11 @@ class Context {
 public:
   Context() : TSRecords(0), NumTSRecords(0) {}
 
-  /// \brief Load all of the target builtins. This should be called
-  /// prior to initializing the builtin identifiers.
-  void InitializeTargetBuiltins(const TargetInfo &Target);
-
   /// InitializeBuiltins - Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
-  void InitializeBuiltins(IdentifierTable &Table, bool NoBuiltins = false);
+  void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target,
+                          bool NoBuiltins = false);
 
   /// \brief Popular the vector with the names of all of the builtins.
   void GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,

@@ -20,6 +20,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"

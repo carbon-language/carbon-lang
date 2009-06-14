@@ -19,6 +19,7 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/TokenLexer.h"
 #include "clang/Lex/PTHManager.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
@@ -101,6 +102,9 @@ class Preprocessor {
   /// the lifetime fo the preprocessor.
   SelectorTable Selectors;
 
+  /// BuiltinInfo - Information about builtins.
+  Builtin::Context BuiltinInfo;
+  
   /// PragmaHandlers - This tracks all of the pragmas that the client registered
   /// with this preprocessor.
   PragmaNamespace *PragmaHandlers;
@@ -211,6 +215,7 @@ public:
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
+  Builtin::Context &getBuiltinInfo() { return BuiltinInfo; }
   llvm::BumpPtrAllocator &getPreprocessorAllocator() { return BP; }
     
   void setPTHManager(PTHManager* pm);
