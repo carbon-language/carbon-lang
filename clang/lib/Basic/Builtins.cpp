@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/Builtins.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
@@ -20,7 +20,7 @@ static const Builtin::Info BuiltinInfo[] = {
   { "not a builtin function", 0, 0, 0, false },
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, false },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
-#include "clang/AST/Builtins.def"
+#include "clang/Basic/Builtins.def"
 };
 
 const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {

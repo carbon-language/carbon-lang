@@ -17,7 +17,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/TargetBuiltins.h"
+#include "clang/Basic/TargetBuiltins.h"
 #include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;

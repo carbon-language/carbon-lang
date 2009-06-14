@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_BUILTINS_H
-#define LLVM_CLANG_AST_BUILTINS_H
+#ifndef LLVM_CLANG_BASIC_BUILTINS_H
+#define LLVM_CLANG_BASIC_BUILTINS_H
 
 #include <cstring>
 
@@ -31,7 +31,7 @@ namespace Builtin {
 enum ID {
   NotBuiltin  = 0,      // This is not a builtin function.
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "clang/AST/Builtins.def"
+#include "clang/Basic/Builtins.def"
   FirstTSBuiltin
 };
 

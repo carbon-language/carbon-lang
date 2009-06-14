@@ -1,4 +1,4 @@
-//===--- X86Builtins.def - X86 Builtin function database --------*- C++ -*-===//
+//===--- BuiltinsX86.def - X86 Builtin function database --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// The format of this database matches clang/AST/Builtins.def.
+// The format of this database matches clang/Basic/Builtins.def.
 
 // FIXME: In GCC, these builtins are defined depending on whether support for
 // MMX/SSE/etc is turned on. We should do this too.

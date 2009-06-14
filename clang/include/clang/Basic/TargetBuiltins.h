@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_TARGET_BUILTINS_H
-#define LLVM_CLANG_AST_TARGET_BUILTINS_H
+#ifndef LLVM_CLANG_BASIC_TARGET_BUILTINS_H
+#define LLVM_CLANG_BASIC_TARGET_BUILTINS_H
 
-#include "clang/AST/Builtins.h"
+#include "clang/Basic/Builtins.h"
 #undef PPC
 
 namespace clang {
@@ -19,7 +19,7 @@ namespace clang {
     enum {
         LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "X86Builtins.def"
+#include "clang/Basic/BuiltinsX86.def"
         LastTSBuiltin
     };
   }
@@ -29,7 +29,7 @@ namespace clang {
     enum {
         LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "PPCBuiltins.def"
+#include "clang/Basic/BuiltinsPPC.def"
         LastTSBuiltin
     };
   }

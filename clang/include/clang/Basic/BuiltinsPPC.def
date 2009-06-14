@@ -1,4 +1,4 @@
-//===--- PPCBuiltins.def - PowerPC Builtin function database ----*- C++ -*-===//
+//===--- BuiltinsPPC.def - PowerPC Builtin function database ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@
 // FIXME: this needs to be the full list supported by GCC.  Right now, I'm just
 // adding stuff on demand.
 
-// The format of this database matches clang/AST/Builtins.def.
+// The format of this database matches clang/Basic/Builtins.def.
 
 // This is just a placeholder, the types and attributes are wrong.
 BUILTIN(__builtin_altivec_abs_v4sf  , "ii"   , "nc")
