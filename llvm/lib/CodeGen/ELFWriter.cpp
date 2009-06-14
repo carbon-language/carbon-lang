@@ -37,6 +37,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -66,32 +67,29 @@ MachineCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
 //===----------------------------------------------------------------------===//
 
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
-  : MachineFunctionPass(&ID), O(o), TM(tm), ElfHdr() {
-  is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
-  isLittleEndian = TM.getTargetData()->isLittleEndian();
+  : MachineFunctionPass(&ID), O(o), TM(tm),
+    is64Bit(TM.getTargetData()->getPointerSizeInBits() == 64),
+    isLittleEndian(TM.getTargetData()->isLittleEndian()),
+    ElfHdr(isLittleEndian, is64Bit) {
 
-  ElfHdr = new ELFHeader(TM.getELFWriterInfo()->getEMachine(), 0,
-                         is64Bit, isLittleEndian);
   TAI = TM.getTargetAsmInfo();
+  TEW = TM.getELFWriterInfo();
 
   // Create the machine code emitter object for this target.
   MCE = new ELFCodeEmitter(*this);
+
+  // Inital number of sections
   NumSections = 0;
 }
 
 ELFWriter::~ELFWriter() {
   delete MCE;
-  delete ElfHdr;
 }
 
 // doInitialization - Emit the file header and all of the global variables for
 // the module to the ELF file.
 bool ELFWriter::doInitialization(Module &M) {
   Mang = new Mangler(M);
-
-  // Local alias to shortenify coming code.
-  std::vector<unsigned char> &FH = FileHeader;
-  OutputBuffer FHOut(FH, is64Bit, isLittleEndian);
 
   // ELF Header
   // ----------
@@ -101,49 +99,48 @@ bool ELFWriter::doInitialization(Module &M) {
   //
   // Note
   // ----
-  // FHOut.outaddr method behaves differently for ELF32 and ELF64 writing
+  // emitWord method behaves differently for ELF32 and ELF64, writing
   // 4 bytes in the former and 8 in the last for *_off and *_addr elf types
 
-  FHOut.outbyte(0x7f); // e_ident[EI_MAG0]
-  FHOut.outbyte('E');  // e_ident[EI_MAG1]
-  FHOut.outbyte('L');  // e_ident[EI_MAG2]
-  FHOut.outbyte('F');  // e_ident[EI_MAG3]
+  ElfHdr.emitByte(0x7f); // e_ident[EI_MAG0]
+  ElfHdr.emitByte('E');  // e_ident[EI_MAG1]
+  ElfHdr.emitByte('L');  // e_ident[EI_MAG2]
+  ElfHdr.emitByte('F');  // e_ident[EI_MAG3]
 
-  FHOut.outbyte(ElfHdr->getElfClass());   // e_ident[EI_CLASS]
-  FHOut.outbyte(ElfHdr->getByteOrder());  // e_ident[EI_DATA]
-  FHOut.outbyte(EV_CURRENT);  // e_ident[EI_VERSION]
+  ElfHdr.emitByte(TEW->getEIClass()); // e_ident[EI_CLASS]
+  ElfHdr.emitByte(TEW->getEIData());  // e_ident[EI_DATA]
+  ElfHdr.emitByte(EV_CURRENT);        // e_ident[EI_VERSION]
+  ElfHdr.emitAlignment(16);           // e_ident[EI_NIDENT-EI_PAD]
 
-  FH.resize(16);  // e_ident[EI_NIDENT-EI_PAD]
-
-  FHOut.outhalf(ET_REL);               // e_type
-  FHOut.outhalf(ElfHdr->getMachine()); // e_machine = target
-  FHOut.outword(EV_CURRENT);           // e_version
-  FHOut.outaddr(0);                    // e_entry = 0, no entry point in .o file
-  FHOut.outaddr(0);                    // e_phoff = 0, no program header for .o
-  ELFHdr_e_shoff_Offset = FH.size();
-  FHOut.outaddr(0);                    // e_shoff = sec hdr table off in bytes
-  FHOut.outword(ElfHdr->getFlags());   // e_flags = whatever the target wants
-  FHOut.outhalf(ElfHdr->getSize());    // e_ehsize = ELF header size
-  FHOut.outhalf(0);                    // e_phentsize = prog header entry size
-  FHOut.outhalf(0);                    // e_phnum = # prog header entries = 0
+  ElfHdr.emitWord16(ET_REL);             // e_type
+  ElfHdr.emitWord16(TEW->getEMachine()); // e_machine = target
+  ElfHdr.emitWord32(EV_CURRENT);         // e_version
+  ElfHdr.emitWord(0);                    // e_entry, no entry point in .o file
+  ElfHdr.emitWord(0);                    // e_phoff, no program header for .o
+  ELFHdr_e_shoff_Offset = ElfHdr.size();
+  ElfHdr.emitWord(0);                    // e_shoff = sec hdr table off in bytes
+  ElfHdr.emitWord32(TEW->getEFlags());   // e_flags = whatever the target wants
+  ElfHdr.emitWord16(TEW->getHdrSize());  // e_ehsize = ELF header size
+  ElfHdr.emitWord16(0);                  // e_phentsize = prog header entry size
+  ElfHdr.emitWord16(0);                  // e_phnum = # prog header entries = 0
 
   // e_shentsize = Section header entry size
-  FHOut.outhalf(ELFSection::getSectionHdrSize(is64Bit));
+  ElfHdr.emitWord16(TEW->getSHdrSize());
 
   // e_shnum     = # of section header ents
-  ELFHdr_e_shnum_Offset = FH.size();
-  FHOut.outhalf(0);
+  ELFHdr_e_shnum_Offset = ElfHdr.size();
+  ElfHdr.emitWord16(0); // Placeholder
 
   // e_shstrndx  = Section # of '.shstrtab'
-  ELFHdr_e_shstrndx_Offset = FH.size();
-  FHOut.outhalf(0);
+  ELFHdr_e_shstrndx_Offset = ElfHdr.size();
+  ElfHdr.emitWord16(0); // Placeholder
 
   // Add the null section, which is required to be first in the file.
   getSection("", ELFSection::SHT_NULL, 0);
 
-  // Start up the symbol table.  The first entry in the symtab is the null
+  // Start up the symbol table.  The first entry in the symtab is the null 
   // entry.
-  SymbolTable.push_back(ELFSym(0));
+  SymbolList.push_back(ELFSym(0));
 
   return false;
 }
@@ -162,7 +159,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     ExternalSym.SetBind(ELFSym::STB_GLOBAL);
     ExternalSym.SetType(ELFSym::STT_NOTYPE);
     ExternalSym.SectionIdx = ELFSection::SHN_UNDEF;
-    SymbolTable.push_back(ExternalSym);
+    SymbolList.push_back(ExternalSym);
     return;
   }
 
@@ -185,7 +182,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
       CommonSym.SetBind(ELFSym::STB_GLOBAL);
       CommonSym.SetType(ELFSym::STT_OBJECT);
       CommonSym.SectionIdx = ELFSection::SHN_COMMON;
-      SymbolTable.push_back(CommonSym);
+      SymbolList.push_back(CommonSym);
       getSection(S->getName(), ELFSection::SHT_NOBITS,
         ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC, 1);
       return;
@@ -222,7 +219,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     // Set the idx of the .bss section
     BSSSym.SectionIdx = BSSSection.SectionIdx;
     if (!GV->hasPrivateLinkage())
-      SymbolTable.push_back(BSSSym);
+      SymbolList.push_back(BSSSym);
 
     // Reserve space in the .bss section for this symbol.
     BSSSection.Size += Size;
@@ -262,21 +259,18 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
   if (Align > ElfS.Align)
     ElfS.Align = Align;
 
-  DataBuffer &GblCstBuf = ElfS.SectionData;
-  OutputBuffer GblCstTab(GblCstBuf, is64Bit, isLittleEndian);
-
   // S.Value should contain the symbol index inside the section,
   // and all symbols should start on their required alignment boundary
-  GblSym.Value = (GblCstBuf.size() + (Align-1)) & (-Align);
-  GblCstBuf.insert(GblCstBuf.end(), GblSym.Value-GblCstBuf.size(), 0);
+  GblSym.Value = (ElfS.size() + (Align-1)) & (-Align);
+  ElfS.emitAlignment(Align);
 
   // Emit the constant symbol to its section
-  EmitGlobalConstant(CV, GblCstTab);
-  SymbolTable.push_back(GblSym);
+  EmitGlobalConstant(CV, ElfS);
+  SymbolList.push_back(GblSym);
 }
 
 void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
-                                         OutputBuffer &GblCstTab) {
+                                         ELFSection &GblS) {
 
   // Print the fields in successive locations. Pad to align if needed!
   const TargetData *TD = TM.getTargetData();
@@ -293,40 +287,40 @@ void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
     sizeSoFar += fieldSize + padSize;
 
     // Now print the actual field value.
-    EmitGlobalConstant(field, GblCstTab);
+    EmitGlobalConstant(field, GblS);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
     for (unsigned p=0; p < padSize; p++)
-      GblCstTab.outbyte(0);
+      GblS.emitByte(0);
   }
   assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
 }
 
-void ELFWriter::EmitGlobalConstant(const Constant *CV, OutputBuffer &GblCstTab) {
+void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
   const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypeAllocSize(CV->getType());
 
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
       std::string GblStr = CVA->getAsString();
-      GblCstTab.outstring(GblStr, GblStr.length());
+      GblS.emitString(GblStr);
     } else { // Not a string.  Print the values in successive locations
       for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-        EmitGlobalConstant(CVA->getOperand(i), GblCstTab);
+        EmitGlobalConstant(CVA->getOperand(i), GblS);
     }
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
-    EmitGlobalConstantStruct(CVS, GblCstTab);
+    EmitGlobalConstantStruct(CVS, GblS);
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     if (CFP->getType() == Type::DoubleTy)
-      GblCstTab.outxword(Val);
+      GblS.emitWord64(Val);
     else if (CFP->getType() == Type::FloatTy)
-      GblCstTab.outword(Val);
+      GblS.emitWord32(Val);
     else if (CFP->getType() == Type::X86_FP80Ty) {
       assert(0 && "X86_FP80Ty global emission not implemented");
     } else if (CFP->getType() == Type::PPC_FP128Ty)
@@ -334,16 +328,16 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, OutputBuffer &GblCstTab) 
     return;
   } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (Size == 4)
-      GblCstTab.outword(CI->getZExtValue());
+      GblS.emitWord32(CI->getZExtValue());
     else if (Size == 8)
-      GblCstTab.outxword(CI->getZExtValue());
+      GblS.emitWord64(CI->getZExtValue());
     else
       assert(0 && "LargeInt global emission not implemented");
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     const VectorType *PTy = CP->getType();
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
-      EmitGlobalConstant(CP->getOperand(I), GblCstTab);
+      EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
   }
   assert(0 && "unknown global constant");
@@ -358,26 +352,30 @@ bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
 /// doFinalization - Now that the module has been completely processed, emit
 /// the ELF file to 'O'.
 bool ELFWriter::doFinalization(Module &M) {
-  /// FIXME: This should be removed when moving to BinaryObjects. Since the
-  /// current ELFCodeEmiter uses CurrBuff, ... it doesn't update S.SectionData
+  /// FIXME: This should be removed when moving to ObjectCodeEmiter. Since the
+  /// current ELFCodeEmiter uses CurrBuff, ... it doesn't update S.Data
   /// vector size for .text sections, so this is a quick dirty fix
   ELFSection &TS = getTextSection();
-  if (TS.Size)
+  if (TS.Size) {
+    BinaryData &BD = TS.getData();
     for (unsigned e=0; e<TS.Size; ++e)
-      TS.SectionData.push_back(TS.SectionData[e]);
+      BD.push_back(BD[e]);
+  }
 
-  // Get .data and .bss section, they should always be present in the binary
+  // Emit .data section placeholder
   getDataSection();
+
+  // Emit .bss section placeholder
   getBSSSection();
 
-  // build data, bss and "common" sections.
+  // Build and emit data, bss and "common" sections.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     EmitGlobal(I);
 
   // Emit non-executable stack note
   if (TAI->getNonexecutableStackDirective())
-    getSection(".note.GNU-stack", ELFSection::SHT_PROGBITS, 0, 1);
+    getNonExecStackSection();
 
   // Emit the symbol table now, if non-empty.
   EmitSymbolTable();
@@ -385,10 +383,10 @@ bool ELFWriter::doFinalization(Module &M) {
   // Emit the relocation sections.
   EmitRelocations();
 
-  // Emit the string table for the sections in the ELF file.
+  // Emit the sections string table.
   EmitSectionTableStringTable();
 
-  // Emit the sections to the .o file, and emit the section table for the file.
+  // Dump the sections and section table to the .o file.
   OutputSectionsAndSectionTable();
 
   // We are done with the abstract symbols.
@@ -404,106 +402,97 @@ bool ELFWriter::doFinalization(Module &M) {
 void ELFWriter::EmitRelocations() {
 }
 
-/// EmitSymbol - Write symbol 'Sym' to the symbol table 'SymTabOut'
-void ELFWriter::EmitSymbol(OutputBuffer &SymTabOut, ELFSym &Sym) {
+/// EmitSymbol - Write symbol 'Sym' to the symbol table 'SymbolTable'
+void ELFWriter::EmitSymbol(BinaryObject &SymbolTable, ELFSym &Sym) {
   if (is64Bit) {
-    SymTabOut.outword(Sym.NameIdx);
-    SymTabOut.outbyte(Sym.Info);
-    SymTabOut.outbyte(Sym.Other);
-    SymTabOut.outhalf(Sym.SectionIdx);
-    SymTabOut.outaddr64(Sym.Value);
-    SymTabOut.outxword(Sym.Size);
+    SymbolTable.emitWord32(Sym.NameIdx);
+    SymbolTable.emitByte(Sym.Info);
+    SymbolTable.emitByte(Sym.Other);
+    SymbolTable.emitWord16(Sym.SectionIdx);
+    SymbolTable.emitWord64(Sym.Value);
+    SymbolTable.emitWord64(Sym.Size);
   } else {
-    SymTabOut.outword(Sym.NameIdx);
-    SymTabOut.outaddr32(Sym.Value);
-    SymTabOut.outword(Sym.Size);
-    SymTabOut.outbyte(Sym.Info);
-    SymTabOut.outbyte(Sym.Other);
-    SymTabOut.outhalf(Sym.SectionIdx);
+    SymbolTable.emitWord32(Sym.NameIdx);
+    SymbolTable.emitWord32(Sym.Value);
+    SymbolTable.emitWord32(Sym.Size);
+    SymbolTable.emitByte(Sym.Info);
+    SymbolTable.emitByte(Sym.Other);
+    SymbolTable.emitWord16(Sym.SectionIdx);
   }
 }
 
-/// EmitSectionHeader - Write section 'Section' header in 'TableOut'
+/// EmitSectionHeader - Write section 'Section' header in 'SHdrTab'
 /// Section Header Table
-void ELFWriter::EmitSectionHeader(OutputBuffer &TableOut, const ELFSection &S) {
-  TableOut.outword(S.NameIdx);
-  TableOut.outword(S.Type);
+void ELFWriter::EmitSectionHeader(BinaryObject &SHdrTab, 
+                                  const ELFSection &SHdr) {
+  SHdrTab.emitWord32(SHdr.NameIdx);
+  SHdrTab.emitWord32(SHdr.Type);
   if (is64Bit) {
-    TableOut.outxword(S.Flags);
-    TableOut.outaddr(S.Addr);
-    TableOut.outaddr(S.Offset);
-    TableOut.outxword(S.Size);
-    TableOut.outword(S.Link);
-    TableOut.outword(S.Info);
-    TableOut.outxword(S.Align);
-    TableOut.outxword(S.EntSize);
+    SHdrTab.emitWord64(SHdr.Flags);
+    SHdrTab.emitWord(SHdr.Addr);
+    SHdrTab.emitWord(SHdr.Offset);
+    SHdrTab.emitWord64(SHdr.Size);
+    SHdrTab.emitWord32(SHdr.Link);
+    SHdrTab.emitWord32(SHdr.Info);
+    SHdrTab.emitWord64(SHdr.Align);
+    SHdrTab.emitWord64(SHdr.EntSize);
   } else {
-    TableOut.outword(S.Flags);
-    TableOut.outaddr(S.Addr);
-    TableOut.outaddr(S.Offset);
-    TableOut.outword(S.Size);
-    TableOut.outword(S.Link);
-    TableOut.outword(S.Info);
-    TableOut.outword(S.Align);
-    TableOut.outword(S.EntSize);
+    SHdrTab.emitWord32(SHdr.Flags);
+    SHdrTab.emitWord(SHdr.Addr);
+    SHdrTab.emitWord(SHdr.Offset);
+    SHdrTab.emitWord32(SHdr.Size);
+    SHdrTab.emitWord32(SHdr.Link);
+    SHdrTab.emitWord32(SHdr.Info);
+    SHdrTab.emitWord32(SHdr.Align);
+    SHdrTab.emitWord32(SHdr.EntSize);
   }
 }
 
 /// EmitSymbolTable - If the current symbol table is non-empty, emit the string
 /// table for it and then the symbol table itself.
 void ELFWriter::EmitSymbolTable() {
-  if (SymbolTable.size() == 1) return;  // Only the null entry.
+  if (SymbolList.size() == 1) return;  // Only the null entry.
 
   // FIXME: compact all local symbols to the start of the symtab.
   unsigned FirstNonLocalSymbol = 1;
 
   ELFSection &StrTab = getStringTableSection();
-  DataBuffer &StrTabBuf = StrTab.SectionData;
-  OutputBuffer StrTabOut(StrTabBuf, is64Bit, isLittleEndian);
 
   // Set the zero'th symbol to a null byte, as required.
-  StrTabOut.outbyte(0);
+  StrTab.emitByte(0);
 
   unsigned Index = 1;
-  for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
+  for (unsigned i = 1, e = SymbolList.size(); i != e; ++i) {
     // Use the name mangler to uniquify the LLVM symbol.
-    std::string Name = Mang->getValueName(SymbolTable[i].GV);
+    std::string Name = Mang->getValueName(SymbolList[i].GV);
 
     if (Name.empty()) {
-      SymbolTable[i].NameIdx = 0;
+      SymbolList[i].NameIdx = 0;
     } else {
-      SymbolTable[i].NameIdx = Index;
-
-      // Add the name to the output buffer, including the null terminator.
-      StrTabBuf.insert(StrTabBuf.end(), Name.begin(), Name.end());
-
-      // Add a null terminator.
-      StrTabBuf.push_back(0);
+      SymbolList[i].NameIdx = Index;
+      StrTab.emitString(Name);
 
       // Keep track of the number of bytes emitted to this section.
       Index += Name.size()+1;
     }
   }
-  assert(Index == StrTabBuf.size());
+  assert(Index == StrTab.size());
   StrTab.Size = Index;
 
   // Now that we have emitted the string table and know the offset into the
   // string table of each symbol, emit the symbol table itself.
   ELFSection &SymTab = getSymbolTableSection();
-  SymTab.Align = is64Bit ? 8 : 4;
-  SymTab.Link = StrTab.SectionIdx;      // Section Index of .strtab.
-  SymTab.Info = FirstNonLocalSymbol;    // First non-STB_LOCAL symbol.
+  SymTab.Align = TEW->getSymTabAlignment();
+  SymTab.Link  = StrTab.SectionIdx;      // Section Index of .strtab.
+  SymTab.Info  = FirstNonLocalSymbol;    // First non-STB_LOCAL symbol.
 
   // Size of each symtab entry.
-  SymTab.EntSize = ELFSym::getEntrySize(is64Bit);
+  SymTab.EntSize = TEW->getSymTabEntrySize();
 
-  DataBuffer &SymTabBuf = SymTab.SectionData;
-  OutputBuffer SymTabOut(SymTabBuf, is64Bit, isLittleEndian);
+  for (unsigned i = 0, e = SymbolList.size(); i != e; ++i)
+    EmitSymbol(SymTab, SymbolList[i]);
 
-  for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i)
-    EmitSymbol(SymTabOut, SymbolTable[i]);
-
-  SymTab.Size = SymTabBuf.size();
+  SymTab.Size = SymTab.size();
 }
 
 /// EmitSectionTableStringTable - This method adds and emits a section for the
@@ -515,32 +504,25 @@ void ELFWriter::EmitSectionTableStringTable() {
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
-  OutputBuffer FHOut(FileHeader, is64Bit, isLittleEndian);
-  FHOut.fixhalf(SHStrTab.SectionIdx, ELFHdr_e_shstrndx_Offset);
+  ElfHdr.fixWord16(SHStrTab.SectionIdx, ELFHdr_e_shstrndx_Offset);
 
   // Set the NameIdx of each section in the string table and emit the bytes for
   // the string table.
   unsigned Index = 0;
-  DataBuffer &Buf = SHStrTab.SectionData;
 
   for (std::list<ELFSection>::iterator I = SectionList.begin(),
          E = SectionList.end(); I != E; ++I) {
     // Set the index into the table.  Note if we have lots of entries with
     // common suffixes, we could memoize them here if we cared.
     I->NameIdx = Index;
-
-    // Add the name to the output buffer, including the null terminator.
-    Buf.insert(Buf.end(), I->Name.begin(), I->Name.end());
-
-    // Add a null terminator.
-    Buf.push_back(0);
+    SHStrTab.emitString(I->getName());
 
     // Keep track of the number of bytes emitted to this section.
-    Index += I->Name.size()+1;
+    Index += I->getName().size()+1;
   }
 
   // Set the size of .shstrtab now that we know what it is.
-  assert(Index == Buf.size());
+  assert(Index == SHStrTab.size());
   SHStrTab.Size = Index;
 }
 
@@ -549,7 +531,7 @@ void ELFWriter::EmitSectionTableStringTable() {
 /// SectionTable.
 void ELFWriter::OutputSectionsAndSectionTable() {
   // Pass #1: Compute the file offset for each section.
-  size_t FileOff = FileHeader.size();   // File header first.
+  size_t FileOff = ElfHdr.size();   // File header first.
 
   // Adjust alignment of all section if needed.
   for (std::list<ELFSection>::iterator I = SectionList.begin(),
@@ -559,14 +541,14 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     if (!I->SectionIdx)
       continue;
 
-    if (!I->SectionData.size()) {
+    if (!I->size()) {
       I->Offset = FileOff;
       continue;
     }
 
     // Update Section size
     if (!I->Size)
-      I->Size = I->SectionData.size();
+      I->Size = I->size();
 
     // Align FileOff to whatever the alignment restrictions of the section are.
     if (I->Align)
@@ -582,43 +564,40 @@ void ELFWriter::OutputSectionsAndSectionTable() {
 
   // Now that we know where all of the sections will be emitted, set the e_shnum
   // entry in the ELF header.
-  OutputBuffer FHOut(FileHeader, is64Bit, isLittleEndian);
-  FHOut.fixhalf(NumSections, ELFHdr_e_shnum_Offset);
+  ElfHdr.fixWord16(NumSections, ELFHdr_e_shnum_Offset);
 
   // Now that we know the offset in the file of the section table, update the
   // e_shoff address in the ELF header.
-  FHOut.fixaddr(FileOff, ELFHdr_e_shoff_Offset);
+  ElfHdr.fixWord(FileOff, ELFHdr_e_shoff_Offset);
 
   // Now that we know all of the data in the file header, emit it and all of the
   // sections!
-  O.write((char*)&FileHeader[0], FileHeader.size());
-  FileOff = FileHeader.size();
-  DataBuffer().swap(FileHeader);
+  O.write((char *)&ElfHdr.getData()[0], ElfHdr.size());
+  FileOff = ElfHdr.size();
 
-  DataBuffer Table;
-  OutputBuffer TableOut(Table, is64Bit, isLittleEndian);
+  // Section Header Table blob
+  BinaryObject SHdrTable(isLittleEndian, is64Bit);
 
-  // Emit all of the section data and build the section table itself.
+  // Emit all of sections to the file and build the section header table.
   while (!SectionList.empty()) {
-    const ELFSection &S = *SectionList.begin();
-    DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.Name
+    ELFSection &S = *SectionList.begin();
+    DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.getName()
          << ", Size: " << S.Size << ", Offset: " << S.Offset
-         << ", SectionData Size: " << S.SectionData.size() << "\n";
-
+         << ", SectionData Size: " << S.size() << "\n";
 
     // Align FileOff to whatever the alignment restrictions of the section are.
     if (S.Align) {
       for (size_t NewFileOff = (FileOff+S.Align-1) & ~(S.Align-1);
-           FileOff != NewFileOff; ++FileOff)
+        FileOff != NewFileOff; ++FileOff)
         O << (char)0xAB;
     }
 
-    if (S.SectionData.size()) {
-      O.write((char*)&S.SectionData[0], S.Size);
+    if (S.size()) {
+      O.write((char *)&S.getData()[0], S.Size);
       FileOff += S.Size;
     }
 
-    EmitSectionHeader(TableOut, S);
+    EmitSectionHeader(SHdrTable, S);
     SectionList.pop_front();
   }
 
@@ -628,5 +607,5 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     O << (char)0xAB;
 
   // Emit the section table itself.
-  O.write((char*)&Table[0], Table.size());
+  O.write((char *)&SHdrTable.getData()[0], SHdrTable.size());
 }

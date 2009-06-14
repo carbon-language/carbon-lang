@@ -10,11 +10,10 @@
 // This header contains common, non-processor-specific data structures and
 // constants for the ELF file format.
 //
-// The details of the ELF32 bits in this file are largely based on
-// the Tool Interface Standard (TIS) Executable and Linking Format
-// (ELF) Specification Version 1.2, May 1995. The ELF64 stuff is not
-// standardized, as far as I can tell. It was largely based on information
-// I found in OpenBSD header files.
+// The details of the ELF32 bits in this file are largely based on the Tool
+// Interface Standard (TIS) Executable and Linking Format (ELF) Specification
+// Version 1.2, May 1995. The ELF64 is based on HP/Intel definition of the
+// ELF-64 object file format document, Version 1.5 Draft 2 May 27, 1998
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,11 +21,13 @@
 #define CODEGEN_ELF_H
 
 #include "llvm/GlobalVariable.h"
+#include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Support/DataTypes.h"
 #include <cstring>
 
 namespace llvm {
+  class BinaryObject;
 
   // Identification Indexes
   enum {
@@ -47,62 +48,17 @@ namespace llvm {
     ET_HIPROC = 0xffff  // Processor-specific
   };
 
-  // Object file classes.
-  enum {
-    ELFCLASS32 = 1, // 32-bit object file
-    ELFCLASS64 = 2  // 64-bit object file
-  };
-
-  // Object file byte orderings.
-  enum {
-    ELFDATA2LSB = 1, // Little-endian object file
-    ELFDATA2MSB = 2  // Big-endian object file
-  };
-
   // Versioning
   enum {
     EV_NONE = 0,
     EV_CURRENT = 1
   };
 
-  struct ELFHeader {
-    // e_machine - This field is the target specific value to emit as the
-    // e_machine member of the ELF header.
-    unsigned short e_machine;
-
-    // e_flags - The machine flags for the target.  This defaults to zero.
-    unsigned e_flags;
-
-    // e_size - Holds the ELF header's size in bytes
-    unsigned e_ehsize;
-
-    // Endianess and ELF Class (64 or 32 bits)
-    unsigned ByteOrder;
-    unsigned ElfClass;
-
-    unsigned getByteOrder() const { return ByteOrder; }
-    unsigned getElfClass() const { return ElfClass; }
-    unsigned getSize() const { return e_ehsize; }
-    unsigned getMachine() const { return e_machine; }
-    unsigned getFlags() const { return e_flags; }
-
-    ELFHeader(unsigned short machine, unsigned flags,
-              bool is64Bit, bool isLittleEndian)
-      : e_machine(machine), e_flags(flags) {
-        ElfClass  = is64Bit ? ELFCLASS64 : ELFCLASS32;
-        ByteOrder = isLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
-        e_ehsize  = is64Bit ? 64 : 52;
-      }
-  };
-
   /// ELFSection - This struct contains information about each section that is
   /// emitted to the file.  This is eventually turned into the section header
   /// table at the end of the file.
-  struct ELFSection {
-
-    // Name of the section
-    std::string Name;
-
+  class ELFSection : public BinaryObject {
+    public:
     // ELF specific fields
     unsigned NameIdx;   // sh_name - .shstrtab idx of name, once emitted.
     unsigned Type;      // sh_type - Section contents & semantics 
@@ -143,8 +99,8 @@ namespace llvm {
       SHT_REL      = 9,  // Relocation entries; no explicit addends.
       SHT_SHLIB    = 10, // Reserved.
       SHT_DYNSYM   = 11, // Symbol table.
-      SHT_LOPROC   = 0x70000000, // Lowest processor architecture-specific type.
-      SHT_HIPROC   = 0x7fffffff, // Highest processor architecture-specific type.
+      SHT_LOPROC   = 0x70000000, // Lowest processor arch-specific type.
+      SHT_HIPROC   = 0x7fffffff, // Highest processor arch-specific type.
       SHT_LOUSER   = 0x80000000, // Lowest type reserved for applications.
       SHT_HIUSER   = 0xffffffff  // Highest type reserved for applications.
     };
@@ -163,22 +119,9 @@ namespace llvm {
     /// SectionIdx - The number of the section in the Section Table.
     unsigned short SectionIdx;
 
-    /// SectionData - The actual data for this section which we are building
-    /// up for emission to the file.
-    std::vector<unsigned char> SectionData;
-
-    /// Relocations - The relocations that we have encountered so far in this 
-    /// section that we will need to convert to Elf relocation entries when
-    /// the file is written.
-    std::vector<MachineRelocation> Relocations;
-
-    /// Section Header Size 
-    static unsigned getSectionHdrSize(bool is64Bit)
-      { return is64Bit ? 64 : 40; }
-
-    ELFSection(const std::string &name)
-      : Name(name), Type(0), Flags(0), Addr(0), Offset(0), Size(0),
-        Link(0), Info(0), Align(0), EntSize(0) {}
+    ELFSection(const std::string &name, bool isLittleEndian, bool is64Bit)
+      : BinaryObject(name, isLittleEndian, is64Bit), Type(0), Flags(0), Addr(0),
+        Offset(0), Size(0), Link(0), Info(0), Align(0), EntSize(0) {}
   };
 
   /// ELFSym - This struct contains information about each symbol that is
@@ -245,9 +188,6 @@ namespace llvm {
       assert(X == (X & 0xF) && "Type value out of range!");
       Info = (Info & 0xF0) | X;
     }
-
-    static unsigned getEntrySize(bool is64Bit)
-      { return is64Bit ? 24 : 16; }
   };
 
 } // end namespace llvm

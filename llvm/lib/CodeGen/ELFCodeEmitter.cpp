@@ -13,6 +13,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -33,9 +34,10 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
   DOUT << "processing function: " << MF.getFunction()->getName() << "\n";
 
   // FIXME: better memory management, this will be replaced by BinaryObjects
-  ES->SectionData.reserve(4096);
-  BufferBegin = &ES->SectionData[0];
-  BufferEnd = BufferBegin + ES->SectionData.capacity();
+  BinaryData &BD = ES->getData();
+  BD.reserve(4096);
+  BufferBegin = &BD[0];
+  BufferEnd = BufferBegin + BD.capacity();
 
   // Align the output buffer with function alignment, and
   // upgrade the section alignment if required
@@ -100,7 +102,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   FnSym.Value = FnStartPtr-BufferBegin;
 
   // Finally, add it to the symtab.
-  EW.SymbolTable.push_back(FnSym);
+  EW.SymbolList.push_back(FnSym);
 
   // Relocations
   // -----------
@@ -121,7 +123,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
     } else {
       assert(0 && "Unhandled relocation type");
     }
-    ES->Relocations.push_back(MR);
+    ES->addRelocation(MR);
   }
   Relocations.clear();
 

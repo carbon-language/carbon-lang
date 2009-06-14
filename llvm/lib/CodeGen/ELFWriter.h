@@ -24,6 +24,7 @@
 #include <map>
 
 namespace llvm {
+  class BinaryObject;
   class ConstantStruct;
   class ELFCodeEmitter;
   class GlobalVariable;
@@ -56,6 +57,9 @@ namespace llvm {
     /// Target machine description.
     TargetMachine &TM;
 
+    /// Target Elf Writer description.
+    const TargetELFWriterInfo *TEW;
+
     /// Mang - The object used to perform name mangling for this module.
     Mangler *Mang;
 
@@ -85,13 +89,8 @@ namespace llvm {
     bool doFinalization(Module &M);
 
   private:
-    // The buffer we accumulate the file header into.  Note that this should be
-    // changed into something much more efficient later (and the bitcode writer
-    // as well!).
-    DataBuffer FileHeader;
-
-    /// ElfHdr - Hold information about the ELF Header
-    ELFHeader *ElfHdr;
+    // Blob containing the Elf header
+    BinaryObject ElfHdr;
 
     /// SectionList - This is the list of sections that we have emitted to the
     /// file.  Once the file has been completely built, the section header table
@@ -110,7 +109,7 @@ namespace llvm {
       ELFSection *&SN = SectionLookup[Name];
       if (SN) return *SN;
 
-      SectionList.push_back(Name);
+      SectionList.push_back(ELFSection(Name, isLittleEndian, is64Bit));
       SN = &SectionList.back();
       SN->SectionIdx = NumSections++;
       SN->Type = Type;
@@ -123,6 +122,10 @@ namespace llvm {
     ELFSection &getTextSection() {
       return getSection(".text", ELFSection::SHT_PROGBITS,
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
+    }
+
+    ELFSection &getNonExecStackSection() {
+      return getSection(".note.GNU-stack", ELFSection::SHT_PROGBITS, 0, 1);
     }
 
     ELFSection &getSymbolTableSection() {
@@ -143,14 +146,14 @@ namespace llvm {
                         ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
     }
 
-    /// SymbolTable - This is the list of symbols we have emitted to the file.
+    /// SymbolList - This is the list of symbols we have emitted to the file.
     /// This actually gets rearranged before emission to the file (to put the
     /// local symbols first in the list).
-    std::vector<ELFSym> SymbolTable;
+    std::vector<ELFSym> SymbolList;
 
-    /// PendingSyms - This is a list of externally defined symbols that we have
-    /// been asked to emit, but have not seen a reference to.  When a reference
-    /// is seen, the symbol will move from this list to the SymbolTable.
+    /// PendingGlobals - List of externally defined symbols that we have been
+    /// asked to emit, but have not seen a reference to.  When a reference
+    /// is seen, the symbol will move from this list to the SymbolList.
     SetVector<GlobalValue*> PendingGlobals;
 
     // As we complete the ELF file, we need to update fields in the ELF header
@@ -160,15 +163,16 @@ namespace llvm {
     unsigned ELFHdr_e_shoff_Offset;     // e_shoff    in ELF header.
     unsigned ELFHdr_e_shstrndx_Offset;  // e_shstrndx in ELF header.
     unsigned ELFHdr_e_shnum_Offset;     // e_shnum    in ELF header.
+
   private:
     void EmitGlobal(GlobalVariable *GV);
-    void EmitGlobalConstant(const Constant *C, OutputBuffer &GblCstTab);
+    void EmitGlobalConstant(const Constant *C, ELFSection &GblS);
     void EmitGlobalConstantStruct(const ConstantStruct *CVS,
-                                  OutputBuffer &GblCstTab);
+                                  ELFSection &GblS);
     void EmitRelocations();
-    void EmitSectionHeader(OutputBuffer &TableOut, const ELFSection &Section);
+    void EmitSectionHeader(BinaryObject &SHdrTab, const ELFSection &SHdr);
     void EmitSectionTableStringTable();
-    void EmitSymbol(OutputBuffer &SymTabOut, ELFSym &Sym);
+    void EmitSymbol(BinaryObject &SymbolTable, ELFSym &Sym);
     void EmitSymbolTable();
     void OutputSectionsAndSectionTable();
   };
