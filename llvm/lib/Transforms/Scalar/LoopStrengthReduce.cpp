@@ -592,7 +592,7 @@ static void MoveLoopVariantsToImmediateField(SCEVHandle &Val, SCEVHandle &Imm,
   if (Val->isLoopInvariant(L)) return;  // Nothing to do.
   
   if (const SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
-    std::vector<SCEVHandle> NewOps;
+    SmallVector<SCEVHandle, 4> NewOps;
     NewOps.reserve(SAE->getNumOperands());
     
     for (unsigned i = 0; i != SAE->getNumOperands(); ++i)
@@ -613,7 +613,7 @@ static void MoveLoopVariantsToImmediateField(SCEVHandle &Val, SCEVHandle &Imm,
     SCEVHandle Start = SARE->getStart();
     MoveLoopVariantsToImmediateField(Start, Imm, L, SE);
     
-    std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
+    SmallVector<SCEVHandle, 4> Ops(SARE->op_begin(), SARE->op_end());
     Ops[0] = Start;
     Val = SE->getAddRecExpr(Ops, SARE->getLoop());
   } else {
@@ -633,7 +633,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
                                 bool isAddress, Loop *L,
                                 ScalarEvolution *SE) {
   if (const SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
-    std::vector<SCEVHandle> NewOps;
+    SmallVector<SCEVHandle, 4> NewOps;
     NewOps.reserve(SAE->getNumOperands());
     
     for (unsigned i = 0; i != SAE->getNumOperands(); ++i) {
@@ -660,7 +660,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     MoveImmediateValues(TLI, AccessTy, Start, Imm, isAddress, L, SE);
     
     if (Start != SARE->getStart()) {
-      std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
+      SmallVector<SCEVHandle, 4> Ops(SARE->op_begin(), SARE->op_end());
       Ops[0] = Start;
       Val = SE->getAddRecExpr(Ops, SARE->getLoop());
     }
@@ -717,7 +717,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 /// SeparateSubExprs - Decompose Expr into all of the subexpressions that are
 /// added together.  This is used to reassociate common addition subexprs
 /// together for maximal sharing when rewriting bases.
-static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
+static void SeparateSubExprs(SmallVector<SCEVHandle, 16> &SubExprs,
                              SCEVHandle Expr,
                              ScalarEvolution *SE) {
   if (const SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Expr)) {
@@ -729,7 +729,7 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
       SubExprs.push_back(Expr);
     } else {
       // Compute the addrec with zero as its base.
-      std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
+      SmallVector<SCEVHandle, 4> Ops(SARE->op_begin(), SARE->op_end());
       Ops[0] = Zero;   // Start with zero base.
       SubExprs.push_back(SE->getAddRecExpr(Ops, SARE->getLoop()));
       
@@ -783,9 +783,9 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
   
   // UniqueSubExprs - Keep track of all of the subexpressions we see in the
   // order we see them.
-  std::vector<SCEVHandle> UniqueSubExprs;
+  SmallVector<SCEVHandle, 16> UniqueSubExprs;
 
-  std::vector<SCEVHandle> SubExprs;
+  SmallVector<SCEVHandle, 16> SubExprs;
   unsigned NumUsesInsideLoop = 0;
   for (unsigned i = 0; i != NumUses; ++i) {
     // If the user is outside the loop, just ignore it for base computation.

@@ -293,7 +293,7 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
     SCEVHandle H =
       getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
     if (H != getOperand(i)) {
-      std::vector<SCEVHandle> NewOps;
+      SmallVector<SCEVHandle, 8> NewOps;
       NewOps.reserve(getNumOperands());
       for (unsigned j = 0; j != i; ++j)
         NewOps.push_back(getOperand(j));
@@ -373,7 +373,7 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
     SCEVHandle H =
       getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
     if (H != getOperand(i)) {
-      std::vector<SCEVHandle> NewOps;
+      SmallVector<SCEVHandle, 8> NewOps;
       NewOps.reserve(getNumOperands());
       for (unsigned j = 0; j != i; ++j)
         NewOps.push_back(getOperand(j));
@@ -558,7 +558,7 @@ namespace {
 /// this to depend on where the addresses of various SCEV objects happened to
 /// land in memory.
 ///
-static void GroupByComplexity(std::vector<SCEVHandle> &Ops,
+static void GroupByComplexity(SmallVectorImpl<SCEVHandle> &Ops,
                               LoopInfo *LI) {
   if (Ops.size() < 2) return;  // Noop
   if (Ops.size() == 2) {
@@ -766,7 +766,7 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op,
   // If the input value is a chrec scev made out of constants, truncate
   // all of the constants.
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
-    std::vector<SCEVHandle> Operands;
+    SmallVector<SCEVHandle, 4> Operands;
     for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i)
       Operands.push_back(getTruncateExpr(AddRec->getOperand(i), Ty));
     return getAddRecExpr(Operands, AddRec->getLoop());
@@ -981,7 +981,7 @@ SCEVHandle ScalarEvolution::getAnyExtendExpr(const SCEVHandle &Op,
 
 /// getAddExpr - Get a canonical add expression, or something simpler if
 /// possible.
-SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
+SCEVHandle ScalarEvolution::getAddExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty add!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
@@ -1001,9 +1001,8 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
     assert(Idx < Ops.size());
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = ConstantInt::get(LHSC->getValue()->getValue() + 
-                                           RHSC->getValue()->getValue());
-      Ops[0] = getConstant(Fold);
+      Ops[0] = getConstant(LHSC->getValue()->getValue() +
+                           RHSC->getValue()->getValue());
       Ops.erase(Ops.begin()+1);  // Erase the folded element
       if (Ops.size() == 1) return Ops[0];
       LHSC = cast<SCEVConstant>(Ops[0]);
@@ -1043,7 +1042,7 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
     const SCEVTruncateExpr *Trunc = cast<SCEVTruncateExpr>(Ops[Idx]);
     const Type *DstType = Trunc->getType();
     const Type *SrcType = Trunc->getOperand()->getType();
-    std::vector<SCEVHandle> LargeOps;
+    SmallVector<SCEVHandle, 8> LargeOps;
     bool Ok = true;
     // Check all the operands to see if they can be represented in the
     // source type of the truncate.
@@ -1059,7 +1058,7 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
         // is much more likely to be foldable here.
         LargeOps.push_back(getSignExtendExpr(C, SrcType));
       } else if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(Ops[i])) {
-        std::vector<SCEVHandle> LargeMulOps;
+        SmallVector<SCEVHandle, 8> LargeMulOps;
         for (unsigned j = 0, f = M->getNumOperands(); j != f && Ok; ++j) {
           if (const SCEVTruncateExpr *T =
                 dyn_cast<SCEVTruncateExpr>(M->getOperand(j))) {
@@ -1128,13 +1127,13 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
     for (unsigned MulOp = 0, e = Mul->getNumOperands(); MulOp != e; ++MulOp) {
       const SCEV *MulOpSCEV = Mul->getOperand(MulOp);
       for (unsigned AddOp = 0, e = Ops.size(); AddOp != e; ++AddOp)
-        if (MulOpSCEV == Ops[AddOp] && !isa<SCEVConstant>(MulOpSCEV)) {
+        if (MulOpSCEV == Ops[AddOp] && !isa<SCEVConstant>(Ops[AddOp])) {
           // Fold W + X + (X * Y * Z)  -->  W + (X * ((Y*Z)+1))
           SCEVHandle InnerMul = Mul->getOperand(MulOp == 0);
           if (Mul->getNumOperands() != 2) {
             // If the multiply has more than two operands, we must get the
             // Y*Z term.
-            std::vector<SCEVHandle> MulOps(Mul->op_begin(), Mul->op_end());
+            SmallVector<SCEVHandle, 4> MulOps(Mul->op_begin(), Mul->op_end());
             MulOps.erase(MulOps.begin()+MulOp);
             InnerMul = getMulExpr(MulOps);
           }
@@ -1166,13 +1165,13 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
             // Fold X + (A*B*C) + (A*D*E) --> X + (A*(B*C+D*E))
             SCEVHandle InnerMul1 = Mul->getOperand(MulOp == 0);
             if (Mul->getNumOperands() != 2) {
-              std::vector<SCEVHandle> MulOps(Mul->op_begin(), Mul->op_end());
+              SmallVector<SCEVHandle, 4> MulOps(Mul->op_begin(), Mul->op_end());
               MulOps.erase(MulOps.begin()+MulOp);
               InnerMul1 = getMulExpr(MulOps);
             }
             SCEVHandle InnerMul2 = OtherMul->getOperand(OMulOp == 0);
             if (OtherMul->getNumOperands() != 2) {
-              std::vector<SCEVHandle> MulOps(OtherMul->op_begin(),
+              SmallVector<SCEVHandle, 4> MulOps(OtherMul->op_begin(),
                                              OtherMul->op_end());
               MulOps.erase(MulOps.begin()+OMulOp);
               InnerMul2 = getMulExpr(MulOps);
@@ -1199,7 +1198,7 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
   for (; Idx < Ops.size() && isa<SCEVAddRecExpr>(Ops[Idx]); ++Idx) {
     // Scan all of the other operands to this add and add them to the vector if
     // they are loop invariant w.r.t. the recurrence.
-    std::vector<SCEVHandle> LIOps;
+    SmallVector<SCEVHandle, 8> LIOps;
     const SCEVAddRecExpr *AddRec = cast<SCEVAddRecExpr>(Ops[Idx]);
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
       if (Ops[i]->isLoopInvariant(AddRec->getLoop())) {
@@ -1213,7 +1212,8 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
       //  NLI + LI + {Start,+,Step}  -->  NLI + {LI+Start,+,Step}
       LIOps.push_back(AddRec->getStart());
 
-      std::vector<SCEVHandle> AddRecOps(AddRec->op_begin(), AddRec->op_end());
+      SmallVector<SCEVHandle, 4> AddRecOps(AddRec->op_begin(),
+                                           AddRec->op_end());
       AddRecOps[0] = getAddExpr(LIOps);
 
       SCEVHandle NewRec = getAddRecExpr(AddRecOps, AddRec->getLoop());
@@ -1238,7 +1238,7 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
         const SCEVAddRecExpr *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
         if (AddRec->getLoop() == OtherAddRec->getLoop()) {
           // Other + {A,+,B} + {C,+,D}  -->  Other + {A+C,+,B+D}
-          std::vector<SCEVHandle> NewOps(AddRec->op_begin(), AddRec->op_end());
+          SmallVector<SCEVHandle, 4> NewOps(AddRec->op_begin(), AddRec->op_end());
           for (unsigned i = 0, e = OtherAddRec->getNumOperands(); i != e; ++i) {
             if (i >= NewOps.size()) {
               NewOps.insert(NewOps.end(), OtherAddRec->op_begin()+i,
@@ -1274,7 +1274,7 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
 
 /// getMulExpr - Get a canonical multiply expression, or something simpler if
 /// possible.
-SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
+SCEVHandle ScalarEvolution::getMulExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty mul!");
 #ifndef NDEBUG
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
@@ -1355,7 +1355,7 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   for (; Idx < Ops.size() && isa<SCEVAddRecExpr>(Ops[Idx]); ++Idx) {
     // Scan all of the other operands to this mul and add them to the vector if
     // they are loop invariant w.r.t. the recurrence.
-    std::vector<SCEVHandle> LIOps;
+    SmallVector<SCEVHandle, 8> LIOps;
     const SCEVAddRecExpr *AddRec = cast<SCEVAddRecExpr>(Ops[Idx]);
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
       if (Ops[i]->isLoopInvariant(AddRec->getLoop())) {
@@ -1367,7 +1367,7 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
     // If we found some loop invariants, fold them into the recurrence.
     if (!LIOps.empty()) {
       //  NLI * LI * {Start,+,Step}  -->  NLI * {LI*Start,+,LI*Step}
-      std::vector<SCEVHandle> NewOps;
+      SmallVector<SCEVHandle, 4> NewOps;
       NewOps.reserve(AddRec->getNumOperands());
       if (LIOps.size() == 1) {
         const SCEV *Scale = LIOps[0];
@@ -1375,7 +1375,7 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
           NewOps.push_back(getMulExpr(Scale, AddRec->getOperand(i)));
       } else {
         for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i) {
-          std::vector<SCEVHandle> MulOps(LIOps);
+          SmallVector<SCEVHandle, 4> MulOps(LIOps.begin(), LIOps.end());
           MulOps.push_back(AddRec->getOperand(i));
           NewOps.push_back(getMulExpr(MulOps));
         }
@@ -1473,14 +1473,14 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
             getAddRecExpr(getZeroExtendExpr(AR->getStart(), ExtTy),
                           getZeroExtendExpr(Step, ExtTy),
                           AR->getLoop())) {
-          std::vector<SCEVHandle> Operands;
+          SmallVector<SCEVHandle, 4> Operands;
           for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i)
             Operands.push_back(getUDivExpr(AR->getOperand(i), RHS));
           return getAddRecExpr(Operands, AR->getLoop());
         }
     // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
     if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS)) {
-      std::vector<SCEVHandle> Operands;
+      SmallVector<SCEVHandle, 4> Operands;
       for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i)
         Operands.push_back(getZeroExtendExpr(M->getOperand(i), ExtTy));
       if (getZeroExtendExpr(M, ExtTy) == getMulExpr(Operands))
@@ -1489,7 +1489,9 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
           SCEVHandle Op = M->getOperand(i);
           SCEVHandle Div = getUDivExpr(Op, RHSC);
           if (!isa<SCEVUDivExpr>(Div) && getMulExpr(Div, RHSC) == Op) {
-            Operands = M->getOperands();
+            const SmallVectorImpl<SCEVHandle> &MOperands = M->getOperands();
+            Operands = SmallVector<SCEVHandle, 4>(MOperands.begin(),
+                                                  MOperands.end());
             Operands[i] = Div;
             return getMulExpr(Operands);
           }
@@ -1497,7 +1499,7 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
     }
     // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
     if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS)) {
-      std::vector<SCEVHandle> Operands;
+      SmallVector<SCEVHandle, 4> Operands;
       for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i)
         Operands.push_back(getZeroExtendExpr(A->getOperand(i), ExtTy));
       if (getZeroExtendExpr(A, ExtTy) == getAddExpr(Operands)) {
@@ -1531,7 +1533,7 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
 /// Simplify the expression as much as possible.
 SCEVHandle ScalarEvolution::getAddRecExpr(const SCEVHandle &Start,
                                const SCEVHandle &Step, const Loop *L) {
-  std::vector<SCEVHandle> Operands;
+  SmallVector<SCEVHandle, 4> Operands;
   Operands.push_back(Start);
   if (const SCEVAddRecExpr *StepChrec = dyn_cast<SCEVAddRecExpr>(Step))
     if (StepChrec->getLoop() == L) {
@@ -1546,7 +1548,7 @@ SCEVHandle ScalarEvolution::getAddRecExpr(const SCEVHandle &Start,
 
 /// getAddRecExpr - Get an add recurrence expression for the specified loop.
 /// Simplify the expression as much as possible.
-SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
+SCEVHandle ScalarEvolution::getAddRecExpr(SmallVectorImpl<SCEVHandle> &Operands,
                                           const Loop *L) {
   if (Operands.size() == 1) return Operands[0];
 #ifndef NDEBUG
@@ -1565,8 +1567,8 @@ SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
   if (const SCEVAddRecExpr *NestedAR = dyn_cast<SCEVAddRecExpr>(Operands[0])) {
     const Loop* NestedLoop = NestedAR->getLoop();
     if (L->getLoopDepth() < NestedLoop->getLoopDepth()) {
-      std::vector<SCEVHandle> NestedOperands(NestedAR->op_begin(),
-                                             NestedAR->op_end());
+      SmallVector<SCEVHandle, 4> NestedOperands(NestedAR->op_begin(),
+                                                NestedAR->op_end());
       SCEVHandle NestedARHandle(NestedAR);
       Operands[0] = NestedAR->getStart();
       NestedOperands[0] = getAddRecExpr(Operands, L);
@@ -1582,13 +1584,14 @@ SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
 
 SCEVHandle ScalarEvolution::getSMaxExpr(const SCEVHandle &LHS,
                                         const SCEVHandle &RHS) {
-  std::vector<SCEVHandle> Ops;
+  SmallVector<SCEVHandle, 2> Ops;
   Ops.push_back(LHS);
   Ops.push_back(RHS);
   return getSMaxExpr(Ops);
 }
 
-SCEVHandle ScalarEvolution::getSMaxExpr(std::vector<SCEVHandle> Ops) {
+SCEVHandle
+ScalarEvolution::getSMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty smax!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
@@ -1668,13 +1671,14 @@ SCEVHandle ScalarEvolution::getSMaxExpr(std::vector<SCEVHandle> Ops) {
 
 SCEVHandle ScalarEvolution::getUMaxExpr(const SCEVHandle &LHS,
                                         const SCEVHandle &RHS) {
-  std::vector<SCEVHandle> Ops;
+  SmallVector<SCEVHandle, 2> Ops;
   Ops.push_back(LHS);
   Ops.push_back(RHS);
   return getUMaxExpr(Ops);
 }
 
-SCEVHandle ScalarEvolution::getUMaxExpr(std::vector<SCEVHandle> Ops) {
+SCEVHandle
+ScalarEvolution::getUMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty umax!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
@@ -2040,7 +2044,7 @@ SCEVHandle ScalarEvolution::createNodeForPHI(PHINode *PN) {
 
           if (FoundIndex != Add->getNumOperands()) {
             // Create an add with everything but the specified operand.
-            std::vector<SCEVHandle> Ops;
+            SmallVector<SCEVHandle, 8> Ops;
             for (unsigned i = 0, e = Add->getNumOperands(); i != e; ++i)
               if (i != FoundIndex)
                 Ops.push_back(Add->getOperand(i));
@@ -3074,7 +3078,7 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
       if (OpAtScope != Comm->getOperand(i)) {
         // Okay, at least one of these operands is loop variant but might be
         // foldable.  Build a new instance of the folded commutative expression.
-        std::vector<SCEVHandle> NewOps(Comm->op_begin(), Comm->op_begin()+i);
+        SmallVector<SCEVHandle, 8> NewOps(Comm->op_begin(), Comm->op_begin()+i);
         NewOps.push_back(OpAtScope);
 
         for (++i; i != e; ++i) {
@@ -3611,7 +3615,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
   // If the start is a non-zero constant, shift the range to simplify things.
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(getStart()))
     if (!SC->getValue()->isZero()) {
-      std::vector<SCEVHandle> Operands(op_begin(), op_end());
+      SmallVector<SCEVHandle, 4> Operands(op_begin(), op_end());
       Operands[0] = SE.getIntegerSCEV(0, SC->getType());
       SCEVHandle Shifted = SE.getAddRecExpr(Operands, getLoop());
       if (const SCEVAddRecExpr *ShiftedAddRec =
@@ -3672,7 +3676,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // quadratic equation to solve it.  To do this, we must frame our problem in
     // terms of figuring out when zero is crossed, instead of when
     // Range.getUpper() is crossed.
-    std::vector<SCEVHandle> NewOps(op_begin(), op_end());
+    SmallVector<SCEVHandle, 4> NewOps(op_begin(), op_end());
     NewOps[0] = SE.getNegativeSCEV(SE.getConstant(Range.getUpper()));
     SCEVHandle NewAddRec = SE.getAddRecExpr(NewOps, getLoop());
 

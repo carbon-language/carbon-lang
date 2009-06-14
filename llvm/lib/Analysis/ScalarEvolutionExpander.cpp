@@ -182,7 +182,8 @@ static bool FactorOutConstant(SCEVHandle &S,
   if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S))
     if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
       if (!C->getValue()->getValue().srem(Factor)) {
-        std::vector<SCEVHandle> NewMulOps(M->getOperands());
+        const SmallVectorImpl<SCEVHandle> &MOperands = M->getOperands();
+        SmallVector<SCEVHandle, 4> NewMulOps(MOperands.begin(), MOperands.end());
         NewMulOps[0] =
           SE.getConstant(C->getValue()->getValue().sdiv(Factor));
         S = SE.getMulExpr(NewMulOps);
@@ -239,7 +240,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
                                     Value *V) {
   const Type *ElTy = PTy->getElementType();
   SmallVector<Value *, 4> GepIndices;
-  std::vector<SCEVHandle> Ops(op_begin, op_end);
+  SmallVector<SCEVHandle, 8> Ops(op_begin, op_end);
   bool AnyNonZeroIndices = false;
 
   // Decend down the pointer's type and attempt to convert the other
@@ -250,8 +251,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
   for (;;) {
     APInt ElSize = APInt(SE.getTypeSizeInBits(Ty),
                          ElTy->isSized() ?  SE.TD->getTypeAllocSize(ElTy) : 0);
-    std::vector<SCEVHandle> NewOps;
-    std::vector<SCEVHandle> ScaledOps;
+    SmallVector<SCEVHandle, 8> NewOps;
+    SmallVector<SCEVHandle, 8> ScaledOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       // Split AddRecs up into parts as either of the parts may be usable
       // without the other.
@@ -365,7 +366,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   // comments on expandAddToGEP for details.
   if (SE.TD)
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
-      const std::vector<SCEVHandle> &Ops = S->getOperands();
+      const SmallVectorImpl<SCEVHandle> &Ops = S->getOperands();
       return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1],
                             PTy, Ty, V);
     }
@@ -432,7 +433,7 @@ static void ExposePointerBase(SCEVHandle &Base, SCEVHandle &Rest,
   }
   if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(Base)) {
     Base = A->getOperand(A->getNumOperands()-1);
-    std::vector<SCEVHandle> NewAddOps(A->op_begin(), A->op_end());
+    SmallVector<SCEVHandle, 8> NewAddOps(A->op_begin(), A->op_end());
     NewAddOps.back() = Rest;
     Rest = SE.getAddExpr(NewAddOps);
     ExposePointerBase(Base, Rest, SE);
@@ -473,7 +474,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
   // {X,+,F} --> X + {0,+,F}
   if (!S->getStart()->isZero()) {
-    std::vector<SCEVHandle> NewOps(S->getOperands());
+    const SmallVectorImpl<SCEVHandle> &SOperands = S->getOperands();
+    SmallVector<SCEVHandle, 4> NewOps(SOperands.begin(), SOperands.end());
     NewOps[0] = SE.getIntegerSCEV(0, Ty);
     SCEVHandle Rest = SE.getAddRecExpr(NewOps, L);
 

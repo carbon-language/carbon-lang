@@ -394,24 +394,24 @@ namespace llvm {
     SCEVHandle getZeroExtendExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getSignExtendExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getAnyExtendExpr(const SCEVHandle &Op, const Type *Ty);
-    SCEVHandle getAddExpr(std::vector<SCEVHandle> &Ops);
+    SCEVHandle getAddExpr(SmallVectorImpl<SCEVHandle> &Ops);
     SCEVHandle getAddExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
-      std::vector<SCEVHandle> Ops;
+      SmallVector<SCEVHandle, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
       return getAddExpr(Ops);
     }
     SCEVHandle getAddExpr(const SCEVHandle &Op0, const SCEVHandle &Op1,
                           const SCEVHandle &Op2) {
-      std::vector<SCEVHandle> Ops;
+      SmallVector<SCEVHandle, 3> Ops;
       Ops.push_back(Op0);
       Ops.push_back(Op1);
       Ops.push_back(Op2);
       return getAddExpr(Ops);
     }
-    SCEVHandle getMulExpr(std::vector<SCEVHandle> &Ops);
+    SCEVHandle getMulExpr(SmallVectorImpl<SCEVHandle> &Ops);
     SCEVHandle getMulExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
-      std::vector<SCEVHandle> Ops;
+      SmallVector<SCEVHandle, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
       return getMulExpr(Ops);
@@ -419,17 +419,17 @@ namespace llvm {
     SCEVHandle getUDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
     SCEVHandle getAddRecExpr(const SCEVHandle &Start, const SCEVHandle &Step,
                              const Loop *L);
-    SCEVHandle getAddRecExpr(std::vector<SCEVHandle> &Operands,
+    SCEVHandle getAddRecExpr(SmallVectorImpl<SCEVHandle> &Operands,
                              const Loop *L);
-    SCEVHandle getAddRecExpr(const std::vector<SCEVHandle> &Operands,
+    SCEVHandle getAddRecExpr(const SmallVectorImpl<SCEVHandle> &Operands,
                              const Loop *L) {
-      std::vector<SCEVHandle> NewOp(Operands);
+      SmallVector<SCEVHandle, 4> NewOp(Operands.begin(), Operands.end());
       return getAddRecExpr(NewOp, L);
     }
     SCEVHandle getSMaxExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
-    SCEVHandle getSMaxExpr(std::vector<SCEVHandle> Operands);
+    SCEVHandle getSMaxExpr(SmallVectorImpl<SCEVHandle> &Operands);
     SCEVHandle getUMaxExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
-    SCEVHandle getUMaxExpr(std::vector<SCEVHandle> Operands);
+    SCEVHandle getUMaxExpr(SmallVectorImpl<SCEVHandle> &Operands);
     SCEVHandle getUnknown(Value *V);
     SCEVHandle getCouldNotCompute();
 

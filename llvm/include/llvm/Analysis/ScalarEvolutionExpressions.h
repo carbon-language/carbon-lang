@@ -199,10 +199,10 @@ namespace llvm {
   ///
   class SCEVNAryExpr : public SCEV {
   protected:
-    std::vector<SCEVHandle> Operands;
+    SmallVector<SCEVHandle, 8> Operands;
 
-    SCEVNAryExpr(enum SCEVTypes T, const std::vector<SCEVHandle> &ops)
-      : SCEV(T), Operands(ops) {}
+    SCEVNAryExpr(enum SCEVTypes T, const SmallVectorImpl<SCEVHandle> &ops)
+      : SCEV(T), Operands(ops.begin(), ops.end()) {}
     virtual ~SCEVNAryExpr() {}
 
   public:
@@ -212,8 +212,8 @@ namespace llvm {
       return Operands[i];
     }
 
-    const std::vector<SCEVHandle> &getOperands() const { return Operands; }
-    typedef std::vector<SCEVHandle>::const_iterator op_iterator;
+    const SmallVectorImpl<SCEVHandle> &getOperands() const { return Operands; }
+    typedef SmallVectorImpl<SCEVHandle>::const_iterator op_iterator;
     op_iterator op_begin() const { return Operands.begin(); }
     op_iterator op_end() const { return Operands.end(); }
 
@@ -259,7 +259,7 @@ namespace llvm {
   ///
   class SCEVCommutativeExpr : public SCEVNAryExpr {
   protected:
-    SCEVCommutativeExpr(enum SCEVTypes T, const std::vector<SCEVHandle> &ops)
+    SCEVCommutativeExpr(enum SCEVTypes T, const SmallVectorImpl<SCEVHandle> &ops)
       : SCEVNAryExpr(T, ops) {}
     ~SCEVCommutativeExpr();
 
@@ -289,7 +289,7 @@ namespace llvm {
   class SCEVAddExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVAddExpr(const std::vector<SCEVHandle> &ops)
+    explicit SCEVAddExpr(const SmallVectorImpl<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scAddExpr, ops) {
     }
 
@@ -309,7 +309,7 @@ namespace llvm {
   class SCEVMulExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVMulExpr(const std::vector<SCEVHandle> &ops)
+    explicit SCEVMulExpr(const SmallVectorImpl<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scMulExpr, ops) {
     }
 
@@ -387,7 +387,7 @@ namespace llvm {
 
     const Loop *L;
 
-    SCEVAddRecExpr(const std::vector<SCEVHandle> &ops, const Loop *l)
+    SCEVAddRecExpr(const SmallVectorImpl<SCEVHandle> &ops, const Loop *l)
       : SCEVNAryExpr(scAddRecExpr, ops), L(l) {
       for (size_t i = 0, e = Operands.size(); i != e; ++i)
         assert(Operands[i]->isLoopInvariant(l) &&
@@ -404,7 +404,7 @@ namespace llvm {
     /// of degree N, it returns a chrec of degree N-1.
     SCEVHandle getStepRecurrence(ScalarEvolution &SE) const {
       if (isAffine()) return getOperand(1);
-      return SE.getAddRecExpr(std::vector<SCEVHandle>(op_begin()+1,op_end()),
+      return SE.getAddRecExpr(SmallVector<SCEVHandle, 3>(op_begin()+1,op_end()),
                               getLoop());
     }
 
@@ -463,7 +463,7 @@ namespace llvm {
   class SCEVSMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVSMaxExpr(const std::vector<SCEVHandle> &ops)
+    explicit SCEVSMaxExpr(const SmallVectorImpl<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scSMaxExpr, ops) {
     }
 
@@ -484,7 +484,7 @@ namespace llvm {
   class SCEVUMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVUMaxExpr(const std::vector<SCEVHandle> &ops)
+    explicit SCEVUMaxExpr(const SmallVectorImpl<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scUMaxExpr, ops) {
     }
 
