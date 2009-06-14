@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Builtins.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;

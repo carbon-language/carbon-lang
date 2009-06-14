@@ -16,8 +16,10 @@
 #define LLVM_CLANG_AST_BUILTINS_H
 
 #include <cstring>
-#include <string>
-#include "llvm/ADT/SmallVector.h"
+
+namespace llvm {
+  template <typename T> class SmallVectorImpl;
+}
 
 namespace clang {
   class TargetInfo;
