@@ -3145,7 +3145,7 @@ bool LLParser::ParseFree(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseLoad
-///   ::= 'volatile'? 'load' TypeAndValue (',' 'align' uint)?
+///   ::= 'volatile'? 'load' TypeAndValue (',' 'align' i32)?
 bool LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
                          bool isVolatile) {
   Value *Val; LocTy Loc;
@@ -3163,7 +3163,7 @@ bool LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
 }
 
 /// ParseStore
-///   ::= 'volatile'? 'store' TypeAndValue ',' TypeAndValue (',' 'align' uint)?
+///   ::= 'volatile'? 'store' TypeAndValue ',' TypeAndValue (',' 'align' i32)?
 bool LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
                           bool isVolatile) {
   Value *Val, *Ptr; LocTy Loc, PtrLoc;
@@ -3186,7 +3186,7 @@ bool LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
 }
 
 /// ParseGetResult
-///   ::= 'getresult' TypeAndValue ',' uint
+///   ::= 'getresult' TypeAndValue ',' i32
 /// FIXME: Remove support for getresult in LLVM 3.0
 bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Val; LocTy ValLoc, EltLoc;

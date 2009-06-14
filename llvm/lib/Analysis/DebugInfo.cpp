@@ -352,7 +352,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
   
   const PointerType *DestTy = PointerType::getUnqual(Type::Int8Ty);
   
-  // If empty string then use a sbyte* null instead.
+  // If empty string then use a i8* null instead.
   if (String.empty())
     return Slot = ConstantPointerNull::get(DestTy);
 

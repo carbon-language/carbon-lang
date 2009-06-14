@@ -2290,7 +2290,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   }
 
   // add (cast *A to intptrtype) B -> 
-  //   cast (GEP (cast *A to sbyte*) B)  -->  intptrtype
+  //   cast (GEP (cast *A to i8*) B)  -->  intptrtype
   {
     CastInst *CI = dyn_cast<CastInst>(LHS);
     Value *Other = RHS;
@@ -7133,10 +7133,10 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   if (Res2 == CI) {
     // Make sure that sign of the Cmp and the sign of the Cast are the same.
     // For example, we might have:
-    //    %A = sext short %X to uint
-    //    %B = icmp ugt uint %A, 1330
+    //    %A = sext i16 %X to i32
+    //    %B = icmp ugt i32 %A, 1330
     // It is incorrect to transform this into 
-    //    %B = icmp ugt short %X, 1330 
+    //    %B = icmp ugt i16 %X, 1330
     // because %A may have negative value. 
     //
     // However, we allow this when the compare is EQ/NE, because they are
@@ -7273,8 +7273,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   // purpose is to compute bits we don't care about.
   uint32_t TypeBits = Op0->getType()->getPrimitiveSizeInBits();
   
-  // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
-  // of a signed value.
+  // shl i32 X, 32 = 0 and srl i8 Y, 9 = 0, ... just don't eliminate
+  // a signed shift.
   //
   if (Op1->uge(TypeBits)) {
     if (I.getOpcode() != Instruction::AShr)

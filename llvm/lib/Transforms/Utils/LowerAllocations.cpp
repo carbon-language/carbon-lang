@@ -112,7 +112,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
     if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
       const Type *AllocTy = MI->getType()->getElementType();
 
-      // malloc(type) becomes sbyte *malloc(size)
+      // malloc(type) becomes i8 *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
         MallocArg = ConstantInt::get(Type::Int64Ty,

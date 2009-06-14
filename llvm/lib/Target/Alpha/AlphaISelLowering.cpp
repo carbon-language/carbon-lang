@@ -39,7 +39,7 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 
 AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM) {
   // Set up the TargetLowering object.
-  //I am having problems with shr n ubyte 1
+  //I am having problems with shr n i8 1
   setShiftAmountType(MVT::i64);
   setBooleanContents(ZeroOrOneBooleanContent);
   

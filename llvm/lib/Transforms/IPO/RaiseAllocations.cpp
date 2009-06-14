@@ -82,14 +82,14 @@ void RaiseAllocations::doInitialization(Module &M) {
 
     // Chck to see if we got the expected malloc
     if (TyWeHave != Malloc1Type) {
-      // Check to see if the prototype is wrong, giving us sbyte*(uint) * malloc
+      // Check to see if the prototype is wrong, giving us i8*(i32) * malloc
       // This handles the common declaration of: 'void *malloc(unsigned);'
       const FunctionType *Malloc2Type = 
         FunctionType::get(PointerType::getUnqual(Type::Int8Ty),
                           std::vector<const Type*>(1, Type::Int32Ty), false);
       if (TyWeHave != Malloc2Type) {
         // Check to see if the prototype is missing, giving us 
-        // sbyte*(...) * malloc
+        // i8*(...) * malloc
         // This handles the common declaration of: 'void *malloc();'
         const FunctionType *Malloc3Type = 
           FunctionType::get(PointerType::getUnqual(Type::Int8Ty),

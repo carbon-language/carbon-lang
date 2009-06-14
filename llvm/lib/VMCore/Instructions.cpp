@@ -1310,7 +1310,7 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
     return false;// Second operand of insertelement must be vector element type.
     
   if (Index->getType() != Type::Int32Ty)
-    return false;  // Third operand of insertelement must be uint.
+    return false;  // Third operand of insertelement must be i32.
   return true;
 }
 
@@ -1880,8 +1880,8 @@ unsigned CastInst::isEliminableCastPair(
   // BITCONVERT    =       FirstClass   n/a       FirstClass    n/a   
   //
   // NOTE: some transforms are safe, but we consider them to be non-profitable.
-  // For example, we could merge "fptoui double to uint" + "zext uint to ulong",
-  // into "fptoui double to ulong", but this loses information about the range
+  // For example, we could merge "fptoui double to i32" + "zext i32 to i64",
+  // into "fptoui double to i64", but this loses information about the range
   // of the produced value (we no longer know the top-part is all zeros). 
   // Further this conversion is often much more expensive for typical hardware,
   // and causes issues when building libgcc.  We disallow fptosi+sext for the 

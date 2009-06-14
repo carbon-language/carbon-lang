@@ -502,7 +502,7 @@ const GlobalValue * AsmPrinter::findGlobalValue(const Constant *CV) {
 void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   const char *Directive = TAI->getUsedDirective();
 
-  // Should be an array of 'sbyte*'.
+  // Should be an array of 'i8*'.
   ConstantArray *InitList = dyn_cast<ConstantArray>(List);
   if (InitList == 0) return;
   

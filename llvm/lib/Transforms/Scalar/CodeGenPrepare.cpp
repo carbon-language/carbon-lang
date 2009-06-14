@@ -401,8 +401,8 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
 
 
 /// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
-/// copy (e.g. it's casting from one pointer type to another, int->uint, or
-/// int->sbyte on PPC), sink it into user blocks to reduce the number of virtual
+/// copy (e.g. it's casting from one pointer type to another, i32->i8 on PPC),
+/// sink it into user blocks to reduce the number of virtual
 /// registers that must be created and coalesced.
 ///
 /// Return true if any changes are made.

@@ -143,10 +143,10 @@ Pass *createLoopIndexSplitPass();
 // this pass is:
 //
 //        FROM CODE                           TO CODE
-//   %X = alloca int, uint 1                 ret int 42
-//   store int 42, int *%X
-//   %Y = load int* %X
-//   ret int %Y
+//   %X = alloca i32, i32 1                 ret i32 42
+//   store i32 42, i32 *%X
+//   %Y = load i32* %X
+//   ret i32 %Y
 //
 FunctionPass *createPromoteMemoryToRegisterPass();
 extern const PassInfo *const PromoteMemoryToRegisterID;
