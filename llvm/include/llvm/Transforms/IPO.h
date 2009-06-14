@@ -214,6 +214,11 @@ Pass *createFunctionAttrsPass();
 ///
 ModulePass *createMergeFunctionsPass();
 
+//===----------------------------------------------------------------------===//
+/// createPartialInliningPass - This pass inlines parts of functions.
+///
+ModulePass *createPartialInliningPass();
+
 } // End llvm namespace
 
 #endif

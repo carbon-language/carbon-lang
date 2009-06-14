@@ -127,6 +127,7 @@ namespace {
       (void) llvm::createPrintModulePass(0);
       (void) llvm::createPrintFunctionPass("", 0);
       (void) llvm::createDbgInfoPrinterPass();
+      (void) llvm::createPartialInliningPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
