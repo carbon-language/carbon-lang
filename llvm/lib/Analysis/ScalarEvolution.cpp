@@ -504,9 +504,18 @@ namespace {
         return false;
       }
 
-      // Constant sorting doesn't matter since they'll be folded.
-      if (isa<SCEVConstant>(LHS))
-        return false;
+      // Compare constant values.
+      if (const SCEVConstant *LC = dyn_cast<SCEVConstant>(LHS)) {
+        const SCEVConstant *RC = cast<SCEVConstant>(RHS);
+        return LC->getValue()->getValue().ult(RC->getValue()->getValue());
+      }
+
+      // Compare addrec loop depths.
+      if (const SCEVAddRecExpr *LA = dyn_cast<SCEVAddRecExpr>(LHS)) {
+        const SCEVAddRecExpr *RA = cast<SCEVAddRecExpr>(RHS);
+        if (LA->getLoop()->getLoopDepth() != RA->getLoop()->getLoopDepth())
+          return LA->getLoop()->getLoopDepth() < RA->getLoop()->getLoopDepth();
+      }
 
       // Lexicographically compare n-ary expressions.
       if (const SCEVNAryExpr *LC = dyn_cast<SCEVNAryExpr>(LHS)) {
