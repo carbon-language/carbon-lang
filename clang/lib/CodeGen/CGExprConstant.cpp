@@ -198,16 +198,13 @@ public:
 
     // Copy initializer elements. Skip padding fields.
     unsigned EltNo = 0;  // Element no in ILE
-    int FieldNo = 0; // Field no in RecordDecl
     bool RewriteType = false;
     for (RecordDecl::field_iterator Field = RD->field_begin(CGM.getContext()),
                                  FieldEnd = RD->field_end(CGM.getContext());
          EltNo < ILE->getNumInits() && Field != FieldEnd; ++Field) {
-      FieldNo++;
-      if (!Field->getIdentifier())
-        continue;
-
       if (Field->isBitField()) {
+        if (!Field->getIdentifier())
+          continue;
         InsertBitfieldIntoStruct(Elts, *Field, ILE->getInit(EltNo));
       } else {
         unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(*Field);
