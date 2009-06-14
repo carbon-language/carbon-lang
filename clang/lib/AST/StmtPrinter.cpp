@@ -643,13 +643,19 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
   if (!Node->isPostfix()) {
     OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
     
-    // Print a space if this is an "identifier operator" like __real.
+    // Print a space if this is an "identifier operator" like __real, or if
+    // it might be concatenated incorrectly like '+'.
     switch (Node->getOpcode()) {
     default: break;
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
     case UnaryOperator::Extension:
       OS << ' ';
+      break;
+    case UnaryOperator::Plus:
+    case UnaryOperator::Minus:
+      if (isa<UnaryOperator>(Node->getSubExpr()))
+        OS << ' ';
       break;
     }
   }
