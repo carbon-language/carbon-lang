@@ -1012,8 +1012,8 @@ SCEVHandle ScalarEvolution::getAddExpr(SmallVectorImpl<SCEVHandle> &Ops) {
       // We found two constants, fold them together!
       Ops[0] = getConstant(LHSC->getValue()->getValue() +
                            RHSC->getValue()->getValue());
+      if (Ops.size() == 2) return Ops[0];
       Ops.erase(Ops.begin()+1);  // Erase the folded element
-      if (Ops.size() == 1) return Ops[0];
       LHSC = cast<SCEVConstant>(Ops[0]);
     }
 
