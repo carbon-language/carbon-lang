@@ -25,6 +25,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/ADT/DenseMap.h"
 #include <iosfwd>
 
 namespace llvm {
@@ -34,6 +35,7 @@ namespace llvm {
   class SCEVHandle;
   class ScalarEvolution;
   class TargetData;
+  template<> struct DenseMapInfo<SCEVHandle>;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are reference-counted opaque objects that the client is not allowed to
@@ -44,6 +46,7 @@ namespace llvm {
     mutable unsigned RefCount;
 
     friend class SCEVHandle;
+    friend class DenseMapInfo<SCEVHandle>;
     void addRef() const { ++RefCount; }
     void dropRef() const {
       if (--RefCount == 0)
@@ -196,6 +199,31 @@ namespace llvm {
   };
   template<> struct simplify_type<SCEVHandle>
     : public simplify_type<const SCEVHandle> {};
+
+  // Specialize DenseMapInfo for SCEVHandle so that SCEVHandle may be used
+  // as a key in DenseMaps.
+  template<>
+  struct DenseMapInfo<SCEVHandle> {
+    static inline SCEVHandle getEmptyKey() {
+      static SCEVCouldNotCompute Empty;
+      if (Empty.RefCount == 0)
+        Empty.addRef();
+      return &Empty;
+    }
+    static inline SCEVHandle getTombstoneKey() {
+      static SCEVCouldNotCompute Tombstone;
+      if (Tombstone.RefCount == 0)
+        Tombstone.addRef();
+      return &Tombstone;
+    }
+    static unsigned getHashValue(const SCEVHandle &Val) {
+      return DenseMapInfo<const SCEV *>::getHashValue(Val);
+    }
+    static bool isEqual(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+      return LHS == RHS;
+    }
+    static bool isPod() { return false; }
+  };
 
   /// ScalarEvolution - This class is the main scalar evolution driver.  Because
   /// client code (intentionally) can't do much with the SCEV objects directly,
