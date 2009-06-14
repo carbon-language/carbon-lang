@@ -988,6 +988,102 @@ SCEVHandle ScalarEvolution::getAnyExtendExpr(const SCEVHandle &Op,
   return ZExt;
 }
 
+/// CollectAddOperandsWithScales - Process the given Ops list, which is
+/// a list of operands to be added under the given scale, update the given
+/// map. This is a helper function for getAddRecExpr. As an example of
+/// what it does, given a sequence of operands that would form an add
+/// expression like this:
+///
+///    m + n + 13 + (A * (o + p + (B * q + m + 29))) + r + (-1 * r)
+///
+/// where A and B are constants, update the map with these values:
+///
+///    (m, 1+A*B), (n, 1), (o, A), (p, A), (q, A*B), (r, 0)
+///
+/// and add 13 + A*B*29 to AccumulatedConstant.
+/// This will allow getAddRecExpr to produce this:
+///
+///    13+A*B*29 + n + (m * (1+A*B)) + ((o + p) * A) + (q * A*B)
+///
+/// This form often exposes folding opportunities that are hidden in
+/// the original operand list.
+///
+/// Return true iff it appears that any interesting folding opportunities
+/// may be exposed. This helps getAddRecExpr short-circuit extra work in
+/// the common case where no interesting opportunities are present, and
+/// is also used as a check to avoid infinite recursion.
+///
+static bool
+CollectAddOperandsWithScales(DenseMap<SCEVHandle, APInt> &M,
+                             SmallVector<SCEVHandle, 8> &NewOps,
+                             APInt &AccumulatedConstant,
+                             const SmallVectorImpl<SCEVHandle> &Ops,
+                             const APInt &Scale,
+                             ScalarEvolution &SE) {
+  bool Interesting = false;
+
+  // Iterate over the add operands.
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Ops[i]);
+    if (Mul && isa<SCEVConstant>(Mul->getOperand(0))) {
+      APInt NewScale =
+        Scale * cast<SCEVConstant>(Mul->getOperand(0))->getValue()->getValue();
+      if (Mul->getNumOperands() == 2 && isa<SCEVAddExpr>(Mul->getOperand(1))) {
+        // A multiplication of a constant with another add; recurse.
+        Interesting |=
+          CollectAddOperandsWithScales(M, NewOps, AccumulatedConstant,
+                                       cast<SCEVAddExpr>(Mul->getOperand(1))
+                                         ->getOperands(),
+                                       NewScale, SE);
+      } else {
+        // A multiplication of a constant with some other value. Update
+        // the map.
+        SmallVector<SCEVHandle, 4> MulOps(Mul->op_begin()+1, Mul->op_end());
+        SCEVHandle Key = SE.getMulExpr(MulOps);
+        std::pair<DenseMap<SCEVHandle, APInt>::iterator, bool> Pair =
+          M.insert(std::make_pair(Key, APInt()));
+        if (Pair.second) {
+          Pair.first->second = NewScale;
+          NewOps.push_back(Pair.first->first);
+        } else {
+          Pair.first->second += NewScale;
+          // The map already had an entry for this value, which may indicate
+          // a folding opportunity.
+          Interesting = true;
+        }
+      }
+    } else if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i])) {
+      // Pull a buried constant out to the outside.
+      if (Scale != 1 || AccumulatedConstant != 0 || C->isZero())
+        Interesting = true;
+      AccumulatedConstant += Scale * C->getValue()->getValue();
+    } else {
+      // An ordinary operand. Update the map.
+      std::pair<DenseMap<SCEVHandle, APInt>::iterator, bool> Pair =
+        M.insert(std::make_pair(Ops[i], APInt()));
+      if (Pair.second) {
+        Pair.first->second = Scale;
+        NewOps.push_back(Pair.first->first);
+      } else {
+        Pair.first->second += Scale;
+        // The map already had an entry for this value, which may indicate
+        // a folding opportunity.
+        Interesting = true;
+      }
+    }
+  }
+
+  return Interesting;
+}
+
+namespace {
+  struct APIntCompare {
+    bool operator()(const APInt &LHS, const APInt &RHS) const {
+      return LHS.ult(RHS);
+    }
+  };
+}
+
 /// getAddExpr - Get a canonical add expression, or something simpler if
 /// possible.
 SCEVHandle ScalarEvolution::getAddExpr(SmallVectorImpl<SCEVHandle> &Ops) {
@@ -1127,6 +1223,38 @@ SCEVHandle ScalarEvolution::getAddExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   // Skip over the add expression until we get to a multiply.
   while (Idx < Ops.size() && Ops[Idx]->getSCEVType() < scMulExpr)
     ++Idx;
+
+  // Check to see if there are any folding opportunities present with
+  // operands multiplied by constant values.
+  if (Idx < Ops.size() && isa<SCEVMulExpr>(Ops[Idx])) {
+    uint64_t BitWidth = getTypeSizeInBits(Ty);
+    DenseMap<SCEVHandle, APInt> M;
+    SmallVector<SCEVHandle, 8> NewOps;
+    APInt AccumulatedConstant(BitWidth, 0);
+    if (CollectAddOperandsWithScales(M, NewOps, AccumulatedConstant,
+                                     Ops, APInt(BitWidth, 1), *this)) {
+      // Some interesting folding opportunity is present, so its worthwhile to
+      // re-generate the operands list. Group the operands by constant scale,
+      // to avoid multiplying by the same constant scale multiple times.
+      std::map<APInt, SmallVector<SCEVHandle, 4>, APIntCompare> MulOpLists;
+      for (SmallVector<SCEVHandle, 8>::iterator I = NewOps.begin(),
+           E = NewOps.end(); I != E; ++I)
+        MulOpLists[M.find(*I)->second].push_back(*I);
+      // Re-generate the operands list.
+      Ops.clear();
+      if (AccumulatedConstant != 0)
+        Ops.push_back(getConstant(AccumulatedConstant));
+      for (std::map<APInt, SmallVector<SCEVHandle, 4>, APIntCompare>::iterator I =
+           MulOpLists.begin(), E = MulOpLists.end(); I != E; ++I)
+        if (I->first != 0)
+          Ops.push_back(getMulExpr(getConstant(I->first), getAddExpr(I->second)));
+      if (Ops.empty())
+        return getIntegerSCEV(0, Ty);
+      if (Ops.size() == 1)
+        return Ops[0];
+      return getAddExpr(Ops);
+    }
+  }
 
   // If we are adding something to a multiply expression, make sure the
   // something is not already an operand of the multiply.  If so, merge it into
