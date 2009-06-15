@@ -472,11 +472,7 @@ bool InitializePreprocessor(Preprocessor &PP,
       AddImplicitIncludePTH(PredefineBuffer, PP, I->first);
     else
       AddImplicitInclude(PredefineBuffer, I->first);
- }
-
-  LineDirective = "# 2 \"<built-in>\" 2 3\n";
-  PredefineBuffer.insert(PredefineBuffer.end(),
-                         LineDirective, LineDirective+strlen(LineDirective));
+  }
 
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
