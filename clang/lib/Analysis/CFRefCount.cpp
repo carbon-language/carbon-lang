@@ -971,8 +971,12 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     
     // FIXME: This should all be refactored into a chain of "summary lookup"
     //  filters.
+    assert (ScratchArgs.isEmpty());
+    
     switch (strlen(FName)) {
       default: break;
+        
+
       case 17:
         // Handle: id NSMakeCollectable(CFTypeRef)
         if (!memcmp(FName, "NSMakeCollectable", 17)) {
@@ -980,13 +984,55 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
               ? getUnarySummary(FT, cfmakecollectable)
               : getPersistentStopSummary();
         }
+        else if (!memcmp(FName, "IOBSDNameMatching", 17) ||
+                 !memcmp(FName, "IOServiceMatching", 17)) {
+          // Part of <rdar://problem/6961230>. (IOKit)
+          // This should be addressed using a API table.
+          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                                   DoNothing, DoNothing);
+        }
         break;
-      
+
+      case 21:
+        if (!memcmp(FName, "IOServiceNameMatching", 21)) {
+          // Part of <rdar://problem/6961230>. (IOKit)
+          // This should be addressed using a API table.
+          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                                   DoNothing, DoNothing);
+        }
+        break;
+
+      case 24:
+        if (!memcmp(FName, "IOServiceAddNotification", 24)) {
+          // Part of <rdar://problem/6961230>. (IOKit)
+          // This should be addressed using a API table.
+          ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);         
+        }
+        break;
+        
+      case 25:
+        if (!memcmp(FName, "IORegistryEntryIDMatching", 25)) {
+          // Part of <rdar://problem/6961230>. (IOKit)
+          // This should be addressed using a API table.
+          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                                   DoNothing, DoNothing);
+        }
+        break;
+        
+      case 26:
+        if (!memcmp(FName, "IOOpenFirmwarePathMatching", 26)) {
+          // Part of <rdar://problem/6961230>. (IOKit)
+          // This should be addressed using a API table.
+          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                                   DoNothing, DoNothing);          
+        }
+        break;
+
       case 27:
         if (!memcmp(FName, "IOServiceGetMatchingService", 27)) {
           // Part of <rdar://problem/6961230>.
           // This should be addressed using a API table.
-          assert (ScratchArgs.isEmpty());
           ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
           S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);         
         }
@@ -997,9 +1043,17 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
           // FIXES: <rdar://problem/6326900>
           // This should be addressed using a API table.  This strcmp is also
           // a little gross, but there is no need to super optimize here.
-          assert (ScratchArgs.isEmpty());
           ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
           S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+        }
+        break;
+        
+      case 32:
+        if (!memcmp(FName, "IOServiceAddMatchingNotification", 32)) {
+          // Part of <rdar://problem/6961230>.
+          // This should be addressed using a API table.
+          ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);         
         }
         break;
     }
