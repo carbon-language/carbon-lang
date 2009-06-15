@@ -215,9 +215,7 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
                                           const DirectoryLookup *&CurDir,
                                           const FileEntry *CurFileEnt) {
   // If 'Filename' is absolute, check to see if it exists and no searching.
-  // FIXME: Portability.  This should be a sys::Path interface, this doesn't
-  // handle things like C:\foo.txt right, nor win32 \\network\device\blah.
-  if (FilenameStart[0] == '/') {
+  if (llvm::sys::Path::isAbsolute(FilenameStart, FilenameEnd-FilenameStart)) {
     CurDir = 0;
 
     // If this was an #include_next "/absolute/file", fail.
