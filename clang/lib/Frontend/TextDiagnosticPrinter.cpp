@@ -640,9 +640,18 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
           SourceLocation B = Info.getRange(i).getBegin();
           SourceLocation E = Info.getRange(i).getEnd();
-          std::pair<FileID, unsigned> BInfo=SM.getDecomposedInstantiationLoc(B);
-          
+          B = SM.getInstantiationLoc(B);
           E = SM.getInstantiationLoc(E);
+          
+          // If the End location and the start location are the same and are a
+          // macro location, then the range was something that came from a macro
+          // expansion or _Pragma.  If this is an object-like macro, the best we
+          // can do is to highlight the range.  If this is a function-like
+          // macro, we'd also like to highlight the arguments.
+          if (B == E && Info.getRange(i).getEnd().isMacroID())
+            E = SM.getInstantiationRange(Info.getRange(i).getEnd()).second;
+
+          std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
           std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
           
           // If the start or end of the range is in another file, just discard
