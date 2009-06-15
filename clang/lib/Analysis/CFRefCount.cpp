@@ -1539,11 +1539,14 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addInstMethSummary("QCView", AllocSumm,
                      "createSnapshotImageOfType", NULL);
 
-  // Create summaries for CIContext, 'createCGImage'.
+  // Create summaries for CIContext, 'createCGImage' and
+  // 'createCGLayerWithSize'.
   addInstMethSummary("CIContext", AllocSumm,
                      "createCGImage", "fromRect", NULL);
   addInstMethSummary("CIContext", AllocSumm,
-                     "createCGImage", "fromRect", "format", "colorSpace", NULL);
+                     "createCGImage", "fromRect", "format", "colorSpace", NULL);  
+  addInstMethSummary("CIContext", AllocSumm, "createCGLayerWithSize",
+           "info", NULL);
 }
 
 //===----------------------------------------------------------------------===//
