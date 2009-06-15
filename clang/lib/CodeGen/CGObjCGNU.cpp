@@ -104,6 +104,7 @@ private:
       std::vector<llvm::Constant*> &V, const std::string &Name="");
   llvm::GlobalVariable *ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
       const ObjCIvarDecl *Ivar);
+  void EmitClassRef(const std::string &className);
 public:
   CGObjCGNU(CodeGen::CodeGenModule &cgm);
   virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *);
@@ -168,15 +169,31 @@ public:
 } // end anonymous namespace
 
 
+/// Emits a reference to a dummy variable which is emitted with each class.
+/// This ensures that a linker error will be generated when trying to link
+/// together modules where a referenced class is not defined.
+void CGObjCGNU::EmitClassRef(const std::string &className){
+  std::string symbolRef = "__objc_class_ref_" + className;
+  // Don't emit two copies of the same symbol
+  if (TheModule.getGlobalVariable(symbolRef)) return;
+  std::string symbolName = "__objc_class_name_" + className;
+  llvm::GlobalVariable *ClassSymbol = TheModule.getGlobalVariable(symbolName);
+  if (!ClassSymbol) {
+	ClassSymbol = new llvm::GlobalVariable(LongTy, false,
+        llvm::GlobalValue::ExternalLinkage, 0, symbolName, &TheModule);
+  }
+  new llvm::GlobalVariable(ClassSymbol->getType(), true,
+    llvm::GlobalValue::CommonLinkage, ClassSymbol, symbolRef,  &TheModule);
+}
 
 static std::string SymbolNameForClass(const std::string &ClassName) {
-  return "___objc_class_name_" + ClassName;
+  return "_OBJC_CLASS_" + ClassName;
 }
 
 static std::string SymbolNameForMethod(const std::string &ClassName, const
   std::string &CategoryName, const std::string &MethodName, bool isClassMethod)
 {
-  return "._objc_method_" + ClassName +"("+CategoryName+")"+
+  return "_OBJC_METHOD_" + ClassName + "("+CategoryName+")"+
             (isClassMethod ? "+" : "-") + MethodName;
 }
 
@@ -217,6 +234,7 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
 llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
                                  const ObjCInterfaceDecl *OID) {
   llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getNameAsString());
+  EmitClassRef(OID->getNameAsString());
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
   std::vector<const llvm::Type*> Params(1, PtrToInt8Ty);
@@ -831,14 +849,21 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   const ObjCInterfaceDecl * SuperClassDecl = 
     OID->getClassInterface()->getSuperClass();
   std::string SuperClassName;
-  if (SuperClassDecl)
+  if (SuperClassDecl) {
     SuperClassName = SuperClassDecl->getNameAsString();
+    EmitClassRef(SuperClassName);
+  }
 
   // Get the class name
   ObjCInterfaceDecl *ClassDecl =
     const_cast<ObjCInterfaceDecl *>(OID->getClassInterface());
   std::string ClassName = ClassDecl->getNameAsString();
-
+  // Emit the symbol that is used to generate linker errors if this class is
+  // referenced in other modules but not declared.
+  new llvm::GlobalVariable(LongTy, false, llvm::GlobalValue::ExternalLinkage,
+    llvm::ConstantInt::get(LongTy, 0), "__objc_class_name_" + ClassName,
+    &TheModule);
+  
   // Get the size of instances.
   int instanceSize = Context.getASTObjCImplementationLayout(OID).getSize() / 8;
 
