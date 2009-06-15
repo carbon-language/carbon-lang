@@ -1040,7 +1040,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   Offset = ARM_AM::getAM3Opc(AddSub, OffImm);
 
   EvenReg = Op0->getOperand(0).getReg();
-  OddReg  = Op0->getOperand(1).getReg();
+  OddReg  = Op1->getOperand(0).getReg();
   if (EvenReg == OddReg)
     return false;
   BaseReg = Op0->getOperand(1).getReg();
