@@ -118,7 +118,7 @@ const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
 
 bool Diagnostic::isBuiltinSFINAEDiag(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->SFINAE && Info->Class != CLASS_NOTE;
+    return Info->SFINAE && Info->Class == CLASS_ERROR;
   return false;
 }
 

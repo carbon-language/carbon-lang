@@ -312,24 +312,8 @@ public:
       // If we encountered an error during template argument
       // deduction, and that error is one of the SFINAE errors,
       // suppress the diagnostic.
-      bool Fatal = false;
-      switch (Diags.getDiagnosticLevel(DiagID)) {
-      case Diagnostic::Ignored:
-      case Diagnostic::Note:
-      case Diagnostic::Warning:
-        break;
-
-      case Diagnostic::Error:
-        ++NumSFINAEErrors;
-        break;
-
-      case Diagnostic::Fatal:
-        Fatal = true;
-        break;
-      }
-
-      if (!Fatal)
-        return SemaDiagnosticBuilder(*this);
+      ++NumSFINAEErrors;
+      return SemaDiagnosticBuilder(*this);
     }
 
     DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
