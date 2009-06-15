@@ -2584,8 +2584,12 @@ bool TargetLowering::CheckTailCallReturnConstraints(CallSDNode *TheCall,
   // Check that operand of the RET node sources from the CALL node. The RET node
   // has at least two operands. Operand 0 holds the chain. Operand 1 holds the
   // value.
+  // Also we need to check that there is no code in between the call and the
+  // return. Hence we also check that the incomming chain to the return sources
+  // from the outgoing chain of the call.
   if (NumOps > 1 &&
-      IgnoreHarmlessInstructions(Ret.getOperand(1)) == SDValue(TheCall,0))
+      IgnoreHarmlessInstructions(Ret.getOperand(1)) == SDValue(TheCall,0) &&
+      Ret.getOperand(0) == SDValue(TheCall, TheCall->getNumValues()-1))
     return true;
   // void return: The RET node  has the chain result value of the CALL node as
   // input.
