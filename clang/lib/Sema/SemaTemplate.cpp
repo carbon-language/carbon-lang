@@ -850,7 +850,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                 ConvertedTemplateArgs))
     return QualType();
 
-  assert((ConvertedTemplateArgs.size() == 
+  assert((ConvertedTemplateArgs.structuredSize() == 
             Template->getTemplateParameters()->size()) &&
          "Converted template argument list is too short!");
 
@@ -2301,7 +2301,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                 RAngleLoc, ConvertedTemplateArgs))
     return true;
 
-  assert((ConvertedTemplateArgs.size() == 
+  assert((ConvertedTemplateArgs.structuredSize() == 
             ClassTemplate->getTemplateParameters()->size()) &&
          "Converted template argument list is too short!");
   
@@ -2562,7 +2562,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                 RAngleLoc, ConvertedTemplateArgs))
     return true;
 
-  assert((ConvertedTemplateArgs.size() == 
+  assert((ConvertedTemplateArgs.structuredSize() == 
             ClassTemplate->getTemplateParameters()->size()) &&
          "Converted template argument list is too short!");
   

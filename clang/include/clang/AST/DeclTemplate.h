@@ -470,14 +470,18 @@ public:
 
   /// \brief Construct a template argument pack.
   TemplateArgument(SourceLocation Loc, TemplateArgument *Args, 
-                   unsigned NumArgs, bool OwnsArgs);
+                   unsigned NumArgs, bool CopyArgs);
   
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
-    assert(Kind != Pack && "FIXME: Handle packs");
     if (Kind == Integral) {
       new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
       Integer.Type = Other.Integer.Type;
+    } else if (Kind == Pack) {
+      Args.NumArgs = Other.Args.NumArgs;
+      Args.Args = new TemplateArgument[Args.NumArgs];
+      for (unsigned I = 0; I != Args.NumArgs; ++I)
+            Args.Args[I] = Other.Args.Args[I];
     }
     else
       TypeOrValue = Other.TypeOrValue;
@@ -617,28 +621,33 @@ public:
 
 /// \brief A helper class for making template argument lists.
 class TemplateArgumentListBuilder {
-  /// Args - contains the template arguments.
-  llvm::SmallVector<TemplateArgument, 16> Args;
+  /// FlatArgs - contains the template arguments in flat form.
+  llvm::SmallVector<TemplateArgument, 16> FlatArgs;
   
-  llvm::SmallVector<unsigned, 32> Indices;
+  llvm::SmallVector<TemplateArgument, 16> StructuredArgs;
 
   ASTContext &Context;
   
+  unsigned PackBeginIndex;
+
   /// isAddingFromParameterPack - Returns whether we're adding arguments from
   /// a parameter pack.
-  bool isAddingFromParameterPack() const { return Indices.size() % 2; }
+  bool isAddingFromParameterPack() const { 
+    return PackBeginIndex != std::numeric_limits<unsigned>::max();
+  }
   
 public:
-  TemplateArgumentListBuilder(ASTContext &Context) : Context(Context) { }
+  TemplateArgumentListBuilder(ASTContext &Context) : Context(Context),
+    PackBeginIndex(std::numeric_limits<unsigned>::max()) { }
   
-  size_t size() const { 
+  size_t structuredSize() const { 
     assert(!isAddingFromParameterPack() && 
            "Size is not valid when adding from a parameter pack");
     
-    return Indices.size() / 2;
+    return StructuredArgs.size();
   }
   
-  size_t flatSize() const { return Args.size(); }
+  size_t flatSize() const { return FlatArgs.size(); }
 
   void push_back(const TemplateArgument& Arg);
   
@@ -648,8 +657,12 @@ public:
   /// EndParameterPack - Finish adding arguments from a parameter pack.
   void EndParameterPack();
   
-  const TemplateArgument *getFlatArgumentList() const { return Args.data(); }
-  TemplateArgument *getFlatArgumentList() { return Args.data(); }
+  const TemplateArgument *getFlatArgumentList() const { 
+      return FlatArgs.data();
+  }
+  TemplateArgument *getFlatArgumentList() { 
+      return FlatArgs.data();
+  }
 };
 
 /// \brief A template argument list.
