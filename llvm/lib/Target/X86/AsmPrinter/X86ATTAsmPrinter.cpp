@@ -673,8 +673,7 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     printBasicBlockLabel(MBB, false, false, false);
 }
 
-bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
-                                         const char Mode) {
+bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.
