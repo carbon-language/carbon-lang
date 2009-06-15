@@ -348,7 +348,7 @@ void PrintPPOutputPPCallbacks::HandleNewlinesInToken(const char *TokStr,
   
   if (NumNewlines == 0) return;
   
-//  CurLine += NumNewlines;
+  CurLine += NumNewlines;
 }
 
 
