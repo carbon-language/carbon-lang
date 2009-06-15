@@ -1743,7 +1743,7 @@ bool LLParser::ParseValID(ValID &ID) {
     Lex.Lex();
     if (ParseToken(lltok::lparen, "expected '(' after constantexpr cast") ||
         ParseGlobalTypeAndValue(SrcVal) ||
-        ParseToken(lltok::kw_to, "expected 'to' int constantexpr cast") ||
+        ParseToken(lltok::kw_to, "expected 'to' in constantexpr cast") ||
         ParseType(DestTy) ||
         ParseToken(lltok::rparen, "expected ')' at end of constantexpr cast"))
       return true;
