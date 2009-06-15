@@ -1850,7 +1850,14 @@ unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
   }
 
   SmallVector<DbgScope *, 8> &Scopes = I->second;
-  assert(!Scopes.empty() && "We should have at least one debug scope!");
+  if (Scopes.empty()) {
+    // Returned ID is 0 if this is unbalanced "end of inlined
+    // scope". This could happen if optimizer eats dbg intrinsics
+    // or "beginning of inlined scope" is not recoginized due to
+    // missing location info. In such cases, ignore this region.end.
+    return 0;
+  }
+
   DbgScope *Scope = Scopes.back(); Scopes.pop_back();
   unsigned ID = MMI->NextLabelID();
   MMI->RecordUsedDbgLabel(ID);

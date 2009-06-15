@@ -361,7 +361,7 @@ bool FastISel::SelectCall(User *I) {
           // Returned ID is 0 if this is unbalanced "end of inlined
           // scope". This could happen if optimizer eats dbg intrinsics
           // or "beginning of inlined scope" is not recoginized due to
-          // missing location info. In such cases, do ignore this region.end.
+          // missing location info. In such cases, ignore this region.end.
           BuildMI(MBB, DL, II).addImm(ID);
       } else {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
