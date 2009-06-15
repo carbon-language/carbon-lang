@@ -123,6 +123,8 @@ public:
   }
   void WriteLineInfo(unsigned LineNo, const char *Extra=0, unsigned ExtraLen=0);
   
+  void HandleNewlinesInToken(const char *TokStr, unsigned Len);
+  
   /// MacroDefined - This hook is called whenever a macro definition is seen.
   void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
   
@@ -327,6 +329,29 @@ bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   return true;
 }
 
+void PrintPPOutputPPCallbacks::HandleNewlinesInToken(const char *TokStr,
+                                                     unsigned Len) {
+  unsigned NumNewlines = 0;
+  for (; Len; --Len, ++TokStr) {
+    if (*TokStr != '\n' &&
+        *TokStr != '\r')
+      continue;
+  
+    ++NumNewlines;
+    
+    // If we have \n\r or \r\n, skip both and count as one line.
+    if (Len != 1 &&
+        (TokStr[1] == '\n' || TokStr[1] == '\r') &&
+        TokStr[0] != TokStr[1])
+      ++TokStr, --Len;
+  }
+  
+  if (NumNewlines == 0) return;
+  
+//  CurLine += NumNewlines;
+}
+
+
 namespace {
 struct UnknownPragmaHandler : public PragmaHandler {
   const char *Prefix;
@@ -382,9 +407,19 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
       const char *TokPtr = Buffer;
       unsigned Len = PP.getSpelling(Tok, TokPtr);
       OS.write(TokPtr, Len);
+      
+      // Tokens that can contain embedded newlines need to adjust our current
+      // line number. 
+      if (Tok.getKind() == tok::comment)
+        Callbacks->HandleNewlinesInToken(TokPtr, Len);
     } else {
       std::string S = PP.getSpelling(Tok);
       OS.write(&S[0], S.size());
+      
+      // Tokens that can contain embedded newlines need to adjust our current
+      // line number. 
+      if (Tok.getKind() == tok::comment)
+        Callbacks->HandleNewlinesInToken(&S[0], S.size());
     }
     Callbacks->SetEmittedTokensOnThisLine();
     
