@@ -804,9 +804,16 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     return Failure;
 
   case pch::SM_SLOC_FILE_ENTRY: {
-    const FileEntry *File 
-      = PP.getFileManager().getFile(BlobStart, BlobStart + BlobLen);
-    // FIXME: Error recovery if file cannot be found.
+    const FileEntry *File = PP.getFileManager().getFile(BlobStart,
+                                                        BlobStart + BlobLen);
+    if (File == 0) {
+      std::string ErrorStr = "could not find file '";
+      ErrorStr.append(BlobStart, BlobLen);
+      ErrorStr += "' referenced by PCH file";
+      Error(ErrorStr.c_str());
+      return Failure;
+    }
+    
     FileID FID = SourceMgr.createFileID(File,
                                 SourceLocation::getFromRawEncoding(Record[1]),
                                        (SrcMgr::CharacteristicKind)Record[2],
