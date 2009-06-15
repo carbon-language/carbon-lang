@@ -385,7 +385,7 @@ ARMRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
 
 
   if (Hint.first == ARMRI::RegPairEven) {
-    if (!hasFP(MF)) {
+    if (!STI.isTargetDarwin() && !hasFP(MF)) {
       if (!STI.isR9Reserved())
         return std::make_pair(GPREven1,
                               GPREven1 + (sizeof(GPREven1)/sizeof(unsigned)));
@@ -408,7 +408,7 @@ ARMRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
                               GPREven6 + (sizeof(GPREven6)/sizeof(unsigned)));
     }
   } else if (Hint.first == ARMRI::RegPairOdd) {
-    if (!hasFP(MF)) {
+    if (!STI.isTargetDarwin() && !hasFP(MF)) {
       if (!STI.isR9Reserved())
         return std::make_pair(GPROdd1,
                               GPROdd1 + (sizeof(GPROdd1)/sizeof(unsigned)));
