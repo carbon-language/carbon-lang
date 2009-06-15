@@ -179,11 +179,11 @@ def PUSH64r  : I<0x50, AddRegFrm,
 
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects = 1, mayStore = 1 in {
 def PUSH64i8   : Ii8<0x6a, RawFrm, (outs), (ins i8imm:$imm), 
-                     "push{l}\t$imm", []>;
+                     "push{q}\t$imm", []>;
 def PUSH64i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm), 
-                      "push{l}\t$imm", []>;
+                      "push{q}\t$imm", []>;
 def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm), 
-                      "push{l}\t$imm", []>;
+                      "push{q}\t$imm", []>;
 }
 
 let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1 in
