@@ -248,7 +248,9 @@ Path::GetCurrentDirectory() {
 /// GetMainExecutable - Return the path to the main executable, given the
 /// value of argv[0] from program startup.
 Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
-  return Path();
+  char pathname[MAX_PATH];
+  DWORD ret = ::GetModuleFileNameA(NULL, pathname, MAX_PATH);
+  return ret != MAX_PATH ? Path(pathname) : Path();
 }
 
 
