@@ -8468,6 +8468,14 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     return;
   case 'J':
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if ((int8_t)C->getSExtValue() == C->getSExtValue()) {
+        Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
+        break;
+      }
+    }
+    return;
+  case 'K':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
       if (C->getZExtValue() <= 63) {
         Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
         break;
