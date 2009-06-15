@@ -1111,7 +1111,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
           // Form the pair instruction instead.
           unsigned EvenReg = 0, OddReg = 0;
           unsigned BaseReg = 0, OffReg = 0, PredReg = 0;
-          ARMCC::CondCodes Pred;
+          ARMCC::CondCodes Pred = ARMCC::AL;
           DebugLoc dl;
           for (unsigned i = 0; i != NumMove; ++i) {
             MachineInstr *Op = Ops.back();
