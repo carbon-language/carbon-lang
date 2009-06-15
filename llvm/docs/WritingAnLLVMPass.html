@@ -1537,7 +1537,7 @@ need some way to free analysis results when they are no longer useful.  The
 <p>If you are writing an analysis or any other pass that retains a significant
 amount of state (for use by another pass which "requires" your pass and uses the
 <a href="#getAnalysis">getAnalysis</a> method) you should implement
-<tt>releaseMEmory</tt> to, well, release the memory allocated to maintain this
+<tt>releaseMemory</tt> to, well, release the memory allocated to maintain this
 internal state.  This method is called after the <tt>run*</tt> method for the
 class, before the next call of <tt>run*</tt> in your pass.</p>
 
