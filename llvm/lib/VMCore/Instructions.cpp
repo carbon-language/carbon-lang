@@ -1576,9 +1576,8 @@ void BinaryOperator::init(BinaryOps iType) {
   case FDiv:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isFloatingPoint() || (isa<VectorType>(getType()) &&
-            cast<VectorType>(getType())->getElementType()->isFloatingPoint())) 
-            && "Incorrect operand type (not floating point) for FDIV");
+    assert(getType()->isFPOrFPVector() &&
+           "Incorrect operand type (not floating point) for FDIV");
     break;
   case URem: 
   case SRem: 
@@ -1591,9 +1590,8 @@ void BinaryOperator::init(BinaryOps iType) {
   case FRem:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isFloatingPoint() || (isa<VectorType>(getType()) &&
-            cast<VectorType>(getType())->getElementType()->isFloatingPoint())) 
-            && "Incorrect operand type (not floating point) for FREM");
+    assert(getType()->isFPOrFPVector() &&
+           "Incorrect operand type (not floating point) for FREM");
     break;
   case Shl:
   case LShr:
@@ -2137,7 +2135,8 @@ CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty,
 CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty, 
                                       bool isSigned, const std::string &Name,
                                       BasicBlock *InsertAtEnd) {
-  assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
+  assert(C->getType()->isIntOrIntVector() && Ty->isIntOrIntVector() &&
+         "Invalid cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
   unsigned DstBits = Ty->getScalarSizeInBits();
   Instruction::CastOps opcode =
@@ -2150,7 +2149,7 @@ CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty,
 CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty, 
                                  const std::string &Name, 
                                  Instruction *InsertBefore) {
-  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() && 
+  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          "Invalid cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
   unsigned DstBits = Ty->getScalarSizeInBits();
@@ -2163,7 +2162,7 @@ CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty,
 CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty, 
                                  const std::string &Name, 
                                  BasicBlock *InsertAtEnd) {
-  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() && 
+  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          "Invalid cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
   unsigned DstBits = Ty->getScalarSizeInBits();

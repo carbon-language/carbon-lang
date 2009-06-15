@@ -2246,34 +2246,30 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::UDiv: 
   case Instruction::SDiv: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || (isa<VectorType>(C1->getType()) &&
-      cast<VectorType>(C1->getType())->getElementType()->isInteger())) &&
+    assert(C1->getType()->isIntOrIntVector() &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FDiv:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isFloatingPoint() || (isa<VectorType>(C1->getType())
-      && cast<VectorType>(C1->getType())->getElementType()->isFloatingPoint())) 
-      && "Tried to create an arithmetic operation on a non-arithmetic type!");
+    assert(C1->getType()->isFPOrFPVector() &&
+           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::URem: 
   case Instruction::SRem: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || (isa<VectorType>(C1->getType()) &&
-      cast<VectorType>(C1->getType())->getElementType()->isInteger())) &&
+    assert(C1->getType()->isIntOrIntVector() &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FRem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isFloatingPoint() || (isa<VectorType>(C1->getType())
-      && cast<VectorType>(C1->getType())->getElementType()->isFloatingPoint())) 
-      && "Tried to create an arithmetic operation on a non-arithmetic type!");
+    assert(C1->getType()->isFPOrFPVector() &&
+           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || isa<VectorType>(C1->getType())) &&
+    assert(C1->getType()->isIntOrIntVector() &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   case Instruction::Shl:
