@@ -547,7 +547,11 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     // fallthrough.
     if (!BBI.FalseBB)
       BBI.FalseBB = findFalseBlock(BBI.BB, BBI.TrueBB);  
-    assert(BBI.FalseBB && "Expected to find the fallthrough block!");
+    if (!BBI.FalseBB) {
+      // Malformed bcc? True and false blocks are the same?
+      BBI.IsUnpredicable = true;
+      return;
+    }
   }
 
   // Then scan all the instructions.
@@ -658,6 +662,13 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
 
   // Do not ifcvt if either path is a back edge to the entry block.
   if (BBI.TrueBB == BB || BBI.FalseBB == BB) {
+    BBI.IsBeingAnalyzed = false;
+    BBI.IsAnalyzed = true;
+    return BBI;
+  }
+
+  // Do not ifcvt if true and false fallthrough blocks are the same.
+  if (!BBI.FalseBB) {
     BBI.IsBeingAnalyzed = false;
     BBI.IsAnalyzed = true;
     return BBI;
