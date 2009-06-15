@@ -20,9 +20,12 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
 using namespace llvm;
+
+STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 
 namespace {
   struct VISIBILITY_HIDDEN PartialInliner : public ModulePass {
@@ -131,6 +134,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   // users (function pointers, etc.) back to the original function.
   duplicateFunction->replaceAllUsesWith(F);
   duplicateFunction->eraseFromParent();
+  
+  ++NumPartialInlined;
   
   return extractedFunction;
 }
