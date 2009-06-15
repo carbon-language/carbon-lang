@@ -106,8 +106,8 @@ protected:
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
   bool isThumb() const { return IsThumb; }
-  bool isThumb1() const { return IsThumb && (ThumbMode == Thumb1); }
-  bool isThumb2() const { return IsThumb && (ThumbMode >= Thumb2); }
+  bool isThumb1Only() const { return IsThumb && (ThumbMode == Thumb1); }
+  bool hasThumb2() const { return IsThumb && (ThumbMode >= Thumb2); }
 
   bool useThumbBacktraces() const { return UseThumbBacktraces; }
   bool isR9Reserved() const { return IsR9Reserved; }
