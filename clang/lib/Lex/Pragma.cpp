@@ -195,8 +195,10 @@ void Preprocessor::HandlePragmaOnce(Token &OnceTok) {
 
 void Preprocessor::HandlePragmaMark() {
   assert(CurPPLexer && "No current lexer?");
-  if (CurLexer) CurLexer->ReadToEndOfLine();
-  else CurPTHLexer->DiscardToEndOfLine();
+  if (CurLexer)
+    CurLexer->ReadToEndOfLine();
+  else
+    CurPTHLexer->DiscardToEndOfLine();
 }
 
 
@@ -253,6 +255,18 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   
   // Mark the file as a system header.
   HeaderInfo.MarkFileSystemHeader(TheLexer->getFileEntry());
+  
+  
+  PresumedLoc PLoc = SourceMgr.getPresumedLoc(SysHeaderTok.getLocation());
+  unsigned FilenameLen = strlen(PLoc.getFilename());
+  unsigned FilenameID = SourceMgr.getLineTableFilenameID(PLoc.getFilename(),
+                                                         FilenameLen);
+  
+  // Emit a line marker.  This will change any source locations from this point
+  // forward to realize they are in a system header.
+  // Create a line note with this information.
+  SourceMgr.AddLineNote(SysHeaderTok.getLocation(), PLoc.getLine(), FilenameID,
+                        false, false, true, false);
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks)
