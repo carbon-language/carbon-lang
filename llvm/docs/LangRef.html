@@ -1106,8 +1106,9 @@ an <tt>ssp</tt> attribute, then the resulting function will have
 an <tt>sspreq</tt> attribute.</dd>
 
 <dt><tt>noredzone</tt></dt>
-<dd>This attribute indicates that the code generator should not enforce red zone
-mandated by target specific ABI.</dd>
+<dd>This attribute indicates that the code generator should not use a
+red zone, even if it would otherwise be supported by the target-specific ABI.
+</dd>
 
 <dt><tt>noimplicitfloat</tt></dt>
 <dd>This attributes disables implicit floating point instructions.</dd>
