@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <set>
 #include <stack>
 #include <vector>
@@ -39,9 +40,9 @@ public:
 };
 
 template<class GraphT,
-         class SetType = std::set<typename GraphTraits<GraphT>::NodeType*>,
-         bool ExtStorage = false,
-         class GT = GraphTraits<GraphT> >
+  class SetType = llvm::SmallPtrSet<typename GraphTraits<GraphT>::NodeType*, 8>,
+  bool ExtStorage = false,
+  class GT = GraphTraits<GraphT> >
 class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
                     public po_iterator_storage<SetType, ExtStorage> {
   typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;

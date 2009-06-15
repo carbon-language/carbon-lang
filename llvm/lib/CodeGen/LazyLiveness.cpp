@@ -32,10 +32,12 @@ void LazyLiveness::computeBackedgeChain(MachineFunction& mf,
   calculated.set(preorder[MBB]);
   
   for (SparseBitVector<128>::iterator I = tmp.begin(); I != tmp.end(); ++I) {
+    assert(rev_preorder.size() > *I && "Unknown block!");
+    
     MachineBasicBlock* SrcMBB = rev_preorder[*I];
     
-    for (MachineBasicBlock::succ_iterator SI = SrcMBB->succ_begin();
-         SI != SrcMBB->succ_end(); ++SI) {
+    for (MachineBasicBlock::succ_iterator SI = SrcMBB->succ_begin(),
+         SE = SrcMBB->succ_end(); SI != SE; ++SI) {
       MachineBasicBlock* TgtMBB = *SI;
       
       if (backedges.count(std::make_pair(SrcMBB, TgtMBB)) &&
@@ -44,7 +46,8 @@ void LazyLiveness::computeBackedgeChain(MachineFunction& mf,
           computeBackedgeChain(mf, TgtMBB);
         
         tv[MBB].set(preorder[TgtMBB]);
-        tv[MBB] |= tv[TgtMBB];
+        SparseBitVector<128> right = tv[TgtMBB];
+        tv[MBB] |= right;
       }
     }
     
@@ -60,6 +63,12 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
   backedge_target.clear();
   calculated.clear();
   preorder.clear();
+  rev_preorder.clear();
+  
+  rv.resize(mf.size());
+  tv.resize(mf.size());
+  preorder.resize(mf.size());
+  rev_preorder.reserve(mf.size());
   
   MRI = &mf.getRegInfo();
   MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
@@ -106,8 +115,8 @@ bool LazyLiveness::runOnMachineFunction(MachineFunction &mf) {
       for (MachineBasicBlock::succ_iterator SI = (*POI)->succ_begin(),
            SE = (*POI)->succ_end(); SI != SE; ++SI)
         if (!backedges.count(std::make_pair(*POI, *SI)) && tv.count(*SI)) {
-          SparseBitVector<128>& PBV = tv[*POI];
-          PBV = tv[*SI];
+          SparseBitVector<128> right = tv[*SI];
+          tv[*POI] |= right;
         }
   
   for (po_iterator<MachineBasicBlock*> POI = po_begin(&*mf.begin()),
