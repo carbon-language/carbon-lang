@@ -647,9 +647,8 @@ def LDRSB : AI3ldsb<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
 
 let mayLoad = 1 in {
 // Load doubleword
-def LDRD  : AI3ldd<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
-                 "ldr", "d $dst, $addr",
-                []>, Requires<[IsARM, HasV5T]>;
+def LDRD : AI3ldd<(outs GPR:$dst1, GPR:$dst2), (ins addrmode3:$addr), LdMiscFrm,
+                "ldr", "d $dst1, $addr", []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed loads
 def LDR_PRE  : AI2ldwpr<(outs GPR:$dst, GPR:$base_wb),
@@ -709,9 +708,8 @@ def STRB : AI2stb<(outs), (ins GPR:$src, addrmode2:$addr), StFrm,
 
 // Store doubleword
 let mayStore = 1 in
-def STRD : AI3std<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
-               "str", "d $src, $addr",
-               []>, Requires<[IsARM, HasV5T]>;
+def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),StMiscFrm,
+               "str", "d $src1, $addr", []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed stores
 def STR_PRE  : AI2stwpr<(outs GPR:$base_wb),

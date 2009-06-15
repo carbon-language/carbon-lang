@@ -17,15 +17,17 @@
 #include "ARMAddressingModes.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -82,6 +84,8 @@ namespace {
                       SmallVector<MachineBasicBlock::iterator, 4> &Merges);
 
     void AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps);
+    bool FixInvalidRegPairOp(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator &MBBI);
     bool LoadStoreMultipleOpti(MachineBasicBlock &MBB);
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
   };
@@ -586,18 +590,118 @@ void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
 static int getMemoryOpOffset(const MachineInstr *MI) {
   int Opcode = MI->getOpcode();
   bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
+  bool isAM3 = Opcode == ARM::LDRD || Opcode == ARM::STRD;
   unsigned NumOperands = MI->getDesc().getNumOperands();
   unsigned OffField = MI->getOperand(NumOperands-3).getImm();
   int Offset = isAM2
-    ? ARM_AM::getAM2Offset(OffField) : ARM_AM::getAM5Offset(OffField) * 4;
+    ? ARM_AM::getAM2Offset(OffField)
+    : (isAM3 ? ARM_AM::getAM3Offset(OffField)
+             : ARM_AM::getAM5Offset(OffField) * 4);
   if (isAM2) {
     if (ARM_AM::getAM2Op(OffField) == ARM_AM::sub)
+      Offset = -Offset;
+  } else if (isAM3) {
+    if (ARM_AM::getAM3Op(OffField) == ARM_AM::sub)
       Offset = -Offset;
   } else {
     if (ARM_AM::getAM5Op(OffField) == ARM_AM::sub)
       Offset = -Offset;
   }
   return Offset;
+}
+
+static void InsertLDR_STR(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator &MBBI,
+                          int OffImm, bool isDef,
+                          DebugLoc dl, unsigned NewOpc,
+                          unsigned Reg, bool RegKill,
+                          unsigned BaseReg, bool BaseKill,
+                          unsigned OffReg, bool OffKill,
+                          ARMCC::CondCodes Pred, unsigned PredReg,
+                          const TargetInstrInfo *TII) {
+  unsigned Offset;
+  if (OffImm < 0)
+    Offset = ARM_AM::getAM2Opc(ARM_AM::sub, -OffImm, ARM_AM::no_shift);
+  else
+    Offset = ARM_AM::getAM2Opc(ARM_AM::add, OffImm, ARM_AM::no_shift);
+  if (isDef)
+    BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc), Reg)
+      .addReg(BaseReg, getKillRegState(BaseKill))
+      .addReg(OffReg,  getKillRegState(OffKill))
+      .addImm(Offset)
+      .addImm(Pred).addReg(PredReg);
+  else
+    BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
+      .addReg(Reg, getKillRegState(RegKill))
+      .addReg(BaseReg, getKillRegState(BaseKill))
+      .addReg(OffReg,  getKillRegState(OffKill))
+      .addImm(Offset)
+      .addImm(Pred).addReg(PredReg);
+}
+
+bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator &MBBI) {
+  MachineInstr *MI = &*MBBI;
+  unsigned Opcode = MI->getOpcode();
+  if (Opcode == ARM::LDRD || Opcode == ARM::STRD) {
+    unsigned EvenReg = MI->getOperand(0).getReg();
+    unsigned OddReg  = MI->getOperand(1).getReg();
+    unsigned EvenRegNum = TRI->getDwarfRegNum(EvenReg, false);
+    unsigned OddRegNum  = TRI->getDwarfRegNum(OddReg, false);
+    if ((EvenRegNum & 1) == 0 && (EvenRegNum + 1) == OddRegNum)
+      return false;
+
+    bool isDef = Opcode == ARM::LDRD;
+    bool EvenKill = isDef ? false : MI->getOperand(0).isKill();
+    bool OddKill  = isDef ? false : MI->getOperand(1).isKill();
+    const MachineOperand &BaseOp = MI->getOperand(2);
+    unsigned BaseReg = BaseOp.getReg();
+    bool BaseKill = BaseOp.isKill();
+    const MachineOperand &OffOp = MI->getOperand(3);
+    unsigned OffReg = OffOp.getReg();
+    bool OffKill = OffOp.isKill();
+    int OffImm = getMemoryOpOffset(MI);
+    unsigned PredReg = 0;
+    ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+
+    if (OddRegNum > EvenRegNum && OffReg == 0 && OffImm == 0) {
+      // Ascending register numbers and no offset. It's safe to change it to a
+      // ldm or stm.
+      unsigned NewOpc = (Opcode == ARM::LDRD) ? ARM::LDM : ARM::STM;
+      BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
+        .addReg(BaseReg, getKillRegState(BaseKill))
+        .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
+        .addImm(Pred).addReg(PredReg)
+        .addReg(EvenReg, getDefRegState(isDef))
+        .addReg(OddReg, getDefRegState(isDef));
+    } else {
+      // Split into two instructions.
+      unsigned NewOpc = (Opcode == ARM::LDRD) ? ARM::LDR : ARM::STR;
+      DebugLoc dl = MBBI->getDebugLoc();
+      // If this is a load and base register is killed, it may have been
+      // re-defed by the load, make sure the first load does not clobber it.
+      if (isDef &&
+          (BaseKill || OffKill) &&
+          (TRI->regsOverlap(EvenReg, BaseReg) ||
+           (OffReg && TRI->regsOverlap(EvenReg, OffReg)))) {
+        assert(!TRI->regsOverlap(OddReg, BaseReg) &&
+               (!OffReg || !TRI->regsOverlap(OddReg, OffReg)));
+        InsertLDR_STR(MBB, MBBI, OffImm+4, isDef, dl, NewOpc, OddReg, OddKill,
+                      BaseReg, false, OffReg, false, Pred, PredReg, TII);
+        InsertLDR_STR(MBB, MBBI, OffImm, isDef, dl, NewOpc, EvenReg, EvenKill,
+                      BaseReg, BaseKill, OffReg, OffKill, Pred, PredReg, TII);
+      } else {
+        InsertLDR_STR(MBB, MBBI, OffImm, isDef, dl, NewOpc, EvenReg, EvenKill,
+                      BaseReg, false, OffReg, false, Pred, PredReg, TII);
+        InsertLDR_STR(MBB, MBBI, OffImm+4, isDef, dl, NewOpc, OddReg, OddKill,
+                      BaseReg, BaseKill, OffReg, OffKill, Pred, PredReg, TII);
+      }
+    }
+
+    MBBI = prior(MBBI);
+    MBB.erase(MI);
+  }
+  return false;
 }
 
 /// LoadStoreMultipleOpti - An optimization pass to turn multiple LDR / STR
@@ -617,6 +721,9 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   RS->enterBasicBlock(&MBB);
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
+    if (FixInvalidRegPairOp(MBB, MBBI))
+      continue;
+
     bool Advance  = false;
     bool TryMerge = false;
     bool Clobber  = false;
@@ -817,8 +924,10 @@ namespace {
     static char ID;
     ARMPreAllocLoadStoreOpt() : MachineFunctionPass(&ID) {}
 
+    const TargetData *TD;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    const ARMSubtarget *STI;
     MachineRegisterInfo *MRI;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
@@ -828,6 +937,7 @@ namespace {
     }
 
   private:
+    bool SatisfyLdStDWordlignment(MachineInstr *MI);
     bool RescheduleOps(MachineBasicBlock *MBB,
                        SmallVector<MachineInstr*, 4> &Ops,
                        unsigned Base, bool isLd,
@@ -838,8 +948,10 @@ namespace {
 }
 
 bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
+  TD  = Fn.getTarget().getTargetData();
   TII = Fn.getTarget().getInstrInfo();
   TRI = Fn.getTarget().getRegisterInfo();
+  STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
   MRI = &Fn.getRegInfo();
 
   bool Modified = false;
@@ -881,6 +993,18 @@ static bool IsSafeToMove(bool isLd, unsigned Base,
     }
   }
   return true;
+}
+
+bool ARMPreAllocLoadStoreOpt::SatisfyLdStDWordlignment(MachineInstr *MI) {
+  if (!MI->hasOneMemOperand() ||
+      !MI->memoperands_begin()->getValue() ||
+      MI->memoperands_begin()->isVolatile())
+    return false;
+
+  unsigned Align = MI->memoperands_begin()->getAlignment();
+  unsigned ReqAlign = STI->hasV6Ops()
+    ? TD->getPrefTypeAlignment(Type::Int64Ty) : 8; // Pre-v6 need 8-byte align
+  return Align >= ReqAlign;
 }
 
 bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
@@ -948,10 +1072,77 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
         MachineBasicBlock::iterator InsertPos = isLd ? FirstOp : LastOp;
         while (InsertPos != MBB->end() && MoveOps.count(InsertPos))
           ++InsertPos;
-        for (unsigned i = 0; i != NumMove; ++i) {
-          MachineInstr *Op = Ops.back();
-          Ops.pop_back();
-          MBB->splice(InsertPos, MBB, Op);
+
+        // If we are moving a pair of loads / stores, see if it makes sense
+        // to try to allocate a pair of registers that can form register pairs.
+        unsigned PairOpcode = 0;
+        unsigned Offset = 0;
+
+        // Make sure the alignment requirement is met.
+        if (NumMove == 2 && SatisfyLdStDWordlignment(Ops.back())) {
+          int Opcode = Ops.back()->getOpcode();
+          // FIXME: FLDS / FSTS -> FLDD / FSTD
+          if (Opcode == ARM::LDR)
+            PairOpcode = ARM::LDRD;
+          else if (Opcode == ARM::STR)
+            PairOpcode = ARM::STRD;
+        }
+        // Then make sure the immediate offset fits.
+        if (PairOpcode) {
+          int OffImm = getMemoryOpOffset(Ops.back());
+          ARM_AM::AddrOpc AddSub = ARM_AM::add;
+          if (OffImm < 0) {
+            AddSub = ARM_AM::sub;
+            OffImm = - OffImm;
+          }
+          if (OffImm >= 256) // 8 bits
+            PairOpcode = 0;
+          else
+            Offset = ARM_AM::getAM3Opc(AddSub, OffImm);
+        }
+
+        if (!PairOpcode) {
+          for (unsigned i = 0; i != NumMove; ++i) {
+            MachineInstr *Op = Ops.back();
+            Ops.pop_back();
+            MBB->splice(InsertPos, MBB, Op);
+          }
+        } else {
+          // Form the pair instruction instead.
+          unsigned EvenReg = 0, OddReg = 0;
+          unsigned BaseReg = 0, OffReg = 0, PredReg = 0;
+          ARMCC::CondCodes Pred;
+          DebugLoc dl;
+          for (unsigned i = 0; i != NumMove; ++i) {
+            MachineInstr *Op = Ops.back();
+            Ops.pop_back();
+            unsigned Reg = Op->getOperand(0).getReg();
+            if (i == 0) {
+              EvenReg = Reg;
+              BaseReg = Op->getOperand(1).getReg();
+              OffReg = Op->getOperand(2).getReg();
+              Pred = getInstrPredicate(Op, PredReg);
+              dl = Op->getDebugLoc();
+            } else
+              OddReg = Reg;
+            MBB->erase(Op);
+          }
+          if (isLd)
+            BuildMI(*MBB, InsertPos, dl, TII->get(PairOpcode))
+              .addReg(EvenReg, RegState::Define)
+              .addReg(OddReg, RegState::Define)
+              .addReg(BaseReg).addReg(0).addImm(Offset)
+              .addImm(Pred).addReg(PredReg);
+          else
+            BuildMI(*MBB, InsertPos, dl, TII->get(PairOpcode))
+              .addReg(EvenReg)
+              .addReg(OddReg)
+              .addReg(BaseReg).addReg(0).addImm(Offset)
+              .addImm(Pred).addReg(PredReg);
+
+          // Add register allocation hints to form register pairs.
+          MRI->setRegAllocationHint(EvenReg, ARMRI::RegPairEven, OddReg);
+          MRI->setRegAllocationHint(OddReg,  ARMRI::RegPairOdd, EvenReg);
         }
 
         NumLdStMoved += NumMove;

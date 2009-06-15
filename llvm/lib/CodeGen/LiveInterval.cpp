@@ -507,12 +507,11 @@ void LiveInterval::join(LiveInterval &Other, const int *LHSValNoAssignments,
   // Update regalloc hint if currently there isn't one.
   if (TargetRegisterInfo::isVirtualRegister(reg) &&
       TargetRegisterInfo::isVirtualRegister(Other.reg)) {
-    std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
-      MRI->getRegAllocationHint(reg);
-    if (Hint.first == MachineRegisterInfo::RA_None) {
-      std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> OtherHint =
+    std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(reg);
+    if (Hint.first == 0 && Hint.second == 0) {
+      std::pair<unsigned, unsigned> OtherHint =
         MRI->getRegAllocationHint(Other.reg);
-      if (OtherHint.first != MachineRegisterInfo::RA_None)
+      if (OtherHint.first || OtherHint.second)
         MRI->setRegAllocationHint(reg, OtherHint.first, OtherHint.second);
     }
   }
@@ -772,8 +771,7 @@ void LiveInterval::Copy(const LiveInterval &RHS,
                         BumpPtrAllocator &VNInfoAllocator) {
   ranges.clear();
   valnos.clear();
-  std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
-    MRI->getRegAllocationHint(RHS.reg);
+  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(RHS.reg);
   MRI->setRegAllocationHint(reg, Hint.first, Hint.second);
 
   weight = RHS.weight;

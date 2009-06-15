@@ -1272,26 +1272,8 @@ static unsigned getRegAllocPreference(unsigned Reg, MachineFunction &MF,
                                       const TargetRegisterInfo *TRI) {
   if (TargetRegisterInfo::isPhysicalRegister(Reg))
     return 0;
-
-  std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
-    MRI->getRegAllocationHint(Reg);
-  switch (Hint.first) {
-  default: assert(0);
-  case MachineRegisterInfo::RA_None:
-    return 0;
-  case MachineRegisterInfo::RA_Preference:
-    return Hint.second;
-  case MachineRegisterInfo::RA_PairEven:
-    if (TargetRegisterInfo::isPhysicalRegister(Hint.second))
-      return TRI->getRegisterPairOdd(MF, Hint.second);
-    return Hint.second;
-  case MachineRegisterInfo::RA_PairOdd:
-    if (TargetRegisterInfo::isPhysicalRegister(Hint.second))
-      return TRI->getRegisterPairEven(MF, Hint.second);
-    return Hint.second;
-  }
-  // Shouldn't reach here.
-  return 0;
+  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(Reg);
+  return TRI->ResolveRegAllocHint(Hint.first, Hint.second, MF);
 }
 
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
@@ -1595,8 +1577,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       if (PhysJoinTweak) {
         if (SrcIsPhys) {
           if (!isWinToJoinVRWithSrcPhysReg(CopyMI, CopyMBB, DstInt, SrcInt)) {
-            mri_->setRegAllocationHint(DstInt.reg,
-                                    MachineRegisterInfo::RA_Preference, SrcReg);
+            mri_->setRegAllocationHint(DstInt.reg, 0, SrcReg);
             ++numAborts;
             DOUT << "\tMay tie down a physical register, abort!\n";
             Again = true;  // May be possible to coalesce later.
@@ -1604,8 +1585,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
           }
         } else {
           if (!isWinToJoinVRWithDstPhysReg(CopyMI, CopyMBB, DstInt, SrcInt)) {
-            mri_->setRegAllocationHint(SrcInt.reg,
-                                    MachineRegisterInfo::RA_Preference, DstReg);
+            mri_->setRegAllocationHint(SrcInt.reg, 0, DstReg);
             ++numAborts;
             DOUT << "\tMay tie down a physical register, abort!\n";
             Again = true;  // May be possible to coalesce later.
@@ -1629,8 +1609,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         if (Length > Threshold &&
             (((float)std::distance(mri_->use_begin(JoinVReg),
                                    mri_->use_end()) / Length) < Ratio)) {
-          mri_->setRegAllocationHint(JoinVInt.reg,
-                                  MachineRegisterInfo::RA_Preference, JoinPReg);
+          mri_->setRegAllocationHint(JoinVInt.reg, 0, JoinPReg);
           ++numAborts;
           DOUT << "\tMay tie down a physical register, abort!\n";
           Again = true;  // May be possible to coalesce later.
@@ -1815,8 +1794,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       TargetRegisterInfo::isVirtualRegister(ResDstInt->reg)) {
     const TargetRegisterClass *RC = mri_->getRegClass(ResDstInt->reg);
     if (!RC->contains(Preference))
-      mri_->setRegAllocationHint(ResDstInt->reg,
-                                 MachineRegisterInfo::RA_None, 0);
+      mri_->setRegAllocationHint(ResDstInt->reg, 0, 0);
   }
 
   DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, tri_);
@@ -2067,12 +2045,9 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   // Update regalloc hint if both are virtual registers.
   if (TargetRegisterInfo::isVirtualRegister(LHS.reg) && 
       TargetRegisterInfo::isVirtualRegister(RHS.reg)) {
-    std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> RHSPref =
-      mri_->getRegAllocationHint(RHS.reg);
-    std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> LHSPref =
-      mri_->getRegAllocationHint(LHS.reg);
-    if (RHSPref.first != MachineRegisterInfo::RA_None &&
-        LHSPref.first == MachineRegisterInfo::RA_None)
+    std::pair<unsigned, unsigned> RHSPref = mri_->getRegAllocationHint(RHS.reg);
+    std::pair<unsigned, unsigned> LHSPref = mri_->getRegAllocationHint(LHS.reg);
+    if (RHSPref != LHSPref)
       mri_->setRegAllocationHint(LHS.reg, RHSPref.first, RHSPref.second);
   }
 
@@ -2846,8 +2821,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       }
 
       // Slightly prefer live interval that has been assigned a preferred reg.
-      if (mri_->getRegAllocationHint(LI.reg).first !=
-          MachineRegisterInfo::RA_None)
+      std::pair<unsigned, unsigned> Hint = mri_->getRegAllocationHint(LI.reg);
+      if (Hint.first || Hint.second)
         LI.weight *= 1.01F;
 
       // Divide the weight of the interval by its size.  This encourages 

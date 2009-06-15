@@ -22,12 +22,17 @@ namespace llvm {
   class TargetInstrInfo;
   class Type;
 
+/// Register allocation hints.
+namespace ARMRI {
+  enum {
+    RegPairOdd  = 1,
+    RegPairEven = 2
+  };
+}
+
 struct ARMRegisterInfo : public ARMGenRegisterInfo {
   const TargetInstrInfo &TII;
   const ARMSubtarget &STI;
-private:
-  /// FramePtr - ARM physical register used as frame ptr.
-  unsigned FramePtr;
 
 public:
   ARMRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
@@ -49,10 +54,6 @@ public:
   /// if the register is a single precision VFP register.
   static unsigned getRegisterNumbering(unsigned RegEnum, bool &isSPVFP);
 
-  /// getPointerRegClass - Return the register class to use to hold pointers.
-  /// This is used for addressing modes.
-  const TargetRegisterClass *getPointerRegClass() const;
-
   /// Code Generation virtual methods...
   const TargetRegisterClass *
     getPhysicalRegisterRegClass(unsigned Reg, MVT VT = MVT::Other) const;
@@ -64,6 +65,16 @@ public:
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
   bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
+
+  const TargetRegisterClass *getPointerRegClass() const;
+
+  std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
+  getAllocationOrder(const TargetRegisterClass *RC,
+                     std::pair<unsigned,unsigned> Hint,
+                     const MachineFunction &MF) const;
+
+  unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
+                               const MachineFunction &MF) const;
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
@@ -95,6 +106,15 @@ public:
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
   
   bool isLowRegister(unsigned Reg) const;
+
+private:
+  /// FramePtr - ARM physical register used as frame ptr.
+  unsigned FramePtr;
+
+  unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;
+
+  unsigned getRegisterPairOdd(unsigned Reg, const MachineFunction &MF) const;
+
 };
 
 } // end namespace llvm

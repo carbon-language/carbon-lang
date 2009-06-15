@@ -900,6 +900,10 @@ void Emitter<CodeEmitter>::emitMiscLoadStoreInstruction(const MachineInstr &MI,
   // Set first operand
   Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRdShift;
 
+  // Skip LDRD and STRD's second operand.
+  if (TID.Opcode == ARM::LDRD || TID.Opcode == ARM::STRD)
+    ++OpIdx;
+
   // Set second operand
   if (ImplicitRn)
     // Special handling for implicit use (e.g. PC).

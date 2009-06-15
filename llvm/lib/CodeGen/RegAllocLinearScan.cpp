@@ -281,7 +281,8 @@ namespace {
     /// getFreePhysReg - return a free physical register for this virtual
     /// register interval if we have one, otherwise return 0.
     unsigned getFreePhysReg(LiveInterval* cur);
-    unsigned getFreePhysReg(const TargetRegisterClass *RC,
+    unsigned getFreePhysReg(LiveInterval* cur,
+                            const TargetRegisterClass *RC,
                             unsigned MaxInactiveCount,
                             SmallVector<unsigned, 256> &inactiveCounts,
                             bool SkipDGRegs);
@@ -936,8 +937,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
           if (DstSubReg)
             Reg = tri_->getMatchingSuperReg(Reg, DstSubReg, RC);
           if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
-            mri_->setRegAllocationHint(cur->reg,
-                                       MachineRegisterInfo::RA_Preference, Reg);
+            mri_->setRegAllocationHint(cur->reg, 0, Reg);
         }
       }
     }
@@ -1046,8 +1046,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     if (LiveInterval *NextReloadLI = hasNextReloadInterval(cur)) {
       // "Downgrade" physReg to try to keep physReg from being allocated until
       // the next reload from the same SS is allocated. 
-      mri_->setRegAllocationHint(NextReloadLI->reg,
-                                 MachineRegisterInfo::RA_Preference, physReg);
+      mri_->setRegAllocationHint(NextReloadLI->reg, 0, physReg);
       DowngradeRegister(cur, physReg);
     }
     return;
@@ -1293,7 +1292,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       // It interval has a preference, it must be defined by a copy. Clear the
       // preference now since the source interval allocation may have been
       // undone as well.
-      mri_->setRegAllocationHint(i->reg, MachineRegisterInfo::RA_None, 0);
+      mri_->setRegAllocationHint(i->reg, 0, 0);
     else {
       UpgradeRegister(ii->second);
     }
@@ -1349,15 +1348,17 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   }
 }
 
-unsigned RALinScan::getFreePhysReg(const TargetRegisterClass *RC,
+unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
+                                   const TargetRegisterClass *RC,
                                    unsigned MaxInactiveCount,
                                    SmallVector<unsigned, 256> &inactiveCounts,
                                    bool SkipDGRegs) {
   unsigned FreeReg = 0;
   unsigned FreeRegInactiveCount = 0;
 
-  TargetRegisterClass::iterator I = RC->allocation_order_begin(*mf_);
-  TargetRegisterClass::iterator E = RC->allocation_order_end(*mf_);
+  TargetRegisterClass::iterator I, E;
+  tie(I, E) = tri_->getAllocationOrder(RC,
+                                    mri_->getRegAllocationHint(cur->reg), *mf_);
   assert(I != E && "No allocatable register in this register class!");
 
   // Scan for the first available register.
@@ -1380,7 +1381,7 @@ unsigned RALinScan::getFreePhysReg(const TargetRegisterClass *RC,
   // return this register.
   if (FreeReg == 0 || FreeRegInactiveCount == MaxInactiveCount)
     return FreeReg;
-  
+ 
   // Continue scanning the registers, looking for the one with the highest
   // inactive count.  Alkis found that this reduced register pressure very
   // slightly on X86 (in rev 1.94 of this file), though this should probably be
@@ -1440,12 +1441,12 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   }
 
   if (!DowngradedRegs.empty()) {
-    unsigned FreeReg = getFreePhysReg(RC, MaxInactiveCount, inactiveCounts,
+    unsigned FreeReg = getFreePhysReg(cur, RC, MaxInactiveCount, inactiveCounts,
                                       true);
     if (FreeReg)
       return FreeReg;
   }
-  return getFreePhysReg(RC, MaxInactiveCount, inactiveCounts, false);
+  return getFreePhysReg(cur, RC, MaxInactiveCount, inactiveCounts, false);
 }
 
 FunctionPass* llvm::createLinearScanRegisterAllocator() {

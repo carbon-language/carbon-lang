@@ -65,7 +65,7 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   // Add a reg, but keep track of whether the vector reallocated or not.
   void *ArrayBase = VRegInfo.empty() ? 0 : &VRegInfo[0];
   VRegInfo.push_back(std::make_pair(RegClass, (MachineOperand*)0));
-  RegAllocHints.push_back(std::make_pair(RA_None, 0));
+  RegAllocHints.push_back(std::make_pair(0, 0));
 
   if (!((&VRegInfo[0] == ArrayBase || VRegInfo.size() == 1)))
     // The vector reallocated, handle this now.

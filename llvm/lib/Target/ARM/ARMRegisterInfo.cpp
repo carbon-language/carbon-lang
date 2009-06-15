@@ -194,10 +194,6 @@ void ARMRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
       .addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
 }
 
-const TargetRegisterClass *ARMRegisterInfo::getPointerRegClass() const {
-  return &ARM::GPRRegClass;
-}
-
 /// isLowRegister - Returns true if the register is low register r0-r7.
 ///
 bool ARMRegisterInfo::isLowRegister(unsigned Reg) const {
@@ -302,6 +298,159 @@ ARMRegisterInfo::isReservedReg(const MachineFunction &MF, unsigned Reg) const {
   }
 
   return false;
+}
+
+const TargetRegisterClass *ARMRegisterInfo::getPointerRegClass() const {
+  return &ARM::GPRRegClass;
+}
+
+/// getAllocationOrder - Returns the register allocation order for a specified
+/// register class in the form of a pair of TargetRegisterClass iterators.
+std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
+ARMRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
+                                    std::pair<unsigned, unsigned> Hint,
+                                    const MachineFunction &MF) const {
+  // Alternative register allocation orders when favoring even / odd registers
+  // of register pairs.
+
+  // No FP, R9 is available.
+  static const unsigned GPREven1[] = {
+    ARM::R0, ARM::R2, ARM::R4, ARM::R6, ARM::R8, ARM::R10,
+    ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R7,
+    ARM::R9, ARM::R11
+  };
+  static const unsigned GPROdd1[] = {
+    ARM::R1, ARM::R3, ARM::R5, ARM::R7, ARM::R9, ARM::R11,
+    ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6,
+    ARM::R8, ARM::R10
+  };
+
+  // FP is R7, R9 is available.
+  static const unsigned GPREven2[] = {
+    ARM::R0, ARM::R2, ARM::R4,          ARM::R8, ARM::R10,
+    ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R6,
+    ARM::R9, ARM::R11
+  };
+  static const unsigned GPROdd2[] = {
+    ARM::R1, ARM::R3, ARM::R5,          ARM::R9, ARM::R11,
+    ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6,
+    ARM::R8, ARM::R10
+  };
+
+  // FP is R11, R9 is available.
+  static const unsigned GPREven3[] = {
+    ARM::R0, ARM::R2, ARM::R4, ARM::R6, ARM::R8,
+    ARM::R1, ARM::R3, ARM::R10,ARM::R12,ARM::LR, ARM::R5, ARM::R7,
+    ARM::R9
+  };
+  static const unsigned GPROdd3[] = {
+    ARM::R1, ARM::R3, ARM::R5, ARM::R6, ARM::R9,
+    ARM::R0, ARM::R2, ARM::R10,ARM::R12,ARM::LR, ARM::R4, ARM::R7,
+    ARM::R8
+  };
+
+  // No FP, R9 is not available.
+  static const unsigned GPREven4[] = {
+    ARM::R0, ARM::R2, ARM::R4, ARM::R6,          ARM::R10,
+    ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R7, ARM::R8,
+    ARM::R11
+  };
+  static const unsigned GPROdd4[] = {
+    ARM::R1, ARM::R3, ARM::R5, ARM::R7,          ARM::R11,
+    ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8,
+    ARM::R10
+  };
+
+  // FP is R7, R9 is not available.
+  static const unsigned GPREven5[] = {
+    ARM::R0, ARM::R2, ARM::R4,                   ARM::R10,
+    ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R6, ARM::R8,
+    ARM::R11
+  };
+  static const unsigned GPROdd5[] = {
+    ARM::R1, ARM::R3, ARM::R5,                   ARM::R11,
+    ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8,
+    ARM::R10
+  };
+
+  // FP is R11, R9 is not available.
+  static const unsigned GPREven6[] = {
+    ARM::R0, ARM::R2, ARM::R4, ARM::R6,
+    ARM::R1, ARM::R3, ARM::R10,ARM::R12,ARM::LR, ARM::R5, ARM::R7, ARM::R8
+  };
+  static const unsigned GPROdd6[] = {
+    ARM::R1, ARM::R3, ARM::R5, ARM::R7,
+    ARM::R0, ARM::R2, ARM::R10,ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8
+  };
+
+
+  if (Hint.first == ARMRI::RegPairEven) {
+    if (!hasFP(MF)) {
+      if (!STI.isR9Reserved())
+        return std::make_pair(GPREven1,
+                              GPREven1 + (sizeof(GPREven1)/sizeof(unsigned)));
+      else
+        return std::make_pair(GPREven4,
+                              GPREven4 + (sizeof(GPREven4)/sizeof(unsigned)));
+    } else if (FramePtr == ARM::R7) {
+      if (!STI.isR9Reserved())
+        return std::make_pair(GPREven2,
+                              GPREven2 + (sizeof(GPREven2)/sizeof(unsigned)));
+      else
+        return std::make_pair(GPREven5,
+                              GPREven5 + (sizeof(GPREven5)/sizeof(unsigned)));
+    } else { // FramePtr == ARM::R11
+      if (!STI.isR9Reserved())
+        return std::make_pair(GPREven3,
+                              GPREven3 + (sizeof(GPREven3)/sizeof(unsigned)));
+      else
+        return std::make_pair(GPREven6,
+                              GPREven6 + (sizeof(GPREven6)/sizeof(unsigned)));
+    }
+  } else if (Hint.first == ARMRI::RegPairOdd) {
+    if (!hasFP(MF)) {
+      if (!STI.isR9Reserved())
+        return std::make_pair(GPROdd1,
+                              GPROdd1 + (sizeof(GPROdd1)/sizeof(unsigned)));
+      else
+        return std::make_pair(GPROdd4,
+                              GPROdd4 + (sizeof(GPROdd4)/sizeof(unsigned)));
+    } else if (FramePtr == ARM::R7) {
+      if (!STI.isR9Reserved())
+        return std::make_pair(GPROdd2,
+                              GPROdd2 + (sizeof(GPROdd2)/sizeof(unsigned)));
+      else
+        return std::make_pair(GPROdd5,
+                              GPROdd5 + (sizeof(GPROdd5)/sizeof(unsigned)));
+    } else { // FramePtr == ARM::R11
+      if (!STI.isR9Reserved())
+        return std::make_pair(GPROdd3,
+                              GPROdd3 + (sizeof(GPROdd3)/sizeof(unsigned)));
+      else
+        return std::make_pair(GPROdd6,
+                              GPROdd6 + (sizeof(GPROdd6)/sizeof(unsigned)));
+    }
+  }
+  return std::make_pair(RC->allocation_order_begin(MF),
+                        RC->allocation_order_end(MF));
+}
+
+/// ResolveRegAllocHint - Resolves the specified register allocation hint
+/// to a physical register. Returns the physical register if it is successful.
+unsigned
+ARMRegisterInfo::ResolveRegAllocHint(unsigned Type, unsigned Reg,
+                                     const MachineFunction &MF) const {
+  if (Reg == 0 || !isPhysicalRegister(Reg))
+    return 0;
+  if (Type == 0)
+    return Reg;
+  else if (Type == (unsigned)ARMRI::RegPairOdd)
+    // Odd register.
+    return getRegisterPairOdd(Reg, MF);
+  else if (Type == (unsigned)ARMRI::RegPairEven)
+    // Even register.
+    return getRegisterPairEven(Reg, MF);
+  return 0;
 }
 
 bool
@@ -1523,6 +1672,154 @@ unsigned ARMRegisterInfo::getEHHandlerRegister() const {
 
 int ARMRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return ARMGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
+}
+
+unsigned ARMRegisterInfo::getRegisterPairEven(unsigned Reg,
+                                              const MachineFunction &MF) const {
+  switch (Reg) {
+  default: break;
+  // Return 0 if either register of the pair is a special register.
+  // So no R12, etc.
+  case ARM::R0: case ARM::R1:
+    return ARM::R0;
+  case ARM::R2: case ARM::R3:
+    // FIXME!
+    return STI.isThumb() ? 0 : ARM::R2;
+  case ARM::R4: case ARM::R5:
+    return ARM::R4;
+  case ARM::R6: case ARM::R7:
+    return isReservedReg(MF, ARM::R7)  ? 0 : ARM::R6;
+  case ARM::R8: case ARM::R9:
+    return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R8;
+  case ARM::R10: case ARM::R11:
+    return isReservedReg(MF, ARM::R11) ? 0 : ARM::R10;
+
+  case ARM::S0: case ARM::S1:
+    return ARM::S0;
+  case ARM::S2: case ARM::S3:
+    return ARM::S2;
+  case ARM::S4: case ARM::S5:
+    return ARM::S4;
+  case ARM::S6: case ARM::S7:
+    return ARM::S6;
+  case ARM::S8: case ARM::S9:
+    return ARM::S8;
+  case ARM::S10: case ARM::S11:
+    return ARM::S10;
+  case ARM::S12: case ARM::S13:
+    return ARM::S12;
+  case ARM::S14: case ARM::S15:
+    return ARM::S14;
+  case ARM::S16: case ARM::S17:
+    return ARM::S16;
+  case ARM::S18: case ARM::S19:
+    return ARM::S18;
+  case ARM::S20: case ARM::S21:
+    return ARM::S20;
+  case ARM::S22: case ARM::S23:
+    return ARM::S22;
+  case ARM::S24: case ARM::S25:
+    return ARM::S24;
+  case ARM::S26: case ARM::S27:
+    return ARM::S26;
+  case ARM::S28: case ARM::S29:
+    return ARM::S28;
+  case ARM::S30: case ARM::S31:
+    return ARM::S30;
+
+  case ARM::D0: case ARM::D1:
+    return ARM::D0;
+  case ARM::D2: case ARM::D3:
+    return ARM::D2;
+  case ARM::D4: case ARM::D5:
+    return ARM::D4;
+  case ARM::D6: case ARM::D7:
+    return ARM::D6;
+  case ARM::D8: case ARM::D9:
+    return ARM::D8;
+  case ARM::D10: case ARM::D11:
+    return ARM::D10;
+  case ARM::D12: case ARM::D13:
+    return ARM::D12;
+  case ARM::D14: case ARM::D15:
+    return ARM::D14;
+  }
+
+  return 0;
+}
+
+unsigned ARMRegisterInfo::getRegisterPairOdd(unsigned Reg,
+                                             const MachineFunction &MF) const {
+  switch (Reg) {
+  default: break;
+  // Return 0 if either register of the pair is a special register.
+  // So no R12, etc.
+  case ARM::R0: case ARM::R1:
+    return ARM::R1;
+  case ARM::R2: case ARM::R3:
+    // FIXME!
+    return STI.isThumb() ? 0 : ARM::R3;
+  case ARM::R4: case ARM::R5:
+    return ARM::R5;
+  case ARM::R6: case ARM::R7:
+    return isReservedReg(MF, ARM::R7)  ? 0 : ARM::R7;
+  case ARM::R8: case ARM::R9:
+    return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R9;
+  case ARM::R10: case ARM::R11:
+    return isReservedReg(MF, ARM::R11) ? 0 : ARM::R11;
+
+  case ARM::S0: case ARM::S1:
+    return ARM::S1;
+  case ARM::S2: case ARM::S3:
+    return ARM::S3;
+  case ARM::S4: case ARM::S5:
+    return ARM::S5;
+  case ARM::S6: case ARM::S7:
+    return ARM::S7;
+  case ARM::S8: case ARM::S9:
+    return ARM::S9;
+  case ARM::S10: case ARM::S11:
+    return ARM::S11;
+  case ARM::S12: case ARM::S13:
+    return ARM::S13;
+  case ARM::S14: case ARM::S15:
+    return ARM::S15;
+  case ARM::S16: case ARM::S17:
+    return ARM::S17;
+  case ARM::S18: case ARM::S19:
+    return ARM::S19;
+  case ARM::S20: case ARM::S21:
+    return ARM::S21;
+  case ARM::S22: case ARM::S23:
+    return ARM::S23;
+  case ARM::S24: case ARM::S25:
+    return ARM::S25;
+  case ARM::S26: case ARM::S27:
+    return ARM::S27;
+  case ARM::S28: case ARM::S29:
+    return ARM::S29;
+  case ARM::S30: case ARM::S31:
+    return ARM::S31;
+
+  case ARM::D0: case ARM::D1:
+    return ARM::D1;
+  case ARM::D2: case ARM::D3:
+    return ARM::D3;
+  case ARM::D4: case ARM::D5:
+    return ARM::D5;
+  case ARM::D6: case ARM::D7:
+    return ARM::D7;
+  case ARM::D8: case ARM::D9:
+    return ARM::D9;
+  case ARM::D10: case ARM::D11:
+    return ARM::D11;
+  case ARM::D12: case ARM::D13:
+    return ARM::D13;
+  case ARM::D14: case ARM::D15:
+    return ARM::D15;
+  }
+
+  return 0;
 }
 
 #include "ARMGenRegisterInfo.inc"

@@ -100,36 +100,15 @@ void VirtRegMap::grow() {
 }
 
 unsigned VirtRegMap::getRegAllocPref(unsigned virtReg) {
-  std::pair<MachineRegisterInfo::RegAllocHintType, unsigned> Hint =
-    MRI->getRegAllocationHint(virtReg);
-  switch (Hint.first) {
-  default: assert(0);
-  case MachineRegisterInfo::RA_None:
-    return 0;
-  case MachineRegisterInfo::RA_Preference:
-    if (TargetRegisterInfo::isPhysicalRegister(Hint.second))
-      return Hint.second;
-    if (hasPhys(Hint.second))
-      return getPhys(Hint.second);
-  case MachineRegisterInfo::RA_PairEven: {
-    unsigned physReg = Hint.second;
-    if (TargetRegisterInfo::isPhysicalRegister(physReg))
-      return TRI->getRegisterPairEven(*MF, physReg);
-    else if (hasPhys(physReg))
-      return TRI->getRegisterPairEven(*MF, getPhys(physReg));
-    return 0;
-  }
-  case MachineRegisterInfo::RA_PairOdd: {
-    unsigned physReg = Hint.second;
-    if (TargetRegisterInfo::isPhysicalRegister(physReg))
-      return TRI->getRegisterPairOdd(*MF, physReg);
-    else if (hasPhys(physReg))
-      return TRI->getRegisterPairOdd(*MF, getPhys(physReg));
-    return 0;
-  }
-  }
-  // Shouldn't reach here.
-  return 0;
+  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(virtReg);
+  unsigned physReg = Hint.second;
+  if (physReg &&
+      TargetRegisterInfo::isVirtualRegister(physReg) && hasPhys(physReg))
+    physReg = getPhys(physReg);
+  if (Hint.first == 0)
+    return (physReg && TargetRegisterInfo::isPhysicalRegister(physReg))
+      ? physReg : 0;
+  return TRI->ResolveRegAllocHint(Hint.first, physReg, *MF);
 }
 
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
