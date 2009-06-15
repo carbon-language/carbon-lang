@@ -309,6 +309,11 @@ namespace sys {
       /// @brief Determine if the path is absolute.
       bool isAbsolute() const;
 
+      /// This function determines if the path name is absolute, as opposed to
+      /// relative.
+      /// @brief Determine if the path is absolute.
+      static bool isAbsolute(const char *NameStart, unsigned NameLen);
+
       /// This function opens the file associated with the path name provided by
       /// the Path object and reads its magic number. If the magic number at the
       /// start of the file matches \p magic, true is returned. In all other

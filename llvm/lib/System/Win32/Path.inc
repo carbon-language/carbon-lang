@@ -125,6 +125,20 @@ Path::isValid() const {
   return true;
 }
 
+bool
+Path::isAbsolute(const char *NameStart, unsigned NameLen) {
+  assert(NameStart);
+  switch (NameLen) {
+  case 0:
+    return false;
+  case 1:
+  case 2:
+    return NameStart[0] == '/';
+  default:
+    return NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/');
+  }
+}
+
 bool 
 Path::isAbsolute() const {
   switch (path.length()) {

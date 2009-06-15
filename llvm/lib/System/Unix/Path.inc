@@ -104,6 +104,14 @@ Path::isValid() const {
 }
 
 bool
+Path::isAbsolute(const char *NameStart, unsigned NameLen) {
+  assert(NameStart);
+  if (NameLen == 0)
+    return false;
+  return NameStart[0] == '/';
+}
+
+bool
 Path::isAbsolute() const {
   if (path.empty())
     return false;
