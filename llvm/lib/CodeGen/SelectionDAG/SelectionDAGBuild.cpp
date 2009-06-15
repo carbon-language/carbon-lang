@@ -5317,8 +5317,12 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         if ((OpFlag & 7) == 2 /*REGDEF*/
             || (OpFlag & 7) == 6 /* EARLYCLOBBER REGDEF */) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
-          assert(!OpInfo.isIndirect &&
-                 "Don't know how to handle tied indirect register inputs yet!");
+          if (OpInfo.isIndirect) {
+            cerr << "llvm: error: "
+                    "Don't know how to handle tied indirect "
+                    "register inputs yet!\n";
+            exit(1);
+          }
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
           MatchedRegs.ValueVTs.push_back(InOperandVal.getValueType());
