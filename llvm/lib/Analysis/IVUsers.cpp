@@ -120,9 +120,9 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L, Loop *UseLoop,
   // Use getSCEVAtScope to attempt to simplify other loops out of
   // the picture.
   SCEVHandle AddRecStart = AddRec->getStart();
-  SCEVHandle BetterAddRecStart = SE->getSCEVAtScope(AddRecStart, UseLoop);
-  if (!isa<SCEVCouldNotCompute>(BetterAddRecStart))
-    AddRecStart = BetterAddRecStart;
+  AddRecStart = SE->getSCEVAtScope(AddRecStart, UseLoop);
+  SCEVHandle AddRecStride = AddRec->getStepRecurrence(*SE);
+  AddRecStride = SE->getSCEVAtScope(AddRecStride, UseLoop);
 
   // FIXME: If Start contains an SCEVAddRecExpr from a different loop, other
   // than an outer loop of the current loop, reject it.  LSR has no concept of
@@ -136,18 +136,18 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L, Loop *UseLoop,
 
   Start = SE->getAddExpr(Start, AddRecStart);
 
-  if (!isa<SCEVConstant>(AddRec->getStepRecurrence(*SE))) {
-    // If stride is an instruction, make sure it dominates the loop preheader.
-    // Otherwise we could end up with a use before def situation.
+  // If stride is an instruction, make sure it dominates the loop preheader.
+  // Otherwise we could end up with a use before def situation.
+  if (!isa<SCEVConstant>(AddRecStride)) {
     BasicBlock *Preheader = L->getLoopPreheader();
-    if (!AddRec->getStepRecurrence(*SE)->dominates(Preheader, DT))
+    if (!AddRecStride->dominates(Preheader, DT))
       return false;
 
     DOUT << "[" << L->getHeader()->getName()
          << "] Variable stride: " << *AddRec << "\n";
   }
 
-  Stride = AddRec->getStepRecurrence(*SE);
+  Stride = AddRecStride;
   isSigned = isSExt;
   return true;
 }
@@ -326,7 +326,7 @@ SCEVHandle IVUsers::getReplacementExpr(const IVStrideUse &U) const {
   // Evaluate the expression out of the loop, if possible.
   if (!L->contains(U.getUser()->getParent())) {
     SCEVHandle ExitVal = SE->getSCEVAtScope(RetVal, L->getParentLoop());
-    if (!isa<SCEVCouldNotCompute>(ExitVal) && ExitVal->isLoopInvariant(L))
+    if (ExitVal->isLoopInvariant(L))
       RetVal = ExitVal;
   }
   // Promote the result to the type of the use.
