@@ -14,42 +14,20 @@
 
 #include "clang/Frontend/DocumentXML.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace clang {
 
 //--------------------------------------------------------- 
-struct DocumentXML::NodeXML
-{
-  std::string               Name;
-  NodeXML*                  Parent;
-
-  NodeXML(const std::string& name, NodeXML* parent) :
-    Name(name),
-    Parent(parent)
-  {}
-};
-
-//--------------------------------------------------------- 
 DocumentXML::DocumentXML(const std::string& rootName, llvm::raw_ostream& out) :
-  Root(new NodeXML(rootName, 0)),
-  CurrentNode(Root),
   Out(out),
   Ctx(0),
-  CurrentIndent(0),
   HasCurrentNodeSubNodes(false)
 {
+  NodeStack.push(rootName);
   Out << "<?xml version=\"1.0\"?>\n<" << rootName;
-}
-
-//--------------------------------------------------------- 
-DocumentXML::~DocumentXML()
-{
-  assert(CurrentNode == Root && "not completely backtracked");
-  delete Root;
 }
 
 //--------------------------------------------------------- 
@@ -59,47 +37,43 @@ DocumentXML& DocumentXML::addSubNode(const std::string& name)
   {
     Out << ">\n";
   }
-  CurrentNode = new NodeXML(name, CurrentNode);
+  NodeStack.push(name);
   HasCurrentNodeSubNodes = false;
-  CurrentIndent += 2;
   Indent();
-  Out << "<" << CurrentNode->Name;
+  Out << "<" << NodeStack.top();
   return *this;
 }
 
 //--------------------------------------------------------- 
 void DocumentXML::Indent() 
 {
-  for (int i = 0; i < CurrentIndent; ++i)
+  for (size_t i = 0, e = (NodeStack.size() - 1) * 2; i < e; ++i)
     Out << ' ';
 }
 
 //--------------------------------------------------------- 
 DocumentXML& DocumentXML::toParent() 
 { 
-  assert(CurrentNode != Root && "to much backtracking");
+  assert(NodeStack.size() > 1 && "to much backtracking");
 
   if (HasCurrentNodeSubNodes)
   {
     Indent();
-    Out << "</" << CurrentNode->Name << ">\n";
+    Out << "</" << NodeStack.top() << ">\n";
   }
   else
   {
     Out << "/>\n";
   }
-  NodeXML* NodeToDelete = CurrentNode;
-  CurrentNode = CurrentNode->Parent; 
-  delete NodeToDelete;
+  NodeStack.pop();
   HasCurrentNodeSubNodes = true;
-  CurrentIndent -= 2;
   return *this; 
 }
 
 //--------------------------------------------------------- 
 namespace {
 
-enum tIdType { ID_NORMAL, ID_FILE, ID_LAST };
+enum tIdType { ID_NORMAL, ID_FILE, ID_LABEL, ID_LAST };
 
 unsigned getNewId(tIdType idType)
 {
@@ -110,7 +84,7 @@ unsigned getNewId(tIdType idType)
 //--------------------------------------------------------- 
 inline std::string getPrefixedId(unsigned uId, tIdType idType)
 {
-  static const char idPrefix[ID_LAST] = { '_', 'f' };
+  static const char idPrefix[ID_LAST] = { '_', 'f', 'l' };
   char buffer[20];
   char* BufPtr = llvm::utohex_buffer(uId, buffer + 20);
   *--BufPtr = idPrefix[idType];
@@ -131,6 +105,7 @@ bool addToMap(T& idMap, const V& value, tIdType idType = ID_NORMAL)
 }
 
 } // anon NS
+
 
 //--------------------------------------------------------- 
 std::string DocumentXML::escapeString(const char* pStr, std::string::size_type len)
@@ -170,7 +145,7 @@ std::string DocumentXML::escapeString(const char* pStr, std::string::size_type l
 //--------------------------------------------------------- 
 void DocumentXML::finalize()
 {
-  assert(CurrentNode == Root && "not completely backtracked");
+  assert(NodeStack.size() == 1 && "not completely backtracked");
 
   addSubNode("ReferenceSection");
   addSubNode("Types");
@@ -179,71 +154,15 @@ void DocumentXML::finalize()
   {
     if (i->first.getCVRQualifiers() != 0)
     {
-      addSubNode("CvQualifiedType");
+      writeTypeToXML(i->first);
       addAttribute("id", getPrefixedId(i->second, ID_NORMAL));
-      addAttribute("type", getPrefixedId(BasicTypes[i->first.getTypePtr()], ID_NORMAL));
-      if (i->first.isConstQualified()) addAttribute("const", "1");
-      if (i->first.isVolatileQualified()) addAttribute("volatile", "1");
-      if (i->first.isRestrictQualified()) addAttribute("restrict", "1");
       toParent();
     }
   }
 
   for (XML::IdMap<const Type*>::iterator i = BasicTypes.begin(), e = BasicTypes.end(); i != e; ++i)
   {
-    // don't use the get methods as they strip of typedef infos
-    if (const BuiltinType *BT = dyn_cast<BuiltinType>(i->first)) {
-      addSubNode("FundamentalType");
-      addAttribute("name", BT->getName(Ctx->getLangOptions().CPlusPlus));
-    }
-    else if (const PointerType *PT = dyn_cast<PointerType>(i->first)) {
-      addSubNode("PointerType");
-      addTypeAttribute(PT->getPointeeType());
-    }
-    else if (dyn_cast<FunctionType>(i->first) != 0) {
-      addSubNode("FunctionType");
-    }
-    else if (const ReferenceType *RT = dyn_cast<ReferenceType>(i->first)) {
-      addSubNode("ReferenceType");
-      addTypeAttribute(RT->getPointeeType());
-    }
-    else if (const TypedefType * TT = dyn_cast<TypedefType>(i->first)) {
-      addSubNode("Typedef");
-      addAttribute("name", TT->getDecl()->getNameAsString());
-      addTypeAttribute(TT->getDecl()->getUnderlyingType());
-      addContextAttribute(TT->getDecl()->getDeclContext());
-    }
-    else if (const QualifiedNameType *QT = dyn_cast<QualifiedNameType>(i->first)) {
-      addSubNode("QualifiedNameType");
-      addTypeAttribute(QT->getNamedType());
-    }
-    else if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(i->first)) {
-      addSubNode("ArrayType");
-      addAttribute("min", 0);
-      addAttribute("max", (CAT->getSize() - 1).toString(10, false));
-      addTypeAttribute(CAT->getElementType());
-    }
-    else if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(i->first)) {
-      addSubNode("VariableArrayType");
-      addTypeAttribute(VAT->getElementType());
-    } 
-    else if (const TagType *RET = dyn_cast<TagType>(i->first)) {
-      const TagDecl *tagDecl = RET->getDecl();
-      std::string tagKind = tagDecl->getKindName();
-      tagKind[0] = std::toupper(tagKind[0]);
-      addSubNode(tagKind);
-      addAttribute("name", tagDecl->getNameAsString());
-      addContextAttribute(tagDecl->getDeclContext());
-    }
-    else if (const VectorType* VT = dyn_cast<VectorType>(i->first)) {
-      addSubNode("VectorType");
-      addTypeAttribute(VT->getElementType());
-      addAttribute("num_elements", VT->getNumElements());
-    }
-    else 
-    {
-      addSubNode("FIXMEType");
-    }
+    writeTypeToXML(i->first);
     addAttribute("id", getPrefixedId(i->second, ID_NORMAL));
     toParent();
   }
@@ -267,7 +186,7 @@ void DocumentXML::finalize()
 
     if (const DeclContext* parent = i->first->getParent())
     {
-      addContextAttribute(parent);
+      addAttribute("context", parent);
     } 
     toParent();
   }
@@ -285,21 +204,21 @@ void DocumentXML::finalize()
   toParent().toParent();
   
   // write the root closing node (which has always subnodes)
-  Out << "</" << CurrentNode->Name << ">\n";
+  Out << "</" << NodeStack.top() << ">\n";
 }
 
 //--------------------------------------------------------- 
-void DocumentXML::addTypeAttribute(const QualType& pType)
+void DocumentXML::addAttribute(const char* pAttributeName, const QualType& pType)
 {
   addTypeRecursively(pType);
-  addAttribute("type", getPrefixedId(Types[pType], ID_NORMAL));
+  addAttribute(pAttributeName, getPrefixedId(Types[pType], ID_NORMAL));
 }
 
 //--------------------------------------------------------- 
-void DocumentXML::addTypeIdAttribute(const Type* pType)
+void DocumentXML::addPtrAttribute(const char* pAttributeName, const Type* pType)
 {
-  addBasicTypeRecursively(pType);
-  addAttribute("id", getPrefixedId(BasicTypes[pType], ID_NORMAL));
+  addTypeRecursively(pType);
+  addAttribute(pAttributeName, getPrefixedId(BasicTypes[pType], ID_NORMAL));
 }
 
 //--------------------------------------------------------- 
@@ -307,7 +226,7 @@ void DocumentXML::addTypeRecursively(const QualType& pType)
 {
   if (addToMap(Types, pType))
   {
-    addBasicTypeRecursively(pType.getTypePtr());
+    addTypeRecursively(pType.getTypePtr());
     // beautifier: a non-qualified type shall be transparent
     if (pType.getCVRQualifiers() == 0)
     {
@@ -317,43 +236,49 @@ void DocumentXML::addTypeRecursively(const QualType& pType)
 }
 
 //--------------------------------------------------------- 
-void DocumentXML::addBasicTypeRecursively(const Type* pType)
+void DocumentXML::addTypeRecursively(const Type* pType)
 {
   if (addToMap(BasicTypes, pType))
   {
-    if (const PointerType *PT = dyn_cast<PointerType>(pType)) {
-      addTypeRecursively(PT->getPointeeType());
+    addParentTypes(pType);
+/*
+    // FIXME: doesn't work in the immediate streaming approach
+    if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(pType)) 
+    {
+      addSubNode("VariableArraySizeExpression");
+      PrintStmt(VAT->getSizeExpr());
+      toParent();
     }
-    else if (const ReferenceType *RT = dyn_cast<ReferenceType>(pType)) {
-      addTypeRecursively(RT->getPointeeType());
-    }
-    else if (const TypedefType *TT = dyn_cast<TypedefType>(pType)) {
-      addTypeRecursively(TT->getDecl()->getUnderlyingType());
-      addContextsRecursively(TT->getDecl()->getDeclContext());
-    }
-    else if (const QualifiedNameType *QT = dyn_cast<QualifiedNameType>(pType)) {
-      addTypeRecursively(QT->getNamedType());
-      // FIXME: what to do with NestedNameSpecifier or shall this type be transparent?
-    }
-    else if (const ArrayType *AT = dyn_cast<ArrayType>(pType)) {
-      addTypeRecursively(AT->getElementType());
-      // FIXME: doesn't work in the immediate streaming approach
-      /*if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(AT)) 
-      {
-        addSubNode("VariableArraySizeExpression");
-        PrintStmt(VAT->getSizeExpr());
-        toParent();
-      }*/
-    }
+*/
   }
 }
 
 //--------------------------------------------------------- 
-void DocumentXML::addContextAttribute(const DeclContext *DC, tContextUsage usage)
+void DocumentXML::addPtrAttribute(const char* pName, const DeclContext* DC)
 {
   addContextsRecursively(DC);
-  const char* pAttributeTags[2] = { "context", "id" };
-  addAttribute(pAttributeTags[usage], getPrefixedId(Contexts[DC], ID_NORMAL));
+  addAttribute(pName, getPrefixedId(Contexts[DC], ID_NORMAL));
+}
+
+//--------------------------------------------------------- 
+void DocumentXML::addPtrAttribute(const char* pAttributeName, const NamedDecl* D)
+{
+  if (const DeclContext* DC = dyn_cast<DeclContext>(D))
+  {
+    addContextsRecursively(DC);
+    addAttribute(pAttributeName, getPrefixedId(Contexts[DC], ID_NORMAL));
+  }
+  else
+  {
+    addToMap(Decls, D);
+    addAttribute(pAttributeName, getPrefixedId(Decls[D], ID_NORMAL));
+  }
+}
+
+//--------------------------------------------------------- 
+void DocumentXML::addPtrAttribute(const char* pName, const NamespaceDecl* D)
+{
+  addPtrAttribute(pName, static_cast<const DeclContext*>(D));
 }
 
 //--------------------------------------------------------- 
@@ -371,6 +296,15 @@ void DocumentXML::addSourceFileAttribute(const std::string& fileName)
   addToMap(SourceFiles, fileName, ID_FILE);
   addAttribute("file", getPrefixedId(SourceFiles[fileName], ID_FILE));
 }
+
+
+//--------------------------------------------------------- 
+void DocumentXML::addPtrAttribute(const char* pName, const LabelStmt* L)
+{
+  addToMap(Labels, L, ID_LABEL);
+  addAttribute(pName, getPrefixedId(Labels[L], ID_LABEL));
+}
+
 
 //--------------------------------------------------------- 
 PresumedLoc DocumentXML::addLocation(const SourceLocation& Loc)
@@ -417,161 +351,9 @@ void DocumentXML::addLocationRange(const SourceRange& R)
 }
 
 //--------------------------------------------------------- 
-void DocumentXML::PrintFunctionDecl(FunctionDecl *FD) 
-{
-  switch (FD->getStorageClass()) {
-  default: assert(0 && "Unknown storage class");
-  case FunctionDecl::None: break;
-  case FunctionDecl::Extern: addAttribute("storage_class", "extern"); break;
-  case FunctionDecl::Static: addAttribute("storage_class", "static"); break;
-  case FunctionDecl::PrivateExtern: addAttribute("storage_class", "__private_extern__"); break;
-  }
-
-  if (FD->isInline())
-    addAttribute("inline", "1");
-  
-  const FunctionType *AFT = FD->getType()->getAsFunctionType();
-  addTypeAttribute(AFT->getResultType());
-  addBasicTypeRecursively(AFT);  
-
-  if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(AFT)) {
-    addAttribute("num_args", FD->getNumParams());
-    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
-      addSubNode("Argument");
-      ParmVarDecl *argDecl = FD->getParamDecl(i);
-      addAttribute("name", argDecl->getNameAsString());
-      addTypeAttribute(FT->getArgType(i));
-      addDeclIdAttribute(argDecl);
-      if (argDecl->getDefaultArg())
-      {
-        addAttribute("default_arg", "1");
-        PrintStmt(argDecl->getDefaultArg());
-      }
-      toParent();
-    }
-    
-    if (FT->isVariadic()) {
-      addSubNode("Ellipsis").toParent();
-    }
-  } else {
-    assert(isa<FunctionNoProtoType>(AFT));
-  }
-}
-
-//--------------------------------------------------------- 
-void DocumentXML::addRefAttribute(const NamedDecl* D)
-{
-  // FIXME: in case of CXX inline member functions referring to a member defined 
-  // after the function it needs to be tested, if the ids are already there
-  // (should work, but I couldn't test it)
-  if (const DeclContext* DC = dyn_cast<DeclContext>(D))
-  {
-    addAttribute("ref", getPrefixedId(Contexts[DC], ID_NORMAL));
-  }
-  else
-  {
-    addAttribute("ref", getPrefixedId(Decls[D], ID_NORMAL));
-  }
-}
-
-//--------------------------------------------------------- 
-void DocumentXML::addDeclIdAttribute(const NamedDecl* D)
-{
-  addToMap(Decls, D);
-  addAttribute("id", getPrefixedId(Decls[D], ID_NORMAL));
-}
-
-//--------------------------------------------------------- 
 void DocumentXML::PrintDecl(Decl *D)
 {
-  addSubNode(D->getDeclKindName());
-  addContextAttribute(D->getDeclContext());
-  addLocation(D->getLocation());
-  if (DeclContext* DC = dyn_cast<DeclContext>(D))
-  {
-    addContextAttribute(DC, CONTEXT_AS_ID);
-  }
-
-  if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-    addAttribute("name", ND->getNameAsString());
-
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      PrintFunctionDecl(FD);
-      if (Stmt *Body = FD->getBody(*Ctx)) {
-        addSubNode("Body");
-        PrintStmt(Body);
-        toParent();
-      }
-    } else if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
-      addBasicTypeRecursively(RD->getTypeForDecl());
-      addAttribute("type", getPrefixedId(BasicTypes[RD->getTypeForDecl()], ID_NORMAL));
-      if (!RD->isDefinition())
-      {
-        addAttribute("forward", "1");
-      }
-
-      for (RecordDecl::field_iterator i = RD->field_begin(*Ctx), e = RD->field_end(*Ctx); i != e; ++i)
-      {
-        PrintDecl(*i);
-      }
-    } else if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
-      const QualType& enumType = ED->getIntegerType();
-      if (!enumType.isNull())
-      {
-        addTypeAttribute(enumType);
-        for (EnumDecl::enumerator_iterator i = ED->enumerator_begin(*Ctx), e = ED->enumerator_end(*Ctx); i != e; ++i)
-        {
-          PrintDecl(*i);
-        }
-      }
-    } else if (EnumConstantDecl* ECD = dyn_cast<EnumConstantDecl>(D)) {
-      addTypeAttribute(ECD->getType());
-      addAttribute("value", ECD->getInitVal().toString(10, true));
-      if (ECD->getInitExpr()) 
-      {
-        PrintStmt(ECD->getInitExpr());
-      }
-    } else if (FieldDecl *FdD = dyn_cast<FieldDecl>(D)) {
-      addTypeAttribute(FdD->getType());
-      addDeclIdAttribute(ND);
-      if (FdD->isMutable())
-        addAttribute("mutable", "1");
-      if (FdD->isBitField())
-      {
-        addAttribute("bitfield", "1");
-        PrintStmt(FdD->getBitWidth());
-      }
-    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-      addTypeIdAttribute(Ctx->getTypedefType(TD).getTypePtr());
-      addTypeAttribute(TD->getUnderlyingType());
-    } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-      addTypeAttribute(VD->getType());
-      addDeclIdAttribute(ND);
-
-      VarDecl *V = dyn_cast<VarDecl>(VD);
-      if (V && V->getStorageClass() != VarDecl::None)
-      {
-        addAttribute("storage_class", VarDecl::getStorageClassSpecifierString(V->getStorageClass()));
-      }
-      
-      if (V && V->getInit()) 
-      {
-        PrintStmt(V->getInit());
-      }
-    }
-  } else if (LinkageSpecDecl* LSD = dyn_cast<LinkageSpecDecl>(D)) {
-    switch (LSD->getLanguage())
-    {
-      case LinkageSpecDecl::lang_c:    addAttribute("lang", "C");  break;
-      case LinkageSpecDecl::lang_cxx:  addAttribute("lang", "CXX");  break;
-      default:                         assert(0 && "Unexpected lang id");
-    }
-  } else if (isa<FileScopeAsmDecl>(D)) {
-    // FIXME: Implement this
-  } else {
-    assert(0 && "Unexpected decl");
-  }
-  toParent();
+  writeDeclToXML(D);
 }
 
 //--------------------------------------------------------- 

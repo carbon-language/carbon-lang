@@ -28,8 +28,31 @@ namespace  {
   class VISIBILITY_HIDDEN StmtXML : public StmtVisitor<StmtXML> {
     DocumentXML&  Doc;
 
-    static const char *getOpcodeStr(UnaryOperator::Opcode Op);
-    static const char *getOpcodeStr(BinaryOperator::Opcode Op);
+    //static const char *getOpcodeStr(UnaryOperator::Opcode Op);
+    //static const char *getOpcodeStr(BinaryOperator::Opcode Op);
+
+
+  void addSpecialAttribute(const char* pName, StringLiteral* Str)
+  {
+    Doc.addAttribute(pName, Doc.escapeString(Str->getStrData(), Str->getByteLength()));
+  }
+
+  void addSpecialAttribute(const char* pName, SizeOfAlignOfExpr* S)
+  {
+    if (S->isArgumentType())
+    {
+      Doc.addAttribute(pName, S->getArgumentType());
+    }
+  }
+
+  void addSpecialAttribute(const char* pName, CXXTypeidExpr* S)
+  {
+    if (S->isTypeOperand())
+    {
+      Doc.addAttribute(pName, S->getTypeOperand());
+    }
+  }
+
 
   public:
     StmtXML(DocumentXML& doc)
@@ -39,12 +62,21 @@ namespace  {
     void DumpSubTree(Stmt *S) {
       if (S) 
       {
-        Doc.addSubNode(S->getStmtClassName());
-        Doc.addLocationRange(S->getSourceRange());
-        if (DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
-          VisitDeclStmt(DS);
-        } else {        
-          Visit(S);
+        Visit(S);
+        if (DeclStmt* DS = dyn_cast<DeclStmt>(S)) 
+        {
+          for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
+               DI != DE; ++DI) 
+          {
+            Doc.PrintDecl(*DI);
+          }
+        } 
+        else 
+        {    
+          if (CXXConditionDeclExpr* CCDE = dyn_cast<CXXConditionDeclExpr>(S))
+          {
+            Doc.PrintDecl(CCDE->getVarDecl());
+          }
           for (Stmt::child_iterator i = S->child_begin(), e = S->child_end(); i != e; ++i)
           {
             DumpSubTree(*i);
@@ -56,17 +88,46 @@ namespace  {
       }
     }
 
-    void DumpTypeExpr(const QualType& T)
-    {
-      Doc.addSubNode("TypeExpr");
-      Doc.addTypeAttribute(T);
-      Doc.toParent();
-    }
 
-    void DumpExpr(const Expr *Node) {
-      Doc.addTypeAttribute(Node->getType());
-    }
+#define NODE_XML( CLASS, NAME )          \
+  void Visit##CLASS(CLASS* S)            \
+  {                                      \
+    typedef CLASS tStmtType;             \
+    Doc.addSubNode(NAME);         
 
+#define ATTRIBUTE_XML( FN, NAME )         Doc.addAttribute(NAME, S->FN); 
+#define TYPE_ATTRIBUTE_XML( FN )          ATTRIBUTE_XML(FN, "type")
+#define ATTRIBUTE_OPT_XML( FN, NAME )     Doc.addAttributeOptional(NAME, S->FN); 
+#define ATTRIBUTE_SPECIAL_XML( FN, NAME ) addSpecialAttribute(NAME, S); 
+#define ATTRIBUTE_FILE_LOCATION_XML       Doc.addLocationRange(S->getSourceRange());
+
+
+#define ATTRIBUTE_ENUM_XML( FN, NAME )  \
+  {                                     \
+    const char* pAttributeName = NAME;  \
+    const bool optional = false;        \
+    switch (S->FN) {                    \
+      default: assert(0 && "unknown enum value"); 
+
+#define ATTRIBUTE_ENUM_OPT_XML( FN, NAME )  \
+  {                                         \
+    const char* pAttributeName = NAME;      \
+    const bool optional = true;             \
+    switch (S->FN) {                        \
+      default: assert(0 && "unknown enum value"); 
+
+#define ENUM_XML( VALUE, NAME )         case VALUE: if ((!optional) || NAME[0]) Doc.addAttribute(pAttributeName, NAME); break;
+#define END_ENUM_XML                    } }
+#define END_NODE_XML                    }
+
+#define ID_ATTRIBUTE_XML                Doc.addAttribute("id", S);
+#define SUB_NODE_XML( CLASS )
+#define SUB_NODE_SEQUENCE_XML( CLASS )
+#define SUB_NODE_OPT_XML( CLASS )
+
+#include "clang/Frontend/StmtXML.def"
+
+#if (0)
     // Stmts.
     void VisitStmt(Stmt *Node);
     void VisitDeclStmt(DeclStmt *Node);
@@ -105,13 +166,14 @@ namespace  {
     void VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
     void VisitObjCSuperExpr(ObjCSuperExpr *Node);
+#endif
   };
 }
 
 //===----------------------------------------------------------------------===//
 //  Stmt printing methods.
 //===----------------------------------------------------------------------===//
-
+#if (0)
 void StmtXML::VisitStmt(Stmt *Node) 
 {
   // nothing special to do
@@ -396,7 +458,7 @@ void StmtXML::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   if (Node->isFreeIvar())
     Doc.addAttribute("isFreeIvar", "1");
 }
-
+#endif
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//

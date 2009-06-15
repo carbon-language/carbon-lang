@@ -17,6 +17,7 @@
 
 #include <string>
 #include <map>
+#include <stack>
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/Support/raw_ostream.h"
@@ -30,6 +31,7 @@ class Decl;
 class NamedDecl;
 class FunctionDecl;
 class ASTContext;
+class LabelStmt;
  
 //--------------------------------------------------------- 
 namespace XML
@@ -50,26 +52,37 @@ class DocumentXML
 {
 public:
   DocumentXML(const std::string& rootName, llvm::raw_ostream& out);
-  ~DocumentXML();
 
   void initialize(ASTContext &Context);
   void PrintDecl(Decl *D);
   void PrintStmt(const Stmt *S);    // defined in StmtXML.cpp
-
   void finalize();
 
 
   DocumentXML& addSubNode(const std::string& name);   // also enters the sub node, returns *this
   DocumentXML& toParent();                            // returns *this
 
+  void addAttribute(const char* pName, const QualType& pType);  
+  void addAttribute(const char* pName, bool value);
+
+  template<class T>
+  void addAttribute(const char* pName, const T* value)
+  {
+    addPtrAttribute(pName, value);
+  }
+
+  template<class T>
+  void addAttribute(const char* pName, T* value)
+  {
+    addPtrAttribute(pName, value);
+  }
+
   template<class T>
   void addAttribute(const char* pName, const T& value);
   
-  void addTypeAttribute(const QualType& pType);  
-  void addRefAttribute(const NamedDecl* D);
+  template<class T>
+  void addAttributeOptional(const char* pName, const T& value);
 
-  enum tContextUsage { CONTEXT_AS_CONTEXT, CONTEXT_AS_ID };
-  void addContextAttribute(const DeclContext *DC, tContextUsage usage = CONTEXT_AS_CONTEXT);
   void addSourceFileAttribute(const std::string& fileName);
 
   PresumedLoc addLocation(const SourceLocation& Loc);
@@ -81,13 +94,9 @@ private:
   DocumentXML(const DocumentXML&);              // not defined
   DocumentXML& operator=(const DocumentXML&);   // not defined
 
-  struct NodeXML;
-
-  NodeXML*  Root;
-  NodeXML*  CurrentNode;   // always after Root
+  std::stack<std::string> NodeStack;
   llvm::raw_ostream& Out;
   ASTContext *Ctx;
-  int       CurrentIndent;
   bool      HasCurrentNodeSubNodes;
 
 
@@ -96,15 +105,38 @@ private:
   XML::IdMap<const Type*>              BasicTypes;
   XML::IdMap<std::string>              SourceFiles;
   XML::IdMap<const NamedDecl*>         Decls;
+  XML::IdMap<const LabelStmt*>         Labels;
 
   void addContextsRecursively(const DeclContext *DC);
-  void addBasicTypeRecursively(const Type* pType);
+  void addTypeRecursively(const Type* pType);
   void addTypeRecursively(const QualType& pType);
 
-  void PrintFunctionDecl(FunctionDecl *FD);
-  void addDeclIdAttribute(const NamedDecl* D);
-  void addTypeIdAttribute(const Type* pType);  
   void Indent();
+
+  // forced pointer dispatch:
+  void addPtrAttribute(const char* pName, const Type* pType);  
+  void addPtrAttribute(const char* pName, const NamedDecl* D);
+  void addPtrAttribute(const char* pName, const DeclContext* D);
+  void addPtrAttribute(const char* pName, const NamespaceDecl* D);    // disambiguation
+  void addPtrAttribute(const char* pName, const LabelStmt* L);
+  void addPtrAttribute(const char* pName, const char* text);
+
+  // defined in TypeXML.cpp:
+  void addParentTypes(const Type* pType);
+  void writeTypeToXML(const Type* pType);
+  void writeTypeToXML(const QualType& pType);
+  class TypeAdder;
+  friend class TypeAdder;
+
+  // defined in DeclXML.cpp:
+  void writeDeclToXML(Decl *D);
+  class DeclPrinter;
+  friend class DeclPrinter;
+
+  // for addAttributeOptional:
+  static bool isDefault(unsigned value)           { return value == 0; }
+  static bool isDefault(bool value)               { return !value; }
+  static bool isDefault(const std::string& value) { return value.empty(); }
 };
 
 //--------------------------------------------------------- inlines
@@ -119,6 +151,28 @@ template<class T>
 inline void DocumentXML::addAttribute(const char* pName, const T& value)
 {
   Out << ' ' << pName << "=\"" << value << "\"";
+}
+
+//--------------------------------------------------------- 
+inline void DocumentXML::addPtrAttribute(const char* pName, const char* text)
+{
+  Out << ' ' << pName << "=\"" << text << "\"";
+}
+
+//--------------------------------------------------------- 
+inline void DocumentXML::addAttribute(const char* pName, bool value)
+{
+  addPtrAttribute(pName, value ? "1" : "0");
+}
+
+//--------------------------------------------------------- 
+template<class T>
+inline void DocumentXML::addAttributeOptional(const char* pName, const T& value)
+{
+  if (!isDefault(value))
+  {
+    addAttribute(pName, value);
+  }
 }
 
 //--------------------------------------------------------- 

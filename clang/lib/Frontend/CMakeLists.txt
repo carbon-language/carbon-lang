@@ -5,6 +5,7 @@ add_clang_library(clangFrontend
   ASTConsumers.cpp
   Backend.cpp
   CacheTokens.cpp
+  DeclXML.cpp
   DependencyFile.cpp
   DiagChecker.cpp
   DocumentXML.cpp
@@ -31,5 +32,6 @@ add_clang_library(clangFrontend
   StmtXML.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
+  TypeXML.cpp
   Warnings.cpp
   )

@@ -1,0 +1,75 @@
+//===-- DocumentXML.def - Metadata about Document XML nodes -----*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the XML root database structure as written in 
+//  an AST XML document. 
+//  The following macros are used:
+//
+//  NODE_XML( CLASS, NAME ) - A node of name NAME denotes a concrete 
+//  statement of class CLASS where CLASS is a class name used internally by clang. 
+//  After a NODE_XML the definition of all (optional) attributes of that statement 
+//  node and possible sub-nodes follows.
+//
+//  END_NODE_XML - Closes the attribute definition of the current node.
+//
+//  ID_ATTRIBUTE_XML - Some nodes have an "id" attribute containing a 
+//  string, which value uniquely identify the entity represented by that node. 
+//  Other nodes may refer by reference attributes to this value.
+//
+//  ATTRIBUTE_SPECIAL_XML( FN, NAME ) - An attribute named NAME which deserves 
+//  a special handling. See the appropriate documentations. 
+//
+//  SUB_NODE_XML( CLASS ) - A mandatory sub-node of class CLASS or its sub-classes.
+//
+//  SUB_NODE_SEQUENCE_XML( CLASS ) - Zero or more sub-nodes of class CLASS or 
+//  its sub-classes.
+//
+//===----------------------------------------------------------------------===//
+
+ROOT_NODE_XML("CLANG_XML")
+  ATTRIBUTE_SPECIAL_XML(ignore, "version")     // special retrieving needed
+  SUB_NODE_XML("TranslationUnit")
+  SUB_NODE_XML("ReferenceSection")
+END_NODE_XML
+
+NODE_XML("TranslationUnit")
+  SUB_NODE_SEQUENCE_XML(Decl)
+END_NODE_XML
+
+NODE_XML("ReferenceSection")
+  SUB_NODE_XML("Types")
+  SUB_NODE_XML("Contexts")
+  SUB_NODE_XML("Files")
+END_NODE_XML
+
+NODE_XML("Types")
+  SUB_NODE_SEQUENCE_XML(Type)
+END_NODE_XML
+
+NODE_XML("Contexts")
+  SUB_NODE_SEQUENCE_XML(DeclContext)
+END_NODE_XML
+
+NODE_XML("Files")
+  SUB_NODE_SEQUENCE_XML("File")
+END_NODE_XML
+
+NODE_XML("File")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_SPECIAL_XML(ignore, "name")         // special retrieving needed, denotes the source file name
+END_NODE_XML
+
+
+//===----------------------------------------------------------------------===//
+#undef NODE_XML
+#undef ID_ATTRIBUTE_XML                
+#undef ATTRIBUTE_SPECIAL_XML
+#undef END_NODE_XML                    
+#undef SUB_NODE_XML
+#undef SUB_NODE_SEQUENCE_XML
