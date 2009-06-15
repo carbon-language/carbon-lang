@@ -107,20 +107,29 @@ public:
   /// either getSExtValue() or getZExtValue() will yield a correctly sized and
   /// signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
-  static ConstantInt *get(const Type *Ty, uint64_t V, bool isSigned = false);
+  static ConstantInt *get(const IntegerType *Ty,
+                          uint64_t V, bool isSigned = false);
+  static Constant *get(const Type *Ty, uint64_t V, bool isSigned = false);
 
   /// Return a ConstantInt with the specified value for the specified type. The
   /// value V will be canonicalized to a an unsigned APInt. Accessing it with
   /// either getSExtValue() or getZExtValue() will yield a correctly sized and
   /// signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific signed value.
-  static ConstantInt *getSigned(const Type *Ty, int64_t V) {
+  static ConstantInt *getSigned(const IntegerType *Ty, int64_t V) {
+    return get(Ty, V, true);
+  }
+  static Constant *getSigned(const Type *Ty, int64_t V) {
     return get(Ty, V, true);
   }
 
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
   static ConstantInt *get(const APInt &V);
+
+  /// If Ty is a vector type, return a Constant with a splat of the given
+  /// value. Otherwise return a ConstantInt for the given value.
+  static Constant *get(const Type *Ty, const APInt &V);
 
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -251,7 +260,7 @@ public:
   /// get() - This returns a constant fp for the specified value in the
   /// specified type.  This should only be used for simple constant values like
   /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-  static ConstantFP *get(const Type *Ty, double V);
+  static Constant *get(const Type *Ty, double V);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);

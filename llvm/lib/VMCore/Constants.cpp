@@ -269,9 +269,20 @@ typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*,
                  DenseMapAPIntKeyInfo> IntMapTy;
 static ManagedStatic<IntMapTy> IntConstants;
 
-ConstantInt *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
-  const IntegerType *ITy = cast<IntegerType>(Ty);
-  return get(APInt(ITy->getBitWidth(), V, isSigned));
+ConstantInt *ConstantInt::get(const IntegerType *Ty,
+                              uint64_t V, bool isSigned) {
+  return get(APInt(Ty->getBitWidth(), V, isSigned));
+}
+
+Constant *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
+  Constant *C = get(cast<IntegerType>(Ty->getScalarType()), V, isSigned);
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return
+      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
 }
 
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
@@ -290,6 +301,19 @@ ConstantInt *ConstantInt::get(const APInt& V) {
     return Slot;
   // otherwise create a new one, insert it, and return it.
   return Slot = new ConstantInt(ITy, V);
+}
+
+Constant *ConstantInt::get(const Type *Ty, const APInt &V) {
+  ConstantInt *C = ConstantInt::get(V);
+  assert(C->getType() == Ty->getScalarType() &&
+         "ConstantInt type doesn't match the type implied by its value!");
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return
+      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
 }
 
 //===----------------------------------------------------------------------===//
@@ -391,11 +415,19 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
 /// get() - This returns a constant fp for the specified value in the
 /// specified type.  This should only be used for simple constant values like
 /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-ConstantFP *ConstantFP::get(const Type *Ty, double V) {
+Constant *ConstantFP::get(const Type *Ty, double V) {
   APFloat FV(V);
   bool ignored;
-  FV.convert(*TypeToFloatSemantics(Ty), APFloat::rmNearestTiesToEven, &ignored);
-  return get(FV);
+  FV.convert(*TypeToFloatSemantics(Ty->getScalarType()),
+             APFloat::rmNearestTiesToEven, &ignored);
+  Constant *C = get(FV);
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return
+      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1932,19 +1964,19 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
 } 
 
 Constant *ConstantExpr::getZExtOrBitCast(Constant *C, const Type *Ty) {
-  if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+  if (C->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return getCast(Instruction::BitCast, C, Ty);
   return getCast(Instruction::ZExt, C, Ty);
 }
 
 Constant *ConstantExpr::getSExtOrBitCast(Constant *C, const Type *Ty) {
-  if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+  if (C->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return getCast(Instruction::BitCast, C, Ty);
   return getCast(Instruction::SExt, C, Ty);
 }
 
 Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
-  if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+  if (C->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return getCast(Instruction::BitCast, C, Ty);
   return getCast(Instruction::Trunc, C, Ty);
 }
@@ -1960,9 +1992,10 @@ Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
 
 Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty, 
                                        bool isSigned) {
-  assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
-  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
-  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  assert(C->getType()->isIntOrIntVector() &&
+         Ty->isIntOrIntVector() && "Invalid cast");
+  unsigned SrcBits = C->getType()->getScalarSizeInBits();
+  unsigned DstBits = Ty->getScalarSizeInBits();
   Instruction::CastOps opcode =
     (SrcBits == DstBits ? Instruction::BitCast :
      (SrcBits > DstBits ? Instruction::Trunc :
@@ -1971,10 +2004,10 @@ Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty,
 }
 
 Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() && 
+  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          "Invalid cast");
-  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
-  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  unsigned SrcBits = C->getType()->getScalarSizeInBits();
+  unsigned DstBits = Ty->getScalarSizeInBits();
   if (SrcBits == DstBits)
     return C; // Avoid a useless cast
   Instruction::CastOps opcode =
@@ -1983,42 +2016,67 @@ Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && "Trunc operand must be integer");
-  assert(Ty->isInteger() && "Trunc produces only integral");
-  assert(C->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()&&
+#ifndef NDEBUG
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isIntOrIntVector() && "Trunc operand must be integer");
+  assert(Ty->isIntOrIntVector() && "Trunc produces only integral");
+  assert(C->getType()->getScalarSizeInBits() > Ty->getScalarSizeInBits()&&
          "SrcTy must be larger than DestTy for Trunc!");
 
   return getFoldedCast(Instruction::Trunc, C, Ty);
 }
 
 Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && "SEXt operand must be integral");
-  assert(Ty->isInteger() && "SExt produces only integer");
-  assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
+#ifndef NDEBUG
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isIntOrIntVector() && "SExt operand must be integral");
+  assert(Ty->isIntOrIntVector() && "SExt produces only integer");
+  assert(C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "SrcTy must be smaller than DestTy for SExt!");
 
   return getFoldedCast(Instruction::SExt, C, Ty);
 }
 
 Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && "ZEXt operand must be integral");
-  assert(Ty->isInteger() && "ZExt produces only integer");
-  assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
+#ifndef NDEBUG
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isIntOrIntVector() && "ZEXt operand must be integral");
+  assert(Ty->isIntOrIntVector() && "ZExt produces only integer");
+  assert(C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "SrcTy must be smaller than DestTy for ZExt!");
 
   return getFoldedCast(Instruction::ZExt, C, Ty);
 }
 
 Constant *ConstantExpr::getFPTrunc(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() &&
-         C->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()&&
+#ifndef NDEBUG
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
+         C->getType()->getScalarSizeInBits() > Ty->getScalarSizeInBits()&&
          "This is an illegal floating point truncation!");
   return getFoldedCast(Instruction::FPTrunc, C, Ty);
 }
 
 Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() &&
-         C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
+#ifndef NDEBUG
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+#endif
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
+         C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "This is an illegal floating point extension!");
   return getFoldedCast(Instruction::FPExt, C, Ty);
 }

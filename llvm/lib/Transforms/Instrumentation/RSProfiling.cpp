@@ -108,9 +108,9 @@ namespace {
   class VISIBILITY_HIDDEN GlobalRandomCounter : public Chooser {
     GlobalVariable* Counter;
     Value* ResetValue;
-    const Type* T;
+    const IntegerType* T;
   public:
-    GlobalRandomCounter(Module& M, const Type* t, uint64_t resetval);
+    GlobalRandomCounter(Module& M, const IntegerType* t, uint64_t resetval);
     virtual ~GlobalRandomCounter();
     virtual void PrepFunction(Function* F);
     virtual void ProcessChoicePoint(BasicBlock* bb);
@@ -121,9 +121,9 @@ namespace {
     GlobalVariable* Counter;
     Value* ResetValue;
     AllocaInst* AI;
-    const Type* T;
+    const IntegerType* T;
   public:
-    GlobalRandomCounterOpt(Module& M, const Type* t, uint64_t resetval);
+    GlobalRandomCounterOpt(Module& M, const IntegerType* t, uint64_t resetval);
     virtual ~GlobalRandomCounterOpt();
     virtual void PrepFunction(Function* F);
     virtual void ProcessChoicePoint(BasicBlock* bb);
@@ -193,7 +193,7 @@ static void getBackEdges(Function& F, T& BackEdges);
 // Methods of choosing when to profile
 ///////////////////////////////////////
   
-GlobalRandomCounter::GlobalRandomCounter(Module& M, const Type* t, 
+GlobalRandomCounter::GlobalRandomCounter(Module& M, const IntegerType* t,
                                          uint64_t resetval) : T(t) {
   ConstantInt* Init = ConstantInt::get(T, resetval); 
   ResetValue = Init;
@@ -229,7 +229,7 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   ReplacePhiPred(oldnext, bb, resetblock);
 }
 
-GlobalRandomCounterOpt::GlobalRandomCounterOpt(Module& M, const Type* t, 
+GlobalRandomCounterOpt::GlobalRandomCounterOpt(Module& M, const IntegerType* t,
                                                uint64_t resetval) 
   : AI(0), T(t) {
   ConstantInt* Init = ConstantInt::get(T, resetval);

@@ -208,6 +208,22 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     }
   }
 
+  // If the cast operand is a constant vector, perform the cast by
+  // operating on each element. In the cast of bitcasts, the element
+  // count may be mismatched; don't attempt to handle that here.
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
+    if (isa<VectorType>(DestTy) &&
+        cast<VectorType>(DestTy)->getNumElements() ==
+        CV->getType()->getNumElements()) {
+      std::vector<Constant*> res;
+      const VectorType *DestVecTy = cast<VectorType>(DestTy);
+      const Type *DstEltTy = DestVecTy->getElementType();
+      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
+        res.push_back(ConstantExpr::getCast(opc,
+                                            CV->getOperand(i), DstEltTy));
+      return ConstantVector::get(DestVecTy, res);
+    }
+
   // We actually have to do a cast now. Perform the cast according to the
   // opcode specified.
   switch (opc) {
@@ -237,14 +253,6 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       APInt Val(DestBitWidth, 2, x);
       return ConstantInt::get(Val);
     }
-    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-      std::vector<Constant*> res;
-      const VectorType *DestVecTy = cast<VectorType>(DestTy);
-      const Type *DstEltTy = DestVecTy->getElementType();
-      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
-        res.push_back(ConstantExpr::getCast(opc, CV->getOperand(i), DstEltTy));
-      return ConstantVector::get(DestVecTy, res);
-    }
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
     if (V->isNullValue())       // Is it an integral null value?
@@ -265,14 +273,6 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);
       return ConstantFP::get(apf);
-    }
-    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-      std::vector<Constant*> res;
-      const VectorType *DestVecTy = cast<VectorType>(DestTy);
-      const Type *DstEltTy = DestVecTy->getElementType();
-      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
-        res.push_back(ConstantExpr::getCast(opc, CV->getOperand(i), DstEltTy));
-      return ConstantVector::get(DestVecTy, res);
     }
     return 0;
   case Instruction::ZExt:

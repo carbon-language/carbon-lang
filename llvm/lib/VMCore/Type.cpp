@@ -112,6 +112,14 @@ const Type *Type::getVAArgsPromotedType() const {
     return this;
 }
 
+/// getScalarType - If this is a vector type, return the element type,
+/// otherwise return this.
+const Type *Type::getScalarType() const {
+  if (const VectorType *VTy = dyn_cast<VectorType>(this))
+    return VTy->getElementType();
+  return this;
+}
+
 /// isIntOrIntVector - Return true if this is an integer type or a vector of
 /// integer types.
 ///
@@ -172,6 +180,28 @@ unsigned Type::getPrimitiveSizeInBits() const {
   case Type::VectorTyID:  return cast<VectorType>(this)->getBitWidth();
   default: return 0;
   }
+}
+
+/// getScalarSizeInBits - If this is a vector type, return the
+/// getPrimitiveSizeInBits value for the element type. Otherwise return the
+/// getPrimitiveSizeInBits value for this type.
+unsigned Type::getScalarSizeInBits() const {
+  return getScalarType()->getPrimitiveSizeInBits();
+}
+
+/// getFPMantissaWidth - Return the width of the mantissa of this type.  This
+/// is only valid on floating point types.  If the FP type does not
+/// have a stable mantissa (e.g. ppc long double), this method returns -1.
+int Type::getFPMantissaWidth() const {
+  if (const VectorType *VTy = dyn_cast<VectorType>(this))
+    return VTy->getElementType()->getFPMantissaWidth();
+  assert(isFloatingPoint() && "Not a floating point type!");
+  if (ID == FloatTyID) return 24;
+  if (ID == DoubleTyID) return 53;
+  if (ID == X86_FP80TyID) return 64;
+  if (ID == FP128TyID) return 113;
+  assert(ID == PPC_FP128TyID && "unknown fp type");
+  return -1;
 }
 
 /// isSizedDerivedType - Derived types like structures and arrays are sized

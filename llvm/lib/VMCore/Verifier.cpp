@@ -745,8 +745,8 @@ void Verifier::visitTruncInst(TruncInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+  unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
+  unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
   Assert1(SrcTy->isIntOrIntVector(), "Trunc only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVector(), "Trunc only produces integer", &I);
@@ -767,8 +767,8 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   Assert1(DestTy->isIntOrIntVector(), "ZExt only produces an integer", &I);
   Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
           "zext source and destination must both be a vector or neither", &I);
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+  unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
+  unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
   Assert1(SrcBitSize < DestBitSize,"Type too small for ZExt", &I);
 
@@ -781,8 +781,8 @@ void Verifier::visitSExtInst(SExtInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+  unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
+  unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
   Assert1(SrcTy->isIntOrIntVector(), "SExt only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVector(), "SExt only produces an integer", &I);
@@ -798,8 +798,8 @@ void Verifier::visitFPTruncInst(FPTruncInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
   // Get the size of the types in bits, we'll need this later
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+  unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
+  unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
   Assert1(SrcTy->isFPOrFPVector(),"FPTrunc only operates on FP", &I);
   Assert1(DestTy->isFPOrFPVector(),"FPTrunc only produces an FP", &I);
@@ -816,8 +816,8 @@ void Verifier::visitFPExtInst(FPExtInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+  unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
+  unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
   Assert1(SrcTy->isFPOrFPVector(),"FPExt only operates on FP", &I);
   Assert1(DestTy->isFPOrFPVector(),"FPExt only produces an FP", &I);

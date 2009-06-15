@@ -2008,15 +2008,15 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       if (!isa<PointerType>(NewCmpTy))
         NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
       else {
-        ConstantInt *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
+        Constant *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
         NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->getOffset(),
-                         SE->getConstant(ConstantInt::get(CmpTy, Scale)))
-        : SE->getConstant(ConstantInt::get(NewCmpIntTy,
+                         SE->getConstant(CmpTy, Scale))
+        : SE->getConstant(NewCmpIntTy,
           cast<SCEVConstant>(CondUse->getOffset())->getValue()
-            ->getSExtValue()*Scale));
+            ->getSExtValue()*Scale);
       break;
     }
   }
@@ -2242,7 +2242,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
         
       ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
       if (!Init) continue;
-      ConstantFP *NewInit = ConstantFP::get(DestTy, Init->getZExtValue());
+      Constant *NewInit = ConstantFP::get(DestTy, Init->getZExtValue());
 
       BinaryOperator *Incr = 
         dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
@@ -2266,7 +2266,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
 
       /* create new increment. '++d' in above example. */
-      ConstantFP *CFP = ConstantFP::get(DestTy, C->getZExtValue());
+      Constant *CFP = ConstantFP::get(DestTy, C->getZExtValue());
       BinaryOperator *NewIncr = 
         BinaryOperator::Create(Incr->getOpcode() == Instruction::Add ?
                                  Instruction::FAdd : Instruction::FSub,
@@ -2506,7 +2506,7 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   Value *startVal = phi->getIncomingValue(inBlock);
   Value *endVal = Cond->getOperand(1);
   // FIXME check for case where both are constant
-  ConstantInt* Zero = ConstantInt::get(Cond->getOperand(1)->getType(), 0);
+  Constant* Zero = ConstantInt::get(Cond->getOperand(1)->getType(), 0);
   BinaryOperator *NewStartVal = 
     BinaryOperator::Create(Instruction::Sub, endVal, startVal,
                            "tmp", PreInsertPt);

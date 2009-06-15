@@ -418,6 +418,7 @@ namespace llvm {
 
     SCEVHandle getConstant(ConstantInt *V);
     SCEVHandle getConstant(const APInt& Val);
+    SCEVHandle getConstant(const Type *Ty, uint64_t V, bool isSigned = false);
     SCEVHandle getTruncateExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getZeroExtendExpr(const SCEVHandle &Op, const Type *Ty);
     SCEVHandle getSignExtendExpr(const SCEVHandle &Op, const Type *Ty);

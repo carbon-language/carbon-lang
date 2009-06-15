@@ -365,7 +365,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
       if (TD && CE->getOpcode() == Instruction::IntToPtr) {
         Constant *Input = CE->getOperand(0);
-        unsigned InWidth = Input->getType()->getPrimitiveSizeInBits();
+        unsigned InWidth = Input->getType()->getScalarSizeInBits();
         if (TD->getPointerSizeInBits() < InWidth) {
           Constant *Mask = 
             ConstantInt::get(APInt::getLowBitsSet(InWidth,
@@ -384,7 +384,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
       if (TD &&
           TD->getPointerSizeInBits() <=
-          CE->getType()->getPrimitiveSizeInBits()) {
+          CE->getType()->getScalarSizeInBits()) {
         if (CE->getOpcode() == Instruction::PtrToInt) {
           Constant *Input = CE->getOperand(0);
           Constant *C = FoldBitCast(Input, DestTy, *TD);

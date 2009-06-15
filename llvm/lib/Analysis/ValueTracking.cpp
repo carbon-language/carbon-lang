@@ -52,11 +52,12 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
   unsigned BitWidth = Mask.getBitWidth();
-  assert((V->getType()->isInteger() || isa<PointerType>(V->getType())) &&
+  assert((V->getType()->isIntOrIntVector() || isa<PointerType>(V->getType())) &&
          "Not integer or pointer type!");
-  assert((!TD || TD->getTypeSizeInBits(V->getType()) == BitWidth) &&
-         (!isa<IntegerType>(V->getType()) ||
-          V->getType()->getPrimitiveSizeInBits() == BitWidth) &&
+  assert((!TD ||
+          TD->getTypeSizeInBits(V->getType()->getScalarType()) == BitWidth) &&
+         (!V->getType()->isIntOrIntVector() ||
+          V->getType()->getScalarSizeInBits() == BitWidth) &&
          KnownZero.getBitWidth() == BitWidth && 
          KnownOne.getBitWidth() == BitWidth &&
          "V, Mask, KnownOne and KnownZero should have same BitWidth");
@@ -67,10 +68,24 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     KnownZero = ~KnownOne & Mask;
     return;
   }
-  // Null is all-zeros.
-  if (isa<ConstantPointerNull>(V)) {
+  // Null and aggregate-zero are all-zeros.
+  if (isa<ConstantPointerNull>(V) ||
+      isa<ConstantAggregateZero>(V)) {
     KnownOne.clear();
     KnownZero = Mask;
+    return;
+  }
+  // Handle a constant vector by taking the intersection of the known bits of
+  // each element.
+  if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
+    KnownZero.set(); KnownOne.set();
+    for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
+      APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
+      ComputeMaskedBits(CV->getOperand(i), Mask, KnownZero2, KnownOne2,
+                        TD, Depth);
+      KnownZero &= KnownZero2;
+      KnownOne &= KnownOne2;
+    }
     return;
   }
   // The address of an aligned GlobalValue has trailing zeros.
@@ -218,7 +233,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     const Type *SrcTy = I->getOperand(0)->getType();
     unsigned SrcBitWidth = TD ?
       TD->getTypeSizeInBits(SrcTy) :
-      SrcTy->getPrimitiveSizeInBits();
+      SrcTy->getScalarSizeInBits();
     APInt MaskIn(Mask);
     MaskIn.zextOrTrunc(SrcBitWidth);
     KnownZero.zextOrTrunc(SrcBitWidth);
@@ -480,7 +495,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         // Handle array index arithmetic.
         const Type *IndexedTy = GTI.getIndexedType();
         if (!IndexedTy->isSized()) return;
-        unsigned GEPOpiBits = Index->getType()->getPrimitiveSizeInBits();
+        unsigned GEPOpiBits = Index->getType()->getScalarSizeInBits();
         uint64_t TypeSize = TD ? TD->getTypeAllocSize(IndexedTy) : 1;
         LocalMask = APInt::getAllOnesValue(GEPOpiBits);
         LocalKnownZero = LocalKnownOne = APInt(GEPOpiBits, 0);
@@ -609,8 +624,8 @@ bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
 /// 'Op' must have a scalar integer type.
 ///
 unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
-  const IntegerType *Ty = cast<IntegerType>(V->getType());
-  unsigned TyBits = Ty->getBitWidth();
+  const Type *Ty = V->getType();
+  unsigned TyBits = Ty->getScalarSizeInBits();
   unsigned Tmp, Tmp2;
   unsigned FirstAnswer = 1;
 

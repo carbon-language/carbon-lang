@@ -298,9 +298,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
               GepIndices.push_back(ConstantInt::get(Type::Int32Ty, ElIdx));
               ElTy = STy->getTypeAtIndex(ElIdx);
               Ops[0] =
-                SE.getConstant(ConstantInt::get(Ty,
-                                                FullOffset -
-                                                  SL.getElementOffset(ElIdx)));
+                SE.getConstant(Ty, FullOffset - SL.getElementOffset(ElIdx));
               AnyNonZeroIndices = true;
               continue;
             }

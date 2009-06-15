@@ -186,6 +186,11 @@ SCEVHandle ScalarEvolution::getConstant(const APInt& Val) {
   return getConstant(ConstantInt::get(Val));
 }
 
+SCEVHandle
+ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
+  return getConstant(ConstantInt::get(cast<IntegerType>(Ty), V, isSigned));
+}
+
 const Type *SCEVConstant::getType() const { return V->getType(); }
 
 void SCEVConstant::print(raw_ostream &OS) const {
@@ -2891,7 +2896,7 @@ ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
   unsigned MaxSteps = MaxBruteForceIterations;
   for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
     ConstantInt *ItCst =
-      ConstantInt::get(IdxExpr->getType(), IterationNum);
+      ConstantInt::get(cast<IntegerType>(IdxExpr->getType()), IterationNum);
     ConstantInt *Val = EvaluateConstantChrecAtConstant(IdxExpr, ItCst, *this);
 
     // Form the GEP offset.
@@ -3086,7 +3091,7 @@ ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen)
     if (CondVal->getValue() == uint64_t(ExitWhen)) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
-      return getConstant(ConstantInt::get(Type::Int32Ty, IterationNum));
+      return getConstant(Type::Int32Ty, IterationNum);
     }
 
     // Compute the value of the PHI node for the next iteration.
@@ -3777,7 +3782,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
   // iteration exits.
   unsigned BitWidth = SE.getTypeSizeInBits(getType());
   if (!Range.contains(APInt(BitWidth, 0)))
-    return SE.getConstant(ConstantInt::get(getType(),0));
+    return SE.getIntegerSCEV(0, getType());
 
   if (isAffine()) {
     // If this is an affine expression then we have this situation:
