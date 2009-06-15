@@ -1153,6 +1153,10 @@ TemplateArgument Sema::Instantiate(TemplateArgument Arg,
       return TemplateArgument();
     return TemplateArgument(E.takeAs<Expr>());
   }
+  
+  case TemplateArgument::Pack:
+    assert(0 && "FIXME: Implement!");
+    break;
   }
 
   assert(false && "Unhandled template argument kind");

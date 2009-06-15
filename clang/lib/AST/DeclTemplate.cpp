@@ -238,6 +238,22 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
   StartLoc = E->getSourceRange().getBegin();
 }
 
+/// \brief Construct a template argument pack.
+TemplateArgument::TemplateArgument(SourceLocation Loc, TemplateArgument *args, 
+                                   unsigned NumArgs, bool CopyArgs) 
+  : Kind(Pack) {
+    Args.NumArgs = NumArgs;
+    Args.CopyArgs = CopyArgs;
+    if (!Args.CopyArgs) {
+      Args.Args = args;
+      return;
+    }
+
+    Args.Args = new TemplateArgument[NumArgs];
+    for (unsigned I = 0; I != NumArgs; ++I)
+      Args.Args[I] = args[I];
+}
+
 //===----------------------------------------------------------------------===//
 // TemplateArgumentListBuilder Implementation
 //===----------------------------------------------------------------------===//

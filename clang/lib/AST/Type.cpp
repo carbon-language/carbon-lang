@@ -1068,6 +1068,10 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
           Args[Idx].getAsExpr()->isValueDependent())
         return true;
       break;
+        
+    case TemplateArgument::Pack:
+      assert(0 && "FIXME: Implement!");
+      break;
     }
   }
 
@@ -1476,6 +1480,9 @@ TemplateSpecializationType::PrintTemplateArgumentList(
       Args[Arg].getAsExpr()->printPretty(s, 0, Policy);
       break;
     }
+    case TemplateArgument::Pack:
+      assert(0 && "FIXME: Implement!");
+      break;
     }
 
     // If this is the first argument and its string representation

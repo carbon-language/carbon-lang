@@ -404,6 +404,11 @@ class TemplateArgument {
       char Value[sizeof(llvm::APSInt)];
       void *Type;
     } Integer;
+    struct {
+      TemplateArgument *Args;
+      unsigned NumArgs;
+      bool CopyArgs;
+    } Args;
   };
 
   /// \brief Location of the beginning of this template argument.
@@ -413,7 +418,7 @@ public:
   /// \brief The type of template argument we're storing.
   enum ArgKind {
     Null = 0,
-    /// The template argument is a type. It's value is stored in the
+    /// The template argument is a type. Its value is stored in the
     /// TypeOrValue field.
     Type = 1,
     /// The template argument is a declaration
@@ -422,7 +427,11 @@ public:
     Integral = 3,
     /// The template argument is a value- or type-dependent expression
     /// stored in an Expr*.
-    Expression = 4
+    Expression = 4,
+
+    /// The template argument is actually a parameter pack. Arguments are stored
+    /// in the Args struct.
+    Pack = 5
   } Kind;
 
   /// \brief Construct an empty, invalid template argument.
@@ -459,8 +468,13 @@ public:
   /// occur in a non-dependent, canonical template argument list.
   TemplateArgument(Expr *E);
 
+  /// \brief Construct a template argument pack.
+  TemplateArgument(SourceLocation Loc, TemplateArgument *Args, 
+                   unsigned NumArgs, bool OwnsArgs);
+  
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
+    assert(Kind != Pack && "FIXME: Handle packs");
     if (Kind == Integral) {
       new (Integer.Value) llvm::APSInt(*Other.getAsIntegral());
       Integer.Type = Other.Integer.Type;
@@ -474,6 +488,10 @@ public:
     // FIXME: Does not provide the strong guarantee for exception
     // safety.
     using llvm::APSInt;
+
+    // FIXME: Handle Packs
+    assert(Kind != Pack && "FIXME: Handle packs");
+    assert(Other.Kind != Pack && "FIXME: Handle packs");
 
     if (Kind == Other.Kind && Kind == Integral) {
       // Copy integral values.
@@ -502,6 +520,8 @@ public:
 
     if (Kind == Integral)
       getAsIntegral()->~APSInt();
+    else if (Kind == Pack && Args.CopyArgs)
+      delete[] Args.Args;
   }
 
   /// \brief Return the kind of stored template argument.
@@ -586,6 +606,11 @@ public:
       // FIXME: We need a canonical representation of expressions.
       ID.AddPointer(getAsExpr());
       break;
+    
+    case Pack:
+      ID.AddInteger(Args.NumArgs);
+      for (unsigned I = 0; I != Args.NumArgs; ++I)
+        Args.Args[I].Profile(ID);
     }
   }
 };

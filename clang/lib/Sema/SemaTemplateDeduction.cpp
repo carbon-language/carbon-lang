@@ -597,6 +597,9 @@ DeduceTemplateArguments(ASTContext &Context,
     // Can't deduce anything, but that's okay.
     return Sema::TDK_Success;
   }
+  case TemplateArgument::Pack:
+    assert(0 && "FIXME: Implement!");
+    break;
   }
       
   return Sema::TDK_Success;
@@ -897,6 +900,9 @@ MarkDeducedTemplateParameters(Sema &SemaRef,
 
   case TemplateArgument::Expression:
     MarkDeducedTemplateParameters(TemplateArg.getAsExpr(), Deduced);
+    break;
+  case TemplateArgument::Pack:
+    assert(0 && "FIXME: Implement!");
     break;
   }
 }

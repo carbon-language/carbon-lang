@@ -806,6 +806,10 @@ static void CanonicalizeTemplateArguments(const TemplateArgument *TemplateArgs,
       Canonical.push_back(TemplateArgument(SourceLocation(), CanonType));
       break;
     }
+    
+    case TemplateArgument::Pack:
+      assert(0 && "FIXME: Implement!");
+      break;
     }
   }
 }
@@ -1207,6 +1211,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           Diag(Arg.getLocation(), diag::err_template_arg_must_be_expr);
         Diag((*Param)->getLocation(), diag::note_template_param_here);
         Invalid = true;
+        break;
+      
+      case TemplateArgument::Pack:
+        assert(0 && "FIXME: Implement!");
+        break;
       }
     } else { 
       // Check template template parameters.
@@ -1250,6 +1259,10 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         
       case TemplateArgument::Integral:
         assert(false && "Integral argument with template template parameter");
+        break;
+      
+      case TemplateArgument::Pack:
+        assert(0 && "FIXME: Implement!");
         break;
       }
     }
