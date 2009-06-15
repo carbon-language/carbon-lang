@@ -859,6 +859,26 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   return Changed;
 }
 
+// isSafeToHoistInvoke - If we would need to insert a select that uses the
+// value of this invoke (comments in HoistThenElseCodeToIf explain why we
+// would need to do this), we can't hoist the invoke, as there is nowhere
+// to put the select in this case.
+static bool isSafeToHoistInvoke(BasicBlock *BB1, BasicBlock *BB2,
+                                Instruction *I1, Instruction *I2) {
+  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI) {
+    PHINode *PN;
+    for (BasicBlock::iterator BBI = SI->begin();
+         (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
+      Value *BB1V = PN->getIncomingValueForBlock(BB1);
+      Value *BB2V = PN->getIncomingValueForBlock(BB2);
+      if (BB1V != BB2V && (BB1V==I1 || BB2V==I2)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 /// HoistThenElseCodeToIf - Given a conditional branch that goes to BB1 and
 /// BB2, hoist any common code in the two blocks up into the branch block.  The
 /// caller of this function guarantees that BI's block dominates BB1 and BB2.
@@ -879,8 +899,9 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
     I1 = BB1_Itr++;
   while (isa<DbgInfoIntrinsic>(I2))
     I2 = BB2_Itr++;
-  if (I1->getOpcode() != I2->getOpcode() || isa<PHINode>(I1) || 
-      isa<InvokeInst>(I1) || !I1->isIdenticalTo(I2))
+  if (I1->getOpcode() != I2->getOpcode() || isa<PHINode>(I1) ||
+      !I1->isIdenticalTo(I2) ||
+      (isa<InvokeInst>(I1) && !isSafeToHoistInvoke(BB1, BB2, I1, I2)))
     return false;
 
   // If we get here, we can hoist at least one instruction.
@@ -911,6 +932,10 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
   return true;
 
 HoistTerminator:
+  // It may not be possible to hoist an invoke.
+  if (isa<InvokeInst>(I1) && !isSafeToHoistInvoke(BB1, BB2, I1, I2))
+    return true;
+
   // Okay, it is safe to hoist the terminator.
   Instruction *NT = I1->clone();
   BIParent->getInstList().insert(BI, NT);
