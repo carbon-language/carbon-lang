@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep store
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {store i32 0,}
 ; PR4366
 
 define void @a() {
