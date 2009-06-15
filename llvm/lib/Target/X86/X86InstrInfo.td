@@ -611,6 +611,15 @@ let mayStore = 1 in
 def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>;
 }
 
+let Defs = [ESP], Uses = [ESP], neverHasSideEffects = 1, mayStore = 1 in {
+def PUSH32i8   : Ii8<0x6a, RawFrm, (outs), (ins i8imm:$imm), 
+                     "push{q}\t$imm", []>;
+def PUSH32i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm), 
+                      "push{q}\t$imm", []>;
+def PUSH32i32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm), 
+                      "push{q}\t$imm", []>;
+}
+
 let Defs = [ESP, EFLAGS], Uses = [ESP], mayLoad = 1, neverHasSideEffects=1 in
 def POPFD    : I<0x9D, RawFrm, (outs), (ins), "popf", []>;
 let Defs = [ESP], Uses = [ESP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in
