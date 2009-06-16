@@ -166,4 +166,3 @@ RWMutex::writer_release()
 #warning Neither LLVM_ON_UNIX nor LLVM_ON_WIN32 was set in System/Mutex.cpp
 #endif
 #endif
-
