@@ -1858,8 +1858,23 @@ Ideal output:
 	setne	%al
 	ret
 
-We could do this transformation in instcombine, but it's only clearly
-beneficial on platforms with a test instruction.
+This should definitely be done in instcombine, canonicalizing the range
+condition into a != condition.  We get this IR:
+
+define i32 @a(i32 %x) nounwind readnone {
+entry:
+	%0 = and i32 %x, 127		; <i32> [#uses=1]
+	%1 = icmp ugt i32 %0, 31		; <i1> [#uses=1]
+	%2 = zext i1 %1 to i32		; <i32> [#uses=1]
+	ret i32 %2
+}
+
+Instcombine prefers to strength reduce relational comparisons to equality
+comparisons when possible, this should be another case of that.  This could
+be handled pretty easily in InstCombiner::visitICmpInstWithInstAndIntCst, but it
+looks like InstCombiner::visitICmpInstWithInstAndIntCst should really already
+be redesigned to use ComputeMaskedBits and friends.
+
 
 //===---------------------------------------------------------------------===//
 Testcase:
