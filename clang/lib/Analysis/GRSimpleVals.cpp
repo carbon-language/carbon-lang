@@ -365,9 +365,11 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
 
     SVal V = StateMgr.GetSVal(St, *I);
     
-    if (isa<loc::MemRegionVal>(V))
-      St = StateMgr.BindLoc(St, cast<Loc>(V), UnknownVal());
-    else if (isa<nonloc::LocAsInteger>(V))
+    if (isa<loc::MemRegionVal>(V)) {
+      const MemRegion *R = cast<loc::MemRegionVal>(V).getRegion();
+      if (R->isBoundable(Eng.getContext()))
+	St = StateMgr.BindLoc(St, cast<Loc>(V), UnknownVal());
+    } else if (isa<nonloc::LocAsInteger>(V))
       St = StateMgr.BindLoc(St, cast<nonloc::LocAsInteger>(V).getLoc(),
                             UnknownVal());
     
