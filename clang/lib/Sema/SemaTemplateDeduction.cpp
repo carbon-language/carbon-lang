@@ -53,9 +53,15 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
          "Cannot deduce non-type template argument with depth > 0");
   
   if (Deduced[NTTP->getIndex()].isNull()) {
-    Deduced[NTTP->getIndex()] = TemplateArgument(SourceLocation(), 
-                                                 llvm::APSInt(Value),
-                                                 NTTP->getType());
+    QualType T = NTTP->getType();
+    
+    // FIXME: Make sure we didn't overflow our data type!
+    unsigned AllowedBits = Context.getTypeSize(T);
+    if (Value.getBitWidth() != AllowedBits)
+      Value.extOrTrunc(AllowedBits);
+    Value.setIsSigned(T->isSignedIntegerType());
+
+    Deduced[NTTP->getIndex()] = TemplateArgument(SourceLocation(), Value, T);
     return Sema::TDK_Success;
   }
   
@@ -671,35 +677,6 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
     = new (Context) TemplateArgumentList(Context, Builder, /*CopyArgs=*/true,
                                          /*FlattenArgs=*/true);
   Info.reset(DeducedArgumentList);
-
-  // Now that we have all of the deduced template arguments, take
-  // another pass through them to convert any integral template
-  // arguments to the appropriate type.
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
-    TemplateArgument &Arg = Deduced[I];    
-    if (Arg.getKind() == TemplateArgument::Integral) {
-      const NonTypeTemplateParmDecl *Parm 
-        = cast<NonTypeTemplateParmDecl>(Partial->getTemplateParameters()
-                                          ->getParam(I));
-      QualType T = InstantiateType(Parm->getType(), *DeducedArgumentList,
-                                   Parm->getLocation(), Parm->getDeclName());
-      if (T.isNull()) {
-        Info.Param = const_cast<NonTypeTemplateParmDecl*>(Parm);
-        Info.FirstArg = TemplateArgument(Parm->getLocation(), Parm->getType());
-        return TDK_SubstitutionFailure;
-      }
-      
-      // FIXME: Make sure we didn't overflow our data type!
-      llvm::APSInt &Value = *Arg.getAsIntegral();
-      unsigned AllowedBits = Context.getTypeSize(T);
-      if (Value.getBitWidth() != AllowedBits)
-        Value.extOrTrunc(AllowedBits);
-      Value.setIsSigned(T->isSignedIntegerType());
-      Arg.setIntegralType(T);
-    }
-
-    (*DeducedArgumentList)[I] = Arg;
-  }
 
   // Substitute the deduced template arguments into the template
   // arguments of the class template partial specialization, and
