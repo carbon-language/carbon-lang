@@ -118,7 +118,7 @@ int LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
                           char **OutError) {
   std::string Error;
   if (ExecutionEngine *JIT =
-      ExecutionEngine::createJIT(unwrap(MP), &Error, 0,
+      ExecutionEngine::create(unwrap(MP), false, &Error,
                                  (CodeGenOpt::Level)OptLevel)) {
     *OutJIT = wrap(JIT);
     return 0;
