@@ -356,10 +356,15 @@ void Driver::PrintVersion(const Compilation &C) const {
   // don't know what the client would like to do.
 
   llvm::errs() << "clang version " CLANG_VERSION_STRING " (" 
-               << vers << " " << revision << ")" << "\n";
+               << vers << " " << revision << ")" << '\n';
 
   const ToolChain &TC = C.getDefaultToolChain();
   llvm::errs() << "Target: " << TC.getTripleString() << '\n';
+
+  // Print the threading model.
+  //
+  // FIXME: Implement correctly.
+  llvm::errs() << "Thread model: " << "posix" << '\n';
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
