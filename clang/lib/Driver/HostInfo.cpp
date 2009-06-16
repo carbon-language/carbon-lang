@@ -122,7 +122,7 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
       // the ID based Triple interface.
       if (Arch == "ppc")
         Arch = "powerpc";
-      else if (Arch == "powerpc")
+      else if (Arch == "ppc64")
         Arch = "powerpc64";
     } else {
       // Otherwise default to the arch of the host.
