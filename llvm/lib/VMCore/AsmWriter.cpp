@@ -1384,7 +1384,10 @@ void AssemblyWriter::printFunction(const Function *F) {
   case CallingConv::Fast:         Out << "fastcc "; break;
   case CallingConv::Cold:         Out << "coldcc "; break;
   case CallingConv::X86_StdCall:  Out << "x86_stdcallcc "; break;
-  case CallingConv::X86_FastCall: Out << "x86_fastcallcc "; break; 
+  case CallingConv::X86_FastCall: Out << "x86_fastcallcc "; break;
+  case CallingConv::ARM_APCS:     Out << "arm_apcscc "; break;
+  case CallingConv::ARM_AAPCS:    Out << "arm_aapcscc "; break;
+  case CallingConv::ARM_AAPCS_VFP:Out << "arm_aapcs_vfpcc "; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
@@ -1640,7 +1643,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::Fast:  Out << " fastcc"; break;
     case CallingConv::Cold:  Out << " coldcc"; break;
     case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
-    case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break; 
+    case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
+    case CallingConv::ARM_APCS:     Out << " arm_apcscc "; break;
+    case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
+    case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
@@ -1688,6 +1694,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::Cold:  Out << " coldcc"; break;
     case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
     case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
+    case CallingConv::ARM_APCS:     Out << " arm_apcscc "; break;
+    case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
+    case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 

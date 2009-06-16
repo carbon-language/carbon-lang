@@ -60,7 +60,9 @@ namespace lltok {
     kw_gc,
     kw_c,
 
-    kw_cc, kw_ccc, kw_fastcc, kw_coldcc, kw_x86_stdcallcc, kw_x86_fastcallcc,
+    kw_cc, kw_ccc, kw_fastcc, kw_coldcc,
+    kw_x86_stdcallcc, kw_x86_fastcallcc,
+    kw_arm_apcscc, kw_arm_aapcscc, kw_arm_aapcs_vfpcc,
 
     kw_signext,
     kw_zeroext,

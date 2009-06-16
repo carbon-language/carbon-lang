@@ -526,6 +526,10 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(coldcc);
   KEYWORD(x86_stdcallcc);
   KEYWORD(x86_fastcallcc);
+  KEYWORD(arm_apcscc);
+  KEYWORD(arm_aapcscc);
+  KEYWORD(arm_aapcs_vfpcc);
+
   KEYWORD(cc);
   KEYWORD(c);
 

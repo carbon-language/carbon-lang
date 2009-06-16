@@ -151,6 +151,7 @@ namespace llvm {
     ///
     unsigned ARMPCLabelIndex;
 
+    CCAssignFn *CCAssignFnForNode(unsigned CC, bool Return) const;
     SDValue LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
                              const SDValue &StackPtr, const CCValAssign &VA,
                              SDValue Chain, SDValue Arg, ISD::ArgFlagsTy Flags);

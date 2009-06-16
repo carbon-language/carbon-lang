@@ -808,8 +808,11 @@ bool LLParser::ParseOptionalVisibility(unsigned &Res) {
 ///   ::= 'coldcc'
 ///   ::= 'x86_stdcallcc'
 ///   ::= 'x86_fastcallcc'
+///   ::= 'arm_apcscc'
+///   ::= 'arm_aapcscc'
+///   ::= 'arm_aapcs_vfpcc'
 ///   ::= 'cc' UINT
-/// 
+///
 bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
   switch (Lex.getKind()) {
   default:                       CC = CallingConv::C; return false;
@@ -818,6 +821,9 @@ bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
   case lltok::kw_coldcc:         CC = CallingConv::Cold; break;
   case lltok::kw_x86_stdcallcc:  CC = CallingConv::X86_StdCall; break;
   case lltok::kw_x86_fastcallcc: CC = CallingConv::X86_FastCall; break;
+  case lltok::kw_arm_apcscc:     CC = CallingConv::ARM_APCS; break;
+  case lltok::kw_arm_aapcscc:    CC = CallingConv::ARM_AAPCS; break;
+  case lltok::kw_arm_aapcs_vfpcc:CC = CallingConv::ARM_AAPCS_VFP; break;
   case lltok::kw_cc:             Lex.Lex(); return ParseUInt32(CC);
   }
   Lex.Lex();

@@ -17,11 +17,6 @@ class CCIfSubtarget<string F, CCAction A>:
 class CCIfAlign<string Align, CCAction A>:
   CCIf<!strconcat("ArgFlags.getOrigAlign() == ", Align), A>;
 
-/// CCIfFloatABI - Match of the float ABI and the arg. ABIType may be "Hard" or
-///                "Soft".
-class CCIfFloatABI<string ABIType, CCAction A>:
-  CCIf<!strconcat("llvm::FloatABIType == llvm::FloatABI::", ABIType), A>;
-
 //===----------------------------------------------------------------------===//
 // ARM APCS Calling Convention
 //===----------------------------------------------------------------------===//
@@ -104,26 +99,4 @@ def RetCC_ARM_AAPCS_VFP : CallingConv<[
   CCIfType<[f32], CCAssignToReg<[S0, S1, S2, S3, S4, S5, S6, S7, S8,
                                  S9, S10, S11, S12, S13, S14, S15]>>,
   CCDelegateTo<RetCC_ARM_AAPCS_Common>
-]>;
-
-//===----------------------------------------------------------------------===//
-// ARM Calling Convention Dispatch
-//===----------------------------------------------------------------------===//
-
-def CC_ARM : CallingConv<[
-  CCIfSubtarget<"isAAPCS_ABI()",
-                CCIfSubtarget<"hasVFP2()",
-                              CCIfFloatABI<"Hard",
-                                           CCDelegateTo<CC_ARM_AAPCS_VFP>>>>,
-  CCIfSubtarget<"isAAPCS_ABI()", CCDelegateTo<CC_ARM_AAPCS>>,
-  CCDelegateTo<CC_ARM_APCS>
-]>;
-
-def RetCC_ARM : CallingConv<[
-  CCIfSubtarget<"isAAPCS_ABI()",
-                CCIfSubtarget<"hasVFP2()",
-                              CCIfFloatABI<"Hard",
-                                           CCDelegateTo<RetCC_ARM_AAPCS_VFP>>>>,
-  CCIfSubtarget<"isAAPCS_ABI()", CCDelegateTo<RetCC_ARM_AAPCS>>,
-  CCDelegateTo<RetCC_ARM_APCS>
 ]>;
