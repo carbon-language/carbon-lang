@@ -46,7 +46,7 @@ static NonTypeTemplateParmDecl *getDeducedParameterFromExpr(Expr *E) {
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(ASTContext &Context, 
                               NonTypeTemplateParmDecl *NTTP, 
-                              llvm::APInt Value,
+                              llvm::APSInt Value,
                               Sema::TemplateDeductionInfo &Info,
                               llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == 0 && 
@@ -64,18 +64,14 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
   // If the template argument was previously deduced to a negative value, 
   // then our deduction fails.
   const llvm::APSInt *PrevValuePtr = Deduced[NTTP->getIndex()].getAsIntegral();
-  if (PrevValuePtr->isSigned() && PrevValuePtr->isNegative()) {
-    // FIXME: This is wacky; we should be dealing with APSInts and
-    // checking the actual signs.
+  if (PrevValuePtr->isNegative()) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = TemplateArgument(SourceLocation(), 
-                                      llvm::APSInt(Value),
-                                      NTTP->getType());
+    Info.SecondArg = TemplateArgument(SourceLocation(), Value, NTTP->getType());
     return Sema::TDK_Inconsistent;
   }
 
-  llvm::APInt PrevValue = *PrevValuePtr;
+  llvm::APSInt PrevValue = *PrevValuePtr;
   if (Value.getBitWidth() > PrevValue.getBitWidth())
     PrevValue.zext(Value.getBitWidth());
   else if (Value.getBitWidth() < PrevValue.getBitWidth())
@@ -84,9 +80,7 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
   if (Value != PrevValue) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = TemplateArgument(SourceLocation(), 
-                                      llvm::APSInt(Value),
-                                      NTTP->getType());
+    Info.SecondArg = TemplateArgument(SourceLocation(), Value, NTTP->getType());
     return Sema::TDK_Inconsistent;
   }
 
@@ -329,10 +323,11 @@ DeduceTemplateArguments(ASTContext &Context,
       assert(NTTP->getDepth() == 0 && 
              "Cannot deduce non-type template argument at depth > 0");
       if (const ConstantArrayType *ConstantArrayArg 
-            = dyn_cast<ConstantArrayType>(ArrayArg))
-        return DeduceNonTypeTemplateArgument(Context, NTTP, 
-                                             ConstantArrayArg->getSize(),
+            = dyn_cast<ConstantArrayType>(ArrayArg)) {
+        llvm::APSInt Size(ConstantArrayArg->getSize());
+        return DeduceNonTypeTemplateArgument(Context, NTTP, Size,
                                              Info, Deduced);
+      }
       if (const DependentSizedArrayType *DependentArrayArg
             = dyn_cast<DependentSizedArrayType>(ArrayArg))
         return DeduceNonTypeTemplateArgument(Context, NTTP,
