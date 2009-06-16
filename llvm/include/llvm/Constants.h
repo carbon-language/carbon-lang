@@ -102,13 +102,17 @@ public:
     return CreateTrueFalseVals(false);
   }
 
-  /// Return a ConstantInt with the specified value for the specified type. The
-  /// value V will be canonicalized to an unsigned APInt. Accessing it with
-  /// either getSExtValue() or getZExtValue() will yield a correctly sized and
-  /// signed value for the type Ty.
+  /// Return a ConstantInt with the specified integer value for the specified
+  /// type. If the type is wider than 64 bits, the value will be zero-extended
+  /// to fit the type, unless isSigned is true, in which case the value will
+  /// be interpreted as a 64-bit signed integer and sign-extended to fit
+  /// the type.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const IntegerType *Ty,
                           uint64_t V, bool isSigned = false);
+
+  /// If Ty is a vector type, return a Constant with a splat of the given
+  /// value. Otherwise return a ConstantInt for the given value.
   static Constant *get(const Type *Ty, uint64_t V, bool isSigned = false);
 
   /// Return a ConstantInt with the specified value for the specified type. The
@@ -257,9 +261,10 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantFP *get(const APFloat &V);
 
-  /// get() - This returns a constant fp for the specified value in the
-  /// specified type.  This should only be used for simple constant values like
-  /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
+  /// get() - This returns a ConstantFP, or a vector containing a splat of a
+  /// ConstantFP, for the specified value in the specified type.  This should
+  /// only be used for simple constant values like 2.0/1.0 etc, that are
+  /// known-valid both as host double and as the target format.
   static Constant *get(const Type *Ty, double V);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
