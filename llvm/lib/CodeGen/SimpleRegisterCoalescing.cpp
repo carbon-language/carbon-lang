@@ -616,19 +616,17 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     }
 
   MachineBasicBlock::iterator MII = next(MachineBasicBlock::iterator(CopyMI));
-  CopyMI->removeFromParent();
   tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
   MachineInstr *NewMI = prior(MII);
 
   if (checkForDeadDef) {
-      // PR4090 fix: Trim interval failed because there was no use of the
-      // source interval in this MBB. If the def is in this MBB too then we
-      // should mark it dead:
-      if (DefMI->getParent() == MBB) {
-        DefMI->addRegisterDead(SrcInt.reg, tri_);
-        SrcLR->end = SrcLR->start + 1;
-      }
- 
+    // PR4090 fix: Trim interval failed because there was no use of the
+    // source interval in this MBB. If the def is in this MBB too then we
+    // should mark it dead:
+    if (DefMI->getParent() == MBB) {
+      DefMI->addRegisterDead(SrcInt.reg, tri_);
+      SrcLR->end = SrcLR->start + 1;
+    }
   }
 
   // CopyMI may have implicit operands, transfer them over to the newly
@@ -647,7 +645,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   }
 
   li_->ReplaceMachineInstrInMaps(CopyMI, NewMI);
-  MBB->getParent()->DeleteMachineInstr(CopyMI);
+  CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);
   ReMatDefs.insert(DefMI);
   ++NumReMats;
@@ -967,7 +965,7 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
 
 /// RemoveCopiesFromValNo - The specified value# is defined by an implicit
 /// def and it is being removed. Turn all copies from this value# into
-/// identity copies so they will be removed.
+/// implicit_defs.
 void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
                                                      VNInfo *VNI) {
   SmallVector<MachineInstr*, 4> ImpDefs;
@@ -979,9 +977,8 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
     MachineInstr *MI = &*RI;
     ++RI;
     if (MO->isDef()) {
-      if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+      if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
         ImpDefs.push_back(MI);
-      }
       continue;
     }
     if (JoinedCopies.count(MI))
@@ -994,13 +991,18 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         SrcReg == li.reg) {
-      // Each use MI may have multiple uses of this register. Change them all.
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg() == li.reg)
-          MO.setReg(DstReg);
-      }
-      JoinedCopies.insert(MI);
+      // Change it to an implicit_def.
+      MI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
+      for (int i = MI->getNumOperands() - 1, e = 0; i > e; --i)
+        MI->RemoveOperand(i);
+      // It's no longer a copy, update the valno it defines.
+      unsigned DefIdx = li_->getDefIndex(UseIdx);
+      LiveInterval &DstInt = li_->getInterval(DstReg);
+      LiveInterval::iterator DLR = DstInt.FindLiveRangeContaining(DefIdx);
+      assert(DLR != DstInt.end() && "Live range not found!");
+      assert(DLR->valno->copy == MI);
+      DLR->valno->copy = NULL;
+      ReMatCopies.insert(MI);
     } else if (UseIdx > LastUseIdx) {
       LastUseIdx = UseIdx;
       LastUse = MO;
@@ -2641,6 +2643,11 @@ SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
     return false;
   LiveInterval &DstInt = li_->getInterval(DstReg);
   const LiveRange *DstLR = DstInt.getLiveRangeContaining(CopyIdx);
+  // If the valno extends beyond this basic block, then it's not safe to delete
+  // the val# or else livein information won't be correct.
+  MachineBasicBlock *EndMBB = li_->getMBBFromIndex(DstLR->end);
+  if (EndMBB != MBB)
+    return false;
   DstInt.removeValNo(DstLR->valno);
   CopyMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
   for (int i = CopyMI->getNumOperands() - 1, e = 0; i > e; --i)
