@@ -37,6 +37,11 @@ namespace {
   CELLSPU("cellspu", "STI CBEA Cell SPU [experimental]");
 }
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeCellSPUTarget() { }
+}
+
 const std::pair<unsigned, int> *
 SPUFrameInfo::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
   NumEntries = 1;

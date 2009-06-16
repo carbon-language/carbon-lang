@@ -48,3 +48,9 @@ namespace {
 
 extern "C" int X86AsmPrinterForceLink;
 int X86AsmPrinterForceLink = 0;
+
+// Force static initialization when called from
+// llvm/InitializeAllAsmPrinters.h
+namespace llvm {
+  void InitializeX86AsmPrinter() { }
+}

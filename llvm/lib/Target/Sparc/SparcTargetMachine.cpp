@@ -29,6 +29,11 @@ int SparcTargetMachineModule = 0;
 // Register the target.
 static RegisterTarget<SparcTargetMachine> X("sparc", "SPARC");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeSparcTarget() { }
+}
+
 const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
   // FIXME: Handle Solaris subtarget someday :)
   return new SparcELFTargetAsmInfo(*this);

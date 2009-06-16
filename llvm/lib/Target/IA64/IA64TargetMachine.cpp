@@ -29,6 +29,11 @@ int IA64TargetMachineModule = 0;
 static RegisterTarget<IA64TargetMachine> X("ia64", 
                                            "IA-64 (Itanium) [experimental]");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeIA64Target() { }
+}
+
 const TargetAsmInfo *IA64TargetMachine::createTargetAsmInfo() const {
   return new IA64TargetAsmInfo(*this);
 }

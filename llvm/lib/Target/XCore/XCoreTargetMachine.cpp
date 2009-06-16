@@ -31,6 +31,11 @@ namespace {
   RegisterTarget<XCoreTargetMachine> X("xcore", "XCore");
 }
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeXCoreTarget() { }
+}
+
 const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
   return new XCoreTargetAsmInfo(*this);
 }

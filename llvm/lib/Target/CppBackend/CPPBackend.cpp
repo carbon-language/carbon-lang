@@ -82,6 +82,11 @@ int CppBackendTargetMachineModule = 0;
 // Register the target.
 static RegisterTarget<CPPTargetMachine> X("cpp", "C++ backend");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeCppBackendTarget() { }
+}
+
 namespace {
   typedef std::vector<const Type*> TypeList;
   typedef std::map<const Type*,std::string> TypeMap;

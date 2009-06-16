@@ -35,6 +35,11 @@ int MSP430TargetMachineModule = 0;
 static RegisterTarget<MSP430TargetMachine>
 X("msp430", "MSP430 [experimental]");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeMSP430Target() { }
+}
+
 MSP430TargetMachine::MSP430TargetMachine(const Module &M,
                                          const std::string &FS) :
   Subtarget(*this, M, FS),

@@ -353,3 +353,9 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
   return false;
 }
+
+// Force static initialization when called from
+// llvm/InitializeAllAsmPrinters.h
+namespace llvm {
+  void InitializeSparcAsmPrinter() { }
+}

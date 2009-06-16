@@ -59,6 +59,11 @@ int CBackendTargetMachineModule = 0;
 // Register the target.
 static RegisterTarget<CTargetMachine> X("c", "C backend");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeCBackendTarget() { }
+}
+
 namespace {
   /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for
   /// any unnamed structure types that are used by the program, and merges

@@ -621,3 +621,9 @@ FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
                                             bool verbose) {
   return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }
+
+// Force static initialization when called from
+// llvm/InitializeAllAsmPrinters.h
+namespace llvm {
+  void InitializeCellSPUAsmPrinter() { }
+}

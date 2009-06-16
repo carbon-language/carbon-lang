@@ -578,3 +578,9 @@ doFinalization(Module &M)
 
   return AsmPrinter::doFinalization(M);
 }
+
+// Force static initialization when called from
+// llvm/InitializeAllAsmPrinters.h
+namespace llvm {
+  void InitializeMipsAsmPrinter() { }
+}

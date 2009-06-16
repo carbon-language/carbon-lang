@@ -436,6 +436,19 @@ case "$enableval" in
 esac
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 
+# Build the LLVM_TARGET and LLVM_ASM_PRINTER macro uses for 
+# Targets.def and AsmPrinters.def.
+LLVM_ENUM_TARGETS=""
+LLVM_ENUM_ASM_PRINTERS=""
+for target_to_build in $TARGETS_TO_BUILD; do
+  LLVM_ENUM_TARGETS="LLVM_TARGET($target_to_build) $LLVM_ENUM_TARGETS"
+  if test -f ${srcdir}/lib/Target/${target_to_build}/AsmPrinter/Makefile ; then
+    LLVM_ENUM_ASM_PRINTERS="LLVM_ASM_PRINTER($target_to_build) $LLVM_ENUM_ASM_PRINTERS";
+  fi
+done
+AC_SUBST(LLVM_ENUM_TARGETS)
+AC_SUBST(LLVM_ENUM_ASM_PRINTERS)
+
 dnl Prevent the CBackend from using printf("%a") for floating point so older
 dnl C compilers that cannot deal with the 0x0p+0 hex floating point format
 dnl can still compile the CBE's output
@@ -1111,6 +1124,8 @@ dnl you MUST also update Makefile.rules so that the variable FilesToConfig
 dnl contains the same list of files as AC_CONFIG_HEADERS below. This ensures the
 dnl files can be updated automatically when their *.in sources change.
 AC_CONFIG_HEADERS([include/llvm/Config/config.h])
+AC_CONFIG_FILES([include/llvm/Config/Targets.def])
+AC_CONFIG_FILES([include/llvm/Config/AsmPrinters.def])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/iterator.h])
 

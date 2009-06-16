@@ -37,6 +37,11 @@ X("pic16", "PIC16 14-bit [experimental].");
 static RegisterTarget<CooperTargetMachine> 
 Y("cooper", "PIC16 Cooper [experimental].");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializePIC16Target() { }
+}
+
 // PIC16TargetMachine - Traditional PIC16 Machine.
 PIC16TargetMachine::PIC16TargetMachine(const Module &M, const std::string &FS,
                                        bool Cooper)

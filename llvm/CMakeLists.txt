@@ -81,13 +81,22 @@ if( LLVM_TARGETS_TO_BUILD STREQUAL "all" )
   set( LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS} )
 endif()
 
+set(LLVM_ENUM_TARGETS "")
 foreach(c ${LLVM_TARGETS_TO_BUILD})
   list(FIND LLVM_ALL_TARGETS ${c} idx)
   if( idx LESS 0 )
     message(FATAL_ERROR "The target `${c}' does not exists.
     It should be one of\n${LLVM_ALL_TARGETS}")
+  else()
+    set(LLVM_ENUM_TARGETS "${LLVM_ENUM_TARGETS}LLVM_TARGET(${c})\n")
   endif()
 endforeach(c)
+
+# Produce llvm/Config/Targets.def
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Targets.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/Targets.def
+  )
 
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
@@ -250,13 +259,22 @@ add_subdirectory(lib/Linker)
 add_subdirectory(lib/Analysis)
 add_subdirectory(lib/Analysis/IPA)
 
-foreach(t ${LLVM_TARGETS_TO_BUILD})
+ set(LLVM_ENUM_ASM_PRINTERS "")
+ foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
   add_subdirectory(lib/Target/${t})
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
-    add_subdirectory(lib/Target/${t}/AsmPrinter)
-  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
+   add_subdirectory(lib/Target/${t}/AsmPrinter)
+    set(LLVM_ENUM_ASM_PRINTERS 
+        "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
+ endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
 endforeach(t)
+
+# Produce llvm/Config/AsmPrinters.def
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmPrinters.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmPrinters.def
+  )
 
 add_subdirectory(lib/ExecutionEngine)
 add_subdirectory(lib/ExecutionEngine/Interpreter)

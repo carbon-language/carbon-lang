@@ -35,6 +35,11 @@ X("ppc32", "PowerPC 32");
 static RegisterTarget<PPC64TargetMachine>
 Y("ppc64", "PowerPC 64");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializePowerPCTarget() { }
+}
+
 // No assembler printer by default
 PPCTargetMachine::AsmPrinterCtorFn PPCTargetMachine::AsmPrinterCtor = 0;
 

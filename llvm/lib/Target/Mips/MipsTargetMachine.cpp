@@ -31,6 +31,11 @@ int MipsTargetMachineModule = 0;
 static RegisterTarget<MipsTargetMachine>    X("mips", "Mips");
 static RegisterTarget<MipselTargetMachine>  Y("mipsel", "Mipsel");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeMipsTarget() { }
+}
+
 const TargetAsmInfo *MipsTargetMachine::
 createTargetAsmInfo() const 
 {

@@ -31,6 +31,11 @@ int AlphaTargetMachineModule = 0;
 // Register the targets
 static RegisterTarget<AlphaTargetMachine> X("alpha", "Alpha [experimental]");
 
+// Force static initialization when called from llvm/InitializeAllTargets.h
+namespace llvm {
+  void InitializeAlphaTarget() { }
+}
+
 const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
   return new AlphaTargetAsmInfo(*this);
 }

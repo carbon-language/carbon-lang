@@ -134,6 +134,8 @@ install-libs: install
 #------------------------------------------------------------------------
 FilesToConfig := \
   include/llvm/Config/config.h \
+  include/llvm/Config/Targets.def \
+	include/llvm/Config/AsmPrinters.def \
   include/llvm/Support/DataTypes.h \
   include/llvm/ADT/iterator.h
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
