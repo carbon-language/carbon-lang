@@ -1,4 +1,4 @@
-//===- llvm/System/Win32/Mutex.inc - Win32 Mutex Implementation -*- C++ -*-===//
+//= llvm/System/Win32/Mutex.inc - Win32 Reader/Writer Mutual Exclusion Lock  =//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Win32 specific (non-pthread) Mutex class.
+// This file implements the Win32 specific (non-pthread) RWMutex class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,42 +17,39 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include "llvm/System/Mutex.h"
 
 namespace llvm {
 using namespace sys;
 
-Mutex::Mutex()
-{
-  data_ = new CRITICAL_SECTION;
-  InitializeCriticalSection((LPCRITICAL_SECTION)data_);
+RWMutex::RWMutex() {
+  data_ = new PSRWLOCK;
+  InitializeSRWLock((PSRWLOCK*)data_);
 }
 
-Mutex::~Mutex()
-{
-  DeleteCriticalSection((LPCRITICAL_SECTION)data_);
-  delete (LPCRITICAL_SECTION)data_;
+RWMutex::~RWMutex() {
+  delete (PSRWLOCK*)data_;
   data_ = 0;
 }
 
-bool 
-Mutex::acquire()
-{
-  EnterCriticalSection((LPCRITICAL_SECTION)data_);
+bool RWMutex::reader_acquire() {
+  AcquireSRWLockShared((PSRWLOCK*)data_);
   return true;
 }
 
-bool 
-Mutex::release()
-{
-  LeaveCriticalSection((LPCRITICAL_SECTION)data_);
+bool RWMutex::reader_release() {
+  ReleaseSRWLockShared((PSRWLOCK*)data_);
   return true;
 }
 
-bool 
-Mutex::tryacquire()
-{
-  return TryEnterCriticalSection((LPCRITICAL_SECTION)data_);
+bool RWMutex::writer_acquire() {
+  AcquireSRWLockExclusive((PSRWLOCK*)data_);
+  return true;
 }
+
+bool RWMutex::writer_release() {
+  ReleaseSRWLockExclusive((PSRWLOCK*)data_);
+  return true;
+}
+
 
 }
