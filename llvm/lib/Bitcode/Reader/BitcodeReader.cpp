@@ -2040,14 +2040,13 @@ void BitcodeReader::dematerializeFunction(Function *F) {
 
 
 Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
-  for (DenseMap<Function*, std::pair<uint64_t, unsigned> >::iterator I = 
-       DeferredFunctionInfo.begin(), E = DeferredFunctionInfo.end(); I != E;
-       ++I) {
-    Function *F = I->first;
+  // Iterate over the module, deserializing any functions that are still on
+  // disk.
+  for (Module::iterator F = TheModule->begin(), E = TheModule->end();
+       F != E; ++F)
     if (F->hasNotBeenReadFromBitcode() &&
         materializeFunction(F, ErrInfo))
       return 0;
-  }
 
   // Upgrade any intrinsic calls that slipped through (should not happen!) and 
   // delete the old functions to clean up. We can't do this unless the entire 
@@ -2123,7 +2122,7 @@ Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, std::string *ErrMsg){
   // is run.
   if (M)
     M = R->releaseModule(ErrMsg);
-  
+   
   delete R;
   return M;
 }
