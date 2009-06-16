@@ -620,7 +620,7 @@ public:
   /// getElementRegion - Retrieve the memory region associated with the
   ///  associated element type, index, and super region.
   ElementRegion* getElementRegion(QualType elementType, SVal Idx,
-                                  const MemRegion* superRegion);
+                                  const MemRegion* superRegion,ASTContext &Ctx);
 
   /// getFieldRegion - Retrieve or create the memory region associated with
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing

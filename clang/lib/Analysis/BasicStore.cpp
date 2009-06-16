@@ -248,7 +248,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St,
   
   if (BaseR)  
     return Loc::MakeVal(MRMgr.getElementRegion(elementType, UnknownVal(),
-                                               BaseR));
+                                               BaseR, getContext()));
   else
     return UnknownVal();
 }

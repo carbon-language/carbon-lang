@@ -90,7 +90,8 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
         // FIXME: Is this the right thing to do in all cases?
         const TypedRegion *Base = isa<ElementRegion>(TR) ?
                                   cast<TypedRegion>(TR->getSuperRegion()) : TR;
-        ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, Base);
+        ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, Base, 
+						   StateMgr.getContext());
         return CastResult(state, ER);
       }
     }

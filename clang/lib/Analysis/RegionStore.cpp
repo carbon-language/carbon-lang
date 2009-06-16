@@ -438,7 +438,7 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
       }
     }
     return loc::MemRegionVal(MRMgr.getElementRegion(elementType, Offset,
-                                                    BaseRegion));
+                                                    BaseRegion, getContext()));
   }
   
   SVal BaseIdx = ElemR->getIndex();
@@ -473,7 +473,8 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   else
     NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(BaseIdxI + OffI));
 
-  return loc::MemRegionVal(MRMgr.getElementRegion(elementType, NewIdx, ArrayR));
+  return loc::MemRegionVal(MRMgr.getElementRegion(elementType, NewIdx, ArrayR,
+						  getContext()));
 }
 
 SVal RegionStoreManager::getSizeInElements(const GRState* St,
@@ -560,7 +561,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   T = AT->getElementType();
   
   nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-  ElementRegion* ER = MRMgr.getElementRegion(T, Idx, ArrayR);
+  ElementRegion* ER = MRMgr.getElementRegion(T, Idx, ArrayR, getContext());
   
   return loc::MemRegionVal(ER);                    
 }
@@ -622,7 +623,7 @@ RegionStoreManager::CastRegion(const GRState* state, const MemRegion* R,
       state = setCastType(state, R, ToTy);
 
       SVal Idx = ValMgr.makeZeroArrayIndex();
-      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx, R);
+      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx,R,getContext());
       return CastResult(state, ER);
     } else
       return CastResult(state, R);
@@ -654,7 +655,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     QualType EleTy = T->getAsPointerType()->getPointeeType();
 
     SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR);
+    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
   } 
   else if (const AllocaRegion *AR = dyn_cast<AllocaRegion>(MR)) {
     // Get the alloca region's current cast type.
@@ -664,7 +665,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     assert(T && "alloca region has no type.");
     QualType EleTy = cast<PointerType>(T->getTypePtr())->getPointeeType();
     SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR);
+    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
   } 
   else
     ER = cast<ElementRegion>(MR);
@@ -686,7 +687,8 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
                                                            Offset->getValue()));
     SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffConverted);
     const MemRegion* NewER =
-      MRMgr.getElementRegion(ER->getElementType(), NewIdx,ER->getSuperRegion());
+      MRMgr.getElementRegion(ER->getElementType(), NewIdx,ER->getSuperRegion(),
+			     getContext());
     return Loc::MakeVal(NewER);
 
   }
@@ -871,7 +873,8 @@ SVal RegionStoreManager::RetrieveArray(const GRState* St, const TypedRegion* R){
 
   for (; i < Size; ++i) {
     SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-    ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R);
+    ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R,
+					       getContext());
     QualType ETy = ER->getElementType();
     SVal ElementVal = Retrieve(St, loc::MemRegionVal(ER), ETy);
     ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
@@ -1153,7 +1156,7 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
       SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
       ElementRegion* ER =
         MRMgr.getElementRegion(cast<ArrayType>(T)->getElementType(),
-                               Idx, R);
+                               Idx, R, getContext());
 
       SVal V = NonLoc::MakeVal(getBasicVals(), str[j], sizeof(char)*8, true);
       St = Bind(St, loc::MemRegionVal(ER), V);
@@ -1173,7 +1176,7 @@ const GRState* RegionStoreManager::BindArray(const GRState* St,
     SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
     ElementRegion* ER =
       MRMgr.getElementRegion(cast<ArrayType>(T)->getElementType(),
-                             Idx, R);
+                             Idx, R, getContext());
 
     if (CAT->getElementType()->isStructureType())
       St = BindStruct(St, ER, *VI);

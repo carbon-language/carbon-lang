@@ -296,10 +296,12 @@ MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
 
 ElementRegion*
 MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
-                                   const MemRegion* superRegion){
+                                 const MemRegion* superRegion, ASTContext& Ctx){
+
+  QualType T = Ctx.getCanonicalType(elementType);
 
   llvm::FoldingSetNodeID ID;
-  ElementRegion::ProfileRegion(ID, elementType, Idx, superRegion);
+  ElementRegion::ProfileRegion(ID, T, Idx, superRegion);
 
   void* InsertPos;
   MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
@@ -307,7 +309,7 @@ MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
 
   if (!R) {
     R = (ElementRegion*) A.Allocate<ElementRegion>();
-    new (R) ElementRegion(elementType, Idx, superRegion);
+    new (R) ElementRegion(T, Idx, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
 
