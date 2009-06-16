@@ -10,3 +10,6 @@ set(LLVM_LINK_COMPONENTS system support bitreader bitwriter)
 add_clang_executable(clang
   driver.cpp
   )
+
+add_dependencies(clang clang-cc)
+
