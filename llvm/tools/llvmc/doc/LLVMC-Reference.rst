@@ -94,9 +94,9 @@ configuration libraries:
 
 * ``--check-graph`` - Check the compilation for common errors like mismatched
   output/input language names, multiple default edges and cycles. Because of
-  plugins, these checks can't be performed at compile-time. Exit with code zero if
-  no errors were found, and return the number of found errors otherwise. Hidden
-  option, useful for debugging LLVMC plugins.
+  plugins, these checks can't be performed at compile-time. Exit with code zero
+  if no errors were found, and return the number of found errors
+  otherwise. Hidden option, useful for debugging LLVMC plugins.
 
 * ``--view-graph`` - Show a graphical representation of the compilation graph
   and exit. Requires that you have ``dot`` and ``gv`` programs installed. Hidden
@@ -104,15 +104,15 @@ configuration libraries:
 
 * ``--write-graph`` - Write a ``compilation-graph.dot`` file in the current
   directory with the compilation graph description in Graphviz format (identical
-  to the file used by the ``--view-graph`` option). The ``-o`` option can be used
-  to set the output file name. Hidden option, useful for debugging LLVMC plugins.
+  to the file used by the ``--view-graph`` option). The ``-o`` option can be
+  used to set the output file name. Hidden option, useful for debugging LLVMC
+  plugins.
 
 * ``--save-temps`` - Write temporary files to the current directory
   and do not delete them on exit. Hidden option, useful for debugging.
 
 * ``--help``, ``--help-hidden``, ``--version`` - These options have
   their standard meaning.
-
 
 Compiling LLVMC plugins
 =======================
@@ -146,14 +146,6 @@ generic::
 
    $ mv Simple.td MyPlugin.td
 
-Note that the plugin source directory must be placed under
-``$LLVMC_DIR/plugins`` to make use of the existing build
-infrastructure. To build a version of the LLVMC executable called
-``mydriver`` with your plugin compiled in, use the following command::
-
-   $ cd $LLVMC_DIR
-   $ make BUILTIN_PLUGINS=MyPlugin DRIVER_NAME=mydriver
-
 To build your plugin as a dynamic library, just ``cd`` to its source
 directory and run ``make``. The resulting file will be called
 ``LLVMC$(LLVMC_PLUGIN).$(DLL_EXTENSION)`` (in our case,
@@ -164,11 +156,45 @@ directory and run ``make``. The resulting file will be called
     $ make
     $ llvmc -load $LLVM_DIR/Release/lib/LLVMCSimple.so
 
+Compiling standalone LLVMC-based drivers
+========================================
+
+By default, the ``llvmc`` executable consists of a driver core plus several
+statically linked plugins (``Base`` and ``Clang`` at the moment). You can
+produce a standalone LLVMC-based driver executable by linking the core with your
+own plugins. The recommended way to do this is by starting with the provided
+``Skeleton`` example (``$LLVMC_DIR/example/Skeleton``)::
+
+    $ cd $LLVMC_DIR/example/
+    $ cp -r Skeleton mydriver
+    $ cd mydriver
+    $ vim Makefile
+    [...]
+    $ make
+
+If you're compiling LLVM with different source and object directories, then you
+must perform the following additional steps before running ``make``::
+
+    # LLVMC_SRC_DIR = $LLVM_SRC_DIR/tools/llvmc/
+    # LLVMC_OBJ_DIR = $LLVM_OBJ_DIR/tools/llvmc/
+    $ cp $LLVMC_SRC_DIR/example/mydriver/Makefile \
+      $LLVMC_OBJ_DIR/example/mydriver/
+    $ cd $LLVMC_OBJ_DIR/example/mydriver
+    $ make
+
+Another way to do the same thing is by using the following command::
+
+    $ cd $LLVMC_DIR
+    $ make LLVMC_BUILTIN_PLUGINS=MyPlugin LLVMC_BASED_DRIVER_NAME=mydriver
+
+This works with both srcdir==objdir and srcdir != objdir, but assumes that the
+plugin source directory was placed under ``$LLVMC_DIR/plugins``.
+
 Sometimes, you will want a 'bare-bones' version of LLVMC that has no
 built-in plugins. It can be compiled with the following command::
 
     $ cd $LLVMC_DIR
-    $ make BUILTIN_PLUGINS=""
+    $ make LLVMC_BUILTIN_PLUGINS=""
 
 
 Customizing LLVMC: the compilation graph

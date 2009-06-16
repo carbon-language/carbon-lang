@@ -48,21 +48,25 @@ be familiar with it to get anything done.
 
 .. _TableGen: http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
 
-Start by compiling ``plugins/Simple/Simple.td``, which is a primitive
-wrapper for ``gcc``::
+Start by compiling ``example/Simple``, which is a primitive wrapper for
+``gcc``::
 
     $ cd $LLVM_DIR/tools/llvmc
-    $ make DRIVER_NAME=mygcc BUILTIN_PLUGINS=Simple
+
+      # NB: A less verbose way to compile standalone LLVMC-based drivers is
+      # described in the reference manual.
+
+    $ make LLVMC_BASED_DRIVER_NAME=mygcc LLVMC_BUILTIN_PLUGINS=Simple
     $ cat > hello.c
     [...]
     $ mygcc hello.c
     $ ./hello.out
     Hello
 
-Here we link our plugin with the LLVMC core statically to form an
-executable file called ``mygcc``. It is also possible to build our
-plugin as a standalone dynamic library; this is described in the
-reference manual.
+Here we link our plugin with the LLVMC core statically to form an executable
+file called ``mygcc``. It is also possible to build our plugin as a dynamic
+library to be loaded by the ``llvmc`` executable (or any other LLVMC-based
+standalone driver); this is described in the reference manual.
 
 Contents of the file ``Simple.td`` look like this::
 
