@@ -147,8 +147,11 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
     return;
   }
 
+  DefaultArgPtr = MaybeCreateCXXExprWithTemporaries(DefaultArg.take(),
+                                                    /*DestroyTemps=*/false);
+  
   // Okay: add the default argument to the parameter
-  Param->setDefaultArg(DefaultArg.take());
+  Param->setDefaultArg(DefaultArgPtr);
 }
 
 /// ActOnParamUnparsedDefaultArgument - We've seen a default

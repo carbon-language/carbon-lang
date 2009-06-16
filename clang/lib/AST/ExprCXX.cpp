@@ -306,10 +306,11 @@ void CXXConstructExpr::Destroy(ASTContext &C) {
 CXXExprWithTemporaries::CXXExprWithTemporaries(Expr *subexpr, 
                                                CXXTemporary **temps, 
                                                unsigned numtemps,
-                                               bool destroytemps)
+                                               bool shoulddestroytemps)
 : Expr(CXXExprWithTemporariesClass, subexpr->getType(),
        subexpr->isTypeDependent(), subexpr->isValueDependent()), 
-  SubExpr(subexpr), Temps(0), NumTemps(numtemps), DestroyTemps(destroytemps) {
+  SubExpr(subexpr), Temps(0), NumTemps(numtemps), 
+  ShouldDestroyTemps(shoulddestroytemps) {
   if (NumTemps > 0) {
     Temps = new CXXTemporary*[NumTemps];
     for (unsigned i = 0; i < NumTemps; ++i)
@@ -321,9 +322,9 @@ CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C,
                                                        Expr *SubExpr,
                                                        CXXTemporary **Temps, 
                                                        unsigned NumTemps,
-                                                       bool DestroyTemps) {
+                                                       bool ShouldDestroyTemps){
   return new (C) CXXExprWithTemporaries(SubExpr, Temps, NumTemps, 
-                                        DestroyTemps);
+                                        ShouldDestroyTemps);
 }
 
 void CXXExprWithTemporaries::Destroy(ASTContext &C) {

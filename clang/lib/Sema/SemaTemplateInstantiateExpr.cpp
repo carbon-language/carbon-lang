@@ -1165,7 +1165,10 @@ TemplateExprInstantiator::VisitCXXExprWithTemporaries(
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
-  return SemaRef.ActOnFinishFullExpr(move(SubExpr));
+  Expr *Temp = 
+    SemaRef.MaybeCreateCXXExprWithTemporaries(SubExpr.takeAs<Expr>(),
+                                              E->shouldDestroyTemporaries());
+  return SemaRef.Owned(Temp);
 }
 
 Sema::OwningExprResult 
