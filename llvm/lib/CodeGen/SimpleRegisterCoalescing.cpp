@@ -963,11 +963,11 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
 }
 
 
-/// RemoveCopiesFromValNo - The specified value# is defined by an implicit
-/// def and it is being removed. Turn all copies from this value# into
-/// implicit_defs.
-void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
-                                                     VNInfo *VNI) {
+/// TurnCopiesFromValNoToImpDefs - The specified value# is defined by an
+/// implicit_def and it is being removed. Turn all copies from this value#
+/// into implicit_defs.
+void SimpleRegisterCoalescing::TurnCopiesFromValNoToImpDefs(LiveInterval &li,
+                                                            VNInfo *VNI) {
   SmallVector<MachineInstr*, 4> ImpDefs;
   MachineOperand *LastUse = NULL;
   unsigned LastUseIdx = li_->getUseIndex(VNI->def);
@@ -1775,7 +1775,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     VNInfo *ImpVal = LR->valno;
     assert(ImpVal->def == CopyIdx);
     unsigned NextDef = LR->end;
-    RemoveCopiesFromValNo(*ResDstInt, ImpVal);
+    TurnCopiesFromValNoToImpDefs(*ResDstInt, ImpVal);
     ResDstInt->removeValNo(ImpVal);
     LR = ResDstInt->FindLiveRangeContaining(NextDef);
     if (LR != ResDstInt->end() && LR->valno->def == NextDef) {
