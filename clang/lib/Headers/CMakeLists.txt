@@ -15,7 +15,12 @@ set(files
   xmmintrin.h)
 
 #FIXME: Centralize Clang version info
-set(output_dir ${LLVM_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/clang/1.0/include)
+if (MSVC_IDE OR XCODE)
+  set(output_dir ${LLVM_BINARY_DIR}/bin/lib/clang/1.0/include)
+else ()
+  set(output_dir ${LLVM_BINARY_DIR}/lib/clang/1.0/include)
+endif ()
+
 
 foreach( f ${files} )
   set( src ${CMAKE_CURRENT_SOURCE_DIR}/${f} )

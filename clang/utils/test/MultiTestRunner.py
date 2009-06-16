@@ -275,7 +275,6 @@ def main():
         tests = tests[:opts.maxTests]
     if opts.path is not None:
         os.environ["PATH"] = opts.path + ":" + os.environ["PATH"];
-        print "Current PATH is: ", os.environ["PATH"]
     
     extra = ''
     if len(tests) != len(allTests):

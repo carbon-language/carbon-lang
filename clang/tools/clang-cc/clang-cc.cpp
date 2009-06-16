@@ -67,6 +67,8 @@
 #include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
+#include "llvm/InitializeAllTargets.h"
+#include "llvm/InitializeAllAsmPrinters.h"
 #include <cstdlib>
 #if HAVE_SYS_TYPES_H
 #  include <sys/types.h>
