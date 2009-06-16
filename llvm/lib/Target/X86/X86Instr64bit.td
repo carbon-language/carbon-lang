@@ -113,7 +113,7 @@ let isCall = 1 in
     // NOTE: this pattern doesn't match "X86call imm", because we do not know
     // that the offset between an arbitrary immediate and the call will fit in
     // the 32-bit pcrel field that we have.
-    def CALL64pcrel32 : I<0xE8, RawFrm,
+    def CALL64pcrel32 : Ii32<0xE8, RawFrm,
                           (outs), (ins i64i32imm:$dst, variable_ops),
                           "call\t${dst:call}", []>,
                         Requires<[In64BitMode]>;
