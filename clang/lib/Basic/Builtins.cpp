@@ -32,6 +32,8 @@ const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
 
 Builtin::Context::Context(const TargetInfo &Target) {
   // Get the target specific builtins from the target.
+  TSRecords = 0;
+  NumTSRecords = 0;
   Target.getTargetBuiltins(TSRecords, NumTSRecords);  
 }
 
