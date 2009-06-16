@@ -108,16 +108,34 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
                                         const char *ArchName) const {
   std::string Arch;
   if (!ArchName) {
-    Arch = getArchName();
+    // If we aren't looking for a specific arch, infer the default architecture
+    // based on -arch and -m32/-m64 command line options.
+    if (Arg *A = Args.getLastArg(options::OPT_arch)) {
+      // The gcc driver behavior with multiple -arch flags wasn't consistent for
+      // things which rely on a default architecture. We just use the last -arch
+      // to find the default tool chain.
+      Arch = A->getValue(Args);
+      
+      // Normalize arch name; we shouldn't be doing this here.
+      //
+      // FIXME: This should be unnecessary once everything moves over to using
+      // the ID based Triple interface.
+      if (Arch == "ppc")
+        Arch = "powerpc";
+      else if (Arch == "powerpc")
+        Arch = "powerpc64";
+    } else {
+      // Otherwise default to the arch of the host.
+      Arch = getArchName();
+    }
     ArchName = Arch.c_str();
-
-    // If no arch name is specified, infer it from the host and
-    // -m32/-m64.
+    
+    // Honor -m32 and -m64 when finding the default tool chain.
     if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
-      if (getArchName() == "i386" || getArchName() == "x86_64") {
-        ArchName = 
-          (A->getOption().getId() == options::OPT_m32) ? "i386" : "x86_64";
-      } else if (getArchName() == "powerpc" || getArchName() == "powerpc64") {
+      if (Arch == "i386" || Arch == "x86_64") {
+        ArchName = (A->getOption().getId() == options::OPT_m32) ? "i386" : 
+          "x86_64";
+      } else if (Arch == "powerpc" || Arch == "powerpc64") {
         ArchName = (A->getOption().getId() == options::OPT_m32) ? "powerpc" : 
           "powerpc64";
       }
