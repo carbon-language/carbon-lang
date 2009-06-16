@@ -820,10 +820,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
           StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
         } else {
           // If EltTy is a vector type, get the element type.
-          const Type *ValTy = EltTy;
-          if (const VectorType *VTy = dyn_cast<VectorType>(ValTy))
-            ValTy = VTy->getElementType();
-          
+          const Type *ValTy = EltTy->getScalarType();
+
           // Construct an integer with the right value.
           unsigned EltSize = TD->getTypeSizeInBits(ValTy);
           APInt OneVal(EltSize, CI->getZExtValue());
