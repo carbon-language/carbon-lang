@@ -23,6 +23,8 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Threading.h"
+#include "llvm/System/RWMutex.h"
 #include <algorithm>
 #include <cstdarg>
 using namespace llvm;
@@ -39,6 +41,9 @@ AbstractTypeUser::~AbstractTypeUser() {}
 //===----------------------------------------------------------------------===//
 //                         Type Class Implementation
 //===----------------------------------------------------------------------===//
+
+// Reader/writer lock used for guarding access to the type maps.
+static ManagedStatic<sys::RWMutex> TypeMapLock;
 
 // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
 // for types as they are needed.  Because resolution of types must invalidate
@@ -848,7 +853,7 @@ public:
         // We already have this type in the table.  Get rid of the newly refined
         // type.
         TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
-        Ty->refineAbstractTypeTo(NewTy);
+        Ty->unlockedRefineAbstractTypeTo(NewTy);
         return;
       }
     } else {
@@ -884,7 +889,7 @@ public:
               }
               TypesByHash.erase(Entry);
             }
-            Ty->refineAbstractTypeTo(NewTy);
+            Ty->unlockedRefineAbstractTypeTo(NewTy);
             return;
           }
         }
@@ -968,15 +973,40 @@ const IntegerType *IntegerType::get(unsigned NumBits) {
     default: 
       break;
   }
-
+  
   IntegerValType IVT(NumBits);
-  IntegerType *ITy = IntegerTypes->get(IVT);
-  if (ITy) return ITy;           // Found a match, return it!
+  IntegerType *ITy = 0;
+  if (llvm_is_multithreaded()) {
+    // First, see if the type is already in the table, for which
+    // a reader lock suffices.
+    TypeMapLock->reader_acquire();
+    ITy = IntegerTypes->get(IVT);
+    TypeMapLock->reader_release();
+    
+    if (!ITy) {
+      // OK, not in the table, get a writer lock.
+      TypeMapLock->writer_acquire();
+      ITy = IntegerTypes->get(IVT);
+      
+      // We need to _recheck_ the table in case someone
+      // put it in between when we released the reader lock
+      // and when we gained the writer lock!
+      if (!ITy) {
+        // Value not found.  Derive a new type!
+        ITy = new IntegerType(NumBits);
+        IntegerTypes->add(IVT, ITy);
+      }
+      
+      TypeMapLock->writer_release();
+    }
+  } else {
+    ITy = IntegerTypes->get(IVT);
+    if (ITy) return ITy;           // Found a match, return it!
 
-  // Value not found.  Derive a new type!
-  ITy = new IntegerType(NumBits);
-  IntegerTypes->add(IVT, ITy);
-
+    // Value not found.  Derive a new type!
+    ITy = new IntegerType(NumBits);
+    IntegerTypes->add(IVT, ITy);
+  }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ITy << "\n";
 #endif
@@ -1040,15 +1070,39 @@ FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
                                 bool isVarArg) {
   FunctionValType VT(ReturnType, Params, isVarArg);
-  FunctionType *FT = FunctionTypes->get(VT);
-  if (FT)
-    return FT;
+  FunctionType *FT = 0;
+  
+  if (llvm_is_multithreaded()) {
+    TypeMapLock->reader_acquire();
+    FT = FunctionTypes->get(VT);
+    TypeMapLock->reader_release();
+    
+    if (!FT) {
+      TypeMapLock->writer_acquire();
+      
+      // Have to check again here, because it might have
+      // been inserted between when we release the reader
+      // lock and when we acquired the writer lock.
+      FT = FunctionTypes->get(VT);
+      if (!FT) {
+        FT = (FunctionType*) operator new(sizeof(FunctionType) +
+                                        sizeof(PATypeHandle)*(Params.size()+1));
+        new (FT) FunctionType(ReturnType, Params, isVarArg);
+        FunctionTypes->add(VT, FT);
+      }
+      TypeMapLock->writer_release();
+    }
+  } else {
+    FT = FunctionTypes->get(VT);
+    if (FT)
+      return FT;
 
-  FT = (FunctionType*) operator new(sizeof(FunctionType) +
-                                    sizeof(PATypeHandle)*(Params.size()+1));
-  new (FT) FunctionType(ReturnType, Params, isVarArg);
-  FunctionTypes->add(VT, FT);
-
+    FT = (FunctionType*) operator new(sizeof(FunctionType) +
+                                      sizeof(PATypeHandle)*(Params.size()+1));
+    new (FT) FunctionType(ReturnType, Params, isVarArg);
+    FunctionTypes->add(VT, FT);
+  }
+  
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << FT << "\n";
 #endif
@@ -1079,20 +1133,39 @@ public:
   }
 };
 }
-static ManagedStatic<TypeMap<ArrayValType, ArrayType> > ArrayTypes;
 
+static ManagedStatic<TypeMap<ArrayValType, ArrayType> > ArrayTypes;
 
 ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
   assert(ElementType && "Can't get array of <null> types!");
   assert(isValidElementType(ElementType) && "Invalid type for array element!");
 
   ArrayValType AVT(ElementType, NumElements);
-  ArrayType *AT = ArrayTypes->get(AVT);
-  if (AT) return AT;           // Found a match, return it!
-
-  // Value not found.  Derive a new type!
-  ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
-
+  ArrayType *AT = 0;
+  
+  if (llvm_is_multithreaded()) {
+    TypeMapLock->reader_acquire();
+    AT = ArrayTypes->get(AVT);
+    TypeMapLock->reader_release();
+    
+    if (!AT) {
+      TypeMapLock->writer_acquire();
+      
+      // Recheck.  Might have changed between release and acquire.
+      AT = ArrayTypes->get(AVT);
+      if (!AT) {
+        // Value not found.  Derive a new type!
+        ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
+      }
+      TypeMapLock->writer_release();
+    }
+  } else {
+    AT = ArrayTypes->get(AVT);
+    if (AT) return AT;           // Found a match, return it!
+    
+    // Value not found.  Derive a new type!
+    ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
+  }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *AT << "\n";
 #endif
@@ -1136,19 +1209,36 @@ public:
   }
 };
 }
-static ManagedStatic<TypeMap<VectorValType, VectorType> > VectorTypes;
 
+static ManagedStatic<TypeMap<VectorValType, VectorType> > VectorTypes;
 
 VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get vector of <null> types!");
 
   VectorValType PVT(ElementType, NumElements);
-  VectorType *PT = VectorTypes->get(PVT);
-  if (PT) return PT;           // Found a match, return it!
-
-  // Value not found.  Derive a new type!
-  VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
-
+  VectorType *PT = 0;
+  
+  if (llvm_is_multithreaded()) {
+    TypeMapLock->reader_acquire();
+    PT = VectorTypes->get(PVT);
+    TypeMapLock->reader_release();
+    
+    if (!PT) {
+      TypeMapLock->writer_acquire();
+      PT = VectorTypes->get(PVT);
+      // Recheck.  Might have changed between release and acquire.
+      if (!PT) {
+        VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
+      }
+      TypeMapLock->writer_acquire();
+    }
+  } else {
+    PT = VectorTypes->get(PVT);
+    if (PT) return PT;           // Found a match, return it!
+    
+    // Value not found.  Derive a new type!
+    VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
+  }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
 #endif
@@ -1203,15 +1293,36 @@ static ManagedStatic<TypeMap<StructValType, StructType> > StructTypes;
 StructType *StructType::get(const std::vector<const Type*> &ETypes, 
                             bool isPacked) {
   StructValType STV(ETypes, isPacked);
-  StructType *ST = StructTypes->get(STV);
-  if (ST) return ST;
-
-  // Value not found.  Derive a new type!
-  ST = (StructType*) operator new(sizeof(StructType) +
-                                  sizeof(PATypeHandle) * ETypes.size());
-  new (ST) StructType(ETypes, isPacked);
-  StructTypes->add(STV, ST);
-
+  StructType *ST = 0;
+  
+  if (llvm_is_multithreaded()) {
+    TypeMapLock->reader_acquire();
+    ST = StructTypes->get(STV);
+    TypeMapLock->reader_release();
+    
+    if (!ST) {
+      TypeMapLock->writer_acquire();
+      ST = StructTypes->get(STV);
+      // Recheck.  Might have changed between release and acquire.
+      if (!ST) {
+        // Value not found.  Derive a new type!
+        ST = (StructType*) operator new(sizeof(StructType) +
+                                        sizeof(PATypeHandle) * ETypes.size());
+        new (ST) StructType(ETypes, isPacked);
+        StructTypes->add(STV, ST);
+      }
+      TypeMapLock->writer_release();
+    }
+  } else {
+    ST = StructTypes->get(STV);
+    if (ST) return ST;
+    
+    // Value not found.  Derive a new type!
+    ST = (StructType*) operator new(sizeof(StructType) +
+                                    sizeof(PATypeHandle) * ETypes.size());
+    new (ST) StructType(ETypes, isPacked);
+    StructTypes->add(STV, ST);
+  }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ST << "\n";
 #endif
@@ -1279,12 +1390,30 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(isValidElementType(ValueType) && "Invalid type for pointer element!");
   PointerValType PVT(ValueType, AddressSpace);
 
-  PointerType *PT = PointerTypes->get(PVT);
-  if (PT) return PT;
-
-  // Value not found.  Derive a new type!
-  PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
-
+  PointerType *PT = 0;
+  
+  if (llvm_is_multithreaded()) {
+    TypeMapLock->reader_acquire();
+    PT = PointerTypes->get(PVT);
+    TypeMapLock->reader_release();
+    
+    if (!PT) {
+      TypeMapLock->writer_acquire();
+      PT = PointerTypes->get(PVT);
+      // Recheck.  Might have changed between release and acquire.
+      if (!PT) {
+        // Value not found.  Derive a new type!
+        PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
+      }
+      TypeMapLock->writer_release();
+    }
+  } else {
+    PT = PointerTypes->get(PVT);
+    if (PT) return PT;
+    
+    // Value not found.  Derive a new type!
+    PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
+  }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
 #endif
@@ -1344,12 +1473,13 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
   }
 }
 
-// refineAbstractTypeTo - This function is used when it is discovered that
-// the 'this' abstract type is actually equivalent to the NewType specified.
-// This causes all users of 'this' to switch to reference the more concrete type
-// NewType and for 'this' to be deleted.
+// unlockedRefineAbstractTypeTo - This function is used when it is discovered
+// that the 'this' abstract type is actually equivalent to the NewType
+// specified. This causes all users of 'this' to switch to reference the more 
+// concrete type NewType and for 'this' to be deleted.  Only used for internal
+// callers.
 //
-void DerivedType::refineAbstractTypeTo(const Type *NewType) {
+void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
   assert(ForwardType == 0 && "This type has already been refined!");
@@ -1368,8 +1498,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // refined, that we will not continue using a dead reference...
   //
   PATypeHolder NewTy(NewType);
-
-  // Any PATypeHolders referring to this type will now automatically forward to
+  // Any PATypeHolders referring to this type will now automatically forward o
   // the type we are resolved to.
   ForwardType = NewType;
   if (NewType->isAbstract())
@@ -1412,6 +1541,21 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // deleted when the last PATypeHolder is destroyed or updated from this type.
   // This may occur on exit of this function, as the CurrentTy object is
   // destroyed.
+}
+
+// refineAbstractTypeTo - This function is used by external callers to notify
+// us that this abstract type is equivalent to another type.
+//
+void DerivedType::refineAbstractTypeTo(const Type *NewType) {
+  if (llvm_is_multithreaded()) {
+    // All recursive calls will go through unlockedRefineAbstractTypeTo,
+    // to avoid deadlock problems.
+    TypeMapLock->writer_acquire();
+    unlockedRefineAbstractTypeTo(NewType);
+    TypeMapLock->writer_release();
+  } else {
+    unlockedRefineAbstractTypeTo(NewType);
+  }
 }
 
 // notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type that
