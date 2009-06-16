@@ -41,6 +41,7 @@ def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;
+def : DiagGroup<"invalid-pch">;
 def : DiagGroup<"missing-braces">;
 def : DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
