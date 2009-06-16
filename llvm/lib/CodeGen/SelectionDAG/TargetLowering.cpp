@@ -171,6 +171,8 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPROUND_PPCF128_F32] = "__trunctfsf2";
   Names[RTLIB::FPROUND_F80_F64] = "__truncxfdf2";
   Names[RTLIB::FPROUND_PPCF128_F64] = "__trunctfdf2";
+  Names[RTLIB::FPTOSINT_F32_I8] = "__fixsfsi";
+  Names[RTLIB::FPTOSINT_F32_I16] = "__fixsfsi";
   Names[RTLIB::FPTOSINT_F32_I32] = "__fixsfsi";
   Names[RTLIB::FPTOSINT_F32_I64] = "__fixsfdi";
   Names[RTLIB::FPTOSINT_F32_I128] = "__fixsfti";
@@ -183,6 +185,8 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOSINT_PPCF128_I32] = "__fixtfsi";
   Names[RTLIB::FPTOSINT_PPCF128_I64] = "__fixtfdi";
   Names[RTLIB::FPTOSINT_PPCF128_I128] = "__fixtfti";
+  Names[RTLIB::FPTOUINT_F32_I8] = "__fixunssfsi";
+  Names[RTLIB::FPTOUINT_F32_I16] = "__fixunssfsi";
   Names[RTLIB::FPTOUINT_F32_I32] = "__fixunssfsi";
   Names[RTLIB::FPTOUINT_F32_I64] = "__fixunssfdi";
   Names[RTLIB::FPTOUINT_F32_I128] = "__fixunssfti";
@@ -195,6 +199,8 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOUINT_PPCF128_I32] = "__fixunstfsi";
   Names[RTLIB::FPTOUINT_PPCF128_I64] = "__fixunstfdi";
   Names[RTLIB::FPTOUINT_PPCF128_I128] = "__fixunstfti";
+  Names[RTLIB::SINTTOFP_I32_F8] = "__floatsisf";
+  Names[RTLIB::SINTTOFP_I32_F16] = "__floatsisf";
   Names[RTLIB::SINTTOFP_I32_F32] = "__floatsisf";
   Names[RTLIB::SINTTOFP_I32_F64] = "__floatsidf";
   Names[RTLIB::SINTTOFP_I32_F80] = "__floatsixf";
@@ -207,6 +213,8 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SINTTOFP_I128_F64] = "__floattidf";
   Names[RTLIB::SINTTOFP_I128_F80] = "__floattixf";
   Names[RTLIB::SINTTOFP_I128_PPCF128] = "__floattitf";
+  Names[RTLIB::UINTTOFP_I32_F8] = "__floatunsisf";
+  Names[RTLIB::UINTTOFP_I32_F16] = "__floatunsisf";
   Names[RTLIB::UINTTOFP_I32_F32] = "__floatunsisf";
   Names[RTLIB::UINTTOFP_I32_F64] = "__floatunsidf";
   Names[RTLIB::UINTTOFP_I32_F80] = "__floatunsixf";
@@ -271,6 +279,10 @@ RTLIB::Libcall RTLIB::getFPROUND(MVT OpVT, MVT RetVT) {
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPTOSINT(MVT OpVT, MVT RetVT) {
   if (OpVT == MVT::f32) {
+    if (RetVT == MVT::i8)
+      return FPTOSINT_F32_I8;
+    if (RetVT == MVT::i16)
+      return FPTOSINT_F32_I16;
     if (RetVT == MVT::i32)
       return FPTOSINT_F32_I32;
     if (RetVT == MVT::i64)
@@ -306,6 +318,10 @@ RTLIB::Libcall RTLIB::getFPTOSINT(MVT OpVT, MVT RetVT) {
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPTOUINT(MVT OpVT, MVT RetVT) {
   if (OpVT == MVT::f32) {
+    if (RetVT == MVT::i8)
+      return FPTOUINT_F32_I8;
+    if (RetVT == MVT::i16)
+      return FPTOUINT_F32_I16;
     if (RetVT == MVT::i32)
       return FPTOUINT_F32_I32;
     if (RetVT == MVT::i64)
