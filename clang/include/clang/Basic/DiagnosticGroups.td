@@ -92,6 +92,7 @@ def UnusedLabel : DiagGroup<"unused-label">;
 def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
 def UnusedVariable : DiagGroup<"unused-variable">;
+def UndeclaredSelector : DiagGroup<"undeclared-selector">;
 def : DiagGroup<"variadic-macros">;
 def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
@@ -128,7 +129,8 @@ def Most : DiagGroup<"most", [
     UnusedValue,
     UnusedVariable,
     VectorConversions,
-    VolatileRegisterVar
+    VolatileRegisterVar,
+    UndeclaredSelector
  ]>;
 
 // -Wall is -Wmost -Wparentheses
