@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=thumb
 ; RUN: llvm-as < %s | llc -march=thumb | \
-; RUN:   grep pop | count 2
+; RUN:   grep pop | count 1
 
 @str = internal constant [4 x i8] c"%d\0A\00"           ; <[4 x i8]*> [#uses=1]
 

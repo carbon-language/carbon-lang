@@ -697,7 +697,6 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
   MachineInstr *PopMI = MF.CreateMachineInstr(get(ARM::tPOP),MI->getDebugLoc());
-  MBB.insert(MI, PopMI);
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     if (Reg == ARM::LR) {
@@ -706,10 +705,15 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
         continue;
       Reg = ARM::PC;
       PopMI->setDesc(get(ARM::tPOP_RET));
-      MBB.erase(MI);
+      MI = MBB.erase(MI);
     }
     PopMI->addOperand(MachineOperand::CreateReg(Reg, true));
   }
+
+  // It's illegal to emit pop instruction without operands.
+  if (PopMI->getNumOperands() > 0)
+    MBB.insert(MI, PopMI);
+
   return true;
 }
 
