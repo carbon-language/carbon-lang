@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_MUTEX_H
-#define LLVM_SYSTEM_MUTEX_H
+#ifndef LLVM_SYSTEM_RWMUTEX_H
+#define LLVM_SYSTEM_RWMUTEX_H
 
 namespace llvm
 {
