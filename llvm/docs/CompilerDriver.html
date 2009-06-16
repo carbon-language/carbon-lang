@@ -21,21 +21,22 @@ The ReST source lives in the directory 'tools/llvmc/doc'. -->
 <li><a class="reference internal" href="#compiling-with-llvmc" id="id5">Compiling with LLVMC</a></li>
 <li><a class="reference internal" href="#predefined-options" id="id6">Predefined options</a></li>
 <li><a class="reference internal" href="#compiling-llvmc-plugins" id="id7">Compiling LLVMC plugins</a></li>
-<li><a class="reference internal" href="#customizing-llvmc-the-compilation-graph" id="id8">Customizing LLVMC: the compilation graph</a></li>
-<li><a class="reference internal" href="#describing-options" id="id9">Describing options</a><ul>
-<li><a class="reference internal" href="#external-options" id="id10">External options</a></li>
+<li><a class="reference internal" href="#compiling-standalone-llvmc-based-drivers" id="id8">Compiling standalone LLVMC-based drivers</a></li>
+<li><a class="reference internal" href="#customizing-llvmc-the-compilation-graph" id="id9">Customizing LLVMC: the compilation graph</a></li>
+<li><a class="reference internal" href="#describing-options" id="id10">Describing options</a><ul>
+<li><a class="reference internal" href="#external-options" id="id11">External options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#conditional-evaluation" id="id11">Conditional evaluation</a></li>
-<li><a class="reference internal" href="#writing-a-tool-description" id="id12">Writing a tool description</a><ul>
-<li><a class="reference internal" href="#actions" id="id13">Actions</a></li>
+<li><a class="reference internal" href="#conditional-evaluation" id="id12">Conditional evaluation</a></li>
+<li><a class="reference internal" href="#writing-a-tool-description" id="id13">Writing a tool description</a><ul>
+<li><a class="reference internal" href="#actions" id="id14">Actions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#language-map" id="id14">Language map</a></li>
-<li><a class="reference internal" href="#more-advanced-topics" id="id15">More advanced topics</a><ul>
-<li><a class="reference internal" href="#hooks-and-environment-variables" id="id16">Hooks and environment variables</a></li>
-<li><a class="reference internal" href="#how-plugins-are-loaded" id="id17">How plugins are loaded</a></li>
-<li><a class="reference internal" href="#debugging" id="id18">Debugging</a></li>
+<li><a class="reference internal" href="#language-map" id="id15">Language map</a></li>
+<li><a class="reference internal" href="#more-advanced-topics" id="id16">More advanced topics</a><ul>
+<li><a class="reference internal" href="#hooks-and-environment-variables" id="id17">Hooks and environment variables</a></li>
+<li><a class="reference internal" href="#how-plugins-are-loaded" id="id18">How plugins are loaded</a></li>
+<li><a class="reference internal" href="#debugging" id="id19">Debugging</a></li>
 </ul>
 </li>
 </ul>
@@ -110,16 +111,17 @@ until the next -x option.</li>
 <li><tt class="docutils literal"><span class="pre">-v</span></tt> - Enable verbose mode, i.e. print out all executed commands.</li>
 <li><tt class="docutils literal"><span class="pre">--check-graph</span></tt> - Check the compilation for common errors like mismatched
 output/input language names, multiple default edges and cycles. Because of
-plugins, these checks can't be performed at compile-time. Exit with code zero if
-no errors were found, and return the number of found errors otherwise. Hidden
-option, useful for debugging LLVMC plugins.</li>
+plugins, these checks can't be performed at compile-time. Exit with code zero
+if no errors were found, and return the number of found errors
+otherwise. Hidden option, useful for debugging LLVMC plugins.</li>
 <li><tt class="docutils literal"><span class="pre">--view-graph</span></tt> - Show a graphical representation of the compilation graph
 and exit. Requires that you have <tt class="docutils literal"><span class="pre">dot</span></tt> and <tt class="docutils literal"><span class="pre">gv</span></tt> programs installed. Hidden
 option, useful for debugging LLVMC plugins.</li>
 <li><tt class="docutils literal"><span class="pre">--write-graph</span></tt> - Write a <tt class="docutils literal"><span class="pre">compilation-graph.dot</span></tt> file in the current
 directory with the compilation graph description in Graphviz format (identical
-to the file used by the <tt class="docutils literal"><span class="pre">--view-graph</span></tt> option). The <tt class="docutils literal"><span class="pre">-o</span></tt> option can be used
-to set the output file name. Hidden option, useful for debugging LLVMC plugins.</li>
+to the file used by the <tt class="docutils literal"><span class="pre">--view-graph</span></tt> option). The <tt class="docutils literal"><span class="pre">-o</span></tt> option can be
+used to set the output file name. Hidden option, useful for debugging LLVMC
+plugins.</li>
 <li><tt class="docutils literal"><span class="pre">--save-temps</span></tt> - Write temporary files to the current directory
 and do not delete them on exit. Hidden option, useful for debugging.</li>
 <li><tt class="docutils literal"><span class="pre">--help</span></tt>, <tt class="docutils literal"><span class="pre">--help-hidden</span></tt>, <tt class="docutils literal"><span class="pre">--version</span></tt> - These options have
@@ -154,14 +156,6 @@ generic:</p>
 <pre class="literal-block">
 $ mv Simple.td MyPlugin.td
 </pre>
-<p>Note that the plugin source directory must be placed under
-<tt class="docutils literal"><span class="pre">$LLVMC_DIR/plugins</span></tt> to make use of the existing build
-infrastructure. To build a version of the LLVMC executable called
-<tt class="docutils literal"><span class="pre">mydriver</span></tt> with your plugin compiled in, use the following command:</p>
-<pre class="literal-block">
-$ cd $LLVMC_DIR
-$ make BUILTIN_PLUGINS=MyPlugin DRIVER_NAME=mydriver
-</pre>
 <p>To build your plugin as a dynamic library, just <tt class="docutils literal"><span class="pre">cd</span></tt> to its source
 directory and run <tt class="docutils literal"><span class="pre">make</span></tt>. The resulting file will be called
 <tt class="docutils literal"><span class="pre">LLVMC$(LLVMC_PLUGIN).$(DLL_EXTENSION)</span></tt> (in our case,
@@ -172,15 +166,48 @@ $ cd $LLVMC_DIR/plugins/Simple
 $ make
 $ llvmc -load $LLVM_DIR/Release/lib/LLVMCSimple.so
 </pre>
+</div>
+<div class="section" id="compiling-standalone-llvmc-based-drivers">
+<h1><a class="toc-backref" href="#id8">Compiling standalone LLVMC-based drivers</a></h1>
+<p>By default, the <tt class="docutils literal"><span class="pre">llvmc</span></tt> executable consists of a driver core plus several
+statically linked plugins (<tt class="docutils literal"><span class="pre">Base</span></tt> and <tt class="docutils literal"><span class="pre">Clang</span></tt> at the moment). You can
+produce a standalone LLVMC-based driver executable by linking the core with your
+own plugins. The recommended way to do this is by starting with the provided
+<tt class="docutils literal"><span class="pre">Skeleton</span></tt> example (<tt class="docutils literal"><span class="pre">$LLVMC_DIR/example/Skeleton</span></tt>):</p>
+<pre class="literal-block">
+$ cd $LLVMC_DIR/example/
+$ cp -r Skeleton mydriver
+$ cd mydriver
+$ vim Makefile
+[...]
+$ make
+</pre>
+<p>If you're compiling LLVM with different source and object directories, then you
+must perform the following additional steps before running <tt class="docutils literal"><span class="pre">make</span></tt>:</p>
+<pre class="literal-block">
+# LLVMC_SRC_DIR = $LLVM_SRC_DIR/tools/llvmc/
+# LLVMC_OBJ_DIR = $LLVM_OBJ_DIR/tools/llvmc/
+$ cp $LLVMC_SRC_DIR/example/mydriver/Makefile \
+  $LLVMC_OBJ_DIR/example/mydriver/
+$ cd $LLVMC_OBJ_DIR/example/mydriver
+$ make
+</pre>
+<p>Another way to do the same thing is by using the following command:</p>
+<pre class="literal-block">
+$ cd $LLVMC_DIR
+$ make LLVMC_BUILTIN_PLUGINS=MyPlugin LLVMC_BASED_DRIVER_NAME=mydriver
+</pre>
+<p>This works with both srcdir==objdir and srcdir != objdir, but assumes that the
+plugin source directory was placed under <tt class="docutils literal"><span class="pre">$LLVMC_DIR/plugins</span></tt>.</p>
 <p>Sometimes, you will want a 'bare-bones' version of LLVMC that has no
 built-in plugins. It can be compiled with the following command:</p>
 <pre class="literal-block">
 $ cd $LLVMC_DIR
-$ make BUILTIN_PLUGINS=&quot;&quot;
+$ make LLVMC_BUILTIN_PLUGINS=&quot;&quot;
 </pre>
 </div>
 <div class="section" id="customizing-llvmc-the-compilation-graph">
-<h1><a class="toc-backref" href="#id8">Customizing LLVMC: the compilation graph</a></h1>
+<h1><a class="toc-backref" href="#id9">Customizing LLVMC: the compilation graph</a></h1>
 <p>Each TableGen configuration file should include the common
 definitions:</p>
 <pre class="literal-block">
@@ -248,7 +275,7 @@ debugging), run <tt class="docutils literal"><span class="pre">llvmc</span> <spa
 <tt class="docutils literal"><span class="pre">gsview</span></tt> installed for this to work properly.</p>
 </div>
 <div class="section" id="describing-options">
-<h1><a class="toc-backref" href="#id9">Describing options</a></h1>
+<h1><a class="toc-backref" href="#id10">Describing options</a></h1>
 <p>Command-line options that the plugin supports are defined by using an
 <tt class="docutils literal"><span class="pre">OptionList</span></tt>:</p>
 <pre class="literal-block">
@@ -317,7 +344,7 @@ the <tt class="docutils literal"><span class="pre">one_or_more</span></tt> and <
 </li>
 </ul>
 <div class="section" id="external-options">
-<h2><a class="toc-backref" href="#id10">External options</a></h2>
+<h2><a class="toc-backref" href="#id11">External options</a></h2>
 <p>Sometimes, when linking several plugins together, one plugin needs to
 access options defined in some other plugin. Because of the way
 options are implemented, such options must be marked as
@@ -332,7 +359,7 @@ for. Example:</p>
 </div>
 </div>
 <div class="section" id="conditional-evaluation">
-<span id="case"></span><h1><a class="toc-backref" href="#id11">Conditional evaluation</a></h1>
+<span id="case"></span><h1><a class="toc-backref" href="#id12">Conditional evaluation</a></h1>
 <p>The 'case' construct is the main means by which programmability is
 achieved in LLVMC. It can be used to calculate edge weights, program
 actions and modify the shell commands to be executed. The 'case'
@@ -412,7 +439,7 @@ one of its arguments returns true. Example: <tt class="docutils literal"><span c
 </ul>
 </div>
 <div class="section" id="writing-a-tool-description">
-<h1><a class="toc-backref" href="#id12">Writing a tool description</a></h1>
+<h1><a class="toc-backref" href="#id13">Writing a tool description</a></h1>
 <p>As was said earlier, nodes in the compilation graph represent tools,
 which are described separately. A tool definition looks like this
 (taken from the <tt class="docutils literal"><span class="pre">include/llvm/CompilerDriver/Tools.td</span></tt> file):</p>
@@ -454,7 +481,7 @@ below).</li>
 </li>
 </ul>
 <div class="section" id="actions">
-<h2><a class="toc-backref" href="#id13">Actions</a></h2>
+<h2><a class="toc-backref" href="#id14">Actions</a></h2>
 <p>A tool often needs to react to command-line options, and this is
 precisely what the <tt class="docutils literal"><span class="pre">actions</span></tt> property is for. The next example
 illustrates this feature:</p>
@@ -515,7 +542,7 @@ Example: <tt class="docutils literal"><span class="pre">(unpack_values</span> <s
 </div>
 </div>
 <div class="section" id="language-map">
-<h1><a class="toc-backref" href="#id14">Language map</a></h1>
+<h1><a class="toc-backref" href="#id15">Language map</a></h1>
 <p>If you are adding support for a new language to LLVMC, you'll need to
 modify the language map, which defines mappings from file extensions
 to language names. It is used to choose the proper toolchain(s) for a
@@ -538,9 +565,9 @@ multiple output languages, for nodes &quot;inside&quot; the graph the input and
 output languages should match. This is enforced at compile-time.</p>
 </div>
 <div class="section" id="more-advanced-topics">
-<h1><a class="toc-backref" href="#id15">More advanced topics</a></h1>
+<h1><a class="toc-backref" href="#id16">More advanced topics</a></h1>
 <div class="section" id="hooks-and-environment-variables">
-<span id="hooks"></span><h2><a class="toc-backref" href="#id16">Hooks and environment variables</a></h2>
+<span id="hooks"></span><h2><a class="toc-backref" href="#id17">Hooks and environment variables</a></h2>
 <p>Normally, LLVMC executes programs from the system <tt class="docutils literal"><span class="pre">PATH</span></tt>. Sometimes,
 this is not sufficient: for example, we may want to specify tool paths
 or names in the configuration file. This can be easily achieved via
@@ -573,7 +600,7 @@ the <tt class="docutils literal"><span class="pre">case</span></tt> expression (
 </pre>
 </div>
 <div class="section" id="how-plugins-are-loaded">
-<span id="priorities"></span><h2><a class="toc-backref" href="#id17">How plugins are loaded</a></h2>
+<span id="priorities"></span><h2><a class="toc-backref" href="#id18">How plugins are loaded</a></h2>
 <p>It is possible for LLVMC plugins to depend on each other. For example,
 one can create edges between nodes defined in some other plugin. To
 make this work, however, that plugin should be loaded first. To
@@ -589,7 +616,7 @@ with 0. Therefore, the plugin with the highest priority value will be
 loaded last.</p>
 </div>
 <div class="section" id="debugging">
-<h2><a class="toc-backref" href="#id18">Debugging</a></h2>
+<h2><a class="toc-backref" href="#id19">Debugging</a></h2>
 <p>When writing LLVMC plugins, it can be useful to get a visual view of
 the resulting compilation graph. This can be achieved via the command
 line option <tt class="docutils literal"><span class="pre">--view-graph</span></tt>. This command assumes that <a class="reference external" href="http://www.graphviz.org/">Graphviz</a> and

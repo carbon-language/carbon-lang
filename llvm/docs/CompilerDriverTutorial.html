@@ -50,21 +50,25 @@ command-line LLVMC usage, refer to the <tt class="docutils literal"><span class=
 <h1><a class="toc-backref" href="#id3">Using LLVMC to generate toolchain drivers</a></h1>
 <p>LLVMC plugins are written mostly using <a class="reference external" href="http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html">TableGen</a>, so you need to
 be familiar with it to get anything done.</p>
-<p>Start by compiling <tt class="docutils literal"><span class="pre">plugins/Simple/Simple.td</span></tt>, which is a primitive
-wrapper for <tt class="docutils literal"><span class="pre">gcc</span></tt>:</p>
+<p>Start by compiling <tt class="docutils literal"><span class="pre">example/Simple</span></tt>, which is a primitive wrapper for
+<tt class="docutils literal"><span class="pre">gcc</span></tt>:</p>
 <pre class="literal-block">
 $ cd $LLVM_DIR/tools/llvmc
-$ make DRIVER_NAME=mygcc BUILTIN_PLUGINS=Simple
+
+  # NB: A less verbose way to compile standalone LLVMC-based drivers is
+  # described in the reference manual.
+
+$ make LLVMC_BASED_DRIVER_NAME=mygcc LLVMC_BUILTIN_PLUGINS=Simple
 $ cat &gt; hello.c
 [...]
 $ mygcc hello.c
 $ ./hello.out
 Hello
 </pre>
-<p>Here we link our plugin with the LLVMC core statically to form an
-executable file called <tt class="docutils literal"><span class="pre">mygcc</span></tt>. It is also possible to build our
-plugin as a standalone dynamic library; this is described in the
-reference manual.</p>
+<p>Here we link our plugin with the LLVMC core statically to form an executable
+file called <tt class="docutils literal"><span class="pre">mygcc</span></tt>. It is also possible to build our plugin as a dynamic
+library to be loaded by the <tt class="docutils literal"><span class="pre">llvmc</span></tt> executable (or any other LLVMC-based
+standalone driver); this is described in the reference manual.</p>
 <p>Contents of the file <tt class="docutils literal"><span class="pre">Simple.td</span></tt> look like this:</p>
 <pre class="literal-block">
 // Include common definitions
