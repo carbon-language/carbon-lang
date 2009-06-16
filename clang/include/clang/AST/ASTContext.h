@@ -299,6 +299,7 @@ public:
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
+                                   bool ParameterPack,
                                    IdentifierInfo *Name = 0);
 
   QualType getTemplateSpecializationType(TemplateName T,

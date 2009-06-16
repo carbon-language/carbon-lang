@@ -564,6 +564,7 @@ InstantiateTemplateTypeParmType(const TemplateTypeParmType *T,
   // parameter with the template "level" reduced by one.
   return SemaRef.Context.getTemplateTypeParmType(T->getDepth() - 1,
                                                  T->getIndex(),
+                                                 T->isParameterPack(),
                                                  T->getName())
     .getQualifiedType(Quals);
 }

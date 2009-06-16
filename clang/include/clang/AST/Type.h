@@ -1403,36 +1403,40 @@ public:
 };
 
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
-  unsigned Depth : 16;
+  unsigned Depth : 15;
   unsigned Index : 16;
+  unsigned ParameterPack : 1;
   IdentifierInfo *Name;
 
-  TemplateTypeParmType(unsigned D, unsigned I, IdentifierInfo *N, 
+  TemplateTypeParmType(unsigned D, unsigned I, bool PP, IdentifierInfo *N, 
                        QualType Canon) 
     : Type(TemplateTypeParm, Canon, /*Dependent=*/true),
-      Depth(D), Index(I), Name(N) { }
+      Depth(D), Index(I), ParameterPack(PP), Name(N) { }
 
-  TemplateTypeParmType(unsigned D, unsigned I) 
+  TemplateTypeParmType(unsigned D, unsigned I, bool PP) 
     : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true),
-      Depth(D), Index(I), Name(0) { }
+      Depth(D), Index(I), ParameterPack(PP), Name(0) { }
 
   friend class ASTContext;  // ASTContext creates these
 
 public:
   unsigned getDepth() const { return Depth; }
   unsigned getIndex() const { return Index; }
+  bool isParameterPack() const { return ParameterPack; }
   IdentifierInfo *getName() const { return Name; }
   
   virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Depth, Index, Name);
+    Profile(ID, Depth, Index, ParameterPack, Name);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, unsigned Depth, 
-                      unsigned Index, IdentifierInfo *Name) {
+                      unsigned Index, bool ParameterPack, 
+                      IdentifierInfo *Name) {
     ID.AddInteger(Depth);
     ID.AddInteger(Index);
+    ID.AddBoolean(ParameterPack);
     ID.AddPointer(Name);
   }
 

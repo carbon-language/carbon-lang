@@ -1414,11 +1414,13 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl) {
 }
 
 /// \brief Retrieve the template type parameter type for a template
-/// parameter with the given depth, index, and (optionally) name.
+/// parameter or parameter pack with the given depth, index, and (optionally) 
+/// name.
 QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index, 
+                                             bool ParameterPack,
                                              IdentifierInfo *Name) {
   llvm::FoldingSetNodeID ID;
-  TemplateTypeParmType::Profile(ID, Depth, Index, Name);
+  TemplateTypeParmType::Profile(ID, Depth, Index, ParameterPack, Name);
   void *InsertPos = 0;
   TemplateTypeParmType *TypeParm 
     = TemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -1426,11 +1428,12 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
   if (TypeParm)
     return QualType(TypeParm, 0);
   
-  if (Name)
-    TypeParm = new (*this, 8) TemplateTypeParmType(Depth, Index, Name,
-                                         getTemplateTypeParmType(Depth, Index));
-  else
-    TypeParm = new (*this, 8) TemplateTypeParmType(Depth, Index);
+  if (Name) {
+    QualType Canon = getTemplateTypeParmType(Depth, Index, ParameterPack);
+    TypeParm = new (*this, 8) TemplateTypeParmType(Depth, Index, ParameterPack,
+                                                   Name, Canon);
+  } else
+    TypeParm = new (*this, 8) TemplateTypeParmType(Depth, Index, ParameterPack);
 
   Types.push_back(TypeParm);
   TemplateTypeParmTypes.InsertNode(TypeParm, InsertPos);
