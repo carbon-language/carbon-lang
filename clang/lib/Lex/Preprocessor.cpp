@@ -51,7 +51,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            IdentifierInfoLookup* IILookup)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts, IILookup),
-    CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
+    BuiltinInfo(Target), CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
       

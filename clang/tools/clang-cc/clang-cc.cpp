@@ -2305,7 +2305,6 @@ int main(int argc, char **argv) {
     
       // Initialize builtin info.
       PP->getBuiltinInfo().InitializeBuiltins(PP->getIdentifierTable(),
-                                              PP->getTargetInfo(),
                                               PP->getLangOptions().NoBuiltin);
     }
 
