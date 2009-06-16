@@ -14,18 +14,15 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Config/config.h"
 #include "llvm/System/Atomic.h"
-#include "llvm/System/Mutex.h"
 #include <cassert>
 using namespace llvm;
 
 static const ManagedStaticBase *StaticList = 0;
 
-static sys::Mutex* ManagedStaticMutex = 0;
-
 void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
                                               void (*Deleter)(void*)) const {
-  if (ManagedStaticMutex) {
-    ManagedStaticMutex->acquire();
+  if (llvm_is_multithreaded()) {
+    llvm_acquire_global_lock();
 
     if (Ptr == 0) {
       void* tmp = Creator ? Creator() : 0;
@@ -39,7 +36,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
       StaticList = this;
     }
 
-    ManagedStaticMutex->release();
+    llvm_release_global_lock();
   } else {
     assert(Ptr == 0 && DeleterFn == 0 && Next == 0 &&
            "Partially initialized ManagedStatic!?");
@@ -68,24 +65,11 @@ void ManagedStaticBase::destroy() const {
   DeleterFn = 0;
 }
 
-bool llvm::llvm_start_multithreaded() {
-#if LLVM_MULTITHREADED
-  assert(ManagedStaticMutex == 0 && "Multithreaded LLVM already initialized!");
-  ManagedStaticMutex = new sys::Mutex(true);
-  return true;
-#else
-  return false;
-#endif
-}
-
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 void llvm::llvm_shutdown() {
   while (StaticList)
     StaticList->destroy();
 
-  if (ManagedStaticMutex) {
-    delete ManagedStaticMutex;
-    ManagedStaticMutex = 0;
-  }
+  if (llvm_is_multithreaded()) llvm_stop_multithreaded();
 }
 
