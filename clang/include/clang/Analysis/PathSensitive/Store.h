@@ -196,8 +196,9 @@ public:
   virtual bool iterSubRegions(const MemRegion* R, Visitor& V) const = 0;  
 };
   
-StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);
-StoreManager* CreateRegionStoreManager(GRStateManager& StMgr);
+StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
+StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
+StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
   
 } // end clang namespace
 
