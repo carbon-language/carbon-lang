@@ -2,6 +2,7 @@
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
   <title>LLVM Programmer's Manual</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
@@ -131,7 +132,7 @@ with another <tt>Value</tt></a> </li>
 
   <li><a href="#threading">Threads and LLVM</a>
   <ul>
-    <li><a href="#startmultithreaded">Entering threaded mode with <tt>llvm_start_multithreaded()</tt><a/></li>
+    <li><a href="#startmultithreaded">Entering threaded mode with <tt>llvm_start_multithreaded()</tt></a></li>
     <li><a href="#shutdown">Ending execution with <tt>llvm_shutdown()</tt></a></li>
     <li><a href="#managedstatic">Lazy initialization with <tt>ManagedStatic</tt></a></li>
   </ul>
@@ -2127,7 +2128,7 @@ FunctionType *ft = TypeBuilder&lt;types::i&lt;8&gt;(types::i&lt;32&gt;*), true&g
 
 <div class="doc_code">
 <pre>
-std::vector<const Type*> params;
+std::vector&lt;const Type*&gt; params;
 params.push_back(PointerType::getUnqual(Type::Int32Ty));
 FunctionType *ft = FunctionType::get(Type::Int8Ty, params, false);
 </pre>
