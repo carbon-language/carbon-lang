@@ -33,10 +33,23 @@ namespace llvm {
   
   protected:
     virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
+  protected:
+    // To avoid having target depend on the asmprinter stuff libraries,
+    // asmprinter set this functions to ctor pointer at startup time if they are
+    // linked in.
+    typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
+                                              MipsTargetMachine &tm,
+                                              CodeGenOpt::Level OptLevel,
+                                              bool verbose);
+    static AsmPrinterCtorFn AsmPrinterCtor;
+    
   public:
     MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle);
 
+    static void registerAsmPrinter(AsmPrinterCtorFn F) {
+      AsmPrinterCtor = F;
+    }
+    
     virtual const MipsInstrInfo   *getInstrInfo()     const 
     { return &InstrInfo; }
     virtual const TargetFrameInfo *getFrameInfo()     const 

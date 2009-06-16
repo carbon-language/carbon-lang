@@ -31,6 +31,9 @@ int MipsTargetMachineModule = 0;
 static RegisterTarget<MipsTargetMachine>    X("mips", "Mips");
 static RegisterTarget<MipselTargetMachine>  Y("mipsel", "Mipsel");
 
+MipsTargetMachine::AsmPrinterCtorFn MipsTargetMachine::AsmPrinterCtor = 0;
+
+
 // Force static initialization when called from llvm/InitializeAllTargets.h
 namespace llvm {
   void InitializeMipsTarget() { }
@@ -130,9 +133,9 @@ addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 // true if AssemblyEmitter is supported
 bool MipsTargetMachine::
 addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel, 
-                   bool Verbose, raw_ostream &Out) 
-{
+                   bool Verbose, raw_ostream &Out)  {
   // Output assembly language.
-  PM.add(createMipsCodePrinterPass(Out, *this, OptLevel, Verbose));
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
   return false;
 }

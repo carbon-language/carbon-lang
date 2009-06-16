@@ -579,6 +579,14 @@ doFinalization(Module &M)
   return AsmPrinter::doFinalization(M);
 }
 
+namespace {
+  static struct Register {
+    Register() {
+      MipsTargetMachine::registerAsmPrinter(createMipsCodePrinterPass);
+    }
+  } Registrator;
+}
+
 // Force static initialization when called from
 // llvm/InitializeAllAsmPrinters.h
 namespace llvm {
