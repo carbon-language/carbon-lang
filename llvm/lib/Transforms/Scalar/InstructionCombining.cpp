@@ -5967,9 +5967,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
   unsigned BitWidth = 0;
   if (TD)
-    BitWidth = TD->getTypeSizeInBits(Ty);
-  else if (isa<IntegerType>(Ty))
-    BitWidth = Ty->getPrimitiveSizeInBits();
+    BitWidth = TD->getTypeSizeInBits(Ty->getScalarType());
+  else if (Ty->isIntOrIntVector())
+    BitWidth = Ty->getScalarSizeInBits();
 
   bool isSignBit = false;
 
@@ -7234,18 +7234,16 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
     if (CSI->isAllOnesValue())
       return ReplaceInstUsesWith(I, CSI);
-  
-  // See if we can turn a signed shr into an unsigned shr.
-  if (!isa<VectorType>(I.getType())) {
-    if (MaskedValueIsZero(Op0,
-                      APInt::getSignBit(I.getType()->getPrimitiveSizeInBits())))
-      return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
 
-    // Arithmetic shifting an all-sign-bit value is a no-op.
-    unsigned NumSignBits = ComputeNumSignBits(Op0);
-    if (NumSignBits == Op0->getType()->getPrimitiveSizeInBits())
-      return ReplaceInstUsesWith(I, Op0);
-  }
+  // See if we can turn a signed shr into an unsigned shr.
+  if (MaskedValueIsZero(Op0,
+                        APInt::getSignBit(I.getType()->getScalarSizeInBits())))
+    return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
+
+  // Arithmetic shifting an all-sign-bit value is a no-op.
+  unsigned NumSignBits = ComputeNumSignBits(Op0);
+  if (NumSignBits == Op0->getType()->getScalarSizeInBits())
+    return ReplaceInstUsesWith(I, Op0);
 
   return 0;
 }
@@ -7295,7 +7293,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
-  uint32_t TypeBits = Op0->getType()->getPrimitiveSizeInBits();
+  uint32_t TypeBits = Op0->getType()->getScalarSizeInBits();
   
   // shl i32 X, 32 = 0 and srl i8 Y, 9 = 0, ... just don't eliminate
   // a signed shift.
@@ -7344,8 +7342,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // part of the register be zeros.  Emulate this by inserting an AND to
       // clear the top bits as needed.  This 'and' will usually be zapped by
       // other xforms later if dead.
-      unsigned SrcSize = TrOp->getType()->getPrimitiveSizeInBits();
-      unsigned DstSize = TI->getType()->getPrimitiveSizeInBits();
+      unsigned SrcSize = TrOp->getType()->getScalarSizeInBits();
+      unsigned DstSize = TI->getType()->getScalarSizeInBits();
       APInt MaskV(APInt::getLowBitsSet(SrcSize, DstSize));
       
       // The mask we constructed says what the trunc would do if occurring
@@ -8380,7 +8378,8 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   uint32_t SrcBitWidth = Src->getType()->getScalarSizeInBits();
 
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0)
-  if (!isa<VectorType>(Ty) && DestBitWidth == 1) {
+  if (DestBitWidth == 1 &&
+      isa<VectorType>(Ty) == isa<VectorType>(Src->getType())) {
     Constant *One = ConstantInt::get(Src->getType(), 1);
     Src = InsertNewInstBefore(BinaryOperator::CreateAnd(Src, One, "tmp"), CI);
     Value *Zero = Constant::getNullValue(Src->getType());
