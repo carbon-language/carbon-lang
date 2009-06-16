@@ -429,6 +429,47 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     return false;
   }
 
+  if (C.getArgs().hasArg(options::OPT_print_multi_lib)) {
+    // FIXME: We need tool chain support for this.
+    llvm::outs() << ".;\n";
+
+    switch (C.getDefaultToolChain().getTriple().getArch()) {
+    default:
+      break;
+      
+    case llvm::Triple::x86_64:
+      llvm::outs() << "x86_64;@m64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64:
+      llvm::outs() << "ppc64;@m64" << "\n";
+      break;
+    }
+    return false;
+  }
+
+  // FIXME: What is the difference between print-multi-directory and
+  // print-multi-os-directory?
+  if (C.getArgs().hasArg(options::OPT_print_multi_directory) ||
+      C.getArgs().hasArg(options::OPT_print_multi_os_directory)) {
+    switch (C.getDefaultToolChain().getTriple().getArch()) {
+    default:
+    case llvm::Triple::x86:
+    case llvm::Triple::ppc:
+      llvm::outs() << "." << "\n";
+      break;
+      
+    case llvm::Triple::x86_64:
+      llvm::outs() << "x86_64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64:
+      llvm::outs() << "ppc64" << "\n";
+      break;
+    }
+    return false;
+  }
+
   return true;
 }
 
