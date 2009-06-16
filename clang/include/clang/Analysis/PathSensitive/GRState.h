@@ -539,7 +539,6 @@ public:
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, Expr* Ex, uint64_t);
   
-  
   //==---------------------------------------------------------------------==//
   // Generic Data Map methods.
   //==---------------------------------------------------------------------==//
@@ -681,6 +680,10 @@ public:
   const GRState* getState() const { return St; } 
   operator const GRState*() const { return St; }
   GRStateManager& getManager() const { return *Mgr; }
+  
+  GRStateRef makeWithStore(Store store) {
+    return GRStateRef(Mgr->MakeStateWithStore(St, store), *Mgr);
+  }
     
   SVal GetSVal(Expr* Ex) {
     return Mgr->GetSVal(St, Ex);
