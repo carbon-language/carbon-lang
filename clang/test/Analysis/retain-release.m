@@ -10,19 +10,23 @@
 // #include <DiskArbitration/DiskArbitration.h>
 // #include <QuartzCore/QuartzCore.h>
 // #include <Quartz/Quartz.h>
+// #include <IOKit/IOKitLib.h>
 //
 // It includes the basic definitions for the test cases below.
 //===----------------------------------------------------------------------===//
 
 typedef unsigned int __darwin_natural_t;
+typedef unsigned long uintptr_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 typedef unsigned int UInt32;
 typedef signed long CFIndex;
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
+extern const CFAllocatorRef kCFAllocatorDefault;
 extern CFTypeRef CFRetain(CFTypeRef cf);
 extern void CFRelease(CFTypeRef cf);
-extern const CFAllocatorRef kCFAllocatorDefault;
 typedef struct {
 }
 CFArrayCallBacks;
@@ -33,6 +37,7 @@ extern CFMutableArrayRef CFArrayCreateMutable(CFAllocatorRef allocator, CFIndex 
 extern const void *CFArrayGetValueAtIndex(CFArrayRef theArray, CFIndex idx);
 extern void CFArrayAppendValue(CFMutableArrayRef theArray, const void *value);
 typedef const struct __CFDictionary * CFDictionaryRef;
+typedef struct __CFDictionary * CFMutableDictionaryRef;
 typedef UInt32 CFStringEncoding;
 enum {
 kCFStringEncodingMacRoman = 0,     kCFStringEncodingWindowsLatin1 = 0x0500,     kCFStringEncodingISOLatin1 = 0x0201,     kCFStringEncodingNextStepLatin = 0x0B01,     kCFStringEncodingASCII = 0x0600,     kCFStringEncodingUnicode = 0x0100,     kCFStringEncodingUTF8 = 0x08000100,     kCFStringEncodingNonLossyASCII = 0x0BFF      ,     kCFStringEncodingUTF16 = 0x0100,     kCFStringEncodingUTF16BE = 0x10000100,     kCFStringEncodingUTF16LE = 0x14000100,      kCFStringEncodingUTF32 = 0x0c000100,     kCFStringEncodingUTF32BE = 0x18000100,     kCFStringEncodingUTF32LE = 0x1c000100  };
@@ -42,9 +47,7 @@ typedef CFTimeInterval CFAbsoluteTime;
 extern CFAbsoluteTime CFAbsoluteTimeGetCurrent(void);
 typedef const struct __CFDate * CFDateRef;
 extern CFDateRef CFDateCreate(CFAllocatorRef allocator, CFAbsoluteTime at);
-CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
-enum {
-kCFCalendarComponentsWrap = (1UL << 0) };
+extern CFAbsoluteTime CFDateGetAbsoluteTime(CFDateRef theDate);
 typedef __darwin_natural_t natural_t;
 typedef natural_t mach_port_name_t;
 typedef mach_port_name_t mach_port_t;
@@ -52,6 +55,8 @@ typedef int kern_return_t;
 typedef kern_return_t mach_error_t;
 typedef signed char BOOL;
 typedef unsigned long NSUInteger;
+@class NSString, Protocol;
+extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object;
@@ -71,32 +76,54 @@ typedef struct {
 }
 NSFastEnumerationState;
 @protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
-@end      @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
+@end   @class NSString;
+@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
 @end  @interface NSArray (NSArrayCreation)  + (id)array;
-@end        @interface NSAutoreleasePool : NSObject {
+@end       @interface NSAutoreleasePool : NSObject {
 }
 - (void)drain;
-@end    typedef double NSTimeInterval;
+@end extern NSString * const NSBundleDidLoadNotification;
+typedef double NSTimeInterval;
 @interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
-@end  enum {
-NSWrapCalendarComponents = kCFCalendarComponentsWrap, };
+@end            typedef unsigned short unichar;
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
 - ( const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
-@end      @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
+@end       @class NSString, NSData;
+@interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
-@end      @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
+@end             @class NSString;
+@interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
 @end    @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
 @end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (id)dictionaryWithCapacity:(NSUInteger)numItems;
+@end  typedef double CGFloat;
+struct CGSize {
+};
+typedef struct CGSize CGSize;
 struct CGRect {
 };
 typedef struct CGRect CGRect;
+@protocol NSLocking  - (void)lock;
 - (id)init;
+@end @class NSURLAuthenticationChallenge;
 typedef mach_port_t io_object_t;
+typedef char io_name_t[128];
+typedef io_object_t io_iterator_t;
 typedef io_object_t io_service_t;
+typedef struct IONotificationPort * IONotificationPortRef;
+typedef void (*IOServiceMatchingCallback)(  void * refcon,  io_iterator_t iterator );
+io_service_t IOServiceGetMatchingService(  mach_port_t masterPort,  CFDictionaryRef matching );
+kern_return_t IOServiceGetMatchingServices(  mach_port_t masterPort,  CFDictionaryRef matching,  io_iterator_t * existing );
+kern_return_t IOServiceAddNotification(  mach_port_t masterPort,  const io_name_t notificationType,  CFDictionaryRef matching,  mach_port_t wakePort,  uintptr_t reference,  io_iterator_t * notification ) __attribute__((deprecated));
+kern_return_t IOServiceAddMatchingNotification(  IONotificationPortRef notifyPort,  const io_name_t notificationType,  CFDictionaryRef matching,         IOServiceMatchingCallback callback,         void * refCon,  io_iterator_t * notification );
+CFMutableDictionaryRef IOServiceMatching(  const char * name );
+CFMutableDictionaryRef IOServiceNameMatching(  const char * name );
+CFMutableDictionaryRef IOBSDNameMatching(  mach_port_t masterPort,  uint32_t options,  const char * bsdName );
+CFMutableDictionaryRef IOOpenFirmwarePathMatching(  mach_port_t masterPort,  uint32_t options,  const char * path );
+CFMutableDictionaryRef IORegistryEntryIDMatching(  uint64_t entryID );
 typedef struct __DASession * DASessionRef;
 extern DASessionRef DASessionCreate( CFAllocatorRef allocator );
 typedef struct __DADisk * DADiskRef;
@@ -106,18 +133,26 @@ extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk );
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk );
 typedef struct CGColorSpace *CGColorSpaceRef;
 typedef struct CGImage *CGImageRef;
-@end   @class CIContext;
-@class NSArray, NSError, NSEvent, NSMenu, NSUndoManager, NSWindow;
+  typedef struct CGLayer *CGLayerRef;
+           @class NSArray, NSError, NSEvent, NSMenu, NSUndoManager, NSWindow;
 @interface NSResponder : NSObject <NSCoding> {
 }
 @end    @protocol NSAnimatablePropertyContainer      - (id)animator;
 @end  extern NSString *NSAnimationTriggerOrderIn ;
 @interface NSView : NSResponder  <NSAnimatablePropertyContainer>  {
+struct __VFlags2 {
 }
-@end   @class NSColor, NSFont, NSNotification;
-@protocol NSValidatedUserInterfaceItem - (SEL)action;
+_vFlags2;
+}
+@end   extern NSString * const NSFullScreenModeAllScreens;
+@protocol NSChangeSpelling - (void)changeSpelling:(id)sender;
+@end      @protocol NSIgnoreMisspelledWords - (void)ignoreSpelling:(id)sender;
+@end  @class NSColor, NSFont, NSNotification;
+@interface NSText : NSView <NSChangeSpelling, NSIgnoreMisspelledWords> {
+}
+@end @protocol NSValidatedUserInterfaceItem - (SEL)action;
 @end   @protocol NSUserInterfaceValidations - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem;
-@end    typedef struct NSThreadPrivate _NSThreadPrivate;
+@end @class NSArray, NSError, NSImage, NSView, NSNotificationCenter, NSURL, NSScreen, NSRunningApplication;
 @interface NSApplication : NSResponder <NSUserInterfaceValidations> {
 }
 @end   enum {
@@ -125,15 +160,12 @@ NSTerminateCancel = 0,         NSTerminateNow = 1,         NSTerminateLater = 2 
 typedef NSUInteger NSApplicationTerminateReply;
 @protocol NSApplicationDelegate <NSObject> @optional        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 @end    enum {
-NSUserInterfaceLayoutDirectionLeftToRight = 0,     NSUserInterfaceLayoutDirectionRightToLeft = 1 };
+}
+_CFlags;
 @interface CIImage : NSObject <NSCoding, NSCopying> {
 }
 typedef int CIFormat;
-typedef struct __SFlags {
-}
-_SFlags;
-@end    extern NSString * const kCAGravityCenter     __attribute__((visibility("default")));
-enum {
+@end  enum {
 kDAReturnSuccess = 0,     kDAReturnError = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x01,     kDAReturnBusy = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x02,     kDAReturnBadArgument = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x03,     kDAReturnExclusiveAccess = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x04,     kDAReturnNoResources = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x05,     kDAReturnNotFound = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x06,     kDAReturnNotMounted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x07,     kDAReturnNotPermitted = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x08,     kDAReturnNotPrivileged = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x09,     kDAReturnNotReady = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0A,     kDAReturnNotWritable = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0B,     kDAReturnUnsupported = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff)<<14) | 0x0C };
 typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
@@ -142,15 +174,25 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 }
 - (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r;
 - (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r     format:(CIFormat)f colorSpace:(CGColorSpaceRef)cs;
-@end     @protocol QCCompositionRenderer      @end   @interface QCRenderer : NSObject <QCCompositionRenderer> {
+- (CGLayerRef)createCGLayerWithSize:(CGSize)size info:(CFDictionaryRef)d;
+@end @class NSURL;
+@protocol QCCompositionRenderer - (NSDictionary*) attributes;
+@end   @interface QCRenderer : NSObject <QCCompositionRenderer> {
 }
 - (id) createSnapshotImageOfType:(NSString*)type;
-@end     @interface QCView : NSView <QCCompositionRenderer> {
+@end  extern NSString* const QCViewDidStartRenderingNotification;
+@interface QCView : NSView <QCCompositionRenderer> {
 }
 - (id) createSnapshotImageOfType:(NSString*)type;
+@end    enum {
+ICEXIFOrientation1 = 1,     ICEXIFOrientation2 = 2,     ICEXIFOrientation3 = 3,     ICEXIFOrientation4 = 4,     ICEXIFOrientation5 = 5,     ICEXIFOrientation6 = 6,     ICEXIFOrientation7 = 7,     ICEXIFOrientation8 = 8, };
+@class ICDevice;
+@protocol ICDeviceDelegate <NSObject>  @required      - (void)didRemoveDevice:(ICDevice*)device;
+@end  @class ICCameraDevice;
+@class ICScannerDevice;
+@protocol ICScannerDeviceDelegate <ICDeviceDelegate>  @optional       - (void)scannerDeviceDidBecomeAvailable:(ICScannerDevice*)scanner;
 @end
-extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
-
+  
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -680,6 +722,72 @@ void rdar6902710(QCView *view, QCRenderer *renderer, CIContext *context,
   [renderer createSnapshotImageOfType:str]; // expected-warning{{leak}}
   [context createCGImage:img fromRect:rect]; // expected-warning{{leak}}
   [context createCGImage:img fromRect:rect format:form colorSpace:cs]; // expected-warning{{leak}}
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6945561> -[CIContext createCGLayerWithSize:info:]
+//                           misinterpreted by clang scan-build
+//===----------------------------------------------------------------------===//
+
+void rdar6945561(CIContext *context, CGSize size, CFDictionaryRef d) {
+  [context createCGLayerWithSize:size info:d]; // expected-warning{{leak}}
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6961230> add knowledge of IOKit functions to retain/release 
+//                          checker
+//===----------------------------------------------------------------------===//
+
+void IOBSDNameMatching_wrapper(mach_port_t masterPort, uint32_t options,  const char * bsdName) {  
+  IOBSDNameMatching(masterPort, options, bsdName); // expected-warning{{leak}}
+}
+
+void IOServiceMatching_wrapper(const char * name) {
+  IOServiceMatching(name); // expected-warning{{leak}}
+}
+
+void IOServiceNameMatching_wrapper(const char * name) {
+  IOServiceNameMatching(name); // expected-warning{{leak}}
+}
+
+__attribute__((cf_returns_retained)) CFDictionaryRef CreateDict();
+
+void IOServiceAddNotification_wrapper(mach_port_t masterPort, const io_name_t notificationType,
+  mach_port_t wakePort, uintptr_t reference, io_iterator_t * notification ) {
+
+  CFDictionaryRef matching = CreateDict();
+  CFRelease(matching);
+  IOServiceAddNotification(masterPort, notificationType, matching, // expected-warning{{used after it is released}} expected-warning{{deprecated}}
+                           wakePort, reference, notification);
+}
+
+void IORegistryEntryIDMatching_wrapper(uint64_t entryID ) {
+  IORegistryEntryIDMatching(entryID); // expected-warning{{leak}}
+}
+
+void IOOpenFirmwarePathMatching_wrapper(mach_port_t masterPort, uint32_t options,
+                                        const char * path) {
+  IOOpenFirmwarePathMatching(masterPort, options, path); // expected-warning{{leak}}
+}
+
+void IOServiceGetMatchingService_wrapper(mach_port_t masterPort) {
+  CFDictionaryRef matching = CreateDict();
+  IOServiceGetMatchingService(masterPort, matching);
+  CFRelease(matching); // expected-warning{{used after it is released}}
+}
+
+void IOServiceGetMatchingServices_wrapper(mach_port_t masterPort, io_iterator_t *existing) {
+  CFDictionaryRef matching = CreateDict();
+  IOServiceGetMatchingServices(masterPort, matching, existing);
+  CFRelease(matching); // expected-warning{{used after it is released}}
+}
+
+void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, const io_name_t notificationType, 
+  IOServiceMatchingCallback callback, void * refCon, io_iterator_t * notification) {
+    
+  CFDictionaryRef matching = CreateDict();
+  IOServiceAddMatchingNotification(notifyPort, notificationType, matching, callback, refCon, notification);
+  CFRelease(matching); // expected-warning{{used after it is released}}
 }
 
 //===----------------------------------------------------------------------===//
