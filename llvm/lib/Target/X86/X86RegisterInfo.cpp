@@ -662,13 +662,6 @@ void X86RegisterInfo::emitFrameMoves(MachineFunction &MF,
      TargetFrameInfo::StackGrowsUp ?
      TD->getPointerSize() : -TD->getPointerSize());
 
-  if (hasFP(MF)) {
-    // Save FP
-    MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
-    MachineLocation FPSrc(FramePtr);
-    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
-  }
-
   MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
   MachineLocation FPSrc(MachineLocation::VirtualFP);
   Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
@@ -714,6 +707,13 @@ void X86RegisterInfo::emitFrameMoves(MachineFunction &MF,
     MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
     MachineLocation CSSrc(Reg);
     Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
+  }
+
+  if (hasFP(MF)) {
+    // Save FP
+    MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
+    MachineLocation FPSrc(FramePtr);
+    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
   }
 }
 
