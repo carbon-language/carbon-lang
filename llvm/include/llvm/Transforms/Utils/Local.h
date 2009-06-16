@@ -31,6 +31,16 @@ struct DbgInfoIntrinsic;
 template<typename T> class SmallVectorImpl;
   
 //===----------------------------------------------------------------------===//
+//  Local analysis.
+//
+
+/// isSafeToLoadUnconditionally - Return true if we know that executing a load
+/// from this value cannot trap.  If it is not obviously safe to load from the
+/// specified pointer, we do a quick local scan of the basic block containing
+/// ScanFrom, to determine if the address is already accessed.
+bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom);
+
+//===----------------------------------------------------------------------===//
 //  Local constant propagation.
 //
 

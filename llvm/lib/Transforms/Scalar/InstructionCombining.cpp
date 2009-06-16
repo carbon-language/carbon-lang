@@ -11419,45 +11419,6 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
   return 0;
 }
 
-/// isSafeToLoadUnconditionally - Return true if we know that executing a load
-/// from this value cannot trap.  If it is not obviously safe to load from the
-/// specified pointer, we do a quick local scan of the basic block containing
-/// ScanFrom, to determine if the address is already accessed.
-static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
-  // If it is an alloca it is always safe to load from.
-  if (isa<AllocaInst>(V)) return true;
-
-  // If it is a global variable it is mostly safe to load from.
-  if (const GlobalValue *GV = dyn_cast<GlobalVariable>(V))
-    // Don't try to evaluate aliases.  External weak GV can be null.
-    return !isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage();
-
-  // Otherwise, be a little bit agressive by scanning the local block where we
-  // want to check to see if the pointer is already being loaded or stored
-  // from/to.  If so, the previous load or store would have already trapped,
-  // so there is no harm doing an extra load (also, CSE will later eliminate
-  // the load entirely).
-  BasicBlock::iterator BBI = ScanFrom, E = ScanFrom->getParent()->begin();
-
-  while (BBI != E) {
-    --BBI;
-
-    // If we see a free or a call (which might do a free) the pointer could be
-    // marked invalid.
-    if (isa<FreeInst>(BBI) || 
-        (isa<CallInst>(BBI) && !isa<DbgInfoIntrinsic>(BBI)))
-      return false;
-    
-    if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
-      if (LI->getOperand(0) == V) return true;
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
-      if (SI->getOperand(1) == V) return true;
-    }
-
-  }
-  return false;
-}
-
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
