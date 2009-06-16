@@ -2768,6 +2768,53 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                    ISD::SETULT : ISD::SETUGT));
     break;
   }
+  case ISD::UMULO:
+  case ISD::SMULO: {
+    MVT VT = Node->getValueType(0);
+    SDValue LHS = Node->getOperand(0);
+    SDValue RHS = Node->getOperand(1);
+    SDValue BottomHalf;
+    SDValue TopHalf;
+    static unsigned Ops[2][3] =
+        { { ISD::MULHU, ISD::UMUL_LOHI, ISD::ZERO_EXTEND },
+          { ISD::MULHS, ISD::SMUL_LOHI, ISD::SIGN_EXTEND }};
+    bool isSigned = Node->getOpcode() == ISD::SMULO;
+    if (TLI.isOperationLegalOrCustom(Ops[isSigned][0], VT)) {
+      BottomHalf = DAG.getNode(ISD::MUL, dl, VT, LHS, RHS);
+      TopHalf = DAG.getNode(Ops[isSigned][0], dl, VT, LHS, RHS);
+    } else if (TLI.isOperationLegalOrCustom(Ops[isSigned][1], VT)) {
+      BottomHalf = DAG.getNode(Ops[isSigned][1], dl, DAG.getVTList(VT, VT), LHS,
+                               RHS);
+      TopHalf = BottomHalf.getValue(1);
+    } else if (TLI.isTypeLegal(MVT::getIntegerVT(VT.getSizeInBits() * 2))) {
+      MVT WideVT = MVT::getIntegerVT(VT.getSizeInBits() * 2);
+      LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
+      RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
+      Tmp1 = DAG.getNode(ISD::MUL, dl, WideVT, LHS, RHS);
+      BottomHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Tmp1,
+                               DAG.getIntPtrConstant(0));
+      TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Tmp1,
+                            DAG.getIntPtrConstant(1));
+    } else {
+      // FIXME: We should be able to fall back to a libcall with an illegal
+      // type in some cases cases.
+      // Also, we can fall back to a division in some cases, but that's a big
+      // performance hit in the general case.
+      assert(0 && "Don't know how to expand this operation yet!");
+    }
+    if (isSigned) {
+      Tmp1 = DAG.getConstant(VT.getSizeInBits() - 1, TLI.getShiftAmountTy());
+      Tmp1 = DAG.getNode(ISD::SRA, dl, VT, BottomHalf, Tmp1);
+      TopHalf = DAG.getSetCC(dl, TLI.getSetCCResultType(VT), TopHalf, Tmp1,
+                             ISD::SETNE);
+    } else {
+      TopHalf = DAG.getSetCC(dl, TLI.getSetCCResultType(VT), TopHalf,
+                             DAG.getConstant(0, VT), ISD::SETNE);
+    }
+    Results.push_back(BottomHalf);
+    Results.push_back(TopHalf);
+    break;
+  }
   case ISD::BUILD_PAIR: {
     MVT PairTy = Node->getValueType(0);
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, PairTy, Node->getOperand(0));
