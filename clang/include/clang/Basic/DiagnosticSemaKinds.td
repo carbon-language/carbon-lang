@@ -242,8 +242,7 @@ def warn_objc_property_attr_mutually_exclusive : Warning<
   "property attributes '%0' and '%1' are mutually exclusive">,
   InGroup<DiagGroup<"readonly-setter-attrs">>, DefaultIgnore;
 def warn_undeclared_selector : Warning<
-  "undeclared selector %0">,
-  InGroup<DiagGroup<"undeclared-selector">>, DefaultIgnore;
+  "undeclared selector %0">, InGroup<UndeclaredSelector>, DefaultIgnore;
 
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
