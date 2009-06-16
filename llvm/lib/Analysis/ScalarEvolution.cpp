@@ -68,6 +68,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
@@ -2394,14 +2395,28 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
       if (CI->isAllOnesValue())
         return getSCEV(U->getOperand(0));
       const APInt &A = CI->getValue();
-      unsigned Ones = A.countTrailingOnes();
-      if (APIntOps::isMask(Ones, A))
+
+      // Instcombine's ShrinkDemandedConstant may strip bits out of
+      // constants, obscuring what would otherwise be a low-bits mask.
+      // Use ComputeMaskedBits to compute what ShrinkDemandedConstant
+      // knew about to reconstruct a low-bits mask value.
+      unsigned LZ = A.countLeadingZeros();
+      unsigned BitWidth = A.getBitWidth();
+      APInt AllOnes = APInt::getAllOnesValue(BitWidth);
+      APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+      ComputeMaskedBits(U->getOperand(0), AllOnes, KnownZero, KnownOne, TD);
+
+      APInt EffectiveMask = APInt::getLowBitsSet(BitWidth, BitWidth - LZ);
+
+      if (LZ != 0 && !((~A & ~KnownZero) & EffectiveMask)) {
         return
           getZeroExtendExpr(getTruncateExpr(getSCEV(U->getOperand(0)),
-                                            IntegerType::get(Ones)),
+                                            IntegerType::get(BitWidth - LZ)),
                             U->getType());
+      }
     }
     break;
+
   case Instruction::Or:
     // If the RHS of the Or is a constant, we may have something like:
     // X*4+1 which got turned into X*4|1.  Handle this as an Add so loop
