@@ -132,7 +132,8 @@ with another <tt>Value</tt></a> </li>
 
   <li><a href="#threading">Threads and LLVM</a>
   <ul>
-    <li><a href="#startmultithreaded">Entering threaded mode with <tt>llvm_start_multithreaded()</tt></a></li>
+    <li><a href="#startmultithreaded">Entering and Exiting Multithreaded Mode
+        </a></li>
     <li><a href="#shutdown">Ending execution with <tt>llvm_shutdown()</tt></a></li>
     <li><a href="#managedstatic">Lazy initialization with <tt>ManagedStatic</tt></a></li>
   </ul>
@@ -2172,27 +2173,38 @@ support.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="startmultithreaded">Entering Threaded Mode with
-    <tt>llvm_start_multithreaded()</tt></a>
+  <a name="startmultithreaded">Entering and Exiting Multithreaded Mode</a>
 </div>
 
 <div class="doc_text">
 
 <p>
 In order to properly protect its internal data structures while avoiding 
-excessive locking overhead in the single-threaded case, the LLVM APIs require
-that the client invoke <tt>llvm_start_multithreaded()</tt>.  This call must
-complete <em>before</em> any other threads attempt to invoke LLVM APIs.  Any
-attempts to call LLVM APIs from multiple threads before
-<tt>llvm_start_multithreaded</tt> returns can and will cause corruption of
-LLVM's internal data.
+excessive locking overhead in the single-threaded case, the LLVM must intialize
+certain data structures necessary to provide guards around its internals.  To do
+so, the client program must invoke <tt>llvm_start_multithreaded()</tt> before
+making any concurrent LLVM API calls.  To subsequently tear down these
+structures, use the <tt>llvm_stop_multithreaded()</tt> call.  You can also use
+the <tt>llvm_is_multithreaded()</tt> call to check the status of multithreaded
+mode.
 </p>
 
 <p>
-A caveat: before <tt>llvm_start_multithreaded()</tt> has been invoked, all 
-<tt>llvm::sys::Mutex</tt> acquisitions and releases will become no-ops.  This
-means that <tt>llvm_start_multithreaded()</tt> must be invoked before a threaded
-application can be executed in the JIT.
+Note that both of these calls must be made <em>in isolation</em>.  That is to
+say that no other LLVM API calls may be executing at any time during the 
+execution of <tt>llvm_start_multithreaded()</tt> or <tt>llvm_stop_multithreaded
+</tt>.  It's is the client's responsibility to enforce this isolation.
+</p>
+
+<p>
+The return value of <tt>llvm_start_multithreaded()</tt> indicates the success or
+failure of the initialization.  Failure typically indicates that your copy of
+LLVM was built without multithreading support, typically because GCC atomic
+intrinsics were not found in your system compiler.  In this case, the LLVM API
+will not be safe for concurrent calls.  However, it <em>will</em> be safe for
+hosting threaded applications in the JIT, though care must be taken to ensure
+that side exits and the like do not accidentally result in concurrent LLVM API
+calls.
 </p>
 </div>
 
@@ -2204,9 +2216,10 @@ application can be executed in the JIT.
 <div class="doc_text">
 <p>
 When you are done using the LLVM APIs, you should call <tt>llvm_shutdown()</tt>
-to deallocate memory used for internal structures.  This call must not begin
-while any other threads are still issuing LLVM API calls.  Doing so is likely
-to result in garbage data or crashes.
+to deallocate memory used for internal structures.  This will also invoke 
+<tt>llvm_stop_multithreaded()</tt> if LLVM is operating in multithreaded mode.
+As such, <tt>llvm_shutdown()</tt> requires the same isolation guarantees as
+<tt>llvm_stop_multithreaded()</tt>.
 </p>
 
 <p>
@@ -2234,6 +2247,13 @@ initialization.
 Note that, because no other threads are allowed to issue LLVM API calls before
 <tt>llvm_start_multithreaded()</tt> returns, it is possible to have 
 <tt>ManagedStatic</tt>s of <tt>llvm::sys::Mutex</tt>s.
+</p>
+
+<p>
+The <tt>llvm_acquire_global_lock()</tt> and <tt>llvm_release_global_lock</tt> 
+APIs provide access to the global lock used to implement the double-checked
+locking for lazy initialization.  These should only be used internally to LLVM,
+and only if you know what you're doing!
 </p>
 </div>
 
