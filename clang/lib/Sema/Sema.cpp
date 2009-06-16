@@ -125,6 +125,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   
   if (!PP.getLangOptions().ObjC1) return;
   
+  // Built-in ObjC types may already be set by PCHReader (hence isNull checks).
   if (Context.getObjCSelType().isNull()) {
     // Synthesize "typedef struct objc_selector *SEL;"
     RecordDecl *SelTag = CreateStructDecl(Context, "objc_selector");
