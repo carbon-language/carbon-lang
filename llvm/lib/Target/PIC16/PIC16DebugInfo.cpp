@@ -14,91 +14,23 @@
 #include "PIC16.h"
 #include "PIC16DebugInfo.h" 
 #include "llvm/GlobalVariable.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/DebugLoc.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
-void PIC16DbgInfo::PopulateDebugInfo(DIType Ty, unsigned short &TypeNo,
-                                     bool &HasAux, int Aux[], 
-                                     std::string &TypeName) {
-  if (Ty.isBasicType(Ty.getTag())) {
-    std::string Name = "";
-    Ty.getName(Name);
-    unsigned short BaseTy = GetTypeDebugNumber(Name);
-    TypeNo = TypeNo << PIC16Dbg::S_BASIC;
-    TypeNo = TypeNo | (0xffff & BaseTy);
-  }
-  else if (Ty.isDerivedType(Ty.getTag())) {
-    switch(Ty.getTag())
-    {
-      case dwarf::DW_TAG_pointer_type:
-        TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
-        TypeNo = TypeNo | PIC16Dbg::DT_PTR;
-        break;
-      default:
-        TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
-    }
-    DIType BaseType = DIDerivedType(Ty.getGV()).getTypeDerivedFrom();
-    PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TypeName);
-  }
-  else if (Ty.isCompositeType(Ty.getTag())) {
-    switch (Ty.getTag()) {
-      case dwarf::DW_TAG_array_type: {
-        DICompositeType CTy = DICompositeType(Ty.getGV());
-        DIArray Elements = CTy.getTypeArray();
-        unsigned short size = 1;
-        unsigned short Dimension[4]={0,0,0,0};
-        for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-          DIDescriptor Element = Elements.getElement(i);
-          if (Element.getTag() == dwarf::DW_TAG_subrange_type) {
-            TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
-            TypeNo = TypeNo | PIC16Dbg::DT_ARY;
-            DISubrange SubRange = DISubrange(Element.getGV());
-            Dimension[i] = SubRange.getHi() - SubRange.getLo() + 1;
-            // Each dimension is represented by 2 bytes starting at byte 9.
-            Aux[8+i*2+0] = Dimension[i];
-            Aux[8+i*2+1] = Dimension[i] >> 8;
-            size = size * Dimension[i];
-          }
-        }
-        HasAux = true;
-        // In auxillary entry for array, 7th and 8th byte represent array size.
-        Aux[6] = size & 0xff;
-        Aux[7] = size >> 8;
-        DIType BaseType = CTy.getTypeDerivedFrom();
-        PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TypeName);
-
-        break;
-      }
-      case dwarf:: DW_TAG_union_type:
-      case dwarf::DW_TAG_structure_type: {
-        DICompositeType CTy = DICompositeType(Ty.getGV());
-        TypeNo = TypeNo << PIC16Dbg::S_BASIC;
-        if (Ty.getTag() == dwarf::DW_TAG_structure_type)
-          TypeNo = TypeNo | PIC16Dbg::T_STRUCT;
-        else
-          TypeNo = TypeNo | PIC16Dbg::T_UNION;
-        CTy.getName(TypeName);
-        // UniqueSuffix is .number where number is obtained from 
-        // llvm.dbg.composite<number>.
-        std::string UniqueSuffix = "." + Ty.getGV()->getName().substr(18);
-        TypeName += UniqueSuffix;
-        unsigned short size = CTy.getSizeInBits()/8;
-        // 7th and 8th byte represent size.   
-        HasAux = true;
-        Aux[6] = size & 0xff;
-        Aux[7] = size >> 8;
-        break;
-      }
-      case dwarf::DW_TAG_enumeration_type: {
-        TypeNo = TypeNo << PIC16Dbg::S_BASIC;
-        TypeNo = TypeNo | PIC16Dbg::T_ENUM;
-        break;
-      }
-      default:
-        TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
-    }
-  }
+/// PopulateDebugInfo - Populate the TypeNo, Aux[] and TagName from Ty.
+///
+void PIC16DbgInfo::PopulateDebugInfo (DIType Ty, unsigned short &TypeNo,
+                                      bool &HasAux, int Aux[], 
+                                      std::string &TagName) {
+  if (Ty.isBasicType(Ty.getTag())) 
+    PopulateBasicTypeInfo (Ty, TypeNo);
+  else if (Ty.isDerivedType(Ty.getTag())) 
+    PopulateDerivedTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
+  else if (Ty.isCompositeType(Ty.getTag())) 
+    PopulateCompositeTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
   else {
     TypeNo = PIC16Dbg::T_NULL;
     HasAux = false;
@@ -106,7 +38,127 @@ void PIC16DbgInfo::PopulateDebugInfo(DIType Ty, unsigned short &TypeNo,
   return;
 }
 
+/// PopulateBasicTypeInfo- Populate TypeNo for basic type from Ty.
+///
+void PIC16DbgInfo::PopulateBasicTypeInfo (DIType Ty, unsigned short &TypeNo) {
+  std::string Name = "";
+  Ty.getName(Name);
+  unsigned short BaseTy = GetTypeDebugNumber(Name);
+  TypeNo = TypeNo << PIC16Dbg::S_BASIC;
+  TypeNo = TypeNo | (0xffff & BaseTy);
+}
 
+/// PopulateDerivedTypeInfo - Populate TypeNo, Aux[], TagName for derived type 
+/// from Ty. Derived types are mostly pointers.
+///
+void PIC16DbgInfo::PopulateDerivedTypeInfo (DIType Ty, unsigned short &TypeNo,
+                                            bool &HasAux, int Aux[],
+                                            std::string &TagName) {
+
+  switch(Ty.getTag())
+  {
+    case dwarf::DW_TAG_pointer_type:
+      TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
+      TypeNo = TypeNo | PIC16Dbg::DT_PTR;
+      break;
+    default:
+      TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
+  }
+  
+  // We also need to encode the the information about the base type of
+  // pointer in TypeNo.
+  DIType BaseType = DIDerivedType(Ty.getGV()).getTypeDerivedFrom();
+  PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TagName);
+}
+
+/// PopulateArrayTypeInfo - Populate TypeNo, Aux[] for array from Ty.
+void PIC16DbgInfo::PopulateArrayTypeInfo (DIType Ty, unsigned short &TypeNo,
+                                          bool &HasAux, int Aux[],
+                                          std::string &TagName) {
+
+  DICompositeType CTy = DICompositeType(Ty.getGV());
+  DIArray Elements = CTy.getTypeArray();
+  unsigned short size = 1;
+  unsigned short Dimension[4]={0,0,0,0};
+  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
+    DIDescriptor Element = Elements.getElement(i);
+    if (Element.getTag() == dwarf::DW_TAG_subrange_type) {
+      TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
+      TypeNo = TypeNo | PIC16Dbg::DT_ARY;
+      DISubrange SubRange = DISubrange(Element.getGV());
+      Dimension[i] = SubRange.getHi() - SubRange.getLo() + 1;
+      // Each dimension is represented by 2 bytes starting at byte 9.
+      Aux[8+i*2+0] = Dimension[i];
+      Aux[8+i*2+1] = Dimension[i] >> 8;
+      size = size * Dimension[i];
+    }
+  }
+  HasAux = true;
+  // In auxillary entry for array, 7th and 8th byte represent array size.
+  Aux[6] = size & 0xff;
+  Aux[7] = size >> 8;
+  DIType BaseType = CTy.getTypeDerivedFrom();
+  PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TagName);
+}
+
+/// PopulateStructOrUnionTypeInfo - Populate TypeNo, Aux[] , TagName for 
+/// structure or union.
+///
+void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty, 
+                                                  unsigned short &TypeNo,
+                                                  bool &HasAux, int Aux[],
+                                                  std::string &TagName) {
+  DICompositeType CTy = DICompositeType(Ty.getGV());
+  TypeNo = TypeNo << PIC16Dbg::S_BASIC;
+  if (Ty.getTag() == dwarf::DW_TAG_structure_type)
+    TypeNo = TypeNo | PIC16Dbg::T_STRUCT;
+  else
+    TypeNo = TypeNo | PIC16Dbg::T_UNION;
+  CTy.getName(TagName);
+  // UniqueSuffix is .number where number is obtained from
+  // llvm.dbg.composite<number>.
+  std::string UniqueSuffix = "." + Ty.getGV()->getName().substr(18);
+  TagName += UniqueSuffix;
+  unsigned short size = CTy.getSizeInBits()/8;
+  // 7th and 8th byte represent size.
+  HasAux = true;
+  Aux[6] = size & 0xff;
+  Aux[7] = size >> 8;
+}
+
+/// PopulateEnumTypeInfo - Populate TypeNo for enum from Ty.
+void PIC16DbgInfo::PopulateEnumTypeInfo (DIType Ty, unsigned short &TypeNo) {
+  TypeNo = TypeNo << PIC16Dbg::S_BASIC;
+  TypeNo = TypeNo | PIC16Dbg::T_ENUM;
+}
+
+/// PopulateCompositeTypeInfo - Populate TypeNo, Aux[] and TagName for 
+/// composite types from Ty.
+///
+void PIC16DbgInfo::PopulateCompositeTypeInfo (DIType Ty, unsigned short &TypeNo,
+                                              bool &HasAux, int Aux[],
+                                              std::string &TagName) {
+  switch (Ty.getTag()) {
+    case dwarf::DW_TAG_array_type: {
+      PopulateArrayTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
+      break;
+    }
+    case dwarf:: DW_TAG_union_type:
+    case dwarf::DW_TAG_structure_type: {
+      PopulateStructOrUnionTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
+      break;
+    }
+    case dwarf::DW_TAG_enumeration_type: {
+      PopulateEnumTypeInfo (Ty, TypeNo);
+      break;
+    }
+    default:
+      TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
+  }
+}
+
+/// GetTypeDebugNumber - Get debug type number for given type.
+///
 unsigned PIC16DbgInfo::GetTypeDebugNumber(std::string &type)  {
   if (type == "char")
     return PIC16Dbg::T_CHAR;
@@ -127,8 +179,10 @@ unsigned PIC16DbgInfo::GetTypeDebugNumber(std::string &type)  {
   else
     return 0;
 }
-
-short PIC16DbgInfo::getClass(DIGlobalVariable DIGV) {
+ 
+/// GetStorageClass - Get storage class for give debug variable.
+///
+short PIC16DbgInfo::getStorageClass(DIGlobalVariable DIGV) {
   short ClassNo;
   if (PAN::isLocalName(DIGV.getGlobal()->getName())) {
     // Generating C_AUTO here fails due to error in linker. Change it once
@@ -142,12 +196,126 @@ short PIC16DbgInfo::getClass(DIGlobalVariable DIGV) {
   return ClassNo;
 }
 
-void PIC16DbgInfo::Init(Module &M) {
-  // Do all debug related initializations here.
-  EmitFileDirective(M);
+/// BeginModule - Emit necessary debug info to start a Module and do other
+/// required initializations.
+void PIC16DbgInfo::BeginModule(Module &M) {
+  // Emit file directive for module.
+  GlobalVariable *CU = M.getNamedGlobal("llvm.dbg.compile_unit");
+  if (CU) {
+    EmitDebugDirectives = true;
+    SwitchToCU(CU);
+  }
+
+  // Emit debug info for decls of composite types.
   EmitCompositeTypeDecls(M);
 }
 
+/// Helper to find first valid debug loc for a function.
+///
+static const DebugLoc GetDebugLocForFunction(const MachineFunction &MF) {
+  DebugLoc DL;
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
+         II != E; ++II) {
+      DL = II->getDebugLoc();
+      if (!DL.isUnknown())
+        return DL;
+    }
+  }
+  return DL;
+}
+
+/// BeginFunction - Emit necessary debug info to start a function.
+///
+void PIC16DbgInfo::BeginFunction(const MachineFunction &MF) {
+  if (! EmitDebugDirectives) return;
+  
+  // Retreive the first valid debug Loc and process it.
+  const DebugLoc &DL = GetDebugLocForFunction(MF);
+  ChangeDebugLoc(MF, DL, true);
+
+  EmitFunctBeginDI(MF.getFunction());
+  
+  // Set current line to 0 so that.line directive is genearted after .bf.
+  CurLine = 0;
+}
+
+/// ChangeDebugLoc - Take necessary steps when DebugLoc changes.
+/// CurFile and CurLine may change as a result of this.
+///
+void PIC16DbgInfo::ChangeDebugLoc(const MachineFunction &MF,  
+                                  const DebugLoc &DL, bool IsInBeginFunction) {
+  if (! EmitDebugDirectives) return;
+  assert (! DL.isUnknown()  && "can't change to invalid debug loc");
+
+  GlobalVariable *CU = MF.getDebugLocTuple(DL).CompileUnit;
+  unsigned line = MF.getDebugLocTuple(DL).Line;
+
+  SwitchToCU(CU);
+  SwitchToLine(line, IsInBeginFunction);
+}
+
+/// SwitchToLine - Emit line directive for a new line.
+///
+void PIC16DbgInfo::SwitchToLine(unsigned Line, bool IsInBeginFunction) {
+  if (CurLine == Line) return;
+  if (!IsInBeginFunction)  O << "\n\t.line " << Line << "\n";
+  CurLine = Line;
+}
+
+/// EndFunction - Emit .ef for end of function.
+///
+void PIC16DbgInfo::EndFunction(const MachineFunction &MF) {
+  if (! EmitDebugDirectives) return;
+  EmitFunctEndDI(MF.getFunction(), CurLine);
+}
+
+/// EndModule - Emit .eof for end of module.
+///
+void PIC16DbgInfo::EndModule(Module &M) {
+  if (! EmitDebugDirectives) return;
+  EmitVarDebugInfo(M);
+  if (CurFile != "") O << "\n\t.eof";
+}
+ 
+/// EmitCompositeTypeElements - Emit debug information for members of a 
+/// composite type.
+/// 
+void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
+                                              std::string UniqueSuffix) { 
+  unsigned long Value = 0;
+  DIArray Elements = CTy.getTypeArray();
+  for (unsigned i = 0, N = Elements.getNumElements(); i < N; i++) {
+    DIDescriptor Element = Elements.getElement(i);
+    unsigned short TypeNo = 0;
+    bool HasAux = false;
+    int ElementAux[PIC16Dbg::AuxSize] = { 0 };
+    std::string TagName = "";
+    std::string ElementName;
+    GlobalVariable *GV = Element.getGV();
+    DIDerivedType DITy(GV);
+    DITy.getName(ElementName);
+    unsigned short ElementSize = DITy.getSizeInBits()/8;
+    // Get mangleddd name for this structure/union  element.
+    std::string MangMemName = ElementName + UniqueSuffix;
+    PopulateDebugInfo(DITy, TypeNo, HasAux, ElementAux, TagName);
+    short Class;
+    if( CTy.getTag() == dwarf::DW_TAG_union_type)
+      Class = PIC16Dbg::C_MOU;
+    else if  (CTy.getTag() == dwarf::DW_TAG_structure_type)
+      Class = PIC16Dbg::C_MOS;
+    EmitSymbol(MangMemName, Class, TypeNo, Value);
+    if (CTy.getTag() == dwarf::DW_TAG_structure_type)
+      Value += ElementSize;
+    if (HasAux)
+      EmitAuxEntry(MangMemName, ElementAux, PIC16Dbg::AuxSize, TagName);
+  }
+}
+
+/// EmitCompositeTypeDecls - Emit composite type declarations like structure 
+/// and union declarations.
+///
 void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
   for(iplist<GlobalVariable>::iterator I = M.getGlobalList().begin(),
       E = M.getGlobalList().end(); I != E; I++) {
@@ -178,33 +346,10 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
 
         // Emit auxiliary debug information for structure/union tag. 
         EmitAuxEntry(MangledCTyName, Aux, PIC16Dbg::AuxSize);
-        unsigned long Value = 0;
-        DIArray Elements = CTy.getTypeArray();
-        for (unsigned i = 0, N = Elements.getNumElements(); i < N; i++) {
-          DIDescriptor Element = Elements.getElement(i);
-          unsigned short TypeNo = 0;
-          bool HasAux = false;
-          int ElementAux[PIC16Dbg::AuxSize] = { 0 };
-          std::string TypeName = "";
-          std::string ElementName;
-          GlobalVariable *GV = Element.getGV();
-          DIDerivedType DITy(GV);
-          DITy.getName(ElementName);
-          unsigned short ElementSize = DITy.getSizeInBits()/8;
-          // Get mangleddd name for this structure/union  element.
-          std::string MangMemName = ElementName + UniqueSuffix;
-	  PopulateDebugInfo(DITy, TypeNo, HasAux, ElementAux, TypeName);
-          short Class;
-          if( CTy.getTag() == dwarf::DW_TAG_union_type)
-            Class = PIC16Dbg::C_MOU;
-          else if  (CTy.getTag() == dwarf::DW_TAG_structure_type)
-            Class = PIC16Dbg::C_MOS;
-          EmitSymbol(MangMemName, Class, TypeNo, Value);
-          if (CTy.getTag() == dwarf::DW_TAG_structure_type)
-            Value += ElementSize;
-          if (HasAux)
-            EmitAuxEntry(MangMemName, ElementAux, PIC16Dbg::AuxSize, TypeName);
-        }
+
+        // Emit members.
+        EmitCompositeTypeElements (CTy, UniqueSuffix);
+
         // Emit mangled Symbol for end of structure/union.
         std::string EOSSymbol = ".eos" + UniqueSuffix;
         EmitSymbol(EOSSymbol, PIC16Dbg::C_EOS);
@@ -214,6 +359,8 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
   }
 }
 
+/// EmitFunctBeginDI - Emit .bf for function.
+///
 void PIC16DbgInfo::EmitFunctBeginDI(const Function *F) {
   std::string FunctName = F->getName();
   if (EmitDebugDirectives) {
@@ -221,16 +368,20 @@ void PIC16DbgInfo::EmitFunctBeginDI(const Function *F) {
     std::string BlockBeginSym = ".bb." + FunctName;
 
     int BFAux[PIC16Dbg::AuxSize] = {0};
-    BFAux[4] = FunctBeginLine;
-    BFAux[5] = FunctBeginLine >> 8;
+    BFAux[4] = CurLine;
+    BFAux[5] = CurLine >> 8;
+
     // Emit debug directives for beginning of function.
     EmitSymbol(FunctBeginSym, PIC16Dbg::C_FCN);
     EmitAuxEntry(FunctBeginSym, BFAux, PIC16Dbg::AuxSize);
+
     EmitSymbol(BlockBeginSym, PIC16Dbg::C_BLOCK);
     EmitAuxEntry(BlockBeginSym, BFAux, PIC16Dbg::AuxSize);
   }
 }
 
+/// EmitFunctEndDI - Emit .ef for function end.
+///
 void PIC16DbgInfo::EmitFunctEndDI(const Function *F, unsigned Line) {
   std::string FunctName = F->getName();
   if (EmitDebugDirectives) {
@@ -241,8 +392,8 @@ void PIC16DbgInfo::EmitFunctEndDI(const Function *F, unsigned Line) {
     EmitSymbol(BlockEndSym, PIC16Dbg::C_BLOCK);
     int EFAux[PIC16Dbg::AuxSize] = {0};
     // 5th and 6th byte stand for line number.
-    EFAux[4] = Line;
-    EFAux[5] = Line >> 8;
+    EFAux[4] = CurLine;
+    EFAux[5] = CurLine >> 8;
     EmitAuxEntry(BlockEndSym, EFAux, PIC16Dbg::AuxSize);
     EmitSymbol(FunctEndSym, PIC16Dbg::C_FCN);
     EmitAuxEntry(FunctEndSym, EFAux, PIC16Dbg::AuxSize);
@@ -251,15 +402,18 @@ void PIC16DbgInfo::EmitFunctEndDI(const Function *F, unsigned Line) {
 
 /// EmitAuxEntry - Emit Auxiliary debug information.
 ///
-void PIC16DbgInfo::EmitAuxEntry(const std::string VarName, int Aux[], int num,
-                                std::string tag) {
+void PIC16DbgInfo::EmitAuxEntry(const std::string VarName, int Aux[], int Num,
+                                std::string TagName) {
   O << "\n\t.dim " << VarName << ", 1" ;
-  if (tag != "")
-    O << ", " << tag;
-  for (int i = 0; i<num; i++)
+  // TagName is emitted in case of structure/union objects.
+  if (TagName != "")
+    O << ", " << TagName;
+  for (int i = 0; i<Num; i++)
     O << "," << Aux[i];
 }
 
+/// EmitSymbol - Emit .def for a symbol. Value is offset for the member.
+///
 void PIC16DbgInfo::EmitSymbol(std::string Name, short Class, unsigned short
                               Type, unsigned long Value) {
   O << "\n\t" << ".def "<< Name << ", type = " << Type << ", class = " 
@@ -268,6 +422,8 @@ void PIC16DbgInfo::EmitSymbol(std::string Name, short Class, unsigned short
     O  << ", value = " << Value;
 }
 
+/// EmitVarDebugInfo - Emit debug information for all variables.
+///
 void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
   GlobalVariable *Root = M.getGlobalVariable("llvm.dbg.global_variables");
   if (!Root)
@@ -283,47 +439,45 @@ void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
       unsigned short TypeNo = 0;
       bool HasAux = false;
       int Aux[PIC16Dbg::AuxSize] = { 0 };
-      std::string TypeName = "";
+      std::string TagName = "";
       std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getName();
-      PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TypeName);
+      PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TagName);
       // Emit debug info only if type information is availaible.
       if (TypeNo != PIC16Dbg::T_NULL) {
         O << "\n\t.type " << VarName << ", " << TypeNo;
-        short ClassNo = getClass(DIGV);
+        short ClassNo = getStorageClass(DIGV);
         O << "\n\t.class " << VarName << ", " << ClassNo;
         if (HasAux) 
-          EmitAuxEntry(VarName, Aux, PIC16Dbg::AuxSize, TypeName);
+          EmitAuxEntry(VarName, Aux, PIC16Dbg::AuxSize, TagName);
       }
     }
   }
   O << "\n";
 }
 
-void PIC16DbgInfo::EmitFileDirective(Module &M) {
-  GlobalVariable *CU = M.getNamedGlobal("llvm.dbg.compile_unit");
-  if (CU) {
-    EmitDebugDirectives = true;
-    EmitFileDirective(CU, false);
-  }
+/// SwitchToCU - Switch to a new compilation unit.
+///
+void PIC16DbgInfo::SwitchToCU(GlobalVariable *CU) {
+  // Get the file path from CU.
+  DICompileUnit cu(CU);
+  std::string DirName, FileName;
+  std::string FilePath = cu.getDirectory(DirName) + "/" + 
+                         cu.getFilename(FileName);
+
+  // Nothing to do if source file is still same.
+  if ( FilePath == CurFile ) return;
+
+  // Else, close the current one and start a new.
+  if (CurFile != "") O << "\n\t.eof";
+  O << "\n\t.file\t\"" << FilePath << "\"\n" ;
+  CurFile = FilePath;
+  CurLine = 0;
 }
 
-void PIC16DbgInfo::EmitFileDirective(GlobalVariable *CU, bool EmitEof) {
-  std::string Dir, FN;
-  DICompileUnit DIUnit(CU);
-  std::string File = DIUnit.getDirectory(Dir) + "/" + DIUnit.getFilename(FN);
-  if ( File != CurFile ) {
-    if (EmitEof)
-      EmitEOF();
-    O << "\n\t.file\t\"" << File << "\"\n" ;
-    CurFile = File;
-  }
-}
-
+/// EmitEOF - Emit .eof for end of file.
+///
 void PIC16DbgInfo::EmitEOF() {
   if (CurFile != "")
     O << "\n\t.EOF";
 }
 
-void PIC16DbgInfo::SetFunctBeginLine(unsigned line) {
-  FunctBeginLine = line;
-}

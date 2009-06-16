@@ -48,27 +48,10 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   CurrentFnName = Mang->getValueName(F);
 
-  // Iterate over the first basic block instructions to find if it has a
-  // DebugLoc. If so emit .file directive. Instructions such as movlw do not
-  // have valid DebugLoc, so need to iterate over instructions.
-  MachineFunction::const_iterator I = MF.begin();
-  for (MachineBasicBlock::const_iterator MBBI = I->begin(), E = I->end();
-       MBBI != E; MBBI++) {
-    const DebugLoc DLoc = MBBI->getDebugLoc();
-    if (!DLoc.isUnknown()) {
-      GlobalVariable *CU = MF.getDebugLocTuple(DLoc).CompileUnit;
-      unsigned line = MF.getDebugLocTuple(DLoc).Line;
-      DbgInfo.EmitFileDirective(CU);
-      DbgInfo.SetFunctBeginLine(line);
-      break;
-    }
-  }
-
   // Emit the function frame (args and temps).
   EmitFunctionFrame(MF);
 
-  // Emit function begin debug directive.
-  DbgInfo.EmitFunctBeginDI(F);
+  DbgInfo.BeginFunction(MF);
 
   // Emit the autos section of function.
   EmitAutos(CurrentFnName);
@@ -89,9 +72,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit function start label.
   O << CurrentFnName << ":\n";
 
-  // For emitting line directives, we need to keep track of the current
-  // source line. When it changes then only emit the line directive.
-  unsigned CurLine = 0;
+  DebugLoc CurDL;
   O << "\n"; 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -109,12 +90,9 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
       // Emit the line directive if source line changed.
       const DebugLoc DL = II->getDebugLoc();
-      if (!DL.isUnknown()) {
-        unsigned line = MF.getDebugLocTuple(DL).Line;
-        if (line != CurLine) {
-          O << "\t.line " << line << "\n";
-          CurLine = line;
-        }
+      if (!DL.isUnknown() && DL != CurDL) {
+        DbgInfo.ChangeDebugLoc(MF, DL);
+        CurDL = DL;
       }
         
       // Print the assembly for the instruction.
@@ -123,7 +101,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
   
   // Emit function end debug directives.
-  DbgInfo.EmitFunctEndDI(F, CurLine);
+  DbgInfo.EndFunction(MF);
 
   return false;  // we didn't modify anything.
 }
@@ -226,7 +204,7 @@ bool PIC16AsmPrinter::doInitialization (Module &M) {
     I->setSection(TAI->SectionForGlobal(I)->getName());
   }
 
-  DbgInfo.Init(M);
+  DbgInfo.BeginModule(M);
   EmitFunctionDecls(M);
   EmitUndefinedVars(M);
   EmitDefinedVars(M);
@@ -313,8 +291,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   printLibcallDecls();
   EmitRemainingAutos();
-  DbgInfo.EmitVarDebugInfo(M);
-  DbgInfo.EmitEOF();
+  DbgInfo.EndModule(M);
   O << "\n\t" << "END\n";
   bool Result = AsmPrinter::doFinalization(M);
   return Result;

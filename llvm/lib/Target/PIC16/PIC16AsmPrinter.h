@@ -32,7 +32,7 @@ namespace llvm {
     explicit PIC16AsmPrinter(raw_ostream &O, PIC16TargetMachine &TM,
                              const TargetAsmInfo *T, CodeGenOpt::Level OL,
                              bool V)
-      : AsmPrinter(O, TM, T, OL, V), DbgInfo(O,T) {
+      : AsmPrinter(O, TM, T, OL, V), DbgInfo(O, T) {
       PTLI = TM.getTargetLowering();
       PTAI = static_cast<const PIC16TargetAsmInfo *> (T);
     }
