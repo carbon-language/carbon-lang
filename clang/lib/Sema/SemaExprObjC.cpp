@@ -130,6 +130,14 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation SelLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
+  ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel, 
+                             SourceRange(LParenLoc, RParenLoc));
+  if (!Method)
+    Method = LookupFactoryMethodInGlobalPool(Sel,
+                                          SourceRange(LParenLoc, RParenLoc));
+  if (!Method)
+    Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
+
   QualType Ty = Context.getObjCSelType();
   return new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
 }
