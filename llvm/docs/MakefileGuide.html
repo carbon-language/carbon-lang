@@ -232,17 +232,16 @@
   Normally, the makefile system will build all the software into a single
   <tt>libname.o</tt> (pre-linked) object. This means the library is not
   searchable and that the distinction between compilation units has been
-  dissolved. Optionally, you can ask for a shared library (.so), archive library
-  (.a) or to not have the default (relinked) library built. For example:</p>
+  dissolved. Optionally, you can ask for a shared library (.so) or archive
+  library (.a) built.  Archive libraries are the default. For example:</p>
   <pre><tt>
       LIBRARYNAME = mylib
       SHARED_LIBRARY = 1
       ARCHIVE_LIBRARY = 1
-      DONT_BUILD_RELINKED = 1
   </tt></pre>
   <p>says to build a library named "mylib" with both a shared library 
-  (<tt>mylib.so</tt>) and an archive library (<tt>mylib.a</tt>) version but
-  not to build the relinked object (<tt>mylib.o</tt>). The contents of all the
+  (<tt>mylib.so</tt>) and an archive library (<tt>mylib.a</tt>) version. The
+  contents of all the
   libraries produced will be the same, they are just constructed differently.
   Note that you normally do not need to specify the sources involved. The LLVM
   Makefile system will infer the source files from the contents of the source
@@ -306,8 +305,6 @@
     <li>The <a href="#SHARED_LIBRARY">SHARED_LIBRARY</a> variable is turned 
     on.</li>
     <li>The <a href="#LINK_LIBS_IN_SHARED">LINK_LIBS_IN_SHARED</a> variable
-    is turned on.</li>
-    <li>The <a href="#DONT_BUILD_RELINKED">DONT_BUILD_RELINKED</a> variable
     is turned on.</li>
   </ol>
   <p>A loadable module is loaded by LLVM via the facilities of libtool's libltdl
@@ -637,11 +634,6 @@
     <dd>If set to any value, causes the makefiles to <b>not</b> automatically
     generate dependencies when running the compiler. Use of this feature is
     discouraged and it may be removed at a later date.</dd>
-    <dt><a name="DONT_BUILD_RELINKED"><tt>DONT_BUILD_RELINKED</tt></a></dt>
-    <dd>If set to any value, causes a relinked library (.o) not to be built. By
-    default, libraries are built as re-linked since most LLVM libraries are
-    needed in their entirety and re-linked libraries will be linked more quickly
-    than equivalent archive libraries.</dd>
     <dt><a name="ENABLE_OPTIMIZED"><tt>ENABLE_OPTIMIZED</tt></a></dt>
     <dd>If set to any value, causes the build to generate optimized objects,
     libraries and executables. This alters the flags specified to the compilers
@@ -960,7 +952,6 @@
     DestArchiveLib
     DestBitcodeLib
     DestModule
-    DestRelinkedLib
     DestSharedLib
     DestTool
     DistAlways
@@ -1004,7 +995,6 @@
     ProjUsedLibs
     Ranlib
     RecursiveTargets
-    Relink
     SrcMakefiles
     Strip
     StripWarnMsg

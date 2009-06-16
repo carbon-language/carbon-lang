@@ -287,10 +287,8 @@ endif
 
 ifdef ENABLE_COVERAGE
   BuildMode := $(BuildMode)+Coverage
-  # These only go to .NoRelink because otherwise we will end up
-  # linking -lgcov into the .o libraries that get built.
-  CXX.Flags.NoRelink += -ftest-coverage -fprofile-arcs
-  C.Flags.NoRelink   += -ftest-coverage -fprofile-arcs
+  CXX.Flags += -ftest-coverage -fprofile-arcs
+  C.Flags   += -ftest-coverage -fprofile-arcs
 endif
 
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
@@ -315,7 +313,6 @@ endif
 # defined/on.
 ifdef LOADABLE_MODULE
   SHARED_LIBRARY := 1
-  DONT_BUILD_RELINKED := 1
   LINK_LIBS_IN_SHARED := 1
 endif
 
@@ -548,10 +545,8 @@ ifdef UNIVERSAL
   endif
   UNIVERSAL_ARCH_OPTIONS := $(UNIVERSAL_ARCH:%=-arch %)
   CompileCommonOpts += $(UNIVERSAL_ARCH_OPTIONS)
-  Relink.Flags := $(UNIVERSAL_ARCH_OPTIONS)
   ifdef UNIVERSAL_SDK_PATH
     CompileCommonOpts += -isysroot $(UNIVERSAL_SDK_PATH)
-    Relink.Flags      += -isysroot $(UNIVERSAL_SDK_PATH)
   endif
 
   # Building universal cannot compute dependencies automatically.
@@ -582,27 +577,23 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         $(CPP.BaseFlags)
 
 ifeq ($(BUILD_COMPONENT), 1)
-  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(C.Flags.NoRelink) \
+  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
   Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(TargetCommonOpts) \
-                  $(CompileCommonOpts) $(CXX.Flags) $(CXX.Flags.NoRelink) -E
-  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+                  $(CompileCommonOpts) $(CXX.Flags) -E
+  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) \
                   $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) $(Strip)
-  Relink        = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) \
-                  $(CompileCommonOpts) $(Relink.Flags)
 else
-  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(C.Flags.NoRelink) \
+  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
   Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) \
-                  $(CompileCommonOpts) $(CXX.Flags) $(CXX.Flags.NoRelink) -E
-  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXX.Flags.NoRelink) \
+                  $(CompileCommonOpts) $(CXX.Flags) -E
+  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) \
                   $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
-  Relink        = $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) \
-                  $(CompileCommonOpts) $(Relink.Flags)
 endif
 
 BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) \
@@ -1048,48 +1039,13 @@ endif
 endif
 
 #---------------------------------------------------------
-# ReLinked Library Targets:
-#   If the user explicitly requests a relinked library with
-#   BUILD_RELINKED, provide it.  Otherwise, if they specify
-#   neither of BUILD_ARCHIVE or DONT_BUILD_RELINKED, give
-#   them one.
+# Library Targets:
+#   If neither BUILD_ARCHIVE or LOADABLE_MODULE are specified, default to
+#   building an archive.
 #---------------------------------------------------------
 ifndef BUILD_ARCHIVE
-ifndef DONT_BUILD_RELINKED
-BUILD_RELINKED = 1
-endif
-endif
-
-ifdef BUILD_RELINKED
-
-all-local:: $(LibName.O)
-
-$(LibName.O): $(ObjectsO) $(LibDir)/.dir
-	$(Echo) Linking $(BuildMode) Object Library $(notdir $@)
-	$(Verb) $(Relink) -r -nodefaultlibs -nostdlib -nostartfiles -o $@ $(ObjectsO)
-
-clean-local::
-ifneq ($(strip $(LibName.O)),)
-	-$(Verb) $(RM) -f $(LibName.O)
-endif
-
-ifdef NO_INSTALL
-install-local::
-	$(Echo) Install circumvented with NO_INSTALL
-uninstall-local::
-	$(Echo) Uninstall circumvented with NO_INSTALL
-else
-DestRelinkedLib = $(PROJ_libdir)/$(LIBRARYNAME).o
-
-install-local:: $(DestRelinkedLib)
-
-$(DestRelinkedLib): $(LibName.O) $(PROJ_libdir)
-	$(Echo) Installing $(BuildMode) Object Library $(DestRelinkedLib)
-	$(Verb) $(INSTALL) $(LibName.O) $(DestRelinkedLib)
-
-uninstall-local::
-	$(Echo) Uninstalling $(BuildMode) Object Library $(DestRelinkedLib)
-	-$(Verb) $(RM) -f $(DestRelinkedLib)
+ifndef LOADABLE_MODULE
+BUILD_ARCHIVE = 1
 endif
 endif
 
