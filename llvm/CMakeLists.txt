@@ -287,7 +287,10 @@ add_subdirectory(lib/Archive)
 add_subdirectory(projects)
 add_subdirectory(tools)
 
-add_subdirectory(examples)
+option(LLVM_EXAMPLES "Build LLVM example programs." OFF)
+if (LLVM_EXAMPLES)
+  add_subdirectory(examples)
+endif ()
 
 install(DIRECTORY include
   DESTINATION .
