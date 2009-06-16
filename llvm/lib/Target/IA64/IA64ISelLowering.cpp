@@ -107,6 +107,10 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VAARG             , MVT::Other, Custom);
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+
+  // FIXME: These should be legal
+  setOperationAction(ISD::BIT_CONVERT, MVT::i64, Expand);
+  setOperationAction(ISD::BIT_CONVERT, MVT::f64, Expand);
   
   // Use the default implementation.
   setOperationAction(ISD::VACOPY            , MVT::Other, Expand);

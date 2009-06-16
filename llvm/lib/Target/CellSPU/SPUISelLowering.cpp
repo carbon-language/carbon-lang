@@ -249,6 +249,25 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::MUL,  MVT::i32,    Legal);
   setOperationAction(ISD::MUL,  MVT::i64,    Legal);
 
+  // Expand double-width multiplication
+  // FIXME: It would probably be reasonable to support some of these operations
+  setOperationAction(ISD::UMUL_LOHI, MVT::i8,  Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i8,  Expand);
+  setOperationAction(ISD::MULHU,     MVT::i8,  Expand);
+  setOperationAction(ISD::MULHS,     MVT::i8,  Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i16, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i16, Expand);
+  setOperationAction(ISD::MULHU,     MVT::i16, Expand);
+  setOperationAction(ISD::MULHS,     MVT::i16, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::MULHU,     MVT::i32, Expand);
+  setOperationAction(ISD::MULHS,     MVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::MULHU,     MVT::i64, Expand);
+  setOperationAction(ISD::MULHS,     MVT::i64, Expand);
+
   // Need to custom handle (some) common i8, i64 math ops
   setOperationAction(ISD::ADD,  MVT::i8,     Custom);
   setOperationAction(ISD::ADD,  MVT::i64,    Legal);

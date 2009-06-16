@@ -788,8 +788,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::USUBO, MVT::i64, Custom);
   setOperationAction(ISD::SMULO, MVT::i32, Custom);
   setOperationAction(ISD::SMULO, MVT::i64, Custom);
-  setOperationAction(ISD::UMULO, MVT::i32, Custom);
-  setOperationAction(ISD::UMULO, MVT::i64, Custom);
 
   if (!Subtarget->is64Bit()) {
     // These libcalls are not available in 32-bit.

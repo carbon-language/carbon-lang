@@ -95,6 +95,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
+  setOperationAction(ISD::SELECT,             MVT::f64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
   setOperationAction(ISD::SETCC,              MVT::f32,   Custom);
   setOperationAction(ISD::SETCC,              MVT::f64,   Custom);
@@ -122,6 +123,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::FCOPYSIGN,         MVT::f32,   Expand);
+  setOperationAction(ISD::FCOPYSIGN,         MVT::f64,   Expand);
 
   // We don't have line number support yet.
   setOperationAction(ISD::DBG_STOPPOINT,     MVT::Other, Expand);
