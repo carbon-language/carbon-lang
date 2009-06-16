@@ -129,6 +129,14 @@ with another <tt>Value</tt></a> </li>
     </ul>
   </li>
 
+  <li><a href="#threading">Threads and LLVM</a>
+  <ul>
+    <li><a href="#startmultithreaded">Entering threaded mode with <tt>llvm_start_multithreaded()</tt><a/></li>
+    <li><a href="#shutdown">Ending execution with <tt>llvm_shutdown()</tt></a></li>
+    <li><a href="#managedstatic">Lazy initialization with <tt>ManagedStatic</tt></a></li>
+  </ul>
+  </li>
+
   <li><a href="#advanced">Advanced Topics</a>
   <ul>
   <li><a href="#TypeResolve">LLVM Type Resolution</a>
@@ -176,8 +184,9 @@ with another <tt>Value</tt></a> </li>
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>, 
                 <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>, 
                 <a href="mailto:ggreif@gmail.com">Gabor Greif</a>, 
-                <a href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a> and
-                <a href="mailto:rspencer@x10sys.com">Reid Spencer</a></p>
+                <a href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a>,
+                <a href="mailto:rspencer@x10sys.com">Reid Spencer</a> and
+                <a href="mailto:owen@apple.com">Owen Anderson</a></p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -2127,6 +2136,104 @@ FunctionType *ft = FunctionType::get(Type::Int8Ty, params, false);
 <p>See the <a href="/doxygen/TypeBuilder_8h-source.html#l00001">class
 comment</a> for more details.</p>
 
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="threading">Threads and LLVM</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+<p>
+This section describes the interaction of the LLVM APIs with multithreading,
+both on the part of client applications, and in the JIT, in the hosted
+application.
+</p>
+
+<p>
+Note that LLVM's support for multithreading is still relatively young.  Up 
+through version 2.5, the execution of threaded hosted applications was
+supported, but not threaded client access to the APIs.  While this use case is
+now supported, clients <em>must</em> adhere to the guidelines specified below to
+ensure proper operation in multithreaded mode.
+</p>
+
+<p>
+Note that, on Unix-like platforms, LLVM requires the presence of GCC's atomic
+intrinsics in order to support threaded operation.  If you need a
+multhreading-capable LLVM on a platform without a suitably modern system
+compiler, consider compiling LLVM and LLVM-GCC in single-threaded mode, and 
+using the resultant compiler to build a copy of LLVM with multithreading
+support.
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="startmultithreaded">Entering Threaded Mode with
+    <tt>llvm_start_multithreaded()</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>
+In order to properly protect its internal data structures while avoiding 
+excessive locking overhead in the single-threaded case, the LLVM APIs require
+that the client invoke <tt>llvm_start_multithreaded()</tt>.  This call must
+complete <em>before</em> any other threads attempt to invoke LLVM APIs.  Any
+attempts to call LLVM APIs from multiple threads before
+<tt>llvm_start_multithreaded</tt> returns can and will cause corruption of
+LLVM's internal data.
+</p>
+
+<p>
+A caveat: before <tt>llvm_start_multithreaded()</tt> has been invoked, all 
+<tt>llvm::sys::Mutex</tt> acquisitions and releases will become no-ops.  This
+means that <tt>llvm_start_multithreaded()</tt> must be invoked before a threaded
+application can be executed in the JIT.
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="shutdown">Ending Execution with <tt>llvm_shutdown()</tt></a>
+</div>
+
+<div class="doc_text">
+<p>
+When you are done using the LLVM APIs, you should call <tt>llvm_shutdown()</tt>
+to deallocate memory used for internal structures.  This call must not begin
+while any other threads are still issuing LLVM API calls.  Doing so is likely
+to result in garbage data or crashes.
+</p>
+
+<p>
+Note that, if you use scope-based shutdown, you can use the
+<tt>llvm_shutdown_obj</tt> class, which calls <tt>llvm_shutdown()</tt> in its
+destructor.
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="managedstatic">Lazy Initialization with <tt>ManagedStatic</tt></a>
+</div>
+
+<div class="doc_text">
+<p>
+<tt>ManagedStatic</tt> is a utility class in LLVM used to implement static
+initialization of static resources, such as the global type tables.  Before the
+invocation of <tt>llvm_shutdown()</tt>, it implements a simple lazy 
+initialization scheme.  Once <tt>llvm_start_multithreaded()</tt> returns,
+however, it uses double-checked locking to implement thread-safe lazy
+initialization.
+</p>
+
+<p>
+Note that, because no other threads are allowed to issue LLVM API calls before
+<tt>llvm_start_multithreaded()</tt> returns, it is possible to have 
+<tt>ManagedStatic</tt>s of <tt>llvm::sys::Mutex</tt>s.
+</p>
 </div>
 
 <!-- *********************************************************************** -->
