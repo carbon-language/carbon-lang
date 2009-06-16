@@ -332,6 +332,7 @@ def main():
     numFailures = len(byCode.get(TestStatus.Fail,[]))
     if numFailures:
         print '\nFailures: %d' % (numFailures,)
-
+        sys.exit(1)
+        
 if __name__=='__main__':
     main()
