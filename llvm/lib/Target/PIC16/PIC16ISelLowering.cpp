@@ -31,42 +31,72 @@ static const char *getIntrinsicName(unsigned opcode) {
   std::string Basename;
   switch(opcode) {
   default: assert (0 && "do not know intrinsic name");
+  // Arithmetic Right shift for integer types.
   case PIC16ISD::SRA_I8: Basename = "sra.i8"; break;
   case RTLIB::SRA_I16: Basename = "sra.i16"; break;
   case RTLIB::SRA_I32: Basename = "sra.i32"; break;
 
+  // Left shift for integer types.
   case PIC16ISD::SLL_I8: Basename = "sll.i8"; break;
   case RTLIB::SHL_I16: Basename = "sll.i16"; break;
   case RTLIB::SHL_I32: Basename = "sll.i32"; break;
 
+  // Logical Right Shift for integer types.
   case PIC16ISD::SRL_I8: Basename = "srl.i8"; break;
   case RTLIB::SRL_I16: Basename = "srl.i16"; break;
   case RTLIB::SRL_I32: Basename = "srl.i32"; break;
 
+  // Multiply for integer types.
   case PIC16ISD::MUL_I8: Basename = "mul.i8"; break;
   case RTLIB::MUL_I16: Basename = "mul.i16"; break;
   case RTLIB::MUL_I32: Basename = "mul.i32"; break;
 
+  // Signed division for integers.
   case RTLIB::SDIV_I16: Basename = "sdiv.i16"; break;
   case RTLIB::SDIV_I32: Basename = "sdiv.i32"; break;
+
+  // Unsigned division for integers.
   case RTLIB::UDIV_I16: Basename = "udiv.i16"; break;
   case RTLIB::UDIV_I32: Basename = "udiv.i32"; break;
 
+  // Signed Modulas for integers.
   case RTLIB::SREM_I16: Basename = "srem.i16"; break;
   case RTLIB::SREM_I32: Basename = "srem.i32"; break;
+
+  // Unsigned Modulas for integers.
   case RTLIB::UREM_I16: Basename = "urem.i16"; break;
   case RTLIB::UREM_I32: Basename = "urem.i32"; break;
 
-  case RTLIB::FPTOSINT_F32_I32:
-               Basename = "f32_to_si32"; break;
-  case RTLIB::SINTTOFP_I32_F32:
-               Basename = "si32_to_f32"; break;
+  //////////////////////
+  // LIBCALLS FOR FLOATS
+  //////////////////////
+
+  // Float to signed integrals
+  case RTLIB::FPTOSINT_F32_I8: Basename = "f32_to_si32"; break;
+  case RTLIB::FPTOSINT_F32_I16: Basename = "f32_to_si32"; break;
+  case RTLIB::FPTOSINT_F32_I32: Basename = "f32_to_si32"; break;
+
+  // Signed integrals to float. char and int are first sign extended to i32 
+  // before being converted to float, so an I8_F32 or I16_F32 isn't required.
+  case RTLIB::SINTTOFP_I32_F32: Basename = "si32_to_f32"; break;
+
+  // Float to Unsigned conversions.
+  // Signed conversion can be used for unsigned conversion as well.
+  // In signed and unsigned versions only the interpretation of the 
+  // MSB is different. Bit representation remains the same. 
+  case RTLIB::FPTOUINT_F32_I8: Basename = "f32_to_si32"; break;
+  case RTLIB::FPTOUINT_F32_I16: Basename = "f32_to_si32"; break;
+  case RTLIB::FPTOUINT_F32_I32: Basename = "f32_to_si32"; break;
+
+  // Unsigned to Float conversions. char and int are first zero extended 
+  // before being converted to float.
+  case RTLIB::UINTTOFP_I32_F32: Basename = "ui32_to_f32"; break;
                
+  // Floating point add, sub, mul, div.
   case RTLIB::ADD_F32: Basename = "add.f32"; break;
   case RTLIB::SUB_F32: Basename = "sub.f32"; break;
   case RTLIB::MUL_F32: Basename = "mul.f32"; break;
   case RTLIB::DIV_F32: Basename = "div.f32"; break;
-  
   }
   
   std::string prefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
@@ -83,7 +113,7 @@ static const char *getIntrinsicName(unsigned opcode) {
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   : TargetLowering(TM), TmpSize(0) {
-  
+ 
   Subtarget = &TM.getSubtarget<PIC16Subtarget>();
 
   addRegisterClass(MVT::i8, PIC16::GPRRegisterClass);
@@ -114,6 +144,7 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   // Signed division lib call names
   setLibcallName(RTLIB::SDIV_I16, getIntrinsicName(RTLIB::SDIV_I16));
   setLibcallName(RTLIB::SDIV_I32, getIntrinsicName(RTLIB::SDIV_I32));
+
   // Unsigned division lib call names
   setLibcallName(RTLIB::UDIV_I16, getIntrinsicName(RTLIB::UDIV_I16));
   setLibcallName(RTLIB::UDIV_I32, getIntrinsicName(RTLIB::UDIV_I32));
@@ -121,15 +152,36 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   // Signed remainder lib call names
   setLibcallName(RTLIB::SREM_I16, getIntrinsicName(RTLIB::SREM_I16));
   setLibcallName(RTLIB::SREM_I32, getIntrinsicName(RTLIB::SREM_I32));
+
   // Unsigned remainder lib call names
   setLibcallName(RTLIB::UREM_I16, getIntrinsicName(RTLIB::UREM_I16));
   setLibcallName(RTLIB::UREM_I32, getIntrinsicName(RTLIB::UREM_I32));
  
-  // Floating point operations
+  // Floating point to signed int conversions.
+  setLibcallName(RTLIB::FPTOSINT_F32_I8, 
+                 getIntrinsicName(RTLIB::FPTOSINT_F32_I8));
+  setLibcallName(RTLIB::FPTOSINT_F32_I16, 
+                 getIntrinsicName(RTLIB::FPTOSINT_F32_I16));
   setLibcallName(RTLIB::FPTOSINT_F32_I32, 
                  getIntrinsicName(RTLIB::FPTOSINT_F32_I32));
+
+  // Signed int to floats.
   setLibcallName(RTLIB::SINTTOFP_I32_F32, 
                  getIntrinsicName(RTLIB::SINTTOFP_I32_F32));
+
+  // Floating points to unsigned ints.
+  setLibcallName(RTLIB::FPTOUINT_F32_I8, 
+                 getIntrinsicName(RTLIB::FPTOUINT_F32_I8));
+  setLibcallName(RTLIB::FPTOUINT_F32_I16, 
+                 getIntrinsicName(RTLIB::FPTOUINT_F32_I16));
+  setLibcallName(RTLIB::FPTOUINT_F32_I32, 
+                 getIntrinsicName(RTLIB::FPTOUINT_F32_I32));
+
+  // Unsigned int to floats.
+  setLibcallName(RTLIB::UINTTOFP_I32_F32, 
+                 getIntrinsicName(RTLIB::UINTTOFP_I32_F32));
+
+  // Floating point add, sub, mul ,div.
   setLibcallName(RTLIB::ADD_F32, getIntrinsicName(RTLIB::ADD_F32));
   setLibcallName(RTLIB::SUB_F32, getIntrinsicName(RTLIB::SUB_F32));
   setLibcallName(RTLIB::MUL_F32, getIntrinsicName(RTLIB::MUL_F32));
