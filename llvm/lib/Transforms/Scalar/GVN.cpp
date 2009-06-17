@@ -37,6 +37,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
 using namespace llvm;
 
@@ -1075,6 +1076,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   BasicBlock *TmpBB = LoadBB;
 
   bool isSinglePred = false;
+  bool allSingleSucc = true;
   while (TmpBB->getSinglePredecessor()) {
     isSinglePred = true;
     TmpBB = TmpBB->getSinglePredecessor();
@@ -1084,6 +1086,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       return false;
     if (Blockers.count(TmpBB))
       return false;
+    if (TmpBB->getTerminator()->getNumSuccessors() != 1)
+      allSingleSucc = false;
   }
   
   assert(TmpBB);
@@ -1160,7 +1164,20 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                 << UnavailablePred->getName() << "': " << *LI);
     return false;
   }
-  
+
+  // Make sure it is valid to move this load here.  We have to watch out for:
+  //  @1 = getelementptr (i8* p, ...
+  //  test p and branch if == 0
+  //  load @1
+  // It is valid to have the getelementptr before the test, even if p can be 0,
+  // as getelementptr only does address arithmetic.
+  // If we are not pushing the value through any multiple-successor blocks
+  // we do not have this case.  Otherwise, check that the load is safe to
+  // put anywhere; this can be improved, but should be conservatively safe.
+  if (!allSingleSucc &&
+      !isSafeToLoadUnconditionally(LoadPtr, UnavailablePred->getTerminator()))
+    return false;
+
   // Okay, we can eliminate this load by inserting a reload in the predecessor
   // and using PHI construction to get the value in the other predecessors, do
   // it.

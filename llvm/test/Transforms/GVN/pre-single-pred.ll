@@ -1,6 +1,7 @@
 ; RUN: llvm-as < %s | opt -gvn -enable-load-pre | llvm-dis | not grep {tmp3 = load}
 
-define i32 @f(i32* nocapture %p, i32 %n) nounwind {
+@p = external global i32
+define i32 @f(i32 %n) nounwind {
 entry:
 	br label %for.cond
 
@@ -13,9 +14,9 @@ for.cond.for.end_crit_edge:		; preds = %for.cond
 	br label %for.end
 
 for.body:		; preds = %for.cond
-	%tmp3 = load i32* %p		; <i32> [#uses=1]
+	%tmp3 = load i32* @p		; <i32> [#uses=1]
 	%dec = add i32 %tmp3, -1		; <i32> [#uses=2]
-	store i32 %dec, i32* %p
+	store i32 %dec, i32* @p
 	%cmp6 = icmp slt i32 %dec, 0		; <i1> [#uses=1]
 	br i1 %cmp6, label %for.body.for.end_crit_edge, label %for.inc
 
@@ -27,6 +28,6 @@ for.inc:		; preds = %for.body
 	br label %for.cond
 
 for.end:		; preds = %for.body.for.end_crit_edge, %for.cond.for.end_crit_edge
-	%tmp9 = load i32* %p		; <i32> [#uses=1]
+	%tmp9 = load i32* @p		; <i32> [#uses=1]
 	ret i32 %tmp9
 }
