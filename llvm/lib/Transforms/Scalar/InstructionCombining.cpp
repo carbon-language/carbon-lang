@@ -1336,7 +1336,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue().abs();
       if (RA.isPowerOf2()) {
-        if (DemandedMask.ule(RA))    // srem won't affect demanded bits
+        if (DemandedMask.ult(RA))    // srem won't affect demanded bits
           return I->getOperand(0);
 
         APInt LowBits = RA - 1;
