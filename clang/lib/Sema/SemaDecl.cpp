@@ -1615,7 +1615,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewTD->setInvalidDecl();
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
-  ProcessDeclAttributes(NewTD, D);
+  ProcessDeclAttributes(S, NewTD, D);
   // Merge the decl with the existing one if appropriate. If the decl is
   // in an outer scope, it isn't the same thing.
   if (PrevDecl && isDeclInScope(PrevDecl, DC, S)) {
@@ -1801,7 +1801,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   NewVD->setLexicalDeclContext(CurContext);
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
-  ProcessDeclAttributes(NewVD, D);
+  ProcessDeclAttributes(S, NewVD, D);
 
   // Handle GNU asm-label extension (encoded as an attribute).
   if (Expr *E = (Expr*) D.getAsmLabel()) {
@@ -2298,7 +2298,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // (for example to check for conflicts, etc).
   // FIXME: This needs to happen before we merge declarations. Then,
   // let attribute merging cope with attribute conflicts.
-  ProcessDeclAttributes(NewFD, D);
+  ProcessDeclAttributes(S, NewFD, D);
   AddKnownFunctionAttributes(NewFD);
 
   if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
@@ -2907,7 +2907,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (II)
     IdResolver.AddDecl(New);
 
-  ProcessDeclAttributes(New, D);
+  ProcessDeclAttributes(S, New, D);
 
   if (New->hasAttr<BlocksAttr>()) {
     Diag(New->getLocation(), diag::err_block_on_nonlocal);
@@ -3628,7 +3628,7 @@ CreateNewDecl:
     New->setInvalidDecl();
 
   if (Attr)
-    ProcessDeclAttributeList(New, Attr);
+    ProcessDeclAttributeList(S, New, Attr);
 
   // If we're declaring or defining a tag in function prototype scope
   // in C, note that this type can only be used within the function.
@@ -3878,7 +3878,8 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   // FIXME: We need to pass in the attributes given an AST
   // representation, not a parser representation.
   if (D)
-    ProcessDeclAttributes(NewFD, *D);
+    // FIXME: What to pass instead of TUScope?
+    ProcessDeclAttributes(TUScope, NewFD, *D);
 
   if (T.isObjCGCWeak())
     Diag(Loc, diag::warn_attribute_weak_on_field);
@@ -3985,7 +3986,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   }
 
   // Process attributes attached to the ivar.
-  ProcessDeclAttributes(NewID, D);
+  ProcessDeclAttributes(S, NewID, D);
   
   if (D.isInvalidType())
     NewID->setInvalidDecl();
@@ -4151,7 +4152,7 @@ void Sema::ActOnFields(Scope* S,
   }
 
   if (Attr)
-    ProcessDeclAttributeList(Record, Attr);
+    ProcessDeclAttributeList(S, Record, Attr);
 }
 
 EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,

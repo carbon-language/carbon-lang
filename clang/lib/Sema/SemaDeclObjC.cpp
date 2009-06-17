@@ -116,7 +116,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc, 
                                       ClassName, ClassLoc);
     if (AttrList)
-      ProcessDeclAttributeList(IDecl, AttrList);
+      ProcessDeclAttributeList(TUScope, IDecl, AttrList);
   
     PushOnScopeChains(IDecl, TUScope);
   }
@@ -282,7 +282,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     PDecl->setForwardDecl(false);
   }
   if (AttrList)
-    ProcessDeclAttributeList(PDecl, AttrList);
+    ProcessDeclAttributeList(TUScope, PDecl, AttrList);
   if (NumProtoRefs) {
     /// Check then save referenced protocols.
     PDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,Context);
@@ -532,7 +532,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
       PushOnScopeChains(PDecl, TUScope);
     }
     if (attrList)
-      ProcessDeclAttributeList(PDecl, attrList);
+      ProcessDeclAttributeList(TUScope, PDecl, attrList);
     Protocols.push_back(PDecl);
   }
   
@@ -1663,7 +1663,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       CvtQTToAstBitMask(ArgInfo[i].DeclSpec.getObjCDeclQualifier()));
     
     // Apply the attributes to the parameter.
-    ProcessDeclAttributeList(Param, ArgInfo[i].ArgAttrs);
+    ProcessDeclAttributeList(TUScope, Param, ArgInfo[i].ArgAttrs);
     
     Params.push_back(Param);
   }
@@ -1674,7 +1674,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   const ObjCMethodDecl *PrevMethod = 0;
 
   if (AttrList)
-    ProcessDeclAttributeList(ObjCMethod, AttrList);
+    ProcessDeclAttributeList(TUScope, ObjCMethod, AttrList);
   
   // For implementations (which can be very "coarse grain"), we add the 
   // method now. This allows the AST to implement lookup methods that work 
@@ -1877,7 +1877,7 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
     PDecl->setInvalidDecl();
   }
   
-  ProcessDeclAttributes(PDecl, FD.D);
+  ProcessDeclAttributes(S, PDecl, FD.D);
 
   // Regardless of setter/getter attribute, we save the default getter/setter
   // selector names in anticipation of declaration of setter/getter methods.

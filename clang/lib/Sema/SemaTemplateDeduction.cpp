@@ -802,6 +802,14 @@ MarkDeducedTemplateParameters(Sema &SemaRef, QualType T,
                                   Deduced);
     break;
 
+  case Type::DependentSizedExtVector: {
+    const DependentSizedExtVectorType *VecType
+    = cast<DependentSizedExtVectorType>(T.getTypePtr());
+    MarkDeducedTemplateParameters(SemaRef, VecType->getElementType(), Deduced);
+    MarkDeducedTemplateParameters(VecType->getSizeExpr(), Deduced);
+    break;
+  }
+
   case Type::FunctionProto: {
     const FunctionProtoType *Proto = cast<FunctionProtoType>(T.getTypePtr());
     MarkDeducedTemplateParameters(SemaRef, Proto->getResultType(), Deduced);

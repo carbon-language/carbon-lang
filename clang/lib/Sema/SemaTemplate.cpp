@@ -548,7 +548,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     NewClass->startDefinition();
 
   if (Attr)
-    ProcessDeclAttributeList(NewClass, Attr);
+    ProcessDeclAttributeList(S, NewClass, Attr);
 
   PushOnScopeChains(NewTemplate, S);
 

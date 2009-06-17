@@ -359,6 +359,8 @@ public:
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                           Expr *ArraySize, unsigned Quals,
                           SourceLocation Loc, DeclarationName Entity);
+  QualType BuildExtVectorType(QualType T, ExprArg ArraySize, 
+                              SourceLocation AttrLoc);
   QualType BuildFunctionType(QualType T,
                              QualType *ParamTypes, unsigned NumParamTypes,
                              bool Variadic, unsigned Quals,
@@ -1116,8 +1118,8 @@ public:
   // More parsing and symbol table subroutines.
 
   // Decl attributes - this routine is the top level dispatcher. 
-  void ProcessDeclAttributes(Decl *D, const Declarator &PD);
-  void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
+  void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD);
+  void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AttrList);
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);

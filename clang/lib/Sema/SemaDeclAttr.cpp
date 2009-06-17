@@ -156,8 +156,8 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
 // least add some helper functions to check most argument patterns (#
 // and types of args).
 
-static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
-                                    Sema &S) {
+static void HandleExtVectorTypeAttr(Scope *scope, Decl *d, 
+                                    const AttributeList &Attr, Sema &S) {
   TypedefDecl *tDecl = dyn_cast<TypedefDecl>(d);
   if (tDecl == 0) {
     S.Diag(Attr.getLoc(), diag::err_typecheck_ext_vector_not_typedef);
@@ -165,37 +165,32 @@ static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
   }
   
   QualType curType = tDecl->getUnderlyingType();
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
-    return;
+
+  Expr *sizeExpr;
+
+  // Special case where the argument is a template id.
+  if (Attr.getParameterName()) {
+    sizeExpr = S.ActOnDeclarationNameExpr(scope, Attr.getLoc(),
+                               Attr.getParameterName(),
+                               false, 0, false).takeAs<Expr>();
+  } else {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 1) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+      return;
+    }
+    sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   }
-  Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
-  llvm::APSInt vecSize(32);
-  if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << "ext_vector_type" << sizeExpr->getSourceRange();
-    return;
+
+  // Instantiate/Install the vector type, and let Sema build the type for us.
+  // This will run the reguired checks.
+  QualType T = S.BuildExtVectorType(curType, S.Owned(sizeExpr), Attr.getLoc());
+  if (!T.isNull()) {
+    tDecl->setUnderlyingType(T);
+    
+    // Remember this typedef decl, we will need it later for diagnostics.
+    S.ExtVectorDecls.push_back(tDecl);
   }
-  // unlike gcc's vector_size attribute, we do not allow vectors to be defined
-  // in conjunction with complex types (pointers, arrays, functions, etc.).
-  if (!curType->isIntegerType() && !curType->isRealFloatingType()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << curType;
-    return;
-  }
-  // unlike gcc's vector_size attribute, the size is specified as the 
-  // number of elements, not the number of bytes.
-  unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue()); 
-  
-  if (vectorSize == 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size)
-      << sizeExpr->getSourceRange();
-    return;
-  }
-  // Instantiate/Install the vector type, the number of elements is > 0.
-  tDecl->setUnderlyingType(S.Context.getExtVectorType(curType, vectorSize));
-  // Remember this typedef decl, we will need it later for diagnostics.
-  S.ExtVectorDecls.push_back(tDecl);
 }
 
 
@@ -1698,7 +1693,7 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
 /// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
 /// the attribute applies to decls.  If the attribute is a type attribute, just
 /// silently ignore it.
-static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
+static void ProcessDeclAttribute(Scope *scope, Decl *D, const AttributeList &Attr, Sema &S) {
   if (Attr.isDeclspecAttribute())
     // FIXME: Try to deal with __declspec attributes!
     return;
@@ -1721,7 +1716,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_dllexport:   HandleDLLExportAttr (D, Attr, S); break;
   case AttributeList::AT_dllimport:   HandleDLLImportAttr (D, Attr, S); break;
   case AttributeList::AT_ext_vector_type:
-    HandleExtVectorTypeAttr(D, Attr, S);
+    HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
   case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
@@ -1777,9 +1772,9 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
 
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
 /// attribute list to the specified decl, ignoring any type attributes.
-void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
+void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AttrList) {
   while (AttrList) {
-    ProcessDeclAttribute(D, *AttrList, *this);
+    ProcessDeclAttribute(S, D, *AttrList, *this);
     AttrList = AttrList->getNext();
   }
 }
@@ -1787,10 +1782,10 @@ void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
-void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
+void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
   // Apply decl attributes from the DeclSpec if present.
   if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
-    ProcessDeclAttributeList(D, Attrs);
+    ProcessDeclAttributeList(S, D, Attrs);
   
   // Walk the declarator structure, applying decl attributes that were in a type
   // position to the decl itself.  This handles cases like:
@@ -1798,9 +1793,9 @@ void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
   // when X is a decl attribute.
   for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
     if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
-      ProcessDeclAttributeList(D, Attrs);
+      ProcessDeclAttributeList(S, D, Attrs);
   
   // Finally, apply any attributes on the decl itself.
   if (const AttributeList *Attrs = PD.getAttributes())
-    ProcessDeclAttributeList(D, Attrs);
+    ProcessDeclAttributeList(S, D, Attrs);
 }

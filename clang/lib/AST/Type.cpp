@@ -50,6 +50,13 @@ void DependentSizedArrayType::Destroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
+void DependentSizedExtVectorType::Destroy(ASTContext& C) {
+  if (SizeExpr)
+    SizeExpr->Destroy(C);
+  this->~DependentSizedExtVectorType();
+  C.Deallocate(this);
+}
+
 /// getArrayElementTypeNoTypeQual - If this is an array type, return the
 /// element type of the array, potentially with type qualifiers missing.
 /// This method should never be used when type qualifiers are meaningful.
@@ -1354,6 +1361,19 @@ void DependentSizedArrayType::getAsStringInternal(std::string &S, const Printing
   S += ']';
   
   getElementType().getAsStringInternal(S, Policy);
+}
+
+void DependentSizedExtVectorType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
+  getElementType().getAsStringInternal(S, Policy);
+
+  S += " __attribute__((ext_vector_  type(";
+  if (getSizeExpr()) {
+    std::string SStr;
+    llvm::raw_string_ostream s(SStr);
+    getSizeExpr()->printPretty(s, 0, Policy);
+    S += s.str();
+  }
+  S += ")))";
 }
 
 void VectorType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {

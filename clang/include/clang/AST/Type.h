@@ -992,6 +992,41 @@ public:
   }
 };
 
+/// DependentSizedExtVectorType - This type represent an ext vectory type
+/// where either the type or size is dependent. For example:
+/// @code
+/// template<typename T, int Size>
+/// class vector {
+///   typedef T __attribute__((ext_vector_type(Size))) type;
+/// }
+/// @endcode
+class DependentSizedExtVectorType : public Type {
+  Expr *SizeExpr;
+  /// ElementType - The element type of the array.
+  QualType ElementType;
+  SourceLocation loc;
+  
+  DependentSizedExtVectorType(QualType ElementType, QualType can, 
+                              Expr *SizeExpr, SourceLocation loc)
+    : Type (DependentSizedExtVector, can, true), 
+    SizeExpr(SizeExpr), ElementType(ElementType), loc(loc) {}
+  friend class ASTContext;
+  virtual void Destroy(ASTContext& C);
+
+public:
+  Expr *getSizeExpr() const { return SizeExpr; }
+  QualType getElementType() const { return ElementType; }
+  SourceLocation getAttributeLoc() const { return loc; }
+
+  virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
+  
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == DependentSizedExtVector; 
+  }
+  static bool classof(const DependentSizedExtVectorType *) { return true; } 
+};
+  
+
 /// VectorType - GCC generic vector type. This type is created using
 /// __attribute__((vector_size(n)), where "n" specifies the vector size in 
 /// bytes. Since the constructor takes the number of vector elements, the 
@@ -1783,7 +1818,7 @@ public:
   static bool classof(const ObjCQualifiedIdType *) { return true; }
     
 };
-  
+
 // Inline function definitions.
 
 /// getUnqualifiedType - Return the type without any qualifiers.

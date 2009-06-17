@@ -5126,7 +5126,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   if (ParamInfo.getNumTypeObjects() == 0
       || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
-    ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
+    ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
     QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
 
     if (T->isArrayType()) {
@@ -5182,7 +5182,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   CurBlock->TheDecl->setParams(Context, CurBlock->Params.data(),
                                CurBlock->Params.size());
   CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
-  ProcessDeclAttributes(CurBlock->TheDecl, ParamInfo);
+  ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
        E = CurBlock->TheDecl->param_end(); AI != E; ++AI)
     // If this has an identifier, add it to the scope stack.

@@ -71,6 +71,7 @@ class ASTContext {
   llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
   std::vector<VariableArrayType*> VariableArrayTypes;
   std::vector<DependentSizedArrayType*> DependentSizedArrayTypes;
+  std::vector<DependentSizedExtVectorType*> DependentSizedExtVectorTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionNoProtoType> FunctionNoProtoTypes;
   llvm::FoldingSet<FunctionProtoType> FunctionProtoTypes;
@@ -276,6 +277,14 @@ public:
   /// of the specified element type and size.  VectorType must be a built-in
   /// type.
   QualType getExtVectorType(QualType VectorType, unsigned NumElts);
+
+  /// getDependentSizedExtVectorType - Returns a non-unique reference to
+  /// the type for a dependently-sized vector of the specified element
+  /// type. FIXME: We will need these to be uniqued, or at least
+  /// comparable, at some point.
+  QualType getDependentSizedExtVectorType(QualType VectorType, 
+                                          Expr *SizeExpr,
+                                          SourceLocation AttrLoc);
 
   /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
   ///

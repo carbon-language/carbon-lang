@@ -2671,7 +2671,7 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   else
     CurContext->addDecl(Context, ExDecl);
 
-  ProcessDeclAttributes(ExDecl, D);
+  ProcessDeclAttributes(S, ExDecl, D);
   return DeclPtrTy::make(ExDecl);
 }
 

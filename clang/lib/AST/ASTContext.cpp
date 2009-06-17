@@ -1269,6 +1269,18 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
   return QualType(New, 0);
 }
 
+QualType ASTContext::getDependentSizedExtVectorType(QualType vecType, 
+                                                    Expr *SizeExpr,
+                                                    SourceLocation AttrLoc) {
+  DependentSizedExtVectorType *New =
+      new (*this,8) DependentSizedExtVectorType(vecType, QualType(), 
+                                                SizeExpr, AttrLoc);
+
+  DependentSizedExtVectorTypes.push_back(New);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
 /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
 ///
 QualType ASTContext::getFunctionNoProtoType(QualType ResultTy) {

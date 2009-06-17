@@ -543,6 +543,48 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
 
   return T;
 }
+
+/// \brief Build an ext-vector type.
+///
+/// Run the required checks for the extended vector type.
+QualType Sema::BuildExtVectorType(QualType T, ExprArg ArraySize, 
+                                  SourceLocation AttrLoc) {
+
+  Expr *Arg = (Expr *)ArraySize.get();
+
+  // unlike gcc's vector_size attribute, we do not allow vectors to be defined
+  // in conjunction with complex types (pointers, arrays, functions, etc.).
+  if (!T->isDependentType() && 
+      !T->isIntegerType() && !T->isRealFloatingType()) {
+    Diag(AttrLoc, diag::err_attribute_invalid_vector_type) << T;
+    return QualType();
+  }
+
+  if (!Arg->isTypeDependent() && !Arg->isValueDependent()) {
+    llvm::APSInt vecSize(32);
+    if (!Arg->isIntegerConstantExpr(vecSize, Context)) {
+      Diag(AttrLoc, diag::err_attribute_argument_not_int)
+      << "ext_vector_type" << Arg->getSourceRange();
+      return QualType();
+    }
+    
+    // unlike gcc's vector_size attribute, the size is specified as the 
+    // number of elements, not the number of bytes.
+    unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue()); 
+    
+    if (vectorSize == 0) {
+      Diag(AttrLoc, diag::err_attribute_zero_size)
+      << Arg->getSourceRange();
+      return QualType();
+    }
+    
+    if (!T->isDependentType())
+      return Context.getExtVectorType(T, vectorSize);
+  } 
+  
+  return Context.getDependentSizedExtVectorType(T, ArraySize.takeAs<Expr>(), 
+                                                AttrLoc);
+}
                               
 /// \brief Build a function type.
 ///
