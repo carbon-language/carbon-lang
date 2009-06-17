@@ -234,6 +234,13 @@ if test "$llvm_cv_target_arch" = "Unknown" ; then
   AC_MSG_WARN([Configuring LLVM for an unknown target archicture])
 fi
 
+# Determine the LLVM native architecture for the target
+case "$llvm_cv_target_arch" in
+    x86)     LLVM_NATIVE_ARCH="X86" ;;
+    x86_64)  LLVM_NATIVE_ARCH="X86" ;;
+    *)       LLVM_NATIVE_ARCH="$llvm_cv_target_arch" ;;
+esac
+  
 dnl Define a substitution, ARCH, for the target architecture
 AC_SUBST(ARCH,$llvm_cv_target_arch)
 
@@ -435,6 +442,15 @@ case "$enableval" in
   ;;
 esac
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
+
+# Determine whether we are building LLVM support for the native architecture.
+# If so, define LLVM_NATIVE_ARCH to that LLVM target.
+for a_target in $TARGETS_TO_BUILD; do
+  if test "$a_target" = "$LLVM_NATIVE_ARCH"; then
+    AC_DEFINE_UNQUOTED(LLVM_NATIVE_ARCH,$LLVM_NATIVE_ARCH,
+      [LLVM architecture name for the native architecture, if available])
+  fi
+done
 
 # Build the LLVM_TARGET and LLVM_ASM_PRINTER macro uses for 
 # Targets.def and AsmPrinters.def.
