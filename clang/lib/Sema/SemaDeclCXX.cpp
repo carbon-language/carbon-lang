@@ -1034,9 +1034,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     DefaultCon->setAccess(AS_public);
     DefaultCon->setImplicit();
     ClassDecl->addDecl(Context, DefaultCon);
-
-    // Notify the class that we've added a constructor.
-    ClassDecl->addedConstructor(Context, DefaultCon);
   }
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
@@ -1113,8 +1110,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, VarDecl::None, 0);
     CopyConstructor->setParams(Context, &FromParam, 1);
-
-    ClassDecl->addedConstructor(Context, CopyConstructor);
     ClassDecl->addDecl(Context, CopyConstructor);
   }
 

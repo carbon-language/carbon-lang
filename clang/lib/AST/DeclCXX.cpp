@@ -128,36 +128,33 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
 void
 CXXRecordDecl::addedConstructor(ASTContext &Context, 
                                 CXXConstructorDecl *ConDecl) {
-  if (!ConDecl->isImplicit()) {
-    // Note that we have a user-declared constructor.
-    UserDeclaredConstructor = true;
+  assert(!ConDecl->isImplicit() && "addedConstructor - not for implicit decl");
+  // Note that we have a user-declared constructor.
+  UserDeclaredConstructor = true;
 
-    // C++ [dcl.init.aggr]p1: 
-    //   An aggregate is an array or a class (clause 9) with no
-    //   user-declared constructors (12.1) [...].
-    Aggregate = false;
+  // C++ [dcl.init.aggr]p1: 
+  //   An aggregate is an array or a class (clause 9) with no
+  //   user-declared constructors (12.1) [...].
+  Aggregate = false;
 
-    // C++ [class]p4:
-    //   A POD-struct is an aggregate class [...]
-    PlainOldData = false;
+  // C++ [class]p4:
+  //   A POD-struct is an aggregate class [...]
+  PlainOldData = false;
 
-    // C++ [class.ctor]p5:
-    //   A constructor is trivial if it is an implicitly-declared default
-    //   constructor.
-    HasTrivialConstructor = false;
+  // C++ [class.ctor]p5:
+  //   A constructor is trivial if it is an implicitly-declared default
+  //   constructor.
+  HasTrivialConstructor = false;
     
-    // Note when we have a user-declared copy constructor, which will
-    // suppress the implicit declaration of a copy constructor.
-    if (ConDecl->isCopyConstructor(Context))
-      UserDeclaredCopyConstructor = true;
-  }
+  // Note when we have a user-declared copy constructor, which will
+  // suppress the implicit declaration of a copy constructor.
+  if (ConDecl->isCopyConstructor(Context))
+    UserDeclaredCopyConstructor = true;
 }
 
 void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
                                             CXXMethodDecl *OpDecl) {
   // We're interested specifically in copy assignment operators.
-  // Unlike addedConstructor, this method is not called for implicit
-  // declarations.
   const FunctionProtoType *FnType = OpDecl->getType()->getAsFunctionProtoType();
   assert(FnType && "Overloaded operator has no proto function type.");
   assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
