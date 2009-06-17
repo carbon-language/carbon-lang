@@ -52,7 +52,7 @@ sys::cas_flag sys::CompareAndSwap(volatile sys::cas_flag* ptr,
 #endif
 }
 
-sys::cas_flag sys::AtomicPostIncrement(volatile sys::cas_flag* ptr) {
+sys::cas_flag sys::AtomicIncrement(volatile sys::cas_flag* ptr) {
 #if LLVM_MULTITHREADED==0
   ++(*ptr);
   return *ptr;
@@ -65,7 +65,7 @@ sys::cas_flag sys::AtomicPostIncrement(volatile sys::cas_flag* ptr) {
 #endif
 }
 
-sys::cas_flag sys::AtomicPostDecrement(volatile sys::cas_flag* ptr) {
+sys::cas_flag sys::AtomicDecrement(volatile sys::cas_flag* ptr) {
 #if LLVM_MULTITHREADED==0
   --(*ptr);
   return *ptr;
