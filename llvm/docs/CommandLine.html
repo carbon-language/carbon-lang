@@ -1116,9 +1116,9 @@ command-line parser sees <b><tt>cl::init</tt></b>, it knows where to put the
 initial value. (You will get an error at runtime if you don't put them in
 the right order.)</li>
 
-<li><a name="cl::location">The <b><tt>cl::location</tt></b></a> attribute where to
-store the value for a parsed command line option if using external storage.  See
-the section on <a href="#storage">Internal vs External Storage</a> for more
+<li><a name="cl::location">The <b><tt>cl::location</tt></b></a> attribute where
+to store the value for a parsed command line option if using external storage.
+See the section on <a href="#storage">Internal vs External Storage</a> for more
 information.</li>
 
 <li><a name="cl::aliasopt">The <b><tt>cl::aliasopt</tt></b></a> attribute
@@ -1146,6 +1146,11 @@ specify macro options where the option name doesn't equal the enum name.  For
 this macro, the first argument is the enum value, the second is the flag name,
 and the second is the description.</li>
 
+</ol>
+
+You will get a compile time error if you try to use cl::values with a parser
+that does not support it.</li>
+
 <li><a name="cl::multi_val">The <b><tt>cl::multi_val</tt></b></a>
 attribute specifies that this option takes has multiple values
 (example: <tt>-sectalign segname sectname sectvalue</tt>). This
@@ -1155,12 +1160,6 @@ will fail with compile error if you try to use it with other option
 types). It is allowed to use all of the usual modifiers on
 multi-valued options (besides <tt>cl::ValueDisallowed</tt>,
 obviously).</li>
-
-
-</ol>
-
-You will get a compile time error if you try to use cl::values with a parser
-that does not support it.</li>
 
 </ul>
 
