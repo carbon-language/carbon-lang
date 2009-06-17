@@ -202,7 +202,7 @@ public:
   Value *CreateFMul(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateMul(LC, RC);
+        return Folder.CreateFMul(LC, RC);
     return Insert(BinaryOperator::CreateFMul(LHS, RHS), Name);
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const char *Name = "") {
