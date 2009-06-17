@@ -30,9 +30,8 @@ class EnvironmentManager;
 class BasicValueFactory;
 class LiveVariables;
 
-class Environment : public llvm::FoldingSetNode {
+class Environment {
 private:
-    
   friend class EnvironmentManager;
   
   // Type definitions.
