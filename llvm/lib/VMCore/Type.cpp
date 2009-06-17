@@ -46,7 +46,7 @@ AbstractTypeUser::~AbstractTypeUser() {}
 // Reader/writer lock used for guarding access to the type maps.
 static ManagedStatic<sys::RWMutex> TypeMapLock;
 
-// Lock used for guarding access to AbstractTypeUsers.
+// Recursive lock used for guarding access to AbstractTypeUsers.
 static ManagedStatic<sys::Mutex> AbstractTypeUsersLock;
 
 // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
@@ -1544,6 +1544,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // will not cause users to drop off of the use list.  If we resolve to ourself
   // we succeed!
   //
+  if (llvm_is_multithreaded()) AbstractTypeUsersLock->acquire();
   while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
@@ -1559,6 +1560,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
     assert(AbstractTypeUsers.size() != OldSize &&
            "AbsTyUser did not remove self from user list!");
   }
+  if (llvm_is_multithreaded()) AbstractTypeUsersLock->release();
 
   // If we were successful removing all users from the type, 'this' will be
   // deleted when the last PATypeHolder is destroyed or updated from this type.
@@ -1589,6 +1591,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
   DOUT << "typeIsREFINED type: " << (void*)this << " " << *this << "\n";
 #endif
 
+  if (llvm_is_multithreaded()) AbstractTypeUsersLock->acquire();
   unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
   while (!AbstractTypeUsers.empty()) {
     AbstractTypeUser *ATU = AbstractTypeUsers.back();
@@ -1597,6 +1600,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
     assert(AbstractTypeUsers.size() < OldSize-- &&
            "AbstractTypeUser did not remove itself from the use list!");
   }
+  if (llvm_is_multithreaded()) AbstractTypeUsersLock->release();
 }
 
 // refineAbstractType - Called when a contained type is found to be more
