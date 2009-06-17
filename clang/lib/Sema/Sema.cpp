@@ -164,7 +164,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   // Synthesize "typedef struct objc_object { Class isa; } *id;"
   if (Context.getObjCIdType().isNull()) {
     RecordDecl *ObjectTag = CreateStructDecl(Context, "objc_object");
-    
+
     QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
     PushOnScopeChains(ObjectTag, TUScope);
     TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,

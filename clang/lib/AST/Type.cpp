@@ -562,6 +562,12 @@ const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {
   return dyn_cast<ObjCInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 
+const ObjCObjectPointerType *Type::getAsObjCObjectPointerType() const {
+  // There is no sugar for ObjCObjectPointerType's, just return the
+  // canonical type pointer if it is the right class.
+  return dyn_cast<ObjCObjectPointerType>(CanonicalType.getUnqualifiedType());
+}
+
 const ObjCQualifiedInterfaceType *
 Type::getAsObjCQualifiedInterfaceType() const {
   // There is no sugar for ObjCQualifiedInterfaceType's, just return the
@@ -569,10 +575,14 @@ Type::getAsObjCQualifiedInterfaceType() const {
   return dyn_cast<ObjCQualifiedInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 
-const ObjCQualifiedIdType *Type::getAsObjCQualifiedIdType() const {
+const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
   // There is no sugar for ObjCQualifiedIdType's, just return the canonical
   // type pointer if it is the right class.
-  return dyn_cast<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+    if (OPT->isObjCQualifiedIdType())
+      return OPT;
+  }
+  return 0;
 }
 
 const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
@@ -777,7 +787,7 @@ bool Type::isScalarType() const {
          isa<BlockPointerType>(CanonicalType) ||
          isa<MemberPointerType>(CanonicalType) ||
          isa<ComplexType>(CanonicalType) ||
-         isa<ObjCQualifiedIdType>(CanonicalType);
+         isa<ObjCObjectPointerType>(CanonicalType);
 }
 
 /// \brief Determines whether the type is a C++ aggregate type or C
@@ -864,7 +874,7 @@ bool Type::isPODType() const {
   case MemberPointer:
   case Vector:
   case ExtVector:
-  case ObjCQualifiedId:
+  case ObjCObjectPointer:
     return true;
 
   case Enum:
@@ -919,7 +929,7 @@ bool Type::isSpecifierType() const {
   case Typename:
   case ObjCInterface:
   case ObjCQualifiedInterface:
-  case ObjCQualifiedId:
+  case ObjCObjectPointer:
     return true;
   default:
     return false;
@@ -980,6 +990,19 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
           getNumExceptions(), exception_begin());
 }
 
+void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,
+                                    const ObjCInterfaceDecl *Decl,
+                                    ObjCProtocolDecl **protocols,
+                                    unsigned NumProtocols) {
+  ID.AddPointer(Decl);
+  for (unsigned i = 0; i != NumProtocols; i++)
+    ID.AddPointer(protocols[i]);
+}
+
+void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getDecl(), &Protocols[0], getNumProtocols());
+}
+
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
                                          const ObjCInterfaceDecl *Decl,
                                          ObjCProtocolDecl **protocols, 
@@ -991,17 +1014,6 @@ void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
 
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getDecl(), &Protocols[0], getNumProtocols());
-}
-
-void ObjCQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID,
-                                  ObjCProtocolDecl **protocols, 
-                                  unsigned NumProtocols) {
-  for (unsigned i = 0; i != NumProtocols; i++)
-    ID.AddPointer(protocols[i]);
-}
-
-void ObjCQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, &Protocols[0], getNumProtocols());
 }
 
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
@@ -1593,6 +1605,30 @@ void ObjCInterfaceType::getAsStringInternal(std::string &InnerString, const Prin
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
+void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString, 
+                                                const PrintingPolicy &Policy) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+
+  std::string ObjCQIString;
+  
+  if (getDecl())
+    ObjCQIString = getDecl()->getNameAsString();
+  else
+    ObjCQIString = "id";
+
+  if (!qual_empty()) {
+    ObjCQIString += '<';
+    for (qual_iterator I = qual_begin(), E = qual_end(); I != E; ++I) {
+      ObjCQIString += (*I)->getNameAsString();
+      if (I+1 != E)
+        ObjCQIString += ',';
+    }
+    ObjCQIString += '>';
+  }
+  InnerString = ObjCQIString + InnerString;
+}
+
 void 
 ObjCQualifiedInterfaceType::getAsStringInternal(std::string &InnerString,
                                            const PrintingPolicy &Policy) const {
@@ -1607,20 +1643,6 @@ ObjCQualifiedInterfaceType::getAsStringInternal(std::string &InnerString,
     else
       ObjCQIString += ',';
     ObjCQIString += (*I)->getNameAsString();
-  }
-  ObjCQIString += '>';
-  InnerString = ObjCQIString + InnerString;
-}
-
-void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
-  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
-    InnerString = ' ' + InnerString;
-  std::string ObjCQIString = "id";
-  ObjCQIString += '<';
-  for (qual_iterator I = qual_begin(), E = qual_end(); I != E; ++I) {
-    ObjCQIString += (*I)->getNameAsString();
-    if (I+1 != E)
-      ObjCQIString += ',';
   }
   ObjCQIString += '>';
   InnerString = ObjCQIString + InnerString;

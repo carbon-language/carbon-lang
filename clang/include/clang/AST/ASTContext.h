@@ -80,7 +80,7 @@ class ASTContext {
   llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
   llvm::FoldingSet<TypenameType> TypenameTypes;
   llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
-  llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
+  llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
   llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
@@ -104,7 +104,7 @@ class ASTContext {
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
   QualType BuiltinVaListType;
-  
+
   /// ObjCIdType - a pseudo built-in typedef type (set by Sema).
   QualType ObjCIdType;
   const RecordType *IdStructType;
@@ -325,6 +325,12 @@ public:
                            const TemplateSpecializationType *TemplateId,
                            QualType Canon = QualType());
 
+  /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for the
+  /// given interface decl and the conforming protocol list.
+  QualType getObjCObjectPointerType(ObjCInterfaceDecl *Decl,
+                                    ObjCProtocolDecl **ProtocolList = 0,
+                                    unsigned NumProtocols = 0);
+  
   /// getObjCQualifiedInterfaceType - Return a 
   /// ObjCQualifiedInterfaceType type for the given interface decl and
   /// the conforming protocol list.
@@ -426,7 +432,7 @@ public:
   /// getObjCEncodingTypeSize returns size of type for objective-c encoding
   /// purpose.
   int getObjCEncodingTypeSize(QualType t);
-    
+
   /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
   /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.
   QualType getObjCIdType() const { return ObjCIdType; }

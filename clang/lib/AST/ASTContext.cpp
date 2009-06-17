@@ -369,7 +369,7 @@ ASTContext::getTypeInfo(const Type *T) {
     // FIXME: Pointers into different addr spaces could have different sizes and
     // alignment requirements: getPointerInfo should take an AddrSpace.
     return getTypeInfo(QualType(cast<ExtQualType>(T)->getBaseType(), 0));
-  case Type::ObjCQualifiedId:
+  case Type::ObjCObjectPointer:
   case Type::ObjCQualifiedInterface:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
@@ -1578,6 +1578,31 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
   NumProtocols = ProtocolsEnd-Protocols;
 }
 
+/// getObjCObjectPointerType - Return a ObjCObjectPointerType type for
+/// the given interface decl and the conforming protocol list.
+QualType ASTContext::getObjCObjectPointerType(ObjCInterfaceDecl *Decl,
+                                              ObjCProtocolDecl **Protocols, 
+                                              unsigned NumProtocols) {
+  // Sort the protocol list alphabetically to canonicalize it.
+  if (NumProtocols)
+    SortAndUniqueProtocols(Protocols, NumProtocols);
+
+  llvm::FoldingSetNodeID ID;
+  ObjCObjectPointerType::Profile(ID, Decl, Protocols, NumProtocols);
+
+  void *InsertPos = 0;
+  if (ObjCObjectPointerType *QT =
+              ObjCObjectPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(QT, 0);
+
+  // No Match;
+  ObjCObjectPointerType *QType =
+    new (*this,8) ObjCObjectPointerType(Decl, Protocols, NumProtocols);
+  
+  Types.push_back(QType);
+  ObjCObjectPointerTypes.InsertNode(QType, InsertPos);
+  return QualType(QType, 0);
+}
 
 /// getObjCQualifiedInterfaceType - Return a ObjCQualifiedInterfaceType type for
 /// the given interface decl and the conforming protocol list.
@@ -1607,23 +1632,7 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
 /// and the conforming protocol list.
 QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols, 
                                             unsigned NumProtocols) {
-  // Sort the protocol list alphabetically to canonicalize it.
-  SortAndUniqueProtocols(Protocols, NumProtocols);
-
-  llvm::FoldingSetNodeID ID;
-  ObjCQualifiedIdType::Profile(ID, Protocols, NumProtocols);
-  
-  void *InsertPos = 0;
-  if (ObjCQualifiedIdType *QT =
-        ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(QT, 0);
-  
-  // No Match;
-  ObjCQualifiedIdType *QType =
-    new (*this,8) ObjCQualifiedIdType(Protocols, NumProtocols);
-  Types.push_back(QType);
-  ObjCQualifiedIdTypes.InsertNode(QType, InsertPos);
-  return QualType(QType, 0);
+  return getObjCObjectPointerType(0, Protocols, NumProtocols);
 }
 
 /// getTypeOfExprType - Unlike many "get<Type>" functions, we can't unique
@@ -2413,9 +2422,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     if (FD || EncodingProperty) {
       // Note that we do extended encoding of protocol qualifer list
       // Only when doing ivar or property encoding.
-      const ObjCQualifiedIdType *QIDT = T->getAsObjCQualifiedIdType();
+      const ObjCObjectPointerType *QIDT = T->getAsObjCQualifiedIdType();
       S += '"';
-      for (ObjCQualifiedIdType::qual_iterator I = QIDT->qual_begin(),
+      for (ObjCObjectPointerType::qual_iterator I = QIDT->qual_begin(),
            E = QIDT->qual_end(); I != E; ++I) {
         S += '<';
         S += (*I)->getNameAsString();
@@ -3298,7 +3307,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 
     return QualType();
   }
-  case Type::ObjCQualifiedId:
+  case Type::ObjCObjectPointer:
+    // FIXME: finish
     // Distinct qualified id's are not compatible.
     return QualType();
   case Type::FixedWidthInt:

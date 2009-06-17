@@ -1969,13 +1969,13 @@ static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
   return 0;
 }
 
-static Decl *FindGetterNameDecl(const ObjCQualifiedIdType *QIdTy,
+static Decl *FindGetterNameDecl(const ObjCObjectPointerType *QIdTy,
                                 IdentifierInfo &Member,
                                 const Selector &Sel,
                                 ASTContext &Context) {
   // Check protocols on qualified interfaces.
   Decl *GDecl = 0;
-  for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
+  for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
        E = QIdTy->qual_end(); I != E; ++I) {
     if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Context, &Member)) {
       GDecl = PD;
@@ -1988,7 +1988,7 @@ static Decl *FindGetterNameDecl(const ObjCQualifiedIdType *QIdTy,
     }
   }
   if (!GDecl) {
-    for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
+    for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
       // Search in the protocol-qualifier list of current protocol.
       GDecl = FindGetterNameDeclFromProtocolList(*I, Member, Sel, Context);
@@ -2313,7 +2313,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       << &Member << BaseType);
   }
   // Handle properties on qualified "id" protocols.
-  const ObjCQualifiedIdType *QIdTy;
+  const ObjCObjectPointerType *QIdTy;
   if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
     // Check protocols on qualified interfaces.
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);

@@ -781,7 +781,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::QualifiedName:
     // Unsupported types
     return llvm::DIType();
-  case Type::ObjCQualifiedId:   // Encode id<p> in debug info just like id.
+  case Type::ObjCObjectPointer:   // Encode id<p> in debug info just like id.
     return Slot = getOrCreateType(M->getContext().getObjCIdType(), Unit);
       
   case Type::ObjCQualifiedInterface:  // Drop protocols from interface.

@@ -1729,13 +1729,15 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getObjCQualifiedInterfaceType(ItfD, Protos.data(), NumProtos);
   }
 
-  case pch::TYPE_OBJC_QUALIFIED_ID: {
+  case pch::TYPE_OBJC_OBJECT_POINTER: {
     unsigned Idx = 0;
+    ObjCInterfaceDecl *ItfD = 
+      cast_or_null<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
     unsigned NumProtos = Record[Idx++];
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCQualifiedIdType(Protos.data(), NumProtos);
+    return Context->getObjCObjectPointerType(ItfD, Protos.data(), NumProtos);
   }
   }
   // Suppress a GCC warning

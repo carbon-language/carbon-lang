@@ -657,6 +657,14 @@ InstantiateTypenameType(const TypenameType *T, unsigned Quals) const {
 
 QualType 
 TemplateTypeInstantiator::
+InstantiateObjCObjectPointerType(const ObjCObjectPointerType *T,
+                                 unsigned Quals) const {
+  assert(false && "Objective-C types cannot be dependent");
+  return QualType();
+}
+
+QualType
+TemplateTypeInstantiator::
 InstantiateObjCInterfaceType(const ObjCInterfaceType *T,
                              unsigned Quals) const {
   assert(false && "Objective-C types cannot be dependent");
@@ -667,14 +675,6 @@ QualType
 TemplateTypeInstantiator::
 InstantiateObjCQualifiedInterfaceType(const ObjCQualifiedInterfaceType *T,
                                       unsigned Quals) const {
-  assert(false && "Objective-C types cannot be dependent");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateObjCQualifiedIdType(const ObjCQualifiedIdType *T,
-                               unsigned Quals) const {
   assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }

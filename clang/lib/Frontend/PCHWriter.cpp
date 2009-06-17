@@ -229,12 +229,14 @@ PCHTypeWriter::VisitObjCQualifiedInterfaceType(
   Code = pch::TYPE_OBJC_QUALIFIED_INTERFACE;
 }
 
-void PCHTypeWriter::VisitObjCQualifiedIdType(const ObjCQualifiedIdType *T) {
+void
+PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
+  Writer.AddDeclRef(T->getDecl(), Record);
   Record.push_back(T->getNumProtocols());
-  for (ObjCQualifiedIdType::qual_iterator I = T->qual_begin(),
+  for (ObjCInterfaceType::qual_iterator I = T->qual_begin(),
        E = T->qual_end(); I != E; ++I)
     Writer.AddDeclRef(*I, Record);
-  Code = pch::TYPE_OBJC_QUALIFIED_ID;
+  Code = pch::TYPE_OBJC_OBJECT_POINTER;
 }
 
 //===----------------------------------------------------------------------===//
@@ -407,7 +409,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_ENUM);
   RECORD(TYPE_OBJC_INTERFACE);
   RECORD(TYPE_OBJC_QUALIFIED_INTERFACE);
-  RECORD(TYPE_OBJC_QUALIFIED_ID);
+  RECORD(TYPE_OBJC_OBJECT_POINTER);
   // Statements and Exprs can occur in the Types block.
   AddStmtsExprs(Stream, Record);
 

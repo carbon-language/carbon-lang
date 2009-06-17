@@ -353,7 +353,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return T;
   }
       
-  case Type::ObjCQualifiedId:
+  case Type::ObjCObjectPointer:
     // Protocols don't influence the LLVM type.
     return ConvertTypeRecursive(Context.getObjCIdType());
 

@@ -386,8 +386,8 @@ namespace clang {
       TYPE_OBJC_INTERFACE           = 21,
       /// \brief An ObjCQualifiedInterfaceType record.
       TYPE_OBJC_QUALIFIED_INTERFACE = 22,
-      /// \brief An ObjCQualifiedIdType record.
-      TYPE_OBJC_QUALIFIED_ID        = 23
+      /// \brief An ObjCObjectPointerType record.
+      TYPE_OBJC_OBJECT_POINTER      = 23
     };
 
     /// \brief The type IDs for special types constructed by semantic

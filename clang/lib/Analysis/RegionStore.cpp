@@ -668,7 +668,7 @@ RegionStoreManager::CastRegion(const GRState *state, const MemRegion* R,
   QualType ToTy = Ctx.getCanonicalType(CastToTy);
 
   // Check cast to ObjCQualifiedID type.
-  if (isa<ObjCQualifiedIdType>(ToTy)) {
+  if (ToTy->isObjCQualifiedIdType()) {
     // FIXME: Record the type information aside.
     return CastResult(state, R);
   }

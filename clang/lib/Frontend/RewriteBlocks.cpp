@@ -132,7 +132,7 @@ public:
       
     if (const PointerType *PT = OCT->getAsPointerType()) {
       if (isa<ObjCInterfaceType>(PT->getPointeeType()) || 
-          isa<ObjCQualifiedIdType>(PT->getPointeeType()))
+          PT->getPointeeType()->isObjCQualifiedIdType())
         return true;
     }
     return false;
