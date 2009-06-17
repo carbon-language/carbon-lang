@@ -14,12 +14,17 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Threading.h"
+#include "llvm/System/RWMutex.h"
 #include <algorithm>
 using namespace llvm;
 
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
+
+static ManagedStatic<sys::RWMutex> TypeSymbolTableLock;
 
 TypeSymbolTable::~TypeSymbolTable() {
   // Drop all abstract type references in the type plane...
@@ -31,26 +36,39 @@ TypeSymbolTable::~TypeSymbolTable() {
 
 std::string TypeSymbolTable::getUniqueName(const std::string &BaseName) const {
   std::string TryName = BaseName;
+  
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_acquire();
+  
   const_iterator End = tmap.end();
 
   // See if the name exists
   while (tmap.find(TryName) != End)            // Loop until we find a free
     TryName = BaseName + utostr(++LastUnique); // name in the symbol table
+  
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_release();
+  
   return TryName;
 }
 
 // lookup a type by name - returns null on failure
 Type* TypeSymbolTable::lookup(const std::string& Name) const {
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_acquire();
+  
   const_iterator TI = tmap.find(Name);
+  Type* result = 0;
   if (TI != tmap.end())
-    return const_cast<Type*>(TI->second);
-  return 0;
+    result = const_cast<Type*>(TI->second);
+    
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_release();
+  
+  return result;
 }
 
 // remove - Remove a type from the symbol table...
 Type* TypeSymbolTable::remove(iterator Entry) {
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->writer_acquire();
+  
   assert(Entry != tmap.end() && "Invalid entry to remove!");
-
   const Type* Result = Entry->second;
 
 #if DEBUG_SYMBOL_TABLE
@@ -59,6 +77,8 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 #endif
 
   tmap.erase(Entry);
+  
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->writer_release();
 
   // If we are removing an abstract type, remove the symbol table from it's use
   // list...
@@ -78,6 +98,8 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 // insert - Insert a type into the symbol table with the specified name...
 void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
   assert(T && "Can't insert null type into symbol table!");
+
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->writer_acquire();
 
   if (tmap.insert(make_pair(Name, T)).second) {
     // Type inserted fine with no conflict.
@@ -103,6 +125,8 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
     // Insert the tmap entry
     tmap.insert(make_pair(UniqueName, T));
   }
+  
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->writer_release();
 
   // If we are adding an abstract type, add the symbol table to it's use list.
   if (T->isAbstract()) {
@@ -116,6 +140,7 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
 // This function is called when one of the types in the type plane are refined
 void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
                                          const Type *NewType) {
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_acquire();
 
   // Loop over all of the types in the symbol table, replacing any references
   // to OldType with references to NewType.  Note that there may be multiple
@@ -138,6 +163,8 @@ void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
       }
     }
   }
+  
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_release();
 }
 
 
@@ -146,9 +173,11 @@ void TypeSymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
   // Loop over all of the types in the symbol table, dropping any abstract
   // type user entries for AbsTy which occur because there are names for the
   // type.
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_acquire();
   for (iterator TI = begin(), TE = end(); TI != TE; ++TI)
     if (TI->second == const_cast<Type*>(static_cast<const Type*>(AbsTy)))
       AbsTy->removeAbstractTypeUser(this);
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_release();
 }
 
 static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
@@ -159,7 +188,9 @@ static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
 
 void TypeSymbolTable::dump() const {
   cerr << "TypeSymbolPlane: ";
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_acquire();
   for_each(tmap.begin(), tmap.end(), DumpTypes);
+  if (llvm_is_multithreaded()) TypeSymbolTableLock->reader_release();
 }
 
 // vim: sw=2 ai
