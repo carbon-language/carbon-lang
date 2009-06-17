@@ -539,6 +539,12 @@ public:
   void PushDeclContext(Scope *S, DeclContext *DC);
   void PopDeclContext();
   
+  /// EnterDeclaratorContext - Used when we must lookup names in the context
+  /// of a declarator's nested name specifier.
+  void EnterDeclaratorContext(Scope *S, DeclContext *DC);
+  void ExitDeclaratorContext(Scope *S);
+  
+  
   /// getCurFunctionDecl - If inside of a function body, this returns a pointer
   /// to the function decl for the function being parsed.  If we're currently
   /// in a 'block', this returns the containing context.

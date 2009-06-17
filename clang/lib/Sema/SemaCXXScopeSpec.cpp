@@ -286,11 +286,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 /// The 'SS' should be a non-empty valid CXXScopeSpec.
 void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
-  PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
-  CurContext = computeDeclContext(SS);
-  assert(CurContext && "No context?");
-  S->setEntity(CurContext);
+  EnterDeclaratorContext(S, computeDeclContext(SS));
 }
 
 /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
@@ -301,12 +297,5 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
   assert(S->getEntity() == computeDeclContext(SS) && "Context imbalance!");
-  S->setEntity(PreDeclaratorDC);
-  PreDeclaratorDC = 0;
-
-  // Reset CurContext to the nearest enclosing context.
-  while (!S->getEntity() && S->getParent())
-    S = S->getParent();
-  CurContext = static_cast<DeclContext*>(S->getEntity());
-  assert(CurContext && "No context?");
+  ExitDeclaratorContext(S);
 }

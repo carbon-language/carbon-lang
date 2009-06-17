@@ -219,6 +219,30 @@ void Sema::PopDeclContext() {
   CurContext = getContainingDC(CurContext);
 }
 
+void Sema::EnterDeclaratorContext(Scope *S, DeclContext *DC) {
+  assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
+  PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
+  CurContext = DC;
+  assert(CurContext && "No context?");
+  S->setEntity(CurContext);
+}
+
+/// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
+/// invoked ActOnCXXEnterDeclaratorScope(), is finished. 'SS' is the same
+/// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
+/// Used to indicate that names should revert to being looked up in the
+/// defining scope.
+void Sema::ExitDeclaratorContext(Scope *S) {
+  S->setEntity(PreDeclaratorDC);
+  PreDeclaratorDC = 0;
+
+  // Reset CurContext to the nearest enclosing context.
+  while (!S->getEntity() && S->getParent())
+    S = S->getParent();
+  CurContext = static_cast<DeclContext*>(S->getEntity());
+  assert(CurContext && "No context?");
+}
+
 /// \brief Determine whether we allow overloading of the function
 /// PrevDecl with another declaration.
 ///

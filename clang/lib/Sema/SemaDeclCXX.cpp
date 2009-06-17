@@ -2852,12 +2852,7 @@ void Sema::ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
   // was used in a member function of X.
   
   // Change current context into the context of the initializing declaration.
-  
-  assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
-  PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
-  CurContext = D->getDeclContext();
-  assert(CurContext && "No context?");
-  S->setEntity(CurContext);
+  EnterDeclaratorContext(S, D->getDeclContext());
 }
 
 /// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
@@ -2874,12 +2869,5 @@ void Sema::ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
     return;
 
   assert(S->getEntity() == D->getDeclContext() && "Context imbalance!");
-  S->setEntity(PreDeclaratorDC);
-  PreDeclaratorDC = 0;
-
-  // Reset CurContext to the nearest enclosing context.
-  while (!S->getEntity() && S->getParent())
-    S = S->getParent();
-  CurContext = static_cast<DeclContext*>(S->getEntity());
-  assert(CurContext && "No context?");
+  ExitDeclaratorContext(S);
 }
