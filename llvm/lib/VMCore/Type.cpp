@@ -453,8 +453,27 @@ void DerivedType::dropAllTypeUses() {
   if (NumContainedTys != 0) {
     // The type must stay abstract.  To do this, we insert a pointer to a type
     // that will never get resolved, thus will always be abstract.
-    static Type *AlwaysOpaqueTy = OpaqueType::get();
-    static PATypeHolder Holder(AlwaysOpaqueTy);
+    static Type *AlwaysOpaqueTy = 0;
+    static PATypeHolder* Holder = 0;
+    if (!AlwaysOpaqueTy) {
+      if (llvm_is_multithreaded()) {
+        llvm_acquire_global_lock();
+      
+        if (!AlwaysOpaqueTy) {
+          Type *tmp = OpaqueType::get();
+          PATypeHolder* tmp2 = new PATypeHolder(AlwaysOpaqueTy);
+          sys::MemoryFence();
+          AlwaysOpaqueTy = tmp;
+          Holder = tmp2;
+        }
+      
+        llvm_release_global_lock();
+      } else {
+        AlwaysOpaqueTy = OpaqueType::get();
+        Holder = new PATypeHolder(AlwaysOpaqueTy);
+      } 
+    }
+    
     ContainedTys[0] = AlwaysOpaqueTy;
 
     // Change the rest of the types to be Int32Ty's.  It doesn't matter what we
