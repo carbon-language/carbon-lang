@@ -476,6 +476,9 @@
 /* Build multithreading support into LLVM */
 #undef LLVM_MULTITHREADED
 
+/* LLVM architecture name for the native architecture, if available */
+#undef LLVM_NATIVE_ARCH
+
 /* Define if this is Unixish platform */
 #undef LLVM_ON_UNIX
 
