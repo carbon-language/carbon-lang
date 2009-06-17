@@ -1183,6 +1183,8 @@ namespace llvm {
     AbstractTypeMapTy AbstractTypeMap;
 
   public:
+    // NOTE: This function is not locked.  It is the caller's responsibility
+    // to enforce proper synchronization.
     typename MapTy::iterator map_end() { return Map.end(); }
     
     /// InsertOrGetItem - Return an iterator for the specified element.
@@ -1190,6 +1192,8 @@ namespace llvm {
     /// entry and Exists=true.  If not, the iterator points to the newly
     /// inserted entry and returns Exists=false.  Newly inserted entries have
     /// I->second == 0, and should be filled in.
+    /// NOTE: This function is not locked.  It is the caller's responsibility
+    // to enforce proper synchronization.
     typename MapTy::iterator InsertOrGetItem(std::pair<MapKey, Constant *>
                                    &InsertVal,
                                    bool &Exists) {
@@ -1225,37 +1229,85 @@ public:
     /// necessary.
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
       MapKey Lookup(Ty, V);
-      typename MapTy::iterator I = Map.find(Lookup);
-      // Is it in the map?      
-      if (I != Map.end())
-        return static_cast<ConstantClass *>(I->second);  
+      if (llvm_is_multithreaded()) {
+        ConstantClass* Result = 0;
+        
+        ConstantsLock->reader_acquire();
+        typename MapTy::iterator I = Map.find(Lookup);
+        // Is it in the map?  
+        if (I != Map.end())
+          Result = static_cast<ConstantClass *>(I->second);
+        ConstantsLock->reader_release();
+        
+        if (!Result) {
+          ConstantsLock->writer_acquire();
+          I = Map.find(Lookup);
+          // Is it in the map?  
+          if (I != Map.end())
+            Result = static_cast<ConstantClass *>(I->second);
+          if (!Result) {
+            // If no preexisting value, create one now...
+            Result =
+              ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
 
-      // If no preexisting value, create one now...
-      ConstantClass *Result =
-        ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
+            assert(Result->getType() == Ty && "Type specified is not correct!");
+            I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
 
-      assert(Result->getType() == Ty && "Type specified is not correct!");
-      I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
+            if (HasLargeKey)  // Remember the reverse mapping if needed.
+              InverseMap.insert(std::make_pair(Result, I));
 
-      if (HasLargeKey)  // Remember the reverse mapping if needed.
-        InverseMap.insert(std::make_pair(Result, I));
-      
-      // If the type of the constant is abstract, make sure that an entry exists
-      // for it in the AbstractTypeMap.
-      if (Ty->isAbstract()) {
-        typename AbstractTypeMapTy::iterator TI = AbstractTypeMap.find(Ty);
+            // If the type of the constant is abstract, make sure that an entry
+            // exists for it in the AbstractTypeMap.
+            if (Ty->isAbstract()) {
+              typename AbstractTypeMapTy::iterator TI = 
+                                                       AbstractTypeMap.find(Ty);
 
-        if (TI == AbstractTypeMap.end()) {
-          // Add ourselves to the ATU list of the type.
-          cast<DerivedType>(Ty)->addAbstractTypeUser(this);
+              if (TI == AbstractTypeMap.end()) {
+                // Add ourselves to the ATU list of the type.
+                cast<DerivedType>(Ty)->addAbstractTypeUser(this);
 
-          AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
+                AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
+              }
+            }
+          }
+          ConstantsLock->writer_release();
         }
+        
+        return Result;
+      } else {
+        typename MapTy::iterator I = Map.find(Lookup);
+        // Is it in the map?      
+        if (I != Map.end())
+          return static_cast<ConstantClass *>(I->second);  
+
+        // If no preexisting value, create one now...
+        ConstantClass *Result =
+          ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
+
+        assert(Result->getType() == Ty && "Type specified is not correct!");
+        I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
+        
+        if (HasLargeKey)  // Remember the reverse mapping if needed.
+          InverseMap.insert(std::make_pair(Result, I));
+        
+        // If the type of the constant is abstract, make sure that an entry
+        // exists for it in the AbstractTypeMap.
+        if (Ty->isAbstract()) {
+          typename AbstractTypeMapTy::iterator TI = AbstractTypeMap.find(Ty);
+
+          if (TI == AbstractTypeMap.end()) {
+            // Add ourselves to the ATU list of the type.
+            cast<DerivedType>(Ty)->addAbstractTypeUser(this);
+            
+            AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
+          }
+        }
+        return Result;
       }
-      return Result;
     }
 
     void remove(ConstantClass *CP) {
+      if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
       typename MapTy::iterator I = FindExistingElement(CP);
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
@@ -1303,12 +1355,16 @@ public:
       }
 
       Map.erase(I);
+      
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
     }
 
     
     /// MoveConstantToNewSlot - If we are about to change C to be the element
     /// specified by I, update our internal data structures to reflect this
     /// fact.
+    /// NOTE: This function is not locked. It is the responsibility of the
+    /// caller to enforce proper synchronization if using this method.
     void MoveConstantToNewSlot(ConstantClass *C, typename MapTy::iterator I) {
       // First, remove the old location of the specified constant in the map.
       typename MapTy::iterator OldI = FindExistingElement(C);
@@ -1338,6 +1394,7 @@ public:
     }
     
     void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+      if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
       typename AbstractTypeMapTy::iterator I =
         AbstractTypeMap.find(cast<Type>(OldTy));
 
@@ -1355,12 +1412,16 @@ public:
 
         I = AbstractTypeMap.find(cast<Type>(OldTy));
       } while (I != AbstractTypeMap.end());
+      
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
     }
 
     // If the type became concrete without being refined to any other existing
     // type, we just remove ourselves from the ATU list.
     void typeBecameConcrete(const DerivedType *AbsTy) {
+      if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
       AbsTy->removeAbstractTypeUser(this);
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
     }
 
     void dump() const {
@@ -1402,19 +1463,16 @@ static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty) {
   assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
-  ConstantAggregateZero* result = 0;
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  result = AggZeroConstants->getOrCreate(Ty, 0);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return AggZeroConstants->getOrCreate(Ty, 0);
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  // Implicitly locked.
   AggZeroConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1451,20 +1509,18 @@ static ManagedStatic<ArrayConstantsTy> ArrayConstants;
 Constant *ConstantArray::get(const ArrayType *Ty,
                              const std::vector<Constant*> &V) {
   // If this is an all-zero array, return a ConstantAggregateZero object
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   if (!V.empty()) {
     Constant *C = V[0];
     if (!C->isNullValue()) {
-      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+      // Implicitly locked.
       return ArrayConstants->getOrCreate(Ty, V);
     }
     for (unsigned i = 1, e = V.size(); i != e; ++i)
       if (V[i] != C) {
-        if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+        // Implicitly locked.
         return ArrayConstants->getOrCreate(Ty, V);
       }
   }
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   
   return ConstantAggregateZero::get(Ty);
 }
@@ -1472,9 +1528,7 @@ Constant *ConstantArray::get(const ArrayType *Ty,
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantArray::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   ArrayConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1583,14 +1637,10 @@ static std::vector<Constant*> getValType(ConstantStruct *CS) {
 Constant *ConstantStruct::get(const StructType *Ty,
                               const std::vector<Constant*> &V) {
   // Create a ConstantAggregateZero value if all elements are zeros...
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   for (unsigned i = 0, e = V.size(); i != e; ++i)
-    if (!V[i]->isNullValue()) {
-      Constant* result = StructConstants->getOrCreate(Ty, V);
-      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-      return result;
-    }
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+    if (!V[i]->isNullValue())
+      // Implicitly locked.
+      return StructConstants->getOrCreate(Ty, V);
 
   return ConstantAggregateZero::get(Ty);
 }
@@ -1606,9 +1656,7 @@ Constant *ConstantStruct::get(const std::vector<Constant*> &V, bool packed) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   StructConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   destroyConstantImpl();
 }
 
@@ -1662,10 +1710,9 @@ Constant *ConstantVector::get(const VectorType *Ty,
     return ConstantAggregateZero::get(Ty);
   if (isUndef)
     return UndefValue::get(Ty);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = VectorConstants->getOrCreate(Ty, V);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+    
+  // Implicitly locked.
+  return VectorConstants->getOrCreate(Ty, V);
 }
 
 Constant *ConstantVector::get(const std::vector<Constant*> &V) {
@@ -1742,10 +1789,8 @@ static char getValType(ConstantPointerNull *) {
 
 
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  ConstantPointerNull* result = NullPtrConstants->getOrCreate(Ty, 0);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  // Implicitly locked.
+  return NullPtrConstants->getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
@@ -1790,18 +1835,15 @@ static char getValType(UndefValue *) {
 
 
 UndefValue *UndefValue::get(const Type *Ty) {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  UndefValue* result = UndefValueConstants->getOrCreate(Ty, 0);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  // Implicitly locked.
+  return UndefValueConstants->getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  // Implicitly locked.
   UndefValueConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -2055,10 +2097,8 @@ static inline Constant *getFoldedCast(
   std::vector<Constant*> argVec(1, C);
   ExprMapKeyType Key(opc, argVec);
   
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(Ty, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(Ty, Key);
 }
  
 Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
@@ -2318,10 +2358,9 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key(Opcode, argVec);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
@@ -2432,10 +2471,9 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   argVec[1] = V1;
   argVec[2] = V2;
   ExprMapKeyType Key(Instruction::Select, argVec);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
@@ -2458,10 +2496,9 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
   for (unsigned i = 0; i != NumIdx; ++i)
     ArgVec.push_back(cast<Constant>(Idxs[i]));
   const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant *result = ExprConstants->getOrCreate(ReqTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
@@ -2495,10 +2532,9 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(Type::Int1Ty, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(Type::Int1Ty, Key);
 }
 
 Constant *
@@ -2515,10 +2551,9 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(Type::Int1Ty, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(Type::Int1Ty, Key);
 }
 
 Constant *
@@ -2563,10 +2598,9 @@ ConstantExpr::getVICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::VICmp, ArgVec, pred);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(LHS->getType(), Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(LHS->getType(), Key);
 }
 
 Constant *
@@ -2613,10 +2647,9 @@ ConstantExpr::getVFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::VFCmp, ArgVec, pred);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(ResultTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ResultTy, Key);
 }
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
@@ -2627,10 +2660,9 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
   std::vector<Constant*> ArgVec(1, Val);
   ArgVec.push_back(Idx);
   const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
@@ -2651,10 +2683,9 @@ Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
   ArgVec.push_back(Elt);
   ArgVec.push_back(Idx);
   const ExprMapKeyType Key(Instruction::InsertElement,ArgVec);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt, 
@@ -2677,10 +2708,9 @@ Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
   ArgVec.push_back(V2);
   ArgVec.push_back(Mask);
   const ExprMapKeyType Key(Instruction::ShuffleVector,ArgVec);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return result;
+  
+  // Implicitly locked.
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2, 
