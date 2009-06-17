@@ -108,6 +108,8 @@ def err_expected_semi_after_method_proto : Error<
   "expected ';' after method prototype">;
 def err_expected_semi_after_namespace_name : Error<
   "expected ';' after namespace name">;
+def err_unexpected_namespace_attributes_alias : Error<
+  "attributes can not be specified on namespace alias">;
 def err_expected_semi_after_attribute_list : Error<
   "expected ';' after attribute list">;
 def err_expected_semi_after_static_assert : Error<

@@ -48,6 +48,8 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   
   SourceLocation IdentLoc;
   IdentifierInfo *Ident = 0;
+
+  Token attrTok;
   
   if (Tok.is(tok::identifier)) {
     Ident = Tok.getIdentifierInfo();
@@ -56,13 +58,19 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   
   // Read label attributes, if present.
   Action::AttrTy *AttrList = 0;
-  if (Tok.is(tok::kw___attribute))
+  if (Tok.is(tok::kw___attribute)) {
+    attrTok = Tok;
+
     // FIXME: save these somewhere.
     AttrList = ParseAttributes();
+  }
   
-  if (Tok.is(tok::equal))
-    // FIXME: Verify no attributes were present.
+  if (Tok.is(tok::equal)) {
+    if (AttrList)
+      Diag(attrTok, diag::err_unexpected_namespace_attributes_alias);
+
     return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident, DeclEnd);
+  }
   
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, Ident ? diag::err_expected_lbrace : 
