@@ -2408,12 +2408,11 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
 
       APInt EffectiveMask = APInt::getLowBitsSet(BitWidth, BitWidth - LZ);
 
-      if (LZ != 0 && !((~A & ~KnownZero) & EffectiveMask)) {
+      if (LZ != 0 && !((~A & ~KnownZero) & EffectiveMask))
         return
           getZeroExtendExpr(getTruncateExpr(getSCEV(U->getOperand(0)),
                                             IntegerType::get(BitWidth - LZ)),
                             U->getType());
-      }
     }
     break;
 
