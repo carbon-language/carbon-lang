@@ -580,3 +580,6 @@
 
 /* Define to a function implementing strdup */
 #cmakedefine strdup ${strdup}
+
+/* Native LLVM architecture */
+#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}
