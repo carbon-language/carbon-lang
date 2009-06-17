@@ -24,6 +24,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Threading.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/RWMutex.h"
 #include <algorithm>
 #include <cstdarg>
@@ -44,6 +45,9 @@ AbstractTypeUser::~AbstractTypeUser() {}
 
 // Reader/writer lock used for guarding access to the type maps.
 static ManagedStatic<sys::RWMutex> TypeMapLock;
+
+// Lock used for guarding access to AbstractTypeUsers.
+static ManagedStatic<sys::Mutex> AbstractTypeUsersLock;
 
 // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
 // for types as they are needed.  Because resolution of types must invalidate
@@ -1440,12 +1444,28 @@ bool PointerType::isValidElementType(const Type *ElemTy) {
 //                     Derived Type Refinement Functions
 //===----------------------------------------------------------------------===//
 
+// addAbstractTypeUser - Notify an abstract type that there is a new user of
+// it.  This function is called primarily by the PATypeHandle class.
+void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
+  assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
+  if (llvm_is_multithreaded()) {
+    AbstractTypeUsersLock->acquire();
+    AbstractTypeUsers.push_back(U);
+    AbstractTypeUsersLock->release();
+  } else {
+    AbstractTypeUsers.push_back(U);
+  }
+}
+
+
 // removeAbstractTypeUser - Notify an abstract type that a user of the class
 // no longer has a handle to the type.  This function is called primarily by
 // the PATypeHandle class.  When there are no users of the abstract type, it
 // is annihilated, because there is no way to get a reference to it ever again.
 //
 void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
+  if (llvm_is_multithreaded()) AbstractTypeUsersLock->acquire();
+  
   // Search from back to front because we will notify users from back to
   // front.  Also, it is likely that there will be a stack like behavior to
   // users that register and unregister users.
@@ -1469,8 +1489,11 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
     DOUT << "DELETEing unused abstract type: <" << *this
          << ">[" << (void*)this << "]" << "\n";
 #endif
-    this->destroy();
+  
+  this->destroy();
   }
+  
+  if (llvm_is_multithreaded()) AbstractTypeUsersLock->release();
 }
 
 // unlockedRefineAbstractTypeTo - This function is used when it is discovered
