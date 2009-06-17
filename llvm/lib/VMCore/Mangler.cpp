@@ -14,6 +14,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/System/Atomic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -164,8 +165,12 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
   } else if (!GV->hasName()) {
     // Must mangle the global into a unique ID.
     unsigned TypeUniqueID = getTypeID(GV->getType());
-    static unsigned GlobalID = 0;
-    Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(GlobalID++);
+    static uint32_t GlobalID = 0;
+    
+    unsigned OldID = GlobalID;
+    sys::AtomicIncrement(&GlobalID);
+    
+    Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(OldID);
   } else {
     if (GV->hasPrivateLinkage())
       Name = makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
