@@ -685,7 +685,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
       // identifier chain.
       if (isa<RecordDecl>(Ctx)) {
         R = LookupQualifiedName(Ctx, Name, NameKind, RedeclarationOnly);
-        if (R || RedeclarationOnly)
+        if (R)
           return std::make_pair(true, R);
       }
       if (Ctx->getParent() != Ctx->getLexicalParent() 
@@ -697,7 +697,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         for (OutOfLineCtx = Ctx; OutOfLineCtx && !OutOfLineCtx->isFileContext();
              OutOfLineCtx = OutOfLineCtx->getParent()) {
           R = LookupQualifiedName(OutOfLineCtx, Name, NameKind, RedeclarationOnly);
-          if (R || RedeclarationOnly)
+          if (R)
             return std::make_pair(true, R);
         }
       }

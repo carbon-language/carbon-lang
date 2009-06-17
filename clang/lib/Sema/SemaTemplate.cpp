@@ -444,6 +444,9 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   if (Previous.begin() != Previous.end())
     PrevDecl = *Previous.begin();
 
+  if (PrevDecl && !isDeclInScope(PrevDecl, CurContext, S))
+    PrevDecl = 0;
+  
   DeclContext *SemanticContext = CurContext;
   if (SS.isNotEmpty() && !SS.isInvalid()) {
     SemanticContext = computeDeclContext(SS);

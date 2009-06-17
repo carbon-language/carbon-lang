@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 class A;
 

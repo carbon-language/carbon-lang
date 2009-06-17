@@ -3807,6 +3807,14 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
   NamedDecl *PrevDecl = LookupName(S, II, LookupMemberName, true);
+
+  if (PrevDecl && PrevDecl->isTemplateParameter()) {
+    // Maybe we will complain about the shadowed template parameter.
+    DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
+    // Just pretend that we didn't see the previous declaration.
+    PrevDecl = 0;
+  }
+
   if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))
     PrevDecl = 0;
 
