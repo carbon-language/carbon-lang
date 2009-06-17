@@ -244,7 +244,7 @@ static CodeGenModule::GVALinkage
 GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     // C++ member functions defined inside the class are always inline.
-    if (MD->isInline() || !MD->isOutOfLineDefinition())
+    if (MD->isInline() || !MD->isOutOfLine())
       return CodeGenModule::GVA_CXXInline;
     
     return CodeGenModule::GVA_StrongExternal;

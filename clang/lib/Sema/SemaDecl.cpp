@@ -183,7 +183,7 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
 DeclContext *Sema::getContainingDC(DeclContext *DC) {
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
     // A C++ out-of-line method will return to the file declaration context.
-    if (MD->isOutOfLineDefinition())
+    if (MD->isOutOfLine())
       return MD->getLexicalDeclContext();
 
     // A C++ inline method is parsed *after* the topmost class it was declared

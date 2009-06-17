@@ -243,7 +243,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::CXXMethod: {
     const CXXMethodDecl* D = cast<CXXMethodDecl>(DC);
-    if (D->isOutOfLineDefinition())
+    if (D->isOutOfLine())
       Out << "[c++ method] ";
     else if (D->isImplicit())
       Out << "(c++ method) ";
@@ -273,7 +273,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::CXXConstructor: {
     const CXXConstructorDecl* D = cast<CXXConstructorDecl>(DC);
-    if (D->isOutOfLineDefinition())
+    if (D->isOutOfLine())
       Out << "[c++ ctor] ";
     else if (D->isImplicit())
       Out << "(c++ ctor) ";
@@ -302,7 +302,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::CXXDestructor: {
     const CXXDestructorDecl* D = cast<CXXDestructorDecl>(DC);
-    if (D->isOutOfLineDefinition())
+    if (D->isOutOfLine())
       Out << "[c++ dtor] ";
     else if (D->isImplicit())
       Out << "(c++ dtor) ";
@@ -318,7 +318,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
   case Decl::CXXConversion: {
     const CXXConversionDecl* D = cast<CXXConversionDecl>(DC);
-    if (D->isOutOfLineDefinition())
+    if (D->isOutOfLine())
       Out << "[c++ conversion] ";
     else if (D->isImplicit())
       Out << "(c++ conversion) ";

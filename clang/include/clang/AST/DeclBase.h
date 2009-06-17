@@ -268,6 +268,10 @@ public:
   const DeclContext *getLexicalDeclContext() const {
     return const_cast<Decl*>(this)->getLexicalDeclContext();
   }
+
+  bool isOutOfLine() const {
+    return getLexicalDeclContext() != getDeclContext();
+  }
   
   /// setDeclContext - Set both the semantic and lexical DeclContext
   /// to DC.

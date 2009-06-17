@@ -477,10 +477,6 @@ public:
   bool isStatic() const { return getStorageClass() == Static; }
   bool isInstance() const { return !isStatic(); }
 
-  bool isOutOfLineDefinition() const {
-    return getLexicalDeclContext() != getDeclContext();
-  }
-
   bool isVirtual() const { 
     return isVirtualAsWritten() ||
       (begin_overridden_methods() != end_overridden_methods());
