@@ -365,22 +365,27 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
 ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
                                                      bool isInc, bool isPre) {
   LValue LV = CGF.EmitLValue(E->getSubExpr());
-  ComplexPairTy InVal = EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
+  ComplexPairTy InVal = EmitLoadOfComplex(LV.getAddress(),
+                                          LV.isVolatileQualified());
   
   llvm::Value *NextVal;
   if (isa<llvm::IntegerType>(InVal.first->getType())) {
     uint64_t AmountVal = isInc ? 1 : -1;
     NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal, true);
+    
+    // Add the inc/dec to the real part.
+    NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
+    
   } else {
     QualType ElemTy = E->getType()->getAsComplexType()->getElementType();
     llvm::APFloat FVal(CGF.getContext().getFloatTypeSemantics(ElemTy), 1);
     if (!isInc)
       FVal.changeSign();
     NextVal = llvm::ConstantFP::get(FVal);
+    
+    // Add the inc/dec to the real part.
+    NextVal = Builder.CreateFAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
   }
-  
-  // Add the inc/dec to the real part.
-  NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
   
   ComplexPairTy IncVal(NextVal, InVal.second);
   
@@ -398,8 +403,15 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   TestAndClearIgnoreRealAssign();
   TestAndClearIgnoreImagAssign();
   ComplexPairTy Op = Visit(E->getSubExpr());
-  llvm::Value *ResR = Builder.CreateNeg(Op.first,  "neg.r");
-  llvm::Value *ResI = Builder.CreateNeg(Op.second, "neg.i");
+  
+  llvm::Value *ResR, *ResI;
+  if (Op.first->getType()->isFloatingPoint()) {
+    ResR = Builder.CreateFNeg(Op.first,  "neg.r");
+    ResI = Builder.CreateFNeg(Op.second, "neg.i");
+  } else {
+    ResR = Builder.CreateNeg(Op.first,  "neg.r");
+    ResI = Builder.CreateNeg(Op.second, "neg.i");
+  }
   return ComplexPairTy(ResR, ResI);
 }
 
@@ -410,31 +422,62 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
   TestAndClearIgnoreImagAssign();
   // ~(a+ib) = a + i*-b
   ComplexPairTy Op = Visit(E->getSubExpr());
-  llvm::Value *ResI = Builder.CreateNeg(Op.second, "conj.i");
+  llvm::Value *ResI;
+  if (Op.second->getType()->isFloatingPoint())
+    ResI = Builder.CreateFNeg(Op.second, "conj.i");
+  else
+    ResI = Builder.CreateNeg(Op.second, "conj.i");
+    
   return ComplexPairTy(Op.first, ResI);
 }
 
 ComplexPairTy ComplexExprEmitter::EmitBinAdd(const BinOpInfo &Op) {
-  llvm::Value *ResR = Builder.CreateAdd(Op.LHS.first,  Op.RHS.first,  "add.r");
-  llvm::Value *ResI = Builder.CreateAdd(Op.LHS.second, Op.RHS.second, "add.i");
+  llvm::Value *ResR, *ResI;
+  
+  if (Op.LHS.first->getType()->isFloatingPoint()) {
+    ResR = Builder.CreateFAdd(Op.LHS.first,  Op.RHS.first,  "add.r");
+    ResI = Builder.CreateFAdd(Op.LHS.second, Op.RHS.second, "add.i");
+  } else {
+    ResR = Builder.CreateAdd(Op.LHS.first,  Op.RHS.first,  "add.r");
+    ResI = Builder.CreateAdd(Op.LHS.second, Op.RHS.second, "add.i");
+  }
   return ComplexPairTy(ResR, ResI);
 }
 
 ComplexPairTy ComplexExprEmitter::EmitBinSub(const BinOpInfo &Op) {
-  llvm::Value *ResR = Builder.CreateSub(Op.LHS.first,  Op.RHS.first,  "sub.r");
-  llvm::Value *ResI = Builder.CreateSub(Op.LHS.second, Op.RHS.second, "sub.i");
+  llvm::Value *ResR, *ResI;
+  if (Op.LHS.first->getType()->isFloatingPoint()) {
+    ResR = Builder.CreateFSub(Op.LHS.first,  Op.RHS.first,  "sub.r");
+    ResI = Builder.CreateFSub(Op.LHS.second, Op.RHS.second, "sub.i");
+  } else {
+    ResR = Builder.CreateSub(Op.LHS.first,  Op.RHS.first,  "sub.r");
+    ResI = Builder.CreateSub(Op.LHS.second, Op.RHS.second, "sub.i");
+  }
   return ComplexPairTy(ResR, ResI);
 }
 
 
 ComplexPairTy ComplexExprEmitter::EmitBinMul(const BinOpInfo &Op) {
-  llvm::Value *ResRl = Builder.CreateMul(Op.LHS.first, Op.RHS.first, "mul.rl");
-  llvm::Value *ResRr = Builder.CreateMul(Op.LHS.second, Op.RHS.second,"mul.rr");
-  llvm::Value *ResR  = Builder.CreateSub(ResRl, ResRr, "mul.r");
+  using llvm::Value;
+  Value *ResR, *ResI;
   
-  llvm::Value *ResIl = Builder.CreateMul(Op.LHS.second, Op.RHS.first, "mul.il");
-  llvm::Value *ResIr = Builder.CreateMul(Op.LHS.first, Op.RHS.second, "mul.ir");
-  llvm::Value *ResI  = Builder.CreateAdd(ResIl, ResIr, "mul.i");
+  if (Op.LHS.first->getType()->isFloatingPoint()) {
+    Value *ResRl = Builder.CreateFMul(Op.LHS.first, Op.RHS.first, "mul.rl");
+    Value *ResRr = Builder.CreateFMul(Op.LHS.second, Op.RHS.second,"mul.rr");
+    ResR  = Builder.CreateFSub(ResRl, ResRr, "mul.r");
+    
+    Value *ResIl = Builder.CreateFMul(Op.LHS.second, Op.RHS.first, "mul.il");
+    Value *ResIr = Builder.CreateFMul(Op.LHS.first, Op.RHS.second, "mul.ir");
+    ResI  = Builder.CreateFAdd(ResIl, ResIr, "mul.i");
+  } else {
+    Value *ResRl = Builder.CreateMul(Op.LHS.first, Op.RHS.first, "mul.rl");
+    Value *ResRr = Builder.CreateMul(Op.LHS.second, Op.RHS.second,"mul.rr");
+    ResR  = Builder.CreateSub(ResRl, ResRr, "mul.r");
+    
+    Value *ResIl = Builder.CreateMul(Op.LHS.second, Op.RHS.first, "mul.il");
+    Value *ResIr = Builder.CreateMul(Op.LHS.first, Op.RHS.second, "mul.ir");
+    ResI  = Builder.CreateAdd(ResIl, ResIr, "mul.i");
+  }
   return ComplexPairTy(ResR, ResI);
 }
 
@@ -442,24 +485,38 @@ ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
   llvm::Value *LHSr = Op.LHS.first, *LHSi = Op.LHS.second;
   llvm::Value *RHSr = Op.RHS.first, *RHSi = Op.RHS.second;
   
-  // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
-  llvm::Value *Tmp1 = Builder.CreateMul(LHSr, RHSr, "tmp"); // a*c
-  llvm::Value *Tmp2 = Builder.CreateMul(LHSi, RHSi, "tmp"); // b*d
-  llvm::Value *Tmp3 = Builder.CreateAdd(Tmp1, Tmp2, "tmp"); // ac+bd
-  
-  llvm::Value *Tmp4 = Builder.CreateMul(RHSr, RHSr, "tmp"); // c*c
-  llvm::Value *Tmp5 = Builder.CreateMul(RHSi, RHSi, "tmp"); // d*d
-  llvm::Value *Tmp6 = Builder.CreateAdd(Tmp4, Tmp5, "tmp"); // cc+dd
-  
-  llvm::Value *Tmp7 = Builder.CreateMul(LHSi, RHSr, "tmp"); // b*c
-  llvm::Value *Tmp8 = Builder.CreateMul(LHSr, RHSi, "tmp"); // a*d
-  llvm::Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8, "tmp"); // bc-ad
 
   llvm::Value *DSTr, *DSTi;
-  if (Tmp3->getType()->isFloatingPoint()) {
+  if (Op.LHS.first->getType()->isFloatingPoint()) {
+    // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
+    llvm::Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr, "tmp"); // a*c
+    llvm::Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi, "tmp"); // b*d
+    llvm::Value *Tmp3 = Builder.CreateFAdd(Tmp1, Tmp2, "tmp"); // ac+bd
+    
+    llvm::Value *Tmp4 = Builder.CreateFMul(RHSr, RHSr, "tmp"); // c*c
+    llvm::Value *Tmp5 = Builder.CreateFMul(RHSi, RHSi, "tmp"); // d*d
+    llvm::Value *Tmp6 = Builder.CreateFAdd(Tmp4, Tmp5, "tmp"); // cc+dd
+    
+    llvm::Value *Tmp7 = Builder.CreateFMul(LHSi, RHSr, "tmp"); // b*c
+    llvm::Value *Tmp8 = Builder.CreateFMul(LHSr, RHSi, "tmp"); // a*d
+    llvm::Value *Tmp9 = Builder.CreateFSub(Tmp7, Tmp8, "tmp"); // bc-ad
+    
     DSTr = Builder.CreateFDiv(Tmp3, Tmp6, "tmp");
     DSTi = Builder.CreateFDiv(Tmp9, Tmp6, "tmp");
   } else {
+    // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
+    llvm::Value *Tmp1 = Builder.CreateMul(LHSr, RHSr, "tmp"); // a*c
+    llvm::Value *Tmp2 = Builder.CreateMul(LHSi, RHSi, "tmp"); // b*d
+    llvm::Value *Tmp3 = Builder.CreateAdd(Tmp1, Tmp2, "tmp"); // ac+bd
+    
+    llvm::Value *Tmp4 = Builder.CreateMul(RHSr, RHSr, "tmp"); // c*c
+    llvm::Value *Tmp5 = Builder.CreateMul(RHSi, RHSi, "tmp"); // d*d
+    llvm::Value *Tmp6 = Builder.CreateAdd(Tmp4, Tmp5, "tmp"); // cc+dd
+    
+    llvm::Value *Tmp7 = Builder.CreateMul(LHSi, RHSr, "tmp"); // b*c
+    llvm::Value *Tmp8 = Builder.CreateMul(LHSr, RHSi, "tmp"); // a*d
+    llvm::Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8, "tmp"); // bc-ad
+    
     if (Op.Ty->getAsComplexType()->getElementType()->isUnsignedIntegerType()) {
       DSTr = Builder.CreateUDiv(Tmp3, Tmp6, "tmp");
       DSTi = Builder.CreateUDiv(Tmp9, Tmp6, "tmp");

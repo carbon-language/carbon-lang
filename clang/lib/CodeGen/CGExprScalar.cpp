@@ -294,6 +294,8 @@ public:
     if (CGF.getContext().getLangOptions().OverflowChecking
         && Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
+    if (Ops.LHS->getType()->isFPOrFPVector())
+      return Builder.CreateFMul(Ops.LHS, Ops.RHS, "mul");
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
   }
   /// Create a binary op that checks for overflow.
@@ -699,11 +701,12 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     // An interesting aspect of this is that increment is always true.
     // Decrement does not have this property.
     NextVal = llvm::ConstantInt::getTrue();
+  } else if (isa<llvm::IntegerType>(InVal->getType())) {
+    NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
+    NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   } else {
     // Add the inc/dec to the real part.
-    if (isa<llvm::IntegerType>(InVal->getType()))
-      NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
-    else if (InVal->getType() == llvm::Type::FloatTy)
+    if (InVal->getType() == llvm::Type::FloatTy)
       NextVal = 
         llvm::ConstantFP::get(llvm::APFloat(static_cast<float>(AmountVal)));
     else if (InVal->getType() == llvm::Type::DoubleTy)
@@ -716,7 +719,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
                 &ignored);
       NextVal = llvm::ConstantFP::get(F);
     }
-    NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    NextVal = Builder.CreateFAdd(InVal, NextVal, isInc ? "inc" : "dec");
   }
   
   // Store the updated result through the lvalue.
@@ -735,6 +738,8 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
 Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   TestAndClearIgnoreResultAssign();
   Value *Op = Visit(E->getSubExpr());
+  if (Op->getType()->isFPOrFPVector())
+    return Builder.CreateFNeg(Op, "neg");
   return Builder.CreateNeg(Op, "neg");
 }
 
@@ -982,9 +987,13 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isPointerType()) {
-    if (CGF.getContext().getLangOptions().OverflowChecking
-        && Ops.Ty->isSignedIntegerType())
+    if (CGF.getContext().getLangOptions().OverflowChecking &&
+        Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
+    
+    if (Ops.LHS->getType()->isFPOrFPVector())
+      return Builder.CreateFAdd(Ops.LHS, Ops.RHS, "add");
+      
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
 
@@ -1050,6 +1059,9 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     if (CGF.getContext().getLangOptions().OverflowChecking
         && Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
+
+    if (Ops.LHS->getType()->isFPOrFPVector())
+      return Builder.CreateFSub(Ops.LHS, Ops.RHS, "sub");
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }
 
