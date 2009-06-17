@@ -720,7 +720,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 }
 
 /// getImplicitType - Check to see if the specified record has an implicit
-/// type which should be applied to it.  This infer the type of register
+/// type which should be applied to it.  This will infer the type of register
 /// references from the register file information, for example.
 ///
 static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
@@ -833,8 +833,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
                          getEnumName(getTypeNum(0)) + "'!");
               }
             }
-         }
-       }
+          }
+        }
       }
       
       return MadeChange;
