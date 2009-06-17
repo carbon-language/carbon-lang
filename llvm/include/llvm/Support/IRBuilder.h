@@ -17,6 +17,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Support/ConstantFolder.h"
@@ -586,32 +587,49 @@ public:
     return Insert(PHINode::Create(Ty), Name);
   }
 
+  CallInst *TransferAttributes(CallInst *CI, const Value* Callee) const {
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Callee))
+      Callee = GA->getAliasedGlobal();
+
+    if (const Function *F = dyn_cast<Function>(Callee)) {
+      CI->setCallingConv(F->getCallingConv());
+      CI->setAttributes(F->getAttributes());
+    }
+
+    return CI;
+  }
+
   CallInst *CreateCall(Value *Callee, const char *Name = "") {
-    return Insert(CallInst::Create(Callee), Name);
+    return Insert(TransferAttributes(CallInst::Create(Callee), Callee), Name);
   }
   CallInst *CreateCall(Value *Callee, Value *Arg, const char *Name = "") {
-    return Insert(CallInst::Create(Callee, Arg), Name);
+    return Insert(TransferAttributes(CallInst::Create(Callee, Arg),
+                                     Callee), Name);
   }
   CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
                         const char *Name = "") {
     Value *Args[] = { Arg1, Arg2 };
-    return Insert(CallInst::Create(Callee, Args, Args+2), Name);
+    return Insert(TransferAttributes(CallInst::Create(Callee, Args, Args+2),
+                                     Callee), Name);
   }
   CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         const char *Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3 };
-    return Insert(CallInst::Create(Callee, Args, Args+3), Name);
+    return Insert(TransferAttributes(CallInst::Create(Callee, Args, Args+3),
+                                     Callee), Name);
   }
   CallInst *CreateCall4(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         Value *Arg4, const char *Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
-    return Insert(CallInst::Create(Callee, Args, Args+4), Name);
+    return Insert(TransferAttributes(CallInst::Create(Callee, Args, Args+4),
+                                     Callee), Name);
   }
 
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin,
                        InputIterator ArgEnd, const char *Name = "") {
-    return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd), Name);
+    return Insert(TransferAttributes(CallInst::Create(Callee, ArgBegin, ArgEnd),
+                                     Callee), Name);
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,
