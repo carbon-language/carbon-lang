@@ -2453,9 +2453,12 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
           if (BO->getOpcode() == Instruction::And &&
               LCI->getValue() == CI->getValue())
             if (const SCEVZeroExtendExpr *Z =
-                  dyn_cast<SCEVZeroExtendExpr>(getSCEV(U->getOperand(0))))
-              return getZeroExtendExpr(getNotSCEV(Z->getOperand()),
-                                       U->getType());
+                  dyn_cast<SCEVZeroExtendExpr>(getSCEV(U->getOperand(0)))) {
+              SCEVHandle ZO = Z->getOperand();
+              if (APIntOps::isMask(getTypeSizeInBits(ZO->getType()),
+                                   CI->getValue()))
+                return getZeroExtendExpr(getNotSCEV(ZO), U->getType());
+            }
     }
     break;
 
