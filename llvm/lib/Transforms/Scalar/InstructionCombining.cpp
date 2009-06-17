@@ -8564,6 +8564,20 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     }
   }
 
+  // zext(trunc(t) & C) -> (t & C)  if C is a mask.
+  if (SrcI && SrcI->getOpcode() == Instruction::And && SrcI->hasOneUse())
+    if (ConstantInt *C = dyn_cast<ConstantInt>(SrcI->getOperand(1)))
+      if (TruncInst *TI = dyn_cast<TruncInst>(SrcI->getOperand(0))) {
+        Value *TI0 = TI->getOperand(0);
+        if (TI0->getType() == CI.getType()) {
+          unsigned TO = C->getValue().countTrailingOnes();
+          if (APIntOps::isMask(TO, C->getValue()))
+            return
+              BinaryOperator::Create(Instruction::And, TI0,
+                                     ConstantExpr::getZExt(C, CI.getType()));
+        }
+      }
+
   return 0;
 }
 
