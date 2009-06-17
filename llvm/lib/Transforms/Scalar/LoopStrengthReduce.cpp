@@ -1129,11 +1129,11 @@ static bool isNonConstantNegative(const SCEVHandle &Expr) {
   return SC->getValue()->getValue().isNegative();
 }
 
-// CollectIVUsers - Transform our list of users and offsets to a bit more
-// complex table. In this new vector, each 'BasedUser' contains 'Base', the base
-// of the strided accesses, as well as the old information from Uses. We
-// progressively move information from the Base field to the Imm field, until
-// we eventually have the full access expression to rewrite the use.
+/// CollectIVUsers - Transform our list of users and offsets to a bit more
+/// complex table. In this new vector, each 'BasedUser' contains 'Base', the base
+/// of the strided accesses, as well as the old information from Uses. We
+/// progressively move information from the Base field to the Imm field, until
+/// we eventually have the full access expression to rewrite the use.
 SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
                                               IVUsersOfOneStride &Uses,
                                               Loop *L,
@@ -2284,9 +2284,9 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
   }
 }
 
-// OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
-// uses in the loop, look to see if we can eliminate some, in favor of using
-// common indvars for the different uses.
+/// OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
+/// uses in the loop, look to see if we can eliminate some, in favor of using
+/// common indvars for the different uses.
 void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   // TODO: implement optzns here.
 
@@ -2413,9 +2413,9 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   ++NumLoopCond;
 }
 
-// OptimizeLoopCountIV - If, after all sharing of IVs, the IV used for deciding
-// when to exit the loop is used only for that purpose, try to rearrange things
-// so it counts down to a test against zero.
+/// OptimizeLoopCountIV - If, after all sharing of IVs, the IV used for deciding
+/// when to exit the loop is used only for that purpose, try to rearrange things
+/// so it counts down to a test against zero.
 void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
 
   // If the number of times the loop is executed isn't computable, give up.
