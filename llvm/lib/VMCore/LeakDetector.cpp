@@ -14,7 +14,10 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Threading.h"
+#include "llvm/System/RWMutex.h"
 #include "llvm/Value.h"
 using namespace llvm;
 
@@ -29,33 +32,63 @@ namespace {
     static void print(const Value* P) { cerr << *P; }
   };
 
+  ManagedStatic<sys::RWMutex> LeakDetectorLock;
+
   template <typename T>
   struct VISIBILITY_HIDDEN LeakDetectorImpl {
-    explicit LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
+    explicit LeakDetectorImpl(const char* const name = "") : 
+      Cache(0), Name(name) { }
 
+    void clear() {
+      Cache = 0;
+      Ts.clear();
+    }
+    
+    void setName(const char* n) { 
+      Name = n;
+    }
+    
     // Because the most common usage pattern, by far, is to add a
     // garbage object, then remove it immediately, we optimize this
     // case.  When an object is added, it is not added to the set
     // immediately, it is added to the CachedValue Value.  If it is
     // immediately removed, no set search need be performed.
     void addGarbage(const T* o) {
-      if (Cache) {
-        assert(Ts.count(Cache) == 0 && "Object already in set!");
-        Ts.insert(Cache);
+      if (llvm_is_multithreaded()) {
+        sys::ScopedWriter Writer(&*LeakDetectorLock);
+        if (Cache) {
+          assert(Ts.count(Cache) == 0 && "Object already in set!");
+          Ts.insert(Cache);
+        }
+        Cache = o;
+      } else {
+        if (Cache) {
+          assert(Ts.count(Cache) == 0 && "Object already in set!");
+          Ts.insert(Cache);
+        }
+        Cache = o;
       }
-      Cache = o;
     }
 
     void removeGarbage(const T* o) {
-      if (o == Cache)
-        Cache = 0; // Cache hit
-      else
-        Ts.erase(o);
+      if (llvm_is_multithreaded()) {
+        sys::ScopedWriter Writer(&*LeakDetectorLock);
+        if (o == Cache)
+          Cache = 0; // Cache hit
+        else
+          Ts.erase(o);
+      } else {
+        if (o == Cache)
+          Cache = 0; // Cache hit
+        else
+          Ts.erase(o);
+      }
     }
 
     bool hasGarbage(const std::string& Message) {
       addGarbage(0); // Flush the Cache
 
+      if (llvm_is_multithreaded()) LeakDetectorLock->reader_acquire();
       assert(Cache == 0 && "No value should be cached anymore!");
 
       if (!Ts.empty()) {
@@ -68,60 +101,52 @@ namespace {
         }
         cerr << '\n';
 
+        if (llvm_is_multithreaded()) LeakDetectorLock->reader_release();
         return true;
       }
+      
+      if (llvm_is_multithreaded()) LeakDetectorLock->reader_release();
       return false;
     }
 
   private:
     SmallPtrSet<const T*, 8> Ts;
     const T* Cache;
-    const char* const Name;
+    const char* Name;
   };
 
-  static LeakDetectorImpl<void>  *Objects;
-  static LeakDetectorImpl<Value> *LLVMObjects;
-
-  static LeakDetectorImpl<void> &getObjects() {
-    if (Objects == 0)
-      Objects = new LeakDetectorImpl<void>("GENERIC");
-    return *Objects;
-  }
-
-  static LeakDetectorImpl<Value> &getLLVMObjects() {
-    if (LLVMObjects == 0)
-      LLVMObjects = new LeakDetectorImpl<Value>("LLVM");
-    return *LLVMObjects;
-  }
+  static ManagedStatic<LeakDetectorImpl<void> > Objects;
+  static ManagedStatic<LeakDetectorImpl<Value> > LLVMObjects;
 
   static void clearGarbage() {
-    delete Objects;
-    delete LLVMObjects;
-    Objects = 0;
-    LLVMObjects = 0;
+    Objects->clear();
+    LLVMObjects->clear();
   }
 }
 
 void LeakDetector::addGarbageObjectImpl(void *Object) {
-  getObjects().addGarbage(Object);
+  Objects->addGarbage(Object);
 }
 
 void LeakDetector::addGarbageObjectImpl(const Value *Object) {
-  getLLVMObjects().addGarbage(Object);
+  LLVMObjects->addGarbage(Object);
 }
 
 void LeakDetector::removeGarbageObjectImpl(void *Object) {
-  getObjects().removeGarbage(Object);
+  Objects->removeGarbage(Object);
 }
 
 void LeakDetector::removeGarbageObjectImpl(const Value *Object) {
-  getLLVMObjects().removeGarbage(Object);
+  LLVMObjects->removeGarbage(Object);
 }
 
 void LeakDetector::checkForGarbageImpl(const std::string &Message) {
+  Objects->setName("GENERIC");
+  LLVMObjects->setName("LLVM");
+  
   // use non-short-circuit version so that both checks are performed
-  if (getObjects().hasGarbage(Message) |
-      getLLVMObjects().hasGarbage(Message))
+  if (Objects->hasGarbage(Message) |
+      LLVMObjects->hasGarbage(Message))
     cerr << "\nThis is probably because you removed an object, but didn't "
          << "delete it.  Please check your code for memory leaks.\n";
 
