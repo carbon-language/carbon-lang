@@ -5,6 +5,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/IRBuilder.h"
 #include <cstdio>
@@ -1081,6 +1082,8 @@ double printd(double X) {
 //===----------------------------------------------------------------------===//
 
 int main() {
+  InitializeNativeTarget();
+  
   // Install standard binary operators.
   // 1 is lowest precedence.
   BinopPrecedence['='] = 2;

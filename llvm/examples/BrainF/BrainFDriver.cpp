@@ -34,6 +34,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Target/TargetSelect.h"
 #include <fstream>
 #include <iostream>
 using namespace llvm;
@@ -135,6 +136,8 @@ int main(int argc, char **argv) {
 
   //Write it out
   if (JIT) {
+    InitializeNativeTarget();
+
     std::cout << "------- Running JIT -------\n";
     ExistingModuleProvider *mp = new ExistingModuleProvider(mod);
     ExecutionEngine *ee = ExecutionEngine::create(mp, false);

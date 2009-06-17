@@ -26,6 +26,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/Target/TargetSelect.h"
 #include <iostream>
 using namespace llvm;
 
@@ -229,8 +230,9 @@ void* callFunc( void* param )
   return (void*)(intptr_t)gv.IntVal.getZExtValue();
 }
 
-int main()
-{
+int main() {
+  InitializeNativeTarget();
+
   // Create some module to put our function into it.
   Module *M = new Module("test");
 

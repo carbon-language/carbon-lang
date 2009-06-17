@@ -42,11 +42,15 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/Target/TargetSelect.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 int main() {
+  
+  InitializeNativeTarget();
+  
   // Create some module to put our function into it.
   Module *M = new Module("test");
 
