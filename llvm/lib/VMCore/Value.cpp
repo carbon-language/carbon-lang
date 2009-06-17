@@ -21,7 +21,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Threading.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/System/RWMutex.h"
 #include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 using namespace llvm;
@@ -405,6 +407,7 @@ Value *Value::DoPHITranslation(const BasicBlock *CurBB,
 /// not a value has an entry in this map.
 typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
 static ManagedStatic<ValueHandlesTy> ValueHandles;
+static ManagedStatic<sys::RWMutex> ValueHandlesLock;
 
 /// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
 /// List is known to point into the existing use list.
@@ -427,9 +430,12 @@ void ValueHandleBase::AddToUseList() {
   if (VP->HasValueHandle) {
     // If this value already has a ValueHandle, then it must be in the
     // ValueHandles map already.
+    if (llvm_is_multithreaded()) ValueHandlesLock->reader_acquire();
     ValueHandleBase *&Entry = (*ValueHandles)[VP];
     assert(Entry != 0 && "Value doesn't have any handles?");
-    return AddToExistingUseList(&Entry);
+    AddToExistingUseList(&Entry);
+    if (llvm_is_multithreaded()) ValueHandlesLock->reader_release();
+    return;
   }
   
   // Ok, it doesn't have any handles yet, so we must insert it into the
@@ -437,6 +443,7 @@ void ValueHandleBase::AddToUseList() {
   // reallocate itself, which would invalidate all of the PrevP pointers that
   // point into the old table.  Handle this by checking for reallocation and
   // updating the stale pointers only if needed.
+  if (llvm_is_multithreaded()) ValueHandlesLock->writer_acquire();
   ValueHandlesTy &Handles = *ValueHandles;
   const void *OldBucketPtr = Handles.getPointerIntoBucketsArray();
   
@@ -448,8 +455,10 @@ void ValueHandleBase::AddToUseList() {
   // If reallocation didn't happen or if this was the first insertion, don't
   // walk the table.
   if (Handles.isPointerIntoBucketsArray(OldBucketPtr) || 
-      Handles.size() == 1)
+      Handles.size() == 1) {
+    if (llvm_is_multithreaded()) ValueHandlesLock->writer_release();
     return;
+  }
   
   // Okay, reallocation did happen.  Fix the Prev Pointers.
   for (ValueHandlesTy::iterator I = Handles.begin(), E = Handles.end();
@@ -457,6 +466,8 @@ void ValueHandleBase::AddToUseList() {
     assert(I->second && I->first == I->second->VP && "List invariant broken!");
     I->second->setPrevPtr(&I->second);
   }
+  
+  if (llvm_is_multithreaded()) ValueHandlesLock->writer_release();
 }
 
 /// RemoveFromUseList - Remove this ValueHandle from its current use list.
@@ -477,11 +488,13 @@ void ValueHandleBase::RemoveFromUseList() {
   // If the Next pointer was null, then it is possible that this was the last
   // ValueHandle watching VP.  If so, delete its entry from the ValueHandles
   // map.
+  if (llvm_is_multithreaded()) ValueHandlesLock->writer_acquire();
   ValueHandlesTy &Handles = *ValueHandles;
   if (Handles.isPointerIntoBucketsArray(PrevPtr)) {
     Handles.erase(VP);
     VP->HasValueHandle = false;
   }
+  if (llvm_is_multithreaded()) ValueHandlesLock->writer_release();
 }
 
 
@@ -490,7 +503,9 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
 
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.
+  if (llvm_is_multithreaded()) ValueHandlesLock->reader_acquire();
   ValueHandleBase *Entry = (*ValueHandles)[V];
+  if (llvm_is_multithreaded()) ValueHandlesLock->reader_release();
   assert(Entry && "Value bit set but no entries exist");
   
   while (Entry) {
@@ -528,7 +543,9 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
   
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.
+  if (llvm_is_multithreaded()) ValueHandlesLock->reader_acquire();
   ValueHandleBase *Entry = (*ValueHandles)[Old];
+  if (llvm_is_multithreaded()) ValueHandlesLock->reader_release();
   assert(Entry && "Value bit set but no entries exist");
   
   while (Entry) {
