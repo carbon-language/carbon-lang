@@ -935,6 +935,8 @@ AC_LINK_IFELSE(
         volatile unsigned long val = 1;
         __sync_synchronize();
         __sync_val_compare_and_swap(&val, 1, 0);
+        __sync_add_and_fetch(&val, 1);
+        __sync_sub_and_fetch(&val, 1);
         return 0;
       }
     ]]),

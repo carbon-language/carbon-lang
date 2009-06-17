@@ -353,10 +353,7 @@ public:
   /// addAbstractTypeUser - Notify an abstract type that there is a new user of
   /// it.  This function is called primarily by the PATypeHandle class.
   ///
-  void addAbstractTypeUser(AbstractTypeUser *U) const {
-    assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-    AbstractTypeUsers.push_back(U);
-  }
+  void addAbstractTypeUser(AbstractTypeUser *U) const;
   
   /// removeAbstractTypeUser - Notify an abstract type that a user of the class
   /// no longer has a handle to the type.  This function is called primarily by

@@ -51,3 +51,31 @@ sys::cas_flag sys::CompareAndSwap(volatile sys::cas_flag* ptr,
 #  error No compare-and-swap implementation for your platform!
 #endif
 }
+
+sys::cas_flag sys::AtomicPostIncrement(volatile sys::cas_flag* ptr) {
+#if LLVM_MULTITHREADED==0
+  ++(*ptr);
+  return *ptr;
+#elif defined(__GNUC__)
+  return __sync_add_and_fetch(ptr, 1);
+#elif defined(_MSC_VER)
+  return InterlockedCompareExchange(ptr, new_value, old_value);
+#else
+#  error No atomic increment implementation for your platform!
+#endif
+}
+
+sys::cas_flag sys::AtomicPostDecrement(volatile sys::cas_flag* ptr) {
+#if LLVM_MULTITHREADED==0
+  --(*ptr);
+  return *ptr;
+#elif defined(__GNUC__)
+  return __sync_sub_and_fetch(ptr, 1);
+#elif defined(_MSC_VER)
+  return InterlockedIncrement(ptr);
+#else
+#  error No atomic decrement implementation for your platform!
+#endif
+}
+
+
