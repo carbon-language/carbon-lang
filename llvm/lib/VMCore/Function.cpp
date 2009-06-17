@@ -18,6 +18,7 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/StringPool.h"
+#include "llvm/Support/Threading.h"
 #include "llvm/System/RWMutex.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/DenseMap.h"
@@ -230,21 +231,20 @@ void Function::removeAttribute(unsigned i, Attributes attr) {
 // allocating an additional word in Function for programs which do not use GC
 // (i.e., most programs) at the cost of increased overhead for clients which do
 // use GC.
-static ManagedStatic<DenseMap<const Function*,PooledStringPtr> > GCNames;
-static ManagedStatic<StringPool> GCNamePool;
+static DenseMap<const Function*,PooledStringPtr> *GCNames;
+static StringPool *GCNamePool;
 static ManagedStatic<sys::RWMutex> GCLock;
 
 bool Function::hasGC() const {
   if (llvm_is_multithreaded()) {
     sys::ScopedReader Reader(&*GCLock);
-    return GCNames->count(this);
-  } else 
-    return GCNames->count(this);
+    return GCNames && GCNames->count(this);
+  } else
+    return GCNames && GCNames->count(this);
 }
 
 const char *Function::getGC() const {
   assert(hasGC() && "Function has no collector");
-  
   if (llvm_is_multithreaded()) {
     sys::ScopedReader Reader(&*GCLock);
     return *(*GCNames)[this];
@@ -253,19 +253,29 @@ const char *Function::getGC() const {
 }
 
 void Function::setGC(const char *Str) {
-  if (llvm_is_multithreaded()) {
-    sys::ScopedWriter Writer(&*GCLock);
-    (*GCNames)[this] = GCNamePool->intern(Str);
-  } else
-    (*GCNames)[this] = GCNamePool->intern(Str); 
+  if (llvm_is_multithreaded()) GCLock->writer_acquire();
+  if (!GCNamePool)
+    GCNamePool = new StringPool();
+  if (!GCNames)
+    GCNames = new DenseMap<const Function*,PooledStringPtr>();
+  (*GCNames)[this] = GCNamePool->intern(Str);
+  if (llvm_is_multithreaded()) GCLock->writer_release();
 }
 
 void Function::clearGC() {
-  if (llvm_is_multithreaded()) {
-    sys::ScopedWriter Writer(&*GCLock);
+  if (llvm_is_multithreaded()) GCLock->writer_acquire();
+  if (GCNames) {
     GCNames->erase(this);
-  } else
-    GCNames->erase(this);
+    if (GCNames->empty()) {
+      delete GCNames;
+      GCNames = 0;
+      if (GCNamePool->empty()) {
+        delete GCNamePool;
+        GCNamePool = 0;
+      }
+    }
+  }
+  if (llvm_is_multithreaded()) GCLock->writer_release();
 }
 
 /// copyAttributesFrom - copy all additional attributes (those not needed to
