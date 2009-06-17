@@ -57,7 +57,7 @@ abstract graph. The structure of this graph is completely determined
 by plugins, which can be either statically or dynamically linked. This
 makes it possible to easily adapt LLVMC for other purposes - for
 example, as a build tool for game resources.</p>
-<p>Because LLVMC employs <a class="reference external" href="http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html">TableGen</a> as its configuration language, you
+<p>Because LLVMC employs <a class="reference external" href="http://llvm.org/docs/TableGenFundamentals.html">TableGen</a> as its configuration language, you
 need to be familiar with it to customize LLVMC.</p>
 </div>
 <div class="section" id="compiling-with-llvmc">
@@ -71,12 +71,12 @@ $ llvmc -O3 -Wall hello.cpp
 $ ./a.out
 hello
 </pre>
-<p>One nice feature of LLVMC is that one doesn't have to distinguish
-between different compilers for different languages (think <tt class="docutils literal"><span class="pre">g++</span></tt> and
-<tt class="docutils literal"><span class="pre">gcc</span></tt>) - the right toolchain is chosen automatically based on input
-language names (which are, in turn, determined from file
-extensions). If you want to force files ending with &quot;.c&quot; to compile as
-C++, use the <tt class="docutils literal"><span class="pre">-x</span></tt> option, just like you would do it with <tt class="docutils literal"><span class="pre">gcc</span></tt>:</p>
+<p>One nice feature of LLVMC is that one doesn't have to distinguish between
+different compilers for different languages (think <tt class="docutils literal"><span class="pre">g++</span></tt> vs.  <tt class="docutils literal"><span class="pre">gcc</span></tt>) - the
+right toolchain is chosen automatically based on input language names (which
+are, in turn, determined from file extensions). If you want to force files
+ending with &quot;.c&quot; to compile as C++, use the <tt class="docutils literal"><span class="pre">-x</span></tt> option, just like you would
+do it with <tt class="docutils literal"><span class="pre">gcc</span></tt>:</p>
 <pre class="literal-block">
 $ # hello.c is really a C++ file
 $ llvmc -x c++ hello.c
@@ -158,13 +158,13 @@ $ mv Simple.td MyPlugin.td
 </pre>
 <p>To build your plugin as a dynamic library, just <tt class="docutils literal"><span class="pre">cd</span></tt> to its source
 directory and run <tt class="docutils literal"><span class="pre">make</span></tt>. The resulting file will be called
-<tt class="docutils literal"><span class="pre">LLVMC$(LLVMC_PLUGIN).$(DLL_EXTENSION)</span></tt> (in our case,
-<tt class="docutils literal"><span class="pre">LLVMCMyPlugin.so</span></tt>). This library can be then loaded in with the
+<tt class="docutils literal"><span class="pre">plugin_llvmc_$(LLVMC_PLUGIN).$(DLL_EXTENSION)</span></tt> (in our case,
+<tt class="docutils literal"><span class="pre">plugin_llvmc_MyPlugin.so</span></tt>). This library can be then loaded in with the
 <tt class="docutils literal"><span class="pre">-load</span></tt> option. Example:</p>
 <pre class="literal-block">
 $ cd $LLVMC_DIR/plugins/Simple
 $ make
-$ llvmc -load $LLVM_DIR/Release/lib/LLVMCSimple.so
+$ llvmc -load $LLVM_DIR/Release/lib/plugin_llvmc_Simple.so
 </pre>
 </div>
 <div class="section" id="compiling-standalone-llvmc-based-drivers">
@@ -197,7 +197,7 @@ $ make
 $ cd $LLVMC_DIR
 $ make LLVMC_BUILTIN_PLUGINS=MyPlugin LLVMC_BASED_DRIVER_NAME=mydriver
 </pre>
-<p>This works with both srcdir==objdir and srcdir != objdir, but assumes that the
+<p>This works with both srcdir == objdir and srcdir != objdir, but assumes that the
 plugin source directory was placed under <tt class="docutils literal"><span class="pre">$LLVMC_DIR/plugins</span></tt>.</p>
 <p>Sometimes, you will want a 'bare-bones' version of LLVMC that has no
 built-in plugins. It can be compiled with the following command:</p>

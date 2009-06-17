@@ -48,12 +48,13 @@ command-line LLVMC usage, refer to the <tt class="docutils literal"><span class=
 </div>
 <div class="section" id="using-llvmc-to-generate-toolchain-drivers">
 <h1><a class="toc-backref" href="#id3">Using LLVMC to generate toolchain drivers</a></h1>
-<p>LLVMC plugins are written mostly using <a class="reference external" href="http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html">TableGen</a>, so you need to
+<p>LLVMC plugins are written mostly using <a class="reference external" href="http://llvm.org/docs/TableGenFundamentals.html">TableGen</a>, so you need to
 be familiar with it to get anything done.</p>
 <p>Start by compiling <tt class="docutils literal"><span class="pre">example/Simple</span></tt>, which is a primitive wrapper for
 <tt class="docutils literal"><span class="pre">gcc</span></tt>:</p>
 <pre class="literal-block">
 $ cd $LLVM_DIR/tools/llvmc
+$ cp -r example/Simple plugins/Simple
 
   # NB: A less verbose way to compile standalone LLVMC-based drivers is
   # described in the reference manual.
