@@ -1221,6 +1221,34 @@ private:
       }
       return I;
     }
+    
+    ConstantClass* Create(const TypeClass *Ty, const ValType &V,
+                          typename MapTy::iterator I) {
+      ConstantClass* Result =
+        ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
+
+      assert(Result->getType() == Ty && "Type specified is not correct!");
+      I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
+
+      if (HasLargeKey)  // Remember the reverse mapping if needed.
+        InverseMap.insert(std::make_pair(Result, I));
+
+      // If the type of the constant is abstract, make sure that an entry
+      // exists for it in the AbstractTypeMap.
+      if (Ty->isAbstract()) {
+        typename AbstractTypeMapTy::iterator TI = 
+                                                 AbstractTypeMap.find(Ty);
+
+        if (TI == AbstractTypeMap.end()) {
+          // Add ourselves to the ATU list of the type.
+          cast<DerivedType>(Ty)->addAbstractTypeUser(this);
+
+          AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
+        }
+      }
+      
+      return Result;
+    }
 public:
     
     /// getOrCreate - Return the specified constant from the map, creating it if
@@ -1245,28 +1273,7 @@ public:
             Result = static_cast<ConstantClass *>(I->second);
           if (!Result) {
             // If no preexisting value, create one now...
-            Result =
-              ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
-
-            assert(Result->getType() == Ty && "Type specified is not correct!");
-            I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
-
-            if (HasLargeKey)  // Remember the reverse mapping if needed.
-              InverseMap.insert(std::make_pair(Result, I));
-
-            // If the type of the constant is abstract, make sure that an entry
-            // exists for it in the AbstractTypeMap.
-            if (Ty->isAbstract()) {
-              typename AbstractTypeMapTy::iterator TI = 
-                                                       AbstractTypeMap.find(Ty);
-
-              if (TI == AbstractTypeMap.end()) {
-                // Add ourselves to the ATU list of the type.
-                cast<DerivedType>(Ty)->addAbstractTypeUser(this);
-
-                AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
-              }
-            }
+            Result = Create(Ty, V, I);
           }
         }
         
@@ -1278,28 +1285,7 @@ public:
           return static_cast<ConstantClass *>(I->second);  
 
         // If no preexisting value, create one now...
-        ConstantClass *Result =
-          ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
-
-        assert(Result->getType() == Ty && "Type specified is not correct!");
-        I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
-        
-        if (HasLargeKey)  // Remember the reverse mapping if needed.
-          InverseMap.insert(std::make_pair(Result, I));
-        
-        // If the type of the constant is abstract, make sure that an entry
-        // exists for it in the AbstractTypeMap.
-        if (Ty->isAbstract()) {
-          typename AbstractTypeMapTy::iterator TI = AbstractTypeMap.find(Ty);
-
-          if (TI == AbstractTypeMap.end()) {
-            // Add ourselves to the ATU list of the type.
-            cast<DerivedType>(Ty)->addAbstractTypeUser(this);
-            
-            AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
-          }
-        }
-        return Result;
+        return Create(Ty, V, I);
       }
     }
 
