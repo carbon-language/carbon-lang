@@ -67,6 +67,7 @@
 #include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Target/TargetSelect.h"
 #include <cstdlib>
 #if HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -2142,6 +2143,9 @@ int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
 
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllAsmPrinters();
+  
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
   
