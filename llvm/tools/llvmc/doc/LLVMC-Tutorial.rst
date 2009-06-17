@@ -46,12 +46,13 @@ Using LLVMC to generate toolchain drivers
 LLVMC plugins are written mostly using TableGen_, so you need to
 be familiar with it to get anything done.
 
-.. _TableGen: http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
+.. _TableGen: http://llvm.org/docs/TableGenFundamentals.html
 
 Start by compiling ``example/Simple``, which is a primitive wrapper for
 ``gcc``::
 
     $ cd $LLVM_DIR/tools/llvmc
+    $ cp -r example/Simple plugins/Simple
 
       # NB: A less verbose way to compile standalone LLVMC-based drivers is
       # described in the reference manual.

@@ -33,7 +33,7 @@ example, as a build tool for game resources.
 Because LLVMC employs TableGen_ as its configuration language, you
 need to be familiar with it to customize LLVMC.
 
-.. _TableGen: http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
+.. _TableGen: http://llvm.org/docs/TableGenFundamentals.html
 
 
 Compiling with LLVMC
@@ -48,12 +48,12 @@ you shouldn't be able to notice them::
      $ ./a.out
      hello
 
-One nice feature of LLVMC is that one doesn't have to distinguish
-between different compilers for different languages (think ``g++`` and
-``gcc``) - the right toolchain is chosen automatically based on input
-language names (which are, in turn, determined from file
-extensions). If you want to force files ending with ".c" to compile as
-C++, use the ``-x`` option, just like you would do it with ``gcc``::
+One nice feature of LLVMC is that one doesn't have to distinguish between
+different compilers for different languages (think ``g++`` vs.  ``gcc``) - the
+right toolchain is chosen automatically based on input language names (which
+are, in turn, determined from file extensions). If you want to force files
+ending with ".c" to compile as C++, use the ``-x`` option, just like you would
+do it with ``gcc``::
 
       $ # hello.c is really a C++ file
       $ llvmc -x c++ hello.c
@@ -148,13 +148,13 @@ generic::
 
 To build your plugin as a dynamic library, just ``cd`` to its source
 directory and run ``make``. The resulting file will be called
-``LLVMC$(LLVMC_PLUGIN).$(DLL_EXTENSION)`` (in our case,
-``LLVMCMyPlugin.so``). This library can be then loaded in with the
+``plugin_llvmc_$(LLVMC_PLUGIN).$(DLL_EXTENSION)`` (in our case,
+``plugin_llvmc_MyPlugin.so``). This library can be then loaded in with the
 ``-load`` option. Example::
 
     $ cd $LLVMC_DIR/plugins/Simple
     $ make
-    $ llvmc -load $LLVM_DIR/Release/lib/LLVMCSimple.so
+    $ llvmc -load $LLVM_DIR/Release/lib/plugin_llvmc_Simple.so
 
 Compiling standalone LLVMC-based drivers
 ========================================
@@ -187,7 +187,7 @@ Another way to do the same thing is by using the following command::
     $ cd $LLVMC_DIR
     $ make LLVMC_BUILTIN_PLUGINS=MyPlugin LLVMC_BASED_DRIVER_NAME=mydriver
 
-This works with both srcdir==objdir and srcdir != objdir, but assumes that the
+This works with both srcdir == objdir and srcdir != objdir, but assumes that the
 plugin source directory was placed under ``$LLVMC_DIR/plugins``.
 
 Sometimes, you will want a 'bare-bones' version of LLVMC that has no
