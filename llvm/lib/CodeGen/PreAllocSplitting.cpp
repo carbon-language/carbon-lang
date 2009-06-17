@@ -343,7 +343,7 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
   if (CurrSLI->hasAtLeastOneValue())
     CurrSValNo = CurrSLI->getValNumInfo(0);
   else
-    CurrSValNo = CurrSLI->getNextValue(~0U, 0, LSs->getVNInfoAllocator());
+    CurrSValNo = CurrSLI->getNextValue(0, 0, false, LSs->getVNInfoAllocator());
   return SS;
 }
 
@@ -637,8 +637,9 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
   if (Phis.count(MBB)) return Phis[MBB]; 
 
   unsigned StartIndex = LIs->getMBBStartIdx(MBB);
-  VNInfo *RetVNI = Phis[MBB] = LI->getNextValue(~0U, /*FIXME*/ 0,
-                                                LIs->getVNInfoAllocator());
+  VNInfo *RetVNI = Phis[MBB] =
+    LI->getNextValue(0, /*FIXME*/ 0, false, LIs->getVNInfoAllocator());
+
   if (!IsIntraBlock) LiveOut[MBB] = RetVNI;
     
   // If there are no uses or defs between our starting point and the
@@ -654,7 +655,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
       IncomingVNs[*PI] = Incoming;
   }
     
-  if (MBB->pred_size() == 1 && !RetVNI->hasPHIKill) {
+  if (MBB->pred_size() == 1 && !RetVNI->hasPHIKill()) {
     VNInfo* OldVN = RetVNI;
     VNInfo* NewVN = IncomingVNs.begin()->second;
     VNInfo* MergedVN = LI->MergeValueNumberInto(OldVN, NewVN);
@@ -678,7 +679,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
     // VNInfo to represent the joined value.
     for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
            IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
-      I->second->hasPHIKill = true;
+      I->second->setHasPHIKill(true);
       unsigned KillIndex = LIs->getMBBEndIdx(I->first);
       if (!LiveInterval::isKill(I->second, KillIndex))
         LI->addKill(I->second, KillIndex);
@@ -730,7 +731,9 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     unsigned DefIdx = LIs->getInstructionIndex(&*DI);
     DefIdx = LiveIntervals::getDefIndex(DefIdx);
     
-    VNInfo* NewVN = LI->getNextValue(DefIdx, 0, Alloc);
+    assert(DI->getOpcode() != TargetInstrInfo::PHI &&
+           "Following NewVN isPHIDef flag incorrect. Fix me!");
+    VNInfo* NewVN = LI->getNextValue(DefIdx, 0, true, Alloc);
     
     // If the def is a move, set the copy field.
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
@@ -793,7 +796,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     
     // Bail out if we ever encounter a valno that has a PHI kill.  We can't
     // renumber these.
-    if (OldVN->hasPHIKill) return;
+    if (OldVN->hasPHIKill()) return;
     
     VNsToCopy.push_back(OldVN);
     
@@ -823,9 +826,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     VNInfo* OldVN = *OI;
     
     // Copy the valno over
-    VNInfo* NewVN = NewLI.getNextValue(OldVN->def, OldVN->copy, 
-                                       LIs->getVNInfoAllocator());
-    NewLI.copyValNumInfo(NewVN, OldVN);
+    VNInfo* NewVN = NewLI.createValueCopy(OldVN, LIs->getVNInfoAllocator());
     NewLI.MergeValueInAsValue(*CurrLI, OldVN, NewVN);
 
     // Remove the valno from the old interval
@@ -873,7 +874,7 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
   
   MachineBasicBlock::iterator KillPt = BarrierMBB->end();
   unsigned KillIdx = 0;
-  if (ValNo->def == ~0U || DefMI->getParent() == BarrierMBB)
+  if (!ValNo->isDefAccurate() || DefMI->getParent() == BarrierMBB)
     KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, KillIdx);
   else
     KillPt = findNextEmptySlot(DefMI->getParent(), DefMI, KillIdx);
@@ -942,7 +943,7 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
     if (CurrSLI->hasAtLeastOneValue())
       CurrSValNo = CurrSLI->getValNumInfo(0);
     else
-      CurrSValNo = CurrSLI->getNextValue(~0U, 0, LSs->getVNInfoAllocator());
+      CurrSValNo = CurrSLI->getNextValue(0, 0, false, LSs->getVNInfoAllocator());
   }
   
   return FMI;
@@ -1032,13 +1033,13 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     CurrLI->FindLiveRangeContaining(LIs->getUseIndex(BarrierIdx));
   VNInfo *ValNo = LR->valno;
 
-  if (ValNo->def == ~1U) {
+  if (ValNo->isUnused()) {
     // Defined by a dead def? How can this be?
     assert(0 && "Val# is defined by a dead def?");
     abort();
   }
 
-  MachineInstr *DefMI = (ValNo->def != ~0U)
+  MachineInstr *DefMI = ValNo->isDefAccurate()
     ? LIs->getInstructionFromIndex(ValNo->def) : NULL;
 
   // If this would create a new join point, do not split.
@@ -1072,8 +1073,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   unsigned SpillIndex = 0;
   MachineInstr *SpillMI = NULL;
   int SS = -1;
-  if (ValNo->def == ~0U) {
-    // If it's defined by a phi, we must split just before the barrier.
+  if (!ValNo->isDefAccurate()) {
+    // If we don't know where the def is we must split just before the barrier.
     if ((SpillMI = FoldSpill(LI->reg, RC, 0, Barrier,
                             BarrierMBB, SS, RefsInMBB))) {
       SpillIndex = LIs->getInstructionIndex(SpillMI);
@@ -1254,17 +1255,16 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
       
       // We don't currently try to handle definitions with PHI kills, because
       // it would involve processing more than one VNInfo at once.
-      if (CurrVN->hasPHIKill) continue;
+      if (CurrVN->hasPHIKill()) continue;
       
       // We also don't try to handle the results of PHI joins, since there's
       // no defining instruction to analyze.
-      unsigned DefIdx = CurrVN->def;
-      if (DefIdx == ~0U || DefIdx == ~1U) continue;
+      if (!CurrVN->isDefAccurate() || CurrVN->isUnused()) continue;
     
       // We're only interested in eliminating cruft introduced by the splitter,
       // is of the form load-use or load-use-store.  First, check that the
       // definition is a load, and remember what stack slot we loaded it from.
-      MachineInstr* DefMI = LIs->getInstructionFromIndex(DefIdx);
+      MachineInstr* DefMI = LIs->getInstructionFromIndex(CurrVN->def);
       int FrameIndex;
       if (!TII->isLoadFromStackSlot(DefMI, FrameIndex)) continue;
       
@@ -1383,7 +1383,7 @@ bool PreAllocSplitting::createsNewJoin(LiveRange* LR,
   if (DefMBB == BarrierMBB)
     return false;
   
-  if (LR->valno->hasPHIKill)
+  if (LR->valno->hasPHIKill())
     return false;
   
   unsigned MBBEnd = LIs->getMBBEndIdx(BarrierMBB);

@@ -827,7 +827,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
         // Add a live range for the new vreg
         LiveInterval& Int = LI.getInterval(I->getOperand(i).getReg());
         VNInfo* FirstVN = *Int.vni_begin();
-        FirstVN->hasPHIKill = false;
+        FirstVN->setHasPHIKill(false);
         if (I->getOperand(i).isKill())
           FirstVN->kills.push_back(
                          LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
@@ -886,10 +886,7 @@ bool StrongPHIElimination::mergeLiveIntervals(unsigned primary,
     VNInfo* OldVN = R.valno;
     VNInfo*& NewVN = VNMap[OldVN];
     if (!NewVN) {
-      NewVN = LHS.getNextValue(OldVN->def,
-                               OldVN->copy,
-                               LI.getVNInfoAllocator());
-      NewVN->kills = OldVN->kills;
+      NewVN = LHS.createValueCopy(OldVN, LI.getVNInfoAllocator());
     }
     
     LiveRange LR (R.start, R.end, NewVN);
@@ -987,7 +984,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       LiveInterval& Int = LI.getOrCreateInterval(I->first);
       const LiveRange* LR =
                        Int.getLiveRangeContaining(LI.getMBBEndIdx(SI->second));
-      LR->valno->hasPHIKill = true;
+      LR->valno->setHasPHIKill(true);
       
       I->second.erase(SI->first);
     }
@@ -1037,7 +1034,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       // now has an unknown def.
       unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
       const LiveRange* PLR = PI.getLiveRangeContaining(idx);
-      PLR->valno->def = ~0U;
+      PLR->valno->setIsPHIDef(true);
       LiveRange R (LI.getMBBStartIdx(PInstr->getParent()),
                    PLR->start, PLR->valno);
       PI.addRange(R);

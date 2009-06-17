@@ -47,16 +47,24 @@ protected:
     tii = mf->getTarget().getInstrInfo();
   }
 
-  /// Insert a store of the given vreg to the given stack slot immediately
-  /// after the given instruction. Returns the base index of the inserted
-  /// instruction. The caller is responsible for adding an appropriate
-  /// LiveInterval to the LiveIntervals analysis.
-  unsigned insertStoreFor(MachineInstr *mi, unsigned ss,
-                          unsigned newVReg,
-                          const TargetRegisterClass *trc) {
-    MachineBasicBlock::iterator nextInstItr(mi); 
-    ++nextInstItr;
+  /// Ensures there is space before the given machine instruction, returns the
+  /// instruction's new number.
+  unsigned makeSpaceBefore(MachineInstr *mi) {
+    if (!lis->hasGapBeforeInstr(lis->getInstructionIndex(mi))) {
+      lis->scaleNumbering(2);
+      ls->scaleNumbering(2);
+    }
 
+    unsigned miIdx = lis->getInstructionIndex(mi);
+
+    assert(lis->hasGapBeforeInstr(miIdx));
+    
+    return miIdx;
+  }
+
+  /// Ensure there is space after the given machine instruction, returns the
+  /// instruction's new number.
+  unsigned makeSpaceAfter(MachineInstr *mi) {
     if (!lis->hasGapAfterInstr(lis->getInstructionIndex(mi))) {
       lis->scaleNumbering(2);
       ls->scaleNumbering(2);
@@ -66,7 +74,23 @@ protected:
 
     assert(lis->hasGapAfterInstr(miIdx));
 
-    tii->storeRegToStackSlot(*mi->getParent(), nextInstItr, newVReg,
+    return miIdx;
+  }  
+
+
+  /// Insert a store of the given vreg to the given stack slot immediately
+  /// after the given instruction. Returns the base index of the inserted
+  /// instruction. The caller is responsible for adding an appropriate
+  /// LiveInterval to the LiveIntervals analysis.
+  unsigned insertStoreFor(MachineInstr *mi, unsigned ss,
+                          unsigned vreg,
+                          const TargetRegisterClass *trc) {
+    MachineBasicBlock::iterator nextInstItr(mi); 
+    ++nextInstItr;
+
+    unsigned miIdx = makeSpaceAfter(mi);
+
+    tii->storeRegToStackSlot(*mi->getParent(), nextInstItr, vreg,
                              true, ss, trc);
     MachineBasicBlock::iterator storeInstItr(mi);
     ++storeInstItr;
@@ -86,20 +110,13 @@ protected:
   /// instruction. The caller is responsible for adding an appropriate
   /// LiveInterval to the LiveIntervals analysis.
   unsigned insertLoadFor(MachineInstr *mi, unsigned ss,
-                         unsigned newVReg,
+                         unsigned vreg,
                          const TargetRegisterClass *trc) {
     MachineBasicBlock::iterator useInstItr(mi);
-
-    if (!lis->hasGapBeforeInstr(lis->getInstructionIndex(mi))) {
-      lis->scaleNumbering(2);
-      ls->scaleNumbering(2);
-    }
-
-    unsigned miIdx = lis->getInstructionIndex(mi);
-
-    assert(lis->hasGapBeforeInstr(miIdx));
-    
-    tii->loadRegFromStackSlot(*mi->getParent(), useInstItr, newVReg, ss, trc);
+  
+    unsigned miIdx = makeSpaceBefore(mi);
+  
+    tii->loadRegFromStackSlot(*mi->getParent(), useInstItr, vreg, ss, trc);
     MachineBasicBlock::iterator loadInstItr(mi);
     --loadInstItr;
     MachineInstr *loadInst = &*loadInstItr;
@@ -112,7 +129,6 @@ protected:
 
     return loadInstIdx;
   }
-
 
   /// Add spill ranges for every use/def of the live interval, inserting loads
   /// immediately before each use, and stores after each def. No folding is
@@ -178,7 +194,7 @@ protected:
                  end = lis->getUseIndex(lis->getInstructionIndex(mi));
 
         VNInfo *vni =
-          newLI->getNextValue(loadInstIdx, 0, lis->getVNInfoAllocator());
+          newLI->getNextValue(loadInstIdx, 0, true, lis->getVNInfoAllocator());
         vni->kills.push_back(lis->getInstructionIndex(mi));
         LiveRange lr(start, end, vni);
 
@@ -191,7 +207,7 @@ protected:
                  end = lis->getUseIndex(storeInstIdx);
 
         VNInfo *vni =
-          newLI->getNextValue(storeInstIdx, 0, lis->getVNInfoAllocator());
+          newLI->getNextValue(storeInstIdx, 0, true, lis->getVNInfoAllocator());
         vni->kills.push_back(storeInstIdx);
         LiveRange lr(start, end, vni);
       
@@ -200,7 +216,6 @@ protected:
 
       added.push_back(newLI);
     }
-
 
     return added;
   }

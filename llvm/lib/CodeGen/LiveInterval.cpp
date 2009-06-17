@@ -306,9 +306,9 @@ void LiveInterval::removeRange(unsigned Start, unsigned End,
               VNInfo *VNI = valnos.back();
               valnos.pop_back();
               VNI->~VNInfo();
-            } while (!valnos.empty() && valnos.back()->def == ~1U);
+            } while (!valnos.empty() && valnos.back()->isUnused());
           } else {
-            ValNo->def = ~1U;
+            ValNo->setIsUnused(true);
           }
         }
       }
@@ -354,9 +354,9 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
       VNInfo *VNI = valnos.back();
       valnos.pop_back();
       VNI->~VNInfo();
-    } while (!valnos.empty() && valnos.back()->def == ~1U);
+    } while (!valnos.empty() && valnos.back()->isUnused());
   } else {
-    ValNo->def = ~1U;
+    ValNo->setIsUnused(true);
   }
 }
  
@@ -372,9 +372,8 @@ void LiveInterval::scaleNumbering(unsigned factor) {
   // Scale VNI info.                                                          
   for (vni_iterator VNI = vni_begin(), VNIE = vni_end(); VNI != VNIE; ++VNI) {
     VNInfo *vni = *VNI;
-    if (vni->def != ~0U && vni->def != ~1U) {
-      vni->def = InstrSlots::scale(vni->def, factor);
-    }
+
+    vni->def = InstrSlots::scale(vni->def, factor);
 
     for (unsigned i = 0; i < vni->kills.size(); ++i) {
       if (vni->kills[i] != 0)
@@ -593,9 +592,9 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
             VNInfo *VNI = valnos.back();
             valnos.pop_back();
             VNI->~VNInfo();
-          } while (!valnos.empty() && valnos.back()->def == ~1U);
+          } while (!valnos.empty() && valnos.back()->isUnused());
         } else {
-          V1->def = ~1U;
+          V1->setIsUnused(true);
         }
       }
     }
@@ -622,7 +621,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
     else if (UnusedValNo)
       ClobberValNo = UnusedValNo;
     else {
-      UnusedValNo = ClobberValNo = getNextValue(~0U, 0, VNInfoAllocator);
+      UnusedValNo = ClobberValNo = getNextValue(0, 0, false, VNInfoAllocator);
       ValNoMaps.insert(std::make_pair(I->valno, ClobberValNo));
     }
 
@@ -675,7 +674,7 @@ void LiveInterval::MergeInClobberRange(unsigned Start, unsigned End,
                                        BumpPtrAllocator &VNInfoAllocator) {
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
-  VNInfo *ClobberValNo = getNextValue(~0U, 0, VNInfoAllocator);
+  VNInfo *ClobberValNo = getNextValue(0, 0, false, VNInfoAllocator);
   
   iterator IP = begin();
   IP = std::upper_bound(IP, end(), Start);
@@ -758,9 +757,9 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
       VNInfo *VNI = valnos.back();
       valnos.pop_back();
       VNI->~VNInfo();
-    } while (valnos.back()->def == ~1U);
+    } while (valnos.back()->isUnused());
   } else {
-    V1->def = ~1U;
+    V1->setIsUnused(true);
   }
   
   return V2;
@@ -777,8 +776,7 @@ void LiveInterval::Copy(const LiveInterval &RHS,
   weight = RHS.weight;
   for (unsigned i = 0, e = RHS.getNumValNums(); i != e; ++i) {
     const VNInfo *VNI = RHS.getValNumInfo(i);
-    VNInfo *NewVNI = getNextValue(~0U, 0, VNInfoAllocator);
-    copyValNumInfo(NewVNI, VNI);
+    createValueCopy(VNI, VNInfoAllocator);
   }
   for (unsigned i = 0, e = RHS.ranges.size(); i != e; ++i) {
     const LiveRange &LR = RHS.ranges[i];
@@ -830,22 +828,22 @@ void LiveInterval::print(std::ostream &OS,
       const VNInfo *vni = *i;
       if (vnum) OS << " ";
       OS << vnum << "@";
-      if (vni->def == ~1U) {
+      if (vni->isUnused()) {
         OS << "x";
       } else {
-        if (vni->def == ~0U)
+        if (!vni->isDefAccurate())
           OS << "?";
         else
           OS << vni->def;
         unsigned ee = vni->kills.size();
-        if (ee || vni->hasPHIKill) {
+        if (ee || vni->hasPHIKill()) {
           OS << "-(";
           for (unsigned j = 0; j != ee; ++j) {
             OS << vni->kills[j];
             if (j != ee-1)
               OS << " ";
           }
-          if (vni->hasPHIKill) {
+          if (vni->hasPHIKill()) {
             if (ee)
               OS << " ";
             OS << "phi";

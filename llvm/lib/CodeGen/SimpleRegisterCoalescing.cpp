@@ -141,7 +141,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   // The live interval of ECX is represented as this:
   // %reg20,inf = [46,47:1)[174,230:0)  0@174-(230) 1@46-(47)
   // The coalescer has no idea there was a def in the middle of [174,230].
-  if (AValNo->redefByEC)
+  if (AValNo->hasRedefByEC())
     return false;
   
   // If AValNo is defined as a copy from IntB, we can potentially process this.  
@@ -203,7 +203,8 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
     for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
       LiveInterval &SRLI = li_->getInterval(*SR);
       SRLI.addRange(LiveRange(FillerStart, FillerEnd,
-                 SRLI.getNextValue(FillerStart, 0, li_->getVNInfoAllocator())));
+                              SRLI.getNextValue(FillerStart, 0, true,
+                                                li_->getVNInfoAllocator())));
     }
   }
 
@@ -304,8 +305,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   assert(ALR != IntA.end() && "Live range not found!");
   VNInfo *AValNo = ALR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization.
-  if (AValNo->def == ~0U || AValNo->def == ~1U || AValNo->hasPHIKill)
+  // the optimization. FIXME: Do isPHIDef and isDefAccurate both need to be
+  // tested?
+  if (AValNo->isPHIDef() || !AValNo->isDefAccurate() ||
+      AValNo->isUnused() || AValNo->hasPHIKill())
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
   const TargetInstrDesc &TID = DefMI->getDesc();
@@ -351,7 +354,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg, false);
   NewMI->getOperand(OpIdx).setIsKill();
 
-  bool BHasPHIKill = BValNo->hasPHIKill;
+  bool BHasPHIKill = BValNo->hasPHIKill();
   SmallVector<VNInfo*, 4> BDeadValNos;
   SmallVector<unsigned, 4> BKills;
   std::map<unsigned, unsigned> BExtend;
@@ -403,7 +406,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       // extended to the end of the existing live range defined by the copy.
       unsigned DefIdx = li_->getDefIndex(UseIdx);
       const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
-      BHasPHIKill |= DLR->valno->hasPHIKill;
+      BHasPHIKill |= DLR->valno->hasPHIKill();
       assert(DLR->valno->def == DefIdx);
       BDeadValNos.push_back(DLR->valno);
       BExtend[DLR->start] = DLR->end;
@@ -462,7 +465,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     }
   }
   IntB.addKills(ValNo, BKills);
-  ValNo->hasPHIKill = BHasPHIKill;
+  ValNo->setHasPHIKill(BHasPHIKill);
 
   DOUT << "   result = "; IntB.print(DOUT, tri_);
   DOUT << "\n";
@@ -578,8 +581,10 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   assert(SrcLR != SrcInt.end() && "Live range not found!");
   VNInfo *ValNo = SrcLR->valno;
   // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization.
-  if (ValNo->def == ~0U || ValNo->def == ~1U || ValNo->hasPHIKill)
+  // the optimization. FIXME: Do isPHIDef and isDefAccurate both need to be
+  // tested?
+  if (ValNo->isPHIDef() || !ValNo->isDefAccurate() ||
+      ValNo->isUnused() || ValNo->hasPHIKill())
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(ValNo->def);
   const TargetInstrDesc &TID = DefMI->getDesc();
@@ -671,7 +676,7 @@ bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
     return false;
   unsigned KillIdx = li_->getMBBEndIdx(MBB) + 1;
   if (DstLR->valno->kills.size() == 1 &&
-      DstLR->valno->kills[0] == KillIdx && DstLR->valno->hasPHIKill)
+      DstLR->valno->kills[0] == KillIdx && DstLR->valno->hasPHIKill())
     return true;
   return false;
 }
@@ -935,7 +940,7 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
   LiveInterval::iterator LR = li.FindLiveRangeContaining(CopyIdx);
   if (LR == li.end())
     return false;
-  if (LR->valno->hasPHIKill)
+  if (LR->valno->hasPHIKill())
     return false;
   if (LR->valno->def != CopyIdx)
     return false;
@@ -1682,9 +1687,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
              E = SavedLI->vni_end(); I != E; ++I) {
         const VNInfo *ValNo = *I;
         VNInfo *NewValNo = RealInt.getNextValue(ValNo->def, ValNo->copy,
+                                                false, // updated at *
                                                 li_->getVNInfoAllocator());
-        NewValNo->hasPHIKill = ValNo->hasPHIKill;
-        NewValNo->redefByEC = ValNo->redefByEC;
+        NewValNo->setFlags(ValNo->getFlags()); // * updated here.
         RealInt.addKills(NewValNo, ValNo->kills);
         RealInt.MergeValueInAsValue(*SavedLI, ValNo, NewValNo);
       }
@@ -1723,7 +1728,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     for (LiveInterval::const_vni_iterator i = ResSrcInt->vni_begin(),
            e = ResSrcInt->vni_end(); i != e; ++i) {
       const VNInfo *vni = *i;
-      if (!vni->def || vni->def == ~1U || vni->def == ~0U)
+      // FIXME: Do isPHIDef and isDefAccurate both need to be tested?
+      if (!vni->def || vni->isUnused() || vni->isPHIDef() || !vni->isDefAccurate())
         continue;
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
       unsigned NewSrcReg, NewDstReg, NewSrcSubIdx, NewDstSubIdx;
@@ -1870,7 +1876,8 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
   unsigned SrcReg = li_->getVNInfoSourceReg(LR->valno);
   if (SrcReg == Reg)
     return true;
-  if (LR->valno->def == ~0U &&
+  // FIXME: Do isPHIDef and isDefAccurate both need to be tested?
+  if ((LR->valno->isPHIDef() || !LR->valno->isDefAccurate()) &&
       TargetRegisterInfo::isPhysicalRegister(li.reg) &&
       *tri_->getSuperRegisters(li.reg)) {
     // It's a sub-register live interval, we may not have precise information.
@@ -2039,7 +2046,8 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   
   // Okay, the final step is to loop over the RHS live intervals, adding them to
   // the LHS.
-  LHSValNo->hasPHIKill |= VNI->hasPHIKill;
+  if (VNI->hasPHIKill())
+    LHSValNo->setHasPHIKill(true);
   LHS.addKills(LHSValNo, VNI->kills);
   LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.weight += RHS.weight;
@@ -2206,7 +2214,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
          i != e; ++i) {
       VNInfo *VNI = *i;
-      if (VNI->def == ~1U || VNI->copy == 0)  // Src not defined by a copy?
+      if (VNI->isUnused() || VNI->copy == 0)  // Src not defined by a copy?
         continue;
       
       // DstReg is known to be a register in the LHS interval.  If the src is
@@ -2223,7 +2231,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
          i != e; ++i) {
       VNInfo *VNI = *i;
-      if (VNI->def == ~1U || VNI->copy == 0)  // Src not defined by a copy?
+      if (VNI->isUnused() || VNI->copy == 0)  // Src not defined by a copy?
         continue;
       
       // DstReg is known to be a register in the RHS interval.  If the src is
@@ -2243,7 +2251,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
          i != e; ++i) {
       VNInfo *VNI = *i;
       unsigned VN = VNI->id;
-      if (LHSValNoAssignments[VN] >= 0 || VNI->def == ~1U) 
+      if (LHSValNoAssignments[VN] >= 0 || VNI->isUnused()) 
         continue;
       ComputeUltimateVN(VNI, NewVNInfo,
                         LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
@@ -2253,7 +2261,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
          i != e; ++i) {
       VNInfo *VNI = *i;
       unsigned VN = VNI->id;
-      if (RHSValNoAssignments[VN] >= 0 || VNI->def == ~1U)
+      if (RHSValNoAssignments[VN] >= 0 || VNI->isUnused())
         continue;
       // If this value number isn't a copy from the LHS, it's a new number.
       if (RHSValsDefinedFromLHS.find(VNI) == RHSValsDefinedFromLHS.end()) {
@@ -2317,7 +2325,8 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     VNInfo *VNI = I->first;
     unsigned LHSValID = LHSValNoAssignments[VNI->id];
     LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
-    NewVNInfo[LHSValID]->hasPHIKill |= VNI->hasPHIKill;
+    if (VNI->hasPHIKill())
+      NewVNInfo[LHSValID]->setHasPHIKill(true);
     RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
   }
 
@@ -2327,7 +2336,8 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     VNInfo *VNI = I->first;
     unsigned RHSValID = RHSValNoAssignments[VNI->id];
     LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
-    NewVNInfo[RHSValID]->hasPHIKill |= VNI->hasPHIKill;
+    if (VNI->hasPHIKill())
+      NewVNInfo[RHSValID]->setHasPHIKill(true);
     LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
   }
 

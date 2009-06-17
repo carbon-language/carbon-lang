@@ -33,26 +33,106 @@ namespace llvm {
   class TargetRegisterInfo;
   struct LiveInterval;
 
-  /// VNInfo - If the value number definition is undefined (e.g. phi
-  /// merge point), it contains ~0u,x. If the value number is not in use, it
-  /// contains ~1u,x to indicate that the value # is not used. 
-  ///   def   - Instruction # of the definition.
-  ///         - or reg # of the definition if it's a stack slot liveinterval.
-  ///   copy  - Copy iff val# is defined by a copy; zero otherwise.
-  ///   hasPHIKill - One or more of the kills are PHI nodes.
-  ///   redefByEC - Re-defined by early clobber somewhere during the live range.
-  ///   kills - Instruction # of the kills.
-  struct VNInfo {
+  /// VNInfo - Value Number Information.
+  /// This class holds information about a machine level values, including
+  /// definition and use points.
+  ///
+  /// Care must be taken in interpreting the def index of the value. The 
+  /// following rules apply:
+  ///
+  /// If the isDefAccurate() method returns false then the def index does not
+  /// actually point to the defining MachineInstr, or even (necessarily) a
+  /// valid MachineInstr at all. In general such a def index should not be
+  /// used as an index to obtain a MachineInstr. The exception is Values
+  /// defined by PHI instructions, after PHI elimination has occured. In this
+  /// case the def should point to the start of the block in which the PHI
+  /// existed. This fact can be used to insert code dealing with the PHI value
+  /// at the merge point (e.g. to spill or split it).
+
+  class VNInfo {
+  private:
+    static const uint8_t HAS_PHI_KILL = 1,                         
+                         REDEF_BY_EC  = 1 << 1,
+                         IS_PHI_DEF = 1 << 2,
+                         IS_UNUSED = 1 << 3,
+                         IS_DEF_ACCURATE = 1 << 4;
+
+    uint8_t flags;
+
+  public:
+    /// The ID number of this value.
     unsigned id;
+    
+    /// The index of the defining instruction (if isDefAccurate() returns true).
     unsigned def;
     MachineInstr *copy;
-    bool hasPHIKill : 1;
-    bool redefByEC : 1;
     SmallVector<unsigned, 4> kills;
+
     VNInfo()
-      : id(~1U), def(~1U), copy(0), hasPHIKill(false), redefByEC(false) {}
+      : flags(IS_UNUSED), id(~1U), def(0), copy(0) {}
+
+    /// VNInfo constructor.
+    /// d is presumed to point to the actual defining instr. If it doesn't
+    /// setIsDefAccurate(false) should be called after construction.
     VNInfo(unsigned i, unsigned d, MachineInstr *c)
-      : id(i), def(d), copy(c), hasPHIKill(false), redefByEC(false) {}
+      : flags(IS_DEF_ACCURATE), id(i), def(d), copy(c) {}
+
+    /// VNInfo construtor, copies values from orig, except for the value number.
+    VNInfo(unsigned i, const VNInfo &orig)
+      : flags(orig.flags), id(i), def(orig.def), copy(orig.copy),
+        kills(orig.kills) {}
+
+    /// Used for copying value number info.
+    unsigned getFlags() const { return flags; }
+    void setFlags(unsigned flags) { this->flags = flags; }
+
+    /// Returns true if one or more kills are PHI nodes.
+    bool hasPHIKill() const { return flags & HAS_PHI_KILL; }
+    void setHasPHIKill(bool hasKill) {
+      if (hasKill)
+        flags |= HAS_PHI_KILL;
+      else
+        flags &= ~HAS_PHI_KILL;
+    }
+
+    /// Returns true if this value is re-defined by an early clobber somewhere
+    /// during the live range.
+    bool hasRedefByEC() const { return flags & REDEF_BY_EC; }
+    void setHasRedefByEC(bool hasRedef) {
+      if (hasRedef)
+        flags |= REDEF_BY_EC;
+      else
+        flags &= ~REDEF_BY_EC;
+    }
+  
+    /// Returns true if this value is defined by a PHI instruction (or was,
+    /// PHI instrucions may have been eliminated).
+    bool isPHIDef() const { return flags & IS_PHI_DEF; }
+    void setIsPHIDef(bool phiDef) {
+      if (phiDef)
+        flags |= IS_PHI_DEF;
+      else
+        flags &= ~IS_PHI_DEF;
+    }
+
+    /// Returns true if this value is unused.
+    bool isUnused() const { return flags & IS_UNUSED; }
+    void setIsUnused(bool unused) {
+      if (unused)
+        flags |= IS_UNUSED;
+      else
+        flags &= ~IS_UNUSED;
+    }
+
+    /// Returns true if the def is accurate.
+    bool isDefAccurate() const { return flags & IS_DEF_ACCURATE; }
+    void setIsDefAccurate(bool defAccurate) {
+      if (defAccurate)
+        flags |= IS_DEF_ACCURATE;
+      else 
+        flags &= ~IS_DEF_ACCURATE;
+    }
+
   };
 
   /// LiveRange structure - This represents a simple register range in the
@@ -210,15 +290,17 @@ namespace llvm {
     void copyValNumInfo(VNInfo *DstValNo, const VNInfo *SrcValNo) {
       DstValNo->def = SrcValNo->def;
       DstValNo->copy = SrcValNo->copy;
-      DstValNo->hasPHIKill = SrcValNo->hasPHIKill;
-      DstValNo->redefByEC = SrcValNo->redefByEC;
+      DstValNo->setFlags(SrcValNo->getFlags());
       DstValNo->kills = SrcValNo->kills;
     }
 
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     VNInfo *getNextValue(unsigned MIIdx, MachineInstr *CopyMI,
-                         BumpPtrAllocator &VNInfoAllocator) {
+                         bool isDefAccurate, BumpPtrAllocator &VNInfoAllocator) {
+
+      assert(MIIdx != ~0u && MIIdx != ~1u &&
+             "PHI def / unused flags should now be passed explicitly.");
 #ifdef __GNUC__
       unsigned Alignment = (unsigned)__alignof__(VNInfo);
 #else
@@ -229,6 +311,26 @@ namespace llvm {
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
                                                       Alignment));
       new (VNI) VNInfo((unsigned)valnos.size(), MIIdx, CopyMI);
+      VNI->setIsDefAccurate(isDefAccurate);
+      valnos.push_back(VNI);
+      return VNI;
+    }
+
+    /// Create a copy of the given value. The new value will be identical except
+    /// for the Value number.
+    VNInfo *createValueCopy(const VNInfo *orig, BumpPtrAllocator &VNInfoAllocator) {
+
+#ifdef __GNUC__
+      unsigned Alignment = (unsigned)__alignof__(VNInfo);
+#else
+      // FIXME: ugly.
+      unsigned Alignment = 8;
+#endif
+      VNInfo *VNI =
+        static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
+                                                      Alignment));
+    
+      new (VNI) VNInfo((unsigned)valnos.size(), *orig);
       valnos.push_back(VNI);
       return VNI;
     }

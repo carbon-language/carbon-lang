@@ -18,6 +18,7 @@ namespace llvm {
   class LiveStacks;
   class MachineFunction;
   class VirtRegMap;
+  class MachineInstr;
 
   /// Spiller interface.
   ///
@@ -26,7 +27,11 @@ namespace llvm {
   class Spiller {
   public:
     virtual ~Spiller() = 0;
+
+    /// Spill the given live range. The method used will depend on the Spiller
+    /// implementation selected.
     virtual std::vector<LiveInterval*> spill(LiveInterval *li) = 0;
+
   };
 
   /// Create and return a spiller object, as specified on the command line.
