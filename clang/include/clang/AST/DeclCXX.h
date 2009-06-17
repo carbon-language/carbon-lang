@@ -535,6 +535,7 @@ public:
 /// public:
 ///   B(A& a) : A(a), f(3.14159) { }
 /// };
+/// @endcode
 class CXXBaseOrMemberInitializer {
   /// BaseOrMember - This points to the entity being initialized,
   /// which is either a base class (a Type) or a non-static data
