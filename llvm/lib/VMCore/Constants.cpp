@@ -25,6 +25,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Threading.h"
+#include "llvm/System/RWMutex.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
@@ -34,6 +36,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 //                              Constant Class
 //===----------------------------------------------------------------------===//
+
+ManagedStatic<sys::RWMutex> ConstantsLock;
 
 void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
@@ -295,12 +299,30 @@ ConstantInt *ConstantInt::get(const APInt& V) {
   const IntegerType *ITy = IntegerType::get(V.getBitWidth());
   // get an existing value or the insertion position
   DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
-  ConstantInt *&Slot = (*IntConstants)[Key]; 
-  // if it exists, return it.
-  if (Slot)
+  
+  if (llvm_is_multithreaded()) {
+    ConstantsLock->reader_acquire();
+    ConstantInt *&Slot = (*IntConstants)[Key]; 
+    ConstantsLock->reader_release();
+    
+    if (!Slot) {
+      ConstantsLock->writer_acquire();
+      ConstantInt *&Slot = (*IntConstants)[Key]; 
+      if (!Slot) {
+        Slot = new ConstantInt(ITy, V);
+      }
+      ConstantsLock->writer_release();
+    }
+    
     return Slot;
-  // otherwise create a new one, insert it, and return it.
-  return Slot = new ConstantInt(ITy, V);
+  } else {
+    ConstantInt *&Slot = (*IntConstants)[Key]; 
+    // if it exists, return it.
+    if (Slot)
+      return Slot;
+    // otherwise create a new one, insert it, and return it.
+    return Slot = new ConstantInt(ITy, V);
+  }
 }
 
 Constant *ConstantInt::get(const Type *Ty, const APInt &V) {
@@ -392,24 +414,58 @@ static ManagedStatic<FPMapTy> FPConstants;
 
 ConstantFP *ConstantFP::get(const APFloat &V) {
   DenseMapAPFloatKeyInfo::KeyTy Key(V);
-  ConstantFP *&Slot = (*FPConstants)[Key];
-  if (Slot) return Slot;
   
-  const Type *Ty;
-  if (&V.getSemantics() == &APFloat::IEEEsingle)
-    Ty = Type::FloatTy;
-  else if (&V.getSemantics() == &APFloat::IEEEdouble)
-    Ty = Type::DoubleTy;
-  else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
-    Ty = Type::X86_FP80Ty;
-  else if (&V.getSemantics() == &APFloat::IEEEquad)
-    Ty = Type::FP128Ty;
-  else {
-    assert(&V.getSemantics() == &APFloat::PPCDoubleDouble&&"Unknown FP format");
-    Ty = Type::PPC_FP128Ty;
+  if (llvm_is_multithreaded()) {
+    ConstantsLock->reader_acquire();
+    ConstantFP *&Slot = (*FPConstants)[Key];
+    ConstantsLock->reader_release();
+    
+    if (!Slot) {
+      ConstantsLock->writer_acquire();
+      Slot = (*FPConstants)[Key];
+      if (!Slot) {
+        const Type *Ty;
+        if (&V.getSemantics() == &APFloat::IEEEsingle)
+          Ty = Type::FloatTy;
+        else if (&V.getSemantics() == &APFloat::IEEEdouble)
+          Ty = Type::DoubleTy;
+        else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
+          Ty = Type::X86_FP80Ty;
+        else if (&V.getSemantics() == &APFloat::IEEEquad)
+          Ty = Type::FP128Ty;
+        else {
+          assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
+                 "Unknown FP format");
+          Ty = Type::PPC_FP128Ty;
+        }
+
+        Slot = new ConstantFP(Ty, V);
+      }
+      ConstantsLock->writer_release();
+    }
+    
+    return Slot;
+  } else {
+    ConstantFP *&Slot = (*FPConstants)[Key];
+    if (Slot) return Slot;
+    
+    const Type *Ty;
+    if (&V.getSemantics() == &APFloat::IEEEsingle)
+      Ty = Type::FloatTy;
+    else if (&V.getSemantics() == &APFloat::IEEEdouble)
+      Ty = Type::DoubleTy;
+    else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
+      Ty = Type::X86_FP80Ty;
+    else if (&V.getSemantics() == &APFloat::IEEEquad)
+      Ty = Type::FP128Ty;
+    else {
+      assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
+             "Unknown FP format");
+      Ty = Type::PPC_FP128Ty;
+    }
+    
+    return Slot = new ConstantFP(Ty, V);
   }
-  
-  return Slot = new ConstantFP(Ty, V);
 }
 
 /// get() - This returns a constant fp for the specified value in the
@@ -1346,13 +1402,19 @@ static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty) {
   assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
-  return AggZeroConstants->getOrCreate(Ty, 0);
+  ConstantAggregateZero* result = 0;
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  result = AggZeroConstants->getOrCreate(Ty, 0);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   AggZeroConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1389,21 +1451,30 @@ static ManagedStatic<ArrayConstantsTy> ArrayConstants;
 Constant *ConstantArray::get(const ArrayType *Ty,
                              const std::vector<Constant*> &V) {
   // If this is an all-zero array, return a ConstantAggregateZero object
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   if (!V.empty()) {
     Constant *C = V[0];
-    if (!C->isNullValue())
+    if (!C->isNullValue()) {
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
       return ArrayConstants->getOrCreate(Ty, V);
+    }
     for (unsigned i = 1, e = V.size(); i != e; ++i)
-      if (V[i] != C)
+      if (V[i] != C) {
+        if (llvm_is_multithreaded()) ConstantsLock->writer_release();
         return ArrayConstants->getOrCreate(Ty, V);
+      }
   }
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  
   return ConstantAggregateZero::get(Ty);
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantArray::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   ArrayConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1512,9 +1583,14 @@ static std::vector<Constant*> getValType(ConstantStruct *CS) {
 Constant *ConstantStruct::get(const StructType *Ty,
                               const std::vector<Constant*> &V) {
   // Create a ConstantAggregateZero value if all elements are zeros...
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   for (unsigned i = 0, e = V.size(); i != e; ++i)
-    if (!V[i]->isNullValue())
-      return StructConstants->getOrCreate(Ty, V);
+    if (!V[i]->isNullValue()) {
+      Constant* result = StructConstants->getOrCreate(Ty, V);
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+      return result;
+    }
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
 
   return ConstantAggregateZero::get(Ty);
 }
@@ -1530,7 +1606,9 @@ Constant *ConstantStruct::get(const std::vector<Constant*> &V, bool packed) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   StructConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   destroyConstantImpl();
 }
 
@@ -1584,7 +1662,10 @@ Constant *ConstantVector::get(const VectorType *Ty,
     return ConstantAggregateZero::get(Ty);
   if (isUndef)
     return UndefValue::get(Ty);
-  return VectorConstants->getOrCreate(Ty, V);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = VectorConstants->getOrCreate(Ty, V);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantVector::get(const std::vector<Constant*> &V) {
@@ -1595,7 +1676,9 @@ Constant *ConstantVector::get(const std::vector<Constant*> &V) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   VectorConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1659,13 +1742,18 @@ static char getValType(ConstantPointerNull *) {
 
 
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
-  return NullPtrConstants->getOrCreate(Ty, 0);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  ConstantPointerNull* result = NullPtrConstants->getOrCreate(Ty, 0);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   NullPtrConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1702,13 +1790,18 @@ static char getValType(UndefValue *) {
 
 
 UndefValue *UndefValue::get(const Type *Ty) {
-  return UndefValueConstants->getOrCreate(Ty, 0);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  UndefValue* result = UndefValueConstants->getOrCreate(Ty, 0);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   UndefValueConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1722,16 +1815,21 @@ MDString::MDString(const char *begin, const char *end)
 static ManagedStatic<StringMap<MDString*> > MDStringCache;
 
 MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(StrBegin,
                                                                       StrEnd);
   MDString *&S = Entry.getValue();
   if (!S) S = new MDString(Entry.getKeyData(),
                            Entry.getKeyData() + Entry.getKeyLength());
+                           
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   return S;
 }
 
 void MDString::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1756,18 +1854,40 @@ MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
 
-  void *InsertPoint;
-  if (MDNode *N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint))
+  if (llvm_is_multithreaded()) {
+    ConstantsLock->reader_acquire();
+    void *InsertPoint;
+    MDNode *N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
+    ConstantsLock->reader_release();
+    
+    if (!N) {
+      ConstantsLock->writer_acquire();
+      N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
+      if (!N) {
+        // InsertPoint will have been set by the FindNodeOrInsertPos call.
+        MDNode *N = new(0) MDNode(Vals, NumVals);
+        MDNodeSet->InsertNode(N, InsertPoint);
+      }
+      ConstantsLock->writer_release();
+    }
+    
     return N;
+  } else {
+    void *InsertPoint;
+    if (MDNode *N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint))
+      return N;
 
-  // InsertPoint will have been set by the FindNodeOrInsertPos call.
-  MDNode *N = new(0) MDNode(Vals, NumVals);
-  MDNodeSet->InsertNode(N, InsertPoint);
-  return N;
+    // InsertPoint will have been set by the FindNodeOrInsertPos call.
+    MDNode *N = new(0) MDNode(Vals, NumVals);
+    MDNodeSet->InsertNode(N, InsertPoint);
+    return N;
+  }
 }
 
 void MDNode::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   MDNodeSet->RemoveNode(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -1934,7 +2054,11 @@ static inline Constant *getFoldedCast(
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C);
   ExprMapKeyType Key(opc, argVec);
-  return ExprConstants->getOrCreate(Ty, Key);
+  
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(Ty, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
  
 Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
@@ -2194,7 +2318,10 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key(Opcode, argVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
@@ -2305,7 +2432,10 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   argVec[1] = V1;
   argVec[2] = V2;
   ExprMapKeyType Key(Instruction::Select, argVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
@@ -2328,7 +2458,10 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
   for (unsigned i = 0; i != NumIdx; ++i)
     ArgVec.push_back(cast<Constant>(Idxs[i]));
   const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant *result = ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
@@ -2362,7 +2495,10 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
-  return ExprConstants->getOrCreate(Type::Int1Ty, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(Type::Int1Ty, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *
@@ -2379,7 +2515,10 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
-  return ExprConstants->getOrCreate(Type::Int1Ty, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(Type::Int1Ty, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *
@@ -2424,7 +2563,10 @@ ConstantExpr::getVICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::VICmp, ArgVec, pred);
-  return ExprConstants->getOrCreate(LHS->getType(), Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(LHS->getType(), Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *
@@ -2471,7 +2613,10 @@ ConstantExpr::getVFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::VFCmp, ArgVec, pred);
-  return ExprConstants->getOrCreate(ResultTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(ResultTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
@@ -2482,7 +2627,10 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
   std::vector<Constant*> ArgVec(1, Val);
   ArgVec.push_back(Idx);
   const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
@@ -2503,7 +2651,10 @@ Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
   ArgVec.push_back(Elt);
   ArgVec.push_back(Idx);
   const ExprMapKeyType Key(Instruction::InsertElement,ArgVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt, 
@@ -2526,7 +2677,10 @@ Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
   ArgVec.push_back(V2);
   ArgVec.push_back(Mask);
   const ExprMapKeyType Key(Instruction::ShuffleVector,ArgVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+  Constant* result = ExprConstants->getOrCreate(ReqTy, Key);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  return result;
 }
 
 Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2, 
@@ -2609,7 +2763,9 @@ Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantExpr::destroyConstant() {
+  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
   ExprConstants->remove(this);
+  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   destroyConstantImpl();
 }
 
@@ -2673,6 +2829,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
+    if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
     bool Exists;
     ArrayConstantsTy::MapTy::iterator I =
       ArrayConstants->InsertOrGetItem(Lookup, Exists);
@@ -2698,8 +2855,10 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
           if (getOperand(i) == From)
             setOperand(i, ToC);
       }
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
       return;
     }
+    if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   }
  
   // Otherwise, I do need to replace this with an existing value.
@@ -2748,6 +2907,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
+    if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
     bool Exists;
     StructConstantsTy::MapTy::iterator I =
       StructConstants->InsertOrGetItem(Lookup, Exists);
@@ -2763,8 +2923,10 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
+      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
       return;
     }
+    if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   }
   
   assert(Replacement != this && "I didn't contain From!");
