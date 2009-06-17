@@ -69,8 +69,7 @@ const GRState* GRStateManager::Unbind(const GRState* St, Loc LV) {
 }
 
 const GRState* GRStateManager::getInitialState() {
-
-  GRState StateImpl(EnvMgr.getInitialEnvironment(), 
+  GRState StateImpl(this, EnvMgr.getInitialEnvironment(), 
                     StoreMgr->getInitialStore(),
                     GDMFactory.GetEmptyMap());
 
@@ -92,13 +91,11 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   return I;
 }
 
-const GRState* GRStateManager::MakeStateWithStore(const GRState* St, 
-                                                  Store store) {
-  GRState NewSt = *St;
+const GRState* GRState::makeWithStore(Store store) const {
+  GRState NewSt = *this;
   NewSt.St = store;
-  return getPersistentState(NewSt);
+  return Mgr->getPersistentState(NewSt);
 }
-
 
 //===----------------------------------------------------------------------===//
 //  State pretty-printing.

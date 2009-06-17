@@ -14,12 +14,12 @@
 #ifndef LLVM_CLANG_ANALYSIS_STORE_H
 #define LLVM_CLANG_ANALYSIS_STORE_H
 
-#include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/ValueManager.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iosfwd>
 
@@ -45,10 +45,10 @@ protected:
   StoreManager(GRStateManager &stateMgr);
 
 protected:
-  virtual const GRState* AddRegionView(const GRState* St,
-                                       const MemRegion* View,
-                                       const MemRegion* Base) {
-    return St;
+  virtual const GRState *AddRegionView(const GRState *state,
+                                        const MemRegion *view,
+                                        const MemRegion *base) {
+    return state;
   }
   
 public:  
@@ -61,7 +61,7 @@ public:
   ///   expected type of the returned value.  This is used if the value is
   ///   lazily computed.
   /// \return The value bound to the location \c loc.
-  virtual SVal Retrieve(const GRState* state, Loc loc,
+  virtual SVal Retrieve(const GRState *state, Loc loc,
                         QualType T = QualType()) = 0;
 
   /// Return a state with the specified value bound to the given location.
@@ -71,7 +71,7 @@ public:
   /// \return A pointer to a GRState object that contains the same bindings as 
   ///   \c state with the addition of having the value specified by \c val bound
   ///   to the location given for \c loc.
-  virtual const GRState* Bind(const GRState* state, Loc loc, SVal val) = 0;
+  virtual const GRState *Bind(const GRState *state, Loc loc, SVal val) = 0;
 
   virtual Store Remove(Store St, Loc L) = 0;
   
@@ -79,9 +79,9 @@ public:
   ///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  virtual const GRState* BindCompoundLiteral(const GRState* St, 
-                                             const CompoundLiteralExpr* CL,
-                                             SVal V) = 0;
+  virtual const GRState *BindCompoundLiteral(const GRState *state,
+                                              const CompoundLiteralExpr* cl,
+                                              SVal v) = 0;
   
   /// getInitialStore - Returns the initial "empty" store representing the
   ///  value bindings upon entry to an analyzed function.
@@ -94,51 +94,52 @@ public:
   /// getSubRegionMap - Returns an opaque map object that clients can query
   ///  to get the subregions of a given MemRegion object.  It is the
   //   caller's responsibility to 'delete' the returned map.
-  virtual SubRegionMap* getSubRegionMap(const GRState *state) = 0;
+  virtual SubRegionMap *getSubRegionMap(const GRState *state) = 0;
 
-  virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;
+  virtual SVal getLValueVar(const GRState *state, const VarDecl *vd) = 0;
 
-  virtual SVal getLValueString(const GRState* St, const StringLiteral* S) = 0;
+  virtual SVal getLValueString(const GRState *state,
+                               const StringLiteral* sl) = 0;
 
-  virtual SVal getLValueCompoundLiteral(const GRState* St, 
-                                        const CompoundLiteralExpr* CL) = 0;
+  virtual SVal getLValueCompoundLiteral(const GRState *state,
+                                        const CompoundLiteralExpr* cl) = 0;
   
-  virtual SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
-                             SVal Base) = 0;
+  virtual SVal getLValueIvar(const GRState *state, const ObjCIvarDecl* decl,
+                             SVal base) = 0;
   
-  virtual SVal getLValueField(const GRState* St, SVal Base, 
+  virtual SVal getLValueField(const GRState *state, SVal base,
                               const FieldDecl* D) = 0;
   
-  virtual SVal getLValueElement(const GRState* St, QualType elementType,
-                                SVal Base, SVal Offset) = 0;
+  virtual SVal getLValueElement(const GRState *state, QualType elementType,
+                                SVal base, SVal offset) = 0;
 
-  virtual SVal getSizeInElements(const GRState* St, const MemRegion* R) {
+  // FIXME: Make out-of-line.
+  virtual SVal getSizeInElements(const GRState *state, const MemRegion *region){
     return UnknownVal();
   }
 
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(Loc Array) = 0;
-
   
   class CastResult {
-    const GRState* State;
-    const MemRegion* R;
+    const GRState *state;
+    const MemRegion *region;
   public:
-    const GRState* getState() const { return State; }
-    const MemRegion* getRegion() const { return R; }
-    CastResult(const GRState* s, const MemRegion* r = 0) : State(s), R(r) {}
+    const GRState *getState() const { return state; }
+    const MemRegion* getRegion() const { return region; }
+    CastResult(const GRState *s, const MemRegion* r = 0) : state(s), region(r){}
   };
   
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
-  virtual CastResult CastRegion(const GRState* state, const MemRegion* R,
+  virtual CastResult CastRegion(const GRState *state, const MemRegion *region,
                                 QualType CastToTy);
 
   /// EvalBinOp - Perform pointer arithmetic.
-  virtual SVal EvalBinOp(const GRState *state, 
-                         BinaryOperator::Opcode Op, Loc L, NonLoc R) {
+  virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
+                         Loc lhs, NonLoc rhs) {
     return UnknownVal();
   }
   
@@ -147,24 +148,27 @@ public:
   ///  method returns NULL.
   virtual const MemRegion* getSelfRegion(Store store) = 0;
 
-  virtual Store
-  RemoveDeadBindings(const GRState* state, Stmt* Loc, SymbolReaper& SymReaper,
-                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
+  virtual Store RemoveDeadBindings(const GRState *state,
+                                   Stmt* Loc, SymbolReaper& SymReaper,
+                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
-  virtual const GRState* BindDecl(const GRState* St, const VarDecl* VD, 
-                                  SVal InitVal) = 0;
+  virtual const GRState *BindDecl(const GRState *state, const VarDecl *vd, 
+                                   SVal initVal) = 0;
 
-  virtual const GRState* BindDeclWithNoInit(const GRState* St, 
-                                            const VarDecl* VD) = 0;
+  virtual const GRState *BindDeclWithNoInit(const GRState *state,
+                                             const VarDecl *vd) = 0;
 
-  virtual const GRState* setExtent(const GRState* St,
-                                   const MemRegion* R, SVal Extent) {
-    return St;
+  // FIXME: Make out-of-line.
+  virtual const GRState *setExtent(const GRState *state,
+                                    const MemRegion *region, SVal extent) {
+    return state;
   }
 
-  virtual const GRState* setDefaultValue(const GRState* St,
-                                         const MemRegion* R, SVal V) {
-    return St;
+  // FIXME: Make out-of-line.
+  virtual const GRState *setDefaultValue(const GRState *state,
+                                          const MemRegion *region,
+                                          SVal val) {
+    return state;
   }
 
   virtual void print(Store store, std::ostream& Out,
@@ -174,13 +178,14 @@ public:
   public:    
     virtual ~BindingsHandler();
     virtual bool HandleBinding(StoreManager& SMgr, Store store,
-                               const MemRegion* R, SVal val) = 0;
+                               const MemRegion *region, SVal val) = 0;
   };
   
   /// iterBindings - Iterate over the bindings in the Store.
   virtual void iterBindings(Store store, BindingsHandler& f) = 0;  
 };
 
+// FIXME: Do we still need this?
 /// SubRegionMap - An abstract interface that represents a queryable map
 ///  between MemRegion objects and their subregions.
 class SubRegionMap {
@@ -193,13 +198,14 @@ public:
     virtual bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) = 0;
   };
   
-  virtual bool iterSubRegions(const MemRegion* R, Visitor& V) const = 0;  
+  virtual bool iterSubRegions(const MemRegion *region, Visitor& V) const = 0;  
 };
-  
+
+// FIXME: Do we need to pass GRStateManager anymore?
 StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
 StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
-  
+
 } // end clang namespace
 
 #endif

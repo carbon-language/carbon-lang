@@ -64,6 +64,8 @@ template <typename T> struct GRStateTrait {
 //===----------------------------------------------------------------------===//
 // GRState- An ImmutableMap type Stmt*/Decl*/Symbols to SVals.
 //===----------------------------------------------------------------------===//
+
+class GRStateManager;
   
 /// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
@@ -81,7 +83,8 @@ private:
   void operator=(const GRState& R) const;
   
   friend class GRStateManager;
-  
+
+  GRStateManager *Mgr;
   Environment Env;
   Store St;
 
@@ -92,8 +95,10 @@ public:
 public:
   
   /// This ctor is used when creating the first GRState object.
-  GRState(const Environment& env,  Store st, GenericDataMap gdm)
-    : Env(env),
+  GRState(GRStateManager *mgr, const Environment& env,  Store st,
+          GenericDataMap gdm)
+    : Mgr(mgr),
+      Env(env),
       St(st),
       GDM(gdm) {}
   
@@ -101,9 +106,13 @@ public:
   ///  in FoldingSetNode will also get copied.
   GRState(const GRState& RHS)
     : llvm::FoldingSetNode(),
+      Mgr(RHS.Mgr),
       Env(RHS.Env),
       St(RHS.St),
       GDM(RHS.GDM) {}
+  
+  /// getStateManager - Return the GRStateManager associated with this state.
+  GRStateManager &getStateManager() const { return *Mgr; }
   
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -134,6 +143,10 @@ public:
     return Env.LookupExpr(E);
   }
   
+  /// makeWithStore - Return a GRState with the same values as the current
+  /// state with the exception of using the specified Store.
+  const GRState *makeWithStore(Store store) const;
+  
   // Iterators.
   typedef Environment::seb_iterator seb_iterator;
   seb_iterator seb_begin() const { return Env.seb_begin(); }
@@ -146,6 +159,9 @@ public:
   // Trait based GDM dispatch.  
   void* const* FindGDM(void* K) const;
   
+  template<typename T>
+  const GRState *add(typename GRStateTrait<T>::key_type K) const;
+
   template <typename T>
   typename GRStateTrait<T>::data_type
   get() const {
@@ -159,6 +175,21 @@ public:
     return GRStateTrait<T>::Lookup(GRStateTrait<T>::MakeData(d), key);
   }
   
+  template <typename T>
+  typename GRStateTrait<T>::context_type get_context() const;
+    
+  template<typename T>
+  const GRState *set(typename GRStateTrait<T>::data_type D) const;
+  
+  template<typename T>
+  const GRState *set(typename GRStateTrait<T>::key_type K,
+                     typename GRStateTrait<T>::value_type E) const;  
+
+  template<typename T>
+  const GRState *set(typename GRStateTrait<T>::key_type K,
+                     typename GRStateTrait<T>::value_type E,
+                     typename GRStateTrait<T>::context_type C) const;
+
   template<typename T>
   bool contains(typename GRStateTrait<T>::key_type key) const {
     void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
@@ -533,9 +564,6 @@ public:
   
   const GRState* getPersistentState(GRState& Impl);
 
-  // MakeStateWithStore - get a persistent state with the new store.
-  const GRState* MakeStateWithStore(const GRState* St, Store store);
-  
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, Expr* Ex, uint64_t);
   
@@ -667,6 +695,39 @@ public:
                             SymbolVisitor& visitor);
 };
   
+
+//===----------------------------------------------------------------------===//
+// Out-of-line template method definitions for GRState.
+//===----------------------------------------------------------------------===//
+
+template<typename T>
+const GRState *GRState::add(typename GRStateTrait<T>::key_type K) const {
+  return Mgr->add<T>(this, K, get_context<T>());
+}
+  
+template <typename T>
+typename GRStateTrait<T>::context_type GRState::get_context() const {
+  return Mgr->get_context<T>();
+}
+  
+template<typename T>
+const GRState *GRState::set(typename GRStateTrait<T>::data_type D) const {
+  return Mgr->set<T>(this, D);
+}
+  
+template<typename T>
+const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
+                            typename GRStateTrait<T>::value_type E) const {
+  return Mgr->set<T>(this, K, E, get_context<T>());
+}
+  
+template<typename T>
+const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
+                            typename GRStateTrait<T>::value_type E,
+                            typename GRStateTrait<T>::context_type C) const {
+  return Mgr->set<T>(this, K, E, C);
+}
+
 //===----------------------------------------------------------------------===//
 // GRStateRef - A "fat" reference to GRState that also bundles GRStateManager.
 //===----------------------------------------------------------------------===//
@@ -681,10 +742,6 @@ public:
   operator const GRState*() const { return St; }
   GRStateManager& getManager() const { return *Mgr; }
   
-  GRStateRef makeWithStore(Store store) {
-    return GRStateRef(Mgr->MakeStateWithStore(St, store), *Mgr);
-  }
-    
   SVal GetSVal(Expr* Ex) {
     return Mgr->GetSVal(St, Ex);
   }
