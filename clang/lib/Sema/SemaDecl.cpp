@@ -219,6 +219,8 @@ void Sema::PopDeclContext() {
   CurContext = getContainingDC(CurContext);
 }
 
+/// EnterDeclaratorContext - Used when we must lookup names in the context
+/// of a declarator's nested name specifier.
 void Sema::EnterDeclaratorContext(Scope *S, DeclContext *DC) {
   assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
   PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
@@ -227,11 +229,6 @@ void Sema::EnterDeclaratorContext(Scope *S, DeclContext *DC) {
   S->setEntity(CurContext);
 }
 
-/// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
-/// invoked ActOnCXXEnterDeclaratorScope(), is finished. 'SS' is the same
-/// CXXScopeSpec that was passed to ActOnCXXEnterDeclaratorScope as well.
-/// Used to indicate that names should revert to being looked up in the
-/// defining scope.
 void Sema::ExitDeclaratorContext(Scope *S) {
   S->setEntity(PreDeclaratorDC);
   PreDeclaratorDC = 0;
