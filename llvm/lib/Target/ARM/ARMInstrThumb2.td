@@ -156,7 +156,7 @@ multiclass T2I_bin_c_irs<string opc, PatFrag opnode> {
 //  Move Instructions.
 //
 def tMOVi16  : PseudoInst<(outs GPR:$dst), (ins i32imm:$src),
-                          "mov $dst, $src",
+                          "movw $dst, $src",
                           [(set GPR:$dst, imm0_65535:$src)]>, 
                          Requires<[HasThumb2]>;
 
