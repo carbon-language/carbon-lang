@@ -36,6 +36,8 @@ if(PYTHONINTERP_FOUND)
       ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
      "--path=${TESTING_EXTRA_PATHS}"
       -s ${CLANG_TEST_EXTRA_ARGS}
+      --clang=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang
+      --clang-cc=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang-cc
      ${CMAKE_CURRENT_SOURCE_DIR}/${testdir}/
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       COMMENT "Running Clang regression tests in ${testdir}")
@@ -47,7 +49,9 @@ if(PYTHONINTERP_FOUND)
     ${PYTHON_EXECUTABLE} 
     ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
     "--path=${TESTING_EXTRA_PATHS}"
-      -s ${CLANG_TEST_EXTRA_ARGS}
+    -s ${CLANG_TEST_EXTRA_ARGS}
+    --clang=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang
+    --clang-cc=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang-cc
     ${all_testdirs}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS clang clang-cc
