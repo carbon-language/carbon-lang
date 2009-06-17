@@ -1721,6 +1721,17 @@ public:
   /// defining scope.
   virtual void ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
 
+  /// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse an
+  /// initializer for the declaration 'Dcl'.
+  /// After this method is called, according to [C++ 3.4.1p13], if 'Dcl' is a
+  /// static data member of class X, names should be looked up in the scope of
+  /// class X.
+  virtual void ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl);
+
+  /// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
+  /// initializer for the declaration 'Dcl'.
+  virtual void ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl);
+
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                             ExprTy **Strings,

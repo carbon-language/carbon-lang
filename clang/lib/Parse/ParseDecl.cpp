@@ -402,7 +402,14 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D) {
       SourceLocation DelLoc = ConsumeToken();
       Actions.SetDeclDeleted(ThisDecl, DelLoc);
     } else {
+      if (getLang().CPlusPlus)
+        Actions.ActOnCXXEnterDeclInitializer(CurScope, ThisDecl);
+
       OwningExprResult Init(ParseInitializer());
+
+      if (getLang().CPlusPlus)
+        Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+
       if (Init.isInvalid()) {
         SkipUntil(tok::semi, true, true);
         return DeclPtrTy();

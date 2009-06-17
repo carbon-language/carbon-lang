@@ -2828,3 +2828,58 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   
   return false;
 }
+
+/// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse an
+/// initializer for the declaration 'Dcl'.
+/// After this method is called, according to [C++ 3.4.1p13], if 'Dcl' is a
+/// static data member of class X, names should be looked up in the scope of
+/// class X.
+void Sema::ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
+  Decl *D = Dcl.getAs<Decl>();
+  // If there is no declaration, there was an error parsing it.
+  if (D == 0)
+    return;
+
+  // Check whether it is a declaration with a nested name specifier like
+  // int foo::bar;
+  if (!D->isOutOfLine())
+    return;
+  
+  // C++ [basic.lookup.unqual]p13
+  //
+  // A name used in the definition of a static data member of class X
+  // (after the qualified-id of the static member) is looked up as if the name
+  // was used in a member function of X.
+  
+  // Change current context into the context of the initializing declaration.
+  
+  assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
+  PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
+  CurContext = D->getDeclContext();
+  assert(CurContext && "No context?");
+  S->setEntity(CurContext);
+}
+
+/// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
+/// initializer for the declaration 'Dcl'.
+void Sema::ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
+  Decl *D = Dcl.getAs<Decl>();
+  // If there is no declaration, there was an error parsing it.
+  if (D == 0)
+    return;
+
+  // Check whether it is a declaration with a nested name specifier like
+  // int foo::bar;
+  if (!D->isOutOfLine())
+    return;
+
+  assert(S->getEntity() == D->getDeclContext() && "Context imbalance!");
+  S->setEntity(PreDeclaratorDC);
+  PreDeclaratorDC = 0;
+
+  // Reset CurContext to the nearest enclosing context.
+  while (!S->getEntity() && S->getParent())
+    S = S->getParent();
+  CurContext = static_cast<DeclContext*>(S->getEntity());
+  assert(CurContext && "No context?");
+}

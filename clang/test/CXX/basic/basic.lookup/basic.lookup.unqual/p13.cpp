@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL
 
 struct S {
   static const int f0 = 0;
