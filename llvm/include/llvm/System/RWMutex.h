@@ -79,6 +79,20 @@ namespace llvm
     /// @}
     };
     
+    /// ScopedReader - RAII acquisition of a writer lock
+    struct ScopedReader {
+      RWMutex* mutex;
+      
+      explicit ScopedReader(RWMutex* m) {
+        mutex = m;
+        mutex->reader_acquire();
+      }
+      
+      ~ScopedReader() {
+        mutex->reader_release();
+      }
+    };
+    
     /// ScopedWriter - RAII acquisition of a writer lock
     struct ScopedWriter {
       RWMutex* mutex;

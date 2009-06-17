@@ -16,7 +16,9 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/StringPool.h"
+#include "llvm/System/RWMutex.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
@@ -228,38 +230,42 @@ void Function::removeAttribute(unsigned i, Attributes attr) {
 // allocating an additional word in Function for programs which do not use GC
 // (i.e., most programs) at the cost of increased overhead for clients which do
 // use GC.
-static DenseMap<const Function*,PooledStringPtr> *GCNames;
-static StringPool *GCNamePool;
+static ManagedStatic<DenseMap<const Function*,PooledStringPtr> > GCNames;
+static ManagedStatic<StringPool> GCNamePool;
+static ManagedStatic<sys::RWMutex> GCLock;
 
 bool Function::hasGC() const {
-  return GCNames && GCNames->count(this);
+  if (llvm_is_multithreaded()) {
+    sys::ScopedReader Reader(&*GCLock);
+    return GCNames->count(this);
+  } else 
+    return GCNames->count(this);
 }
 
 const char *Function::getGC() const {
   assert(hasGC() && "Function has no collector");
-  return *(*GCNames)[this];
+  
+  if (llvm_is_multithreaded()) {
+    sys::ScopedReader Reader(&*GCLock);
+    return *(*GCNames)[this];
+  } else
+    return *(*GCNames)[this];
 }
 
 void Function::setGC(const char *Str) {
-  if (!GCNamePool)
-    GCNamePool = new StringPool();
-  if (!GCNames)
-    GCNames = new DenseMap<const Function*,PooledStringPtr>();
-  (*GCNames)[this] = GCNamePool->intern(Str);
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*GCLock);
+    (*GCNames)[this] = GCNamePool->intern(Str);
+  } else
+    (*GCNames)[this] = GCNamePool->intern(Str); 
 }
 
 void Function::clearGC() {
-  if (GCNames) {
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*GCLock);
     GCNames->erase(this);
-    if (GCNames->empty()) {
-      delete GCNames;
-      GCNames = 0;
-      if (GCNamePool->empty()) {
-        delete GCNamePool;
-        GCNamePool = 0;
-      }
-    }
-  }
+  } else
+    GCNames->erase(this);
 }
 
 /// copyAttributesFrom - copy all additional attributes (those not needed to
