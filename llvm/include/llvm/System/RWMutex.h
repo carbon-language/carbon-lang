@@ -78,6 +78,20 @@ namespace llvm
       void operator=(const RWMutex &);
     /// @}
     };
+    
+    /// ScopedWriter - RAII acquisition of a writer lock
+    struct ScopedWriter {
+      RWMutex* mutex;
+      
+      explicit ScopedWriter(RWMutex* m) {
+        mutex = m;
+        mutex->writer_acquire();
+      }
+      
+      ~ScopedWriter() {
+        mutex->writer_release();
+      }
+    };
   }
 }
 

@@ -306,12 +306,11 @@ ConstantInt *ConstantInt::get(const APInt& V) {
     ConstantsLock->reader_release();
     
     if (!Slot) {
-      ConstantsLock->writer_acquire();
+      sys::ScopedWriter Writer(&*ConstantsLock);
       ConstantInt *&Slot = (*IntConstants)[Key]; 
       if (!Slot) {
         Slot = new ConstantInt(ITy, V);
       }
-      ConstantsLock->writer_release();
     }
     
     return Slot;
@@ -421,7 +420,7 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
     ConstantsLock->reader_release();
     
     if (!Slot) {
-      ConstantsLock->writer_acquire();
+      sys::ScopedWriter Writer(&*ConstantsLock);
       Slot = (*FPConstants)[Key];
       if (!Slot) {
         const Type *Ty;
@@ -441,7 +440,6 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
 
         Slot = new ConstantFP(Ty, V);
       }
-      ConstantsLock->writer_release();
     }
     
     return Slot;
@@ -1240,7 +1238,7 @@ public:
         ConstantsLock->reader_release();
         
         if (!Result) {
-          ConstantsLock->writer_acquire();
+          sys::ScopedWriter Writer(&*ConstantsLock);
           I = Map.find(Lookup);
           // Is it in the map?  
           if (I != Map.end())
@@ -1270,7 +1268,6 @@ public:
               }
             }
           }
-          ConstantsLock->writer_release();
         }
         
         return Result;
@@ -1419,9 +1416,11 @@ public:
     // If the type became concrete without being refined to any other existing
     // type, we just remove ourselves from the ATU list.
     void typeBecameConcrete(const DerivedType *AbsTy) {
-      if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-      AbsTy->removeAbstractTypeUser(this);
-      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+      if (llvm_is_multithreaded()) {
+        sys::ScopedWriter Writer(&*ConstantsLock);
+        AbsTy->removeAbstractTypeUser(this);
+      } else
+        AbsTy->removeAbstractTypeUser(this);
     }
 
     void dump() const {
@@ -1723,9 +1722,12 @@ Constant *ConstantVector::get(const std::vector<Constant*> &V) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  VectorConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Write(&*ConstantsLock);
+    VectorConstants->remove(this);
+  } else
+    VectorConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1796,9 +1798,11 @@ ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  NullPtrConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*ConstantsLock);
+    NullPtrConstants->remove(this);
+  } else
+    NullPtrConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1857,21 +1861,33 @@ MDString::MDString(const char *begin, const char *end)
 static ManagedStatic<StringMap<MDString*> > MDStringCache;
 
 MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(StrBegin,
-                                                                      StrEnd);
-  MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Entry.getKeyData(),
-                           Entry.getKeyData() + Entry.getKeyLength());
-                           
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
-  return S;
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*ConstantsLock);
+    StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
+                                          StrBegin, StrEnd);
+    MDString *&S = Entry.getValue();
+    if (!S) S = new MDString(Entry.getKeyData(),
+                             Entry.getKeyData() + Entry.getKeyLength());
+
+    return S;
+  } else {
+    StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
+                                          StrBegin, StrEnd);
+    MDString *&S = Entry.getValue();
+    if (!S) S = new MDString(Entry.getKeyData(),
+                             Entry.getKeyData() + Entry.getKeyLength());
+  
+    return S;
+  }
 }
 
 void MDString::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*ConstantsLock);
+    MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
+  } else
+    MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
+
   destroyConstantImpl();
 }
 
@@ -1903,14 +1919,13 @@ MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
     ConstantsLock->reader_release();
     
     if (!N) {
-      ConstantsLock->writer_acquire();
+      sys::ScopedWriter Writer(&*ConstantsLock);
       N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
       if (!N) {
         // InsertPoint will have been set by the FindNodeOrInsertPos call.
         MDNode *N = new(0) MDNode(Vals, NumVals);
         MDNodeSet->InsertNode(N, InsertPoint);
       }
-      ConstantsLock->writer_release();
     }
     
     return N;
@@ -1927,9 +1942,12 @@ MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
 }
 
 void MDNode::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  MDNodeSet->RemoveNode(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*ConstantsLock); 
+    MDNodeSet->RemoveNode(this);
+  } else
+    MDNodeSet->RemoveNode(this);
+  
   destroyConstantImpl();
 }
 
@@ -2793,9 +2811,12 @@ Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantExpr::destroyConstant() {
-  if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
-  ExprConstants->remove(this);
-  if (llvm_is_multithreaded()) ConstantsLock->writer_release();
+  if (llvm_is_multithreaded()) {
+    sys::ScopedWriter Writer(&*ConstantsLock);
+    ExprConstants->remove(this);
+  } else
+    ExprConstants->remove(this);
+  
   destroyConstantImpl();
 }
 
@@ -2859,7 +2880,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
-    if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+    sys::ScopedWriter Writer(&*ConstantsLock);
     bool Exists;
     ArrayConstantsTy::MapTy::iterator I =
       ArrayConstants->InsertOrGetItem(Lookup, Exists);
@@ -2885,10 +2906,8 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
           if (getOperand(i) == From)
             setOperand(i, ToC);
       }
-      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
       return;
     }
-    if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   }
  
   // Otherwise, I do need to replace this with an existing value.
@@ -2937,7 +2956,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
-    if (llvm_is_multithreaded()) ConstantsLock->writer_acquire();
+    sys::ScopedWriter Writer(&*ConstantsLock);
     bool Exists;
     StructConstantsTy::MapTy::iterator I =
       StructConstants->InsertOrGetItem(Lookup, Exists);
@@ -2953,10 +2972,8 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
-      if (llvm_is_multithreaded()) ConstantsLock->writer_release();
       return;
     }
-    if (llvm_is_multithreaded()) ConstantsLock->writer_release();
   }
   
   assert(Replacement != this && "I didn't contain From!");
