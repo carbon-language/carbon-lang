@@ -155,7 +155,24 @@ public:
   typedef Environment::beb_iterator beb_iterator;
   beb_iterator beb_begin() const { return Env.beb_begin(); }
   beb_iterator beb_end() const { return Env.beb_end(); }
+  
+  BasicValueFactory &getBasicVals() const;
+  SymbolManager &getSymbolManager() const;
 
+  SVal getLValue(const VarDecl* VD) const;
+
+  SVal getSVal(Expr* Ex) const;
+  
+  SVal getBlkExprSVal(Expr* Ex) const;
+  
+  SVal getSValAsScalarOrLoc(const Expr *Ex) const;
+  
+  SVal getSVal(Loc LV, QualType T = QualType()) const;
+  
+  SVal getSVal(const MemRegion* R) const;
+  
+  SVal getSValAsScalarOrLoc(const MemRegion *R) const;
+  
   // Trait based GDM dispatch.  
   void* const* FindGDM(void* K) const;
   
@@ -697,8 +714,44 @@ public:
   
 
 //===----------------------------------------------------------------------===//
-// Out-of-line template method definitions for GRState.
+// Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
+
+inline SVal GRState::getLValue(const VarDecl* VD) const {
+  return Mgr->GetLValue(this, VD);
+}  
+  
+inline SVal GRState::getSVal(Expr* Ex) const {
+  return Mgr->GetSVal(this, Ex);
+}
+
+inline SVal GRState::getBlkExprSVal(Expr* Ex) const {  
+  return Mgr->GetBlkExprSVal(this, Ex);
+}
+
+inline SVal GRState::getSValAsScalarOrLoc(const Expr *Ex) const {
+  return Mgr->GetSValAsScalarOrLoc(this, Ex);
+}
+
+inline SVal GRState::getSVal(Loc LV, QualType T) const {
+  return Mgr->GetSVal(this, LV, T);
+}
+
+inline SVal GRState::getSVal(const MemRegion* R) const {
+  return Mgr->GetSVal(this, R);
+}
+
+inline SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
+  return Mgr->GetSValAsScalarOrLoc(this, R);
+}
+  
+inline BasicValueFactory& GRState::getBasicVals() const {
+  return Mgr->getBasicVals();
+}
+
+inline SymbolManager& GRState::getSymbolManager() const {
+  return Mgr->getSymbolManager();
+}
 
 template<typename T>
 const GRState *GRState::add(typename GRStateTrait<T>::key_type K) const {

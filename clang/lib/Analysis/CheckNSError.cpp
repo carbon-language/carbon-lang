@@ -41,7 +41,7 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
   bool CheckNSErrorArgument(QualType ArgTy);
   bool CheckCFErrorArgument(QualType ArgTy);
   
-  void CheckParamDeref(VarDecl* V, GRStateRef state, BugReporter& BR);
+  void CheckParamDeref(VarDecl* V, const GRState *state, BugReporter& BR);
   
   void EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl);
   
@@ -94,8 +94,7 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
     // Scan the parameters for an implicit null dereference.
     for (llvm::SmallVectorImpl<VarDecl*>::iterator I=ErrorParams.begin(),
           E=ErrorParams.end(); I!=E; ++I)    
-        CheckParamDeref(*I, GRStateRef((*RI)->getState(),Eng.getStateManager()),
-                        BR);
+        CheckParamDeref(*I, (*RI)->getState(), BR);
 
   }
 }
@@ -186,13 +185,13 @@ bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
   return TT->getDecl()->getIdentifier() == II;
 }
 
-void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
+void NSErrorCheck::CheckParamDeref(VarDecl* Param, const GRState *rootState,
                                    BugReporter& BR) {
   
-  SVal ParamL = rootState.GetLValue(Param);
+  SVal ParamL = rootState->getLValue(Param);
   const MemRegion* ParamR = cast<loc::MemRegionVal>(ParamL).getRegionAs<VarRegion>();
   assert (ParamR && "Parameters always have VarRegions.");
-  SVal ParamSVal = rootState.GetSVal(ParamR);
+  SVal ParamSVal = rootState->getSVal(ParamR);
   
   // FIXME: For now assume that ParamSVal is symbolic.  We need to generalize
   // this later.
@@ -204,8 +203,8 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
   for (GRExprEngine::null_deref_iterator I=Eng.implicit_null_derefs_begin(),
        E=Eng.implicit_null_derefs_end(); I!=E; ++I) {
     
-    GRStateRef state = GRStateRef((*I)->getState(), Eng.getStateManager());
-    const SVal* X = state.get<GRState::NullDerefTag>();    
+    const GRState *state = (*I)->getState();
+    const SVal* X = state->get<GRState::NullDerefTag>();    
 
     if (!X || X->getAsSymbol() != ParamSym)
       continue;

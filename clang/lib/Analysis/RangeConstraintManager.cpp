@@ -233,7 +233,7 @@ struct GRStateTrait<ConstraintRange>
   
 namespace {
 class VISIBILITY_HIDDEN RangeConstraintManager : public SimpleConstraintManager{
-  RangeSet GetRange(GRStateRef state, SymbolRef sym);      
+  RangeSet GetRange(const GRState *state, SymbolRef sym);      
 public:
   RangeConstraintManager(GRStateManager& statemgr) 
       : SimpleConstraintManager(statemgr) {}
@@ -289,12 +289,11 @@ const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState* St,
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
 const GRState*
-RangeConstraintManager::RemoveDeadBindings(const GRState* St,
+RangeConstraintManager::RemoveDeadBindings(const GRState* state,
                                            SymbolReaper& SymReaper) {
-  GRStateRef state(St, StateMgr);
 
-  ConstraintRangeTy CR = state.get<ConstraintRange>();
-  ConstraintRangeTy::Factory& CRFactory = state.get_context<ConstraintRange>();
+  ConstraintRangeTy CR = state->get<ConstraintRange>();
+  ConstraintRangeTy::Factory& CRFactory = state->get_context<ConstraintRange>();
 
   for (ConstraintRangeTy::iterator I = CR.begin(), E = CR.end(); I != E; ++I) {
     SymbolRef sym = I.getKey();    
@@ -302,7 +301,7 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* St,
       CR = CRFactory.Remove(CR, sym);
   }
   
-  return state.set<ConstraintRange>(CR);
+  return state->set<ConstraintRange>(CR);
 }
 
 //===------------------------------------------------------------------------===
@@ -310,14 +309,14 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* St,
 //===------------------------------------------------------------------------===/
 
 RangeSet
-RangeConstraintManager::GetRange(GRStateRef state, SymbolRef sym) {
-  if (ConstraintRangeTy::data_type* V = state.get<ConstraintRange>(sym))
+RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
+  if (ConstraintRangeTy::data_type* V = state->get<ConstraintRange>(sym))
     return *V;
   
   // Lazily generate a new RangeSet representing all possible values for the
   // given symbol type.
-  QualType T = state.getSymbolManager().getType(sym);
-  BasicValueFactory& BV = state.getBasicVals();  
+  QualType T = state->getSymbolManager().getType(sym);
+  BasicValueFactory& BV = state->getBasicVals();  
   return RangeSet(F, BV.getMinValue(T), BV.getMaxValue(T));
 }
 
@@ -327,12 +326,11 @@ RangeConstraintManager::GetRange(GRStateRef state, SymbolRef sym) {
 
 #define AssumeX(OP)\
 const GRState*\
-RangeConstraintManager::AssumeSym ## OP(const GRState* St, SymbolRef sym,\
+RangeConstraintManager::AssumeSym ## OP(const GRState* state, SymbolRef sym,\
   const llvm::APSInt& V, bool& isFeasible){\
-  GRStateRef state(St, StateMgr);\
-  const RangeSet& R = GetRange(state, sym).Add##OP(state.getBasicVals(), F, V);\
+  const RangeSet& R = GetRange(state, sym).Add##OP(state->getBasicVals(), F, V);\
   isFeasible = !R.isEmpty();\
-  return isFeasible ? state.set<ConstraintRange>(sym, R).getState() : 0;\
+  return isFeasible ? state->set<ConstraintRange>(sym, R) : 0;\
 }
 
 AssumeX(EQ)

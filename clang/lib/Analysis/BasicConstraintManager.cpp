@@ -226,28 +226,24 @@ BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolRef sym,
   return St;
 }
 
-const GRState* BasicConstraintManager::AddEQ(const GRState* St, SymbolRef sym,
+const GRState* BasicConstraintManager::AddEQ(const GRState* state, SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
-  GRStateRef state(St, StateMgr);
-  return state.set<ConstEq>(sym, &V);
+  return state->set<ConstEq>(sym, &V);
 }
 
-const GRState* BasicConstraintManager::AddNE(const GRState* St, SymbolRef sym,
+const GRState* BasicConstraintManager::AddNE(const GRState* state, SymbolRef sym,
                                              const llvm::APSInt& V) {
 
-  GRStateRef state(St, StateMgr);
-
   // First, retrieve the NE-set associated with the given symbol.
-  ConstNotEqTy::data_type* T = state.get<ConstNotEq>(sym);
+  ConstNotEqTy::data_type* T = state->get<ConstNotEq>(sym);
   GRState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
-
   
   // Now add V to the NE set.
   S = ISetFactory.Add(S, &V);
   
   // Create a new state with the old binding replaced.
-  return state.set<ConstNotEq>(sym, S);
+  return state->set<ConstNotEq>(sym, S);
 }
 
 const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState* St,
@@ -277,28 +273,27 @@ bool BasicConstraintManager::isEqual(const GRState* St, SymbolRef sym,
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
 const GRState*
-BasicConstraintManager::RemoveDeadBindings(const GRState* St,
+BasicConstraintManager::RemoveDeadBindings(const GRState* state,
                                            SymbolReaper& SymReaper) {
 
-  GRStateRef state(St, StateMgr);
-  ConstEqTy CE = state.get<ConstEq>();
-  ConstEqTy::Factory& CEFactory = state.get_context<ConstEq>();
+  ConstEqTy CE = state->get<ConstEq>();
+  ConstEqTy::Factory& CEFactory = state->get_context<ConstEq>();
 
   for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
     SymbolRef sym = I.getKey();
     if (SymReaper.maybeDead(sym)) CE = CEFactory.Remove(CE, sym);
   }
-  state = state.set<ConstEq>(CE);
+  state = state->set<ConstEq>(CE);
 
-  ConstNotEqTy CNE = state.get<ConstNotEq>();
-  ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEq>();
+  ConstNotEqTy CNE = state->get<ConstNotEq>();
+  ConstNotEqTy::Factory& CNEFactory = state->get_context<ConstNotEq>();
 
   for (ConstNotEqTy::iterator I = CNE.begin(), E = CNE.end(); I != E; ++I) {
     SymbolRef sym = I.getKey();    
     if (SymReaper.maybeDead(sym)) CNE = CNEFactory.Remove(CNE, sym);
   }
   
-  return state.set<ConstNotEq>(CNE);
+  return state->set<ConstNotEq>(CNE);
 }
 
 void BasicConstraintManager::print(const GRState* St, std::ostream& Out, 
