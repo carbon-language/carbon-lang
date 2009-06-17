@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -iv-users -analyze | grep store
+; RUN: llvm-as < %s | opt -iv-users -analyze -disable-output | grep store
 
 define fastcc void @foo() nounwind {
 entry:

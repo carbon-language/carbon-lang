@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | not grep {/u -1}
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | not grep {/u -1}
 ; PR3275
 
 @g_16 = external global i16		; <i16*> [#uses=3]

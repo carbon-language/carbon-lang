@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep -e {-->  %b}
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | grep -e {-->  %b}
 ; PR1810
 
 define void @fun() {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution |& grep {/u 3}
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output |& grep {/u 3}
 
 define i32 @f(i32 %x) nounwind readnone {
 entry:

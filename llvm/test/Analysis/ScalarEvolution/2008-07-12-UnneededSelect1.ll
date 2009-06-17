@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution |& not grep smax
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output |& not grep smax
 ; PR2261
 
 @lut = common global [256 x i8] zeroinitializer, align 32		; <[256 x i8]*> [#uses=1]

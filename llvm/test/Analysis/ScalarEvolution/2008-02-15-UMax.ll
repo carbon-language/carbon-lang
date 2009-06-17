@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep umax
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | grep umax
 ; PR2003
 
 define i32 @foo(i32 %n) {

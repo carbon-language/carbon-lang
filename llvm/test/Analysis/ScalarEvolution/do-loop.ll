@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep smax
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | grep smax
 ; PR1614
 
 define i32 @f(i32 %x, i32 %y) {
