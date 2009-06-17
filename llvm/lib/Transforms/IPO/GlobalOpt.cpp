@@ -1667,11 +1667,14 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     //
     // NOTE: It doesn't make sense to promote non single-value types since we
     // are just replacing static memory to stack memory.
+    //
+    // If the global is in different address space, don't bring it to stack.
     if (!GS.HasMultipleAccessingFunctions &&
         GS.AccessingFunction && !GS.HasNonInstructionUser &&
         GV->getType()->getElementType()->isSingleValueType() &&
         GS.AccessingFunction->getName() == "main" &&
-        GS.AccessingFunction->hasExternalLinkage()) {
+        GS.AccessingFunction->hasExternalLinkage() &&
+        GV->getType()->getAddressSpace() == 0) {
       DOUT << "LOCALIZING GLOBAL: " << *GV;
       Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
       const Type* ElemTy = GV->getType()->getElementType();
