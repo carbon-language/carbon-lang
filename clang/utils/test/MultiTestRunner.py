@@ -169,7 +169,7 @@ class Tester(threading.Thread):
                 code = None
             else:
                 code = TestRunner.runOneTest(path, command, output, testname, 
-                                             opts.clang,
+                                             opts.clang, opts.clangcc,
                                              useValgrind=opts.useValgrind,
                                              useDGCompat=opts.useDGCompat,
                                              useScript=opts.testScript,
@@ -200,7 +200,7 @@ def detectCPUs():
         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
         if ncpus > 0:
             return ncpus
-        return 1 # Default
+    return 1 # Default
 
 def main():
     global options
@@ -212,7 +212,10 @@ def main():
                       default=detectCPUs())
     parser.add_option("", "--clang", dest="clang",
                       help="Program to use as \"clang\"",
-                      action="store", default="clang")
+                      action="store", default=None)
+    parser.add_option("", "--clang-cc", dest="clangcc",
+                      help="Program to use as \"clang-cc\"",
+                      action="store", default=None)
     parser.add_option("", "--vg", dest="useValgrind",
                       help="Run tests under valgrind",
                       action="store_true", default=False)
@@ -241,7 +244,7 @@ def main():
                       help="Run tests in random order",
                       action="store_true", default=False)
     parser.add_option("", "--seed", dest="seed",
-                      help="Seed for random number generator (default: random).",
+                      help="Seed for random number generator (default: random)",
                       action="store", default=None)
     parser.add_option("", "--no-progress-bar", dest="useProgressBar",
                       help="Do not use curses based progress bar",
@@ -257,6 +260,11 @@ def main():
 
     if not args:
         parser.error('No inputs specified')
+
+    if opts.clang is None:
+        opts.clang = TestRunner.inferClang()
+    if opts.clangcc is None:
+        opts.clangcc = TestRunner.inferClangCC(opts.clang)
 
     # FIXME: It could be worth loading these in parallel with testing.
     allTests = list(getTests(args))
@@ -279,7 +287,8 @@ def main():
     extra = ''
     if len(tests) != len(allTests):
         extra = ' of %d'%(len(allTests),)
-    header = '-- Testing: %d%s tests, %d threads --'%(len(tests),extra,opts.numThreads)
+    header = '-- Testing: %d%s tests, %d threads --'%(len(tests),extra,
+                                                      opts.numThreads)
 
     progressBar = None
     if not opts.quiet:

@@ -15,11 +15,17 @@
 #     %t - temporary file name (derived from testcase name)
 #
 
-import os
-import sys
-import subprocess
 import errno
+import os
 import re
+import signal
+import subprocess
+import sys
+
+# Increase determinism for things that use the terminal width.
+#
+# FIXME: Find a better place for this hack.
+os.environ['COLUMNS'] = '0'
 
 class TestStatus:
     Pass = 0 
@@ -59,7 +65,7 @@ def cat(path, output):
     output.writelines(f)
     f.close()
 
-def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, 
+def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
                useValgrind=False,
                useDGCompat=False,
                useScript=None, 
@@ -109,7 +115,8 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG,
                      ('%llvmgxx','llvm-g++ -emit-llvm -w'),
                      ('%prcontext','prcontext.tcl'),
                      ('%t',TEMPOUTPUT),
-                     ('clang',CLANG)]
+                     (' clang ', ' ' + CLANG + ' '),
+                     (' clang-cc ', ' ' + CLANGCC + ' ')]
     scriptLines = []
     xfailLines = []
     for ln in open(scriptFile):
@@ -148,9 +155,11 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG,
         outputFile.write(out)
         outputFile.write(err)
         SCRIPT_STATUS = p.wait()
+
+        # Detect Ctrl-C in subprocess.
+        if SCRIPT_STATUS == -signal.SIGINT:
+            raise KeyboardInterrupt
     except KeyboardInterrupt:
-        if p is not None:
-            os.kill(p.pid)
         raise
     outputFile.close()
 
@@ -185,24 +194,100 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG,
         return TestStatus.XFail
     else:
         return TestStatus.Pass
+
+def capture(args):
+    p = subprocess.Popen(args, stdout=subprocess.PIPE)
+    out,_ = p.communicate()
+    return out
+
+def which(command):
+    # Would be nice if Python had a lib function for this.
+    res = capture(['which',command])
+    res = res.strip()
+    if res and os.path.exists(res):
+        return res
+    return None
+
+def inferClang():
+    # Determine which clang to use.
+    clang = os.getenv('CLANG')
+    
+    # If the user set clang in the environment, definitely use that and don't
+    # try to validate.
+    if clang:
+        return clang
+
+    # Otherwise look in the path.
+    clang = which('clang')
+
+    if not clang:
+        print >>sys.stderr, "error: couldn't find 'clang' program, try setting CLANG in your environment"
+        sys.exit(1)
+        
+    return clang
+
+def inferClangCC(clang):
+    clangcc = os.getenv('CLANGCC')
+
+    # If the user set clang in the environment, definitely use that and don't
+    # try to validate.
+    if clangcc:
+        return clangcc
+
+    # Otherwise try adding -cc since we expect to be looking in a build
+    # directory.
+    clangcc = which(clang + '-cc')
+    if not clangcc:
+        # Otherwise ask clang.
+        res = capture([clang, '-print-prog-name=clang-cc'])
+        res = res.strip()
+        if res and os.path.exists(res):
+            clangcc = res
+    
+    if not clangcc:
+        print >>sys.stderr, "error: couldn't find 'clang-cc' program, try setting CLANGCC in your environment"
+        sys.exit(1)
+        
+    return clangcc
     
 def main():
-    _,path = sys.argv
-    command = path
-    # Use hand concatentation here because we want to override
-    # absolute paths.
-    output = 'Output/' + path + '.out'
-    testname = path
+    global options
+    from optparse import OptionParser
+    parser = OptionParser("usage: %prog [options] {tests}")
+    parser.add_option("", "--clang", dest="clang",
+                      help="Program to use as \"clang\"",
+                      action="store", default=None)
+    parser.add_option("", "--clang-cc", dest="clangcc",
+                      help="Program to use as \"clang-cc\"",
+                      action="store", default=None)
+    parser.add_option("", "--vg", dest="useValgrind",
+                      help="Run tests under valgrind",
+                      action="store_true", default=False)
+    parser.add_option("", "--dg", dest="useDGCompat",
+                      help="Use llvm dejagnu compatibility mode",
+                      action="store_true", default=False)
+    (opts, args) = parser.parse_args()
 
-    # Determine which clang to use.
-    CLANG = os.getenv('CLANG')
-    if not CLANG:
-        CLANG = 'clang'
+    if not args:
+        parser.error('No tests specified')
 
-    res = runOneTest(path, command, output, testname, CLANG,
-                     useValgrind=bool(os.getenv('VG')), 
-                     useDGCompat=bool(os.getenv('DG_COMPAT')), 
-                     useScript=os.getenv("TEST_SCRIPT"))
+    if opts.clang is None:
+        opts.clang = inferClang()
+    if opts.clangcc is None:
+        opts.clangcc = inferClangCC(opts.clang)
+
+    for path in args:
+        command = path
+        # Use hand concatentation here because we want to override
+        # absolute paths.
+        output = 'Output/' + path + '.out'
+        testname = path
+        
+        res = runOneTest(path, command, output, testname, 
+                         opts.clang, opts.clangcc,
+                         useValgrind=opts.useValgrind,
+                         useDGCompat=opts.useDGCompat,
+                         useScript=os.getenv("TEST_SCRIPT"))
 
     sys.exit(res == TestStatus.Fail or res == TestStatus.XPass)
 
