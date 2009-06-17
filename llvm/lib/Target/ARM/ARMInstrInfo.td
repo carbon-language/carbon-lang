@@ -1385,6 +1385,12 @@ def : ARMV5TEPat<(add GPR:$acc,
 include "ARMInstrThumb.td"
 
 //===----------------------------------------------------------------------===//
+// Thumb2 Support
+//
+
+include "ARMInstrThumb2.td"
+
+//===----------------------------------------------------------------------===//
 // Floating Point Support
 //
 

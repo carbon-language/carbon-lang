@@ -52,8 +52,13 @@ public:
 
   virtual const char *getPassName() const {
     return "ARM Instruction Selection";
-  } 
-  
+  }
+
+ /// getI32Imm - Return a target constant with the specified value, of type i32.
+  inline SDValue getI32Imm(unsigned Imm) {
+    return CurDAG->getTargetConstant(Imm, MVT::i32);
+  }
+
   SDNode *Select(SDValue Op);
   virtual void InstructionSelect();
   bool SelectAddrMode2(SDValue Op, SDValue N, SDValue &Base,
@@ -83,6 +88,9 @@ public:
                              SDValue &OffImm, SDValue &Offset);
   bool SelectThumbAddrModeSP(SDValue Op, SDValue N, SDValue &Base,
                              SDValue &OffImm);
+
+  bool SelectShifterOperand(SDValue Op, SDValue N,
+                            SDValue &BaseReg, SDValue &Opc);
 
   bool SelectShifterOperandReg(SDValue Op, SDValue N, SDValue &A,
                                SDValue &B, SDValue &C);
@@ -509,8 +517,30 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue Op, SDValue N,
   return false;
 }
 
+bool ARMDAGToDAGISel::SelectShifterOperand(SDValue Op,
+                                           SDValue N,
+                                           SDValue &BaseReg,
+                                           SDValue &Opc) {
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
+
+  // Don't match base register only case. That is matched to a separate
+  // lower complexity pattern with explicit register operand.
+  if (ShOpcVal == ARM_AM::no_shift) return false;
+
+  BaseReg = N.getOperand(0);
+  unsigned ShImmVal = 0;
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1)))
+    ShImmVal = RHS->getZExtValue() & 31;
+  else
+    return false;
+
+  Opc = getI32Imm(ARM_AM::getSORegOpc(ShOpcVal, ShImmVal));
+
+  return true;
+}
+
 bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue Op,
-                                              SDValue N, 
+                                              SDValue N,
                                               SDValue &BaseReg,
                                               SDValue &ShReg,
                                               SDValue &Opc) {
@@ -549,6 +579,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   switch (N->getOpcode()) {
   default: break;
   case ISD::Constant: {
+    // ARMv6T2 and later should materialize imms via MOV / MOVT pair.
+    if (Subtarget->hasV6T2Ops() || Subtarget->hasThumb2())
+      break;
+
     unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
     bool UseCP = true;
     if (Subtarget->isThumb())
