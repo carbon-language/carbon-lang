@@ -729,8 +729,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
                           !Fn->doesNotThrow() ||
                           UnwindTablesMandatory;
-  DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
-                 DebugLoc::getUnknownLoc());
+  DebugLoc DL;
 
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
