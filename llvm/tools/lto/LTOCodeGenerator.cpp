@@ -18,8 +18,6 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/InitializeAllTargets.h"
-#include "llvm/InitializeAllAsmPrinters.h"
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
@@ -39,10 +37,11 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetSelect.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Config/config.h"
@@ -76,6 +75,8 @@ LTOCodeGenerator::LTOCodeGenerator()
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
       _nativeObjectFile(NULL), _gccPath(NULL), _assemblerPath(NULL)
 {
+  InitializeAllTargets();
+  InitializeAllAsmPrinters();
 
 }
 

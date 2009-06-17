@@ -28,7 +28,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
-#include "llvm/Config/config.h"
+#include "llvm/Target/TargetSelect.h"
 #include <iostream>
 #include <cerrno>
 using namespace llvm;
@@ -85,16 +85,6 @@ static void do_shutdown() {
   llvm_shutdown();
 }
 
-#ifdef LLVM_NATIVE_ARCH
-namespace llvm {
-#define Declare2(TARG, MOD)   void Initialize ## TARG ## MOD()
-#define Declare(T, M) Declare2(T, M)
-  Declare(LLVM_NATIVE_ARCH, Target);
-#undef Declare
-#undef Declare2
-}
-#endif
-
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
@@ -149,15 +139,9 @@ int main(int argc, char **argv, char * const *envp) {
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
   
-  // If we have a native target, initialize it to ensure it is linked in.
-#ifdef LLVM_NATIVE_ARCH
-#define DoInit2(TARG, MOD)   llvm::Initialize ## TARG ## MOD()
-#define DoInit(T, M) DoInit2(T, M)
-  DoInit(LLVM_NATIVE_ARCH, Target);
-#undef DoInit
-#undef DoInit2
-#endif
-  
+  // If we have a native target, initialize it to ensure it is linked in and
+  // usable by the JIT.
+  InitializeNativeTarget();
 
   EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, OLvl);
   if (!EE && !ErrorMsg.empty()) {
