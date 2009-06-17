@@ -240,7 +240,7 @@ def error_duplicate_ivar_use : Error<
 def error_property_implemented : Error<"property %0 is already implemented">;
 def warn_objc_property_attr_mutually_exclusive : Warning<
   "property attributes '%0' and '%1' are mutually exclusive">,
-  InGroup<DiagGroup<"readonly-setter-attrs">>, DefaultIgnore;
+  InGroup<ReadOnlySetterAttrs>, DefaultIgnore;
 def warn_undeclared_selector : Warning<
   "undeclared selector %0">, InGroup<UndeclaredSelector>, DefaultIgnore;
 
