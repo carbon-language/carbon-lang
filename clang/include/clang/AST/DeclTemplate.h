@@ -696,13 +696,6 @@ public:
   }
 
   /// \brief Retrieve the template argument at a given index.
-  TemplateArgument &get(unsigned Idx) { 
-    assert(Idx < NumArguments && "Invalid template argument index");
-    return getFlatArgumentList()[Idx];
-  }
-
-  /// \brief Retrieve the template argument at a given index.
-        TemplateArgument &operator[](unsigned Idx)       { return get(Idx); }
   const TemplateArgument &operator[](unsigned Idx) const { return get(Idx); }
 
   /// \brief Retrieve the number of template arguments in this
@@ -714,9 +707,6 @@ public:
   unsigned flat_size() const { return NumArguments; }
 
   /// \brief Retrieve the flattened template argument list.
-  TemplateArgument *getFlatArgumentList() { 
-    return Arguments.getPointer();
-  }
   const TemplateArgument *getFlatArgumentList() const { 
     return Arguments.getPointer();
   }
