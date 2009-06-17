@@ -539,7 +539,7 @@ template<>
 class parser<bool> : public basic_parser<bool> {
   const char *ArgStr;
 public:
-  
+
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
 
@@ -1105,7 +1105,7 @@ public:
   }
 };
 
-// multi_arg - Modifier to set the number of additional values.
+// multi_val - Modifier to set the number of additional values.
 struct multi_val {
   unsigned AdditionalVals;
   explicit multi_val(unsigned N) : AdditionalVals(N) {}
