@@ -18,31 +18,39 @@
 
 #include "Win32.h"
 
-// FIXME: THIS IS NOT THREAD-SAFE!!
-// Windows does not have reader-writer locks pre-Vista.  If you want to have
-// thread-safe LLVM on Windows, for now at least, you need to use a pthreads
-// replacement library.
+// FIXME: Windows does not have reader-writer locks pre-Vista.  If you want
+// real reader-writer locks, you a pthreads implementation for Windows.
 
 namespace llvm {
 using namespace sys;
 
-RWMutex::RWMutex() { }
+RWMutex::RWMutex() {
+  data_ = calloc(1, sizeof(CRITICAL_SECTION));
+  InitializeCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+}
 
-RWMutex::~RWMutex() { }
+RWMutex::~RWMutex() {
+  DeleteCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
+  free(data_);
+}
 
 bool RWMutex::reader_acquire() {
+  EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
 bool RWMutex::reader_release() {
+  LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
 bool RWMutex::writer_acquire() {
+  EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
 bool RWMutex::writer_release() {
+  LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
