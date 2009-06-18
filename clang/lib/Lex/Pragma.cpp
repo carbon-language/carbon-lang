@@ -93,7 +93,7 @@ void Preprocessor::HandlePragmaDirective() {
   PragmaHandlers->HandlePragma(*this, Tok);
   
   // If the pragma handler didn't read the rest of the line, consume it now.
-  if (CurPPLexer->ParsingPreprocessorDirective)
+  if (CurPPLexer && CurPPLexer->ParsingPreprocessorDirective)
     DiscardUntilEndOfDirective();
 }
 
