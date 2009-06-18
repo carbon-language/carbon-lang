@@ -154,8 +154,10 @@ public:
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, InputIterator ArgBegin,
                            InputIterator ArgEnd, const char *Name = "") {
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
-                                     ArgBegin, ArgEnd), Name);
+    return Insert(TransferAttributes(InvokeInst::Create(Callee,
+                                                        NormalDest, UnwindDest,
+                                                        ArgBegin, ArgEnd),
+                                     Callee), Name);
   }
 
   UnwindInst *CreateUnwind() {
