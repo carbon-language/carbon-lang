@@ -2453,10 +2453,25 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
               LCI->getValue() == CI->getValue())
             if (const SCEVZeroExtendExpr *Z =
                   dyn_cast<SCEVZeroExtendExpr>(getSCEV(U->getOperand(0)))) {
-              SCEVHandle ZO = Z->getOperand();
-              if (APIntOps::isMask(getTypeSizeInBits(ZO->getType()),
-                                   CI->getValue()))
-                return getZeroExtendExpr(getNotSCEV(ZO), U->getType());
+              const Type *UTy = U->getType();
+              SCEVHandle Z0 = Z->getOperand();
+              const Type *Z0Ty = Z0->getType();
+              unsigned Z0TySize = getTypeSizeInBits(Z0Ty);
+
+              // If C is a low-bits mask, the zero extend is zerving to
+              // mask off the high bits. Complement the operand and
+              // re-apply the zext.
+              if (APIntOps::isMask(Z0TySize, CI->getValue()))
+                return getZeroExtendExpr(getNotSCEV(Z0), UTy);
+
+              // If C is a single bit, it may be in the sign-bit position
+              // before the zero-extend. In this case, represent the xor
+              // using an add, which is equivalent, and re-apply the zext.
+              APInt Trunc = APInt(CI->getValue()).trunc(Z0TySize);
+              if (APInt(Trunc).zext(getTypeSizeInBits(UTy)) == CI->getValue() &&
+                  Trunc.isSignBit())
+                return getZeroExtendExpr(getAddExpr(Z0, getConstant(Trunc)),
+                                         UTy);
             }
     }
     break;
