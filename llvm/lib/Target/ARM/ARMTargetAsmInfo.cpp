@@ -74,10 +74,10 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
 
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.
-  if (TM.getRelocationModel() != Reloc::PIC_) {
-    // Emit a local label that is preserved until the linker runs.
-    JumpTableSpecialLabelPrefix = "l";
-  }
+  // Emit a local label that is preserved until the linker runs.
+  // We do not check the relocation model here since it can be overridden
+  // later.
+  JumpTableSpecialLabelPrefix = "l";
 
   NeedsSet = true;
   DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";

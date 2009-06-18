@@ -68,10 +68,9 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.
-  if (TM.getRelocationModel() != Reloc::PIC_) {
-    // Emit a local label that is preserved until the linker runs.
-    JumpTableSpecialLabelPrefix = "l";
-  }
+  // We do not check the relocation model here since it can be overridden
+  // later.
+  JumpTableSpecialLabelPrefix = "l";
 }
 
 /// PreferredEHDataFormat - This hook allows the target to select data
