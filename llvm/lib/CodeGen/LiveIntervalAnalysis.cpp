@@ -584,7 +584,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
-        LiveRange LR(Start, End, interval.getNextValue(0, 0, false, VNInfoAllocator));
+        LiveRange LR(Start, End, interval.getNextValue(Start, 0, false, VNInfoAllocator));
         LR.valno->setIsPHIDef(true);
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
@@ -753,7 +753,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
       SeenDefUse = true;
-      goto exit;
+      break;
     } else if (mi->modifiesRegister(interval.reg, tri_)) {
       // Another instruction redefines the register before it is ever read.
       // Then the register is essentially dead at the instruction that defines
@@ -762,7 +762,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       DOUT << " dead";
       end = getDefIndex(start) + 1;
       SeenDefUse = true;
-      goto exit;
+      break;
     }
 
     baseIndex += InstrSlots::NUM;
@@ -774,7 +774,6 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
     }
   }
 
-exit:
   // Live-in register might not be used at all.
   if (!SeenDefUse) {
     if (isAlias) {
@@ -786,7 +785,10 @@ exit:
     }
   }
 
-  LiveRange LR(start, end, interval.getNextValue(0, 0, false, VNInfoAllocator));
+  VNInfo *vni = interval.getNextValue(start, 0, false, VNInfoAllocator);
+  vni->setIsPHIDef(true);
+  LiveRange LR(start, end, vni);
+  
   interval.addRange(LR);
   interval.addKill(LR.valno, end);
   DOUT << " +" << LR << '\n';
