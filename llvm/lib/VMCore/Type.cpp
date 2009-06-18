@@ -44,7 +44,7 @@ AbstractTypeUser::~AbstractTypeUser() {}
 //===----------------------------------------------------------------------===//
 
 // Reader/writer lock used for guarding access to the type maps.
-static ManagedStatic<sys::RWMutex> TypeMapLock;
+static ManagedStatic<sys::SmartRWMutex<true> > TypeMapLock;
 
 // Recursive lock used for guarding access to AbstractTypeUsers.
 // NOTE: The false template parameter means this will no-op when we're not in
@@ -1003,36 +1003,26 @@ const IntegerType *IntegerType::get(unsigned NumBits) {
   
   IntegerValType IVT(NumBits);
   IntegerType *ITy = 0;
-  if (llvm_is_multithreaded()) {
-    // First, see if the type is already in the table, for which
-    // a reader lock suffices.
-    TypeMapLock->reader_acquire();
-    ITy = IntegerTypes->get(IVT);
-    TypeMapLock->reader_release();
+  
+  // First, see if the type is already in the table, for which
+  // a reader lock suffices.
+  TypeMapLock->reader_acquire();
+  ITy = IntegerTypes->get(IVT);
+  TypeMapLock->reader_release();
     
-    if (!ITy) {
-      // OK, not in the table, get a writer lock.
-      TypeMapLock->writer_acquire();
-      ITy = IntegerTypes->get(IVT);
-      
-      // We need to _recheck_ the table in case someone
-      // put it in between when we released the reader lock
-      // and when we gained the writer lock!
-      if (!ITy) {
-        // Value not found.  Derive a new type!
-        ITy = new IntegerType(NumBits);
-        IntegerTypes->add(IVT, ITy);
-      }
-      
-      TypeMapLock->writer_release();
-    }
-  } else {
+  if (!ITy) {
+    // OK, not in the table, get a writer lock.
+    sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
     ITy = IntegerTypes->get(IVT);
-    if (ITy) return ITy;           // Found a match, return it!
-
-    // Value not found.  Derive a new type!
-    ITy = new IntegerType(NumBits);
-    IntegerTypes->add(IVT, ITy);
+      
+    // We need to _recheck_ the table in case someone
+    // put it in between when we released the reader lock
+    // and when we gained the writer lock!
+    if (!ITy) {
+      // Value not found.  Derive a new type!
+      ITy = new IntegerType(NumBits);
+      IntegerTypes->add(IVT, ITy);
+    }
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ITy << "\n";
@@ -1099,37 +1089,25 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *FT = 0;
   
-  if (llvm_is_multithreaded()) {
-    TypeMapLock->reader_acquire();
-    FT = FunctionTypes->get(VT);
-    TypeMapLock->reader_release();
-    
-    if (!FT) {
-      TypeMapLock->writer_acquire();
-      
-      // Have to check again here, because it might have
-      // been inserted between when we release the reader
-      // lock and when we acquired the writer lock.
-      FT = FunctionTypes->get(VT);
-      if (!FT) {
-        FT = (FunctionType*) operator new(sizeof(FunctionType) +
-                                        sizeof(PATypeHandle)*(Params.size()+1));
-        new (FT) FunctionType(ReturnType, Params, isVarArg);
-        FunctionTypes->add(VT, FT);
-      }
-      TypeMapLock->writer_release();
-    }
-  } else {
-    FT = FunctionTypes->get(VT);
-    if (FT)
-      return FT;
-
-    FT = (FunctionType*) operator new(sizeof(FunctionType) +
-                                      sizeof(PATypeHandle)*(Params.size()+1));
-    new (FT) FunctionType(ReturnType, Params, isVarArg);
-    FunctionTypes->add(VT, FT);
-  }
+  TypeMapLock->reader_acquire();
+  FT = FunctionTypes->get(VT);
+  TypeMapLock->reader_release();
   
+  if (!FT) {
+    sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
+    
+    // Have to check again here, because it might have
+    // been inserted between when we release the reader
+    // lock and when we acquired the writer lock.
+    FT = FunctionTypes->get(VT);
+    if (!FT) {
+      FT = (FunctionType*) operator new(sizeof(FunctionType) +
+                                      sizeof(PATypeHandle)*(Params.size()+1));
+      new (FT) FunctionType(ReturnType, Params, isVarArg);
+      FunctionTypes->add(VT, FT);
+    }
+  }
+
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << FT << "\n";
 #endif
@@ -1170,28 +1148,19 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
   ArrayValType AVT(ElementType, NumElements);
   ArrayType *AT = 0;
   
-  if (llvm_is_multithreaded()) {
-    TypeMapLock->reader_acquire();
-    AT = ArrayTypes->get(AVT);
-    TypeMapLock->reader_release();
+  TypeMapLock->reader_acquire();
+  AT = ArrayTypes->get(AVT);
+  TypeMapLock->reader_release();
     
+  if (!AT) {
+    sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
+    
+    // Recheck.  Might have changed between release and acquire.
+    AT = ArrayTypes->get(AVT);
     if (!AT) {
-      TypeMapLock->writer_acquire();
-      
-      // Recheck.  Might have changed between release and acquire.
-      AT = ArrayTypes->get(AVT);
-      if (!AT) {
-        // Value not found.  Derive a new type!
-        ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
-      }
-      TypeMapLock->writer_release();
+      // Value not found.  Derive a new type!
+      ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
     }
-  } else {
-    AT = ArrayTypes->get(AVT);
-    if (AT) return AT;           // Found a match, return it!
-    
-    // Value not found.  Derive a new type!
-    ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *AT << "\n";
@@ -1245,26 +1214,17 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   VectorValType PVT(ElementType, NumElements);
   VectorType *PT = 0;
   
-  if (llvm_is_multithreaded()) {
-    TypeMapLock->reader_acquire();
-    PT = VectorTypes->get(PVT);
-    TypeMapLock->reader_release();
+  TypeMapLock->reader_acquire();
+  PT = VectorTypes->get(PVT);
+  TypeMapLock->reader_release();
     
+  if (!PT) {
+    sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
+    PT = VectorTypes->get(PVT);
+    // Recheck.  Might have changed between release and acquire.
     if (!PT) {
-      TypeMapLock->writer_acquire();
-      PT = VectorTypes->get(PVT);
-      // Recheck.  Might have changed between release and acquire.
-      if (!PT) {
-        VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
-      }
-      TypeMapLock->writer_acquire();
+      VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
     }
-  } else {
-    PT = VectorTypes->get(PVT);
-    if (PT) return PT;           // Found a match, return it!
-    
-    // Value not found.  Derive a new type!
-    VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
@@ -1322,33 +1282,21 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
   StructValType STV(ETypes, isPacked);
   StructType *ST = 0;
   
-  if (llvm_is_multithreaded()) {
-    TypeMapLock->reader_acquire();
-    ST = StructTypes->get(STV);
-    TypeMapLock->reader_release();
+  TypeMapLock->reader_acquire();
+  ST = StructTypes->get(STV);
+  TypeMapLock->reader_release();
     
+  if (!ST) {
+    sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
+    ST = StructTypes->get(STV);
+    // Recheck.  Might have changed between release and acquire.
     if (!ST) {
-      TypeMapLock->writer_acquire();
-      ST = StructTypes->get(STV);
-      // Recheck.  Might have changed between release and acquire.
-      if (!ST) {
-        // Value not found.  Derive a new type!
-        ST = (StructType*) operator new(sizeof(StructType) +
-                                        sizeof(PATypeHandle) * ETypes.size());
-        new (ST) StructType(ETypes, isPacked);
-        StructTypes->add(STV, ST);
-      }
-      TypeMapLock->writer_release();
+      // Value not found.  Derive a new type!
+      ST = (StructType*) operator new(sizeof(StructType) +
+                                      sizeof(PATypeHandle) * ETypes.size());
+      new (ST) StructType(ETypes, isPacked);
+      StructTypes->add(STV, ST);
     }
-  } else {
-    ST = StructTypes->get(STV);
-    if (ST) return ST;
-    
-    // Value not found.  Derive a new type!
-    ST = (StructType*) operator new(sizeof(StructType) +
-                                    sizeof(PATypeHandle) * ETypes.size());
-    new (ST) StructType(ETypes, isPacked);
-    StructTypes->add(STV, ST);
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ST << "\n";
@@ -1419,27 +1367,18 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
 
   PointerType *PT = 0;
   
-  if (llvm_is_multithreaded()) {
-    TypeMapLock->reader_acquire();
+  TypeMapLock->reader_acquire();
+  PT = PointerTypes->get(PVT);
+  TypeMapLock->reader_release();
+  
+  if (!PT) {
+    sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
     PT = PointerTypes->get(PVT);
-    TypeMapLock->reader_release();
-    
+    // Recheck.  Might have changed between release and acquire.
     if (!PT) {
-      TypeMapLock->writer_acquire();
-      PT = PointerTypes->get(PVT);
-      // Recheck.  Might have changed between release and acquire.
-      if (!PT) {
-        // Value not found.  Derive a new type!
-        PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
-      }
-      TypeMapLock->writer_release();
+      // Value not found.  Derive a new type!
+      PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
     }
-  } else {
-    PT = PointerTypes->get(PVT);
-    if (PT) return PT;
-    
-    // Value not found.  Derive a new type!
-    PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
@@ -1591,15 +1530,10 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
 // us that this abstract type is equivalent to another type.
 //
 void DerivedType::refineAbstractTypeTo(const Type *NewType) {
-  if (llvm_is_multithreaded()) {
-    // All recursive calls will go through unlockedRefineAbstractTypeTo,
-    // to avoid deadlock problems.
-    TypeMapLock->writer_acquire();
-    unlockedRefineAbstractTypeTo(NewType);
-    TypeMapLock->writer_release();
-  } else {
-    unlockedRefineAbstractTypeTo(NewType);
-  }
+  // All recursive calls will go through unlockedRefineAbstractTypeTo,
+  // to avoid deadlock problems.
+  sys::SmartScopedWriter<true> Writer(&*TypeMapLock);
+  unlockedRefineAbstractTypeTo(NewType);
 }
 
 // notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type that
