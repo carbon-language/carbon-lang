@@ -584,6 +584,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState *state,
       QualType VarTy = VR->getValueType(getContext());
       uint64_t EleSize = getContext().getTypeSize(EleTy);
       uint64_t VarSize = getContext().getTypeSize(VarTy);
+      assert(VarSize != 0);
       return NonLoc::MakeIntVal(getBasicVals(), VarSize / EleSize, false);
     }
 
@@ -710,15 +711,18 @@ RegionStoreManager::CastRegion(const GRState *state, const MemRegion* R,
     uint64_t ObjTySize = getContext().getTypeSize(ObjTy);
 
     if ((PointeeTySize > 0 && PointeeTySize < ObjTySize) ||
-        (ObjTy->isAggregateType() && PointeeTy->isScalarType())) {
+        (ObjTy->isAggregateType() && PointeeTy->isScalarType()) ||
+	ObjTySize == 0 /* R has 'void*' type. */) {
       // Record the cast type of the region.
       state = setCastType(state, R, ToTy);
 
       SVal Idx = ValMgr.makeZeroArrayIndex();
       ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx,R,getContext());
       return CastResult(state, ER);
-    } else
+    } else {
+      state = setCastType(state, R, ToTy);
       return CastResult(state, R);
+    }
   }
 
   if (isa<ObjCObjectRegion>(R)) {
@@ -930,14 +934,22 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     return UndefinedVal();
   }
 
+  // If the region is already cast to another type, use that type to create the
+  // symbol value.
+  if (const QualType *p = state->get<RegionCasts>(R)) {
+    QualType T = *p;
+    RTy = T->getAsPointerType()->getPointeeType();
+  }
+
   // All other integer values are symbolic.
   if (Loc::IsLocType(RTy) || RTy->isIntegerType())
-    return ValMgr.getRegionValueSymbolVal(R);
+    return ValMgr.getRegionValueSymbolVal(R, RTy);
   else
     return UnknownVal();
 }
 
-SVal RegionStoreManager::RetrieveStruct(const GRState *state, const TypedRegion* R){
+SVal RegionStoreManager::RetrieveStruct(const GRState *state, 
+					const TypedRegion* R){
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
 
@@ -1220,8 +1232,8 @@ const GRState *RegionStoreManager::RemoveRegionView(const GRState *state,
   return state->set<RegionViewMap>(Base, RVFactory.Remove(*d, View));
 }
 
-const GRState *RegionStoreManager::setCastType(const GRState *state, const MemRegion* R,
-                                           QualType T) {
+const GRState *RegionStoreManager::setCastType(const GRState *state, 
+					       const MemRegion* R, QualType T) {
   return state->set<RegionCasts>(R, T);
 }
 
