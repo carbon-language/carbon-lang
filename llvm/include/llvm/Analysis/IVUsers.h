@@ -35,9 +35,9 @@ class IVStrideUse : public CallbackVH, public ilist_node<IVStrideUse> {
 public:
   IVStrideUse(IVUsersOfOneStride *parent,
               const SCEVHandle &offset,
-              Instruction* U, Value *O, bool issigned)
+              Instruction* U, Value *O)
     : CallbackVH(U), Parent(parent), Offset(offset),
-      OperandValToReplace(O), IsSigned(issigned),
+      OperandValToReplace(O),
       IsUseOfPostIncrementedValue(false) {
   }
 
@@ -57,8 +57,7 @@ public:
 
   /// getOffset - Return the offset to add to a theoeretical induction
   /// variable that starts at zero and counts up by the stride to compute
-  /// the value for the use. This always has the same type as the stride,
-  /// which may need to be casted to match the type of the use.
+  /// the value for the use. This always has the same type as the stride.
   SCEVHandle getOffset() const { return Offset; }
 
   /// setOffset - Assign a new offset to this use.
@@ -77,13 +76,6 @@ public:
   void setOperandValToReplace(Value *Op) {
     OperandValToReplace = Op;
   }
-
-  /// isSigned - The stride (and thus also the Offset) of this use may be in
-  /// a narrower type than the use itself (OperandValToReplace->getType()).
-  /// When this is the case, isSigned() indicates whether the IV expression
-  /// should be signed-extended instead of zero-extended to fit the type of
-  /// the use.
-  bool isSigned() const { return IsSigned; }
 
   /// isUseOfPostIncrementedValue - True if this should use the
   /// post-incremented version of this IV, not the preincremented version.
@@ -109,10 +101,6 @@ private:
   /// OperandValToReplace - The Value of the operand in the user instruction
   /// that this IVStrideUse is representing.
   WeakVH OperandValToReplace;
-
-  /// IsSigned - Determines whether the replacement value is sign or
-  /// zero extended to the type of the use.
-  bool IsSigned;
 
   /// IsUseOfPostIncrementedValue - True if this should use the
   /// post-incremented version of this IV, not the preincremented version.
@@ -170,9 +158,8 @@ public:
   /// initial value and the operand that uses the IV.
   ilist<IVStrideUse> Users;
 
-  void addUser(const SCEVHandle &Offset,Instruction *User, Value *Operand,
-               bool isSigned) {
-    Users.push_back(new IVStrideUse(this, Offset, User, Operand, isSigned));
+  void addUser(const SCEVHandle &Offset, Instruction *User, Value *Operand) {
+    Users.push_back(new IVStrideUse(this, Offset, User, Operand));
   }
 };
 

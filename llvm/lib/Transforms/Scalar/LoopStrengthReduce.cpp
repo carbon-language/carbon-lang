@@ -336,13 +336,6 @@ namespace {
     /// EmittedBase.
     Value *OperandValToReplace;
 
-    /// isSigned - The stride (and thus also the Base) of this use may be in
-    /// a narrower type than the use itself (OperandValToReplace->getType()).
-    /// When this is the case, the isSigned field indicates whether the
-    /// IV expression should be signed-extended instead of zero-extended to
-    /// fit the type of the use.
-    bool isSigned;
-
     /// Imm - The immediate value that should be added to the base immediately
     /// before Inst, because it will be folded into the imm field of the
     /// instruction.  This is also sometimes used for loop-variant values that
@@ -363,7 +356,6 @@ namespace {
     BasedUser(IVStrideUse &IVSU, ScalarEvolution *se)
       : SE(se), Base(IVSU.getOffset()), Inst(IVSU.getUser()),
         OperandValToReplace(IVSU.getOperandValToReplace()),
-        isSigned(IVSU.isSigned()),
         Imm(SE->getIntegerSCEV(0, Base->getType())), 
         isUseOfPostIncrementedValue(IVSU.isUseOfPostIncrementedValue()) {}
 
@@ -427,11 +419,6 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
     // Always emit the immediate (if non-zero) into the same block as the user.
     NewValSCEV = SE->getAddExpr(NewValSCEV, Imm);
   }
-
-  if (isSigned)
-    NewValSCEV = SE->getTruncateOrSignExtend(NewValSCEV, Ty);
-  else
-    NewValSCEV = SE->getTruncateOrZeroExtend(NewValSCEV, Ty);
 
   return Rewriter.expandCodeFor(NewValSCEV, Ty, IP);
 }
@@ -2047,7 +2034,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
     OldCond->replaceAllUsesWith(Cond);
     OldCond->eraseFromParent();
 
-    IU->IVUsesByStride[*NewStride]->addUser(NewOffset, Cond, NewCmpLHS, false);
+    IU->IVUsesByStride[*NewStride]->addUser(NewOffset, Cond, NewCmpLHS);
     CondUse = &IU->IVUsesByStride[*NewStride]->Users.back();
     CondStride = NewStride;
     ++NumEliminated;
@@ -2397,8 +2384,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
       
       // Clone the IVUse, as the old use still exists!
       IU->IVUsesByStride[*CondStride]->addUser(CondUse->getOffset(), Cond,
-                                              CondUse->getOperandValToReplace(),
-                                               false);
+                                             CondUse->getOperandValToReplace());
       CondUse = &IU->IVUsesByStride[*CondStride]->Users.back();
     }
   }

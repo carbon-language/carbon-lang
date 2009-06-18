@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | opt -iv-users -analyze -disable-output | grep store
+; RUN: llvm-as < %s | opt -scalar-evolution -analyze -disable-output \
+; RUN:  | grep {\\-->  (zext i4 {-7,+,-8}<loop> to i32)}
 
 define fastcc void @foo() nounwind {
 entry:
