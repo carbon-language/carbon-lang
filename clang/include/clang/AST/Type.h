@@ -994,7 +994,7 @@ public:
   }
 };
 
-/// DependentSizedExtVectorType - This type represent an ext vectory type
+/// DependentSizedExtVectorType - This type represent an extended vector type
 /// where either the type or size is dependent. For example:
 /// @code
 /// template<typename T, int Size>
@@ -1016,7 +1016,7 @@ class DependentSizedExtVectorType : public Type {
   virtual void Destroy(ASTContext& C);
 
 public:
-  Expr *getSizeExpr() const { return SizeExpr; }
+  const Expr *getSizeExpr() const { return SizeExpr; }
   QualType getElementType() const { return ElementType; }
   SourceLocation getAttributeLoc() const { return loc; }
 

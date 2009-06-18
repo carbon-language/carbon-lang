@@ -1378,7 +1378,7 @@ void DependentSizedArrayType::getAsStringInternal(std::string &S, const Printing
 void DependentSizedExtVectorType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   getElementType().getAsStringInternal(S, Policy);
 
-  S += " __attribute__((ext_vector_  type(";
+  S += " __attribute__((ext_vector_type(";
   if (getSizeExpr()) {
     std::string SStr;
     llvm::raw_string_ostream s(SStr);

@@ -725,12 +725,13 @@ MarkDeducedTemplateParameters(Sema &SemaRef,
 /// \brief Mark the template arguments that are deduced by the given
 /// expression.
 static void 
-MarkDeducedTemplateParameters(Expr *E, llvm::SmallVectorImpl<bool> &Deduced) {
-  DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
+MarkDeducedTemplateParameters(const Expr *E, 
+                              llvm::SmallVectorImpl<bool> &Deduced) {
+  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
   if (!E)
     return;
 
-  NonTypeTemplateParmDecl *NTTP 
+  const NonTypeTemplateParmDecl *NTTP 
     = dyn_cast<NonTypeTemplateParmDecl>(DRE->getDecl());
   if (!NTTP)
     return;
@@ -751,26 +752,26 @@ MarkDeducedTemplateParameters(Sema &SemaRef, QualType T,
   switch (T->getTypeClass()) {
   case Type::ExtQual:
     MarkDeducedTemplateParameters(SemaRef, 
-                QualType(cast<ExtQualType>(T.getTypePtr())->getBaseType(), 0),
+                              QualType(cast<ExtQualType>(T)->getBaseType(), 0),
                                   Deduced);
     break;
 
   case Type::Pointer:
     MarkDeducedTemplateParameters(SemaRef,
-                          cast<PointerType>(T.getTypePtr())->getPointeeType(),
+                                  cast<PointerType>(T)->getPointeeType(),
                                   Deduced);
     break;
 
   case Type::BlockPointer:
     MarkDeducedTemplateParameters(SemaRef,
-                     cast<BlockPointerType>(T.getTypePtr())->getPointeeType(),
+                                  cast<BlockPointerType>(T)->getPointeeType(),
                                   Deduced);
     break;
 
   case Type::LValueReference:
   case Type::RValueReference:
     MarkDeducedTemplateParameters(SemaRef,
-                        cast<ReferenceType>(T.getTypePtr())->getPointeeType(),
+                                  cast<ReferenceType>(T)->getPointeeType(),
                                   Deduced);
     break;
 
@@ -783,35 +784,34 @@ MarkDeducedTemplateParameters(Sema &SemaRef, QualType T,
   }
 
   case Type::DependentSizedArray:
-    MarkDeducedTemplateParameters(
-                 cast<DependentSizedArrayType>(T.getTypePtr())->getSizeExpr(),
+    MarkDeducedTemplateParameters(cast<DependentSizedArrayType>(T)->getSizeExpr(),
                                   Deduced);
     // Fall through to check the element type
 
   case Type::ConstantArray:
   case Type::IncompleteArray:
     MarkDeducedTemplateParameters(SemaRef,
-                            cast<ArrayType>(T.getTypePtr())->getElementType(),
+                                  cast<ArrayType>(T)->getElementType(),
                                   Deduced);
     break;
 
   case Type::Vector:
   case Type::ExtVector:
     MarkDeducedTemplateParameters(SemaRef,
-                           cast<VectorType>(T.getTypePtr())->getElementType(),
+                                  cast<VectorType>(T)->getElementType(),
                                   Deduced);
     break;
 
   case Type::DependentSizedExtVector: {
     const DependentSizedExtVectorType *VecType
-    = cast<DependentSizedExtVectorType>(T.getTypePtr());
+      = cast<DependentSizedExtVectorType>(T);
     MarkDeducedTemplateParameters(SemaRef, VecType->getElementType(), Deduced);
     MarkDeducedTemplateParameters(VecType->getSizeExpr(), Deduced);
     break;
   }
 
   case Type::FunctionProto: {
-    const FunctionProtoType *Proto = cast<FunctionProtoType>(T.getTypePtr());
+    const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
     MarkDeducedTemplateParameters(SemaRef, Proto->getResultType(), Deduced);
     for (unsigned I = 0, N = Proto->getNumArgs(); I != N; ++I)
       MarkDeducedTemplateParameters(SemaRef, Proto->getArgType(I), Deduced);
@@ -819,12 +819,12 @@ MarkDeducedTemplateParameters(Sema &SemaRef, QualType T,
   }
 
   case Type::TemplateTypeParm:
-    Deduced[cast<TemplateTypeParmType>(T.getTypePtr())->getIndex()] = true;
+    Deduced[cast<TemplateTypeParmType>(T)->getIndex()] = true;
     break;
 
   case Type::TemplateSpecialization: {
     const TemplateSpecializationType *Spec 
-      = cast<TemplateSpecializationType>(T.getTypePtr());
+      = cast<TemplateSpecializationType>(T);
     if (TemplateDecl *Template = Spec->getTemplateName().getAsTemplateDecl())
       if (TemplateTemplateParmDecl *TTP 
             = dyn_cast<TemplateTemplateParmDecl>(Template))

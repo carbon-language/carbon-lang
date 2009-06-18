@@ -435,7 +435,7 @@ TemplateTypeInstantiator::
 InstantiateDependentSizedExtVectorType(const DependentSizedExtVectorType *T,
                                    unsigned Quals) const {
 
-  // Instantiate the element type if needed
+  // Instantiate the element type if needed.
   QualType ElementType = T->getElementType();
   if (ElementType->isDependentType()) {
     ElementType = Instantiate(ElementType);
@@ -443,10 +443,10 @@ InstantiateDependentSizedExtVectorType(const DependentSizedExtVectorType *T,
       return QualType();
   }
 
-  // Instantiate the size expression
-  Expr *SizeExpr = T->getSizeExpr();
+  // Instantiate the size expression.
+  const Expr *SizeExpr = T->getSizeExpr();
   Sema::OwningExprResult InstantiatedArraySize = 
-    SemaRef.InstantiateExpr(SizeExpr, TemplateArgs);
+    SemaRef.InstantiateExpr(const_cast<Expr *>(SizeExpr), TemplateArgs);
   if (InstantiatedArraySize.isInvalid())
     return QualType();
   
