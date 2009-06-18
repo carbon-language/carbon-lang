@@ -778,8 +778,7 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op,
   if (const SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
     return getTruncateOrZeroExtend(SZ->getOperand(), Ty);
 
-  // If the input value is a chrec scev made out of constants, truncate
-  // all of the constants.
+  // If the input value is a chrec scev, truncate the chrec's operands.
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
     SmallVector<SCEVHandle, 4> Operands;
     for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i)
