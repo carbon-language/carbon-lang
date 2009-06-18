@@ -23,7 +23,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/DataTypes.h"
 #include <iosfwd>
 #include <cassert>
 #include <climits>
@@ -52,13 +51,15 @@ namespace llvm {
 
   class VNInfo {
   private:
-    static const uint8_t HAS_PHI_KILL = 1,                         
-                         REDEF_BY_EC  = 1 << 1,
-                         IS_PHI_DEF = 1 << 2,
-                         IS_UNUSED = 1 << 3,
-                         IS_DEF_ACCURATE = 1 << 4;
+    enum {
+      HAS_PHI_KILL    = 1,                         
+      REDEF_BY_EC     = 1 << 1,
+      IS_PHI_DEF      = 1 << 2,
+      IS_UNUSED       = 1 << 3,
+      IS_DEF_ACCURATE = 1 << 4
+    };
 
-    uint8_t flags;
+    unsigned char flags;
 
   public:
     /// The ID number of this value.
