@@ -154,10 +154,8 @@ public:
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, InputIterator ArgBegin,
                            InputIterator ArgEnd, const char *Name = "") {
-    return Insert(TransferAttributes(InvokeInst::Create(Callee,
-                                                        NormalDest, UnwindDest,
-                                                        ArgBegin, ArgEnd),
-                                     Callee), Name);
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
+                                     ArgBegin, ArgEnd), Name);
   }
 
   UnwindInst *CreateUnwind() {
@@ -589,61 +587,32 @@ public:
     return Insert(PHINode::Create(Ty), Name);
   }
 
-  CallInst *TransferAttributes(CallInst *CI, const Value* Callee) const {
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Callee))
-      Callee = GA->getAliasedGlobal();
-
-    if (const Function *F = dyn_cast<Function>(Callee)) {
-      CI->setCallingConv(F->getCallingConv());
-      CI->setAttributes(F->getAttributes());
-    }
-
-    return CI;
-  }
-
-  InvokeInst *TransferAttributes(InvokeInst *II, const Value* Callee) const {
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Callee))
-      Callee = GA->getAliasedGlobal();
-
-    if (const Function *F = dyn_cast<Function>(Callee)) {
-      II->setCallingConv(F->getCallingConv());
-      II->setAttributes(F->getAttributes());
-    }
-
-    return II;
-  }
-
   CallInst *CreateCall(Value *Callee, const char *Name = "") {
-    return Insert(TransferAttributes(CallInst::Create(Callee), Callee), Name);
+    return Insert(CallInst::Create(Callee), Name);
   }
   CallInst *CreateCall(Value *Callee, Value *Arg, const char *Name = "") {
-    return Insert(TransferAttributes(CallInst::Create(Callee, Arg),
-                                     Callee), Name);
+    return Insert(CallInst::Create(Callee, Arg), Name);
   }
   CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
                         const char *Name = "") {
     Value *Args[] = { Arg1, Arg2 };
-    return Insert(TransferAttributes(CallInst::Create(Callee, Args, Args+2),
-                                     Callee), Name);
+    return Insert(CallInst::Create(Callee, Args, Args+2), Name);
   }
   CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         const char *Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3 };
-    return Insert(TransferAttributes(CallInst::Create(Callee, Args, Args+3),
-                                     Callee), Name);
+    return Insert(CallInst::Create(Callee, Args, Args+3), Name);
   }
   CallInst *CreateCall4(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         Value *Arg4, const char *Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
-    return Insert(TransferAttributes(CallInst::Create(Callee, Args, Args+4),
-                                     Callee), Name);
+    return Insert(CallInst::Create(Callee, Args, Args+4), Name);
   }
 
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin,
                        InputIterator ArgEnd, const char *Name = "") {
-    return Insert(TransferAttributes(CallInst::Create(Callee, ArgBegin, ArgEnd),
-                                     Callee), Name);
+    return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd), Name);
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,

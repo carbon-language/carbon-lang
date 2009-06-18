@@ -135,7 +135,11 @@ Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
                                            TD->getIntPtrType(),
                                            PointerType::getUnqual(Type::Int8Ty),
                                            NULL);
-  return B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
+  CallInst *CI = B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
+  if (const Function *F = dyn_cast<Function>(StrLen->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
+  return CI;
 }
 
 /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
@@ -164,7 +168,12 @@ Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
                                          PointerType::getUnqual(Type::Int8Ty),
                                          Type::Int32Ty, TD->getIntPtrType(),
                                          NULL);
-  return B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
+  CallInst *CI = B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
+
+  if (const Function *F = dyn_cast<Function>(MemChr->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
+  return CI;
 }
 
 /// EmitMemCmp - Emit a call to the memcmp function.
@@ -182,8 +191,13 @@ Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                                          PointerType::getUnqual(Type::Int8Ty),
                                          PointerType::getUnqual(Type::Int8Ty),
                                          TD->getIntPtrType(), NULL);
-  return B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
-                       Len, "memcmp");
+  CallInst *CI = B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
+                               Len, "memcmp");
+
+  if (const Function *F = dyn_cast<Function>(MemCmp->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
+  return CI;
 }
 
 /// EmitMemSet - Emit a call to the memset function
@@ -217,20 +231,30 @@ Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
     NameBuffer[NameLen+1] = 0;
     Name = NameBuffer;
   }
-  
+
   Module *M = Caller->getParent();
-  Value *Callee = M->getOrInsertFunction(Name, Op->getType(), 
+  Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
                                          Op->getType(), NULL);
-  return B.CreateCall(Callee, Op, Name);
+  CallInst *CI = B.CreateCall(Callee, Op, Name);
+
+  if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
+  return CI;
 }
 
 /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
 /// is an integer.
 void LibCallOptimization::EmitPutChar(Value *Char, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Value *F = M->getOrInsertFunction("putchar", Type::Int32Ty,
-                                    Type::Int32Ty, NULL);
-  B.CreateCall(F, B.CreateIntCast(Char, Type::Int32Ty, "chari"), "putchar");
+  Value *PutChar = M->getOrInsertFunction("putchar", Type::Int32Ty,
+                                          Type::Int32Ty, NULL);
+  CallInst *CI = B.CreateCall(PutChar,
+                              B.CreateIntCast(Char, Type::Int32Ty, "chari"),
+                              "putchar");
+
+  if (const Function *F = dyn_cast<Function>(PutChar->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
 }
 
 /// EmitPutS - Emit a call to the puts function.  This assumes that Str is
@@ -241,10 +265,14 @@ void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
   AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
 
-  Value *F = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
-                                    Type::Int32Ty,
-                                    PointerType::getUnqual(Type::Int8Ty), NULL);
-  B.CreateCall(F, CastToCStr(Str, B), "puts");
+  Value *PutS = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
+                                       Type::Int32Ty,
+                                       PointerType::getUnqual(Type::Int8Ty),
+                                       NULL);
+  CallInst *CI = B.CreateCall(PutS, CastToCStr(Str, B), "puts");
+  if (const Function *F = dyn_cast<Function>(PutS->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
 }
 
 /// EmitFPutC - Emit a call to the fputc function.  This assumes that Char is
@@ -258,12 +286,14 @@ void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
   if (isa<PointerType>(File->getType()))
     F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI, 2), Type::Int32Ty,
                                Type::Int32Ty, File->getType(), NULL);
-                                         
   else
     F = M->getOrInsertFunction("fputc", Type::Int32Ty, Type::Int32Ty,
                                File->getType(), NULL);
   Char = B.CreateIntCast(Char, Type::Int32Ty, "chari");
-  B.CreateCall2(F, Char, File, "fputc");
+  CallInst *CI = B.CreateCall2(F, Char, File, "fputc");
+
+  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
+    CI->setCallingConv(Fn->getCallingConv());
 }
 
 /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
@@ -283,7 +313,10 @@ void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
     F = M->getOrInsertFunction("fputs", Type::Int32Ty,
                                PointerType::getUnqual(Type::Int8Ty),
                                File->getType(), NULL);
-  B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
+  CallInst *CI = B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
+
+  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
+    CI->setCallingConv(Fn->getCallingConv());
 }
 
 /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
@@ -307,8 +340,11 @@ void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                                PointerType::getUnqual(Type::Int8Ty),
                                TD->getIntPtrType(), TD->getIntPtrType(),
                                File->getType(), NULL);
-  B.CreateCall4(F, CastToCStr(Ptr, B), Size, 
-                ConstantInt::get(TD->getIntPtrType(), 1), File);
+  CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
+                               ConstantInt::get(TD->getIntPtrType(), 1), File);
+
+  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
+    CI->setCallingConv(Fn->getCallingConv());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1039,7 +1075,7 @@ struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
       if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
         LdExpArg = B.CreateZExt(OpC->getOperand(0), Type::Int32Ty, "tmp");
     }
-    
+
     if (LdExpArg) {
       const char *Name;
       if (Op->getType() == Type::FloatTy)
@@ -1056,12 +1092,15 @@ struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
       Module *M = Caller->getParent();
       Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
                                              Op->getType(), Type::Int32Ty,NULL);
-      return B.CreateCall2(Callee, One, LdExpArg);
+      CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
+      if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
+        CI->setCallingConv(F->getCallingConv());
+
+      return CI;
     }
     return 0;
   }
 };
-    
 
 //===---------------------------------------===//
 // Double -> Float Shrinking Optimizations for Unary Functions like 'floor'
@@ -1072,7 +1111,7 @@ struct VISIBILITY_HIDDEN UnaryDoubleFPOpt : public LibCallOptimization {
     if (FT->getNumParams() != 1 || FT->getReturnType() != Type::DoubleTy ||
         FT->getParamType(0) != Type::DoubleTy)
       return 0;
-    
+
     // If this is something like 'floor((double)floatval)', convert to floorf.
     FPExtInst *Cast = dyn_cast<FPExtInst>(CI->getOperand(1));
     if (Cast == 0 || Cast->getOperand(0)->getType() != Type::FloatTy)
