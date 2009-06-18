@@ -25,8 +25,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Threading.h"
 #include "llvm/System/RWMutex.h"
+#include "llvm/System/Threading.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>

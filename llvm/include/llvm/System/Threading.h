@@ -1,4 +1,4 @@
-//===-- llvm/Support/Threading.h - Control multithreading mode --*- C++ -*-===//
+//===-- llvm/System/Threading.h - Control multithreading mode --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_THREADING_H
-#define LLVM_SUPPORT_THREADING_H
+#ifndef LLVM_SYSTEM_THREADING_H
+#define LLVM_SYSTEM_THREADING_H
 
 namespace llvm {
   /// llvm_start_multithreaded - Allocate and initialize structures needed to

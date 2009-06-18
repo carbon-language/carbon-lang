@@ -19,8 +19,8 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Threading.h"
 #include "llvm/System/Atomic.h"
+#include "llvm/System/Threading.h"
 #include <algorithm>
 #include <map>
 #include <set>

@@ -20,8 +20,8 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Threading.h"
 #include "llvm/System/Mutex.h"
+#include "llvm/System/Threading.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm-c/Core.h"
 #include <algorithm>

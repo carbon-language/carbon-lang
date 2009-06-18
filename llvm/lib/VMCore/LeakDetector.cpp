@@ -16,8 +16,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Support/Threading.h"
 #include "llvm/System/RWMutex.h"
+#include "llvm/System/Threading.h"
 #include "llvm/Value.h"
 using namespace llvm;
 
