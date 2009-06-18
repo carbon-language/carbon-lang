@@ -1,4 +1,4 @@
-//===-- llvm-dis.cpp - The low-level LLVM disassembler --------------------===//
+//===-- llvm-mc.cpp - Machine Code Hacking Driver -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This utility may be invoked in the following manner:
-//  llvm-dis [options]      - Read LLVM bitcode from stdin, write asm to stdout
-//  llvm-dis [options] x.bc - Read LLVM bitcode from the x.bc file, write asm
-//                            to the x.ll file.
-//  Options:
-//      --help   - Output information about command line switches
+// This utility is a simple driver that allows command line hacking on machine
+// code.
 //
 //===----------------------------------------------------------------------===//
 
