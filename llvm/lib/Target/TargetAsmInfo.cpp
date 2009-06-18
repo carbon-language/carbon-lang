@@ -58,6 +58,7 @@ void TargetAsmInfo::fillDefaultValues() {
   InlineAsmEnd = "#NO_APP";
   AssemblerDialect = 0;
   StringConstantPrefix = ".str";
+  AllowQuotesInName = false;
   ZeroDirective = "\t.zero\t";
   ZeroDirectiveSuffix = 0;
   AsciiDirective = "\t.ascii\t";

@@ -836,10 +836,6 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   assert(DW && "Dwarf Writer is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
 
-  // Darwin wants symbols to be quoted if they have complex names.
-  if (Subtarget->isTargetDarwin())
-    Mang->setUseQuotes(true);
-
   // Thumb-2 instructions are supported only in unified assembler syntax mode.
   if (Subtarget->hasThumb2())
     O << "\t.syntax unified\n";

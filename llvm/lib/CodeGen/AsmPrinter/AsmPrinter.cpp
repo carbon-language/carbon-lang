@@ -152,6 +152,9 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix());
   
+  if (TAI->doesAllowQuotesInName())
+    Mang->setUseQuotes(true);
+  
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
 

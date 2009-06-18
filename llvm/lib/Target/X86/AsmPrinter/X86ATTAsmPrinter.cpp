@@ -781,10 +781,6 @@ bool X86ATTAsmPrinter::doInitialization(Module &M) {
     DW->BeginModule(&M, MMI, O, this, TAI);
   }
 
-  // Darwin wants symbols to be quoted if they have complex names.
-  if (Subtarget->isTargetDarwin())
-    Mang->setUseQuotes(true);
-
   return Result;
 }
 

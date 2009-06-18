@@ -654,9 +654,6 @@ bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   assert(DW && "DwarfWriter is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
 
-  // GNU as handles section names wrapped in quotes
-  Mang->setUseQuotes(true);
-
   SwitchToSection(TAI->getTextSection());
 
   return Result;
@@ -884,9 +881,6 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   DW = getAnalysisIfAvailable<DwarfWriter>();
   assert(DW && "DwarfWriter is not available");
   DW->BeginModule(&M, MMI, O, this, TAI);
-
-  // Darwin wants symbols to be quoted if they have complex names.
-  Mang->setUseQuotes(true);
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.

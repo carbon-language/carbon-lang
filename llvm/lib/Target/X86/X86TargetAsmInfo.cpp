@@ -86,6 +86,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     PersonalitySuffix = "$non_lazy_ptr";
   }
   NeedsIndirectEncoding = true;
+  AllowQuotesInName = true;
   InlineAsmStart = "## InlineAsm Start";
   InlineAsmEnd = "## InlineAsm End";
   CommentString = "##";

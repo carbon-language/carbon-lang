@@ -278,6 +278,10 @@ namespace llvm {
     /// use '\1' as the first character.
     const char *StringConstantPrefix;     // Defaults to ".str"
 
+    /// AllowQuotesInName - This is true if the assembler allows for complex
+    /// symbol names to be surrounded in quotes.  This defaults to false.
+    bool AllowQuotesInName;
+    
     //===--- Data Emission Directives -------------------------------------===//
 
     /// ZeroDirective - this should be set to the directive used to get some
@@ -744,6 +748,9 @@ namespace llvm {
     }
     const char *getStringConstantPrefix() const {
       return StringConstantPrefix;
+    }
+    bool doesAllowQuotesInName() const {
+      return AllowQuotesInName;
     }
     const char *getZeroDirective() const {
       return ZeroDirective;

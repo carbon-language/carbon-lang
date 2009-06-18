@@ -45,6 +45,7 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   HiddenDirective = "\t.private_extern ";
   SupportsExceptionHandling = true;
   NeedsIndirectEncoding = true;
+  AllowQuotesInName = true;
   NeedsSet = true;
   BSSSection = 0;
   
