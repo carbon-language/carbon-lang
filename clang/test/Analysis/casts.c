@@ -19,14 +19,11 @@ struct s {
   struct s *value;
 };
 
-// ElementRegion and cast-to pointee type may be of the same size:
-// 'struct s **' and 'int'.
-
 int f1(struct s **pval) {
   int *tbool = ((void*)0);
   struct s *t = *pval;
   pval = &(t->value);
-  tbool = (int *)pval;
-  char c = (unsigned char) *tbool;
+  tbool = (int *)pval; // Should record the cast-to type here.
+  char c = (unsigned char) *tbool; // Should use cast-to type to create symbol.
 }
 
