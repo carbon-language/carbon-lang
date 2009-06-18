@@ -32,7 +32,7 @@ namespace {
     static void print(const Value* P) { cerr << *P; }
   };
 
-  ManagedStatic<sys::RWMutex> LeakDetectorLock;
+  ManagedStatic<sys::SmartRWMutex<true> > LeakDetectorLock;
 
   template <typename T>
   struct VISIBILITY_HIDDEN LeakDetectorImpl {
@@ -54,41 +54,26 @@ namespace {
     // immediately, it is added to the CachedValue Value.  If it is
     // immediately removed, no set search need be performed.
     void addGarbage(const T* o) {
-      if (llvm_is_multithreaded()) {
-        sys::ScopedWriter Writer(&*LeakDetectorLock);
-        if (Cache) {
-          assert(Ts.count(Cache) == 0 && "Object already in set!");
-          Ts.insert(Cache);
-        }
-        Cache = o;
-      } else {
-        if (Cache) {
-          assert(Ts.count(Cache) == 0 && "Object already in set!");
-          Ts.insert(Cache);
-        }
-        Cache = o;
+      sys::SmartScopedWriter<true> Writer(&*LeakDetectorLock);
+      if (Cache) {
+        assert(Ts.count(Cache) == 0 && "Object already in set!");
+        Ts.insert(Cache);
       }
+      Cache = o;
     }
 
     void removeGarbage(const T* o) {
-      if (llvm_is_multithreaded()) {
-        sys::ScopedWriter Writer(&*LeakDetectorLock);
-        if (o == Cache)
-          Cache = 0; // Cache hit
-        else
-          Ts.erase(o);
-      } else {
-        if (o == Cache)
-          Cache = 0; // Cache hit
-        else
-          Ts.erase(o);
-      }
+      sys::SmartScopedWriter<true> Writer(&*LeakDetectorLock);
+      if (o == Cache)
+        Cache = 0; // Cache hit
+      else
+        Ts.erase(o);
     }
 
     bool hasGarbage(const std::string& Message) {
       addGarbage(0); // Flush the Cache
 
-      if (llvm_is_multithreaded()) LeakDetectorLock->reader_acquire();
+      sys::SmartScopedReader<true> Reader(&*LeakDetectorLock);
       assert(Cache == 0 && "No value should be cached anymore!");
 
       if (!Ts.empty()) {
@@ -101,11 +86,9 @@ namespace {
         }
         cerr << '\n';
 
-        if (llvm_is_multithreaded()) LeakDetectorLock->reader_release();
         return true;
       }
       
-      if (llvm_is_multithreaded()) LeakDetectorLock->reader_release();
       return false;
     }
 
