@@ -1953,9 +1953,8 @@ public:
 
   // Assumptions.
 
-  virtual const GRState* EvalAssume(GRStateManager& VMgr,
-                                       const GRState* St, SVal Cond,
-                                       bool Assumption, bool& isFeasible);
+  virtual const GRState *EvalAssume(const GRState* state, SVal condition,
+                                    bool assumption);
 };
 
 } // end anonymous namespace
@@ -3307,10 +3306,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
 
 // Assumptions.
 
-const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
-                                      const GRState* state,
-                                      SVal Cond, bool Assumption,
-                                      bool& isFeasible) {
+const GRState* CFRefCount::EvalAssume(const GRState *state,
+                                      SVal Cond, bool Assumption) {
 
   // FIXME: We may add to the interface of EvalAssume the list of symbols
   //  whose assumptions have changed.  For now we just iterate through the
@@ -3329,7 +3326,7 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
   for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {    
     // Check if the symbol is null (or equal to any constant).
     // If this is the case, stop tracking the symbol.
-    if (VMgr.getSymVal(state, I.getKey())) {
+    if (state->getSymVal(I.getKey())) {
       changed = true;
       B = RefBFactory.Remove(B, I.getKey());
     }

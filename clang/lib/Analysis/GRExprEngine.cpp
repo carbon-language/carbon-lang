@@ -181,10 +181,9 @@ const GRState* GRExprEngine::getInitialState() {
           SVal Constraint = EvalBinOp(state, BinaryOperator::GT, V,
                                       ValMgr.makeZeroVal(T),
                                       getContext().IntTy);          
-          bool isFeasible = false;          
-          const GRState *newState = Assume(state, Constraint, true,
-                                           isFeasible);
-          if (newState) state = newState;
+
+          if (const GRState *newState = state->assume(Constraint, true))
+            state = newState;
         }
     }
   
@@ -708,21 +707,13 @@ void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
   }
     
   // Process the true branch.
-
-  bool isFeasible = false;  
-  const GRState* state = Assume(PrevState, V, true, isFeasible);
-
-  if (isFeasible)
+  if (const GRState *state = PrevState->assume(V, true))
     builder.generateNode(MarkBranch(state, Term, true), true);
   else
     builder.markInfeasible(true);
       
   // Process the false branch.  
-  
-  isFeasible = false;
-  state = Assume(PrevState, V, false, isFeasible);
-  
-  if (isFeasible)
+  if (const GRState *state = PrevState->assume(V, false))
     builder.generateNode(MarkBranch(state, Term, false), false);
   else
     builder.markInfeasible(false);
@@ -808,7 +799,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   }
 
   const GRState*  DefaultSt = state;  
-  bool DefaultFeasible = false;
+  bool defaultIsFeasible = false;
   
   for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
     CaseStmt* Case = cast<CaseStmt>(I.getCase());
@@ -846,11 +837,8 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
                            getContext().IntTy);
       
       // Now "assume" that the case matches.      
-      bool isFeasible = false;      
-      const GRState* StNew = Assume(state, Res, true, isFeasible);
-      
-      if (isFeasible) {
-        builder.generateCaseStmtNode(I, StNew);
+      if (const GRState* stateNew = state->assume(Res, true)) {
+        builder.generateCaseStmtNode(I, stateNew);
        
         // If CondV evaluates to a constant, then we know that this
         // is the *only* case that we can take, so stop evaluating the
@@ -861,13 +849,9 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       
       // Now "assume" that the case doesn't match.  Add this state
       // to the default state (if it is feasible).
-      
-      isFeasible = false;
-      StNew = Assume(DefaultSt, Res, false, isFeasible);
-      
-      if (isFeasible) {
-        DefaultFeasible = true;
-        DefaultSt = StNew;
+      if (const GRState *stateNew = DefaultSt->assume(Res, false)) {
+        defaultIsFeasible = true;
+        DefaultSt = stateNew;
       }
 
       // Concretize the next value in the range.
@@ -882,7 +866,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   
   // If we reach here, than we know that the default branch is
   // possible.  
-  if (DefaultFeasible) builder.generateDefaultCaseNode(DefaultSt);
+  if (defaultIsFeasible) builder.generateDefaultCaseNode(DefaultSt);
 }
 
 //===----------------------------------------------------------------------===//
@@ -922,27 +906,17 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     // or 1.  Alternatively, we could take a lazy approach, and calculate this
     // value later when necessary.  We don't have the machinery in place for
     // this right now, and since most logical expressions are used for branches,
-    // the payoff is not likely to be large.  Instead, we do eager evaluation.
-        
-    bool isFeasible = false;
-    const GRState* NewState = Assume(state, X, true, isFeasible);
-    
-    if (isFeasible)
-      MakeNode(Dst, B, Pred,
-               BindBlkExpr(NewState, B, MakeConstantVal(1U, B)));
+    // the payoff is not likely to be large.  Instead, we do eager evaluation.        
+    if (const GRState *newState = state->assume(X, true))
+      MakeNode(Dst, B, Pred, BindBlkExpr(newState, B, MakeConstantVal(1U, B)));
       
-    isFeasible = false;
-    NewState = Assume(state, X, false, isFeasible);
-    
-    if (isFeasible)
-      MakeNode(Dst, B, Pred,
-               BindBlkExpr(NewState, B, MakeConstantVal(0U, B)));
+    if (const GRState *newState = state->assume(X, false))
+      MakeNode(Dst, B, Pred, BindBlkExpr(newState, B, MakeConstantVal(0U, B)));
   }
   else {
     // We took the LHS expression.  Depending on whether we are '&&' or
     // '||' we know what the value of the expression is via properties of
     // the short-circuiting.
-    
     X = MakeConstantVal( B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U, B);
     MakeNode(Dst, B, Pred, BindBlkExpr(state, B, X));
   }
@@ -1189,15 +1163,12 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
   Loc LV = cast<Loc>(location);    
   
   // "Assume" that the pointer is not NULL.
-  bool isFeasibleNotNull = false;
-  const GRState* StNotNull = Assume(state, LV, true, isFeasibleNotNull);
+  const GRState *StNotNull = state->assume(LV, true);
   
   // "Assume" that the pointer is NULL.
-  bool isFeasibleNull = false;
-  const GRState *StNull = Assume(state, LV, false, isFeasibleNull);
+  const GRState *StNull = state->assume(LV, false);
 
-  if (isFeasibleNull) {
-    
+  if (StNull) {    
     // Use the Generic Data Map to mark in the state what lval was null.
     const SVal* PersistentLV = getBasicVals().getPersistentSVal(LV);
     StNull = StNull->set<GRState::NullDerefTag>(PersistentLV);
@@ -1208,17 +1179,15 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
       Builder->generateNode(Ex, StNull, Pred, 
                             ProgramPoint::PostNullCheckFailedKind);
 
-    if (NullNode) {
-      
-      NullNode->markAsSink();
-      
-      if (isFeasibleNotNull) ImplicitNullDeref.insert(NullNode);
+    if (NullNode) {      
+      NullNode->markAsSink();      
+      if (StNotNull) ImplicitNullDeref.insert(NullNode);
       else ExplicitNullDeref.insert(NullNode);
     }
   }
   
-  if (!isFeasibleNotNull)
-    return 0;
+  if (!StNotNull)
+    return NULL;
 
   // Check for out-of-bound array access.
   if (isa<loc::MemRegionVal>(LV)) {
@@ -1230,15 +1199,12 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
       SVal NumElements = getStoreManager().getSizeInElements(StNotNull,
                                                           ER->getSuperRegion());
 
-      bool isFeasibleInBound = false;
-      const GRState* StInBound = AssumeInBound(StNotNull, Idx, NumElements, 
-                                               true, isFeasibleInBound);
+      const GRState * StInBound = StNotNull->assumeInBound(Idx, NumElements, 
+                                                           true);
+      const GRState* StOutBound = StNotNull->assumeInBound(Idx, NumElements, 
+                                                           false);
 
-      bool isFeasibleOutBound = false;
-      const GRState* StOutBound = AssumeInBound(StNotNull, Idx, NumElements, 
-                                                false, isFeasibleOutBound);
-
-      if (isFeasibleOutBound) {
+      if (StOutBound) {
         // Report warning.  Make sink node manually.
         NodeTy* OOBNode =
           Builder->generateNode(Ex, StOutBound, Pred,
@@ -1247,16 +1213,16 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
         if (OOBNode) {
           OOBNode->markAsSink();
 
-          if (isFeasibleInBound)
+          if (StInBound)
             ImplicitOOBMemAccesses.insert(OOBNode);
           else
             ExplicitOOBMemAccesses.insert(OOBNode);
         }
       }
 
-      if (!isFeasibleInBound)
-        return 0;
-      
+      if (!StInBound)
+        return NULL;
+
       StNotNull = StInBound;
     }
   }
@@ -1329,19 +1295,18 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
   
     ExplodedNode<GRState> *N = *I;
     const GRState *stateLoad = N->getState();
-    SVal theValueVal = StateMgr.GetSVal(stateLoad, theValueExpr);
-    SVal oldValueVal = StateMgr.GetSVal(stateLoad, oldValueExpr);
+    SVal theValueVal = stateLoad->getSVal(theValueExpr);
+    SVal oldValueVal = stateLoad->getSVal(oldValueExpr);
         
     // Perform the comparison.
     SVal Cmp = Engine.EvalBinOp(stateLoad,
                                 BinaryOperator::EQ, theValueVal, oldValueVal,
                                 Engine.getContext().IntTy);
-    bool isFeasible = false;
-    const GRState *stateEqual = StateMgr.Assume(stateLoad, Cmp, true,
-                                                isFeasible);
+
+    const GRState *stateEqual = stateLoad->assume(Cmp, true);
     
     // Were they equal?
-    if (isFeasible) {
+    if (stateEqual) {
       // Perform the store.
       ExplodedNodeSet<GRState> TmpStore;
       Engine.EvalStore(TmpStore, theValueExpr, N, stateEqual, location, 
@@ -1359,11 +1324,7 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     }
     
     // Were they not equal?
-    isFeasible = false;
-    const GRState *stateNotEqual = StateMgr.Assume(stateLoad, Cmp, false,
-                                                   isFeasible);
-    
-    if (isFeasible) {
+    if (const GRState *stateNotEqual = stateLoad->assume(Cmp, false)) {
       SVal Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
       Engine.MakeNode(Dst, CE, N, Engine.BindExpr(stateNotEqual, CE, Res));
     }
@@ -1659,19 +1620,15 @@ void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src, Expr *Ex) {
     SVal V = GetSVal(state, Ex);    
     if (isa<nonloc::SymExprVal>(V)) {
       // First assume that the condition is true.
-      bool isFeasible = false;
-      const GRState *stateTrue = Assume(state, V, true, isFeasible);
-      if (isFeasible) {
-        stateTrue = BindExpr(stateTrue, Ex, MakeConstantVal(1U, Ex));        
+      if (const GRState *stateTrue = state->assume(V, true)) {
+        stateTrue = stateTrue->bindExpr(Ex, MakeConstantVal(1U, Ex));        
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
                                       stateTrue, Pred));
       }
         
       // Next, assume that the condition is false.
-      isFeasible = false;
-      const GRState *stateFalse = Assume(state, V, false, isFeasible);
-      if (isFeasible) {
-        stateFalse = BindExpr(stateFalse, Ex, MakeConstantVal(0U, Ex));
+      if (const GRState *stateFalse = state->assume(V, false)) {
+        stateFalse = stateFalse->bindExpr(Ex, MakeConstantVal(0U, Ex));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
                                       stateFalse, Pred));
       }
@@ -1873,14 +1830,12 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     }
     
     // "Assume" that the receiver is not NULL.    
-    bool isFeasibleNotNull = false;
-    const GRState *StNotNull = Assume(state, L, true, isFeasibleNotNull);
+    const GRState *StNotNull = state->assume(L, true);
     
     // "Assume" that the receiver is NULL.    
-    bool isFeasibleNull = false;
-    const GRState *StNull = Assume(state, L, false, isFeasibleNull);
+    const GRState *StNull = state->assume(L, false);
     
-    if (isFeasibleNull) {
+    if (StNull) {
       QualType RetTy = ME->getType();
       
       // Check if the receiver was nil and the return value a struct.
@@ -1894,7 +1849,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
           //  garbage.                
           if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
             N->markAsSink();
-            if (isFeasibleNotNull)
+            if (StNotNull)
               NilReceiverStructRetImplicit.insert(N);
             else
               NilReceiverStructRetExplicit.insert(N);            
@@ -1913,13 +1868,13 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
             if(voidPtrSize < returnTypeSize) {
               if (NodeTy* N = Builder->generateNode(ME, StNull, Pred)) {
                 N->markAsSink();
-                if(isFeasibleNotNull)
+                if(StNotNull)
                   NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
                 else
                   NilReceiverLargerThanVoidPtrRetExplicit.insert(N);            
               }
             }
-            else if (!isFeasibleNotNull) {
+            else if (!StNotNull) {
               // Handle the safe cases where the return value is 0 if the
               // receiver is nil.
               //
@@ -2266,21 +2221,20 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
         continue;
       }
       
-      bool isFeasibleZero = false;
-      const GRState* ZeroSt =  Assume(state, Size, false, isFeasibleZero);
+      const GRState* zeroState =  state->assume(Size, false);      
+      state = state->assume(Size, true);
       
-      bool isFeasibleNotZero = false;
-      state = Assume(state, Size, true, isFeasibleNotZero);
-      
-      if (isFeasibleZero) {
-        if (NodeTy* N = Builder->generateNode(DS, ZeroSt, Pred)) {
+      if (zeroState) {
+        if (NodeTy* N = Builder->generateNode(DS, zeroState, Pred)) {
           N->markAsSink();          
-          if (isFeasibleNotZero) ImplicitBadSizedVLA.insert(N);
-          else ExplicitBadSizedVLA.insert(N);
+          if (state)
+            ImplicitBadSizedVLA.insert(N);
+          else
+            ExplicitBadSizedVLA.insert(N);
         }
       }
       
-      if (!isFeasibleNotZero)
+      if (!state)
         continue;      
     }
     
@@ -2697,23 +2651,20 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
                                       ValMgr.makeZeroVal(U->getType()),
                                       getContext().IntTy);          
           
-          bool isFeasible = false;
-          Assume(state, Constraint, true, isFeasible);
-          if (!isFeasible) {
+          if (!state->assume(Constraint, true)) {
             // It isn't feasible for the original value to be null.
             // Propagate this constraint.
             Constraint = EvalBinOp(state, BinaryOperator::EQ, Result,
                                    ValMgr.makeZeroVal(U->getType()),
                                    getContext().IntTy);
             
-            bool isFeasible = false;
-            state = Assume(state, Constraint, false, isFeasible);
-            assert(isFeasible && state);
+            state = state->assume(Constraint, false);
+            assert(state);
           }            
         }        
       }
       
-      state = BindExpr(state, U, U->isPostfix() ? V2 : Result);
+      state = state->bindExpr(U, U->isPostfix() ? V2 : Result);
 
       // Perform the store.      
       EvalStore(Dst, U, *I2, state, V1, Result);
@@ -2861,29 +2812,24 @@ const GRState* GRExprEngine::CheckDivideZero(Expr* Ex, const GRState* state,
   
   // Check for divide/remainder-by-zero.
   // First, "assume" that the denominator is 0 or undefined.            
-  
-  bool isFeasibleZero = false;
-  const GRState* ZeroSt =  Assume(state, Denom, false, isFeasibleZero);
+  const GRState* zeroState =  state->assume(Denom, false);
   
   // Second, "assume" that the denominator cannot be 0.            
+  state = state->assume(Denom, true);
   
-  bool isFeasibleNotZero = false;
-  state = Assume(state, Denom, true, isFeasibleNotZero);
-  
-  // Create the node for the divide-by-zero (if it occurred).
-  
-  if (isFeasibleZero)
-    if (NodeTy* DivZeroNode = Builder->generateNode(Ex, ZeroSt, Pred)) {
+  // Create the node for the divide-by-zero (if it occurred).  
+  if (zeroState)
+    if (NodeTy* DivZeroNode = Builder->generateNode(Ex, zeroState, Pred)) {
       DivZeroNode->markAsSink();
       
-      if (isFeasibleNotZero)
+      if (state)
         ImplicitBadDivides.insert(DivZeroNode);
       else
         ExplicitBadDivides.insert(DivZeroNode);
       
     }
   
-  return isFeasibleNotZero ? state : 0;
+  return state;
 }
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,

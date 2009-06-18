@@ -158,6 +158,49 @@ public:
   
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
+  GRTransferFuncs &getTransferFuncs() const;
+    
+  //==---------------------------------------------------------------------==//
+  // Constraints on values.
+  //==---------------------------------------------------------------------==//
+  //
+  // Each GRState records constraints on symbolic values.  These constraints
+  // are managed using the ConstraintManager associated with a GRStateManager.
+  // As constraints gradually accrue on symbolic values, added constraints
+  // may conflict and indicate that a state is infeasible (as no real values
+  // could satisfy all the constraints).  This is the principal mechanism
+  // for modeling path-sensitivity in GRExprEngine/GRState.
+  //
+  // Various "Assume" methods form the interface for adding constraints to
+  // symbolic values.  A call to "Assume" indicates an assumption being placed
+  // on one or symbolic values.  Assume methods take the following inputs:
+  //
+  //  (1) A GRState object representing the current state.
+  //
+  //  (2) The assumed constraint (which is specific to a given "Assume" method).
+  //
+  //  (3) A binary value "Assumption" that indicates whether the constraint is
+  //      assumed to be true or false.
+  //
+  // The output of "Assume" are two values:
+  //
+  //  (a) "isFeasible" is set to true or false to indicate whether or not
+  //      the assumption is feasible.
+  //
+  //  (b) A new GRState object with the added constraints.
+  //
+  // FIXME: (a) should probably disappear since it is redundant with (b).
+  //  (i.e., (b) could just be set to NULL).
+  //
+  
+  const GRState *assume(SVal condition, bool assumption) const;
+  
+  const GRState *assumeInBound(SVal idx, SVal upperBound, 
+                               bool assumption) const;
+  
+  //==---------------------------------------------------------------------==//
+  // Binding and retrieving values to/from the environment and symbolic store.
+  //==---------------------------------------------------------------------==//
   
   const GRState *bindExpr(Stmt* Ex, SVal V, bool isBlkExpr,
                           bool Invalidate) const;
@@ -171,6 +214,8 @@ public:
   const GRState *unbindLoc(Loc LV) const;
 
   SVal getLValue(const VarDecl* VD) const;
+  
+  const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
   SVal getSVal(Expr* Ex) const;
   
@@ -188,7 +233,10 @@ public:
 
   template <typename CB> CB scanReachableSymbols(SVal val) const;
   
-  // Trait based GDM dispatch.  
+  //==---------------------------------------------------------------------==//
+  // Accessing the Generic Data Map (GDM).
+  //==---------------------------------------------------------------------==//
+
   void* const* FindGDM(void* K) const;
   
   template<typename T>
@@ -671,56 +719,6 @@ public:
     
     return GRStateTrait<T>::MakeContext(p);
   }
-  
-  //==---------------------------------------------------------------------==//
-  // Constraints on values.
-  //==---------------------------------------------------------------------==//
-  //
-  // Each GRState records constraints on symbolic values.  These constraints
-  // are managed using the ConstraintManager associated with a GRStateManager.
-  // As constraints gradually accrue on symbolic values, added constraints
-  // may conflict and indicate that a state is infeasible (as no real values
-  // could satisfy all the constraints).  This is the principal mechanism
-  // for modeling path-sensitivity in GRExprEngine/GRState.
-  //
-  // Various "Assume" methods form the interface for adding constraints to
-  // symbolic values.  A call to "Assume" indicates an assumption being placed
-  // on one or symbolic values.  Assume methods take the following inputs:
-  //
-  //  (1) A GRState object representing the current state.
-  //
-  //  (2) The assumed constraint (which is specific to a given "Assume" method).
-  //
-  //  (3) A binary value "Assumption" that indicates whether the constraint is
-  //      assumed to be true or false.
-  //
-  // The output of "Assume" are two values:
-  //
-  //  (a) "isFeasible" is set to true or false to indicate whether or not
-  //      the assumption is feasible.
-  //
-  //  (b) A new GRState object with the added constraints.
-  //
-  // FIXME: (a) should probably disappear since it is redundant with (b).
-  //  (i.e., (b) could just be set to NULL).
-  //
-
-  const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
-                           bool& isFeasible) {
-    const GRState *state =
-      ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
-    assert(!isFeasible || state);
-    return isFeasible ? state : NULL;
-  }
-
-  const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
-                               bool Assumption, bool& isFeasible) {
-    const GRState *state =
-      ConstraintMgr->AssumeInBound(St, Idx, UpperBound, Assumption, 
-                                   isFeasible);
-    assert(!isFeasible || state);
-    return isFeasible ? state : NULL;
-  }
 
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) {
     return ConstraintMgr->getSymVal(St, sym);
@@ -736,6 +734,15 @@ public:
 // Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
 
+inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
+  return Mgr->ConstraintMgr->Assume(this, Cond, Assumption);
+}
+
+inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
+                                             bool Assumption) const {
+  return Mgr->ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
+}  
+  
 inline const GRState *GRState::bindExpr(Stmt* Ex, SVal V, bool isBlkExpr,
                                        bool Invalidate) const {
   return Mgr->BindExpr(this, Ex, V, isBlkExpr, Invalidate);
@@ -757,6 +764,10 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
 inline SVal GRState::getLValue(const VarDecl* VD) const {
   return Mgr->GetLValue(this, VD);
 }  
+  
+inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
+  return Mgr->getSymVal(this, sym);
+}
   
 inline SVal GRState::getSVal(Expr* Ex) const {
   return Mgr->GetSVal(this, Ex);
@@ -782,12 +793,16 @@ inline SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
   return Mgr->GetSValAsScalarOrLoc(this, R);
 }
   
-inline BasicValueFactory& GRState::getBasicVals() const {
+inline BasicValueFactory &GRState::getBasicVals() const {
   return Mgr->getBasicVals();
 }
 
-inline SymbolManager& GRState::getSymbolManager() const {
+inline SymbolManager &GRState::getSymbolManager() const {
   return Mgr->getSymbolManager();
+}
+  
+inline GRTransferFuncs &GRState::getTransferFuncs() const {
+  return Mgr->getTransferFuncs();
 }
 
 template<typename T>

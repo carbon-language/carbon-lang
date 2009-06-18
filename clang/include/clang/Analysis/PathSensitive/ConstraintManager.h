@@ -30,26 +30,25 @@ class SVal;
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const GRState* Assume(const GRState* St, SVal Cond, 
-                                bool Assumption, bool& isFeasible) = 0;
+  virtual const GRState *Assume(const GRState *state, SVal Cond, 
+                                bool Assumption) = 0;
 
-  virtual const GRState* AssumeInBound(const GRState* St, SVal Idx, 
-                                       SVal UpperBound, bool Assumption,
-                                       bool& isFeasible) = 0;
+  virtual const GRState *AssumeInBound(const GRState *state, SVal Idx, 
+                                       SVal UpperBound, bool Assumption) = 0;
 
-  virtual const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym)
-    const = 0;
+  virtual const llvm::APSInt* getSymVal(const GRState *state,
+                                        SymbolRef sym) const = 0;
 
-  virtual bool isEqual(const GRState* St, SymbolRef sym, 
+  virtual bool isEqual(const GRState *state, SymbolRef sym, 
                        const llvm::APSInt& V) const = 0;
 
-  virtual const GRState* RemoveDeadBindings(const GRState* St,
+  virtual const GRState *RemoveDeadBindings(const GRState *state,
                                             SymbolReaper& SymReaper) = 0;
 
-  virtual void print(const GRState* St, std::ostream& Out, 
+  virtual void print(const GRState *state, std::ostream& Out, 
                      const char* nl, const char *sep) = 0;
 
-  virtual void EndPath(const GRState* St) {}
+  virtual void EndPath(const GRState *state) {}
   
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about
   ///  all SVal values.  This method returns true if the ConstraintManager can

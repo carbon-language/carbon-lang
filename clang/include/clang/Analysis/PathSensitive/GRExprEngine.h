@@ -520,24 +520,7 @@ protected:
   
   inline NonLoc MakeConstantVal(uint64_t X, Expr* Ex) {
     return NonLoc::MakeVal(getBasicVals(), X, Ex->getType());
-  }
-  
-  /// Assume - Create new state by assuming that a given expression
-  ///  is true or false.
-  const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
-                           bool& isFeasible) {
-    return StateMgr.Assume(St, Cond, Assumption, isFeasible);
-  }
-  
-  const GRState* Assume(const GRState* St, Loc Cond, bool Assumption,
-                           bool& isFeasible) {
-    return StateMgr.Assume(St, Cond, Assumption, isFeasible);
-  }
-
-  const GRState* AssumeInBound(const GRState* St, SVal Idx, SVal UpperBound,
-                               bool Assumption, bool& isFeasible) {
-    return StateMgr.AssumeInBound(St, Idx, UpperBound, Assumption, isFeasible);
-  }
+  }  
 
 public:
   NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St,

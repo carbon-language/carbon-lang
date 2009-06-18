@@ -239,22 +239,22 @@ public:
       : SimpleConstraintManager(statemgr) {}
 
   const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V);
 
   const GRState* AssumeSymEQ(const GRState* St, SymbolRef sym,
-                                const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V);
 
   const GRState* AssumeSymLT(const GRState* St, SymbolRef sym,
-                                    const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V);
 
   const GRState* AssumeSymGT(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V);
 
   const GRState* AssumeSymGE(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V);
 
   const GRState* AssumeSymLE(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V, bool& isFeasible);
+                             const llvm::APSInt& V);
 
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) const;
     
@@ -327,10 +327,9 @@ RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
 #define AssumeX(OP)\
 const GRState*\
 RangeConstraintManager::AssumeSym ## OP(const GRState* state, SymbolRef sym,\
-  const llvm::APSInt& V, bool& isFeasible){\
+  const llvm::APSInt& V){\
   const RangeSet& R = GetRange(state, sym).Add##OP(state->getBasicVals(), F, V);\
-  isFeasible = !R.isEmpty();\
-  return isFeasible ? state->set<ConstraintRange>(sym, R) : 0;\
+  return !R.isEmpty() ? state->set<ConstraintRange>(sym, R) : NULL;\
 }
 
 AssumeX(EQ)

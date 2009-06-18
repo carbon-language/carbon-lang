@@ -819,24 +819,15 @@ public:
     
     // Check if in the previous state it was feasible for this constraint
     // to *not* be true.
-    
-    GRStateManager &StateMgr = BRC.getStateManager();
-    bool isFeasible = false;    
-    if (StateMgr.Assume(PrevN->getState(), Constraint, !Assumption,
-                        isFeasible)) {
-      assert(isFeasible); // Eventually we don't need 'isFeasible'.
+    if (PrevN->getState()->assume(Constraint, !Assumption)) {
 
       isSatisfied = true;
       
       // As a sanity check, make sure that the negation of the constraint
       // was infeasible in the current state.  If it is feasible, we somehow
       // missed the transition point.
-      isFeasible = false;
-      if (StateMgr.Assume(N->getState(), Constraint, !Assumption,
-                          isFeasible)) {
-        assert(isFeasible);
+      if (N->getState()->assume(Constraint, !Assumption))
         return NULL;
-      }
       
       // We found the transition point for the constraint.  We now need to
       // pretty-print the constraint. (work-in-progress)      

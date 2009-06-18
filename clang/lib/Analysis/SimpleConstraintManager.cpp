@@ -55,60 +55,55 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
   return true;
 }
   
-const GRState*
-SimpleConstraintManager::Assume(const GRState* St, SVal Cond, bool Assumption,
-                                bool& isFeasible) {
+const GRState *SimpleConstraintManager::Assume(const GRState *state,
+                                               SVal Cond, bool Assumption) {
   if (Cond.isUnknown()) {
-    isFeasible = true;
-    return St;
+    return state;
   }
 
   if (isa<NonLoc>(Cond))
-    return Assume(St, cast<NonLoc>(Cond), Assumption, isFeasible);
+    return Assume(state, cast<NonLoc>(Cond), Assumption);
   else
-    return Assume(St, cast<Loc>(Cond), Assumption, isFeasible);
+    return Assume(state, cast<Loc>(Cond), Assumption);
 }
 
-const GRState*
-SimpleConstraintManager::Assume(const GRState* St, Loc Cond, bool Assumption,
-                                bool& isFeasible) {
-  St = AssumeAux(St, Cond, Assumption, isFeasible);
-  
-  if (!isFeasible)
-    return St;
-  
+const GRState *SimpleConstraintManager::Assume(const GRState *state, Loc Cond,
+                                               bool Assumption) {
+
+  state = AssumeAux(state, Cond, Assumption);
+
   // EvalAssume is used to call into the GRTransferFunction object to perform
   // any checker-specific update of the state based on this assumption being
-  // true or false.
-  return StateMgr.getTransferFuncs().EvalAssume(StateMgr, St, Cond, Assumption,
-                                                isFeasible);
+  // true or false.  
+  return state ? state->getTransferFuncs().EvalAssume(state, Cond, Assumption)
+               : NULL;
 }
 
-const GRState*
-SimpleConstraintManager::AssumeAux(const GRState* St, Loc Cond, bool Assumption,
-                                   bool& isFeasible) {
-  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
+                                                  Loc Cond, bool Assumption) {
+  
+  BasicValueFactory &BasicVals = state->getBasicVals();
 
   switch (Cond.getSubKind()) {
   default:
     assert (false && "'Assume' not implemented for this Loc.");
-    return St;
+    return state;
 
   case loc::MemRegionKind: {
     // FIXME: Should this go into the storemanager?
     
-    const MemRegion* R = cast<loc::MemRegionVal>(Cond).getRegion();
-    const SubRegion* SubR = dyn_cast<SubRegion>(R);
+    const MemRegion *R = cast<loc::MemRegionVal>(Cond).getRegion();
+    const SubRegion *SubR = dyn_cast<SubRegion>(R);
 
     while (SubR) {
       // FIXME: now we only find the first symbolic region.
-      if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(SubR)) {
+      if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR)) {
         if (Assumption)
-          return AssumeSymNE(St, SymR->getSymbol(),
-                             BasicVals.getZeroWithPtrWidth(), isFeasible);
+          return AssumeSymNE(state, SymR->getSymbol(), 
+                             BasicVals.getZeroWithPtrWidth());
         else
-          return AssumeSymEQ(St, SymR->getSymbol(),
-                             BasicVals.getZeroWithPtrWidth(), isFeasible);
+          return AssumeSymEQ(state, SymR->getSymbol(),
+                             BasicVals.getZeroWithPtrWidth());
       }
       SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
     }
@@ -117,43 +112,42 @@ SimpleConstraintManager::AssumeAux(const GRState* St, Loc Cond, bool Assumption,
   }
       
   case loc::GotoLabelKind:
-    isFeasible = Assumption;
-    return St;
+    return Assumption ? state : NULL;
 
   case loc::ConcreteIntKind: {
-    bool b = cast<loc::ConcreteInt>(Cond).getValue() != 0;
-    isFeasible = b ? Assumption : !Assumption;
-    return St;
+    bool b = cast<loc::ConcreteInt>(Cond).getValue() != 0;    
+    bool isFeasible = b ? Assumption : !Assumption;
+    return isFeasible ? state : NULL;
   }
   } // end switch
 }
 
-const GRState*
-SimpleConstraintManager::Assume(const GRState* St, NonLoc Cond, bool Assumption,
-                               bool& isFeasible) {
-  St = AssumeAux(St, Cond, Assumption, isFeasible);
-  
-  if (!isFeasible)
-    return St;
-  
+const GRState *SimpleConstraintManager::Assume(const GRState *state,
+                                               NonLoc Cond,
+                                               bool Assumption) {
+
+  state = AssumeAux(state, Cond, Assumption);
+
   // EvalAssume is used to call into the GRTransferFunction object to perform
   // any checker-specific update of the state based on this assumption being
-  // true or false.
-  return StateMgr.getTransferFuncs().EvalAssume(StateMgr, St, Cond, Assumption,
-                                                  isFeasible);
+  // true or false.  
+  return state ? state->getTransferFuncs().EvalAssume(state, Cond, Assumption)
+               : NULL;
 }
 
-const GRState*
-SimpleConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
-                                   bool Assumption, bool& isFeasible) {
+const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
+                                                  NonLoc Cond,
+                                                  bool Assumption) {
+  
   // We cannot reason about SymIntExpr and SymSymExpr.
   if (!canReasonAbout(Cond)) {
-    isFeasible = true;
-    return St;
+    // Just return the current state indicating that the path is feasible.
+    // This may be an over-approximation of what is possible.
+    return state;
   }  
 
-  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
-  SymbolManager& SymMgr = StateMgr.getSymbolManager();
+  BasicValueFactory &BasicVals = state->getBasicVals();
+  SymbolManager &SymMgr = state->getSymbolManager();
 
   switch (Cond.getSubKind()) {
   default:
@@ -162,38 +156,38 @@ SimpleConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
   case nonloc::SymbolValKind: {
     nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
     SymbolRef sym = SV.getSymbol();
-    QualType T =  SymMgr.getType(sym);
-    
-    if (Assumption)
-      return AssumeSymNE(St, sym, BasicVals.getValue(0, T), isFeasible);
-    else
-      return AssumeSymEQ(St, sym, BasicVals.getValue(0, T), isFeasible);
+    QualType T =  SymMgr.getType(sym);    
+    const llvm::APSInt &zero = BasicVals.getValue(0, T);
+
+    return Assumption ? AssumeSymNE(state, sym, zero)
+                      : AssumeSymEQ(state, sym, zero);
   }
 
   case nonloc::SymExprValKind: {
     nonloc::SymExprVal V = cast<nonloc::SymExprVal>(Cond);
     if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression()))
-      return AssumeSymInt(St, Assumption, SE, isFeasible);
+      return AssumeSymInt(state, Assumption, SE);
     
-    isFeasible = true;
-    return St;
+    // For all other symbolic expressions, over-approximate and consider
+    // the constraint feasible.
+    return state;
   }
 
   case nonloc::ConcreteIntKind: {
     bool b = cast<nonloc::ConcreteInt>(Cond).getValue() != 0;
-    isFeasible = b ? Assumption : !Assumption;
-    return St;
+    bool isFeasible = b ? Assumption : !Assumption;
+    return isFeasible ? state : NULL;
   }
 
   case nonloc::LocAsIntegerKind:
-    return AssumeAux(St, cast<nonloc::LocAsInteger>(Cond).getLoc(),
-                     Assumption, isFeasible);
+    return AssumeAux(state, cast<nonloc::LocAsInteger>(Cond).getLoc(),
+                     Assumption);
   } // end switch
 }
 
-const GRState*
-SimpleConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
-                                      const SymIntExpr *SE, bool& isFeasible) {
+const GRState *SimpleConstraintManager::AssumeSymInt(const GRState *state,
+                                                     bool Assumption,
+                                                     const SymIntExpr *SE) {
 
 
   // Here we assume that LHS is a symbol.  This is consistent with the
@@ -203,45 +197,42 @@ SimpleConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
   
   switch (SE->getOpcode()) {
   default:
-    // No logic yet for other operators.
-    isFeasible = true;
-    return St;
+    // No logic yet for other operators.  Assume the constraint is feasible.
+    return state;
 
   case BinaryOperator::EQ:
-    return Assumption ? AssumeSymEQ(St, Sym, Int, isFeasible)
-                      : AssumeSymNE(St, Sym, Int, isFeasible);
+    return Assumption ? AssumeSymEQ(state, Sym, Int)
+                      : AssumeSymNE(state, Sym, Int);
 
   case BinaryOperator::NE:
-    return Assumption ? AssumeSymNE(St, Sym, Int, isFeasible)
-                      : AssumeSymEQ(St, Sym, Int, isFeasible);
-
+    return Assumption ? AssumeSymNE(state, Sym, Int)
+                      : AssumeSymEQ(state, Sym, Int);
   case BinaryOperator::GT:
-    return Assumption ? AssumeSymGT(St, Sym, Int, isFeasible)
-                      : AssumeSymLE(St, Sym, Int, isFeasible);
+    return Assumption ? AssumeSymGT(state, Sym, Int)
+                      : AssumeSymLE(state, Sym, Int);
 
   case BinaryOperator::GE:
-    return Assumption ? AssumeSymGE(St, Sym, Int, isFeasible)
-                      : AssumeSymLT(St, Sym, Int, isFeasible);
+    return Assumption ? AssumeSymGE(state, Sym, Int)
+                      : AssumeSymLT(state, Sym, Int);
 
   case BinaryOperator::LT:
-    return Assumption ? AssumeSymLT(St, Sym, Int, isFeasible)
-                      : AssumeSymGE(St, Sym, Int, isFeasible);
+    return Assumption ? AssumeSymLT(state, Sym, Int)
+                      : AssumeSymGE(state, Sym, Int);
       
   case BinaryOperator::LE:
-      return Assumption ? AssumeSymLE(St, Sym, Int, isFeasible)
-                        : AssumeSymGT(St, Sym, Int, isFeasible);
+    return Assumption ? AssumeSymLE(state, Sym, Int)
+                      : AssumeSymGT(state, Sym, Int);
   } // end switch
 }
 
-const GRState* 
-SimpleConstraintManager::AssumeInBound(const GRState* St, SVal Idx, 
-                                       SVal UpperBound, bool Assumption, 
-                                       bool& isFeasible) {
+const GRState *SimpleConstraintManager::AssumeInBound(const GRState *state,
+                                                      SVal Idx, 
+                                                      SVal UpperBound,
+                                                      bool Assumption) { 
+
   // Only support ConcreteInt for now.
-  if (!(isa<nonloc::ConcreteInt>(Idx) && isa<nonloc::ConcreteInt>(UpperBound))){
-    isFeasible = true;
-    return St;
-  }
+  if (!(isa<nonloc::ConcreteInt>(Idx) && isa<nonloc::ConcreteInt>(UpperBound)))
+    return state;
 
   const llvm::APSInt& Zero = getBasicVals().getZeroWithPtrWidth(false);
   llvm::APSInt IdxV = cast<nonloc::ConcreteInt>(Idx).getValue();
@@ -254,10 +245,8 @@ SimpleConstraintManager::AssumeInBound(const GRState* St, SVal Idx,
     UBV.extend(Zero.getBitWidth());
 
   bool InBound = (Zero <= IdxV) && (IdxV < UBV);
-
-  isFeasible = Assumption ? InBound : !InBound;
-
-  return St;
+  bool isFeasible = Assumption ? InBound : !InBound;
+  return isFeasible ? state : NULL;
 }
 
 }  // end of namespace clang

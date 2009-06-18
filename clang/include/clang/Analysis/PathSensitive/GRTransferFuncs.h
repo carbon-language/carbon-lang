@@ -110,11 +110,9 @@ public:
 
   // Assumptions.
   
-  virtual const GRState* EvalAssume(GRStateManager& VMgr,
-                                       const GRState* St,
-                                       SVal Cond, bool Assumption,
-                                       bool& isFeasible) {
-    return St;
+  virtual const GRState* EvalAssume(const GRState *state,
+                                    SVal Cond, bool Assumption) {
+    return state;
   }
 };
   
