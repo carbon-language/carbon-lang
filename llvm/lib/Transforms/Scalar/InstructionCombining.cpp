@@ -8564,19 +8564,32 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     }
   }
 
-  // zext(trunc(t) & C) -> (t & C)  if C is a mask.
+  // zext(trunc(t) & C) -> (t & zext(C)).
   if (SrcI && SrcI->getOpcode() == Instruction::And && SrcI->hasOneUse())
     if (ConstantInt *C = dyn_cast<ConstantInt>(SrcI->getOperand(1)))
       if (TruncInst *TI = dyn_cast<TruncInst>(SrcI->getOperand(0))) {
         Value *TI0 = TI->getOperand(0);
-        if (TI0->getType() == CI.getType()) {
-          unsigned TO = C->getValue().countTrailingOnes();
-          if (APIntOps::isMask(TO, C->getValue()))
-            return
-              BinaryOperator::Create(Instruction::And, TI0,
-                                     ConstantExpr::getZExt(C, CI.getType()));
-        }
+        if (TI0->getType() == CI.getType())
+          return
+            BinaryOperator::CreateAnd(TI0,
+                                      ConstantExpr::getZExt(C, CI.getType()));
       }
+
+  // zext((trunc(t) & C) ^ C) -> ((t & zext(C)) ^ zext(C)).
+  if (SrcI && SrcI->getOpcode() == Instruction::Xor && SrcI->hasOneUse())
+    if (ConstantInt *C = dyn_cast<ConstantInt>(SrcI->getOperand(1)))
+      if (BinaryOperator *And = dyn_cast<BinaryOperator>(SrcI->getOperand(0)))
+        if (And->getOpcode() == Instruction::And && And->hasOneUse() &&
+            And->getOperand(1) == C)
+          if (TruncInst *TI = dyn_cast<TruncInst>(And->getOperand(0))) {
+            Value *TI0 = TI->getOperand(0);
+            if (TI0->getType() == CI.getType()) {
+              Constant *ZC = ConstantExpr::getZExt(C, CI.getType());
+              Instruction *NewAnd = BinaryOperator::CreateAnd(TI0, ZC, "tmp");
+              InsertNewInstBefore(NewAnd, *And);
+              return BinaryOperator::CreateXor(NewAnd, ZC);
+            }
+          }
 
   return 0;
 }
