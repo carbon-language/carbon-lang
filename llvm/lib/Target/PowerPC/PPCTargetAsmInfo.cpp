@@ -64,7 +64,7 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
   DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
   DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
+  DwarfMacroInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.
@@ -130,7 +130,7 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
   DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
-  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+  DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
   PCSymbol = ".";
 

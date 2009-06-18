@@ -1995,8 +1995,8 @@ void DwarfDebug::EmitInitial() {
   Asm->SwitchToDataSection(TAI->getDwarfARangesSection());
   EmitLabel("section_aranges", 0);
 
-  if (TAI->doesSupportMacInfoSection()) {
-    Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
+  if (const char *LineInfoDirective = TAI->getDwarfMacroInfoSection()) {
+    Asm->SwitchToDataSection(LineInfoDirective);
     EmitLabel("section_macinfo", 0);
   }
 
@@ -2542,9 +2542,9 @@ void DwarfDebug::EmitDebugRanges() {
 /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
 ///
 void DwarfDebug::EmitDebugMacInfo() {
-  if (TAI->doesSupportMacInfoSection()) {
+  if (const char *LineInfoDirective = TAI->getDwarfMacroInfoSection()) {
     // Start the dwarf macinfo section.
-    Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
+    Asm->SwitchToDataSection(LineInfoDirective);
     Asm->EOL();
   }
 }

@@ -102,7 +102,6 @@ void TargetAsmInfo::fillDefaultValues() {
   SupportsExceptionHandling = false;
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
-  SupportsMacInfoSection = true;
   NonLocalEHFrameLabel = false;
   GlobalEHDirective = 0;
   SupportsWeakOmittedEHFrame = true;
@@ -118,7 +117,7 @@ void TargetAsmInfo::fillDefaultValues() {
   DwarfLocSection = ".debug_loc";
   DwarfARangesSection = ".debug_aranges";
   DwarfRangesSection = ".debug_ranges";
-  DwarfMacInfoSection = ".debug_macinfo";
+  DwarfMacroInfoSection = ".debug_macinfo";
   DwarfEHFrameSection = ".eh_frame";
   DwarfExceptionSection = ".gcc_except_table";
   AsmTransCBE = 0;

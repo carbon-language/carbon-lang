@@ -118,7 +118,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
   DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
   DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
+  DwarfMacroInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 
   // Exceptions handling
   SupportsExceptionHandling = true;
@@ -176,7 +176,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
   DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
-  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+  DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
   // Exceptions handling
   SupportsExceptionHandling = true;
@@ -259,7 +259,7 @@ X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
   DwarfLocSection =     "\t.section\t.debug_loc,\"dr\"";
   DwarfARangesSection = "\t.section\t.debug_aranges,\"dr\"";
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"dr\"";
-  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
+  DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
 }
 
 unsigned

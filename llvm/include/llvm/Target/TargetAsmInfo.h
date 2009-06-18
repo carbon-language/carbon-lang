@@ -472,10 +472,6 @@ namespace llvm {
     /// encode inline subroutine information.
     bool DwarfUsesInlineInfoSection; // Defaults to false.
 
-    /// SupportsMacInfo - true if the Dwarf output supports macro information
-    ///
-    bool SupportsMacInfoSection;            // Defaults to true
-
     /// NonLocalEHFrameLabel - If set, the EH_frame label needs to be non-local.
     ///
     bool NonLocalEHFrameLabel;              // Defaults to false.
@@ -536,9 +532,9 @@ namespace llvm {
     ///
     const char *DwarfRangesSection; // Defaults to ".debug_ranges".
 
-    /// DwarfMacInfoSection - Section directive for Dwarf info.
+    /// DwarfMacroInfoSection - Section directive for DWARF macro info.
     ///
-    const char *DwarfMacInfoSection; // Defaults to ".debug_macinfo".
+    const char *DwarfMacroInfoSection; // Defaults to ".debug_macinfo".
     
     /// DwarfEHFrameSection - Section directive for Exception frames.
     ///
@@ -866,9 +862,6 @@ namespace llvm {
     bool doesDwarfUsesInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
     }
-    bool doesSupportMacInfoSection() const {
-      return SupportsMacInfoSection;
-    }
     bool doesRequireNonLocalEHFrameLabel() const {
       return NonLocalEHFrameLabel;
     }
@@ -914,8 +907,8 @@ namespace llvm {
     const char *getDwarfRangesSection() const {
       return DwarfRangesSection;
     }
-    const char *getDwarfMacInfoSection() const {
-      return DwarfMacInfoSection;
+    const char *getDwarfMacroInfoSection() const {
+      return DwarfMacroInfoSection;
     }
     const char *getDwarfEHFrameSection() const {
       return DwarfEHFrameSection;

@@ -64,7 +64,7 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   DwarfLocSection = "\t.section\t.debug_loc,\"\",@progbits";
   DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
   DwarfRangesSection = "\t.section\t.debug_ranges,\"\",@progbits";
-  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+  DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 }
 
 const Section*
