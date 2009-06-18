@@ -18,7 +18,7 @@
 
 using namespace clang;
 
-SVal Environment::GetSVal(Stmt* E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetSVal(const Stmt *E, BasicValueFactory& BasicVals) const {
   
   for (;;) {
     
@@ -34,7 +34,7 @@ SVal Environment::GetSVal(Stmt* E, BasicValueFactory& BasicVals) const {
         continue;
         
       case Stmt::CharacterLiteralClass: {
-        CharacterLiteral* C = cast<CharacterLiteral>(E);
+        const CharacterLiteral* C = cast<CharacterLiteral>(E);
         return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
       }
         
@@ -48,7 +48,7 @@ SVal Environment::GetSVal(Stmt* E, BasicValueFactory& BasicVals) const {
        
       case Stmt::ImplicitCastExprClass:
       case Stmt::CStyleCastExprClass: {
-        CastExpr* C = cast<CastExpr>(E);
+        const CastExpr* C = cast<CastExpr>(E);
         QualType CT = C->getType();
         
         if (CT->isVoidType())
@@ -69,7 +69,8 @@ SVal Environment::GetSVal(Stmt* E, BasicValueFactory& BasicVals) const {
   return LookupExpr(E);
 }
 
-SVal Environment::GetBlkExprSVal(Stmt* E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetBlkExprSVal(const Stmt *E,
+                                 BasicValueFactory& BasicVals) const {
   
   while (1) {
     switch (E->getStmtClass()) {
@@ -78,7 +79,7 @@ SVal Environment::GetBlkExprSVal(Stmt* E, BasicValueFactory& BasicVals) const {
         continue;
         
       case Stmt::CharacterLiteralClass: {
-        CharacterLiteral* C = cast<CharacterLiteral>(E);
+        const CharacterLiteral* C = cast<CharacterLiteral>(E);
         return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
       }
         
@@ -92,8 +93,9 @@ SVal Environment::GetBlkExprSVal(Stmt* E, BasicValueFactory& BasicVals) const {
   }
 }
 
-Environment EnvironmentManager::BindExpr(const Environment& Env, Stmt* E,SVal V,
-                                         bool isBlkExpr, bool Invalidate) {  
+Environment EnvironmentManager::BindExpr(const Environment& Env, const Stmt* E,
+                                         SVal V, bool isBlkExpr,
+                                         bool Invalidate) {  
   assert (E);
   
   if (V.isUnknown()) {    
@@ -136,7 +138,7 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
   // Iterate over the block-expr bindings.
   for (Environment::beb_iterator I = Env.beb_begin(), E = Env.beb_end(); 
        I != E; ++I) {
-    Stmt* BlkExpr = I.getKey();
+    const Stmt *BlkExpr = I.getKey();
 
     if (SymReaper.isLive(Loc, BlkExpr)) {
       SVal X = I.getData();

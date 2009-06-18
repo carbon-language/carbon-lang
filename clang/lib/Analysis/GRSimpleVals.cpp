@@ -363,7 +363,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
         I != E; ++I) {
 
-    SVal V = StateMgr.GetSVal(St, *I);
+    SVal V = St->getSVal(*I);
     
     if (isa<loc::MemRegionVal>(V)) {
       const MemRegion *R = cast<loc::MemRegionVal>(V).getRegion();
@@ -382,7 +382,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {    
     unsigned Count = Builder.getCurrentBlockCount();
     SVal X = Eng.getValueManager().getConjuredSymbolVal(CE, Count);
-    St = StateMgr.BindExpr(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+    St = St->bindExpr(CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
     
   Builder.MakeNode(Dst, CE, Pred, St);
@@ -400,18 +400,16 @@ void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
   
   
   // The basic transfer function logic for message expressions does nothing.
-  // We just invalidate all arguments passed in by references.
-  
-  GRStateManager& StateMgr = Eng.getStateManager();
-  const GRState* St = Builder.GetState(Pred);
+  // We just invalidate all arguments passed in by references.  
+  const GRState *St = Builder.GetState(Pred);
   
   for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
        I != E; ++I) {
     
-    SVal V = StateMgr.GetSVal(St, *I);
+    SVal V = St->getSVal(*I);
     
     if (isa<Loc>(V))
-      St = StateMgr.BindLoc(St, cast<Loc>(V), UnknownVal());
+      St = St->bindLoc(cast<Loc>(V), UnknownVal());
   }
   
   Builder.MakeNode(Dst, ME, Pred, St);

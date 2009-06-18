@@ -66,9 +66,6 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   APIMisuse *BT;
   BugReporter& BR;
   ASTContext &Ctx;
-  GRStateManager* VMgr;
-
-  SVal GetSVal(const GRState* St, Expr* E) { return VMgr->GetSVal(St, E); }
       
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
@@ -79,9 +76,8 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   bool CheckNilArg(NodeTy* N, unsigned Arg);
 
 public:
-  BasicObjCFoundationChecks(ASTContext& ctx, GRStateManager* vmgr,
-                            BugReporter& br) 
-    : BT(0), BR(br), Ctx(ctx), VMgr(vmgr) {}
+  BasicObjCFoundationChecks(ASTContext& ctx, BugReporter& br) 
+    : BT(0), BR(br), Ctx(ctx) {}
         
   bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
@@ -106,10 +102,8 @@ private:
 
 
 GRSimpleAPICheck*
-clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
-                                       GRStateManager* VMgr, BugReporter& BR) {
-  
-  return new BasicObjCFoundationChecks(Ctx, VMgr, BR);  
+clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx, BugReporter& BR) {
+  return new BasicObjCFoundationChecks(Ctx, BR);  
 }
 
 
@@ -157,7 +151,7 @@ bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
   
   Expr * E = ME->getArg(Arg);
   
-  if (isNil(GetSVal(N->getState(), E))) {
+  if (isNil(N->getState()->getSVal(E))) {
     WarnNilArg(N, ME, Arg);
     return true;
   }
@@ -259,14 +253,11 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   //   approach makes this class more stateless.
   ASTContext& Ctx;
   IdentifierInfo* II;
-  GRStateManager* VMgr;
   BugReporter& BR;
-    
-  SVal GetSVal(const GRState* St, Expr* E) { return VMgr->GetSVal(St, E); }
-  
+
 public:
-  AuditCFNumberCreate(ASTContext& ctx, GRStateManager* vmgr, BugReporter& br) 
-  : BT(0), Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), VMgr(vmgr), BR(br){}
+  AuditCFNumberCreate(ASTContext& ctx, BugReporter& br) 
+  : BT(0), Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), BR(br){}
   
   ~AuditCFNumberCreate() {}
   
@@ -374,14 +365,14 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){  
   CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   Expr* Callee = CE->getCallee();  
-  SVal CallV = GetSVal(N->getState(), Callee);  
+  SVal CallV = N->getState()->getSVal(Callee);  
   const FunctionDecl* FD = CallV.getAsFunctionDecl();
 
   if (!FD || FD->getIdentifier() != II || CE->getNumArgs()!=3)
     return false;
   
   // Get the value of the "theType" argument.
-  SVal  TheTypeVal = GetSVal(N->getState(), CE->getArg(1));
+  SVal TheTypeVal = N->getState()->getSVal(CE->getArg(1));
   
     // FIXME: We really should allow ranges of valid theType values, and
     //   bifurcate the state appropriately.
@@ -400,7 +391,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
-  SVal TheValueExpr = GetSVal(N->getState(), CE->getArg(2));
+  SVal TheValueExpr = N->getState()->getSVal(CE->getArg(2));
   
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
@@ -469,9 +460,8 @@ void AuditCFNumberCreate::AddError(const TypedRegion* R, Expr* Ex,
 }
 
 GRSimpleAPICheck*
-clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
-                                 GRStateManager* VMgr, BugReporter& BR) {  
-  return new AuditCFNumberCreate(Ctx, VMgr, BR);
+clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {  
+  return new AuditCFNumberCreate(Ctx, BR);
 }
 
 //===----------------------------------------------------------------------===//
@@ -479,13 +469,12 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
 
 void clang::RegisterAppleChecks(GRExprEngine& Eng) {
   ASTContext& Ctx = Eng.getContext();
-  GRStateManager* VMgr = &Eng.getStateManager();
   BugReporter &BR = Eng.getBugReporter();
 
-  Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, VMgr, BR),
+  Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, BR),
                Stmt::ObjCMessageExprClass);
 
-  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, VMgr, BR),
+  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR),
                Stmt::CallExprClass);
   
   RegisterNSErrorChecks(BR, Eng);

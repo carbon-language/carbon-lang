@@ -23,6 +23,5 @@ void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
                                   BinaryOperator::Opcode Op,
                                   NonLoc L, NonLoc R, QualType T) {
   
-  OStates.Add(Eng.getStateManager().BindExpr(St, Ex,
-                                          DetermEvalBinOpNN(Eng, Op, L, R, T)));
+  OStates.Add(St->bindExpr(Ex, DetermEvalBinOpNN(Eng, Op, L, R, T)));
 }

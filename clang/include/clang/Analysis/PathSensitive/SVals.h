@@ -181,7 +181,7 @@ public:
 
   static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
   
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
+  static NonLoc MakeVal(BasicValueFactory& BasicVals, const IntegerLiteral *I);
 
   static NonLoc MakeVal(BasicValueFactory& BasicVals, const llvm::APInt& I,
                         bool isUnsigned);
@@ -212,7 +212,7 @@ public:
     
   static Loc MakeVal(const MemRegion* R);
     
-  static Loc MakeVal(AddrLabelExpr* E);
+  static Loc MakeVal(const AddrLabelExpr* E);
 
   static Loc MakeNull(BasicValueFactory &BasicVals);
   

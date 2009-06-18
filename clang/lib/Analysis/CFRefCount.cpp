@@ -3056,7 +3056,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     // FIXME: Is this really working as expected?  There are cases where
     //  we just use the 'ID' from the message expression.
     const GRState* St = Builder.GetState(Pred);
-    SVal V = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
+    SVal V = St->getSValAsScalarOrLoc(Receiver);
 
     SymbolRef Sym = V.getAsLocSymbol();
     if (Sym) {
@@ -3089,7 +3089,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     //  This is a hack.  When we have full-IP this should be removed.
     if (isa<ObjCMethodDecl>(&Eng.getGraph().getCodeDecl())) {      
       if (Expr* Receiver = ME->getReceiver()) {
-        SVal X = Eng.getStateManager().GetSValAsScalarOrLoc(St, Receiver);
+        SVal X = St->getSValAsScalarOrLoc(Receiver);
         if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
           if (L->getRegion() == Eng.getStateManager().getSelfRegion(St)) {
             // Update the summary to make the default argument effect

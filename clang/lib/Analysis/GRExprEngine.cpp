@@ -644,7 +644,7 @@ static SVal RecoverCastedSymbol(GRStateManager& StateMgr, const GRState* state,
   if (!bitsInit || !T->isIntegerType() || Ctx.getTypeSize(T) > bits)
     return UnknownVal();
   
-  return StateMgr.GetSVal(state, Ex);
+  return state->getSVal(Ex);
 }
 
 void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
@@ -1284,10 +1284,9 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
   const void *OSAtomicStoreTag = &magic_store;
   
   // Load 'theValue'.
-  GRStateManager &StateMgr = Engine.getStateManager();
   const GRState *state = Pred->getState();
   ExplodedNodeSet<GRState> Tmp;
-  SVal location = StateMgr.GetSVal(state, theValueExpr);
+  SVal location = state->getSVal(theValueExpr);
   Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag);
 
   for (ExplodedNodeSet<GRState>::iterator I = Tmp.begin(), E = Tmp.end();
@@ -1310,8 +1309,7 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
       // Perform the store.
       ExplodedNodeSet<GRState> TmpStore;
       Engine.EvalStore(TmpStore, theValueExpr, N, stateEqual, location, 
-                       StateMgr.GetSVal(stateEqual, newValueExpr),
-                       OSAtomicStoreTag);
+                       stateEqual->getSVal(newValueExpr), OSAtomicStoreTag);
       
       // Now bind the result of the comparison.
       for (ExplodedNodeSet<GRState>::iterator I2 = TmpStore.begin(),

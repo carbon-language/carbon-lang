@@ -202,10 +202,10 @@ public:
   // Binding and retrieving values to/from the environment and symbolic store.
   //==---------------------------------------------------------------------==//
   
-  const GRState *bindExpr(Stmt* Ex, SVal V, bool isBlkExpr,
+  const GRState *bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
                           bool Invalidate) const;
   
-  const GRState *bindExpr(Stmt* Ex, SVal V, bool Invalidate = true) const;  
+  const GRState *bindExpr(const Stmt* Ex, SVal V, bool Invalidate = true) const;  
   
   const GRState *bindLoc(Loc location, SVal V) const;
   
@@ -217,11 +217,11 @@ public:
   
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
-  SVal getSVal(Expr* Ex) const;
+  SVal getSVal(const Stmt* Ex) const;
   
-  SVal getBlkExprSVal(Expr* Ex) const;
+  SVal getBlkExprSVal(const Stmt* Ex) const;
   
-  SVal getSValAsScalarOrLoc(const Expr *Ex) const;
+  SVal getSValAsScalarOrLoc(const Stmt *Ex) const;
   
   SVal getSVal(Loc LV, QualType T = QualType()) const;
   
@@ -511,6 +511,7 @@ public:
     return StoreMgr->getSelfRegion(state->getStore());
   }
   
+private:
   // Get the lvalue for a variable reference.
   SVal GetLValue(const GRState* St, const VarDecl* D) {
     return StoreMgr->getLValueVar(St, D);
@@ -540,9 +541,8 @@ public:
     return StoreMgr->getLValueElement(St, ElementType, Base, Idx);
   }  
 
-  // Methods that query & manipulate the Environment.
-  
-  SVal GetSVal(const GRState* St, Stmt* Ex) {
+  // Methods that query & manipulate the Environment.  
+  SVal GetSVal(const GRState* St, const Stmt* Ex) {
     return St->getEnvironment().GetSVal(Ex, getBasicVals());
   }
   
@@ -555,17 +555,12 @@ public:
     
     return UnknownVal();
   }
-    
 
-  SVal GetSVal(const GRState* St, const Stmt* Ex) {
-    return St->getEnvironment().GetSVal(const_cast<Stmt*>(Ex), getBasicVals());
-  }
-  
-  SVal GetBlkExprSVal(const GRState* St, Stmt* Ex) {
+  SVal GetBlkExprSVal(const GRState* St, const Stmt* Ex) {
     return St->getEnvironment().GetBlkExprSVal(Ex, getBasicVals());
   }
   
-  const GRState* BindExpr(const GRState* St, Stmt* Ex, SVal V,
+  const GRState* BindExpr(const GRState* St, const Stmt* Ex, SVal V,
                           bool isBlkExpr, bool Invalidate) {
     
     const Environment& OldEnv = St->getEnvironment();
@@ -579,7 +574,7 @@ public:
     return getPersistentState(NewSt);
   }
   
-  const GRState* BindExpr(const GRState* St, Stmt* Ex, SVal V,
+  const GRState* BindExpr(const GRState* St, const Stmt* Ex, SVal V,
                           bool Invalidate = true) {
     
     bool isBlkExpr = false;
@@ -595,6 +590,8 @@ public:
     
     return BindExpr(St, Ex, V, isBlkExpr, Invalidate);
   }
+
+public:
 
   SVal ArrayToPointer(Loc Array) {
     return StoreMgr->ArrayToPointer(Array);
@@ -743,12 +740,12 @@ inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
   return Mgr->ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
 }  
   
-inline const GRState *GRState::bindExpr(Stmt* Ex, SVal V, bool isBlkExpr,
-                                       bool Invalidate) const {
+inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
+                                        bool Invalidate) const {
   return Mgr->BindExpr(this, Ex, V, isBlkExpr, Invalidate);
 }
 
-inline const GRState *GRState::bindExpr(Stmt* Ex, SVal V,
+inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
                                         bool Invalidate) const {
   return Mgr->BindExpr(this, Ex, V, Invalidate);
 }
@@ -769,15 +766,15 @@ inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
   return Mgr->getSymVal(this, sym);
 }
   
-inline SVal GRState::getSVal(Expr* Ex) const {
+inline SVal GRState::getSVal(const Stmt* Ex) const {
   return Mgr->GetSVal(this, Ex);
 }
 
-inline SVal GRState::getBlkExprSVal(Expr* Ex) const {  
+inline SVal GRState::getBlkExprSVal(const Stmt* Ex) const {  
   return Mgr->GetBlkExprSVal(this, Ex);
 }
 
-inline SVal GRState::getSValAsScalarOrLoc(const Expr *Ex) const {
+inline SVal GRState::getSValAsScalarOrLoc(const Stmt *Ex) const {
   return Mgr->GetSValAsScalarOrLoc(this, Ex);
 }
 

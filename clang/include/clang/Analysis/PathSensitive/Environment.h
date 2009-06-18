@@ -35,7 +35,7 @@ private:
   friend class EnvironmentManager;
   
   // Type definitions.
-  typedef llvm::ImmutableMap<Stmt*,SVal> BindingsTy;
+  typedef llvm::ImmutableMap<const Stmt*,SVal> BindingsTy;
 
   // Data.
   BindingsTy SubExprBindings;
@@ -54,25 +54,25 @@ public:
   beb_iterator beb_begin() const { return BlkExprBindings.begin(); }
   beb_iterator beb_end() const { return BlkExprBindings.end(); }      
   
-  SVal LookupSubExpr(Stmt* E) const {
+  SVal LookupSubExpr(const Stmt* E) const {
     const SVal* X = SubExprBindings.lookup(cast<Expr>(E));
     return X ? *X : UnknownVal();
   }
   
-  SVal LookupBlkExpr(Stmt* E) const {
+  SVal LookupBlkExpr(const Stmt* E) const {
     const SVal* X = BlkExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  SVal LookupExpr(Stmt* E) const {
+  SVal LookupExpr(const Stmt* E) const {
     const SVal* X = SubExprBindings.lookup(E);
     if (X) return *X;
     X = BlkExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  SVal GetSVal(Stmt* Ex, BasicValueFactory& BasicVals) const;
-  SVal GetBlkExprSVal(Stmt* Ex, BasicValueFactory& BasicVals) const; 
+  SVal GetSVal(const Stmt* Ex, BasicValueFactory& BasicVals) const;
+  SVal GetBlkExprSVal(const Stmt* Ex, BasicValueFactory& BasicVals) const; 
   
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
@@ -108,19 +108,19 @@ public:
   ///  removed.  This method only removes bindings for block-level expressions.
   ///  Using this method on a non-block level expression will return the
   ///  same environment object.
-  Environment RemoveBlkExpr(const Environment& Env, Stmt* E) {
+  Environment RemoveBlkExpr(const Environment& Env, const Stmt* E) {
     return Environment(Env.SubExprBindings, F.Remove(Env.BlkExprBindings, E));
   }
   
-  Environment RemoveSubExpr(const Environment& Env, Stmt* E) {
+  Environment RemoveSubExpr(const Environment& Env, const Stmt* E) {
     return Environment(F.Remove(Env.SubExprBindings, E), Env.BlkExprBindings);
   }
   
-  Environment AddBlkExpr(const Environment& Env, Stmt* E, SVal V) {
+  Environment AddBlkExpr(const Environment& Env, const Stmt *E, SVal V) {
     return Environment(Env.SubExprBindings, F.Add(Env.BlkExprBindings, E, V));
   }
   
-  Environment AddSubExpr(const Environment& Env, Stmt* E, SVal V) {
+  Environment AddSubExpr(const Environment& Env, const Stmt *E, SVal V) {
     return Environment(F.Add(Env.SubExprBindings, E, V), Env.BlkExprBindings);
   }
   
@@ -135,7 +135,7 @@ public:
     return Environment(F.GetEmptyMap(), F.GetEmptyMap());
   }
   
-  Environment BindExpr(const Environment& Env, Stmt* E, SVal V,
+  Environment BindExpr(const Environment& Env, const Stmt* E, SVal V,
                        bool isBlkExpr, bool Invalidate);
 
   Environment

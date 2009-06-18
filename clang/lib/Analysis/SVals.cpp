@@ -294,7 +294,7 @@ NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T) {
   return nonloc::ConcreteInt(BasicVals.getValue(X, T));
 }
 
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I) {
+NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const IntegerLiteral* I) {
 
   return nonloc::ConcreteInt(BasicVals.getValue(APSInt(I->getValue(),
                               I->getType()->isUnsignedIntegerType())));
@@ -402,7 +402,9 @@ nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
 
 Loc Loc::MakeVal(const MemRegion* R) { return loc::MemRegionVal(R); }
 
-Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
+Loc Loc::MakeVal(const AddrLabelExpr *E) {
+  return loc::GotoLabel(E->getLabel());
+}
 
 Loc Loc::MakeNull(BasicValueFactory &BasicVals) {
   return loc::ConcreteInt(BasicVals.getZeroWithPtrWidth());

@@ -336,7 +336,7 @@ GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
     if (!DR)
       continue;
     
-    SVal Y = VMgr.GetSVal(N->getState(), DR);
+    SVal Y = N->getState()->getSVal(DR);
     
     if (X != Y)
       continue;

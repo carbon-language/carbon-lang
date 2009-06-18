@@ -347,9 +347,7 @@ public:
       assert (E && "Return expression cannot be NULL");
       
       // Get the value associated with E.
-      loc::MemRegionVal V =
-        cast<loc::MemRegionVal>(Eng.getStateManager().GetSVal(N->getState(),
-                                                               E));
+      loc::MemRegionVal V = cast<loc::MemRegionVal>(N->getState()->getSVal(E));
       
       // Generate a report for this bug.
       std::string buf;
@@ -427,7 +425,7 @@ class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
       return Ex;
     }
     
-    bool MatchesCriteria(Expr* Ex) { return VM.GetSVal(St, Ex).isUndef(); }
+    bool MatchesCriteria(Expr* Ex) { return St->getSVal(Ex).isUndef(); }
   };
   
 public:
@@ -519,8 +517,7 @@ public:
             "variable-length array (VLA) '"
          << VD->getNameAsString() << "' evaluates to ";
       
-      bool isUndefined = Eng.getStateManager().GetSVal(N->getState(),
-                                                       SizeExpr).isUndef();
+      bool isUndefined = N->getState()->getSVal(SizeExpr).isUndef();
       
       if (isUndefined)
         os << "an undefined or garbage value.";
@@ -563,7 +560,7 @@ public:
     CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
     const GRState* state = N->getState();
     
-    SVal X = VMgr.GetSVal(state, CE->getCallee());
+    SVal X = state->getSVal(CE->getCallee());
 
     const FunctionDecl* FD = X.getAsFunctionDecl();
     if (!FD)
@@ -888,7 +885,7 @@ static void registerTrackNullOrUndefValue(BugReporterContext& BRC,
         StateMgr.getRegionManager().getVarRegion(VD);
 
       // What did we load?
-      SVal V = StateMgr.GetSVal(state, S);
+      SVal V = state->getSVal(S);
         
       if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V) 
           || V.isUndef()) {
@@ -897,7 +894,7 @@ static void registerTrackNullOrUndefValue(BugReporterContext& BRC,
     }
   }
     
-  SVal V = StateMgr.GetSValAsScalarOrLoc(state, S);
+  SVal V = state->getSValAsScalarOrLoc(S);
   
   // Uncomment this to find cases where we aren't properly getting the
   // base value that was dereferenced.
