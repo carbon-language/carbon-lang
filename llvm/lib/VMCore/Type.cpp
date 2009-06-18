@@ -455,12 +455,14 @@ void DerivedType::dropAllTypeUses() {
     // that will never get resolved, thus will always be abstract.
     static Type *AlwaysOpaqueTy = 0;
     static PATypeHolder* Holder = 0;
-    if (!AlwaysOpaqueTy) {
+    Type *tmp = AlwaysOpaqueTy;
+    sys::MemoryFence();
+    if (!tmp) {
       if (llvm_is_multithreaded()) {
         llvm_acquire_global_lock();
-      
-        if (!AlwaysOpaqueTy) {
-          Type *tmp = OpaqueType::get();
+        tmp = AlwaysOpaqueTy;
+        if (!tmp) {
+          tmp = OpaqueType::get();
           PATypeHolder* tmp2 = new PATypeHolder(AlwaysOpaqueTy);
           sys::MemoryFence();
           AlwaysOpaqueTy = tmp;
