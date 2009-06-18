@@ -3114,17 +3114,15 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
 
 namespace {
 class VISIBILITY_HIDDEN StopTrackingCallback : public SymbolVisitor {
-  GRStateRef state;
+  const GRState *state;
 public:
-  StopTrackingCallback(GRStateRef st) : state(st) {}
-  GRStateRef getState() { return state; }
+  StopTrackingCallback(const GRState *st) : state(st) {}
+  const GRState *getState() const { return state; }
 
   bool VisitSymbol(SymbolRef sym) {
-    state = state.remove<RefBindings>(sym);
+    state = state->remove<RefBindings>(sym);
     return true;
   }
-  
-  const GRState* getState() const { return state.getState(); }
 };
 } // end anonymous namespace
   
@@ -3139,7 +3137,7 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
   // (2) we are binding to a memregion that does not have stack storage
   // (3) we are binding to a memregion with stack storage that the store
   //     does not understand.  
-  GRStateRef state = B.getState();
+  const GRState *state = B.getState();
 
   if (!isa<loc::MemRegionVal>(location))
     escapes = true;
@@ -3151,7 +3149,7 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
       // To test (3), generate a new state with the binding removed.  If it is
       // the same state, then it escapes (since the store cannot represent
       // the binding).
-      escapes = (state == (state.BindLoc(cast<Loc>(location), UnknownVal())));
+      escapes = (state == (state->bind(cast<Loc>(location), UnknownVal())));
     }
   }
 
@@ -3163,9 +3161,8 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
 
   // Otherwise, find all symbols referenced by 'val' that we are tracking
   // and stop tracking them.
-  B.MakeNode(state.scanReachableSymbols<StopTrackingCallback>(val).getState());
+  B.MakeNode(state->scanReachableSymbols<StopTrackingCallback>(val).getState());
 }
-
 
  // Return statements.
 

@@ -158,6 +158,10 @@ public:
   
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
+  
+  const GRState *bind(Loc location, SVal V) const;
+  
+  const GRState *bind(SVal location, SVal V) const;    
 
   SVal getLValue(const VarDecl* VD) const;
 
@@ -172,6 +176,8 @@ public:
   SVal getSVal(const MemRegion* R) const;
   
   SVal getSValAsScalarOrLoc(const MemRegion *R) const;
+  
+  template <typename CB> CB scanReachableSymbols(SVal val) const;
   
   // Trait based GDM dispatch.  
   void* const* FindGDM(void* K) const;
@@ -195,6 +201,14 @@ public:
   template <typename T>
   typename GRStateTrait<T>::context_type get_context() const;
     
+  
+  template<typename T>
+  const GRState *remove(typename GRStateTrait<T>::key_type K) const;
+
+  template<typename T>
+  const GRState *remove(typename GRStateTrait<T>::key_type K,
+                        typename GRStateTrait<T>::context_type C) const;
+  
   template<typename T>
   const GRState *set(typename GRStateTrait<T>::data_type D) const;
   
@@ -717,6 +731,14 @@ public:
 // Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
 
+inline const GRState *GRState::bind(Loc LV, SVal V) const {
+  return Mgr->BindLoc(this, LV, V);
+}
+
+inline const GRState *GRState::bind(SVal LV, SVal V) const {
+  return !isa<Loc>(LV) ? this : bind(cast<Loc>(LV), V);
+}
+  
 inline SVal GRState::getLValue(const VarDecl* VD) const {
   return Mgr->GetLValue(this, VD);
 }  
@@ -764,6 +786,17 @@ typename GRStateTrait<T>::context_type GRState::get_context() const {
 }
   
 template<typename T>
+const GRState *GRState::remove(typename GRStateTrait<T>::key_type K) const {
+  return Mgr->remove<T>(this, K, get_context<T>());
+}
+
+template<typename T>
+const GRState *GRState::remove(typename GRStateTrait<T>::key_type K,
+                               typename GRStateTrait<T>::context_type C) const {
+  return Mgr->remove<T>(this, K, C);
+}
+  
+template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::data_type D) const {
   return Mgr->set<T>(this, D);
 }
@@ -779,6 +812,13 @@ const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
                             typename GRStateTrait<T>::value_type E,
                             typename GRStateTrait<T>::context_type C) const {
   return Mgr->set<T>(this, K, E, C);
+}
+  
+template <typename CB>
+CB GRState::scanReachableSymbols(SVal val) const {
+  CB cb(this);
+  Mgr->scanReachableSymbols(val, this, cb);
+  return cb;
 }
 
 //===----------------------------------------------------------------------===//
