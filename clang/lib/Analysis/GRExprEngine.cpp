@@ -1482,7 +1482,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     const FunctionDecl* FD = L.getAsFunctionDecl();
     if (FD) {      
-      if (FD->getAttr<NoReturnAttr>() || FD->getAttr<AnalyzerNoReturnAttr>())
+      if (FD->getAttr<NoReturnAttr>(getContext()) || 
+          FD->getAttr<AnalyzerNoReturnAttr>(getContext()))
         Builder->BuildSinks = true;
       else {
         // HACK: Some functions are not marked noreturn, and don't return.

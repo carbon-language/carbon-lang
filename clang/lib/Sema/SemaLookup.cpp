@@ -894,7 +894,7 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
             continue;
         }
 
-        if ((*I)->getAttr<OverloadableAttr>()) {
+        if ((*I)->getAttr<OverloadableAttr>(Context)) {
           // If this declaration has the "overloadable" attribute, we
           // might have a set of overloaded functions.
 

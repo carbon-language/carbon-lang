@@ -102,7 +102,7 @@ CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
     if (VD->getStorageClass() == VarDecl::PrivateExtern)
       return LangOptions::Hidden;
 
-  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>()) {
+  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>(getContext())) {
     switch (attr->getVisibility()) {
     default: assert(0 && "Unknown visibility!");
     case VisibilityAttr::DefaultVisibility: 
@@ -241,7 +241,8 @@ void CodeGenModule::EmitAnnotations() {
 }
 
 static CodeGenModule::GVALinkage
-GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
+GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD, 
+                      const LangOptions &Features) {
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     // C++ member functions defined inside the class are always inline.
     if (MD->isInline() || !MD->isOutOfLine())
@@ -265,11 +266,11 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
       return CodeGenModule::GVA_C99Inline;
     // Normal inline is a strong symbol.
     return CodeGenModule::GVA_StrongExternal;
-  } else if (FD->hasActiveGNUInlineAttribute()) {
+  } else if (FD->hasActiveGNUInlineAttribute(Context)) {
     // GCC in C99 mode seems to use a different decision-making
     // process for extern inline, which factors in previous
     // declarations.
-    if (FD->isExternGNUInline())
+    if (FD->isExternGNUInline(Context))
       return CodeGenModule::GVA_C99Inline;
     // Normal inline is a strong symbol.
     return CodeGenModule::GVA_StrongExternal;
@@ -293,13 +294,13 @@ GetLinkageForFunction(const FunctionDecl *FD, const LangOptions &Features) {
 /// variables (these details are set in EmitGlobalVarDefinition for variables).
 void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
                                                     llvm::GlobalValue *GV) {
-  GVALinkage Linkage = GetLinkageForFunction(D, Features);
+  GVALinkage Linkage = GetLinkageForFunction(getContext(), D, Features);
 
   if (Linkage == GVA_Internal) {
     GV->setLinkage(llvm::Function::InternalLinkage);
-  } else if (D->hasAttr<DLLExportAttr>()) {
+  } else if (D->hasAttr<DLLExportAttr>(getContext())) {
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  } else if (D->hasAttr<WeakAttr>()) {
+  } else if (D->hasAttr<WeakAttr>(getContext())) {
     GV->setLinkage(llvm::Function::WeakAnyLinkage);
   } else if (Linkage == GVA_C99Inline) {
     // In C99 mode, 'inline' functions are guaranteed to have a strong
@@ -332,10 +333,10 @@ void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
                                         AttributeList.size()));
 
   // Set the appropriate calling convention for the Function.
-  if (D->hasAttr<FastCallAttr>())
+  if (D->hasAttr<FastCallAttr>(getContext()))
     F->setCallingConv(llvm::CallingConv::X86_FastCall);
 
-  if (D->hasAttr<StdCallAttr>())
+  if (D->hasAttr<StdCallAttr>(getContext()))
     F->setCallingConv(llvm::CallingConv::X86_StdCall);
 }
 
@@ -344,10 +345,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (!Features.Exceptions && !Features.ObjCNonFragileABI)
     F->addFnAttr(llvm::Attribute::NoUnwind);  
 
-  if (D->hasAttr<AlwaysInlineAttr>())
+  if (D->hasAttr<AlwaysInlineAttr>(getContext()))
     F->addFnAttr(llvm::Attribute::AlwaysInline);
   
-  if (D->hasAttr<NoinlineAttr>())
+  if (D->hasAttr<NoinlineAttr>(getContext()))
     F->addFnAttr(llvm::Attribute::NoInline);
 }
 
@@ -355,10 +356,10 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
                                         llvm::GlobalValue *GV) {
   setGlobalVisibility(GV, D);
 
-  if (D->hasAttr<UsedAttr>())
+  if (D->hasAttr<UsedAttr>(getContext()))
     AddUsedGlobal(GV);
 
-  if (const SectionAttr *SA = D->getAttr<SectionAttr>())
+  if (const SectionAttr *SA = D->getAttr<SectionAttr>(getContext()))
     GV->setSection(SA->getName());
 }
 
@@ -382,9 +383,10 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
   // Only a few attributes are set on declarations; these may later be
   // overridden by a definition.
   
-  if (FD->hasAttr<DLLImportAttr>()) {
+  if (FD->hasAttr<DLLImportAttr>(getContext())) {
     F->setLinkage(llvm::Function::DLLImportLinkage);
-  } else if (FD->hasAttr<WeakAttr>() || FD->hasAttr<WeakImportAttr>()) {
+  } else if (FD->hasAttr<WeakAttr>(getContext()) || 
+             FD->hasAttr<WeakImportAttr>(getContext())) {
     // "extern_weak" is overloaded in LLVM; we probably should have
     // separate linkage types for this. 
     F->setLinkage(llvm::Function::ExternalWeakLinkage);
@@ -392,7 +394,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
     F->setLinkage(llvm::Function::ExternalLinkage); 
   }
 
-  if (const SectionAttr *SA = FD->getAttr<SectionAttr>())
+  if (const SectionAttr *SA = FD->getAttr<SectionAttr>(getContext()))
     F->setSection(SA->getName());
 }
 
@@ -499,15 +501,16 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   // Never defer when EmitAllDecls is specified or the decl has
   // attribute used.
-  if (Features.EmitAllDecls || Global->hasAttr<UsedAttr>())
+  if (Features.EmitAllDecls || Global->hasAttr<UsedAttr>(getContext()))
     return false;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
     // Constructors and destructors should never be deferred.
-    if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
+    if (FD->hasAttr<ConstructorAttr>(getContext()) || 
+        FD->hasAttr<DestructorAttr>(getContext()))
       return false;
 
-    GVALinkage Linkage = GetLinkageForFunction(FD, Features);
+    GVALinkage Linkage = GetLinkageForFunction(getContext(), FD, Features);
     
     // static, static inline, always_inline, and extern inline functions can
     // always be deferred.  Normal inline functions can be deferred in C99/C++.
@@ -528,7 +531,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   
   // If this is an alias definition (which otherwise looks like a declaration)
   // emit it now.
-  if (Global->hasAttr<AliasAttr>())
+  if (Global->hasAttr<AliasAttr>(getContext()))
     return EmitAliasDefinition(Global);
 
   // Ignore declarations, they will be emitted on their first use.
@@ -717,7 +720,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
     if (D->getStorageClass() == VarDecl::PrivateExtern)
       GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
 
-    if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
+    if (D->hasAttr<WeakAttr>(getContext()) || 
+        D->hasAttr<WeakImportAttr>(getContext()))
       GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
     GV->setThreadLocal(D->isThreadSpecified());
@@ -837,7 +841,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     cast<llvm::GlobalValue>(Entry)->eraseFromParent();
   }
 
-  if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>()) {
+  if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>(getContext())) {
     SourceManager &SM = Context.getSourceManager();
     AddAnnotation(EmitAnnotateAttr(GV, AA,
                               SM.getInstantiationLineNumber(D->getLocation())));
@@ -850,11 +854,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // Set the llvm linkage type as appropriate.
   if (D->getStorageClass() == VarDecl::Static)
     GV->setLinkage(llvm::Function::InternalLinkage);
-  else if (D->hasAttr<DLLImportAttr>())
+  else if (D->hasAttr<DLLImportAttr>(getContext()))
     GV->setLinkage(llvm::Function::DLLImportLinkage);
-  else if (D->hasAttr<DLLExportAttr>())
+  else if (D->hasAttr<DLLExportAttr>(getContext()))
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (D->hasAttr<WeakAttr>())
+  else if (D->hasAttr<WeakAttr>(getContext()))
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
   else if (!CompileOpts.NoCommon &&
            (!D->hasExternalStorage() && !D->getInit()))
@@ -1017,14 +1021,14 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   SetFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
   
-  if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>())
+  if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>(getContext()))
     AddGlobalCtor(Fn, CA->getPriority());
-  if (const DestructorAttr *DA = D->getAttr<DestructorAttr>())
+  if (const DestructorAttr *DA = D->getAttr<DestructorAttr>(getContext()))
     AddGlobalDtor(Fn, DA->getPriority());
 }
 
 void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
-  const AliasAttr *AA = D->getAttr<AliasAttr>();
+  const AliasAttr *AA = D->getAttr<AliasAttr>(getContext());
   assert(AA && "Not an alias?");
 
   const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
@@ -1080,7 +1084,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   // Set attributes which are particular to an alias; this is a
   // specialization of the attributes which may be set on a global
   // variable/function.
-  if (D->hasAttr<DLLExportAttr>()) {
+  if (D->hasAttr<DLLExportAttr>(getContext())) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       // The dllexport attribute is ignored for undefined symbols.
       if (FD->getBody(getContext()))
@@ -1088,7 +1092,8 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
     } else {
       GA->setLinkage(llvm::Function::DLLExportLinkage);
     }
-  } else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>()) {
+  } else if (D->hasAttr<WeakAttr>(getContext()) || 
+             D->hasAttr<WeakImportAttr>(getContext())) {
     GA->setLinkage(llvm::Function::WeakAnyLinkage);
   }
 

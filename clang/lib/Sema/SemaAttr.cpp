@@ -205,7 +205,7 @@ void Sema::ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
   // Otherwise, add the 'unused' attribute to each referenced declaration.
   for (unsigned i = 0; i < NumExprs; ++i) {
     DeclRefExpr *DR = (DeclRefExpr*) Exprs[i];
-    DR->getDecl()->addAttr(::new (Context) UnusedAttr());
+    DR->getDecl()->addAttr(Context, ::new (Context) UnusedAttr());
     DR->Destroy(Context);
   }
 }

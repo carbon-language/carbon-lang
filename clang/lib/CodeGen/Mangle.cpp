@@ -87,7 +87,7 @@ static bool isInCLinkageSpecification(const Decl *D) {
 bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
   // Clang's "overloadable" attribute extension to C/C++ implies
   // name mangling (always).
-  if (!FD->hasAttr<OverloadableAttr>()) {
+  if (!FD->hasAttr<OverloadableAttr>(Context)) {
     // C functions are not mangled, and "main" is never mangled.
     if (!Context.getLangOptions().CPlusPlus || FD->isMain())
       return false;
@@ -111,7 +111,7 @@ bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
 bool CXXNameMangler::mangle(const NamedDecl *D) {
   // Any decl can be declared with __asm("foo") on it, and this takes
   // precedence over all other naming in the .o file.
-  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
+  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>(Context)) {
     // If we have an asm name, then we use it as the mangling.
     Out << '\01';  // LLVM IR Marker for __asm("foo")
     Out << ALA->getLabel();

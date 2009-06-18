@@ -38,12 +38,6 @@ using namespace clang;
 
 static bool StatSwitch = false;
 
-// This keeps track of all decl attributes. Since so few decls have attrs, we
-// keep them in a hash map instead of wasting space in the Decl class.
-typedef llvm::DenseMap<const Decl*, Attr*> DeclAttrMapTy;
-
-static DeclAttrMapTy *DeclAttrs = 0;
-
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Declaration not in DeclNodes.def!");
@@ -224,11 +218,8 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
   }
 }
 
-void Decl::addAttr(Attr *NewAttr) {
-  if (!DeclAttrs)
-    DeclAttrs = new DeclAttrMapTy();
-  
-  Attr *&ExistingAttr = (*DeclAttrs)[this];
+void Decl::addAttr(ASTContext &Context, Attr *NewAttr) {
+  Attr *&ExistingAttr = Context.getDeclAttrs(this);
 
   NewAttr->setNext(ExistingAttr);
   ExistingAttr = NewAttr;
@@ -236,25 +227,19 @@ void Decl::addAttr(Attr *NewAttr) {
   HasAttrs = true;
 }
 
-void Decl::invalidateAttrs() {
+void Decl::invalidateAttrs(ASTContext &Context) {
   if (!HasAttrs) return;
-
+  
   HasAttrs = false;
-  (*DeclAttrs)[this] = 0;
-  DeclAttrs->erase(this);
-
-  if (DeclAttrs->empty()) {
-    delete DeclAttrs;
-    DeclAttrs = 0;
-  }
+  Context.eraseDeclAttrs(this);
 }
 
-const Attr *Decl::getAttrsImpl() const {
+const Attr *Decl::getAttrsImpl(ASTContext &Context) const {
   assert(HasAttrs && "getAttrs() should verify this!"); 
-  return (*DeclAttrs)[this];
+  return Context.getDeclAttrs(this);
 }
 
-void Decl::swapAttrs(Decl *RHS) {
+void Decl::swapAttrs(ASTContext &Context, Decl *RHS) {
   bool HasLHSAttr = this->HasAttrs;
   bool HasRHSAttr = RHS->HasAttrs;
   
@@ -263,17 +248,17 @@ void Decl::swapAttrs(Decl *RHS) {
   
   // If 'this' has no attrs, swap the other way.
   if (!HasLHSAttr)
-    return RHS->swapAttrs(this);
+    return RHS->swapAttrs(Context, this);
   
   // Handle the case when both decls have attrs.
   if (HasRHSAttr) {
-    std::swap((*DeclAttrs)[this], (*DeclAttrs)[RHS]);
+    std::swap(Context.getDeclAttrs(this), Context.getDeclAttrs(RHS));
     return;
   }
   
   // Otherwise, LHS has an attr and RHS doesn't.
-  (*DeclAttrs)[RHS] = (*DeclAttrs)[this];
-  (*DeclAttrs).erase(this);
+  Context.getDeclAttrs(RHS) = Context.getDeclAttrs(this);
+  Context.eraseDeclAttrs(this);
   this->HasAttrs = false;
   RHS->HasAttrs = true;
 }
@@ -282,12 +267,8 @@ void Decl::swapAttrs(Decl *RHS) {
 void Decl::Destroy(ASTContext &C) {
   // Free attributes for this decl.
   if (HasAttrs) {
-    DeclAttrMapTy::iterator it = DeclAttrs->find(this);
-    assert(it != DeclAttrs->end() && "No attrs found but HasAttrs is true!");
-  
-    // release attributes.
-    it->second->Destroy(C);
-    invalidateAttrs();
+    C.getDeclAttrs(this)->Destroy(C);
+    invalidateAttrs(C);
     HasAttrs = false;
   }
   

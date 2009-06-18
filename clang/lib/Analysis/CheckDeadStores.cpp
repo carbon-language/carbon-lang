@@ -85,7 +85,7 @@ public:
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
 
-    if (VD->hasLocalStorage() && !Live(VD, AD) && !VD->getAttr<UnusedAttr>())
+    if (VD->hasLocalStorage() && !Live(VD, AD) && !VD->getAttr<UnusedAttr>(Ctx))
       Report(VD, dsk, Ex->getSourceRange().getBegin(),
              Val->getSourceRange());      
   }
@@ -190,7 +190,7 @@ public:
             // A dead initialization is a variable that is dead after it
             // is initialized.  We don't flag warnings for those variables
             // marked 'unused'.
-            if (!Live(V, AD) && V->getAttr<UnusedAttr>() == 0) {
+            if (!Live(V, AD) && V->getAttr<UnusedAttr>(Ctx) == 0) {
               // Special case: check for initializations with constants.
               //
               //  e.g. : int x = 0;

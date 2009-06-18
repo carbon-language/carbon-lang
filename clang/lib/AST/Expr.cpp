@@ -456,7 +456,7 @@ Stmt *BlockExpr::getBody() {
 /// with location to warn on and the source range[s] to report with the
 /// warning.
 bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
-                                  SourceRange &R2) const {
+                                  SourceRange &R2, ASTContext &Context) const {
   // Don't warn if the expr is type dependent. The type could end up
   // instantiating to void.
   if (isTypeDependent())
@@ -469,7 +469,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return true;
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->
-      isUnusedResultAWarning(Loc, R1, R2);
+      isUnusedResultAWarning(Loc, R1, R2, Context);
   case UnaryOperatorClass: {
     const UnaryOperator *UO = cast<UnaryOperator>(this);
     
@@ -492,7 +492,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
         return false;
       break;
     case UnaryOperator::Extension:
-      return UO->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);
+      return UO->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Context);
     }
     Loc = UO->getOperatorLoc();
     R1 = UO->getSubExpr()->getSourceRange();
@@ -502,8 +502,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     const BinaryOperator *BO = cast<BinaryOperator>(this);
     // Consider comma to have side effects if the LHS or RHS does.
     if (BO->getOpcode() == BinaryOperator::Comma)
-      return BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2) ||
-             BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2);
+      return BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Context) ||
+             BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Context);
       
     if (BO->isAssignmentOp())
       return false;
@@ -519,9 +519,10 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // The condition must be evaluated, but if either the LHS or RHS is a
     // warning, warn about them.
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    if (Exp->getLHS() && Exp->getLHS()->isUnusedResultAWarning(Loc, R1, R2))
+    if (Exp->getLHS() && 
+        Exp->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Context))
       return true;
-    return Exp->getRHS()->isUnusedResultAWarning(Loc, R1, R2);
+    return Exp->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Context);
   }
 
   case MemberExprClass:
@@ -554,8 +555,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
       // If the callee has attribute pure, const, or warn_unused_result, warn
       // about it. void foo() { strlen("bar"); } should warn.
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CalleeDRE->getDecl()))
-        if (FD->getAttr<WarnUnusedResultAttr>() ||
-            FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
+        if (FD->getAttr<WarnUnusedResultAttr>(Context) ||
+            FD->getAttr<PureAttr>(Context) || FD->getAttr<ConstAttr>(Context)) {
           Loc = CE->getCallee()->getLocStart();
           R1 = CE->getCallee()->getSourceRange();
           
@@ -578,7 +579,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     const CompoundStmt *CS = cast<StmtExpr>(this)->getSubStmt();
     if (!CS->body_empty())
       if (const Expr *E = dyn_cast<Expr>(CS->body_back()))
-        return E->isUnusedResultAWarning(Loc, R1, R2);
+        return E->isUnusedResultAWarning(Loc, R1, R2, Context);
     
     Loc = cast<StmtExpr>(this)->getLParenLoc();
     R1 = getSourceRange();
@@ -588,8 +589,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.
     if (getType()->isVoidType())
-      return cast<CastExpr>(this)->getSubExpr()->isUnusedResultAWarning(Loc,
-                                                                        R1, R2);
+      return cast<CastExpr>(this)->getSubExpr()
+               ->isUnusedResultAWarning(Loc, R1, R2, Context);
     Loc = cast<CStyleCastExpr>(this)->getLParenLoc();
     R1 = cast<CStyleCastExpr>(this)->getSubExpr()->getSourceRange();
     return true;
@@ -597,8 +598,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.
     if (getType()->isVoidType())
-      return cast<CastExpr>(this)->getSubExpr()->isUnusedResultAWarning(Loc,
-                                                                        R1, R2);
+      return cast<CastExpr>(this)->getSubExpr()
+               ->isUnusedResultAWarning(Loc, R1, R2, Context);
     Loc = cast<CXXFunctionalCastExpr>(this)->getTypeBeginLoc();
     R1 = cast<CXXFunctionalCastExpr>(this)->getSubExpr()->getSourceRange();
     return true;
@@ -606,11 +607,11 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case ImplicitCastExprClass:
     // Check the operand, since implicit casts are inserted by Sema
     return cast<ImplicitCastExpr>(this)
-      ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);
+      ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Context);
 
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)
-      ->getExpr()->isUnusedResultAWarning(Loc, R1, R2);
+      ->getExpr()->isUnusedResultAWarning(Loc, R1, R2, Context);
 
   case CXXNewExprClass:
     // FIXME: In theory, there might be new expressions that don't have side
@@ -619,7 +620,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return false;
   case CXXExprWithTemporariesClass:
     return cast<CXXExprWithTemporaries>(this)
-      ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);
+      ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Context);
   }
 }
 

@@ -74,7 +74,7 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
       continue;
 
     // Skip IB Outlets.
-    if (ID->getAttr<IBOutletAttr>())
+    if (ID->getAttr<IBOutletAttr>(Ctx))
       continue;
     
     M[ID] = Unused;

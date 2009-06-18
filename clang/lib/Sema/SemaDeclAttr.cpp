@@ -284,7 +284,7 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
   
   if (TagDecl *TD = dyn_cast<TagDecl>(d))
-    TD->addAttr(::new (S.Context) PackedAttr(1));
+    TD->addAttr(S.Context, ::new (S.Context) PackedAttr(1));
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(d)) {
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
@@ -293,7 +293,7 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_ignored_for_field_of_type)
         << Attr.getName() << FD->getType();
     else
-      FD->addAttr(::new (S.Context) PackedAttr(1));
+      FD->addAttr(S.Context, ::new (S.Context) PackedAttr(1));
   } else
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }
@@ -308,7 +308,7 @@ static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // The IBOutlet attribute only applies to instance variables of Objective-C
   // classes.
   if (isa<ObjCIvarDecl>(d) || isa<ObjCPropertyDecl>(d))
-    d->addAttr(::new (S.Context) IBOutletAttr());
+    d->addAttr(S.Context, ::new (S.Context) IBOutletAttr());
   else
     S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet);
 }
@@ -380,7 +380,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned* start = &NonNullArgs[0];
   unsigned size = NonNullArgs.size();
   std::sort(start, start + size);
-  d->addAttr(::new (S.Context) NonNullAttr(start, size));
+  d->addAttr(S.Context, ::new (S.Context) NonNullAttr(start, size));
 }
 
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -405,7 +405,7 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   // FIXME: check if target symbol exists in current file
   
-  d->addAttr(::new (S.Context) AliasAttr(std::string(Alias, AliasLen)));
+  d->addAttr(S.Context, ::new (S.Context) AliasAttr(std::string(Alias, AliasLen)));
 }
 
 static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr, 
@@ -422,7 +422,7 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
     return;
   }
   
-  d->addAttr(::new (S.Context) AlwaysInlineAttr());
+  d->addAttr(S.Context, ::new (S.Context) AlwaysInlineAttr());
 }
 
 static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
@@ -447,13 +447,13 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
 
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (HandleCommonNoReturnAttr(d, Attr, S))  
-    d->addAttr(::new (S.Context) NoReturnAttr());
+    d->addAttr(S.Context, ::new (S.Context) NoReturnAttr());
 }
 
 static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
                                        Sema &S) {
   if (HandleCommonNoReturnAttr(d, Attr, S))  
-    d->addAttr(::new (S.Context) AnalyzerNoReturnAttr());
+    d->addAttr(S.Context, ::new (S.Context) AnalyzerNoReturnAttr());
 }
 
 static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -469,7 +469,7 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) UnusedAttr());
+  d->addAttr(S.Context, ::new (S.Context) UnusedAttr());
 }
 
 static void HandleUsedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -490,7 +490,7 @@ static void HandleUsedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) UsedAttr());
+  d->addAttr(S.Context, ::new (S.Context) UsedAttr());
 }
 
 static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -519,7 +519,7 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) ConstructorAttr(priority));
+  d->addAttr(S.Context, ::new (S.Context) ConstructorAttr(priority));
 }
 
 static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -548,7 +548,7 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) DestructorAttr(priority));
+  d->addAttr(S.Context, ::new (S.Context) DestructorAttr(priority));
 }
 
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -558,7 +558,7 @@ static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) DeprecatedAttr());
+  d->addAttr(S.Context, ::new (S.Context) DeprecatedAttr());
 }
 
 static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -568,7 +568,7 @@ static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) UnavailableAttr());
+  d->addAttr(S.Context, ::new (S.Context) UnavailableAttr());
 }
 
 static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -605,7 +605,7 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) VisibilityAttr(type));
+  d->addAttr(S.Context, ::new (S.Context) VisibilityAttr(type));
 }
 
 static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
@@ -621,7 +621,7 @@ static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
     return;
   }
   
-  D->addAttr(::new (S.Context) ObjCExceptionAttr());
+  D->addAttr(S.Context, ::new (S.Context) ObjCExceptionAttr());
 }
 
 static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -637,7 +637,7 @@ static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
       return;
     }
   }
-  D->addAttr(::new (S.Context) ObjCNSObjectAttr());
+  D->addAttr(S.Context, ::new (S.Context) ObjCNSObjectAttr());
 }
 
 static void 
@@ -652,7 +652,7 @@ HandleOverloadableAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  D->addAttr(::new (S.Context) OverloadableAttr());
+  D->addAttr(S.Context, ::new (S.Context) OverloadableAttr());
 }
 
 static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -676,7 +676,7 @@ static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) BlocksAttr(type));
+  d->addAttr(S.Context, ::new (S.Context) BlocksAttr(type));
 }
 
 static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -768,7 +768,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << 6 /*function, method or block */;
     return;
   }
-  d->addAttr(::new (S.Context) SentinelAttr(sentinel, nullPos));
+  d->addAttr(S.Context, ::new (S.Context) SentinelAttr(sentinel, nullPos));
 }
 
 static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -786,7 +786,7 @@ static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) 
     return;
   }
   
-  Fn->addAttr(::new (S.Context) WarnUnusedResultAttr());
+  Fn->addAttr(S.Context, ::new (S.Context) WarnUnusedResultAttr());
 }
 
 static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -803,7 +803,7 @@ static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  D->addAttr(::new (S.Context) WeakAttr());
+  D->addAttr(S.Context, ::new (S.Context) WeakAttr());
 }
 
 static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -836,7 +836,7 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  D->addAttr(::new (S.Context) WeakImportAttr());
+  D->addAttr(S.Context, ::new (S.Context) WeakImportAttr());
 }
 
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -848,7 +848,7 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Attribute can be applied only to functions or variables.
   if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLImportAttr());
+    D->addAttr(S.Context, ::new (S.Context) DLLImportAttr());
     return;
   }
 
@@ -876,12 +876,12 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     }
   }
 
-  if (D->getAttr<DLLExportAttr>()) {
+  if (D->getAttr<DLLExportAttr>(S.Context)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
     return;
   }
 
-  D->addAttr(::new (S.Context) DLLImportAttr());
+  D->addAttr(S.Context, ::new (S.Context) DLLImportAttr());
 }
 
 static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -893,7 +893,7 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Attribute can be applied only to functions or variables.
   if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLExportAttr());
+    D->addAttr(S.Context, ::new (S.Context) DLLExportAttr());
     return;
   }
 
@@ -912,7 +912,7 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  D->addAttr(::new (S.Context) DLLExportAttr());
+  D->addAttr(S.Context, ::new (S.Context) DLLExportAttr());
 }
 
 static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -931,7 +931,8 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
     return;
   }
-  D->addAttr(::new (S.Context) SectionAttr(std::string(SE->getStrData(),
+  D->addAttr(S.Context, 
+             ::new (S.Context) SectionAttr(std::string(SE->getStrData(),
                                                      SE->getByteLength())));
 }
 
@@ -950,13 +951,13 @@ static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // stdcall and fastcall attributes are mutually incompatible.
-  if (d->getAttr<FastCallAttr>()) {
+  if (d->getAttr<FastCallAttr>(S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
       << "stdcall" << "fastcall";
     return;
   }
 
-  d->addAttr(::new (S.Context) StdCallAttr());
+  d->addAttr(S.Context, ::new (S.Context) StdCallAttr());
 }
 
 static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -973,13 +974,13 @@ static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // stdcall and fastcall attributes are mutually incompatible.
-  if (d->getAttr<StdCallAttr>()) {
+  if (d->getAttr<StdCallAttr>(S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
       << "fastcall" << "stdcall";
     return;
   }
 
-  d->addAttr(::new (S.Context) FastCallAttr());
+  d->addAttr(S.Context, ::new (S.Context) FastCallAttr());
 }
 
 static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -989,7 +990,7 @@ static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) NoThrowAttr());
+  d->addAttr(S.Context, ::new (S.Context) NoThrowAttr());
 }
 
 static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -999,7 +1000,7 @@ static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) ConstAttr());
+  d->addAttr(S.Context, ::new (S.Context) ConstAttr());
 }
 
 static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1009,7 +1010,7 @@ static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) PureAttr());
+  d->addAttr(S.Context, ::new (S.Context) PureAttr());
 }
 
 static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1067,7 +1068,7 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) CleanupAttr(FD));
+  d->addAttr(S.Context, ::new (S.Context) CleanupAttr(FD));
 }
 
 /// Handle __attribute__((format_arg((idx)))) attribute
@@ -1130,7 +1131,7 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }    
   
-  d->addAttr(::new (S.Context) FormatArgAttr(Idx.getZExtValue()));
+  d->addAttr(S.Context, ::new (S.Context) FormatArgAttr(Idx.getZExtValue()));
 }
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
@@ -1271,7 +1272,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) FormatAttr(std::string(Format, FormatLen),
+  d->addAttr(S.Context, 
+             ::new (S.Context) FormatAttr(std::string(Format, FormatLen),
                             Idx.getZExtValue(), FirstArg.getZExtValue()));
 }
 
@@ -1339,7 +1341,7 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
     }
   }
 
-  RD->addAttr(::new (S.Context) TransparentUnionAttr());
+  RD->addAttr(S.Context, ::new (S.Context) TransparentUnionAttr());
 }
 
 static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1357,7 +1359,8 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
     return;
   }
-  d->addAttr(::new (S.Context) AnnotateAttr(std::string(SE->getStrData(),
+  d->addAttr(S.Context, 
+             ::new (S.Context) AnnotateAttr(std::string(SE->getStrData(),
                                                         SE->getByteLength())));
 }
 
@@ -1373,7 +1376,7 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     // FIXME: This should be the target specific maximum alignment.
     // (For now we just use 128 bits which is the maximum on X86).
     Align = 128;
-    d->addAttr(::new (S.Context) AlignedAttr(Align));
+    d->addAttr(S.Context, ::new (S.Context) AlignedAttr(Align));
     return;
   }
   
@@ -1390,7 +1393,7 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) AlignedAttr(Alignment.getZExtValue() * 8));
+  d->addAttr(S.Context, ::new (S.Context) AlignedAttr(Alignment.getZExtValue() * 8));
 }
 
 /// HandleModeAttr - This attribute modifies the width of a decl with
@@ -1571,7 +1574,7 @@ static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) NodebugAttr());
+  d->addAttr(S.Context, ::new (S.Context) NodebugAttr());
 }
 
 static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1587,7 +1590,7 @@ static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) NoinlineAttr());
+  d->addAttr(S.Context, ::new (S.Context) NoinlineAttr());
 }
 
 static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1609,7 +1612,7 @@ static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  d->addAttr(::new (S.Context) GNUInlineAttr());
+  d->addAttr(S.Context, ::new (S.Context) GNUInlineAttr());
 }
 
 static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1645,7 +1648,8 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) RegparmAttr(NumParams.getZExtValue()));
+  d->addAttr(S.Context, 
+             ::new (S.Context) RegparmAttr(NumParams.getZExtValue()));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1678,10 +1682,10 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
       assert(0 && "invalid ownership attribute");
       return;
     case AttributeList::AT_cf_returns_retained:
-      d->addAttr(::new (S.Context) CFReturnsRetainedAttr());
+      d->addAttr(S.Context, ::new (S.Context) CFReturnsRetainedAttr());
       return;
     case AttributeList::AT_ns_returns_retained:
-      d->addAttr(::new (S.Context) NSReturnsRetainedAttr());
+      d->addAttr(S.Context, ::new (S.Context) NSReturnsRetainedAttr());
       return;
   };
 }

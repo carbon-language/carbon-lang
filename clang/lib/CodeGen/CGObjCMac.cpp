@@ -1356,11 +1356,12 @@ static llvm::Constant *getConstantGEP(llvm::Constant *C,
 
 /// hasObjCExceptionAttribute - Return true if this class or any super
 /// class has the __objc_exception__ attribute.
-static bool hasObjCExceptionAttribute(const ObjCInterfaceDecl *OID) {
-  if (OID->hasAttr<ObjCExceptionAttr>())
+static bool hasObjCExceptionAttribute(ASTContext &Context, 
+                                      const ObjCInterfaceDecl *OID) {
+  if (OID->hasAttr<ObjCExceptionAttr>(Context))
     return true;
   if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
-    return hasObjCExceptionAttribute(Super);
+    return hasObjCExceptionAttribute(Context, Super);
   return false;
 }
 
@@ -4402,7 +4403,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
 
-  if (hasObjCExceptionAttribute(ID->getClassInterface()))
+  if (hasObjCExceptionAttribute(CGM.getContext(), ID->getClassInterface()))
     flags |= CLS_EXCEPTION;
 
   if (!ID->getClassInterface()->getSuperClass()) {
@@ -5686,7 +5687,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
 
     // If this type (or a super class) has the __objc_exception__
     // attribute, emit an external reference.
-    if (hasObjCExceptionAttribute(ID))
+    if (hasObjCExceptionAttribute(CGM.getContext(), ID))
       return Entry = 
         new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
                                  llvm::GlobalValue::ExternalLinkage,

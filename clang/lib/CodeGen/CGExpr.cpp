@@ -668,7 +668,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
         isa<ImplicitParamDecl>(VD))) {
     LValue LV;
-    bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
+    bool NonGCable = VD->hasLocalStorage() && 
+      !VD->hasAttr<BlocksAttr>(getContext());
     if (VD->hasExternalStorage()) {
       llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
       if (VD->getType()->isReferenceType())
@@ -684,7 +685,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // local static?
       if (!NonGCable)
         attr = getContext().getObjCGCAttrKind(E->getType());
-      if (VD->hasAttr<BlocksAttr>()) {
+      if (VD->hasAttr<BlocksAttr>(getContext())) {
         bool needsCopyDispose = BlockRequiresCopying(VD->getType());
         const llvm::Type *PtrStructTy = V->getType();
         const llvm::Type *Ty = PtrStructTy;

@@ -380,13 +380,14 @@ bool FunctionDecl::isExternC(ASTContext &Context) const {
   // In C, any non-static, non-overloadable function has external
   // linkage.
   if (!Context.getLangOptions().CPlusPlus)
-    return getStorageClass() != Static && !getAttr<OverloadableAttr>();
+    return getStorageClass() != Static && !getAttr<OverloadableAttr>(Context);
 
   for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit(); 
        DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != Static && !getAttr<OverloadableAttr>();
+        return getStorageClass() != Static && 
+               !getAttr<OverloadableAttr>(Context);
 
       break;
     }
@@ -451,7 +452,7 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
   if (isa<LinkageSpecDecl>(getDeclContext()) &&
       cast<LinkageSpecDecl>(getDeclContext())->getLanguage() 
         == LinkageSpecDecl::lang_c &&
-      !getAttr<OverloadableAttr>())
+      !getAttr<OverloadableAttr>(Context))
     return BuiltinID;
 
   // Not a builtin
@@ -496,25 +497,25 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
-bool FunctionDecl::hasActiveGNUInlineAttribute() const {
-  if (!isInline() || !hasAttr<GNUInlineAttr>())
+bool FunctionDecl::hasActiveGNUInlineAttribute(ASTContext &Context) const {
+  if (!isInline() || !hasAttr<GNUInlineAttr>(Context))
     return false;
 
   for (const FunctionDecl *FD = getPreviousDeclaration(); FD; 
        FD = FD->getPreviousDeclaration()) {
-    if (FD->isInline() && !FD->hasAttr<GNUInlineAttr>())
+    if (FD->isInline() && !FD->hasAttr<GNUInlineAttr>(Context))
       return false;
   }
 
   return true;
 }
 
-bool FunctionDecl::isExternGNUInline() const {
-  if (!hasActiveGNUInlineAttribute())
+bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
+  if (!hasActiveGNUInlineAttribute(Context))
     return false;
 
   for (const FunctionDecl *FD = this; FD; FD = FD->getPreviousDeclaration())
-    if (FD->getStorageClass() == Extern && FD->hasAttr<GNUInlineAttr>())
+    if (FD->getStorageClass() == Extern && FD->hasAttr<GNUInlineAttr>(Context))
       return true;
 
   return false;

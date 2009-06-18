@@ -3484,7 +3484,7 @@ Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
   // Best is the best viable function.
   if (Best->Function &&
       (Best->Function->isDeleted() || 
-       Best->Function->getAttr<UnavailableAttr>()))
+       Best->Function->getAttr<UnavailableAttr>(Context)))
     return OR_Deleted;
 
   // If Best refers to a function that is either deleted (C++0x) or
@@ -3506,7 +3506,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
     if (Cand->Viable || !OnlyViable) {
       if (Cand->Function) {
         if (Cand->Function->isDeleted() ||
-            Cand->Function->getAttr<UnavailableAttr>()) {
+            Cand->Function->getAttr<UnavailableAttr>(Context)) {
           // Deleted or "unavailable" function.
           Diag(Cand->Function->getLocation(), diag::err_ovl_candidate_deleted)
             << Cand->Function->isDeleted();

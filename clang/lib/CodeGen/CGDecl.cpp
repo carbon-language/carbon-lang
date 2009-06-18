@@ -60,7 +60,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 /// EmitBlockVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
 void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
-  if (D.hasAttr<AsmLabelAttr>())
+  if (D.hasAttr<AsmLabelAttr>(getContext()))
     CGM.ErrorUnsupported(&D, "__asm__");
   
   switch (D.getStorageClass()) {
@@ -171,7 +171,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   }
 
   // FIXME: Merge attribute handling.
-  if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
+  if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>(getContext())) {
     SourceManager &SM = CGM.getContext().getSourceManager();
     llvm::Constant *Ann =
       CGM.EmitAnnotateAttr(GV, AA, 
@@ -179,10 +179,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
     CGM.AddAnnotation(Ann);
   }
 
-  if (const SectionAttr *SA = D.getAttr<SectionAttr>())
+  if (const SectionAttr *SA = D.getAttr<SectionAttr>(getContext()))
     GV->setSection(SA->getName());
   
-  if (D.hasAttr<UsedAttr>())
+  if (D.hasAttr<UsedAttr>(getContext()))
     CGM.AddUsedGlobal(GV);
 
   // We may have to cast the constant because of the initializer
@@ -244,7 +244,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
 /// These turn into simple stack objects, or GlobalValues depending on target.
 void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
-  bool isByRef = D.hasAttr<BlocksAttr>();
+  bool isByRef = D.hasAttr<BlocksAttr>(getContext());
   bool needsDispose = false;
   unsigned Align = 0;
 
@@ -414,7 +414,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
 
   // Handle the cleanup attribute
-  if (const CleanupAttr *CA = D.getAttr<CleanupAttr>()) {
+  if (const CleanupAttr *CA = D.getAttr<CleanupAttr>(getContext())) {
     const FunctionDecl *FD = CA->getFunctionDecl();
     
     llvm::Constant* F = CGM.GetAddrOfFunction(GlobalDecl(FD));

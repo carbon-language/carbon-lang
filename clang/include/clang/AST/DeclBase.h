@@ -211,23 +211,23 @@ public:
   }
 
   bool hasAttrs() const { return HasAttrs; }
-  void addAttr(Attr *attr);
-  const Attr *getAttrs() const {
+  void addAttr(ASTContext &Context, Attr *attr);
+  const Attr *getAttrs(ASTContext &Context) const {
     if (!HasAttrs) return 0;  // common case, no attributes.
-    return getAttrsImpl();    // Uncommon case, out of line hash lookup.
+    return getAttrsImpl(Context);    // Uncommon case, out of line hash lookup.
   }
-  void swapAttrs(Decl *D);
-  void invalidateAttrs();
+  void swapAttrs(ASTContext &Context, Decl *D);
+  void invalidateAttrs(ASTContext &Context);
 
-  template<typename T> const T *getAttr() const {
-    for (const Attr *attr = getAttrs(); attr; attr = attr->getNext())
+  template<typename T> const T *getAttr(ASTContext &Context) const {
+    for (const Attr *attr = getAttrs(Context); attr; attr = attr->getNext())
       if (const T *V = dyn_cast<T>(attr))
         return V;
     return 0;
   }
     
-  template<typename T> bool hasAttr() const {
-    return getAttr<T>() != 0;
+  template<typename T> bool hasAttr(ASTContext &Context) const {
+    return getAttr<T>(Context) != 0;
   }
   
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
@@ -329,7 +329,7 @@ public:
   void dump(ASTContext &Context);
 
 private:
-  const Attr *getAttrsImpl() const;
+  const Attr *getAttrsImpl(ASTContext &Context) const;
 
 };
 

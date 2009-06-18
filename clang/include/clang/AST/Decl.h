@@ -832,12 +832,12 @@ public:
   /// The gnu_inline attribute only introduces GNU inline semantics
   /// when all of the inline declarations of the function are marked
   /// gnu_inline.
-  bool hasActiveGNUInlineAttribute() const;
+  bool hasActiveGNUInlineAttribute(ASTContext &Context) const;
 
   /// \brief Determines whether this function is a GNU "extern
   /// inline", which is roughly the opposite of a C99 "extern inline"
   /// function.
-  bool isExternGNUInline() const;
+  bool isExternGNUInline(ASTContext &Context) const;
 
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".

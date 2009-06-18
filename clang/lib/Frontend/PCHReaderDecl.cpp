@@ -80,7 +80,7 @@ void PCHDeclReader::VisitDecl(Decl *D) {
   D->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   D->setInvalidDecl(Record[Idx++]);
   if (Record[Idx++])
-    D->addAttr(Reader.ReadAttributes());
+    D->addAttr(*Reader.getContext(), Reader.ReadAttributes());
   D->setImplicit(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
 }

@@ -569,7 +569,7 @@ public:
     if (!FD)
       return false;
 
-    const NonNullAttr* Att = FD->getAttr<NonNullAttr>();
+    const NonNullAttr* Att = FD->getAttr<NonNullAttr>(BR.getContext());
     
     if (!Att)
       return false;

@@ -166,7 +166,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   // handlers.
 
   // Printf checking.
-  if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>()) {
+  if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>(Context)) {
     if (Format->getType() == "printf") {
       bool HasVAListArg = Format->getFirstArg() == 0;
       if (!HasVAListArg) {
@@ -178,7 +178,8 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                            HasVAListArg ? 0 : Format->getFirstArg() - 1);
     }
   }
-  for (const Attr *attr = FDecl->getAttrs(); attr; attr = attr->getNext()) {
+  for (const Attr *attr = FDecl->getAttrs(Context); 
+       attr; attr = attr->getNext()) {
     if (const NonNullAttr *NonNull = dyn_cast<NonNullAttr>(attr))
       CheckNonNullArguments(NonNull, TheCall);
   }
@@ -191,7 +192,7 @@ Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
 
   OwningExprResult TheCallResult(Owned(TheCall));
   // Printf checking.
-  const FormatAttr *Format = NDecl->getAttr<FormatAttr>();
+  const FormatAttr *Format = NDecl->getAttr<FormatAttr>(Context);
   if (!Format)
     return move(TheCallResult);
   const VarDecl *V = dyn_cast<VarDecl>(NDecl);

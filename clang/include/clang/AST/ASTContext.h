@@ -126,6 +126,12 @@ class ASTContext {
 
   RecordDecl *ObjCFastEnumerationStateTypeDecl;
   
+  /// \brief Keeps track of all declaration attributes. 
+  ///
+  /// Since so few decls have attrs, we keep them in a hash map instead of
+  /// wasting space in the Decl class.
+  llvm::DenseMap<const Decl*, Attr*> DeclAttrs;
+  
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -164,6 +170,12 @@ public:
     return FullSourceLoc(Loc,SourceMgr);
   }
 
+  /// \brief Retrieve the attributes for the given declaration.
+  Attr*& getDeclAttrs(const Decl *D) { return DeclAttrs[D]; }
+  
+  /// \brief Erase the attributes corresponding to the given declaration.
+  void eraseDeclAttrs(const Decl *D) { DeclAttrs.erase(D); }
+  
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
 
