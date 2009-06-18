@@ -99,6 +99,8 @@ use Socket;
 my $HOME       = $ENV{'HOME'};
 my $SVNURL     = $ENV{"SVNURL"};
 $SVNURL        = 'http://llvm.org/svn/llvm-project' unless $SVNURL;
+my $TestSVNURL = $ENV{"TestSVNURL"};
+$TestSVNURL    = 'https://llvm.org/svn/llvm-project' unless $TestSVNURL;
 my $CVSRootDir = $ENV{'CVSROOT'};
 $CVSRootDir    = "/home/vadve/shared/PublicCVS" unless $CVSRootDir;
 my $BuildDir   = $ENV{'BUILDDIR'};
@@ -537,19 +539,20 @@ if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CHECKOUT STAGE:\n"; }
   if ($USESVN) {
       my $SVNCMD = "$NICE svn co --non-interactive $SVNURL";
+      my $SVNCMD2 = "$NICE svn co --non-interactive $TestSVNURL";
       if ($VERBOSE) {
         print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-              "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
+              "$SVNCMD2/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
       }
       system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-            "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
-	if ($WITHCLANG) {
-	  my $SVNCMD = "$NICE svn co --non-interactive $SVNURL/cfe/trunk";
-	  if ($VERBOSE) {
-	   print "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n"; 
-	}
-	system "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n";
-	} 
+            "$SVNCMD2/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
+      if ($WITHCLANG) {
+        my $SVNCMD = "$NICE svn co --non-interactive $SVNURL/cfe/trunk";
+        if ($VERBOSE) {
+          print "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n"; 
+        }
+          system "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n";
+      }
   } else {
     my $CVSOPT = "";
     $CVSOPT = "-z3" # Use compression if going over ssh.
