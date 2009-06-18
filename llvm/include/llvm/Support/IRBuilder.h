@@ -601,6 +601,18 @@ public:
     return CI;
   }
 
+  InvokeInst *TransferAttributes(InvokeInst *II, const Value* Callee) const {
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Callee))
+      Callee = GA->getAliasedGlobal();
+
+    if (const Function *F = dyn_cast<Function>(Callee)) {
+      II->setCallingConv(F->getCallingConv());
+      II->setAttributes(F->getAttributes());
+    }
+
+    return II;
+  }
+
   CallInst *CreateCall(Value *Callee, const char *Name = "") {
     return Insert(TransferAttributes(CallInst::Create(Callee), Callee), Name);
   }
