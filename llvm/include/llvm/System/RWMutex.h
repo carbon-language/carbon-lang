@@ -14,12 +14,14 @@
 #ifndef LLVM_SYSTEM_RWMUTEX_H
 #define LLVM_SYSTEM_RWMUTEX_H
 
+#include "llvm/System/Threading.h"
+
 namespace llvm
 {
   namespace sys
   {
-    /// @brief Platform agnostic Mutex class.
-    class RWMutex
+    /// @brief Platform agnostic RWMutex class.
+    class RWMutexImpl
     {
     /// @name Constructors
     /// @{
@@ -27,11 +29,11 @@ namespace llvm
 
       /// Initializes the lock but doesn't acquire it.
       /// @brief Default Constructor.
-      explicit RWMutex();
+      explicit RWMutexImpl();
 
       /// Releases and removes the lock
       /// @brief Destructor
-      ~RWMutex();
+      ~RWMutexImpl();
 
     /// @}
     /// @name Methods
@@ -74,38 +76,80 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private:
-      RWMutex(const RWMutex & original);
-      void operator=(const RWMutex &);
+      RWMutexImpl(const RWMutexImpl & original);
+      void operator=(const RWMutexImpl &);
     /// @}
     };
     
-    /// ScopedReader - RAII acquisition of a reader lock
-    struct ScopedReader {
-      RWMutex* mutex;
+    /// SmartMutex - An R/W mutex with a compile time constant parameter that 
+    /// indicates whether this mutex should become a no-op when we're not
+    /// running in multithreaded mode.
+    template<bool mt_only>
+    class SmartRWMutex : RWMutexImpl {
+    public:
+      explicit SmartRWMutex() : RWMutexImpl() { }
       
-      explicit ScopedReader(RWMutex* m) {
+      bool reader_acquire() {
+        if (!mt_only && llvm_is_multithreaded())
+          return RWMutexImpl::reader_acquire();
+        return true;
+      }
+      
+      bool reader_release() {
+        if (!mt_only || llvm_is_multithreaded())
+          return RWMutexImpl::reader_release();
+        return true;
+      }
+      
+      bool writer_acquire() {
+        if (!mt_only || llvm_is_multithreaded())
+          return RWMutexImpl::writer_acquire();
+        return true;
+      }
+      
+      bool writer_release() {
+        if (!mt_only || llvm_is_multithreaded())
+          return RWMutexImpl::writer_release();
+        return true;
+      }
+      
+    private:
+      SmartRWMutex(const SmartRWMutex<mt_only> & original);
+      void operator=(const SmartRWMutex<mt_only> &);
+    };
+    typedef SmartRWMutex<false> RWMutex;
+    
+    /// ScopedReader - RAII acquisition of a reader lock
+    template<bool mt_only>
+    struct SmartScopedReader {
+      SmartRWMutex<mt_only>* mutex;
+      
+      explicit SmartScopedReader(SmartRWMutex<mt_only>* m) {
         mutex = m;
         mutex->reader_acquire();
       }
       
-      ~ScopedReader() {
+      ~SmartScopedReader() {
         mutex->reader_release();
       }
     };
+    typedef SmartScopedReader<false> ScopedReader;
     
     /// ScopedWriter - RAII acquisition of a writer lock
-    struct ScopedWriter {
-      RWMutex* mutex;
+    template<bool mt_only>
+    struct SmartScopedWriter {
+      SmartRWMutex<mt_only>* mutex;
       
-      explicit ScopedWriter(RWMutex* m) {
+      explicit SmartScopedWriter(SmartRWMutex<mt_only>* m) {
         mutex = m;
         mutex->writer_acquire();
       }
       
-      ~ScopedWriter() {
+      ~SmartScopedWriter() {
         mutex->writer_release();
       }
     };
+    typedef SmartScopedWriter<false> ScopedWriter;
   }
 }
 

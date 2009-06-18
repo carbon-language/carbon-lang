@@ -23,12 +23,12 @@
 // Define all methods as no-ops if threading is explicitly disabled
 namespace llvm {
 using namespace sys;
-RWMutex::RWMutex() { }
-RWMutex::~RWMutex() { }
-bool RWMutex::reader_acquire() { return true; }
-bool RWMutex::reader_release() { return true; }
-bool RWMutex::writer_acquire() { return true; }
-bool RWMutex::writer_release() { return true; }
+RWMutexImpl::RWMutexImpl() { }
+RWMutexImpl::~RWMutexImpl() { }
+bool RWMutexImpl::reader_acquire() { return true; }
+bool RWMutexImpl::reader_release() { return true; }
+bool RWMutexImpl::writer_acquire() { return true; }
+bool RWMutexImpl::writer_release() { return true; }
 }
 #else
 
@@ -56,7 +56,7 @@ using namespace sys;
 static const bool pthread_enabled = true;
 
 // Construct a RWMutex using pthread calls
-RWMutex::RWMutex()
+RWMutexImpl::RWMutexImpl()
   : data_(0)
 {
   if (pthread_enabled)
@@ -89,7 +89,7 @@ RWMutex::RWMutex()
 }
 
 // Destruct a RWMutex
-RWMutex::~RWMutex()
+RWMutexImpl::~RWMutexImpl()
 {
   if (pthread_enabled)
   {
@@ -101,7 +101,7 @@ RWMutex::~RWMutex()
 }
 
 bool
-RWMutex::reader_acquire()
+RWMutexImpl::reader_acquire()
 {
   if (pthread_enabled)
   {
@@ -115,7 +115,7 @@ RWMutex::reader_acquire()
 }
 
 bool
-RWMutex::reader_release()
+RWMutexImpl::reader_release()
 {
   if (pthread_enabled)
   {
@@ -129,7 +129,7 @@ RWMutex::reader_release()
 }
 
 bool
-RWMutex::writer_acquire()
+RWMutexImpl::writer_acquire()
 {
   if (pthread_enabled)
   {
@@ -143,7 +143,7 @@ RWMutex::writer_acquire()
 }
 
 bool
-RWMutex::writer_release()
+RWMutexImpl::writer_release()
 {
   if (pthread_enabled)
   {

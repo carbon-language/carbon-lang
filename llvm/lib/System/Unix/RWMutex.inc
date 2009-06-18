@@ -20,23 +20,23 @@ namespace llvm {
 
 using namespace sys;
 
-RWMutex::RWMutex() { }
+RWMutexImpl::RWMutexImpl() { }
 
-RWMutex::~RWMutex() { }
+RWMutexImpl::~RWMutexImpl() { }
 
-bool RWMutex::reader_acquire() {
+bool RWMutexImpl::reader_acquire() {
   return true;
 }
 
-bool RWMutex::reader_release() {
+bool RWMutexImpl::reader_release() {
   return true;
 }
 
-bool RWMutex::writer_acquire() {
+bool RWMutexImpl::writer_acquire() {
   return true;
 }
 
-bool RWMutex::writer_release() {
+bool RWMutexImpl::writer_release() {
   return true;
 }
 

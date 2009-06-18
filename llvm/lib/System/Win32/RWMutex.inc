@@ -24,32 +24,32 @@
 namespace llvm {
 using namespace sys;
 
-RWMutex::RWMutex() {
+RWMutexImpl::RWMutexImpl() {
   data_ = calloc(1, sizeof(CRITICAL_SECTION));
   InitializeCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
 }
 
-RWMutex::~RWMutex() {
+RWMutexImpl::~RWMutexImpl() {
   DeleteCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   free(data_);
 }
 
-bool RWMutex::reader_acquire() {
+bool RWMutexImpl::reader_acquire() {
   EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
-bool RWMutex::reader_release() {
+bool RWMutexImpl::reader_release() {
   LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
-bool RWMutex::writer_acquire() {
+bool RWMutexImpl::writer_acquire() {
   EnterCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
 
-bool RWMutex::writer_release() {
+bool RWMutexImpl::writer_release() {
   LeaveCriticalSection(static_cast<LPCRITICAL_SECTION>(data_));
   return true;
 }
