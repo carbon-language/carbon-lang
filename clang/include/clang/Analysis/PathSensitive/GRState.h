@@ -184,6 +184,8 @@ public:
   
   SVal getSValAsScalarOrLoc(const MemRegion *R) const;
   
+  bool scanReachableSymbols(SVal val, SymbolVisitor& visitor) const;
+
   template <typename CB> CB scanReachableSymbols(SVal val) const;
   
   // Trait based GDM dispatch.  
@@ -305,12 +307,9 @@ public:
 // GRStateManager - Factory object for GRStates.
 //===----------------------------------------------------------------------===//
 
-class GRStateRef;
-  
 class GRStateManager {
   friend class GRExprEngine;
   friend class GRState;
-  friend class GRStateRef;
   
 private:
   EnvironmentManager                   EnvMgr;
@@ -730,9 +729,6 @@ public:
   void EndPath(const GRState* St) {
     ConstraintMgr->EndPath(St);
   }
-
-  bool scanReachableSymbols(SVal val, const GRState* state,
-                            SymbolVisitor& visitor);
 };
   
 
@@ -836,152 +832,13 @@ const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
 template <typename CB>
 CB GRState::scanReachableSymbols(SVal val) const {
   CB cb(this);
-  Mgr->scanReachableSymbols(val, this, cb);
+  scanReachableSymbols(val, cb);
   return cb;
 }
   
 inline const GRState *GRState::unbindLoc(Loc LV) const {
   return Mgr->Unbind(this, LV);
 }
-
-//===----------------------------------------------------------------------===//
-// GRStateRef - A "fat" reference to GRState that also bundles GRStateManager.
-//===----------------------------------------------------------------------===//
-  
-class GRStateRef {
-  const GRState* St;
-  GRStateManager* Mgr;
-public:
-  GRStateRef(const GRState* st, GRStateManager& mgr) : St(st), Mgr(&mgr) {}
-
-  const GRState* getState() const { return St; } 
-  operator const GRState*() const { return St; }
-  GRStateManager& getManager() const { return *Mgr; }
-  
-  SVal GetSVal(Expr* Ex) {
-    return Mgr->GetSVal(St, Ex);
-  }
-  
-  SVal GetBlkExprSVal(Expr* Ex) {  
-    return Mgr->GetBlkExprSVal(St, Ex);
-  }
-  
-  SVal GetSValAsScalarOrLoc(const Expr *Ex) {
-    return Mgr->GetSValAsScalarOrLoc(St, Ex);
-  }
-
-  SVal GetSVal(Loc LV, QualType T = QualType()) {
-    return Mgr->GetSVal(St, LV, T);
-  }
-  
-  SVal GetSVal(const MemRegion* R) {
-    return Mgr->GetSVal(St, R);
-  }
-  
-  SVal GetSValAsScalarOrLoc(const MemRegion *R) {
-    return Mgr->GetSValAsScalarOrLoc(St, R);
-  }
-
-  GRStateRef BindExpr(Stmt* Ex, SVal V, bool isBlkExpr, bool Invalidate) {
-    return GRStateRef(Mgr->BindExpr(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
-  }
-  
-  GRStateRef BindExpr(Stmt* Ex, SVal V, bool Invalidate = true) {
-    return GRStateRef(Mgr->BindExpr(St, Ex, V, Invalidate), *Mgr);
-  }
-    
-  GRStateRef BindDecl(const VarDecl* VD, SVal InitVal) {
-    return GRStateRef(Mgr->BindDecl(St, VD, InitVal), *Mgr);
-  }
-  
-  GRStateRef BindLoc(Loc LV, SVal V) {
-    return GRStateRef(Mgr->BindLoc(St, LV, V), *Mgr);
-  }
-  
-  GRStateRef BindLoc(SVal LV, SVal V) {
-    if (!isa<Loc>(LV)) return *this;
-    return BindLoc(cast<Loc>(LV), V);
-  }    
-  
-  GRStateRef Unbind(Loc LV) {
-    return GRStateRef(Mgr->Unbind(St, LV), *Mgr);
-  }
-  
-  // Trait based GDM dispatch.
-  template<typename T>
-  typename GRStateTrait<T>::data_type get() const {
-    return St->get<T>();
-  }
-  
-  template<typename T>
-  typename GRStateTrait<T>::lookup_type
-  get(typename GRStateTrait<T>::key_type key) const {
-    return St->get<T>(key);
-  }
-  
-  template<typename T>
-  GRStateRef set(typename GRStateTrait<T>::data_type D) {
-    return GRStateRef(Mgr->set<T>(St, D), *Mgr);
-  }
-
-  template <typename T>
-  typename GRStateTrait<T>::context_type get_context() {
-    return Mgr->get_context<T>();
-  }
-
-  template<typename T>
-  GRStateRef set(typename GRStateTrait<T>::key_type K,
-                 typename GRStateTrait<T>::value_type E,
-                 typename GRStateTrait<T>::context_type C) {
-    return GRStateRef(Mgr->set<T>(St, K, E, C), *Mgr);
-  }
-  
-  template<typename T>
-  GRStateRef set(typename GRStateTrait<T>::key_type K,
-                 typename GRStateTrait<T>::value_type E) {
-    return GRStateRef(Mgr->set<T>(St, K, E, get_context<T>()), *Mgr);
-  }  
-
-  template<typename T>
-  GRStateRef add(typename GRStateTrait<T>::key_type K) {
-    return GRStateRef(Mgr->add<T>(St, K, get_context<T>()), *Mgr);
-  }
-
-  template<typename T>
-  GRStateRef remove(typename GRStateTrait<T>::key_type K,
-                    typename GRStateTrait<T>::context_type C) {
-    return GRStateRef(Mgr->remove<T>(St, K, C), *Mgr);
-  }
-  
-  template<typename T>
-  GRStateRef remove(typename GRStateTrait<T>::key_type K) {
-    return GRStateRef(Mgr->remove<T>(St, K, get_context<T>()), *Mgr);
-  }
-  
-  template<typename T>
-  bool contains(typename GRStateTrait<T>::key_type key) const {
-    return St->contains<T>(key);
-  }
-  
-  // Lvalue methods.
-  SVal GetLValue(const VarDecl* VD) {
-    return Mgr->GetLValue(St, VD);
-  }
-    
-  GRStateRef Assume(SVal Cond, bool Assumption, bool& isFeasible) {
-    return GRStateRef(Mgr->Assume(St, Cond, Assumption, isFeasible), *Mgr);  
-  }
-  
-  template <typename CB>
-  CB scanReachableSymbols(SVal val) {
-    CB cb(*this);
-    Mgr->scanReachableSymbols(val, St, cb);
-    return cb;
-  }
-  
-  SymbolManager& getSymbolManager() { return Mgr->getSymbolManager(); }
-  BasicValueFactory& getBasicVals() { return Mgr->getBasicVals(); }  
-};
 
 } // end clang namespace
 

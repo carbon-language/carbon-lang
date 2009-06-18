@@ -203,13 +203,13 @@ class VISIBILITY_HIDDEN ScanReachableSymbols : public SubRegionMap::Visitor  {
   typedef llvm::DenseSet<const MemRegion*> VisitedRegionsTy;
 
   VisitedRegionsTy visited;
-  GRStateRef state;
+  const GRState *state;
   SymbolVisitor &visitor;
   llvm::OwningPtr<SubRegionMap> SRM;
 public:
   
-  ScanReachableSymbols(GRStateManager* sm, const GRState *st, SymbolVisitor& v)
-    : state(st, *sm), visitor(v) {}
+  ScanReachableSymbols(const GRState *st, SymbolVisitor& v)
+    : state(st), visitor(v) {}
   
   bool scan(nonloc::CompoundVal val);
   bool scan(SVal val);
@@ -260,19 +260,18 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
       return false;
   
   // Now look at the binding to this region (if any).
-  if (!scan(state.GetSValAsScalarOrLoc(R)))
+  if (!scan(state->getSValAsScalarOrLoc(R)))
     return false;
   
   // Now look at the subregions.
   if (!SRM.get())
-   SRM.reset(state.getManager().getStoreManager().getSubRegionMap(state));
+   SRM.reset(state->getStateManager().getStoreManager().getSubRegionMap(state));
   
   return SRM->iterSubRegions(R, *this);
 }
 
-bool GRStateManager::scanReachableSymbols(SVal val, const GRState* state,
-                                          SymbolVisitor& visitor) {
-  ScanReachableSymbols S(this, state, visitor);
+bool GRState::scanReachableSymbols(SVal val, SymbolVisitor& visitor) const {
+  ScanReachableSymbols S(this, visitor);
   return S.scan(val);
 }
 

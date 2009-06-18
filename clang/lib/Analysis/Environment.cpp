@@ -147,7 +147,7 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
 
       // Mark all symbols in the block expr's value live.
       MarkLiveCallback cb(SymReaper);
-      StateMgr.scanReachableSymbols(X, state, cb);
+      state->scanReachableSymbols(X, cb);
     } else {
       // The block expr is dead.
       SVal X = I.getData();
