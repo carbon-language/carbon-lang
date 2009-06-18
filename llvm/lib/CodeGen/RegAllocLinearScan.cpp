@@ -1356,9 +1356,15 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
   unsigned FreeReg = 0;
   unsigned FreeRegInactiveCount = 0;
 
+  std::pair<unsigned, unsigned> Hint = mri_->getRegAllocationHint(cur->reg);
+  // Resolve second part of the hint (if possible) given the current allocation.
+  unsigned physReg = Hint.second;
+  if (physReg &&
+      TargetRegisterInfo::isVirtualRegister(physReg) && vrm_->hasPhys(physReg))
+    physReg = vrm_->getPhys(physReg);
+
   TargetRegisterClass::iterator I, E;
-  tie(I, E) = tri_->getAllocationOrder(RC,
-                                    mri_->getRegAllocationHint(cur->reg), *mf_);
+  tie(I, E) = tri_->getAllocationOrder(RC, Hint.first, physReg, *mf_);
   assert(I != E && "No allocatable register in this register class!");
 
   // Scan for the first available register.

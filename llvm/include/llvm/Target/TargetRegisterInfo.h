@@ -523,7 +523,7 @@ public:
   /// register class in the form of a pair of TargetRegisterClass iterators.
   virtual std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
   getAllocationOrder(const TargetRegisterClass *RC,
-                     std::pair<unsigned,unsigned> Hint,
+                     unsigned HintType, unsigned HintReg,
                      const MachineFunction &MF) const {
     return std::make_pair(RC->allocation_order_begin(MF),
                           RC->allocation_order_end(MF));
@@ -531,11 +531,22 @@ public:
 
   /// ResolveRegAllocHint - Resolves the specified register allocation hint
   /// to a physical register. Returns the physical register if it is successful.
-  unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
-                               const MachineFunction &MF) const {
+  virtual unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
+                                       const MachineFunction &MF) const {
     if (Type == 0 && Reg && isPhysicalRegister(Reg))
       return Reg;
     return 0;
+  }
+
+  /// UpdateRegAllocHint - A callback to allow target a chance to update
+  /// register allocation hints when a register is "changed" (e.g. coalesced)
+  /// to another register. e.g. On ARM, some virtual registers should target
+  /// register pairs, if one of pair is coalesced to another register, the
+  /// allocation hint of the other half of the pair should be changed to point
+  /// to the new register.
+  virtual void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
+                                  MachineFunction &MF) const {
+    // Do nothing.
   }
 
   /// targetHandlesStackFrameRounding - Returns true if the target is

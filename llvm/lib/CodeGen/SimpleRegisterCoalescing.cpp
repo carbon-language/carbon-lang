@@ -1766,6 +1766,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // being merged.
   li_->removeInterval(SrcReg);
 
+  // Update regalloc hint.
+  tri_->UpdateRegAllocHint(SrcReg, DstReg, *mf_);
+
   // Manually deleted the live interval copy.
   if (SavedLI) {
     SavedLI->clear();

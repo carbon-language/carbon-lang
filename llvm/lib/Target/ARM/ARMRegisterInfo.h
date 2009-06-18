@@ -70,11 +70,14 @@ public:
 
   std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
   getAllocationOrder(const TargetRegisterClass *RC,
-                     std::pair<unsigned,unsigned> Hint,
+                     unsigned HintType, unsigned HintReg,
                      const MachineFunction &MF) const;
 
   unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
                                const MachineFunction &MF) const;
+
+  void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
+                          MachineFunction &MF) const;
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 

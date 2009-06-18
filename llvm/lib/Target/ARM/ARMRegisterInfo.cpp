@@ -308,7 +308,7 @@ const TargetRegisterClass *ARMRegisterInfo::getPointerRegClass() const {
 /// register class in the form of a pair of TargetRegisterClass iterators.
 std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
 ARMRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
-                                    std::pair<unsigned, unsigned> Hint,
+                                    unsigned HintType, unsigned HintReg,
                                     const MachineFunction &MF) const {
   // Alternative register allocation orders when favoring even / odd registers
   // of register pairs.
@@ -384,7 +384,13 @@ ARMRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
   };
 
 
-  if (Hint.first == ARMRI::RegPairEven) {
+  if (HintType == ARMRI::RegPairEven) {
+    if (isPhysicalRegister(HintReg) && getRegisterPairEven(HintReg, MF) == 0)
+      // It's no longer possible to fulfill this hint. Return the default
+      // allocation order.
+      return std::make_pair(RC->allocation_order_begin(MF),
+                            RC->allocation_order_end(MF));
+
     if (!STI.isTargetDarwin() && !hasFP(MF)) {
       if (!STI.isR9Reserved())
         return std::make_pair(GPREven1,
@@ -407,7 +413,13 @@ ARMRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
         return std::make_pair(GPREven6,
                               GPREven6 + (sizeof(GPREven6)/sizeof(unsigned)));
     }
-  } else if (Hint.first == ARMRI::RegPairOdd) {
+  } else if (HintType == ARMRI::RegPairOdd) {
+    if (isPhysicalRegister(HintReg) && getRegisterPairOdd(HintReg, MF) == 0)
+      // It's no longer possible to fulfill this hint. Return the default
+      // allocation order.
+      return std::make_pair(RC->allocation_order_begin(MF),
+                            RC->allocation_order_end(MF));
+
     if (!STI.isTargetDarwin() && !hasFP(MF)) {
       if (!STI.isR9Reserved())
         return std::make_pair(GPROdd1,
@@ -451,6 +463,26 @@ ARMRegisterInfo::ResolveRegAllocHint(unsigned Type, unsigned Reg,
     // Even register.
     return getRegisterPairEven(Reg, MF);
   return 0;
+}
+
+void
+ARMRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
+                                    MachineFunction &MF) const {
+  MachineRegisterInfo *MRI = &MF.getRegInfo();
+  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(Reg);
+  if ((Hint.first == (unsigned)ARMRI::RegPairOdd ||
+       Hint.first == (unsigned)ARMRI::RegPairEven) &&
+      Hint.second && TargetRegisterInfo::isVirtualRegister(Hint.second)) {
+    // If 'Reg' is one of the even / odd register pair and it's now changed
+    // (e.g. coalesced) into a different register. The other register of the
+    // pair allocation hint must be updated to reflect the relationship
+    // change.
+    unsigned OtherReg = Hint.second;
+    Hint = MRI->getRegAllocationHint(OtherReg);
+    if (Hint.second == Reg)
+      // Make sure the pair has not already divorced.
+      MRI->setRegAllocationHint(OtherReg, Hint.first, NewReg);
+  }
 }
 
 bool
@@ -1680,68 +1712,68 @@ unsigned ARMRegisterInfo::getRegisterPairEven(unsigned Reg,
   default: break;
   // Return 0 if either register of the pair is a special register.
   // So no R12, etc.
-  case ARM::R0: case ARM::R1:
+  case ARM::R1:
     return ARM::R0;
-  case ARM::R2: case ARM::R3:
+  case ARM::R3:
     // FIXME!
     return STI.isThumb() ? 0 : ARM::R2;
-  case ARM::R4: case ARM::R5:
+  case ARM::R5:
     return ARM::R4;
-  case ARM::R6: case ARM::R7:
+  case ARM::R7:
     return isReservedReg(MF, ARM::R7)  ? 0 : ARM::R6;
-  case ARM::R8: case ARM::R9:
+  case ARM::R9:
     return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R8;
-  case ARM::R10: case ARM::R11:
+  case ARM::R11:
     return isReservedReg(MF, ARM::R11) ? 0 : ARM::R10;
 
-  case ARM::S0: case ARM::S1:
+  case ARM::S1:
     return ARM::S0;
-  case ARM::S2: case ARM::S3:
+  case ARM::S3:
     return ARM::S2;
-  case ARM::S4: case ARM::S5:
+  case ARM::S5:
     return ARM::S4;
-  case ARM::S6: case ARM::S7:
+  case ARM::S7:
     return ARM::S6;
-  case ARM::S8: case ARM::S9:
+  case ARM::S9:
     return ARM::S8;
-  case ARM::S10: case ARM::S11:
+  case ARM::S11:
     return ARM::S10;
-  case ARM::S12: case ARM::S13:
+  case ARM::S13:
     return ARM::S12;
-  case ARM::S14: case ARM::S15:
+  case ARM::S15:
     return ARM::S14;
-  case ARM::S16: case ARM::S17:
+  case ARM::S17:
     return ARM::S16;
-  case ARM::S18: case ARM::S19:
+  case ARM::S19:
     return ARM::S18;
-  case ARM::S20: case ARM::S21:
+  case ARM::S21:
     return ARM::S20;
-  case ARM::S22: case ARM::S23:
+  case ARM::S23:
     return ARM::S22;
-  case ARM::S24: case ARM::S25:
+  case ARM::S25:
     return ARM::S24;
-  case ARM::S26: case ARM::S27:
+  case ARM::S27:
     return ARM::S26;
-  case ARM::S28: case ARM::S29:
+  case ARM::S29:
     return ARM::S28;
-  case ARM::S30: case ARM::S31:
+  case ARM::S31:
     return ARM::S30;
 
-  case ARM::D0: case ARM::D1:
+  case ARM::D1:
     return ARM::D0;
-  case ARM::D2: case ARM::D3:
+  case ARM::D3:
     return ARM::D2;
-  case ARM::D4: case ARM::D5:
+  case ARM::D5:
     return ARM::D4;
-  case ARM::D6: case ARM::D7:
+  case ARM::D7:
     return ARM::D6;
-  case ARM::D8: case ARM::D9:
+  case ARM::D9:
     return ARM::D8;
-  case ARM::D10: case ARM::D11:
+  case ARM::D11:
     return ARM::D10;
-  case ARM::D12: case ARM::D13:
+  case ARM::D13:
     return ARM::D12;
-  case ARM::D14: case ARM::D15:
+  case ARM::D15:
     return ARM::D14;
   }
 
@@ -1754,68 +1786,68 @@ unsigned ARMRegisterInfo::getRegisterPairOdd(unsigned Reg,
   default: break;
   // Return 0 if either register of the pair is a special register.
   // So no R12, etc.
-  case ARM::R0: case ARM::R1:
+  case ARM::R0:
     return ARM::R1;
-  case ARM::R2: case ARM::R3:
+  case ARM::R2:
     // FIXME!
     return STI.isThumb() ? 0 : ARM::R3;
-  case ARM::R4: case ARM::R5:
+  case ARM::R4:
     return ARM::R5;
-  case ARM::R6: case ARM::R7:
+  case ARM::R6:
     return isReservedReg(MF, ARM::R7)  ? 0 : ARM::R7;
-  case ARM::R8: case ARM::R9:
+  case ARM::R8:
     return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R9;
-  case ARM::R10: case ARM::R11:
+  case ARM::R10:
     return isReservedReg(MF, ARM::R11) ? 0 : ARM::R11;
 
-  case ARM::S0: case ARM::S1:
+  case ARM::S0:
     return ARM::S1;
-  case ARM::S2: case ARM::S3:
+  case ARM::S2:
     return ARM::S3;
-  case ARM::S4: case ARM::S5:
+  case ARM::S4:
     return ARM::S5;
-  case ARM::S6: case ARM::S7:
+  case ARM::S6:
     return ARM::S7;
-  case ARM::S8: case ARM::S9:
+  case ARM::S8:
     return ARM::S9;
-  case ARM::S10: case ARM::S11:
+  case ARM::S10:
     return ARM::S11;
-  case ARM::S12: case ARM::S13:
+  case ARM::S12:
     return ARM::S13;
-  case ARM::S14: case ARM::S15:
+  case ARM::S14:
     return ARM::S15;
-  case ARM::S16: case ARM::S17:
+  case ARM::S16:
     return ARM::S17;
-  case ARM::S18: case ARM::S19:
+  case ARM::S18:
     return ARM::S19;
-  case ARM::S20: case ARM::S21:
+  case ARM::S20:
     return ARM::S21;
-  case ARM::S22: case ARM::S23:
+  case ARM::S22:
     return ARM::S23;
-  case ARM::S24: case ARM::S25:
+  case ARM::S24:
     return ARM::S25;
-  case ARM::S26: case ARM::S27:
+  case ARM::S26:
     return ARM::S27;
-  case ARM::S28: case ARM::S29:
+  case ARM::S28:
     return ARM::S29;
-  case ARM::S30: case ARM::S31:
+  case ARM::S30:
     return ARM::S31;
 
-  case ARM::D0: case ARM::D1:
+  case ARM::D0:
     return ARM::D1;
-  case ARM::D2: case ARM::D3:
+  case ARM::D2:
     return ARM::D3;
-  case ARM::D4: case ARM::D5:
+  case ARM::D4:
     return ARM::D5;
-  case ARM::D6: case ARM::D7:
+  case ARM::D6:
     return ARM::D7;
-  case ARM::D8: case ARM::D9:
+  case ARM::D8:
     return ARM::D9;
-  case ARM::D10: case ARM::D11:
+  case ARM::D10:
     return ARM::D11;
-  case ARM::D12: case ARM::D13:
+  case ARM::D12:
     return ARM::D13;
-  case ARM::D14: case ARM::D15:
+  case ARM::D14:
     return ARM::D15;
   }
 
