@@ -36,7 +36,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     ConstantInt *V;
-    explicit SCEVConstant(ConstantInt *v) : SCEV(scConstant), V(v) {}
+    explicit SCEVConstant(ConstantInt *v, const ScalarEvolution* p) :
+      SCEV(scConstant, p), V(v) {}
 
     virtual ~SCEVConstant();
   public:
@@ -79,7 +80,8 @@ namespace llvm {
     SCEVHandle Op;
     const Type *Ty;
 
-    SCEVCastExpr(unsigned SCEVTy, const SCEVHandle &op, const Type *ty);
+    SCEVCastExpr(unsigned SCEVTy, const SCEVHandle &op, const Type *ty,
+                 const ScalarEvolution* p);
     virtual ~SCEVCastExpr();
 
   public:
@@ -112,7 +114,8 @@ namespace llvm {
   class SCEVTruncateExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVTruncateExpr(const SCEVHandle &op, const Type *ty);
+    SCEVTruncateExpr(const SCEVHandle &op, const Type *ty,
+                     const ScalarEvolution* p);
     virtual ~SCEVTruncateExpr();
 
   public:
@@ -141,7 +144,8 @@ namespace llvm {
   class SCEVZeroExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty);
+    SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty,
+                       const ScalarEvolution* p);
     virtual ~SCEVZeroExtendExpr();
 
   public:
@@ -170,7 +174,8 @@ namespace llvm {
   class SCEVSignExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty);
+    SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty,
+                       const ScalarEvolution* p);
     virtual ~SCEVSignExtendExpr();
 
   public:
@@ -201,8 +206,9 @@ namespace llvm {
   protected:
     SmallVector<SCEVHandle, 8> Operands;
 
-    SCEVNAryExpr(enum SCEVTypes T, const SmallVectorImpl<SCEVHandle> &ops)
-      : SCEV(T), Operands(ops.begin(), ops.end()) {}
+    SCEVNAryExpr(enum SCEVTypes T, const SmallVectorImpl<SCEVHandle> &ops,
+                 const ScalarEvolution* p)
+      : SCEV(T, p), Operands(ops.begin(), ops.end()) {}
     virtual ~SCEVNAryExpr() {}
 
   public:
@@ -259,8 +265,10 @@ namespace llvm {
   ///
   class SCEVCommutativeExpr : public SCEVNAryExpr {
   protected:
-    SCEVCommutativeExpr(enum SCEVTypes T, const SmallVectorImpl<SCEVHandle> &ops)
-      : SCEVNAryExpr(T, ops) {}
+    SCEVCommutativeExpr(enum SCEVTypes T,
+                        const SmallVectorImpl<SCEVHandle> &ops,
+                        const ScalarEvolution* p)
+      : SCEVNAryExpr(T, ops, p) {}
     ~SCEVCommutativeExpr();
 
   public:
@@ -289,8 +297,9 @@ namespace llvm {
   class SCEVAddExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVAddExpr(const SmallVectorImpl<SCEVHandle> &ops)
-      : SCEVCommutativeExpr(scAddExpr, ops) {
+    explicit SCEVAddExpr(const SmallVectorImpl<SCEVHandle> &ops,
+                         const ScalarEvolution* p)
+      : SCEVCommutativeExpr(scAddExpr, ops, p) {
     }
 
   public:
@@ -309,8 +318,9 @@ namespace llvm {
   class SCEVMulExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVMulExpr(const SmallVectorImpl<SCEVHandle> &ops)
-      : SCEVCommutativeExpr(scMulExpr, ops) {
+    explicit SCEVMulExpr(const SmallVectorImpl<SCEVHandle> &ops,
+                         const ScalarEvolution* p)
+      : SCEVCommutativeExpr(scMulExpr, ops, p) {
     }
 
   public:
@@ -331,8 +341,9 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVHandle LHS, RHS;
-    SCEVUDivExpr(const SCEVHandle &lhs, const SCEVHandle &rhs)
-      : SCEV(scUDivExpr), LHS(lhs), RHS(rhs) {}
+    SCEVUDivExpr(const SCEVHandle &lhs, const SCEVHandle &rhs,
+                 const ScalarEvolution* p)
+      : SCEV(scUDivExpr, p), LHS(lhs), RHS(rhs) {}
 
     virtual ~SCEVUDivExpr();
   public:
@@ -387,8 +398,9 @@ namespace llvm {
 
     const Loop *L;
 
-    SCEVAddRecExpr(const SmallVectorImpl<SCEVHandle> &ops, const Loop *l)
-      : SCEVNAryExpr(scAddRecExpr, ops), L(l) {
+    SCEVAddRecExpr(const SmallVectorImpl<SCEVHandle> &ops, const Loop *l,
+                   const ScalarEvolution* p)
+      : SCEVNAryExpr(scAddRecExpr, ops, p), L(l) {
       for (size_t i = 0, e = Operands.size(); i != e; ++i)
         assert(Operands[i]->isLoopInvariant(l) &&
                "Operands of AddRec must be loop-invariant!");
@@ -463,8 +475,9 @@ namespace llvm {
   class SCEVSMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVSMaxExpr(const SmallVectorImpl<SCEVHandle> &ops)
-      : SCEVCommutativeExpr(scSMaxExpr, ops) {
+    explicit SCEVSMaxExpr(const SmallVectorImpl<SCEVHandle> &ops,
+                          const ScalarEvolution* p)
+      : SCEVCommutativeExpr(scSMaxExpr, ops, p) {
     }
 
   public:
@@ -484,8 +497,9 @@ namespace llvm {
   class SCEVUMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVUMaxExpr(const SmallVectorImpl<SCEVHandle> &ops)
-      : SCEVCommutativeExpr(scUMaxExpr, ops) {
+    explicit SCEVUMaxExpr(const SmallVectorImpl<SCEVHandle> &ops,
+                          const ScalarEvolution* p)
+      : SCEVCommutativeExpr(scUMaxExpr, ops, p) {
     }
 
   public:
@@ -508,7 +522,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     Value *V;
-    explicit SCEVUnknown(Value *v) : SCEV(scUnknown), V(v) {}
+    explicit SCEVUnknown(Value *v, const ScalarEvolution* p) :
+      SCEV(scUnknown, p), V(v) {}
 
   protected:
     ~SCEVUnknown();

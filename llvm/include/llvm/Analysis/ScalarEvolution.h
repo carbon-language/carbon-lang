@@ -53,12 +53,15 @@ namespace llvm {
         delete this;
     }
 
+    const ScalarEvolution* parent;
+
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
     void operator=(const SCEV &);  // DO NOT IMPLEMENT
   protected:
     virtual ~SCEV();
   public:
-    explicit SCEV(unsigned SCEVTy) : SCEVType(SCEVTy), RefCount(0) {}
+    explicit SCEV(unsigned SCEVTy, const ScalarEvolution* p) : 
+      SCEVType(SCEVTy), RefCount(0), parent(p) {}
 
     unsigned getSCEVType() const { return SCEVType; }
 
@@ -126,7 +129,7 @@ namespace llvm {
   /// None of the standard SCEV operations are valid on this class, it is just a
   /// marker.
   struct SCEVCouldNotCompute : public SCEV {
-    SCEVCouldNotCompute();
+    SCEVCouldNotCompute(const ScalarEvolution* p);
     ~SCEVCouldNotCompute();
 
     // None of these methods are valid for this object.
@@ -205,13 +208,13 @@ namespace llvm {
   template<>
   struct DenseMapInfo<SCEVHandle> {
     static inline SCEVHandle getEmptyKey() {
-      static SCEVCouldNotCompute Empty;
+      static SCEVCouldNotCompute Empty(0);
       if (Empty.RefCount == 0)
         Empty.addRef();
       return &Empty;
     }
     static inline SCEVHandle getTombstoneKey() {
-      static SCEVCouldNotCompute Tombstone;
+      static SCEVCouldNotCompute Tombstone(0);
       if (Tombstone.RefCount == 0)
         Tombstone.addRef();
       return &Tombstone;

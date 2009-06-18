@@ -133,7 +133,8 @@ bool SCEV::isOne() const {
   return false;
 }
 
-SCEVCouldNotCompute::SCEVCouldNotCompute() : SCEV(scCouldNotCompute) {}
+SCEVCouldNotCompute::SCEVCouldNotCompute(const ScalarEvolution* p) :
+  SCEV(scCouldNotCompute, p) {}
 SCEVCouldNotCompute::~SCEVCouldNotCompute() {}
 
 bool SCEVCouldNotCompute::isLoopInvariant(const Loop *L) const {
@@ -179,7 +180,7 @@ SCEVConstant::~SCEVConstant() {
 
 SCEVHandle ScalarEvolution::getConstant(ConstantInt *V) {
   SCEVConstant *&R = (*SCEVConstants)[V];
-  if (R == 0) R = new SCEVConstant(V);
+  if (R == 0) R = new SCEVConstant(V, this);
   return R;
 }
 
@@ -199,8 +200,9 @@ void SCEVConstant::print(raw_ostream &OS) const {
 }
 
 SCEVCastExpr::SCEVCastExpr(unsigned SCEVTy,
-                           const SCEVHandle &op, const Type *ty)
-  : SCEV(SCEVTy), Op(op), Ty(ty) {}
+                           const SCEVHandle &op, const Type *ty,
+                           const ScalarEvolution* p)
+  : SCEV(SCEVTy, p), Op(op), Ty(ty) {}
 
 SCEVCastExpr::~SCEVCastExpr() {}
 
@@ -214,8 +216,9 @@ bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
 static ManagedStatic<std::map<std::pair<const SCEV*, const Type*>, 
                      SCEVTruncateExpr*> > SCEVTruncates;
 
-SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
-  : SCEVCastExpr(scTruncate, op, ty) {
+SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty,
+                                   const ScalarEvolution* p)
+  : SCEVCastExpr(scTruncate, op, ty, p) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate non-integer value!");
@@ -235,8 +238,9 @@ void SCEVTruncateExpr::print(raw_ostream &OS) const {
 static ManagedStatic<std::map<std::pair<const SCEV*, const Type*>,
                      SCEVZeroExtendExpr*> > SCEVZeroExtends;
 
-SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
-  : SCEVCastExpr(scZeroExtend, op, ty) {
+SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty,
+                                       const ScalarEvolution* p)
+  : SCEVCastExpr(scZeroExtend, op, ty, p) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot zero extend non-integer value!");
@@ -256,8 +260,9 @@ void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
 static ManagedStatic<std::map<std::pair<const SCEV*, const Type*>,
                      SCEVSignExtendExpr*> > SCEVSignExtends;
 
-SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
-  : SCEVCastExpr(scSignExtend, op, ty) {
+SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty,
+                                       const ScalarEvolution* p)
+  : SCEVCastExpr(scSignExtend, op, ty, p) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot sign extend non-integer value!");
@@ -787,7 +792,7 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op,
   }
 
   SCEVTruncateExpr *&Result = (*SCEVTruncates)[std::make_pair(Op, Ty)];
-  if (Result == 0) Result = new SCEVTruncateExpr(Op, Ty);
+  if (Result == 0) Result = new SCEVTruncateExpr(Op, Ty, this);
   return Result;
 }
 
@@ -875,7 +880,7 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
     }
 
   SCEVZeroExtendExpr *&Result = (*SCEVZeroExtends)[std::make_pair(Op, Ty)];
-  if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty);
+  if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty, this);
   return Result;
 }
 
@@ -947,7 +952,7 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
     }
 
   SCEVSignExtendExpr *&Result = (*SCEVSignExtends)[std::make_pair(Op, Ty)];
-  if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty);
+  if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty, this);
   return Result;
 }
 
@@ -1409,7 +1414,7 @@ SCEVHandle ScalarEvolution::getAddExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
   SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scAddExpr,
                                                                  SCEVOps)];
-  if (Result == 0) Result = new SCEVAddExpr(Ops);
+  if (Result == 0) Result = new SCEVAddExpr(Ops, this);
   return Result;
 }
 
@@ -1575,7 +1580,7 @@ SCEVHandle ScalarEvolution::getMulExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scMulExpr,
                                                                  SCEVOps)];
   if (Result == 0)
-    Result = new SCEVMulExpr(Ops);
+    Result = new SCEVMulExpr(Ops, this);
   return Result;
 }
 
@@ -1666,7 +1671,7 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
   }
 
   SCEVUDivExpr *&Result = (*SCEVUDivs)[std::make_pair(LHS, RHS)];
-  if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS);
+  if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS, this);
   return Result;
 }
 
@@ -1720,7 +1725,7 @@ SCEVHandle ScalarEvolution::getAddRecExpr(SmallVectorImpl<SCEVHandle> &Operands,
 
   std::vector<const SCEV*> SCEVOps(Operands.begin(), Operands.end());
   SCEVAddRecExpr *&Result = (*SCEVAddRecExprs)[std::make_pair(L, SCEVOps)];
-  if (Result == 0) Result = new SCEVAddRecExpr(Operands, L);
+  if (Result == 0) Result = new SCEVAddRecExpr(Operands, L, this);
   return Result;
 }
 
@@ -1807,7 +1812,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
   SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scSMaxExpr,
                                                                  SCEVOps)];
-  if (Result == 0) Result = new SCEVSMaxExpr(Ops);
+  if (Result == 0) Result = new SCEVSMaxExpr(Ops, this);
   return Result;
 }
 
@@ -1894,7 +1899,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
   SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scUMaxExpr,
                                                                  SCEVOps)];
-  if (Result == 0) Result = new SCEVUMaxExpr(Ops);
+  if (Result == 0) Result = new SCEVUMaxExpr(Ops, this);
   return Result;
 }
 
@@ -1904,7 +1909,7 @@ SCEVHandle ScalarEvolution::getUnknown(Value *V) {
   if (isa<ConstantPointerNull>(V))
     return getIntegerSCEV(0, V->getType());
   SCEVUnknown *&Result = (*SCEVUnknowns)[V];
-  if (Result == 0) Result = new SCEVUnknown(V);
+  if (Result == 0) Result = new SCEVUnknown(V, this);
   return Result;
 }
 
@@ -3978,7 +3983,7 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //===----------------------------------------------------------------------===//
 
 ScalarEvolution::ScalarEvolution()
-  : FunctionPass(&ID), CouldNotCompute(new SCEVCouldNotCompute()) {
+  : FunctionPass(&ID), CouldNotCompute(new SCEVCouldNotCompute(0)) {
 }
 
 bool ScalarEvolution::runOnFunction(Function &F) {
