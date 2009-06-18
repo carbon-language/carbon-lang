@@ -22,13 +22,13 @@
 namespace llvm {
 using namespace sys;
 
-Mutex::Mutex(bool /*recursive*/)
+MutexImpl::MutexImpl(bool /*recursive*/)
 {
   data_ = new CRITICAL_SECTION;
   InitializeCriticalSection((LPCRITICAL_SECTION)data_);
 }
 
-Mutex::~Mutex()
+MutexImpl::~MutexImpl()
 {
   DeleteCriticalSection((LPCRITICAL_SECTION)data_);
   delete (LPCRITICAL_SECTION)data_;
@@ -36,21 +36,21 @@ Mutex::~Mutex()
 }
 
 bool 
-Mutex::acquire()
+MutexImpl::acquire()
 {
   EnterCriticalSection((LPCRITICAL_SECTION)data_);
   return true;
 }
 
 bool 
-Mutex::release()
+MutexImpl::release()
 {
   LeaveCriticalSection((LPCRITICAL_SECTION)data_);
   return true;
 }
 
 bool 
-Mutex::tryacquire()
+MutexImpl::tryacquire()
 {
   return TryEnterCriticalSection((LPCRITICAL_SECTION)data_);
 }

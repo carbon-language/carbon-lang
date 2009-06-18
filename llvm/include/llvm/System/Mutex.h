@@ -14,12 +14,14 @@
 #ifndef LLVM_SYSTEM_MUTEX_H
 #define LLVM_SYSTEM_MUTEX_H
 
+#include "llvm/System/Threading.h"
+
 namespace llvm
 {
   namespace sys
   {
     /// @brief Platform agnostic Mutex class.
-    class Mutex
+    class MutexImpl
     {
     /// @name Constructors
     /// @{
@@ -30,11 +32,11 @@ namespace llvm
       /// also more likely to deadlock (same thread can't acquire more than
       /// once).
       /// @brief Default Constructor.
-      explicit Mutex(bool recursive = true);
+      explicit MutexImpl(bool recursive = true);
 
       /// Releases and removes the lock
       /// @brief Destructor
-      ~Mutex();
+      ~MutexImpl();
 
     /// @}
     /// @name Methods
@@ -74,10 +76,46 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private:
-      Mutex(const Mutex & original);
-      void operator=(const Mutex &);
+      MutexImpl(const MutexImpl & original);
+      void operator=(const MutexImpl &);
     /// @}
     };
+    
+    
+    /// SmartMutex - A mutex with a compile time constant parameter that 
+    /// indicates whether this mutex should become a no-op when we're not
+    /// running in multithreaded mode.
+    template<bool mt_only>
+    class SmartMutex {
+      MutexImpl mtx;
+    public:
+      explicit SmartMutex(bool recursive = true) : mtx(recursive) { }
+      
+      bool acquire() {
+        if (!mt_only || (mt_only && llvm_is_multithreaded()))
+          return mtx.acquire();
+        return true;
+      }
+
+      bool release() {
+        if (!mt_only || (mt_only && llvm_is_multithreaded()))
+          return mtx.release();
+        return true;
+      }
+
+      bool tryacquire() {
+        if (!mt_only || (mt_only && llvm_is_multithreaded()))
+          return mtx.tryacquire();
+        return true;
+      }
+      
+      private:
+        SmartMutex<mt_only>(const SmartMutex<mt_only> & original);
+        void operator=(const SmartMutex<mt_only> &);
+    };
+    
+    /// Mutex - A standard, always enforced mutex.
+    typedef SmartMutex<false> Mutex;
   }
 }
 
