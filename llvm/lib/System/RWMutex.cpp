@@ -23,7 +23,7 @@
 // Define all methods as no-ops if threading is explicitly disabled
 namespace llvm {
 using namespace sys;
-RWMutex::RWMutex( bool recursive) { }
+RWMutex::RWMutex() { }
 RWMutex::~RWMutex() { }
 bool RWMutex::reader_acquire() { return true; }
 bool RWMutex::reader_release() { return true; }
