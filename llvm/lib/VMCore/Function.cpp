@@ -233,37 +233,30 @@ void Function::removeAttribute(unsigned i, Attributes attr) {
 // use GC.
 static DenseMap<const Function*,PooledStringPtr> *GCNames;
 static StringPool *GCNamePool;
-static ManagedStatic<sys::RWMutex> GCLock;
+static ManagedStatic<sys::SmartRWMutex<true> > GCLock;
 
 bool Function::hasGC() const {
-  if (llvm_is_multithreaded()) {
-    sys::ScopedReader Reader(&*GCLock);
-    return GCNames && GCNames->count(this);
-  } else
-    return GCNames && GCNames->count(this);
+  sys::SmartScopedReader<true> Reader(&*GCLock);
+  return GCNames && GCNames->count(this);
 }
 
 const char *Function::getGC() const {
   assert(hasGC() && "Function has no collector");
-  if (llvm_is_multithreaded()) {
-    sys::ScopedReader Reader(&*GCLock);
-    return *(*GCNames)[this];
-  } else
-    return *(*GCNames)[this];
+  sys::SmartScopedReader<true> Reader(&*GCLock);
+  return *(*GCNames)[this];
 }
 
 void Function::setGC(const char *Str) {
-  if (llvm_is_multithreaded()) GCLock->writer_acquire();
+  sys::SmartScopedWriter<true> Writer(&*GCLock);
   if (!GCNamePool)
     GCNamePool = new StringPool();
   if (!GCNames)
     GCNames = new DenseMap<const Function*,PooledStringPtr>();
   (*GCNames)[this] = GCNamePool->intern(Str);
-  if (llvm_is_multithreaded()) GCLock->writer_release();
 }
 
 void Function::clearGC() {
-  if (llvm_is_multithreaded()) GCLock->writer_acquire();
+  sys::SmartScopedWriter<true> Writer(&*GCLock);
   if (GCNames) {
     GCNames->erase(this);
     if (GCNames->empty()) {
@@ -275,7 +268,6 @@ void Function::clearGC() {
       }
     }
   }
-  if (llvm_is_multithreaded()) GCLock->writer_release();
 }
 
 /// copyAttributesFrom - copy all additional attributes (those not needed to
