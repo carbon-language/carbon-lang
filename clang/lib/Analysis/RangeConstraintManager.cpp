@@ -235,8 +235,7 @@ namespace {
 class VISIBILITY_HIDDEN RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(const GRState *state, SymbolRef sym);      
 public:
-  RangeConstraintManager(GRStateManager& statemgr) 
-      : SimpleConstraintManager(statemgr) {}
+  RangeConstraintManager() {}
 
   const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
                              const llvm::APSInt& V);
@@ -275,9 +274,8 @@ private:
 
 } // end anonymous namespace
 
-ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager& StateMgr)
-{
-  return new RangeConstraintManager(StateMgr);
+ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager&) {
+  return new RangeConstraintManager();
 }
 
 const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState* St,

@@ -51,7 +51,7 @@ class VISIBILITY_HIDDEN BasicConstraintManager
   GRState::IntSetTy::Factory ISetFactory;
 public:
   BasicConstraintManager(GRStateManager& statemgr) 
-    : SimpleConstraintManager(statemgr), ISetFactory(statemgr.getAllocator()) {}
+    : ISetFactory(statemgr.getAllocator()) {}
 
   const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V);

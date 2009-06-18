@@ -234,7 +234,7 @@ const GRState *SimpleConstraintManager::AssumeInBound(const GRState *state,
   if (!(isa<nonloc::ConcreteInt>(Idx) && isa<nonloc::ConcreteInt>(UpperBound)))
     return state;
 
-  const llvm::APSInt& Zero = getBasicVals().getZeroWithPtrWidth(false);
+  const llvm::APSInt& Zero = state->getBasicVals().getZeroWithPtrWidth(false);
   llvm::APSInt IdxV = cast<nonloc::ConcreteInt>(Idx).getValue();
   // IdxV might be too narrow.
   if (IdxV.getBitWidth() < Zero.getBitWidth())

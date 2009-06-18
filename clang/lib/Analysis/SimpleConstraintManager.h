@@ -20,22 +20,18 @@
 namespace clang {
 
 class SimpleConstraintManager : public ConstraintManager {
-protected:
-  GRStateManager& StateMgr;
 public:
-  SimpleConstraintManager(GRStateManager& statemgr) 
-    : StateMgr(statemgr) {}
-  virtual ~SimpleConstraintManager();
+  SimpleConstraintManager() {}
+  virtual ~SimpleConstraintManager();  
   
-  bool canReasonAbout(SVal X) const;
-  
-  virtual const GRState *Assume(const GRState *state, SVal Cond,
-                                bool Assumption);
-
   //===------------------------------------------------------------------===//
   // Common implementation for the interface provided by ConstraintManager.
   //===------------------------------------------------------------------===//
-  
+
+  bool canReasonAbout(SVal X) const;
+
+  const GRState *Assume(const GRState *state, SVal Cond, bool Assumption);
+
   const GRState *Assume(const GRState *state, Loc Cond, bool Assumption);
 
   const GRState *Assume(const GRState *state, NonLoc Cond, bool Assumption);
@@ -77,14 +73,6 @@ protected:
   const GRState *AssumeAux(const GRState *state, Loc Cond,bool Assumption);
   
   const GRState *AssumeAux(const GRState *state, NonLoc Cond, bool Assumption);
-
-  //===------------------------------------------------------------------===//
-  // FIXME: These can probably be removed now.
-  //===------------------------------------------------------------------===//
-
-private:
-  BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
-  SymbolManager& getSymbolManager() const { return StateMgr.getSymbolManager(); }
 };
 
 }  // end clang namespace
