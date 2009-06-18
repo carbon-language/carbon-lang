@@ -35,3 +35,5 @@ add_clang_library(clangFrontend
   TypeXML.cpp
   Warnings.cpp
   )
+
+add_dependencies(clangSema ClangDiagnosticFrontend)

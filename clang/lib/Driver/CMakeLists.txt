@@ -17,3 +17,5 @@ add_clang_library(clangDriver
   Tools.cpp
   Types.cpp
   )
+
+add_dependencies(clangSema ClangDiagnosticDriver)
