@@ -358,7 +358,7 @@ namespace {
 /// -time-passes is enabled on the command line.
 ///
 
-static ManagedStatic<sys::Mutex> TimingInfoMutex;
+static ManagedStatic<sys::SmartMutex<true> > TimingInfoMutex;
 
 class VISIBILITY_HIDDEN TimingInfo {
   std::map<Pass*, Timer> TimingData;
@@ -384,22 +384,21 @@ public:
     if (dynamic_cast<PMDataManager *>(P)) 
       return;
 
-    if (llvm_is_multithreaded()) TimingInfoMutex->acquire();
+    sys::SmartScopedLock<true> Lock(&*TimingInfoMutex);
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     if (I == TimingData.end())
       I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
     I->second.startTimer();
-    if (llvm_is_multithreaded()) TimingInfoMutex->release();
   }
+  
   void passEnded(Pass *P) {
     if (dynamic_cast<PMDataManager *>(P)) 
       return;
 
-    if (llvm_is_multithreaded()) TimingInfoMutex->acquire();
+    sys::SmartScopedLock<true> Lock(&*TimingInfoMutex);
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     assert(I != TimingData.end() && "passStarted/passEnded not nested right!");
     I->second.stopTimer();
-    if (llvm_is_multithreaded()) TimingInfoMutex->release();
   }
 };
 
