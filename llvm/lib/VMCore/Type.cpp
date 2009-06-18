@@ -47,7 +47,9 @@ AbstractTypeUser::~AbstractTypeUser() {}
 static ManagedStatic<sys::RWMutex> TypeMapLock;
 
 // Recursive lock used for guarding access to AbstractTypeUsers.
-static ManagedStatic<sys::Mutex> AbstractTypeUsersLock;
+// NOTE: The false template parameter means this will no-op when we're not in
+// multithreaded mode.
+static ManagedStatic<sys::SmartMutex<true> > AbstractTypeUsersLock;
 
 // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
 // for types as they are needed.  Because resolution of types must invalidate
@@ -1469,13 +1471,9 @@ bool PointerType::isValidElementType(const Type *ElemTy) {
 // it.  This function is called primarily by the PATypeHandle class.
 void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
   assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-  if (llvm_is_multithreaded()) {
-    AbstractTypeUsersLock->acquire();
-    AbstractTypeUsers.push_back(U);
-    AbstractTypeUsersLock->release();
-  } else {
-    AbstractTypeUsers.push_back(U);
-  }
+  AbstractTypeUsersLock->acquire();
+  AbstractTypeUsers.push_back(U);
+  AbstractTypeUsersLock->release();
 }
 
 
@@ -1485,7 +1483,7 @@ void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
 // is annihilated, because there is no way to get a reference to it ever again.
 //
 void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
-  if (llvm_is_multithreaded()) AbstractTypeUsersLock->acquire();
+  AbstractTypeUsersLock->acquire();
   
   // Search from back to front because we will notify users from back to
   // front.  Also, it is likely that there will be a stack like behavior to
@@ -1514,7 +1512,7 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
   this->destroy();
   }
   
-  if (llvm_is_multithreaded()) AbstractTypeUsersLock->release();
+  AbstractTypeUsersLock->release();
 }
 
 // unlockedRefineAbstractTypeTo - This function is used when it is discovered
@@ -1565,7 +1563,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // will not cause users to drop off of the use list.  If we resolve to ourself
   // we succeed!
   //
-  if (llvm_is_multithreaded()) AbstractTypeUsersLock->acquire();
+  AbstractTypeUsersLock->acquire();
   while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
@@ -1581,7 +1579,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
     assert(AbstractTypeUsers.size() != OldSize &&
            "AbsTyUser did not remove self from user list!");
   }
-  if (llvm_is_multithreaded()) AbstractTypeUsersLock->release();
+  AbstractTypeUsersLock->release();
 
   // If we were successful removing all users from the type, 'this' will be
   // deleted when the last PATypeHolder is destroyed or updated from this type.
@@ -1612,7 +1610,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
   DOUT << "typeIsREFINED type: " << (void*)this << " " << *this << "\n";
 #endif
 
-  if (llvm_is_multithreaded()) AbstractTypeUsersLock->acquire();
+  AbstractTypeUsersLock->acquire();
   unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
   while (!AbstractTypeUsers.empty()) {
     AbstractTypeUser *ATU = AbstractTypeUsers.back();
@@ -1621,7 +1619,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
     assert(AbstractTypeUsers.size() < OldSize-- &&
            "AbstractTypeUser did not remove itself from the use list!");
   }
-  if (llvm_is_multithreaded()) AbstractTypeUsersLock->release();
+  AbstractTypeUsersLock->release();
 }
 
 // refineAbstractType - Called when a contained type is found to be more
