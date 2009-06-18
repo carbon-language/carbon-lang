@@ -841,7 +841,7 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
     Mang->setUseQuotes(true);
 
   // Thumb-2 instructions are supported only in unified assembler syntax mode.
-  if (Subtarget->isTargetELF() && Subtarget->hasThumb2())
+  if (Subtarget->hasThumb2())
     O << "\t.syntax unified\n";
 
   // Emit ARM Build Attributes
