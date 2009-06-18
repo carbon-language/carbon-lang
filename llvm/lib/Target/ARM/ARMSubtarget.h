@@ -48,9 +48,6 @@ protected:
   /// ThumbMode - Indicates supported Thumb version.
   ThumbTypeEnum ThumbMode;
 
-  /// UseThumbBacktraces - True if we use thumb style backtraces.
-  bool UseThumbBacktraces;
-
   /// IsR9Reserved - True if R9 is a not available as general purpose register.
   bool IsR9Reserved;
 
@@ -109,7 +106,6 @@ protected:
   bool isThumb1Only() const { return IsThumb && (ThumbMode == Thumb1); }
   bool hasThumb2() const { return IsThumb && (ThumbMode >= Thumb2); }
 
-  bool useThumbBacktraces() const { return UseThumbBacktraces; }
   bool isR9Reserved() const { return IsR9Reserved; }
 
   const std::string & getCPUString() const { return CPUString; }

@@ -1483,7 +1483,7 @@ SDValue ARMTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  unsigned FrameReg = (Subtarget->isThumb() || Subtarget->useThumbBacktraces())
+  unsigned FrameReg = (Subtarget->isThumb() || Subtarget->isTargetDarwin())
     ? ARM::R7 : ARM::R11;
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
   while (Depth--)

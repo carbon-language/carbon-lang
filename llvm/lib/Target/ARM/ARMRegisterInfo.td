@@ -134,7 +134,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
     GPRClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.useThumbBacktraces()) {
+      if (Subtarget.isTargetDarwin()) {
         if (Subtarget.isR9Reserved())
           return ARM_GPR_AO_4;
         else
@@ -154,7 +154,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       GPRClass::iterator I;
 
-      if (Subtarget.useThumbBacktraces()) {
+      if (Subtarget.isTargetDarwin()) {
         if (Subtarget.isR9Reserved()) {
           I = ARM_GPR_AO_4 + (sizeof(ARM_GPR_AO_4)/sizeof(unsigned));
         } else {

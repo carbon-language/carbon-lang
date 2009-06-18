@@ -159,7 +159,7 @@ ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii,
                                  const ARMSubtarget &sti)
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
-    FramePtr((STI.useThumbBacktraces() || STI.isThumb()) ? ARM::R7 : ARM::R11) {
+    FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11) {
 }
 
 static inline
@@ -1687,9 +1687,8 @@ unsigned ARMRegisterInfo::getRARegister() const {
 
 unsigned ARMRegisterInfo::getFrameRegister(MachineFunction &MF) const {
   if (STI.isTargetDarwin() || hasFP(MF))
-    return (STI.useThumbBacktraces() || STI.isThumb()) ? ARM::R7 : ARM::R11;
-  else
-    return ARM::SP;
+    return FramePtr;
+  return ARM::SP;
 }
 
 unsigned ARMRegisterInfo::getEHExceptionRegister() const {

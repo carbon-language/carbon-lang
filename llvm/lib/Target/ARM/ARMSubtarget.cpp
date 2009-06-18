@@ -24,7 +24,6 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
   , ARMFPUType(None)
   , IsThumb(isThumb)
   , ThumbMode(Thumb1)
-  , UseThumbBacktraces(false)
   , IsR9Reserved(false)
   , stackAlignment(4)
   , CPUString("generic")
@@ -83,8 +82,6 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
   if (isAAPCS_ABI())
     stackAlignment = 8;
 
-  if (isTargetDarwin()) {
-    UseThumbBacktraces = true;
+  if (isTargetDarwin())
     IsR9Reserved = true;
-  }
 }
