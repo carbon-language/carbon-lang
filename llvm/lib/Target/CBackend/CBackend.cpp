@@ -1454,6 +1454,17 @@ std::string CWriter::GetValueName(const Value *Operand) {
 /// writeInstComputationInline - Emit the computation for the specified
 /// instruction inline, with no destination provided.
 void CWriter::writeInstComputationInline(Instruction &I) {
+  // We can't currently support integer types other than 1, 8, 16, 32, 64.
+  // Validate this.
+  const Type *Ty = I.getType();
+  if (Ty->isInteger() && (Ty!=Type::Int1Ty && Ty!=Type::Int8Ty &&
+        Ty!=Type::Int16Ty && Ty!=Type::Int32Ty && Ty!=Type::Int64Ty)) {
+      cerr << "The C backend does not currently support integer "
+           << "types of widths other than 1, 8, 16, 32, 64.\n";
+      cerr << "This is being tracked as PR 4158.\n";
+      abort();
+  }
+
   // If this is a non-trivial bool computation, make sure to truncate down to
   // a 1 bit value.  This is important because we want "add i1 x, y" to return
   // "0" when x and y are true, not "2" for example.
