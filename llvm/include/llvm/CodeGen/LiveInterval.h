@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/DataTypes.h"
 #include <iosfwd>
 #include <cassert>
 #include <climits>
