@@ -12,6 +12,7 @@ add_llvm_library(LLVMSystem
   Program.cpp
   RWMutex.cpp
   Signals.cpp
+  Threading.cpp
   TimeValue.cpp
   )
 
