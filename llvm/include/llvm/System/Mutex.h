@@ -86,31 +86,30 @@ namespace llvm
     /// indicates whether this mutex should become a no-op when we're not
     /// running in multithreaded mode.
     template<bool mt_only>
-    class SmartMutex {
-      MutexImpl mtx;
+    class SmartMutex : public MutexImpl {
     public:
-      explicit SmartMutex(bool recursive = true) : mtx(recursive) { }
+      explicit SmartMutex(bool recursive = true) : MutexImpl(recursive) { }
       
       bool acquire() {
-        if (!mt_only || (mt_only && llvm_is_multithreaded()))
-          return mtx.acquire();
+        if (!mt_only && llvm_is_multithreaded())
+          return MutexImpl::acquire();
         return true;
       }
 
       bool release() {
-        if (!mt_only || (mt_only && llvm_is_multithreaded()))
-          return mtx.release();
+        if (!mt_only || llvm_is_multithreaded())
+          return MutexImpl::release();
         return true;
       }
 
       bool tryacquire() {
-        if (!mt_only || (mt_only && llvm_is_multithreaded()))
-          return mtx.tryacquire();
+        if (!mt_only || llvm_is_multithreaded())
+          return MutexImpl::tryacquire();
         return true;
       }
       
       private:
-        SmartMutex<mt_only>(const SmartMutex<mt_only> & original);
+        SmartMutex(const SmartMutex<mt_only> & original);
         void operator=(const SmartMutex<mt_only> &);
     };
     
