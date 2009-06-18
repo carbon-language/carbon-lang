@@ -29,13 +29,11 @@ FunctionPass *llvm::createX86CodePrinterPass(raw_ostream &o,
                                              bool verbose) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 
-  if (Subtarget->isFlavorIntel()) {
+  if (Subtarget->isFlavorIntel())
     return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo(),
                                   OptLevel, verbose);
-  } else {
-    return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(),
-                                OptLevel, verbose);
-  }
+  return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(),
+                              OptLevel, verbose);
 }
 
 namespace {
