@@ -407,7 +407,7 @@ Value *Value::DoPHITranslation(const BasicBlock *CurBB,
 /// not a value has an entry in this map.
 typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
 static ManagedStatic<ValueHandlesTy> ValueHandles;
-static ManagedStatic<sys::RWMutex> ValueHandlesLock;
+static ManagedStatic<sys::SmartRWMutex<true> > ValueHandlesLock;
 
 /// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
 /// List is known to point into the existing use list.
@@ -430,11 +430,10 @@ void ValueHandleBase::AddToUseList() {
   if (VP->HasValueHandle) {
     // If this value already has a ValueHandle, then it must be in the
     // ValueHandles map already.
-    if (llvm_is_multithreaded()) ValueHandlesLock->reader_acquire();
+    sys::SmartScopedReader<true> Reader(&*ValueHandlesLock);
     ValueHandleBase *&Entry = (*ValueHandles)[VP];
     assert(Entry != 0 && "Value doesn't have any handles?");
     AddToExistingUseList(&Entry);
-    if (llvm_is_multithreaded()) ValueHandlesLock->reader_release();
     return;
   }
   
@@ -443,7 +442,7 @@ void ValueHandleBase::AddToUseList() {
   // reallocate itself, which would invalidate all of the PrevP pointers that
   // point into the old table.  Handle this by checking for reallocation and
   // updating the stale pointers only if needed.
-  if (llvm_is_multithreaded()) ValueHandlesLock->writer_acquire();
+  sys::SmartScopedWriter<true> Writer(&*ValueHandlesLock);
   ValueHandlesTy &Handles = *ValueHandles;
   const void *OldBucketPtr = Handles.getPointerIntoBucketsArray();
   
@@ -456,7 +455,6 @@ void ValueHandleBase::AddToUseList() {
   // walk the table.
   if (Handles.isPointerIntoBucketsArray(OldBucketPtr) || 
       Handles.size() == 1) {
-    if (llvm_is_multithreaded()) ValueHandlesLock->writer_release();
     return;
   }
   
@@ -466,8 +464,6 @@ void ValueHandleBase::AddToUseList() {
     assert(I->second && I->first == I->second->VP && "List invariant broken!");
     I->second->setPrevPtr(&I->second);
   }
-  
-  if (llvm_is_multithreaded()) ValueHandlesLock->writer_release();
 }
 
 /// RemoveFromUseList - Remove this ValueHandle from its current use list.
@@ -488,13 +484,12 @@ void ValueHandleBase::RemoveFromUseList() {
   // If the Next pointer was null, then it is possible that this was the last
   // ValueHandle watching VP.  If so, delete its entry from the ValueHandles
   // map.
-  if (llvm_is_multithreaded()) ValueHandlesLock->writer_acquire();
+  sys::SmartScopedWriter<true> Writer(&*ValueHandlesLock);
   ValueHandlesTy &Handles = *ValueHandles;
   if (Handles.isPointerIntoBucketsArray(PrevPtr)) {
     Handles.erase(VP);
     VP->HasValueHandle = false;
   }
-  if (llvm_is_multithreaded()) ValueHandlesLock->writer_release();
 }
 
 
@@ -503,9 +498,9 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
 
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.
-  if (llvm_is_multithreaded()) ValueHandlesLock->reader_acquire();
+  ValueHandlesLock->reader_acquire();
   ValueHandleBase *Entry = (*ValueHandles)[V];
-  if (llvm_is_multithreaded()) ValueHandlesLock->reader_release();
+  ValueHandlesLock->reader_release();
   assert(Entry && "Value bit set but no entries exist");
   
   while (Entry) {
@@ -543,9 +538,9 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
   
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.
-  if (llvm_is_multithreaded()) ValueHandlesLock->reader_acquire();
+  ValueHandlesLock->reader_acquire();
   ValueHandleBase *Entry = (*ValueHandles)[Old];
-  if (llvm_is_multithreaded()) ValueHandlesLock->reader_release();
+  ValueHandlesLock->reader_release();
   assert(Entry && "Value bit set but no entries exist");
   
   while (Entry) {
