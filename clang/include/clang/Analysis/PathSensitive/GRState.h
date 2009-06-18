@@ -159,9 +159,16 @@ public:
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
   
-  const GRState *bind(Loc location, SVal V) const;
+  const GRState *bindExpr(Stmt* Ex, SVal V, bool isBlkExpr,
+                          bool Invalidate) const;
   
-  const GRState *bind(SVal location, SVal V) const;    
+  const GRState *bindExpr(Stmt* Ex, SVal V, bool Invalidate = true) const;  
+  
+  const GRState *bindLoc(Loc location, SVal V) const;
+  
+  const GRState *bindLoc(SVal location, SVal V) const;
+  
+  const GRState *unbindLoc(Loc LV) const;
 
   SVal getLValue(const VarDecl* VD) const;
 
@@ -234,11 +241,14 @@ public:
     virtual void Print(std::ostream& Out, const GRState* state,
                        const char* nl, const char* sep) = 0;
   };
+  
+  // Pretty-printing.
+  void print(std::ostream& Out, const char *nl = "\n",
+             const char *sep = "") const;  
 
-  void print(std::ostream& Out, StoreManager& StoreMgr,
-             ConstraintManager& ConstraintMgr,
-             Printer **Beg = 0, Printer **End = 0,
-             const char* nl = "\n", const char *sep = "") const; 
+  void printStdErr() const; 
+  
+  void printDOT(std::ostream& Out) const;  
   
   // Tags used for the Generic Data Map.
   struct NullDerefTag {
@@ -299,6 +309,7 @@ class GRStateRef;
   
 class GRStateManager {
   friend class GRExprEngine;
+  friend class GRState;
   friend class GRStateRef;
   
 private:
@@ -506,8 +517,6 @@ public:
   SVal GetBlkExprSVal(const GRState* St, Stmt* Ex) {
     return St->getEnvironment().GetBlkExprSVal(Ex, getBasicVals());
   }
-  
-  
   
   const GRState* BindExpr(const GRState* St, Stmt* Ex, SVal V,
                           bool isBlkExpr, bool Invalidate) {
@@ -731,12 +740,22 @@ public:
 // Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
 
-inline const GRState *GRState::bind(Loc LV, SVal V) const {
+inline const GRState *GRState::bindExpr(Stmt* Ex, SVal V, bool isBlkExpr,
+                                       bool Invalidate) const {
+  return Mgr->BindExpr(this, Ex, V, isBlkExpr, Invalidate);
+}
+
+inline const GRState *GRState::bindExpr(Stmt* Ex, SVal V,
+                                        bool Invalidate) const {
+  return Mgr->BindExpr(this, Ex, V, Invalidate);
+}
+  
+inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
   return Mgr->BindLoc(this, LV, V);
 }
 
-inline const GRState *GRState::bind(SVal LV, SVal V) const {
-  return !isa<Loc>(LV) ? this : bind(cast<Loc>(LV), V);
+inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
+  return !isa<Loc>(LV) ? this : bindLoc(cast<Loc>(LV), V);
 }
   
 inline SVal GRState::getLValue(const VarDecl* VD) const {
@@ -819,6 +838,10 @@ CB GRState::scanReachableSymbols(SVal val) const {
   CB cb(this);
   Mgr->scanReachableSymbols(val, this, cb);
   return cb;
+}
+  
+inline const GRState *GRState::unbindLoc(Loc LV) const {
+  return Mgr->Unbind(this, LV);
 }
 
 //===----------------------------------------------------------------------===//
@@ -957,15 +980,7 @@ public:
   }
   
   SymbolManager& getSymbolManager() { return Mgr->getSymbolManager(); }
-  BasicValueFactory& getBasicVals() { return Mgr->getBasicVals(); }
-  
-  // Pretty-printing.
-  void print(std::ostream& Out, const char* nl = "\n",
-             const char *sep = "") const;
-  
-  void printStdErr() const; 
-  
-  void printDOT(std::ostream& Out) const;
+  BasicValueFactory& getBasicVals() { return Mgr->getBasicVals(); }  
 };
 
 } // end clang namespace

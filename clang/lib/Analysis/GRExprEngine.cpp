@@ -1194,14 +1194,13 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
   
   // "Assume" that the pointer is NULL.
   bool isFeasibleNull = false;
-  GRStateRef StNull = GRStateRef(Assume(state, LV, false, isFeasibleNull),
-                                 getStateManager());
+  const GRState *StNull = Assume(state, LV, false, isFeasibleNull);
 
   if (isFeasibleNull) {
     
     // Use the Generic Data Map to mark in the state what lval was null.
     const SVal* PersistentLV = getBasicVals().getPersistentSVal(LV);
-    StNull = StNull.set<GRState::NullDerefTag>(PersistentLV);
+    StNull = StNull->set<GRState::NullDerefTag>(PersistentLV);
     
     // We don't use "MakeNode" here because the node will be a sink
     // and we have no intention of processing it later.
@@ -1771,16 +1770,16 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
   if (!Pred)
     return;
     
-  GRStateRef state = GRStateRef(GetState(Pred), getStateManager());
+  const GRState *state = GetState(Pred);
 
   // Handle the case where the container still has elements.
   QualType IntTy = getContext().IntTy;
   SVal TrueV = NonLoc::MakeVal(getBasicVals(), 1, IntTy);
-  GRStateRef hasElems = state.BindExpr(S, TrueV);
+  const GRState *hasElems = state->bindExpr(S, TrueV);
   
   // Handle the case where the container has no elements.
   SVal FalseV = NonLoc::MakeVal(getBasicVals(), 0, IntTy);
-  GRStateRef noElems = state.BindExpr(S, FalseV);
+  const GRState *noElems = state->bindExpr(S, FalseV);
   
   if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
     if (const TypedRegion* R = dyn_cast<TypedRegion>(MV->getRegion())) {
@@ -1792,11 +1791,11 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
       unsigned Count = Builder->getCurrentBlockCount();
       SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
       SVal V = Loc::MakeVal(getStoreManager().getRegionManager().getSymbolicRegion(Sym));
-      hasElems = hasElems.BindLoc(ElementV, V);
+      hasElems = hasElems->bindLoc(ElementV, V);
 
       // Bind the location to 'nil' on the false branch.
       SVal nilV = loc::ConcreteInt(getBasicVals().getValue(0, T));      
-      noElems = noElems.BindLoc(ElementV, nilV);      
+      noElems = noElems->bindLoc(ElementV, nilV);      
     }
   
   // Create the new nodes.
@@ -3353,8 +3352,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
     Out << "\\|StateID: " << (void*) N->getState() << "\\|";
 
-    GRStateRef state(N->getState(), GraphPrintCheckerState->getStateManager());
-    state.printDOT(Out);
+    const GRState *state = N->getState();
+    state->printDOT(Out);
       
     Out << "\\l";
     return Out.str();

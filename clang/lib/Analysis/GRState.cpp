@@ -101,13 +101,9 @@ const GRState* GRState::makeWithStore(Store store) const {
 //  State pretty-printing.
 //===----------------------------------------------------------------------===//
 
-void GRState::print(std::ostream& Out, StoreManager& StoreMgr,
-                    ConstraintManager& ConstraintMgr,
-                    Printer** Beg, Printer** End,
-                    const char* nl, const char* sep) const {
-  
+void GRState::print(std::ostream& Out, const char* nl, const char* sep) const {  
   // Print the store.
-  StoreMgr.print(getStore(), Out, nl, sep);
+  Mgr->getStoreManager().print(getStore(), Out, nl, sep);
   
   // Print Subexpression bindings.
   bool isFirst = true;
@@ -147,24 +143,21 @@ void GRState::print(std::ostream& Out, StoreManager& StoreMgr,
     I.getData().print(Out);
   }
   
-  ConstraintMgr.print(this, Out, nl, sep);
+  Mgr->getConstraintManager().print(this, Out, nl, sep);
   
-  // Print checker-specific data. 
-  for ( ; Beg != End ; ++Beg) (*Beg)->Print(Out, this, nl, sep);
+  // Print checker-specific data.
+  for (std::vector<Printer*>::iterator I = Mgr->Printers.begin(),
+                                       E = Mgr->Printers.end(); I != E; ++I) {
+    (*I)->Print(Out, this, nl, sep);
+  }
 }
 
-void GRStateRef::printDOT(std::ostream& Out) const {
+void GRState::printDOT(std::ostream& Out) const {
   print(Out, "\\l", "\\|");
 }
 
-void GRStateRef::printStdErr() const {
+void GRState::printStdErr() const {
   print(*llvm::cerr);
-}  
-
-void GRStateRef::print(std::ostream& Out, const char* nl, const char* sep)const{
-  GRState::Printer **beg = Mgr->Printers.empty() ? 0 : &Mgr->Printers[0];
-  GRState::Printer **end = !beg ? 0 : beg + Mgr->Printers.size();  
-  St->print(Out, *Mgr->StoreMgr, *Mgr->ConstraintMgr, beg, end, nl, sep);
 }
 
 //===----------------------------------------------------------------------===//
