@@ -9,6 +9,7 @@ endif()
 add_subdirectory(opt)
 add_subdirectory(llvm-as)
 add_subdirectory(llvm-dis)
+add_subdirectory(llvm-mc)
 
 add_subdirectory(llc)
 add_subdirectory(llvm-ranlib)
