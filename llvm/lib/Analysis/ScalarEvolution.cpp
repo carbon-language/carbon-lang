@@ -2580,6 +2580,24 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
           return getNotSCEV(getUMaxExpr(getNotSCEV(getSCEV(LHS)),
                                         getNotSCEV(getSCEV(RHS))));
         break;
+      case ICmpInst::ICMP_NE:
+        // n != 0 ? n : 1  ->  umax(n, 1)
+        if (LHS == U->getOperand(1) &&
+            isa<ConstantInt>(U->getOperand(2)) &&
+            cast<ConstantInt>(U->getOperand(2))->isOne() &&
+            isa<ConstantInt>(RHS) &&
+            cast<ConstantInt>(RHS)->isZero())
+          return getUMaxExpr(getSCEV(LHS), getSCEV(U->getOperand(2)));
+        break;
+      case ICmpInst::ICMP_EQ:
+        // n == 0 ? 1 : n  ->  umax(n, 1)
+        if (LHS == U->getOperand(2) &&
+            isa<ConstantInt>(U->getOperand(1)) &&
+            cast<ConstantInt>(U->getOperand(1))->isOne() &&
+            isa<ConstantInt>(RHS) &&
+            cast<ConstantInt>(RHS)->isZero())
+          return getUMaxExpr(getSCEV(LHS), getSCEV(U->getOperand(1)));
+        break;
       default:
         break;
       }
