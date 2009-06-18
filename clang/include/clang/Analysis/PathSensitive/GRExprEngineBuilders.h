@@ -83,11 +83,9 @@ public:
         Dst.Add(Pred);
     }
   }
-  
-  GRStateRef getState() {
-    return GRStateRef(state, Eng.getStateManager());
-  }
 
+  const GRState *getState() { return state; }
+  
   GRStateManager& getStateManager() {
     return Eng.getStateManager();
   }
