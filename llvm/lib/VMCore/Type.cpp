@@ -458,9 +458,9 @@ void DerivedType::dropAllTypeUses() {
     static Type *AlwaysOpaqueTy = 0;
     static PATypeHolder* Holder = 0;
     Type *tmp = AlwaysOpaqueTy;
-    sys::MemoryFence();
-    if (!tmp) {
-      if (llvm_is_multithreaded()) {
+    if (llvm_is_multithreaded()) {
+      sys::MemoryFence();
+      if (!tmp) {
         llvm_acquire_global_lock();
         tmp = AlwaysOpaqueTy;
         if (!tmp) {
@@ -472,12 +472,12 @@ void DerivedType::dropAllTypeUses() {
         }
       
         llvm_release_global_lock();
-      } else {
-        AlwaysOpaqueTy = OpaqueType::get();
-        Holder = new PATypeHolder(AlwaysOpaqueTy);
-      } 
-    }
-    
+      }
+    } else {
+      AlwaysOpaqueTy = OpaqueType::get();
+      Holder = new PATypeHolder(AlwaysOpaqueTy);
+    } 
+        
     ContainedTys[0] = AlwaysOpaqueTy;
 
     // Change the rest of the types to be Int32Ty's.  It doesn't matter what we

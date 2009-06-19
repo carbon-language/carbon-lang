@@ -198,9 +198,9 @@ static PassRegistrar *getPassRegistrar() {
   // Use double-checked locking to safely initialize the registrar when
   // we're running in multithreaded mode.
   PassRegistrar* tmp = PassRegistrarObj;
-  sys::MemoryFence();
-  if (!tmp) {
-    if (llvm_is_multithreaded()) {
+  if (llvm_is_multithreaded()) {
+    sys::MemoryFence();
+    if (!tmp) {
       llvm_acquire_global_lock();
       tmp = PassRegistrarObj;
       if (!tmp) {
@@ -209,10 +209,11 @@ static PassRegistrar *getPassRegistrar() {
         PassRegistrarObj = tmp;
       }
       llvm_release_global_lock();
-    } else {
-      PassRegistrarObj = new PassRegistrar();
     }
+  } else if (!tmp) {
+    PassRegistrarObj = new PassRegistrar();
   }
+  
   return PassRegistrarObj;
 }
 
