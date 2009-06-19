@@ -78,7 +78,7 @@ public:
 
   /// get() - Static factory methods - Return objects of the specified value.
   ///
-  static MDNode *get(Value*const* Vals, unsigned NumVals);
+  static MDNode *get(Value*const* Vals, unsigned NumVals, bool locked = true);
 
   Value *getElement(unsigned i) const {
     return Node[i];
@@ -117,7 +117,7 @@ public:
   /// duplicates
   void Profile(FoldingSetNodeID &ID) const;
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
     assert(0 && "This should never be called because MDNodes have no ops");
     abort();

@@ -28,11 +28,13 @@ namespace llvm {
   Constant *ConstantFoldCastInstruction(
     unsigned opcode,     ///< The opcode of the cast
     const Constant *V,   ///< The source constant
-    const Type *DestTy   ///< The destination type
+    const Type *DestTy,   ///< The destination type
+    bool locked = true
   );
   Constant *ConstantFoldSelectInstruction(const Constant *Cond,
                                           const Constant *V1,
-                                          const Constant *V2);
+                                          const Constant *V2,
+                                          bool locked = true);
   Constant *ConstantFoldExtractElementInstruction(const Constant *Val,
                                                   const Constant *Idx);
   Constant *ConstantFoldInsertElementInstruction(const Constant *Val,
@@ -49,12 +51,13 @@ namespace llvm {
                                                const unsigned* Idxs,
                                                unsigned NumIdx);
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
-                                          const Constant *V2);
+                                          const Constant *V2,
+                                          bool locked = true);
   Constant *ConstantFoldCompareInstruction(unsigned short predicate, 
                                            const Constant *C1, 
                                            const Constant *C2);
-  Constant *ConstantFoldGetElementPtr(const Constant *C,
-                                      Constant* const *Idxs, unsigned NumIdx);
+  Constant *ConstantFoldGetElementPtr(const Constant *C, Constant* const *Idxs,
+                                      unsigned NumIdx, bool locked = true);
 } // End llvm namespace
 
 #endif

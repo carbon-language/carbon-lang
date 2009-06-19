@@ -127,27 +127,27 @@ bool Constant::ContainsRelocations(unsigned Kind) const {
 }
 
 // Static constructor to create a '0' constant of arbitrary type...
-Constant *Constant::getNullValue(const Type *Ty) {
+Constant *Constant::getNullValue(const Type *Ty, bool locked) {
   static uint64_t zero[2] = {0, 0};
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
-    return ConstantInt::get(Ty, 0);
+    return ConstantInt::get(Ty, 0, locked);
   case Type::FloatTyID:
-    return ConstantFP::get(APFloat(APInt(32, 0)));
+    return ConstantFP::get(APFloat(APInt(32, 0)), locked);
   case Type::DoubleTyID:
-    return ConstantFP::get(APFloat(APInt(64, 0)));
+    return ConstantFP::get(APFloat(APInt(64, 0)), locked);
   case Type::X86_FP80TyID:
-    return ConstantFP::get(APFloat(APInt(80, 2, zero)));
+    return ConstantFP::get(APFloat(APInt(80, 2, zero)), locked);
   case Type::FP128TyID:
-    return ConstantFP::get(APFloat(APInt(128, 2, zero), true));
+    return ConstantFP::get(APFloat(APInt(128, 2, zero), true), locked);
   case Type::PPC_FP128TyID:
-    return ConstantFP::get(APFloat(APInt(128, 2, zero)));
+    return ConstantFP::get(APFloat(APInt(128, 2, zero)), locked);
   case Type::PointerTyID:
-    return ConstantPointerNull::get(cast<PointerType>(Ty));
+    return ConstantPointerNull::get(cast<PointerType>(Ty), locked);
   case Type::StructTyID:
   case Type::ArrayTyID:
   case Type::VectorTyID:
-    return ConstantAggregateZero::get(Ty);
+    return ConstantAggregateZero::get(Ty, locked);
   default:
     // Function, Label, or Opaque type?
     assert(!"Cannot create a null constant of that type!");
@@ -162,21 +162,22 @@ Constant *Constant::getAllOnesValue(const Type *Ty) {
 }
 
 // Static constructor to create an integral constant with all bits set
-ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
+ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty, bool locked) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    return ConstantInt::get(APInt::getAllOnesValue(ITy->getBitWidth()));
+    return ConstantInt::get(APInt::getAllOnesValue(ITy->getBitWidth()), locked);
   return 0;
 }
 
 /// @returns the value for a vector integer constant of the given type that
 /// has all its bits set to true.
 /// @brief Get the all ones value
-ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
+ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty,
+                                                bool locked) {
   std::vector<Constant*> Elts;
   Elts.resize(Ty->getNumElements(),
-              ConstantInt::getAllOnesValue(Ty->getElementType()));
+              ConstantInt::getAllOnesValue(Ty->getElementType(), locked));
   assert(Elts[0] && "Not a vector integer type!");
-  return cast<ConstantVector>(ConstantVector::get(Elts));
+  return cast<ConstantVector>(ConstantVector::get(Elts, locked));
 }
 
 
@@ -275,17 +276,19 @@ typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*,
 static ManagedStatic<IntMapTy> IntConstants;
 
 ConstantInt *ConstantInt::get(const IntegerType *Ty,
-                              uint64_t V, bool isSigned) {
-  return get(APInt(Ty->getBitWidth(), V, isSigned));
+                              uint64_t V, bool isSigned, bool locked) {
+  return get(APInt(Ty->getBitWidth(), V, isSigned), locked);
 }
 
-Constant *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
+Constant *ConstantInt::get(const Type *Ty, uint64_t V,
+                           bool isSigned, bool locked) {
   Constant *C = get(cast<IntegerType>(Ty->getScalarType()), V, isSigned);
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+    ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C),
+                        locked);
 
   return C;
 }
@@ -295,38 +298,42 @@ Constant *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
 // operator== and operator!= to ensure that the DenseMap doesn't attempt to
 // compare APInt's of different widths, which would violate an APInt class
 // invariant which generates an assertion.
-ConstantInt *ConstantInt::get(const APInt& V) {
+ConstantInt *ConstantInt::get(const APInt& V, bool locked) {
   // Get the corresponding integer type for the bit width of the value.
   const IntegerType *ITy = IntegerType::get(V.getBitWidth());
   // get an existing value or the insertion position
   DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
   
-  ConstantsLock->reader_acquire();
+  if (locked) ConstantsLock->reader_acquire();
   ConstantInt *&Slot = (*IntConstants)[Key]; 
-  ConstantsLock->reader_release();
+  if (locked) ConstantsLock->reader_release();
     
   if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
-    ConstantInt *&NewSlot = (*IntConstants)[Key]; 
-    if (!Slot) {
-      NewSlot = new ConstantInt(ITy, V);
+    if (locked) {
+      sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+      ConstantInt *&NewSlot = (*IntConstants)[Key]; 
+      if (!Slot) {
+        NewSlot = new ConstantInt(ITy, V);
+      }
+      return NewSlot;
+    } else {
+      Slot = new ConstantInt(ITy, V);
     }
-    
-    return NewSlot;
-  } else {
-    return Slot;
   }
+  
+  return Slot;
 }
 
-Constant *ConstantInt::get(const Type *Ty, const APInt &V) {
-  ConstantInt *C = ConstantInt::get(V);
+Constant *ConstantInt::get(const Type *Ty, const APInt &V, bool locked) {
+  ConstantInt *C = ConstantInt::get(V, locked);
   assert(C->getType() == Ty->getScalarType() &&
          "ConstantInt type doesn't match the type implied by its value!");
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C),
+                          locked);
 
   return C;
 }
@@ -405,17 +412,37 @@ typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*,
 
 static ManagedStatic<FPMapTy> FPConstants;
 
-ConstantFP *ConstantFP::get(const APFloat &V) {
+ConstantFP *ConstantFP::get(const APFloat &V, bool locked) {
   DenseMapAPFloatKeyInfo::KeyTy Key(V);
   
-  ConstantsLock->reader_acquire();
+  if (locked) ConstantsLock->reader_acquire();
   ConstantFP *&Slot = (*FPConstants)[Key];
-  ConstantsLock->reader_release();
+  if (locked) ConstantsLock->reader_release();
     
   if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
-    ConstantFP *&NewSlot = (*FPConstants)[Key];
-    if (!NewSlot) {
+    if (locked) {
+      sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+      ConstantFP *&NewSlot = (*FPConstants)[Key];
+      if (!NewSlot) {
+        const Type *Ty;
+        if (&V.getSemantics() == &APFloat::IEEEsingle)
+          Ty = Type::FloatTy;
+        else if (&V.getSemantics() == &APFloat::IEEEdouble)
+          Ty = Type::DoubleTy;
+        else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
+          Ty = Type::X86_FP80Ty;
+        else if (&V.getSemantics() == &APFloat::IEEEquad)
+          Ty = Type::FP128Ty;
+        else {
+          assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
+                 "Unknown FP format");
+          Ty = Type::PPC_FP128Ty;
+        }
+        NewSlot = new ConstantFP(Ty, V);
+      }
+      
+      return NewSlot;
+    } else {
       const Type *Ty;
       if (&V.getSemantics() == &APFloat::IEEEsingle)
         Ty = Type::FloatTy;
@@ -430,10 +457,8 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
                "Unknown FP format");
         Ty = Type::PPC_FP128Ty;
       }
-      NewSlot = new ConstantFP(Ty, V);
+      Slot = new ConstantFP(Ty, V);
     }
-    
-    return NewSlot;
   }
   
   return Slot;
@@ -442,17 +467,18 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
 /// get() - This returns a constant fp for the specified value in the
 /// specified type.  This should only be used for simple constant values like
 /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-Constant *ConstantFP::get(const Type *Ty, double V) {
+Constant *ConstantFP::get(const Type *Ty, double V, bool locked) {
   APFloat FV(V);
   bool ignored;
   FV.convert(*TypeToFloatSemantics(Ty->getScalarType()),
              APFloat::rmNearestTiesToEven, &ignored);
-  Constant *C = get(FV);
+  Constant *C = get(FV, locked);
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C), 
+                          locked);
 
   return C;
 }
@@ -856,50 +882,50 @@ Constant *ConstantExpr::getNot(Constant *C) {
   return get(Instruction::Xor, C,
              Constant::getAllOnesValue(C->getType()));
 }
-Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
-  return get(Instruction::Add, C1, C2);
+Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::Add, C1, C2, locked);
 }
-Constant *ConstantExpr::getFAdd(Constant *C1, Constant *C2) {
-  return get(Instruction::FAdd, C1, C2);
+Constant *ConstantExpr::getFAdd(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::FAdd, C1, C2, locked);
 }
-Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
-  return get(Instruction::Sub, C1, C2);
+Constant *ConstantExpr::getSub(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::Sub, C1, C2, locked);
 }
-Constant *ConstantExpr::getFSub(Constant *C1, Constant *C2) {
-  return get(Instruction::FSub, C1, C2);
+Constant *ConstantExpr::getFSub(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::FSub, C1, C2, locked);
 }
-Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
-  return get(Instruction::Mul, C1, C2);
+Constant *ConstantExpr::getMul(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::Mul, C1, C2, locked);
 }
-Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2) {
-  return get(Instruction::FMul, C1, C2);
+Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::FMul, C1, C2, locked);
 }
-Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::UDiv, C1, C2);
+Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::UDiv, C1, C2, locked);
 }
-Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::SDiv, C1, C2);
+Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::SDiv, C1, C2, locked);
 }
-Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::FDiv, C1, C2);
+Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::FDiv, C1, C2, locked);
 }
-Constant *ConstantExpr::getURem(Constant *C1, Constant *C2) {
-  return get(Instruction::URem, C1, C2);
+Constant *ConstantExpr::getURem(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::URem, C1, C2, locked);
 }
-Constant *ConstantExpr::getSRem(Constant *C1, Constant *C2) {
-  return get(Instruction::SRem, C1, C2);
+Constant *ConstantExpr::getSRem(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::SRem, C1, C2, locked);
 }
-Constant *ConstantExpr::getFRem(Constant *C1, Constant *C2) {
-  return get(Instruction::FRem, C1, C2);
+Constant *ConstantExpr::getFRem(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::FRem, C1, C2, locked);
 }
-Constant *ConstantExpr::getAnd(Constant *C1, Constant *C2) {
-  return get(Instruction::And, C1, C2);
+Constant *ConstantExpr::getAnd(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::And, C1, C2, locked);
 }
-Constant *ConstantExpr::getOr(Constant *C1, Constant *C2) {
-  return get(Instruction::Or, C1, C2);
+Constant *ConstantExpr::getOr(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::Or, C1, C2, locked);
 }
-Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
-  return get(Instruction::Xor, C1, C2);
+Constant *ConstantExpr::getXor(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::Xor, C1, C2, locked);
 }
 unsigned ConstantExpr::getPredicate() const {
   assert(getOpcode() == Instruction::FCmp || 
@@ -908,14 +934,14 @@ unsigned ConstantExpr::getPredicate() const {
          getOpcode() == Instruction::VICmp);
   return ((const CompareConstantExpr*)this)->predicate;
 }
-Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
-  return get(Instruction::Shl, C1, C2);
+Constant *ConstantExpr::getShl(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::Shl, C1, C2, locked);
 }
-Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2) {
-  return get(Instruction::LShr, C1, C2);
+Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::LShr, C1, C2, locked);
 }
-Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2) {
-  return get(Instruction::AShr, C1, C2);
+Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2, bool locked) {
+  return get(Instruction::AShr, C1, C2, locked);
 }
 
 /// getWithOperandReplaced - Return a constant expression identical to this
@@ -1251,9 +1277,30 @@ public:
         
       return Result;
     }
+    
+    /// unlockedGetOrCreate - Return the specified constant from the map,
+    /// creating it if necessary. This version performs no locking, and should
+    /// only be used during recursive type refinement, when the locks are 
+    /// already held.
+    ConstantClass *unlockedGetOrCreate(const TypeClass *Ty, const ValType &V) {
+      MapKey Lookup(Ty, V);
+      ConstantClass* Result = 0;
+      
+      typename MapTy::iterator I = Map.find(Lookup);
+      // Is it in the map?  
+      if (I != Map.end())
+        Result = static_cast<ConstantClass *>(I->second);
+        
+      if (!Result) {
+        // If no preexisting value, create one now...
+        Result = Create(Ty, V, I);
+      }
+        
+      return Result;
+    }
 
-    void remove(ConstantClass *CP) {
-      ConstantsLock->writer_acquire();
+    void remove(ConstantClass *CP, bool locked = true) {
+      if (locked) ConstantsLock->writer_acquire();
       typename MapTy::iterator I = FindExistingElement(CP);
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
@@ -1302,7 +1349,7 @@ public:
 
       Map.erase(I);
       
-      ConstantsLock->writer_release();
+      if (locked) ConstantsLock->writer_release();
     }
 
     
@@ -1392,10 +1439,10 @@ namespace llvm {
   struct ConvertConstantType<ConstantAggregateZero, Type> {
     static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
       // Make everyone now use a constant of the new type...
-      Constant *New = ConstantAggregateZero::get(NewTy);
+      Constant *New = ConstantAggregateZero::get(NewTy, false);
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();     // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 }
@@ -1405,19 +1452,19 @@ static ManagedStatic<ValueMap<char, Type,
 
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 
-ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty) {
+ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty, bool locked) {
   assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
-  
-  // Implicitly locked.
-  return AggZeroConstants->getOrCreate(Ty, 0);
+
+  return locked ? AggZeroConstants->getOrCreate(Ty, 0) :
+                  AggZeroConstants->unlockedGetOrCreate(Ty, 0);
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
-void ConstantAggregateZero::destroyConstant() {
+void ConstantAggregateZero::destroyConstant(bool locked) {
   // Implicitly locked.
-  AggZeroConstants->remove(this);
+  AggZeroConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -1431,10 +1478,10 @@ namespace llvm {
       std::vector<Constant*> C;
       for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
         C.push_back(cast<Constant>(OldC->getOperand(i)));
-      Constant *New = ConstantArray::get(NewTy, C);
+      Constant *New = ConstantArray::get(NewTy, C, false);
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();    // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 }
@@ -1452,29 +1499,36 @@ typedef ValueMap<std::vector<Constant*>, ArrayType,
 static ManagedStatic<ArrayConstantsTy> ArrayConstants;
 
 Constant *ConstantArray::get(const ArrayType *Ty,
-                             const std::vector<Constant*> &V) {
+                             const std::vector<Constant*> &V,
+                             bool locked) {
   // If this is an all-zero array, return a ConstantAggregateZero object
   if (!V.empty()) {
     Constant *C = V[0];
     if (!C->isNullValue()) {
-      // Implicitly locked.
-      return ArrayConstants->getOrCreate(Ty, V);
+      if (locked)
+        // Implicitly locked.
+        return ArrayConstants->getOrCreate(Ty, V);
+      else
+        return ArrayConstants->unlockedGetOrCreate(Ty, V);
     }
     for (unsigned i = 1, e = V.size(); i != e; ++i)
       if (V[i] != C) {
-        // Implicitly locked.
-        return ArrayConstants->getOrCreate(Ty, V);
+        if (locked)
+          // Implicitly locked.
+          return ArrayConstants->getOrCreate(Ty, V);
+        else
+          return ArrayConstants->unlockedGetOrCreate(Ty, V);
       }
   }
   
-  return ConstantAggregateZero::get(Ty);
+  return ConstantAggregateZero::get(Ty, locked);
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
-void ConstantArray::destroyConstant() {
+void ConstantArray::destroyConstant(bool locked) {
   // Implicitly locked.
-  ArrayConstants->remove(this);
+  ArrayConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -1484,7 +1538,8 @@ void ConstantArray::destroyConstant() {
 /// Otherwise, the length parameter specifies how much of the string to use 
 /// and it won't be null terminated.
 ///
-Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
+Constant *ConstantArray::get(const std::string &Str,
+                             bool AddNull, bool locked) {
   std::vector<Constant*> ElementVals;
   for (unsigned i = 0; i < Str.length(); ++i)
     ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
@@ -1495,7 +1550,7 @@ Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
   }
 
   ArrayType *ATy = ArrayType::get(Type::Int8Ty, ElementVals.size());
-  return ConstantArray::get(ATy, ElementVals);
+  return ConstantArray::get(ATy, ElementVals, locked);
 }
 
 /// isString - This method returns true if the array is an array of i8, and 
@@ -1559,11 +1614,11 @@ namespace llvm {
       std::vector<Constant*> C;
       for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
         C.push_back(cast<Constant>(OldC->getOperand(i)));
-      Constant *New = ConstantStruct::get(NewTy, C);
+      Constant *New = ConstantStruct::get(NewTy, C, false);
       assert(New != OldC && "Didn't replace constant??");
 
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();    // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 }
@@ -1581,29 +1636,31 @@ static std::vector<Constant*> getValType(ConstantStruct *CS) {
 }
 
 Constant *ConstantStruct::get(const StructType *Ty,
-                              const std::vector<Constant*> &V) {
+                              const std::vector<Constant*> &V,
+                              bool locked) {
   // Create a ConstantAggregateZero value if all elements are zeros...
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     if (!V[i]->isNullValue())
-      // Implicitly locked.
-      return StructConstants->getOrCreate(Ty, V);
+      return locked ? StructConstants->getOrCreate(Ty, V) :
+                      StructConstants->unlockedGetOrCreate(Ty, V);
 
-  return ConstantAggregateZero::get(Ty);
+  return ConstantAggregateZero::get(Ty, locked);
 }
 
-Constant *ConstantStruct::get(const std::vector<Constant*> &V, bool packed) {
+Constant *ConstantStruct::get(const std::vector<Constant*> &V, bool packed,
+                              bool locked) {
   std::vector<const Type*> StructEls;
   StructEls.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     StructEls.push_back(V[i]->getType());
-  return get(StructType::get(StructEls, packed), V);
+  return get(StructType::get(StructEls, packed), V, locked);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantStruct::destroyConstant() {
+void ConstantStruct::destroyConstant(bool locked) {
   // Implicitly locked.
-  StructConstants->remove(this);
+  StructConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -1617,10 +1674,10 @@ namespace llvm {
       std::vector<Constant*> C;
       for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
         C.push_back(cast<Constant>(OldC->getOperand(i)));
-      Constant *New = ConstantVector::get(NewTy, C);
+      Constant *New = ConstantVector::get(NewTy, C, false);
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();    // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 }
@@ -1637,7 +1694,8 @@ static ManagedStatic<ValueMap<std::vector<Constant*>, VectorType,
                               ConstantVector> > VectorConstants;
 
 Constant *ConstantVector::get(const VectorType *Ty,
-                              const std::vector<Constant*> &V) {
+                              const std::vector<Constant*> &V,
+                              bool locked) {
   assert(!V.empty() && "Vectors can't be empty");
   // If this is an all-undef or alll-zero vector, return a
   // ConstantAggregateZero or UndefValue.
@@ -1654,24 +1712,24 @@ Constant *ConstantVector::get(const VectorType *Ty,
   }
   
   if (isZero)
-    return ConstantAggregateZero::get(Ty);
+    return ConstantAggregateZero::get(Ty, locked);
   if (isUndef)
-    return UndefValue::get(Ty);
+    return UndefValue::get(Ty, locked);
     
-  // Implicitly locked.
-  return VectorConstants->getOrCreate(Ty, V);
+  return locked ? VectorConstants->getOrCreate(Ty, V) :
+                  VectorConstants->unlockedGetOrCreate(Ty, V);
 }
 
-Constant *ConstantVector::get(const std::vector<Constant*> &V) {
+Constant *ConstantVector::get(const std::vector<Constant*> &V, bool locked) {
   assert(!V.empty() && "Cannot infer type if V is empty");
-  return get(VectorType::get(V.front()->getType(),V.size()), V);
+  return get(VectorType::get(V.front()->getType(),V.size()), V, locked);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantVector::destroyConstant() {
+void ConstantVector::destroyConstant(bool locked) {
   // Implicitly locked.
-  VectorConstants->remove(this);
+  VectorConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -1718,10 +1776,10 @@ namespace llvm {
   struct ConvertConstantType<ConstantPointerNull, PointerType> {
     static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
       // Make everyone now use a constant of the new type...
-      Constant *New = ConstantPointerNull::get(NewTy);
+      Constant *New = ConstantPointerNull::get(NewTy, false);
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();     // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 }
@@ -1734,16 +1792,18 @@ static char getValType(ConstantPointerNull *) {
 }
 
 
-ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
+ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty,
+                                              bool locked) {
   // Implicitly locked.
-  return NullPtrConstants->getOrCreate(Ty, 0);
+  return locked ? NullPtrConstants->getOrCreate(Ty, 0) :
+                  NullPtrConstants->unlockedGetOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantPointerNull::destroyConstant() {
+void ConstantPointerNull::destroyConstant(bool locked) {
   // Implicitly locked.
-  NullPtrConstants->remove(this);
+  NullPtrConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -1764,10 +1824,10 @@ namespace llvm {
   struct ConvertConstantType<UndefValue, Type> {
     static void convert(UndefValue *OldC, const Type *NewTy) {
       // Make everyone now use a constant of the new type.
-      Constant *New = UndefValue::get(NewTy);
+      Constant *New = UndefValue::get(NewTy, false);
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();     // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 }
@@ -1779,16 +1839,16 @@ static char getValType(UndefValue *) {
 }
 
 
-UndefValue *UndefValue::get(const Type *Ty) {
-  // Implicitly locked.
-  return UndefValueConstants->getOrCreate(Ty, 0);
+UndefValue *UndefValue::get(const Type *Ty, bool locked) {
+  return locked ? UndefValueConstants->getOrCreate(Ty, 0) :
+                  UndefValueConstants->unlockedGetOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
-void UndefValue::destroyConstant() {
+void UndefValue::destroyConstant(bool locked) {
   // Implicitly locked.
-  UndefValueConstants->remove(this);
+  UndefValueConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -1801,21 +1861,25 @@ MDString::MDString(const char *begin, const char *end)
 
 static ManagedStatic<StringMap<MDString*> > MDStringCache;
 
-MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+MDString *MDString::get(const char *StrBegin, const char *StrEnd, bool locked) {
+  if (locked) ConstantsLock->writer_acquire();
+  
   StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
                                         StrBegin, StrEnd);
   MDString *&S = Entry.getValue();
   if (!S) S = new MDString(Entry.getKeyData(),
                            Entry.getKeyData() + Entry.getKeyLength());
 
+  if (locked) ConstantsLock->writer_release();
+
   return S;
 }
 
-void MDString::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+void MDString::destroyConstant(bool locked) {
+  if (locked) ConstantsLock->writer_acquire();
   MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
   destroyConstantImpl();
+  if (locked) ConstantsLock->writer_release();
 }
 
 //---- MDNode::get() implementation
@@ -1834,20 +1898,26 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(*I);
 }
 
-MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
+MDNode *MDNode::get(Value*const* Vals, unsigned NumVals, bool locked) {
   FoldingSetNodeID ID;
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
 
-  ConstantsLock->reader_acquire();
+  if (locked) ConstantsLock->reader_acquire();
   void *InsertPoint;
   MDNode *N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
-  ConstantsLock->reader_release();
+  if (locked) ConstantsLock->reader_release();
   
   if (!N) {
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
-    N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
-    if (!N) {
+    if (locked) {
+      sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+      N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
+      if (!N) {
+        // InsertPoint will have been set by the FindNodeOrInsertPos call.
+        N = new(0) MDNode(Vals, NumVals);
+        MDNodeSet->InsertNode(N, InsertPoint);
+      }
+    } else {
       // InsertPoint will have been set by the FindNodeOrInsertPos call.
       N = new(0) MDNode(Vals, NumVals);
       MDNodeSet->InsertNode(N, InsertPoint);
@@ -1856,11 +1926,11 @@ MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
   return N;
 }
 
-void MDNode::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock); 
+void MDNode::destroyConstant(bool locked) {
+  if (locked) ConstantsLock->writer_acquire();
   MDNodeSet->RemoveNode(this);
-  
   destroyConstantImpl();
+  if (locked) ConstantsLock->writer_release();
 }
 
 //---- ConstantExpr::get() implementations...
@@ -1971,30 +2041,30 @@ namespace llvm {
       case Instruction::IntToPtr:
       case Instruction::BitCast:
         New = ConstantExpr::getCast(OldC->getOpcode(), OldC->getOperand(0), 
-                                    NewTy);
+                                    NewTy, false);
         break;
       case Instruction::Select:
         New = ConstantExpr::getSelectTy(NewTy, OldC->getOperand(0),
                                         OldC->getOperand(1),
-                                        OldC->getOperand(2));
+                                        OldC->getOperand(2), false);
         break;
       default:
         assert(OldC->getOpcode() >= Instruction::BinaryOpsBegin &&
                OldC->getOpcode() <  Instruction::BinaryOpsEnd);
         New = ConstantExpr::getTy(NewTy, OldC->getOpcode(), OldC->getOperand(0),
-                                  OldC->getOperand(1));
+                                  OldC->getOperand(1), false);
         break;
       case Instruction::GetElementPtr:
         // Make everyone now use a constant of the new type...
         std::vector<Value*> Idx(OldC->op_begin()+1, OldC->op_end());
         New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0),
-                                               &Idx[0], Idx.size());
+                                               &Idx[0], Idx.size(), false);
         break;
       }
 
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();    // This constant is now dead, destroy it.
+      OldC->destroyConstant(false);    // This constant is now dead, destroy it.
     }
   };
 } // end namespace llvm
@@ -2017,10 +2087,10 @@ static ManagedStatic<ValueMap<ExprMapKeyType, Type,
 /// This is a utility function to handle folding of casts and lookup of the
 /// cast in the ExprConstants map. It is used by the various get* methods below.
 static inline Constant *getFoldedCast(
-  Instruction::CastOps opc, Constant *C, const Type *Ty) {
+  Instruction::CastOps opc, Constant *C, const Type *Ty, bool locked) {
   assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
   // Fold a few common cases
-  if (Constant *FC = ConstantFoldCastInstruction(opc, C, Ty))
+  if (Constant *FC = ConstantFoldCastInstruction(opc, C, Ty, locked))
     return FC;
 
   // Look up the constant in the table first to ensure uniqueness
@@ -2028,10 +2098,12 @@ static inline Constant *getFoldedCast(
   ExprMapKeyType Key(opc, argVec);
   
   // Implicitly locked.
-  return ExprConstants->getOrCreate(Ty, Key);
+  return locked ? ExprConstants->getOrCreate(Ty, Key) :
+                  ExprConstants->unlockedGetOrCreate(Ty, Key);  
 }
  
-Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty,
+                                bool locked) {
   Instruction::CastOps opc = Instruction::CastOps(oc);
   assert(Instruction::isCast(opc) && "opcode out of range");
   assert(C && Ty && "Null arguments to getCast");
@@ -2041,18 +2113,18 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
     default:
       assert(0 && "Invalid cast opcode");
       break;
-    case Instruction::Trunc:    return getTrunc(C, Ty);
-    case Instruction::ZExt:     return getZExt(C, Ty);
-    case Instruction::SExt:     return getSExt(C, Ty);
-    case Instruction::FPTrunc:  return getFPTrunc(C, Ty);
-    case Instruction::FPExt:    return getFPExtend(C, Ty);
-    case Instruction::UIToFP:   return getUIToFP(C, Ty);
-    case Instruction::SIToFP:   return getSIToFP(C, Ty);
-    case Instruction::FPToUI:   return getFPToUI(C, Ty);
-    case Instruction::FPToSI:   return getFPToSI(C, Ty);
-    case Instruction::PtrToInt: return getPtrToInt(C, Ty);
-    case Instruction::IntToPtr: return getIntToPtr(C, Ty);
-    case Instruction::BitCast:  return getBitCast(C, Ty);
+    case Instruction::Trunc:    return getTrunc(C, Ty, locked);
+    case Instruction::ZExt:     return getZExt(C, Ty, locked);
+    case Instruction::SExt:     return getSExt(C, Ty, locked);
+    case Instruction::FPTrunc:  return getFPTrunc(C, Ty, locked);
+    case Instruction::FPExt:    return getFPExtend(C, Ty, locked);
+    case Instruction::UIToFP:   return getUIToFP(C, Ty, locked);
+    case Instruction::SIToFP:   return getSIToFP(C, Ty, locked);
+    case Instruction::FPToUI:   return getFPToUI(C, Ty, locked);
+    case Instruction::FPToSI:   return getFPToSI(C, Ty, locked);
+    case Instruction::PtrToInt: return getPtrToInt(C, Ty, locked);
+    case Instruction::IntToPtr: return getIntToPtr(C, Ty, locked);
+    case Instruction::BitCast:  return getBitCast(C, Ty, locked);
   }
   return 0;
 } 
@@ -2063,10 +2135,11 @@ Constant *ConstantExpr::getZExtOrBitCast(Constant *C, const Type *Ty) {
   return getCast(Instruction::ZExt, C, Ty);
 }
 
-Constant *ConstantExpr::getSExtOrBitCast(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getSExtOrBitCast(Constant *C, const Type *Ty,
+                                         bool locked) {
   if (C->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
-    return getCast(Instruction::BitCast, C, Ty);
-  return getCast(Instruction::SExt, C, Ty);
+    return getCast(Instruction::BitCast, C, Ty, locked);
+  return getCast(Instruction::SExt, C, Ty, locked);
 }
 
 Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
@@ -2075,13 +2148,14 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
   return getCast(Instruction::Trunc, C, Ty);
 }
 
-Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
+Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty,
+                                       bool locked) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
   assert((Ty->isInteger() || isa<PointerType>(Ty)) && "Invalid cast");
 
   if (Ty->isInteger())
-    return getCast(Instruction::PtrToInt, S, Ty);
-  return getCast(Instruction::BitCast, S, Ty);
+    return getCast(Instruction::PtrToInt, S, Ty, locked);
+  return getCast(Instruction::BitCast, S, Ty, locked);
 }
 
 Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty, 
@@ -2109,7 +2183,7 @@ Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
   return getCast(opcode, C, Ty);
 }
 
-Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2120,10 +2194,10 @@ Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
   assert(C->getType()->getScalarSizeInBits() > Ty->getScalarSizeInBits()&&
          "SrcTy must be larger than DestTy for Trunc!");
 
-  return getFoldedCast(Instruction::Trunc, C, Ty);
+  return getFoldedCast(Instruction::Trunc, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2134,10 +2208,10 @@ Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
   assert(C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "SrcTy must be smaller than DestTy for SExt!");
 
-  return getFoldedCast(Instruction::SExt, C, Ty);
+  return getFoldedCast(Instruction::SExt, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2148,10 +2222,10 @@ Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
   assert(C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "SrcTy must be smaller than DestTy for ZExt!");
 
-  return getFoldedCast(Instruction::ZExt, C, Ty);
+  return getFoldedCast(Instruction::ZExt, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getFPTrunc(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getFPTrunc(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2160,10 +2234,10 @@ Constant *ConstantExpr::getFPTrunc(Constant *C, const Type *Ty) {
   assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          C->getType()->getScalarSizeInBits() > Ty->getScalarSizeInBits()&&
          "This is an illegal floating point truncation!");
-  return getFoldedCast(Instruction::FPTrunc, C, Ty);
+  return getFoldedCast(Instruction::FPTrunc, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2172,10 +2246,10 @@ Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
   assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "This is an illegal floating point extension!");
-  return getFoldedCast(Instruction::FPExt, C, Ty);
+  return getFoldedCast(Instruction::FPExt, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2183,10 +2257,10 @@ Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
          "This is an illegal uint to floating point cast!");
-  return getFoldedCast(Instruction::UIToFP, C, Ty);
+  return getFoldedCast(Instruction::UIToFP, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2194,10 +2268,10 @@ Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
          "This is an illegal sint to floating point cast!");
-  return getFoldedCast(Instruction::SIToFP, C, Ty);
+  return getFoldedCast(Instruction::SIToFP, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2205,10 +2279,10 @@ Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
          "This is an illegal floating point to uint cast!");
-  return getFoldedCast(Instruction::FPToUI, C, Ty);
+  return getFoldedCast(Instruction::FPToUI, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty, bool locked) {
 #ifndef NDEBUG
   bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
@@ -2216,22 +2290,25 @@ Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
   assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
          "This is an illegal floating point to sint cast!");
-  return getFoldedCast(Instruction::FPToSI, C, Ty);
+  return getFoldedCast(Instruction::FPToSI, C, Ty, locked);
 }
 
-Constant *ConstantExpr::getPtrToInt(Constant *C, const Type *DstTy) {
+Constant *ConstantExpr::getPtrToInt(Constant *C, const Type *DstTy,
+                                    bool locked) {
   assert(isa<PointerType>(C->getType()) && "PtrToInt source must be pointer");
   assert(DstTy->isInteger() && "PtrToInt destination must be integral");
-  return getFoldedCast(Instruction::PtrToInt, C, DstTy);
+  return getFoldedCast(Instruction::PtrToInt, C, DstTy, locked);
 }
 
-Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy) {
+Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy,
+                                    bool locked) {
   assert(C->getType()->isInteger() && "IntToPtr source must be integral");
   assert(isa<PointerType>(DstTy) && "IntToPtr destination must be a pointer");
-  return getFoldedCast(Instruction::IntToPtr, C, DstTy);
+  return getFoldedCast(Instruction::IntToPtr, C, DstTy, locked);
 }
 
-Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
+Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy,
+                                   bool locked) {
   // BitCast implies a no-op cast of type only. No bits change.  However, you 
   // can't cast pointers to anything but pointers.
 #ifndef NDEBUG
@@ -2251,7 +2328,7 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   // speedily.
   if (C->getType() == DstTy) return C;
   
-  return getFoldedCast(Instruction::BitCast, C, DstTy);
+  return getFoldedCast(Instruction::BitCast, C, DstTy, locked);
 }
 
 Constant *ConstantExpr::getAlignOf(const Type *Ty) {
@@ -2274,7 +2351,7 @@ Constant *ConstantExpr::getSizeOf(const Type *Ty) {
 }
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
-                              Constant *C1, Constant *C2) {
+                              Constant *C1, Constant *C2, bool locked) {
   // Check the operands for consistency first
   assert(Opcode >= Instruction::BinaryOpsBegin &&
          Opcode <  Instruction::BinaryOpsEnd   &&
@@ -2283,14 +2360,14 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
          "Operand types in binary constant expression should match");
 
   if (ReqTy == C1->getType() || ReqTy == Type::Int1Ty)
-    if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
+    if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2, locked))
       return FC;          // Fold a few common cases...
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key(Opcode, argVec);
   
-  // Implicitly locked.
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  return locked ? ExprConstants->getOrCreate(ReqTy, Key) :
+                  ExprConstants->unlockedGetOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
@@ -2315,7 +2392,8 @@ Constant *ConstantExpr::getCompareTy(unsigned short predicate,
   }
 }
 
-Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
+                            bool locked) {
   // API compatibility: Adjust integer opcodes to floating-point opcodes.
   if (C1->getType()->isFPOrFPVector()) {
     if (Opcode == Instruction::Add) Opcode = Instruction::FAdd;
@@ -2380,7 +2458,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   }
 #endif
 
-  return getTy(C1->getType(), Opcode, C1, C2);
+  return getTy(C1->getType(), Opcode, C1, C2, locked);
 }
 
 Constant *ConstantExpr::getCompare(unsigned short pred, 
@@ -2390,11 +2468,11 @@ Constant *ConstantExpr::getCompare(unsigned short pred,
 }
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
-                                    Constant *V1, Constant *V2) {
+                                    Constant *V1, Constant *V2, bool locked) {
   assert(!SelectInst::areInvalidOperands(C, V1, V2)&&"Invalid select operands");
 
   if (ReqTy == V1->getType())
-    if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
+    if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2, locked))
       return SC;        // Fold common cases
 
   std::vector<Constant*> argVec(3, C);
@@ -2402,19 +2480,20 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   argVec[2] = V2;
   ExprMapKeyType Key(Instruction::Select, argVec);
   
-  // Implicitly locked.
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  return locked ? ExprConstants->getOrCreate(ReqTy, Key) :
+                  ExprConstants->unlockedGetOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                            Value* const *Idxs,
-                                           unsigned NumIdx) {
+                                           unsigned NumIdx, bool locked) {
   assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs,
                                            Idxs+NumIdx) ==
          cast<PointerType>(ReqTy)->getElementType() &&
          "GEP indices invalid!");
 
-  if (Constant *FC = ConstantFoldGetElementPtr(C, (Constant**)Idxs, NumIdx))
+  if (Constant *FC = ConstantFoldGetElementPtr(C, (Constant**)Idxs,
+                                               NumIdx, locked))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&
@@ -2428,22 +2507,24 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
   const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec);
 
   // Implicitly locked.
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  return locked ? ExprConstants->getOrCreate(ReqTy, Key) :
+                  ExprConstants->unlockedGetOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
-                                         unsigned NumIdx) {
+                                         unsigned NumIdx, bool locked) {
   // Get the result type of the getelementptr!
   const Type *Ty = 
     GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
   assert(Ty && "GEP indices invalid!");
   unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
-  return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
+  return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs,  
+                            NumIdx, locked);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant* const *Idxs,
-                                         unsigned NumIdx) {
-  return getGetElementPtr(C, (Value* const *)Idxs, NumIdx);
+                                         unsigned NumIdx, bool locked) {
+  return getGetElementPtr(C, (Value* const *)Idxs, NumIdx, locked);
 }
 
 
@@ -2722,9 +2803,8 @@ Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantExpr::destroyConstant() {
-  // Implicitly locked.
-  ExprConstants->remove(this);
+void ConstantExpr::destroyConstant(bool locked) {
+  ExprConstants->remove(this, locked);
   destroyConstantImpl();
 }
 
@@ -2861,6 +2941,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   Constant *Replacement = 0;
   if (isAllZeros) {
+    // We're 
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.

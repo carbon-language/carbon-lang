@@ -109,11 +109,13 @@ public:
   /// the type.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const IntegerType *Ty,
-                          uint64_t V, bool isSigned = false);
+                          uint64_t V, bool isSigned = false,
+                          bool locked = true);
 
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
-  static Constant *get(const Type *Ty, uint64_t V, bool isSigned = false);
+  static Constant *get(const Type *Ty, uint64_t V,
+                       bool isSigned = false, bool locked = true);
 
   /// Return a ConstantInt with the specified value for the specified type. The
   /// value V will be canonicalized to a an unsigned APInt. Accessing it with
@@ -129,11 +131,11 @@ public:
 
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
-  static ConstantInt *get(const APInt &V);
+  static ConstantInt *get(const APInt &V, bool locked = true);
 
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
-  static Constant *get(const Type *Ty, const APInt &V);
+  static Constant *get(const Type *Ty, const APInt &V, bool locked = true);
 
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -230,7 +232,7 @@ public:
   /// @returns the value for an integer constant of the given type that has all
   /// its bits set to true.
   /// @brief Get the all ones value
-  static ConstantInt *getAllOnesValue(const Type *Ty);
+  static ConstantInt *getAllOnesValue(const Type *Ty, bool locked = true);
 
   /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ConstantInt *) { return true; }
@@ -259,13 +261,13 @@ protected:
   }
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantFP *get(const APFloat &V);
+  static ConstantFP *get(const APFloat &V, bool locked = true);
 
   /// get() - This returns a ConstantFP, or a vector containing a splat of a
   /// ConstantFP, for the specified value in the specified type.  This should
   /// only be used for simple constant values like 2.0/1.0 etc, that are
   /// known-valid both as host double and as the target format.
-  static Constant *get(const Type *Ty, double V);
+  static Constant *get(const Type *Ty, double V, bool locked = true);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);
@@ -321,13 +323,13 @@ protected:
 public:
   /// get() - static factory method for creating a null aggregate.  It is
   /// illegal to call this method with a non-aggregate type.
-  static ConstantAggregateZero *get(const Type *Ty);
+  static ConstantAggregateZero *get(const Type *Ty, bool locked = true);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return true; }
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -349,9 +351,11 @@ protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
+  static Constant *get(const ArrayType *T, const std::vector<Constant*> &,
+                       bool locked = true);
   static Constant *get(const ArrayType *T,
-                       Constant*const*Vals, unsigned NumVals) {
+                       Constant*const*Vals, unsigned NumVals,
+                       bool locked = true) {
     // FIXME: make this the primary ctor method.
     return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
   }
@@ -362,7 +366,8 @@ public:
   /// of the array by one (you've been warned).  However, in some situations 
   /// this is not desired so if AddNull==false then the string is copied without
   /// null termination. 
-  static Constant *get(const std::string &Initializer, bool AddNull = true);
+  static Constant *get(const std::string &Initializer,
+                       bool AddNull = true, bool locked = true);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
@@ -395,7 +400,7 @@ public:
   /// created as ConstantAggregateZero objects.
   virtual bool isNullValue() const { return false; }
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -423,12 +428,14 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
-  static Constant *get(const StructType *T, const std::vector<Constant*> &V);
-  static Constant *get(const std::vector<Constant*> &V, bool Packed = false);
+  static Constant *get(const StructType *T, const std::vector<Constant*> &V,
+                       bool locked = true);
+  static Constant *get(const std::vector<Constant*> &V, bool Packed = false, 
+                       bool locked = true);
   static Constant *get(Constant*const* Vals, unsigned NumVals,
-                       bool Packed = false) {
+                       bool Packed = false, bool locked = true) {
     // FIXME: make this the primary ctor method.
-    return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
+    return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed, locked);
   }
   
   /// Transparently provide more efficient getOperand methods.
@@ -447,7 +454,7 @@ public:
     return false;
   }
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -474,11 +481,13 @@ protected:
   ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static Constant *get(const VectorType *T, const std::vector<Constant*> &);
-  static Constant *get(const std::vector<Constant*> &V);
-  static Constant *get(Constant*const* Vals, unsigned NumVals) {
+  static Constant *get(const VectorType *T, const std::vector<Constant*> &,
+                       bool locked = true);
+  static Constant *get(const std::vector<Constant*> &V, bool locked = true);
+  static Constant *get(Constant*const* Vals, unsigned NumVals,
+                       bool locked = true) {
     // FIXME: make this the primary ctor method.
-    return get(std::vector<Constant*>(Vals, Vals+NumVals));
+    return get(std::vector<Constant*>(Vals, Vals+NumVals), locked);
   }
   
   /// Transparently provide more efficient getOperand methods.
@@ -494,7 +503,8 @@ public:
   /// @returns the value for a vector integer constant of the given type that
   /// has all its bits set to true.
   /// @brief Get the all ones value
-  static ConstantVector *getAllOnesValue(const VectorType *Ty);
+  static ConstantVector *getAllOnesValue(const VectorType *Ty,
+                                         bool locked = true);
   
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero vectors are always
@@ -511,7 +521,7 @@ public:
   /// elements have the same value, return that value. Otherwise return NULL.
   Constant *getSplatValue();
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -546,13 +556,13 @@ protected:
   }
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantPointerNull *get(const PointerType *T);
+  static ConstantPointerNull *get(const PointerType *T, bool locked = true);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return true; }
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
 
   /// getType - Specialize the getType() method to always return an PointerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -590,13 +600,14 @@ protected:
   // These private methods are used by the type resolution code to create
   // ConstantExprs in intermediate forms.
   static Constant *getTy(const Type *Ty, unsigned Opcode,
-                         Constant *C1, Constant *C2);
+                         Constant *C1, Constant *C2, bool locked = true);
   static Constant *getCompareTy(unsigned short pred, Constant *C1,
                                 Constant *C2);
-  static Constant *getSelectTy(const Type *Ty,
-                               Constant *C1, Constant *C2, Constant *C3);
+  static Constant *getSelectTy(const Type *Ty, Constant *C1, Constant *C2,
+                               Constant *C3, bool locked = true);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
-                                      Value* const *Idxs, unsigned NumIdxs);
+                                      Value* const *Idxs, unsigned NumIdxs,
+                                      bool locked = true);
   static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
                                        Constant *Idx);
   static Constant *getInsertElementTy(const Type *Ty, Constant *Val,
@@ -617,18 +628,18 @@ public:
 
   /// Cast constant expr
   ///
-  static Constant *getTrunc   (Constant *C, const Type *Ty);
-  static Constant *getSExt    (Constant *C, const Type *Ty);
-  static Constant *getZExt    (Constant *C, const Type *Ty);
-  static Constant *getFPTrunc (Constant *C, const Type *Ty);
-  static Constant *getFPExtend(Constant *C, const Type *Ty);
-  static Constant *getUIToFP  (Constant *C, const Type *Ty);
-  static Constant *getSIToFP  (Constant *C, const Type *Ty);
-  static Constant *getFPToUI  (Constant *C, const Type *Ty);
-  static Constant *getFPToSI  (Constant *C, const Type *Ty);
-  static Constant *getPtrToInt(Constant *C, const Type *Ty);
-  static Constant *getIntToPtr(Constant *C, const Type *Ty);
-  static Constant *getBitCast (Constant *C, const Type *Ty);
+  static Constant *getTrunc   (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getSExt    (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getZExt    (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getFPTrunc (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getFPExtend(Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getUIToFP  (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getSIToFP  (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getFPToUI  (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getFPToSI  (Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getPtrToInt(Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getIntToPtr(Constant *C, const Type *Ty, bool locked = true);
+  static Constant *getBitCast (Constant *C, const Type *Ty, bool locked = true);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
@@ -638,7 +649,8 @@ public:
   static Constant *getCast(
     unsigned ops,  ///< The opcode for the conversion
     Constant *C,   ///< The constant to be converted
-    const Type *Ty ///< The type to which the constant is converted
+    const Type *Ty, ///< The type to which the constant is converted
+    bool locked = true
   );
 
   // @brief Create a ZExt or BitCast cast constant expression
@@ -650,7 +662,8 @@ public:
   // @brief Create a SExt or BitCast cast constant expression 
   static Constant *getSExtOrBitCast(
     Constant *C,   ///< The constant to sext or bitcast
-    const Type *Ty ///< The type to sext or bitcast C to
+    const Type *Ty, ///< The type to sext or bitcast C to
+    bool locked = true
   );
 
   // @brief Create a Trunc or BitCast cast constant expression
@@ -662,7 +675,8 @@ public:
   /// @brief Create a BitCast or a PtrToInt cast constant expression
   static Constant *getPointerCast(
     Constant *C,   ///< The pointer value to be casted (operand 0)
-    const Type *Ty ///< The type to which cast should be made
+    const Type *Ty, ///< The type to which cast should be made
+    bool locked = true
   );
 
   /// @brief Create a ZExt, Bitcast or Trunc for integer -> integer casts
@@ -708,7 +722,8 @@ public:
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
-  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2,
+                       bool locked = true);
 
   /// @brief Return an ICmp, FCmp, VICmp, or VFCmp comparison operator constant
   /// expression.
@@ -720,36 +735,38 @@ public:
   static Constant *getNeg(Constant *C);
   static Constant *getFNeg(Constant *C);
   static Constant *getNot(Constant *C);
-  static Constant *getAdd(Constant *C1, Constant *C2);
-  static Constant *getFAdd(Constant *C1, Constant *C2);
-  static Constant *getSub(Constant *C1, Constant *C2);
-  static Constant *getFSub(Constant *C1, Constant *C2);
-  static Constant *getMul(Constant *C1, Constant *C2);
-  static Constant *getFMul(Constant *C1, Constant *C2);
-  static Constant *getUDiv(Constant *C1, Constant *C2);
-  static Constant *getSDiv(Constant *C1, Constant *C2);
-  static Constant *getFDiv(Constant *C1, Constant *C2);
-  static Constant *getURem(Constant *C1, Constant *C2); // unsigned rem
-  static Constant *getSRem(Constant *C1, Constant *C2); // signed rem
-  static Constant *getFRem(Constant *C1, Constant *C2);
-  static Constant *getAnd(Constant *C1, Constant *C2);
-  static Constant *getOr(Constant *C1, Constant *C2);
-  static Constant *getXor(Constant *C1, Constant *C2);
+  static Constant *getAdd(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getFAdd(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getSub(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getFSub(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getMul(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getFMul(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getUDiv(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getSDiv(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getFDiv(Constant *C1, Constant *C2, bool locked = true);
+  // unsigned rem
+  static Constant *getURem(Constant *C1, Constant *C2, bool locked = true); 
+  // signed rem
+  static Constant *getSRem(Constant *C1, Constant *C2, bool locked = true); 
+  static Constant *getFRem(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getAnd(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getOr(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getXor(Constant *C1, Constant *C2, bool locked = true);
   static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getVICmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getVFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
-  static Constant *getShl(Constant *C1, Constant *C2);
-  static Constant *getLShr(Constant *C1, Constant *C2);
-  static Constant *getAShr(Constant *C1, Constant *C2);
+  static Constant *getShl(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getLShr(Constant *C1, Constant *C2, bool locked = true);
+  static Constant *getAShr(Constant *C1, Constant *C2, bool locked = true);
 
   /// Getelementptr form.  std::vector<Value*> is only accepted for convenience:
   /// all elements must be Constant's.
   ///
-  static Constant *getGetElementPtr(Constant *C,
-                                    Constant* const *IdxList, unsigned NumIdx);
-  static Constant *getGetElementPtr(Constant *C,
-                                    Value* const *IdxList, unsigned NumIdx);
+  static Constant *getGetElementPtr(Constant *C, Constant* const *IdxList,
+                                    unsigned NumIdx, bool locked = true);
+  static Constant *getGetElementPtr(Constant *C, Value* const *IdxList,
+                                    unsigned NumIdx, bool locked = true);
   
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
@@ -794,7 +811,7 @@ public:
   }
   Constant *getWithOperands(Constant* const *Ops, unsigned NumOps) const;
   
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -831,13 +848,13 @@ public:
   /// get() - Static factory methods - Return an 'undef' object of the specified
   /// type.
   ///
-  static UndefValue *get(const Type *T);
+  static UndefValue *get(const Type *T, bool locked = true);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return false; }
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UndefValue *) { return true; }
@@ -864,7 +881,8 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value.
   ///
-  static MDString *get(const char *StrBegin, const char *StrEnd);
+  static MDString *get(const char *StrBegin, const char *StrEnd, 
+                       bool locked = true);
 
   /// size() - The length of this string.
   ///
@@ -891,7 +909,7 @@ public:
     return false;
   }
 
-  virtual void destroyConstant();
+  virtual void destroyConstant(bool locked = true);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MDString *) { return true; }
