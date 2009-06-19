@@ -350,7 +350,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context)
 PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags) 
   : SourceMgr(SourceMgr), FileMgr(FileMgr), Diags(Diags),
-    SemaObj(0), PP(PP), Context(Context), Consumer(0),
+    SemaObj(0), PP(0), Context(0), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
