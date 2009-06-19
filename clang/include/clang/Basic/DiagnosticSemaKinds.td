@@ -573,6 +573,14 @@ def err_param_default_argument_references_this : Error<
 def err_param_default_argument_nonfunc : Error<
   "default arguments can only be specified for parameters in a function "
   "declaration">;
+def err_defining_default_ctor : Error<
+  "cannot define the default constructor for %0, because %1 does not "
+  "have any default constructor">;
+def not_previous_class_decl : Note<
+  "class %0 declared here">;
+def err_unintialized_member : Error<
+  "cannot define the default constructor for %0, because of "
+  "unintialized %select{reference|const}1 member">;
 
 def err_use_of_default_argument_to_function_declared_later : Error<
   "use of default argument to function %0 that is declared later in class %1">;

@@ -184,10 +184,28 @@ void CXXRecordDecl::addConversionFunction(ASTContext &Context,
   Conversions.addOverload(ConvDecl);
 }
 
+
+CXXConstructorDecl *
+CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
+  QualType ClassType = Context.getTypeDeclType(this);
+  DeclarationName ConstructorName
+    = Context.DeclarationNames.getCXXConstructorName(
+                      Context.getCanonicalType(ClassType.getUnqualifiedType()));
+  
+  DeclContext::lookup_const_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = lookup(Context, ConstructorName);
+       Con != ConEnd; ++Con) {
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+    if (Constructor->isDefaultConstructor())
+      return Constructor;
+  }
+  return 0;
+}
+
 const CXXDestructorDecl *
 CXXRecordDecl::getDestructor(ASTContext &Context) {
   QualType ClassType = Context.getTypeDeclType(this);
-
+  
   DeclarationName Name 
     = Context.DeclarationNames.getCXXDestructorName(ClassType);
 

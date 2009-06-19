@@ -1793,7 +1793,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     return DeclPtrTy();
   }
   
-  NamespaceAliasDecl *AliasDecl = 
+  NamespaceAliasDecl *AliasDecl =
     NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc, 
                                Alias, SS.getRange(), 
                                (NestedNameSpecifier *)SS.getScopeRep(),
@@ -1801,6 +1801,80 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
   
   CurContext->addDecl(Context, AliasDecl);
   return DeclPtrTy::make(AliasDecl);
+}
+
+void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
+                                            CXXConstructorDecl *Constructor) {
+  if (!Constructor->isDefaultConstructor() ||
+      !Constructor->isImplicit() || Constructor->isImplicitMustBeDefined())
+    return;
+  
+  CXXRecordDecl *ClassDecl
+    = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  assert(ClassDecl && "InitializeVarWithConstructor - invalid constructor");
+  // Before the implicitly-declared default constructor for a class is 
+  // implicitly defined, all the implicitly-declared default constructors
+  // for its base class and its non-static data members shall have been
+  // implicitly defined.
+  bool err = false;
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+    if (!BaseClassDecl->hasTrivialConstructor()) {
+      if (CXXConstructorDecl *BaseCtor = 
+            BaseClassDecl->getDefaultConstructor(Context)) {
+        if (BaseCtor->isImplicit())
+          BaseCtor->setImplicitMustBeDefined();
+      }
+      else {
+        Diag(CurrentLocation, diag::err_defining_default_ctor) 
+          << ClassDecl->getNameAsCString() << BaseClassDecl->getNameAsCString();
+        Diag(BaseClassDecl->getLocation(), diag::not_previous_class_decl) 
+              << BaseClassDecl->getNameAsCString();
+        err = true;
+      }
+    }
+  }
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
+       Field != ClassDecl->field_end(Context);
+       ++Field) {
+    QualType FieldType = Context.getCanonicalType((*Field)->getType());
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (!FieldClassDecl->hasTrivialConstructor())
+        if (CXXConstructorDecl *FieldCtor = 
+            FieldClassDecl->getDefaultConstructor(Context)) {
+          if (FieldCtor->isImplicit())
+            FieldCtor->setImplicitMustBeDefined();
+        }
+        else {
+          Diag(CurrentLocation, diag::err_defining_default_ctor) 
+          << ClassDecl->getNameAsCString() << 
+              FieldClassDecl->getNameAsCString();
+          Diag(FieldClassDecl->getLocation(), diag::not_previous_class_decl) 
+          << FieldClassDecl->getNameAsCString();
+          err = true;
+        }
+      }
+    else if (FieldType->isReferenceType()) {
+      Diag(CurrentLocation, diag::err_unintialized_member) 
+        << ClassDecl->getNameAsCString() << 0;
+      Diag((*Field)->getLocation(), diag::note_declared_at);
+      err = true;
+    }
+    else if (FieldType.isConstQualified()) {
+      Diag(CurrentLocation, diag::err_unintialized_member) 
+        << ClassDecl->getNameAsCString() << 1;
+       Diag((*Field)->getLocation(), diag::note_declared_at);
+      err = true;
+    }
+  }
+  if (!err)
+    Constructor->setImplicitMustBeDefined();  
 }
 
 void Sema::InitializeVarWithConstructor(VarDecl *VD, 
@@ -1878,6 +1952,9 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
       VDecl->setCXXDirectInitializer(true);
       InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
                                    (Expr**)Exprs.release(), NumExprs);
+      // An implicitly-declared default constructor for a class is implicitly
+      // defined when it is used to creat an object of its class type.
+      DefineImplicitDefaultConstructor(VDecl->getLocation(), Constructor);
     }
     return;
   }

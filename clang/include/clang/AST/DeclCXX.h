@@ -439,6 +439,9 @@ public:
     TemplateOrInstantiation = Template;
   }
 
+  /// getDefaultConstructor - Returns the default constructor for this class
+  CXXConstructorDecl *getDefaultConstructor(ASTContext &Context);
+  
   /// getDestructor - Returns the destructor decl for this class.
   const CXXDestructorDecl *getDestructor(ASTContext &Context);
   
@@ -638,6 +641,10 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// explicitly defaulted (i.e., defined with " = default") will have
   /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
+  
+  /// ImplicitMustBeDefined - Implicit constructor was used to create an 
+  /// object of its class type. It must be defined.
+  bool ImplicitMustBeDefined : 1;
 
   /// FIXME: Add support for base and member initializers.
 
@@ -645,7 +652,8 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      DeclarationName N, QualType T,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline),
-      Explicit(isExplicit), ImplicitlyDefined(false) { 
+      Explicit(isExplicit), ImplicitlyDefined(false),  
+      ImplicitMustBeDefined(false) { 
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -676,6 +684,17 @@ public:
     ImplicitlyDefined = ID; 
   }
 
+  /// isImplicitMustBeDefined - Whether a definition must be synthesized for
+  /// the implicit constructor.
+  bool isImplicitMustBeDefined() const {
+    return isImplicit() && ImplicitMustBeDefined;
+  }
+  
+  /// setImplicitMustBeDefined - constructor must be implicitly defined.
+  void setImplicitMustBeDefined() {
+    ImplicitMustBeDefined = true;
+  }
+  
   /// isDefaultConstructor - Whether this constructor is a default
   /// constructor (C++ [class.ctor]p5), which can be used to
   /// default-initialize a class of this type.

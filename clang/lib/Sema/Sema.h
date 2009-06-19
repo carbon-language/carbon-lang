@@ -1533,6 +1533,11 @@ public:
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
+  
+  /// DefineImplicitDefaultConstructor - Checks for feasibilityt of 
+  /// defining this constructor as the default constructor.
+  void DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
+                                        CXXConstructorDecl *Constructor);
 
   /// MaybeBindToTemporary - If the passed in expression has a record type with
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise
