@@ -35,10 +35,18 @@ class SPUTargetMachine : public LLVMTargetMachine {
   SPUFrameInfo        FrameInfo;
   SPUTargetLowering   TLInfo;
   InstrItineraryData  InstrItins;
-  
+
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
+
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
+                                            SPUTargetMachine &tm,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose);
+  static AsmPrinterCtorFn AsmPrinterCtor;
+
 public:
   SPUTargetMachine(const Module &M, const std::string &FS);
 
@@ -78,7 +86,7 @@ public:
     return &DataLayout;
   }
 
-  virtual const InstrItineraryData getInstrItineraryData() const {  
+  virtual const InstrItineraryData getInstrItineraryData() const {
     return InstrItins;
   }
   
@@ -88,6 +96,10 @@ public:
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel,
                                   bool Verbose, raw_ostream &Out);
+
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
 };
 
 } // end namespace llvm

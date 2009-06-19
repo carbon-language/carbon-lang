@@ -33,10 +33,18 @@ class AlphaTargetMachine : public LLVMTargetMachine {
   AlphaJITInfo JITInfo;
   AlphaSubtarget Subtarget;
   AlphaTargetLowering TLInfo;
-  
+
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
+
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
+                                            TargetMachine &tm,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose);
+  static AsmPrinterCtorFn AsmPrinterCtor;
+
 public:
   AlphaTargetMachine(const Module &M, const std::string &FS);
 
@@ -46,7 +54,7 @@ public:
   virtual const AlphaRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual AlphaTargetLowering* getTargetLowering() const { 
+  virtual AlphaTargetLowering* getTargetLowering() const {
     return const_cast<AlphaTargetLowering*>(&TLInfo);
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
@@ -56,7 +64,7 @@ public:
 
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);
-  
+
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
@@ -75,6 +83,10 @@ public:
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
                                     JITCodeEmitter &JCE);
+
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
 };
 
 } // end namespace llvm

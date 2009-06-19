@@ -19,15 +19,12 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-/// IA64TargetMachineModule - Note that this is used on hosts that cannot link
-/// in a library unless there are references into the library.  In particular,
-/// it seems that it is not possible to get things to work on Win32 without
-/// this.  Though it is unused, do not remove it.
-extern "C" int IA64TargetMachineModule;
-int IA64TargetMachineModule = 0;
-
-static RegisterTarget<IA64TargetMachine> X("ia64", 
+// Register the target
+static RegisterTarget<IA64TargetMachine> X("ia64",
                                            "IA-64 (Itanium) [experimental]");
+
+// No assembler printer by default
+IA64TargetMachine::AsmPrinterCtorFn IA64TargetMachine::AsmPrinterCtor = 0;
 
 // Force static initialization when called from llvm/InitializeAllTargets.h
 namespace llvm {
@@ -93,7 +90,10 @@ bool IA64TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                            CodeGenOpt::Level OptLevel,
                                            bool Verbose,
                                            raw_ostream &Out) {
-  PM.add(createIA64CodePrinterPass(Out, *this, OptLevel, Verbose));
+  // Output assembly language.
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  if (AsmPrinterCtor)
+    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
   return false;
 }
 

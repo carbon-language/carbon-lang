@@ -309,3 +309,11 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 namespace llvm {
   void InitializeAlphaAsmPrinter() { }
 }
+
+namespace {
+  static struct Register {
+    Register() {
+      AlphaTargetMachine::registerAsmPrinter(createAlphaCodePrinterPass);
+    }
+  } Registrator;
+}

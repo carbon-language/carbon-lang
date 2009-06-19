@@ -23,19 +23,14 @@
 
 using namespace llvm;
 
-/// CellSPUTargetMachineModule - Note that this is used on hosts that
-/// cannot link in a library unless there are references into the
-/// library.  In particular, it seems that it is not possible to get
-/// things to work on Win32 without this.  Though it is unused, do not
-/// remove it.
-extern "C" int CellSPUTargetMachineModule;
-int CellSPUTargetMachineModule = 0;
-
 namespace {
   // Register the targets
   RegisterTarget<SPUTargetMachine>
   CELLSPU("cellspu", "STI CBEA Cell SPU [experimental]");
 }
+
+// No assembler printer by default
+SPUTargetMachine::AsmPrinterCtorFn SPUTargetMachine::AsmPrinterCtor = 0;
 
 // Force static initialization when called from llvm/InitializeAllTargets.h
 namespace llvm {
@@ -98,6 +93,9 @@ bool SPUTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           raw_ostream &Out) {
-  PM.add(createSPUAsmPrinterPass(Out, *this, OptLevel, Verbose));
+  // Output assembly language.
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  if (AsmPrinterCtor)
+    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
   return false;
 }

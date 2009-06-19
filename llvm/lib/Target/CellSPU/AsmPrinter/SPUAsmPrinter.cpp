@@ -627,3 +627,11 @@ FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
 namespace llvm {
   void InitializeCellSPUAsmPrinter() { }
 }
+
+namespace {
+  static struct Register {
+    Register() {
+      SPUTargetMachine::registerAsmPrinter(createSPUAsmPrinterPass);
+    }
+  } Registrator;
+}

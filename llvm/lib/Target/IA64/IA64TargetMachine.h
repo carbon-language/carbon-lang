@@ -30,9 +30,17 @@ class IA64TargetMachine : public LLVMTargetMachine {
   TargetFrameInfo    FrameInfo;
   //IA64JITInfo      JITInfo;
   IA64TargetLowering TLInfo;
-  
+
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
+
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
+                                            IA64TargetMachine &tm,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose);
+  static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
   IA64TargetMachine(const Module &M, const std::string &FS);
@@ -40,14 +48,14 @@ public:
   virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }
   virtual const IA64Subtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual       IA64TargetLowering *getTargetLowering() const { 
+  virtual       IA64TargetLowering *getTargetLowering() const {
     return const_cast<IA64TargetLowering*>(&TLInfo);
   }
   virtual const IA64RegisterInfo   *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
-  
+
   static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
@@ -56,6 +64,10 @@ public:
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel,
                                   bool Verbose, raw_ostream &Out);
+
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
 };
 } // End llvm namespace
 
