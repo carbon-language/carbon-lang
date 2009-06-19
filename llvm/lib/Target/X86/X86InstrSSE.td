@@ -3027,6 +3027,12 @@ def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 }
 
+// vector_shuffle v1, v2 <4, 5, 2, 3> using SHUFPSrri (we prefer movsd, but
+// fall back to this for SSE1)
+def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
+          (SHUFPSrri VR128:$src2, VR128:$src1, 
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>, Requires<[HasSSE1]>;
+
 // Set lowest element and zero upper elements.
 let AddedComplexity = 15 in
 def : Pat<(v2f64 (movl immAllZerosV_bc, VR128:$src)),
