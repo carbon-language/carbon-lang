@@ -112,7 +112,6 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L, Loop *UseLoop,
   SCEVHandle AddRecStart = AddRec->getStart();
   AddRecStart = SE->getSCEVAtScope(AddRecStart, UseLoop);
   SCEVHandle AddRecStride = AddRec->getStepRecurrence(*SE);
-  AddRecStride = SE->getSCEVAtScope(AddRecStride, UseLoop);
 
   // FIXME: If Start contains an SCEVAddRecExpr from a different loop, other
   // than an outer loop of the current loop, reject it.  LSR has no concept of
