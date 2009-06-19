@@ -620,7 +620,7 @@ static void InsertLDR_STR(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator &MBBI,
                           int OffImm, bool isDef,
                           DebugLoc dl, unsigned NewOpc,
-                          unsigned Reg, bool RegKill,
+                          unsigned Reg, bool RegDeadKill,
                           unsigned BaseReg, bool BaseKill,
                           unsigned OffReg, bool OffKill,
                           ARMCC::CondCodes Pred, unsigned PredReg,
@@ -631,14 +631,15 @@ static void InsertLDR_STR(MachineBasicBlock &MBB,
   else
     Offset = ARM_AM::getAM2Opc(ARM_AM::add, OffImm, ARM_AM::no_shift);
   if (isDef)
-    BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc), Reg)
+    BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
+      .addReg(Reg, getDefRegState(true) | getDeadRegState(RegDeadKill))
       .addReg(BaseReg, getKillRegState(BaseKill))
       .addReg(OffReg,  getKillRegState(OffKill))
       .addImm(Offset)
       .addImm(Pred).addReg(PredReg);
   else
     BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
-      .addReg(Reg, getKillRegState(RegKill))
+      .addReg(Reg, getKillRegState(RegDeadKill))
       .addReg(BaseReg, getKillRegState(BaseKill))
       .addReg(OffReg,  getKillRegState(OffKill))
       .addImm(Offset)
@@ -658,8 +659,10 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
       return false;
 
     bool isLd = Opcode == ARM::LDRD;
-    bool EvenKill = isLd ? false : MI->getOperand(0).isKill();
-    bool OddKill  = isLd ? false : MI->getOperand(1).isKill();
+    bool EvenDeadKill = isLd ?
+      MI->getOperand(0).isDead() : MI->getOperand(0).isKill();
+    bool OddDeadKill  = isLd ?
+      MI->getOperand(1).isDead() : MI->getOperand(1).isKill();
     const MachineOperand &BaseOp = MI->getOperand(2);
     unsigned BaseReg = BaseOp.getReg();
     bool BaseKill = BaseOp.isKill();
@@ -679,16 +682,16 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
           .addReg(BaseReg, getKillRegState(BaseKill))
           .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
           .addImm(Pred).addReg(PredReg)
-          .addReg(EvenReg, getDefRegState(isLd))
-          .addReg(OddReg, getDefRegState(isLd));
+          .addReg(EvenReg, getDefRegState(isLd) | getDeadRegState(EvenDeadKill))
+          .addReg(OddReg, getDefRegState(isLd) | getDeadRegState(OddDeadKill));
         ++NumLDRD2LDM;
       } else {
         BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
           .addReg(BaseReg, getKillRegState(BaseKill))
           .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
           .addImm(Pred).addReg(PredReg)
-          .addReg(EvenReg, getKillRegState(EvenKill))
-          .addReg(OddReg, getKillRegState(OddKill));
+          .addReg(EvenReg, getKillRegState(EvenDeadKill))
+          .addReg(OddReg, getKillRegState(OddDeadKill));
         ++NumSTRD2STM;
       }
     } else {
@@ -703,15 +706,17 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
            (OffReg && TRI->regsOverlap(EvenReg, OffReg)))) {
         assert(!TRI->regsOverlap(OddReg, BaseReg) &&
                (!OffReg || !TRI->regsOverlap(OddReg, OffReg)));
-        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc, OddReg, OddKill,
+        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc, OddReg, OddDeadKill,
                       BaseReg, false, OffReg, false, Pred, PredReg, TII);
-        InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc, EvenReg, EvenKill,
+        InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc, EvenReg, EvenDeadKill,
                       BaseReg, BaseKill, OffReg, OffKill, Pred, PredReg, TII);
       } else {
-        InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc, EvenReg, EvenKill,
-                      BaseReg, false, OffReg, false, Pred, PredReg, TII);
-        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc, OddReg, OddKill,
-                      BaseReg, BaseKill, OffReg, OffKill, Pred, PredReg, TII);
+        InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
+                      EvenReg, EvenDeadKill, BaseReg, false, OffReg, false,
+                      Pred, PredReg, TII);
+        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc,
+                      OddReg, OddDeadKill, BaseReg, BaseKill, OffReg, OffKill,
+                      Pred, PredReg, TII);
       }
       if (isLd)
         ++NumLDRD2LDR;
