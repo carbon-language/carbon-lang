@@ -271,7 +271,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
   // Emit post-function debug information.
-  if (TAI->doesSupportDebugInformation())
+  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
     DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
@@ -1034,7 +1034,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit final debug information.
-    if (TAI->doesSupportDebugInformation())
+    if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
       DW->EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
@@ -1054,11 +1054,11 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit final debug information.
-    if (TAI->doesSupportDebugInformation())
+    if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
       DW->EndModule();
   } else if (Subtarget->isTargetELF()) {
     // Emit final debug information.
-    if (TAI->doesSupportDebugInformation())
+    if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
       DW->EndModule();
   }
 
