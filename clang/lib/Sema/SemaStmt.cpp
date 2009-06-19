@@ -748,16 +748,23 @@ Action::OwningStmtResult
 Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // If this is the first return we've seen in the block, infer the type of
   // the block from it.
-  if (CurBlock->ReturnType == 0) {
+  if (CurBlock->ReturnType.isNull()) {
     if (RetValExp) {
       // Don't call UsualUnaryConversions(), since we don't want to do
       // integer promotions here.
       DefaultFunctionArrayConversion(RetValExp);
-      CurBlock->ReturnType = RetValExp->getType().getTypePtr();
+      CurBlock->ReturnType = RetValExp->getType();
+      if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
+        // We have to remove a 'const' added to copied-in variable which was
+        // part of the implementation spec. and not the actual qualifier for
+        // the variable.
+        if (CDRE->isConstQualAdded())
+           CurBlock->ReturnType.removeConst();
+      }
     } else
-      CurBlock->ReturnType = Context.VoidTy.getTypePtr();
+      CurBlock->ReturnType = Context.VoidTy;
   }
-  QualType FnRetType = QualType(CurBlock->ReturnType, 0);
+  QualType FnRetType = CurBlock->ReturnType;
 
   if (CurBlock->TheDecl->hasAttr<NoReturnAttr>(Context)) {
     Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr)

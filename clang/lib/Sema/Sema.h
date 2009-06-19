@@ -102,7 +102,7 @@ struct BlockSemaInfo {
   
   /// ReturnType - This will get set to block result type, by looking at
   /// return types, if any, in the block body.
-  Type *ReturnType;
+  QualType ReturnType;
   
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced

@@ -1129,10 +1129,13 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>(Context))
       return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, true));
-
+    // This is to record that a 'const' was actually synthesize and added.
+    bool constAdded = !ExprTy.isConstQualified();
     // Variable will be bound by-copy, make it const within the closure.
+    
     ExprTy.addConst();
-    return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, false));
+    return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, false, 
+                                                constAdded));
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
@@ -5111,7 +5114,7 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   BSI->PrevBlockInfo = CurBlock;
   CurBlock = BSI;
 
-  BSI->ReturnType = 0;
+  BSI->ReturnType = QualType();
   BSI->TheScope = BlockScope;
   BSI->hasBlockDeclRefExprs = false;
   BSI->SavedFunctionNeedsScopeChecking = CurFunctionNeedsScopeChecking;
@@ -5206,7 +5209,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     Diag(ParamInfo.getSourceRange().getBegin(),
          diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
   } else if (!RetTy->isDependentType())
-    CurBlock->ReturnType = RetTy.getTypePtr();
+    CurBlock->ReturnType = RetTy;
 }
 
 /// ActOnBlockError - If there is an error parsing a block, this callback
@@ -5240,8 +5243,8 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   CurBlock = CurBlock->PrevBlockInfo;
 
   QualType RetTy = Context.VoidTy;
-  if (BSI->ReturnType)
-    RetTy = QualType(BSI->ReturnType, 0);
+  if (!BSI->ReturnType.isNull())
+    RetTy = BSI->ReturnType;
 
   llvm::SmallVector<QualType, 8> ArgTypes;
   for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)

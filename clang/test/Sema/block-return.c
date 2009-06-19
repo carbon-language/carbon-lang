@@ -102,3 +102,27 @@ void foo6() {
   b(1);
   int (^c)(void) __attribute__((noreturn)) = ^ __attribute__((noreturn)) { return 100; }; // expected-error {{block declared 'noreturn' should not return}}
 }
+
+
+void foo7()
+{
+ const int (^BB) (void) = ^{ const int i = 1; return i; }; // OK 
+ const int (^CC) (void)  = ^const int{ const int i = 1; return i; }; // OK
+
+  int i;
+  int (^FF) (void)  = ^{ return i; }; // OK
+  int (^EE) (void)  = ^{ return i+1; }; // OK
+
+  __block int j;
+  int (^JJ) (void)  = ^{ return j; }; // OK
+  int (^KK) (void)  = ^{ return j+1; }; // OK
+
+  __block const int k;
+  const int cint = 100;
+
+  int (^MM) (void)  = ^{ return k; }; // expected-error {{incompatible block pointer types initializing 'int const (^)(void)', expected 'int (^)(void)'}}
+  int (^NN) (void)  = ^{ return cint; }; // expected-error {{incompatible block pointer types initializing 'int const (^)(void)', expected 'int (^)(void)'}}
+
+}
+
+
