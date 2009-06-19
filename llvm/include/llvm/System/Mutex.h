@@ -68,9 +68,7 @@ namespace llvm
     /// @name Platform Dependent Data
     /// @{
     private:
-#ifdef ENABLE_THREADS
       void* data_; ///< We don't know what the data will be
-#endif
 
     /// @}
     /// @name Do Not Implement

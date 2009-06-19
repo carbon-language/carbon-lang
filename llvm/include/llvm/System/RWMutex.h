@@ -68,9 +68,7 @@ namespace llvm
     /// @name Platform Dependent Data
     /// @{
     private:
-#ifdef ENABLE_THREADS
       void* data_; ///< We don't know what the data will be
-#endif
 
     /// @}
     /// @name Do Not Implement
@@ -85,12 +83,12 @@ namespace llvm
     /// indicates whether this mutex should become a no-op when we're not
     /// running in multithreaded mode.
     template<bool mt_only>
-    class SmartRWMutex : RWMutexImpl {
+    class SmartRWMutex : public RWMutexImpl {
     public:
       explicit SmartRWMutex() : RWMutexImpl() { }
       
       bool reader_acquire() {
-        if (!mt_only && llvm_is_multithreaded())
+        if (!mt_only || llvm_is_multithreaded())
           return RWMutexImpl::reader_acquire();
         return true;
       }
