@@ -24,10 +24,10 @@
 #include "llvm/Support/Dwarf.h"
 #include <cctype>
 #include <cstring>
-
 using namespace llvm;
 
-void TargetAsmInfo::fillDefaultValues() {
+TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
+: TM(tm) {
   BSSSection = "\t.bss";
   BSSSection_ = 0;
   ReadOnlySection = 0;
@@ -124,11 +124,6 @@ void TargetAsmInfo::fillDefaultValues() {
   AsmTransCBE = 0;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
   DataSection = getUnnamedSection("\t.data", SectionFlags::Writeable);
-}
-
-TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
-  : TM(tm) {
-  fillDefaultValues();
 }
 
 TargetAsmInfo::~TargetAsmInfo() {

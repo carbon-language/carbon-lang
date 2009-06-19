@@ -47,52 +47,11 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   ARMTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
-  GlobalPrefix = "_";
-  PrivateGlobalPrefix = "L";
-  LessPrivateGlobalPrefix = "l";
-  StringConstantPrefix = "\1LC";
-  BSSSection = 0;                       // no BSS section
   ZeroDirective = "\t.space\t";
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   SetDirective = "\t.set\t";
-  WeakRefDirective = "\t.weak_reference\t";
-  WeakDefDirective = "\t.weak_definition ";
-  HiddenDirective = "\t.private_extern\t";
   ProtectedDirective = NULL;
-  JumpTableDataSection = ".const";
-  CStringSection = "\t.cstring";
   HasDotTypeDotSizeDirective = false;
-  HasSingleParameterDotFile = false;
-  NeedsIndirectEncoding = true;
-  AllowQuotesInName = true;
-    
-  if (TM.getRelocationModel() == Reloc::Static) {
-    StaticCtorsSection = ".constructor";
-    StaticDtorsSection = ".destructor";
-  } else {
-    StaticCtorsSection = ".mod_init_func";
-    StaticDtorsSection = ".mod_term_func";
-  }
-
-  // In non-PIC modes, emit a special label before jump tables so that the
-  // linker can perform more accurate dead code stripping.
-  // Emit a local label that is preserved until the linker runs.
-  // We do not check the relocation model here since it can be overridden
-  // later.
-  JumpTableSpecialLabelPrefix = "l";
-
-  NeedsSet = true;
-  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacroInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 }
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):

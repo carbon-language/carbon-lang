@@ -23,7 +23,7 @@ namespace llvm {
   class Type;
   class Mangler;
 
-  struct DarwinTargetAsmInfo: public TargetAsmInfo {
+  struct DarwinTargetAsmInfo : public TargetAsmInfo {
     const Section* TextCoalSection;
     const Section* ConstTextCoalSection;
     const Section* ConstDataCoalSection;

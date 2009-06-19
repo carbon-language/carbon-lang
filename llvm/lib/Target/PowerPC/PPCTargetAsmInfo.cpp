@@ -19,59 +19,19 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
+PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   PPCTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   PCSymbol = ".";
   CommentString = ";";
-  GlobalPrefix = "_";
-  PrivateGlobalPrefix = "L";
-  LessPrivateGlobalPrefix = "l";
-  StringConstantPrefix = "\1LC";
   ConstantPoolSection = "\t.const\t";
-  JumpTableDataSection = ".const";
-  CStringSection = "\t.cstring";
-  if (TM.getRelocationModel() == Reloc::Static) {
-    StaticCtorsSection = ".constructor";
-    StaticDtorsSection = ".destructor";
-  } else {
-    StaticCtorsSection = ".mod_init_func";
-    StaticDtorsSection = ".mod_term_func";
-  }
-  HasSingleParameterDotFile = false;
-  SwitchToSectionDirective = "\t.section ";
   UsedDirective = "\t.no_dead_strip\t";
-  WeakDefDirective = "\t.weak_definition ";
-  WeakRefDirective = "\t.weak_reference ";
-  HiddenDirective = "\t.private_extern ";
   SupportsExceptionHandling = true;
-  NeedsIndirectEncoding = true;
-  AllowQuotesInName = true;
-  NeedsSet = true;
-  BSSSection = 0;
   
   DwarfEHFrameSection =
-  ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
+   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
   DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
-
-  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacroInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
-  
-  // In non-PIC modes, emit a special label before jump tables so that the
-  // linker can perform more accurate dead code stripping.
-  // We do not check the relocation model here since it can be overridden
-  // later.
-  JumpTableSpecialLabelPrefix = "l";
 }
 
 /// PreferredEHDataFormat - This hook allows the target to select data

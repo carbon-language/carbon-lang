@@ -130,7 +130,6 @@ namespace llvm {
   private:
     mutable StringMap<Section> Sections;
     mutable SectionFlags::FlagsStringsMapType FlagsStrings;
-    void fillDefaultValues();
   protected:
     /// TM - The current TargetMachine.
     const TargetMachine &TM;
@@ -312,8 +311,7 @@ namespace llvm {
     /// directives for various sizes and non-default address spaces.
     virtual const char *getASDirective(unsigned size, 
                                        unsigned AS) const {
-      assert (AS > 0 
-              && "Dont know the directives for default addr space");
+      assert(AS > 0 && "Dont know the directives for default addr space");
       return NULL;
     }
 
