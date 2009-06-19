@@ -1473,6 +1473,7 @@ Constant *ConstantArray::get(const ArrayType *Ty,
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantArray::destroyConstant() {
+  // Implicitly locked.
   ArrayConstants->remove(this);
   destroyConstantImpl();
 }
@@ -1601,6 +1602,7 @@ Constant *ConstantStruct::get(const std::vector<Constant*> &V, bool packed) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {
+  // Implicitly locked.
   StructConstants->remove(this);
   destroyConstantImpl();
 }
@@ -1668,7 +1670,7 @@ Constant *ConstantVector::get(const std::vector<Constant*> &V) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
-  sys::SmartScopedWriter<true> Write(&*ConstantsLock);
+  // Implicitly locked.
   VectorConstants->remove(this);
   destroyConstantImpl();
 }
@@ -1740,7 +1742,7 @@ ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+  // Implicitly locked.
   NullPtrConstants->remove(this);
   destroyConstantImpl();
 }
@@ -2721,7 +2723,7 @@ Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantExpr::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+  // Implicitly locked.
   ExprConstants->remove(this);
   destroyConstantImpl();
 }
