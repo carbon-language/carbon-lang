@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 
@@ -84,7 +85,10 @@ class MCInst {
 public:
   MCInst() : Opcode(~0U) {}
   
+  unsigned getOpcode() const { return Opcode; }
+  DebugLoc getDebugLoc() const { return DebugLoc(); }
   
+  const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
   
 };
 

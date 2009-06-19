@@ -104,7 +104,7 @@ public:
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
-  const DebugLoc getDebugLoc() const { return debugLoc; }
+  DebugLoc getDebugLoc() const { return debugLoc; }
   
   /// getDesc - Returns the target instruction descriptor of this
   /// MachineInstr.
