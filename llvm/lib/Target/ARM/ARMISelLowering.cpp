@@ -296,7 +296,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     // Use branch latency information to determine if-conversion limits.
     const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
     const InstrItineraryData &InstrItins = Subtarget->getInstrItineraryData();
-    unsigned Latency = InstrItins.getLatency(TII->get(ARM::BL).getSchedClass());
+    unsigned Latency= InstrItins.getLatency(TII->get(ARM::Bcc).getSchedClass());
     if (Latency > 1) {
       setIfCvtBlockSizeLimit(Latency-1);
       if (Latency > 2)
