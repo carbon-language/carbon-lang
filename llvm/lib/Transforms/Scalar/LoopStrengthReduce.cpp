@@ -2118,7 +2118,7 @@ ICmpInst *LoopStrengthReduce::OptimizeMax(Loop *L, ICmpInst *Cond,
   const SCEVNAryExpr *Max = cast<SCEVNAryExpr>(IterationCount);
   if (Max != SE->getSCEV(Sel)) return Cond;
 
-  // Two handle a max with more than two operands, this optimization would
+  // To handle a max with more than two operands, this optimization would
   // require additional checking and setup.
   if (Max->getNumOperands() != 2)
     return Cond;
