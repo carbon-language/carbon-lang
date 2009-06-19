@@ -490,12 +490,8 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 
 bool LinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
-  SwitchToTextSection("\t.text");
-  // Emit initial debug information.
   DW = getAnalysisIfAvailable<DwarfWriter>();
-  assert(DW && "Dwarf Writer is not available");
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  DW->BeginModule(&M, MMI, O, this, TAI);
+  SwitchToTextSection("\t.text");
   return Result;
 }
 

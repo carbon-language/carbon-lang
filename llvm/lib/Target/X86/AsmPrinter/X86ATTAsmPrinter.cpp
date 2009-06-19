@@ -780,19 +780,7 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 /// doInitialization
 bool X86ATTAsmPrinter::doInitialization(Module &M) {
-
-  bool Result = AsmPrinter::doInitialization(M);
-
-  if (TAI->doesSupportDebugInformation()) {
-    // Let PassManager know we need debug information and relay
-    // the MachineModuleInfo address on to DwarfWriter.
-    // AsmPrinter::doInitialization did this analysis.
-    MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-    DW = getAnalysisIfAvailable<DwarfWriter>();
-    DW->BeginModule(&M, MMI, O, this, TAI);
-  }
-
-  return Result;
+  return AsmPrinter::doInitialization(M);
 }
 
 
@@ -1046,8 +1034,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit final debug information.
-    DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
-    DW->EndModule();
+    if (TAI->doesSupportDebugInformation())
+      DW->EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
@@ -1066,12 +1054,12 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit final debug information.
-    DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
-    DW->EndModule();
+    if (TAI->doesSupportDebugInformation())
+      DW->EndModule();
   } else if (Subtarget->isTargetELF()) {
     // Emit final debug information.
-    DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
-    DW->EndModule();
+    if (TAI->doesSupportDebugInformation())
+      DW->EndModule();
   }
 
   return AsmPrinter::doFinalization(M);

@@ -24,6 +24,7 @@ using namespace llvm;
 XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   : ELFTargetAsmInfo(TM),
     Subtarget(TM.getSubtargetImpl()) {
+  SupportsDebugInformation = true;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
   DataSection = getNamedSection("\t.dp.data", SectionFlags::Writeable |
                                 SectionFlags::Small);

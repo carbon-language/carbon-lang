@@ -828,13 +828,7 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool ARMAsmPrinter::doInitialization(Module &M) {
 
   bool Result = AsmPrinter::doInitialization(M);
-
-  // Emit initial debug information.
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  assert(MMI);
   DW = getAnalysisIfAvailable<DwarfWriter>();
-  assert(DW && "Dwarf Writer is not available");
-  DW->BeginModule(&M, MMI, O, this, TAI);
 
   // Thumb-2 instructions are supported only in unified assembler syntax mode.
   if (Subtarget->hasThumb2())

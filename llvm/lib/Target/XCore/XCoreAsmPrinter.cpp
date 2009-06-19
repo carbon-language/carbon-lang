@@ -428,6 +428,7 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 bool XCoreAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
+  DW = getAnalysisIfAvailable<DwarfWriter>();
   
   if (!FileDirective.empty()) {
     emitFileDirective(FileDirective);
@@ -449,11 +450,6 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
     }
   }
 
-  // Emit initial debug information.
-  DW = getAnalysisIfAvailable<DwarfWriter>();
-  assert(DW && "Dwarf Writer is not available");
-  DW->BeginModule(&M, getAnalysisIfAvailable<MachineModuleInfo>(),
-                  O, this, TAI);
   return Result;
 }
 

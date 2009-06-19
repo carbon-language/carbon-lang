@@ -52,6 +52,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   SetDirective = "\t.set\t";
   ProtectedDirective = NULL;
   HasDotTypeDotSizeDirective = false;
+  SupportsDebugInformation = true;
 }
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
@@ -85,6 +86,7 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
     StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
     StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
   }
+  SupportsDebugInformation = true;
 }
 
 /// Count the number of comma-separated arguments.

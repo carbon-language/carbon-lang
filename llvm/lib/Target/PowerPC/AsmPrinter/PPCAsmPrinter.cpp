@@ -646,16 +646,8 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
-
-  // Emit initial debug information.
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  assert(MMI);
   DW = getAnalysisIfAvailable<DwarfWriter>();
-  assert(DW && "DwarfWriter is not available");
-  DW->BeginModule(&M, MMI, O, this, TAI);
-
   SwitchToSection(TAI->getTextSection());
-
   return Result;
 }
 
@@ -872,15 +864,7 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   O << "\t.machine " << CPUDirectives[Directive] << '\n';
 
   bool Result = AsmPrinter::doInitialization(M);
-
-  // Emit initial debug information.
-  // We need this for Personality functions.
-  // AsmPrinter::doInitialization should have done this analysis.
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  assert(MMI);
   DW = getAnalysisIfAvailable<DwarfWriter>();
-  assert(DW && "DwarfWriter is not available");
-  DW->BeginModule(&M, MMI, O, this, TAI);
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.

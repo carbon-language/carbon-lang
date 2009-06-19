@@ -177,9 +177,17 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   SwitchToDataSection("");   // Reset back to no section.
   
-  MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  if (MMI) MMI->AnalyzeModule(M);
-  DW = getAnalysisIfAvailable<DwarfWriter>();
+  if (TAI->doesSupportDebugInformation() 
+      || TAI->doesSupportExceptionHandling()) {
+    MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+    if (MMI) {
+      MMI->AnalyzeModule(M);
+      DW = getAnalysisIfAvailable<DwarfWriter>();
+      if (DW)
+        DW->BeginModule(&M, MMI, O, this, TAI);
+    }
+  }
+
   return false;
 }
 
