@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | not grep cmov
-; XFAIL: *
 
 ; LSR should be able to eliminate both smax and umax expressions
 ; in loop trip counts.

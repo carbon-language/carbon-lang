@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=x86 | not grep cmov
-; XFAIL: *
 
 ; LSR should be able to eliminate the max computations by
 ; making the loops use slt/ult comparisons instead of ne comparisons.
