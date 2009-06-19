@@ -47,7 +47,7 @@ AbstractTypeUser::~AbstractTypeUser() {}
 static ManagedStatic<sys::SmartRWMutex<true> > TypeMapLock;
 
 // Recursive lock used for guarding access to AbstractTypeUsers.
-// NOTE: The false template parameter means this will no-op when we're not in
+// NOTE: The true template parameter means this will no-op when we're not in
 // multithreaded mode.
 static ManagedStatic<sys::SmartMutex<true> > AbstractTypeUsersLock;
 
