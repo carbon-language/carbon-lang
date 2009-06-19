@@ -61,28 +61,28 @@ public:
   // Accessors.
   C &operator*() {
     void* tmp = Ptr;
-    sys::MemoryFence();
+    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
 
     return *static_cast<C*>(Ptr);
   }
   C *operator->() {
     void* tmp = Ptr;
-    sys::MemoryFence();
+    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
 
     return static_cast<C*>(Ptr);
   }
   const C &operator*() const {
     void* tmp = Ptr;
-    sys::MemoryFence();
+    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
 
     return *static_cast<C*>(Ptr);
   }
   const C *operator->() const {
     void* tmp = Ptr;
-    sys::MemoryFence();
+    if (llvm_is_multithreaded()) sys::MemoryFence();
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>);
 
     return static_cast<C*>(Ptr);
