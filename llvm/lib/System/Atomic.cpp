@@ -59,7 +59,7 @@ sys::cas_flag sys::AtomicIncrement(volatile sys::cas_flag* ptr) {
 #elif defined(__GNUC__)
   return __sync_add_and_fetch(ptr, 1);
 #elif defined(_MSC_VER)
-  return InterlockedCompareExchange(ptr, new_value, old_value);
+  return InterlockedIncrement(ptr);
 #else
 #  error No atomic increment implementation for your platform!
 #endif
@@ -72,7 +72,7 @@ sys::cas_flag sys::AtomicDecrement(volatile sys::cas_flag* ptr) {
 #elif defined(__GNUC__)
   return __sync_sub_and_fetch(ptr, 1);
 #elif defined(_MSC_VER)
-  return InterlockedIncrement(ptr);
+  return InterlockedDecrement(ptr);
 #else
 #  error No atomic decrement implementation for your platform!
 #endif
