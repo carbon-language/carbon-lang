@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin -arm-pre-alloc-loadstore-opti | grep ldrd
-; RUN: llvm-as < %s | llc -mtriple=armv5-apple-darwin -arm-pre-alloc-loadstore-opti | not grep ldrd
-; RUN: llvm-as < %s | llc -mtriple=armv6-eabi -arm-pre-alloc-loadstore-opti | not grep ldrd
+; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin | grep ldrd
+; RUN: llvm-as < %s | llc -mtriple=armv5-apple-darwin | not grep ldrd
+; RUN: llvm-as < %s | llc -mtriple=armv6-eabi | not grep ldrd
 ; rdar://r6949835
 
 @b = external global i64*

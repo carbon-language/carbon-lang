@@ -32,6 +32,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -992,15 +993,19 @@ bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   return Modified;
 }
 
-static bool IsSafeToMove(bool isLd, unsigned Base,
-                         MachineBasicBlock::iterator I,
-                         MachineBasicBlock::iterator E,
-                         SmallPtrSet<MachineInstr*, 4> MoveOps,
-                         const TargetRegisterInfo *TRI) {
+static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
+                                      MachineBasicBlock::iterator I,
+                                      MachineBasicBlock::iterator E,
+                                      SmallPtrSet<MachineInstr*, 4> &MemOps,
+                                      SmallSet<unsigned, 4> &MemRegs,
+                                      const TargetRegisterInfo *TRI) {
   // Are there stores / loads / calls between them?
   // FIXME: This is overly conservative. We should make use of alias information
   // some day.
+  SmallSet<unsigned, 4> AddedRegPressure;
   while (++I != E) {
+    if (MemOps.count(&*I))
+      continue;
     const TargetInstrDesc &TID = I->getDesc();
     if (TID.isCall() || TID.isTerminator() || TID.hasUnmodeledSideEffects())
       return false;
@@ -1013,16 +1018,26 @@ static bool IsSafeToMove(bool isLd, unsigned Base,
       // str r1, [r0]
       // strh r5, [r0]
       // str r4, [r0, #+4]
-      if (TID.mayStore() && !MoveOps.count(&*I))
+      if (TID.mayStore())
         return false;
     }
     for (unsigned j = 0, NumOps = I->getNumOperands(); j != NumOps; ++j) {
       MachineOperand &MO = I->getOperand(j);
-      if (MO.isReg() && MO.isDef() && TRI->regsOverlap(MO.getReg(), Base))
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (MO.isDef() && TRI->regsOverlap(Reg, Base))
         return false;
+      if (Reg != Base && !MemRegs.count(Reg))
+        AddedRegPressure.insert(Reg);
     }
   }
-  return true;
+
+  // Estimate register pressure increase due to the transformation.
+  if (MemRegs.size() <= 4)
+    // Ok if we are moving small number of instructions.
+    return true;
+  return AddedRegPressure.size() <= MemRegs.size() * 2;
 }
 
 bool
@@ -1123,29 +1138,33 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
       LastOffset = Offset;
       LastBytes = Bytes;
       LastOpcode = Opcode;
-      if (++NumMove == 4)
+      if (++NumMove == 8) // FIXME: Tune
         break;
     }
 
     if (NumMove <= 1)
       Ops.pop_back();
     else {
-      SmallPtrSet<MachineInstr*, 4> MoveOps;
-      for (int i = NumMove-1; i >= 0; --i)
-        MoveOps.insert(Ops[i]);
+      SmallPtrSet<MachineInstr*, 4> MemOps;
+      SmallSet<unsigned, 4> MemRegs;
+      for (int i = NumMove-1; i >= 0; --i) {
+        MemOps.insert(Ops[i]);
+        MemRegs.insert(Ops[i]->getOperand(0).getReg());
+      }
 
       // Be conservative, if the instructions are too far apart, don't
       // move them. We want to limit the increase of register pressure.
-      bool DoMove = (LastLoc - FirstLoc) < NumMove*4;
+      bool DoMove = (LastLoc - FirstLoc) <= NumMove*4; // FIXME: Tune this.
       if (DoMove)
-        DoMove = IsSafeToMove(isLd, Base, FirstOp, LastOp, MoveOps, TRI);
+        DoMove = IsSafeAndProfitableToMove(isLd, Base, FirstOp, LastOp,
+                                           MemOps, MemRegs, TRI);
       if (!DoMove) {
         for (unsigned i = 0; i != NumMove; ++i)
           Ops.pop_back();
       } else {
         // This is the new location for the loads / stores.
         MachineBasicBlock::iterator InsertPos = isLd ? FirstOp : LastOp;
-        while (InsertPos != MBB->end() && MoveOps.count(InsertPos))
+        while (InsertPos != MBB->end() && MemOps.count(InsertPos))
           ++InsertPos;
 
         // If we are moving a pair of loads / stores, see if it makes sense
@@ -1279,7 +1298,8 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
       }
 
       if (StopHere) {
-        // Found a duplicate (a base+offset combination that's seen earlier). Backtrack.
+        // Found a duplicate (a base+offset combination that's seen earlier).
+        // Backtrack.
         --Loc;
         break;
       }
