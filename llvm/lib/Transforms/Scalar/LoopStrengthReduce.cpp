@@ -2116,6 +2116,11 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
   const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(IterationCount);
   if (!SMax || SMax != SE->getSCEV(Sel)) return Cond;
 
+  // Two handle a max with more than two operands, this optimization would
+  // require additional checking and setup.
+  if (SMax->getNumOperands() != 2)
+    return Cond;
+
   SCEVHandle SMaxLHS = SMax->getOperand(0);
   SCEVHandle SMaxRHS = SMax->getOperand(1);
   if (!SMaxLHS || SMaxLHS != One) return Cond;
