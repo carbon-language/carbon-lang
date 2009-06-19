@@ -140,7 +140,7 @@ namespace llvm {
       }
 
       std::string::size_type FirstColon = ArgValue.rfind(':', SecondColon-1);
-      if (SecondColon == std::string::npos) {
+      if (FirstColon == std::string::npos) {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
         return true;
       }
