@@ -18,6 +18,7 @@
 #define LLVM_MC_MCINST_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
