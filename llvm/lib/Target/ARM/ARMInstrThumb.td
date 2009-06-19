@@ -277,6 +277,7 @@ def tPUSH : TI<(outs), (ins reglist:$src1, variable_ops),
 //
 
 // Add with carry
+let isCommutable = 1 in
 def tADC : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                "adc $dst, $rhs",
                [(set tGPR:$dst, (adde tGPR:$lhs, tGPR:$rhs))]>;
@@ -311,6 +312,7 @@ def tADDrSPi : TI<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs),
 def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
                   "add $dst, $rhs * 4", []>;
 
+let isCommutable = 1 in
 def tAND : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                 "and $dst, $rhs",
                 [(set tGPR:$dst, (and tGPR:$lhs, tGPR:$rhs))]>;
@@ -358,6 +360,7 @@ def tCMPNZr : TI<(outs), (ins tGPR:$lhs, tGPR:$rhs),
 
 // TODO: A7-37: CMP(3) - cmp hi regs
 
+let isCommutable = 1 in
 def tEOR : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                "eor $dst, $rhs",
                [(set tGPR:$dst, (xor tGPR:$lhs, tGPR:$rhs))]>;
@@ -399,6 +402,7 @@ def tMOVhir2hir : TI<(outs GPR:$dst), (ins GPR:$src),
                       "cpy $dst, $src\t@ hir2hir", []>;
 } // neverHasSideEffects
 
+let isCommutable = 1 in
 def tMUL : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                "mul $dst, $rhs",
                [(set tGPR:$dst, (mul tGPR:$lhs, tGPR:$rhs))]>;
@@ -411,6 +415,7 @@ def tNEG : TI<(outs tGPR:$dst), (ins tGPR:$src),
               "neg $dst, $src",
               [(set tGPR:$dst, (ineg tGPR:$src))]>;
 
+let isCommutable = 1 in
 def tORR : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                "orr $dst, $rhs",
                [(set tGPR:$dst, (or tGPR:$lhs, tGPR:$rhs))]>;
