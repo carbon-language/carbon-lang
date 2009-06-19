@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Target/TargetInstrDesc.h"
-#include "llvm/CodeGen/DebugLoc.h"
+#include "llvm/Support/DebugLoc.h"
 #include <list>
 #include <vector>
 

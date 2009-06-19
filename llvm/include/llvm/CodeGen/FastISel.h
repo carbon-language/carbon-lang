@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/CodeGen/DebugLoc.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
 namespace llvm {

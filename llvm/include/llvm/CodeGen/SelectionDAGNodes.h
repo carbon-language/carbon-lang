@@ -31,7 +31,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/CodeGen/DebugLoc.h"
+#include "llvm/Support/DebugLoc.h"
 #include <cassert>
 #include <climits>
 

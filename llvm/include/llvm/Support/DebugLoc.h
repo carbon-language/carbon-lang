@@ -1,4 +1,4 @@
-//===---- llvm/CodeGen/DebugLoc.h - Debug Location Information --*- C++ -*-===//
+//===---- llvm/DebugLoc.h - Debug Location Information ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a number of light weight data structures used by the code
-// generator to describe and track debug location information.
+// This file defines a number of light weight data structures used
+// to describe and track debug location information.
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_DEBUGLOC_H
-#define LLVM_CODEGEN_DEBUGLOC_H
+#ifndef LLVM_DEBUGLOC_H
+#define LLVM_DEBUGLOC_H
 
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
@@ -98,4 +98,4 @@ namespace llvm {
   
 } // end namespace llvm
 
-#endif /* LLVM_CODEGEN_DEBUGLOC_H */
+#endif /* LLVM_DEBUGLOC_H */

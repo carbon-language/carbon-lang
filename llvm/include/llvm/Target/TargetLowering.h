@@ -30,7 +30,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/CodeGen/DebugLoc.h"
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetMachine.h"
 #include <climits>
 #include <map>

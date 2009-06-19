@@ -15,7 +15,7 @@
 #include "PIC16DebugInfo.h" 
 #include "llvm/GlobalVariable.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/DebugLoc.h"
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
