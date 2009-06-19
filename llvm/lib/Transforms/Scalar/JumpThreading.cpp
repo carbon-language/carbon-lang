@@ -324,10 +324,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     }
   }
 
-  // If there is only a single predecessor of this block, nothing to fold.
-  if (BB->getSinglePredecessor())
-    return false;
-  
   // All the rest of our checks depend on the condition being an instruction.
   if (CondInst == 0)
     return false;
@@ -358,6 +354,23 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       if (ProcessBranchOnCompare(CondCmp, BB))
         return true;      
     }
+    
+    // If we have a comparison, loop over the predecessors to see if there is
+    // a condition with the same value.
+    pred_iterator PI = pred_begin(BB), E = pred_end(BB);
+    for (; PI != E; ++PI)
+      if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+        if (PBI->isConditional() && *PI != BB) {
+          if (CmpInst *CI = dyn_cast<CmpInst>(PBI->getCondition())) {
+            if (CI->getOperand(0) == CondCmp->getOperand(0) &&
+                CI->getOperand(1) == CondCmp->getOperand(1) &&
+                CI->getPredicate() == CondCmp->getPredicate()) {
+              // TODO: Could handle things like (x != 4) --> (x == 17)
+              if (ProcessBranchOnDuplicateCond(*PI, BB))
+                return true;
+            }
+          }
+        }
   }
 
   // Check for some cases that are worth simplifying.  Right now we want to look
