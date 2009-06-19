@@ -651,6 +651,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   O << "  processDebugLoc(MI->getDebugLoc());\n\n";
 
+  O << "\n#ifndef NO_ASM_WRITER_BOILERPLATE\n";
+  
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
     << "    O << \"\\t\";\n"
     << "    printInlineAsm(MI);\n"
@@ -665,7 +667,9 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "    printImplicitDef(MI);\n"
     << "    return true;\n"
     << "  }\n\n";
-  
+
+  O << "\n#endif\n";
+
   O << "  O << \"\\t\";\n\n";
 
   O << "  // Emit the opcode for the instruction.\n"
