@@ -28,13 +28,14 @@ namespace llvm {
 class Module;
 
 class ARMTargetMachine : public LLVMTargetMachine {
-  ARMSubtarget      Subtarget;
-  const TargetData  DataLayout;       // Calculates type size & alignment
-  ARMInstrInfo      InstrInfo;
-  ARMFrameInfo      FrameInfo;
-  ARMJITInfo        JITInfo;
-  ARMTargetLowering TLInfo;
-  Reloc::Model      DefRelocModel;    // Reloc model before it's overridden.
+  ARMSubtarget        Subtarget;
+  const TargetData    DataLayout;       // Calculates type size & alignment
+  ARMInstrInfo        InstrInfo;
+  ARMFrameInfo        FrameInfo;
+  ARMJITInfo          JITInfo;
+  ARMTargetLowering   TLInfo;
+  InstrItineraryData  InstrItins;
+  Reloc::Model        DefRelocModel;    // Reloc model before it's overridden.
 
 protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
@@ -58,6 +59,9 @@ public:
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual       ARMTargetLowering *getTargetLowering() const {
     return const_cast<ARMTargetLowering*>(&TLInfo);
+  }
+  virtual const InstrItineraryData getInstrItineraryData() const {  
+    return InstrItins;
   }
 
   static void registerAsmPrinter(AsmPrinterCtorFn F) {

@@ -292,6 +292,21 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setIfCvtBlockSizeLimit(Subtarget->isThumb() ? 0 : 10);
   setIfCvtDupBlockSizeLimit(Subtarget->isThumb() ? 0 : 2);
 
+  if (!Subtarget->isThumb()) {
+    // Use branch latency information to determine if-conversion limits.
+    const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+    const InstrItineraryData &InstrItins = Subtarget->getInstrItineraryData();
+    unsigned Latency = InstrItins.getLatency(TII->get(ARM::BL).getSchedClass());
+    if (Latency > 1) {
+      setIfCvtBlockSizeLimit(Latency-1);
+      if (Latency > 2)
+        setIfCvtDupBlockSizeLimit(Latency-2);
+    } else {
+      setIfCvtBlockSizeLimit(10);
+      setIfCvtDupBlockSizeLimit(2);
+    }
+  }
+
   maxStoresPerMemcpy = 1;   //// temporary - rewrite interface to use type
   // Do not enable CodePlacementOpt for now: it currently runs after the
   // ARMConstantIslandPass and messes up branch relaxation and placement

@@ -14,6 +14,7 @@
 #ifndef ARMSUBTARGET_H
 #define ARMSUBTARGET_H
 
+#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
 #include <string>
 
@@ -58,6 +59,9 @@ protected:
   /// CPUString - String name of used CPU.
   std::string CPUString;
 
+  /// Selected instruction itineraries (one entry per itinerary class.)
+  InstrItineraryData InstrItins;
+  
  public:
   enum {
     isELF, isDarwin
@@ -109,6 +113,10 @@ protected:
   bool isR9Reserved() const { return IsR9Reserved; }
 
   const std::string & getCPUString() const { return CPUString; }
+
+  /// getInstrItins - Return the instruction itineraies based on subtarget 
+  /// selection.
+  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

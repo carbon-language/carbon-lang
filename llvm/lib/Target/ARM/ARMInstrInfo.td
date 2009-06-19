@@ -539,7 +539,7 @@ let isReturn = 1, isTerminator = 1 in
                     LdStMulFrm, "ldm${p}${addr:submode} $addr, $dst1",
                     []>;
 
-let isCall = 1,
+let isCall = 1, Itinerary = IIC_Br,
   Defs = [R0, R1, R2, R3, R12, LR,
           D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
   def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
@@ -567,7 +567,7 @@ let isCall = 1,
   }
 }
 
-let isBranch = 1, isTerminator = 1 in {
+let isBranch = 1, isTerminator = 1, Itinerary = IIC_Br in {
   // B is "predicable" since it can be xformed into a Bcc.
   let isBarrier = 1 in {
     let isPredicable = 1 in

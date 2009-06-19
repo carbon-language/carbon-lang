@@ -102,7 +102,8 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
     InstrInfo(Subtarget),
     FrameInfo(Subtarget),
     JITInfo(),
-    TLInfo(*this) {
+    TLInfo(*this),
+    InstrItins(Subtarget.getInstrItineraryData()) {
   DefRelocModel = getRelocationModel();
 }
 

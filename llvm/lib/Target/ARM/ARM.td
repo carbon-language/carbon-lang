@@ -45,62 +45,72 @@ def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
 // ARM Processors supported.
 //
 
-class Proc<string Name, list<SubtargetFeature> Features>
- : Processor<Name, NoItineraries, Features>;
+include "ARMSchedule.td"
+
+class ProcNoItin<string Name, list<SubtargetFeature> Features>
+ : Processor<Name, GenericItineraries, Features>;
 
 // V4 Processors.
-def : Proc<"generic",         []>;
-def : Proc<"arm8",            []>;
-def : Proc<"arm810",          []>;
-def : Proc<"strongarm",       []>;
-def : Proc<"strongarm110",    []>;
-def : Proc<"strongarm1100",   []>;
-def : Proc<"strongarm1110",   []>;
+def : ProcNoItin<"generic",         []>;
+def : ProcNoItin<"arm8",            []>;
+def : ProcNoItin<"arm810",          []>;
+def : ProcNoItin<"strongarm",       []>;
+def : ProcNoItin<"strongarm110",    []>;
+def : ProcNoItin<"strongarm1100",   []>;
+def : ProcNoItin<"strongarm1110",   []>;
 
 // V4T Processors.
-def : Proc<"arm7tdmi",        [ArchV4T]>;
-def : Proc<"arm7tdmi-s",      [ArchV4T]>;
-def : Proc<"arm710t",         [ArchV4T]>;
-def : Proc<"arm720t",         [ArchV4T]>;
-def : Proc<"arm9",            [ArchV4T]>;
-def : Proc<"arm9tdmi",        [ArchV4T]>;
-def : Proc<"arm920",          [ArchV4T]>;
-def : Proc<"arm920t",         [ArchV4T]>;
-def : Proc<"arm922t",         [ArchV4T]>;
-def : Proc<"arm940t",         [ArchV4T]>;
-def : Proc<"ep9312",          [ArchV4T]>;
+def : ProcNoItin<"arm7tdmi",        [ArchV4T]>;
+def : ProcNoItin<"arm7tdmi-s",      [ArchV4T]>;
+def : ProcNoItin<"arm710t",         [ArchV4T]>;
+def : ProcNoItin<"arm720t",         [ArchV4T]>;
+def : ProcNoItin<"arm9",            [ArchV4T]>;
+def : ProcNoItin<"arm9tdmi",        [ArchV4T]>;
+def : ProcNoItin<"arm920",          [ArchV4T]>;
+def : ProcNoItin<"arm920t",         [ArchV4T]>;
+def : ProcNoItin<"arm922t",         [ArchV4T]>;
+def : ProcNoItin<"arm940t",         [ArchV4T]>;
+def : ProcNoItin<"ep9312",          [ArchV4T]>;
 
 // V5T Processors.
-def : Proc<"arm10tdmi",       [ArchV5T]>;
-def : Proc<"arm1020t",        [ArchV5T]>;
+def : ProcNoItin<"arm10tdmi",       [ArchV5T]>;
+def : ProcNoItin<"arm1020t",        [ArchV5T]>;
 
 // V5TE Processors.
-def : Proc<"arm9e",           [ArchV5TE]>;
-def : Proc<"arm926ej-s",      [ArchV5TE]>;
-def : Proc<"arm946e-s",       [ArchV5TE]>;
-def : Proc<"arm966e-s",       [ArchV5TE]>;
-def : Proc<"arm968e-s",       [ArchV5TE]>;
-def : Proc<"arm10e",          [ArchV5TE]>;
-def : Proc<"arm1020e",        [ArchV5TE]>;
-def : Proc<"arm1022e",        [ArchV5TE]>;
-def : Proc<"xscale",          [ArchV5TE]>;
-def : Proc<"iwmmxt",          [ArchV5TE]>;
+def : ProcNoItin<"arm9e",           [ArchV5TE]>;
+def : ProcNoItin<"arm926ej-s",      [ArchV5TE]>;
+def : ProcNoItin<"arm946e-s",       [ArchV5TE]>;
+def : ProcNoItin<"arm966e-s",       [ArchV5TE]>;
+def : ProcNoItin<"arm968e-s",       [ArchV5TE]>;
+def : ProcNoItin<"arm10e",          [ArchV5TE]>;
+def : ProcNoItin<"arm1020e",        [ArchV5TE]>;
+def : ProcNoItin<"arm1022e",        [ArchV5TE]>;
+def : ProcNoItin<"xscale",          [ArchV5TE]>;
+def : ProcNoItin<"iwmmxt",          [ArchV5TE]>;
 
 // V6 Processors.
-def : Proc<"arm1136j-s",      [ArchV6]>;
-def : Proc<"arm1136jf-s",     [ArchV6, FeatureVFP2]>;
-def : Proc<"arm1176jz-s",     [ArchV6]>;
-def : Proc<"arm1176jzf-s",    [ArchV6, FeatureVFP2]>;
-def : Proc<"mpcorenovfp",     [ArchV6]>;
-def : Proc<"mpcore",          [ArchV6, FeatureVFP2]>;
+def : Processor<"arm1136j-s",       V6Itineraries,
+                [ArchV6]>;
+def : Processor<"arm1136jf-s",      V6Itineraries,
+                [ArchV6, FeatureVFP2]>;
+def : Processor<"arm1176jz-s",      V6Itineraries,
+                [ArchV6]>;
+def : Processor<"arm1176jzf-s",     V6Itineraries,
+                [ArchV6, FeatureVFP2]>;
+def : Processor<"mpcorenovfp",      V6Itineraries,
+                [ArchV6]>;
+def : Processor<"mpcore",           V6Itineraries,
+                [ArchV6, FeatureVFP2]>;
 
 // V6T2 Processors.
-def : Proc<"arm1156t2-s",     [ArchV6T2, FeatureThumb2]>;
-def : Proc<"arm1156t2f-s",    [ArchV6T2, FeatureThumb2, FeatureVFP2]>;
+def : Processor<"arm1156t2-s",     V6Itineraries,
+                [ArchV6T2, FeatureThumb2]>;
+def : Processor<"arm1156t2f-s",    V6Itineraries,
+                [ArchV6T2, FeatureThumb2, FeatureVFP2]>;
 
 // V7 Processors.
-def : Proc<"cortex-a8",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
-def : Proc<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : ProcNoItin<"cortex-a8",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : ProcNoItin<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
