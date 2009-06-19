@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use POSIX qw(strftime);
 use File::Copy;
+use File::Find;
 use Socket;
 
 #
@@ -787,40 +788,20 @@ if (!$BuildError) {
   print "Organizing size of .o and .a files\n"
     if ( $VERBOSE );
   ChangeDir( "$BuildDir/llvm", "Build Directory" );
-  $afiles.= `find utils/ -iname '*.a' -ls`;
-  $afiles.= `find lib/ -iname '*.a' -ls`;
-  $afiles.= `find tools/ -iname '*.a' -ls`;
+
+  my @dirs = ('utils', 'lib', 'tools');
   if($BUILDTYPE eq "release"){
-    $afiles.= `find Release/ -iname '*.a' -ls`;
+    push @dirs, 'Release';
   } elsif($BUILDTYPE eq "release-asserts") {
-   $afiles.= `find Release-Asserts/ -iname '*.a' -ls`;
+    push @dirs, 'Release-Asserts';
   } else {
-   $afiles.= `find Debug/ -iname '*.a' -ls`;
+    push @dirs, 'Debug';
   }
 
-  $ofiles.= `find utils/ -iname '*.o' -ls`;
-  $ofiles.= `find lib/ -iname '*.o' -ls`;
-  $ofiles.= `find tools/ -iname '*.o' -ls`;
-  if($BUILDTYPE eq "release"){
-    $ofiles.= `find Release/ -iname '*.o' -ls`;
-  } elsif($BUILDTYPE eq "release-asserts") {
-    $ofiles.= `find Release-Asserts/ -iname '*.o' -ls`;
-  } else {
-    $ofiles.= `find Debug/ -iname '*.o' -ls`;
-  }
-
-  @AFILES = split "\n", $afiles;
-  $a_file_sizes="";
-  foreach $x (@AFILES){
-    $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
-    $a_file_sizes.="$1 $2 $BUILDTYPE\n";
-  }
-  @OFILES = split "\n", $ofiles;
-  $o_file_sizes="";
-  foreach $x (@OFILES){
-    $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
-    $o_file_sizes.="$1 $2 $BUILDTYPE\n";
-  }
+  find(sub {
+      $a_file_sizes .= (-s $_)." $File::Find::name $BUILDTYPE\n" if /\.a$/i;
+      $o_file_sizes .= (-s $_)." $File::Find::name $BUILDTYPE\n" if /\.o$/i;
+    }, @dirs);
 } else {
   $a_file_sizes="No data due to a bad build.";
   $o_file_sizes="No data due to a bad build.";
