@@ -584,7 +584,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
-        LiveRange LR(Start, End, interval.getNextValue(Start, 0, false, VNInfoAllocator));
+        LiveRange LR(Start, End,
+          interval.getNextValue(mbb->getNumber(), 0, false, VNInfoAllocator));
         LR.valno->setIsPHIDef(true);
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
@@ -785,7 +786,8 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
     }
   }
 
-  VNInfo *vni = interval.getNextValue(start, 0, false, VNInfoAllocator);
+  VNInfo *vni =
+    interval.getNextValue(MBB->getNumber(), 0, false, VNInfoAllocator);
   vni->setIsPHIDef(true);
   LiveRange LR(start, end, vni);
   

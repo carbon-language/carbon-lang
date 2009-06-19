@@ -40,14 +40,14 @@ namespace llvm {
   /// Care must be taken in interpreting the def index of the value. The 
   /// following rules apply:
   ///
-  /// If the isDefAccurate() method returns false then the def index does not
-  /// actually point to the defining MachineInstr, or even (necessarily) a
-  /// valid MachineInstr at all. In general such a def index should not be
-  /// used as an index to obtain a MachineInstr. The exception is Values
-  /// defined by PHI instructions, after PHI elimination has occured. In this
-  /// case the def should point to the start of the block in which the PHI
-  /// existed. This fact can be used to insert code dealing with the PHI value
-  /// at the merge point (e.g. to spill or split it).
+  /// If the isDefAccurate() method returns false then def does not contain the
+  /// index of the defining MachineInstr, or even (necessarily) to a
+  /// MachineInstr at all. In general such a def index is not meaningful
+  /// and should not be used. The exception is that, for values originally
+  /// defined by PHI instructions, after PHI elimination def will contain the
+  /// index of the MBB in which the PHI originally existed. This can be used
+  /// to insert code (spills or copies) which deals with the value, which will
+  /// be live in to the block.
 
   class VNInfo {
   private:
