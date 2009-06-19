@@ -303,8 +303,11 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   GlobalPrefix = "_";
   CommentString = ";";
 
+  InlineAsmStart = "; InlineAsm Start";
+  InlineAsmEnd   = "; InlineAsm End";
+
   PrivateGlobalPrefix = "$";
-  AlignDirective = "\talign\t";
+  AlignDirective = "\tALIGN\t";
   ZeroDirective = "\tdb\t";
   ZeroDirectiveSuffix = " dup(0)";
   AsciiDirective = "\tdb\t";
@@ -316,13 +319,15 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
 
+  AlignmentIsInBytes = true;
+
   TextSection = getUnnamedSection("_text", SectionFlags::Code);
   DataSection = getUnnamedSection("_data", SectionFlags::Writeable);
 
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";
-  TextSectionStartSuffix = "\tsegment 'CODE'";
-  DataSectionStartSuffix = "\tsegment 'DATA'";
+  TextSectionStartSuffix = "\tSEGMENT PARA 'CODE'";
+  DataSectionStartSuffix = "\tSEGMENT PARA 'DATA'";
   SectionEndDirectiveSuffix = "\tends\n";
 }
 

@@ -339,8 +339,8 @@ void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
 }
 
 void X86IntelAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  O << "\"L" << getFunctionNumber() << "$pb\"\n";
-  O << "\"L" << getFunctionNumber() << "$pb\":";
+  O << "L" << getFunctionNumber() << "$pb\n";
+  O << "L" << getFunctionNumber() << "$pb:";
 }
 
 bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
@@ -362,7 +362,7 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  O << '%' << TRI->getName(Reg);
+  O << TRI->getName(Reg);
   return false;
 }
 
@@ -414,7 +414,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
 
   Mang->markCharUnacceptable('.');
 
-  O << "\t.686\n\t.model flat\n\n";
+  O << "\t.686\n\t.MMX\n\t.XMM\n\t.model flat\n\n";
 
   // Emit declarations for external functions.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -422,7 +422,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
       std::string Name = Mang->getValueName(I);
       decorateName(Name, I);
 
-      O << "\textern " ;
+      O << "\tEXTERN " ;
       if (I->hasDLLImportLinkage()) {
         O << "__imp_";
       }
@@ -436,7 +436,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
     if (I->isDeclaration()) {
       std::string Name = Mang->getValueName(I);
 
-      O << "\textern " ;
+      O << "\tEXTERN " ;
       if (I->hasDLLImportLinkage()) {
         O << "__imp_";
       }
@@ -471,14 +471,14 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     case GlobalValue::WeakAnyLinkage:
     case GlobalValue::WeakODRLinkage:
       SwitchToDataSection("");
-      O << name << "?\tsegment common 'COMMON'\n";
+      O << name << "?\tSEGEMNT PARA common 'COMMON'\n";
       bCustomSegment = true;
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
       // are also available.
       break;
     case GlobalValue::AppendingLinkage:
       SwitchToDataSection("");
-      O << name << "?\tsegment public 'DATA'\n";
+      O << name << "?\tSEGMENT PARA public 'DATA'\n";
       bCustomSegment = true;
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
       // are also available.
