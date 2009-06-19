@@ -156,6 +156,10 @@ private:
   /// the implementation rather than explicitly written by the user.
   bool Implicit : 1;
 
+  /// \brief Whether this declaration was "used", meaning that a definition is
+  /// required.
+  bool Used : 1;
+  
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 8;
   
@@ -174,7 +178,7 @@ protected:
   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
     : NextDeclInContext(0), DeclCtx(DC), 
       Loc(L), DeclKind(DK), InvalidDecl(0),
-      HasAttrs(false), Implicit(false), 
+      HasAttrs(false), Implicit(false), Used(false),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)), Access(AS_none) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
@@ -240,6 +244,11 @@ public:
   /// was written explicitly in the source code.
   bool isImplicit() const { return Implicit; }
   void setImplicit(bool I = true) { Implicit = I; }
+  
+  /// \brief Whether this declaration was used, meaning that a definition
+  /// is required.
+  bool isUsed() const { return Used; }
+  void setUsed(bool U = true) { Used = U; }
   
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;

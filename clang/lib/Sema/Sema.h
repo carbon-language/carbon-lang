@@ -18,7 +18,9 @@
 #include "IdentifierResolver.h"
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/Action.h"
@@ -245,6 +247,12 @@ public:
   /// have been declared.
   bool GlobalNewDeleteDeclared;
 
+  /// A flag that indicates when we are processing an unevaluated operand
+  /// (C++0x [expr]). C99 has the same notion of declarations being
+  /// "used" and C++03 has the notion of "potentially evaluated", but we
+  /// adopt the C++0x terminology since it is most precise.
+  bool InUnevaluatedOperand;
+  
   /// \brief Whether the code handled by Sema should be considered a
   /// complete translation unit or not.
   ///
@@ -454,6 +462,19 @@ public:
   virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body);
   DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body,
                                     bool IsInstantiation);
+  
+  /// \brief Diagnose any unused parameters in the given sequence of
+  /// ParmVarDecl pointers.
+  template<typename InputIterator>
+  void DiagnoseUnusedParameters(InputIterator Param, InputIterator ParamEnd) {
+    for (; Param != ParamEnd; ++Param) {
+      if (!(*Param)->isUsed() && (*Param)->getDeclName() && 
+          !(*Param)->template hasAttr<UnusedAttr>(Context))
+        Diag((*Param)->getLocation(), diag::warn_unused_parameter)
+          << (*Param)->getDeclName();
+    }
+  }
+  
   void DiagnoseInvalidJumps(Stmt *Body);
   virtual DeclPtrTy ActOnFileScopeAsmDecl(SourceLocation Loc, ExprArg expr);
 
@@ -694,6 +715,7 @@ public:
   bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
                                  const OverloadCandidate& Cand2);
   OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
+                                       SourceLocation Loc,
                                        OverloadCandidateSet::iterator& Best);
   void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                                bool OnlyViable);
@@ -1312,6 +1334,14 @@ public:
   void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                              Expr **Args, unsigned NumArgs);
 
+  virtual bool setUnevaluatedOperand(bool UnevaluatedOperand) { 
+    bool Result = InUnevaluatedOperand;
+    InUnevaluatedOperand = UnevaluatedOperand;
+    return Result;
+  }
+
+  void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
+  
   // Primary Expressions.
   virtual SourceRange getExprRange(ExprTy *E) const;
 

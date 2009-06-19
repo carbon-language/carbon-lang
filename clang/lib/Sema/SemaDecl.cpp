@@ -3094,10 +3094,23 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody(Body);
+    
+    if (!FD->isInvalidDecl())
+      DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
+    
+    // C++ [basic.def.odr]p2:
+    //   [...] A virtual member function is used if it is not pure. [...]
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FD))
+      if (Method->isVirtual() && !Method->isPure())
+        MarkDeclarationReferenced(Method->getLocation(), Method);
+    
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody(Body);
+    
+    if (!MD->isInvalidDecl())
+      DiagnoseUnusedParameters(MD->param_begin(), MD->param_end());
   } else {
     Body->Destroy(Context);
     return DeclPtrTy();

@@ -82,6 +82,7 @@ void PCHDeclReader::VisitDecl(Decl *D) {
   if (Record[Idx++])
     D->addAttr(*Reader.getContext(), Reader.ReadAttributes());
   D->setImplicit(Record[Idx++]);
+  D->setUsed(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
 }
 

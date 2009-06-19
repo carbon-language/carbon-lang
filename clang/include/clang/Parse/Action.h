@@ -637,6 +637,18 @@ public:
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//
 
+  /// \brief Notifies the action when the parser is processing an unevaluated
+  /// operand.
+  ///
+  /// \param UnevaluatedOperand true to indicate that the parser is processing
+  /// an unevaluated operand, or false otherwise.
+  ///
+  /// \returns whether the the action module was previously in an unevaluated
+  /// operand.
+  virtual bool setUnevaluatedOperand(bool UnevaluatedOperand) { 
+    return false;
+  }
+  
   // Primary Expressions.
 
   /// \brief Retrieve the source range that corresponds to the given

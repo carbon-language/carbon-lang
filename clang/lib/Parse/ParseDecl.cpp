@@ -2699,8 +2699,12 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     // things like '=' and '*='.  Sema rejects these in C89 mode because they
     // are not i-c-e's, so we don't need to distinguish between the two here.
     
-    // Parse the assignment-expression now.
-    NumElements = ParseAssignmentExpression();
+    // Parse the constant-expression or assignment-expression now (depending
+    // on dialect).
+    if (getLang().CPlusPlus)
+      NumElements = ParseConstantExpression();
+    else
+      NumElements = ParseAssignmentExpression();
   }
   
   // If there was an error parsing the assignment-expression, recover.

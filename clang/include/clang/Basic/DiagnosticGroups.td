@@ -116,7 +116,9 @@ def Format2 : DiagGroup<"format=2",
                         [FormatNonLiteral, FormatSecurity, FormatY2K]>;
 
 
-def Extra : DiagGroup<"extra">;
+def Extra : DiagGroup<"extra", [
+    UnusedParameter
+  ]>;
 
 def Most : DiagGroup<"most", [
     Comment,

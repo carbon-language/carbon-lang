@@ -1379,7 +1379,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
   }
 
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, From->getLocStart(), Best)) {
     case OR_Success:
       // Record the standard conversion we used and the conversion function.
       if (CXXConstructorDecl *Constructor 
@@ -3445,14 +3445,21 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   return false;
 }
 
-/// BestViableFunction - Computes the best viable function (C++ 13.3.3) 
-/// within an overload candidate set. If overloading is successful,
-/// the result will be OR_Success and Best will be set to point to the
-/// best viable function within the candidate set. Otherwise, one of
-/// several kinds of errors will be returned; see
-/// Sema::OverloadingResult.
+/// \brief Computes the best viable function (C++ 13.3.3) 
+/// within an overload candidate set.
+///
+/// \param CandidateSet the set of candidate functions.
+///
+/// \param Loc the location of the function name (or operator symbol) for
+/// which overload resolution occurs.
+///
+/// \param Best f overload resolution was successful or found a deleted 
+/// function, Best points to the candidate function found.
+///
+/// \returns The result of overload resolution.
 Sema::OverloadingResult 
 Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
+                         SourceLocation Loc,
                          OverloadCandidateSet::iterator& Best)
 {
   // Find the best viable function.
@@ -3487,9 +3494,14 @@ Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
        Best->Function->getAttr<UnavailableAttr>(Context)))
     return OR_Deleted;
 
-  // If Best refers to a function that is either deleted (C++0x) or
-  // unavailable (Clang extension) report an error.
-
+  // C++ [basic.def.odr]p2:
+  //   An overloaded function is used if it is selected by overload resolution
+  //   when referred to from a potentially-evaluated expression. [Note: this 
+  //   covers calls to named functions (5.2.2), operator overloading 
+  //   (clause 13), user-defined conversions (12.3.2), allocation function for
+  //   placement new (5.3.4), as well as non-default initialization (8.5).
+  if (Best->Function)
+    MarkDeclarationReferenced(Loc, Best->Function);
   return OR_Success;
 }
 
@@ -3709,7 +3721,7 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
                                          CandidateSet);
 
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, Fn->getLocStart(), Best)) {
   case OR_Success:
     return Best->Function;
 
@@ -3815,7 +3827,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, OpLoc, Best)) {
   case OR_Success: {
     // We found a built-in operator or an overloaded operator.
     FunctionDecl *FnDecl = Best->Function;
@@ -3968,7 +3980,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, OpLoc, Best)) {
     case OR_Success: {
       // We found a built-in operator or an overloaded operator.
       FunctionDecl *FnDecl = Best->Function;
@@ -4094,7 +4106,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     }
 
     OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Best)) {
+    switch (BestViableFunction(CandidateSet, MemExpr->getLocStart(), Best)) {
     case OR_Success:
       Method = cast<CXXMethodDecl>(Best->Function);
       break;
@@ -4219,7 +4231,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, Object->getLocStart(), Best)) {
   case OR_Success:
     // Overload resolution succeeded; we'll build the appropriate call
     // below.
@@ -4388,7 +4400,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, OpLoc, Best)) {
   case OR_Success:
     // Overload resolution succeeded; we'll build the call below.
     break;

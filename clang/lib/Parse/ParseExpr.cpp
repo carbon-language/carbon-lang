@@ -276,6 +276,11 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
 
 
 Parser::OwningExprResult Parser::ParseConstantExpression() {
+  // C++ [basic.def.odr]p2:
+  //   An expression is potentially evaluated unless it appears where an 
+  //   integral constant expression is required (see 5.19) [...].
+  EnterUnevaluatedOperand Unevaluated(Actions);
+  
   OwningExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
 
@@ -971,8 +976,15 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
       Diag(Tok,diag::err_expected_lparen_after_id) << OpTok.getIdentifierInfo();
       return ExprError();
     }
+    
+    // C++0x [expr.sizeof]p1:
+    //   [...] The operand is either an expression, which is an unevaluated 
+    //   operand (Clause 5) [...]
+    //
+    // The GNU typeof and alignof extensions also behave as unevaluated
+    // operands.
+    EnterUnevaluatedOperand Unevaluated(Actions);
     Operand = ParseCastExpression(true/*isUnaryExpression*/);
-
   } else {
     // If it starts with a '(', we know that it is either a parenthesized
     // type-name, or it is a unary-expression that starts with a compound
@@ -980,6 +992,14 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     // expression.
     ParenParseOption ExprType = CastExpr;
     SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
+    
+    // C++0x [expr.sizeof]p1:
+    //   [...] The operand is either an expression, which is an unevaluated 
+    //   operand (Clause 5) [...]
+    //
+    // The GNU typeof and alignof extensions also behave as unevaluated
+    // operands.
+    EnterUnevaluatedOperand Unevaluated(Actions);
     Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/,
                                    CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);

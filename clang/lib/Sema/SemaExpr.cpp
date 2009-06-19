@@ -627,6 +627,7 @@ DeclRefExpr *
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
+  MarkDeclarationReferenced(Loc, D);
   if (SS && !SS->isEmpty()) {
     return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
                                               ValueDependent, SS->getRange(),
@@ -721,6 +722,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     // BaseObject is an anonymous struct/union variable (and is,
     // therefore, not part of another non-anonymous record).
     if (BaseObjectExpr) BaseObjectExpr->Destroy(Context);
+    MarkDeclarationReferenced(Loc, BaseObject);
     BaseObjectExpr = new (Context) DeclRefExpr(BaseObject,BaseObject->getType(),
                                                SourceLocation());
     ExtraQuals 
@@ -777,6 +779,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
         = MemberType.getCVRQualifiers() | ExtraQuals;
       MemberType = MemberType.getQualifiedType(combinedQualifiers);
     }
+    MarkDeclarationReferenced(Loc, *FI);
     Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
                                       OpLoc, MemberType);
     BaseObjectIsPointer = false;
@@ -876,6 +879,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // turn this into Self->ivar, just return a BareIVarExpr or something.
           IdentifierInfo &II = Context.Idents.get("self");
           OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
+          MarkDeclarationReferenced(Loc, IV);
           return Owned(new (Context) 
                        ObjCIvarRefExpr(IV, IV->getType(), Loc, 
                                        SelfExpr.takeAs<Expr>(), true, true));
@@ -1025,6 +1029,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // Build the implicit member access expression.
           Expr *This = new (Context) CXXThisExpr(SourceLocation(),
                                                  MD->getThisType(Context));
+          MarkDeclarationReferenced(Loc, D);
           return Owned(new (Context) MemberExpr(This, true, D,
                                                 Loc, MemberType));
         }
@@ -1125,6 +1130,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // as they do not get snapshotted.
   //
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
+    MarkDeclarationReferenced(Loc, VD);
     QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>(Context))
@@ -1579,7 +1585,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Best)) {
+    switch (BestViableFunction(CandidateSet, OpLoc, Best)) {
     case OR_Success: {
       // We found a built-in operator or an overloaded operator.
       FunctionDecl *FnDecl = Best->Function;
@@ -1689,7 +1695,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
     // Perform overload resolution.
     OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Best)) {
+    switch (BestViableFunction(CandidateSet, LLoc, Best)) {
     case OR_Success: {
       // We found a built-in operator or an overloaded operator.
       FunctionDecl *FnDecl = Best->Function;
@@ -5258,7 +5264,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
                                       BSI->isVariadic, 0);
 
   // FIXME: Check that return/parameter types are complete/non-abstract
-
+  DiagnoseUnusedParameters(BSI->Params.begin(), BSI->Params.end());
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   // If needed, diagnose invalid gotos and switches in the block.
@@ -5425,3 +5431,49 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
     *Result = EvalResult.Val.getInt();
   return false;
 }
+
+
+/// \brief Note that the given declaration was referenced in the source code.
+///
+/// This routine should be invoke whenever a given declaration is referenced
+/// in the source code, and where that reference occurred. If this declaration
+/// reference means that the the declaration is used (C++ [basic.def.odr]p2,
+/// C99 6.9p3), then the declaration will be marked as used.
+///
+/// \param Loc the location where the declaration was referenced.
+///
+/// \param D the declaration that has been referenced by the source code.
+void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
+  assert(D && "No declaration?");
+  
+  // Mark a parameter declaration "used", regardless of whether we're in a
+  // template or not.
+  if (isa<ParmVarDecl>(D))
+    D->setUsed(true);
+  
+  // Do not mark anything as "used" within a dependent context; wait for
+  // an instantiation.
+  if (CurContext->isDependentContext())
+    return;
+  
+  // If we are in an unevaluated operand, don't mark any definitions as used.
+  if (InUnevaluatedOperand)
+    return;
+  
+  // Note that this declaration has been used.
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    // FIXME: implicit template instantiation
+    // FIXME: keep track of references to static functions
+    (void)Function;
+    Function->setUsed(true);
+    return;
+  } 
+  
+  if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    (void)Var;
+    // FIXME: implicit template instantiation
+    // FIXME: keep track of references to static data?
+    D->setUsed(true);
+  }
+}
+

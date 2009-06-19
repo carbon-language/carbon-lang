@@ -82,6 +82,7 @@ void PCHDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->isInvalidDecl());
   Record.push_back(D->hasAttrs());
   Record.push_back(D->isImplicit());
+  Record.push_back(D->isUsed());
   Record.push_back(D->getAccess());
 }
 
@@ -360,6 +361,7 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   // know are true of all PARM_VAR_DECLs.
   if (!D->hasAttrs() &&
       !D->isImplicit() &&
+      !D->isUsed() &&
       D->getAccess() == AS_none &&
       D->getStorageClass() == 0 &&
       !D->hasCXXDirectInitializer() && // Can params have this ever?
@@ -434,6 +436,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isInvalidDecl (!?)
   Abv->Add(BitCodeAbbrevOp(0));                       // HasAttrs
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
+  Abv->Add(BitCodeAbbrevOp(0));                       // isUsed
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   
   // NamedDecl

@@ -2031,7 +2031,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   // constructors, we'll need to make them appear here.
 
   OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Best)) {
+  switch (BestViableFunction(CandidateSet, Loc, Best)) {
   case OR_Success:
     // We found a constructor. Return it.
     return cast<CXXConstructorDecl>(Best->Function);
@@ -2263,7 +2263,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     }
 
     OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Best)) {
+    switch (BestViableFunction(CandidateSet, Init->getLocStart(), Best)) {
     case OR_Success:
       // This is a direct binding.
       BindsDirectly = true;

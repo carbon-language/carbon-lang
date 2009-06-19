@@ -546,7 +546,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
 
   // Do the resolution.
   OverloadCandidateSet::iterator Best;
-  switch(BestViableFunction(Candidates, Best)) {
+  switch(BestViableFunction(Candidates, StartLoc, Best)) {
   case OR_Success: {
     // Got one!
     FunctionDecl *FnDecl = Best->Function;
@@ -1175,7 +1175,7 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
   Self.AddBuiltinOperatorCandidates(OO_Conditional, Args, 2, CandidateSet);
 
   OverloadCandidateSet::iterator Best;
-  switch (Self.BestViableFunction(CandidateSet, Best)) {
+  switch (Self.BestViableFunction(CandidateSet, Loc, Best)) {
     case Sema::OR_Success:
       // We found a match. Perform the conversions on the arguments and move on.
       if (Self.PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],

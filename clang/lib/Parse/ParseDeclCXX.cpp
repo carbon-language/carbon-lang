@@ -279,7 +279,7 @@ Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   }
   
   SourceLocation LParenLoc = ConsumeParen();
-  
+
   OwningExprResult AssertExpr(ParseConstantExpression());
   if (AssertExpr.isInvalid()) {
     SkipUntil(tok::semi);
