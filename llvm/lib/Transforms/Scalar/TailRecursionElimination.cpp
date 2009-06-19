@@ -52,6 +52,7 @@
 
 #define DEBUG_TYPE "tailcallelim"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -201,8 +202,21 @@ bool TailCallElim::runOnFunction(Function &F) {
 bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
   // FIXME: We can move load/store/call/free instructions above the call if the
   // call does not mod/ref the memory location being processed.
-  if (I->mayHaveSideEffects() || isa<LoadInst>(I))
+  if (I->mayHaveSideEffects())  // This also handles volatile loads.
     return false;
+  
+  if (LoadInst* L = dyn_cast<LoadInst>(I)) {
+    // Loads may always be moved above calls without side effects.
+    if (CI->mayHaveSideEffects()) {
+      // Non-volatile loads may be moved above a call with side effects if it
+      // does not write to memory and the load provably won't trap.
+      // FIXME: Writes to memory only matter if they may alias the pointer
+      // being loaded from.
+      if (CI->mayWriteToMemory() ||
+          !isSafeToLoadUnconditionally(L->getPointerOperand(), L))
+        return false;
+    }
+  }
 
   // Otherwise, if this is a side-effect free instruction, check to make sure
   // that it does not use the return value of the call.  If it doesn't use the
