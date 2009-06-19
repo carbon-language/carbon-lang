@@ -49,6 +49,7 @@ public:
   enum OSType {
     UnknownOS,
 
+    AuroraUX,
     Darwin,
     DragonFly,
     FreeBSD,
