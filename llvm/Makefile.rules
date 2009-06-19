@@ -519,10 +519,10 @@ endif
 #----------------------------------------------------------
 
 ifndef NO_PEDANTIC
-CompileCommonOpts += -pedantic
+CompileCommonOpts += -pedantic -Wno-long-long
 endif
-CompileCommonOpts += -Wall -W -Wwrite-strings -Wno-long-long \
-                     -Wunused -Wno-unused-parameter $(EXTRA_OPTIONS)
+CompileCommonOpts += -Wall -W -Wno-unused-parameter -Wwrite-strings \
+                     $(EXTRA_OPTIONS)
 
 ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
