@@ -571,6 +571,20 @@ namespace llvm {
     /// is deleted.
     void forgetLoopBackedgeTakenCount(const Loop *L);
 
+    /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
+    /// guaranteed to end in (at every loop iteration).  It is, at the same time,
+    /// the minimum number of times S is divisible by 2.  For example, given {4,+,8}
+    /// it returns 2.  If S is guaranteed to be 0, it returns the bitwidth of S.
+    uint32_t GetMinTrailingZeros(const SCEVHandle &S);
+
+    /// GetMinLeadingZeros - Determine the minimum number of zero bits that S is
+    /// guaranteed to begin with (at every loop iteration).
+    uint32_t GetMinLeadingZeros(const SCEVHandle &S);
+
+    /// GetMinSignBits - Determine the minimum number of sign bits that S is
+    /// guaranteed to begin with.
+    uint32_t GetMinSignBits(const SCEVHandle &S);
+
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
