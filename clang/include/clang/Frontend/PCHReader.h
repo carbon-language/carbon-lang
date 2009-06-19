@@ -53,6 +53,82 @@ class NamedDecl;
 class Preprocessor;
 class Sema;
 class SwitchCase;
+class PCHReader;
+class HeaderFileInfo;
+
+/// \brief Abstract interface for callback invocations by the PCHReader.
+///
+/// While reading a PCH file, the PCHReader will call the methods of the
+/// listener to pass on specific information. Some of the listener methods can
+/// return true to indicate to the PCHReader that the information (and
+/// consequently the PCH file) is invalid.
+class PCHReaderListener {
+public:
+  virtual ~PCHReaderListener();
+  
+  /// \brief Receives the language options.
+  ///
+  /// \returns true to indicate the options are invalid or false otherwise.
+  virtual bool ReadLanguageOptions(const LangOptions &LangOpts) {
+    return false;
+  }
+  
+  /// \brief Receives the target triple.
+  ///
+  /// \returns true to indicate the target triple is invalid or false otherwise.
+  virtual bool ReadTargetTriple(const std::string &Triple) {
+    return false;
+  }
+  
+  /// \brief Receives the contents of the predefines buffer.
+  ///
+  /// \param PCHPredef The start of the predefines buffer in the PCH
+  /// file.
+  ///
+  /// \param PCHPredefLen The length of the predefines buffer in the PCH
+  /// file.
+  ///
+  /// \param PCHBufferID The FileID for the PCH predefines buffer.
+  ///
+  /// \param SuggestedPredefines If necessary, additional definitions are added
+  /// here.
+  ///
+  /// \returns true to indicate the predefines are invalid or false otherwise.
+  virtual bool ReadPredefinesBuffer(const char *PCHPredef, 
+                                    unsigned PCHPredefLen,
+                                    FileID PCHBufferID,
+                                    std::string &SuggestedPredefines) {
+    return false;
+  }
+  
+  /// \brief Receives a HeaderFileInfo entry.
+  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI) {}
+  
+  /// \brief Receives __COUNTER__ value.
+  virtual void ReadCounter(unsigned Value) {}
+};
+
+/// \brief PCHReaderListener implementation to validate the information of
+/// the PCH file against an initialized Preprocessor.
+class PCHValidator : public PCHReaderListener {
+  Preprocessor &PP;
+  PCHReader &Reader;
+  
+  unsigned NumHeaderInfos;
+  
+public:
+  PCHValidator(Preprocessor &PP, PCHReader &Reader)
+    : PP(PP), Reader(Reader), NumHeaderInfos(0) {}
+  
+  virtual bool ReadLanguageOptions(const LangOptions &LangOpts);
+  virtual bool ReadTargetTriple(const std::string &Triple);
+  virtual bool ReadPredefinesBuffer(const char *PCHPredef, 
+                                    unsigned PCHPredefLen,
+                                    FileID PCHBufferID,
+                                    std::string &SuggestedPredefines);
+  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI);
+  virtual void ReadCounter(unsigned Value);
+};
 
 /// \brief Reads a precompiled head containing the contents of a
 /// translation unit.
@@ -75,12 +151,19 @@ public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
 
 private:
+  /// \ brief The receiver of some callbacks invoked by PCHReader.
+  llvm::OwningPtr<PCHReaderListener> Listener;
+  
+  SourceManager &SourceMgr;
+  FileManager &FileMgr;
+  Diagnostic &Diags;
+  
   /// \brief The semantic analysis object that will be processing the
   /// PCH file and the translation unit that uses it.
   Sema *SemaObj;
 
   /// \brief The preprocessor that will be loading the source file.
-  Preprocessor &PP;
+  Preprocessor *PP;
 
   /// \brief The AST context into which we'll read the PCH file.
   ASTContext *Context;
@@ -328,12 +411,33 @@ private:
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
-  explicit PCHReader(Preprocessor &PP, ASTContext *Context);
+  /// \brief Load the PCH file and validate its contents against the given
+  /// Preprocessor.
+  PCHReader(Preprocessor &PP, ASTContext *Context);
+  
+  /// \brief Load the PCH file without using any pre-initialized Preprocessor.
+  ///
+  /// The necessary information to initialize a Preprocessor later can be
+  /// obtained by setting a PCHReaderListener.
+  PCHReader(SourceManager &SourceMgr, FileManager &FileMgr, Diagnostic &Diags);
   ~PCHReader();
 
   /// \brief Load the precompiled header designated by the given file
   /// name.
   PCHReadResult ReadPCH(const std::string &FileName);
+  
+  /// \brief Set the PCH callbacks listener.
+  void setListener(PCHReaderListener *listener) {
+    Listener.reset(listener);
+  }
+  
+  /// \brief Set the Preprocessor to use.
+  void setPreprocessor(Preprocessor &pp) {
+    PP = &pp;
+  }
+  
+  /// \brief Sets and initializes the given Context.
+  void InitializeContext(ASTContext &Context);
 
   /// \brief Retrieve the name of the original source file name 
   const std::string &getOriginalSourceFile() { return OriginalFileName; }
