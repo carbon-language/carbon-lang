@@ -294,6 +294,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   if (!Subtarget->isThumb()) {
     // Use branch latency information to determine if-conversion limits.
+    // FIXME: If-converter should use instruction latency of the branch being
+    // eliminated to compute the threshold. For ARMv6, the branch "latency"
+    // varies depending on whether it's dynamically or statically predicted
+    // and on whether the destination is in the prefetch buffer.
     const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
     const InstrItineraryData &InstrItins = Subtarget->getInstrItineraryData();
     unsigned Latency= InstrItins.getLatency(TII->get(ARM::Bcc).getSchedClass());
