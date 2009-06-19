@@ -89,7 +89,7 @@ namespace llvm
       explicit SmartMutex(bool recursive = true) : MutexImpl(recursive) { }
       
       bool acquire() {
-        if (!mt_only && llvm_is_multithreaded())
+        if (!mt_only || llvm_is_multithreaded())
           return MutexImpl::acquire();
         return true;
       }
