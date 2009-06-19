@@ -709,12 +709,10 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     // strcmp(P, "x") -> memcmp(P, "x", 2)
     uint64_t Len1 = GetStringLength(Str1P);
     uint64_t Len2 = GetStringLength(Str2P);
-    if (Len1 || Len2) {
-      // Choose the smallest Len excluding 0 which means 'unknown'.
-      if (!Len1 || (Len2 && Len2 < Len1))
-        Len1 = Len2;
+    if (Len1 && Len2) {
       return EmitMemCmp(Str1P, Str2P,
-                        ConstantInt::get(TD->getIntPtrType(), Len1), B);
+                        ConstantInt::get(TD->getIntPtrType(),
+                        std::min(Len1, Len2)), B);
     }
 
     return 0;
