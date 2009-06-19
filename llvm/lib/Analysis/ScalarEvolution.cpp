@@ -4048,9 +4048,17 @@ void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
       SCEVHandle SV = SE.getSCEV(&*I);
       SV->print(OS);
 
-      if (const Loop *L = LI->getLoopFor((*I).getParent())) {
+      const Loop *L = LI->getLoopFor((*I).getParent());
+
+      SCEVHandle AtUse = SE.getSCEVAtScope(SV, L);
+      if (AtUse != SV) {
+        OS << "  -->  ";
+        AtUse->print(OS);
+      }
+
+      if (L) {
         OS << "\t\t" "Exits: ";
-        SCEVHandle ExitValue = SE.getSCEVAtScope(&*I, L->getParentLoop());
+        SCEVHandle ExitValue = SE.getSCEVAtScope(SV, L->getParentLoop());
         if (!ExitValue->isLoopInvariant(L)) {
           OS << "<<Unknown>>";
         } else {
