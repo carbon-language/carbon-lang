@@ -25,6 +25,8 @@ int f1(struct s **pval) {
   pval = &(t->value);
   tbool = (int *)pval; // Should record the cast-to type here.
   char c = (unsigned char) *tbool; // Should use cast-to type to create symbol.
+  if (*tbool == -1)
+    3;
 }
 
 void f2(const char *str) {

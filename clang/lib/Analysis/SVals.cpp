@@ -323,10 +323,10 @@ NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
 }
 
 SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
-  SymbolRef sym = SymMgr.getRegionValueSymbol(R);
+  SymbolRef sym = SymMgr.getRegionValueSymbol(R, T);
                                 
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R)) {
-    if (!T.getTypePtr())
+    if (T.isNull())
       T = TR->getValueType(SymMgr.getContext());
 
     // If T is of function pointer type, create a CodeTextRegion wrapping a

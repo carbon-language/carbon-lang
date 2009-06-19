@@ -92,14 +92,14 @@ std::ostream& std::operator<<(std::ostream& os, const SymExpr *SE) {
 }
 
 const SymbolRegionValue* 
-SymbolManager::getRegionValueSymbol(const MemRegion* R) {
+SymbolManager::getRegionValueSymbol(const MemRegion* R, QualType T) {
   llvm::FoldingSetNodeID profile;
-  SymbolRegionValue::Profile(profile, R);
+  SymbolRegionValue::Profile(profile, R, T);
   void* InsertPos;  
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);    
   if (!SD) {  
     SD = (SymExpr*) BPAlloc.Allocate<SymbolRegionValue>();
-    new (SD) SymbolRegionValue(SymbolCounter, R);  
+    new (SD) SymbolRegionValue(SymbolCounter, R, T);  
     DataSet.InsertNode(SD, InsertPos);
     ++SymbolCounter;
   }
@@ -166,6 +166,9 @@ QualType SymbolConjured::getType(ASTContext&) const {
 }
 
 QualType SymbolRegionValue::getType(ASTContext& C) const {
+  if (!T.isNull())
+    return T;
+
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
     return TR->getValueType(C);
   
