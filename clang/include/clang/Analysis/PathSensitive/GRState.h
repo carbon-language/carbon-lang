@@ -202,10 +202,21 @@ public:
   // Binding and retrieving values to/from the environment and symbolic store.
   //==---------------------------------------------------------------------==//
   
+  /// BindCompoundLiteral - Return the state that has the bindings currently
+  ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
+  ///  for the compound literal and 'BegInit' and 'EndInit' represent an
+  ///  array of initializer values.
+  const GRState* bindCompoundLiteral(const CompoundLiteralExpr* CL,
+                                     SVal V) const;
+  
   const GRState *bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
                           bool Invalidate) const;
   
-  const GRState *bindExpr(const Stmt* Ex, SVal V, bool Invalidate = true) const;  
+  const GRState *bindExpr(const Stmt* Ex, SVal V, bool Invalidate = true) const;
+  
+  const GRState *bindBlkExpr(const Stmt *Ex, SVal V) const {
+    return bindExpr(Ex, V, true, false);
+  }
   
   const GRState *bindLoc(Loc location, SVal V) const;
   
@@ -213,7 +224,22 @@ public:
   
   const GRState *unbindLoc(Loc LV) const;
 
-  SVal getLValue(const VarDecl* VD) const;
+  /// Get the lvalue for a variable reference.
+  SVal getLValue(const VarDecl *decl) const;
+  
+  /// Get the lvalue for a StringLiteral.
+  SVal getLValue(const StringLiteral *literal) const;
+  
+  SVal getLValue(const CompoundLiteralExpr *literal) const;
+  
+  /// Get the lvalue for an ivar reference.
+  SVal getLValue(const ObjCIvarDecl *decl, SVal base) const;
+  
+  /// Get the lvalue for a field reference.
+  SVal getLValue(SVal Base, const FieldDecl *decl) const;
+  
+  /// Get the lvalue for an array index.
+  SVal getLValue(QualType ElementType, SVal Base, SVal Idx) const;
   
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
@@ -481,15 +507,6 @@ public:
     // Store manager should return a persistent state.
     return StoreMgr->BindDeclWithNoInit(St, VD);
   }
-  
-  /// BindCompoundLiteral - Return the state that has the bindings currently
-  ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
-  ///  for the compound literal and 'BegInit' and 'EndInit' represent an
-  ///  array of initializer values.
-  const GRState* BindCompoundLiteral(const GRState* St,
-                                     const CompoundLiteralExpr* CL, SVal V) {
-    return StoreMgr->BindCompoundLiteral(St, CL, V);
-  }
 
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                     SymbolReaper& SymReaper);
@@ -512,34 +529,6 @@ public:
   }
   
 private:
-  // Get the lvalue for a variable reference.
-  SVal GetLValue(const GRState* St, const VarDecl* D) {
-    return StoreMgr->getLValueVar(St, D);
-  }
-
-  // Get the lvalue for a StringLiteral.
-  SVal GetLValue(const GRState* St, const StringLiteral* E) {
-    return StoreMgr->getLValueString(St, E);
-  }
-
-  SVal GetLValue(const GRState* St, const CompoundLiteralExpr* CL) {
-    return StoreMgr->getLValueCompoundLiteral(St, CL);
-  }
-
-  // Get the lvalue for an ivar reference.
-  SVal GetLValue(const GRState* St, const ObjCIvarDecl* D, SVal Base) {
-    return StoreMgr->getLValueIvar(St, D, Base);
-  }
-  
-  // Get the lvalue for a field reference.
-  SVal GetLValue(const GRState* St, SVal Base, const FieldDecl* D) {
-    return StoreMgr->getLValueField(St, Base, D);
-  }
-  
-  // Get the lvalue for an array index.
-  SVal GetLValue(const GRState* St, QualType ElementType, SVal Base, SVal Idx) {
-    return StoreMgr->getLValueElement(St, ElementType, Base, Idx);
-  }  
 
   // Methods that query & manipulate the Environment.  
   SVal GetSVal(const GRState* St, const Stmt* Ex) {
@@ -738,7 +727,12 @@ inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
 inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
                                              bool Assumption) const {
   return Mgr->ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
-}  
+} 
+
+inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
+                                            SVal V) const {
+  return Mgr->StoreMgr->BindCompoundLiteral(this, CL, V);
+}
   
 inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
                                         bool Invalidate) const {
@@ -759,8 +753,28 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
 }
   
 inline SVal GRState::getLValue(const VarDecl* VD) const {
-  return Mgr->GetLValue(this, VD);
-}  
+  return Mgr->StoreMgr->getLValueVar(this, VD);
+}
+
+inline SVal GRState::getLValue(const StringLiteral *literal) const {
+  return Mgr->StoreMgr->getLValueString(this, literal);
+}
+  
+inline SVal GRState::getLValue(const CompoundLiteralExpr *literal) const {
+  return Mgr->StoreMgr->getLValueCompoundLiteral(this, literal);
+}
+
+inline SVal GRState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
+  return Mgr->StoreMgr->getLValueIvar(this, D, Base);
+}
+  
+inline SVal GRState::getLValue(SVal Base, const FieldDecl* D) const {
+  return Mgr->StoreMgr->getLValueField(this, Base, D);
+}
+  
+inline SVal GRState::getLValue(QualType ElementType, SVal Base, SVal Idx) const{
+  return Mgr->StoreMgr->getLValueElement(this, ElementType, Base, Idx);
+}
   
 inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
   return Mgr->getSymVal(this, sym);
