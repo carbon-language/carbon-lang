@@ -749,9 +749,15 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
   // If the operand is a symbolic or alloca region, create the first element
   // region on it.
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR)) {
-    // Get symbol's type. It should be a pointer type.
-    SymbolRef Sym = SR->getSymbol();
-    QualType T = Sym->getType(getContext());
+    QualType T;
+    // If the SymbolicRegion was cast to another type, use that type.
+    if (const QualType *t = state->get<RegionCasts>(SR)) {
+      T = *t;
+    } else {
+      // Otherwise use the symbol's type.
+      SymbolRef Sym = SR->getSymbol();
+      T = Sym->getType(getContext());
+    }
     QualType EleTy = T->getAsPointerType()->getPointeeType();
 
     SVal ZeroIdx = ValMgr.makeZeroArrayIndex();

@@ -27,3 +27,12 @@ int f1(struct s **pval) {
   char c = (unsigned char) *tbool; // Should use cast-to type to create symbol.
 }
 
+void f2(const char *str) {
+ unsigned char ch, cl, *p;
+
+ p = (unsigned char *)str;
+ ch = *p++; // use cast-to type 'unsigned char' to create element region.
+ cl = *p++;
+ if(!cl)
+    cl = 'a';
+}
