@@ -27,6 +27,7 @@
 namespace llvm {
 
 class MachineJumpTableInfo;
+class MCInst;
 
 class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   DwarfWriter *DW;
@@ -63,6 +64,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   /// machine instruction was sufficiently described to print it, otherwise it
   /// returns false.
   bool printInstruction(const MachineInstr *MI);
+  
+  bool printInstruction(const MCInst &TmpInst);
+
 
   // These methods are used by the tablegen'erated instruction printer.
   void printOperand(const MachineInstr *MI, unsigned OpNo,
