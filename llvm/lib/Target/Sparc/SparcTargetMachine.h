@@ -35,6 +35,14 @@ class SparcTargetMachine : public LLVMTargetMachine {
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
   
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
+                                            TargetMachine &tm,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool verbose);
+  static AsmPrinterCtorFn AsmPrinterCtor;
+  
 public:
   SparcTargetMachine(const Module &M, const std::string &FS);
 
@@ -56,6 +64,10 @@ public:
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel,
                                   bool Verbose, raw_ostream &Out);
+  
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
 };
 
 } // end namespace llvm

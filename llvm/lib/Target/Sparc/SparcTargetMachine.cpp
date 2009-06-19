@@ -18,16 +18,12 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-/// SparcTargetMachineModule - Note that this is used on hosts that
-/// cannot link in a library unless there are references into the
-/// library.  In particular, it seems that it is not possible to get
-/// things to work on Win32 without this.  Though it is unused, do not
-/// remove it.
-extern "C" int SparcTargetMachineModule;
-int SparcTargetMachineModule = 0;
-
 // Register the target.
 static RegisterTarget<SparcTargetMachine> X("sparc", "SPARC");
+
+// No assembler printer by default
+SparcTargetMachine::AsmPrinterCtorFn SparcTargetMachine::AsmPrinterCtor = 0;
+
 
 // Force static initialization when called from llvm/InitializeAllTargets.h
 namespace llvm {
@@ -94,6 +90,8 @@ bool SparcTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             bool Verbose,
                                             raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createSparcCodePrinterPass(Out, *this, OptLevel, Verbose));
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  if (AsmPrinterCtor)
+    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
   return false;
 }

@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "Sparc.h"
 #include "SparcInstrInfo.h"
+#include "SparcTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -24,8 +25,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -87,6 +86,7 @@ FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
                                                bool verbose) {
   return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
 }
+
 
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
@@ -352,6 +352,14 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   O << ']';
 
   return false;
+}
+
+namespace {
+  static struct Register {
+    Register() {
+      SparcTargetMachine::registerAsmPrinter(createSparcCodePrinterPass);
+    }
+  } Registrator;
 }
 
 // Force static initialization when called from
