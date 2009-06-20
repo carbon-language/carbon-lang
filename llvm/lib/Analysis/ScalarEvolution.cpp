@@ -3655,6 +3655,29 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
   return 0;
 }
 
+/// HasSameValue - SCEV structural equivalence is usually sufficient for
+/// testing whether two expressions are equal, however for the purposes of
+/// looking for a condition guarding a loop, it can be useful to be a little
+/// more general, since a front-end may have replicated the controlling
+/// expression.
+///
+static bool HasSameValue(const SCEVHandle &A, const SCEVHandle &B) {
+  // Quick check to see if they are the same SCEV.
+  if (A == B) return true;
+
+  // Otherwise, if they're both SCEVUnknown, it's possible that they hold
+  // two different instructions with the same value. Check for this case.
+  if (const SCEVUnknown *AU = dyn_cast<SCEVUnknown>(A))
+    if (const SCEVUnknown *BU = dyn_cast<SCEVUnknown>(B))
+      if (const Instruction *AI = dyn_cast<Instruction>(AU->getValue()))
+        if (const Instruction *BI = dyn_cast<Instruction>(BU->getValue()))
+          if (AI->isIdenticalTo(BI))
+            return true;
+
+  // Otherwise assume they may have a different value.
+  return false;
+}
+
 /// isLoopGuardedByCond - Test whether entry to the loop is protected by
 /// a conditional between LHS and RHS.  This is used to help avoid max
 /// expressions in loop trip counts.
@@ -3755,9 +3778,10 @@ bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
 
     SCEVHandle PreCondLHSSCEV = getSCEV(PreCondLHS);
     SCEVHandle PreCondRHSSCEV = getSCEV(PreCondRHS);
-    if ((LHS == PreCondLHSSCEV && RHS == PreCondRHSSCEV) ||
-        (LHS == getNotSCEV(PreCondRHSSCEV) &&
-         RHS == getNotSCEV(PreCondLHSSCEV)))
+    if ((HasSameValue(LHS, PreCondLHSSCEV) &&
+         HasSameValue(RHS, PreCondRHSSCEV)) ||
+        (HasSameValue(LHS, getNotSCEV(PreCondRHSSCEV)) &&
+         HasSameValue(RHS, getNotSCEV(PreCondLHSSCEV))))
       return true;
   }
 
