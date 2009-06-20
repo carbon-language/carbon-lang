@@ -667,6 +667,7 @@ unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setByRef(Record[Idx++]);
+  E->setConstQualAdded(Record[Idx++]);
   return 0;
 }
 

@@ -602,6 +602,7 @@ void PCHStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isByRef());
+  Record.push_back(E->isConstQualAdded());
   Code = pch::EXPR_BLOCK_DECL_REF;
 }
 
