@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -iv-users -disable-output | grep {Stride i64 {1,+,2}<loop>:}
+; RUN: llvm-as < %s | opt -analyze -iv-users -disable-output | grep {Stride i64 {3,+,2}<loop>:}
 
 ; The value of %r is dependent on a polynomial iteration expression.
 
@@ -13,6 +13,6 @@ loop:
   br i1 %c, label %exit, label %loop
 
 exit:
-  %r = mul i64 %indvar, %indvar
+  %r = mul i64 %indvar.next, %indvar.next
   ret i64 %r
 }
