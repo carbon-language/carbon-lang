@@ -188,6 +188,14 @@ protected:
   virtual ~Decl();
 
 public:
+
+  /// \brief Source range that this declaration covers.
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLocation(), getLocation());
+  }
+  SourceLocation getLocStart() const { return getSourceRange().getBegin(); }
+  SourceLocation getLocEnd() const { return getSourceRange().getEnd(); }
+
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 

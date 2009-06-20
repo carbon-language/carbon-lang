@@ -315,6 +315,12 @@ void VarDecl::Destroy(ASTContext& C) {
 VarDecl::~VarDecl() {
 }
 
+SourceRange VarDecl::getSourceRange() const {
+  if (getInit())
+    return SourceRange(getLocation(), getInit()->getLocEnd());
+  return SourceRange(getLocation(), getLocation());
+}
+
 bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
   if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
     return false;
@@ -369,6 +375,12 @@ Stmt *FunctionDecl::getBodyIfAvailable() const {
   }
 
   return 0;
+}
+
+void FunctionDecl::setBody(Stmt *B) {
+  Body = B;
+  if (B && EndRangeLoc < B->getLocEnd())
+    EndRangeLoc = B->getLocEnd();
 }
 
 bool FunctionDecl::isMain() const {
@@ -481,6 +493,10 @@ void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
     void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
     ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
+
+    // Update source range.
+    if (EndRangeLoc < NewParamInfo[NumParams-1]->getLocEnd())
+      EndRangeLoc = NewParamInfo[NumParams-1]->getLocEnd();
   }
 }
 

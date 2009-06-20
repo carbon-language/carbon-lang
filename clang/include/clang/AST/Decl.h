@@ -146,8 +146,8 @@ public:
   }
   void setOriginalNamespace(NamespaceDecl *ND) { OrigNamespace = ND; }
   
-  SourceRange getSourceRange() const { 
-    return SourceRange(LBracLoc, RBracLoc); 
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLocation(), RBracLoc);
   }
 
   SourceLocation getLBracLoc() const { return LBracLoc; }
@@ -259,6 +259,8 @@ public:
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
   void setStorageClass(StorageClass SC) { SClass = SC; }
+  
+  virtual SourceRange getSourceRange() const;
 
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
   void setTypeSpecStartLoc(SourceLocation SL) {
@@ -644,6 +646,8 @@ private:
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
+  
+  SourceLocation EndRangeLoc;
 
   /// \brief The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
@@ -667,7 +671,7 @@ protected:
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
-      TemplateOrInstantiation() {}
+      EndRangeLoc(L), TemplateOrInstantiation() {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -677,7 +681,15 @@ public:
                               DeclarationName N, QualType T, 
                               StorageClass S = None, bool isInline = false,
                               bool hasWrittenPrototype = true,
-                              SourceLocation TSStartLoc = SourceLocation());  
+                              SourceLocation TSStartLoc = SourceLocation());
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLocation(), EndRangeLoc);
+  }
+  void setLocEnd(SourceLocation E) {
+    assert(getLocation() <= E && "Invalid end location");
+    EndRangeLoc = E;
+  }
   
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
   void setTypeSpecStartLoc(SourceLocation TS) { TypeSpecStartLoc = TS; }
@@ -706,7 +718,7 @@ public:
   /// CodeGenModule.cpp uses it, and I don't know if this would break it.
   bool isThisDeclarationADefinition() const { return Body; }
 
-  void setBody(Stmt *B) { Body = B; }
+  void setBody(Stmt *B);
   void setLazyBody(uint64_t Offset) { Body = Offset; }
 
   /// Whether this function is marked as virtual explicitly.
