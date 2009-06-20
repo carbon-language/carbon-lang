@@ -388,13 +388,11 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op,
 
 void X86ATTAsmPrinter::printMemReference(const MCInst *MI, unsigned Op,
                                          const char *Modifier, bool NotRIPRel){
-#if 0
-  assert(isMem(MI, Op) && "Invalid memory reference!");
-  MachineOperand Segment = MI->getOperand(Op+4);
+  //assert(isMem(MI, Op) && "Invalid memory reference!");
+  const MCOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
     printOperand(MI, Op+4, Modifier);
     O << ':';
   }
   printLeaMemReference(MI, Op, Modifier, NotRIPRel);
-#endif
 }
