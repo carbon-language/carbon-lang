@@ -88,16 +88,6 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '$';
     O << Op.getImm();
     return;
-  } else if (Op.isMBBLabel()) {
-    assert(0 && "labels should only be used as pc-relative values");
-    // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
-    // should eventually call into this code, not the other way around.
-    
-    O << TAI->getPrivateGlobalPrefix() << "BB" << Op.getMBBLabelFunction()
-      << '_' << Op.getMBBLabelBlock();
-    
-    // FIXME: with verbose asm print llvm bb name, add to operand.
-    return;
   }
   
   O << "<<UNKNOWN OPERAND KIND>>";

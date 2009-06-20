@@ -223,11 +223,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;
-  case MachineOperand::MO_MachineBasicBlock:
-    // FIXME: REMOVE
-    assert(0 && "labels should only be used as pc-relative values");
-    printBasicBlockLabel(MO.getMBB());
-    return;
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
