@@ -48,6 +48,9 @@ def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
                         [add, mul, X86mul_imm, shl, or, frameindex, X86Wrapper],
                         []>;
 
+def tls64addr : ComplexPattern<i64, 4, "SelectTLSADDRAddr",
+                               [tglobaltlsaddr], []>;
+
 //===----------------------------------------------------------------------===//
 // Pattern fragments.
 //
@@ -1330,13 +1333,13 @@ let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
             XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [RSP] in
-def TLS_addr64 : I<0, Pseudo, (outs), (ins i64imm:$sym),
+def TLS_addr64 : I<0, Pseudo, (outs), (ins lea64mem:$sym),
                    ".byte\t0x66; "
-                   "leaq\t${sym:mem}(%rip), %rdi; "
+                   "leaq\t$sym(%rip), %rdi; "
                    ".word\t0x6666; "
                    "rex64; "
                    "call\t__tls_get_addr@PLT",
-                  [(X86tlsaddr tglobaltlsaddr:$sym)]>,
+                  [(X86tlsaddr tls64addr:$sym)]>,
                   Requires<[In64BitMode]>;
 
 let AddedComplexity = 5 in

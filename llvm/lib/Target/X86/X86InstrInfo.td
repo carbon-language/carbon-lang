@@ -224,6 +224,8 @@ def brtarget : Operand<OtherVT> {
 def addr      : ComplexPattern<iPTR, 5, "SelectAddr", [], []>;
 def lea32addr : ComplexPattern<i32, 4, "SelectLEAAddr",
                                [add, sub, mul, shl, or, frameindex], []>;
+def tls32addr : ComplexPattern<i32, 4, "SelectTLSADDRAddr",
+                               [tglobaltlsaddr], []>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
@@ -3112,11 +3114,11 @@ let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
             MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
             XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-    Uses = [ESP, EBX] in
-def TLS_addr32 : I<0, Pseudo, (outs), (ins i32imm:$sym),
-                  "leal\t${sym:mem}(,%ebx,1), %eax; "
+    Uses = [ESP] in
+def TLS_addr32 : I<0, Pseudo, (outs), (ins lea32mem:$sym),
+                  "leal\t$sym, %eax; "
                   "call\t___tls_get_addr@PLT",
-                  [(X86tlsaddr tglobaltlsaddr:$sym)]>,
+                  [(X86tlsaddr tls32addr:$sym)]>,
                   Requires<[In32BitMode]>;
 
 let AddedComplexity = 5 in

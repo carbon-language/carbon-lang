@@ -167,6 +167,8 @@ namespace {
                     SDValue &Segment);
     bool SelectLEAAddr(SDValue Op, SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp);
+    bool SelectTLSADDRAddr(SDValue Op, SDValue N, SDValue &Base,
+                       SDValue &Scale, SDValue &Index, SDValue &Disp);
     bool SelectScalarSSELoad(SDValue Op, SDValue Pred,
                              SDValue N, SDValue &Base, SDValue &Scale,
                              SDValue &Index, SDValue &Disp,
@@ -1292,6 +1294,32 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
   }
   return false;
 }
+
+/// SelectTLSADDRAddr - This is only run on TargetGlobalTLSAddress nodes.
+bool X86DAGToDAGISel::SelectTLSADDRAddr(SDValue Op, SDValue N, SDValue &Base,
+                                        SDValue &Scale, SDValue &Index,
+                                        SDValue &Disp) {
+  assert(Op.getOpcode() == X86ISD::TLSADDR);
+  assert(N.getOpcode() == ISD::TargetGlobalTLSAddress);
+  const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
+  
+  X86ISelAddressMode AM;
+  AM.GV = GA->getGlobal();
+  AM.Disp += GA->getOffset();
+  AM.Base.Reg = CurDAG->getRegister(0, N.getValueType());
+  
+  if (N.getValueType() == MVT::i32) {
+    AM.Scale = 1;
+    AM.IndexReg = CurDAG->getRegister(X86::EBX, MVT::i32);
+  } else {
+    AM.IndexReg = CurDAG->getRegister(0, MVT::i64);
+  }
+  
+  SDValue Segment;
+  getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
+  return true;
+}
+
 
 bool X86DAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
                                   SDValue &Base, SDValue &Scale,
