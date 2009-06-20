@@ -940,14 +940,14 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     return SourceLocation();
   
   unsigned FilePos = Content->SourceLineCache[Line - 1];
-  const char *BufStart = Content->getBuffer()->getBufferStart();
-  const char *BufEnd = Content->getBuffer()->getBufferEnd();
-  const char *p = BufStart;
+  const char *Buf = Content->getBuffer()->getBufferStart();
+  unsigned BufLength = Content->getBuffer()->getBufferEnd() - Buf;
+  unsigned i = 0;
 
   // Check that the given column is valid.
-  while (p < BufEnd && *p != '\n' && *p != '\r')
-    ++p;
-  if (Col > p-BufStart)
+  while (i < BufLength-1 && i < Col-1 && Buf[i] != '\n' && Buf[i] != '\r')
+    ++i;
+  if (i < Col-1)
     return SourceLocation();
   
   return getLocForStartOfFile(Content->FirstFID).
