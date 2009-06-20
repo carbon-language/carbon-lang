@@ -74,7 +74,8 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printLeaMemReference(const MCInst *MI, unsigned Op);
   void printSSECC(const MCInst *MI, unsigned Op);
   void printPICLabel(const MCInst *MI, unsigned Op);
-
+  void print_pcrel_imm(const MCInst *MI, unsigned OpNo);
+  
   void printi8mem(const MCInst *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
@@ -117,6 +118,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   // These methods are used by the tablegen'erated instruction printer.
   void printOperand(const MachineInstr *MI, unsigned OpNo,
                     const char *Modifier = 0, bool NotRIPRel = false);
+  void print_pcrel_imm(const MachineInstr *MI, unsigned OpNo);
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }

@@ -163,6 +163,11 @@ def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 // X86 Operand Definitions.
 //
 
+def i32imm_pcrel : Operand<i32> {
+  let PrintMethod = "print_pcrel_imm";
+}
+
+
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
 class X86MemOperand<string printMethod> : Operand<iPTR> {
@@ -206,8 +211,10 @@ def i16i8imm  : Operand<i16>;
 // 32-bits but only 8 bits are significant.
 def i32i8imm  : Operand<i32>;
 
-// Branch targets have OtherVT type.
-def brtarget : Operand<OtherVT>;
+// Branch targets have OtherVT type and print as pc-relative values.
+def brtarget : Operand<OtherVT> {
+  let PrintMethod = "print_pcrel_imm";
+}
 
 //===----------------------------------------------------------------------===//
 // X86 Complex Pattern Definitions.
@@ -561,8 +568,9 @@ let isCall = 1 in
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
               XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
       Uses = [ESP] in {
-    def CALLpcrel32 : Ii32<0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
-                           "call\t${dst:call}", []>;
+    def CALLpcrel32 : Ii32<0xE8, RawFrm,
+                           (outs), (ins i32imm_pcrel:$dst,variable_ops),
+                           "call\t$dst", []>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
                         "call\t{*}$dst", [(X86call GR32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
@@ -587,7 +595,7 @@ def TCRETURNri : I<0, Pseudo, (outs), (ins GR32:$dst, i32imm:$offset, variable_o
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
 
-  def TAILJMPd : IBr<0xE9, (ins i32imm:$dst), "jmp\t${dst:call}  # TAILCALL",
+  def TAILJMPd : IBr<0xE9, (ins i32imm_pcrel:$dst), "jmp\t$dst  # TAILCALL",
                  []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst  # TAILCALL",

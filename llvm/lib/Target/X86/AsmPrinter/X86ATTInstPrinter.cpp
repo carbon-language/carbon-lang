@@ -46,6 +46,24 @@ void X86ATTAsmPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
 }
 
 
+/// print_pcrel_imm - This is used to print an immediate value that ends up
+/// being encoded as a pc-relative value.  These print slightly differently, for
+/// example, a $ is not emitted.
+void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  
+  if (Op.isImm())
+    O << Op.getImm();
+  else if (Op.isMBBLabel())
+    // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
+    // should eventually call into this code, not the other way around.
+    O << TAI->getPrivateGlobalPrefix() << "BB" << Op.getMBBLabelFunction()
+      << '_' << Op.getMBBLabelBlock();
+  else
+    assert(0 && "Unknown pcrel immediate operand");
+}
+
+
 void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                     const char *Modifier, bool NotRIPRel) {
   assert(Modifier == 0 && "Modifiers should not be used");
@@ -71,6 +89,7 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << Op.getImm();
     return;
   } else if (Op.isMBBLabel()) {
+    assert(0 && "labels should only be used as pc-relative values");
     // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
     // should eventually call into this code, not the other way around.
     
@@ -108,9 +127,6 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                         strcmp(Modifier, "call")))
         O << '$';
       O << MO.getImm();
-      return;
-    case MachineOperand::MO_MachineBasicBlock:
-      printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
       return;
     case MachineOperand::MO_JumpTableIndex: {
       bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
@@ -389,7 +405,6 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
 }
 
 void X86ATTAsmPrinter::printMemReference(const MCInst *MI, unsigned Op) {
-  //assert(isMem(MI, Op) && "Invalid memory reference!");
   const MCOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
     printOperand(MI, Op+4);

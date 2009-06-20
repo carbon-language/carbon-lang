@@ -19,6 +19,14 @@
 
 // 64-bits but only 32 bits are significant.
 def i64i32imm  : Operand<i64>;
+
+// 64-bits but only 32 bits are significant, and those bits are treated as being
+// pc relative.
+def i64i32imm_pcrel : Operand<i64> {
+  let PrintMethod = "print_pcrel_imm";
+}
+
+
 // 64-bits but only 8 bits are significant.
 def i64i8imm   : Operand<i64>;
 
@@ -115,8 +123,8 @@ let isCall = 1 in
     // that the offset between an arbitrary immediate and the call will fit in
     // the 32-bit pcrel field that we have.
     def CALL64pcrel32 : Ii32<0xE8, RawFrm,
-                          (outs), (ins i64i32imm:$dst, variable_ops),
-                          "call\t${dst:call}", []>,
+                          (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
+                          "call\t$dst", []>,
                         Requires<[In64BitMode]>;
     def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                           "call\t{*}$dst", [(X86call GR64:$dst)]>;

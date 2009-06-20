@@ -224,6 +224,8 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
+    // FIXME: REMOVE
+    assert(0 && "labels should only be used as pc-relative values");
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex: {
@@ -243,14 +245,13 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   }
   case MachineOperand::MO_GlobalAddress: {
-    bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
 
     decorateName(Name, GV);
 
-    if (!isMemOp && !isCallOp) O << "OFFSET ";
+    if (!isMemOp) O << "OFFSET ";
     if (GV->hasDLLImportLinkage()) {
       // FIXME: This should be fixed with full support of stdcall & fastcall
       // CC's
@@ -261,8 +262,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    if (!isCallOp) O << "OFFSET ";
     O << TAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
@@ -270,6 +269,39 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     O << "<unknown operand type>"; return;
   }
 }
+
+void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
+  const MachineOperand &MO = MI->getOperand(OpNo);
+  switch (MO.getType()) {
+  default: assert(0 && "Unknown pcrel immediate operand");
+  case MachineOperand::MO_Immediate:
+    O << MO.getImm();
+    return;
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMBB());
+    return;
+    
+  case MachineOperand::MO_GlobalAddress: {
+    GlobalValue *GV = MO.getGlobal();
+    std::string Name = Mang->getValueName(GV);
+    decorateName(Name, GV);
+    
+    if (GV->hasDLLImportLinkage()) {
+      // FIXME: This should be fixed with full support of stdcall & fastcall
+      // CC's
+      O << "__imp_";
+    }
+    O << Name;
+    printOffset(MO.getOffset());
+    return;
+  }
+
+  case MachineOperand::MO_ExternalSymbol:
+    O << TAI->getGlobalPrefix() << MO.getSymbolName();
+    return;
+  }
+}
+
 
 void X86IntelAsmPrinter::printLeaMemReference(const MachineInstr *MI,
                                               unsigned Op,
