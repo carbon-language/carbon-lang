@@ -359,12 +359,11 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
     // That is, unless we are currently processing the last reference itself.
     LastRefOrPartRef->addRegisterDead(Reg, TRI, true);
 
-  /* Partial uses. Mark register def dead and add implicit def of
-     sub-registers which are used.
-    FIXME: LiveIntervalAnalysis can't handle this yet!
-    EAX<dead>  = op  AL<imp-def>
-    That is, EAX def is dead but AL def extends pass it.
-    Enable this after live interval analysis is fixed to improve codegen!
+  // Partial uses. Mark register def dead and add implicit def of
+  // sub-registers which are used.
+  // EAX<dead>  = op  AL<imp-def>
+  // That is, EAX def is dead but AL def extends pass it.
+  // Enable this after live interval analysis is fixed to improve codegen!
   else if (!PhysRegUse[Reg]) {
     PhysRegDef[Reg]->addRegisterDead(Reg, TRI, true);
     for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
@@ -377,7 +376,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
           PartUses.erase(*SS);
       }
     }
-  } */
+  }
   else
     LastRefOrPartRef->addRegisterKilled(Reg, TRI, true);
   return true;
