@@ -61,7 +61,7 @@ protected:
 public:
   /// Static constructor to get a '0' constant of arbitrary type...
   ///
-  static Constant *getNullValue(const Type *Ty, bool locked = true);
+  static Constant *getNullValue(const Type *Ty);
 
   /// Static constructor to get a '-1' constant.  This supports integers and
   /// vectors.
@@ -107,9 +107,7 @@ public:
   /// available cached constants.  Implementations should call
   /// destroyConstantImpl as the last thing they do, to destroy all users and
   /// delete this.
-  virtual void destroyConstant(bool locked = true) {
-    assert(0 && "Not reached!");
-  }
+  virtual void destroyConstant() { assert(0 && "Not reached!"); }
 
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }

@@ -40,8 +40,7 @@ using namespace llvm;
 /// specified vector type.  At this point, we know that the elements of the
 /// input vector constant are all simple integer or FP values.
 static Constant *BitCastConstantVector(ConstantVector *CV,
-                                       const VectorType *DstTy,
-                                       bool locked) {
+                                       const VectorType *DstTy) {
   // If this cast changes element count then we can't handle it here:
   // doing so requires endianness information.  This should be handled by
   // Analysis/ConstantFolding.cpp
@@ -61,7 +60,7 @@ static Constant *BitCastConstantVector(ConstantVector *CV,
   const Type *DstEltTy = DstTy->getElementType();
   for (unsigned i = 0; i != NumElts; ++i)
     Result.push_back(ConstantExpr::getBitCast(CV->getOperand(i), DstEltTy));
-  return ConstantVector::get(Result, locked);
+  return ConstantVector::get(Result);
 }
 
 /// This function determines which opcode to use to fold two constant cast 
@@ -89,8 +88,7 @@ foldConstantCastPair(
                                         Type::Int64Ty);
 }
 
-static Constant *FoldBitCast(Constant *V, const Type *DestTy,
-                             bool locked = true) {
+static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
   const Type *SrcTy = V->getType();
   if (SrcTy == DestTy)
     return V; // no-op cast
@@ -101,7 +99,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy,
     if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy))
       if (PTy->getAddressSpace() == DPTy->getAddressSpace()) {
         SmallVector<Value*, 8> IdxList;
-        IdxList.push_back(Constant::getNullValue(Type::Int32Ty, locked));
+        IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
         const Type *ElTy = PTy->getElementType();
         while (ElTy != DPTy->getElementType()) {
           if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
@@ -119,8 +117,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy,
         }
         
         if (ElTy == DPTy->getElementType())
-          return ConstantExpr::getGetElementPtr(V, &IdxList[0],
-                                                IdxList.size(), locked);
+          return ConstantExpr::getGetElementPtr(V, &IdxList[0], IdxList.size());
       }
   
   // Handle casts from one vector constant to another.  We know that the src 
@@ -132,24 +129,23 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy,
       SrcTy = NULL;
       // First, check for null.  Undef is already handled.
       if (isa<ConstantAggregateZero>(V))
-        return Constant::getNullValue(DestTy, locked);
+        return Constant::getNullValue(DestTy);
       
       if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
-        return BitCastConstantVector(CV, DestPTy, locked);
+        return BitCastConstantVector(CV, DestPTy);
     }
 
     // Canonicalize scalar-to-vector bitcasts into vector-to-vector bitcasts
     // This allows for other simplifications (although some of them
     // can only be handled by Analysis/ConstantFolding.cpp).
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V))
-      return ConstantExpr::getBitCast(ConstantVector::get(&V, 1, locked), 
-                                      DestPTy, locked);
+      return ConstantExpr::getBitCast(ConstantVector::get(&V, 1), DestPTy);
   }
   
   // Finally, implement bitcast folding now.   The code below doesn't handle
   // bitcast right.
   if (isa<ConstantPointerNull>(V))  // ptr->ptr cast.
-    return ConstantPointerNull::get(cast<PointerType>(DestTy), locked);
+    return ConstantPointerNull::get(cast<PointerType>(DestTy));
   
   // Handle integral constant input.
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -160,7 +156,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy,
 
     if (DestTy->isFloatingPoint())
       return ConstantFP::get(APFloat(CI->getValue(),
-                                     DestTy != Type::PPC_FP128Ty), locked);
+                                     DestTy != Type::PPC_FP128Ty));
 
     // Otherwise, can't fold this (vector?)
     return 0;
@@ -169,22 +165,22 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy,
   // Handle ConstantFP input.
   if (const ConstantFP *FP = dyn_cast<ConstantFP>(V))
     // FP -> Integral.
-    return ConstantInt::get(FP->getValueAPF().bitcastToAPInt(), locked);
+    return ConstantInt::get(FP->getValueAPF().bitcastToAPInt());
 
   return 0;
 }
 
 
 Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
-                                            const Type *DestTy, bool locked) {
+                                            const Type *DestTy) {
   if (isa<UndefValue>(V)) {
     // zext(undef) = 0, because the top bits will be zero.
     // sext(undef) = 0, because the top bits will all be the same.
     // [us]itofp(undef) = 0, because the result value is bounded.
     if (opc == Instruction::ZExt || opc == Instruction::SExt ||
         opc == Instruction::UIToFP || opc == Instruction::SIToFP)
-      return Constant::getNullValue(DestTy, locked);
-    return UndefValue::get(DestTy, locked);
+      return Constant::getNullValue(DestTy);
+    return UndefValue::get(DestTy);
   }
   // No compile-time operations on this type yet.
   if (V->getType() == Type::PPC_FP128Ty || DestTy == Type::PPC_FP128Ty)
@@ -196,7 +192,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (CE->isCast()) {
       // Try hard to fold cast of cast because they are often eliminable.
       if (unsigned newOpc = foldConstantCastPair(opc, CE, DestTy))
-        return ConstantExpr::getCast(newOpc, CE->getOperand(0), DestTy, locked);
+        return ConstantExpr::getCast(newOpc, CE->getOperand(0), DestTy);
     } else if (CE->getOpcode() == Instruction::GetElementPtr) {
       // If all of the indexes in the GEP are null values, there is no pointer
       // adjustment going on.  We might as well cast the source pointer.
@@ -208,7 +204,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         }
       if (isAllNull)
         // This is casting one pointer type to another, always BitCast
-        return ConstantExpr::getPointerCast(CE->getOperand(0), DestTy, locked);
+        return ConstantExpr::getPointerCast(CE->getOperand(0), DestTy);
     }
   }
 
@@ -224,8 +220,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       const Type *DstEltTy = DestVecTy->getElementType();
       for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
         res.push_back(ConstantExpr::getCast(opc,
-                                        CV->getOperand(i), DstEltTy, locked));
-      return ConstantVector::get(DestVecTy, res, locked);
+                                            CV->getOperand(i), DstEltTy));
+      return ConstantVector::get(DestVecTy, res);
     }
 
   // We actually have to do a cast now. Perform the cast according to the
@@ -242,7 +238,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                   DestTy == Type::FP128Ty ? APFloat::IEEEquad :
                   APFloat::Bogus,
                   APFloat::rmNearestTiesToEven, &ignored);
-      return ConstantFP::get(Val, locked);
+      return ConstantFP::get(Val);
     }
     return 0; // Can't fold.
   case Instruction::FPToUI: 
@@ -255,16 +251,16 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       (void) V.convertToInteger(x, DestBitWidth, opc==Instruction::FPToSI,
                                 APFloat::rmTowardZero, &ignored);
       APInt Val(DestBitWidth, 2, x);
-      return ConstantInt::get(Val, locked);
+      return ConstantInt::get(Val);
     }
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
     if (V->isNullValue())       // Is it an integral null value?
-      return ConstantPointerNull::get(cast<PointerType>(DestTy), locked);
+      return ConstantPointerNull::get(cast<PointerType>(DestTy));
     return 0;                   // Other pointer types cannot be casted
   case Instruction::PtrToInt:   // always treated as unsigned
     if (V->isNullValue())       // is it a null pointer value?
-      return ConstantInt::get(DestTy, 0, locked);
+      return ConstantInt::get(DestTy, 0);
     return 0;                   // Other pointer types cannot be casted
   case Instruction::UIToFP:
   case Instruction::SIToFP:
@@ -276,7 +272,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       (void)apf.convertFromAPInt(api, 
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);
-      return ConstantFP::get(apf, locked);
+      return ConstantFP::get(apf);
     }
     return 0;
   case Instruction::ZExt:
@@ -284,7 +280,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.zext(BitWidth);
-      return ConstantInt::get(Result, locked);
+      return ConstantInt::get(Result);
     }
     return 0;
   case Instruction::SExt:
@@ -292,7 +288,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.sext(BitWidth);
-      return ConstantInt::get(Result, locked);
+      return ConstantInt::get(Result);
     }
     return 0;
   case Instruction::Trunc:
@@ -300,11 +296,11 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.trunc(BitWidth);
-      return ConstantInt::get(Result, locked);
+      return ConstantInt::get(Result);
     }
     return 0;
   case Instruction::BitCast:
-    return FoldBitCast(const_cast<Constant*>(V), DestTy, locked);
+    return FoldBitCast(const_cast<Constant*>(V), DestTy);
   default:
     assert(!"Invalid CE CastInst opcode");
     break;
@@ -316,7 +312,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
 
 Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
                                               const Constant *V1,
-                                              const Constant *V2, bool locked) {
+                                              const Constant *V2) {
   if (const ConstantInt *CB = dyn_cast<ConstantInt>(Cond))
     return const_cast<Constant*>(CB->getZExtValue() ? V1 : V2);
 
@@ -570,22 +566,21 @@ Constant *llvm::ConstantFoldInsertValueInstruction(const Constant *Agg,
 static Constant *EvalVectorOp(const ConstantVector *V1, 
                               const ConstantVector *V2,
                               const VectorType *VTy,
-                              Constant *(*FP)(Constant*, Constant*, bool)) {
+                              Constant *(*FP)(Constant*, Constant*)) {
   std::vector<Constant*> Res;
   const Type *EltTy = VTy->getElementType();
   for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
     const Constant *C1 = V1 ? V1->getOperand(i) : Constant::getNullValue(EltTy);
     const Constant *C2 = V2 ? V2->getOperand(i) : Constant::getNullValue(EltTy);
     Res.push_back(FP(const_cast<Constant*>(C1),
-                     const_cast<Constant*>(C2), true));
+                     const_cast<Constant*>(C2)));
   }
   return ConstantVector::get(Res);
 }
 
 Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                                               const Constant *C1,
-                                              const Constant *C2,
-                                              bool locked) {
+                                              const Constant *C2) {
   // No compile-time operations on this type yet.
   if (C1->getType() == Type::PPC_FP128Ty)
     return 0;
@@ -597,29 +592,29 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       if (isa<UndefValue>(C1) && isa<UndefValue>(C2))
         // Handle undef ^ undef -> 0 special case. This is a common
         // idiom (misuse).
-        return Constant::getNullValue(C1->getType(), locked);
+        return Constant::getNullValue(C1->getType());
       // Fallthrough
     case Instruction::Add:
     case Instruction::Sub:
-      return UndefValue::get(C1->getType(), locked);
+      return UndefValue::get(C1->getType());
     case Instruction::Mul:
     case Instruction::And:
-      return Constant::getNullValue(C1->getType(), locked);
+      return Constant::getNullValue(C1->getType());
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::URem:
     case Instruction::SRem:
       if (!isa<UndefValue>(C2))                    // undef / X -> 0
-        return Constant::getNullValue(C1->getType(), locked);
+        return Constant::getNullValue(C1->getType());
       return const_cast<Constant*>(C2);            // X / undef -> undef
     case Instruction::Or:                          // X | undef -> -1
       if (const VectorType *PTy = dyn_cast<VectorType>(C1->getType()))
-        return ConstantVector::getAllOnesValue(PTy, locked);
-      return ConstantInt::getAllOnesValue(C1->getType(), locked);
+        return ConstantVector::getAllOnesValue(PTy);
+      return ConstantInt::getAllOnesValue(C1->getType());
     case Instruction::LShr:
       if (isa<UndefValue>(C2) && isa<UndefValue>(C1))
         return const_cast<Constant*>(C1);           // undef lshr undef -> undef
-      return Constant::getNullValue(C1->getType(), locked); // X lshr undef -> 0
+      return Constant::getNullValue(C1->getType()); // X lshr undef -> 0
                                                     // undef lshr X -> 0
     case Instruction::AShr:
       if (!isa<UndefValue>(C2))
@@ -630,7 +625,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return const_cast<Constant*>(C1);           // X ashr undef --> X
     case Instruction::Shl:
       // undef << X -> 0   or   X << undef -> 0
-      return Constant::getNullValue(C1->getType(), locked);
+      return Constant::getNullValue(C1->getType());
     }
   }
 
@@ -1577,7 +1572,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
                                           Constant* const *Idxs,
-                                          unsigned NumIdx, bool locked) {
+                                          unsigned NumIdx) {
   if (NumIdx == 0 ||
       (NumIdx == 1 && Idxs[0]->isNullValue()))
     return const_cast<Constant*>(C);
@@ -1588,8 +1583,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
                                                        (Value **)Idxs,
                                                        (Value **)Idxs+NumIdx);
     assert(Ty != 0 && "Invalid indices for GEP!");
-    return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()), 
-                           locked);
+    return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
   Constant *Idx0 = Idxs[0];
@@ -1607,8 +1601,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
                                                          (Value**)Idxs+NumIdx);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return 
-        ConstantPointerNull::get(PointerType::get(Ty,Ptr->getAddressSpace()), 
-                                 locked);
+        ConstantPointerNull::get(PointerType::get(Ty,Ptr->getAddressSpace()));
     }
   }
 
@@ -1636,22 +1629,20 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         if (!Idx0->isNullValue()) {
           const Type *IdxTy = Combined->getType();
           if (IdxTy != Idx0->getType()) {
-            Constant *C1 = ConstantExpr::getSExtOrBitCast(Idx0, Type::Int64Ty,
-                                                          locked);
+            Constant *C1 = ConstantExpr::getSExtOrBitCast(Idx0, Type::Int64Ty);
             Constant *C2 = ConstantExpr::getSExtOrBitCast(Combined, 
-                                                          Type::Int64Ty,
-                                                          locked);
-            Combined = ConstantExpr::get(Instruction::Add, C1, C2, locked);
+                                                          Type::Int64Ty);
+            Combined = ConstantExpr::get(Instruction::Add, C1, C2);
           } else {
             Combined =
-              ConstantExpr::get(Instruction::Add, Idx0, Combined, locked);
+              ConstantExpr::get(Instruction::Add, Idx0, Combined);
           }
         }
 
         NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), Idxs+1, Idxs+NumIdx);
         return ConstantExpr::getGetElementPtr(CE->getOperand(0), &NewIndices[0],
-                                              NewIndices.size(), locked);
+                                              NewIndices.size());
       }
     }
 
@@ -1668,7 +1659,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
             if (CAT->getElementType() == SAT->getElementType())
               return ConstantExpr::getGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs, NumIdx, locked);
+                      (Constant*)CE->getOperand(0), Idxs, NumIdx);
     }
     
     // Fold: getelementptr (i8* inttoptr (i64 1 to i8*), i32 -1)
@@ -1686,10 +1677,10 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         Offset = ConstantExpr::getSExt(Offset, Base->getType());
       else if (Base->getType()->getPrimitiveSizeInBits() <
                Offset->getType()->getPrimitiveSizeInBits())
-        Base = ConstantExpr::getZExt(Base, Offset->getType(), locked);
+        Base = ConstantExpr::getZExt(Base, Offset->getType());
       
-      Base = ConstantExpr::getAdd(Base, Offset, locked);
-      return ConstantExpr::getIntToPtr(Base, CE->getType(), locked);
+      Base = ConstantExpr::getAdd(Base, Offset);
+      return ConstantExpr::getIntToPtr(Base, CE->getType());
     }
   }
   return 0;
