@@ -348,7 +348,6 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 }
 
 void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
-  const char *Modifier = 0;
   bool NotRIPRel = false;
 
   const MCOperand &BaseReg  = MI->getOperand(Op);
@@ -368,28 +367,20 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   }
   
   if (IndexReg.getReg() || BaseReg.getReg()) {
-    unsigned ScaleVal = MI->getOperand(Op+1).getImm();
-    unsigned BaseRegOperand = 0, IndexRegOperand = 2;
-    
     // There are cases where we can end up with ESP/RSP in the indexreg slot.
     // If this happens, swap the base/index register to support assemblers that
     // don't work when the index is *SP.
     // FIXME: REMOVE THIS.
-    if (IndexReg.getReg() == X86::ESP || IndexReg.getReg() == X86::RSP) {
-      assert(ScaleVal == 1 && "Scale not supported for stack pointer!");
-      abort();
-      //std::swap(BaseReg, IndexReg);
-      //std::swap(BaseRegOperand, IndexRegOperand);
-    }
+    assert(IndexReg.getReg() != X86::ESP && IndexReg.getReg() != X86::RSP);
     
     O << '(';
     if (BaseReg.getReg())
-      printOperand(MI, Op+BaseRegOperand, Modifier);
+      printOperand(MI, Op);
     
     if (IndexReg.getReg()) {
       O << ',';
-      printOperand(MI, Op+IndexRegOperand, Modifier);
-      if (ScaleVal != 1)
+      printOperand(MI, Op+2);
+      if (MI->getOperand(Op+1).getImm() != 1)
         O << ',' << ScaleVal;
     }
     O << ')';
