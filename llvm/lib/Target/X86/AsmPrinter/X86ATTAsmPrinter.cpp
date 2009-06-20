@@ -803,6 +803,13 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   printInstruction(MI);
 }
 
+/// doInitialization
+bool X86ATTAsmPrinter::doInitialization(Module &M) {
+  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling()) 
+    MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  return AsmPrinter::doInitialization(M);
+}
+
 void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 

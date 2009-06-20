@@ -647,6 +647,8 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  assert(MMI);
   SwitchToSection(TAI->getTextSection());
   return Result;
 }
@@ -865,6 +867,8 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
 
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  assert(MMI);
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
