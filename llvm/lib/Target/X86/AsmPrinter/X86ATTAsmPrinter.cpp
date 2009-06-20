@@ -771,6 +771,29 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (NewAsmPrinter) {
     O << "NEW: ";
     MCInst TmpInst;
+    
+    TmpInst.setOpcode(MI->getOpcode());
+    
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      
+      MCOperand MCOp;
+      if (MO.isReg()) {
+        MCOp.MakeReg(MO.getReg());
+      } else if (MO.isImm()) {
+        MCOp.MakeImm(MO.getImm());
+      } else {
+        assert(0 && "Unimp");
+      }
+      
+      TmpInst.addOperand(MCOp);
+    }
+    
+    if (MI->getOpcode() == X86::LEA64_32r) {
+      // Should handle the 'subreg rewriting' for the lea64_32mem operand.
+      
+    }
+    
     // FIXME: Convert TmpInst.
     printInstruction(&TmpInst);
     O << "OLD: ";
