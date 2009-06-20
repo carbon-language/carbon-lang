@@ -157,6 +157,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setHasWrittenPrototype(Record[Idx++]);
   FD->setDeleted(Record[Idx++]);
   FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: C++ TemplateOrInstantiation
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
