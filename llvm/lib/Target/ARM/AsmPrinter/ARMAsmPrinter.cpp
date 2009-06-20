@@ -45,7 +45,6 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
     DwarfWriter *DW;
-    MachineModuleInfo *MMI;
 
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when printing asm code for different targets.
@@ -84,7 +83,7 @@ namespace {
     explicit ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
                            const TargetAsmInfo *T, CodeGenOpt::Level OL,
                            bool V)
-      : AsmPrinter(O, TM, T, OL, V), DW(0), MMI(NULL), AFI(NULL), MCP(NULL),
+      : AsmPrinter(O, TM, T, OL, V), DW(0), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }

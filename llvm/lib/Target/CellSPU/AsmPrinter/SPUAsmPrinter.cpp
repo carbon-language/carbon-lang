@@ -287,12 +287,11 @@ namespace {
   /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
   class VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
     DwarfWriter *DW;
-    MachineModuleInfo *MMI;
   public:
     explicit LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
                              const TargetAsmInfo *T, CodeGenOpt::Level F,
                              bool V)
-      : SPUAsmPrinter(O, TM, T, F, V), DW(0), MMI(0) {}
+      : SPUAsmPrinter(O, TM, T, F, V), DW(0) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";
