@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_RWMUTEX_H
 
 #include "llvm/System/Threading.h"
+#include <cassert>
 
 namespace llvm
 {
@@ -84,30 +85,50 @@ namespace llvm
     /// running in multithreaded mode.
     template<bool mt_only>
     class SmartRWMutex : public RWMutexImpl {
+      unsigned readers, writers;
     public:
-      explicit SmartRWMutex() : RWMutexImpl() { }
+      explicit SmartRWMutex() : RWMutexImpl(), readers(0), writers(0) { }
       
       bool reader_acquire() {
         if (!mt_only || llvm_is_multithreaded())
           return RWMutexImpl::reader_acquire();
+        
+        // Single-threaded debugging code.  This would be racy in multithreaded
+        // mode, but provides not sanity checks in single threaded mode.
+        ++readers;
         return true;
       }
       
       bool reader_release() {
         if (!mt_only || llvm_is_multithreaded())
           return RWMutexImpl::reader_release();
+        
+        // Single-threaded debugging code.  This would be racy in multithreaded
+        // mode, but provides not sanity checks in single threaded mode.
+        assert(readers > 0 && "Reader lock not acquired before release!");
+        --readers;
         return true;
       }
       
       bool writer_acquire() {
         if (!mt_only || llvm_is_multithreaded())
           return RWMutexImpl::writer_acquire();
+        
+        // Single-threaded debugging code.  This would be racy in multithreaded
+        // mode, but provides not sanity checks in single threaded mode.
+        assert(writers == 0 && "Writer lock already acquired!");
+        ++writers;
         return true;
       }
       
       bool writer_release() {
         if (!mt_only || llvm_is_multithreaded())
           return RWMutexImpl::writer_release();
+        
+        // Single-threaded debugging code.  This would be racy in multithreaded
+        // mode, but provides not sanity checks in single threaded mode.
+        assert(writers == 1 && "Writer lock not acquired before release!");
+        --writers;
         return true;
       }
       

@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_MUTEX_H
 
 #include "llvm/System/Threading.h"
+#include <cassert>
 
 namespace llvm
 {
@@ -85,18 +86,32 @@ namespace llvm
     /// running in multithreaded mode.
     template<bool mt_only>
     class SmartMutex : public MutexImpl {
+      unsigned acquired;
+      bool recursive;
     public:
-      explicit SmartMutex(bool recursive = true) : MutexImpl(recursive) { }
+      explicit SmartMutex(bool rec = true) :
+        MutexImpl(rec), acquired(0), recursive(rec) { }
       
       bool acquire() {
         if (!mt_only || llvm_is_multithreaded())
           return MutexImpl::acquire();
+        
+        // Single-threaded debugging code.  This would be racy in multithreaded
+        // mode, but provides not sanity checks in single threaded mode.
+        assert((recursive || acquired == 0) && "Lock already acquired!!");
+        ++acquired;
         return true;
       }
 
       bool release() {
         if (!mt_only || llvm_is_multithreaded())
           return MutexImpl::release();
+        
+        // Single-threaded debugging code.  This would be racy in multithreaded
+        // mode, but provides not sanity checks in single threaded mode.
+        assert(((recursive && acquired) || (acquired == 1)) &&
+               "Lock not acquired before release!");
+        --acquired;
         return true;
       }
 
