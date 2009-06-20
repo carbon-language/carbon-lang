@@ -762,6 +762,18 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
+static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
+  // Convert registers in the addr mode according to subreg64.
+  for (unsigned i = 0; i != 4; ++i) {
+    if (!MI->getOperand(i).isReg()) continue;
+    
+    unsigned Reg = MI->getOperand(i).getReg();
+    if (Reg == 0) continue;
+    
+    MI->getOperand(i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
+  }
+}
+
 /// printMachineInstruction -- Print out a single X86 LLVM instruction MI in
 /// AT&T syntax to the current output stream.
 ///
@@ -769,6 +781,21 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
   if (NewAsmPrinter) {
+    if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+      O << "\t";
+      printInlineAsm(MI);
+      return;
+    } else if (MI->isLabel()) {
+      printLabel(MI);
+      return;
+    } else if (MI->getOpcode() == TargetInstrInfo::DECLARE) {
+      printDeclare(MI);
+      return;
+    } else if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+      printImplicitDef(MI);
+      return;
+    }
+    
     O << "NEW: ";
     MCInst TmpInst;
     
@@ -782,6 +809,8 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
         MCOp.MakeReg(MO.getReg());
       } else if (MO.isImm()) {
         MCOp.MakeImm(MO.getImm());
+      } else if (MO.isMBB()) {
+        MCOp.MakeMBBLabel(getFunctionNumber(), MO.getMBB()->getNumber());
       } else {
         assert(0 && "Unimp");
       }
@@ -789,9 +818,9 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       TmpInst.addOperand(MCOp);
     }
     
-    if (MI->getOpcode() == X86::LEA64_32r) {
+    if (TmpInst.getOpcode() == X86::LEA64_32r) {
       // Should handle the 'subreg rewriting' for the lea64_32mem operand.
-      
+      lower_lea64_32mem(&TmpInst, 1);
     }
     
     // FIXME: Convert TmpInst.

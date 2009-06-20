@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/MC/MCInst.h"
 #include "X86ATTAsmPrinter.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -25,9 +26,8 @@ using namespace llvm;
 #undef MachineInstr
 
 void X86ATTAsmPrinter::printSSECC(const MCInst *MI, unsigned Op) {
-  unsigned char value = MI->getOperand(Op).getImm();
-  assert(value <= 7 && "Invalid ssecc argument!");
-  switch (value) {
+  switch (MI->getOperand(Op).getImm()) {
+  default: assert(0 && "Invalid ssecc argument!");
   case 0: O << "eq"; break;
   case 1: O << "lt"; break;
   case 2: O << "le"; break;
@@ -48,7 +48,7 @@ void X86ATTAsmPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
 
 void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                     const char *Modifier, bool NotRIPRel) {
-  //assert(Modifier == 0 && "Modifiers should not be used");
+  assert(Modifier == 0 && "Modifiers should not be used");
   
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
@@ -69,6 +69,15 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     // strcmp(Modifier, "call")))
     O << '$';
     O << Op.getImm();
+    return;
+  } else if (Op.isMBBLabel()) {
+    // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
+    // should eventually call into this code, not the other way around.
+    
+    O << TAI->getPrivateGlobalPrefix() << "BB" << Op.getMBBLabelFunction()
+      << '_' << Op.getMBBLabelBlock();
+    
+    // FIXME: with verbose asm print llvm bb name, add to operand.
     return;
   }
   
@@ -338,9 +347,10 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 #endif
 }
 
-void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op,
-                                            const char *Modifier,
-                                            bool NotRIPRel) {
+void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
+  const char *Modifier = 0;
+  bool NotRIPRel = false;
+
   const MCOperand &BaseReg  = MI->getOperand(Op);
   const MCOperand &IndexReg = MI->getOperand(Op+2);
   const MCOperand &DispSpec = MI->getOperand(Op+3);
@@ -386,13 +396,12 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op,
   }
 }
 
-void X86ATTAsmPrinter::printMemReference(const MCInst *MI, unsigned Op,
-                                         const char *Modifier, bool NotRIPRel){
+void X86ATTAsmPrinter::printMemReference(const MCInst *MI, unsigned Op) {
   //assert(isMem(MI, Op) && "Invalid memory reference!");
   const MCOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
-    printOperand(MI, Op+4, Modifier);
+    printOperand(MI, Op+4);
     O << ':';
   }
-  printLeaMemReference(MI, Op, Modifier, NotRIPRel);
+  printLeaMemReference(MI, Op);
 }

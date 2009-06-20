@@ -29,6 +29,7 @@ def lea64mem : Operand<i64> {
 
 def lea64_32mem : Operand<i32> {
   let PrintMethod = "printlea64_32mem";
+  let AsmOperandLowerMethod = "lower_lea64_32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
 }
 

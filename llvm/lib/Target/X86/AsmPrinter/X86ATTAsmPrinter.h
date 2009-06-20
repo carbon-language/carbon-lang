@@ -70,10 +70,8 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   void printOperand(const MCInst *MI, unsigned OpNo,
                     const char *Modifier = 0, bool NotRIPRel = false);
-  void printMemReference(const MCInst *MI, unsigned Op,
-                         const char *Modifier=NULL, bool NotRIPRel = false);
-  void printLeaMemReference(const MCInst *MI, unsigned Op,
-                            const char *Modifier=NULL, bool NotRIPRel = false);
+  void printMemReference(const MCInst *MI, unsigned Op);
+  void printLeaMemReference(const MCInst *MI, unsigned Op);
   void printSSECC(const MCInst *MI, unsigned Op);
   void printPICLabel(const MCInst *MI, unsigned Op);
 
@@ -111,7 +109,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
     printLeaMemReference(MI, OpNo);
   }
   void printlea64_32mem(const MCInst *MI, unsigned OpNo) {
-    printLeaMemReference(MI, OpNo, "subreg64");
+    printLeaMemReference(MI, OpNo);
   }
   
   

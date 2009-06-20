@@ -29,13 +29,18 @@ class MCOperand {
   enum MachineOperandType {
     kInvalid,                 ///< Uninitialized.
     kRegister,                ///< Register operand.
-    kImmediate                ///< Immediate operand.
+    kImmediate,               ///< Immediate operand.
+    kMBBLabel                 ///< Basic block label.
   };
   unsigned char Kind;
   
   union {
     unsigned RegVal;
     int64_t ImmVal;
+    struct {
+      unsigned FunctionNo;
+      unsigned BlockNo;
+    } MBBLabel;
   };
 public:
   
@@ -44,6 +49,7 @@ public:
 
   bool isReg() const { return Kind == kRegister; }
   bool isImm() const { return Kind == kImmediate; }
+  bool isMBBLabel() const { return Kind == kMBBLabel; }
   
   /// getReg - Returns the register number.
   unsigned getReg() const {
@@ -66,6 +72,15 @@ public:
     ImmVal = Val;
   }
   
+  unsigned getMBBLabelFunction() const {
+    assert(isMBBLabel() && "Wrong accessor");
+    return MBBLabel.FunctionNo; 
+  }
+  unsigned getMBBLabelBlock() const {
+    assert(isMBBLabel() && "Wrong accessor");
+    return MBBLabel.BlockNo; 
+  }
+  
   void MakeReg(unsigned Reg) {
     Kind = kRegister;
     RegVal = Reg;
@@ -73,6 +88,11 @@ public:
   void MakeImm(int64_t Val) {
     Kind = kImmediate;
     ImmVal = Val;
+  }
+  void MakeMBBLabel(unsigned Fn, unsigned MBB) {
+    Kind = kMBBLabel;
+    MBBLabel.FunctionNo = Fn;
+    MBBLabel.BlockNo = MBB;
   }
 };
 
@@ -91,6 +111,7 @@ public:
   DebugLoc getDebugLoc() const { return DebugLoc(); }
   
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
+  MCOperand &getOperand(unsigned i) { return Operands[i]; }
   
   void addOperand(const MCOperand &Op) {
     Operands.push_back(Op);

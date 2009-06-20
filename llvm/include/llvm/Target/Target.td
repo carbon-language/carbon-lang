@@ -274,6 +274,7 @@ def unknown;
 class Operand<ValueType ty> {
   ValueType Type = ty;
   string PrintMethod = "printOperand";
+  string AsmOperandLowerMethod = ?;
   dag MIOperandInfo = (ops);
 }
 
