@@ -7,7 +7,7 @@
 
 @i = thread_local global i32 15
 
-define i32* @f() {
+define i32* @f() nounwind {
 entry:
 	ret i32* @i
 }
