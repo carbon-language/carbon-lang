@@ -68,7 +68,12 @@ namespace SrcMgr {
     /// NumLines - The number of lines in this ContentCache.  This is only valid
     /// if SourceLineCache is non-null.
     unsigned NumLines;
-    
+
+    /// FirstFID - First FileID that was created for this ContentCache.
+    /// Represents the first source inclusion of the file associated with this
+    /// ContentCache.
+    mutable FileID FirstFID;
+
     /// getBuffer - Returns the memory buffer for the associated content.
     const llvm::MemoryBuffer *getBuffer() const;
     
@@ -624,6 +629,13 @@ public:
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
   //===--------------------------------------------------------------------===//
+
+  /// \brief Get the source location for the given file:line:col triplet.
+  ///
+  /// If the source file is included multiple times, the source location will
+  /// be based upon the first inclusion.
+  SourceLocation getLocation(const FileEntry *SourceFile,
+                             unsigned Line, unsigned Col) const;
   
   // Iterators over FileInfos.
   typedef llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>

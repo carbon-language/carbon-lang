@@ -358,7 +358,10 @@ FileID SourceManager::createFileID(const ContentCache *File,
     SLocEntryTable[PreallocatedID] 
       = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
     SLocEntryLoaded[PreallocatedID] = true;
-    return LastFileIDLookup = FileID::get(PreallocatedID);
+    FileID FID = FileID::get(PreallocatedID);
+    if (File->FirstFID.isInvalid())
+      File->FirstFID = FID;
+    return LastFileIDLookup = FID;
   }
 
   SLocEntryTable.push_back(SLocEntry::get(NextOffset, 
@@ -913,6 +916,43 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
 //===----------------------------------------------------------------------===//
 // Other miscellaneous methods.
 //===----------------------------------------------------------------------===//
+
+/// \brief Get the source location for the given file:line:col triplet.
+///
+/// If the source file is included multiple times, the source location will
+/// be based upon the first inclusion.
+SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
+                                          unsigned Line, unsigned Col) const {
+  assert(SourceFile && "Null source file!");
+  assert(Line && Col && "Line and column should start from 1!");
+
+  fileinfo_iterator FI = FileInfos.find(SourceFile);
+  if (FI == FileInfos.end())
+    return SourceLocation();
+  ContentCache *Content = FI->second;
+  
+  // If this is the first use of line information for this buffer, compute the
+  /// SourceLineCache for it on demand.
+  if (Content->SourceLineCache == 0)
+    ComputeLineNumbers(Content, ContentCacheAlloc);
+
+  if (Line > Content->NumLines)
+    return SourceLocation();
+  
+  unsigned FilePos = Content->SourceLineCache[Line - 1];
+  const char *BufStart = Content->getBuffer()->getBufferStart();
+  const char *BufEnd = Content->getBuffer()->getBufferEnd();
+  const char *p = BufStart;
+
+  // Check that the given column is valid.
+  while (p < BufEnd && *p != '\n' && *p != '\r')
+    ++p;
+  if (Col > p-BufStart)
+    return SourceLocation();
+  
+  return getLocForStartOfFile(Content->FirstFID).
+            getFileLocWithOffset(FilePos + Col - 1);
+}
 
 
 /// PrintStats - Print statistics to stderr.
