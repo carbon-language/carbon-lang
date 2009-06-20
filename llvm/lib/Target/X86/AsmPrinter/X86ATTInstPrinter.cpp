@@ -380,7 +380,8 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
     if (IndexReg.getReg()) {
       O << ',';
       printOperand(MI, Op+2);
-      if (MI->getOperand(Op+1).getImm() != 1)
+      unsigned ScaleVal = MI->getOperand(Op+1).getImm();
+      if (ScaleVal != 1)
         O << ',' << ScaleVal;
     }
     O << ')';
