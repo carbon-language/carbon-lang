@@ -35,7 +35,7 @@ class MCOperand {
   
   union {
     unsigned RegVal;
-    uint64_t ImmVal;
+    int64_t ImmVal;
   };
 public:
   
@@ -57,11 +57,11 @@ public:
     RegVal = Reg;
   }
   
-  uint64_t getImm() const {
+  int64_t getImm() const {
     assert(isImm() && "This is not an immediate");
     return ImmVal;
   }
-  void setImm(uint64_t Val) {
+  void setImm(int64_t Val) {
     assert(isImm() && "This is not an immediate");
     ImmVal = Val;
   }
@@ -70,7 +70,7 @@ public:
     Kind = kRegister;
     RegVal = Reg;
   }
-  void MakeImm(uint64_t Val) {
+  void MakeImm(int64_t Val) {
     Kind = kImmediate;
     ImmVal = Val;
   }
@@ -85,10 +85,16 @@ class MCInst {
 public:
   MCInst() : Opcode(~0U) {}
   
+  void setOpcode(unsigned Op) { Opcode = Op; }
+  
   unsigned getOpcode() const { return Opcode; }
   DebugLoc getDebugLoc() const { return DebugLoc(); }
   
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
+  
+  void addOperand(const MCOperand &Op) {
+    Operands.push_back(Op);
+  }
   
 };
 
