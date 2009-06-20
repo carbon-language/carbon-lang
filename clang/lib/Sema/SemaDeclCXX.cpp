@@ -1866,9 +1866,10 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
       }
       else {
         Diag(CurrentLocation, diag::err_defining_default_ctor) 
-          << ClassDecl->getNameAsCString() << BaseClassDecl->getNameAsCString();
-        Diag(BaseClassDecl->getLocation(), diag::not_previous_class_decl) 
-              << BaseClassDecl->getNameAsCString();
+          << Context.getTagDeclType(ClassDecl) << 1 
+          << Context.getTagDeclType(BaseClassDecl);
+        Diag(BaseClassDecl->getLocation(), diag::note_previous_class_decl) 
+              << Context.getTagDeclType(BaseClassDecl);
         err = true;
       }
     }
@@ -1890,22 +1891,22 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
         }
         else {
           Diag(CurrentLocation, diag::err_defining_default_ctor) 
-          << ClassDecl->getNameAsCString() << 
-              FieldClassDecl->getNameAsCString();
-          Diag(FieldClassDecl->getLocation(), diag::not_previous_class_decl) 
-          << FieldClassDecl->getNameAsCString();
+          << Context.getTagDeclType(ClassDecl) << 0 <<
+              Context.getTagDeclType(FieldClassDecl);
+          Diag(FieldClassDecl->getLocation(), diag::note_previous_class_decl) 
+          << Context.getTagDeclType(FieldClassDecl);
           err = true;
         }
       }
     else if (FieldType->isReferenceType()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
-        << ClassDecl->getNameAsCString() << 0;
+        << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getNameAsCString();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       err = true;
     }
     else if (FieldType.isConstQualified()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
-        << ClassDecl->getNameAsCString() << 1;
+        << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getNameAsCString();
        Diag((*Field)->getLocation(), diag::note_declared_at);
       err = true;
     }
