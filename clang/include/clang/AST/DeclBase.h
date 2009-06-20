@@ -159,10 +159,12 @@ private:
   /// \brief Whether this declaration was "used", meaning that a definition is
   /// required.
   bool Used : 1;
-  
+
+protected:
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 8;
   
+private:
 #ifndef NDEBUG
   void CheckAccessDeclContext() const;
 #else

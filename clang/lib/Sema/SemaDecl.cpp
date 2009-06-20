@@ -2284,7 +2284,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
         << D.getCXXScopeSpec().getRange();
       NewFD->setInvalidDecl();
-    } else if (!Redeclaration) {
+    } else if (!Redeclaration && (!PrevDecl || !isa<UsingDecl>(PrevDecl))) {
       // The user tried to provide an out-of-line definition for a
       // function that is a member of a class or namespace, but there
       // was no such member function declared (C++ [class.mfct]p2, 
@@ -2455,7 +2455,8 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
 
     if (PrevDecl && 
         (!AllowOverloadingOfFunction(PrevDecl, Context) || 
-         !IsOverload(NewFD, PrevDecl, MatchedDecl))) {
+         !IsOverload(NewFD, PrevDecl, MatchedDecl)) &&
+        !isa<UsingDecl>(PrevDecl)) {
       Redeclaration = true;
       Decl *OldDecl = PrevDecl;
 

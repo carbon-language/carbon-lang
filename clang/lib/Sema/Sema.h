@@ -1547,6 +1547,14 @@ public:
                                            const CXXScopeSpec &SS,
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
+
+  virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
+                                        SourceLocation UsingLoc,
+                                        const CXXScopeSpec &SS,
+                                        SourceLocation IdentLoc,
+                                        IdentifierInfo *TargetName,
+                                        AttributeList *AttrList,
+                                        bool IsTypeName);
   
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.

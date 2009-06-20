@@ -42,6 +42,22 @@ Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
   return DeclPtrTy();
 }
 
+// Defined out-of-line here because of dependecy on AttributeList
+Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
+                                              SourceLocation UsingLoc,
+                                              const CXXScopeSpec &SS,
+                                              SourceLocation IdentLoc,
+                                              IdentifierInfo *TargetName,
+                                              AttributeList *AttrList,
+                                              bool IsTypeName) {
+  
+  // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
+  // passed AttributeList, however other actions don't free it, is it
+  // temporary state or bug?
+  delete AttrList;
+  return DeclPtrTy();
+}
+
 
 void PrettyStackTraceActionsDecl::print(llvm::raw_ostream &OS) const {
   if (Loc.isValid()) {

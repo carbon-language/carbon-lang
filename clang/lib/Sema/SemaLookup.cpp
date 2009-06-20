@@ -1151,8 +1151,10 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
                                Name, NameKind, RedeclarationOnly);
   }
 
-  return LookupName(S, Name, NameKind, RedeclarationOnly, 
-                    AllowBuiltinCreation, Loc);
+  LookupResult result(LookupName(S, Name, NameKind, RedeclarationOnly, 
+                    AllowBuiltinCreation, Loc));
+  
+  return(result);
 }
 
 

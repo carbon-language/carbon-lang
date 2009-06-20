@@ -64,7 +64,7 @@ struct K2 k2; // expected-error{{reference to 'K2' is ambiguous}} \
 
 class X { // expected-note{{candidate found by name lookup is 'X'}}
   // FIXME: produce a suitable error message for this
-  using namespace A; // expected-error{{expected member name or}}
+  using namespace A; // expected-error{{not allowed}}
 };
 
 namespace N {

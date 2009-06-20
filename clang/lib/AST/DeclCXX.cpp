@@ -443,6 +443,14 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                     Qualifier, IdentLoc, Namespace);
 }
 
+UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
+      SourceLocation L, SourceRange NNR, SourceLocation TargetNL,
+      SourceLocation UL, NamedDecl* Target,
+      NestedNameSpecifier* TargetNNS, bool IsTypeNameArg) {
+  return new (C) UsingDecl(DC, L, NNR, TargetNL, UL, Target,
+      TargetNNS, IsTypeNameArg);
+}
+
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L, Expr *AssertExpr,
                                            StringLiteral *Message) {

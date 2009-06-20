@@ -92,6 +92,10 @@ def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
+def err_using_requires_qualname : Error<
+  "using declaration requires a qualified name">;
+def err_using_typename_non_type : Error<
+  "'typename' keyword used on a non-type">;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;

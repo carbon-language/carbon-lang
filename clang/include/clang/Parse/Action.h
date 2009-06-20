@@ -932,6 +932,15 @@ public:
                                            IdentifierInfo *Ident) {
     return DeclPtrTy();
   }
+
+  /// ActOnUsingDirective - This is called when using-directive is parsed.
+  virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
+                                        SourceLocation UsingLoc,
+                                        const CXXScopeSpec &SS,
+                                        SourceLocation IdentLoc,
+                                        IdentifierInfo *TargetName,
+                                        AttributeList *AttrList,
+                                        bool IsTypeName);
                                          
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,

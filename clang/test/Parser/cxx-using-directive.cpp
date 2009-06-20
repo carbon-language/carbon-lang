@@ -13,8 +13,7 @@ namespace D {
   
   class C {
     
-    using namespace B ; // expected-error{{expected member name or ';' after declaration specifiers}}
-    //FIXME: this needs better error message
+    using namespace B ; // expected-error{{not allowed}}
   };
   
   namespace B {}

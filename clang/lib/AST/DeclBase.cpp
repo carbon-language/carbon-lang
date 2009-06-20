@@ -164,6 +164,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ParmVar:
     case OriginalParmVar:
     case NonTypeTemplateParm:
+    case Using:
     case ObjCMethod:
     case ObjCContainer:
     case ObjCCategory:

@@ -1481,6 +1481,9 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::Namespace:
     EmitNamespace(cast<NamespaceDecl>(D));
     break;
+    // No code generation needed.
+  case Decl::Using:
+    break;
   case Decl::CXXConstructor:
     EmitCXXConstructors(cast<CXXConstructorDecl>(D));
     break;

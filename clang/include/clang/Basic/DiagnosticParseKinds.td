@@ -154,6 +154,10 @@ def err_unknown_typename : Error<
   "unknown type name %0">;
 def err_use_of_tag_name_without_tag : Error<
   "use of tagged type %0 without '%1' tag">;
+def err_expected_ident_in_using : Error<
+  "expected an identifier in using directive">;
+def err_unexpected_template_spec_in_using : Error<
+  "use of template specialization in using directive not allowed">;
 
 
 /// Objective-C parser diagnostics
@@ -214,6 +218,8 @@ def ext_ellipsis_exception_spec : Extension<
   "exception specification of '...' is a Microsoft extension">;
 def err_expected_catch : Error<"expected catch">;
 def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
+def err_using_namespace_in_class : Error<
+  "'using namespace' in class not allowed">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
@@ -289,5 +295,5 @@ def warn_pragma_unused_expected_var : Warning<
   "expected '#pragma unused' argument to be a variable name">;
 def warn_pragma_unused_expected_punc : Warning<
   "expected ')' or ',' in '#pragma unused'">;
-  
+
 } // end of Parser diagnostics

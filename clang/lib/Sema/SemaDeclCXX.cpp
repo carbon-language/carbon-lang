@@ -1748,6 +1748,43 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
     S->PushUsingDirective(DeclPtrTy::make(UDir));
 }
 
+
+Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
+                                          SourceLocation UsingLoc,
+                                          const CXXScopeSpec &SS,
+                                          SourceLocation IdentLoc,
+                                          IdentifierInfo *TargetName,
+                                          AttributeList *AttrList,
+                                          bool IsTypeName) {
+  assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
+  assert(TargetName && "Invalid TargetName.");
+  assert(IdentLoc.isValid() && "Invalid TargetName location.");
+  assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
+
+  UsingDecl *UsingAlias = 0;
+
+  // Lookup target name.
+  LookupResult R = LookupParsedName(S, &SS, TargetName,
+                                    LookupOrdinaryName, false);
+
+  if (NamedDecl *NS = R) {
+    if (IsTypeName && !isa<TypeDecl>(NS)) {
+      Diag(IdentLoc, diag::err_using_typename_non_type);
+    }
+    UsingAlias = UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
+        NS->getLocation(), UsingLoc, NS,
+        static_cast<NestedNameSpecifier *>(SS.getScopeRep()),
+        IsTypeName);
+    PushOnScopeChains(UsingAlias, S);
+  } else {
+    Diag(IdentLoc, diag::err_using_requires_qualname) << SS.getRange();
+  }
+
+  // FIXME: We ignore attributes for now.
+  delete AttrList;
+  return DeclPtrTy::make(UsingAlias);
+}
+
 /// getNamespaceDecl - Returns the namespace a decl represents. If the decl
 /// is a namespace alias, returns the namespace it points to.
 static inline NamespaceDecl *getNamespaceDecl(NamedDecl *D) {

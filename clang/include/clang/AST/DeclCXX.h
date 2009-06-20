@@ -1049,6 +1049,61 @@ public:
   }
   static bool classof(const NamespaceAliasDecl *D) { return true; }
 };
+
+/// UsingDecl - Represents a C++ using-declaration. For example:
+///    using someNameSpace::someIdentifier;
+class UsingDecl : public NamedDecl {
+
+  /// \brief The source range that covers the nested-name-specifier
+  /// preceding the declaration name.
+  SourceRange NestedNameRange;
+  /// \brief The source location of the target declaration name.
+  SourceLocation TargetNameLocation;
+  /// \brief The source location of the "using" location itself.
+  SourceLocation UsingLocation;
+  /// \brief Target declaration.
+  NamedDecl* TargetDecl;
+  /// \brief Target declaration.
+  NestedNameSpecifier* TargetNestedNameDecl;
+
+  // Had 'typename' keyword.
+  bool IsTypeName;
+
+  UsingDecl(DeclContext *DC, SourceLocation L, SourceRange NNR,
+            SourceLocation TargetNL, SourceLocation UL, NamedDecl* Target,
+            NestedNameSpecifier* TargetNNS, bool IsTypeNameArg)
+    : NamedDecl(Decl::Using, DC, L, Target->getDeclName()),
+      NestedNameRange(NNR), TargetNameLocation(TargetNL),
+      UsingLocation(UL), TargetDecl(Target),
+      TargetNestedNameDecl(TargetNNS), IsTypeName(IsTypeNameArg) { 
+    this->IdentifierNamespace = TargetDecl->getIdentifierNamespace();
+  }
+
+public:
+  /// \brief Returns the source range that covers the nested-name-specifier
+  /// preceding the namespace name.
+  SourceRange getNestedNameRange() { return(NestedNameRange); }
+  /// \brief Returns the source location of the target declaration name.
+  SourceLocation getTargetNameLocation() { return(TargetNameLocation); }
+  /// \brief Returns the source location of the "using" location itself.
+  SourceLocation getUsingLocation() { return(UsingLocation); }
+  /// \brief getTargetDecl - Returns target specified by using-decl.
+  NamedDecl *getTargetDecl() { return(TargetDecl); }
+  /// \brief Get target nested name declaration.
+  NestedNameSpecifier* getTargetNestedNameDecl() { return(TargetNestedNameDecl); }
+  /// isTypeName - Return true if using decl had 'typename'.
+  bool isTypeName() const { return(IsTypeName); }
+
+  static UsingDecl *Create(ASTContext &C, DeclContext *DC,
+      SourceLocation L, SourceRange NNR, SourceLocation TargetNL,
+      SourceLocation UL, NamedDecl* Target,
+      NestedNameSpecifier* TargetNNS, bool IsTypeNameArg);
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::Using;
+  }
+  static bool classof(const UsingDecl *D) { return true; }
+};
   
 /// StaticAssertDecl - Represents a C++0x static_assert declaration.
 class StaticAssertDecl : public Decl {
