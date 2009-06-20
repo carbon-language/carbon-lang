@@ -13,6 +13,7 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/System/RWMutex.h"
+#include <cstring>
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
@@ -64,6 +65,12 @@ RWMutexImpl::RWMutexImpl()
     // Declare the pthread_rwlock data structures
     pthread_rwlock_t* rwlock =
       static_cast<pthread_rwlock_t*>(malloc(sizeof(pthread_rwlock_t)));
+
+#ifdef __APPLE__
+    // Workaround a bug/mis-feature in Darwin's pthread_rwlock_init.
+    bzero(rwlock, sizeof(pthread_rwlock_t));
+#endif
+
     pthread_rwlockattr_t attr;
 
     // Initialize the rwlock attributes
