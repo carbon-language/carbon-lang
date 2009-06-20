@@ -3836,9 +3836,12 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                      : getUMaxExpr(RHS, Start);
 
     // Determine the maximum constant end value.
-    SCEVHandle MaxEnd = isa<SCEVConstant>(End) ? End :
-      getConstant(isSigned ? APInt::getSignedMaxValue(BitWidth) :
-                             APInt::getMaxValue(BitWidth));
+    SCEVHandle MaxEnd =
+      isa<SCEVConstant>(End) ? End :
+      getConstant(isSigned ? APInt::getSignedMaxValue(BitWidth)
+                               .ashr(GetMinSignBits(End) - 1) :
+                             APInt::getMaxValue(BitWidth)
+                               .lshr(GetMinLeadingZeros(End)));
 
     // Finally, we subtract these two values and divide, rounding up, to get
     // the number of times the backedge is executed.
