@@ -552,6 +552,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     printOffset(MO.getOffset());
 
+    if (needCloseParen)
+      O << ')';
+    
+    bool isRIPRelative = false;
     if (isThreadLocal) {
       TLSModel::Model model = getTLSModel(GVar, TM.getRelocationModel());
       switch (model) {
@@ -565,7 +569,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       case TLSModel::InitialExec:
         if (Subtarget->is64Bit()) {
           assert (!NotRIPRel);
-          O << "@GOTTPOFF(%rip)";
+          O << "@GOTTPOFF";
+          isRIPRelative = true;
         } else {
           O << "@INDNTPOFF";
         }
@@ -585,27 +590,23 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << "@GOT";
         else
           O << "@GOTOFF";
-      } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel) {
+      } else if (Subtarget->isPICStyleRIPRel() &&
+                 !NotRIPRel) {
         if (TM.getRelocationModel() != Reloc::Static) {
           if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
             O << "@GOTPCREL";
-
-          if (needCloseParen) {
-            needCloseParen = false;
-            O << ')';
-          }
         }
-
-        // Use rip when possible to reduce code size, except when
-        // index or base register are also part of the address. e.g.
-        // foo(%rip)(%rcx,%rax,4) is not legal
-        O << "(%rip)";
+        
+        isRIPRelative = true;
       }
     }
 
-    if (needCloseParen)
-      O << ')';
-
+    // Use rip when possible to reduce code size, except when
+    // index or base register are also part of the address. e.g.
+    // foo(%rip)(%rcx,%rax,4) is not legal.
+    if (isRIPRelative)
+      O << "(%rip)";
+    
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
