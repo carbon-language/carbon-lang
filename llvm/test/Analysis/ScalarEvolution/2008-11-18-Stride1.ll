@@ -1,4 +1,9 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output |& grep {/u 3}
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
+; RUN:  | grep {Loop bb: Unpredictable backedge-taken count\\.}
+
+; ScalarEvolution can't compute a trip count because it doesn't know if
+; dividing by the stride will have a remainder. This could theoretically
+; be teaching it how to use a more elaborate trip count computation.
 
 define i32 @f(i32 %x) nounwind readnone {
 entry:

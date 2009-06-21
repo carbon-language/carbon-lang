@@ -3788,6 +3788,33 @@ bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
   return false;
 }
 
+/// getBECount - Subtract the end and start values and divide by the step,
+/// rounding up, to get the number of times the backedge is executed. Return
+/// CouldNotCompute if an intermediate computation overflows.
+SCEVHandle ScalarEvolution::getBECount(const SCEVHandle &Start,
+                                       const SCEVHandle &End,
+                                       const SCEVHandle &Step) {
+  const Type *Ty = Start->getType();
+  SCEVHandle NegOne = getIntegerSCEV(-1, Ty);
+  SCEVHandle Diff = getMinusSCEV(End, Start);
+  SCEVHandle RoundUp = getAddExpr(Step, NegOne);
+
+  // Add an adjustment to the difference between End and Start so that
+  // the division will effectively round up.
+  SCEVHandle Add = getAddExpr(Diff, RoundUp);
+
+  // Check Add for unsigned overflow.
+  // TODO: More sophisticated things could be done here.
+  const Type *WideTy = IntegerType::get(getTypeSizeInBits(Ty) + 1);
+  SCEVHandle OperandExtendedAdd =
+    getAddExpr(getZeroExtendExpr(Diff, WideTy),
+               getZeroExtendExpr(RoundUp, WideTy));
+  if (getZeroExtendExpr(Add, WideTy) != OperandExtendedAdd)
+    return CouldNotCompute;
+
+  return getUDivExpr(Add, Step);
+}
+
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// CouldNotCompute.
@@ -3869,16 +3896,11 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
     // Finally, we subtract these two values and divide, rounding up, to get
     // the number of times the backedge is executed.
-    SCEVHandle BECount = getUDivExpr(getAddExpr(getMinusSCEV(End, Start),
-                                                getAddExpr(Step, NegOne)),
-                                     Step);
+    SCEVHandle BECount = getBECount(Start, End, Step);
 
     // The maximum backedge count is similar, except using the minimum start
     // value and the maximum end value.
-    SCEVHandle MaxBECount = getUDivExpr(getAddExpr(getMinusSCEV(MaxEnd,
-                                                                MinStart),
-                                                   getAddExpr(Step, NegOne)),
-                                        Step);
+    SCEVHandle MaxBECount = getBECount(MinStart, MaxEnd, Step);;
 
     return BackedgeTakenInfo(BECount, MaxBECount);
   }

@@ -332,6 +332,13 @@ namespace llvm {
                                           const SCEVHandle &SymName,
                                           const SCEVHandle &NewVal);
 
+    /// getBECount - Subtract the end and start values and divide by the step,
+    /// rounding up, to get the number of times the backedge is executed. Return
+    /// CouldNotCompute if an intermediate computation overflows.
+    SCEVHandle getBECount(const SCEVHandle &Start,
+                          const SCEVHandle &End,
+                          const SCEVHandle &Step);
+
     /// getBackedgeTakenInfo - Return the BackedgeTakenInfo for the given
     /// loop, lazily computing new values if the loop hasn't been analyzed
     /// yet.

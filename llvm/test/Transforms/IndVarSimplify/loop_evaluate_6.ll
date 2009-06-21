@@ -1,7 +1,9 @@
 ; RUN: llvm-as < %s | opt -indvars -loop-deletion | llvm-dis | grep phi | count 1
+; XFAIL: *
 
-; Indvars should be able to evaluate this loop, allowing loop deletion
-; to delete it.
+; Indvars can't evaluate this loop, because ScalarEvolution can't compute
+; an exact trip count, because it doesn't know if dividing by the stride will
+; have a remainder. It could be done with more aggressive VRP though.
 
 define i32 @test(i32 %x_offs) nounwind readnone {
 entry:

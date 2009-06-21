@@ -1,5 +1,9 @@
 ; RUN: llvm-as < %s | opt -scalar-evolution -analyze -disable-output \
-; RUN:  | grep {backedge-taken count is ((64 + (-64 smax (-1 + (-1 \\* %0))) + %0) /u 64)}
+; RUN:  | grep {Loop bb3\\.i: Unpredictable backedge-taken count\\.}
+
+; ScalarEvolution can't compute a trip count because it doesn't know if
+; dividing by the stride will have a remainder. This could theoretically
+; be teaching it how to use a more elaborate trip count computation.
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 target triple = "x86_64-unknown-linux-gnu"
