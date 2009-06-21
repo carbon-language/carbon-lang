@@ -77,7 +77,7 @@ asmtok::TokKind AsmLexer::LexIdentifier() {
   while (isalnum(*CurPtr) || *CurPtr == '_' || *CurPtr == '$' ||
          *CurPtr == '.' || *CurPtr == '@')
     ++CurPtr;
-  CurStrVal.assign(TokStart, CurPtr);   // Skip %
+  CurStrVal.assign(TokStart, CurPtr);   // Include %
   return asmtok::Identifier;
 }
 
@@ -194,6 +194,28 @@ asmtok::TokKind AsmLexer::LexDigit() {
   return asmtok::IntVal;
 }
 
+/// LexQuote: String: "..."
+asmtok::TokKind AsmLexer::LexQuote() {
+  int CurChar = getNextChar();
+  // TODO: does gas allow multiline string constants?
+  while (CurChar != '"') {
+    if (CurChar == '\\') {
+      // Allow \", etc.
+      CurChar = getNextChar();
+    }
+    
+    if (CurChar == EOF) {
+      PrintError(TokStart, "unterminated string constant");
+      return asmtok::Eof;
+    }
+
+    CurChar = getNextChar();
+  }
+  
+  CurStrVal.assign(TokStart, CurPtr);   // include quotes.
+  return asmtok::String;
+}
+
 
 asmtok::TokKind AsmLexer::LexToken() {
   TokStart = CurPtr;
@@ -228,6 +250,7 @@ asmtok::TokKind AsmLexer::LexToken() {
   case '%': return LexPercent();
   case '/': return LexSlash();
   case '#': return LexHash();
+  case '"': return LexQuote();
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
     return LexDigit();

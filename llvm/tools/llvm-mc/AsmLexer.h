@@ -28,10 +28,15 @@ namespace asmtok {
     // Markers
     Eof, Error,
 
+    // String values.
     Identifier,
     Register,
+    String,
+    
+    // Integer values.
     IntVal,
     
+    // No-value.
     EndOfStatement,
     Colon,
     Plus,
@@ -70,7 +75,8 @@ public:
   asmtok::TokKind getKind() const { return CurKind; }
   
   const std::string &getCurStrVal() const {
-    assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register) &&
+    assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register ||
+            CurKind == asmtok::String) &&
            "This token doesn't have a string value");
     return CurStrVal;
   }
@@ -95,6 +101,7 @@ private:
   asmtok::TokKind LexSlash();
   asmtok::TokKind LexHash();
   asmtok::TokKind LexDigit();
+  asmtok::TokKind LexQuote();
 };
   
 } // end namespace llvm

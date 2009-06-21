@@ -82,6 +82,9 @@ static int AssembleInput(const char *ProgName) {
     case asmtok::Register:
       outs() << "register: " << Lexer.getCurStrVal() << '\n';
       break;
+    case asmtok::String:
+      outs() << "string: " << Lexer.getCurStrVal() << '\n';
+      break;
     case asmtok::IntVal:
       outs() << "int: " << Lexer.getCurIntVal() << '\n';
       break;
