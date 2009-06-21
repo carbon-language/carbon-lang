@@ -1214,19 +1214,19 @@ inline std::ostream &operator<<(std::ostream &OS, const RecordVal &RV) {
 
 class Record {
   std::string Name;
-  TGLoc Loc;
+  SMLoc Loc;
   std::vector<std::string> TemplateArgs;
   std::vector<RecordVal> Values;
   std::vector<Record*> SuperClasses;
 public:
 
-  explicit Record(const std::string &N, TGLoc loc) : Name(N), Loc(loc) {}
+  explicit Record(const std::string &N, SMLoc loc) : Name(N), Loc(loc) {}
   ~Record() {}
   
   const std::string &getName() const { return Name; }
   void setName(const std::string &Name);  // Also updates RecordKeeper.
   
-  TGLoc getLoc() const { return Loc; }
+  SMLoc getLoc() const { return Loc; }
   
   const std::vector<std::string> &getTemplateArgs() const {
     return TemplateArgs;
@@ -1381,7 +1381,7 @@ struct MultiClass {
 
   void dump() const;
 
-  MultiClass(const std::string &Name, TGLoc Loc) : Rec(Name, Loc) {}
+  MultiClass(const std::string &Name, SMLoc Loc) : Rec(Name, Loc) {}
 };
 
 class RecordKeeper {
@@ -1461,12 +1461,12 @@ struct LessRecordFieldName {
 
 
 class TGError {
-  TGLoc Loc;
+  SMLoc Loc;
   std::string Message;
 public:
-  TGError(TGLoc loc, const std::string &message) : Loc(loc), Message(message) {}
+  TGError(SMLoc loc, const std::string &message) : Loc(loc), Message(message) {}
   
-  TGLoc getLoc() const { return Loc; }
+  SMLoc getLoc() const { return Loc; }
   const std::string &getMessage() const { return Message; }
 };
   
@@ -1475,7 +1475,7 @@ std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK);
 
 extern RecordKeeper Records;
 
-void PrintError(TGLoc ErrorLoc, const std::string &Msg);
+void PrintError(SMLoc ErrorLoc, const std::string &Msg);
 
   
 } // End llvm namespace

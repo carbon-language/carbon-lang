@@ -23,7 +23,7 @@
 namespace llvm {
 class MemoryBuffer;
 class TGSourceMgr;
-class TGLoc;
+class SMLoc;
   
 namespace tgtok {
   enum TokKind {
@@ -101,10 +101,10 @@ public:
     return CurIntVal;
   }
 
-  TGLoc getLoc() const;
+  SMLoc getLoc() const;
 
   void PrintError(const char *Loc, const std::string &Msg) const;
-  void PrintError(TGLoc Loc, const std::string &Msg) const;
+  void PrintError(SMLoc Loc, const std::string &Msg) const;
   
 private:
   /// LexToken - Read the next token and return its code.

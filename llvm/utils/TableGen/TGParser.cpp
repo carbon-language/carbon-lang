@@ -26,7 +26,7 @@ using namespace llvm;
 
 namespace llvm {
 struct SubClassReference {
-  TGLoc RefLoc;
+  SMLoc RefLoc;
   Record *Rec;
   std::vector<Init*> TemplateArgs;
   SubClassReference() : Rec(0) {}
@@ -35,7 +35,7 @@ struct SubClassReference {
 };
 
 struct SubMultiClassReference {
-  TGLoc RefLoc;
+  SMLoc RefLoc;
   MultiClass *MC;
   std::vector<Init*> TemplateArgs;
   SubMultiClassReference() : MC(0) {}
@@ -60,7 +60,7 @@ void SubMultiClassReference::dump() const {
 
 } // end namespace llvm
 
-bool TGParser::AddValue(Record *CurRec, TGLoc Loc, const RecordVal &RV) {
+bool TGParser::AddValue(Record *CurRec, SMLoc Loc, const RecordVal &RV) {
   if (CurRec == 0)
     CurRec = &CurMultiClass->Rec;
   
@@ -79,7 +79,7 @@ bool TGParser::AddValue(Record *CurRec, TGLoc Loc, const RecordVal &RV) {
 
 /// SetValue -
 /// Return true on error, false on success.
-bool TGParser::SetValue(Record *CurRec, TGLoc Loc, const std::string &ValName, 
+bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName, 
                         const std::vector<unsigned> &BitList, Init *V) {
   if (!V) return false;
 
@@ -527,7 +527,7 @@ bool TGParser::ParseOptionalRangeList(std::vector<unsigned> &Ranges) {
   if (Lex.getCode() != tgtok::less)
     return false;
   
-  TGLoc StartLoc = Lex.getLoc();
+  SMLoc StartLoc = Lex.getLoc();
   Lex.Lex(); // eat the '<'
   
   // Parse the range list.
@@ -549,7 +549,7 @@ bool TGParser::ParseOptionalBitList(std::vector<unsigned> &Ranges) {
   if (Lex.getCode() != tgtok::l_brace)
     return false;
   
-  TGLoc StartLoc = Lex.getLoc();
+  SMLoc StartLoc = Lex.getLoc();
   Lex.Lex(); // eat the '{'
   
   // Parse the range list.
@@ -634,7 +634,7 @@ RecTy *TGParser::ParseType() {
 Init *TGParser::ParseIDValue(Record *CurRec) {
   assert(Lex.getCode() == tgtok::Id && "Expected ID in ParseIDValue");
   std::string Name = Lex.getCurStrVal();
-  TGLoc Loc = Lex.getLoc();
+  SMLoc Loc = Lex.getLoc();
   Lex.Lex();
   return ParseIDValue(CurRec, Name, Loc);
 }
@@ -642,7 +642,7 @@ Init *TGParser::ParseIDValue(Record *CurRec) {
 /// ParseIDValue - This is just like ParseIDValue above, but it assumes the ID
 /// has already been read.
 Init *TGParser::ParseIDValue(Record *CurRec, 
-                             const std::string &Name, TGLoc NameLoc) {
+                             const std::string &Name, SMLoc NameLoc) {
   if (CurRec) {
     if (const RecordVal *RV = CurRec->getValue(Name))
       return new VarInit(Name, RV->getType());
@@ -1041,7 +1041,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
       R = new CodeInit(Lex.getCurStrVal()); Lex.Lex(); break;
   case tgtok::question: R = new UnsetInit(); Lex.Lex(); break;
   case tgtok::Id: {
-    TGLoc NameLoc = Lex.getLoc();
+    SMLoc NameLoc = Lex.getLoc();
     std::string Name = Lex.getCurStrVal();
     if (Lex.Lex() != tgtok::less)  // consume the Id.
       return ParseIDValue(CurRec, Name, NameLoc);    // Value ::= IDValue
@@ -1087,7 +1087,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     return new DefInit(NewRec);
   }    
   case tgtok::l_brace: {           // Value ::= '{' ValueList '}'
-    TGLoc BraceLoc = Lex.getLoc();
+    SMLoc BraceLoc = Lex.getLoc();
     Lex.Lex(); // eat the '{'
     std::vector<Init*> Vals;
     
@@ -1295,7 +1295,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType) {
     switch (Lex.getCode()) {
     default: return Result;
     case tgtok::l_brace: {
-      TGLoc CurlyLoc = Lex.getLoc();
+      SMLoc CurlyLoc = Lex.getLoc();
       Lex.Lex(); // eat the '{'
       std::vector<unsigned> Ranges = ParseRangeList();
       if (Ranges.empty()) return 0;
@@ -1317,7 +1317,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType) {
       break;
     }
     case tgtok::l_square: {
-      TGLoc SquareLoc = Lex.getLoc();
+      SMLoc SquareLoc = Lex.getLoc();
       Lex.Lex(); // eat the '['
       std::vector<unsigned> Ranges = ParseRangeList();
       if (Ranges.empty()) return 0;
@@ -1449,7 +1449,7 @@ std::string TGParser::ParseDeclaration(Record *CurRec,
     return "";
   }
   
-  TGLoc IdLoc = Lex.getLoc();
+  SMLoc IdLoc = Lex.getLoc();
   std::string DeclName = Lex.getCurStrVal();
   Lex.Lex();
   
@@ -1470,7 +1470,7 @@ std::string TGParser::ParseDeclaration(Record *CurRec,
   // If a value is present, parse it.
   if (Lex.getCode() == tgtok::equal) {
     Lex.Lex();
-    TGLoc ValLoc = Lex.getLoc();
+    SMLoc ValLoc = Lex.getLoc();
     Init *Val = ParseValue(CurRec, Type);
     if (Val == 0 ||
         SetValue(CurRec, ValLoc, DeclName, std::vector<unsigned>(), Val))
@@ -1536,7 +1536,7 @@ bool TGParser::ParseBodyItem(Record *CurRec) {
   if (Lex.Lex() != tgtok::Id)
     return TokError("expected field identifier after let");
   
-  TGLoc IdLoc = Lex.getLoc();
+  SMLoc IdLoc = Lex.getLoc();
   std::string FieldName = Lex.getCurStrVal();
   Lex.Lex();  // eat the field name.
   
@@ -1640,7 +1640,7 @@ bool TGParser::ParseObjectBody(Record *CurRec) {
 ///   DefInst ::= DEF ObjectName ObjectBody
 ///
 llvm::Record *TGParser::ParseDef(MultiClass *CurMultiClass) {
-  TGLoc DefLoc = Lex.getLoc();
+  SMLoc DefLoc = Lex.getLoc();
   assert(Lex.getCode() == tgtok::Def && "Unknown tok");
   Lex.Lex();  // Eat the 'def' token.  
 
@@ -1728,7 +1728,7 @@ std::vector<LetRecord> TGParser::ParseLetList() {
       return std::vector<LetRecord>();
     }
     std::string Name = Lex.getCurStrVal();
-    TGLoc NameLoc = Lex.getLoc();
+    SMLoc NameLoc = Lex.getLoc();
     Lex.Lex();  // Eat the identifier. 
 
     // Check for an optional RangeList.
@@ -1780,7 +1780,7 @@ bool TGParser::ParseTopLevelLet() {
     if (ParseObject())
       return true;
   } else {   // Object ::= LETCommand '{' ObjectList '}'
-    TGLoc BraceLoc = Lex.getLoc();
+    SMLoc BraceLoc = Lex.getLoc();
     // Otherwise, this is a group let.
     Lex.Lex();  // eat the '{'.
     
@@ -1905,7 +1905,7 @@ bool TGParser::ParseDefm() {
   if (Lex.Lex() != tgtok::Id)  // eat the defm.
     return TokError("expected identifier after defm");
   
-  TGLoc DefmPrefixLoc = Lex.getLoc();
+  SMLoc DefmPrefixLoc = Lex.getLoc();
   std::string DefmPrefix = Lex.getCurStrVal();
   if (Lex.Lex() != tgtok::colon)
     return TokError("expected ':' after defm identifier");
@@ -1913,7 +1913,7 @@ bool TGParser::ParseDefm() {
   // eat the colon.
   Lex.Lex();
 
-  TGLoc SubClassLoc = Lex.getLoc();
+  SMLoc SubClassLoc = Lex.getLoc();
   SubClassReference Ref = ParseSubClassReference(0, true);
 
   while (1) {

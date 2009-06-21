@@ -126,7 +126,7 @@ RecordKeeper llvm::Records;
 
 static TGSourceMgr SrcMgr;
 
-void llvm::PrintError(TGLoc ErrorLoc, const std::string &Msg) {
+void llvm::PrintError(SMLoc ErrorLoc, const std::string &Msg) {
   SrcMgr.PrintError(ErrorLoc, Msg);
 }
 
@@ -145,7 +145,7 @@ static bool ParseFile(const std::string &Filename,
   }
   
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
-  SrcMgr.AddNewSourceBuffer(F, TGLoc());
+  SrcMgr.AddNewSourceBuffer(F, SMLoc());
   
   TGParser Parser(SrcMgr);
 

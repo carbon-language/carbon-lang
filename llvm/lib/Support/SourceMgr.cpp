@@ -27,7 +27,7 @@ TGSourceMgr::~TGSourceMgr() {
 
 /// FindBufferContainingLoc - Return the ID of the buffer containing the
 /// specified location, returning -1 if not found.
-int TGSourceMgr::FindBufferContainingLoc(TGLoc Loc) const {
+int TGSourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
   for (unsigned i = 0, e = Buffers.size(); i != e; ++i)
     if (Loc.getPointer() >= Buffers[i].Buffer->getBufferStart() &&
         // Use <= here so that a pointer to the null at the end of the buffer
@@ -39,7 +39,7 @@ int TGSourceMgr::FindBufferContainingLoc(TGLoc Loc) const {
 
 /// FindLineNumber - Find the line number for the specified location in the
 /// specified file.  This is not a fast method.
-unsigned TGSourceMgr::FindLineNumber(TGLoc Loc, int BufferID) const {
+unsigned TGSourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   if (BufferID == -1) BufferID = FindBufferContainingLoc(Loc);
   assert(BufferID != -1 && "Invalid Location!");
   
@@ -51,13 +51,13 @@ unsigned TGSourceMgr::FindLineNumber(TGLoc Loc, int BufferID) const {
   
   const char *Ptr = Buff->getBufferStart();
 
-  for (; TGLoc::getFromPointer(Ptr) != Loc; ++Ptr)
+  for (; SMLoc::getFromPointer(Ptr) != Loc; ++Ptr)
     if (*Ptr == '\n') ++LineNo;
   return LineNo;
 }
 
-void TGSourceMgr::PrintIncludeStack(TGLoc IncludeLoc) const {
-  if (IncludeLoc == TGLoc()) return;  // Top of stack.
+void TGSourceMgr::PrintIncludeStack(SMLoc IncludeLoc) const {
+  if (IncludeLoc == SMLoc()) return;  // Top of stack.
   
   int CurBuf = FindBufferContainingLoc(IncludeLoc);
   assert(CurBuf != -1 && "Invalid or unspecified location!");
@@ -70,7 +70,7 @@ void TGSourceMgr::PrintIncludeStack(TGLoc IncludeLoc) const {
 }
 
 
-void TGSourceMgr::PrintError(TGLoc ErrorLoc, const std::string &Msg) const {
+void TGSourceMgr::PrintError(SMLoc ErrorLoc, const std::string &Msg) const {
   raw_ostream &OS = errs();
   
   // First thing to do: find the current buffer containing the specified
