@@ -19,7 +19,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
-#include "AsmLexer.h"
+#include "AsmParser.h"
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -34,16 +34,20 @@ IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
 
 enum ActionType {
+  AC_AsLex,
   AC_Assemble
 };
 
 static cl::opt<ActionType>
 Action(cl::desc("Action to perform:"),
-       cl::values(clEnumValN(AC_Assemble, "assemble",
+       cl::init(AC_Assemble),
+       cl::values(clEnumValN(AC_AsLex, "as-lex",
+                             "Lex tokens from a .s file"),
+                  clEnumValN(AC_Assemble, "assemble",
                              "Assemble a .s file (default)"),
                   clEnumValEnd));
 
-static int AssembleInput(const char *ProgName) {
+static int AsLexInput(const char *ProgName) {
   std::string ErrorMessage;
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
                                                       &ErrorMessage);
@@ -65,16 +69,19 @@ static int AssembleInput(const char *ProgName) {
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
 
-  
-  
   AsmLexer Lexer(SrcMgr);
+  
+  bool Error = false;
   
   asmtok::TokKind Tok = Lexer.Lex();
   while (Tok != asmtok::Eof) {
     switch (Tok) {
-    default: Lexer.PrintError(Lexer.getLoc(), "driver: unknown token"); break;
+    default:
+      Lexer.PrintError(Lexer.getLoc(), "driver: unknown token");
+      Error = true;
+      break;
     case asmtok::Error:
-      Lexer.PrintError(Lexer.getLoc(), "error, bad token");
+      Error = true; // error already printed.
       break;
     case asmtok::Identifier:
       outs() << "identifier: " << Lexer.getCurStrVal() << '\n';
@@ -103,8 +110,34 @@ static int AssembleInput(const char *ProgName) {
     Tok = Lexer.Lex();
   }
   
-  return 1;
+  return Error;
 }
+
+static int AssembleInput(const char *ProgName) {
+  std::string ErrorMessage;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
+                                                      &ErrorMessage);
+  if (Buffer == 0) {
+    errs() << ProgName << ": ";
+    if (ErrorMessage.size())
+      errs() << ErrorMessage << "\n";
+    else
+      errs() << "input file didn't read correctly.\n";
+    return 1;
+  }
+  
+  SourceMgr SrcMgr;
+  
+  // Tell SrcMgr about this buffer, which is what TGParser will pick up.
+  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
+  
+  // Record the location of the include directories so that the lexer can find
+  // it later.
+  SrcMgr.setIncludeDirs(IncludeDirs);
+  
+  AsmParser Parser(SrcMgr);
+  return Parser.Run();
+}  
 
 
 int main(int argc, char **argv) {
@@ -116,6 +149,8 @@ int main(int argc, char **argv) {
 
   switch (Action) {
   default:
+  case AC_AsLex:
+    return AsLexInput(argv[0]);
   case AC_Assemble:
     return AssembleInput(argv[0]);
   }

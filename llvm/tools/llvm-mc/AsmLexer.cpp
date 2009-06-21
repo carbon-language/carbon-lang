@@ -84,7 +84,7 @@ asmtok::TokKind AsmLexer::LexIdentifier() {
 /// LexPercent: Register: %[a-zA-Z0-9]+
 asmtok::TokKind AsmLexer::LexPercent() {
   if (!isalnum(*CurPtr))
-    return asmtok::Error;  // Must have at least one character.
+    return ReturnError(TokStart, "invalid register name");
   while (isalnum(*CurPtr))
     ++CurPtr;
   CurStrVal.assign(TokStart, CurPtr);   // Skip %
@@ -103,8 +103,7 @@ asmtok::TokKind AsmLexer::LexSlash() {
     int CurChar = getNextChar();
     switch (CurChar) {
     case EOF:
-      PrintError(TokStart, "Unterminated comment!");
-      return asmtok::Error;
+      return ReturnError(TokStart, "unterminated comment");
     case '*':
       // End of the comment?
       if (CurPtr[0] != '/') break;
@@ -137,9 +136,9 @@ asmtok::TokKind AsmLexer::LexHash() {
 /// TODO: FP literal.
 asmtok::TokKind AsmLexer::LexDigit() {
   if (*CurPtr == ':')
-    return asmtok::Error;  // FIXME LOCAL LABEL.
+    return ReturnError(TokStart, "FIXME: local label not implemented");
   if (*CurPtr == 'f' || *CurPtr == 'b')
-    return asmtok::Error;  // FIXME FORWARD/BACKWARD LABEL.
+    return ReturnError(TokStart, "FIXME: directional label not implemented");
   
   // Decimal integer: [1-9][0-9]*
   if (CurPtr[-1] != '0') {
@@ -229,7 +228,7 @@ asmtok::TokKind AsmLexer::LexToken() {
       return LexIdentifier();
     
     // Unknown character, emit an error.
-    return asmtok::Error;
+    return ReturnError(TokStart, "invalid character in input");
   case EOF: return asmtok::Eof;
   case 0:
   case ' ':
