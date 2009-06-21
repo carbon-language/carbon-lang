@@ -773,6 +773,13 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       }
       }
     }
+    
+    // 0 / x -> 0.
+    if ((Opcode == Instruction::UDiv ||
+         Opcode == Instruction::SDiv) &&
+        CI1->isZero())
+      return const_cast<Constant*>(C1);
+    
   } else if (const ConstantFP *CFP1 = dyn_cast<ConstantFP>(C1)) {
     if (const ConstantFP *CFP2 = dyn_cast<ConstantFP>(C2)) {
       APFloat C1V = CFP1->getValueAPF();
