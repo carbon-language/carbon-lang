@@ -25,6 +25,26 @@ SourceMgr::~SourceMgr() {
   }
 }
 
+/// AddIncludeFile - Search for a file with the specified name in the current
+/// directory or in one of the IncludeDirs.  If no file is found, this returns
+/// ~0, otherwise it returns the buffer ID of the stacked file.
+unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
+                                   SMLoc IncludeLoc) {
+  
+  MemoryBuffer *NewBuf = MemoryBuffer::getFile(Filename.c_str());
+
+  // If the file didn't exist directly, see if it's in an include path.
+  for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBuf; ++i) {
+    std::string IncFile = IncludeDirectories[i] + "/" + Filename;
+    NewBuf = MemoryBuffer::getFile(IncFile.c_str());
+  }
+ 
+  if (NewBuf == 0) return ~0U;
+
+  return AddNewSourceBuffer(NewBuf, IncludeLoc);
+}
+
+
 /// FindBufferContainingLoc - Return the ID of the buffer containing the
 /// specified location, returning -1 if not found.
 int SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {

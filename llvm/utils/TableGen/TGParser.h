@@ -49,8 +49,6 @@ class TGParser {
 public:
   TGParser(SourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
   
-  void setIncludeDirs(const std::vector<std::string> &D){Lex.setIncludeDirs(D);}
-
   /// ParseFile - Main entrypoint for parsing a tblgen file.  These parser
   /// routines return true on error, or false on success.
   bool ParseFile();

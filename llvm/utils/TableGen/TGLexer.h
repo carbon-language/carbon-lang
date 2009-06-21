@@ -73,16 +73,9 @@ class TGLexer {
   /// by the SourceMgr object.
   int CurBuffer;
   
-  // IncludeDirectories - This is the list of directories we should search for
-  // include files in.
-  std::vector<std::string> IncludeDirectories;
 public:
   TGLexer(SourceMgr &SrcMgr);
   ~TGLexer() {}
-  
-  void setIncludeDirs(const std::vector<std::string> &Dirs) {
-    IncludeDirectories = Dirs;
-  }
   
   tgtok::TokKind Lex() {
     return CurCode = LexToken();

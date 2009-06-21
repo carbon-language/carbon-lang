@@ -278,24 +278,15 @@ bool TGLexer::LexInclude() {
   // Get the string.
   std::string Filename = CurStrVal;
 
-  // Try to find the file.
-  MemoryBuffer *NewBuf = MemoryBuffer::getFile(Filename.c_str());
-
-  // If the file didn't exist directly, see if it's in an include path.
-  for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBuf; ++i) {
-    std::string IncFile = IncludeDirectories[i] + "/" + Filename;
-    NewBuf = MemoryBuffer::getFile(IncFile.c_str());
-  }
-    
-  if (NewBuf == 0) {
+  
+  CurBuffer = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr));
+  if (CurBuffer == ~0U) {
     PrintError(getLoc(), "Could not find include file '" + Filename + "'");
     return true;
   }
   
   // Save the line number and lex buffer of the includer.
-  CurBuffer = SrcMgr.AddNewSourceBuffer(NewBuf, SMLoc::getFromPointer(CurPtr));
-  
-  CurBuf = NewBuf;
+  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();
   return false;
 }

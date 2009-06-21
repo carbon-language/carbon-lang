@@ -57,11 +57,19 @@ class SourceMgr {
   /// Buffers - This is all of the buffers that we are reading from.
   std::vector<SrcBuffer> Buffers;
   
+  // IncludeDirectories - This is the list of directories we should search for
+  // include files in.
+  std::vector<std::string> IncludeDirectories;
+  
   SourceMgr(const SourceMgr&);    // DO NOT IMPLEMENT
   void operator=(const SourceMgr&); // DO NOT IMPLEMENT
 public:
   SourceMgr() {}
   ~SourceMgr();
+  
+  void setIncludeDirs(const std::vector<std::string> &Dirs) {
+    IncludeDirectories = Dirs;
+  }
   
   const SrcBuffer &getBufferInfo(unsigned i) const {
     assert(i < Buffers.size() && "Invalid Buffer ID!");
@@ -85,6 +93,11 @@ public:
     Buffers.push_back(NB);
     return Buffers.size()-1;
   }
+  
+  /// AddIncludeFile - Search for a file with the specified name in the current
+  /// directory or in one of the IncludeDirs.  If no file is found, this returns
+  /// ~0, otherwise it returns the buffer ID of the stacked file.
+  unsigned AddIncludeFile(const std::string &Filename, SMLoc IncludeLoc);
   
   /// FindBufferContainingLoc - Return the ID of the buffer containing the
   /// specified location, returning -1 if not found.

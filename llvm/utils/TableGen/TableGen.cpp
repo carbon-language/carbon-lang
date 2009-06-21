@@ -146,12 +146,12 @@ static bool ParseFile(const std::string &Filename,
   
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
   SrcMgr.AddNewSourceBuffer(F, SMLoc());
-  
-  TGParser Parser(SrcMgr);
 
   // Record the location of the include directory so that the lexer can find
   // it later.
-  Parser.setIncludeDirs(IncludeDirs);
+  SrcMgr.setIncludeDirs(IncludeDirs);
+  
+  TGParser Parser(SrcMgr);
 
   return Parser.ParseFile();
 }
