@@ -15,7 +15,7 @@
 #ifndef RECORD_H
 #define RECORD_H
 
-#include "TGSourceMgr.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
 #include <map>
 #include <ostream>

@@ -1,4 +1,4 @@
-//===- TGSourceMgr.cpp - Manager for Source Buffers & Diagnostics ---------===//
+//===- SourceMgr.cpp - Manager for Simple Source Buffers & Diagnostics ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the TGSourceMgr class.
+// This file implements the SourceMgr class.  This class is used as a simple
+// substrate for diagnostics, #include handling, and other low level things for
+// simple parsers.
 //
 //===----------------------------------------------------------------------===//
 
-#include "TGSourceMgr.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGLexer.h"
-#include "TGSourceMgr.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <ostream>

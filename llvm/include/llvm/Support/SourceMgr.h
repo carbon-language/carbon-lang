@@ -1,4 +1,4 @@
-//===- TGSourceMgr.h - Manager for Source Buffers & Diagnostics -*- C++ -*-===//
+//===- SourceMgr.h - Manager for Source Buffers & Diagnostics ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the TGSourceMgr class.
+// This file declares the SourceMgr class.  This class is used as a simple
+// substrate for diagnostics, #include handling, and other low level things for
+// simple parsers.
 //
 //===----------------------------------------------------------------------===//
 

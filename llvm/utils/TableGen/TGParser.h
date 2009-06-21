@@ -15,7 +15,7 @@
 #define TGPARSER_H
 
 #include "TGLexer.h"
-#include "TGSourceMgr.h"
+#include "llvm/Support/SourceMgr.h"
 #include <map>
 
 namespace llvm {
