@@ -138,20 +138,20 @@ public:
 ///   obj conformsToProtocol:@protocol(foo)]
 /// The return type is "Protocol*".
 class ObjCProtocolExpr : public Expr {    
-  ObjCProtocolDecl *Protocol;    
+  ObjCProtocolDecl *TheProtocol;    
   SourceLocation AtLoc, RParenLoc;
 public:
   ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCProtocolExprClass, T), Protocol(protocol),
+  : Expr(ObjCProtocolExprClass, T), TheProtocol(protocol),
     AtLoc(at), RParenLoc(rp) {}
   explicit ObjCProtocolExpr(EmptyShell Empty)
     : Expr(ObjCProtocolExprClass, Empty) {}
 
   ObjCProtocolExpr *Clone(ASTContext &C) const;
   
-  ObjCProtocolDecl *getProtocol() const { return Protocol; }
-  void setProtocol(ObjCProtocolDecl *P) { Protocol = P; }
+  ObjCProtocolDecl *getProtocol() const { return TheProtocol; }
+  void setProtocol(ObjCProtocolDecl *P) { TheProtocol = P; }
     
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }

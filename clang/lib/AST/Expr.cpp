@@ -1571,7 +1571,7 @@ ObjCSelectorExpr *ObjCSelectorExpr::Clone(ASTContext &C) const {
 }
 
 ObjCProtocolExpr *ObjCProtocolExpr::Clone(ASTContext &C) const {
-  return new (C) ObjCProtocolExpr(getType(), Protocol, AtLoc, RParenLoc);
+  return new (C) ObjCProtocolExpr(getType(), TheProtocol, AtLoc, RParenLoc);
 }
 
 // constructor for class messages. 
