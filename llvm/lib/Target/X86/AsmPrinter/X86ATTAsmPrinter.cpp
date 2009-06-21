@@ -917,12 +917,6 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       // Handle the 'subreg rewriting' for the lea64_32mem operand.
       lower_lea64_32mem(&TmpInst, 1);
       break;
-    case X86::CALL64pcrel32:
-    case X86::CALLpcrel32:
-    case X86::TAILJMPd:
-      // The target operand is pc-relative, not an absolute reference.
-      // FIXME: this should be an operand property, not an asm format modifier.
-      ;   
     }
     
     // FIXME: Convert TmpInst.
