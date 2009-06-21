@@ -629,7 +629,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     }
   }
 
-  // Handle simplifications of the RHS when a constant int.
+  // Handle simplifications when the RHS is a constant int.
   if (const ConstantInt *CI2 = dyn_cast<ConstantInt>(C2)) {
     switch (Opcode) {
     case Instruction::Add:
@@ -773,13 +773,20 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       }
       }
     }
-    
-    // 0 / x -> 0.
-    if ((Opcode == Instruction::UDiv ||
-         Opcode == Instruction::SDiv) &&
-        CI1->isZero())
-      return const_cast<Constant*>(C1);
-    
+
+    switch (Opcode) {
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::LShr:
+    case Instruction::AShr:
+    case Instruction::Shl:
+      if (CI1->equalsInt(0)) return const_cast<Constant*>(C1);
+      break;
+    default:
+      break;
+    }
   } else if (const ConstantFP *CFP1 = dyn_cast<ConstantFP>(C1)) {
     if (const ConstantFP *CFP2 = dyn_cast<ConstantFP>(C2)) {
       APFloat C1V = CFP1->getValueAPF();
