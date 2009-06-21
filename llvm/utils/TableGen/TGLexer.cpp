@@ -24,7 +24,7 @@
 #include <cerrno>
 using namespace llvm;
 
-TGLexer::TGLexer(TGSourceMgr &SM) : SrcMgr(SM) {
+TGLexer::TGLexer(SourceMgr &SM) : SrcMgr(SM) {
   CurBuffer = 0;
   CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();

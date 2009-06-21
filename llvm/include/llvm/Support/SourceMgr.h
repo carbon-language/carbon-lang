@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TGSOURCEMGR_H
-#define TGSOURCEMGR_H
+#ifndef SUPPORT_SOURCEMGR_H
+#define SUPPORT_SOURCEMGR_H
 
 #include <string>
 #include <vector>
@@ -22,7 +22,7 @@
 
 namespace llvm {
   class MemoryBuffer;
-  class TGSourceMgr;
+  class SourceMgr;
   
 class SMLoc {
   const char *Ptr;
@@ -42,9 +42,9 @@ public:
   }
 };
 
-/// TGSourceMgr - This owns the files read by tblgen, handles include stacks,
+/// SourceMgr - This owns the files read by tblgen, handles include stacks,
 /// and handles printing of diagnostics.
-class TGSourceMgr {
+class SourceMgr {
   struct SrcBuffer {
     /// Buffer - The memory buffer for the file.
     MemoryBuffer *Buffer;
@@ -57,11 +57,11 @@ class TGSourceMgr {
   /// Buffers - This is all of the buffers that we are reading from.
   std::vector<SrcBuffer> Buffers;
   
-  TGSourceMgr(const TGSourceMgr&);    // DO NOT IMPLEMENT
-  void operator=(const TGSourceMgr&); // DO NOT IMPLEMENT
+  SourceMgr(const SourceMgr&);    // DO NOT IMPLEMENT
+  void operator=(const SourceMgr&); // DO NOT IMPLEMENT
 public:
-  TGSourceMgr() {}
-  ~TGSourceMgr();
+  SourceMgr() {}
+  ~SourceMgr();
   
   const SrcBuffer &getBufferInfo(unsigned i) const {
     assert(i < Buffers.size() && "Invalid Buffer ID!");

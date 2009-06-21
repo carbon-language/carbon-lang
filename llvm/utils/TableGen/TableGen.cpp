@@ -124,7 +124,7 @@ namespace {
 // FIXME: Eliminate globals from tblgen.
 RecordKeeper llvm::Records;
 
-static TGSourceMgr SrcMgr;
+static SourceMgr SrcMgr;
 
 void llvm::PrintError(SMLoc ErrorLoc, const std::string &Msg) {
   SrcMgr.PrintError(ErrorLoc, Msg);
@@ -136,7 +136,7 @@ void llvm::PrintError(SMLoc ErrorLoc, const std::string &Msg) {
 /// file.
 static bool ParseFile(const std::string &Filename,
                       const std::vector<std::string> &IncludeDirs,
-                      TGSourceMgr &SrcMgr) {
+                      SourceMgr &SrcMgr) {
   std::string ErrorStr;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {

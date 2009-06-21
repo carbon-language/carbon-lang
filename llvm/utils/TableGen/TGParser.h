@@ -47,7 +47,7 @@ class TGParser {
   /// current value.
   MultiClass *CurMultiClass;
 public:
-  TGParser(TGSourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
+  TGParser(SourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
   
   void setIncludeDirs(const std::vector<std::string> &D){Lex.setIncludeDirs(D);}
 

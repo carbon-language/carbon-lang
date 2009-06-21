@@ -18,7 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-TGSourceMgr::~TGSourceMgr() {
+SourceMgr::~SourceMgr() {
   while (!Buffers.empty()) {
     delete Buffers.back().Buffer;
     Buffers.pop_back();
@@ -27,7 +27,7 @@ TGSourceMgr::~TGSourceMgr() {
 
 /// FindBufferContainingLoc - Return the ID of the buffer containing the
 /// specified location, returning -1 if not found.
-int TGSourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
+int SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
   for (unsigned i = 0, e = Buffers.size(); i != e; ++i)
     if (Loc.getPointer() >= Buffers[i].Buffer->getBufferStart() &&
         // Use <= here so that a pointer to the null at the end of the buffer
@@ -39,7 +39,7 @@ int TGSourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
 
 /// FindLineNumber - Find the line number for the specified location in the
 /// specified file.  This is not a fast method.
-unsigned TGSourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
+unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   if (BufferID == -1) BufferID = FindBufferContainingLoc(Loc);
   assert(BufferID != -1 && "Invalid Location!");
   
@@ -56,7 +56,7 @@ unsigned TGSourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   return LineNo;
 }
 
-void TGSourceMgr::PrintIncludeStack(SMLoc IncludeLoc) const {
+void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc) const {
   if (IncludeLoc == SMLoc()) return;  // Top of stack.
   
   int CurBuf = FindBufferContainingLoc(IncludeLoc);
@@ -70,7 +70,7 @@ void TGSourceMgr::PrintIncludeStack(SMLoc IncludeLoc) const {
 }
 
 
-void TGSourceMgr::PrintError(SMLoc ErrorLoc, const std::string &Msg) const {
+void SourceMgr::PrintError(SMLoc ErrorLoc, const std::string &Msg) const {
   raw_ostream &OS = errs();
   
   // First thing to do: find the current buffer containing the specified

@@ -22,7 +22,7 @@
 
 namespace llvm {
 class MemoryBuffer;
-class TGSourceMgr;
+class SourceMgr;
 class SMLoc;
   
 namespace tgtok {
@@ -58,7 +58,7 @@ namespace tgtok {
 
 /// TGLexer - TableGen Lexer class.
 class TGLexer {
-  TGSourceMgr &SrcMgr;
+  SourceMgr &SrcMgr;
   
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
@@ -77,7 +77,7 @@ class TGLexer {
   // include files in.
   std::vector<std::string> IncludeDirectories;
 public:
-  TGLexer(TGSourceMgr &SrcMgr);
+  TGLexer(SourceMgr &SrcMgr);
   ~TGLexer() {}
   
   void setIncludeDirs(const std::vector<std::string> &Dirs) {

@@ -19,6 +19,7 @@ add_llvm_library(LLVMSupport
   PrettyStackTrace.cpp
   SlowOperationInformer.cpp
   SmallPtrSet.cpp
+  SourceMgr.cpp
   Statistic.cpp
   Streams.cpp
   StringExtras.cpp
