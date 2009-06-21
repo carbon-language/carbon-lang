@@ -44,11 +44,11 @@ tgtok::TokKind TGLexer::ReturnError(const char *Loc, const std::string &Msg) {
 
 
 void TGLexer::PrintError(const char *Loc, const std::string &Msg) const {
-  SrcMgr.PrintError(SMLoc::getFromPointer(Loc), Msg);
+  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg);
 }
 
 void TGLexer::PrintError(SMLoc Loc, const std::string &Msg) const {
-  SrcMgr.PrintError(Loc, Msg);
+  SrcMgr.PrintMessage(Loc, Msg);
 }
 
 

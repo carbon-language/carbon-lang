@@ -107,10 +107,9 @@ public:
   /// specified file.  This is not a fast method.
   unsigned FindLineNumber(SMLoc Loc, int BufferID = -1) const;
   
-  
-  /// PrintError - Emit an error message about the specified location with the
+  /// PrintMessage - Emit a message about the specified location with the
   /// specified string.
-  void PrintError(SMLoc ErrorLoc, const std::string &Msg) const;
+  void PrintMessage(SMLoc Loc, const std::string &Msg) const;
   
 private:
   void PrintIncludeStack(SMLoc IncludeLoc) const;

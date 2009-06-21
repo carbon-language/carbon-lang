@@ -89,8 +89,7 @@ public:
   
   SMLoc getLoc() const;
   
-  void PrintError(const char *Loc, const std::string &Msg) const;
-  void PrintError(SMLoc Loc, const std::string &Msg) const;
+  void PrintMessage(SMLoc Loc, const std::string &Msg) const;
   
 private:
   int getNextChar();

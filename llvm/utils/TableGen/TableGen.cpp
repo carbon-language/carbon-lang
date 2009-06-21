@@ -127,7 +127,7 @@ RecordKeeper llvm::Records;
 static SourceMgr SrcMgr;
 
 void llvm::PrintError(SMLoc ErrorLoc, const std::string &Msg) {
-  SrcMgr.PrintError(ErrorLoc, Msg);
+  SrcMgr.PrintMessage(ErrorLoc, Msg);
 }
 
 

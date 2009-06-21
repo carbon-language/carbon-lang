@@ -29,18 +29,14 @@ SMLoc AsmLexer::getLoc() const {
   return SMLoc::getFromPointer(TokStart);
 }
 
-void AsmLexer::PrintError(const char *Loc, const std::string &Msg) const {
-  SrcMgr.PrintError(SMLoc::getFromPointer(Loc), Msg);
-}
-
-void AsmLexer::PrintError(SMLoc Loc, const std::string &Msg) const {
-  SrcMgr.PrintError(Loc, Msg);
+void AsmLexer::PrintMessage(SMLoc Loc, const std::string &Msg) const {
+  SrcMgr.PrintMessage(Loc, Msg);
 }
 
 /// ReturnError - Set the error to the specified string at the specified
 /// location.  This is defined to always return asmtok::Error.
 asmtok::TokKind AsmLexer::ReturnError(const char *Loc, const std::string &Msg) {
-  PrintError(Loc, Msg);
+  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg);
   return asmtok::Error;
 }
 
@@ -203,10 +199,8 @@ asmtok::TokKind AsmLexer::LexQuote() {
       CurChar = getNextChar();
     }
     
-    if (CurChar == EOF) {
-      PrintError(TokStart, "unterminated string constant");
-      return asmtok::Eof;
-    }
+    if (CurChar == EOF)
+      return ReturnError(TokStart, "unterminated string constant");
 
     CurChar = getNextChar();
   }

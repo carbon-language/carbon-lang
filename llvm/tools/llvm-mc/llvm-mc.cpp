@@ -77,7 +77,7 @@ static int AsLexInput(const char *ProgName) {
   while (Tok != asmtok::Eof) {
     switch (Tok) {
     default:
-      Lexer.PrintError(Lexer.getLoc(), "driver: unknown token");
+      Lexer.PrintMessage(Lexer.getLoc(), "driver: unknown token");
       Error = true;
       break;
     case asmtok::Error:

@@ -16,6 +16,17 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+bool AsmParser::Error(SMLoc L, const char *Msg) {
+  Lexer.PrintMessage(L, Msg);
+  return true;
+}
+
+bool AsmParser::TokError(const char *Msg) {
+  Lexer.PrintMessage(Lexer.getLoc(), Msg);
+  return true;
+}
+
+
 bool AsmParser::Run() {
   // Prime the lexer.
   Lexer.Lex();
@@ -34,8 +45,7 @@ bool AsmParser::Run() {
 bool AsmParser::ParseStatement() {
   switch (Lexer.getKind()) {
   default:
-    Lexer.PrintError(Lexer.getLoc(), "unexpected token at start of statement");
-    return true;
+    return TokError("unexpected token at start of statement");
   case asmtok::EndOfStatement:
     Lexer.Lex();
     return false;

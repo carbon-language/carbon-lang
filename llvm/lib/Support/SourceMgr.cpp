@@ -90,12 +90,12 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc) const {
 }
 
 
-void SourceMgr::PrintError(SMLoc ErrorLoc, const std::string &Msg) const {
+void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg) const {
   raw_ostream &OS = errs();
   
   // First thing to do: find the current buffer containing the specified
   // location.
-  int CurBuf = FindBufferContainingLoc(ErrorLoc);
+  int CurBuf = FindBufferContainingLoc(Loc);
   assert(CurBuf != -1 && "Invalid or unspecified location!");
   
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc);
@@ -104,24 +104,24 @@ void SourceMgr::PrintError(SMLoc ErrorLoc, const std::string &Msg) const {
   
   
   OS << "Parsing " << CurMB->getBufferIdentifier() << ":"
-     << FindLineNumber(ErrorLoc, CurBuf) << ": ";
+     << FindLineNumber(Loc, CurBuf) << ": ";
   
   OS << Msg << "\n";
   
   // Scan backward to find the start of the line.
-  const char *LineStart = ErrorLoc.getPointer();
+  const char *LineStart = Loc.getPointer();
   while (LineStart != CurMB->getBufferStart() && 
          LineStart[-1] != '\n' && LineStart[-1] != '\r')
     --LineStart;
   // Get the end of the line.
-  const char *LineEnd = ErrorLoc.getPointer();
+  const char *LineEnd = Loc.getPointer();
   while (LineEnd != CurMB->getBufferEnd() && 
          LineEnd[0] != '\n' && LineEnd[0] != '\r')
     ++LineEnd;
   // Print out the line.
   OS << std::string(LineStart, LineEnd) << "\n";
   // Print out spaces before the caret.
-  for (const char *Pos = LineStart; Pos != ErrorLoc.getPointer(); ++Pos)
+  for (const char *Pos = LineStart; Pos != Loc.getPointer(); ++Pos)
     OS << (*Pos == '\t' ? '\t' : ' ');
   OS << "^\n";
 }

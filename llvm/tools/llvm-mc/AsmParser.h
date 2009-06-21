@@ -30,6 +30,8 @@ public:
 private:
   bool ParseStatement();
   
+  bool Error(SMLoc L, const char *Msg);
+  bool TokError(const char *Msg);
 };
 
 } // end namespace llvm
