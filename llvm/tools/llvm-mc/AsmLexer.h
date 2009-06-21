@@ -73,6 +73,8 @@ public:
   }
   
   asmtok::TokKind getKind() const { return CurKind; }
+  bool is(asmtok::TokKind K) const { return CurKind == K; }
+  bool isNot(asmtok::TokKind K) const { return CurKind != K; }
   
   const std::string &getCurStrVal() const {
     assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register ||

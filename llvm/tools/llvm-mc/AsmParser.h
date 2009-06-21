@@ -27,6 +27,9 @@ public:
   
   bool Run();
   
+private:
+  bool ParseStatement();
+  
 };
 
 } // end namespace llvm
