@@ -72,17 +72,29 @@ static int AssembleInput(const char *ProgName) {
   asmtok::TokKind Tok = Lexer.Lex();
   while (Tok != asmtok::Eof) {
     switch (Tok) {
-    default: outs() << "<<unknown token>>\n"; break;
-    case asmtok::Error: outs() << "<<error>>\n"; break;
+    default: Lexer.PrintError(Lexer.getLoc(), "driver: unknown token"); break;
+    case asmtok::Error:
+      Lexer.PrintError(Lexer.getLoc(), "error, bad token");
+      break;
     case asmtok::Identifier:
       outs() << "identifier: " << Lexer.getCurStrVal() << '\n';
+      break;
+    case asmtok::Register:
+      outs() << "register: " << Lexer.getCurStrVal() << '\n';
       break;
     case asmtok::IntVal:
       outs() << "int: " << Lexer.getCurIntVal() << '\n';
       break;
+    case asmtok::EndOfStatement: outs() << "EndOfStatement\n"; break;
     case asmtok::Colon:  outs() << "Colon\n"; break;
     case asmtok::Plus:   outs() << "Plus\n"; break;
     case asmtok::Minus:  outs() << "Minus\n"; break;
+    case asmtok::Slash:  outs() << "Slash\n"; break;
+    case asmtok::LParen: outs() << "LParen\n"; break;
+    case asmtok::RParen: outs() << "RParen\n"; break;
+    case asmtok::Star:   outs() << "Star\n"; break;
+    case asmtok::Comma:  outs() << "Comma\n"; break;
+    case asmtok::Dollar: outs() << "Dollar\n"; break;
     }
     
     Tok = Lexer.Lex();

@@ -29,12 +29,16 @@ namespace asmtok {
     Eof, Error,
 
     Identifier,
+    Register,
     IntVal,
     
-    
+    EndOfStatement,
     Colon,
     Plus,
-    Minus
+    Minus,
+    Slash,    // '/'
+    LParen, RParen,
+    Star, Comma, Dollar
   };
 }
 
@@ -66,7 +70,7 @@ public:
   asmtok::TokKind getKind() const { return CurKind; }
   
   const std::string &getCurStrVal() const {
-    assert(CurKind == asmtok::Identifier &&
+    assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register) &&
            "This token doesn't have a string value");
     return CurStrVal;
   }
@@ -82,9 +86,15 @@ public:
   
 private:
   int getNextChar();
+  asmtok::TokKind ReturnError(const char *Loc, const std::string &Msg);
 
   /// LexToken - Read the next token and return its code.
   asmtok::TokKind LexToken();
+  asmtok::TokKind LexIdentifier();
+  asmtok::TokKind LexPercent();
+  asmtok::TokKind LexSlash();
+  asmtok::TokKind LexHash();
+  asmtok::TokKind LexDigit();
 };
   
 } // end namespace llvm
