@@ -15,7 +15,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <ostream>
 #include "llvm/Config/config.h"
 #include <cctype>
 #include <cstdio>
@@ -353,19 +352,19 @@ tgtok::TokKind TGLexer::LexNumber() {
       
       // Requires at least one hex digit.
       if (CurPtr == NumStart)
-        return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+        return ReturnError(TokStart, "Invalid hexadecimal number");
 
       errno = 0;
       CurIntVal = strtoll(NumStart, 0, 16);
       if (errno == EINVAL)
-        return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+        return ReturnError(TokStart, "Invalid hexadecimal number");
       if (errno == ERANGE) {
         errno = 0;
         CurIntVal = (int64_t)strtoull(NumStart, 0, 16);
         if (errno == EINVAL)
-          return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+          return ReturnError(TokStart, "Invalid hexadecimal number");
         if (errno == ERANGE)
-          return ReturnError(CurPtr-2, "Hexadecimal number out of range");
+          return ReturnError(TokStart, "Hexadecimal number out of range");
       }
       return tgtok::IntVal;
     } else if (CurPtr[0] == 'b') {
