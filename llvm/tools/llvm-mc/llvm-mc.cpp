@@ -16,6 +16,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 using namespace llvm;
@@ -27,30 +28,62 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"),
                cl::value_desc("filename"));
 
-int main(int argc, char **argv) {
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(argc, argv);
-  
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+static cl::list<std::string>
+IncludeDirs("I", cl::desc("Directory of include files"),
+            cl::value_desc("directory"), cl::Prefix);
 
-  cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
+enum ActionType {
+  AC_Assemble
+};
 
+static cl::opt<ActionType>
+Action(cl::desc("Action to perform:"),
+       cl::values(clEnumValN(AC_Assemble, "assemble",
+                             "Assemble a .s file (default)"),
+                  clEnumValEnd));
+
+static int AssembleInput(const char *ProgName) {
   std::string ErrorMessage;
-  
-  MemoryBuffer *Buffer
-    = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage);
-
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
+                                                      &ErrorMessage);
   if (Buffer == 0) {
-    errs() << argv[0] << ": ";
+    errs() << ProgName << ": ";
     if (ErrorMessage.size())
       errs() << ErrorMessage << "\n";
     else
       errs() << "input file didn't read correctly.\n";
     return 1;
   }
+
+  SourceMgr SrcMgr;
+  
+  // Tell SrcMgr about this buffer, which is what TGParser will pick up.
+  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
+  
+  // Record the location of the include directories so that the lexer can find
+  // it later.
+  SrcMgr.setIncludeDirs(IncludeDirs);
+  
+  //TGParser Parser(SrcMgr);
+  //return Parser.ParseFile();
   
   
+  return 1;
+}
+
+
+int main(int argc, char **argv) {
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
+
+  switch (Action) {
+  default:
+  case AC_Assemble:
+    return AssembleInput(argv[0]);
+  }
   
   return 0;
 }
