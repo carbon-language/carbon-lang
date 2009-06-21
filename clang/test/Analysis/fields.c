@@ -8,3 +8,12 @@ void bar() {
   *(unsigned*)&y = foo();
   y.x = 1;
 }
+
+struct s {
+  int n;
+};
+
+void f() {
+  struct s a;
+  int *p = &(a.n) + 1;
+}

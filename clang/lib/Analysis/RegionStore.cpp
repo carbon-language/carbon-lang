@@ -773,8 +773,13 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
     ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
   } 
-  else
+  else if (isa<FieldRegion>(MR)) {
+    // Not track pointer arithmetic on struct fields.
+    return UnknownVal();
+  }
+  else {
     ER = cast<ElementRegion>(MR);
+  }
 
   SVal Idx = ER->getIndex();
 
