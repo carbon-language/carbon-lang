@@ -490,7 +490,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     return;
   }
   case MachineOperand::MO_GlobalAddress: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    bool isMemOp = Modifier && !strcmp(Modifier, "mem");
     bool needCloseParen = false;
 
     const GlobalValue *GV = MO.getGlobal();
@@ -499,7 +499,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       // If GV is an alias then use the aliasee for determining
       // thread-localness.
       if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-        GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
+        GVar =dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
     }
 
     bool isThreadLocal = GVar && GVar->isThreadLocal();
@@ -542,9 +542,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (TM.getRelocationModel() == Reloc::PIC_)
         O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget);
     } else {
-      if (GV->hasDLLImportLinkage()) {
+      if (GV->hasDLLImportLinkage())
         O << "__imp_";
-      }
       O << Name;
     }
 

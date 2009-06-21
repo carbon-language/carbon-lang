@@ -173,7 +173,7 @@ public:
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
   bool isPICStyleStub() const { return PICStyle == PICStyles::Stub; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
-  bool isPICStyleWinPIC() const { return PICStyle == PICStyles:: WinPIC; }
+  bool isPICStyleWinPIC() const { return PICStyle == PICStyles::WinPIC; }
   
   /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
   unsigned getDarwinVers() const { return DarwinVers; }
