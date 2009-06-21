@@ -280,7 +280,7 @@ bool TGLexer::LexInclude() {
 
   
   CurBuffer = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr));
-  if (CurBuffer == ~0U) {
+  if (CurBuffer == -1) {
     PrintError(getLoc(), "Could not find include file '" + Filename + "'");
     return true;
   }
