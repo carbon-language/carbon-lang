@@ -2299,11 +2299,11 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   // induction variable, to allow coalescing the live ranges for the IV into
   // one register value.
   BasicBlock *LatchBlock = L->getLoopLatch();
-  BasicBlock *ExitBlock = L->getExitingBlock();
-  if (!ExitBlock)
+  BasicBlock *ExitingBlock = L->getExitingBlock();
+  if (!ExitingBlock)
     // Multiple exits, just look at the exit in the latch block if there is one.
-    ExitBlock = LatchBlock;
-  BranchInst *TermBr = dyn_cast<BranchInst>(ExitBlock->getTerminator());
+    ExitingBlock = LatchBlock;
+  BranchInst *TermBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (!TermBr)
     return;
   if (TermBr->isUnconditional() || !isa<ICmpInst>(TermBr->getCondition()))
@@ -2316,7 +2316,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   if (!FindIVUserForCond(Cond, CondUse, CondStride))
     return; // setcc doesn't use the IV.
 
-  if (ExitBlock != LatchBlock) {
+  if (ExitingBlock != LatchBlock) {
     if (!Cond->hasOneUse())
       // See below, we don't want the condition to be cloned.
       return;
@@ -2378,7 +2378,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
 
   // If possible, change stride and operands of the compare instruction to
   // eliminate one stride.
-  if (ExitBlock == LatchBlock)
+  if (ExitingBlock == LatchBlock)
     Cond = ChangeCompareStride(L, Cond, CondUse, CondStride);
 
   // It's possible for the setcc instruction to be anywhere in the loop, and
