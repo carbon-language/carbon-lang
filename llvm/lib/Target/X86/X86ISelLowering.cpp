@@ -4437,9 +4437,8 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
   // exec)
-  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
-                                             GA->getValueType(0),
-                                             GA->getOffset());
+  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
+                                           GA->getOffset());
   SDValue Offset = DAG.getNode(X86ISD::Wrapper, dl, PtrVT, TGA);
 
   if (model == TLSModel::InitialExec)
