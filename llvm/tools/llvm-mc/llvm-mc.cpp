@@ -19,6 +19,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "AsmLexer.h"
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -63,10 +64,29 @@ static int AssembleInput(const char *ProgName) {
   // Record the location of the include directories so that the lexer can find
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
+
   
-  //TGParser Parser(SrcMgr);
-  //return Parser.ParseFile();
   
+  AsmLexer Lexer(SrcMgr);
+  
+  asmtok::TokKind Tok = Lexer.Lex();
+  while (Tok != asmtok::Eof) {
+    switch (Tok) {
+    default: outs() << "<<unknown token>>\n"; break;
+    case asmtok::Error: outs() << "<<error>>\n"; break;
+    case asmtok::Identifier:
+      outs() << "identifier: " << Lexer.getCurStrVal() << '\n';
+      break;
+    case asmtok::IntVal:
+      outs() << "int: " << Lexer.getCurIntVal() << '\n';
+      break;
+    case asmtok::Colon:  outs() << "Colon\n"; break;
+    case asmtok::Plus:   outs() << "Plus\n"; break;
+    case asmtok::Minus:  outs() << "Minus\n"; break;
+    }
+    
+    Tok = Lexer.Lex();
+  }
   
   return 1;
 }
