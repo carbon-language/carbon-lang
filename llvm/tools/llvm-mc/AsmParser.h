@@ -37,6 +37,8 @@ private:
   void EatToEndOfStatement();
   
   bool ParseX86Operand(X86Operand &Op);
+  bool ParseX86MemOperand(X86Operand &Op);
+  bool ParseExpression(int64_t &Res);
 };
 
 } // end namespace llvm
