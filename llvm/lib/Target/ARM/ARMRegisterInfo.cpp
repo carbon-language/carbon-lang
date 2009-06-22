@@ -497,7 +497,9 @@ ARMRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
 ///
 bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
+  return (NoFramePointerElim ||
+          MFI->hasVarSizedObjects() ||
+          MFI->isFrameAddressTaken());
 }
 
 // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
