@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include <list>
 #include <string>
 #include <vector>
 
@@ -247,11 +248,18 @@ public:
   /// have been declared.
   bool GlobalNewDeleteDeclared;
 
-  /// A flag that indicates when we are processing an unevaluated operand
-  /// (C++0x [expr]). C99 has the same notion of declarations being
-  /// "used" and C++03 has the notion of "potentially evaluated", but we
-  /// adopt the C++0x terminology since it is most precise.
-  bool InUnevaluatedOperand;
+  /// The current expression evaluation context.
+  ExpressionEvaluationContext ExprEvalContext;
+  
+  typedef std::vector<std::pair<SourceLocation, Decl *> > 
+    PotentiallyReferencedDecls;
+  
+  /// A stack of declarations, each element of which is a set of declarations
+  /// that will be marked as referenced if the corresponding potentially
+  /// potentially evaluated expression is potentially evaluated. Each element
+  /// in the stack corresponds to a PotentiallyPotentiallyEvaluated expression
+  /// evaluation context.
+  std::list<PotentiallyReferencedDecls> PotentiallyReferencedDeclStack;
   
   /// \brief Whether the code handled by Sema should be considered a
   /// complete translation unit or not.
@@ -1334,12 +1342,13 @@ public:
   void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                              Expr **Args, unsigned NumArgs);
 
-  virtual bool setUnevaluatedOperand(bool UnevaluatedOperand) { 
-    bool Result = InUnevaluatedOperand;
-    InUnevaluatedOperand = UnevaluatedOperand;
-    return Result;
-  }
-
+  virtual ExpressionEvaluationContext 
+  PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext);
+  
+  virtual void 
+  PopExpressionEvaluationContext(ExpressionEvaluationContext OldContext,
+                                 ExpressionEvaluationContext NewContext);
+  
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   
   // Primary Expressions.

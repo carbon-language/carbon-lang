@@ -145,6 +145,9 @@ TemplateStmtInstantiator::VisitSwitchCase(SwitchCase *S) {
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitCaseStmt(CaseStmt *S) {
+  // The case value expressions are not potentially evaluated.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+
   // Instantiate left-hand case value.
   OwningExprResult LHS = SemaRef.InstantiateExpr(S->getLHS(), TemplateArgs);
   if (LHS.isInvalid())

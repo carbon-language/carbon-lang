@@ -182,7 +182,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()), 
     ExternalSource(0), CurContext(0), PreDeclaratorDC(0),
     CurBlock(0), PackContext(0), IdResolver(pp.getLangOptions()),
-    GlobalNewDeleteDeclared(false), InUnevaluatedOperand(false),
+    GlobalNewDeleteDeclared(false), ExprEvalContext(PotentiallyEvaluated),
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), CurrentInstantiationScope(0) {
   

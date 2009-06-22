@@ -420,6 +420,7 @@ InstantiateDependentSizedArrayType(const DependentSizedArrayType *T,
   }
   
   // Instantiate the size expression
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
   Sema::OwningExprResult InstantiatedArraySize = 
     SemaRef.InstantiateExpr(ArraySize, TemplateArgs);
   if (InstantiatedArraySize.isInvalid())
@@ -442,6 +443,10 @@ InstantiateDependentSizedExtVectorType(const DependentSizedExtVectorType *T,
     if (ElementType.isNull())
       return QualType();
   }
+
+  // The expression in a dependent-sized extended vector type is not
+  // potentially evaluated.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
 
   // Instantiate the size expression.
   const Expr *SizeExpr = T->getSizeExpr();
@@ -520,6 +525,9 @@ TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
 QualType 
 TemplateTypeInstantiator::InstantiateTypeOfExprType(const TypeOfExprType *T,
                                                     unsigned Quals) const {
+  // The expression in a typeof is not potentially evaluated.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  
   Sema::OwningExprResult E 
     = SemaRef.InstantiateExpr(T->getUnderlyingExpr(), TemplateArgs);
   if (E.isInvalid())
@@ -1175,6 +1183,9 @@ TemplateArgument Sema::Instantiate(TemplateArgument Arg,
     return Arg;
 
   case TemplateArgument::Expression: {
+    // Template argument expressions are not potentially evaluated.
+    EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+
     Sema::OwningExprResult E = InstantiateExpr(Arg.getAsExpr(), TemplateArgs);
     if (E.isInvalid())
       return TemplateArgument();

@@ -71,6 +71,31 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
 
   QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
 
+  if (!isType) {
+    // C++0x [expr.typeid]p3:
+    //   When typeid is applied to an expression other than an lvalue of a 
+    //   polymorphic class type [...] [the] expression is an unevaluated 
+    //   operand.
+    
+    // FIXME: if the type of the expression is a class type, the class
+    // shall be completely defined.
+    bool isUnevaluatedOperand = true;
+    Expr *E = static_cast<Expr *>(TyOrExpr);
+    if (E && !E->isTypeDependent() && E->isLvalue(Context) == Expr::LV_Valid) {
+      QualType T = E->getType();
+      if (const RecordType *RecordT = T->getAsRecordType()) {
+        CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());
+        if (RecordD->isPolymorphic())
+          isUnevaluatedOperand = false;
+      }
+    }
+    
+    // If this is an unevaluated operand, clear out the set of declaration
+    // references we have been computing.
+    if (isUnevaluatedOperand)
+      PotentiallyReferencedDeclStack.back().clear();
+  }
+  
   return Owned(new (Context) CXXTypeidExpr(isType, TyOrExpr,
                                            TypeInfoType.withConst(),
                                            SourceRange(OpLoc, RParenLoc)));

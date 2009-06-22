@@ -104,24 +104,6 @@ class Parser {
       GreaterThanIsOperator = OldGreaterThanIsOperator;
     }
   };
-
-  /// \brief RAII object that enters an unevaluated operand.
-  class EnterUnevaluatedOperand {    
-    /// \brief The action object.
-    Action &Actions;
-    
-    /// \brief Whether we were previously within an unevaluated operand.
-    bool PreviouslyInUnevaluatedOperand;
-    
-  public:
-    explicit EnterUnevaluatedOperand(Action &Actions) : Actions(Actions) { 
-      PreviouslyInUnevaluatedOperand = Actions.setUnevaluatedOperand(true);
-    }
-    
-    ~EnterUnevaluatedOperand() {
-      Actions.setUnevaluatedOperand(PreviouslyInUnevaluatedOperand);
-    }
-  };
   
 public:
   Parser(Preprocessor &PP, Action &Actions);

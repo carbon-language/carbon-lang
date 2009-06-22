@@ -163,6 +163,9 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   if (Invalid)
     BitWidth = 0;
   else if (BitWidth) {
+    // The bit-width expression is not potentially evaluated.
+    EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+    
     OwningExprResult InstantiatedBitWidth
       = SemaRef.InstantiateExpr(BitWidth, TemplateArgs);
     if (InstantiatedBitWidth.isInvalid()) {
@@ -192,6 +195,9 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
 Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   Expr *AssertExpr = D->getAssertExpr();
       
+  // The expression in a static assertion is not potentially evaluated.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  
   OwningExprResult InstantiatedAssertExpr
     = SemaRef.InstantiateExpr(AssertExpr, TemplateArgs);
   if (InstantiatedAssertExpr.isInvalid())
@@ -222,8 +228,13 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
        EC != ECEnd; ++EC) {
     // The specified value for the enumerator.
     OwningExprResult Value = SemaRef.Owned((Expr *)0);
-    if (Expr *UninstValue = EC->getInitExpr())
+    if (Expr *UninstValue = EC->getInitExpr()) {
+      // The enumerator's value expression is not potentially evaluated.
+      EnterExpressionEvaluationContext Unevaluated(SemaRef, 
+                                                   Action::Unevaluated);
+      
       Value = SemaRef.InstantiateExpr(UninstValue, TemplateArgs);
+    }
 
     // Drop the initial value and continue.
     bool isInvalid = false;

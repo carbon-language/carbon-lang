@@ -279,7 +279,8 @@ Parser::OwningExprResult Parser::ParseConstantExpression() {
   // C++ [basic.def.odr]p2:
   //   An expression is potentially evaluated unless it appears where an 
   //   integral constant expression is required (see 5.19) [...].
-  EnterUnevaluatedOperand Unevaluated(Actions);
+  EnterExpressionEvaluationContext Unevaluated(Actions,
+                                               Action::Unevaluated);
   
   OwningExprResult LHS(ParseCastExpression(false));
   if (LHS.isInvalid()) return move(LHS);
@@ -983,7 +984,8 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     //
     // The GNU typeof and alignof extensions also behave as unevaluated
     // operands.
-    EnterUnevaluatedOperand Unevaluated(Actions);
+    EnterExpressionEvaluationContext Unevaluated(Actions,
+                                                 Action::Unevaluated);
     Operand = ParseCastExpression(true/*isUnaryExpression*/);
   } else {
     // If it starts with a '(', we know that it is either a parenthesized
@@ -999,7 +1001,8 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     //
     // The GNU typeof and alignof extensions also behave as unevaluated
     // operands.
-    EnterUnevaluatedOperand Unevaluated(Actions);
+    EnterExpressionEvaluationContext Unevaluated(Actions,
+                                                 Action::Unevaluated);
     Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/,
                                    CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);

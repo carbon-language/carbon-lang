@@ -750,7 +750,7 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
 /// ParseTemplateArgument - Parse a C++ template argument (C++ [temp.names]).
 ///
 ///       template-argument: [C++ 14.2]
-///         assignment-expression
+///         constant-expression
 ///         type-id
 ///         id-expression
 void *Parser::ParseTemplateArgument(bool &ArgIsType) {
@@ -768,7 +768,7 @@ void *Parser::ParseTemplateArgument(bool &ArgIsType) {
     return TypeArg.get();
   }
 
-  OwningExprResult ExprArg = ParseAssignmentExpression();
+  OwningExprResult ExprArg = ParseConstantExpression();
   if (ExprArg.isInvalid() || !ExprArg.get())
     return 0;
 

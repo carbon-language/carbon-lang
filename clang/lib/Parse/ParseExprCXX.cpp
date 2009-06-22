@@ -384,10 +384,9 @@ Parser::OwningExprResult Parser::ParseCXXTypeid() {
     //
     // Note that we can't tell whether the expression is an lvalue of a 
     // polymorphic class type until after we've parsed the expression, so
-    // we treat the expression as an unevaluated operand and let semantic
-    // analysis cope with case where the expression is not an unevaluated
-    // operand.
-    EnterUnevaluatedOperand Unevaluated(Actions);
+    // we the expression is potentially potentially evaluated.
+    EnterExpressionEvaluationContext Unevaluated(Actions,
+                                       Action::PotentiallyPotentiallyEvaluated);
     Result = ParseExpression();
 
     // Match the ')'.
