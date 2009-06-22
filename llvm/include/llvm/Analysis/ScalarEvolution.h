@@ -50,15 +50,13 @@ namespace llvm {
   class SCEV {
     const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
 
-    const ScalarEvolution* parent;
-
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
     void operator=(const SCEV &);  // DO NOT IMPLEMENT
   protected:
     virtual ~SCEV();
   public:
-    explicit SCEV(unsigned SCEVTy, const ScalarEvolution* p) : 
-      SCEVType(SCEVTy), parent(p) {}
+    explicit SCEV(unsigned SCEVTy) : 
+      SCEVType(SCEVTy) {}
 
     unsigned getSCEVType() const { return SCEVType; }
 
@@ -126,8 +124,7 @@ namespace llvm {
   /// None of the standard SCEV operations are valid on this class, it is just a
   /// marker.
   struct SCEVCouldNotCompute : public SCEV {
-    SCEVCouldNotCompute(const ScalarEvolution* p);
-    ~SCEVCouldNotCompute();
+    SCEVCouldNotCompute();
 
     // None of these methods are valid for this object.
     virtual bool isLoopInvariant(const Loop *L) const;
