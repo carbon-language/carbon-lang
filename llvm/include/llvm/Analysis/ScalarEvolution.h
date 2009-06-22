@@ -348,6 +348,31 @@ namespace llvm {
     /// loop will iterate.
     BackedgeTakenInfo ComputeBackedgeTakenCount(const Loop *L);
 
+    /// ComputeBackedgeTakenCountFromExit - Compute the number of times the
+    /// backedge of the specified loop will execute if it exits via the
+    /// specified block.
+    BackedgeTakenInfo ComputeBackedgeTakenCountFromExit(const Loop *L,
+                                                      BasicBlock *ExitingBlock);
+
+    /// ComputeBackedgeTakenCountFromExitCond - Compute the number of times the
+    /// backedge of the specified loop will execute if its exit condition
+    /// were a conditional branch of ExitCond, TBB, and FBB.
+    BackedgeTakenInfo
+      ComputeBackedgeTakenCountFromExitCond(const Loop *L,
+                                            Value *ExitCond,
+                                            BasicBlock *TBB,
+                                            BasicBlock *FBB);
+
+    /// ComputeBackedgeTakenCountFromExitCondICmp - Compute the number of
+    /// times the backedge of the specified loop will execute if its exit
+    /// condition were a conditional branch of the ICmpInst ExitCond, TBB,
+    /// and FBB.
+    BackedgeTakenInfo
+      ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
+                                                ICmpInst *ExitCond,
+                                                BasicBlock *TBB,
+                                                BasicBlock *FBB);
+
     /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
     /// of 'icmp op load X, cst', try to see if we can compute the trip count.
     SCEVHandle
@@ -519,6 +544,12 @@ namespace llvm {
     /// getIntegerSCEV - Given an integer or FP type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
     SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
+
+    /// getUMaxFromMismatchedTypes - Promote the operands to the wider of
+    /// the types using zero-extension, and then perform a umax operation
+    /// with them.
+    SCEVHandle getUMaxFromMismatchedTypes(const SCEVHandle &LHS,
+                                          const SCEVHandle &RHS);
 
     /// hasSCEV - Return true if the SCEV for this value has already been
     /// computed.
