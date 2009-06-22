@@ -2733,12 +2733,9 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
                                                  IK_Default);
         if (!Constructor)
           Var->setInvalidDecl();
-        else  { 
+        else 
           if (!RD->hasTrivialConstructor())
             InitializeVarWithConstructor(Var, Constructor, InitType, 0, 0);
-            // Check for valid construction.
-            DefineImplicitDefaultConstructor(Var->getLocation(), Constructor);
-        }
       }
     }
 

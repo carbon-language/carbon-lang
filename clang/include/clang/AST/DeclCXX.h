@@ -642,18 +642,13 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
   
-  /// ImplicitMustBeDefined - Implicit constructor was used to create an 
-  /// object of its class type. It must be defined.
-  bool ImplicitMustBeDefined : 1;
-
   /// FIXME: Add support for base and member initializers.
 
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
                      DeclarationName N, QualType T,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline),
-      Explicit(isExplicit), ImplicitlyDefined(false),  
-      ImplicitMustBeDefined(false) { 
+      Explicit(isExplicit), ImplicitlyDefined(false) { 
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -682,17 +677,6 @@ public:
     assert(isThisDeclarationADefinition() && 
            "Can only set the implicit-definition flag once the constructor has been defined");
     ImplicitlyDefined = ID; 
-  }
-
-  /// isImplicitMustBeDefined - Whether a definition must be synthesized for
-  /// the implicit constructor.
-  bool isImplicitMustBeDefined() const {
-    return isImplicit() && ImplicitMustBeDefined;
-  }
-  
-  /// setImplicitMustBeDefined - constructor must be implicitly defined.
-  void setImplicitMustBeDefined() {
-    ImplicitMustBeDefined = true;
   }
   
   /// isDefaultConstructor - Whether this constructor is a default

@@ -5461,6 +5461,13 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     return;
   
   // Note that this declaration has been used.
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+    DefineImplicitDefaultConstructor(Loc, Constructor);
+    // FIXME: set the Used flag if it is determined that ctor is valid.
+    Constructor->setUsed(true);
+    return;
+  } 
+  
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // FIXME: implicit template instantiation
     // FIXME: keep track of references to static functions

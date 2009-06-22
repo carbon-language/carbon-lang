@@ -1843,7 +1843,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
   if (!Constructor->isDefaultConstructor() ||
-      !Constructor->isImplicit() || Constructor->isImplicitMustBeDefined())
+      !Constructor->isImplicit() || Constructor->isUsed())
     return;
   
   CXXRecordDecl *ClassDecl
@@ -1862,7 +1862,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
       if (CXXConstructorDecl *BaseCtor = 
             BaseClassDecl->getDefaultConstructor(Context)) {
         if (BaseCtor->isImplicit())
-          BaseCtor->setImplicitMustBeDefined();
+          BaseCtor->setUsed();
       }
       else {
         Diag(CurrentLocation, diag::err_defining_default_ctor) 
@@ -1887,7 +1887,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
         if (CXXConstructorDecl *FieldCtor = 
             FieldClassDecl->getDefaultConstructor(Context)) {
           if (FieldCtor->isImplicit())
-            FieldCtor->setImplicitMustBeDefined();
+            FieldCtor->setUsed();
         }
         else {
           Diag(CurrentLocation, diag::err_defining_default_ctor) 
@@ -1912,7 +1912,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     }
   }
   if (!err)
-    Constructor->setImplicitMustBeDefined();  
+    Constructor->setUsed();  
 }
 
 void Sema::InitializeVarWithConstructor(VarDecl *VD, 
@@ -1990,9 +1990,6 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
       VDecl->setCXXDirectInitializer(true);
       InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
                                    (Expr**)Exprs.release(), NumExprs);
-      // An implicitly-declared default constructor for a class is implicitly
-      // defined when it is used to creat an object of its class type.
-      DefineImplicitDefaultConstructor(VDecl->getLocation(), Constructor);
     }
     return;
   }
