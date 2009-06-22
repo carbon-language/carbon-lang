@@ -553,6 +553,12 @@ namespace llvm {
     SCEVHandle getUMaxFromMismatchedTypes(const SCEVHandle &LHS,
                                           const SCEVHandle &RHS);
 
+    /// getUMinFromMismatchedTypes - Promote the operands to the wider of
+    /// the types using zero-extension, and then perform a umin operation
+    /// with them.
+    SCEVHandle getUMinFromMismatchedTypes(const SCEVHandle &LHS,
+                                          const SCEVHandle &RHS);
+
     /// hasSCEV - Return true if the SCEV for this value has already been
     /// computed.
     bool hasSCEV(Value *V) const;

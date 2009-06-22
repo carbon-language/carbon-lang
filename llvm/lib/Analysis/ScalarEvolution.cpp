@@ -2156,6 +2156,22 @@ SCEVHandle ScalarEvolution::getUMaxFromMismatchedTypes(const SCEVHandle &LHS,
   return getUMaxExpr(PromotedLHS, PromotedRHS);
 }
 
+/// getUMinFromMismatchedTypes - Promote the operands to the wider of
+/// the types using zero-extension, and then perform a umin operation
+/// with them.
+SCEVHandle ScalarEvolution::getUMinFromMismatchedTypes(const SCEVHandle &LHS,
+                                                       const SCEVHandle &RHS) {
+  SCEVHandle PromotedLHS = LHS;
+  SCEVHandle PromotedRHS = RHS;
+
+  if (getTypeSizeInBits(LHS->getType()) > getTypeSizeInBits(RHS->getType()))
+    PromotedRHS = getZeroExtendExpr(RHS, LHS->getType());
+  else
+    PromotedLHS = getNoopOrZeroExtend(LHS, RHS->getType());
+
+  return getUMinExpr(PromotedLHS, PromotedRHS);
+}
+
 /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value for
 /// the specified instruction and replaces any references to the symbolic value
 /// SymName with the specified value.  This is used during PHI resolution.
