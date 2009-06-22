@@ -290,6 +290,11 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
             args.push_back("-arch");
             args.push_back("armv6");
         }
+        else if ((strncmp(targetTriple.c_str(), "armv7-apple-", 12) == 0) ||
+                 (strncmp(targetTriple.c_str(), "thumbv7-apple-", 14) == 0)) {
+            args.push_back("-arch");
+            args.push_back("armv7");
+        }
         // add -static to assembler command line when code model requires
         if ( (_assemblerPath != NULL) && (_codeModel == LTO_CODEGEN_PIC_MODEL_STATIC) )
             args.push_back("-static");
