@@ -18,6 +18,9 @@
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// Basic methods.
+//===----------------------------------------------------------------------===//
 
 MemRegion::~MemRegion() {}
 
@@ -87,13 +90,15 @@ void DeclRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   DeclRegion::ProfileRegion(ID, D, superRegion, getKind());
 }
 
-void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym) {
+void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym,
+                                   const MemRegion *sreg) {
   ID.AddInteger((unsigned) MemRegion::SymbolicRegionKind);
   ID.Add(sym);
+  ID.AddPointer(sreg);
 }
 
 void SymbolicRegion::Profile(llvm::FoldingSetNodeID& ID) const {
-  SymbolicRegion::ProfileRegion(ID, sym);
+  SymbolicRegion::ProfileRegion(ID, sym, getSuperRegion());
 }
 
 void ElementRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
@@ -230,68 +235,21 @@ bool MemRegionManager::onHeap(const MemRegion* R) {
   return (R != 0) && (R == heap); 
 }
 
+//===----------------------------------------------------------------------===//
+// Constructing regions.
+//===----------------------------------------------------------------------===//
+
 StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
-  llvm::FoldingSetNodeID ID;
-  MemSpaceRegion* GlobalsR = getGlobalsRegion();
-
-  StringRegion::ProfileRegion(ID, Str, GlobalsR);
-
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  StringRegion* R = cast_or_null<StringRegion>(data);
-
-  if (!R) {
-    R = (StringRegion*) A.Allocate<StringRegion>();
-    new (R) StringRegion(Str, GlobalsR);
-    Regions.InsertNode(R, InsertPos);
-  }
-
-  return R;
+  return getRegion<StringRegion>(Str);
 }
 
 VarRegion* MemRegionManager::getVarRegion(const VarDecl* d) {
-  
-  const MemRegion* superRegion = d->hasLocalStorage() ? getStackRegion() 
-                                 : getGlobalsRegion();
-  
-  llvm::FoldingSetNodeID ID;
-  DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::VarRegionKind);
-  
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  VarRegion* R = cast_or_null<VarRegion>(data);
-  
-  if (!R) {
-    R = (VarRegion*) A.Allocate<VarRegion>();
-    new (R) VarRegion(d, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;
+  return getRegion<VarRegion>(d);
 }
 
 CompoundLiteralRegion*
 MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
-  // Is this compound literal allocated on the stack or is part of the
-  //  global constant pool?
-  const MemRegion* superRegion = CL->isFileScope() ?
-                                 getGlobalsRegion() : getStackRegion();
-
-  // Profile the compound literal.
-  llvm::FoldingSetNodeID ID;  
-  CompoundLiteralRegion::ProfileRegion(ID, CL, superRegion);  
-  
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  CompoundLiteralRegion* R = cast_or_null<CompoundLiteralRegion>(data);
-  
-  if (!R) {
-    R = (CompoundLiteralRegion*) A.Allocate<CompoundLiteralRegion>();
-    new (R) CompoundLiteralRegion(CL, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;
+  return getRegion<CompoundLiteralRegion>(CL);
 }
 
 ElementRegion*
@@ -351,20 +309,7 @@ CodeTextRegion* MemRegionManager::getCodeTextRegion(SymbolRef sym, QualType t) {
 
 /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
 SymbolicRegion* MemRegionManager::getSymbolicRegion(SymbolRef sym) {
-  llvm::FoldingSetNodeID ID;
-  SymbolicRegion::ProfileRegion(ID, sym);
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  SymbolicRegion* R = cast_or_null<SymbolicRegion>(data);
-  
-  if (!R) {
-    R = (SymbolicRegion*) A.Allocate<SymbolicRegion>();
-    // SymbolicRegion's storage class is usually unknown.
-    new (R) SymbolicRegion(sym, getUnknownRegion());
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;  
+  return getRegion<SymbolicRegion>(sym);
 }
 
 FieldRegion* MemRegionManager::getFieldRegion(const FieldDecl* d,

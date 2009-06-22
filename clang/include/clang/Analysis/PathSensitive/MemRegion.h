@@ -262,7 +262,9 @@ public:
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym);
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID,
+                            SymbolRef sym,
+                            const MemRegion* superRegion);
   
   void print(llvm::raw_ostream& os) const;
   
@@ -277,7 +279,7 @@ class StringRegion : public TypedRegion {
   const StringLiteral* Str;
 protected:
 
-  StringRegion(const StringLiteral* str, MemRegion* sreg)
+  StringRegion(const StringLiteral* str, const MemRegion* sreg)
     : TypedRegion(sreg, StringRegionKind), Str(str) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
@@ -399,7 +401,7 @@ class VarRegion : public DeclRegion {
   VarRegion(const VarDecl* vd, const MemRegion* sReg)
     : DeclRegion(vd, sReg, VarRegionKind) {}
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, VarDecl* VD,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* VD,
                       const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, VD, superRegion, VarRegionKind);
   }
@@ -600,6 +602,8 @@ public:
   /// onHeap - check if the region is allocated on the heap, usually by malloc.
   bool onHeap(const MemRegion* R);
   
+  bool hasStackStorage(const MemRegion* R);
+  
   /// getAllocaRegion - Retrieve a region associated with a call to alloca().
   AllocaRegion* getAllocaRegion(const Expr* Ex, unsigned Cnt);
   
@@ -646,13 +650,86 @@ public:
 
   CodeTextRegion* getCodeTextRegion(SymbolRef sym, QualType t);
   CodeTextRegion* getCodeTextRegion(const FunctionDecl* fd, QualType t);
-
-  bool hasStackStorage(const MemRegion* R);
+  
+  template <typename RegionTy, typename A1>
+  RegionTy* getRegion(const A1 a1);
 
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
 };
+  
+//===----------------------------------------------------------------------===//
+// Out-of-line member template definitions.
+//===----------------------------------------------------------------------===//
+
+template<typename RegionTy> struct MemRegionManagerTrait;
+  
+template <typename RegionTy, typename A1>
+RegionTy* MemRegionManager::getRegion(const A1 a1) {
+
+  const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
+    MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1);
+  
+  llvm::FoldingSetNodeID ID;  
+  RegionTy::ProfileRegion(ID, a1, superRegion);  
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+  
+//===----------------------------------------------------------------------===//
+// Traits for constructing regions.
+//===----------------------------------------------------------------------===//
+
+template <> struct MemRegionManagerTrait<CompoundLiteralRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const CompoundLiteralExpr *CL) {
+    
+    return CL->isFileScope() ? MRMgr.getGlobalsRegion() 
+                             : MRMgr.getStackRegion();
+  }
+};
+  
+template <> struct MemRegionManagerTrait<StringRegion> {
+  typedef MemSpaceRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const StringLiteral*) {
+    return MRMgr.getGlobalsRegion();
+  }
+};
+  
+template <> struct MemRegionManagerTrait<VarRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const VarDecl *d) {
+    return d->hasLocalStorage() ? MRMgr.getStackRegion() 
+                                : MRMgr.getGlobalsRegion();
+  }
+};
+  
+template <> struct MemRegionManagerTrait<SymbolicRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             SymbolRef) {
+    return MRMgr.getUnknownRegion();
+  }
+};
+  
+  
 } // end clang namespace
+
+//===----------------------------------------------------------------------===//
+// Pretty-printing regions.
+//===----------------------------------------------------------------------===//
 
 namespace llvm {
 static inline raw_ostream& operator<<(raw_ostream& O,
