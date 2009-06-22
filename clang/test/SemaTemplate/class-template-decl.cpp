@@ -35,6 +35,12 @@ template<typename> class TemplateTemplateParm; // expected-error{{template param
 
 template<template<typename T, int> class X> class TemplateTemplateParm; // expected-error{{too many template parameters in template template parameter redeclaration}}
 
+template<typename T>
+struct test {}; // expected-note{{previous definition}}
+
+template<typename T>
+struct test : T {}; // expected-error{{redefinition}}
+
 #if 0
 // FIXME: parse template declarations in these scopes, so that we can
 // complain about the one at function scope.

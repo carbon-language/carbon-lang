@@ -107,6 +107,9 @@ namespace {
 void
 Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc, 
                                 ExprArg defarg) {
+  if (!param || !defarg.get())
+    return;
+  
   ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
   UnparsedDefaultArgLocs.erase(Param);
 
@@ -161,6 +164,9 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
 void Sema::ActOnParamUnparsedDefaultArgument(DeclPtrTy param, 
                                              SourceLocation EqualLoc,
                                              SourceLocation ArgLoc) {
+  if (!param)
+    return;
+  
   ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
   if (Param)
     Param->setUnparsedDefaultArg();
@@ -171,6 +177,9 @@ void Sema::ActOnParamUnparsedDefaultArgument(DeclPtrTy param,
 /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
 /// the default argument for the parameter param failed.
 void Sema::ActOnParamDefaultArgumentError(DeclPtrTy param) {
+  if (!param)
+    return;
+  
   ParmVarDecl *Param = cast<ParmVarDecl>(param.getAs<Decl>());
   
   Param->setInvalidDecl();
@@ -415,6 +424,9 @@ Sema::BaseResult
 Sema::ActOnBaseSpecifier(DeclPtrTy classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
                          TypeTy *basetype, SourceLocation BaseLoc) {
+  if (!classdecl)
+    return true;
+
   AdjustDeclIfTemplate(classdecl);
   CXXRecordDecl *Class = cast<CXXRecordDecl>(classdecl.getAs<Decl>());
   QualType BaseType = QualType::getFromOpaquePtr(basetype);
@@ -640,6 +652,9 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                           ExprTy **Args, unsigned NumArgs,
                           SourceLocation *CommaLocs,
                           SourceLocation RParenLoc) {
+  if (!ConstructorD)
+    return true;
+  
   CXXConstructorDecl *Constructor 
     = dyn_cast<CXXConstructorDecl>(ConstructorD.getAs<Decl>());
   if (!Constructor) {
@@ -741,8 +756,11 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
 void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl, 
                                 SourceLocation ColonLoc,
                                 MemInitTy **MemInits, unsigned NumMemInits) {
-  CXXConstructorDecl *Constructor = 
-  dyn_cast<CXXConstructorDecl>(ConstructorDecl.getAs<Decl>());
+  if (!ConstructorDecl)
+    return;
+  
+  CXXConstructorDecl *Constructor 
+    = dyn_cast<CXXConstructorDecl>(ConstructorDecl.getAs<Decl>());
   
   if (!Constructor) {
     Diag(ColonLoc, diag::err_only_constructors_take_base_inits);
@@ -957,6 +975,9 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclPtrTy TagDecl,
                                              SourceLocation LBrac,
                                              SourceLocation RBrac) {
+  if (!TagDecl)
+    return;
+  
   AdjustDeclIfTemplate(TagDecl);
   ActOnFields(S, RLoc, TagDecl,
               (DeclPtrTy*)FieldCollector->getCurFields(),
@@ -1238,6 +1259,9 @@ void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
 /// name. However, it should not bring the parameters into scope;
 /// that will be performed by ActOnDelayedCXXMethodParameter.
 void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
+  if (!MethodD)
+    return;
+  
   CXXScopeSpec SS;
   FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
   QualType ClassTy 
@@ -1253,6 +1277,9 @@ void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
 /// the method declaration. For example, we could see an
 /// ActOnParamDefaultArgument event for this parameter.
 void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy ParamD) {
+  if (!ParamD)
+    return;
+  
   ParmVarDecl *Param = cast<ParmVarDecl>(ParamD.getAs<Decl>());
 
   // If this parameter has an unparsed default argument, clear it out
@@ -1272,6 +1299,9 @@ void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy ParamD) {
 /// immediately!) for this method, if it was also defined inside the
 /// class body.
 void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
+  if (!MethodD)
+    return;
+  
   FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
   CXXScopeSpec SS;
   QualType ClassTy 
