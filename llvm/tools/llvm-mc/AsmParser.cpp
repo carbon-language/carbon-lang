@@ -108,7 +108,7 @@ bool AsmParser::ParseX86Operand(X86Operand &Op) {
     // FIXME: Decode reg #.
     // FIXME: if a segment register, this could either be just the seg reg, or
     // the start of a memory operand.
-    Op = X86Operand::CreateReg(0);
+    Op = X86Operand::CreateReg(123);
     Lexer.Lex(); // Eat register.
     return false;
   case asmtok::Dollar: {
@@ -119,12 +119,19 @@ bool AsmParser::ParseX86Operand(X86Operand &Op) {
       return TokError("expected integer constant");
     Op = X86Operand::CreateReg(Val);
     return false;
+  case asmtok::Star:
+    Lexer.Lex(); // Eat the star.
+    
+    if (Lexer.is(asmtok::Register)) {
+      Op = X86Operand::CreateReg(123);
+      Lexer.Lex(); // Eat register.
+    } else if (ParseX86MemOperand(Op))
+      return true;
+
+    // FIXME: Note that these are 'dereferenced' so that clients know the '*' is
+    // there.
+    return false;
   }
-      
-  //case asmtok::Star:
-  // * %eax
-  // * <memaddress>
-  // Note that these are both "dereferenced".
   }
 }
 
