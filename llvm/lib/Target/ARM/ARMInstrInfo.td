@@ -855,9 +855,9 @@ defm UXTH   : AI_unary_rrot<0b01101111,
 defm UXTB16 : AI_unary_rrot<0b01101100,
                             "uxtb16", UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
-def : ARMV6Pat<(and (shl GPR:$Src, 8), 0xFF00FF),
+def : ARMV6Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
                (UXTB16r_rot GPR:$Src, 24)>;
-def : ARMV6Pat<(and (srl GPR:$Src, 8), 0xFF00FF),
+def : ARMV6Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
                (UXTB16r_rot GPR:$Src, 8)>;
 
 defm UXTAB : AI_bin_rrot<0b01101110, "uxtab",
@@ -1038,7 +1038,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
   def BT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "bt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
-                                      (sra GPR:$b, 16)))]>,
+                                      (sra GPR:$b, (i32 16))))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 0;
              let Inst{6} = 1;
@@ -1046,7 +1046,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 
   def TB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "tb"), " $dst, $a, $b",
-              [(set GPR:$dst, (opnode (sra GPR:$a, 16),
+              [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 1;
@@ -1055,8 +1055,8 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 
   def TT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "tt"), " $dst, $a, $b",
-              [(set GPR:$dst, (opnode (sra GPR:$a, 16),
-                                      (sra GPR:$b, 16)))]>,
+              [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
+                                      (sra GPR:$b, (i32 16))))]>,
             Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 1;
              let Inst{6} = 1;
@@ -1065,7 +1065,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
   def WB : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "wb"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
-                                    (sext_inreg GPR:$b, i16)), 16))]>,
+                                    (sext_inreg GPR:$b, i16)), (i32 16)))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 1;
              let Inst{6} = 0;
@@ -1074,7 +1074,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
   def WT : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
               !strconcat(opc, "wt"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
-                                    (sra GPR:$b, 16)), 16))]>,
+                                    (sra GPR:$b, (i32 16))), (i32 16)))]>,
             Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 1;
              let Inst{6} = 1;
@@ -1096,7 +1096,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
   def BT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "bt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
-                                                     (sra GPR:$b, 16))))]>,
+                                                     (sra GPR:$b, (i32 16)))))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 0;
              let Inst{6} = 1;
@@ -1104,7 +1104,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
 
   def TB : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "tb"), " $dst, $a, $b, $acc",
-              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
+              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
                                                  (sext_inreg GPR:$b, i16))))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 1;
@@ -1113,8 +1113,8 @@ multiclass AI_smla<string opc, PatFrag opnode> {
 
   def TT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "tt"), " $dst, $a, $b, $acc",
-              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
-                                                     (sra GPR:$b, 16))))]>,
+              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
+                                                     (sra GPR:$b, (i32 16)))))]>,
             Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 1;
              let Inst{6} = 1;
@@ -1123,7 +1123,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
   def WB : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "wb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                            (sext_inreg GPR:$b, i16)), 16)))]>,
+                                       (sext_inreg GPR:$b, i16)), (i32 16))))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 0;
              let Inst{6} = 0;
@@ -1132,7 +1132,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
   def WT : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "wt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                                   (sra GPR:$b, 16)), 16)))]>,
+                                         (sra GPR:$b, (i32 16))), (i32 16))))]>,
             Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 0;
              let Inst{6} = 1;
@@ -1168,10 +1168,10 @@ def REV  : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src),
 def REV16 : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src),
                "rev16", " $dst, $src",
                [(set GPR:$dst,
-                   (or (and (srl GPR:$src, 8), 0xFF),
-                       (or (and (shl GPR:$src, 8), 0xFF00),
-                           (or (and (srl GPR:$src, 8), 0xFF0000),
-                               (and (shl GPR:$src, 8), 0xFF000000)))))]>,
+                   (or (and (srl GPR:$src, (i32 8)), 0xFF),
+                       (or (and (shl GPR:$src, (i32 8)), 0xFF00),
+                           (or (and (srl GPR:$src, (i32 8)), 0xFF0000),
+                               (and (shl GPR:$src, (i32 8)), 0xFF000000)))))]>,
                Requires<[IsARM, HasV6]> {
   let Inst{7-4}   = 0b1011;
   let Inst{11-8}  = 0b1111;
@@ -1182,8 +1182,8 @@ def REVSH : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src),
                "revsh", " $dst, $src",
                [(set GPR:$dst,
                   (sext_inreg
-                    (or (srl (and GPR:$src, 0xFF00), 8),
-                        (shl GPR:$src, 8)), i16))]>,
+                    (or (srl (and GPR:$src, 0xFF00), (i32 8)),
+                        (shl GPR:$src, (i32 8))), i16))]>,
                Requires<[IsARM, HasV6]> {
   let Inst{7-4}   = 0b1011;
   let Inst{11-8}  = 0b1111;
@@ -1218,7 +1218,7 @@ def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
-def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, 16)),
+def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, (i32 16))),
                (PKHTB GPR:$src1, GPR:$src2, 16)>;
 def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
                    (and (srl GPR:$src2, imm1_15:$shamt), 0xFFFF)),
@@ -1370,47 +1370,54 @@ def : ARMPat<(extloadi8  addrmodepc:$addr), (PICLDRB addrmodepc:$addr)>;
 def : ARMPat<(extloadi16 addrmodepc:$addr), (PICLDRH addrmodepc:$addr)>;
 
 // smul* and smla*
-def : ARMV5TEPat<(mul (sra (shl GPR:$a, 16), 16), (sra (shl GPR:$b, 16), 16)),
+def : ARMV5TEPat<(mul (sra (shl GPR:$a, (i32 16)), (i32 16)),
+                      (sra (shl GPR:$b, (i32 16)), (i32 16))),
                  (SMULBB GPR:$a, GPR:$b)>;
 def : ARMV5TEPat<(mul sext_16_node:$a, sext_16_node:$b),
                  (SMULBB GPR:$a, GPR:$b)>;
-def : ARMV5TEPat<(mul (sra (shl GPR:$a, 16), 16), (sra GPR:$b, 16)),
+def : ARMV5TEPat<(mul (sra (shl GPR:$a, (i32 16)), (i32 16)),
+                      (sra GPR:$b, (i32 16))),
                  (SMULBT GPR:$a, GPR:$b)>;
-def : ARMV5TEPat<(mul sext_16_node:$a, (sra GPR:$b, 16)),
+def : ARMV5TEPat<(mul sext_16_node:$a, (sra GPR:$b, (i32 16))),
                  (SMULBT GPR:$a, GPR:$b)>;
-def : ARMV5TEPat<(mul (sra GPR:$a, 16), (sra (shl GPR:$b, 16), 16)),
+def : ARMV5TEPat<(mul (sra GPR:$a, (i32 16)),
+                      (sra (shl GPR:$b, (i32 16)), (i32 16))),
                  (SMULTB GPR:$a, GPR:$b)>;
-def : ARMV5TEPat<(mul (sra GPR:$a, 16), sext_16_node:$b),
+def : ARMV5TEPat<(mul (sra GPR:$a, (i32 16)), sext_16_node:$b),
                 (SMULTB GPR:$a, GPR:$b)>;
-def : ARMV5TEPat<(sra (mul GPR:$a, (sra (shl GPR:$b, 16), 16)), 16),
+def : ARMV5TEPat<(sra (mul GPR:$a, (sra (shl GPR:$b, (i32 16)), (i32 16))),
+                      (i32 16)),
                  (SMULWB GPR:$a, GPR:$b)>;
-def : ARMV5TEPat<(sra (mul GPR:$a, sext_16_node:$b), 16),
+def : ARMV5TEPat<(sra (mul GPR:$a, sext_16_node:$b), (i32 16)),
                  (SMULWB GPR:$a, GPR:$b)>;
 
 def : ARMV5TEPat<(add GPR:$acc,
-                      (mul (sra (shl GPR:$a, 16), 16),
-                           (sra (shl GPR:$b, 16), 16))),
+                      (mul (sra (shl GPR:$a, (i32 16)), (i32 16)),
+                           (sra (shl GPR:$b, (i32 16)), (i32 16)))),
                  (SMLABB GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
                       (mul sext_16_node:$a, sext_16_node:$b)),
                  (SMLABB GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
-                      (mul (sra (shl GPR:$a, 16), 16), (sra GPR:$b, 16))),
+                      (mul (sra (shl GPR:$a, (i32 16)), (i32 16)),
+                           (sra GPR:$b, (i32 16)))),
                  (SMLABT GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
-                      (mul sext_16_node:$a, (sra GPR:$b, 16))),
+                      (mul sext_16_node:$a, (sra GPR:$b, (i32 16)))),
                  (SMLABT GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
-                      (mul (sra GPR:$a, 16), (sra (shl GPR:$b, 16), 16))),
+                      (mul (sra GPR:$a, (i32 16)),
+                           (sra (shl GPR:$b, (i32 16)), (i32 16)))),
                  (SMLATB GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
-                      (mul (sra GPR:$a, 16), sext_16_node:$b)),
+                      (mul (sra GPR:$a, (i32 16)), sext_16_node:$b)),
                  (SMLATB GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
-                      (sra (mul GPR:$a, (sra (shl GPR:$b, 16), 16)), 16)),
+                      (sra (mul GPR:$a, (sra (shl GPR:$b, (i32 16)), (i32 16))),
+                           (i32 16))),
                  (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
 def : ARMV5TEPat<(add GPR:$acc,
-                      (sra (mul GPR:$a, sext_16_node:$b), 16)),
+                      (sra (mul GPR:$a, sext_16_node:$b), (i32 16))),
                  (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
 
 //===----------------------------------------------------------------------===//
