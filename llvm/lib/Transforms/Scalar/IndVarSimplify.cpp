@@ -481,7 +481,6 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
     ilist<IVStrideUse> &List = SI->second->Users;
     for (ilist<IVStrideUse>::iterator UI = List.begin(),
          E = List.end(); UI != E; ++UI) {
-      const SCEV* Offset = UI->getOffset();
       Value *Op = UI->getOperandValToReplace();
       const Type *UseTy = Op->getType();
       Instruction *User = UI->getUser();

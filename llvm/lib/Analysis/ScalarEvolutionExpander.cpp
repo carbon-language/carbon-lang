@@ -594,7 +594,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
   // Truncate the result down to the original type, if needed.
   const SCEV* T = SE.getTruncateOrNoop(V, Ty);
-  return expand(V);
+  return expand(T);
 }
 
 Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
