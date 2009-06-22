@@ -17,9 +17,10 @@
 #include "AsmLexer.h"
 
 namespace llvm {
-
+  
 class AsmParser {
   AsmLexer Lexer;
+  struct X86Operand;
   
 public:
   AsmParser(SourceMgr &SM) : Lexer(SM) {}
@@ -32,6 +33,10 @@ private:
   
   bool Error(SMLoc L, const char *Msg);
   bool TokError(const char *Msg);
+  
+  void EatToEndOfStatement();
+  
+  bool ParseX86Operand(X86Operand &Op);
 };
 
 } // end namespace llvm
