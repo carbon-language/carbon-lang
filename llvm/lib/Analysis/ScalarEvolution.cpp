@@ -3832,7 +3832,6 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     // FORNOW: We only support unit strides.
     unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
     SCEVHandle Step = AddRec->getStepRecurrence(*this);
-    SCEVHandle NegOne = getIntegerSCEV(-1, AddRec->getType());
 
     // TODO: handle non-constant strides.
     const SCEVConstant *CStep = dyn_cast<SCEVConstant>(Step);
