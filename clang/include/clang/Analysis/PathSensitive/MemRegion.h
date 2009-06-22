@@ -402,7 +402,7 @@ class VarRegion : public DeclRegion {
     : DeclRegion(vd, sReg, VarRegionKind) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* VD,
-                      const MemRegion* superRegion) {
+                            const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, VD, superRegion, VarRegionKind);
   }
   
@@ -438,8 +438,8 @@ public:
     return C.getCanonicalType(getDecl()->getType());
   }    
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, FieldDecl* FD,
-                      const MemRegion* superRegion) {
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FieldDecl* FD,
+                            const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, FD, superRegion, FieldRegionKind);
   }
     
@@ -455,7 +455,8 @@ class ObjCObjectRegion : public DeclRegion {
   ObjCObjectRegion(const ObjCInterfaceDecl* ivd, const MemRegion* sReg)
   : DeclRegion(ivd, sReg, ObjCObjectRegionKind) {}
   
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, ObjCInterfaceDecl* ivd,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID,
+                            const ObjCInterfaceDecl* ivd,
                             const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, ivd, superRegion, ObjCObjectRegionKind);
   }
@@ -481,8 +482,8 @@ class ObjCIvarRegion : public DeclRegion {
   ObjCIvarRegion(const ObjCIvarDecl* ivd, const MemRegion* sReg)
     : DeclRegion(ivd, sReg, ObjCIvarRegionKind) {}
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, ObjCIvarDecl* ivd,
-                      const MemRegion* superRegion) {
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const ObjCIvarDecl* ivd,
+                            const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, ivd, superRegion, ObjCIvarRegionKind);
   }
   
@@ -653,6 +654,9 @@ public:
   
   template <typename RegionTy, typename A1>
   RegionTy* getRegion(const A1 a1);
+  
+  template <typename RegionTy, typename A1>
+  RegionTy* getRegion(const A1 a1, const MemRegion* superRegion);
 
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
@@ -670,6 +674,24 @@ RegionTy* MemRegionManager::getRegion(const A1 a1) {
   const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
     MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1);
   
+  llvm::FoldingSetNodeID ID;  
+  RegionTy::ProfileRegion(ID, a1, superRegion);  
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+template <typename RegionTy, typename A1>
+RegionTy* MemRegionManager::getRegion(const A1 a1, const MemRegion *superRegion)
+{  
   llvm::FoldingSetNodeID ID;  
   RegionTy::ProfileRegion(ID, a1, superRegion);  
   void* InsertPos;

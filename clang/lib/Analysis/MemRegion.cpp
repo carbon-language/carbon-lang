@@ -314,39 +314,13 @@ SymbolicRegion* MemRegionManager::getSymbolicRegion(SymbolRef sym) {
 
 FieldRegion* MemRegionManager::getFieldRegion(const FieldDecl* d,
                                               const MemRegion* superRegion) {
-  llvm::FoldingSetNodeID ID;
-  DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::FieldRegionKind);
-  
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  FieldRegion* R = cast_or_null<FieldRegion>(data);
-  
-  if (!R) {
-    R = (FieldRegion*) A.Allocate<FieldRegion>();
-    new (R) FieldRegion(d, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;
+  return getRegion<FieldRegion>(d, superRegion);
 }
 
 ObjCIvarRegion*
 MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
                                     const MemRegion* superRegion) {
-  llvm::FoldingSetNodeID ID;
-  DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::ObjCIvarRegionKind);
-  
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  ObjCIvarRegion* R = cast_or_null<ObjCIvarRegion>(data);
-  
-  if (!R) {
-    R = (ObjCIvarRegion*) A.Allocate<ObjCIvarRegion>();
-    new (R) ObjCIvarRegion(d, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;
+  return getRegion<ObjCIvarRegion>(d, superRegion);
 }
 
 ObjCObjectRegion*
