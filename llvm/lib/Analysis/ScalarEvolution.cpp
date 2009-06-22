@@ -1903,6 +1903,18 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   return Result;
 }
 
+SCEVHandle ScalarEvolution::getSMinExpr(const SCEVHandle &LHS,
+                                        const SCEVHandle &RHS) {
+  // ~smax(~x, ~y) == smin(x, y).
+  return getNotSCEV(getSMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
+}
+
+SCEVHandle ScalarEvolution::getUMinExpr(const SCEVHandle &LHS,
+                                        const SCEVHandle &RHS) {
+  // ~umax(~x, ~y) == umin(x, y)
+  return getNotSCEV(getUMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
+}
+
 SCEVHandle ScalarEvolution::getUnknown(Value *V) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
     return getConstant(CI);
@@ -2644,10 +2656,7 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
         if (LHS == U->getOperand(1) && RHS == U->getOperand(2))
           return getSMaxExpr(getSCEV(LHS), getSCEV(RHS));
         else if (LHS == U->getOperand(2) && RHS == U->getOperand(1))
-          // ~smax(~x, ~y) == smin(x, y).
-          return getNotSCEV(getSMaxExpr(
-                                   getNotSCEV(getSCEV(LHS)),
-                                   getNotSCEV(getSCEV(RHS))));
+          return getSMinExpr(getSCEV(LHS), getSCEV(RHS));
         break;
       case ICmpInst::ICMP_ULT:
       case ICmpInst::ICMP_ULE:
@@ -2658,9 +2667,7 @@ SCEVHandle ScalarEvolution::createSCEV(Value *V) {
         if (LHS == U->getOperand(1) && RHS == U->getOperand(2))
           return getUMaxExpr(getSCEV(LHS), getSCEV(RHS));
         else if (LHS == U->getOperand(2) && RHS == U->getOperand(1))
-          // ~umax(~x, ~y) == umin(x, y)
-          return getNotSCEV(getUMaxExpr(getNotSCEV(getSCEV(LHS)),
-                                        getNotSCEV(getSCEV(RHS))));
+          return getUMinExpr(getSCEV(LHS), getSCEV(RHS));
         break;
       case ICmpInst::ICMP_NE:
         // n != 0 ? n : 1  ->  umax(n, 1)

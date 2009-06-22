@@ -494,6 +494,8 @@ namespace llvm {
     SCEVHandle getSMaxExpr(SmallVectorImpl<SCEVHandle> &Operands);
     SCEVHandle getUMaxExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
     SCEVHandle getUMaxExpr(SmallVectorImpl<SCEVHandle> &Operands);
+    SCEVHandle getSMinExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
+    SCEVHandle getUMinExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
     SCEVHandle getUnknown(Value *V);
     SCEVHandle getCouldNotCompute();
 
