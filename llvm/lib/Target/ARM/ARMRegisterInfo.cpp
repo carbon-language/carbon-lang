@@ -235,8 +235,10 @@ ARMRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   };
 
   static const unsigned DarwinCalleeSavedRegs[] = {
+    // Darwin ABI deviates from ARM standard ABI. R9 is not a callee-saved
+    // register.
     ARM::LR,  ARM::R7,  ARM::R6, ARM::R5, ARM::R4,
-    ARM::R11, ARM::R10, ARM::R9, ARM::R8,
+    ARM::R11, ARM::R10, ARM::R8,
 
     ARM::D15, ARM::D14, ARM::D13, ARM::D12,
     ARM::D11, ARM::D10, ARM::D9,  ARM::D8,
@@ -256,6 +258,7 @@ ARMRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
+
   static const TargetRegisterClass * const ThumbCalleeSavedRegClasses[] = {
     &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
     &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::tGPRRegClass,
@@ -265,7 +268,33 @@ ARMRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
-  return STI.isThumb() ? ThumbCalleeSavedRegClasses : CalleeSavedRegClasses;
+
+  static const TargetRegisterClass * const DarwinCalleeSavedRegClasses[] = {
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass,
+
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    0
+  };
+
+  static const TargetRegisterClass * const DarwinThumbCalleeSavedRegClasses[] ={
+    &ARM::GPRRegClass,  &ARM::tGPRRegClass, &ARM::tGPRRegClass,
+    &ARM::tGPRRegClass, &ARM::tGPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass,  &ARM::GPRRegClass,
+
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    0
+  };
+
+  if (STI.isThumb()) {
+    return STI.isTargetDarwin()
+      ? DarwinThumbCalleeSavedRegClasses : ThumbCalleeSavedRegClasses;
+  }
+  return STI.isTargetDarwin()
+    ? DarwinCalleeSavedRegClasses : CalleeSavedRegClasses;
 }
 
 BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {

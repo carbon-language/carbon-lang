@@ -16,7 +16,12 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<bool>
+ReserveR9("arm-reserve-r9", cl::Hidden,
+          cl::desc("Reserve R9, making it unavailable as GPR"));
 
 ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
                            bool isThumb)
@@ -24,7 +29,7 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
   , ARMFPUType(None)
   , IsThumb(isThumb)
   , ThumbMode(Thumb1)
-  , IsR9Reserved(false)
+  , IsR9Reserved(ReserveR9)
   , stackAlignment(4)
   , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.
@@ -83,5 +88,5 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
     stackAlignment = 8;
 
   if (isTargetDarwin())
-    IsR9Reserved = true;
+    IsR9Reserved = ReserveR9 | (ARMArchVersion < V6);
 }
