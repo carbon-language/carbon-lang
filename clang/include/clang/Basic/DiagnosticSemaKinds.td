@@ -870,7 +870,8 @@ def err_undeclared_var_use : Error<"use of undeclared identifier %0">;
 def err_undeclared_use : Error<"use of undeclared '%0'">;
 def warn_deprecated : Warning<"%0 is deprecated">,
     InGroup<DiagGroup<"deprecated-declarations">>;
-def warn_unavailable : Warning<"%0 is unavailable">;
+def warn_unavailable : Warning<"%0 is unavailable">,
+    InGroup<DiagGroup<"unavailable-declarations">>;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;
 def warn_not_enough_argument : Warning<
