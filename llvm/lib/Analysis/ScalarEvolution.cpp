@@ -2958,18 +2958,18 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
       if (L->contains(TBB)) {
         // Both conditions must be true for the loop to continue executing.
         // Choose the less conservative count.
-        // TODO: Take the minimum of the exact counts.
-        if (BTI0.Exact == BTI1.Exact)
+        if (BTI0.Exact == CouldNotCompute)
+          BECount = BTI1.Exact;
+        else if (BTI1.Exact == CouldNotCompute)
           BECount = BTI0.Exact;
-        // TODO: Take the minimum of the maximum counts.
+        else
+          BECount = getUMinFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
         if (BTI0.Max == CouldNotCompute)
           MaxBECount = BTI1.Max;
         else if (BTI1.Max == CouldNotCompute)
           MaxBECount = BTI0.Max;
-        else if (const SCEVConstant *C0 = dyn_cast<SCEVConstant>(BTI0.Max))
-          if (const SCEVConstant *C1 = dyn_cast<SCEVConstant>(BTI1.Max))
-              MaxBECount = getConstant(APIntOps::umin(C0->getValue()->getValue(),
-                                                      C1->getValue()->getValue()));
+        else
+          MaxBECount = getUMinFromMismatchedTypes(BTI0.Max, BTI1.Max);
       } else {
         // Both conditions must be true for the loop to exit.
         assert(L->contains(FBB) && "Loop block has no successor in loop!");
@@ -2992,18 +2992,18 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
       if (L->contains(FBB)) {
         // Both conditions must be false for the loop to continue executing.
         // Choose the less conservative count.
-        // TODO: Take the minimum of the exact counts.
-        if (BTI0.Exact == BTI1.Exact)
+        if (BTI0.Exact == CouldNotCompute)
+          BECount = BTI1.Exact;
+        else if (BTI1.Exact == CouldNotCompute)
           BECount = BTI0.Exact;
-        // TODO: Take the minimum of the maximum counts.
+        else
+          BECount = getUMinFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
         if (BTI0.Max == CouldNotCompute)
           MaxBECount = BTI1.Max;
         else if (BTI1.Max == CouldNotCompute)
           MaxBECount = BTI0.Max;
-        else if (const SCEVConstant *C0 = dyn_cast<SCEVConstant>(BTI0.Max))
-          if (const SCEVConstant *C1 = dyn_cast<SCEVConstant>(BTI1.Max))
-              MaxBECount = getConstant(APIntOps::umin(C0->getValue()->getValue(),
-                                                      C1->getValue()->getValue()));
+        else
+          MaxBECount = getUMinFromMismatchedTypes(BTI0.Max, BTI1.Max);
       } else {
         // Both conditions must be false for the loop to exit.
         assert(L->contains(TBB) && "Loop block has no successor in loop!");
