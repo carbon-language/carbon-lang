@@ -28,7 +28,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/ManagedStatic.h"
 #include <algorithm>
 using namespace llvm;
 
