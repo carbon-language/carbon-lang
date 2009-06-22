@@ -39,8 +39,7 @@ namespace asmtok {
     // No-value.
     EndOfStatement,
     Colon,
-    Plus,
-    Minus,
+    Plus, Minus, Tilde,
     Slash,    // '/'
     LParen, RParen,
     Star, Comma, Dollar

@@ -213,10 +213,25 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   return false;
 }
 
+/// ParseParenExpr - Parse a paren expression and return it.
+/// NOTE: This assumes the leading '(' has already been consumed.
+///
+/// parenexpr ::= expr)
+///
+bool AsmParser::ParseParenExpr(int64_t &Res) {
+  if (ParseExpression(Res)) return true;
+  if (Lexer.isNot(asmtok::RParen))
+    return TokError("expected ')' in parentheses expression");
+  Lexer.Lex();
+  return false;
+}
 
-/// ParseExpression - Parse an expression and return it.
-/// FIXME: This should handle real expressions, we do something trivial for now.
-bool AsmParser::ParseExpression(int64_t &Res) {
+/// ParsePrimaryExpr - Parse a primary expression and return it.
+///  primaryexpr ::= (parenexpr
+///  primaryexpr ::= symbol
+///  primaryexpr ::= number
+///  primaryexpr ::= ~,+,- primaryexpr
+bool AsmParser::ParsePrimaryExpr(int64_t &Res) {
   switch (Lexer.getKind()) {
   default:
     return TokError("unknown token in expression");
@@ -230,7 +245,26 @@ bool AsmParser::ParseExpression(int64_t &Res) {
     Res = Lexer.getCurIntVal();
     Lexer.Lex(); // Eat identifier.
     return false;
+  case asmtok::LParen:
+    Lexer.Lex(); // Eat the '('.
+    return ParseParenExpr(Res);
+  case asmtok::Tilde:
+  case asmtok::Plus:
+  case asmtok::Minus:
+    Lexer.Lex(); // Eat the operator.
+    return ParsePrimaryExpr(Res);
   }
+}
+
+/// ParseExpression - Parse an expression and return it.
+/// 
+///  expr ::= expr +,- expr          -> lowest.
+///  expr ::= expr |,^,&,! expr      -> middle.
+///  expr ::= expr *,/,%,<<,>> expr  -> highest.
+///  expr ::= primaryexpr
+///
+bool AsmParser::ParseExpression(int64_t &Res) {
+  return ParsePrimaryExpr(Res);
 }
   
   

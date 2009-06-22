@@ -99,6 +99,7 @@ static int AsLexInput(const char *ProgName) {
     case asmtok::Colon:  outs() << "Colon\n"; break;
     case asmtok::Plus:   outs() << "Plus\n"; break;
     case asmtok::Minus:  outs() << "Minus\n"; break;
+    case asmtok::Tilde:  outs() << "Tilde\n"; break;
     case asmtok::Slash:  outs() << "Slash\n"; break;
     case asmtok::LParen: outs() << "LParen\n"; break;
     case asmtok::RParen: outs() << "RParen\n"; break;

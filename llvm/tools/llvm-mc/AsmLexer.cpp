@@ -235,6 +235,7 @@ asmtok::TokKind AsmLexer::LexToken() {
   case ':': return asmtok::Colon;
   case '+': return asmtok::Plus;
   case '-': return asmtok::Minus;
+  case '~': return asmtok::Tilde;
   case '(': return asmtok::LParen;
   case ')': return asmtok::RParen;
   case '*': return asmtok::Star;
