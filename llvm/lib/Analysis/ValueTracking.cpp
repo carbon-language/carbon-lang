@@ -624,8 +624,12 @@ bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
 /// 'Op' must have a scalar integer type.
 ///
 unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
+  assert((TD || V->getType()->isIntOrIntVector()) &&
+         "ComputeNumSignBits requires a TargetData object to operate "
+         "on non-integer values!");
   const Type *Ty = V->getType();
-  unsigned TyBits = Ty->getScalarSizeInBits();
+  unsigned TyBits = TD ? TD->getTypeSizeInBits(V->getType()->getScalarType()) :
+                         Ty->getScalarSizeInBits();
   unsigned Tmp, Tmp2;
   unsigned FirstAnswer = 1;
 
