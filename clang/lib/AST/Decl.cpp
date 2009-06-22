@@ -379,7 +379,7 @@ Stmt *FunctionDecl::getBodyIfAvailable() const {
 
 void FunctionDecl::setBody(Stmt *B) {
   Body = B;
-  if (B && EndRangeLoc < B->getLocEnd())
+  if (B)
     EndRangeLoc = B->getLocEnd();
 }
 

@@ -647,6 +647,13 @@ private:
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
   
+  /// \brief End part of this FunctionDecl's source range.
+  ///
+  /// We could compute the full range in getSourceRange(). However, when we're
+  /// dealing with a function definition deserialized from a PCH/AST file,
+  /// we can only compute the full range once the function body has been
+  /// de-serialized, so it's far better to have the (sometimes-redundant)
+  /// EndRangeLoc.
   SourceLocation EndRangeLoc;
 
   /// \brief The template or declaration that this declaration
