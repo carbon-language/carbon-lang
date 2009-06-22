@@ -299,11 +299,11 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // If this instruction is dead now, delete it.
         RecursivelyDeleteTriviallyDeadInstructions(Inst);
 
-        // See if this is a single-entry LCSSA PHI node.  If so, we can (and
-        // have to) remove
-        // the PHI entirely.  This is safe, because the NewVal won't be variant
+        // If we're inserting code into the exit block rather than the
+        // preheader, we can (and have to) remove the PHI entirely.
+        // This is safe, because the NewVal won't be variant
         // in the loop, so we don't need an LCSSA phi node anymore.
-        if (NumPreds == 1) {
+        if (ExitBlocks.size() == 1) {
           PN->replaceAllUsesWith(ExitVal);
           RecursivelyDeleteTriviallyDeadInstructions(PN);
           break;
