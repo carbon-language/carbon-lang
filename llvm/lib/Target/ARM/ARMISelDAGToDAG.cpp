@@ -579,17 +579,18 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   switch (N->getOpcode()) {
   default: break;
   case ISD::Constant: {
-    // ARMv6T2 and later should materialize imms via MOV / MOVT pair.
-    if (Subtarget->hasV6T2Ops() || Subtarget->hasThumb2())
-      break;
-
     unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
     bool UseCP = true;
-    if (Subtarget->isThumb())
-      UseCP = (Val > 255 &&                          // MOV
-               ~Val > 255 &&                         // MOV + MVN
-               !ARM_AM::isThumbImmShiftedVal(Val));  // MOV + LSL
-    else
+    if (Subtarget->isThumb()) {
+      if (Subtarget->hasThumb2())
+        // Thumb2 has the MOVT instruction, so all immediates can
+        // be done with MOV + MOVT, at worst.
+        UseCP = 0;
+      else
+        UseCP = (Val > 255 &&                          // MOV
+                 ~Val > 255 &&                         // MOV + MVN
+                 !ARM_AM::isThumbImmShiftedVal(Val));  // MOV + LSL
+    } else
       UseCP = (ARM_AM::getSOImmVal(Val) == -1 &&     // MOV
                ARM_AM::getSOImmVal(~Val) == -1 &&    // MVN
                !ARM_AM::isSOImmTwoPartVal(Val));     // two instrs.
