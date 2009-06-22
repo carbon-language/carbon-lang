@@ -580,8 +580,8 @@ def err_param_default_argument_nonfunc : Error<
   "default arguments can only be specified for parameters in a function "
   "declaration">;
 def err_defining_default_ctor : Error<
-  "cannot define the default constructor for %0, because %select{base class|member}1 "
-  "%2 does not have any implicit default constructor">;
+  "cannot define the implicit default constructor for %0, because %select{base class|member}1 "
+  "%2 does not have any default constructor">;
 def note_previous_class_decl : Note<
   "%0 declared here">;
 def err_unintialized_member : Error<

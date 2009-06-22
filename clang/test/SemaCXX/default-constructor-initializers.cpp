@@ -11,7 +11,7 @@ struct X2  : X1 {  // expected-note {{'struct X2' declared here}} \
 
 struct X3 : public X2 {
 };
-X3 x3;  // expected-error {{cannot define the default constructor for 'struct X3', because member 'struct X2' does not have any implicit default constructor}}
+X3 x3;  // expected-error {{cannot define the implicit default constructor for 'struct X3', because member 'struct X2' does not have any default constructor}}
 
 
 struct X4 {
@@ -19,7 +19,7 @@ struct X4 {
   X2 & rx2; // expected-note {{declared at}}
 };
 
-X4 x4; // expected-error {{cannot define the default constructor for 'struct X4', because base class 'struct X2' does not have any implicit default constructor}} \
+X4 x4; // expected-error {{cannot define the implicit default constructor for 'struct X4', because base class 'struct X2' does not have any default constructor}} \
        // expected-error {{cannot define the implicit default constructor for 'struct X4', because reference member rx2 cannot be default-initialized}}
 
 
