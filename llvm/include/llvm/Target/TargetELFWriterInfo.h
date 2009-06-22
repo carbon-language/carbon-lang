@@ -78,11 +78,32 @@ namespace llvm {
 
     /// Symbol Table Info
     unsigned getSymTabEntrySize() const { return is64Bit ? 24 : 16; }
-    unsigned getSymTabAlignment() const { return is64Bit ? 8 : 4; }
+
+    /// getPrefELFAlignment - Returns the preferred alignment for ELF. This
+    /// is used to align some sections.
+    unsigned getPrefELFAlignment() const { return is64Bit ? 8 : 4; }
+
+    /// getRelocationEntrySize - Entry size used in the relocation section
+    unsigned getRelocationEntrySize() const {
+      return is64Bit ? (hasRelocationAddend() ? 24 : 16)
+                     : (hasRelocationAddend() ? 12 : 8);
+    }
 
     /// getFunctionAlignment - Returns the alignment for function 'F', targets
     /// with different alignment constraints should overload this method
     virtual unsigned getFunctionAlignment(const Function *F) const;
+
+    /// getRelocationType - Returns the target specific ELF Relocation type.
+    /// 'MachineRelTy' contains the object code independent relocation type
+    virtual unsigned getRelocationType(unsigned MachineRelTy) const = 0;
+
+    /// hasRelocationAddend - True if the target uses an addend in the
+    /// ELF relocation entry.
+    virtual bool hasRelocationAddend() const = 0;
+
+    /// getAddendForRelTy - Gets the addend value for an ELF relocation entry
+    /// based on the target relocation type. If addend is not used returns 0.
+    virtual long int getAddendForRelTy(unsigned RelTy) const = 0;
   };
 
 } // end llvm namespace

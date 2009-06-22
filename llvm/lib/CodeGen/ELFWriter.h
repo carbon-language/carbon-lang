@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/OutputBuffer.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
 #include "ELF.h"
@@ -89,7 +89,7 @@ namespace llvm {
     bool doFinalization(Module &M);
 
   private:
-    // Blob containing the Elf header
+    /// Blob containing the Elf header
     BinaryObject ElfHdr;
 
     /// SectionList - This is the list of sections that we have emitted to the
@@ -102,14 +102,35 @@ namespace llvm {
     /// the SectionList.
     std::map<std::string, ELFSection*> SectionLookup;
 
+    /// GblSymLookup - This is a mapping from global value to a symbol index
+    /// in the symbol table. This is useful since relocations symbol references
+    /// must be quickly mapped to a symbol table index
+    std::map<const GlobalValue*, uint32_t> GblSymLookup;
+
+    /// SymbolList - This is the list of symbols emitted to the symbol table
+    /// Local symbols go to the front and Globals to the back.
+    std::list<ELFSym> SymbolList;
+
+    /// PendingGlobals - List of externally defined symbols that we have been
+    /// asked to emit, but have not seen a reference to.  When a reference
+    /// is seen, the symbol will move from this list to the SymbolList.
+    SetVector<GlobalValue*> PendingGlobals;
+
     /// getSection - Return the section with the specified name, creating a new
     /// section if one does not already exist.
-    ELFSection &getSection(const std::string &Name, unsigned Type, 
+    ELFSection &getSection(const std::string &Name, unsigned Type,
                            unsigned Flags = 0, unsigned Align = 0) {
       ELFSection *&SN = SectionLookup[Name];
       if (SN) return *SN;
 
-      SectionList.push_back(ELFSection(Name, isLittleEndian, is64Bit));
+      // Remove tab from section name prefix. This is necessary becase TAI 
+      // sometimes return a section name prefixed with a "\t" char.
+      std::string SectionName(Name);
+      size_t Pos = SectionName.find("\t");
+      if (Pos != std::string::npos)
+        SectionName.erase(Pos, 1);
+
+      SectionList.push_back(ELFSection(SectionName, isLittleEndian, is64Bit));
       SN = &SectionList.back();
       SN->SectionIdx = NumSections++;
       SN->Type = Type;
@@ -119,9 +140,23 @@ namespace llvm {
       return *SN;
     }
 
+    /// TODO: support mangled names here to emit the right .text section
+    /// for c++ object files.
     ELFSection &getTextSection() {
       return getSection(".text", ELFSection::SHT_PROGBITS,
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
+    }
+
+    /// Return the relocation section of section 'S'. 'RelA' is true
+    /// if the relocation section contains entries with addends.
+    ELFSection &getRelocSection(std::string SName, bool RelA) {
+      std::string RelSName(".rel");
+      unsigned SHdrTy = RelA ? ELFSection::SHT_RELA : ELFSection::SHT_REL;
+
+      if (RelA) RelSName.append("a");
+      RelSName.append(SName);
+
+      return getSection(RelSName, SHdrTy, 0, TEW->getPrefELFAlignment());
     }
 
     ELFSection &getNonExecStackSection() {
@@ -146,15 +181,9 @@ namespace llvm {
                         ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
     }
 
-    /// SymbolList - This is the list of symbols we have emitted to the file.
-    /// This actually gets rearranged before emission to the file (to put the
-    /// local symbols first in the list).
-    std::vector<ELFSym> SymbolList;
-
-    /// PendingGlobals - List of externally defined symbols that we have been
-    /// asked to emit, but have not seen a reference to.  When a reference
-    /// is seen, the symbol will move from this list to the SymbolList.
-    SetVector<GlobalValue*> PendingGlobals;
+    ELFSection &getNullSection() {
+      return getSection("", ELFSection::SHT_NULL, 0);
+    }
 
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of
@@ -165,11 +194,15 @@ namespace llvm {
     unsigned ELFHdr_e_shnum_Offset;     // e_shnum    in ELF header.
 
   private:
-    void EmitGlobal(GlobalVariable *GV);
+    void EmitFunctionDeclaration(const Function *F);
+    void EmitGlobalVar(const GlobalVariable *GV);
     void EmitGlobalConstant(const Constant *C, ELFSection &GblS);
     void EmitGlobalConstantStruct(const ConstantStruct *CVS,
                                   ELFSection &GblS);
+    unsigned getGlobalELFLinkage(const GlobalVariable *GV);
+    ELFSection &getGlobalSymELFSection(const GlobalVariable *GV, ELFSym &Sym);
     void EmitRelocations();
+    void EmitRelocation(BinaryObject &RelSec, ELFRelocation &Rel, bool HasRelA);
     void EmitSectionHeader(BinaryObject &SHdrTab, const ELFSection &SHdr);
     void EmitSectionTableStringTable();
     void EmitSymbol(BinaryObject &SymbolTable, ELFSym &Sym);

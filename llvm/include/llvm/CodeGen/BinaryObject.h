@@ -61,6 +61,11 @@ public:
     return Relocations;
   }
 
+  /// hasRelocations - Return true if 'Relocations' is not empty
+  bool hasRelocations() const {
+    return !Relocations.empty();
+  }
+
   /// emitByte - This callback is invoked when a byte needs to be
   /// written to the data stream.
   inline void emitByte(uint8_t B) {
@@ -317,6 +322,7 @@ public:
   void addRelocation(const MachineRelocation& relocation) {
     Relocations.push_back(relocation);
   }
+
 };
 
 } // end namespace llvm

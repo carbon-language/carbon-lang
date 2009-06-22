@@ -71,38 +71,37 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Update Section Size
   ES->Size = CurBufferPtr - BufferBegin;
 
-  // Figure out the binding (linkage) of the symbol.
-  switch (MF.getFunction()->getLinkage()) {
-  default:
-    // appending linkage is illegal for functions.
-    assert(0 && "Unknown linkage type!");
-  case GlobalValue::ExternalLinkage:
-    FnSym.SetBind(ELFSym::STB_GLOBAL);
-    break;
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-    FnSym.SetBind(ELFSym::STB_WEAK);
-    break;
-  case GlobalValue::PrivateLinkage:
-    assert (0 && "PrivateLinkage should not be in the symbol table.");
-  case GlobalValue::InternalLinkage:
-    FnSym.SetBind(ELFSym::STB_LOCAL);
-    break;
-  }
-
   // Set the symbol type as a function
-  FnSym.SetType(ELFSym::STT_FUNC);
-
+  FnSym.setType(ELFSym::STT_FUNC);
   FnSym.SectionIdx = ES->SectionIdx;
   FnSym.Size = CurBufferPtr-FnStartPtr;
 
   // Offset from start of Section
   FnSym.Value = FnStartPtr-BufferBegin;
 
-  // Finally, add it to the symtab.
-  EW.SymbolList.push_back(FnSym);
+  // Figure out the binding (linkage) of the symbol.
+  switch (MF.getFunction()->getLinkage()) {
+  default:
+    // appending linkage is illegal for functions.
+    assert(0 && "Unknown linkage type!");
+  case GlobalValue::ExternalLinkage:
+    FnSym.setBind(ELFSym::STB_GLOBAL);
+    EW.SymbolList.push_back(FnSym);
+    break;
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+    FnSym.setBind(ELFSym::STB_WEAK);
+    EW.SymbolList.push_back(FnSym);
+    break;
+  case GlobalValue::PrivateLinkage:
+    assert (0 && "PrivateLinkage should not be in the symbol table.");
+  case GlobalValue::InternalLinkage:
+    FnSym.setBind(ELFSym::STB_LOCAL);
+    EW.SymbolList.push_front(FnSym);
+    break;
+  }
 
   // Relocations
   // -----------
@@ -113,7 +112,6 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = Relocations[i];
     intptr_t Addr;
-
     if (MR.isBasicBlock()) {
       Addr = getMachineBasicBlockAddress(MR.getBasicBlock());
       MR.setConstantVal(ES->SectionIdx);
