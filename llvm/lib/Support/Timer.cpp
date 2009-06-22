@@ -15,6 +15,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/Process.h"
 #include <algorithm>
 #include <fstream>
@@ -50,25 +51,28 @@ namespace {
                    cl::Hidden, cl::location(getLibSupportInfoOutputFilename()));
 }
 
-static TimerGroup *DefaultTimerGroup = 0;
+static ManagedStatic<sys::SmartMutex<true> > TimerLock;
+static ManagedStatic<TimerGroup> DefaultTimerGroup;
 static TimerGroup *getDefaultTimerGroup() {
-  if (DefaultTimerGroup) return DefaultTimerGroup;
-  return DefaultTimerGroup = new TimerGroup("Miscellaneous Ungrouped Timers");
+  return &*DefaultTimerGroup;
 }
 
 Timer::Timer(const std::string &N)
   : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), PeakMem(0), Name(N),
     Started(false), TG(getDefaultTimerGroup()) {
+  sys::SmartScopedLock<true> Lock(&*TimerLock);
   TG->addTimer();
 }
 
 Timer::Timer(const std::string &N, TimerGroup &tg)
   : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), PeakMem(0), Name(N),
     Started(false), TG(&tg) {
+  sys::SmartScopedLock<true> Lock(&*TimerLock);
   TG->addTimer();
 }
 
 Timer::Timer(const Timer &T) {
+  sys::SmartScopedLock<true> Lock(&*TimerLock);
   TG = T.TG;
   if (TG) TG->addTimer();
   operator=(T);
@@ -77,6 +81,7 @@ Timer::Timer(const Timer &T) {
 
 // Copy ctor, initialize with no TG member.
 Timer::Timer(bool, const Timer &T) {
+  sys::SmartScopedLock<true> Lock(&*TimerLock);
   TG = T.TG;     // Avoid assertion in operator=
   operator=(T);  // Copy contents
   TG = 0;
@@ -84,6 +89,7 @@ Timer::Timer(bool, const Timer &T) {
 
 
 Timer::~Timer() {
+  sys::SmartScopedLock<true> Lock(&*TimerLock);
   if (TG) {
     if (Started) {
       Started = false;
@@ -129,8 +135,10 @@ static TimeRecord getTimeRecord(bool Start) {
 }
 
 static ManagedStatic<std::vector<Timer*> > ActiveTimers;
+static ManagedStatic<sys::SmartMutex<true> > ActiveTimerLock;
 
 void Timer::startTimer() {
+  sys::SmartScopedLock<true> Lock(&*ActiveTimerLock);
   Started = true;
   ActiveTimers->push_back(this);
   TimeRecord TR = getTimeRecord(true);
@@ -142,6 +150,7 @@ void Timer::startTimer() {
 }
 
 void Timer::stopTimer() {
+  sys::SmartScopedLock<true> Lock(&*ActiveTimerLock);
   TimeRecord TR = getTimeRecord(false);
   Elapsed    += TR.Elapsed;
   UserTime   += TR.UserTime;
@@ -171,6 +180,7 @@ void Timer::sum(const Timer &T) {
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
+  sys::SmartScopedLock<true> Lock(&*ActiveTimerLock);
   size_t MemUsed = getMemUsage();
 
   for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
@@ -193,7 +203,10 @@ static ManagedStatic<Name2Timer> NamedTimers;
 
 static ManagedStatic<Name2Pair> NamedGroupedTimers;
 
+static ManagedStatic<sys::SmartMutex<true> > NamedTimerLock;
+
 static Timer &getNamedRegionTimer(const std::string &Name) {
+  sys::SmartScopedLock<true> Lock(&*NamedTimerLock);
   Name2Timer::iterator I = NamedTimers->find(Name);
   if (I != NamedTimers->end())
     return I->second;
@@ -203,6 +216,7 @@ static Timer &getNamedRegionTimer(const std::string &Name) {
 
 static Timer &getNamedRegionTimer(const std::string &Name,
                                   const std::string &GroupName) {
+  sys::SmartScopedLock<true> Lock(&*NamedTimerLock);
 
   Name2Pair::iterator I = NamedGroupedTimers->find(GroupName);
   if (I == NamedGroupedTimers->end()) {
@@ -340,7 +354,7 @@ void TimerGroup::removeTimer() {
       // If this is not an collection of ungrouped times, print the total time.
       // Ungrouped timers don't really make sense to add up.  We still print the
       // TOTAL line to make the percentages make sense.
-      if (this != DefaultTimerGroup) {
+      if (this != &*DefaultTimerGroup) {
         *OutStream << "  Total Execution Time: ";
 
         printAlignedFP(Total.getProcessTime(), 4, 5, *OutStream);
@@ -376,12 +390,6 @@ void TimerGroup::removeTimer() {
 
     if (OutStream != cerr.stream() && OutStream != cout.stream())
       delete OutStream;   // Close the file...
-  }
-
-  // Delete default timer group!
-  if (NumTimers == 0 && this == DefaultTimerGroup) {
-    delete DefaultTimerGroup;
-    DefaultTimerGroup = 0;
   }
 }
 
