@@ -2791,7 +2791,7 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
 
     if (NewBTI.Exact == CouldNotCompute) {
       // We couldn't compute an exact value for this exit, so
-      // we don't be able to compute an exact value for the loop.
+      // we won't be able to compute an exact value for the loop.
       CouldNotComputeBECount = true;
       BECount = CouldNotCompute;
     } else if (!CouldNotComputeBECount) {
@@ -2807,7 +2807,7 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
     }
     if (NewBTI.Max == CouldNotCompute) {
       // We couldn't compute an maximum value for this exit, so
-      // we don't be able to compute an maximum value for the loop.
+      // we won't be able to compute an maximum value for the loop.
       CouldNotComputeMaxBECount = true;
       MaxBECount = CouldNotCompute;
     } else if (!CouldNotComputeMaxBECount) {
