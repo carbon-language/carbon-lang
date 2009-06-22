@@ -3121,6 +3121,8 @@ bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
           VT = (MVT::SimpleValueType)(VT.getSimpleVT() - 1);
         VTSize = VT.getSizeInBits() / 8;
       } else {
+        // This can result in a type that is not legal on the target, e.g.
+        // 1 or 2 bytes on PPC.
         VT = (MVT::SimpleValueType)(VT.getSimpleVT() - 1);
         VTSize >>= 1;
       }
@@ -3177,12 +3179,29 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
                            DstSV, DstSVOff + DstOff, false, DstAlign);
     } else {
-      Value = DAG.getLoad(VT, dl, Chain,
-                          getMemBasePlusOffset(Src, SrcOff, DAG),
-                          SrcSV, SrcSVOff + SrcOff, false, Align);
-      Store = DAG.getStore(Chain, dl, Value,
-                           getMemBasePlusOffset(Dst, DstOff, DAG),
-                           DstSV, DstSVOff + DstOff, false, DstAlign);
+      // The type might not be legal for the target.  This should only happen
+      // if the type is smaller than a legal type, as on PPC, so the right
+      // thing to do is generate a LoadExt/StoreTrunc pair.
+      // FIXME does the case above also need this?
+      if (TLI.isTypeLegal(VT)) {
+        Value = DAG.getLoad(VT, dl, Chain,
+                            getMemBasePlusOffset(Src, SrcOff, DAG),
+                            SrcSV, SrcSVOff + SrcOff, false, Align);
+        Store = DAG.getStore(Chain, dl, Value,
+                             getMemBasePlusOffset(Dst, DstOff, DAG),
+                             DstSV, DstSVOff + DstOff, false, DstAlign);
+      } else {
+        MVT NVT = VT;
+        while (!TLI.isTypeLegal(NVT)) {
+          NVT = (MVT::SimpleValueType(NVT.getSimpleVT() + 1));
+        }
+        Value = DAG.getExtLoad(ISD::EXTLOAD, dl, NVT, Chain,
+                               getMemBasePlusOffset(Src, SrcOff, DAG),
+                               SrcSV, SrcSVOff + SrcOff, VT, false, Align);
+        Store = DAG.getTruncStore(Chain, dl, Value,
+                               getMemBasePlusOffset(Dst, DstOff, DAG),
+                               DstSV, DstSVOff + DstOff, VT, false, DstAlign);
+      }
     }
     OutChains.push_back(Store);
     SrcOff += VTSize;
