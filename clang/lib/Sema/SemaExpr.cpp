@@ -5462,9 +5462,13 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   
   // Note that this declaration has been used.
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
-    DefineImplicitDefaultConstructor(Loc, Constructor);
-    // FIXME: set the Used flag if it is determined that ctor is valid.
-    Constructor->setUsed(true);
+    if (Constructor->isImplicit() && Constructor->isDefaultConstructor()) {
+        if (!Constructor->isUsed())
+          DefineImplicitDefaultConstructor(Loc, Constructor);
+    }
+    // FIXME: more checking for other implicits go here.
+    else
+      Constructor->setUsed(true);
     return;
   } 
   

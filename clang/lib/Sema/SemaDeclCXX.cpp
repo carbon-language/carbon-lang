@@ -1842,9 +1842,9 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
 
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
-  if (!Constructor->isDefaultConstructor() ||
-      !Constructor->isImplicit() || Constructor->isUsed())
-    return;
+  assert((Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
+          !Constructor->isUsed()) &&
+    "DefineImplicitDefaultConstructor - call it for implicit default ctor");
   
   CXXRecordDecl *ClassDecl
     = cast<CXXRecordDecl>(Constructor->getDeclContext());
@@ -1862,7 +1862,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
       if (CXXConstructorDecl *BaseCtor = 
             BaseClassDecl->getDefaultConstructor(Context)) {
         if (BaseCtor->isImplicit())
-          BaseCtor->setUsed();
+          MarkDeclarationReferenced(CurrentLocation, BaseCtor);
       }
       else {
         Diag(CurrentLocation, diag::err_defining_default_ctor) 
@@ -1887,7 +1887,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
         if (CXXConstructorDecl *FieldCtor = 
             FieldClassDecl->getDefaultConstructor(Context)) {
           if (FieldCtor->isImplicit())
-            FieldCtor->setUsed();
+            MarkDeclarationReferenced(CurrentLocation, FieldCtor);
         }
         else {
           Diag(CurrentLocation, diag::err_defining_default_ctor) 
