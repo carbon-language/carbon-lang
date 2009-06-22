@@ -1878,7 +1878,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   
   CXXRecordDecl *ClassDecl
     = cast<CXXRecordDecl>(Constructor->getDeclContext());
-  assert(ClassDecl && "InitializeVarWithConstructor - invalid constructor");
+  assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
   // Before the implicitly-declared default constructor for a class is 
   // implicitly defined, all the implicitly-declared default constructors
   // for its base class and its non-static data members shall have been
@@ -1891,7 +1891,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     if (!BaseClassDecl->hasTrivialConstructor()) {
       if (CXXConstructorDecl *BaseCtor = 
             BaseClassDecl->getDefaultConstructor(Context)) {
-        if (BaseCtor->isImplicit())
+        if (BaseCtor->isImplicit() && !BaseCtor->isUsed())
           MarkDeclarationReferenced(CurrentLocation, BaseCtor);
       }
       else {
@@ -1916,7 +1916,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
       if (!FieldClassDecl->hasTrivialConstructor())
         if (CXXConstructorDecl *FieldCtor = 
             FieldClassDecl->getDefaultConstructor(Context)) {
-          if (FieldCtor->isImplicit())
+          if (FieldCtor->isImplicit() && !FieldCtor->isUsed())
             MarkDeclarationReferenced(CurrentLocation, FieldCtor);
         }
         else {
@@ -1943,6 +1943,48 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   }
   if (!err)
     Constructor->setUsed();  
+}
+
+void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
+                                   CXXConstructorDecl *CopyConstructor,
+                                   unsigned TypeQuals) {
+  assert((CopyConstructor->isImplicit() && 
+          CopyConstructor->isCopyConstructor(Context, TypeQuals) &&
+          !CopyConstructor->isUsed()) &&
+         "DefineImplicitCopyConstructor - call it for implicit copy ctor");
+  
+  CXXRecordDecl *ClassDecl
+    = cast<CXXRecordDecl>(CopyConstructor->getDeclContext());
+  assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
+  // Before the implicitly-declared copy constructor for a class is 
+  // implicitly defined, all the implicitly-declared copy constructors
+  // for its base class and its non-static data members shall have been
+  // implicitly defined.
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+    if (CXXConstructorDecl *BaseCopyCtor = 
+        BaseClassDecl->getCopyConstructor(Context, TypeQuals))
+      if (BaseCopyCtor->isImplicit() && !BaseCopyCtor->isUsed())
+        MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
+  }
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
+       Field != ClassDecl->field_end(Context);
+       ++Field) {
+    QualType FieldType = Context.getCanonicalType((*Field)->getType());
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (CXXConstructorDecl *FieldCopyCtor = 
+          FieldClassDecl->getCopyConstructor(Context, TypeQuals))
+          if (FieldCopyCtor->isImplicit() && !FieldCopyCtor->isUsed())
+            MarkDeclarationReferenced(CurrentLocation, FieldCopyCtor);
+    }
+  }
+  CopyConstructor->setUsed();
 }
 
 void Sema::InitializeVarWithConstructor(VarDecl *VD, 

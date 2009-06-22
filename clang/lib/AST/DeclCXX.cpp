@@ -66,21 +66,29 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
 }
 
 bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
+  return getCopyConstructor(Context, QualType::Const) != 0;
+}
+
+CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context, 
+                                                      unsigned TypeQuals) const{
   QualType ClassType
     = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
   DeclarationName ConstructorName 
     = Context.DeclarationNames.getCXXConstructorName(
-                                           Context.getCanonicalType(ClassType));
-  unsigned TypeQuals;
+                                          Context.getCanonicalType(ClassType));
+  unsigned FoundTQs;
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = this->lookup(Context, ConstructorName);
        Con != ConEnd; ++Con) {
-    if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, TypeQuals) &&
-        (TypeQuals & QualType::Const) != 0)
-      return true;
+    if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, 
+                                                          FoundTQs)) {
+      if (((TypeQuals & QualType::Const) == (FoundTQs & QualType::Const)) ||
+          (!(TypeQuals & QualType::Const) && (FoundTQs & QualType::Const)))
+        return cast<CXXConstructorDecl>(*Con);
+      
+    }
   }
-
-  return false;
+  return 0;
 }
 
 bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {

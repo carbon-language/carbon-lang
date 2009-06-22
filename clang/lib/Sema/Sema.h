@@ -1582,10 +1582,16 @@ public:
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
   
-  /// DefineImplicitDefaultConstructor - Checks for feasibilityt of 
+  /// DefineImplicitDefaultConstructor - Checks for feasibility of 
   /// defining this constructor as the default constructor.
   void DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                         CXXConstructorDecl *Constructor);
+  
+  /// DefineImplicitCopyConstructor - Checks for feasibility of 
+  /// defining this constructor as the copy constructor.
+  void DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
+                                     CXXConstructorDecl *Constructor,
+                                     unsigned TypeQuals);
 
   /// MaybeBindToTemporary - If the passed in expression has a record type with
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise

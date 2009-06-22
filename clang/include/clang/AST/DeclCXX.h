@@ -283,6 +283,10 @@ public:
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(ASTContext &Context) const;
 
+  /// getCopyConstructor - Returns the copy constructor for this class
+  CXXConstructorDecl *getCopyConstructor(ASTContext &Context, 
+                                         unsigned TypeQuals) const;
+
   /// hasConstCopyAssignment - Determines whether this class has a
   /// copy assignment operator that accepts a const-qualified argument.
   bool hasConstCopyAssignment(ASTContext &Context) const;
