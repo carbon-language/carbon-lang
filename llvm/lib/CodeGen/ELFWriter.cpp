@@ -386,6 +386,9 @@ bool ELFWriter::doFinalization(Module &M) {
   if (TAI->getNonexecutableStackDirective())
     getNonExecStackSection();
 
+  // Emit string table
+  EmitStringTable();
+
   // Emit the symbol table now, if non-empty.
   EmitSymbolTable();
 
@@ -518,12 +521,10 @@ void ELFWriter::EmitSectionHeader(BinaryObject &SHdrTab,
   }
 }
 
-/// EmitSymbolTable - If the current symbol table is non-empty, emit the string
-/// table for it and then the symbol table itself.
-void ELFWriter::EmitSymbolTable() {
+/// EmitStringTable - If the current symbol table is non-empty, emit the string
+/// table for it
+void ELFWriter::EmitStringTable() {
   if (!SymbolList.size()) return;  // Empty symbol table.
-
-  unsigned FirstNonLocalSymbol = 1;
   ELFSection &StrTab = getStringTableSection();
 
   // Set the zero'th symbol to a null byte, as required.
@@ -550,12 +551,20 @@ void ELFWriter::EmitSymbolTable() {
   }
   assert(Index == StrTab.size());
   StrTab.Size = Index;
+}
 
+/// EmitSymbolTable - Emit the symbol table itself.
+void ELFWriter::EmitSymbolTable() {
+  if (!SymbolList.size()) return;  // Empty symbol table.
+
+  unsigned FirstNonLocalSymbol = 1;
   // Now that we have emitted the string table and know the offset into the
   // string table of each symbol, emit the symbol table itself.
   ELFSection &SymTab = getSymbolTableSection();
   SymTab.Align = TEW->getPrefELFAlignment();
-  SymTab.Link  = StrTab.SectionIdx;      // Section Index of .strtab.
+
+  // Section Index of .strtab.
+  SymTab.Link = getStringTableSection().SectionIdx;
 
   // Size of each symtab entry.
   SymTab.EntSize = TEW->getSymTabEntrySize();
@@ -566,7 +575,7 @@ void ELFWriter::EmitSymbolTable() {
 
   // Emit all the symbols to the symbol table. Skip the null
   // symbol, cause it's emitted already
-  Index = 1;
+  unsigned Index = 1;
   for (std::list<ELFSym>::iterator I = SymbolList.begin(),
        E = SymbolList.end(); I != E; ++I, ++Index) {
     // Keep track of the first non-local symbol

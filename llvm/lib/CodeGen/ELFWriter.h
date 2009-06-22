@@ -207,6 +207,7 @@ namespace llvm {
     void EmitSectionTableStringTable();
     void EmitSymbol(BinaryObject &SymbolTable, ELFSym &Sym);
     void EmitSymbolTable();
+    void EmitStringTable();
     void OutputSectionsAndSectionTable();
   };
 }
