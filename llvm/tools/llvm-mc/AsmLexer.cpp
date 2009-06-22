@@ -15,6 +15,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 using namespace llvm;
 
