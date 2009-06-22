@@ -27,6 +27,7 @@
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/System/Mutex.h"
 #include <csignal>
 #include <cstdio>
 #include <map>
@@ -44,6 +45,8 @@
 #endif
 
 using namespace llvm;
+
+static ManagedStatic<sys::Mutex> FunctionsLock;
 
 typedef GenericValue (*ExFunc)(const FunctionType *,
                                const std::vector<GenericValue> &);
@@ -94,6 +97,7 @@ static ExFunc lookupFunction(const Function *F) {
     ExtName += getTypeID(FT->getContainedType(i));
   ExtName += "_" + F->getName();
 
+  sys::ScopedLock Writer(&*FunctionsLock);
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
     FnPtr = FuncNames["lle_X_"+F->getName()];
@@ -246,12 +250,16 @@ GenericValue Interpreter::callExternalFunction(Function *F,
                                      const std::vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
+  FunctionsLock->acquire();
+
   // Do a lookup to see if the function is in our cache... this should just be a
   // deferred annotation!
   std::map<const Function *, ExFunc>::iterator FI = ExportedFunctions->find(F);
   if (ExFunc Fn = (FI == ExportedFunctions->end()) ? lookupFunction(F)
-                                                   : FI->second)
+                                                   : FI->second) {
+    FunctionsLock->release();
     return Fn(F->getFunctionType(), ArgVals);
+  }
 
 #ifdef USE_LIBFFI
   std::map<const Function *, RawFunc>::iterator RF = RawFunctions->find(F);
@@ -264,6 +272,8 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   } else {
     RawFn = RF->second;
   }
+  
+  FunctionsLock->release();
 
   GenericValue Result;
   if (RawFn != 0 && ffiInvoke(RawFn, F, ArgVals, getTargetData(), Result))
@@ -529,6 +539,7 @@ GenericValue lle_X_fprintf(const FunctionType *FT,
 
 
 void Interpreter::initializeExternalFunctions() {
+  sys::ScopedLock Writer(&*FunctionsLock);
   FuncNames["lle_X_atexit"]       = lle_X_atexit;
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_abort"]        = lle_X_abort;
