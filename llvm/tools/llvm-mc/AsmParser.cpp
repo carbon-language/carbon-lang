@@ -167,8 +167,18 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
       // Nothing to do here, fall into the code below with the '(' part of the
       // memory operand consumed.
     } else {
-      // FIXME: Call ParseParenExpression with the leading ( consumed.
-      return TokError("FIXME: Paren expr not implemented yet!");
+      // It must be an parenthesized expression, parse it now.
+      if (ParseParenExpr(Disp)) return true;
+      
+      // After parsing the base expression we could either have a parenthesized
+      // memory address or not.  If not, return now.  If so, eat the (.
+      if (Lexer.isNot(asmtok::LParen)) {
+        Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 0);
+        return false;
+      }
+      
+      // Eat the '('.
+      Lexer.Lex();
     }
   }
   
