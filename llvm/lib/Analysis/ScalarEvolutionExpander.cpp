@@ -152,8 +152,8 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
 /// TODO: When ScalarEvolution gets a SCEVSDivExpr, this can be made
 /// unnecessary; in its place, just signed-divide Ops[i] by the scale and
 /// check to see if the divide was folded.
-static bool FactorOutConstant(SCEVHandle &S,
-                              SCEVHandle &Remainder,
+static bool FactorOutConstant(const SCEV* &S,
+                              const SCEV* &Remainder,
                               const APInt &Factor,
                               ScalarEvolution &SE) {
   // Everything is divisible by one.
@@ -168,7 +168,7 @@ static bool FactorOutConstant(SCEVHandle &S,
     // the value at this scale. It will be considered for subsequent
     // smaller scales.
     if (C->isZero() || !CI->isZero()) {
-      SCEVHandle Div = SE.getConstant(CI);
+      const SCEV* Div = SE.getConstant(CI);
       S = Div;
       Remainder =
         SE.getAddExpr(Remainder,
@@ -182,8 +182,8 @@ static bool FactorOutConstant(SCEVHandle &S,
   if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S))
     if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
       if (!C->getValue()->getValue().srem(Factor)) {
-        const SmallVectorImpl<SCEVHandle> &MOperands = M->getOperands();
-        SmallVector<SCEVHandle, 4> NewMulOps(MOperands.begin(), MOperands.end());
+        const SmallVectorImpl<const SCEV*> &MOperands = M->getOperands();
+        SmallVector<const SCEV*, 4> NewMulOps(MOperands.begin(), MOperands.end());
         NewMulOps[0] =
           SE.getConstant(C->getValue()->getValue().sdiv(Factor));
         S = SE.getMulExpr(NewMulOps);
@@ -192,13 +192,13 @@ static bool FactorOutConstant(SCEVHandle &S,
 
   // In an AddRec, check if both start and step are divisible.
   if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
-    SCEVHandle Step = A->getStepRecurrence(SE);
-    SCEVHandle StepRem = SE.getIntegerSCEV(0, Step->getType());
+    const SCEV* Step = A->getStepRecurrence(SE);
+    const SCEV* StepRem = SE.getIntegerSCEV(0, Step->getType());
     if (!FactorOutConstant(Step, StepRem, Factor, SE))
       return false;
     if (!StepRem->isZero())
       return false;
-    SCEVHandle Start = A->getStart();
+    const SCEV* Start = A->getStart();
     if (!FactorOutConstant(Start, Remainder, Factor, SE))
       return false;
     S = SE.getAddRecExpr(Start, Step, A->getLoop());
@@ -233,14 +233,14 @@ static bool FactorOutConstant(SCEVHandle &S,
 /// loop-invariant portions of expressions, after considering what
 /// can be folded using target addressing modes.
 ///
-Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
-                                    const SCEVHandle *op_end,
+Value *SCEVExpander::expandAddToGEP(const SCEV* const *op_begin,
+                                    const SCEV* const *op_end,
                                     const PointerType *PTy,
                                     const Type *Ty,
                                     Value *V) {
   const Type *ElTy = PTy->getElementType();
   SmallVector<Value *, 4> GepIndices;
-  SmallVector<SCEVHandle, 8> Ops(op_begin, op_end);
+  SmallVector<const SCEV*, 8> Ops(op_begin, op_end);
   bool AnyNonZeroIndices = false;
 
   // Decend down the pointer's type and attempt to convert the other
@@ -251,14 +251,14 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
   for (;;) {
     APInt ElSize = APInt(SE.getTypeSizeInBits(Ty),
                          ElTy->isSized() ?  SE.TD->getTypeAllocSize(ElTy) : 0);
-    SmallVector<SCEVHandle, 8> NewOps;
-    SmallVector<SCEVHandle, 8> ScaledOps;
+    SmallVector<const SCEV*, 8> NewOps;
+    SmallVector<const SCEV*, 8> ScaledOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       // Split AddRecs up into parts as either of the parts may be usable
       // without the other.
       if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(Ops[i]))
         if (!A->getStart()->isZero()) {
-          SCEVHandle Start = A->getStart();
+          const SCEV* Start = A->getStart();
           Ops.push_back(SE.getAddRecExpr(SE.getIntegerSCEV(0, A->getType()),
                                          A->getStepRecurrence(SE),
                                          A->getLoop()));
@@ -267,8 +267,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEVHandle *op_begin,
         }
       // If the scale size is not 0, attempt to factor out a scale.
       if (ElSize != 0) {
-        SCEVHandle Op = Ops[i];
-        SCEVHandle Remainder = SE.getIntegerSCEV(0, Op->getType());
+        const SCEV* Op = Ops[i];
+        const SCEV* Remainder = SE.getIntegerSCEV(0, Op->getType());
         if (FactorOutConstant(Op, Remainder, ElSize, SE)) {
           ScaledOps.push_back(Op); // Op now has ElSize factored out.
           NewOps.push_back(Remainder);
@@ -364,7 +364,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   // comments on expandAddToGEP for details.
   if (SE.TD)
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
-      const SmallVectorImpl<SCEVHandle> &Ops = S->getOperands();
+      const SmallVectorImpl<const SCEV*> &Ops = S->getOperands();
       return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1],
                             PTy, Ty, V);
     }
@@ -420,7 +420,7 @@ Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
 /// Move parts of Base into Rest to leave Base with the minimal
 /// expression that provides a pointer operand suitable for a
 /// GEP expansion.
-static void ExposePointerBase(SCEVHandle &Base, SCEVHandle &Rest,
+static void ExposePointerBase(const SCEV* &Base, const SCEV* &Rest,
                               ScalarEvolution &SE) {
   while (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(Base)) {
     Base = A->getStart();
@@ -431,7 +431,7 @@ static void ExposePointerBase(SCEVHandle &Base, SCEVHandle &Rest,
   }
   if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(Base)) {
     Base = A->getOperand(A->getNumOperands()-1);
-    SmallVector<SCEVHandle, 8> NewAddOps(A->op_begin(), A->op_end());
+    SmallVector<const SCEV*, 8> NewAddOps(A->op_begin(), A->op_end());
     NewAddOps.back() = Rest;
     Rest = SE.getAddExpr(NewAddOps);
     ExposePointerBase(Base, Rest, SE);
@@ -455,9 +455,9 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   if (CanonicalIV &&
       SE.getTypeSizeInBits(CanonicalIV->getType()) >
       SE.getTypeSizeInBits(Ty)) {
-    SCEVHandle Start = SE.getAnyExtendExpr(S->getStart(),
+    const SCEV* Start = SE.getAnyExtendExpr(S->getStart(),
                                            CanonicalIV->getType());
-    SCEVHandle Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
+    const SCEV* Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
                                           CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(Start, Step, S->getLoop()));
     BasicBlock::iterator SaveInsertPt = getInsertionPoint();
@@ -472,16 +472,16 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
   // {X,+,F} --> X + {0,+,F}
   if (!S->getStart()->isZero()) {
-    const SmallVectorImpl<SCEVHandle> &SOperands = S->getOperands();
-    SmallVector<SCEVHandle, 4> NewOps(SOperands.begin(), SOperands.end());
+    const SmallVectorImpl<const SCEV*> &SOperands = S->getOperands();
+    SmallVector<const SCEV*, 4> NewOps(SOperands.begin(), SOperands.end());
     NewOps[0] = SE.getIntegerSCEV(0, Ty);
-    SCEVHandle Rest = SE.getAddRecExpr(NewOps, L);
+    const SCEV* Rest = SE.getAddRecExpr(NewOps, L);
 
     // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
     // comments on expandAddToGEP for details.
     if (SE.TD) {
-      SCEVHandle Base = S->getStart();
-      SCEVHandle RestArray[1] = { Rest };
+      const SCEV* Base = S->getStart();
+      const SCEV* RestArray[1] = { Rest };
       // Dig into the expression to find the pointer base for a GEP.
       ExposePointerBase(Base, RestArray[0], SE);
       // If we found a pointer, expand the AddRec with a GEP.
@@ -581,19 +581,19 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   // folders, then expandCodeFor the closed form.  This allows the folders to
   // simplify the expression without having to build a bunch of special code
   // into this folder.
-  SCEVHandle IH = SE.getUnknown(I);   // Get I as a "symbolic" SCEV.
+  const SCEV* IH = SE.getUnknown(I);   // Get I as a "symbolic" SCEV.
 
   // Promote S up to the canonical IV type, if the cast is foldable.
-  SCEVHandle NewS = S;
-  SCEVHandle Ext = SE.getNoopOrAnyExtend(S, I->getType());
+  const SCEV* NewS = S;
+  const SCEV* Ext = SE.getNoopOrAnyExtend(S, I->getType());
   if (isa<SCEVAddRecExpr>(Ext))
     NewS = Ext;
 
-  SCEVHandle V = cast<SCEVAddRecExpr>(NewS)->evaluateAtIteration(IH, SE);
+  const SCEV* V = cast<SCEVAddRecExpr>(NewS)->evaluateAtIteration(IH, SE);
   //cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
   // Truncate the result down to the original type, if needed.
-  SCEVHandle T = SE.getTruncateOrNoop(V, Ty);
+  const SCEV* T = SE.getTruncateOrNoop(V, Ty);
   return expand(V);
 }
 
@@ -654,7 +654,7 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   return LHS;
 }
 
-Value *SCEVExpander::expandCodeFor(SCEVHandle SH, const Type *Ty) {
+Value *SCEVExpander::expandCodeFor(const SCEV* SH, const Type *Ty) {
   // Expand the code for this SCEV.
   Value *V = expand(SH);
   if (Ty) {
@@ -667,7 +667,7 @@ Value *SCEVExpander::expandCodeFor(SCEVHandle SH, const Type *Ty) {
 
 Value *SCEVExpander::expand(const SCEV *S) {
   // Check to see if we already expanded this.
-  std::map<SCEVHandle, AssertingVH<Value> >::iterator I =
+  std::map<const SCEV*, AssertingVH<Value> >::iterator I =
     InsertedExpressions.find(S);
   if (I != InsertedExpressions.end())
     return I->second;
@@ -685,7 +685,7 @@ Value *
 SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
                                                     const Type *Ty) {
   assert(Ty->isInteger() && "Can only insert integer induction variables!");
-  SCEVHandle H = SE.getAddRecExpr(SE.getIntegerSCEV(0, Ty),
+  const SCEV* H = SE.getAddRecExpr(SE.getIntegerSCEV(0, Ty),
                                   SE.getIntegerSCEV(1, Ty), L);
   return expand(H);
 }

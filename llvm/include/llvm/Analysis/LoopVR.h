@@ -78,9 +78,9 @@ public:
 private:
   ConstantRange compute(Value *V);
 
-  ConstantRange getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE);
+  ConstantRange getRange(const SCEV* S, Loop *L, ScalarEvolution &SE);
 
-  ConstantRange getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE);
+  ConstantRange getRange(const SCEV* S, const SCEV* T, ScalarEvolution &SE);
 
   std::map<Value *, ConstantRange *> Map;
 };

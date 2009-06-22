@@ -26,8 +26,8 @@ char LoopVR::ID = 0;
 static RegisterPass<LoopVR> X("loopvr", "Loop Value Ranges", false, true);
 
 /// getRange - determine the range for a particular SCEV within a given Loop
-ConstantRange LoopVR::getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE) {
-  SCEVHandle T = SE.getBackedgeTakenCount(L);
+ConstantRange LoopVR::getRange(const SCEV* S, Loop *L, ScalarEvolution &SE) {
+  const SCEV* T = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(T))
     return ConstantRange(cast<IntegerType>(S->getType())->getBitWidth(), true);
 
@@ -36,7 +36,7 @@ ConstantRange LoopVR::getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE) {
 }
 
 /// getRange - determine the range for a particular SCEV with a given trip count
-ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
+ConstantRange LoopVR::getRange(const SCEV* S, const SCEV* T, ScalarEvolution &SE){
 
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
     return ConstantRange(C->getValue()->getValue());
@@ -182,8 +182,8 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
     if (!Trip) return FullSet;
 
     if (AddRec->isAffine()) {
-      SCEVHandle StartHandle = AddRec->getStart();
-      SCEVHandle StepHandle = AddRec->getOperand(1);
+      const SCEV* StartHandle = AddRec->getStart();
+      const SCEV* StepHandle = AddRec->getOperand(1);
 
       const SCEVConstant *Step = dyn_cast<SCEVConstant>(StepHandle);
       if (!Step) return FullSet;
@@ -194,7 +194,7 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
       if ((TripExt * StepExt).ugt(APInt::getLowBitsSet(ExWidth, ExWidth >> 1)))
         return FullSet;
 
-      SCEVHandle EndHandle = SE.getAddExpr(StartHandle,
+      const SCEV* EndHandle = SE.getAddExpr(StartHandle,
                                            SE.getMulExpr(T, StepHandle));
       const SCEVConstant *Start = dyn_cast<SCEVConstant>(StartHandle);
       const SCEVConstant *End = dyn_cast<SCEVConstant>(EndHandle);
@@ -254,7 +254,7 @@ ConstantRange LoopVR::compute(Value *V) {
 
   ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
 
-  SCEVHandle S = SE.getSCEV(I);
+  const SCEV* S = SE.getSCEV(I);
   if (isa<SCEVUnknown>(S) || isa<SCEVCouldNotCompute>(S))
     return ConstantRange(cast<IntegerType>(V->getType())->getBitWidth(), false);
 

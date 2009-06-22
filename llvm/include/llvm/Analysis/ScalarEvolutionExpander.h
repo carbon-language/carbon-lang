@@ -28,7 +28,7 @@ namespace llvm {
   /// memory.
   struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
-    std::map<SCEVHandle, AssertingVH<Value> > InsertedExpressions;
+    std::map<const SCEV*, AssertingVH<Value> > InsertedExpressions;
     std::set<Value*> InsertedValues;
 
     BasicBlock::iterator InsertPt;
@@ -77,12 +77,12 @@ namespace llvm {
     /// expression into the program.  The inserted code is inserted into the
     /// SCEVExpander's current insertion point. If a type is specified, the
     /// result will be expanded to have that type, with a cast if necessary.
-    Value *expandCodeFor(SCEVHandle SH, const Type *Ty = 0);
+    Value *expandCodeFor(const SCEV* SH, const Type *Ty = 0);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(SCEVHandle SH, const Type *Ty,
+    Value *expandCodeFor(const SCEV* SH, const Type *Ty,
                          BasicBlock::iterator IP) {
       setInsertionPoint(IP);
       return expandCodeFor(SH, Ty);
@@ -105,7 +105,8 @@ namespace llvm {
   private:
     /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
     /// instead of using ptrtoint+arithmetic+inttoptr.
-    Value *expandAddToGEP(const SCEVHandle *op_begin, const SCEVHandle *op_end,
+    Value *expandAddToGEP(const SCEV* const *op_begin,
+                          const SCEV* const *op_end,
                           const PointerType *PTy, const Type *Ty, Value *V);
 
     Value *expand(const SCEV *S);
