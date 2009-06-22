@@ -59,6 +59,8 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
     return false;
   case ARM::FCPYS:
   case ARM::FCPYD:
+  case ARM::VMOVD:
+  case ARM::VMOVQ:
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     return true;
@@ -528,6 +530,8 @@ bool ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   else if (DestRC == ARM::DPRRegisterClass)
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
                    .addReg(SrcReg));
+  else if (DestRC == ARM::QPRRegisterClass)
+    BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
   else
     return false;
   
@@ -844,6 +848,10 @@ canFoldMemoryOperand(const MachineInstr *MI,
   case ARM::FCPYS:
   case ARM::FCPYD:
     return true;
+
+  case ARM::VMOVD:
+  case ARM::VMOVQ:
+    return false; // FIXME
   }
 
   return false;

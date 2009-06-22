@@ -93,6 +93,10 @@ def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
 def HasV5T    : Predicate<"Subtarget->hasV5TOps()">;
 def HasV5TE   : Predicate<"Subtarget->hasV5TEOps()">;
 def HasV6     : Predicate<"Subtarget->hasV6Ops()">;
+def HasV7     : Predicate<"Subtarget->hasV7Ops()">;
+def HasVFP2   : Predicate<"Subtarget->hasVFP2()">;
+def HasVFP3   : Predicate<"Subtarget->hasVFP3()">;
+def HasNEON   : Predicate<"Subtarget->hasNEON()">;
 def IsThumb   : Predicate<"Subtarget->isThumb()">;
 def HasThumb2 : Predicate<"Subtarget->hasThumb2()">;
 def IsARM     : Predicate<"!Subtarget->isThumb()">;
@@ -1437,3 +1441,9 @@ include "ARMInstrThumb2.td"
 //
 
 include "ARMInstrVFP.td"
+
+//===----------------------------------------------------------------------===//
+// Advanced SIMD (NEON) Support
+//
+
+include "ARMInstrNEON.td"

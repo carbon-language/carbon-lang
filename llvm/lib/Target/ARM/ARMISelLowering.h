@@ -67,8 +67,63 @@ namespace llvm {
       EH_SJLJ_SETJMP,    // SjLj exception handling setjmp
       EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp
 
-      THREAD_POINTER
+      THREAD_POINTER,
+
+      VCEQ,         // Vector compare equal.
+      VCGE,         // Vector compare greater than or equal.
+      VCGEU,        // Vector compare unsigned greater than or equal.
+      VCGT,         // Vector compare greater than.
+      VCGTU,        // Vector compare unsigned greater than.
+      VTST,         // Vector test bits.
+
+      // Vector shift by immediate:
+      VSHL,         // ...left
+      VSHRs,        // ...right (signed)
+      VSHRu,        // ...right (unsigned)
+      VSHLLs,       // ...left long (signed)
+      VSHLLu,       // ...left long (unsigned)
+      VSHLLi,       // ...left long (with maximum shift count)
+      VSHRN,        // ...right narrow
+
+      // Vector rounding shift by immediate:
+      VRSHRs,       // ...right (signed)
+      VRSHRu,       // ...right (unsigned)
+      VRSHRN,       // ...right narrow
+
+      // Vector saturating shift by immediate:
+      VQSHLs,       // ...left (signed)
+      VQSHLu,       // ...left (unsigned)
+      VQSHLsu,      // ...left (signed to unsigned)
+      VQSHRNs,      // ...right narrow (signed)
+      VQSHRNu,      // ...right narrow (unsigned)
+      VQSHRNsu,     // ...right narrow (signed to unsigned)
+
+      // Vector saturating rounding shift by immediate:
+      VQRSHRNs,     // ...right narrow (signed)
+      VQRSHRNu,     // ...right narrow (unsigned)
+      VQRSHRNsu,    // ...right narrow (signed to unsigned)
+
+      // Vector shift and insert:
+      VSLI,         // ...left
+      VSRI,         // ...right
+
+      // Vector get lane (VMOV scalar to ARM core register)
+      // (These are used for 8- and 16-bit element types only.)
+      VGETLANEu,    // zero-extend vector extract element
+      VGETLANEs,    // sign-extend vector extract element
+
+      // Vector duplicate lane (128-bit result only; 64-bit is a shuffle)
+      VDUPLANEQ     // splat a lane from a 64-bit vector to a 128-bit vector
     };
+  }
+
+  /// Define some predicates that are used for node matching.
+  namespace ARM {
+    /// getVMOVImm - If this is a build_vector of constants which can be
+    /// formed by using a VMOV instruction of the specified element size,
+    /// return the constant being splatted.  The ByteSize field indicates the
+    /// number of bytes of each element [1248].
+    SDValue getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
   }
 
   //===--------------------------------------------------------------------===//
@@ -150,6 +205,21 @@ namespace llvm {
     /// ARMPCLabelIndex - Keep track the number of ARM PC labels created.
     ///
     unsigned ARMPCLabelIndex;
+
+    void addTypeForNEON(MVT VT, MVT PromotedLdStVT, MVT PromotedBitwiseVT);
+    void addDRTypeForNEON(MVT VT);
+    void addQRTypeForNEON(MVT VT);
+
+    typedef SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPassVector;
+    void PassF64ArgInRegs(CallSDNode *TheCall, SelectionDAG &DAG,
+                          SDValue Chain, SDValue &Arg,
+                          RegsToPassVector &RegsToPass,
+                          CCValAssign &VA, CCValAssign &NextVA,
+                          SDValue &StackPtr,
+                          SmallVector<SDValue, 8> &MemOpChains,
+                          ISD::ArgFlagsTy Flags);
+    SDValue GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
+                                 SDValue &Root, SelectionDAG &DAG, DebugLoc dl);
 
     CCAssignFn *CCAssignFnForNode(unsigned CC, bool Return) const;
     SDValue LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,

@@ -114,6 +114,12 @@ namespace ARMII {
     // Thumb format
     ThumbFrm      = 23 << FormShift,
 
+    // NEON format
+    NEONFrm       = 24 << FormShift,
+    NEONGetLnFrm  = 25 << FormShift,
+    NEONSetLnFrm  = 26 << FormShift,
+    NEONDupFrm    = 27 << FormShift,
+
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.

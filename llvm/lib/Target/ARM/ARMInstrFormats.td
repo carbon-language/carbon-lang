@@ -49,6 +49,11 @@ def VFPMiscFrm    : Format<22>;
 
 def ThumbFrm      : Format<23>;
 
+def NEONFrm       : Format<24>;
+def NEONGetLnFrm  : Format<25>;
+def NEONSetLnFrm  : Format<26>;
+def NEONDupFrm    : Format<27>;
+
 // Misc flag for data processing instructions that indicates whether
 // the instruction has a Rn register operand.
 class UnaryDP  { bit isUnaryDataProc = 1; }
@@ -737,6 +742,14 @@ class TIx2<dag outs, dag ins, string asm, list<dag> pattern>
 class TJTI<dag outs, dag ins, string asm, list<dag> pattern>
   : ThumbI<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
+// ThumbPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
+class ThumbPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb];
+}
+
+class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb, HasV5T];
+}
 
 //===----------------------------------------------------------------------===//
 
@@ -857,12 +870,102 @@ class AVConv5I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops, string opc,
 
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// ARM NEON Instruction templates.
+//
 
-// ThumbPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
-class ThumbPat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb];
+class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, string asm,
+            string cstr, list<dag> pattern>
+  : InstARM<am, Size4Bytes, im, NEONFrm, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
+  let AsmString = asm;
+  let Pattern = pattern;
+  list<Predicate> Predicates = [HasNEON];
 }
 
-class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb, HasV5T];
+class NI<dag oops, dag iops, string asm, list<dag> pattern>
+  : NeonI<oops, iops, AddrModeNone, IndexModeNone, asm, "", pattern> {
 }
+
+class NDataI<dag oops, dag iops, string asm, string cstr, list<dag> pattern>
+  : NeonI<oops, iops, AddrModeNone, IndexModeNone, asm, cstr, pattern> {
+  let Inst{31-25} = 0b1111001;
+}
+
+// NEON "one register and a modified immediate" format.
+class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
+               bit op5, bit op4,
+               dag oops, dag iops, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, asm, cstr, pattern> {
+  let Inst{23} = op23;
+  let Inst{21-19} = op21_19;
+  let Inst{11-8} = op11_8;
+  let Inst{7} = op7;
+  let Inst{6} = op6;
+  let Inst{5} = op5;
+  let Inst{4} = op4;
+}
+
+// NEON 2 vector register format.
+class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
+          bits<5> op11_7, bit op6, bit op4,
+          dag oops, dag iops, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, asm, cstr, pattern> {
+  let Inst{24-23} = op24_23;
+  let Inst{21-20} = op21_20;
+  let Inst{19-18} = op19_18;
+  let Inst{17-16} = op17_16;
+  let Inst{11-7} = op11_7;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
+}
+
+// NEON 2 vector register with immediate.
+class N2VImm<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
+             bit op6, bit op4,
+             dag oops, dag iops, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, asm, cstr, pattern> {
+  let Inst{24} = op24;
+  let Inst{23} = op23;
+  let Inst{21-16} = op21_16;
+  let Inst{11-8} = op11_8;
+  let Inst{7} = op7;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
+}
+
+// NEON 3 vector register format.
+class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
+          dag oops, dag iops, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, asm, cstr, pattern> {
+  let Inst{24} = op24;
+  let Inst{23} = op23;
+  let Inst{21-20} = op21_20;
+  let Inst{11-8} = op11_8;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
+}
+
+// NEON VMOVs between scalar and core registers.
+class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
+               dag oops, dag iops, Format f, string opc, string asm,
+               list<dag> pattern>
+  : AI<oops, iops, f, opc, asm, pattern> {
+  let Inst{27-20} = opcod1;
+  let Inst{11-8} = opcod2;
+  let Inst{6-5} = opcod3;
+  let Inst{4} = 1;
+  list<Predicate> Predicates = [HasNEON];
+}
+class NVGetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
+                dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONGetLnFrm, opc, asm,
+             pattern>;
+class NVSetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
+                dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONSetLnFrm, opc, asm,
+             pattern>;
+class NVDup<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
+            dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONDupFrm, opc, asm, pattern>;

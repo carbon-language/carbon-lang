@@ -24,19 +24,29 @@ def CC_ARM_APCS : CallingConv<[
 
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
-  // f64 is passed in pairs of GPRs, possibly split onto the stack
-  CCIfType<[f64], CCCustom<"CC_ARM_APCS_Custom_f64">>,
+  // Handle all vector types as either f64 or v2f64.
+  CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
+
+  // f64 and v2f64 are passed in adjacent GPRs, possibly split onto the stack
+  CCIfType<[f64, v2f64], CCCustom<"CC_ARM_APCS_Custom_f64">>,
 
   CCIfType<[f32], CCBitConvertToType<i32>>,
   CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
 
   CCIfType<[i32], CCAssignToStack<4, 4>>,
-  CCIfType<[f64], CCAssignToStack<8, 4>>
+  CCIfType<[f64], CCAssignToStack<8, 4>>,
+  CCIfType<[v2f64], CCAssignToStack<16, 4>>
 ]>;
 
 def RetCC_ARM_APCS : CallingConv<[
   CCIfType<[f32], CCBitConvertToType<i32>>,
-  CCIfType<[f64], CCCustom<"RetCC_ARM_APCS_Custom_f64">>,
+
+  // Handle all vector types as either f64 or v2f64.
+  CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
+
+  CCIfType<[f64, v2f64], CCCustom<"RetCC_ARM_APCS_Custom_f64">>,
 
   CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
   CCIfType<[i64], CCAssignToRegWithShadow<[R0, R2], [R1, R3]>>
@@ -59,7 +69,8 @@ def CC_ARM_AAPCS_Common : CallingConv<[
                        CCAssignToReg<[R0, R1, R2, R3]>>>,
 
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
-  CCIfType<[f64], CCAssignToStack<8, 8>>
+  CCIfType<[f64], CCAssignToStack<8, 8>>,
+  CCIfType<[v2f64], CCAssignToStack<16, 8>>
 ]>;
 
 def RetCC_ARM_AAPCS_Common : CallingConv<[
@@ -72,13 +83,21 @@ def RetCC_ARM_AAPCS_Common : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_ARM_AAPCS : CallingConv<[
-  CCIfType<[f64], CCCustom<"CC_ARM_AAPCS_Custom_f64">>,
+  // Handle all vector types as either f64 or v2f64.
+  CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
+
+  CCIfType<[f64, v2f64], CCCustom<"CC_ARM_AAPCS_Custom_f64">>,
   CCIfType<[f32], CCBitConvertToType<i32>>,
   CCDelegateTo<CC_ARM_AAPCS_Common>
 ]>;
 
 def RetCC_ARM_AAPCS : CallingConv<[
-  CCIfType<[f64], CCCustom<"RetCC_ARM_AAPCS_Custom_f64">>,
+  // Handle all vector types as either f64 or v2f64.
+  CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
+
+  CCIfType<[f64, v2f64], CCCustom<"RetCC_ARM_AAPCS_Custom_f64">>,
   CCIfType<[f32], CCBitConvertToType<i32>>,
   CCDelegateTo<RetCC_ARM_AAPCS_Common>
 ]>;
@@ -88,6 +107,10 @@ def RetCC_ARM_AAPCS : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_ARM_AAPCS_VFP : CallingConv<[
+  // Handle all vector types as either f64 or v2f64.
+  CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
+
   CCIfType<[f64], CCAssignToReg<[D0, D1, D2, D3, D4, D5, D6, D7]>>,
   CCIfType<[f32], CCAssignToReg<[S0, S1, S2, S3, S4, S5, S6, S7, S8,
                                  S9, S10, S11, S12, S13, S14, S15]>>,
@@ -95,6 +118,10 @@ def CC_ARM_AAPCS_VFP : CallingConv<[
 ]>;
 
 def RetCC_ARM_AAPCS_VFP : CallingConv<[
+  // Handle all vector types as either f64 or v2f64.
+  CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
+
   CCIfType<[f64], CCAssignToReg<[D0, D1, D2, D3, D4, D5, D6, D7]>>,
   CCIfType<[f32], CCAssignToReg<[S0, S1, S2, S3, S4, S5, S6, S7, S8,
                                  S9, S10, S11, S12, S13, S14, S15]>>,

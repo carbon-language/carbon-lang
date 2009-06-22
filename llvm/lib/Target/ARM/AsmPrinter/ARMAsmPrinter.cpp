@@ -285,12 +285,22 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                  const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
-  case MachineOperand::MO_Register:
-    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-      O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
-    else
+  case MachineOperand::MO_Register: {
+    unsigned Reg = MO.getReg();
+    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      if (Modifier && strcmp(Modifier, "dregpair") == 0) {
+        unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
+        unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
+        O << '{'
+          << TRI->getAsmName(DRegLo) << "-" << TRI->getAsmName(DRegHi)
+          << '}';
+      } else {
+        O << TRI->getAsmName(Reg);
+      }
+    } else
       assert(0 && "not implemented");
     break;
+  }
   case MachineOperand::MO_Immediate: {
     if (!Modifier || strcmp(Modifier, "no_hash") != 0)
       O << "#";

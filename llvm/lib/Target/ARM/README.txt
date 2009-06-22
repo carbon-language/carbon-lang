@@ -552,3 +552,23 @@ __Z11no_overflowjj:
 
 //===---------------------------------------------------------------------===//
 
+Some of the NEON intrinsics may be appropriate for more general use, either
+as target-independent intrinsics or perhaps elsewhere in the ARM backend.
+Some of them may also be lowered to target-independent SDNodes, and perhaps
+some new SDNodes could be added.
+
+For example, maximum, minimum, and absolute value operations are well-defined
+and standard operations, both for vector and scalar types.
+
+The current NEON-specific intrinsics for count leading zeros and count one
+bits could perhaps be replaced by the target-independent ctlz and ctpop
+intrinsics.  It may also make sense to add a target-independent "ctls"
+intrinsic for "count leading sign bits".  Likewise, the backend could use
+the target-independent SDNodes for these operations.
+
+ARMv6 has scalar saturating and halving adds and subtracts.  The same
+intrinsics could possibly be used for both NEON's vector implementations of
+those operations and the ARMv6 scalar versions.
+
+//===---------------------------------------------------------------------===//
+

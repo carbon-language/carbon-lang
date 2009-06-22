@@ -116,6 +116,7 @@ def llvm_v2i64_ty      : LLVMType<v2i64>;    //  2 x i64
 def llvm_v2i32_ty      : LLVMType<v2i32>;    //  2 x i32
 def llvm_v1i64_ty      : LLVMType<v1i64>;    //  1 x i64
 def llvm_v4i32_ty      : LLVMType<v4i32>;    //  4 x i32
+def llvm_v2f32_ty      : LLVMType<v2f32>;    //  2 x float
 def llvm_v4f32_ty      : LLVMType<v4f32>;    //  4 x float
 def llvm_v2f64_ty      : LLVMType<v2f64>;    //  2 x double
 
