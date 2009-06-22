@@ -739,6 +739,9 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
 
     // After updating the operand, check if the machine instruction has
     // become a copy. If so, update its val# information.
+    if (JoinedCopies.count(UseMI))
+      continue;
+
     const TargetInstrDesc &TID = UseMI->getDesc();
     unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
     if (TID.getNumDefs() == 1 && TID.getNumOperands() > 2 &&
@@ -749,9 +752,10 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
          allocatableRegs_[CopyDstReg])) {
       LiveInterval &LI = li_->getInterval(CopyDstReg);
       unsigned DefIdx = li_->getDefIndex(li_->getInstructionIndex(UseMI));
-      const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx);
-      if (DLR->valno->def == DefIdx)
-        DLR->valno->copy = UseMI;
+      if (const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx)) {
+        if (DLR->valno->def == DefIdx)
+          DLR->valno->copy = UseMI;
+      }
     }
   }
 }
