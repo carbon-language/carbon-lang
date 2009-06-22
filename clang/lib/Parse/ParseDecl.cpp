@@ -273,7 +273,7 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
 /// [C++]   template-declaration
 /// [C++]   namespace-definition
 /// [C++]   using-directive
-/// [C++]   using-declaration [TODO]
+/// [C++]   using-declaration
 /// [C++0x] static_assert-declaration
 ///         others... [FIXME]
 ///

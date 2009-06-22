@@ -89,6 +89,21 @@ public:
   iterator end() { return Last; }
   const_iterator end() const { return Last; }
   
+  bool operator==(const dynarray &other) const {
+    if (size() != other.size())
+      return false;
+    
+    for (unsigned I = 0, N = size(); I != N; ++I)
+      if ((*this)[I] != other[I])
+        return false;
+    
+    return true;
+  }
+  
+  bool operator!=(const dynarray &other) const {
+    return !(*this == other);
+  }
+  
 public:
   T* Start, *Last, *End;
 };
@@ -99,11 +114,6 @@ struct Point {
 
   float x, y, z;
 };
-
-// FIXME: remove these when we have implicit instantiation for member
-// functions of class templates.
-template class dynarray<int>;
-template class dynarray<Point>;
 
 int main() {
   dynarray<int> di;
@@ -146,5 +156,13 @@ int main() {
        I != IEnd; ++I)
     assert(*I == I - di4.begin());
 
+  assert(di4 == di);
+  di4[3] = 17;
+  assert(di4 != di);
+  
+  dynarray<Point> dp;
+  dp.push_back(Point());
+  assert(dp.size() == 1);
+  
   return 0;
 }

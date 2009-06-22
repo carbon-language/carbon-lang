@@ -597,6 +597,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Function->isInvalidDecl())
     return;
 
+  assert(!Function->getBody(Context) && "Already instantiated!");
+  
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl 
     = Function->getInstantiatedFromMemberFunction();
@@ -775,4 +777,19 @@ NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
     }
 
   return D;
+}
+
+/// \brief Performs template instantiation for all implicit template 
+/// instantiations we have seen until this point.
+void Sema::PerformPendingImplicitInstantiations() {
+  while (!PendingImplicitInstantiations.empty()) {
+    PendingImplicitInstantiation Inst = PendingImplicitInstantiations.front();
+    PendingImplicitInstantiations.pop();
+    
+    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first))
+      if (!Function->getBody(Context))
+        InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function);
+    
+    // FIXME: instantiation static member variables
+  }
 }

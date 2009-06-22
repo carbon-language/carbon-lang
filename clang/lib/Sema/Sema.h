@@ -31,6 +31,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include <list>
 #include <string>
+#include <queue>
 #include <vector>
 
 namespace llvm {
@@ -2504,6 +2505,22 @@ public:
   /// variables.
   LocalInstantiationScope *CurrentInstantiationScope;
 
+  /// \brief An entity for which implicit template instantiation is required.
+  ///
+  /// The source location associated with the declaration is the first place in 
+  /// the source code where the declaration was "used". It is not necessarily
+  /// the point of instantiation (which will be either before or after the 
+  /// namespace-scope declaration that triggered this implicit instantiation),
+  /// However, it is the location that diagnostics should generally refer to,
+  /// because users will need to know what code triggered the instantiation.
+  typedef std::pair<ValueDecl *, SourceLocation> PendingImplicitInstantiation;
+  
+  /// \brief The queue of implicit template instantiations that are required
+  /// but have not yet been performed.
+  std::queue<PendingImplicitInstantiation> PendingImplicitInstantiations;
+
+  void PerformPendingImplicitInstantiations();
+  
   QualType InstantiateType(QualType T, const TemplateArgumentList &TemplateArgs,
                            SourceLocation Loc, DeclarationName Entity);
   
@@ -2559,7 +2576,7 @@ public:
   void InstantiateVariableDefinition(VarDecl *Var);
 
   NamedDecl *InstantiateCurrentDeclRef(NamedDecl *D);
-  
+    
   // Simple function for cloning expressions.
   template<typename T> 
   OwningExprResult Clone(T *E) {

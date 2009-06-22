@@ -1921,6 +1921,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         Expr **Exprs, unsigned NumExprs) {
   Expr *Temp = CXXConstructExpr::Create(Context, DeclInitType, Constructor, 
                                         false, Exprs, NumExprs);
+  MarkDeclarationReferenced(VD->getLocation(), Constructor);
   VD->setInit(Context, Temp);
 }
 

@@ -235,6 +235,18 @@ void Sema::DeleteStmt(StmtTy *S) {
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
 void Sema::ActOnEndOfTranslationUnit() {
+  // C++: Perform implicit template instantiations.
+  //
+  // FIXME: When we perform these implicit instantiations, we do not carefully
+  // keep track of the point of instantiation (C++ [temp.point]). This means
+  // that name lookup that occurs within the template instantiation will
+  // always happen at the end of the translation unit, so it will find
+  // some names that should not be found. Although this is common behavior 
+  // for C++ compilers, it is technically wrong. In the future, we either need
+  // to be able to filter the results of name lookup or we need to perform
+  // template instantiations earlier.
+  PerformPendingImplicitInstantiations();
+  
   if (!CompleteTranslationUnit)
     return;
 

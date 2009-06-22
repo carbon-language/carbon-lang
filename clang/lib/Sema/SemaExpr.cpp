@@ -2134,25 +2134,32 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         MemberType = MemberType.getQualifiedType(combinedQualifiers);
       }
 
+      MarkDeclarationReferenced(MemberLoc, FD);
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
                                             MemberLoc, MemberType));
     }
     
-    if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl))
+    if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
+      MarkDeclarationReferenced(MemberLoc, MemberDecl);
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                             Var, MemberLoc,
                                          Var->getType().getNonReferenceType()));
-    if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl))
+    }
+    if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl)) {
+      MarkDeclarationReferenced(MemberLoc, MemberDecl);
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                             MemberFn, MemberLoc,
                                             MemberFn->getType()));
+    }
     if (OverloadedFunctionDecl *Ovl
           = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl,
                                             MemberLoc, Context.OverloadTy));
-    if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl))
+    if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
+      MarkDeclarationReferenced(MemberLoc, MemberDecl);
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                             Enum, MemberLoc, Enum->getType()));
+    }
     if (isa<TypeDecl>(MemberDecl))
       return ExprError(Diag(MemberLoc,diag::err_typecheck_member_reference_type)
         << DeclarationName(&Member) << int(OpKind == tok::arrow));
@@ -5475,6 +5482,9 @@ Sema::PopExpressionEvaluationContext(ExpressionEvaluationContext OldContext,
 void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   assert(D && "No declaration?");
   
+  if (D->isUsed())
+    return;
+  
   // Mark a parameter declaration "used", regardless of whether we're in a
   // template or not.
   if (isa<ParmVarDecl>(D))
@@ -5512,16 +5522,22 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     // FIXME: more checking for other implicits go here.
     else
       Constructor->setUsed(true);
-    return;
   } 
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-    // FIXME: implicit template instantiation
+    // Implicit instantiation of function templates
+    if (!Function->getBody(Context)) {
+      if (Function->getInstantiatedFromMemberFunction())
+        PendingImplicitInstantiations.push(std::make_pair(Function, Loc));
+
+      // FIXME: check for function template specializations.
+    }
+    
+    
     // FIXME: keep track of references to static functions
-    (void)Function;
     Function->setUsed(true);
     return;
-  } 
+  }
   
   if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
     (void)Var;
