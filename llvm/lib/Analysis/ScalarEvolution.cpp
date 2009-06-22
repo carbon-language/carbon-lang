@@ -2902,10 +2902,8 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
       if (L->contains(TBB)) {
         // Both conditions must be true for the loop to continue executing.
         // Choose the less conservative count.
-        if (BTI0.Exact == CouldNotCompute)
-          BECount = BTI1.Exact;
-        else if (BTI1.Exact == CouldNotCompute)
-          BECount = BTI0.Exact;
+        if (BTI0.Exact == CouldNotCompute || BTI1.Exact == CouldNotCompute)
+          BECount = CouldNotCompute;
         else
           BECount = getUMinFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
         if (BTI0.Max == CouldNotCompute)
@@ -2936,10 +2934,8 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
       if (L->contains(FBB)) {
         // Both conditions must be false for the loop to continue executing.
         // Choose the less conservative count.
-        if (BTI0.Exact == CouldNotCompute)
-          BECount = BTI1.Exact;
-        else if (BTI1.Exact == CouldNotCompute)
-          BECount = BTI0.Exact;
+        if (BTI0.Exact == CouldNotCompute || BTI1.Exact == CouldNotCompute)
+          BECount = CouldNotCompute;
         else
           BECount = getUMinFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
         if (BTI0.Max == CouldNotCompute)
