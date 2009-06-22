@@ -171,15 +171,9 @@ bool SCEVCouldNotCompute::classof(const SCEV *S) {
 // SCEVConstants - Only allow the creation of one SCEVConstant for any
 // particular value.  Don't use a SCEVHandle here, or else the object will
 // never be deleted!
-static ManagedStatic<std::map<ConstantInt*, SCEVConstant*> > SCEVConstants;
-
-
-SCEVConstant::~SCEVConstant() {
-  SCEVConstants->erase(V);
-}
 
 SCEVHandle ScalarEvolution::getConstant(ConstantInt *V) {
-  SCEVConstant *&R = (*SCEVConstants)[V];
+  SCEVConstant *&R = SCEVConstants[V];
   if (R == 0) R = new SCEVConstant(V, this);
   return R;
 }
@@ -213,8 +207,6 @@ bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
 // SCEVTruncates - Only allow the creation of one SCEVTruncateExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will
 // never be deleted!
-static ManagedStatic<std::map<std::pair<const SCEV*, const Type*>, 
-                     SCEVTruncateExpr*> > SCEVTruncates;
 
 SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty,
                                    const ScalarEvolution* p)
@@ -224,9 +216,6 @@ SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty,
          "Cannot truncate non-integer value!");
 }
 
-SCEVTruncateExpr::~SCEVTruncateExpr() {
-  SCEVTruncates->erase(std::make_pair(Op, Ty));
-}
 
 void SCEVTruncateExpr::print(raw_ostream &OS) const {
   OS << "(trunc " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
@@ -235,8 +224,6 @@ void SCEVTruncateExpr::print(raw_ostream &OS) const {
 // SCEVZeroExtends - Only allow the creation of one SCEVZeroExtendExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static ManagedStatic<std::map<std::pair<const SCEV*, const Type*>,
-                     SCEVZeroExtendExpr*> > SCEVZeroExtends;
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty,
                                        const ScalarEvolution* p)
@@ -246,10 +233,6 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty,
          "Cannot zero extend non-integer value!");
 }
 
-SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
-  SCEVZeroExtends->erase(std::make_pair(Op, Ty));
-}
-
 void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
   OS << "(zext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
@@ -257,8 +240,6 @@ void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
 // SCEVSignExtends - Only allow the creation of one SCEVSignExtendExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static ManagedStatic<std::map<std::pair<const SCEV*, const Type*>,
-                     SCEVSignExtendExpr*> > SCEVSignExtends;
 
 SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty,
                                        const ScalarEvolution* p)
@@ -268,10 +249,6 @@ SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty,
          "Cannot sign extend non-integer value!");
 }
 
-SCEVSignExtendExpr::~SCEVSignExtendExpr() {
-  SCEVSignExtends->erase(std::make_pair(Op, Ty));
-}
-
 void SCEVSignExtendExpr::print(raw_ostream &OS) const {
   OS << "(sext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
@@ -279,13 +256,6 @@ void SCEVSignExtendExpr::print(raw_ostream &OS) const {
 // SCEVCommExprs - Only allow the creation of one SCEVCommutativeExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static ManagedStatic<std::map<std::pair<unsigned, std::vector<const SCEV*> >,
-                     SCEVCommutativeExpr*> > SCEVCommExprs;
-
-SCEVCommutativeExpr::~SCEVCommutativeExpr() {
-  std::vector<const SCEV*> SCEVOps(Operands.begin(), Operands.end());
-  SCEVCommExprs->erase(std::make_pair(getSCEVType(), SCEVOps));
-}
 
 void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   assert(Operands.size() > 1 && "This plus expr shouldn't exist!");
@@ -340,12 +310,6 @@ bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
 // SCEVUDivs - Only allow the creation of one SCEVUDivExpr for any particular
 // input.  Don't use a SCEVHandle here, or else the object will never be
 // deleted!
-static ManagedStatic<std::map<std::pair<const SCEV*, const SCEV*>,
-                     SCEVUDivExpr*> > SCEVUDivs;
-
-SCEVUDivExpr::~SCEVUDivExpr() {
-  SCEVUDivs->erase(std::make_pair(LHS, RHS));
-}
 
 bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
@@ -367,14 +331,6 @@ const Type *SCEVUDivExpr::getType() const {
 // SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static ManagedStatic<std::map<std::pair<const Loop *,
-                                        std::vector<const SCEV*> >,
-                     SCEVAddRecExpr*> > SCEVAddRecExprs;
-
-SCEVAddRecExpr::~SCEVAddRecExpr() {
-  std::vector<const SCEV*> SCEVOps(Operands.begin(), Operands.end());
-  SCEVAddRecExprs->erase(std::make_pair(L, SCEVOps));
-}
 
 SCEVHandle SCEVAddRecExpr::
 replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -420,9 +376,6 @@ void SCEVAddRecExpr::print(raw_ostream &OS) const {
 // SCEVUnknowns - Only allow the creation of one SCEVUnknown for any particular
 // value.  Don't use a SCEVHandle here, or else the object will never be
 // deleted!
-static ManagedStatic<std::map<Value*, SCEVUnknown*> > SCEVUnknowns;
-
-SCEVUnknown::~SCEVUnknown() { SCEVUnknowns->erase(V); }
 
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // All non-instruction values are loop invariant.  All instructions are loop
@@ -791,7 +744,7 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op,
     return getAddRecExpr(Operands, AddRec->getLoop());
   }
 
-  SCEVTruncateExpr *&Result = (*SCEVTruncates)[std::make_pair(Op, Ty)];
+  SCEVTruncateExpr *&Result = SCEVTruncates[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVTruncateExpr(Op, Ty, this);
   return Result;
 }
@@ -879,7 +832,7 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op,
       }
     }
 
-  SCEVZeroExtendExpr *&Result = (*SCEVZeroExtends)[std::make_pair(Op, Ty)];
+  SCEVZeroExtendExpr *&Result = SCEVZeroExtends[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty, this);
   return Result;
 }
@@ -951,7 +904,7 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op,
       }
     }
 
-  SCEVSignExtendExpr *&Result = (*SCEVSignExtends)[std::make_pair(Op, Ty)];
+  SCEVSignExtendExpr *&Result = SCEVSignExtends[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty, this);
   return Result;
 }
@@ -1412,7 +1365,7 @@ SCEVHandle ScalarEvolution::getAddExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   // Okay, it looks like we really DO need an add expr.  Check to see if we
   // already have one, otherwise create a new one.
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
-  SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scAddExpr,
+  SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scAddExpr,
                                                                  SCEVOps)];
   if (Result == 0) Result = new SCEVAddExpr(Ops, this);
   return Result;
@@ -1577,7 +1530,7 @@ SCEVHandle ScalarEvolution::getMulExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   // Okay, it looks like we really DO need an mul expr.  Check to see if we
   // already have one, otherwise create a new one.
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
-  SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scMulExpr,
+  SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scMulExpr,
                                                                  SCEVOps)];
   if (Result == 0)
     Result = new SCEVMulExpr(Ops, this);
@@ -1670,7 +1623,7 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
     }
   }
 
-  SCEVUDivExpr *&Result = (*SCEVUDivs)[std::make_pair(LHS, RHS)];
+  SCEVUDivExpr *&Result = SCEVUDivs[std::make_pair(LHS, RHS)];
   if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS, this);
   return Result;
 }
@@ -1724,7 +1677,7 @@ SCEVHandle ScalarEvolution::getAddRecExpr(SmallVectorImpl<SCEVHandle> &Operands,
   }
 
   std::vector<const SCEV*> SCEVOps(Operands.begin(), Operands.end());
-  SCEVAddRecExpr *&Result = (*SCEVAddRecExprs)[std::make_pair(L, SCEVOps)];
+  SCEVAddRecExpr *&Result = SCEVAddRecExprs[std::make_pair(L, SCEVOps)];
   if (Result == 0) Result = new SCEVAddRecExpr(Operands, L, this);
   return Result;
 }
@@ -1810,7 +1763,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   // Okay, it looks like we really DO need an smax expr.  Check to see if we
   // already have one, otherwise create a new one.
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
-  SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scSMaxExpr,
+  SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scSMaxExpr,
                                                                  SCEVOps)];
   if (Result == 0) Result = new SCEVSMaxExpr(Ops, this);
   return Result;
@@ -1897,7 +1850,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<SCEVHandle> &Ops) {
   // Okay, it looks like we really DO need a umax expr.  Check to see if we
   // already have one, otherwise create a new one.
   std::vector<const SCEV*> SCEVOps(Ops.begin(), Ops.end());
-  SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scUMaxExpr,
+  SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scUMaxExpr,
                                                                  SCEVOps)];
   if (Result == 0) Result = new SCEVUMaxExpr(Ops, this);
   return Result;
@@ -1920,7 +1873,7 @@ SCEVHandle ScalarEvolution::getUnknown(Value *V) {
     return getConstant(CI);
   if (isa<ConstantPointerNull>(V))
     return getIntegerSCEV(0, V->getType());
-  SCEVUnknown *&Result = (*SCEVUnknowns)[V];
+  SCEVUnknown *&Result = SCEVUnknowns[V];
   if (Result == 0) Result = new SCEVUnknown(V, this);
   return Result;
 }
@@ -4324,6 +4277,45 @@ void ScalarEvolution::releaseMemory() {
   BackedgeTakenCounts.clear();
   ConstantEvolutionLoopExitValue.clear();
   ValuesAtScopes.clear();
+  
+  for (std::map<ConstantInt*, SCEVConstant*>::iterator
+       I = SCEVConstants.begin(), E = SCEVConstants.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<std::pair<const SCEV*, const Type*>,
+       SCEVTruncateExpr*>::iterator I = SCEVTruncates.begin(),
+       E = SCEVTruncates.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<std::pair<const SCEV*, const Type*>,
+       SCEVZeroExtendExpr*>::iterator I = SCEVZeroExtends.begin(),
+       E = SCEVZeroExtends.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<std::pair<unsigned, std::vector<const SCEV*> >,
+       SCEVCommutativeExpr*>::iterator I = SCEVCommExprs.begin(),
+       E = SCEVCommExprs.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<std::pair<const SCEV*, const SCEV*>, SCEVUDivExpr*>::iterator
+       I = SCEVUDivs.begin(), E = SCEVUDivs.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<std::pair<const SCEV*, const Type*>,
+       SCEVSignExtendExpr*>::iterator I =  SCEVSignExtends.begin(),
+       E = SCEVSignExtends.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<std::pair<const Loop *, std::vector<const SCEV*> >,
+       SCEVAddRecExpr*>::iterator I = SCEVAddRecExprs.begin(),
+       E = SCEVAddRecExprs.end(); I != E; ++I)
+    delete I->second;
+  for (std::map<Value*, SCEVUnknown*>::iterator I = SCEVUnknowns.begin(),
+       E = SCEVUnknowns.end(); I != E; ++I)
+    delete I->second;
+  
+  SCEVConstants.clear();
+  SCEVTruncates.clear();
+  SCEVZeroExtends.clear();
+  SCEVCommExprs.clear();
+  SCEVUDivs.clear();
+  SCEVSignExtends.clear();
+  SCEVAddRecExprs.clear();
+  SCEVUnknowns.clear();
 }
 
 void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {

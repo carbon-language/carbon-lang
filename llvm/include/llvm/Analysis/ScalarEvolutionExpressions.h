@@ -38,8 +38,6 @@ namespace llvm {
     ConstantInt *V;
     explicit SCEVConstant(ConstantInt *v, const ScalarEvolution* p) :
       SCEV(scConstant, p), V(v) {}
-
-    virtual ~SCEVConstant();
   public:
     ConstantInt *getValue() const { return V; }
 
@@ -116,7 +114,6 @@ namespace llvm {
 
     SCEVTruncateExpr(const SCEVHandle &op, const Type *ty,
                      const ScalarEvolution* p);
-    virtual ~SCEVTruncateExpr();
 
   public:
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -146,7 +143,6 @@ namespace llvm {
 
     SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty,
                        const ScalarEvolution* p);
-    virtual ~SCEVZeroExtendExpr();
 
   public:
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -176,7 +172,6 @@ namespace llvm {
 
     SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty,
                        const ScalarEvolution* p);
-    virtual ~SCEVSignExtendExpr();
 
   public:
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -269,7 +264,6 @@ namespace llvm {
                         const SmallVectorImpl<SCEVHandle> &ops,
                         const ScalarEvolution* p)
       : SCEVNAryExpr(T, ops, p) {}
-    ~SCEVCommutativeExpr();
 
   public:
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -345,7 +339,6 @@ namespace llvm {
                  const ScalarEvolution* p)
       : SCEV(scUDivExpr, p), LHS(lhs), RHS(rhs) {}
 
-    virtual ~SCEVUDivExpr();
   public:
     const SCEVHandle &getLHS() const { return LHS; }
     const SCEVHandle &getRHS() const { return RHS; }
@@ -405,7 +398,6 @@ namespace llvm {
         assert(Operands[i]->isLoopInvariant(l) &&
                "Operands of AddRec must be loop-invariant!");
     }
-    ~SCEVAddRecExpr();
 
   public:
     const SCEVHandle &getStart() const { return Operands[0]; }
@@ -524,9 +516,7 @@ namespace llvm {
     Value *V;
     explicit SCEVUnknown(Value *v, const ScalarEvolution* p) :
       SCEV(scUnknown, p), V(v) {}
-
-  protected:
-    ~SCEVUnknown();
+      
   public:
     Value *getValue() const { return V; }
 

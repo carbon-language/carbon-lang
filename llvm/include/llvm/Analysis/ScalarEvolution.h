@@ -35,6 +35,14 @@ namespace llvm {
   class SCEVHandle;
   class ScalarEvolution;
   class TargetData;
+  class SCEVConstant;
+  class SCEVTruncateExpr;
+  class SCEVZeroExtendExpr;
+  class SCEVCommutativeExpr;
+  class SCEVUDivExpr;
+  class SCEVSignExtendExpr;
+  class SCEVAddRecExpr;
+  class SCEVUnknown;
   template<> struct DenseMapInfo<SCEVHandle>;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
@@ -43,15 +51,9 @@ namespace llvm {
   ///
   class SCEV {
     const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
-    mutable unsigned RefCount;
 
     friend class SCEVHandle;
     friend class DenseMapInfo<SCEVHandle>;
-    void addRef() const { ++RefCount; }
-    void dropRef() const {
-      if (--RefCount == 0)
-        delete this;
-    }
 
     const ScalarEvolution* parent;
 
@@ -61,7 +63,7 @@ namespace llvm {
     virtual ~SCEV();
   public:
     explicit SCEV(unsigned SCEVTy, const ScalarEvolution* p) : 
-      SCEVType(SCEVTy), RefCount(0), parent(p) {}
+      SCEVType(SCEVTy), parent(p) {}
 
     unsigned getSCEVType() const { return SCEVType; }
 
@@ -159,12 +161,9 @@ namespace llvm {
   public:
     SCEVHandle(const SCEV *s) : S(s) {
       assert(S && "Cannot create a handle to a null SCEV!");
-      S->addRef();
     }
-    SCEVHandle(const SCEVHandle &RHS) : S(RHS.S) {
-      S->addRef();
-    }
-    ~SCEVHandle() { S->dropRef(); }
+    SCEVHandle(const SCEVHandle &RHS) : S(RHS.S) { }
+    ~SCEVHandle() {  }
 
     operator const SCEV*() const { return S; }
 
@@ -176,18 +175,14 @@ namespace llvm {
 
     const SCEVHandle &operator=(SCEV *RHS) {
       if (S != RHS) {
-        S->dropRef();
         S = RHS;
-        S->addRef();
       }
       return *this;
     }
 
     const SCEVHandle &operator=(const SCEVHandle &RHS) {
       if (S != RHS.S) {
-        S->dropRef();
         S = RHS.S;
-        S->addRef();
       }
       return *this;
     }
@@ -209,14 +204,10 @@ namespace llvm {
   struct DenseMapInfo<SCEVHandle> {
     static inline SCEVHandle getEmptyKey() {
       static SCEVCouldNotCompute Empty(0);
-      if (Empty.RefCount == 0)
-        Empty.addRef();
       return &Empty;
     }
     static inline SCEVHandle getTombstoneKey() {
       static SCEVCouldNotCompute Tombstone(0);
-      if (Tombstone.RefCount == 0)
-        Tombstone.addRef();
       return &Tombstone;
     }
     static unsigned getHashValue(const SCEVHandle &Val) {
@@ -639,6 +630,23 @@ namespace llvm {
     void print(std::ostream *OS, const Module* M = 0) const {
       if (OS) print(*OS, M);
     }
+    
+  private:
+    // Uniquing tables.
+    std::map<ConstantInt*, SCEVConstant*> SCEVConstants;
+    std::map<std::pair<const SCEV*, const Type*>,
+             SCEVTruncateExpr*> SCEVTruncates;
+    std::map<std::pair<const SCEV*, const Type*>,
+             SCEVZeroExtendExpr*> SCEVZeroExtends;
+    std::map<std::pair<unsigned, std::vector<const SCEV*> >,
+             SCEVCommutativeExpr*> SCEVCommExprs;
+    std::map<std::pair<const SCEV*, const SCEV*>,
+             SCEVUDivExpr*> SCEVUDivs;
+    std::map<std::pair<const SCEV*, const Type*>,
+             SCEVSignExtendExpr*> SCEVSignExtends;
+    std::map<std::pair<const Loop *, std::vector<const SCEV*> >,
+             SCEVAddRecExpr*> SCEVAddRecExprs;
+    std::map<Value*, SCEVUnknown*> SCEVUnknowns;
   };
 }
 
