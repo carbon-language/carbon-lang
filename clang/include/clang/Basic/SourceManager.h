@@ -326,6 +326,11 @@ class SourceManager {
   // Statistics for -print-stats.
   mutable unsigned NumLinearScans, NumBinaryProbes;
   
+  // Cache results for the isBeforeInTranslationUnit method.
+  mutable FileID LastLFIDForBeforeTUCheck;
+  mutable FileID LastRFIDForBeforeTUCheck;
+  mutable bool   LastResForBeforeTUCheck;
+  
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);  
@@ -637,6 +642,11 @@ public:
   SourceLocation getLocation(const FileEntry *SourceFile,
                              unsigned Line, unsigned Col) const;
   
+  /// \brief Determines the order of 2 source locations in the translation unit.
+  ///
+  /// \returns true if LHS source location comes before RHS, false otherwise.
+  bool isBeforeInTranslationUnit(SourceLocation LHS, SourceLocation RHS) const;
+
   // Iterators over FileInfos.
   typedef llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>
       ::const_iterator fileinfo_iterator;

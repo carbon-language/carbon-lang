@@ -957,6 +957,106 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
             getFileLocWithOffset(FilePos + Col - 1);
 }
 
+/// \brief Determines the order of 2 source locations in the translation unit.
+///
+/// \returns true if LHS source location comes before RHS, false otherwise.
+bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
+                                              SourceLocation RHS) const {
+  assert(LHS.isValid() && RHS.isValid() && "Passed invalid source location!");
+  if (LHS == RHS)
+    return false;
+  
+  std::pair<FileID, unsigned> LOffs = getDecomposedLoc(LHS);
+  std::pair<FileID, unsigned> ROffs = getDecomposedLoc(RHS);
+  
+  // If the source locations are in the same file, just compare offsets.
+  if (LOffs.first == ROffs.first)
+    return LOffs.second < ROffs.second;
+
+  // If we are comparing a source location with multiple locations in the same
+  // file, we get a big win by caching the result.
+  
+  if (LastLFIDForBeforeTUCheck == LOffs.first &&
+      LastRFIDForBeforeTUCheck == ROffs.first)
+    return LastResForBeforeTUCheck;
+  
+  LastLFIDForBeforeTUCheck = LOffs.first;
+  LastRFIDForBeforeTUCheck = ROffs.first;
+  
+  // "Traverse" the include/instantiation stacks of both locations and try to
+  // find a common "ancestor".
+  //
+  // First we traverse the stack of the right location and check each level
+  // against the level of the left location, while collecting all levels in a
+  // "stack map".
+
+  std::map<FileID, unsigned> ROffsMap;
+  ROffsMap[ROffs.first] = ROffs.second;
+
+  while (1) {
+    SourceLocation UpperLoc;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(ROffs.first);
+    if (Entry.isInstantiation())
+      UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+    else
+      UpperLoc = Entry.getFile().getIncludeLoc();
+    
+    if (UpperLoc.isInvalid())
+      break; // We reached the top.
+    
+    ROffs = getDecomposedLoc(UpperLoc);
+    
+    if (LOffs.first == ROffs.first)
+      return LastResForBeforeTUCheck = LOffs.second < ROffs.second;
+    
+    ROffsMap[ROffs.first] = ROffs.second;
+  }
+
+  // We didn't find a common ancestor. Now traverse the stack of the left
+  // location, checking against the stack map of the right location.
+
+  while (1) {
+    SourceLocation UpperLoc;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(LOffs.first);
+    if (Entry.isInstantiation())
+      UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+    else
+      UpperLoc = Entry.getFile().getIncludeLoc();
+    
+    if (UpperLoc.isInvalid())
+      break; // We reached the top.
+    
+    LOffs = getDecomposedLoc(UpperLoc);
+    
+    std::map<FileID, unsigned>::iterator I = ROffsMap.find(LOffs.first);
+    if (I != ROffsMap.end())
+      return LastResForBeforeTUCheck = LOffs.second < I->second;
+  }
+  
+  // No common ancestor.
+  // Now we are getting into murky waters. Most probably this is because one
+  // location is in the predefines buffer.
+  
+  const FileEntry *LEntry =
+    getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
+  const FileEntry *REntry =
+    getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  
+  // If the locations are in two memory buffers we give up, we can't answer
+  // which one should be considered first.
+  // FIXME: Should there be a way to "include" memory buffers in the translation
+  // unit ?
+  assert((LEntry != 0 || REntry != 0) && "Locations in memory buffers.");
+  
+  // Consider the memory buffer as coming before the file in the translation
+  // unit.
+  if (LEntry == 0)
+    return LastResForBeforeTUCheck = true;
+  else {
+    assert(REntry == 0 && "Locations in not #included files ?");
+    return LastResForBeforeTUCheck = false;
+  }
+}
 
 /// PrintStats - Print statistics to stderr.
 ///
