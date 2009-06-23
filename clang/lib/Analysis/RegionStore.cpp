@@ -1100,7 +1100,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
       if (j >= len)
         break;
 
-      SVal Idx = ValMgr.makeNonLoc(i);
+      SVal Idx = ValMgr.makeIntVal(i);
       ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx,R,getContext());
 
       SVal V = NonLoc::MakeVal(getBasicVals(), str[j], sizeof(char)*8, true);
@@ -1118,7 +1118,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     if (VI == VE)
       break;
 
-    SVal Idx = ValMgr.makeNonLoc(i);
+    SVal Idx = ValMgr.makeIntVal(i);
     ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
     if (CAT->getElementType()->isStructureType())
@@ -1131,7 +1131,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
   // to 0.
   if (ElementTy->isIntegerType()) {
     while (i < Size) {
-      SVal Idx = ValMgr.makeNonLoc(i);
+      SVal Idx = ValMgr.makeIntVal(i);
       ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx,R,getContext());
       SVal V = ValMgr.makeZeroVal(ElementTy);
       state = Bind(state, Loc::MakeVal(ER), V);

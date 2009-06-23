@@ -264,7 +264,7 @@ NonLoc ValueManager::makeNonLoc(SymbolRef sym) {
   return nonloc::SymbolVal(sym);
 }
 
-NonLoc ValueManager::makeNonLoc(const APSInt& V) {
+NonLoc ValueManager::makeIntVal(const APSInt& V) {
   return nonloc::ConcreteInt(BasicVals.getValue(V));
 }
 

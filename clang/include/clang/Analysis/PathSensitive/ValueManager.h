@@ -90,7 +90,7 @@ public:
   
   NonLoc makeNonLoc(SymbolRef sym);
 
-  NonLoc makeNonLoc(const llvm::APSInt& V);
+  NonLoc makeIntVal(const llvm::APSInt& V);
   
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const llvm::APSInt& rhs, QualType T);

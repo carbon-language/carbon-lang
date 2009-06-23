@@ -944,8 +944,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
   } else if (const EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
     assert(!asLValue && "EnumConstantDecl does not have lvalue.");
 
-    BasicValueFactory& BasicVals = StateMgr.getBasicVals();
-    SVal V = nonloc::ConcreteInt(BasicVals.getValue(ED->getInitVal()));
+    SVal V = ValMgr.makeIntVal(ED->getInitVal());
     MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V));
     return;
 
