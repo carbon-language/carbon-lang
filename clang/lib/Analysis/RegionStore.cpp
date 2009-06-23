@@ -939,7 +939,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     }
   }  
 
-  if (R->hasStackStorage() || R->hasHeapStorage()) {
+  if (R->hasHeapOrStackStorage()) {
     // All stack variables are considered to have undefined values
     // upon creation.  All heap allocated blocks are considered to
     // have undefined values as well unless they are explicitly bound

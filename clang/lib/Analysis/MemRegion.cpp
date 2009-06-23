@@ -313,45 +313,40 @@ AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
   return getRegion<AllocaRegion>(E, cnt);
 }
 
-bool MemRegion::hasStackStorage() const {
-  // Only subregions can have stack storage.
+
+const MemSpaceRegion *MemRegion::getMemorySpace() const {
+  const MemRegion *R = this;
   const SubRegion* SR = dyn_cast<SubRegion>(this);
-
-  if (!SR)
-    return false;
-
-  MemSpaceRegion* S = getMemRegionManager()->getStackRegion();
   
   while (SR) {
-    const MemRegion *R = SR->getSuperRegion();
-    if (R == S)
-      return true;
-    
-    SR = dyn_cast<SubRegion>(R);    
+    R = SR->getSuperRegion();
+    SR = dyn_cast<SubRegion>(R);
   }
- 
+  
+  return dyn_cast<MemSpaceRegion>(R);
+}
+
+bool MemRegion::hasStackStorage() const {
+  if (const MemSpaceRegion *MS = getMemorySpace())
+    return MS == getMemRegionManager()->getStackRegion();
+
   return false;
 }
 
 bool MemRegion::hasHeapStorage() const {
-  // Only subregions can have stack storage.
-  const SubRegion* SR = dyn_cast<SubRegion>(this);
-
-  if (!SR)
-    return false;
-
-  MemSpaceRegion* H = getMemRegionManager()->getHeapRegion();
-
-  while (SR) {
-    const MemRegion *R = SR->getSuperRegion();
-    if (R == H)
-      return true;
-
-    SR = dyn_cast<SubRegion>(R);
-  }
+  if (const MemSpaceRegion *MS = getMemorySpace())
+    return MS == getMemRegionManager()->getHeapRegion();
 
   return false;
 }
+
+bool MemRegion::hasHeapOrStackStorage() const {
+  if (const MemSpaceRegion *MS = getMemorySpace()) {
+    MemRegionManager *Mgr = getMemRegionManager();
+    return MS == Mgr->getHeapRegion() || MS == Mgr->getStackRegion();
+  }
+  return false;
+}  
 
 //===----------------------------------------------------------------------===//
 // View handling.
