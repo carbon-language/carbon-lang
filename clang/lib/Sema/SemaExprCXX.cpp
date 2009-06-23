@@ -771,7 +771,7 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
       Diag(ED->getLocation(), diag::err_type_defined_in_condition);
   }
 
-  DeclPtrTy Dcl = ActOnDeclarator(S, D, DeclPtrTy());
+  DeclPtrTy Dcl = ActOnDeclarator(S, D);
   if (!Dcl)
     return ExprError();
   AddInitializerToDecl(Dcl, move(AssignExprVal), /*DirectInit=*/false);
