@@ -98,6 +98,7 @@ namespace {
     void printSOImm2PartOperand(const MachineInstr *MI, int opNum);
     void printSOOperand(const MachineInstr *MI, int OpNum);
     void printSORegOperand(const MachineInstr *MI, int opNum);
+    void printT2SOImmOperand(const MachineInstr *MI, int opNum);
     void printAddrMode2Operand(const MachineInstr *MI, int OpNo);
     void printAddrMode2OffsetOperand(const MachineInstr *MI, int OpNo);
     void printAddrMode3Operand(const MachineInstr *MI, int OpNo);
@@ -108,6 +109,7 @@ namespace {
                                const char *Modifier = 0);
     void printAddrModePCOperand(const MachineInstr *MI, int OpNo,
                                 const char *Modifier = 0);
+    void printBitfieldInvMaskImmOperand (const MachineInstr *MI, int OpNo);
     void printThumbAddrModeRROperand(const MachineInstr *MI, int OpNo);
     void printThumbAddrModeRI5Operand(const MachineInstr *MI, int OpNo,
                                       unsigned Scale);
@@ -455,6 +457,24 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
   }
 }
 
+static void printT2SOImm(raw_ostream &O, int64_t V) {
+  unsigned Imm = ARM_AM::getT2SOImmValDecode(V);
+  
+  // Always print the immediate directly, as the "rotate" form
+  // is deprecated in some contexts.
+  O << "#" << Imm;
+}
+
+/// printT2SOImmOperand - T2SOImm is:
+///  1. a 4-bit splat control value and 8 bit immediate value
+///  2. a 5-bit rotate amount and a non-zero 8-bit immediate value
+///     represented by a normalizedin 7-bit value (msb is always 1)
+void ARMAsmPrinter::printT2SOImmOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  assert(MO.isImm() && "Not a valid so_imm value!");
+  printT2SOImm(O, MO.getImm());
+}
+
 void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
@@ -617,6 +637,16 @@ void ARMAsmPrinter::printAddrModePCOperand(const MachineInstr *MI, int Op,
   const MachineOperand &MO1 = MI->getOperand(Op);
   assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
   O << "[pc, +" << TM.getRegisterInfo()->get(MO1.getReg()).AsmName << "]";
+}
+
+void
+ARMAsmPrinter::printBitfieldInvMaskImmOperand(const MachineInstr *MI, int Op) {
+  const MachineOperand &MO = MI->getOperand(Op);
+  uint32_t v = ~MO.getImm();
+  int32_t lsb = ffs (v) - 1;
+  int32_t width = fls (v) - lsb;
+  assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
+  O << "#" << lsb << ", #" << width;
 }
 
 void

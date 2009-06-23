@@ -751,6 +751,26 @@ class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb, HasV5T];
 }
 
+// T2I - Thumb2 instruction.
+
+class Thumb2I<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
+             string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
+  let OutOperandList = outs;
+  let InOperandList = ins;
+  let AsmString   = asm;
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb, HasThumb2];
+}
+
+class T2I<dag outs, dag ins, string asm, list<dag> pattern>
+  : Thumb2I<outs, ins, AddrModeNone, Size4Bytes, asm, "", pattern>;
+
+// Thumb2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
+class Thumb2Pat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb, HasThumb2];
+}
+
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
