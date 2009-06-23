@@ -112,8 +112,7 @@ static inline size_t getMemUsage() {
 }
 
 struct TimeRecord {
-  double Elapsed, UserTime, SystemTime;
-  ssize_t MemUsed;
+  uint64_t Elapsed, UserTime, SystemTime, MemUsed;
 };
 
 static TimeRecord getTimeRecord(bool Start) {
@@ -123,7 +122,7 @@ static TimeRecord getTimeRecord(bool Start) {
   sys::TimeValue user(0,0);
   sys::TimeValue sys(0,0);
 
-  ssize_t MemUsed = 0;
+  uint64_t MemUsed = 0;
   if (Start) {
     MemUsed = getMemUsage();
     sys::Process::GetTimeUsage(now,user,sys);
@@ -132,9 +131,9 @@ static TimeRecord getTimeRecord(bool Start) {
     MemUsed = getMemUsage();
   }
 
-  Result.Elapsed  = now.seconds()  + now.microseconds()  / 1000000.0;
-  Result.UserTime = user.seconds() + user.microseconds() / 1000000.0;
-  Result.SystemTime  = sys.seconds()  + sys.microseconds()  / 1000000.0;
+  Result.Elapsed  = now.seconds() * 1000000 + now.microseconds();
+  Result.UserTime = user.seconds() * 1000000 + user.microseconds();
+  Result.SystemTime  = sys.seconds() * 1000000 + sys.microseconds();
   Result.MemUsed  = MemUsed;
 
   return Result;
@@ -277,12 +276,13 @@ static void printVal(double Val, double Total, std::ostream &OS) {
 
 void Timer::print(const Timer &Total, std::ostream &OS) {
   if (Total.UserTime)
-    printVal(UserTime, Total.UserTime, OS);
+    printVal(UserTime / 1000000.0, Total.UserTime / 1000000.0, OS);
   if (Total.SystemTime)
-    printVal(SystemTime, Total.SystemTime, OS);
+    printVal(SystemTime / 1000000.0, Total.SystemTime / 1000000.0, OS);
   if (Total.getProcessTime())
-    printVal(getProcessTime(), Total.getProcessTime(), OS);
-  printVal(Elapsed, Total.Elapsed, OS);
+    printVal(getProcessTime() / 1000000.0,
+             Total.getProcessTime() / 1000000.0, OS);
+  printVal(Elapsed / 1000000.0, Total.Elapsed / 1000000.0, OS);
 
   OS << "  ";
 
@@ -355,23 +355,23 @@ void TimerGroup::removeTimer() {
       if (this != DefaultTimerGroup) {
         *OutStream << "  Total Execution Time: ";
 
-        printAlignedFP(Total.getProcessTime(), 4, 5, *OutStream);
+        printAlignedFP(Total.getProcessTime() / 1000000.0, 4, 5, *OutStream);
         *OutStream << " seconds (";
-        printAlignedFP(Total.getWallTime(), 4, 5, *OutStream);
+        printAlignedFP(Total.getWallTime() / 1000000.0, 4, 5, *OutStream);
         *OutStream << " wall clock)\n";
       }
       *OutStream << "\n";
 
-      if (Total.UserTime)
+      if (Total.UserTime / 1000000.0)
         *OutStream << "   ---User Time---";
-      if (Total.SystemTime)
+      if (Total.SystemTime / 1000000.0)
         *OutStream << "   --System Time--";
-      if (Total.getProcessTime())
+      if (Total.getProcessTime() / 1000000.0)
         *OutStream << "   --User+System--";
       *OutStream << "   ---Wall Time---";
-      if (Total.getMemUsed())
+      if (Total.getMemUsed() / 1000000.0)
         *OutStream << "  ---Mem---";
-      if (Total.getPeakMem())
+      if (Total.getPeakMem() / 1000000.0)
         *OutStream << "  -PeakMem-";
       *OutStream << "  --- Name ---\n";
 

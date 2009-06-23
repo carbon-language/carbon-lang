@@ -34,12 +34,12 @@ class TimerGroup;
 /// if they are never started.
 ///
 class Timer {
-  double Elapsed;        // Wall clock time elapsed in seconds
-  double UserTime;       // User time elapsed
-  double SystemTime;     // System time elapsed
-  ssize_t MemUsed;       // Memory allocated (in bytes)
-  size_t PeakMem;        // Peak memory used
-  size_t PeakMemBase;    // Temporary for peak calculation...
+  uint64_t Elapsed;        // Wall clock time elapsed in seconds
+  uint64_t UserTime;       // User time elapsed
+  uint64_t SystemTime;     // System time elapsed
+  uint64_t MemUsed;       // Memory allocated (in bytes)
+  uint64_t PeakMem;        // Peak memory used
+  uint64_t PeakMemBase;    // Temporary for peak calculation...
   std::string Name;      // The name of this time variable
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
@@ -49,10 +49,10 @@ public:
   Timer(const Timer &T);
   ~Timer();
 
-  double getProcessTime() const { return UserTime+SystemTime; }
-  double getWallTime() const { return Elapsed; }
-  ssize_t getMemUsed() const { return MemUsed; }
-  size_t getPeakMem() const { return PeakMem; }
+  uint64_t getProcessTime() const { return UserTime+SystemTime; }
+  uint64_t getWallTime() const { return Elapsed; }
+  uint64_t getMemUsed() const { return MemUsed; }
+  uint64_t getPeakMem() const { return PeakMem; }
   std::string getName() const { return Name; }
 
   const Timer &operator=(const Timer &T) {
