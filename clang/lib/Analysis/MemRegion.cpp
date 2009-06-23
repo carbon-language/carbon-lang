@@ -325,40 +325,13 @@ MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
 
 ObjCObjectRegion*
 MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
-                                    const MemRegion* superRegion) {
-  llvm::FoldingSetNodeID ID;
-  DeclRegion::ProfileRegion(ID, d, superRegion,
-                            MemRegion::ObjCObjectRegionKind);
-  
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  ObjCObjectRegion* R = cast_or_null<ObjCObjectRegion>(data);
-  
-  if (!R) {
-    R = (ObjCObjectRegion*) A.Allocate<ObjCObjectRegion>();
-    new (R) ObjCObjectRegion(d, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;
+                                      const MemRegion* superRegion) {
+  return getRegion<ObjCObjectRegion>(d, superRegion);
 }
 
 TypedViewRegion* 
 MemRegionManager::getTypedViewRegion(QualType t, const MemRegion* superRegion) {
-  llvm::FoldingSetNodeID ID;
-  TypedViewRegion::ProfileRegion(ID, t, superRegion);
-
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  TypedViewRegion* R = cast_or_null<TypedViewRegion>(data);
-
-  if (!R) {
-    R = (TypedViewRegion*) A.Allocate<TypedViewRegion>();
-    new (R) TypedViewRegion(t, superRegion);
-    Regions.InsertNode(R, InsertPos);
-  }
-
-  return R;
+  return getRegion<TypedViewRegion>(t, superRegion);
 }
 
 AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
