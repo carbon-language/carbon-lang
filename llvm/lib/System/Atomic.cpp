@@ -91,4 +91,22 @@ sys::cas_flag sys::AtomicAdd(volatile sys::cas_flag* ptr, sys::cas_flag val) {
 #endif
 }
 
+sys::cas_flag sys::AtomicMul(volatile sys::cas_flag* ptr, sys::cas_flag val) {
+  sys::cas_flag original, result;
+  do {
+    original = *ptr;
+    result = original * val;
+  } while (sys::CompareAndSwap(ptr, result, original) != original);
 
+  return result;
+}
+
+sys::cas_flag sys::AtomicDiv(volatile sys::cas_flag* ptr, sys::cas_flag val) {
+  sys::cas_flag original, result;
+  do {
+    original = *ptr;
+    result = original / val;
+  } while (sys::CompareAndSwap(ptr, result, original) != original);
+
+  return result;
+}

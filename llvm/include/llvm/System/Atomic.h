@@ -27,6 +27,8 @@ namespace llvm {
     cas_flag AtomicIncrement(volatile cas_flag* ptr);
     cas_flag AtomicDecrement(volatile cas_flag* ptr);
     cas_flag AtomicAdd(volatile cas_flag* ptr, cas_flag val);
+    cas_flag AtomicMul(volatile cas_flag* ptr, cas_flag val);
+    cas_flag AtomicDiv(volatile cas_flag* ptr, cas_flag val);
   }
 }
 
