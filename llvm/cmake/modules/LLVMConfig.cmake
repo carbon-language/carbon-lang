@@ -20,12 +20,7 @@ endfunction(get_system_libs)
 
 
 macro(llvm_config executable)
-  # extra args is the list of link components.
-  if( USE_EXPLICIT_DEPENDENCIES )
-    explicit_llvm_config(${executable} ${ARGN})
-  else( )
-    nix_llvm_config(${executable} ${ARGN})
-  endif( )
+  explicit_llvm_config(${executable} ${ARGN})
 endmacro(llvm_config)
 
 
@@ -127,44 +122,7 @@ function(explicit_map_components_to_libraries out_libs)
   set(${out_libs} ${result} PARENT_SCOPE)
 endfunction(explicit_map_components_to_libraries)
 
-
-macro(nix_llvm_config executable)
-  set(lc "")
-  foreach(c ${ARGN})
-    set(lc "${lc} ${c}")
-  endforeach(c)
-  if( NOT HAVE_LLVM_CONFIG )
-    target_link_libraries(${executable}
-      "`${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs ${lc}`")
-  else( NOT HAVE_LLVM_CONFIG )
-    # tbi: Error handling.
-    if( NOT PERL_EXECUTABLE )
-      message(FATAL_ERROR "Perl required but not found!")
-    endif( NOT PERL_EXECUTABLE )
-    execute_process(
-      COMMAND sh -c "${PERL_EXECUTABLE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/llvm-config --libs ${lc}"
-      RESULT_VARIABLE rv
-      OUTPUT_VARIABLE libs
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(NOT rv EQUAL 0)
-      message(FATAL_ERROR "llvm-config failed for executable ${executable}")
-    endif(NOT rv EQUAL 0)
-    string(REPLACE " " ";" libs ${libs})
-    foreach(c ${libs})
-      if(c MATCHES ".*\\.o")
-	get_filename_component(fn ${c} NAME)
-	target_link_libraries(${executable}
-	  ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/${fn})
-      else(c MATCHES ".*\\.o")
-	string(REPLACE "-l" "" fn ${c})
-	target_link_libraries(${executable} ${fn})
-      endif(c MATCHES ".*\\.o")
-    endforeach(c)
-  endif( NOT HAVE_LLVM_CONFIG )
-endmacro(nix_llvm_config)
-
-
-# This data is used on MSVC for stablishing executable/library
+# This data is used to establish executable/library
 # dependencies.  Comes from the llvm-config script, which is built and
 # installed on the bin directory for MinGW or Linux. At the end of the
 # script, you'll see lines like this:
