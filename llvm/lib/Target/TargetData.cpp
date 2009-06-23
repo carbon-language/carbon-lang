@@ -23,6 +23,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -345,11 +346,13 @@ typedef DenseMap<LayoutKey, StructLayout*, DenseMapLayoutKeyInfo> LayoutInfoTy;
 }
 
 static ManagedStatic<LayoutInfoTy> LayoutInfo;
+static ManagedStatic<sys::SmartMutex<true> > LayoutLock;
 
 TargetData::~TargetData() {
   if (!LayoutInfo.isConstructed())
     return;
   
+  sys::SmartScopedLock<true> Lock(&*LayoutLock);
   // Remove any layouts for this TD.
   LayoutInfoTy &TheMap = *LayoutInfo;
   for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end(); I != E; ) {
@@ -366,6 +369,7 @@ TargetData::~TargetData() {
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   LayoutInfoTy &TheMap = *LayoutInfo;
   
+  sys::SmartScopedLock<true> Lock(&*LayoutLock);
   StructLayout *&SL = TheMap[LayoutKey(this, Ty)];
   if (SL) return SL;
 
@@ -390,6 +394,7 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutInfo.isConstructed()) return;  // No cache.
   
+  sys::SmartScopedLock<true> Lock(&*LayoutLock);
   LayoutInfoTy::iterator I = LayoutInfo->find(LayoutKey(this, Ty));
   if (I == LayoutInfo->end()) return;
   
