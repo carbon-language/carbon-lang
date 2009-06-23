@@ -2843,7 +2843,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
             if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
               ValueManager &ValMgr = Eng.getValueManager();
               SVal V = ValMgr.getConjuredSymbolVal(*I, T, Count);
-              state = state->bindLoc(Loc::MakeVal(R), V);
+              state = state->bindLoc(ValMgr.makeLoc(R), V);
             }
             else if (const RecordType *RT = T->getAsStructureType()) {
               // Handle structs in a not so awesome way.  Here we just
@@ -2873,7 +2873,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                   const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
 
                   SVal V = ValMgr.getConjuredSymbolVal(*I, FT, Count);
-                  state = state->bindLoc(Loc::MakeVal(FR), V);
+                  state = state->bindLoc(ValMgr.makeLoc(FR), V);
                 }                
               }
             } else if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
@@ -2987,7 +2987,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
       state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
                                                             RetT));
-      state = state->bindExpr(Ex, ValMgr.makeRegionVal(Sym), false);
+      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), false);
 
       // FIXME: Add a flag to the checker where allocations are assumed to
       // *not fail.
@@ -3010,7 +3010,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
       state = state->set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
                                                                RetT));
-      state = state->bindExpr(Ex, ValMgr.makeRegionVal(Sym), false);
+      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), false);
       break;
     }
   }

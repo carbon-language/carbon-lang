@@ -236,65 +236,6 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
     return UndefinedVal();
 }
 
-
-NonLoc NonLoc::MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
-                          bool isUnsigned) {
-  return nonloc::ConcreteInt(BasicVals.getIntValue(X, isUnsigned));
-}
-
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, 
-                       unsigned BitWidth, bool isUnsigned) {
-  return nonloc::ConcreteInt(BasicVals.getValue(X, BitWidth, isUnsigned));
-}
-
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T) {  
-  return nonloc::ConcreteInt(BasicVals.getValue(X, T));
-}
-
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const IntegerLiteral* I) {
-
-  return nonloc::ConcreteInt(BasicVals.getValue(APSInt(I->getValue(),
-                              I->getType()->isUnsignedIntegerType())));
-}
-
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const llvm::APInt& I,
-                       bool isUnsigned) {
-  return nonloc::ConcreteInt(BasicVals.getValue(I, isUnsigned));
-}
-
-NonLoc NonLoc::MakeVal(BasicValueFactory& BasicVals, const llvm::APSInt& I) {
-  return nonloc::ConcreteInt(BasicVals.getValue(I));
-}
-
-NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
-  return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
-}
-
-
-NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
-                               BasicValueFactory& BasicVals) {
-  return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
-}
-
-nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
-                                                unsigned Bits) {
-  return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));
-}
-
-//===----------------------------------------------------------------------===//
-// Utility methods for constructing Locs.
-//===----------------------------------------------------------------------===//
-
-Loc Loc::MakeVal(const MemRegion* R) { return loc::MemRegionVal(R); }
-
-Loc Loc::MakeVal(const AddrLabelExpr *E) {
-  return loc::GotoLabel(E->getLabel());
-}
-
-Loc Loc::MakeNull(BasicValueFactory &BasicVals) {
-  return loc::ConcreteInt(BasicVals.getZeroWithPtrWidth());
-}
-
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//

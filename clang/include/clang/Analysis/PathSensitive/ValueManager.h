@@ -68,17 +68,8 @@ public:
     return SymMgr.getConjuredSymbol(E, VisitCount, SymbolTag);
   }
   
-  // Aggregation methods that use multiple submanagers.
-  
-  Loc makeRegionVal(SymbolRef Sym) {
-    return Loc::MakeVal(MemMgr.getSymbolicRegion(Sym));
-  }
-  
   /// makeZeroVal - Construct an SVal representing '0' for the specified type.
   SVal makeZeroVal(QualType T);
-  /// makeZeroArrayIndex - Construct an SVal representing '0' index for array
-  /// elements.
-  SVal makeZeroArrayIndex();
 
   /// GetRegionValueSymbolVal - make a unique symbol for value of R.
   SVal getRegionValueSymbolVal(const MemRegion* R, QualType T = QualType());
@@ -87,18 +78,77 @@ public:
   SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
 
   SVal getFunctionPointer(const FunctionDecl* FD);
-  
-  NonLoc makeNonLoc(SymbolRef sym);
 
-  NonLoc makeIntVal(const llvm::APSInt& V);
-  
+  NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {
+    return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
+  }
+
+  NonLoc makeZeroArrayIndex() {
+    return nonloc::ConcreteInt(BasicVals.getZeroWithPtrWidth(false));
+  }
+
+  NonLoc makeIntVal(const IntegerLiteral* I) {
+    return nonloc::ConcreteInt(BasicVals.getValue(I->getValue(),
+                                        I->getType()->isUnsignedIntegerType()));
+  }
+
+  NonLoc makeIntVal(const llvm::APSInt& V) {
+    return nonloc::ConcreteInt(BasicVals.getValue(V));
+  }
+
+  NonLoc makeIntVal(const llvm::APInt& V, bool isUnsigned) {
+    return nonloc::ConcreteInt(BasicVals.getValue(V, isUnsigned));
+  }
+
+  NonLoc makeIntVal(uint64_t X, QualType T) {
+    return nonloc::ConcreteInt(BasicVals.getValue(X, T));
+  }
+
+  NonLoc makeIntVal(uint64_t X, bool isUnsigned) {
+    return nonloc::ConcreteInt(BasicVals.getIntValue(X, isUnsigned));
+  }
+
+  NonLoc makeIntVal(uint64_t X, unsigned BitWidth, bool isUnsigned) {
+    return nonloc::ConcreteInt(BasicVals.getValue(X, BitWidth, isUnsigned));
+  }
+
+  NonLoc makeLocAsInteger(Loc V, unsigned Bits) {
+    return nonloc::LocAsInteger(BasicVals.getPersistentSValWithData(V, Bits));
+  }
+
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const llvm::APSInt& rhs, QualType T);
   
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const SymExpr *rhs, QualType T);
   
-  NonLoc makeTruthVal(bool b, QualType T);
+  NonLoc makeTruthVal(bool b, QualType T) {
+    return nonloc::ConcreteInt(BasicVals.getTruthValue(b, T));
+  }
+
+  NonLoc makeTruthVal(bool b) {
+    return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
+  }
+
+  Loc makeNull() {
+    return loc::ConcreteInt(BasicVals.getZeroWithPtrWidth());
+  }
+
+  Loc makeLoc(SymbolRef Sym) {
+    return loc::MemRegionVal(MemMgr.getSymbolicRegion(Sym));
+  }
+
+  Loc makeLoc(const MemRegion* R) {
+    return loc::MemRegionVal(R);
+  }
+
+  Loc makeLoc(const AddrLabelExpr* E) {
+    return loc::GotoLabel(E->getLabel());
+  }
+
+  Loc makeLoc(const llvm::APSInt& V) {
+    return loc::ConcreteInt(BasicVals.getValue(V));
+  }
 };
 } // end clang namespace
 #endif

@@ -24,31 +24,19 @@ using namespace llvm;
 
 SVal ValueManager::makeZeroVal(QualType T) {
   if (Loc::IsLocType(T))
-    return Loc::MakeNull(BasicVals);
+    return makeNull();
 
   if (T->isIntegerType())
-    return NonLoc::MakeVal(BasicVals, 0, T);
+    return makeIntVal(0, T);
   
   // FIXME: Handle floats.
   // FIXME: Handle structs.
   return UnknownVal();  
 }
 
-SVal ValueManager::makeZeroArrayIndex() {
-  return nonloc::ConcreteInt(BasicVals.getZeroWithPtrWidth(false));
-}
-
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-Locs.
 //===----------------------------------------------------------------------===//
-
-NonLoc ValueManager::makeNonLoc(SymbolRef sym) {
-  return nonloc::SymbolVal(sym);
-}
-
-NonLoc ValueManager::makeIntVal(const APSInt& V) {
-  return nonloc::ConcreteInt(BasicVals.getValue(V));
-}
 
 NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                                 const APSInt& v, QualType T) {
@@ -66,9 +54,6 @@ NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, T));
 }
 
-NonLoc ValueManager::makeTruthVal(bool b, QualType T) {
-  return nonloc::ConcreteInt(BasicVals.getTruthValue(b, T));
-}
 
 SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
   SymbolRef sym = SymMgr.getRegionValueSymbol(R, T);
@@ -80,15 +65,15 @@ SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
     // If T is of function pointer type, create a CodeTextRegion wrapping a
     // symbol.
     if (T->isFunctionPointerType()) {
-      return Loc::MakeVal(MemMgr.getCodeTextRegion(sym, T));
+      return loc::MemRegionVal(MemMgr.getCodeTextRegion(sym, T));
     }
     
     if (Loc::IsLocType(T))
-      return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
+      return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
   
     // Only handle integers for now.
     if (T->isIntegerType() && T->isScalarType())
-      return makeNonLoc(sym);
+      return nonloc::SymbolVal(sym);
   }
 
   return UnknownVal();
@@ -101,14 +86,14 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, unsigned Count) {
   // If T is of function pointer type, create a CodeTextRegion wrapping a
   // symbol.
   if (T->isFunctionPointerType()) {
-    return Loc::MakeVal(MemMgr.getCodeTextRegion(sym, T));
+    return loc::MemRegionVal(MemMgr.getCodeTextRegion(sym, T));
   }
 
   if (Loc::IsLocType(T))
-    return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
+    return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   if (T->isIntegerType() && T->isScalarType())
-    return makeNonLoc(sym);
+    return nonloc::SymbolVal(sym);
 
   return UnknownVal();
 }
@@ -121,14 +106,14 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
   // If T is of function pointer type, create a CodeTextRegion wrapping a
   // symbol.
   if (T->isFunctionPointerType()) {
-    return Loc::MakeVal(MemMgr.getCodeTextRegion(sym, T));
+    return loc::MemRegionVal(MemMgr.getCodeTextRegion(sym, T));
   }
 
   if (Loc::IsLocType(T))
-    return Loc::MakeVal(MemMgr.getSymbolicRegion(sym));
+    return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   if (T->isIntegerType() && T->isScalarType())
-    return makeNonLoc(sym);
+    return nonloc::SymbolVal(sym);
 
   return UnknownVal();
 }
@@ -138,4 +123,3 @@ SVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
     = MemMgr.getCodeTextRegion(FD, Context.getPointerType(FD->getType()));
   return loc::MemRegionVal(R);
 }
-

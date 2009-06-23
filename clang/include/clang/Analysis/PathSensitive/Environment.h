@@ -27,7 +27,7 @@
 namespace clang {
 
 class EnvironmentManager;
-class BasicValueFactory;
+class ValueManager;
 class LiveVariables;
 
 class Environment {
@@ -71,8 +71,8 @@ public:
     return X ? *X : UnknownVal();
   }
   
-  SVal GetSVal(const Stmt* Ex, BasicValueFactory& BasicVals) const;
-  SVal GetBlkExprSVal(const Stmt* Ex, BasicValueFactory& BasicVals) const; 
+  SVal GetSVal(const Stmt* Ex, ValueManager& ValMgr) const;
+  SVal GetBlkExprSVal(const Stmt* Ex, ValueManager& ValMgr) const; 
   
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.

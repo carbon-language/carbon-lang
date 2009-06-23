@@ -63,7 +63,7 @@ public:
 
   // FIXME: Investigate what is using this. This method should be removed.
   virtual Loc getLoc(const VarDecl* VD) {
-    return Loc::MakeVal(MRMgr.getVarRegion(VD));
+    return ValMgr.makeLoc(MRMgr.getVarRegion(VD));
   }
   
   const GRState *BindCompoundLiteral(const GRState *state,
@@ -126,17 +126,17 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
 }
 
 SVal BasicStoreManager::getLValueVar(const GRState *state, const VarDecl* VD) {
-  return Loc::MakeVal(MRMgr.getVarRegion(VD));
+  return ValMgr.makeLoc(MRMgr.getVarRegion(VD));
 }
 
 SVal BasicStoreManager::getLValueString(const GRState *state, 
                                         const StringLiteral* S) {
-  return Loc::MakeVal(MRMgr.getStringRegion(S));
+  return ValMgr.makeLoc(MRMgr.getStringRegion(S));
 }
 
 SVal BasicStoreManager::getLValueCompoundLiteral(const GRState *state,
                                                  const CompoundLiteralExpr* CL){
-  return Loc::MakeVal(MRMgr.getCompoundLiteralRegion(CL));
+  return ValMgr.makeLoc(MRMgr.getCompoundLiteralRegion(CL));
 }
 
 SVal BasicStoreManager::getLValueIvar(const GRState *state, const ObjCIvarDecl* D,
@@ -151,7 +151,7 @@ SVal BasicStoreManager::getLValueIvar(const GRState *state, const ObjCIvarDecl* 
     const MemRegion *BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
 
     if (BaseR == SelfRegion)
-      return loc::MemRegionVal(MRMgr.getObjCIvarRegion(D, BaseR));
+      return ValMgr.makeLoc(MRMgr.getObjCIvarRegion(D, BaseR));
   }
   
   return UnknownVal();
@@ -186,7 +186,7 @@ SVal BasicStoreManager::getLValueField(const GRState *state, SVal Base,
       return Base;
   }
   
-  return Loc::MakeVal(MRMgr.getFieldRegion(D, BaseR));
+  return ValMgr.makeLoc(MRMgr.getFieldRegion(D, BaseR));
 }
 
 SVal BasicStoreManager::getLValueElement(const GRState *state,
@@ -242,8 +242,8 @@ SVal BasicStoreManager::getLValueElement(const GRState *state,
   }
   
   if (BaseR)  
-    return Loc::MakeVal(MRMgr.getElementRegion(elementType, UnknownVal(),
-                                               BaseR, getContext()));
+    return ValMgr.makeLoc(MRMgr.getElementRegion(elementType, UnknownVal(),
+                                                 BaseR, getContext()));
   else
     return UnknownVal();
 }
@@ -456,7 +456,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
     const MemRegion* R = I.getKey();
     
     if (!Marked.count(R)) {
-      store = Remove(store, Loc::MakeVal(R));
+      store = Remove(store, ValMgr.makeLoc(R));
       SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
@@ -483,7 +483,7 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
           const MemRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
                                                          SelfRegion);          
           SVal X = ValMgr.getRegionValueSymbolVal(IVR);          
-          St = BindInternal(St, Loc::MakeVal(IVR), X);
+          St = BindInternal(St, ValMgr.makeLoc(IVR), X);
         }
       }
     }
@@ -515,8 +515,8 @@ Store BasicStoreManager::getInitialStore() {
           SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
                                                  MRMgr.getHeapRegion());
           
-          St = BindInternal(St, Loc::MakeVal(MRMgr.getVarRegion(PD)),
-                            Loc::MakeVal(SelfRegion));
+          St = BindInternal(St, ValMgr.makeLoc(MRMgr.getVarRegion(PD)),
+                            ValMgr.makeLoc(SelfRegion));
           
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
@@ -541,7 +541,7 @@ Store BasicStoreManager::getInitialStore() {
             ? ValMgr.getRegionValueSymbolVal(R)
             : UndefinedVal();
 
-      St = BindInternal(St, Loc::MakeVal(R), X);
+      St = BindInternal(St, ValMgr.makeLoc(R), X);
     }
   }
   return St;

@@ -30,6 +30,7 @@ class BasicValueFactory;
 class MemRegion;
 class MemRegionManager;
 class GRStateManager;
+class ValueManager;
   
 class SVal {
 public:
@@ -171,28 +172,6 @@ protected:
 public:
   void print(llvm::raw_ostream& Out) const;
   
-  // Utility methods to create NonLocs.
-
-  static NonLoc MakeIntVal(BasicValueFactory& BasicVals, uint64_t X, 
-                           bool isUnsigned);
-
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, 
-                        unsigned BitWidth, bool isUnsigned);
-
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
-  
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, const IntegerLiteral *I);
-
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, const llvm::APInt& I,
-                        bool isUnsigned);
-
-  static NonLoc MakeVal(BasicValueFactory& BasicVals, const llvm::APSInt& I);
-    
-  static NonLoc MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
-
-  static NonLoc MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
-                                BasicValueFactory& BasicVals);
-
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind;
@@ -210,12 +189,6 @@ public:
   Loc(const Loc& X) : SVal(X.Data, true, X.getSubKind()) {}
   Loc& operator=(const Loc& X) { memcpy(this, &X, sizeof(Loc)); return *this; }
     
-  static Loc MakeVal(const MemRegion* R);
-    
-  static Loc MakeVal(const AddrLabelExpr* E);
-
-  static Loc MakeNull(BasicValueFactory &BasicVals);
-  
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind;
@@ -301,6 +274,8 @@ public:
 };
   
 class LocAsInteger : public NonLoc {
+  friend class clang::ValueManager;
+
   LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
     NonLoc(LocAsIntegerKind, &data) {
       assert (isa<Loc>(data.first));
@@ -330,12 +305,10 @@ public:
   static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == LocAsIntegerKind;
   }
-  
-  static LocAsInteger Make(BasicValueFactory& Vals, Loc V, unsigned Bits);
 };
 
 class CompoundVal : public NonLoc {
-  friend class NonLoc;
+  friend class clang::ValueManager;
 
   CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
 

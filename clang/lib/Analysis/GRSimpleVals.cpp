@@ -84,7 +84,7 @@ SVal GRSimpleVals::EvalCast(GRExprEngine& Eng, Loc X, QualType T) {
   unsigned BitWidth = Eng.getContext().getTypeSize(T);
 
   if (!isa<loc::ConcreteInt>(X))
-    return nonloc::LocAsInteger::Make(BasicVals, X, BitWidth);
+    return Eng.getValueManager().makeLocAsInteger(X, BitWidth);
   
   llvm::APSInt V = cast<loc::ConcreteInt>(X).getValue();
   V.setIsUnsigned(T->isUnsignedIntegerType() || Loc::IsLocType(T));
@@ -133,8 +133,8 @@ SVal GRSimpleVals::DetermEvalBinOpNN(GRExprEngine& Eng,
                                      BinaryOperator::Opcode Op,
                                      NonLoc L, NonLoc R,
                                      QualType T)  {
-
   BasicValueFactory& BasicVals = Eng.getBasicVals();
+  ValueManager& ValMgr = Eng.getValueManager();
   unsigned subkind = L.getSubKind();
   
   while (1) {
@@ -157,16 +157,15 @@ SVal GRSimpleVals::DetermEvalBinOpNN(GRExprEngine& Eng,
             llvm::APSInt V = cast<nonloc::ConcreteInt>(R).getValue();
             V.setIsUnsigned(true);
             V.extOrTrunc(Ctx.getTypeSize(Ctx.VoidPtrTy));
-            return EvalBinOp(Eng, Op, LL,
-                             loc::ConcreteInt(BasicVals.getValue(V)));
+            return EvalBinOp(Eng, Op, LL, ValMgr.makeLoc(V));
           }
           
           default: 
             switch (Op) {
               case BinaryOperator::EQ:
-                return NonLoc::MakeIntTruthVal(BasicVals, false);
+                return ValMgr.makeTruthVal(false);
               case BinaryOperator::NE:
-                return NonLoc::MakeIntTruthVal(BasicVals, true);
+                return ValMgr.makeTruthVal(true);
               default:
                 // This case also handles pointer arithmetic.
                 return UnknownVal();
@@ -289,7 +288,7 @@ SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, const GRState *state,
 
 SVal GRSimpleVals::EvalEquality(GRExprEngine& Eng, Loc L, Loc R, bool isEqual) {
   
-  BasicValueFactory& BasicVals = Eng.getBasicVals();
+  ValueManager& ValMgr = Eng.getValueManager();
 
   switch (L.getSubKind()) {
 
@@ -307,7 +306,7 @@ SVal GRSimpleVals::EvalEquality(GRExprEngine& Eng, Loc L, Loc R, bool isEqual) {
         if (!isEqual)
           b = !b;
         
-        return NonLoc::MakeIntTruthVal(BasicVals, b);
+        return ValMgr.makeTruthVal(b);
       }
       else if (SymbolRef Sym = R.getAsSymbol()) {
         const SymIntExpr * SE =
@@ -339,10 +338,10 @@ SVal GRSimpleVals::EvalEquality(GRExprEngine& Eng, Loc L, Loc R, bool isEqual) {
     // Fall-through.
       
     case loc::GotoLabelKind:
-      return NonLoc::MakeIntTruthVal(BasicVals, isEqual ? L == R : L != R);
+      return ValMgr.makeTruthVal(isEqual ? L == R : L != R);
   }
   
-  return NonLoc::MakeIntTruthVal(BasicVals, isEqual ? false : true);
+  return ValMgr.makeTruthVal(isEqual ? false : true);
 }
 
 //===----------------------------------------------------------------------===//

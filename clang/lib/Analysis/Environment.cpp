@@ -18,14 +18,14 @@
 
 using namespace clang;
 
-SVal Environment::GetSVal(const Stmt *E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
   
   for (;;) {
     
     switch (E->getStmtClass()) {
         
       case Stmt::AddrLabelExprClass:        
-        return Loc::MakeVal(cast<AddrLabelExpr>(E));
+        return ValMgr.makeLoc(cast<AddrLabelExpr>(E));
         
         // ParenExprs are no-ops.
         
@@ -35,11 +35,11 @@ SVal Environment::GetSVal(const Stmt *E, BasicValueFactory& BasicVals) const {
         
       case Stmt::CharacterLiteralClass: {
         const CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
+        return ValMgr.makeIntVal(C->getValue(), C->getType());
       }
         
       case Stmt::IntegerLiteralClass: {
-        return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
+        return ValMgr.makeIntVal(cast<IntegerLiteral>(E));
       }
         
       // Casts where the source and target type are the same
@@ -69,8 +69,7 @@ SVal Environment::GetSVal(const Stmt *E, BasicValueFactory& BasicVals) const {
   return LookupExpr(E);
 }
 
-SVal Environment::GetBlkExprSVal(const Stmt *E,
-                                 BasicValueFactory& BasicVals) const {
+SVal Environment::GetBlkExprSVal(const Stmt *E, ValueManager& ValMgr) const {
   
   while (1) {
     switch (E->getStmtClass()) {
@@ -80,11 +79,11 @@ SVal Environment::GetBlkExprSVal(const Stmt *E,
         
       case Stmt::CharacterLiteralClass: {
         const CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
+        return ValMgr.makeIntVal(C->getValue(), C->getType());
       }
         
       case Stmt::IntegerLiteralClass: {
-        return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
+        return ValMgr.makeIntVal(cast<IntegerLiteral>(E));
       }
         
       default:

@@ -905,16 +905,19 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     // this right now, and since most logical expressions are used for branches,
     // the payoff is not likely to be large.  Instead, we do eager evaluation.        
     if (const GRState *newState = state->assume(X, true))
-      MakeNode(Dst, B, Pred, newState->bindBlkExpr(B, MakeConstantVal(1U, B)));
+      MakeNode(Dst, B, Pred, 
+               newState->bindBlkExpr(B, ValMgr.makeIntVal(1U, B->getType())));
       
     if (const GRState *newState = state->assume(X, false))
-      MakeNode(Dst, B, Pred, newState->bindBlkExpr(B, MakeConstantVal(0U, B)));
+      MakeNode(Dst, B, Pred, 
+               newState->bindBlkExpr(B, ValMgr.makeIntVal(0U, B->getType())));
   }
   else {
     // We took the LHS expression.  Depending on whether we are '&&' or
     // '||' we know what the value of the expression is via properties of
     // the short-circuiting.
-    X = MakeConstantVal( B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U, B);
+    X = ValMgr.makeIntVal(B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U, 
+                          B->getType());
     MakeNode(Dst, B, Pred, state->bindBlkExpr(B, X));
   }
 }
@@ -1614,14 +1617,16 @@ void GRExprEngine::EvalEagerlyAssume(NodeSet &Dst, NodeSet &Src, Expr *Ex) {
     if (isa<nonloc::SymExprVal>(V)) {
       // First assume that the condition is true.
       if (const GRState *stateTrue = state->assume(V, true)) {
-        stateTrue = stateTrue->bindExpr(Ex, MakeConstantVal(1U, Ex));        
+        stateTrue = stateTrue->bindExpr(Ex, 
+                                        ValMgr.makeIntVal(1U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
                                       stateTrue, Pred));
       }
         
       // Next, assume that the condition is false.
       if (const GRState *stateFalse = state->assume(V, false)) {
-        stateFalse = stateFalse->bindExpr(Ex, MakeConstantVal(0U, Ex));
+        stateFalse = stateFalse->bindExpr(Ex, 
+                                          ValMgr.makeIntVal(0U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
                                       stateFalse, Pred));
       }
@@ -1724,12 +1729,11 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
   const GRState *state = GetState(Pred);
 
   // Handle the case where the container still has elements.
-  QualType IntTy = getContext().IntTy;
-  SVal TrueV = NonLoc::MakeVal(getBasicVals(), 1, IntTy);
+  SVal TrueV = ValMgr.makeTruthVal(1);
   const GRState *hasElems = state->bindExpr(S, TrueV);
   
   // Handle the case where the container has no elements.
-  SVal FalseV = NonLoc::MakeVal(getBasicVals(), 0, IntTy);
+  SVal FalseV = ValMgr.makeTruthVal(0);
   const GRState *noElems = state->bindExpr(S, FalseV);
   
   if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
@@ -1741,11 +1745,11 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
       assert (Loc::IsLocType(T));
       unsigned Count = Builder->getCurrentBlockCount();
       SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
-      SVal V = Loc::MakeVal(getStoreManager().getRegionManager().getSymbolicRegion(Sym));
+      SVal V = ValMgr.makeLoc(Sym);
       hasElems = hasElems->bindLoc(ElementV, V);
 
       // Bind the location to 'nil' on the false branch.
-      SVal nilV = loc::ConcreteInt(getBasicVals().getValue(0, T));      
+      SVal nilV = ValMgr.makeIntVal(0, T);      
       noElems = noElems->bindLoc(ElementV, nilV);      
     }
   
@@ -2289,7 +2293,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
     // Handle base case where the initializer has no elements.
     // e.g: static int* myArray[] = {};
     if (NumInitElements == 0) {
-      SVal V = NonLoc::MakeCompoundVal(T, StartVals, getBasicVals());
+      SVal V = ValMgr.makeCompoundVal(T, StartVals);
       MakeNode(Dst, E, Pred, state->bindExpr(E, V));
       return;
     }      
@@ -2322,7 +2326,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
         
         if (NewItr == ItrEnd) {
           // Now we have a list holding all init values. Make CompoundValData.
-          SVal V = NonLoc::MakeCompoundVal(T, NewVals, getBasicVals());
+          SVal V = ValMgr.makeCompoundVal(T, NewVals);
 
           // Make final state and node.
           MakeNode(Dst, E, *NI, state->bindExpr(E, V));
@@ -2392,8 +2396,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
     amt = getContext().getTypeAlign(T) / 8;
   
   MakeNode(Dst, Ex, Pred,
-           GetState(Pred)->bindExpr(Ex, NonLoc::MakeVal(getBasicVals(), amt,
-                                                        Ex->getType())));  
+           GetState(Pred)->bindExpr(Ex, ValMgr.makeIntVal(amt, Ex->getType())));
 }
 
 
@@ -2467,7 +2470,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         // For all other types, UnaryOperator::Float returns 0.
         assert (Ex->getType()->isIntegerType());
         const GRState* state = GetState(*I);
-        SVal X = NonLoc::MakeVal(getBasicVals(), 0, Ex->getType());
+        SVal X = ValMgr.makeZeroVal(Ex->getType());
         MakeNode(Dst, U, *I, state->bindExpr(U, X));
       }
       
@@ -2570,7 +2573,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             //    transfer functions as "0 == E".
             
             if (isa<Loc>(V)) {
-              Loc X = Loc::MakeNull(getBasicVals());
+              Loc X = ValMgr.makeNull();
               SVal Result = EvalBinOp(state,BinaryOperator::EQ, cast<Loc>(V), X,
                                       U->getType());
               state = state->bindExpr(U, Result);
@@ -2628,7 +2631,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
 
-      SVal Result = EvalBinOp(state, Op, V2, MakeConstantVal(1U, U), 
+      SVal Result = EvalBinOp(state, Op, V2, ValMgr.makeIntVal(1U,U->getType()),
                               U->getType());    
       
       // Conjure a new symbol if necessary to recover precision.

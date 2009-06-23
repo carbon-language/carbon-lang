@@ -481,11 +481,6 @@ protected:
     return N == EntryNode ? CleanedState : N->getState();
   }
   
-public:  
-  inline NonLoc MakeConstantVal(uint64_t X, Expr* Ex) {
-    return NonLoc::MakeVal(getBasicVals(), X, Ex->getType());
-  }  
-
 public:
   NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,

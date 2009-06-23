@@ -532,7 +532,7 @@ private:
 
   // Methods that query & manipulate the Environment.  
   SVal GetSVal(const GRState* St, const Stmt* Ex) {
-    return St->getEnvironment().GetSVal(Ex, getBasicVals());
+    return St->getEnvironment().GetSVal(Ex, ValueMgr);
   }
   
   SVal GetSValAsScalarOrLoc(const GRState* state, const Stmt *S) {
@@ -546,7 +546,7 @@ private:
   }
 
   SVal GetBlkExprSVal(const GRState* St, const Stmt* Ex) {
-    return St->getEnvironment().GetBlkExprSVal(Ex, getBasicVals());
+    return St->getEnvironment().GetBlkExprSVal(Ex, ValueMgr);
   }
   
   const GRState* BindExpr(const GRState* St, const Stmt* Ex, SVal V,
