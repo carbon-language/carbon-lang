@@ -234,20 +234,6 @@ MemSpaceRegion* MemRegionManager::getCodeRegion() {
   return LazyAllocate(code);
 }
 
-bool MemRegionManager::onStack(const MemRegion* R) {
-  while (const SubRegion* SR = dyn_cast<SubRegion>(R))
-    R = SR->getSuperRegion();
-
-  return (R != 0) && (R == stack);
-}
-
-bool MemRegionManager::onHeap(const MemRegion* R) {
-  while (const SubRegion* SR = dyn_cast<SubRegion>(R))
-    R = SR->getSuperRegion();
-
-  return (R != 0) && (R == heap); 
-}
-
 //===----------------------------------------------------------------------===//
 // Constructing regions.
 //===----------------------------------------------------------------------===//
@@ -352,7 +338,6 @@ AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
 }
 
 bool MemRegionManager::hasStackStorage(const MemRegion* R) {
-
   // Only subregions can have stack storage.
   const SubRegion* SR = dyn_cast<SubRegion>(R);
 
@@ -368,10 +353,29 @@ bool MemRegionManager::hasStackStorage(const MemRegion* R) {
     
     SR = dyn_cast<SubRegion>(R);    
   }
-
+ 
   return false;
 }
 
+bool MemRegionManager::hasHeapStorage(const MemRegion* R) {
+  // Only subregions can have stack storage.
+  const SubRegion* SR = dyn_cast<SubRegion>(R);
+
+  if (!SR)
+    return false;
+
+  MemSpaceRegion* H = getHeapRegion();
+
+  while (SR) {
+    R = SR->getSuperRegion();
+    if (R == H)
+      return true;
+
+    SR = dyn_cast<SubRegion>(R);
+  }
+
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // View handling.

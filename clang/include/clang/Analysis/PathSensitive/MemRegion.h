@@ -608,19 +608,6 @@ public:
 
   MemSpaceRegion* getCodeRegion();
 
-  bool isGlobalsRegion(const MemRegion* R) { 
-    assert(R);
-    return R == globals; 
-  }
-
-  /// onStack - check if the region is allocated on the stack.
-  bool onStack(const MemRegion* R);
-
-  /// onHeap - check if the region is allocated on the heap, usually by malloc.
-  bool onHeap(const MemRegion* R);
-  
-  bool hasStackStorage(const MemRegion* R);
-  
   /// getAllocaRegion - Retrieve a region associated with a call to alloca().
   AllocaRegion* getAllocaRegion(const Expr* Ex, unsigned Cnt);
   
@@ -677,6 +664,15 @@ public:
   template <typename RegionTy, typename A1, typename A2>
   RegionTy* getRegion(const A1 a1, const A2 a2);
 
+  bool isGlobalsRegion(const MemRegion* R) { 
+    assert(R);
+    return R == globals; 
+  }
+
+  bool hasStackStorage(const MemRegion* R);
+
+  bool hasHeapStorage(const MemRegion* R);
+  
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
 };
