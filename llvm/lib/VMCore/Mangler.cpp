@@ -168,7 +168,7 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
     static uint32_t GlobalID = 0;
     
     unsigned OldID = GlobalID;
-    sys::AtomicIncrement(&GlobalID);
+    sys::AtomicIncrement32(&GlobalID);
     
     Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(OldID);
   } else {
