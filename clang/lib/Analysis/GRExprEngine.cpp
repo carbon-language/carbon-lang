@@ -176,7 +176,7 @@ const GRState* GRExprEngine::getInitialState() {
       const ParmVarDecl *PD = FD->getParamDecl(0);
       QualType T = PD->getType();
       if (T->isIntegerType())
-        if (const MemRegion *R = StateMgr.getRegion(PD)) {
+        if (const MemRegion *R = state->getRegion(PD)) {
           SVal V = state->getSVal(loc::MemRegionVal(R));
           SVal Constraint = EvalBinOp(state, BinaryOperator::GT, V,
                                       ValMgr.makeZeroVal(T),
@@ -2253,7 +2253,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
       // update the state based on the new binding.  If the GRTransferFunc
       // object doesn't do anything, just auto-propagate the current state.
       GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, state, DS,true);
-      getTF().EvalBind(BuilderRef, loc::MemRegionVal(StateMgr.getRegion(VD)),
+      getTF().EvalBind(BuilderRef, loc::MemRegionVal(state->getRegion(VD)),
                        InitVal);      
     } 
     else {

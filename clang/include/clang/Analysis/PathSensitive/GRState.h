@@ -199,6 +199,14 @@ public:
                                bool assumption) const;
   
   //==---------------------------------------------------------------------==//
+  // Utility methods for getting regions.
+  //==---------------------------------------------------------------------==//
+
+  const VarRegion* getRegion(const VarDecl* D) const;
+
+  const MemRegion* getSelfRegion() const;
+
+  //==---------------------------------------------------------------------==//
   // Binding and retrieving values to/from the environment and symbolic store.
   //==---------------------------------------------------------------------==//
   
@@ -431,18 +439,7 @@ private:
   /// Liveness - live-variables information of the ValueDecl* and block-level
   /// Expr* in the CFG. Used to get initial store and prune out dead state.
   LiveVariables& Liveness;
-
-private:
-
-  Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
-    return EnvMgr.RemoveBlkExpr(Env, E);
-  }
   
-  // FIXME: Remove when we do lazy initializaton of variable bindings.
-//   const GRState* BindVar(const GRState* St, VarDecl* D, SVal V) {
-//     return SetSVal(St, getLoc(D), V);
-//   }
-    
 public:
   
   GRStateManager(ASTContext& Ctx,
@@ -464,7 +461,7 @@ public:
   
   ~GRStateManager();
 
-  const GRState* getInitialState();
+  const GRState *getInitialState();
         
   ASTContext &getContext() { return ValueMgr.getContext(); }
   const ASTContext &getContext() const { return ValueMgr.getContext(); }               
@@ -509,17 +506,6 @@ public:
     GRState NewSt = *St;
     NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
     return getPersistentState(NewSt);
-  }
-
-  
-  // Utility methods for getting regions.
-  
-  VarRegion* getRegion(const VarDecl* D) {
-    return getRegionManager().getVarRegion(D);
-  }
-  
-  const MemRegion* getSelfRegion(const GRState* state) {
-    return StoreMgr->getSelfRegion(state->getStore());
   }
   
 private:

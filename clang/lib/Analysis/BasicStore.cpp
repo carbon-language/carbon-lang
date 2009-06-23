@@ -535,7 +535,7 @@ Store BasicStoreManager::getInitialStore() {
 
       // Initialize globals and parameters to symbolic values.
       // Initialize local variables to undefined.
-      const MemRegion *R = StateMgr.getRegion(VD);
+      const MemRegion *R = ValMgr.getRegionManager().getVarRegion(VD);
       SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                 isa<ImplicitParamDecl>(VD))
             ? ValMgr.getRegionValueSymbolVal(R)

@@ -3091,7 +3091,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
       if (Expr* Receiver = ME->getReceiver()) {
         SVal X = St->getSValAsScalarOrLoc(Receiver);
         if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
-          if (L->getRegion() == Eng.getStateManager().getSelfRegion(St)) {
+          if (L->getRegion() == St->getSelfRegion()) {
             // Update the summary to make the default argument effect
             // 'StopTracking'.
             Summ = Summaries.copySummary(Summ);
