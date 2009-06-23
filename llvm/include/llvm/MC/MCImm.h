@@ -16,6 +16,8 @@
 #ifndef LLVM_MC_MCIMM_H
 #define LLVM_MC_MCIMM_H
 
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
 class MCSymbol;
 
