@@ -1165,20 +1165,14 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
-  
-  for (RecordDecl::field_iterator FI = RD->field_begin(getContext()), 
-                                  FE = RD->field_end(getContext()); 
+
+  RecordDecl::field_iterator FI, FE;
+
+  for (FI = RD->field_begin(getContext()), FE = RD->field_end(getContext());
        FI != FE; ++FI, ++VI) {
 
-    // There may be fewer values than fields only when we are initializing a
-    // struct decl. In this case, mark the region as having default value.
-    if (VI == VE) {
-      // FIXME: We should bind signed/unsigned 0 according to the sign of the
-      // field type.
-      const NonLoc& Idx = NonLoc::MakeIntVal(getBasicVals(), 0, false);
-      state = state->set<RegionDefaultValue>(R, Idx);
+    if (VI == VE)
       break;
-    }
 
     QualType FTy = (*FI)->getType();
     FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
@@ -1189,6 +1183,17 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
       state = BindArray(state, FR, *VI);
     else if (FTy->isStructureType())
       state = BindStruct(state, FR, *VI);
+  }
+
+  // There may be fewer values in the initialize list than the fields of struct.
+  while (FI != FE) {
+    QualType FTy = (*FI)->getType();
+    if (FTy->isIntegerType()) {
+      FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
+      state = Bind(state, Loc::MakeVal(FR), ValMgr.makeZeroVal(FTy));
+    }
+
+    ++FI;
   }
 
   return state;
