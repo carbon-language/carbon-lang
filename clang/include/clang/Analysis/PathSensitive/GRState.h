@@ -665,6 +665,14 @@ public:
 // Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
 
+inline const VarRegion* GRState::getRegion(const VarDecl* D) const {
+  return Mgr->getRegionManager().getVarRegion(D);
+}
+
+inline const MemRegion* GRState::getSelfRegion() const {
+  return Mgr->StoreMgr->getSelfRegion(getStore());
+}
+  
 inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
   return Mgr->ConstraintMgr->Assume(this, Cond, Assumption);
 }
