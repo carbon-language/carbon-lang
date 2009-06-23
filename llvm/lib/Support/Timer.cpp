@@ -112,7 +112,7 @@ static inline size_t getMemUsage() {
 }
 
 struct TimeRecord {
-  uint64_t Elapsed, UserTime, SystemTime, MemUsed;
+  int64_t Elapsed, UserTime, SystemTime, MemUsed;
 };
 
 static TimeRecord getTimeRecord(bool Start) {
@@ -122,7 +122,7 @@ static TimeRecord getTimeRecord(bool Start) {
   sys::TimeValue user(0,0);
   sys::TimeValue sys(0,0);
 
-  uint64_t MemUsed = 0;
+  int64_t MemUsed = 0;
   if (Start) {
     MemUsed = getMemUsage();
     sys::Process::GetTimeUsage(now,user,sys);
