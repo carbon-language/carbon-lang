@@ -14,6 +14,7 @@
 #include "AsmLexer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Config/config.h"  // for strtoull.
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
