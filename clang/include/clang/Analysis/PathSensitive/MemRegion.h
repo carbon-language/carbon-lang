@@ -249,7 +249,7 @@ public:
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, 
-                            const void* data, QualType t);
+                            const void* data, QualType t, const MemRegion*);
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == CodeTextRegionKind;
@@ -793,7 +793,18 @@ template <> struct MemRegionManagerTrait<SymbolicRegion> {
     return MRMgr.getUnknownRegion();
   }
 };
-  
+
+template<> struct MemRegionManagerTrait<CodeTextRegion> {
+  typedef MemSpaceRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const FunctionDecl*, QualType) {
+    return MRMgr.getCodeRegion();
+  }
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             SymbolRef, QualType) {
+    return MRMgr.getCodeRegion();
+  }
+};
   
 } // end clang namespace
 

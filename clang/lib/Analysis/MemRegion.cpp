@@ -129,14 +129,14 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 void CodeTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const void* data,
-                                   QualType t) {
+                                   QualType t, const MemRegion*) {
   ID.AddInteger(MemRegion::CodeTextRegionKind);
   ID.AddPointer(data);
   ID.Add(t);
 }
 
 void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
-  CodeTextRegion::ProfileRegion(ID, Data, LocationType);
+  CodeTextRegion::ProfileRegion(ID, Data, LocationType, superRegion);
 }
 
 //===----------------------------------------------------------------------===//
@@ -275,35 +275,11 @@ MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
 
 CodeTextRegion* MemRegionManager::getCodeTextRegion(const FunctionDecl* fd,
                                                     QualType t) {
-  llvm::FoldingSetNodeID ID;
-  CodeTextRegion::ProfileRegion(ID, fd, t);
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  CodeTextRegion* R = cast_or_null<CodeTextRegion>(data);
-
-  if (!R) {
-    R = (CodeTextRegion*) A.Allocate<CodeTextRegion>();
-    new (R) CodeTextRegion(fd, t, getCodeRegion());
-    Regions.InsertNode(R, InsertPos);
-  }
-
-  return R;
+  return getRegion<CodeTextRegion>(fd, t);
 }
 
 CodeTextRegion* MemRegionManager::getCodeTextRegion(SymbolRef sym, QualType t) {
-  llvm::FoldingSetNodeID ID;
-  CodeTextRegion::ProfileRegion(ID, sym, t);
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  CodeTextRegion* R = cast_or_null<CodeTextRegion>(data);
-
-  if (!R) {
-    R = (CodeTextRegion*) A.Allocate<CodeTextRegion>();
-    new (R) CodeTextRegion(sym, t, getCodeRegion());
-    Regions.InsertNode(R, InsertPos);
-  }
-
-  return R;
+  return getRegion<CodeTextRegion>(sym, t);
 }
 
 /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
