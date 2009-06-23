@@ -36,4 +36,4 @@ add_clang_library(clangFrontend
   Warnings.cpp
   )
 
-add_dependencies(clangSema ClangDiagnosticFrontend)
+add_dependencies(clangFrontend ClangDiagnosticFrontend)
