@@ -112,6 +112,7 @@ public:
   
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
   MCOperand &getOperand(unsigned i) { return Operands[i]; }
+  unsigned getNumOperands() const { return Operands.size(); }
   
   void addOperand(const MCOperand &Op) {
     Operands.push_back(Op);
