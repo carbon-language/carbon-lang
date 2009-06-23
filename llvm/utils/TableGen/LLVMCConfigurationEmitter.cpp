@@ -1652,11 +1652,11 @@ void EmitToolClassDefinition (const ToolDescription& D,
 
 }
 
-/// EmitOptionDefintions - Iterate over a list of option descriptions
+/// EmitOptionDefinitions - Iterate over a list of option descriptions
 /// and emit registration code.
-void EmitOptionDefintions (const OptionDescriptions& descs,
-                           bool HasSink, bool HasExterns,
-                           std::ostream& O)
+void EmitOptionDefinitions (const OptionDescriptions& descs,
+                            bool HasSink, bool HasExterns,
+                            std::ostream& O)
 {
   std::vector<OptionDescription> Aliases;
 
@@ -2081,7 +2081,7 @@ void EmitPluginCode(const PluginData& Data, std::ostream& O) {
   EmitIncludes(O);
 
   // Emit global option registration code.
-  EmitOptionDefintions(Data.OptDescs, Data.HasSink, Data.HasExterns, O);
+  EmitOptionDefinitions(Data.OptDescs, Data.HasSink, Data.HasExterns, O);
 
   // Emit hook declarations.
   EmitHookDeclarations(Data.ToolDescs, O);
