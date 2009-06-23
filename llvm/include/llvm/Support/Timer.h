@@ -152,7 +152,6 @@ class TimerGroup {
   unsigned NumTimers;
   std::vector<Timer> TimersToPrint;
 public:
-  TimerGroup() : Name("Miscellaneous Ungrouped Timers"), NumTimers(0) {}
   explicit TimerGroup(const std::string &name) : Name(name), NumTimers(0) {}
   ~TimerGroup() {
     assert(NumTimers == 0 &&
