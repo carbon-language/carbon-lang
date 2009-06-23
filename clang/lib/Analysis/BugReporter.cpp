@@ -380,7 +380,7 @@ public:
       return true;
     
     // Check if the previous state has this binding.    
-    SVal X = VMgr.GetSVal(PrevSt, loc::MemRegionVal(R));
+    SVal X = PrevSt->getSVal(loc::MemRegionVal(R));
     
     if (X == V) // Same binding?
       return true;

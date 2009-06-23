@@ -282,7 +282,7 @@ bool GRState::scanReachableSymbols(SVal val, SymbolVisitor& visitor) const {
 bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
                              const llvm::APSInt& Y) {
   
-  SVal V = GetSVal(state, Ex);
+  SVal V = state->getSVal(Ex);
   
   if (loc::ConcreteInt* X = dyn_cast<loc::ConcreteInt>(&V))
     return X->getValue() == Y;
