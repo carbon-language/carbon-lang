@@ -9,7 +9,7 @@
 //
 //  This file defines ValueManager, a class that manages symbolic values
 //  and SVals created for use by GRExprEngine and related classes.  It
-//  wraps SymbolManager, MemRegionManager, and BasicValueFactory.
+//  wraps and owns SymbolManager, MemRegionManager, and BasicValueFactory.
 //
 //===----------------------------------------------------------------------===//
 
