@@ -1890,10 +1890,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
       = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
     if (!BaseClassDecl->hasTrivialConstructor()) {
       if (CXXConstructorDecl *BaseCtor = 
-            BaseClassDecl->getDefaultConstructor(Context)) {
-        if (BaseCtor->isImplicit() && !BaseCtor->isUsed())
-          MarkDeclarationReferenced(CurrentLocation, BaseCtor);
-      }
+            BaseClassDecl->getDefaultConstructor(Context))
+        MarkDeclarationReferenced(CurrentLocation, BaseCtor);
       else {
         Diag(CurrentLocation, diag::err_defining_default_ctor) 
           << Context.getTagDeclType(ClassDecl) << 1 
@@ -1915,10 +1913,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (!FieldClassDecl->hasTrivialConstructor())
         if (CXXConstructorDecl *FieldCtor = 
-            FieldClassDecl->getDefaultConstructor(Context)) {
-          if (FieldCtor->isImplicit() && !FieldCtor->isUsed())
-            MarkDeclarationReferenced(CurrentLocation, FieldCtor);
-        }
+            FieldClassDecl->getDefaultConstructor(Context))
+          MarkDeclarationReferenced(CurrentLocation, FieldCtor);
         else {
           Diag(CurrentLocation, diag::err_defining_default_ctor) 
           << Context.getTagDeclType(ClassDecl) << 0 <<
@@ -1956,6 +1952,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   CXXRecordDecl *ClassDecl
     = cast<CXXRecordDecl>(CopyConstructor->getDeclContext());
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
+  // C++ [class.copy] p209
   // Before the implicitly-declared copy constructor for a class is 
   // implicitly defined, all the implicitly-declared copy constructors
   // for its base class and its non-static data members shall have been
@@ -1966,8 +1963,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
       = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
     if (CXXConstructorDecl *BaseCopyCtor = 
         BaseClassDecl->getCopyConstructor(Context, TypeQuals))
-      if (BaseCopyCtor->isImplicit() && !BaseCopyCtor->isUsed())
-        MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
+      MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
        Field != ClassDecl->field_end(Context);
@@ -1980,8 +1976,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXConstructorDecl *FieldCopyCtor = 
           FieldClassDecl->getCopyConstructor(Context, TypeQuals))
-          if (FieldCopyCtor->isImplicit() && !FieldCopyCtor->isUsed())
-            MarkDeclarationReferenced(CurrentLocation, FieldCopyCtor);
+        MarkDeclarationReferenced(CurrentLocation, FieldCopyCtor);
     }
   }
   CopyConstructor->setUsed();
