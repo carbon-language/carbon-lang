@@ -532,14 +532,13 @@ bool ARMDAGToDAGISel::SelectThumb2ShifterOperandReg(SDValue Op,
 
   BaseReg = N.getOperand(0);
   unsigned ShImmVal = 0;
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1)))
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     ShImmVal = RHS->getZExtValue() & 31;
-  else
-    return false;
+    Opc = getI32Imm(ARM_AM::getSORegOpc(ShOpcVal, ShImmVal));
+    return true;
+  }
 
-  Opc = getI32Imm(ARM_AM::getSORegOpc(ShOpcVal, ShImmVal));
-
-  return true;
+  return false;
 }
 
 bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue Op,
