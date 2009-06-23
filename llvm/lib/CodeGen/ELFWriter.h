@@ -171,14 +171,18 @@ namespace llvm {
       return getSection(".strtab", ELFSection::SHT_STRTAB, 0, 1);
     }
 
+    ELFSection &getSectionHeaderStringTableSection() {
+      return getSection(".shstrtab", ELFSection::SHT_STRTAB, 0, 1);
+    }
+
     ELFSection &getDataSection() {
       return getSection(".data", ELFSection::SHT_PROGBITS,
-                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
+                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC, 4);
     }
 
     ELFSection &getBSSSection() {
       return getSection(".bss", ELFSection::SHT_NOBITS,
-                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
+                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC, 4);
     }
 
     ELFSection &getNullSection() {

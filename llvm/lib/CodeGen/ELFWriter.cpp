@@ -159,10 +159,6 @@ ELFSection &ELFWriter::getGlobalSymELFSection(const GlobalVariable *GV,
   unsigned Flags = S->getFlags();
   unsigned SectionType = ELFSection::SHT_PROGBITS;
   unsigned SHdrFlags = ELFSection::SHF_ALLOC;
-  const TargetData *TD = TM.getTargetData();
-  unsigned Align = TD->getPreferredAlignment(GV);
-  Constant *CV = GV->getInitializer();
-
   DOUT << "Section " << S->getName() << " for global " << GV->getName() << "\n";
 
   // If this is an external global, the symbol does not have a section.
@@ -170,6 +166,10 @@ ELFSection &ELFWriter::getGlobalSymELFSection(const GlobalVariable *GV,
     Sym.SectionIdx = ELFSection::SHN_UNDEF;
     return getNullSection();
   }
+
+  const TargetData *TD = TM.getTargetData();
+  unsigned Align = TD->getPreferredAlignment(GV);
+  Constant *CV = GV->getInitializer();
 
   if (Flags & SectionFlags::Code)
     SHdrFlags |= ELFSection::SHF_EXECINSTR;
@@ -192,6 +192,7 @@ ELFSection &ELFWriter::getGlobalSymELFSection(const GlobalVariable *GV,
         GV->hasCommonLinkage()) {
       Sym.SectionIdx = ELFSection::SHN_COMMON;
       Sym.IsCommon = true;
+      ElfS.Align = 1;
       return ElfS;
     }
     Sym.IsBss = true;
@@ -218,19 +219,21 @@ void ELFWriter::EmitFunctionDeclaration(const Function *F) {
 
 void ELFWriter::EmitGlobalVar(const GlobalVariable *GV) {
   unsigned SymBind = getGlobalELFLinkage(GV);
+  unsigned Align=0, Size=0;
   ELFSym GblSym(GV);
   GblSym.setBind(SymBind);
 
-  if (GV->hasInitializer())
+  if (GV->hasInitializer()) {
     GblSym.setType(ELFSym::STT_OBJECT);
-  else
+    const TargetData *TD = TM.getTargetData();
+    Align = TD->getPreferredAlignment(GV);
+    Size = TD->getTypeAllocSize(GV->getInitializer()->getType());
+    GblSym.Size = Size;
+  } else {
     GblSym.setType(ELFSym::STT_NOTYPE);
+  }
 
   ELFSection &GblSection = getGlobalSymELFSection(GV, GblSym);
-  const TargetData *TD = TM.getTargetData();
-  unsigned Align = TD->getPreferredAlignment(GV);
-  unsigned Size = TD->getTypeAllocSize(GV->getInitializer()->getType());
-  GblSym.Size = Size;
 
   if (GblSym.IsCommon) {
     GblSym.Value = Align;
@@ -598,7 +601,7 @@ void ELFWriter::EmitSymbolTable() {
 /// section names.
 void ELFWriter::EmitSectionTableStringTable() {
   // First step: add the section for the string table to the list of sections:
-  ELFSection &SHStrTab = getSection(".shstrtab", ELFSection::SHT_STRTAB, 0);
+  ELFSection &SHStrTab = getSectionHeaderStringTableSection();
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
@@ -684,13 +687,12 @@ void ELFWriter::OutputSectionsAndSectionTable() {
          << ", SectionData Size: " << S.size() << "\n";
 
     // Align FileOff to whatever the alignment restrictions of the section are.
-    if (S.Align) {
-      for (size_t NewFileOff = (FileOff+S.Align-1) & ~(S.Align-1);
-        FileOff != NewFileOff; ++FileOff)
-        O << (char)0xAB;
-    }
-
     if (S.size()) {
+      if (S.Align)  {
+        for (size_t NewFileOff = (FileOff+S.Align-1) & ~(S.Align-1);
+             FileOff != NewFileOff; ++FileOff)
+          O << (char)0xAB;
+      }
       O.write((char *)&S.getData()[0], S.Size);
       FileOff += S.Size;
     }
