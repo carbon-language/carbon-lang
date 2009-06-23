@@ -2247,7 +2247,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
         InitVal = ValMgr.getConjuredSymbolVal(InitEx, Count);
       }        
       
-      state = StateMgr.BindDecl(state, VD, InitVal);
+      state = state->bindDecl(VD, InitVal);
       
       // The next thing to do is check if the GRTransferFuncs object wants to
       // update the state based on the new binding.  If the GRTransferFunc
@@ -2257,7 +2257,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
                        InitVal);      
     } 
     else {
-      state = StateMgr.BindDeclWithNoInit(state, VD);
+      state = state->bindDeclWithNoInit(VD);
       MakeNode(Dst, DS, *I, state);
     }
   }

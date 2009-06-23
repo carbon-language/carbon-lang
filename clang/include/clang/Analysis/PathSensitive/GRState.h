@@ -218,6 +218,10 @@ public:
     return bindExpr(Ex, V, true, false);
   }
   
+  const GRState *bindDecl(const VarDecl* VD, SVal IVal) const;
+  
+  const GRState *bindDeclWithNoInit(const VarDecl* VD) const;  
+  
   const GRState *bindLoc(Loc location, SVal V) const;
   
   const GRState *bindLoc(SVal location, SVal V) const;
@@ -498,16 +502,6 @@ public:
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
 
-  const GRState* BindDecl(const GRState* St, const VarDecl* VD, SVal IVal) {
-    // Store manager should return a persistent state.
-    return StoreMgr->BindDecl(St, VD, IVal);
-  }
-
-  const GRState* BindDeclWithNoInit(const GRState* St, const VarDecl* VD) {
-    // Store manager should return a persistent state.
-    return StoreMgr->BindDeclWithNoInit(St, VD);
-  }
-
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                     SymbolReaper& SymReaper);
 
@@ -707,6 +701,14 @@ inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
 inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                             SVal V) const {
   return Mgr->StoreMgr->BindCompoundLiteral(this, CL, V);
+}
+  
+inline const GRState *GRState::bindDecl(const VarDecl* VD, SVal IVal) const {
+  return Mgr->StoreMgr->BindDecl(this, VD, IVal);
+}
+
+inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD) const {
+  return Mgr->StoreMgr->BindDeclWithNoInit(this, VD);
 }
   
 inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
