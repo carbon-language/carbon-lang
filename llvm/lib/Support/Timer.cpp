@@ -52,8 +52,20 @@ namespace {
 
 static TimerGroup *DefaultTimerGroup = 0;
 static TimerGroup *getDefaultTimerGroup() {
-  if (DefaultTimerGroup) return DefaultTimerGroup;
-  return DefaultTimerGroup = new TimerGroup("Miscellaneous Ungrouped Timers");
+  TimerGroup* tmp = DefaultTimerGroup;
+  sys::MemoryFence();
+  if (!tmp) {
+    llvm_acquire_global_lock();
+    tmp = DefaultTimerGroup;
+    if (!tmp) {
+      tmp = new TimerGroup("Miscellaneous Ungrouped Timers");
+      sys::MemoryFence();
+      DefaultTimerGroup = tmp;
+    }
+    llvm_release_global_lock();
+  }
+  
+  return tmp;
 }
 
 Timer::Timer(const std::string &N)
@@ -376,12 +388,6 @@ void TimerGroup::removeTimer() {
 
     if (OutStream != cerr.stream() && OutStream != cout.stream())
       delete OutStream;   // Close the file...
-  }
-
-  // Delete default timer group!
-  if (NumTimers == 0 && this == DefaultTimerGroup) {
-    delete DefaultTimerGroup;
-    DefaultTimerGroup = 0;
   }
 }
 
