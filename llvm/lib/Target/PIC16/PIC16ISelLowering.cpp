@@ -702,10 +702,12 @@ void PIC16TargetLowering::LegalizeAddress(SDValue Ptr, SelectionDAG &DAG,
   if (Ptr.getOpcode() == ISD::ADD) {
     SDValue OperLeft = Ptr.getOperand(0);
     SDValue OperRight = Ptr.getOperand(1);
-    if (OperLeft.getOpcode() == ISD::Constant) {
+    if ((OperLeft.getOpcode() == ISD::Constant) &&
+        (dyn_cast<ConstantSDNode>(OperLeft)->getZExtValue() < 32 )) {
       Offset = dyn_cast<ConstantSDNode>(OperLeft)->getZExtValue();
       Ptr = OperRight;
-    } else if (OperRight.getOpcode() == ISD::Constant) {
+    } else if ((OperRight.getOpcode() == ISD::Constant)  &&
+               (dyn_cast<ConstantSDNode>(OperRight)->getZExtValue() < 32 )){
       Offset = dyn_cast<ConstantSDNode>(OperRight)->getZExtValue();
       Ptr = OperLeft;
     }
