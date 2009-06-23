@@ -1453,6 +1453,18 @@ public:
     return DeclResult();
   }
 
+  /// \brief Invoked when a declarator that has one or more template parameter
+  /// lists has been parsed.
+  ///
+  /// This action is similar to ActOnDeclarator(), except that the declaration
+  /// being created somehow involves a template, e.g., it is a template 
+  /// declaration or specialization.
+  virtual DeclPtrTy ActOnTemplateDeclarator(Scope *S, 
+                              MultiTemplateParamsArg TemplateParameterLists,
+                                            Declarator &D) {
+    return DeclPtrTy();
+  }
+  
   /// \brief Process the explicit instantiation of a class template
   /// specialization.
   ///

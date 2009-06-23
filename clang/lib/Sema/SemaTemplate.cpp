@@ -2499,6 +2499,13 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   return DeclPtrTy::make(Specialization);
 }
 
+Sema::DeclPtrTy 
+Sema::ActOnTemplateDeclarator(Scope *S, 
+                              MultiTemplateParamsArg TemplateParameterLists,
+                              Declarator &D) {
+  return HandleDeclarator(S, D, move(TemplateParameterLists), false);
+}
+
 // Explicit instantiation of a class template specialization
 Sema::DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,

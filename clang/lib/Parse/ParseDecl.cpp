@@ -371,7 +371,8 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
 /// According to the standard grammar, =default and =delete are function
 /// definitions, but that definitely doesn't fit with the parser here.
 ///
-Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D) {
+Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
+                                     const ParsedTemplateInfo &TemplateInfo) {
   // If a simple-asm-expr is present, parse it.
   if (Tok.is(tok::kw_asm)) {
     SourceLocation Loc;
@@ -393,7 +394,13 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D) {
   }
   
   // Inform the current actions module that we just parsed this declarator.
-  DeclPtrTy ThisDecl = Actions.ActOnDeclarator(CurScope, D);
+  DeclPtrTy ThisDecl = TemplateInfo.TemplateParams? 
+      Actions.ActOnTemplateDeclarator(CurScope,
+                             Action::MultiTemplateParamsArg(Actions,
+                                          TemplateInfo.TemplateParams->data(),
+                                          TemplateInfo.TemplateParams->size()),
+                                    D)
+    : Actions.ActOnDeclarator(CurScope, D);
   
   // Parse declarator '=' initializer.
   if (Tok.is(tok::equal)) {

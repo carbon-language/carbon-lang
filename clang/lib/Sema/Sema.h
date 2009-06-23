@@ -421,9 +421,12 @@ public:
   virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
   
   virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
-    return ActOnDeclarator(S, D, false);
+    return HandleDeclarator(S, D, MultiTemplateParamsArg(*this), false);
   }
-  DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition);
+  
+  DeclPtrTy HandleDeclarator(Scope *S, Declarator &D, 
+                             MultiTemplateParamsArg TemplateParameterLists,
+                             bool IsFunctionDefinition);
   void RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
                                         Scope *S);
   void DiagnoseFunctionSpecifiers(Declarator& D);
@@ -437,6 +440,7 @@ public:
                                 bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, NamedDecl* PrevDecl, 
+                                     MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
                                      bool &Redeclaration);
   void CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
@@ -2068,6 +2072,10 @@ public:
                                    AttributeList *Attr,
                                  MultiTemplateParamsArg TemplateParameterLists);
 
+  virtual DeclPtrTy ActOnTemplateDeclarator(Scope *S, 
+                                  MultiTemplateParamsArg TemplateParameterLists,
+                                            Declarator &D);
+  
   virtual DeclResult
   ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                              unsigned TagSpec, 

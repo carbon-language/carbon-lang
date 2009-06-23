@@ -909,7 +909,8 @@ private:
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
                                         SourceLocation &DeclEnd,
                                         bool RequireSemi = true);
-  DeclPtrTy ParseDeclarationAfterDeclarator(Declarator &D);
+  DeclPtrTy ParseDeclarationAfterDeclarator(Declarator &D,
+               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
   DeclPtrTy ParseFunctionTryBlock(DeclPtrTy Decl);

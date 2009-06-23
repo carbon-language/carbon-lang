@@ -170,7 +170,8 @@ Parser::ParseSingleDeclarationAfterTemplate(
   // If we have a declaration or declarator list, handle it.
   if (isDeclarationAfterDeclarator()) {
     // Parse this declaration.
-    DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(DeclaratorInfo);
+    DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(DeclaratorInfo,
+                                                         TemplateInfo);
 
     if (Tok.is(tok::comma)) {
       Diag(Tok, diag::err_multiple_template_declarators)

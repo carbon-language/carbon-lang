@@ -1385,7 +1385,9 @@ static bool isNearlyMatchingFunction(ASTContext &Context,
 }
 
 Sema::DeclPtrTy 
-Sema::ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition) {
+Sema::HandleDeclarator(Scope *S, Declarator &D, 
+                       MultiTemplateParamsArg TemplateParamLists,
+                       bool IsFunctionDefinition) {
   DeclarationName Name = GetNameForDeclarator(D);
 
   // All of these full declarators require an identifier.  If it doesn't have
@@ -1500,9 +1502,15 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, bool IsFunctionDefinition) {
 
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+    if (TemplateParamLists.size()) {
+      Diag(D.getIdentifierLoc(), diag::err_template_typedef);
+      return DeclPtrTy();
+    }
+      
     New = ActOnTypedefDeclarator(S, D, DC, R, PrevDecl, Redeclaration);
   } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, PrevDecl, 
+                                  move(TemplateParamLists),
                                   IsFunctionDefinition, Redeclaration);
   } else {
     New = ActOnVariableDeclarator(S, D, DC, R, PrevDecl, Redeclaration);
@@ -1987,6 +1995,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
 NamedDecl* 
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, NamedDecl* PrevDecl,
+                              MultiTemplateParamsArg TemplateParamLists,
                               bool IsFunctionDefinition, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
@@ -2044,6 +2053,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       << R->getAsFunctionType()->getResultType();
     D.setInvalidType();
   }
+
+  // Check that we can declare a template here.
+  if (TemplateParamLists.size() && 
+      CheckTemplateDeclScope(S, TemplateParamLists))
+    return 0;
   
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;
@@ -2987,7 +3001,9 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
   
   Scope *ParentScope = FnBodyScope->getParent();
 
-  DeclPtrTy DP = ActOnDeclarator(ParentScope, D, /*IsFunctionDefinition=*/true);
+  DeclPtrTy DP = HandleDeclarator(ParentScope, D, 
+                                  MultiTemplateParamsArg(*this),
+                                  /*IsFunctionDefinition=*/true);
   return ActOnStartOfFunctionDef(FnBodyScope, DP);
 }
 

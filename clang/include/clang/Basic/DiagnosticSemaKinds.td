@@ -651,6 +651,7 @@ def note_template_export_unsupported : Note<
 def err_template_outside_namespace_or_class_scope : Error<
   "templates can only be declared in namespace or class scope">;
 def err_template_linkage : Error<"templates must have C++ linkage">;
+def err_template_typedef : Error<"a typedef cannot be a template">;
 def err_template_unnamed_class : Error<
   "cannot declare a class template with no name">;
 def err_template_param_list_different_arity : Error<
