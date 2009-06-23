@@ -473,13 +473,14 @@ Slash:
     // Common case, backslash-char where the char is not whitespace.
     if (!isWhitespace(Ptr[0])) return '\\';
     
-    // See if we have optional whitespace characters followed by a newline.
+    // See if we have optional whitespace characters between the slash and
+    // newline.
     if (unsigned EscapedNewLineSize = getEscapedNewLineSize(Ptr)) {
       // Remember that this token needs to be cleaned.
       if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
       // Warn if there was whitespace between the backslash and newline.
-      if (EscapedNewLineSize != 1 && Tok && !isLexingRawMode())
+      if (Ptr[0] != '\n' && Ptr[0] != '\r' && Tok && !isLexingRawMode())
         Diag(Ptr, diag::backslash_newline_space);
         
       // Found backslash<whitespace><newline>.  Parse the char after it.
