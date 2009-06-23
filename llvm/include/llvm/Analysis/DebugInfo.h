@@ -36,7 +36,7 @@ namespace llvm {
 
   class DIDescriptor {
   protected:    
-    GlobalVariable *GV;
+    GlobalVariable *DbgGV;
 
     /// DIDescriptor constructor.  If the specified GV is non-null, this checks
     /// to make sure that the tag in the descriptor matches 'RequiredTag'.  If
@@ -58,12 +58,12 @@ namespace llvm {
     GlobalVariable *getGlobalVariableField(unsigned Elt) const;
 
   public:
-    explicit DIDescriptor() : GV(0) {}
-    explicit DIDescriptor(GlobalVariable *gv) : GV(gv) {}
+    explicit DIDescriptor() : DbgGV(0) {}
+    explicit DIDescriptor(GlobalVariable *GV) : DbgGV(GV) {}
 
-    bool isNull() const { return GV == 0; }
+    bool isNull() const { return DbgGV == 0; }
 
-    GlobalVariable *getGV() const { return GV; }
+    GlobalVariable *getGV() const { return DbgGV; }
 
     unsigned getVersion() const {
       return getUnsignedField(0) & LLVMDebugVersionMask;
@@ -245,7 +245,7 @@ namespace llvm {
     explicit DIDerivedType(GlobalVariable *GV)
       : DIType(GV, true, true) {
       if (GV && !isDerivedType(getTag()))
-        GV = 0;
+        DbgGV = 0;
     }
 
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
@@ -265,7 +265,7 @@ namespace llvm {
     explicit DICompositeType(GlobalVariable *GV)
       : DIDerivedType(GV, true, true) {
       if (GV && !isCompositeType(getTag()))
-        GV = 0;
+        DbgGV = 0;
     }
 
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
@@ -373,10 +373,10 @@ namespace llvm {
   /// global etc).
   class DIVariable : public DIDescriptor {
   public:
-    explicit DIVariable(GlobalVariable *gv = 0)
-      : DIDescriptor(gv) {
-      if (gv && !isVariable(getTag()))
-        GV = 0;
+    explicit DIVariable(GlobalVariable *GV = 0)
+      : DIDescriptor(GV) {
+      if (GV && !isVariable(getTag()))
+        DbgGV = 0;
     }
 
     DIDescriptor getContext() const { return getDescriptorField(1); }

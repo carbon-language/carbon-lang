@@ -73,22 +73,22 @@ bool DIDescriptor::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
   return true;
 }
 
-DIDescriptor::DIDescriptor(GlobalVariable *gv, unsigned RequiredTag) {
-  GV = gv;
+DIDescriptor::DIDescriptor(GlobalVariable *GV, unsigned RequiredTag) {
+  DbgGV = GV;
   
   // If this is non-null, check to see if the Tag matches. If not, set to null.
   if (GV && getTag() != RequiredTag)
-    GV = 0;
+    DbgGV = 0;
 }
 
 const std::string &
 DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
-  if (GV == 0) {
+  if (DbgGV == 0) {
     Result.clear();
     return Result;
   }
 
-  Constant *C = GV->getInitializer();
+  Constant *C = DbgGV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands()) {
     Result.clear();
     return Result;
@@ -102,9 +102,9 @@ DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
-  if (GV == 0) return 0;
+  if (DbgGV == 0) return 0;
 
-  Constant *C = GV->getInitializer();
+  Constant *C = DbgGV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
     return 0;
 
@@ -114,9 +114,9 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
 }
 
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
-  if (GV == 0) return DIDescriptor();
+  if (DbgGV == 0) return DIDescriptor();
 
-  Constant *C = GV->getInitializer();
+  Constant *C = DbgGV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
     return DIDescriptor();
 
@@ -125,9 +125,9 @@ DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
 }
 
 GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
-  if (GV == 0) return 0;
+  if (DbgGV == 0) return 0;
 
-  Constant *C = GV->getInitializer();
+  Constant *C = DbgGV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
     return 0;
 
@@ -140,12 +140,12 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
 //===----------------------------------------------------------------------===//
 
 // Needed by DIVariable::getType().
-DIType::DIType(GlobalVariable *gv) : DIDescriptor(gv) {
-  if (!gv) return;
+DIType::DIType(GlobalVariable *GV) : DIDescriptor(GV) {
+  if (!GV) return;
   unsigned tag = getTag();
   if (tag != dwarf::DW_TAG_base_type && !DIDerivedType::isDerivedType(tag) &&
       !DICompositeType::isCompositeType(tag))
-    GV = 0;
+    DbgGV = 0;
 }
 
 /// isDerivedType - Return true if the specified tag is legal for
@@ -198,8 +198,8 @@ bool DIVariable::isVariable(unsigned Tag) {
 }
 
 unsigned DIArray::getNumElements() const {
-  assert (GV && "Invalid DIArray");
-  Constant *C = GV->getInitializer();
+  assert (DbgGV && "Invalid DIArray");
+  Constant *C = DbgGV->getInitializer();
   assert (C && "Invalid DIArray initializer");
   return C->getNumOperands();
 }
@@ -959,7 +959,7 @@ namespace llvm {
 /// dump - Print descriptor.
 void DIDescriptor::dump() const {
   cerr << "[" << dwarf::TagString(getTag()) << "] ";
-  cerr << std::hex << "[GV:" << GV << "]" << std::dec;
+  cerr << std::hex << "[GV:" << DbgGV << "]" << std::dec;
 }
 
 /// dump - Print compile unit.
@@ -1000,11 +1000,11 @@ void DIType::dump() const {
     cerr << " [fwd] ";
 
   if (isBasicType(Tag))
-    DIBasicType(GV).dump();
+    DIBasicType(DbgGV).dump();
   else if (isDerivedType(Tag))
-    DIDerivedType(GV).dump();
+    DIDerivedType(DbgGV).dump();
   else if (isCompositeType(Tag))
-    DICompositeType(GV).dump();
+    DICompositeType(DbgGV).dump();
   else {
     cerr << "Invalid DIType\n";
     return;
@@ -1051,7 +1051,7 @@ void DIGlobal::dump() const {
     cerr << " [def] ";
 
   if (isGlobalVariable(Tag))
-    DIGlobalVariable(GV).dump();
+    DIGlobalVariable(DbgGV).dump();
 
   cerr << "\n";
 }
