@@ -169,6 +169,7 @@ static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min, un
 }
 
 static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
+  Define(Defs, "__APPLE_CC__", "5621");
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
   Define(Defs, "OBJC_NEW_PROPERTIES");

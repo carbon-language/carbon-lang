@@ -232,7 +232,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
   
   // Currently claim to be compatible with GCC 4.2.1-5621.
-  DefineBuiltinMacro(Buf, "__APPLE_CC__=5621");
   DefineBuiltinMacro(Buf, "__GNUC_MINOR__=2");
   DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
   DefineBuiltinMacro(Buf, "__GNUC__=4");
