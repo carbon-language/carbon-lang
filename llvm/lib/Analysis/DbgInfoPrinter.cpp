@@ -93,7 +93,7 @@ void PrintDbgInfo::printFuncStart(const DbgFuncStartInst *FS) {
   DISubprogram Subprogram(cast<GlobalVariable>(FS->getSubprogram()));
   std::string Res1, Res2;
   Out << "; fully qualified function name: " << Subprogram.getDisplayName(Res1)
-      << " return type: " << Subprogram.getType().getName(Res2)
+      << " return type: " << Subprogram.getReturnTypeName(Res2)
       << " at line " << Subprogram.getLineNumber()
       << "\n\n";
 }
