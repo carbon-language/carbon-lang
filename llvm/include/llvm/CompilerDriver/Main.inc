@@ -12,8 +12,6 @@
 //  supported please refer to the tools' manual page or run the tool
 //  with the --help option.
 //
-//  This
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_INCLUDE_COMPILER_DRIVER_MAIN_INC
