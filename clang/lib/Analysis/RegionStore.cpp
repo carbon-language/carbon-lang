@@ -1171,6 +1171,8 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
     // There may be fewer values than fields only when we are initializing a
     // struct decl. In this case, mark the region as having default value.
     if (VI == VE) {
+      // FIXME: We should bind signed/unsigned 0 according to the sign of the
+      // field type.
       const NonLoc& Idx = NonLoc::MakeIntVal(getBasicVals(), 0, false);
       state = state->set<RegionDefaultValue>(R, Idx);
       break;
