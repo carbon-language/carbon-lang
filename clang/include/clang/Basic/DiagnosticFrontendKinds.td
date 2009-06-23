@@ -136,4 +136,7 @@ def warn_pch_char_signed : Error<
 
 def err_not_a_pch_file : Error<
     "'%0' does not appear to be a precompiled header file">, DefaultFatal;
+def warn_unknown_warning_option : Warning<
+    "unknown warning option '%0'">,
+    InGroup<DiagGroup<"unknown-warning-option"> >;
 }

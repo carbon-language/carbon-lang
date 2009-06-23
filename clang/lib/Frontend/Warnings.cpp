@@ -24,6 +24,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include <cstdio>
 #include <cstring>
 #include <utility>
@@ -99,7 +100,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
     }
     
     if (Diags.setDiagnosticGroupMapping(OptStart, Mapping))
-      fprintf(stderr, "warning: unknown warning option: -W%s\n", Opt.c_str());
+      Diags.Report(FullSourceLoc(), diag::warn_unknown_warning_option)
+        << ("-W" + Opt);
   }
   
   return false;
