@@ -35,11 +35,11 @@ void sys::MemoryFence() {
 #endif
 }
 
-uint32_t sys::CompareAndSwap32(volatile uint32_t* ptr,
-                               uint32_t new_value,
-                               uint32_t old_value) {
+sys::cas_flag sys::CompareAndSwap(volatile sys::cas_flag* ptr,
+                                  sys::cas_flag new_value,
+                                  sys::cas_flag old_value) {
 #if LLVM_MULTITHREADED==0
-  uint32_t result = *ptr;
+  sys::cas_flag result = *ptr;
   if (result == old_value)
     *ptr = new_value;
   return result;
@@ -52,7 +52,7 @@ uint32_t sys::CompareAndSwap32(volatile uint32_t* ptr,
 #endif
 }
 
-int32_t sys::AtomicIncrement32(volatile int32_t* ptr) {
+sys::cas_flag sys::AtomicIncrement(volatile sys::cas_flag* ptr) {
 #if LLVM_MULTITHREADED==0
   ++(*ptr);
   return *ptr;
@@ -65,7 +65,7 @@ int32_t sys::AtomicIncrement32(volatile int32_t* ptr) {
 #endif
 }
 
-int32_t sys::AtomicDecrement32(volatile int32_t* ptr) {
+sys::cas_flag sys::AtomicDecrement(volatile sys::cas_flag* ptr) {
 #if LLVM_MULTITHREADED==0
   --(*ptr);
   return *ptr;
@@ -78,7 +78,7 @@ int32_t sys::AtomicDecrement32(volatile int32_t* ptr) {
 #endif
 }
 
-int32_t sys::AtomicAdd32(volatile int32_t* ptr, int32_t val) {
+sys::cas_flag sys::AtomicAdd(volatile sys::cas_flag* ptr, sys::cas_flag val) {
 #if LLVM_MULTITHREADED==0
   *ptr += val;
   return *ptr;
@@ -91,16 +91,4 @@ int32_t sys::AtomicAdd32(volatile int32_t* ptr, int32_t val) {
 #endif
 }
 
-int64_t sys::AtomicAdd64(volatile int64_t* ptr, int64_t val) {
-#if LLVM_MULTITHREADED==0
-  *ptr += val;
-  return *ptr;
-#elif defined(__GNUC__)
-  return __sync_add_and_fetch(ptr, val);
-#elif defined(_MSC_VER)
-  return InterlockedAdd64(ptr, val);
-#else
-#  error No atomic add implementation for your platform!
-#endif
-}
 

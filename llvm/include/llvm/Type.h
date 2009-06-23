@@ -103,7 +103,7 @@ private:
   /// has no AbstractTypeUsers, the type is deleted.  This is only sensical for
   /// derived types.
   ///
-  mutable int32_t RefCount;
+  mutable sys::cas_flag RefCount;
 
   const Type *getForwardedTypeInternal() const;
 
@@ -338,7 +338,7 @@ public:
 
   void addRef() const {
     assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
-    sys::AtomicIncrement32(&RefCount);
+    sys::AtomicIncrement(&RefCount);
   }
 
   void dropRef() const {
@@ -347,8 +347,8 @@ public:
 
     // If this is the last PATypeHolder using this object, and there are no
     // PATypeHandles using it, the type is dead, delete it now.
-    int32_t Count = sys::AtomicDecrement32(&RefCount);
-    if (Count == 0 && AbstractTypeUsers.empty())
+    sys::cas_flag OldCount = sys::AtomicDecrement(&RefCount);
+    if (OldCount == 0 && AbstractTypeUsers.empty())
       this->destroy();
   }
   

@@ -165,10 +165,10 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
   } else if (!GV->hasName()) {
     // Must mangle the global into a unique ID.
     unsigned TypeUniqueID = getTypeID(GV->getType());
-    static int32_t GlobalID = 0;
+    static uint32_t GlobalID = 0;
     
-    int32_t OldID = GlobalID;
-    sys::AtomicIncrement32(&GlobalID);
+    unsigned OldID = GlobalID;
+    sys::AtomicIncrement(&GlobalID);
     
     Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(OldID);
   } else {

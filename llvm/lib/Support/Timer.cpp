@@ -112,7 +112,8 @@ static inline size_t getMemUsage() {
 }
 
 struct TimeRecord {
-  int64_t Elapsed, UserTime, SystemTime, MemUsed;
+  double Elapsed, UserTime, SystemTime;
+  ssize_t MemUsed;
 };
 
 static TimeRecord getTimeRecord(bool Start) {
@@ -122,7 +123,7 @@ static TimeRecord getTimeRecord(bool Start) {
   sys::TimeValue user(0,0);
   sys::TimeValue sys(0,0);
 
-  int64_t MemUsed = 0;
+  ssize_t MemUsed = 0;
   if (Start) {
     MemUsed = getMemUsage();
     sys::Process::GetTimeUsage(now,user,sys);
@@ -131,9 +132,9 @@ static TimeRecord getTimeRecord(bool Start) {
     MemUsed = getMemUsage();
   }
 
-  Result.Elapsed  = now.seconds() * 1000000 + now.microseconds();
-  Result.UserTime = user.seconds() * 1000000 + user.microseconds();
-  Result.SystemTime  = sys.seconds() * 1000000 + sys.microseconds();
+  Result.Elapsed  = now.seconds()  + now.microseconds()  / 1000000.0;
+  Result.UserTime = user.seconds() + user.microseconds() / 1000000.0;
+  Result.SystemTime  = sys.seconds()  + sys.microseconds()  / 1000000.0;
   Result.MemUsed  = MemUsed;
 
   return Result;
@@ -182,11 +183,11 @@ void Timer::sum(const Timer &T) {
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
-  int64_t MemUsed = getMemUsage();
+  size_t MemUsed = getMemUsage();
 
   for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
          E = ActiveTimers->end(); I != E; ++I)
-    (*I)->PeakMem = std::max((*I)->PeakMem, (int64_t)MemUsed-(*I)->PeakMemBase);
+    (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
 }
 
 //===----------------------------------------------------------------------===//
@@ -276,13 +277,12 @@ static void printVal(double Val, double Total, std::ostream &OS) {
 
 void Timer::print(const Timer &Total, std::ostream &OS) {
   if (Total.UserTime)
-    printVal(UserTime / 1000000.0, Total.UserTime / 1000000.0, OS);
+    printVal(UserTime, Total.UserTime, OS);
   if (Total.SystemTime)
-    printVal(SystemTime / 1000000.0, Total.SystemTime / 1000000.0, OS);
+    printVal(SystemTime, Total.SystemTime, OS);
   if (Total.getProcessTime())
-    printVal(getProcessTime() / 1000000.0,
-             Total.getProcessTime() / 1000000.0, OS);
-  printVal(Elapsed / 1000000.0, Total.Elapsed / 1000000.0, OS);
+    printVal(getProcessTime(), Total.getProcessTime(), OS);
+  printVal(Elapsed, Total.Elapsed, OS);
 
   OS << "  ";
 
@@ -355,23 +355,23 @@ void TimerGroup::removeTimer() {
       if (this != DefaultTimerGroup) {
         *OutStream << "  Total Execution Time: ";
 
-        printAlignedFP(Total.getProcessTime() / 1000000.0, 4, 5, *OutStream);
+        printAlignedFP(Total.getProcessTime(), 4, 5, *OutStream);
         *OutStream << " seconds (";
-        printAlignedFP(Total.getWallTime() / 1000000.0, 4, 5, *OutStream);
+        printAlignedFP(Total.getWallTime(), 4, 5, *OutStream);
         *OutStream << " wall clock)\n";
       }
       *OutStream << "\n";
 
-      if (Total.UserTime / 1000000.0)
+      if (Total.UserTime)
         *OutStream << "   ---User Time---";
-      if (Total.SystemTime / 1000000.0)
+      if (Total.SystemTime)
         *OutStream << "   --System Time--";
-      if (Total.getProcessTime() / 1000000.0)
+      if (Total.getProcessTime())
         *OutStream << "   --User+System--";
       *OutStream << "   ---Wall Time---";
-      if (Total.getMemUsed() / 1000000.0)
+      if (Total.getMemUsed())
         *OutStream << "  ---Mem---";
-      if (Total.getPeakMem() / 1000000.0)
+      if (Total.getPeakMem())
         *OutStream << "  -PeakMem-";
       *OutStream << "  --- Name ---\n";
 
