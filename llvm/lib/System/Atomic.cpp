@@ -78,4 +78,17 @@ sys::cas_flag sys::AtomicDecrement(volatile sys::cas_flag* ptr) {
 #endif
 }
 
+sys::cas_flag sys::AtomicAdd(volatile sys::cas_flag* ptr, sys::cas_flag val) {
+#if LLVM_MULTITHREADED==0
+  *ptr += val;
+  return *ptr;
+#elif defined(__GNUC__)
+  return __sync_add_and_fetch(ptr, val);
+#elif defined(_MSC_VER)
+  return InterlockedAdd(ptr, val);
+#else
+#  error No atomic add implementation for your platform!
+#endif
+}
+
 
