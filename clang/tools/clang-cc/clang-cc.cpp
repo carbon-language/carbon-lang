@@ -33,6 +33,7 @@
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/CodeGen/ModuleBuilder.h"
@@ -79,83 +80,17 @@ using namespace clang;
 // Source Location Parser
 //===----------------------------------------------------------------------===//
 
-/// \brief A source location that has been parsed on the command line.
-struct ParsedSourceLocation {
-  std::string FileName;
-  unsigned Line;
-  unsigned Column;
-
-  /// \brief Try to resolve the file name of a parsed source location.
-  ///
-  /// \returns true if there was an error, false otherwise.
-  bool ResolveLocation(FileManager &FileMgr, RequestedSourceLocation &Result);
-};
-
-bool
-ParsedSourceLocation::ResolveLocation(FileManager &FileMgr, 
-                                      RequestedSourceLocation &Result) {
-  const FileEntry *File = FileMgr.getFile(FileName);
+static bool ResolveParsedLocation(ParsedSourceLocation &ParsedLoc,
+                                  FileManager &FileMgr,
+                                  RequestedSourceLocation &Result) {
+  const FileEntry *File = FileMgr.getFile(ParsedLoc.FileName);
   if (!File)
     return true;
 
   Result.File = File;
-  Result.Line = Line;
-  Result.Column = Column;
+  Result.Line = ParsedLoc.Line;
+  Result.Column = ParsedLoc.Column;
   return false;
-}
-
-namespace llvm {
-  namespace cl {
-    /// \brief Command-line option parser that parses source locations.
-    ///
-    /// Source locations are of the form filename:line:column.
-    template<>
-    class parser<ParsedSourceLocation> 
-      : public basic_parser<ParsedSourceLocation> {
-    public:
-      bool parse(Option &O, const char *ArgName, 
-                 const std::string &ArgValue,
-                 ParsedSourceLocation &Val);
-    };
-
-    bool 
-    parser<ParsedSourceLocation>::
-    parse(Option &O, const char *ArgName, const std::string &ArgValue, 
-          ParsedSourceLocation &Val) {
-      using namespace clang;
-
-      const char *ExpectedFormat 
-        = "source location must be of the form filename:line:column";
-      std::string::size_type SecondColon = ArgValue.rfind(':');
-      if (SecondColon == std::string::npos) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-      char *EndPtr;
-      long Column 
-        = std::strtol(ArgValue.c_str() + SecondColon + 1, &EndPtr, 10);
-      if (EndPtr != ArgValue.c_str() + ArgValue.size()) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-
-      std::string::size_type FirstColon = ArgValue.rfind(':', SecondColon-1);
-      if (FirstColon == std::string::npos) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-      long Line = std::strtol(ArgValue.c_str() + FirstColon + 1, &EndPtr, 10);
-      if (EndPtr != ArgValue.c_str() + SecondColon) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-      
-      Val.FileName = ArgValue.substr(0, FirstColon);
-      Val.Line = Line;
-      Val.Column = Column;
-      return false;
-    }
-  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -1979,8 +1914,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     for (unsigned Idx = 0, Last = FixItAtLocations.size(); 
          Idx != Last; ++Idx) {
       RequestedSourceLocation Requested;
-      if (FixItAtLocations[Idx].ResolveLocation(PP.getFileManager(), 
-                                                Requested)) {
+      if (ResolveParsedLocation(FixItAtLocations[Idx],
+                                PP.getFileManager(), Requested)) {
         fprintf(stderr, "FIX-IT could not find file \"%s\"\n",
                 FixItAtLocations[Idx].FileName.c_str());
       } else {
