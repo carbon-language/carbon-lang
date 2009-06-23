@@ -524,6 +524,24 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 }
 } // isNotDuplicable = 1
 
+
+// LEApcrel - Load a pc-relative address into a register without offending the
+// assembler.
+def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p), Pseudo,
+                   !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
+                                         "${:private}PCRELL${:uid}+8))\n"),
+                              !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                         "add$p $dst, pc, #PCRELV${:uid}")),
+                   []>;
+
+def LEApcrelJT : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, i32imm:$id, pred:$p),
+          Pseudo,
+          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
+                                         "${:private}PCRELL${:uid}+8))\n"),
+                              !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                         "add$p $dst, pc, #PCRELV${:uid}")),
+                   []>;
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
 //
@@ -1275,23 +1293,6 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">, UnaryDP;
 
-
-// LEApcrel - Load a pc-relative address into a register without offending the
-// assembler.
-def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p), Pseudo,
-                   !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
-                                         "${:private}PCRELL${:uid}+8))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add$p $dst, pc, #PCRELV${:uid}")),
-                   []>;
-
-def LEApcrelJT : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, i32imm:$id, pred:$p),
-          Pseudo,
-          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
-                                         "${:private}PCRELL${:uid}+8))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add$p $dst, pc, #PCRELV${:uid}")),
-                   []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
