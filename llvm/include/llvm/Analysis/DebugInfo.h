@@ -330,6 +330,19 @@ namespace llvm {
 
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
+    /// getReturnTypeName - Subprogram return types are encoded either as
+    /// DIType or as DICompositeType.
+    const std::string &getReturnTypeName(std::string &F) const {
+      DICompositeType DCT(getFieldAs<DICompositeType>(8));
+      if (!DCT.isNull()) {
+        DIArray A = DCT.getTypeArray();
+        DIType T(A.getElement(0).getGV());
+        return T.getName(F);
+      }
+      DIType T(getFieldAs<DIType>(8));
+      return T.getName(F);
+    }
+
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
 
