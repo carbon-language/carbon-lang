@@ -52,7 +52,7 @@ uint32_t sys::CompareAndSwap32(volatile uint32_t* ptr,
 #endif
 }
 
-uint32_t sys::AtomicIncrement32(volatile uint32_t* ptr) {
+int32_t sys::AtomicIncrement32(volatile int32_t* ptr) {
 #if LLVM_MULTITHREADED==0
   ++(*ptr);
   return *ptr;
@@ -65,7 +65,7 @@ uint32_t sys::AtomicIncrement32(volatile uint32_t* ptr) {
 #endif
 }
 
-uint32_t sys::AtomicDecrement32(volatile uint32_t* ptr) {
+int32_t sys::AtomicDecrement32(volatile int32_t* ptr) {
 #if LLVM_MULTITHREADED==0
   --(*ptr);
   return *ptr;
@@ -78,7 +78,7 @@ uint32_t sys::AtomicDecrement32(volatile uint32_t* ptr) {
 #endif
 }
 
-uint32_t sys::AtomicAdd32(volatile uint32_t* ptr, uint32_t val) {
+int32_t sys::AtomicAdd32(volatile int32_t* ptr, int32_t val) {
 #if LLVM_MULTITHREADED==0
   *ptr += val;
   return *ptr;
@@ -91,7 +91,7 @@ uint32_t sys::AtomicAdd32(volatile uint32_t* ptr, uint32_t val) {
 #endif
 }
 
-uint64_t sys::AtomicAdd64(volatile uint64_t* ptr, uint64_t val) {
+int64_t sys::AtomicAdd64(volatile int64_t* ptr, int64_t val) {
 #if LLVM_MULTITHREADED==0
   *ptr += val;
   return *ptr;

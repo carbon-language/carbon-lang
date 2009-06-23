@@ -103,7 +103,7 @@ private:
   /// has no AbstractTypeUsers, the type is deleted.  This is only sensical for
   /// derived types.
   ///
-  mutable uint32_t RefCount;
+  mutable int32_t RefCount;
 
   const Type *getForwardedTypeInternal() const;
 
@@ -347,7 +347,7 @@ public:
 
     // If this is the last PATypeHolder using this object, and there are no
     // PATypeHandles using it, the type is dead, delete it now.
-    uint32_t Count = sys::AtomicDecrement32(&RefCount);
+    int32_t Count = sys::AtomicDecrement32(&RefCount);
     if (Count == 0 && AbstractTypeUsers.empty())
       this->destroy();
   }

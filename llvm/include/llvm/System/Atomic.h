@@ -23,11 +23,11 @@ namespace llvm {
     uint32_t CompareAndSwap32(volatile uint32_t* ptr,
                             uint32_t new_value,
                             uint32_t old_value);
-    uint32_t AtomicIncrement32(volatile uint32_t* ptr);
-    uint32_t AtomicDecrement32(volatile uint32_t* ptr);
-    uint32_t AtomicAdd32(volatile uint32_t* ptr, uint32_t val);
+    int32_t AtomicIncrement32(volatile int32_t* ptr);
+    int32_t AtomicDecrement32(volatile int32_t* ptr);
+    int32_t AtomicAdd32(volatile int32_t* ptr, int32_t val);
     
-    uint64_t AtomicAdd64(volatile uint64_t* ptr, uint64_t val);
+    int64_t AtomicAdd64(volatile int64_t* ptr, int64_t val);
   }
 }
 
