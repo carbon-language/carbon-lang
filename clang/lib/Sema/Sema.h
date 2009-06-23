@@ -1137,7 +1137,8 @@ public:
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
-                                   AssociatedClassSet &AssociatedClasses);
+                                   AssociatedClassSet &AssociatedClasses,
+                                          bool &GlobalScope);
 
   bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                SourceLocation NameLoc, 

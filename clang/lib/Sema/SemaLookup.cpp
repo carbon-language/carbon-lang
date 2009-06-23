@@ -1239,7 +1239,8 @@ static void
 addAssociatedClassesAndNamespaces(CXXRecordDecl *Class, 
                                   ASTContext &Context,
                             Sema::AssociatedNamespaceSet &AssociatedNamespaces,
-                            Sema::AssociatedClassSet &AssociatedClasses) {
+                            Sema::AssociatedClassSet &AssociatedClasses,
+                                  bool &GlobalScope) {
   // C++ [basic.lookup.koenig]p2:
   //   [...]
   //     -- If T is a class type (including unions), its associated
@@ -1252,13 +1253,14 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
   DeclContext *Ctx = Class->getDeclContext();
   if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
     AssociatedClasses.insert(EnclosingClass);
-
   // Add the associated namespace for this class.
   while (Ctx->isRecord())
     Ctx = Ctx->getParent();
   if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(Ctx))
     AssociatedNamespaces.insert(EnclosingNamespace);
-
+  else if (Ctx->isTranslationUnit())
+    GlobalScope = true;
+  
   // Add the class itself. If we've already seen this class, we don't
   // need to visit base classes.
   if (!AssociatedClasses.insert(Class))
@@ -1288,6 +1290,8 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
           BaseCtx = BaseCtx->getParent();
         if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(BaseCtx))
           AssociatedNamespaces.insert(EnclosingNamespace);
+        else if (BaseCtx->isTranslationUnit())
+          GlobalScope = true;
 
         // Make sure we visit the bases of this base class.
         if (BaseDecl->bases_begin() != BaseDecl->bases_end())
@@ -1304,7 +1308,8 @@ static void
 addAssociatedClassesAndNamespaces(QualType T, 
                                   ASTContext &Context,
                             Sema::AssociatedNamespaceSet &AssociatedNamespaces,
-                            Sema::AssociatedClassSet &AssociatedClasses) {
+                                  Sema::AssociatedClassSet &AssociatedClasses,
+                                  bool &GlobalScope) {
   // C++ [basic.lookup.koenig]p2:
   //
   //   For each argument type T in the function call, there is a set
@@ -1346,7 +1351,8 @@ addAssociatedClassesAndNamespaces(QualType T,
         = dyn_cast<CXXRecordDecl>(ClassType->getDecl())) {
       addAssociatedClassesAndNamespaces(ClassDecl, Context, 
                                         AssociatedNamespaces, 
-                                        AssociatedClasses);
+                                        AssociatedClasses,
+                                        GlobalScope);
       return;
     }
 
@@ -1366,6 +1372,8 @@ addAssociatedClassesAndNamespaces(QualType T,
       Ctx = Ctx->getParent();
     if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(Ctx))
       AssociatedNamespaces.insert(EnclosingNamespace);
+    else if (Ctx->isTranslationUnit())
+      GlobalScope = true;
 
     return;
   }
@@ -1377,7 +1385,8 @@ addAssociatedClassesAndNamespaces(QualType T,
     // Return type
     addAssociatedClassesAndNamespaces(FunctionType->getResultType(), 
                                       Context,
-                                      AssociatedNamespaces, AssociatedClasses);
+                                      AssociatedNamespaces, AssociatedClasses,
+                                      GlobalScope);
 
     const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FunctionType);
     if (!Proto)
@@ -1388,7 +1397,8 @@ addAssociatedClassesAndNamespaces(QualType T,
                                            ArgEnd = Proto->arg_type_end(); 
          Arg != ArgEnd; ++Arg)
       addAssociatedClassesAndNamespaces(*Arg, Context,
-                                        AssociatedNamespaces, AssociatedClasses);
+                                        AssociatedNamespaces, AssociatedClasses,
+                                        GlobalScope);
       
     return;
   }
@@ -1406,13 +1416,15 @@ addAssociatedClassesAndNamespaces(QualType T,
     // Handle the type that the pointer to member points to.
     addAssociatedClassesAndNamespaces(MemberPtr->getPointeeType(),
                                       Context,
-                                      AssociatedNamespaces, AssociatedClasses);
+                                      AssociatedNamespaces, AssociatedClasses,
+                                      GlobalScope);
 
     // Handle the class type into which this points.
     if (const RecordType *Class = MemberPtr->getClass()->getAsRecordType())
       addAssociatedClassesAndNamespaces(cast<CXXRecordDecl>(Class->getDecl()),
                                         Context,
-                                        AssociatedNamespaces, AssociatedClasses);
+                                        AssociatedNamespaces, AssociatedClasses,
+                                        GlobalScope);
 
     return;
   }
@@ -1431,7 +1443,8 @@ addAssociatedClassesAndNamespaces(QualType T,
 void 
 Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                  AssociatedNamespaceSet &AssociatedNamespaces,
-                                 AssociatedClassSet &AssociatedClasses) {
+                                 AssociatedClassSet &AssociatedClasses,
+                                         bool &GlobalScope) {
   AssociatedNamespaces.clear();
   AssociatedClasses.clear();
 
@@ -1447,7 +1460,8 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
 
     if (Arg->getType() != Context.OverloadTy) {
       addAssociatedClassesAndNamespaces(Arg->getType(), Context,
-                                        AssociatedNamespaces, AssociatedClasses);
+                                        AssociatedNamespaces, AssociatedClasses,
+                                        GlobalScope);
       continue;
     }
 
@@ -1483,11 +1497,14 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
       DeclContext *Ctx = FDecl->getDeclContext();
       if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(Ctx))
         AssociatedNamespaces.insert(EnclosingNamespace);
+      else if (Ctx->isTranslationUnit())
+        GlobalScope = true;
 
       // Add the classes and namespaces associated with the parameter
       // types and return type of this function.
       addAssociatedClassesAndNamespaces(FDecl->getType(), Context,
-                                        AssociatedNamespaces, AssociatedClasses);
+                                        AssociatedNamespaces, AssociatedClasses,
+                                        GlobalScope);
     }
   }
 }
@@ -1589,8 +1606,10 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
   // arguments we have.
   AssociatedNamespaceSet AssociatedNamespaces;
   AssociatedClassSet AssociatedClasses;
+  bool GlobalScope = false;
   FindAssociatedClassesAndNamespaces(Args, NumArgs, 
-                                     AssociatedNamespaces, AssociatedClasses);
+                                     AssociatedNamespaces, AssociatedClasses,
+                                     GlobalScope);
 
   // C++ [basic.lookup.argdep]p3:
   //   Let X be the lookup set produced by unqualified lookup (3.4.1)
@@ -1623,6 +1642,19 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
       if (!Func)
         break;
 
+      Functions.insert(Func);
+    }
+  }
+  
+  if (GlobalScope) {
+    DeclContext::lookup_iterator I, E;
+    for (llvm::tie(I, E) 
+           = Context.getTranslationUnitDecl()->lookup(Context, Name); 
+         I != E; ++I) {
+      FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
+      if (!Func)
+        break;
+      
       Functions.insert(Func);
     }
   }

@@ -58,3 +58,16 @@ namespace M {
 void test_operator_name_adl(N::X x) {
   (void)operator+(x, x);
 }
+
+struct Z { };
+int& f(Z);
+
+namespace O {
+  char &f();
+  void test_global_scope_adl(Z z) {
+    {
+      int& ir = f(z);
+    }
+  }
+}
+
