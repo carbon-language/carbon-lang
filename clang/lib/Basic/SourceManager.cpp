@@ -373,7 +373,10 @@ FileID SourceManager::createFileID(const ContentCache *File,
   
   // Set LastFileIDLookup to the newly created file.  The next getFileID call is
   // almost guaranteed to be from that file.
-  return LastFileIDLookup = FileID::get(SLocEntryTable.size()-1);
+  FileID FID = FileID::get(SLocEntryTable.size()-1);
+  if (File->FirstFID.isInvalid())
+    File->FirstFID = FID;
+  return LastFileIDLookup = FID;
 }
 
 /// createInstantiationLoc - Return a new SourceLocation that encodes the fact
