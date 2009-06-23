@@ -1079,17 +1079,11 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
                                              SVal Init) {
 
   QualType T = R->getValueType(getContext());
-  assert(T->isArrayType());
-
-  // When we are binding the whole array, it always has default value 0.
-  state = state->set<RegionDefaultValue>(R, NonLoc::MakeIntVal(getBasicVals(),
-                                                               0, false));
-
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
+  QualType ElementTy = CAT->getElementType();
 
   llvm::APSInt Size(CAT->getSize(), false);
-  llvm::APSInt i = getBasicVals().getValue(0, Size.getBitWidth(),
-                                           Size.isUnsigned());
+  llvm::APSInt i(llvm::APInt::getNullValue(Size.getBitWidth()), false);
 
   // Check if the init expr is a StringLiteral.
   if (isa<loc::MemRegionVal>(Init)) {
@@ -1106,10 +1100,8 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
       if (j >= len)
         break;
 
-      SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-      ElementRegion* ER =
-        MRMgr.getElementRegion(cast<ArrayType>(T)->getElementType(),
-                               Idx, R, getContext());
+      SVal Idx = ValMgr.makeNonLoc(i);
+      ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx,R,getContext());
 
       SVal V = NonLoc::MakeVal(getBasicVals(), str[j], sizeof(char)*8, true);
       state = Bind(state, loc::MemRegionVal(ER), V);
@@ -1122,19 +1114,29 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
 
   for (; i < Size; ++i, ++VI) {
-    // The init list might be shorter than the array decl.
+    // The init list might be shorter than the array length.
     if (VI == VE)
       break;
 
-    SVal Idx = NonLoc::MakeVal(getBasicVals(), i);
-    ElementRegion* ER =
-      MRMgr.getElementRegion(cast<ArrayType>(T)->getElementType(),
-                             Idx, R, getContext());
+    SVal Idx = ValMgr.makeNonLoc(i);
+    ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
     if (CAT->getElementType()->isStructureType())
       state = BindStruct(state, ER, *VI);
     else
       state = Bind(state, Loc::MakeVal(ER), *VI);
+  }
+
+  // If the init list is shorter than the array length, bind the rest elements
+  // to 0.
+  if (ElementTy->isIntegerType()) {
+    while (i < Size) {
+      SVal Idx = ValMgr.makeNonLoc(i);
+      ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx,R,getContext());
+      SVal V = ValMgr.makeZeroVal(ElementTy);
+      state = Bind(state, Loc::MakeVal(ER), V);
+      ++i;
+    }
   }
 
   return state;

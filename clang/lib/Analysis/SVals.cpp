@@ -264,6 +264,10 @@ NonLoc ValueManager::makeNonLoc(SymbolRef sym) {
   return nonloc::SymbolVal(sym);
 }
 
+NonLoc ValueManager::makeNonLoc(const APSInt& V) {
+  return nonloc::ConcreteInt(BasicVals.getValue(V));
+}
+
 NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                                 const APSInt& v, QualType T) {
   // The Environment ensures we always get a persistent APSInt in
