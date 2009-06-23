@@ -1,4 +1,4 @@
-//===-- llvm/MC/MCImm.h - MCImm class ---------------------------*- C++ -*-===//
+//===-- llvm/MC/MCValue.h - MCValue class -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,24 +7,25 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the MCInst and MCOperand classes, which
-// is the basic representation used to represent low-level machine code
-// instructions.
+// This file contains the declaration of the MCValue class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCIMM_H
-#define LLVM_MC_MCIMM_H
+#ifndef LLVM_MC_MCVALUE_H
+#define LLVM_MC_MCVALUE_H
 
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 class MCSymbol;
 
-/// MCImm - This represents an "assembler immediate".  In its most general form,
-/// this can hold "SymbolA - SymbolB + imm64".  Not all targets supports
+/// MCValue - This represents an "assembler immediate".  In its most general
+/// form, this can hold "SymbolA - SymbolB + imm64".  Not all targets supports
 /// relocations of this general form, but we need to represent this anyway.
-class MCImm {
+///
+/// Note that this class must remain a simple POD value class, because we need
+/// it to live in unions etc.
+class MCValue {
   MCSymbol *SymA, *SymB;
   int64_t Cst;
 public:
@@ -34,16 +35,16 @@ public:
   MCSymbol *getSymB() const { return SymB; }
   
   
-  static MCImm get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
-    MCImm R;
+  static MCValue get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
+    MCValue R;
     R.Cst = Val;
     R.SymA = SymA;
     R.SymB = SymB;
     return R;
   }
   
-  static MCImm get(int64_t Val) {
-    MCImm R;
+  static MCValue get(int64_t Val) {
+    MCValue R;
     R.Cst = Val;
     R.SymA = 0;
     R.SymB = 0;

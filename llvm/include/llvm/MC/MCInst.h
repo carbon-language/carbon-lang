@@ -16,7 +16,7 @@
 #ifndef LLVM_MC_MCINST_H
 #define LLVM_MC_MCINST_H
 
-#include "llvm/MC/MCImm.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
@@ -31,14 +31,14 @@ class MCOperand {
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
     kMBBLabel,                ///< Basic block label.
-    kMCImm
+    kMCValue
   };
   unsigned char Kind;
   
   union {
     unsigned RegVal;
     int64_t ImmVal;
-    MCImm MCImmVal;
+    MCValue MCValueVal;
     struct {
       unsigned FunctionNo;
       unsigned BlockNo;
