@@ -50,9 +50,9 @@ namespace llvm {
   inline bool InitializeNativeTarget() {
   // If we have a native target, initialize it to ensure it is linked in.
 #ifdef LLVM_NATIVE_ARCH
-#define DoInit2(TARG, MOD)   llvm::Initialize ## TARG ## MOD()
-#define DoInit(T, M) DoInit2(T, M)
-    DoInit(LLVM_NATIVE_ARCH, Target);
+#define DoInit2(TARG)   llvm::Initialize ## TARG ()
+#define DoInit(T) DoInit2(T)
+    DoInit(LLVM_NATIVE_ARCH);
     return false;
 #undef DoInit
 #undef DoInit2

@@ -582,4 +582,4 @@
 #cmakedefine strdup ${strdup}
 
 /* Native LLVM architecture */
-#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}
+#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}Target

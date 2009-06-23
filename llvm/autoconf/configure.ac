@@ -447,7 +447,8 @@ AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 # If so, define LLVM_NATIVE_ARCH to that LLVM target.
 for a_target in $TARGETS_TO_BUILD; do
   if test "$a_target" = "$LLVM_NATIVE_ARCH"; then
-    AC_DEFINE_UNQUOTED(LLVM_NATIVE_ARCH,$LLVM_NATIVE_ARCH,
+    LLVM_NATIVE_ARCHTARGET="${LLVM_NATIVE_ARCH}Target"
+    AC_DEFINE_UNQUOTED(LLVM_NATIVE_ARCH,$LLVM_NATIVE_ARCHTARGET,
       [LLVM architecture name for the native architecture, if available])
   fi
 done
