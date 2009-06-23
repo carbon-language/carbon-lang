@@ -13,10 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef LLVM_MC_MCINST_H
 #define LLVM_MC_MCINST_H
 
+#include "llvm/MC/MCImm.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
@@ -30,13 +30,15 @@ class MCOperand {
     kInvalid,                 ///< Uninitialized.
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
-    kMBBLabel                 ///< Basic block label.
+    kMBBLabel,                ///< Basic block label.
+    kMCImm
   };
   unsigned char Kind;
   
   union {
     unsigned RegVal;
     int64_t ImmVal;
+    MCImm MCImmVal;
     struct {
       unsigned FunctionNo;
       unsigned BlockNo;
