@@ -2,7 +2,7 @@
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep lsr
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep asr
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ror
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | not grep mov
 
 define i32 @t2ADDrs_lsl(i32 %X, i32 %Y) {
         %A = shl i32 %Y, 16
