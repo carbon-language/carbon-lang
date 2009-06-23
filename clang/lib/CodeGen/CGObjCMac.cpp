@@ -911,6 +911,8 @@ protected:
                                         const CallArgList &CallArgs,
                                         const ObjCCommonTypesHelper &ObjCTypes);
 
+  virtual void MergeMetadataGlobals(std::vector<llvm::Constant*> &UsedArray);
+
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) : CGM(cgm)
   { }
@@ -3426,6 +3428,16 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
   NameOut += ']';
 }
 
+void CGObjCCommonMac::MergeMetadataGlobals(
+                                  std::vector<llvm::Constant*> &UsedArray) {
+  llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(),
+       e = UsedGlobals.end(); i != e; ++i) {
+    UsedArray.push_back(llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(*i), 
+                                                       i8PTy));
+  }
+}
+
 void CGObjCMac::FinishModule() {
   EmitModuleInfo();
 
@@ -3446,22 +3458,6 @@ void CGObjCMac::FinishModule() {
     i->second->setInitializer(llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
                                                         Values));
   }
-
-  std::vector<llvm::Constant*> Used;
-  for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
-         e = UsedGlobals.end(); i != e; ++i) {
-    Used.push_back(llvm::ConstantExpr::getBitCast(*i, ObjCTypes.Int8PtrTy));
-  }
-  
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.Int8PtrTy, Used.size());
-  llvm::GlobalValue *GV = 
-    new llvm::GlobalVariable(AT, false,
-                             llvm::GlobalValue::AppendingLinkage,
-                             llvm::ConstantArray::get(AT, Used),
-                             "llvm.used", 
-                             &CGM.getModule());
-
-  GV->setSection("llvm.metadata");
 
   // Add assembler directives to add lazy undefined symbol references
   // for classes which are referenced but not defined. This is
@@ -4111,24 +4107,6 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   IMGV->setSection("__DATA, __objc_imageinfo, regular, no_dead_strip");
   IMGV->setConstant(true);
   UsedGlobals.push_back(IMGV);
-  
-  std::vector<llvm::Constant*> Used;
-
-  for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
-       e = UsedGlobals.end(); i != e; ++i) {
-    Used.push_back(llvm::ConstantExpr::getBitCast(*i, ObjCTypes.Int8PtrTy));
-  }
-
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.Int8PtrTy, Used.size());
-  llvm::GlobalValue *GV = 
-  new llvm::GlobalVariable(AT, false,
-                           llvm::GlobalValue::AppendingLinkage,
-                           llvm::ConstantArray::get(AT, Used),
-                           "llvm.used", 
-                           &CGM.getModule());
-  
-  GV->setSection("llvm.metadata");
-  
 }
 
 /// LegacyDispatchedSelector - Returns true if SEL is not in the list of

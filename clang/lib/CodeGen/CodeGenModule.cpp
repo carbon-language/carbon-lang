@@ -406,11 +406,12 @@ void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
 
 void CodeGenModule::EmitLLVMUsed() {
   // Don't create llvm.used if there is no need.
-  if (LLVMUsed.empty())
+  // FIXME. Runtime indicates that there might be more 'used' symbols; but not
+  // necessariy. So, this test is not accurate for emptiness.
+  if (LLVMUsed.empty() && !Runtime)
     return;
 
   llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, LLVMUsed.size());
   
   // Convert LLVMUsed to what ConstantArray needs.
   std::vector<llvm::Constant*> UsedArray;
@@ -419,6 +420,12 @@ void CodeGenModule::EmitLLVMUsed() {
     UsedArray[i] = 
      llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*LLVMUsed[i]), i8PTy);
   }
+  
+  if (Runtime)
+    Runtime->MergeMetadataGlobals(UsedArray);
+  if (UsedArray.empty())
+    return;
+  llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, UsedArray.size());
   
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(ATy, false, 
