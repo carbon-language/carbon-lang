@@ -182,11 +182,11 @@ void Timer::sum(const Timer &T) {
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
-  size_t MemUsed = getMemUsage();
+  int64_t MemUsed = getMemUsage();
 
   for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
          E = ActiveTimers->end(); I != E; ++I)
-    (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
+    (*I)->PeakMem = std::max((*I)->PeakMem, (int64_t)MemUsed-(*I)->PeakMemBase);
 }
 
 //===----------------------------------------------------------------------===//
