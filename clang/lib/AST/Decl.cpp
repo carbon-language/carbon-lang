@@ -496,7 +496,7 @@ void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
 
     // Update source range. The check below allows us to set EndRangeLoc before
     // setting the parameters.
-    if (EndRangeLoc < NewParamInfo[NumParams-1]->getLocEnd())
+    if (EndRangeLoc.isInvalid() || EndRangeLoc == getLocation())
       EndRangeLoc = NewParamInfo[NumParams-1]->getLocEnd();
   }
 }

@@ -694,7 +694,6 @@ public:
     return SourceRange(getLocation(), EndRangeLoc);
   }
   void setLocEnd(SourceLocation E) {
-    assert(getLocation() <= E && "Invalid end location");
     EndRangeLoc = E;
   }
   
