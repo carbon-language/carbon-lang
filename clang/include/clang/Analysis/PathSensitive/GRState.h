@@ -593,17 +593,7 @@ public:
   
     return UnknownVal();
   }
-  
-  const GRState* BindLoc(const GRState* St, Loc LV, SVal V) {
-    return StoreMgr->Bind(St, LV, V);
-  }
 
-  void Unbind(GRState& St, Loc LV) {
-    St.St = StoreMgr->Remove(St.St, LV);
-  }
-  
-  const GRState* Unbind(const GRState* St, Loc LV);
-  
   const GRState* getPersistentState(GRState& Impl);
 
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
@@ -722,7 +712,7 @@ inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
 }
   
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
-  return Mgr->BindLoc(this, LV, V);
+  return Mgr->StoreMgr->Bind(this, LV, V);
 }
 
 inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
@@ -843,10 +833,6 @@ CB GRState::scanReachableSymbols(SVal val) const {
   CB cb(this);
   scanReachableSymbols(val, cb);
   return cb;
-}
-  
-inline const GRState *GRState::unbindLoc(Loc LV) const {
-  return Mgr->Unbind(this, LV);
 }
 
 } // end clang namespace

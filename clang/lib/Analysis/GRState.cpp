@@ -56,16 +56,16 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
                                            SymReaper);
 }
 
-const GRState* GRStateManager::Unbind(const GRState* St, Loc LV) {
-  Store OldStore = St->getStore();
-  Store NewStore = StoreMgr->Remove(OldStore, LV);
+const GRState *GRState::unbindLoc(Loc LV) const {
+  Store OldStore = getStore();
+  Store NewStore = Mgr->StoreMgr->Remove(OldStore, LV);
   
   if (NewStore == OldStore)
-    return St;
+    return this;
   
-  GRState NewSt = *St;
+  GRState NewSt = *this;
   NewSt.St = NewStore;
-  return getPersistentState(NewSt);    
+  return Mgr->getPersistentState(NewSt);    
 }
 
 const GRState* GRStateManager::getInitialState() {

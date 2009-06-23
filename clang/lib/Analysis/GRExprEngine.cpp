@@ -1046,7 +1046,7 @@ void GRExprEngine::EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   else {
     // We are binding to a value other than 'unknown'.  Perform the binding
     // using the StoreManager.
-    newState = StateMgr.BindLoc(state, cast<Loc>(location), Val);
+    newState = state->bindLoc(cast<Loc>(location), Val);
   }
 
   // The next thing to do is check if the GRTransferFuncs object wants to

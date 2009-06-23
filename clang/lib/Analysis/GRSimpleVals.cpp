@@ -354,24 +354,23 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
                             CallExpr* CE, SVal L,
                             ExplodedNode<GRState>* Pred) {
   
-  GRStateManager& StateMgr = Eng.getStateManager();
-  const GRState* St = Builder.GetState(Pred);
+  const GRState* state = Builder.GetState(Pred);
   
   // Invalidate all arguments passed in by reference (Locs).
 
   for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
         I != E; ++I) {
 
-    SVal V = St->getSVal(*I);
+    SVal V = state->getSVal(*I);
     
     if (isa<loc::MemRegionVal>(V)) {
       const MemRegion *R = cast<loc::MemRegionVal>(V).getRegion();
+      
       if (R->isBoundable())
-        St = StateMgr.BindLoc(St, cast<Loc>(V), UnknownVal());
+        state = state->bindLoc(cast<Loc>(V), UnknownVal());
     } else if (isa<nonloc::LocAsInteger>(V))
-      St = StateMgr.BindLoc(St, cast<nonloc::LocAsInteger>(V).getLoc(),
-                            UnknownVal());
-    
+        state = state->bindLoc(cast<nonloc::LocAsInteger>(V).getLoc(),
+                               UnknownVal());
   }
   
   // Make up a symbol for the return value of this function.  
@@ -381,10 +380,10 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {    
     unsigned Count = Builder.getCurrentBlockCount();
     SVal X = Eng.getValueManager().getConjuredSymbolVal(CE, Count);
-    St = St->bindExpr(CE, X, Eng.getCFG().isBlkExpr(CE), false);
+    state = state->bindExpr(CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
     
-  Builder.MakeNode(Dst, CE, Pred, St);
+  Builder.MakeNode(Dst, CE, Pred, state);
 }
 
 //===----------------------------------------------------------------------===//
