@@ -16,13 +16,16 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
+#include "llvm/System/Mutex.h"
 #include <ostream>
 #include <vector>
 using namespace llvm;
 
 static ManagedStatic<std::vector<std::string> > Plugins;
+static ManagedStatic<sys::SmartMutex<true> > PluginsLock;
 
 void PluginLoader::operator=(const std::string &Filename) {
+  sys::SmartScopedLock<true> Lock(&*PluginsLock);
   std::string Error;
   if (sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str(), &Error)) {
     cerr << "Error opening '" << Filename << "': " << Error
@@ -33,10 +36,12 @@ void PluginLoader::operator=(const std::string &Filename) {
 }
 
 unsigned PluginLoader::getNumPlugins() {
+  sys::SmartScopedLock<true> Lock(&*PluginsLock);
   return Plugins.isConstructed() ? Plugins->size() : 0;
 }
 
 std::string &PluginLoader::getPlugin(unsigned num) {
+  sys::SmartScopedLock<true> Lock(&*PluginsLock);
   assert(Plugins.isConstructed() && num < Plugins->size() &&
          "Asking for an out of bounds plugin");
   return (*Plugins)[num];
