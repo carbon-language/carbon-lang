@@ -12,7 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsmParser.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;

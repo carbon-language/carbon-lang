@@ -236,6 +236,7 @@ add_subdirectory(lib/Transforms/Hello)
 add_subdirectory(lib/Linker)
 add_subdirectory(lib/Analysis)
 add_subdirectory(lib/Analysis/IPA)
+add_subdirectory(lib/MC)
 
  set(LLVM_ENUM_ASM_PRINTERS "")
  foreach(t ${LLVM_TARGETS_TO_BUILD})
