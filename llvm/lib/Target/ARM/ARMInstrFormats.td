@@ -751,6 +751,28 @@ class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb, HasV5T];
 }
 
+// Thumb1 only
+class Thumb1I<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
+             string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
+  let OutOperandList = outs;
+  let InOperandList = ins;
+  let AsmString   = asm;
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb1Only];
+}
+
+class T1I<dag outs, dag ins, string asm, list<dag> pattern>
+  : Thumb1I<outs, ins, AddrModeNone, Size2Bytes, asm, "", pattern>;
+
+// Two-address instructions
+class T1It<dag outs, dag ins, string asm, list<dag> pattern>
+  : Thumb1I<outs, ins, AddrModeNone, Size2Bytes, asm, "$lhs = $dst", pattern>;
+
+class Thumb1Pat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb1Only];
+}
+
 // T2I - Thumb2 instruction.
 
 class Thumb2I<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
