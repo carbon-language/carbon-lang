@@ -1,4 +1,4 @@
-//===- lib/MachineCode/MCContext.cpp - Machine Code Context ---------------===//
+//===- lib/MC/MCContext.cpp - Machine Code Context ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,9 +10,9 @@
 #include "llvm/MC/MCContext.h"
 
 #include "llvm/MC/MCAtom.h"
-#include "llvm/MC/MCImm.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 using namespace llvm;
 
 MCContext::MCContext()
@@ -63,12 +63,12 @@ void MCContext::ClearSymbolValue(MCSymbol *Sym) {
   SymbolValues.erase(Sym);
 }
 
-void MCContext::SetSymbolValue(MCSymbol *Sym, const MCImm &Value) {
+void MCContext::SetSymbolValue(MCSymbol *Sym, const MCValue &Value) {
   SymbolValues[Sym] = Value;
 }
 
-const MCImm *MCContext::GetSymbolValue(MCSymbol *Sym) const {
-  DenseMap<MCSymbol*, MCImm>::iterator it = SymbolValues.find(Sym);
+const MCValue *MCContext::GetSymbolValue(MCSymbol *Sym) const {
+  DenseMap<MCSymbol*, MCValue>::iterator it = SymbolValues.find(Sym);
 
   if (it == SymbolValues.end())
     return 0;

@@ -16,7 +16,7 @@
 
 namespace llvm {
   class MCAtom;
-  class MCImm;
+  class MCValue;
   class MCSection;
   class MCSymbol;
 
@@ -32,7 +32,7 @@ namespace llvm {
     StringMap<MCSymbol*> Symbols;
 
     /// SymbolValues - Bindings of symbols to values.
-    DenseMap<MCSymbol*, MCImm> SymbolValues;
+    DenseMap<MCSymbol*, MCValue> SymbolValues;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -73,11 +73,11 @@ namespace llvm {
 
     /// SetSymbolValue - Set the value binding for @param Symbol to @param
     /// Value.
-    void SetSymbolValue(MCSymbol *Symbol, const MCImm &Value);
+    void SetSymbolValue(MCSymbol *Symbol, const MCValue &Value);
 
     /// GetSymbolValue - Return the current value for @param Symbol, or null if
     /// none exists.
-    const MCImm *GetSymbolValue(MCSymbol *Symbol) const;
+    const MCValue *GetSymbolValue(MCSymbol *Symbol) const;
 
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return Allocator.Allocate(Size, Align);

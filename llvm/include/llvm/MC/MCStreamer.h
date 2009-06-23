@@ -13,7 +13,7 @@
 namespace llvm {
   class MCAtom;
   class MCContext;
-  class MCImm;
+  class MCValue;
   class MCInst;
   class MCSection;
   class MCSymbol;
@@ -59,7 +59,7 @@ namespace llvm {
     //
     // FIXME: What to do about the current section? Should we get rid of the
     // symbol section in the constructor and initialize it here?
-    virtual void EmitLabel(MCSymbol *Symbol);
+    virtual void EmitLabel(MCSymbol *Symbol) = 0;
 
     /// EmitAssignment - Emit an assignment of @param Value to @param Symbol.
     ///
@@ -75,7 +75,7 @@ namespace llvm {
     /// @param MakeAbsolute - If true, then the symbol should be given the
     /// absolute value of @param Value, even if @param Value would be
     /// relocatable expression. This corresponds to the ".set" directive.
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCImm &Value,
+    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
                                 bool MakeAbsolute = false) = 0;
 
     /// EmitSymbolAttribute - Add the given @param Attribute to @param Symbol.
@@ -103,11 +103,14 @@ namespace llvm {
     /// @param Value - The value to emit.
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
-    virtual void EmitValue(const MCImm &Value, unsigned Size) = 0;
+    virtual void EmitValue(const MCValue &Value, unsigned Size) = 0;
 
     /// EmitInstruction - Emit the given @param Instruction into the current
     /// section.
     virtual void EmitInstruction(const MCInst &Inst) = 0;
+
+    /// Finish - Finish emission of machine code and flush any output.
+    virtual void Finish() = 0;
   };
 
   /// createAsmStreamer - Create a machine code streamer which will print out
