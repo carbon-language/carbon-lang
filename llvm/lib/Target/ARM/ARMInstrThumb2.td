@@ -14,7 +14,7 @@
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
-                ComplexPattern<i32, 2, "SelectShifterOperand",
+                ComplexPattern<i32, 2, "SelectThumb2ShifterOperandReg",
                                [shl,srl,sra,rotr]> {
   let PrintMethod = "printSOOperand";
   let MIOperandInfo = (ops GPR, i32imm);

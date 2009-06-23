@@ -92,8 +92,8 @@ public:
   bool SelectThumbAddrModeSP(SDValue Op, SDValue N, SDValue &Base,
                              SDValue &OffImm);
 
-  bool SelectShifterOperand(SDValue Op, SDValue N,
-                            SDValue &BaseReg, SDValue &Opc);
+  bool SelectThumb2ShifterOperandReg(SDValue Op, SDValue N,
+                                     SDValue &BaseReg, SDValue &Opc);
 
   bool SelectShifterOperandReg(SDValue Op, SDValue N, SDValue &A,
                                SDValue &B, SDValue &C);
@@ -520,10 +520,10 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue Op, SDValue N,
   return false;
 }
 
-bool ARMDAGToDAGISel::SelectShifterOperand(SDValue Op,
-                                           SDValue N,
-                                           SDValue &BaseReg,
-                                           SDValue &Opc) {
+bool ARMDAGToDAGISel::SelectThumb2ShifterOperandReg(SDValue Op,
+                                                    SDValue N,
+                                                    SDValue &BaseReg,
+                                                    SDValue &Opc) {
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
 
   // Don't match base register only case. That is matched to a separate
