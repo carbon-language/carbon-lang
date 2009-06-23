@@ -66,10 +66,14 @@ void Statistic::RegisterStatistic() {
   // If stats are enabled, inform StatInfo that this statistic should be
   // printed.
   sys::ScopedLock Writer(&*StatLock);
-  if (Enabled)
-    StatInfo->addStatistic(this);
-  // Remember we have been registered.
-  Initialized = true;
+  if (!Initialized) {
+    if (Enabled)
+      StatInfo->addStatistic(this);
+    
+    sys::MemoryFence();
+    // Remember we have been registered.
+    Initialized = true;
+  }
 }
 
 namespace {
