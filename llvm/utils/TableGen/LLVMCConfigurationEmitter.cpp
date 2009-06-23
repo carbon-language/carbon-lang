@@ -1681,7 +1681,7 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
       continue;
     }
 
-    O << "(\"" << val.Name << '\"';
+    O << "(\"" << val.Name << "\"\n";
 
     if (val.Type == OptionType::Prefix || val.Type == OptionType::PrefixList)
       O << ", cl::Prefix";
@@ -1712,7 +1712,7 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
     if (!val.Help.empty())
       O << ", cl::desc(\"" << val.Help << "\")";
 
-    O << ");\n";
+    O << ");\n\n";
   }
 
   // Emit the aliases (they should go after all the 'proper' options).
