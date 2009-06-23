@@ -31,6 +31,7 @@ add_clang_library(clangAnalysis
   SVals.cpp
   SymbolManager.cpp
   UninitializedValues.cpp
+  ValueManager.cpp
   )
 
 add_dependencies(clangAnalysis ClangDiagnosticAnalysis)
