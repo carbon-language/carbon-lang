@@ -59,11 +59,14 @@ private:
 protected:
   MemRegion(Kind k) : kind(k) {}
   virtual ~MemRegion();
+  ASTContext &getContext() const;
 
 public:
   // virtual MemExtent getExtent(MemRegionManager& mrm) const = 0;
   virtual void Profile(llvm::FoldingSetNodeID& ID) const = 0;
-  
+
+  virtual MemRegionManager* getMemRegionManager() const = 0;
+
   std::string getString() const;
 
   virtual void print(llvm::raw_ostream& os) const;  
@@ -72,7 +75,7 @@ public:
   
   template<typename RegionTy> const RegionTy* getAs() const;
   
-  virtual bool isBoundable(ASTContext&) const { return true; }
+  virtual bool isBoundable() const { return true; }
 
   static bool classof(const MemRegion*) { return true; }
 };
@@ -81,14 +84,23 @@ public:
 ///  for example, the set of global variables, the stack frame, etc.
 class MemSpaceRegion : public MemRegion {
   friend class MemRegionManager;
-  MemSpaceRegion() : MemRegion(MemSpaceRegionKind) {}
+
+protected:
+  MemRegionManager *Mgr;
+
+  MemSpaceRegion(MemRegionManager *mgr) : MemRegion(MemSpaceRegionKind),
+                                          Mgr(mgr) {}
   
+  MemRegionManager* getMemRegionManager() const {
+    return Mgr;
+  }
+
 public:
   //RegionExtent getExtent() const { return UndefinedExtent(); }
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
-  bool isBoundable(ASTContext &) const { return false; }
+  bool isBoundable() const { return false; }
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == MemSpaceRegionKind;
@@ -101,11 +113,12 @@ class SubRegion : public MemRegion {
 protected:
   const MemRegion* superRegion;  
   SubRegion(const MemRegion* sReg, Kind k) : MemRegion(k), superRegion(sReg) {}
-  
 public:
   const MemRegion* getSuperRegion() const {
     return superRegion;
   }
+  
+  MemRegionManager* getMemRegionManager() const;
 
   bool isSubRegionOf(const MemRegion* R) const;
 
@@ -164,8 +177,8 @@ public:
     return getLocationType(C)->getDesugaredType();
   }
 
-  bool isBoundable(ASTContext &C) const {
-    return !getValueType(C).isNull();
+  bool isBoundable() const {
+    return !getValueType(getContext()).isNull();
   }
 
   static bool classof(const MemRegion* R) {
@@ -229,7 +242,7 @@ public:
     return const_cast<SymbolRef>(static_cast<const SymbolRef>(Data));
   }
   
-  bool isBoundable(ASTContext&) const { return false; }
+  bool isBoundable() const { return false; }
   
   virtual void print(llvm::raw_ostream& os) const;
 
@@ -329,7 +342,7 @@ public:
     return PTy->getPointeeType();
   }
   
-  bool isBoundable(ASTContext &C) const {
+  bool isBoundable() const {
     return isa<PointerType>(LValueType);
   }  
 
@@ -559,6 +572,7 @@ const RegionTy* MemRegion::getAs() const {
 //===----------------------------------------------------------------------===//
 
 class MemRegionManager {
+  ASTContext &C;
   llvm::BumpPtrAllocator& A;
   llvm::FoldingSet<MemRegion> Regions;
   
@@ -569,10 +583,12 @@ class MemRegionManager {
   MemSpaceRegion* code;
 
 public:
-  MemRegionManager(llvm::BumpPtrAllocator& a)
-    : A(a), globals(0), stack(0), heap(0), unknown(0), code(0) {}
+  MemRegionManager(ASTContext &c, llvm::BumpPtrAllocator& a)
+    : C(c), A(a), globals(0), stack(0), heap(0), unknown(0), code(0) {}
   
   ~MemRegionManager() {}
+  
+  ASTContext &getContext() { return C; }
   
   /// getStackRegion - Retrieve the memory region associated with the
   ///  current stack frame.
@@ -666,9 +682,13 @@ private:
 };
   
 //===----------------------------------------------------------------------===//
-// Out-of-line member template definitions.
+// Out-of-line member definitions.
 //===----------------------------------------------------------------------===//
 
+inline ASTContext& MemRegion::getContext() const {
+  return getMemRegionManager()->getContext();
+}
+  
 template<typename RegionTy> struct MemRegionManagerTrait;
   
 template <typename RegionTy, typename A1>

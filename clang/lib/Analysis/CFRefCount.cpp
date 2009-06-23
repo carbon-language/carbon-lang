@@ -2835,7 +2835,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           // Remove any existing reference-count binding.
           if (Sym) state = state->remove<RefBindings>(Sym);
           
-          if (R->isBoundable(Ctx)) {
+          if (R->isBoundable()) {
             // Set the value of the variable to be a conjured symbol.
             unsigned Count = Builder.getCurrentBlockCount();
             QualType T = R->getValueType(Ctx);

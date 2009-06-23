@@ -717,7 +717,7 @@ public:
         if (isa<loc::ConcreteInt>(V)) {
           bool b = false;
           ASTContext &C = BRC.getASTContext();
-          if (R->isBoundable(C)) {
+          if (R->isBoundable()) {
             if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
               if (C.isObjCObjectPointerType(TR->getValueType(C))) {
                 os << "initialized to nil";
@@ -748,7 +748,7 @@ public:
       if (isa<loc::ConcreteInt>(V)) {
         bool b = false;
         ASTContext &C = BRC.getASTContext();
-        if (R->isBoundable(C)) {
+        if (R->isBoundable()) {
           if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
             if (C.isObjCObjectPointerType(TR->getValueType(C))) {
               os << "nil object reference stored to ";

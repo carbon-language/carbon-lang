@@ -613,7 +613,7 @@ public:
     // We only want to do fetches from regions that we can actually bind
     // values.  For example, SymbolicRegions of type 'id<...>' cannot
     // have direct bindings (but their can be bindings on their subregions).
-    if (!R->isBoundable(getContext()))
+    if (!R->isBoundable())
       return UnknownVal();
     
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {

@@ -351,7 +351,7 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
         // are incompatible.  This may also cause lots of breakage
         // elsewhere. Food for thought.
         if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
-          if (TyR->isBoundable(C) &&
+          if (TyR->isBoundable() &&
               Loc::IsLocType(TyR->getValueType(C)))              
             V = X->getLoc();
         }

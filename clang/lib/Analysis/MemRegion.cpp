@@ -37,6 +37,19 @@ bool SubRegion::isSubRegionOf(const MemRegion* R) const {
   return false;
 }
 
+
+MemRegionManager* SubRegion::getMemRegionManager() const {
+  const SubRegion* r = this;
+  do {
+    const MemRegion *superRegion = r->getSuperRegion();
+    if (const SubRegion *sr = dyn_cast<SubRegion>(superRegion)) {
+      r = sr;
+      continue;
+    }
+    return superRegion->getMemRegionManager();
+  } while (1);
+}
+
 void MemSpaceRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ID.AddInteger((unsigned)getKind());
 }
@@ -192,13 +205,12 @@ void VarRegion::print(llvm::raw_ostream& os) const {
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//
   
-MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {
-  
+MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {  
   if (!region) {  
     region = (MemSpaceRegion*) A.Allocate<MemSpaceRegion>();
-    new (region) MemSpaceRegion();
+    new (region) MemSpaceRegion(this);
   }
-  
+
   return region;
 }
 

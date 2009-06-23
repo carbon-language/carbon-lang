@@ -39,7 +39,7 @@ public:
   ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context)
                : Context(context), BasicVals(Context, alloc),
                  SymMgr(Context, BasicVals, alloc),
-                 MemMgr(alloc) {}
+                 MemMgr(Context, alloc) {}
 
   // Accessors to submanagers.
   
