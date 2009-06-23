@@ -239,79 +239,103 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
 }
 
 /// \brief Construct a template argument pack.
-TemplateArgument::TemplateArgument(SourceLocation Loc, TemplateArgument *args, 
-                                   unsigned NumArgs, bool CopyArgs) 
-  : Kind(Pack) {
-    Args.NumArgs = NumArgs;
-    Args.CopyArgs = CopyArgs;
-    if (!Args.CopyArgs) {
-      Args.Args = args;
-      return;
-    }
-
-    Args.Args = new TemplateArgument[NumArgs];
-    for (unsigned I = 0; I != NumArgs; ++I)
-      Args.Args[I] = args[I];
+void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs, 
+                                       bool CopyArgs) {
+  assert(isNull() && "Must call setArgumentPack on a null argument");
+  
+  Kind = Pack;
+  Args.NumArgs = NumArgs;
+  Args.CopyArgs = CopyArgs;
+  if (!Args.CopyArgs) {
+    Args.Args = args;
+    return;
+  }
+  
+  Args.Args = new TemplateArgument[NumArgs];
+  for (unsigned I = 0; I != Args.NumArgs; ++I)
+    Args.Args[I] = args[I];
 }
 
 //===----------------------------------------------------------------------===//
 // TemplateArgumentListBuilder Implementation
 //===----------------------------------------------------------------------===//
-void TemplateArgumentListBuilder::push_back(const TemplateArgument& Arg) {
+
+void TemplateArgumentListBuilder::Append(const TemplateArgument& Arg) {
   switch (Arg.getKind()) {
-  default: break;
-  case TemplateArgument::Type:
-    assert(Arg.getAsType()->isCanonical() && "Type must be canonical!");
-    break;
+    default: break;
+    case TemplateArgument::Type:
+      assert(Arg.getAsType()->isCanonical() && "Type must be canonical!");
+      break;
   }
   
-  FlatArgs.push_back(Arg);
+  assert(NumFlatArgs < MaxFlatArgs && "Argument list builder is full!");
+  assert(!StructuredArgs && 
+         "Can't append arguments when an argument pack has been added!");
   
-  if (!isAddingFromParameterPack())
-    StructuredArgs.push_back(Arg);
+  if (!FlatArgs)
+    FlatArgs = new TemplateArgument[MaxFlatArgs];
+  
+  FlatArgs[NumFlatArgs++] = Arg;
 }
 
-void TemplateArgumentListBuilder::BeginParameterPack() {
-  assert(!isAddingFromParameterPack() && "Already adding to parameter pack!");
-
-  PackBeginIndex = FlatArgs.size();
+void TemplateArgumentListBuilder::BeginPack() {
+  assert(!AddingToPack && "Already adding to pack!");
+  assert(!StructuredArgs && "Argument list already contains a pack!");
+  
+  AddingToPack = true;
+  PackBeginIndex = NumFlatArgs;
 }
 
-void TemplateArgumentListBuilder::EndParameterPack() {
-  assert(isAddingFromParameterPack() && "Not adding to parameter pack!");
+void TemplateArgumentListBuilder::EndPack() {
+  assert(AddingToPack && "Not adding to pack!");
+  assert(!StructuredArgs && "Argument list already contains a pack!");
+  
+  AddingToPack = false;
 
-  unsigned NumArgs = FlatArgs.size() - PackBeginIndex;
-  TemplateArgument *Args = NumArgs ? &FlatArgs[PackBeginIndex] : 0;
+  StructuredArgs = new TemplateArgument[MaxStructuredArgs];
   
-  StructuredArgs.push_back(TemplateArgument(SourceLocation(), Args, NumArgs,
-                                            /*CopyArgs=*/false));
+  // First copy the flat entries over to the list  (if any)
+  for (unsigned I = 0; I != PackBeginIndex; ++I) {
+    NumStructuredArgs++;
+    StructuredArgs[I] = FlatArgs[I];
+  }
   
-  PackBeginIndex = std::numeric_limits<unsigned>::max();
-}  
+  // Next, set the pack.
+  TemplateArgument *PackArgs = 0;
+  unsigned NumPackArgs = NumFlatArgs - PackBeginIndex;
+  if (NumPackArgs)
+    PackArgs = &FlatArgs[PackBeginIndex];
+  
+  StructuredArgs[NumStructuredArgs++].setArgumentPack(PackArgs, NumPackArgs, 
+                                                      /*CopyArgs=*/false);
+}
+
+void TemplateArgumentListBuilder::ReleaseArgs() {
+  FlatArgs = 0;
+  NumFlatArgs = 0;
+  MaxFlatArgs = 0;
+  StructuredArgs = 0;
+  NumStructuredArgs = 0;
+  MaxStructuredArgs = 0;
+}
 
 //===----------------------------------------------------------------------===//
 // TemplateArgumentList Implementation
 //===----------------------------------------------------------------------===//
 TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
                                            TemplateArgumentListBuilder &Builder,
-                                           bool CopyArgs, bool FlattenArgs)
-  : NumArguments(Builder.flatSize()) {
-  if (!CopyArgs) {
-    Arguments.setPointer(Builder.getFlatArgumentList());
-    Arguments.setInt(1);
-    return;
-  }
-
+                                           bool TakeArgs)
+  : FlatArguments(Builder.getFlatArguments(), TakeArgs), 
+    NumFlatArguments(Builder.flatSize()), 
+    StructuredArguments(Builder.getStructuredArguments(), TakeArgs),
+    NumStructuredArguments(Builder.structuredSize()) {
   
-  unsigned Size = sizeof(TemplateArgument) * Builder.flatSize();
-  unsigned Align = llvm::AlignOf<TemplateArgument>::Alignment;
-  void *Mem = Context.Allocate(Size, Align);
-  Arguments.setPointer((TemplateArgument *)Mem);
-  Arguments.setInt(0);
-
-  TemplateArgument *Args = (TemplateArgument *)Mem;
-  for (unsigned I = 0; I != NumArguments; ++I)
-    new (Args + I) TemplateArgument(Builder.getFlatArgumentList()[I]);
+  if (!TakeArgs)
+    return;
+    
+  if (Builder.getStructuredArguments() == Builder.getFlatArguments())
+    StructuredArguments.setInt(0);
+  Builder.ReleaseArgs();
 }
 
 TemplateArgumentList::~TemplateArgumentList() {
@@ -333,7 +357,7 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                   // class template specializations?
                   SpecializedTemplate->getIdentifier()),
     SpecializedTemplate(SpecializedTemplate),
-    TemplateArgs(Context, Builder, /*CopyArgs=*/true, /*FlattenArgs=*/true),
+    TemplateArgs(Context, Builder, /*TakeArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
 }
                   

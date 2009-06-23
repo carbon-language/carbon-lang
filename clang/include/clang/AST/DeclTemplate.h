@@ -469,10 +469,6 @@ public:
   /// occur in a non-dependent, canonical template argument list.
   TemplateArgument(Expr *E);
 
-  /// \brief Construct a template argument pack.
-  TemplateArgument(SourceLocation Loc, TemplateArgument *Args, 
-                   unsigned NumArgs, bool CopyArgs);
-  
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
     if (Kind == Integral) {
@@ -587,6 +583,9 @@ public:
   /// \brief Retrieve the location where the template argument starts.
   SourceLocation getLocation() const { return StartLoc; }
 
+  /// \brief Construct a template argument pack.
+  void setArgumentPack(TemplateArgument *Args, unsigned NumArgs, bool CopyArgs);
+
   /// \brief Used to insert TemplateArguments into FoldingSets.
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddInteger(Kind);
@@ -622,47 +621,51 @@ public:
 
 /// \brief A helper class for making template argument lists.
 class TemplateArgumentListBuilder {
-  /// FlatArgs - contains the template arguments in flat form.
-  llvm::SmallVector<TemplateArgument, 16> FlatArgs;
+  TemplateArgument *StructuredArgs;
+  unsigned MaxStructuredArgs;
+  unsigned NumStructuredArgs;
+    
+  TemplateArgument *FlatArgs;
+  unsigned MaxFlatArgs;
+  unsigned NumFlatArgs;
   
-  llvm::SmallVector<TemplateArgument, 16> StructuredArgs;
-
-  ASTContext &Context;
-  
+  bool AddingToPack;
   unsigned PackBeginIndex;
-
-  /// isAddingFromParameterPack - Returns whether we're adding arguments from
-  /// a parameter pack.
-  bool isAddingFromParameterPack() const { 
-    return PackBeginIndex != std::numeric_limits<unsigned>::max();
-  }
   
 public:
-  TemplateArgumentListBuilder(ASTContext &Context) : Context(Context),
-    PackBeginIndex(std::numeric_limits<unsigned>::max()) { }
+  TemplateArgumentListBuilder(const TemplateParameterList *Parameters,
+                              unsigned NumTemplateArgs)
+    : StructuredArgs(0), MaxStructuredArgs(Parameters->size()), 
+    NumStructuredArgs(0), FlatArgs(0), 
+    MaxFlatArgs(std::max(MaxStructuredArgs, NumTemplateArgs)), NumFlatArgs(0),
+    AddingToPack(false), PackBeginIndex(0) { }
   
-  size_t structuredSize() const { 
-    assert(!isAddingFromParameterPack() && 
-           "Size is not valid when adding from a parameter pack");
-    
-    return StructuredArgs.size();
-  }
-  
-  size_t flatSize() const { return FlatArgs.size(); }
+  void Append(const TemplateArgument& Arg);
+  void BeginPack();
+  void EndPack();
 
-  void push_back(const TemplateArgument& Arg);
+  void ReleaseArgs();
   
-  /// BeginParameterPack - Start adding arguments from a parameter pack.
-  void BeginParameterPack();
-  
-  /// EndParameterPack - Finish adding arguments from a parameter pack.
-  void EndParameterPack();
-  
-  const TemplateArgument *getFlatArgumentList() const { 
-      return FlatArgs.data();
+  unsigned flatSize() const { 
+    return NumFlatArgs;
   }
-  TemplateArgument *getFlatArgumentList() { 
-      return FlatArgs.data();
+  const TemplateArgument *getFlatArguments() const {
+    return FlatArgs;
+  }
+  
+  unsigned structuredSize() const {
+    // If we don't have any structured args, just reuse the flat size.
+    if (!StructuredArgs)
+      return flatSize();
+
+    return NumStructuredArgs;
+  }
+  const TemplateArgument *getStructuredArguments() const {
+    // If we don't have any structured args, just reuse the flat args.
+    if (!StructuredArgs)
+      return getFlatArguments();
+    
+    return StructuredArgs;
   }
 };
 
@@ -676,22 +679,25 @@ class TemplateArgumentList {
   ///
   /// The integer value will be non-zero to indicate that this
   /// template argument list does not own the pointer.
-  llvm::PointerIntPair<TemplateArgument *, 1> Arguments;
+  llvm::PointerIntPair<const TemplateArgument *, 1> FlatArguments;
 
   /// \brief The number of template arguments in this template
   /// argument list.
-  unsigned NumArguments;
+  unsigned NumFlatArguments;
 
+  llvm::PointerIntPair<const TemplateArgument *, 1> StructuredArguments;
+  unsigned NumStructuredArguments;
+  
 public:
   TemplateArgumentList(ASTContext &Context,
                        TemplateArgumentListBuilder &Builder,
-                       bool CopyArgs, bool FlattenArgs);
+                       bool TakeArgs);
 
   ~TemplateArgumentList();
 
   /// \brief Retrieve the template argument at a given index.
   const TemplateArgument &get(unsigned Idx) const { 
-    assert(Idx < NumArguments && "Invalid template argument index");
+    assert(Idx < NumFlatArguments && "Invalid template argument index");
     return getFlatArgumentList()[Idx];
   }
 
@@ -700,15 +706,15 @@ public:
 
   /// \brief Retrieve the number of template arguments in this
   /// template argument list.
-  unsigned size() const { return NumArguments; }
+  unsigned size() const { return NumFlatArguments; }
 
   /// \brief Retrieve the number of template arguments in the
   /// flattened template argument list.
-  unsigned flat_size() const { return NumArguments; }
+  unsigned flat_size() const { return NumFlatArguments; }
 
   /// \brief Retrieve the flattened template argument list.
   const TemplateArgument *getFlatArgumentList() const { 
-    return Arguments.getPointer();
+    return FlatArguments.getPointer();
   }
 };
 

@@ -654,7 +654,8 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   // C++ [temp.deduct.type]p2:
   //   [...] or if any template argument remains neither deduced nor
   //   explicitly specified, template argument deduction fails.
-  TemplateArgumentListBuilder Builder(Context);
+  TemplateArgumentListBuilder Builder(Partial->getTemplateParameters(),
+                                      Deduced.size());
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
     if (Deduced[I].isNull()) {
       Decl *Param 
@@ -669,13 +670,12 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
       return TDK_Incomplete;
     }
 
-    Builder.push_back(Deduced[I]);
+    Builder.Append(Deduced[I]);
   }
 
   // Form the template argument list from the deduced template arguments.
   TemplateArgumentList *DeducedArgumentList 
-    = new (Context) TemplateArgumentList(Context, Builder, /*CopyArgs=*/true,
-                                         /*FlattenArgs=*/true);
+    = new (Context) TemplateArgumentList(Context, Builder, /*TakeArgs=*/true);
   Info.reset(DeducedArgumentList);
 
   // Substitute the deduced template arguments into the template
