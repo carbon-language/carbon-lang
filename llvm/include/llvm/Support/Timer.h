@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_TIMER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/System/Mutex.h"
 #include <string>
 #include <vector>
 #include <iosfwd>
@@ -43,6 +44,7 @@ class Timer {
   std::string Name;      // The name of this time variable
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
+  mutable sys::SmartMutex<true> Lock; // Mutex for the contents of this Timer.
 public:
   explicit Timer(const std::string &N);
   Timer(const std::string &N, TimerGroup &tg);
@@ -56,6 +58,14 @@ public:
   std::string getName() const { return Name; }
 
   const Timer &operator=(const Timer &T) {
+    if (&T < this) {
+      T.Lock.acquire();
+      Lock.acquire();
+    } else {
+      Lock.acquire();
+      T.Lock.acquire();
+    }
+    
     Elapsed = T.Elapsed;
     UserTime = T.UserTime;
     SystemTime = T.SystemTime;
@@ -65,6 +75,15 @@ public:
     Name = T.Name;
     Started = T.Started;
     assert(TG == T.TG && "Can only assign timers in the same TimerGroup!");
+    
+    if (&T < this) {
+      T.Lock.release();
+      Lock.release();
+    } else {
+      Lock.release();
+      T.Lock.release();
+    }
+    
     return *this;
   }
 
@@ -160,11 +179,9 @@ public:
 
 private:
   friend class Timer;
-  void addTimer() { ++NumTimers; }
+  void addTimer();
   void removeTimer();
-  void addTimerToPrint(const Timer &T) {
-    TimersToPrint.push_back(Timer(true, T));
-  }
+  void addTimerToPrint(const Timer &T);
 };
 
 } // End llvm namespace
