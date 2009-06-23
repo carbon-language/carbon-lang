@@ -269,9 +269,9 @@ def t2MOVi16 : T2I<(outs GPR:$dst), (ins i32imm:$src),
 
 // FIXME: Move (shifted register) is a pseudo-instruction for ASR, LSL, LSR,
 // ROR, and RRX. Consider splitting into multiple instructions.
-def t2MOVs  : T2I<(outs GPR:$dst), (ins so_reg:$src),
+def t2MOVs  : T2I<(outs GPR:$dst), (ins t2_so_reg:$src),
                   "mov $dst, $src",
-                  [(set GPR:$dst, so_reg:$src)]>;
+                  [(set GPR:$dst, t2_so_reg:$src)]>;
 def t2MOVrx : T2I<(outs GPR:$dst), (ins GPR:$src),
                   "mov $dst, $src, rrx",
                   [(set GPR:$dst, (ARMrrx GPR:$src))]>;
