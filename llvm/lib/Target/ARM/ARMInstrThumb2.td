@@ -167,19 +167,19 @@ multiclass T2I_bin_irs<string opc, PatFrag opnode> {
                 [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 
-/// T2I_2bin_is - Same as T2I_bin_irs except the order of operands are reversed.
+/// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are reversed.
 multiclass T2I_rbin_irs<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
-                !strconcat(opc, " $dst, $lhs, $rhs"),
+                !strconcat(opc, " $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
    // register
    def rr : T2I<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs),
-                !strconcat(opc, " $dst, $lhs, $rhs"),
+                !strconcat(opc, " $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
-                !strconcat(opc, " $dst, $lhs, $rhs"),
+                !strconcat(opc, " $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>;
 }
 
@@ -208,15 +208,15 @@ let Defs = [CPSR] in {
 multiclass T2I_rbin_s_irs<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
-                !strconcat(opc, "s $dst, $lhs, $rhs"),
+                !strconcat(opc, "s $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
    // register
    def rr : T2I<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs),
-                !strconcat(opc, " $dst, $lhs, $rhs"),
+                !strconcat(opc, " $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
-                !strconcat(opc, "s $dst, $lhs, $rhs"),
+                !strconcat(opc, "s $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>;
 }
 }
@@ -268,15 +268,15 @@ let Uses = [CPSR] in {
 multiclass T2I_rbin_c_irs<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs, cc_out:$s),
-                !strconcat(opc, "${s} $dst, $lhs, $rhs"),
+                !strconcat(opc, "${s} $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
    // register
    def rr : T2I<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs, cc_out:$s),
-                !strconcat(opc, "${s} $dst, $lhs, $rhs"),
+                !strconcat(opc, "${s} $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs, cc_out:$s),
-                !strconcat(opc, "${s} $dst, $lhs, $rhs"),
+                !strconcat(opc, "${s} $dst, $rhs, $lhs"),
                 [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>;
 }
 }
