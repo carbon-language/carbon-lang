@@ -19,6 +19,7 @@
 
 #include "llvm/CompilerDriver/CompilationGraph.h"
 #include "llvm/CompilerDriver/Error.h"
+#include "llvm/CompilerDriver/ForceLinkage.h"
 #include "llvm/CompilerDriver/Plugin.h"
 
 #include "llvm/System/Path.h"
@@ -85,6 +86,8 @@ namespace {
 
 int main(int argc, char** argv) {
   try {
+    ForceLinkage();
+
     LanguageMap langMap;
     CompilationGraph graph;
 

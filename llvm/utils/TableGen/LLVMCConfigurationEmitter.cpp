@@ -1984,6 +1984,7 @@ void EmitRegisterPlugin(int Priority, std::ostream& O) {
 /// additional declarations.
 void EmitIncludes(std::ostream& O) {
   O << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
+    << "#include \"llvm/CompilerDriver/ForceLinkageMacros.h\"\n"
     << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
     << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"
 
@@ -2106,7 +2107,13 @@ void EmitPluginCode(const PluginData& Data, std::ostream& O) {
   // Emit code for plugin registration.
   EmitRegisterPlugin(Data.Priority, O);
 
-  O << "} // End anonymous namespace.\n";
+  O << "} // End anonymous namespace.\n\n";
+
+  // Force linkage magic.
+  O << "namespace llvmc {\n";
+  O << "LLVMC_FORCE_LINKAGE_DECL(LLVMC_PLUGIN_NAME) {}\n";
+  O << "}\n";
+
   // EOF
 }
 
