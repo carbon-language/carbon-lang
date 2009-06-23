@@ -384,8 +384,5 @@ namespace {
 }
 
 
-// Force static initialization when called from
-// llvm/InitializeAllAsmPrinters.h
-namespace llvm {
-  void InitializeIA64AsmPrinter() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeIA64AsmPrinter() { }

@@ -39,10 +39,8 @@ int ARMTargetMachineModule = 0;
 static RegisterTarget<ARMTargetMachine>   X("arm",   "ARM");
 static RegisterTarget<ThumbTargetMachine> Y("thumb", "Thumb");
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeARMTarget() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeARMTarget() { }
 
 // No assembler printer by default
 ARMTargetMachine::AsmPrinterCtorFn ARMTargetMachine::AsmPrinterCtor = 0;

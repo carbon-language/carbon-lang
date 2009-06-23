@@ -1172,8 +1172,5 @@ namespace {
   } Registrator;
 }
 
-// Force static initialization when called from
-// llvm/InitializeAllAsmPrinters.h
-namespace llvm {
-  void InitializeARMAsmPrinter() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeARMAsmPrinter() { }

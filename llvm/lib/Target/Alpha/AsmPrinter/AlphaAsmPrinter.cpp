@@ -304,11 +304,8 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-// Force static initialization when called from
-// llvm/InitializeAllAsmPrinters.h
-namespace llvm {
-  void InitializeAlphaAsmPrinter() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeAlphaAsmPrinter() { }
 
 namespace {
   static struct Register {

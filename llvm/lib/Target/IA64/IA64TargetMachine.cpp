@@ -26,10 +26,8 @@ static RegisterTarget<IA64TargetMachine> X("ia64",
 // No assembler printer by default
 IA64TargetMachine::AsmPrinterCtorFn IA64TargetMachine::AsmPrinterCtor = 0;
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeIA64Target() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeIA64Target() { }
 
 const TargetAsmInfo *IA64TargetMachine::createTargetAsmInfo() const {
   return new IA64TargetAsmInfo(*this);

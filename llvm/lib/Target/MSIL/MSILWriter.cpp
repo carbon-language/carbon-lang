@@ -55,10 +55,8 @@ int MSILTargetMachineModule = 0;
 
 static RegisterTarget<MSILTarget> X("msil", "MSIL backend");
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeMSILTarget() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeMSILTarget() { }
 
 bool MSILModule::runOnModule(Module &M) {
   ModulePtr = &M;

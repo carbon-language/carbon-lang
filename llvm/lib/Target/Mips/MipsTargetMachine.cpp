@@ -34,10 +34,8 @@ static RegisterTarget<MipselTargetMachine>  Y("mipsel", "Mipsel");
 MipsTargetMachine::AsmPrinterCtorFn MipsTargetMachine::AsmPrinterCtor = 0;
 
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeMipsTarget() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeMipsTarget() { }
 
 const TargetAsmInfo *MipsTargetMachine::
 createTargetAsmInfo() const 

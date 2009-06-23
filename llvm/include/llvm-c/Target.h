@@ -20,6 +20,7 @@
 #define LLVM_C_TARGET_H
 
 #include "llvm-c/Core.h"
+#include "llvm/Config/config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +32,34 @@ typedef int LLVMByteOrdering;
 typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
 typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 
+/* Declare all of the target-initialization functions that are available. */
+#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
+#include "llvm/Config/Targets.def"
+
+/** LLVMInitializeAllTargets - The main program should call this function if it
+    wants to link in all available targets that LLVM is configured to
+    support. */
+static inline void LLVMInitializeAllTargets() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
+#include "llvm/Config/Targets.def"
+}
+  
+/** LLVMInitializeNativeTarget - The main program should call this function to
+    initialize the native target corresponding to the host.  This is useful 
+    for JIT applications to ensure that the target gets linked in correctly. */
+static inline int LLVMInitializeNativeTarget() {
+  /* If we have a native target, initialize it to ensure it is linked in. */
+#ifdef LLVM_NATIVE_ARCH
+#define DoInit2(TARG)   LLVMInitialize ## TARG ()
+#define DoInit(T) DoInit2(T)
+  DoInit(LLVM_NATIVE_ARCH);
+  return 0;
+#undef DoInit
+#undef DoInit2
+#else
+  return 1;
+#endif
+}  
 
 /*===-- Target Data -------------------------------------------------------===*/
 

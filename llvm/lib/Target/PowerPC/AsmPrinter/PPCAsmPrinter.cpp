@@ -1185,8 +1185,5 @@ namespace {
 extern "C" int PowerPCAsmPrinterForceLink;
 int PowerPCAsmPrinterForceLink = 0;
 
-// Force static initialization when called from
-// llvm/InitializeAllAsmPrinters.h
-namespace llvm {
-  void InitializePowerPCAsmPrinter() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializePowerPCAsmPrinter() { }

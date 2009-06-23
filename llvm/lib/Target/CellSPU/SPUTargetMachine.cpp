@@ -32,10 +32,8 @@ namespace {
 // No assembler printer by default
 SPUTargetMachine::AsmPrinterCtorFn SPUTargetMachine::AsmPrinterCtor = 0;
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeCellSPUTarget() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeCellSPUTarget() { }
 
 const std::pair<unsigned, int> *
 SPUFrameInfo::getCalleeSaveSpillSlots(unsigned &NumEntries) const {

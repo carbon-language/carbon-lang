@@ -25,10 +25,8 @@ static RegisterTarget<SparcTargetMachine> X("sparc", "SPARC");
 SparcTargetMachine::AsmPrinterCtorFn SparcTargetMachine::AsmPrinterCtor = 0;
 
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeSparcTarget() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeSparcTarget() { }
 
 const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
   // FIXME: Handle Solaris subtarget someday :)

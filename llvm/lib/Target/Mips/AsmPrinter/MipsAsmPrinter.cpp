@@ -587,8 +587,5 @@ namespace {
   } Registrator;
 }
 
-// Force static initialization when called from
-// llvm/InitializeAllAsmPrinters.h
-namespace llvm {
-  void InitializeMipsAsmPrinter() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeMipsAsmPrinter() { }

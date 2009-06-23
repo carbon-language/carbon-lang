@@ -27,10 +27,8 @@ static RegisterTarget<AlphaTargetMachine> X("alpha", "Alpha [experimental]");
 // No assembler printer by default
 AlphaTargetMachine::AsmPrinterCtorFn AlphaTargetMachine::AsmPrinterCtor = 0;
 
-// Force static initialization when called from llvm/InitializeAllTargets.h
-namespace llvm {
-  void InitializeAlphaTarget() { }
-}
+// Force static initialization.
+extern "C" void LLVMInitializeAlphaTarget() { }
 
 const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
   return new AlphaTargetAsmInfo(*this);
