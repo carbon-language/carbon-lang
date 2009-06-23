@@ -180,9 +180,6 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 add_llvm_definitions( -D__STDC_LIMIT_MACROS )
 add_llvm_definitions( -D__STDC_CONSTANT_MACROS )
 
-set(LLVM_PLO_FLAGS "" CACHE
-  STRING "Flags for creating partially linked objects.")
-
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
   # TODO: support other platforms and toolchains.
   option(LLVM_BUILD_32_BITS "Build 32 bits executables and libraries." OFF)
@@ -221,7 +218,6 @@ endif( MSVC )
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
 
 include(AddLLVM)
-include(AddPartiallyLinkedObject)
 include(TableGen)
 
 add_subdirectory(lib/Support)

@@ -3,10 +3,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   )
 
-add_partially_linked_object(LLVMCellSPUAsmPrinter
+add_llvm_library(LLVMCellSPUAsmPrinter
   SPUAsmPrinter.cpp
   )
-
-target_name_of_partially_linked_object(LLVMCellSPUCodeGen n)
-
-add_dependencies(LLVMCellSPUAsmPrinter ${n})

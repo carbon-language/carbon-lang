@@ -3,10 +3,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   )
 
-add_partially_linked_object(LLVMIA64AsmPrinter
+add_llvm_library(LLVMIA64AsmPrinter
   IA64AsmPrinter.cpp
   )
-
-target_name_of_partially_linked_object(LLVMIA64CodeGen n)
-
-add_dependencies(LLVMIA64AsmPrinter ${n})

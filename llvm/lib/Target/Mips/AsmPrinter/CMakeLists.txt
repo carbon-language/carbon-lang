@@ -3,10 +3,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   )
 
-add_partially_linked_object(LLVMMipsAsmPrinter
+add_llvm_library(LLVMMipsAsmPrinter
   MipsAsmPrinter.cpp
   )
-
-target_name_of_partially_linked_object(LLVMMipsCodeGen n)
-
-add_dependencies(LLVMMipsAsmPrinter ${n})
