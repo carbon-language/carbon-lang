@@ -313,17 +313,17 @@ AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
   return getRegion<AllocaRegion>(E, cnt);
 }
 
-bool MemRegionManager::hasStackStorage(const MemRegion* R) {
+bool MemRegion::hasStackStorage() const {
   // Only subregions can have stack storage.
-  const SubRegion* SR = dyn_cast<SubRegion>(R);
+  const SubRegion* SR = dyn_cast<SubRegion>(this);
 
   if (!SR)
     return false;
 
-  MemSpaceRegion* S = getStackRegion();
+  MemSpaceRegion* S = getMemRegionManager()->getStackRegion();
   
   while (SR) {
-    R = SR->getSuperRegion();
+    const MemRegion *R = SR->getSuperRegion();
     if (R == S)
       return true;
     
@@ -333,17 +333,17 @@ bool MemRegionManager::hasStackStorage(const MemRegion* R) {
   return false;
 }
 
-bool MemRegionManager::hasHeapStorage(const MemRegion* R) {
+bool MemRegion::hasHeapStorage() const {
   // Only subregions can have stack storage.
-  const SubRegion* SR = dyn_cast<SubRegion>(R);
+  const SubRegion* SR = dyn_cast<SubRegion>(this);
 
   if (!SR)
     return false;
 
-  MemSpaceRegion* H = getHeapRegion();
+  MemSpaceRegion* H = getMemRegionManager()->getHeapRegion();
 
   while (SR) {
-    R = SR->getSuperRegion();
+    const MemRegion *R = SR->getSuperRegion();
     if (R == H)
       return true;
 

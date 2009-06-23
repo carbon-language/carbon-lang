@@ -574,11 +574,6 @@ public:
   // Methods that manipulate the GDM.
   const GRState* addGDM(const GRState* St, void* Key, void* Data);
   
-  // Methods that query or create regions.
-  bool hasStackStorage(const MemRegion* R) {
-    return getRegionManager().hasStackStorage(R);
-  }
-  
   // Methods that query & manipulate the Store.
 
   void iterBindings(const GRState* state, StoreManager::BindingsHandler& F) {

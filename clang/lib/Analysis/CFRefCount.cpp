@@ -3141,7 +3141,7 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
     escapes = true;
   else {
     const MemRegion* R = cast<loc::MemRegionVal>(location).getRegion();
-    escapes = !B.getStateManager().hasStackStorage(R);
+    escapes = !R->hasStackStorage();
     
     if (!escapes) {
       // To test (3), generate a new state with the binding removed.  If it is

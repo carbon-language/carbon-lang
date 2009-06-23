@@ -2764,7 +2764,7 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
       // Determine if the value is on the stack.
       const MemRegion* R = cast<loc::MemRegionVal>(&X)->getRegion();
       
-      if (R && getStateManager().hasStackStorage(R)) {
+      if (R && R->hasStackStorage()) {
         // Create a special node representing the error.
         if (NodeTy* N = Builder->generateNode(S, GetState(*I), *I)) {
           N->markAsSink();

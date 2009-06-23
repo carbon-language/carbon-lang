@@ -68,6 +68,10 @@ public:
   virtual MemRegionManager* getMemRegionManager() const = 0;
 
   std::string getString() const;
+    
+  bool hasStackStorage() const;
+  
+  bool hasHeapStorage() const;
 
   virtual void print(llvm::raw_ostream& os) const;  
   
@@ -668,10 +672,6 @@ public:
     assert(R);
     return R == globals; 
   }
-
-  bool hasStackStorage(const MemRegion* R);
-
-  bool hasHeapStorage(const MemRegion* R);
   
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
