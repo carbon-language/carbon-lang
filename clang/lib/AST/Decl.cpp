@@ -494,7 +494,8 @@ void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
     ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
 
-    // Update source range.
+    // Update source range. The check below allows us to set EndRangeLoc before
+    // setting the parameters.
     if (EndRangeLoc < NewParamInfo[NumParams-1]->getLocEnd())
       EndRangeLoc = NewParamInfo[NumParams-1]->getLocEnd();
   }
