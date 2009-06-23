@@ -160,7 +160,7 @@ def tMOVi16  : PseudoInst<(outs GPR:$dst), (ins i32imm:$src),
                           [(set GPR:$dst, imm0_65535:$src)]>, 
                          Requires<[HasThumb2]>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def tMOVTi16 : PseudoInst<(outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                           "movt $dst, $imm",
                           [(set GPR:$dst, (or (and GPR:$src, 0xffff), 
