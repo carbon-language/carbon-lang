@@ -17,6 +17,7 @@
 #include "AsmLexer.h"
 
 namespace llvm {
+class MCInst;
   
 class AsmParser {
   AsmLexer Lexer;
@@ -36,12 +37,15 @@ private:
   
   void EatToEndOfStatement();
   
-  bool ParseX86Operand(X86Operand &Op);
-  bool ParseX86MemOperand(X86Operand &Op);
   bool ParseExpression(int64_t &Res);
   bool ParsePrimaryExpr(int64_t &Res);
   bool ParseBinOpRHS(unsigned Precedence, int64_t &Res);
   bool ParseParenExpr(int64_t &Res);
+  
+  // X86 specific.
+  bool ParseX86InstOperands(MCInst &Inst);
+  bool ParseX86Operand(X86Operand &Op);
+  bool ParseX86MemOperand(X86Operand &Op);
 };
 
 } // end namespace llvm
