@@ -50,14 +50,15 @@ void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
 }
 
 void AllocaRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
-                                 const Expr* Ex, unsigned cnt) {
+                                 const Expr* Ex, unsigned cnt,
+                                 const MemRegion *) {
   ID.AddInteger((unsigned) AllocaRegionKind);
   ID.AddPointer(Ex);
   ID.AddInteger(cnt);
 }
 
 void AllocaRegion::Profile(llvm::FoldingSetNodeID& ID) const {
-  ProfileRegion(ID, Ex, Cnt);
+  ProfileRegion(ID, Ex, Cnt, superRegion);
 }
 
 void TypedViewRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
@@ -335,20 +336,7 @@ MemRegionManager::getTypedViewRegion(QualType t, const MemRegion* superRegion) {
 }
 
 AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
-  llvm::FoldingSetNodeID ID;
-  AllocaRegion::ProfileRegion(ID, E, cnt);
-  
-  void* InsertPos;
-  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
-  AllocaRegion* R = cast_or_null<AllocaRegion>(data);
-  
-  if (!R) {
-    R = (AllocaRegion*) A.Allocate<AllocaRegion>();
-    new (R) AllocaRegion(E, cnt, getStackRegion());
-    Regions.InsertNode(R, InsertPos);
-  }
-  
-  return R;
+  return getRegion<AllocaRegion>(E, cnt);
 }
 
 bool MemRegionManager::hasStackStorage(const MemRegion* R) {

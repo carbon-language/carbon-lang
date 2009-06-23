@@ -123,7 +123,7 @@ protected:
                 // memory allocated by alloca at the same call site.
   const Expr* Ex;
 
-  AllocaRegion(const Expr* ex, unsigned cnt, const MemRegion* superRegion)
+  AllocaRegion(const Expr* ex, unsigned cnt, const MemRegion *superRegion)
     : SubRegion(superRegion, AllocaRegionKind), Cnt(cnt), Ex(ex) {}
   
 public:
@@ -133,7 +133,7 @@ public:
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
-                            unsigned Cnt);
+                            unsigned Cnt, const MemRegion *superRegion);
   
   void print(llvm::raw_ostream& os) const;
   
@@ -657,6 +657,9 @@ public:
   
   template <typename RegionTy, typename A1>
   RegionTy* getRegion(const A1 a1, const MemRegion* superRegion);
+  
+  template <typename RegionTy, typename A1, typename A2>
+  RegionTy* getRegion(const A1 a1, const A2 a2);
 
 private:
   MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
@@ -707,10 +710,39 @@ RegionTy* MemRegionManager::getRegion(const A1 a1, const MemRegion *superRegion)
   return R;
 }
   
+template <typename RegionTy, typename A1, typename A2>
+RegionTy* MemRegionManager::getRegion(const A1 a1, const A2 a2) {
+  
+  const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
+    MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1, a2);
+  
+  llvm::FoldingSetNodeID ID;  
+  RegionTy::ProfileRegion(ID, a1, a2, superRegion);  
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, a2, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+  
 //===----------------------------------------------------------------------===//
 // Traits for constructing regions.
 //===----------------------------------------------------------------------===//
 
+template <> struct MemRegionManagerTrait<AllocaRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const Expr *, unsigned) {
+    return MRMgr.getStackRegion();
+  }
+};  
+  
 template <> struct MemRegionManagerTrait<CompoundLiteralRegion> {
   typedef MemRegion SuperRegionTy;
   static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
