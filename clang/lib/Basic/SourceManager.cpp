@@ -1047,6 +1047,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // FIXME: Should there be a way to "include" memory buffers in the translation
   // unit ?
   assert((LEntry != 0 || REntry != 0) && "Locations in memory buffers.");
+  (void) REntry;
   
   // Consider the memory buffer as coming before the file in the translation
   // unit.
