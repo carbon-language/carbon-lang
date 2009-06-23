@@ -75,17 +75,18 @@ asmtok::TokKind AsmLexer::LexIdentifier() {
   while (isalnum(*CurPtr) || *CurPtr == '_' || *CurPtr == '$' ||
          *CurPtr == '.' || *CurPtr == '@')
     ++CurPtr;
-  CurStrVal.assign(TokStart, CurPtr);   // Include %
+  CurStrVal.assign(TokStart, CurPtr);
   return asmtok::Identifier;
 }
 
 /// LexPercent: Register: %[a-zA-Z0-9]+
 asmtok::TokKind AsmLexer::LexPercent() {
   if (!isalnum(*CurPtr))
-    return ReturnError(TokStart, "invalid register name");
+    return asmtok::Percent;  // Single %.
+  
   while (isalnum(*CurPtr))
     ++CurPtr;
-  CurStrVal.assign(TokStart, CurPtr);   // Skip %
+  CurStrVal.assign(TokStart, CurPtr);   // Include %
   return asmtok::Register;
 }
 
@@ -243,6 +244,10 @@ asmtok::TokKind AsmLexer::LexToken() {
   case '*': return asmtok::Star;
   case ',': return asmtok::Comma;
   case '$': return asmtok::Dollar;
+  case '|': return asmtok::Pipe;
+  case '^': return asmtok::Caret;
+  case '&': return asmtok::Amp;
+  case '!': return asmtok::Exclaim;
   case '%': return LexPercent();
   case '/': return LexSlash();
   case '#': return LexHash();
@@ -250,6 +255,20 @@ asmtok::TokKind AsmLexer::LexToken() {
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
     return LexDigit();
+  case '<':
+    if (*CurPtr == '<') {
+      ++CurPtr;
+      return asmtok::LessLess;
+    }
+    // Don't have any use for bare '<' yet.
+    return ReturnError(TokStart, "invalid character in input");
+  case '>':
+    if (*CurPtr == '>') {
+      ++CurPtr;
+      return asmtok::GreaterGreater;
+    }
+    // Don't have any use for bare '>' yet.
+    return ReturnError(TokStart, "invalid character in input");
       
   // TODO: Quoted identifiers (objc methods etc)
   // local labels: [0-9][:]

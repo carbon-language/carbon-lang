@@ -42,7 +42,10 @@ namespace asmtok {
     Plus, Minus, Tilde,
     Slash,    // '/'
     LParen, RParen,
-    Star, Comma, Dollar
+    Star, Comma, Dollar,
+    
+    Pipe, Caret, Amp, Exclaim,
+    Percent, LessLess, GreaterGreater
   };
 }
 

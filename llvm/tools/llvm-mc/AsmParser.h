@@ -40,6 +40,7 @@ private:
   bool ParseX86MemOperand(X86Operand &Op);
   bool ParseExpression(int64_t &Res);
   bool ParsePrimaryExpr(int64_t &Res);
+  bool ParseBinOpRHS(unsigned Precedence, int64_t &Res);
   bool ParseParenExpr(int64_t &Res);
 };
 

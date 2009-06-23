@@ -168,7 +168,9 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
       // memory operand consumed.
     } else {
       // It must be an parenthesized expression, parse it now.
-      if (ParseParenExpr(Disp)) return true;
+      if (ParseParenExpr(Disp) ||
+          ParseBinOpRHS(1, Disp))
+        return true;
       
       // After parsing the base expression we could either have a parenthesized
       // memory address or not.  If not, return now.  If so, eat the (.
@@ -274,9 +276,61 @@ bool AsmParser::ParsePrimaryExpr(int64_t &Res) {
 ///  expr ::= primaryexpr
 ///
 bool AsmParser::ParseExpression(int64_t &Res) {
-  return ParsePrimaryExpr(Res);
+  return ParsePrimaryExpr(Res) ||
+         ParseBinOpRHS(1, Res);
 }
-  
+
+static unsigned getBinOpPrecedence(asmtok::TokKind K) {
+  switch (K) {
+  default: return 0;    // not a binop.
+  case asmtok::Plus:
+  case asmtok::Minus:
+    return 1;
+  case asmtok::Pipe:
+  case asmtok::Caret:
+  case asmtok::Amp:
+  case asmtok::Exclaim:
+    return 2;
+  case asmtok::Star:
+  case asmtok::Slash:
+  case asmtok::Percent:
+  case asmtok::LessLess:
+  case asmtok::GreaterGreater:
+    return 3;
+  }
+}
+
+
+/// ParseBinOpRHS - Parse all binary operators with precedence >= 'Precedence'.
+/// Res contains the LHS of the expression on input.
+bool AsmParser::ParseBinOpRHS(unsigned Precedence, int64_t &Res) {
+  while (1) {
+    unsigned TokPrec = getBinOpPrecedence(Lexer.getKind());
+    
+    // If the next token is lower precedence than we are allowed to eat, return
+    // successfully with what we ate already.
+    if (TokPrec < Precedence)
+      return false;
+    
+    //asmtok::TokKind BinOp = Lexer.getKind();
+    Lexer.Lex();
+    
+    // Eat the next primary expression.
+    int64_t RHS;
+    if (ParsePrimaryExpr(RHS)) return true;
+    
+    // If BinOp binds less tightly with RHS than the operator after RHS, let
+    // the pending operator take RHS as its LHS.
+    unsigned NextTokPrec = getBinOpPrecedence(Lexer.getKind());
+    if (TokPrec < NextTokPrec) {
+      if (ParseBinOpRHS(Precedence+1, RHS)) return true;
+    }
+
+    // Merge LHS/RHS: fixme use the right operator etc.
+    Res += RHS;
+  }
+}
+
   
   
   
