@@ -211,7 +211,7 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
                                            CodeGenOpt::Level ol)
   : TLI(dag.getTargetLoweringInfo()), DAG(dag), OptLevel(ol),
     ValueTypeActions(TLI.getValueTypeActions()) {
-  assert(MVT::LAST_VALUETYPE <= 32 &&
+  assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
          "Too many value types for ValueTypeActions to hold!");
 }
 

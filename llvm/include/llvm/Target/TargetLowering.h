@@ -173,14 +173,18 @@ public:
     /// ValueTypeActions - This is a bitvector that contains two bits for each
     /// value type, where the two bits correspond to the LegalizeAction enum.
     /// This can be queried with "getTypeAction(VT)".
-    uint32_t ValueTypeActions[2];
+    /// dimension by (MVT::MAX_ALLOWED_LAST_VALUETYPE/32) * 2
+    uint32_t ValueTypeActions[4];
   public:
     ValueTypeActionImpl() {
       ValueTypeActions[0] = ValueTypeActions[1] = 0;
+      ValueTypeActions[2] = ValueTypeActions[3] = 0;
     }
     ValueTypeActionImpl(const ValueTypeActionImpl &RHS) {
       ValueTypeActions[0] = RHS.ValueTypeActions[0];
       ValueTypeActions[1] = RHS.ValueTypeActions[1];
+      ValueTypeActions[2] = RHS.ValueTypeActions[2];
+      ValueTypeActions[3] = RHS.ValueTypeActions[3];
     }
     
     LegalizeAction getTypeAction(MVT VT) const {

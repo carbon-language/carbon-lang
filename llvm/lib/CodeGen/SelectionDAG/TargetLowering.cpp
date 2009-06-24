@@ -527,7 +527,7 @@ TargetLowering::~TargetLowering() {}
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
 void TargetLowering::computeRegisterProperties() {
-  assert(MVT::LAST_VALUETYPE <= 32 &&
+  assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
          "Too many value types for ValueTypeActions to hold!");
 
   // Everything defaults to needing one register.

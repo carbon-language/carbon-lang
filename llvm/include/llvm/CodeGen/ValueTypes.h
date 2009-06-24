@@ -1,3 +1,4 @@
+
 //===- CodeGen/ValueTypes.h - Low-Level Target independ. types --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -71,6 +72,11 @@ namespace llvm {
       LAST_VECTOR_VALUETYPE  = v2f64,
 
       LAST_VALUETYPE =  30,   // This always remains at the end of the list.
+
+      // This is the current maximum for LAST_VALUETYPE.
+      // Affects ValueTypeActions in TargetLowering.h.
+      // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
+      MAX_ALLOWED_VALUETYPE = 64,
 
       // iPTRAny - An int value the size of the pointer of the current
       // target to any address space. This must only be used internal to
