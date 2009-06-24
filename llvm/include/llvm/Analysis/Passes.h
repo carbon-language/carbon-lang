@@ -18,6 +18,7 @@
 namespace llvm {
   class FunctionPass;
   class ImmutablePass;
+  class LoopPass;
   class ModulePass;
   class Pass;
   class LibCallInfo;
@@ -116,6 +117,13 @@ namespace llvm {
   // createLiveValuesPass - This creates an instance of the LiveValues pass.
   //
   FunctionPass *createLiveValuesPass();
+
+  //===--------------------------------------------------------------------===//
+  //
+  // createLoopDependenceAnalysisPass - This creates an instance of the
+  // LoopDependenceAnalysis pass.
+  //
+  LoopPass *createLoopDependenceAnalysisPass();
   
   // Minor pass prototypes, allowing us to expose them through bugpoint and
   // analyze.
