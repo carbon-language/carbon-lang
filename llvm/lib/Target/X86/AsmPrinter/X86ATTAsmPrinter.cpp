@@ -1080,11 +1080,9 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
 /// printGVStub - Print stub for a global value.
 ///
-void X86ATTAsmPrinter::printGVStub(const char *GV, const char *Prefix) {
-  printSuffixedName(GV, "$non_lazy_ptr", Prefix);
-  O << ":\n\t.indirect_symbol ";
-  if (Prefix) O << Prefix;
-  O << GV << "\n\t.long\t0\n";
+void X86ATTAsmPrinter::printGVStub(const char *GV) {
+  printSuffixedName(GV, "$non_lazy_ptr");
+  O << ":\n\t.indirect_symbol " << GV << "\n\t.long\t0\n";
 }
 
 /// printHiddenGVStub - Print stub for a hidden global value.
