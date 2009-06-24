@@ -1127,15 +1127,12 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
       state = Bind(state, ValMgr.makeLoc(ER), *VI);
   }
 
-  // If the init list is shorter than the array length, bind the rest elements
-  // to 0.
-  if (ElementTy->isIntegerType()) {
-    while (i < Size) {
-      SVal Idx = ValMgr.makeIntVal(i);
-      ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx,R,getContext());
+  // If the init list is shorter than the array length, set the array default
+  // value.
+  if (i < Size) {
+    if (ElementTy->isIntegerType()) {
       SVal V = ValMgr.makeZeroVal(ElementTy);
-      state = Bind(state, ValMgr.makeLoc(ER), V);
-      ++i;
+      state = setDefaultValue(state, R, V);
     }
   }
 
