@@ -43,6 +43,9 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 static cl::opt<bool> NewAsmPrinter("experimental-asm-printer",
                                    cl::Hidden);
 
+//===----------------------------------------------------------------------===//
+// Primitive Helper Functions.
+//===----------------------------------------------------------------------===//
 
 void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   if (Subtarget->isTargetDarwin())
@@ -53,6 +56,14 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
     assert(0 && "Don't know how to print PIC label!\n");
 }
 
+/// PrintUnmangledNameSafely - Print out the printable characters in the name.
+/// Don't print things like \\n or \\0.
+static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+  for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
+       Name != E; ++Name)
+    if (isprint(*Name))
+      OS << *Name;
+}
 
 static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
                                                     const TargetData *TD) {
@@ -86,15 +97,6 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
   // We're not supporting tooooo huge arguments :)
   Info.setBytesToPopOnReturn((unsigned int)Size);
   return Info;
-}
-
-/// PrintUnmangledNameSafely - Print out the printable characters in the name.
-/// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
-  for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
-       Name != E; ++Name)
-    if (isprint(*Name))
-      OS << *Name;
 }
 
 /// decorateName - Query FunctionInfoMap and use this information for various
@@ -151,6 +153,8 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
   }
 }
 
+
+
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
 
@@ -158,9 +162,12 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   SwitchToSection(TAI->SectionForGlobal(F));
 
+  // FIXME: A function's alignment should be part of MachineFunction.  There
+  // shouldn't be a policy decision here.
   unsigned FnAlign = 4;
   if (F->hasFnAttr(Attribute::OptimizeForSize))
     FnAlign = 1;
+  
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
@@ -456,11 +463,12 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       << MO.getIndex();
 
     if (TM.getRelocationModel() == Reloc::PIC_) {
-      if (Subtarget->isPICStyleStub())
-        O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << "$pb\"";
-      else if (Subtarget->isPICStyleGOT())
+      if (Subtarget->isPICStyleStub()) {
+        O << '-';
+        PrintPICBaseSymbol();
+      } else if (Subtarget->isPICStyleGOT()) {
         O << "@GOTOFF";
+      }
     }
 
     if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
@@ -474,10 +482,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       << MO.getIndex();
 
     if (TM.getRelocationModel() == Reloc::PIC_) {
-      if (Subtarget->isPICStyleStub())
-        O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << "$pb\"";
-      else if (Subtarget->isPICStyleGOT())
+      if (Subtarget->isPICStyleStub()) {
+        O << '-';
+        PrintPICBaseSymbol();
+      } else if (Subtarget->isPICStyleGOT())
         O << "@GOTOFF";
     }
 
