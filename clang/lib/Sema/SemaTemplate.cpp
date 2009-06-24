@@ -2507,6 +2507,27 @@ Sema::ActOnTemplateDeclarator(Scope *S,
   return HandleDeclarator(S, D, move(TemplateParameterLists), false);
 }
 
+Sema::DeclPtrTy 
+Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope, 
+                               MultiTemplateParamsArg TemplateParameterLists,
+                                      Declarator &D) {
+  assert(getCurFunctionDecl() == 0 && "Function parsing confused");
+  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
+         "Not a function declarator!");
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  
+  if (FTI.hasPrototype) {
+    // FIXME: Diagnose arguments without names in C. 
+  }
+  
+  Scope *ParentScope = FnBodyScope->getParent();
+  
+  DeclPtrTy DP = HandleDeclarator(ParentScope, D, 
+                                  move(TemplateParameterLists),
+                                  /*IsFunctionDefinition=*/true);
+  return ActOnStartOfFunctionDef(FnBodyScope, DP);  
+}
+
 // Explicit instantiation of a class template specialization
 Sema::DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,

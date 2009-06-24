@@ -636,7 +636,8 @@ private:
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
             AccessSpecifier AS = AS_none);
                                                
-  DeclPtrTy ParseFunctionDefinition(Declarator &D);
+  DeclPtrTy ParseFunctionDefinition(Declarator &D,
+                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   void ParseKNRParamDeclarations(Declarator &D);
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the simple-asm.

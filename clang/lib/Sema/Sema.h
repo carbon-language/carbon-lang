@@ -2077,6 +2077,10 @@ public:
                                   MultiTemplateParamsArg TemplateParameterLists,
                                             Declarator &D);
   
+  virtual DeclPtrTy ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope, 
+                                                    MultiTemplateParamsArg TemplateParameterLists,
+                                                    Declarator &D);
+  
   virtual DeclResult
   ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                              unsigned TagSpec, 

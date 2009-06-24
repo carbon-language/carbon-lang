@@ -37,7 +37,7 @@ template <template <typename> class T = foo> class TTP3; // FIXME:expected-error
 template <template <typename> class = foo> class TTP3; // FIXME:expected-error{{template argument for template template parameter must be a template}}
 template <template <typename X, typename Y> class T> class TTP5;
 
-// Forward declararations with non-type params
+// Forward declarations with non-type params
 template <int> class NTP0;
 template <int N> class NTP1;
 template <int N = 5> class NTP2;

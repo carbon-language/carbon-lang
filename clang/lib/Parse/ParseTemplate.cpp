@@ -201,7 +201,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
       }
       return DeclPtrTy();
     }
-    return ParseFunctionDefinition(DeclaratorInfo);
+    return ParseFunctionDefinition(DeclaratorInfo, TemplateInfo);
   }
 
   if (DeclaratorInfo.isFunctionDeclarator())

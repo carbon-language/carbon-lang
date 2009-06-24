@@ -590,7 +590,8 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
 /// [C++] function-definition: [C++ 8.4]
 ///         decl-specifier-seq[opt] declarator function-try-block
 ///
-Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D) {
+Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D,
+                                     const ParsedTemplateInfo &TemplateInfo) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
@@ -632,7 +633,13 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D) {
 
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.
-  DeclPtrTy Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
+  DeclPtrTy Res = TemplateInfo.TemplateParams? 
+      Actions.ActOnStartOfFunctionTemplateDef(CurScope,
+                              Action::MultiTemplateParamsArg(Actions,
+                                          TemplateInfo.TemplateParams->data(),
+                                         TemplateInfo.TemplateParams->size()),
+                                              D)
+    : Actions.ActOnStartOfFunctionDef(CurScope, D);
 
   if (Tok.is(tok::kw_try))
     return ParseFunctionTryBlock(Res);

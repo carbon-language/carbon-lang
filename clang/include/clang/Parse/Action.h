@@ -1465,6 +1465,14 @@ public:
     return DeclPtrTy();
   }
   
+  /// \brief Invoked when the parser is beginning to parse a function template
+  /// or function template specialization definition.
+  virtual DeclPtrTy ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope, 
+                                MultiTemplateParamsArg TemplateParameterLists,
+                                                    Declarator &D) {
+    return DeclPtrTy();
+  }
+  
   /// \brief Process the explicit instantiation of a class template
   /// specialization.
   ///
