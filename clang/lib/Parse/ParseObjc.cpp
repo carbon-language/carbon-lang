@@ -771,10 +771,12 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute)) 
     MethodAttrs = ParseAttributes();
   
+  if (KeyIdents.size() == 0)
+    return DeclPtrTy();
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
-                                        mType, IDecl, DSRet, ReturnType, Sel, 
+                                        mType, IDecl, DSRet, ReturnType, Sel,
                                         &ArgInfos[0], CargNames, MethodAttrs,
                                         MethodImplKind, isVariadic);
 }
