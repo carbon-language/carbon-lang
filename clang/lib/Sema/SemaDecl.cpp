@@ -2157,6 +2157,26 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // from the semantic context.
   NewFD->setLexicalDeclContext(CurContext);
 
+  // If there is a template parameter list, then we are dealing with a 
+  // template declaration or specialization.
+  FunctionTemplateDecl *FunctionTemplate = 0;
+  if (TemplateParamLists.size()) {
+    // FIXME: member templates!
+    TemplateParameterList *TemplateParams 
+      = static_cast<TemplateParameterList *>(*TemplateParamLists.release());
+    
+    if (TemplateParams->size() > 0) {
+      // This is a function template
+      FunctionTemplate = FunctionTemplateDecl::Create(Context, CurContext,
+                                                      NewFD->getLocation(),
+                                                      Name, TemplateParams,
+                                                      NewFD);
+      NewFD->setDescribedFunctionTemplate(FunctionTemplate);
+    } else {
+      // FIXME: Handle function template specializations
+    }
+  }
+  
   // C++ [dcl.fct.spec]p5:
   //   The virtual specifier shall only be used in declarations of
   //   nonstatic class member functions that appear within a
