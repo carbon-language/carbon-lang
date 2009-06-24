@@ -82,6 +82,11 @@ namespace llvm {
     ///
     bool isOne() const;
 
+    /// isAllOnesValue - Return true if the expression is a constant
+    /// all-ones value.
+    ///
+    bool isAllOnesValue() const;
+
     /// replaceSymbolicValuesWithConcrete - If this SCEV internally references
     /// the symbolic value "Sym", construct and return a new SCEV that produces
     /// the same value, but which uses the concrete value Conc instead of the

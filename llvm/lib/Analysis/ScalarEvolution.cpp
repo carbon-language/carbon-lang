@@ -132,6 +132,12 @@ bool SCEV::isOne() const {
   return false;
 }
 
+bool SCEV::isAllOnesValue() const {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(this))
+    return SC->getValue()->isAllOnesValue();
+  return false;
+}
+
 SCEVCouldNotCompute::SCEVCouldNotCompute() :
   SCEV(scCouldNotCompute) {}
 
