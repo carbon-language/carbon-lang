@@ -45,7 +45,7 @@ AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T, CodeGenOpt::Level OL, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), OptLevel(OL), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
-    IsInTextSection(false) {
+    IsInTextSection(false), LastMI(0), LastFn(0), Counter(~0U) {
   DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
@@ -1315,20 +1315,15 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
     if (VerboseAsm)
       O << TAI->getCommentString();
   } else if (!strcmp(Code, "uid")) {
-    // Assign a unique ID to this machine instruction.
-    static const MachineInstr *LastMI = 0;
-    static const Function *F = 0;
-    static unsigned Counter = 0U-1;
-
     // Comparing the address of MI isn't sufficient, because machineinstrs may
     // be allocated to the same address across functions.
     const Function *ThisF = MI->getParent()->getParent()->getFunction();
     
-    // If this is a new machine instruction, bump the counter.
-    if (LastMI != MI || F != ThisF) {
+    // If this is a new LastFn instruction, bump the counter.
+    if (LastMI != MI || LastFn != ThisF) {
       ++Counter;
       LastMI = MI;
-      F = ThisF;
+      LastFn = ThisF;
     }
     O << Counter;
   } else {

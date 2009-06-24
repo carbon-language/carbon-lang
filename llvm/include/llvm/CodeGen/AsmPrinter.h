@@ -109,6 +109,12 @@ namespace llvm {
     ///
     bool VerboseAsm;
 
+    /// Private state for PrintSpecial()
+    // Assign a unique ID to this machine instruction.
+    mutable const MachineInstr *LastMI;
+    mutable const Function *LastFn;
+    mutable unsigned Counter;
+
   protected:
     explicit AsmPrinter(raw_ostream &o, TargetMachine &TM,
                         const TargetAsmInfo *T, CodeGenOpt::Level OL, bool V);
