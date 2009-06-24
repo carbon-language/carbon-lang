@@ -373,7 +373,8 @@ void LiveInterval::scaleNumbering(unsigned factor) {
   for (vni_iterator VNI = vni_begin(), VNIE = vni_end(); VNI != VNIE; ++VNI) {
     VNInfo *vni = *VNI;
 
-    vni->def = InstrSlots::scale(vni->def, factor);
+    if (vni->isDefAccurate())
+      vni->def = InstrSlots::scale(vni->def, factor);
 
     for (unsigned i = 0; i < vni->kills.size(); ++i) {
       if (vni->kills[i] != 0)

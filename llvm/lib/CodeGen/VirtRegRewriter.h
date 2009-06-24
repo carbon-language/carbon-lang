@@ -32,11 +32,6 @@
 #include "VirtRegMap.h"
 #include <map>
 
-// TODO:
-//       - Finish renaming Spiller -> Rewriter
-//         - SimpleSpiller
-//         - LocalSpiller
-
 namespace llvm {
   
   /// VirtRegRewriter interface: Implementations of this interface assign
