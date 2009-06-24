@@ -45,7 +45,7 @@ public:
   virtual const GRState *RemoveDeadBindings(const GRState *state,
                                             SymbolReaper& SymReaper) = 0;
 
-  virtual void print(const GRState *state, std::ostream& Out, 
+  virtual void print(const GRState *state, llvm::raw_ostream& Out, 
                      const char* nl, const char *sep) = 0;
 
   virtual void EndPath(const GRState *state) {}

@@ -112,7 +112,8 @@ public:
     return BindingsTy(static_cast<const BindingsTy::TreeTy*>(store));
   }
 
-  void print(Store store, std::ostream& Out, const char* nl, const char *sep);
+  void print(Store store, llvm::raw_ostream& Out, const char* nl,
+             const char *sep);
 
 private:
   ASTContext& getContext() { return StateMgr.getContext(); }
@@ -602,18 +603,19 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
   return store;
 }
 
-void BasicStoreManager::print(Store store, std::ostream& O,
+void BasicStoreManager::print(Store store, llvm::raw_ostream& Out,
                               const char* nl, const char *sep) {
       
-  llvm::raw_os_ostream Out(O);
   BindingsTy B = GetBindings(store);
   Out << "Variables:" << nl;
   
   bool isFirst = true;
   
   for (BindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
-    if (isFirst) isFirst = false;
-    else Out << nl;
+    if (isFirst)
+      isFirst = false;
+    else
+      Out << nl;
     
     Out << ' ' << I.getKey() << " : ";
     I.getData().print(Out);

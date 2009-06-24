@@ -21,7 +21,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include <iosfwd>
 
 namespace clang {
   
@@ -171,7 +170,7 @@ public:
     return state;
   }
 
-  virtual void print(Store store, std::ostream& Out,
+  virtual void print(Store store, llvm::raw_ostream& Out,
                      const char* nl, const char *sep) = 0;
       
   class BindingsHandler {

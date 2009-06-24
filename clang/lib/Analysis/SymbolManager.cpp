@@ -85,12 +85,6 @@ llvm::raw_ostream& llvm::operator<<(llvm::raw_ostream& os, const SymExpr *SE) {
   return os;
 }
 
-std::ostream& std::operator<<(std::ostream& os, const SymExpr *SE) {
-  llvm::raw_os_ostream O(os);
-  print(O, SE);
-  return os;
-}
-
 const SymbolRegionValue* 
 SymbolManager::getRegionValueSymbol(const MemRegion* R, QualType T) {
   llvm::FoldingSetNodeID profile;

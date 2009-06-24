@@ -328,9 +328,4 @@ namespace llvm {
   llvm::raw_ostream& operator<<(llvm::raw_ostream& Out,
                                 const clang::SymExpr *SE);
 }
-namespace std {
-  std::ostream& operator<<(std::ostream& Out,
-                           const clang::SymExpr *SE);
-}
-
 #endif

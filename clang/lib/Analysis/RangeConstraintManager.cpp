@@ -200,7 +200,7 @@ public:
     return newRanges;
   }
 
-  void Print(std::ostream &os) const {
+  void print(llvm::raw_ostream &os) const {
     bool isFirst = true;
     os << "{ ";
     for (iterator i = begin(), e = end(); i != e; ++i) {
@@ -265,7 +265,7 @@ public:
 
   const GRState* RemoveDeadBindings(const GRState* St, SymbolReaper& SymReaper);
 
-  void print(const GRState* St, std::ostream& Out, 
+  void print(const GRState* St, llvm::raw_ostream& Out, 
              const char* nl, const char *sep);
 
 private:
@@ -341,7 +341,7 @@ AssumeX(GE)
 // Pretty-printing.
 //===------------------------------------------------------------------------===/
 
-void RangeConstraintManager::print(const GRState* St, std::ostream& Out, 
+void RangeConstraintManager::print(const GRState* St, llvm::raw_ostream& Out, 
                                    const char* nl, const char *sep) {
   
   ConstraintRangeTy Ranges = St->get<ConstraintRange>();
@@ -353,6 +353,6 @@ void RangeConstraintManager::print(const GRState* St, std::ostream& Out,
   
   for (ConstraintRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I){
     Out << nl << ' ' << I.getKey() << " : ";
-    I.getData().Print(Out);
+    I.getData().print(Out);
   }
 }

@@ -83,7 +83,7 @@ public:
 
   const GRState* RemoveDeadBindings(const GRState* state, SymbolReaper& SymReaper);
 
-  void print(const GRState* state, std::ostream& Out, 
+  void print(const GRState* state, llvm::raw_ostream& Out, 
              const char* nl, const char *sep);
 };
 
@@ -280,7 +280,7 @@ BasicConstraintManager::RemoveDeadBindings(const GRState* state,
   return state->set<ConstNotEq>(CNE);
 }
 
-void BasicConstraintManager::print(const GRState* state, std::ostream& Out, 
+void BasicConstraintManager::print(const GRState* state, llvm::raw_ostream& Out, 
                                    const char* nl, const char *sep) {
   // Print equality constraints.
 
@@ -288,12 +288,8 @@ void BasicConstraintManager::print(const GRState* state, std::ostream& Out,
 
   if (!CE.isEmpty()) {
     Out << nl << sep << "'==' constraints:";
-
-    for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
-      Out << nl << " $" << I.getKey();
-      llvm::raw_os_ostream OS(Out);
-      OS << " : "   << *I.getData();
-    }
+    for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I)
+      Out << nl << " $" << I.getKey() << " : " << *I.getData();
   }
 
   // Print != constraints.

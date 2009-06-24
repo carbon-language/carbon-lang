@@ -1,4 +1,4 @@
-//= GRState*cpp - Path-Sens. "State" for tracking valuues -----*- C++ -*--=//
+//= GRState.cpp - Path-Sensitive "State" for tracking values -----*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolRef, ExprBindKey, and GRState*
+//  This file implements GRState and GRStateManager.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,6 +20,7 @@
 using namespace clang;
 
 // Give the vtable for ConstraintManager somewhere to live.
+// FIXME: Move this elsewhere.
 ConstraintManager::~ConstraintManager() {}
 
 GRStateManager::~GRStateManager() {
@@ -117,7 +118,8 @@ const GRState* GRState::makeWithStore(Store store) const {
 //  State pretty-printing.
 //===----------------------------------------------------------------------===//
 
-void GRState::print(std::ostream& Out, const char* nl, const char* sep) const {  
+void GRState::print(llvm::raw_ostream& Out, const char* nl,
+                    const char* sep) const {  
   // Print the store.
   Mgr->getStoreManager().print(getStore(), Out, nl, sep);
   
@@ -133,9 +135,7 @@ void GRState::print(std::ostream& Out, const char* nl, const char* sep) const {
     else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
-    llvm::raw_os_ostream OutS(Out);
-    I.getKey()->printPretty(OutS);
-    OutS.flush();
+    I.getKey()->printPretty(Out);
     Out << " : ";
     I.getData().print(Out);
   }
@@ -152,9 +152,7 @@ void GRState::print(std::ostream& Out, const char* nl, const char* sep) const {
     else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
-    llvm::raw_os_ostream OutS(Out);
-    I.getKey()->printPretty(OutS);
-    OutS.flush();
+    I.getKey()->printPretty(Out);
     Out << " : ";
     I.getData().print(Out);
   }
@@ -168,12 +166,12 @@ void GRState::print(std::ostream& Out, const char* nl, const char* sep) const {
   }
 }
 
-void GRState::printDOT(std::ostream& Out) const {
+void GRState::printDOT(llvm::raw_ostream& Out) const {
   print(Out, "\\l", "\\|");
 }
 
 void GRState::printStdErr() const {
-  print(*llvm::cerr);
+  print(llvm::errs());
 }
 
 //===----------------------------------------------------------------------===//

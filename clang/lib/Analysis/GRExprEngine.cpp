@@ -3158,7 +3158,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
   static std::string getNodeLabel(const GRExprEngine::NodeTy* N, void*,
                                   bool ShortNames) {
-    std::ostringstream Out;
+    
+    std::string sbuf;
+    llvm::raw_string_ostream Out(sbuf);
 
     // Program Location.
     ProgramPoint Loc = N->getLocation();
@@ -3180,9 +3182,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           SourceLocation SLoc = S->getLocStart();
 
           Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
-          llvm::raw_os_ostream OutS(Out);
-          S->printPretty(OutS);
-          OutS.flush();
+          S->printPretty(Out);
           
           if (SLoc.isFileID()) {        
             Out << "\\lline="
@@ -3236,10 +3236,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           SourceLocation SLoc = T->getLocStart();
          
           Out << "\\|Terminator: ";
-          
-          llvm::raw_os_ostream OutS(Out);
-          E.getSrc()->printTerminator(OutS);
-          OutS.flush();
+          E.getSrc()->printTerminator(Out);
           
           if (SLoc.isFileID()) {
             Out << "\\lline="
@@ -3254,14 +3251,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
             if (Label) {                        
               if (CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
                 Out << "\\lcase ";
-                llvm::raw_os_ostream OutS(Out);
-                C->getLHS()->printPretty(OutS);
-                OutS.flush();
+                C->getLHS()->printPretty(Out);
               
                 if (Stmt* RHS = C->getRHS()) {
                   Out << " .. ";
-                  RHS->printPretty(OutS);
-                  OutS.flush();
+                  RHS->printPretty(Out);
                 }
                 
                 Out << ":";

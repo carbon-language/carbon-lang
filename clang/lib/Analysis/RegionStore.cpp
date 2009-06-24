@@ -238,10 +238,8 @@ public:
   CastResult CastRegion(const GRState *state, const MemRegion* R,
                         QualType CastToTy);
 
-  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,Loc L,NonLoc R);
-
-
-
+  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,Loc L,
+                 NonLoc R);
 
   Store getInitialStore() { return RBFactory.GetEmptyMap().getRoot(); }
   
@@ -260,8 +258,6 @@ public:
     
     return SelfRegion;
   }
-  
-
  
   //===-------------------------------------------------------------------===//
   // Binding values to regions.
@@ -352,7 +348,8 @@ public:
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
 
-  void print(Store store, std::ostream& Out, const char* nl, const char *sep);
+  void print(Store store, llvm::raw_ostream& Out, const char* nl,
+             const char *sep);
 
   void iterBindings(Store store, BindingsHandler& f) {
     // FIXME: Implement.
@@ -1423,9 +1420,8 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-void RegionStoreManager::print(Store store, std::ostream& Out, 
+void RegionStoreManager::print(Store store, llvm::raw_ostream& OS,
                                const char* nl, const char *sep) {
-  llvm::raw_os_ostream OS(Out);
   RegionBindingsTy B = GetRegionBindings(store);
   OS << "Store:" << nl;
   

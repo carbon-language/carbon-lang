@@ -111,7 +111,6 @@ public:
   ///  return that expression.  Otherwise return NULL.
   const SymExpr *getAsSymbolicExpression() const;
   
-  void print(std::ostream& OS) const;
   void print(llvm::raw_ostream& OS) const;
   void printStdErr() const;
 

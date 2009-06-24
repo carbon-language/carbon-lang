@@ -242,11 +242,6 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
 
 void SVal::printStdErr() const { print(llvm::errs()); }
 
-void SVal::print(std::ostream& Out) const {
-  llvm::raw_os_ostream out(Out);
-  print(out);
-}
-
 void SVal::print(llvm::raw_ostream& Out) const {
 
   switch (getBaseKind()) {

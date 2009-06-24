@@ -20,7 +20,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/LangOptions.h"
-#include <sstream>
 
 using namespace clang;
 
@@ -97,8 +96,8 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
   // Find ivars that are unused.
   for (IvarUsageMap::iterator I = M.begin(), E = M.end(); I!=E; ++I)
     if (I->second == Unused) {
-      
-      std::ostringstream os;
+      std::string sbuf;
+      llvm::raw_string_ostream os(sbuf);
       os << "Instance variable '" << I->first->getNameAsString()
          << "' in class '" << ID->getNameAsString() 
          << "' is never used by the methods in its @implementation "

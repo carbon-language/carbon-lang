@@ -34,7 +34,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <functional>
 
@@ -326,17 +326,17 @@ public:
   class Printer {
   public:
     virtual ~Printer() {}
-    virtual void Print(std::ostream& Out, const GRState* state,
+    virtual void Print(llvm::raw_ostream& Out, const GRState* state,
                        const char* nl, const char* sep) = 0;
   };
   
   // Pretty-printing.
-  void print(std::ostream& Out, const char *nl = "\n",
+  void print(llvm::raw_ostream& Out, const char *nl = "\n",
              const char *sep = "") const;  
 
   void printStdErr() const; 
   
-  void printDOT(std::ostream& Out) const;  
+  void printDOT(llvm::raw_ostream& Out) const;  
   
   // Tags used for the Generic Data Map.
   struct NullDerefTag {
