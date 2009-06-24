@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -47,6 +48,30 @@ TEST(AsmStreamer, Sections) {
   MCSection *Sec0 = S.getContext().GetSection("foo");
   S.getStreamer().SwitchSection(Sec0);
   EXPECT_EQ(S.getString(), ".section foo\n");
+}
+
+TEST(AsmStreamer, Values) {
+  StringAsmStreamer S;
+  MCSection *Sec0 = S.getContext().GetSection("foo");
+  MCSymbol *A = S.getContext().CreateSymbol(S.getContext().CreateAtom(Sec0),
+                                         "a");
+  MCSymbol *B = S.getContext().CreateSymbol(S.getContext().CreateAtom(Sec0),
+                                            "b");
+  S.getStreamer().SwitchSection(Sec0);
+  S.getStreamer().EmitLabel(A);
+  S.getStreamer().EmitLabel(B);
+  S.getStreamer().EmitValue(MCValue::get(A, B, 10), 1);
+  S.getStreamer().EmitValue(MCValue::get(A, B, 10), 2);
+  S.getStreamer().EmitValue(MCValue::get(A, B, 10), 4);
+  S.getStreamer().EmitValue(MCValue::get(A, B, 10), 8);
+  EXPECT_EQ(S.getString(), ".section foo\n\
+a:\n\
+b:\n\
+.byte a - b + 10\n\
+.short a - b + 10\n\
+.long a - b + 10\n\
+.quad a - b + 10\n\
+");
 }
 
 }

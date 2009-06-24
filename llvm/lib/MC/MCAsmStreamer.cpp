@@ -121,7 +121,7 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
   default:
     assert(0 && "Invalid size for machine code value!");
   case 1: OS << ".byte"; break;
-  case 2: OS << ".hword"; break;
+  case 2: OS << ".short"; break;
   case 4: OS << ".long"; break;
   case 8: OS << ".quad"; break;
   }
