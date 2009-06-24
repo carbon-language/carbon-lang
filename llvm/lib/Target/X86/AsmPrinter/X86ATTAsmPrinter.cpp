@@ -1169,9 +1169,9 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     if (!HiddenGVStubs.empty()) {
       SwitchToSection(TAI->getDataSection());
+      EmitAlignment(2);
       for (StringSet<>::iterator I = HiddenGVStubs.begin(),
            E = HiddenGVStubs.end(); I != E; ++I) {
-        EmitAlignment(2);
         const char *Name = I->getKeyData();
         printSuffixedName(Name, "$non_lazy_ptr");
         O << ":\n" << TAI->getData32bitsDirective() << Name << '\n';
