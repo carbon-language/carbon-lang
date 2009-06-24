@@ -719,8 +719,8 @@ const SCEV* ScalarEvolution::getTruncateExpr(const SCEV* Op,
   Ty = getEffectiveSCEVType(Ty);
 
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
-    return getUnknown(
-        ConstantExpr::getTrunc(SC->getValue(), Ty));
+    return getConstant(
+      cast<ConstantInt>(ConstantExpr::getTrunc(SC->getValue(), Ty)));
 
   // trunc(trunc(x)) --> trunc(x)
   if (const SCEVTruncateExpr *ST = dyn_cast<SCEVTruncateExpr>(Op))
@@ -759,7 +759,7 @@ const SCEV* ScalarEvolution::getZeroExtendExpr(const SCEV* Op,
     const Type *IntTy = getEffectiveSCEVType(Ty);
     Constant *C = ConstantExpr::getZExt(SC->getValue(), IntTy);
     if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
-    return getUnknown(C);
+    return getConstant(cast<ConstantInt>(C));
   }
 
   // zext(zext(x)) --> zext(x)
@@ -847,7 +847,7 @@ const SCEV* ScalarEvolution::getSignExtendExpr(const SCEV* Op,
     const Type *IntTy = getEffectiveSCEVType(Ty);
     Constant *C = ConstantExpr::getSExt(SC->getValue(), IntTy);
     if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
-    return getUnknown(C);
+    return getConstant(cast<ConstantInt>(C));
   }
 
   // sext(sext(x)) --> sext(x)
@@ -1617,7 +1617,8 @@ const SCEV* ScalarEvolution::getUDivExpr(const SCEV* LHS,
     if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
-      return getUnknown(ConstantExpr::getUDiv(LHSCV, RHSCV));
+      return getConstant(cast<ConstantInt>(ConstantExpr::getUDiv(LHSCV,
+                                                                 RHSCV)));
     }
   }
 
@@ -1966,7 +1967,7 @@ const SCEV* ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
 ///
 const SCEV* ScalarEvolution::getNegativeSCEV(const SCEV* V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
-    return getUnknown(ConstantExpr::getNeg(VC->getValue()));
+    return getConstant(cast<ConstantInt>(ConstantExpr::getNeg(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
@@ -1976,7 +1977,7 @@ const SCEV* ScalarEvolution::getNegativeSCEV(const SCEV* V) {
 /// getNotSCEV - Return a SCEV corresponding to ~V = -1-V
 const SCEV* ScalarEvolution::getNotSCEV(const SCEV* V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
-    return getUnknown(ConstantExpr::getNot(VC->getValue()));
+    return getConstant(cast<ConstantInt>(ConstantExpr::getNot(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
