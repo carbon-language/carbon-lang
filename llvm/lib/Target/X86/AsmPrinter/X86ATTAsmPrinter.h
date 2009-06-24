@@ -27,17 +27,24 @@
 namespace llvm {
 
 class MachineJumpTableInfo;
+class MCContext;
 class MCInst;
+class MCStreamer;
 
 class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   MachineModuleInfo *MMI;
   const X86Subtarget *Subtarget;
+  
+  MCContext *Context;
+  MCStreamer *Streamer;
  public:
   explicit X86ATTAsmPrinter(raw_ostream &O, X86TargetMachine &TM,
                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
                             bool V)
     : AsmPrinter(O, TM, T, OL, V), MMI(0) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
+    Context = 0;
+    Streamer = 0;
   }
 
   virtual const char *getPassName() const {

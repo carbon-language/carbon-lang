@@ -26,7 +26,9 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -933,6 +935,14 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool X86ATTAsmPrinter::doInitialization(Module &M) {
   if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling()) 
     MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  
+  if (NewAsmPrinter) {
+    Context = new MCContext();
+    // FIXME: Send this to "O" instead of outs().  For now, we force it to
+    // stdout to make it easy to compare.
+    Streamer = createAsmStreamer(*Context, outs());
+  }
+  
   return AsmPrinter::doInitialization(M);
 }
 
@@ -1214,6 +1224,15 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       DW->EndModule();
   }
 
+  if (NewAsmPrinter) {
+    Streamer->Finish();
+    
+    delete Streamer;
+    delete Context;
+    Streamer = 0;
+    Context = 0;
+  }
+  
   return AsmPrinter::doFinalization(M);
 }
 
