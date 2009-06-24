@@ -644,7 +644,7 @@ ARMAsmPrinter::printBitfieldInvMaskImmOperand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO = MI->getOperand(Op);
   uint32_t v = ~MO.getImm();
   int32_t lsb = ffs (v) - 1;
-  int32_t width = ffs (v) - lsb;
+  int32_t width = fls (v) - lsb;
   assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
   O << "#" << lsb << ", #" << width;
 }
