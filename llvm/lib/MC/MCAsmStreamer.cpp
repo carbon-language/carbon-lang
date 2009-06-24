@@ -84,8 +84,8 @@ void MCAsmStreamer::SwitchSection(MCSection *Section) {
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   // FIXME: We need to enforce that we aren't printing atoms which are more
   // complicated than the assembler understands.
-  assert(Symbol->getAtom()->getSection() == CurSection && 
-         "The label for a symbol must match its section!");
+  //assert(Symbol->getAtom()->getSection() == CurSection && 
+  //       "The label for a symbol must match its section!");
   OS << Symbol->getName() << ":\n";
 }
 

@@ -56,6 +56,13 @@ namespace llvm {
     /// @param Name - The symbol name, which must be unique across all symbols.
     MCSymbol *CreateSymbol(MCAtom *Atom, const char *Name);
 
+    /// GetOrCreateSymbol - Lookup the symbol inside with the specified
+    /// @param Name.  If it exists, return it.  If not, create a forward
+    /// reference and return it.
+    ///
+    /// @param Name - The symbol name, which must be unique across all symbols.
+    MCSymbol *GetOrCreateSymbol(const char *Name);
+    
     /// CreateTemporarySymbol - Create a new temporary symbol inside @param Atom
     /// with the specified @param Name.
     ///

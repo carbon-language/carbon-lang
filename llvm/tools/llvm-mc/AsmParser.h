@@ -17,17 +17,20 @@
 #include "AsmLexer.h"
 
 namespace llvm {
+class MCContext;
 class MCInst;
 class MCStreamer;
   
 class AsmParser {
   AsmLexer Lexer;
+  MCContext &Ctx;
   MCStreamer &Out;
   
   struct X86Operand;
   
 public:
-  AsmParser(SourceMgr &SM, MCStreamer &OutStr) : Lexer(SM), Out(OutStr) {}
+  AsmParser(SourceMgr &SM, MCContext &ctx, MCStreamer &OutStr)
+    : Lexer(SM), Ctx(ctx), Out(OutStr) {}
   ~AsmParser() {}
   
   bool Run();

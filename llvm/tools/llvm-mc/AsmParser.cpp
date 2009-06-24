@@ -185,6 +185,12 @@ bool AsmParser::ParseStatement() {
   if (Lexer.Lex() == asmtok::Colon) {
     // identifier ':'   -> Label.
     Lexer.Lex();
+    
+    // Since we saw a label, create a symbol and emit it.
+    // FIXME: If the label starts with L it is an assembler temporary label.
+    // Why does the client of this api need to know this?
+    Out.EmitLabel(Ctx.GetOrCreateSymbol(IDVal));
+    
     return ParseStatement();
   }
   

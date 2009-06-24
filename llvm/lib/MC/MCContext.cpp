@@ -44,6 +44,20 @@ MCSymbol *MCContext::CreateSymbol(MCAtom *Atom, const char *Name) {
   return Entry = new (*this) MCSymbol(Atom, Name, false);
 }
 
+/// GetOrCreateSymbol - Lookup the symbol inside with the specified
+/// @param Name.  If it exists, return it.  If not, create a forward
+/// reference and return it.
+///
+/// @param Name - The symbol name, which must be unique across all symbols.
+MCSymbol *MCContext::GetOrCreateSymbol(const char *Name) {
+  MCSymbol *&Entry = Symbols[Name];
+  if (Entry) return Entry;
+
+  // FIXME: is a null atom the right way to make a forward ref?
+  return Entry = new (*this) MCSymbol(0, Name, false);
+}
+
+
 MCSymbol *MCContext::CreateTemporarySymbol(MCAtom *Atom, const char *Name) {
   // If unnamed, just create a symbol.
   if (Name[0] == '\0')

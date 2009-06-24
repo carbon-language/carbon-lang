@@ -139,10 +139,9 @@ static int AssembleInput(const char *ProgName) {
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
   
-  // FIXME: don't leak streamer, own.
   MCContext Ctx;
   OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, outs()));
-  AsmParser Parser(SrcMgr, *Str.get());
+  AsmParser Parser(SrcMgr, Ctx, *Str.get());
   return Parser.Run();
 }  
 
