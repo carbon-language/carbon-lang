@@ -546,6 +546,18 @@ TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
   return SemaRef.Context.getTypeOfType(Underlying);
 }
 
+QualType
+TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T,
+                                                  unsigned Quals) const {
+  Sema::OwningExprResult E 
+    = SemaRef.InstantiateExpr(T->getUnderlyingExpr(), TemplateArgs);
+
+  if (E.isInvalid())
+    return QualType();
+  
+  return SemaRef.Context.getDecltypeType(E.takeAs<Expr>());
+}
+
 QualType 
 TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
                                                 unsigned Quals) const {

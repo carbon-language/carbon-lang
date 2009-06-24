@@ -360,6 +360,9 @@ public:
   QualType getTypeOfExprType(Expr *e);
   QualType getTypeOfType(QualType t);
   
+  /// getDecltypeType - C++0x decltype.
+  QualType getDecltypeType(Expr *e);
+  
   /// getTagDeclType - Return the unique reference to the type for the
   /// specified TagDecl (struct/union/class/enum) decl.
   QualType getTagDeclType(TagDecl *Decl);

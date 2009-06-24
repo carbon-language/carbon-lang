@@ -1822,7 +1822,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     QualType UnderlyingType = GetType(Record[0]);
     return Context->getTypeOfType(UnderlyingType);
   }
-    
+   
+  case pch::TYPE_DECLTYPE:
+    return Context->getDecltypeType(ReadTypeExpr());
+
   case pch::TYPE_RECORD:
     assert(Record.size() == 1 && "incorrect encoding of record type");
     return Context->getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));

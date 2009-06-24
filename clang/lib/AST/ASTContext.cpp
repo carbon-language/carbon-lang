@@ -460,6 +460,10 @@ ASTContext::getTypeInfo(const Type *T) {
   case Type::TypeOf:
     return getTypeInfo(cast<TypeOfType>(T)->getUnderlyingType().getTypePtr());
 
+  case Type::Decltype:
+    return getTypeInfo(cast<DecltypeType>(T)->getUnderlyingExpr()->getType()
+                        .getTypePtr());
+
   case Type::QualifiedName:
     return getTypeInfo(cast<QualifiedNameType>(T)->getNamedType().getTypePtr());
     
@@ -1657,6 +1661,19 @@ QualType ASTContext::getTypeOfType(QualType tofType) {
   TypeOfType *tot = new (*this,8) TypeOfType(tofType, Canonical);
   Types.push_back(tot);
   return QualType(tot, 0);
+}
+
+/// getDecltypeType -  Unlike many "get<Type>" functions, we don't unique
+/// DecltypeType AST's. The only motivation to unique these nodes would be
+/// memory savings. Since decltype(t) is fairly uncommon, space shouldn't be
+/// an issue. This doesn't effect the type checker, since it operates 
+/// on canonical type's (which are always unique).
+QualType ASTContext::getDecltypeType(Expr *e) {
+  // FIXME: Use the right type here!
+  QualType Canonical = getCanonicalType(e->getType());
+  DecltypeType *dt = new (*this, 8) DecltypeType(e, Canonical);
+  Types.push_back(dt);
+  return QualType(dt, 0);
 }
 
 /// getTagDeclType - Return the unique reference to the type for the

@@ -185,6 +185,11 @@ void PCHTypeWriter::VisitTypeOfType(const TypeOfType *T) {
   Code = pch::TYPE_TYPEOF;
 }
 
+void PCHTypeWriter::VisitDecltypeType(const DecltypeType *T) {
+  Writer.AddStmt(T->getUnderlyingExpr());
+  Code = pch::TYPE_DECLTYPE;
+}
+
 void PCHTypeWriter::VisitTagType(const TagType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   assert(!T->isBeingDefined() && 

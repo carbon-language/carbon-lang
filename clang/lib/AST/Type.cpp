@@ -1052,6 +1052,11 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
+DecltypeType::DecltypeType(Expr *E, QualType can)
+  : Type(Decltype, can, E->isTypeDependent()), E(E) {
+  assert(!isa<TypedefType>(can) && "Invalid canonical type");
+}
+
 TagType::TagType(TypeClass TC, TagDecl *D, QualType can) 
   : Type(TC, can, D->isDependentType()), decl(D, 0) {}
 
@@ -1419,6 +1424,16 @@ void TypeOfType::getAsStringInternal(std::string &InnerString, const PrintingPol
   std::string Tmp;
   getUnderlyingType().getAsStringInternal(Tmp, Policy);
   InnerString = "typeof(" + Tmp + ")" + InnerString;
+}
+
+void DecltypeType::getAsStringInternal(std::string &InnerString, 
+                                       const PrintingPolicy &Policy) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'decltype(t) X'.
+    InnerString = ' ' + InnerString;
+  std::string Str;
+  llvm::raw_string_ostream s(Str);
+  getUnderlyingExpr()->printPretty(s, 0, Policy);
+  InnerString = "decltype(" + s.str() + ")" + InnerString;
 }
 
 void FunctionNoProtoType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
