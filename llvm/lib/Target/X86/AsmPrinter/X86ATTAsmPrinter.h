@@ -188,9 +188,6 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   void printModuleLevelGV(const GlobalVariable* GVar);
 
-  void printGVStub(const char *GV);
-  void printHiddenGVStub(const char *GV);
-
   bool runOnMachineFunction(MachineFunction &F);
 
   void emitFunctionHeader(const MachineFunction &MF);

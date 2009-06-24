@@ -1078,22 +1078,6 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   EmitGlobalConstant(C);
 }
 
-/// printGVStub - Print stub for a global value.
-///
-void X86ATTAsmPrinter::printGVStub(const char *GV) {
-  printSuffixedName(GV, "$non_lazy_ptr");
-  O << ":\n\t.indirect_symbol " << GV << "\n\t.long\t0\n";
-}
-
-/// printHiddenGVStub - Print stub for a hidden global value.
-///
-void X86ATTAsmPrinter::printHiddenGVStub(const char *GV) {
-  EmitAlignment(2);
-  printSuffixedName(GV, "$non_lazy_ptr");
-  O << ":\n" << TAI->getData32bitsDirective() << GV << '\n';
-}
-
-
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -1142,21 +1126,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
-
-    // Output stubs for dynamically-linked functions
-    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i) {
-      SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
-                          "self_modifying_code+pure_instructions,5", 0);
-      const char *p = i->getKeyData();
-      printSuffixedName(p, "$stub");
-      O << ":\n"
-           "\t.indirect_symbol " << p << "\n"
-           "\thlt ; hlt ; hlt ; hlt ; hlt\n";
-    }
-
-    O << '\n';
-
+    
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
     if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
@@ -1170,19 +1140,42 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       }
     }
 
+    // Output stubs for dynamically-linked functions
+    if (!FnStubs.empty()) {
+      for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+           I != E; ++I) {
+        SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
+                            "self_modifying_code+pure_instructions,5", 0);
+        const char *Name = I->getKeyData();
+        printSuffixedName(Name, "$stub");
+        O << ":\n"
+             "\t.indirect_symbol " << Name << "\n"
+             "\thlt ; hlt ; hlt ; hlt ; hlt\n";
+      }
+      O << '\n';
+    }
+
     // Output stubs for external and common global variables.
-    if (!GVStubs.empty())
+    if (!GVStubs.empty()) {
       SwitchToDataSection(
                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
-    for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
-         i != e; ++i)
-      printGVStub(i->getKeyData());
+      for (StringSet<>::iterator I = GVStubs.begin(), E = GVStubs.end();
+           I != E; ++I) {
+        const char *Name = I->getKeyData();
+        printSuffixedName(Name, "$non_lazy_ptr");
+        O << ":\n\t.indirect_symbol " << Name << "\n\t.long\t0\n";
+      }
+    }
 
     if (!HiddenGVStubs.empty()) {
       SwitchToSection(TAI->getDataSection());
-      for (StringSet<>::iterator i = HiddenGVStubs.begin(), e = HiddenGVStubs.end();
-           i != e; ++i)
-        printHiddenGVStub(i->getKeyData());
+      for (StringSet<>::iterator I = HiddenGVStubs.begin(),
+           E = HiddenGVStubs.end(); I != E; ++I) {
+        EmitAlignment(2);
+        const char *Name = I->getKeyData();
+        printSuffixedName(Name, "$non_lazy_ptr");
+        O << ":\n" << TAI->getData32bitsDirective() << Name << '\n';
+      }
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
