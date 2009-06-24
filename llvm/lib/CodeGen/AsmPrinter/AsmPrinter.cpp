@@ -192,13 +192,26 @@ bool AsmPrinter::doInitialization(Module &M) {
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
+  // If the target wants to know about weak references, print them all.
   if (TAI->getWeakRefDirective()) {
-    if (!ExtWeakSymbols.empty())
-      SwitchToDataSection("");
+    // FIXME: This is not lazy, it would be nice to only print weak references
+    // to stuff that is actually used.  Note that doing so would require targets
+    // to notice uses in operands (due to constant exprs etc).  This should
+    // happen with the MC stuff eventually.
+    SwitchToDataSection("");
 
-    for (std::set<const GlobalValue*>::iterator i = ExtWeakSymbols.begin(),
-         e = ExtWeakSymbols.end(); i != e; ++i)
-      O << TAI->getWeakRefDirective() << Mang->getValueName(*i) << '\n';
+    // Print out module-level global variables here.
+    for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I) {
+      if (I->hasExternalWeakLinkage())
+        O << TAI->getWeakRefDirective() << Mang->getValueName(I) << '\n';
+    }
+    
+    for (Module::const_iterator I = M.begin(), E = M.end();
+         I != E; ++I) {
+      if (I->hasExternalWeakLinkage())
+        O << TAI->getWeakRefDirective() << Mang->getValueName(I) << '\n';
+    }
   }
 
   if (TAI->getSetDirective()) {
@@ -207,7 +220,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
     O << '\n';
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
-         I!=E; ++I) {
+         I != E; ++I) {
       std::string Name = Mang->getValueName(I);
       std::string Target;
 
@@ -235,7 +248,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
   // If we don't have any trampolines, then we don't require stack memory
   // to be executable. Some targets have a directive to declare this.
-  Function* InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
+  Function *InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
   if (!InitTrampolineIntrinsic || InitTrampolineIntrinsic->use_empty())
     if (TAI->getNonexecutableStackDirective())
       O << TAI->getNonexecutableStackDirective() << '\n';

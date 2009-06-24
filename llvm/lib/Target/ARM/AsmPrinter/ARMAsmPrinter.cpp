@@ -169,11 +169,6 @@ namespace {
          O << ")";
       }
       O << "\n";
-
-      // If the constant pool value is a extern weak symbol, remember to emit
-      // the weak reference.
-      if (GV && GV->hasExternalWeakLinkage())
-        ExtWeakSymbols.insert(GV);
     }
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -331,8 +326,6 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
@@ -749,10 +742,6 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
     } else {
       EmitGlobalConstant(MCPE.Val.ConstVal);
-      // remember to emit the weak reference
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(MCPE.Val.ConstVal))
-        if (GV->hasExternalWeakLinkage())
-          ExtWeakSymbols.insert(GV);
     }
   }
 }
@@ -1045,12 +1034,6 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   O << "\n";
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << name << ", " << Size << "\n";
-
-  // If the initializer is a extern weak symbol, remember to emit the weak
-  // reference!
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
 
   EmitGlobalConstant(C);
   O << '\n';

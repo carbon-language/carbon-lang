@@ -244,9 +244,6 @@ emitGlobal(const GlobalVariable *GV)
     
     // Mark the end of the global
     O << "\t.cc_bottom " << name << ".data\n";
-  } else {
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
   }
 }
 
@@ -375,12 +372,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     printBasicBlockLabel(MO.getMBB());
     break;
   case MachineOperand::MO_GlobalAddress:
-    {
-      const GlobalValue *GV = MO.getGlobal();
-      O << Mang->getValueName(GV);
-      if (GV->hasExternalWeakLinkage())
-        ExtWeakSymbols.insert(GV);
-    }
+    O << Mang->getValueName(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -430,25 +422,8 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
   
-  if (!FileDirective.empty()) {
+  if (!FileDirective.empty())
     emitFileDirective(FileDirective);
-  }
-  
-  // Print out type strings for external functions here
-  for (Module::const_iterator I = M.begin(), E = M.end();
-       I != E; ++I) {
-    if (I->isDeclaration() && !I->isIntrinsic()) {
-      switch (I->getLinkage()) {
-      default:
-        assert(0 && "Unexpected linkage");
-      case Function::ExternalWeakLinkage:
-        ExtWeakSymbols.insert(I);
-        // fallthrough
-      case Function::ExternalLinkage:
-        break;
-      }
-    }
-  }
 
   return Result;
 }

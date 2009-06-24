@@ -361,9 +361,6 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
       }
     }
     O << Name;
-
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
     return;
   }
 
@@ -583,12 +580,6 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
   PrintUnmangledNameSafely(GVar, O);
   O << "'\n";
-
-  // If the initializer is a extern weak symbol, remember to emit the weak
-  // reference!
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
 
   EmitGlobalConstant(C);
   O << '\n';

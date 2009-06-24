@@ -194,8 +194,6 @@ namespace {
             std::string Name = Mang->getValueName(GV);
             FnStubs.insert(Name);
             printSuffixedName(Name, "$stub");
-            if (GV->hasExternalWeakLinkage())
-              ExtWeakSymbols.insert(GV);
             return;
           }
         }
@@ -403,17 +401,12 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
         }
-        if (GV->hasExternalWeakLinkage())
-          ExtWeakSymbols.insert(GV);
         return;
       }
     }
     O << Name;
 
     printOffset(MO.getOffset());
-
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
     return;
   }
 
@@ -743,12 +736,6 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
   O << '\n';
 
-  // If the initializer is a extern weak symbol, remember to emit the weak
-  // reference!
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
-
   EmitGlobalConstant(C);
   O << '\n';
 }
@@ -986,12 +973,6 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "'";
   }
   O << '\n';
-
-  // If the initializer is a extern weak symbol, remember to emit the weak
-  // reference!
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
 
   EmitGlobalConstant(C);
   O << '\n';

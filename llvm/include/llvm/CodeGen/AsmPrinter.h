@@ -63,9 +63,6 @@ namespace llvm {
     /// that ought be fixed soon.
     DwarfWriter *DW;
     
-    // Necessary for external weak linkage support
-    std::set<const GlobalValue*> ExtWeakSymbols;
-
     /// OptLevel - Generating code at a specific optimization level.
     CodeGenOpt::Level OptLevel;
   public:

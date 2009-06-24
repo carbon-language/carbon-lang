@@ -372,9 +372,6 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
         FnStubs.insert(Name);
     }
     
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
-    
     printOffset(MO.getOffset());
     
     if (needCloseParen)
@@ -548,9 +545,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << "__imp_";
       O << Name;
     }
-
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
 
     printOffset(MO.getOffset());
 
@@ -1086,43 +1080,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     if (I->hasDLLExportLinkage())
       DLLExportedGVs.insert(Mang->makeNameProper(I->getName(),""));
-
-    // If the global is a extern weak symbol, remember to emit the weak
-    // reference!
-    // FIXME: This is rather hacky, since we'll emit references to ALL weak
-    // stuff, not used. But currently it's the only way to deal with extern weak
-    // initializers hidden deep inside constant expressions.
-    if (I->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(I);
   }
-
-  for (Module::const_iterator I = M.begin(), E = M.end();
-       I != E; ++I) {
-    // If the global is a extern weak symbol, remember to emit the weak
-    // reference!
-    // FIXME: This is rather hacky, since we'll emit references to ALL weak
-    // stuff, not used. But currently it's the only way to deal with extern weak
-    // initializers hidden deep inside constant expressions.
-    if (I->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(I);
-  }
-
-  // Output linker support code for dllexported globals
-  if (!DLLExportedGVs.empty())
-    SwitchToDataSection(".section .drectve");
-
-  for (StringSet<>::iterator i = DLLExportedGVs.begin(),
-         e = DLLExportedGVs.end();
-         i != e; ++i)
-    O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
-
-  if (!DLLExportedFns.empty())
-    SwitchToDataSection(".section .drectve");
-
-  for (StringSet<>::iterator i = DLLExportedFns.begin(),
-         e = DLLExportedFns.end();
-         i != e; ++i)
-    O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
 
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
@@ -1195,10 +1153,32 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
   }
   
+  
+  // Output linker support code for dllexported globals on windows.
+  if (!DLLExportedGVs.empty()) {
+    SwitchToDataSection(".section .drectve");
+  
+    for (StringSet<>::iterator i = DLLExportedGVs.begin(),
+         e = DLLExportedGVs.end(); i != e; ++i)
+      O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
+  }
+  
+  if (!DLLExportedFns.empty()) {
+    SwitchToDataSection(".section .drectve");
+  
+    for (StringSet<>::iterator i = DLLExportedFns.begin(),
+         e = DLLExportedFns.end();
+         i != e; ++i)
+      O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
+  }
+  
   // Emit final debug information.
+  // FIXME: Sink into DoFinalization.
   if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
     DW->EndModule();
-  
+
+  // Do common shutdown.
+  bool Changed = AsmPrinter::doFinalization(M);
   
   if (NewAsmPrinter) {
     Streamer->Finish();
@@ -1209,7 +1189,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     Context = 0;
   }
   
-  return AsmPrinter::doFinalization(M);
+  return Changed;
 }
 
 // Include the auto-generated portion of the assembly writer.

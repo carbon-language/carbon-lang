@@ -121,8 +121,6 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   case MachineOperand::MO_GlobalAddress: {
     GlobalValue *GV = MO.getGlobal();
     O << Mang->getValueName(GV);
-    if (GV->isDeclaration() && GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
     return;
   }
 
@@ -264,12 +262,6 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
 
   O << name << ":\n";
-
-  // If the initializer is a extern weak symbol, remember to emit the weak
-  // reference!
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
 
   EmitGlobalConstant(C);
   O << '\n';
