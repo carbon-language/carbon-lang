@@ -4340,6 +4340,15 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
   }
 
   OS << "\n";
+  OS << "Loop " << L->getHeader()->getName() << ": ";
+
+  if (!isa<SCEVCouldNotCompute>(SE->getMaxBackedgeTakenCount(L))) {
+    OS << "max backedge-taken count is " << *SE->getMaxBackedgeTakenCount(L);
+  } else {
+    OS << "Unpredictable max backedge-taken count. ";
+  }
+
+  OS << "\n";
 }
 
 void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
