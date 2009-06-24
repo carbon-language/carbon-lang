@@ -141,9 +141,12 @@ class VISIBILITY_HIDDEN DbgScope {
   SmallVector<DbgScope *, 4> Scopes;  // Scopes defined in scope.
   SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
   SmallVector<DbgConcreteScope *, 8> ConcreteInsts;// Concrete insts of funcs.
+  
+  // Private state for dump()
+  mutable unsigned IndentLevel;
 public:
   DbgScope(DbgScope *P, DIDescriptor D)
-    : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0) {}
+    : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), IndentLevel(0) {}
   virtual ~DbgScope();
 
   // Accessors.
@@ -176,7 +179,6 @@ public:
 
 #ifndef NDEBUG
 void DbgScope::dump() const {
-  static unsigned IndentLevel = 0;
   std::string Indent(IndentLevel, ' ');
 
   cerr << Indent; Desc.dump();
