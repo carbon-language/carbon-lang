@@ -9,7 +9,7 @@
 @dst = external global i32 
 @src = external global i32 
 
-define void @foo() {
+define void @foo() nounwind {
 entry:
     store i32* @dst, i32** @ptr
     %tmp.s = load i32* @src
