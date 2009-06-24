@@ -1134,9 +1134,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
          i != e; ++i)
     O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
 
-  if (!DLLExportedFns.empty()) {
+  if (!DLLExportedFns.empty())
     SwitchToDataSection(".section .drectve");
-  }
 
   for (StringSet<>::iterator i = DLLExportedFns.begin(),
          e = DLLExportedFns.end();
@@ -1162,20 +1161,21 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     // Print global value stubs.
     bool InStubSection = false;
+    // Add the (possibly multiple) personalities to the set of global value
+    // stubs.  Only referenced functions get into the Personalities list.
     if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
-      // Add the (possibly multiple) personalities to the set of global values.
-      // Only referenced functions get into the Personalities list.
-      const std::vector<Function *>& Personalities = MMI->getPersonalities();
-      for (std::vector<Function *>::const_iterator I = Personalities.begin(),
-             E = Personalities.end(); I != E; ++I) {
-        if (!*I)
+      const std::vector<Function*> &Personalities = MMI->getPersonalities();
+      for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
+        if (Personalities[i] == 0)
           continue;
         if (!InStubSection) {
           SwitchToDataSection(
                      "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
           InStubSection = true;
         }
-        printGVStub((*I)->getNameStart(), "_");
+        std::string Name = Mang->getValueName(Personalities[i]);
+        decorateName(Name, Personalities[i]);
+        GVStubs.insert(Name);
       }
     }
 
