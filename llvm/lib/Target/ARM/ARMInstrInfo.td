@@ -535,7 +535,8 @@ def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p), Pseudo,
                                          "add$p $dst, pc, #PCRELV${:uid}")),
                    []>;
 
-def LEApcrelJT : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, i32imm:$id, pred:$p),
+def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
+                           (ins i32imm:$label, i32imm:$id, pred:$p),
           Pseudo,
           !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
                                          "${:private}PCRELL${:uid}+8))\n"),
