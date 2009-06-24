@@ -13,7 +13,6 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm_executionengine
-DONT_BUILD_RELINKED := 1
 UsedComponents := executionengine jit interpreter native
 UsedOcamlInterfaces := llvm llvm_target
 

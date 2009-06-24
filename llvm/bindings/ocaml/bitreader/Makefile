@@ -13,7 +13,6 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm_bitreader
-DONT_BUILD_RELINKED := 1
 UsedComponents := bitreader
 UsedOcamlInterfaces := llvm
 

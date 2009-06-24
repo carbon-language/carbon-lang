@@ -13,7 +13,6 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm
-DONT_BUILD_RELINKED := 1
 UsedComponents := core
 UsedOcamLibs := llvm
 

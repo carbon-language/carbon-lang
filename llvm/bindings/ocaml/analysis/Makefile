@@ -13,7 +13,6 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm_analysis
-DONT_BUILD_RELINKED := 1
 UsedComponents := analysis
 UsedOcamlInterfaces := llvm
 

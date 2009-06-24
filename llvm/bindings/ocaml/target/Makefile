@@ -13,7 +13,6 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm_target
-DONT_BUILD_RELINKED := 1
 UsedComponents := target
 UsedOcamlInterfaces := llvm
 

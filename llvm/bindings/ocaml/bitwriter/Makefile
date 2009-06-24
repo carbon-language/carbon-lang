@@ -13,7 +13,6 @@
 
 LEVEL := ../../..
 LIBRARYNAME := llvm_bitwriter
-DONT_BUILD_RELINKED := 1
 UsedComponents := bitwriter
 UsedOcamlInterfaces := llvm
 
