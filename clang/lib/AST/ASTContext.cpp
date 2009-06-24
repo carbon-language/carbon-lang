@@ -1663,15 +1663,43 @@ QualType ASTContext::getTypeOfType(QualType tofType) {
   return QualType(tot, 0);
 }
 
+/// getDecltypeForExpr - Given an expr, will return the decltype for that
+/// expression, according to the rules in C++0x [dcl.type.simple]p4
+static QualType getDecltypeForExpr(const Expr *e, ASTContext &Context) {
+  // If e is an id expression or a class member access, decltype(e) is defined
+  // as the type of the entity named by e.
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(e)) {
+    if (const ValueDecl *VD = dyn_cast<ValueDecl>(DRE->getDecl()))
+      return VD->getType();
+  }
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(e)) {
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
+      return FD->getType();
+  }
+  // If e is a function call or an invocation of an overloaded operator,
+  // (parentheses around e are ignored), decltype(e) is defined as the
+  // return type of that function.
+  if (const CallExpr *CE = dyn_cast<CallExpr>(e->IgnoreParens()))
+    return CE->getCallReturnType();
+  
+  QualType T = e->getType();
+  
+  // Otherwise, where T is the type of e, if e is an lvalue, decltype(e) is 
+  // defined as T&, otherwise decltype(e) is defined as T.
+  if (e->isLvalue(Context) == Expr::LV_Valid)
+    T = Context.getLValueReferenceType(T);
+  
+  return T;
+}
+
 /// getDecltypeType -  Unlike many "get<Type>" functions, we don't unique
 /// DecltypeType AST's. The only motivation to unique these nodes would be
 /// memory savings. Since decltype(t) is fairly uncommon, space shouldn't be
 /// an issue. This doesn't effect the type checker, since it operates 
 /// on canonical type's (which are always unique).
 QualType ASTContext::getDecltypeType(Expr *e) {
-  // FIXME: Use the right type here!
-  QualType Canonical = getCanonicalType(e->getType());
-  DecltypeType *dt = new (*this, 8) DecltypeType(e, Canonical);
+  QualType T = getDecltypeForExpr(e, *this);
+  DecltypeType *dt = new (*this, 8) DecltypeType(e, getCanonicalType(T));
   Types.push_back(dt);
   return QualType(dt, 0);
 }

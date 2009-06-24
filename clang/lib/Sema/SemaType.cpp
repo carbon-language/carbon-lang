@@ -240,10 +240,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for decltype?");
     // TypeQuals handled by caller.
-    
-    // FIXME: Use the right type!
-    Result = Context.IntTy;
-    isInvalid = true;
+    Result = Context.getDecltypeType(E);
     break;
   }
     
