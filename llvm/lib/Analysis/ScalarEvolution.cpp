@@ -1508,8 +1508,8 @@ const SCEV* ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV*> &Ops) {
 
 /// getUDivExpr - Get a canonical multiply expression, or something simpler if
 /// possible.
-const SCEV* ScalarEvolution::getUDivExpr(const SCEV* LHS,
-                                        const SCEV* RHS) {
+const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
+                                         const SCEV *RHS) {
   assert(getEffectiveSCEVType(LHS->getType()) ==
          getEffectiveSCEVType(RHS->getType()) &&
          "SCEVUDivExpr operand types don't match!");
@@ -1652,8 +1652,8 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV*> &Operands,
   return Result;
 }
 
-const SCEV* ScalarEvolution::getSMaxExpr(const SCEV* LHS,
-                                        const SCEV* RHS) {
+const SCEV *ScalarEvolution::getSMaxExpr(const SCEV *LHS,
+                                         const SCEV *RHS) {
   SmallVector<const SCEV*, 2> Ops;
   Ops.push_back(LHS);
   Ops.push_back(RHS);
@@ -1743,8 +1743,8 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV*> &Ops) {
   return Result;
 }
 
-const SCEV* ScalarEvolution::getUMaxExpr(const SCEV* LHS,
-                                        const SCEV* RHS) {
+const SCEV *ScalarEvolution::getUMaxExpr(const SCEV *LHS,
+                                         const SCEV *RHS) {
   SmallVector<const SCEV*, 2> Ops;
   Ops.push_back(LHS);
   Ops.push_back(RHS);
@@ -1834,14 +1834,14 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV*> &Ops) {
   return Result;
 }
 
-const SCEV* ScalarEvolution::getSMinExpr(const SCEV* LHS,
-                                        const SCEV* RHS) {
+const SCEV *ScalarEvolution::getSMinExpr(const SCEV *LHS,
+                                         const SCEV *RHS) {
   // ~smax(~x, ~y) == smin(x, y).
   return getNotSCEV(getSMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
 }
 
-const SCEV* ScalarEvolution::getUMinExpr(const SCEV* LHS,
-                                        const SCEV* RHS) {
+const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
+                                         const SCEV *RHS) {
   // ~umax(~x, ~y) == umin(x, y)
   return getNotSCEV(getUMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
 }
@@ -1960,8 +1960,8 @@ const SCEV* ScalarEvolution::getNotSCEV(const SCEV* V) {
 
 /// getMinusSCEV - Return a SCEV corresponding to LHS - RHS.
 ///
-const SCEV* ScalarEvolution::getMinusSCEV(const SCEV* LHS,
-                                         const SCEV* RHS) {
+const SCEV *ScalarEvolution::getMinusSCEV(const SCEV *LHS,
+                                          const SCEV *RHS) {
   // X - Y --> X + -Y
   return getAddExpr(LHS, getNegativeSCEV(RHS));
 }
@@ -2067,8 +2067,8 @@ ScalarEvolution::getTruncateOrNoop(const SCEV* V, const Type *Ty) {
 /// getUMaxFromMismatchedTypes - Promote the operands to the wider of
 /// the types using zero-extension, and then perform a umax operation
 /// with them.
-const SCEV* ScalarEvolution::getUMaxFromMismatchedTypes(const SCEV* LHS,
-                                                       const SCEV* RHS) {
+const SCEV *ScalarEvolution::getUMaxFromMismatchedTypes(const SCEV *LHS,
+                                                        const SCEV *RHS) {
   const SCEV* PromotedLHS = LHS;
   const SCEV* PromotedRHS = RHS;
 
@@ -2083,8 +2083,8 @@ const SCEV* ScalarEvolution::getUMaxFromMismatchedTypes(const SCEV* LHS,
 /// getUMinFromMismatchedTypes - Promote the operands to the wider of
 /// the types using zero-extension, and then perform a umin operation
 /// with them.
-const SCEV* ScalarEvolution::getUMinFromMismatchedTypes(const SCEV* LHS,
-                                                       const SCEV* RHS) {
+const SCEV *ScalarEvolution::getUMinFromMismatchedTypes(const SCEV *LHS,
+                                                        const SCEV *RHS) {
   const SCEV* PromotedLHS = LHS;
   const SCEV* PromotedRHS = RHS;
 
