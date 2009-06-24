@@ -1803,6 +1803,17 @@ MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
   return S;
 }
 
+MDString *MDString::get(const std::string &Str) {
+  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+  StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
+                                        Str.data(), Str.data() + Str.size());
+  MDString *&S = Entry.getValue();
+  if (!S) S = new MDString(Entry.getKeyData(),
+                           Entry.getKeyData() + Entry.getKeyLength());
+
+  return S;
+}
+
 void MDString::destroyConstant() {
   sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
   MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));

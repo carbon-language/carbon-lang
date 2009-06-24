@@ -865,6 +865,7 @@ public:
   /// get() - Static factory methods - Return objects of the specified value.
   ///
   static MDString *get(const char *StrBegin, const char *StrEnd);
+  static MDString *get(const std::string &Str);
 
   /// size() - The length of this string.
   ///
