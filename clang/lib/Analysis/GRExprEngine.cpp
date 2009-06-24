@@ -3156,7 +3156,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     return "";
   }
     
-  static std::string getNodeLabel(const GRExprEngine::NodeTy* N, void*) {
+  static std::string getNodeLabel(const GRExprEngine::NodeTy* N, void*,
+                                  bool ShortNames) {
     std::ostringstream Out;
 
     // Program Location.

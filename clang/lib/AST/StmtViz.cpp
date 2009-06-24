@@ -31,7 +31,8 @@ void Stmt::viewAST() const {
 namespace llvm {
 template<>
 struct DOTGraphTraits<const Stmt*> : public DefaultDOTGraphTraits {
-  static std::string getNodeLabel(const Stmt* Node, const Stmt* Graph) {
+  static std::string getNodeLabel(const Stmt* Node, const Stmt* Graph,
+                                  bool ShortNames) {
     
 #ifndef NDEBUG
     std::string OutSStr;
