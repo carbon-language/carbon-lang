@@ -90,13 +90,12 @@ int foo(int *p, int *q) {
    return !p ? bar(q, 2, p) 
              : bar(p, 2, q);
 }
-
-<span class="command">$ clang --analyze test.m</span>
-test.m:4:16: warning: Null pointer passed as an argument to a 'nonnull' parameter
-   return !p ? bar(q, 2, p) 
-               ^         ~
-1 diagnostic generated.
 </pre>
+
+<p>Running <tt>scan-build</tt> over this source produces the following
+output:</p>
+
+<img src="images/example_cf_returns_retained_gc.png">
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <h2 id="macosx">Mac OS X API Annotations</h2>
