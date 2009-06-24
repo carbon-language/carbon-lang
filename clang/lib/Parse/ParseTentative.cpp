@@ -543,6 +543,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 /// [GNU]     typeof-specifier
 /// [GNU]     '_Complex'
 /// [C++0x]   'auto'                                                [TODO]
+/// [C++0x]   'decltype' ( expression )
 ///
 ///         type-name:
 ///           class-name
@@ -695,7 +696,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
 
     return TPResult::True();
 
-    // GNU typeof support.
+  // GNU typeof support.
   case tok::kw_typeof: {
     if (NextToken().isNot(tok::l_paren))
       return TPResult::True();
@@ -715,6 +716,10 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
 
     return TPResult::True();
   }
+
+  // C++0x decltype support.
+  case tok::kw_decltype:
+    return TPResult::True();
 
   default:
     return TPResult::False();

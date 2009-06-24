@@ -1025,6 +1025,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       ParseTypeofSpecifier(DS);
       continue;
 
+    case tok::kw_decltype:
+      ParseDecltypeSpecifier(DS);
+      continue;
+
     case tok::less:
       // GCC ObjC supports types like "<SomeProtocol>" as a synonym for
       // "id<SomeProtocol>".  This is hopelessly old fashioned and dangerous,
@@ -1102,6 +1106,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 /// [GNU]   typeof-specifier
 /// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
+/// [C++0x] 'decltype' ( expression )
 bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
                                         const char *&PrevSpec,
                                       const ParsedTemplateInfo &TemplateInfo) {
@@ -1242,6 +1247,11 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     ParseTypeofSpecifier(DS);
     return true;
 
+  // C++0x decltype support.
+  case tok::kw_decltype:
+    ParseDecltypeSpecifier(DS);
+    return true;
+      
   case tok::kw___ptr64:
   case tok::kw___w64:
   case tok::kw___cdecl:

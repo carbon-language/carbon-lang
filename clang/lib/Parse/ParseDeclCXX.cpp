@@ -355,6 +355,53 @@ Parser::DeclPtrTy Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
                                               move(AssertMessage));
 }
 
+/// ParseDecltypeSpecifier - Parse a C++0x decltype specifier.
+///
+/// 'decltype' ( expression )
+///
+void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
+  assert(Tok.is(tok::kw_decltype) && "Not a decltype specifier");
+
+  SourceLocation StartLoc = ConsumeToken();
+  SourceLocation LParenLoc = Tok.getLocation();
+  
+    
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after, 
+                       "decltype")) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  
+  
+  // Parse the expression
+  
+  // C++0x [dcl.type.simple]p4:
+  //   The operand of the decltype specifier is an unevaluated operand.
+  EnterExpressionEvaluationContext Unevaluated(Actions,
+                                               Action::Unevaluated);
+  OwningExprResult Result = ParseExpression();
+  if (Result.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  
+  // Match the ')'
+  SourceLocation RParenLoc;
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  
+  if (RParenLoc.isInvalid())
+    return;
+
+  const char *PrevSpec = 0;
+  // Check for duplicate type specifiers (e.g. "int decltype(a)").
+  if (DS.SetTypeSpecType(DeclSpec::TST_decltype, StartLoc, PrevSpec, 
+                         Result.release()))
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+}
+
 /// ParseClassName - Parse a C++ class-name, which names a class. Note
 /// that we only check that the result names a type; semantic analysis
 /// will need to verify that the type names a class. The result is

@@ -1071,6 +1071,7 @@ private:
   AttributeList *ParseMicrosoftDeclSpec(AttributeList* CurrAttr = 0);
   AttributeList *ParseMicrosoftTypeAttributes(AttributeList* CurrAttr = 0);
   void ParseTypeofSpecifier(DeclSpec &DS);
+  void ParseDecltypeSpecifier(DeclSpec &DS);
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
   /// enter a new C++ declarator scope and exit it when the function is

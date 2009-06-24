@@ -82,6 +82,7 @@ public:
     TST_typename,     // Typedef, C++ class-name or enum name, etc.
     TST_typeofType,
     TST_typeofExpr,
+    TST_decltype,     // C++0x decltype
     TST_error         // erroneous type
   };
   

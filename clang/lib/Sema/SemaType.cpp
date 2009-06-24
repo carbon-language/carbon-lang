@@ -236,6 +236,17 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = Context.getTypeOfExprType(E);
     break;
   }
+  case DeclSpec::TST_decltype: {
+    Expr *E = static_cast<Expr *>(DS.getTypeRep());
+    assert(E && "Didn't get an expression for decltype?");
+    // TypeQuals handled by caller.
+    
+    // FIXME: Use the right type!
+    Result = Context.IntTy;
+    isInvalid = true;
+    break;
+  }
+    
   case DeclSpec::TST_error:
     Result = Context.IntTy;
     isInvalid = true;
