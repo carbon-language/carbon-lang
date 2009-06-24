@@ -1089,10 +1089,9 @@ void X86ATTAsmPrinter::printGVStub(const char *GV, const char *Prefix) {
 
 /// printHiddenGVStub - Print stub for a hidden global value.
 ///
-void X86ATTAsmPrinter::printHiddenGVStub(const char *GV, const char *Prefix) {
+void X86ATTAsmPrinter::printHiddenGVStub(const char *GV) {
   EmitAlignment(2);
-  printSuffixedName(GV, "$non_lazy_ptr", Prefix);
-  if (Prefix) O << Prefix;
+  printSuffixedName(GV, "$non_lazy_ptr");
   O << ":\n" << TAI->getData32bitsDirective() << GV << '\n';
 }
 
