@@ -144,9 +144,10 @@ namespace {
     const TargetLowering *TLI;
     const TargetInstrInfo *TII;
     bool MadeChange;
+    int FnNum;
   public:
     static char ID;
-    IfConverter() : MachineFunctionPass(&ID) {}
+    IfConverter() : MachineFunctionPass(&ID), FnNum(-1) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "If Converter"; }
@@ -225,7 +226,6 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  static int FnNum = -1;
   DOUT << "\nIfcvt: function (" << ++FnNum <<  ") \'"
        << MF.getFunction()->getName() << "\'";
 
