@@ -1195,10 +1195,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
         printHiddenGVStub(i->getKeyData());
     }
 
-    // Emit final debug information.
-    if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
-      DW->EndModule();
-
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
     // implementation of multiple entry points).  If this doesn't occur, the
@@ -1214,16 +1210,13 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
         << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
         << ";\t.endef\n";
     }
-
-    // Emit final debug information.
-    if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
-      DW->EndModule();
-  } else if (Subtarget->isTargetELF()) {
-    // Emit final debug information.
-    if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
-      DW->EndModule();
   }
-
+  
+  // Emit final debug information.
+  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
+    DW->EndModule();
+  
+  
   if (NewAsmPrinter) {
     Streamer->Finish();
     
