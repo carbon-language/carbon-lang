@@ -1874,15 +1874,17 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
          OldParmEnd = Old->end(), NewParm = New->begin();
        OldParm != OldParmEnd; ++OldParm, ++NewParm) {
     if ((*OldParm)->getKind() != (*NewParm)->getKind()) {
-      unsigned NextDiag = diag::err_template_param_different_kind;
-      if (TemplateArgLoc.isValid()) {
-        Diag(TemplateArgLoc, diag::err_template_arg_template_params_mismatch);
-        NextDiag = diag::note_template_param_different_kind;
+      if (Complain) {
+        unsigned NextDiag = diag::err_template_param_different_kind;
+        if (TemplateArgLoc.isValid()) {
+          Diag(TemplateArgLoc, diag::err_template_arg_template_params_mismatch);
+          NextDiag = diag::note_template_param_different_kind;
+        }
+        Diag((*NewParm)->getLocation(), NextDiag)
+        << IsTemplateTemplateParm;
+        Diag((*OldParm)->getLocation(), diag::note_template_prev_declaration)
+        << IsTemplateTemplateParm;
       }
-      Diag((*NewParm)->getLocation(), NextDiag)
-        << IsTemplateTemplateParm;
-      Diag((*OldParm)->getLocation(), diag::note_template_prev_declaration)
-        << IsTemplateTemplateParm;
       return false;
     }
 

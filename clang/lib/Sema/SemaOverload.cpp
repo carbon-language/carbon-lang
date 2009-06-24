@@ -301,6 +301,15 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
     // This function overloads every function in the overload set.
     return true;
   } else if (FunctionDecl* Old = dyn_cast<FunctionDecl>(OldD)) {
+    FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();
+    FunctionTemplateDecl *NewTemplate = New->getDescribedFunctionTemplate(); 
+    
+    // C++ [temp.fct]p2:
+    //   A function template can be overloaded with other function templates
+    //   and with normal (non-template) functions.
+    if ((OldTemplate == 0) != (NewTemplate == 0))
+      return true;
+
     // Is the function New an overload of the function Old?
     QualType OldQType = Context.getCanonicalType(Old->getType());
     QualType NewQType = Context.getCanonicalType(New->getType());
@@ -315,8 +324,8 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
         isa<FunctionNoProtoType>(NewQType.getTypePtr()))
       return false;
 
-    FunctionProtoType* OldType = cast<FunctionProtoType>(OldQType.getTypePtr());
-    FunctionProtoType* NewType = cast<FunctionProtoType>(NewQType.getTypePtr());
+    FunctionProtoType* OldType = cast<FunctionProtoType>(OldQType);
+    FunctionProtoType* NewType = cast<FunctionProtoType>(NewQType);
 
     // The signature of a function includes the types of its
     // parameters (C++ 1.3.10), which includes the presence or absence
@@ -328,6 +337,22 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
                      NewType->arg_type_begin())))
       return true;
 
+    // C++ [temp.over.link]p4:
+    //   The signature of a function template consists of its function 
+    //   signature, its return type and its template parameter list. The names
+    //   of the template parameters are significant only for establishing the
+    //   relationship between the template parameters and the rest of the 
+    //   signature.
+    //
+    // We check the return type and template parameter lists for function
+    // templates first; the remaining checks follow.
+    if (NewTemplate &&
+        (!TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(), 
+                                         OldTemplate->getTemplateParameters(), 
+                                         false, false, SourceLocation()) ||
+         OldType->getResultType() != NewType->getResultType()))
+      return true;
+    
     // If the function is a class member, its signature includes the
     // cv-qualifiers (if any) on the function itself.
     //
