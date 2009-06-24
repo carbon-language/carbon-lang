@@ -95,7 +95,8 @@ STATISTIC(NumBruteForceTripCountsComputed,
 static cl::opt<unsigned>
 MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
                         cl::desc("Maximum number of iterations SCEV will "
-                                 "symbolically execute a constant derived loop"),
+                                 "symbolically execute a constant "
+                                 "derived loop"),
                         cl::init(100));
 
 static RegisterPass<ScalarEvolution>
@@ -156,10 +157,11 @@ bool SCEVCouldNotCompute::hasComputableLoopEvolution(const Loop *L) const {
   return false;
 }
 
-const SCEV* SCEVCouldNotCompute::
-replaceSymbolicValuesWithConcrete(const SCEV* Sym,
-                                  const SCEV* Conc,
-                                  ScalarEvolution &SE) const {
+const SCEV *
+SCEVCouldNotCompute::replaceSymbolicValuesWithConcrete(
+                                                    const SCEV *Sym,
+                                                    const SCEV *Conc,
+                                                    ScalarEvolution &SE) const {
   return this;
 }
 
@@ -170,11 +172,6 @@ void SCEVCouldNotCompute::print(raw_ostream &OS) const {
 bool SCEVCouldNotCompute::classof(const SCEV *S) {
   return S->getSCEVType() == scCouldNotCompute;
 }
-
-
-// SCEVConstants - Only allow the creation of one SCEVConstant for any
-// particular value.  Don't use a const SCEV* here, or else the object will
-// never be deleted!
 
 const SCEV* ScalarEvolution::getConstant(ConstantInt *V) {
   SCEVConstant *&R = SCEVConstants[V];
@@ -205,10 +202,6 @@ bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return Op->dominates(BB, DT);
 }
 
-// SCEVTruncates - Only allow the creation of one SCEVTruncateExpr for any
-// particular input.  Don't use a const SCEV* here, or else the object will
-// never be deleted!
-
 SCEVTruncateExpr::SCEVTruncateExpr(const SCEV* op, const Type *ty)
   : SCEVCastExpr(scTruncate, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
@@ -216,14 +209,9 @@ SCEVTruncateExpr::SCEVTruncateExpr(const SCEV* op, const Type *ty)
          "Cannot truncate non-integer value!");
 }
 
-
 void SCEVTruncateExpr::print(raw_ostream &OS) const {
   OS << "(trunc " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
-
-// SCEVZeroExtends - Only allow the creation of one SCEVZeroExtendExpr for any
-// particular input.  Don't use a const SCEV* here, or else the object will never
-// be deleted!
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEV* op, const Type *ty)
   : SCEVCastExpr(scZeroExtend, op, ty) {
@@ -236,10 +224,6 @@ void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
   OS << "(zext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
-// SCEVSignExtends - Only allow the creation of one SCEVSignExtendExpr for any
-// particular input.  Don't use a const SCEV* here, or else the object will never
-// be deleted!
-
 SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEV* op, const Type *ty)
   : SCEVCastExpr(scSignExtend, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
@@ -251,10 +235,6 @@ void SCEVSignExtendExpr::print(raw_ostream &OS) const {
   OS << "(sext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
-// SCEVCommExprs - Only allow the creation of one SCEVCommutativeExpr for any
-// particular input.  Don't use a const SCEV* here, or else the object will never
-// be deleted!
-
 void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   assert(Operands.size() > 1 && "This plus expr shouldn't exist!");
   const char *OpStr = getOperationStr();
@@ -264,10 +244,11 @@ void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   OS << ")";
 }
 
-const SCEV* SCEVCommutativeExpr::
-replaceSymbolicValuesWithConcrete(const SCEV* Sym,
-                                  const SCEV* Conc,
-                                  ScalarEvolution &SE) const {
+const SCEV *
+SCEVCommutativeExpr::replaceSymbolicValuesWithConcrete(
+                                                    const SCEV *Sym,
+                                                    const SCEV *Conc,
+                                                    ScalarEvolution &SE) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const SCEV* H =
       getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
@@ -304,11 +285,6 @@ bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return true;
 }
 
-
-// SCEVUDivs - Only allow the creation of one SCEVUDivExpr for any particular
-// input.  Don't use a const SCEV* here, or else the object will never be
-// deleted!
-
 bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
 }
@@ -326,14 +302,10 @@ const Type *SCEVUDivExpr::getType() const {
   return RHS->getType();
 }
 
-// SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
-// particular input.  Don't use a const SCEV* here, or else the object will never
-// be deleted!
-
-const SCEV* SCEVAddRecExpr::
-replaceSymbolicValuesWithConcrete(const SCEV* Sym,
-                                  const SCEV* Conc,
-                                  ScalarEvolution &SE) const {
+const SCEV *
+SCEVAddRecExpr::replaceSymbolicValuesWithConcrete(const SCEV *Sym,
+                                                  const SCEV *Conc,
+                                                  ScalarEvolution &SE) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const SCEV* H =
       getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
@@ -370,10 +342,6 @@ void SCEVAddRecExpr::print(raw_ostream &OS) const {
     OS << ",+," << *Operands[i];
   OS << "}<" << L->getHeader()->getName() + ">";
 }
-
-// SCEVUnknowns - Only allow the creation of one SCEVUnknown for any particular
-// value.  Don't use a const SCEV* here, or else the object will never be
-// deleted!
 
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // All non-instruction values are loop invariant.  All instructions are loop
@@ -589,7 +557,7 @@ static const SCEV* BinomialCoefficient(const SCEV* It, unsigned K,
   // safe in modular arithmetic.
   //
   // However, this code doesn't use exactly that formula; the formula it uses
-  // is something like the following, where T is the number of factors of 2 in 
+  // is something like the following, where T is the number of factors of 2 in
   // K! (i.e. trailing zeros in the binary representation of K!), and ^ is
   // exponentiation:
   //
@@ -601,7 +569,7 @@ static const SCEV* BinomialCoefficient(const SCEV* It, unsigned K,
   // arithmetic.  To do exact division in modular arithmetic, all we have
   // to do is multiply by the inverse.  Therefore, this step can be done at
   // width W.
-  // 
+  //
   // The next issue is how to safely do the division by 2^T.  The way this
   // is done is by doing the multiplication step at a width of at least W + T
   // bits.  This way, the bottom W+T bits of the product are accurate. Then,
@@ -1205,10 +1173,11 @@ const SCEV* ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV*> &Ops) {
       Ops.clear();
       if (AccumulatedConstant != 0)
         Ops.push_back(getConstant(AccumulatedConstant));
-      for (std::map<APInt, SmallVector<const SCEV*, 4>, APIntCompare>::iterator I =
-           MulOpLists.begin(), E = MulOpLists.end(); I != E; ++I)
+      for (std::map<APInt, SmallVector<const SCEV *, 4>, APIntCompare>::iterator
+           I = MulOpLists.begin(), E = MulOpLists.end(); I != E; ++I)
         if (I->first != 0)
-          Ops.push_back(getMulExpr(getConstant(I->first), getAddExpr(I->second)));
+          Ops.push_back(getMulExpr(getConstant(I->first),
+                                   getAddExpr(I->second)));
       if (Ops.empty())
         return getIntegerSCEV(0, Ty);
       if (Ops.size() == 1)
@@ -1263,14 +1232,15 @@ const SCEV* ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV*> &Ops) {
             // Fold X + (A*B*C) + (A*D*E) --> X + (A*(B*C+D*E))
             const SCEV* InnerMul1 = Mul->getOperand(MulOp == 0);
             if (Mul->getNumOperands() != 2) {
-              SmallVector<const SCEV*, 4> MulOps(Mul->op_begin(), Mul->op_end());
+              SmallVector<const SCEV *, 4> MulOps(Mul->op_begin(),
+                                                  Mul->op_end());
               MulOps.erase(MulOps.begin()+MulOp);
               InnerMul1 = getMulExpr(MulOps);
             }
             const SCEV* InnerMul2 = OtherMul->getOperand(OMulOp == 0);
             if (OtherMul->getNumOperands() != 2) {
-              SmallVector<const SCEV*, 4> MulOps(OtherMul->op_begin(),
-                                             OtherMul->op_end());
+              SmallVector<const SCEV *, 4> MulOps(OtherMul->op_begin(),
+                                                  OtherMul->op_end());
               MulOps.erase(MulOps.begin()+OMulOp);
               InnerMul2 = getMulExpr(MulOps);
             }
@@ -1336,7 +1306,8 @@ const SCEV* ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV*> &Ops) {
         const SCEVAddRecExpr *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
         if (AddRec->getLoop() == OtherAddRec->getLoop()) {
           // Other + {A,+,B} + {C,+,D}  -->  Other + {A+C,+,B+D}
-          SmallVector<const SCEV*, 4> NewOps(AddRec->op_begin(), AddRec->op_end());
+          SmallVector<const SCEV *, 4> NewOps(AddRec->op_begin(),
+                                              AddRec->op_end());
           for (unsigned i = 0, e = OtherAddRec->getNumOperands(); i != e; ++i) {
             if (i >= NewOps.size()) {
               NewOps.insert(NewOps.end(), OtherAddRec->op_begin()+i,
@@ -1400,7 +1371,7 @@ const SCEV* ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV*> &Ops) {
     ++Idx;
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = ConstantInt::get(LHSC->getValue()->getValue() * 
+      ConstantInt *Fold = ConstantInt::get(LHSC->getValue()->getValue() *
                                            RHSC->getValue()->getValue());
       Ops[0] = getConstant(Fold);
       Ops.erase(Ops.begin()+1);  // Erase the folded element
@@ -1647,8 +1618,9 @@ const SCEV* ScalarEvolution::getAddRecExpr(const SCEV* Start,
 
 /// getAddRecExpr - Get an add recurrence expression for the specified loop.
 /// Simplify the expression as much as possible.
-const SCEV* ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV*> &Operands,
-                                          const Loop *L) {
+const SCEV *
+ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV*> &Operands,
+                               const Loop *L) {
   if (Operands.size() == 1) return Operands[0];
 #ifndef NDEBUG
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
@@ -2119,9 +2091,10 @@ const SCEV* ScalarEvolution::getUMinFromMismatchedTypes(const SCEV* LHS,
 /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value for
 /// the specified instruction and replaces any references to the symbolic value
 /// SymName with the specified value.  This is used during PHI resolution.
-void ScalarEvolution::
-ReplaceSymbolicValueWithConcrete(Instruction *I, const SCEV* SymName,
-                                 const SCEV* NewVal) {
+void
+ScalarEvolution::ReplaceSymbolicValueWithConcrete(Instruction *I,
+                                                  const SCEV *SymName,
+                                                  const SCEV *NewVal) {
   std::map<SCEVCallbackVH, const SCEV*>::iterator SI =
     Scalars.find(SCEVCallbackVH(I, this));
   if (SI == Scalars.end()) return;
@@ -2190,8 +2163,10 @@ const SCEV* ScalarEvolution::createNodeForPHI(PHINode *PN) {
             if (Accum->isLoopInvariant(L) ||
                 (isa<SCEVAddRecExpr>(Accum) &&
                  cast<SCEVAddRecExpr>(Accum)->getLoop() == L)) {
-              const SCEV* StartVal = getSCEV(PN->getIncomingValue(IncomingEdge));
-              const SCEV* PHISCEV  = getAddRecExpr(StartVal, Accum, L);
+              const SCEV *StartVal =
+                getSCEV(PN->getIncomingValue(IncomingEdge));
+              const SCEV *PHISCEV =
+                getAddRecExpr(StartVal, Accum, L);
 
               // Okay, for the entire analysis of this edge we assumed the PHI
               // to be symbolic.  We now need to go back and update all of the
@@ -2216,7 +2191,7 @@ const SCEV* ScalarEvolution::createNodeForPHI(PHINode *PN) {
             // initial step of the addrec evolution.
             if (StartVal == getMinusSCEV(AddRec->getOperand(0),
                                             AddRec->getOperand(1))) {
-              const SCEV* PHISCEV = 
+              const SCEV* PHISCEV =
                  getAddRecExpr(StartVal, AddRec->getOperand(1), L);
 
               // Okay, for the entire analysis of this edge we assumed the PHI
@@ -2788,7 +2763,8 @@ void ScalarEvolution::forgetLoopPHIs(const Loop *L) {
   SmallVector<Instruction *, 16> Worklist;
   for (BasicBlock::iterator I = Header->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-    std::map<SCEVCallbackVH, const SCEV*>::iterator It = Scalars.find((Value*)I);
+    std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+      Scalars.find((Value*)I);
     if (It != Scalars.end() && !isa<SCEVUnknown>(It->second))
       Worklist.push_back(PN);
   }
@@ -2850,7 +2826,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExit(const Loop *L,
   BranchInst *ExitBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (ExitBr == 0) return CouldNotCompute;
   assert(ExitBr->isConditional() && "If unconditional, it can't be in loop!");
-  
+
   // At this point, we know we have a conditional branch that determines whether
   // the loop is exited.  However, we don't know if the branch is executed each
   // time through the loop.  If not, then the execution count of the branch will
@@ -3025,7 +3001,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
   LHS = getSCEVAtScope(LHS, L);
   RHS = getSCEVAtScope(RHS, L);
 
-  // At this point, we would like to compute how many iterations of the 
+  // At this point, we would like to compute how many iterations of the
   // loop the predicate will return true for these inputs.
   if (LHS->isLoopInvariant(L) && !RHS->isLoopInvariant(L)) {
     // If there is a loop-invariant, force it into the RHS.
@@ -3087,7 +3063,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
       errs() << "[unsigned] ";
     errs() << *LHS << "   "
-         << Instruction::getOpcodeName(Instruction::ICmp) 
+         << Instruction::getOpcodeName(Instruction::ICmp)
          << "   " << *RHS << "\n";
 #endif
     break;
@@ -3143,10 +3119,12 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
 /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition of
 /// 'icmp op load X, cst', try to see if we can compute the backedge
 /// execution count.
-const SCEV* ScalarEvolution::
-ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI, Constant *RHS,
-                                             const Loop *L,
-                                             ICmpInst::Predicate predicate) {
+const SCEV *
+ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
+                                                LoadInst *LI,
+                                                Constant *RHS,
+                                                const Loop *L,
+                                                ICmpInst::Predicate predicate) {
   if (LI->isVolatile()) return CouldNotCompute;
 
   // Check to see if the loaded pointer is a getelementptr of a global.
@@ -3302,8 +3280,10 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
 /// in the header of its containing loop, we know the loop executes a
 /// constant number of times, and the PHI node is just a recurrence
 /// involving constants, fold it.
-Constant *ScalarEvolution::
-getConstantEvolutionLoopExitValue(PHINode *PN, const APInt& BEs, const Loop *L){
+Constant *
+ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
+                                                   const APInt& BEs,
+                                                   const Loop *L) {
   std::map<PHINode*, Constant*>::iterator I =
     ConstantEvolutionLoopExitValue.find(PN);
   if (I != ConstantEvolutionLoopExitValue.end())
@@ -3353,8 +3333,10 @@ getConstantEvolutionLoopExitValue(PHINode *PN, const APInt& BEs, const Loop *L){
 /// try to evaluate a few iterations of the loop until we get the exit
 /// condition gets a value of ExitWhen (true or false).  If we cannot
 /// evaluate the trip count of the loop, return CouldNotCompute.
-const SCEV* ScalarEvolution::
-ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
+const SCEV *
+ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
+                                                       Value *Cond,
+                                                       bool ExitWhen) {
   PHINode *PN = getConstantEvolvingPHI(Cond, L);
   if (PN == 0) return CouldNotCompute;
 
@@ -3490,7 +3472,7 @@ const SCEV* ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
             }
           }
         }
-        
+
         Constant *C;
         if (const CmpInst *CI = dyn_cast<CmpInst>(I))
           C = ConstantFoldCompareInstOperands(CI->getPredicate(),
@@ -3515,7 +3497,8 @@ const SCEV* ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
       if (OpAtScope != Comm->getOperand(i)) {
         // Okay, at least one of these operands is loop variant but might be
         // foldable.  Build a new instance of the folded commutative expression.
-        SmallVector<const SCEV*, 8> NewOps(Comm->op_begin(), Comm->op_begin()+i);
+        SmallVector<const SCEV *, 8> NewOps(Comm->op_begin(),
+                                            Comm->op_begin()+i);
         NewOps.push_back(OpAtScope);
 
         for (++i; i != e; ++i) {
@@ -3663,7 +3646,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
   APInt Two(BitWidth, 2);
   APInt Four(BitWidth, 4);
 
-  { 
+  {
     using namespace APIntOps;
     const APInt& C = L;
     // Convert from chrec coefficients to polynomial coefficients AX^2+BX+C
@@ -3683,7 +3666,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     // integer value or else APInt::sqrt() will assert.
     APInt SqrtVal(SqrtTerm.sqrt());
 
-    // Compute the two solutions for the quadratic formula. 
+    // Compute the two solutions for the quadratic formula.
     // The divisions must be performed as signed divisions.
     APInt NegB(-B);
     APInt TwoA( A << 1 );
@@ -3695,7 +3678,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     ConstantInt *Solution1 = ConstantInt::get((NegB + SqrtVal).sdiv(TwoA));
     ConstantInt *Solution2 = ConstantInt::get((NegB - SqrtVal).sdiv(TwoA));
 
-    return std::make_pair(SE.getConstant(Solution1), 
+    return std::make_pair(SE.getConstant(Solution1),
                           SE.getConstant(Solution2));
     } // end APIntOps namespace
 }
@@ -3727,8 +3710,10 @@ const SCEV* ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
     // where BW is the common bit width of Start and Step.
 
     // Get the initial value for the loop.
-    const SCEV* Start = getSCEVAtScope(AddRec->getStart(), L->getParentLoop());
-    const SCEV* Step = getSCEVAtScope(AddRec->getOperand(1), L->getParentLoop());
+    const SCEV *Start = getSCEVAtScope(AddRec->getStart(),
+                                       L->getParentLoop());
+    const SCEV *Step = getSCEVAtScope(AddRec->getOperand(1),
+                                      L->getParentLoop());
 
     if (const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step)) {
       // For now we handle only constant steps.
@@ -3759,7 +3744,7 @@ const SCEV* ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 #endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
                                    R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
@@ -4021,9 +4006,9 @@ const SCEV* ScalarEvolution::getBECount(const SCEV* Start,
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// CouldNotCompute.
-ScalarEvolution::BackedgeTakenInfo ScalarEvolution::
-HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
-                 const Loop *L, bool isSigned) {
+ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
+                                  const Loop *L, bool isSigned) {
   // Only handle:  "ADDREC < LoopInvariant".
   if (!RHS->isLoopInvariant(L)) return CouldNotCompute;
 
@@ -4073,7 +4058,7 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     const SCEV* Start = AddRec->getOperand(0);
 
     // Determine the minimum constant start value.
-    const SCEV* MinStart = isa<SCEVConstant>(Start) ? Start :
+    const SCEV *MinStart = isa<SCEVConstant>(Start) ? Start :
       getConstant(isSigned ? APInt::getSignedMinValue(BitWidth) :
                              APInt::getMinValue(BitWidth));
 
@@ -4116,7 +4101,7 @@ HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 /// the condition, thus computing the exit count. If the iteration count can't
 /// be computed, an instance of SCEVCouldNotCompute is returned.
 const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
-                                                   ScalarEvolution &SE) const {
+                                                    ScalarEvolution &SE) const {
   if (Range.isFullSet())  // Infinite loop.
     return SE.getCouldNotCompute();
 
@@ -4175,7 +4160,7 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
-           EvaluateConstantChrecAtConstant(this, 
+           EvaluateConstantChrecAtConstant(this,
            ConstantInt::get(ExitVal - One), SE)->getValue()) &&
            "Linear scev computation is off in a bad way!");
     return SE.getConstant(ExitValue);
@@ -4196,7 +4181,7 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     if (R1) {
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
                                    R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
@@ -4310,7 +4295,7 @@ void ScalarEvolution::releaseMemory() {
   BackedgeTakenCounts.clear();
   ConstantEvolutionLoopExitValue.clear();
   ValuesAtScopes.clear();
-  
+
   for (std::map<ConstantInt*, SCEVConstant*>::iterator
        I = SCEVConstants.begin(), E = SCEVConstants.end(); I != E; ++I)
     delete I->second;
@@ -4340,7 +4325,7 @@ void ScalarEvolution::releaseMemory() {
   for (std::map<Value*, SCEVUnknown*>::iterator I = SCEVUnknowns.begin(),
        E = SCEVUnknowns.end(); I != E; ++I)
     delete I->second;
-  
+
   SCEVConstants.clear();
   SCEVTruncates.clear();
   SCEVZeroExtends.clear();
