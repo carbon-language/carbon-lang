@@ -334,6 +334,12 @@ namespace llvm {
     /// found.
     BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
 
+    /// isNecessaryCond - Test whether the given CondValue value is a condition
+    /// which is at least as strict as the one described by Pred, LHS, and RHS.
+    bool isNecessaryCond(Value *Cond, ICmpInst::Predicate Pred,
+                         const SCEV *LHS, const SCEV *RHS,
+                         bool Inverse);
+
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
     /// constant number of times, and the PHI node is just a recurrence

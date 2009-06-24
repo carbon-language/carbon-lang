@@ -409,16 +409,8 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV* const &NewBase,
 
   const SCEV* NewValSCEV = SE->getUnknown(Base);
 
-  // If there is no immediate value, skip the next part.
-  if (!Imm->isZero()) {
-    // If we are inserting the base and imm values in the same block, make sure
-    // to adjust the IP position if insertion reused a result.
-    if (IP == BaseInsertPt)
-      IP = Rewriter.getInsertionPoint();
-
-    // Always emit the immediate (if non-zero) into the same block as the user.
-    NewValSCEV = SE->getAddExpr(NewValSCEV, Imm);
-  }
+  // Always emit the immediate into the same block as the user.
+  NewValSCEV = SE->getAddExpr(NewValSCEV, Imm);
 
   return Rewriter.expandCodeFor(NewValSCEV, Ty, IP);
 }

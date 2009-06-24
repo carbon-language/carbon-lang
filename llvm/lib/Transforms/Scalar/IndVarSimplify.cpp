@@ -104,7 +104,8 @@ namespace {
     void RewriteLoopExitValues(Loop *L, const SCEV *BackedgeTakenCount);
 
     void RewriteIVExpressions(Loop *L, const Type *LargestType,
-                              SCEVExpander &Rewriter);
+                              SCEVExpander &Rewriter,
+                              BasicBlock::iterator InsertPt);
 
     void SinkUnusedInvariants(Loop *L, SCEVExpander &Rewriter);
 
@@ -170,6 +171,8 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   }
 
   // Expand the code for the iteration count into the preheader of the loop.
+  assert(RHS->isLoopInvariant(L) &&
+         "Computed iteration count is not loop invariant!");
   BasicBlock *Preheader = L->getLoopPreheader();
   Value *ExitCnt = Rewriter.expandCodeFor(RHS, IndVar->getType(),
                                           Preheader->getTerminator());
@@ -434,10 +437,10 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
                                           ExitingBlock, BI, Rewriter);
   }
 
-  Rewriter.setInsertionPoint(Header->getFirstNonPHI());
+  BasicBlock::iterator InsertPt = Header->getFirstNonPHI();
 
   // Rewrite IV-derived expressions. Clears the rewriter cache.
-  RewriteIVExpressions(L, LargestType, Rewriter);
+  RewriteIVExpressions(L, LargestType, Rewriter, InsertPt);
 
   // The Rewriter may only be used for isInsertedInstruction queries from this
   // point on.
@@ -462,7 +465,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 }
 
 void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
-                                          SCEVExpander &Rewriter) {
+                                          SCEVExpander &Rewriter,
+                                          BasicBlock::iterator InsertPt) {
   SmallVector<WeakVH, 16> DeadInsts;
 
   // Rewrite all induction variable expressions in terms of the canonical
@@ -488,29 +492,17 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
       // Compute the final addrec to expand into code.
       const SCEV* AR = IU->getReplacementExpr(*UI);
 
-      Value *NewVal = 0;
-      if (AR->isLoopInvariant(L)) {
-        BasicBlock::iterator I = Rewriter.getInsertionPoint();
-        // Expand loop-invariant values in the loop preheader. They will
-        // be sunk to the exit block later, if possible.
-        NewVal =
-          Rewriter.expandCodeFor(AR, UseTy,
-                                 L->getLoopPreheader()->getTerminator());
-        Rewriter.setInsertionPoint(I);
-        ++NumReplaced;
-      } else {
-        // FIXME: It is an extremely bad idea to indvar substitute anything more
-        // complex than affine induction variables.  Doing so will put expensive
-        // polynomial evaluations inside of the loop, and the str reduction pass
-        // currently can only reduce affine polynomials.  For now just disable
-        // indvar subst on anything more complex than an affine addrec, unless
-        // it can be expanded to a trivial value.
-        if (!Stride->isLoopInvariant(L))
-          continue;
+      // FIXME: It is an extremely bad idea to indvar substitute anything more
+      // complex than affine induction variables.  Doing so will put expensive
+      // polynomial evaluations inside of the loop, and the str reduction pass
+      // currently can only reduce affine polynomials.  For now just disable
+      // indvar subst on anything more complex than an affine addrec, unless
+      // it can be expanded to a trivial value.
+      if (!AR->isLoopInvariant(L) && !Stride->isLoopInvariant(L))
+        continue;
 
-        // Now expand it into actual Instructions and patch it into place.
-        NewVal = Rewriter.expandCodeFor(AR, UseTy);
-      }
+      // Now expand it into actual Instructions and patch it into place.
+      Value *NewVal = Rewriter.expandCodeFor(AR, UseTy, InsertPt);
 
       // Patch the new value into place.
       if (Op->hasName())
