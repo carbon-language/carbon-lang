@@ -892,8 +892,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // If the region is an element or field, it may have a default value.
   if (isa<ElementRegion>(R) || isa<FieldRegion>(R)) {
     const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
-    GRStateTrait<RegionDefaultValue>::lookup_type D = 
-      state->get<RegionDefaultValue>(SuperR);
+    const SVal* D = state->get<RegionDefaultValue>(SuperR);
     if (D) {
       // If the default value is symbolic, we need to create a new symbol.
       if (D->hasConjuredSymbol())
