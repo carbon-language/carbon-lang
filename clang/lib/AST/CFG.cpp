@@ -22,9 +22,6 @@
 #include "llvm/Support/Compiler.h"
 #include <llvm/Support/Allocator.h>
 #include <llvm/Support/Format.h>
-#include <iomanip>
-#include <algorithm>
-#include <sstream>
 
 using namespace clang;
 
