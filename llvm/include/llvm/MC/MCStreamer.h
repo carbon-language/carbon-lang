@@ -23,9 +23,21 @@ namespace llvm {
   class MCStreamer {
   public:
     enum SymbolAttr {
-      Global,
-      Weak,
-      PrivateExtern
+      Global,         /// .globl
+      Hidden,         /// .hidden (ELF)
+      IndirectSymbol, /// .indirect_symbol (Apple)
+      Internal,       /// .internal (ELF)
+      LazyReference,  /// .lazy_reference (Apple)
+      NoDeadStrip,    /// .no_dead_strip (Apple)
+      PrivateExtern,  /// .private_extern (Apple)
+      Protected,      /// .protected (ELF)
+      Reference,      /// .reference (Apple)
+      Weak,           /// .weak
+      WeakDefinition, /// .weak_definition (Apple)
+      WeakReference,  /// .weak_reference (Apple)
+
+      SymbolAttrFirst = Global,
+      SymbolAttrLast = WeakReference
     };
 
   private:
