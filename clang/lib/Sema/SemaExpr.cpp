@@ -623,17 +623,36 @@ Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
 /// BuildDeclRefExpr - Build either a DeclRefExpr or a
 /// QualifiedDeclRefExpr based on whether or not SS is a
 /// nested-name-specifier.
-DeclRefExpr *
+Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
+  
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
+      if (const FunctionDecl *FD = MD->getParent()->isLocalClass()) {
+        if (VD->hasLocalStorage() && VD->getDeclContext() != CurContext) {
+          Diag(Loc, diag::err_reference_to_local_var_in_enclosing_function) 
+            << D->getIdentifier() << FD->getDeclName();
+          Diag(D->getLocation(), diag::note_local_variable_declared_here) 
+            << D->getIdentifier();
+          return ExprError();
+        }
+      }
+    }
+  }
+  
   MarkDeclarationReferenced(Loc, D);
+  
+  Expr *E;
   if (SS && !SS->isEmpty()) {
-    return new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
-                                              ValueDependent, SS->getRange(),
+    E = new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent, 
+                                          ValueDependent, SS->getRange(),
                   static_cast<NestedNameSpecifier *>(SS->getScopeRep()));
   } else
-    return new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
+    E = new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
+  
+  return Owned(E);
 }
 
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
@@ -968,7 +987,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         // The pointer is type- and value-dependent if it points into something
         // dependent.
         bool Dependent = DC->isDependentContext();
-        return Owned(BuildDeclRefExpr(D, DType, Loc, Dependent, Dependent, SS));
+        return BuildDeclRefExpr(D, DType, Loc, Dependent, Dependent, SS);
       }
     }
   }
@@ -1061,11 +1080,11 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
-    return Owned(BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc,
-                                  false, false, SS));
+    return BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc,
+                           false, false, SS);
   else if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
-    return Owned(BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
-                                  false, false, SS));
+    return BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
+                            false, false, SS);
   ValueDecl *VD = cast<ValueDecl>(D);
 
   // Check whether this declaration can be used. Note that we suppress
@@ -1113,7 +1132,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       QualType NoProtoType = T;
       if (const FunctionProtoType *Proto = T->getAsFunctionProtoType())
         NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
-      return Owned(BuildDeclRefExpr(VD, NoProtoType, Loc, false, false, SS));
+      return BuildDeclRefExpr(VD, NoProtoType, Loc, false, false, SS);
     }
   }
 
@@ -1194,8 +1213,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
 
-  return Owned(BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
-                                TypeDependent, ValueDependent, SS));
+  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
+                          TypeDependent, ValueDependent, SS);
 }
 
 Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,

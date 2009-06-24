@@ -449,6 +449,15 @@ public:
   /// getDestructor - Returns the destructor decl for this class.
   const CXXDestructorDecl *getDestructor(ASTContext &Context);
   
+  /// isLocalClass - If the class is a local class [class.local], returns
+  /// the enclosing function declaration.
+  const FunctionDecl *isLocalClass() const {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(getDeclContext()))
+      return RD->isLocalClass();
+    
+    return dyn_cast<FunctionDecl>(getDeclContext());
+  }
+  
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.

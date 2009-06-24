@@ -1377,9 +1377,10 @@ public:
                                                     bool HasTrailingLParen,
                                                     const CXXScopeSpec &SS,
                                                     bool isAddressOfOperand);
-  DeclRefExpr *BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
-                                bool TypeDependent, bool ValueDependent,
-                                const CXXScopeSpec *SS = 0);
+  OwningExprResult BuildDeclRefExpr(NamedDecl *D, QualType Ty, 
+                                    SourceLocation Loc, bool TypeDependent, 
+                                    bool ValueDependent,
+                                    const CXXScopeSpec *SS = 0);
   VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
                                     llvm::SmallVectorImpl<FieldDecl *> &Path);
   OwningExprResult
