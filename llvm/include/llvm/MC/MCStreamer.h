@@ -116,7 +116,7 @@ namespace llvm {
   /// createAsmStreamer - Create a machine code streamer which will print out
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
-  MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS);
+  inline MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS) { return 0; }
 
   // FIXME: These two may end up getting rolled into a single
   // createObjectStreamer interface, which implements the assembler backend, and
