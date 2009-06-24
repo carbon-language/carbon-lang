@@ -57,6 +57,10 @@ private:
   bool ParseDirectiveDarwinSection(); // Darwin specific ".section".
   bool ParseDirectiveSectionSwitch(const char *Section,
                                    const char *Directives = 0);
+  bool ParseDirectiveAscii(bool ZeroTerminated); // ".ascii", ".asciiz"
+  bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
+  bool ParseDirectiveFill(); // ".fill"
+  bool ParseDirectiveSpace(); // ".space"
   
 };
 

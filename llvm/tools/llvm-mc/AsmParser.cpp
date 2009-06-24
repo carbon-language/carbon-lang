@@ -291,7 +291,27 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".objc_selector_strs"))
       return ParseDirectiveSectionSwitch("__OBJC,__selector_strs");
     
-    
+    // Data directives
+
+    if (!strcmp(IDVal, ".ascii"))
+      return ParseDirectiveAscii(false);
+    if (!strcmp(IDVal, ".asciz"))
+      return ParseDirectiveAscii(true);
+
+    // FIXME: Target hooks for size? Also for "word", "hword".
+    if (!strcmp(IDVal, ".byte"))
+      return ParseDirectiveValue(1);
+    if (!strcmp(IDVal, ".short"))
+      return ParseDirectiveValue(2);
+    if (!strcmp(IDVal, ".long"))
+      return ParseDirectiveValue(4);
+    if (!strcmp(IDVal, ".quad"))
+      return ParseDirectiveValue(8);
+    if (!strcmp(IDVal, ".fill"))
+      return ParseDirectiveFill();
+    if (!strcmp(IDVal, ".space"))
+      return ParseDirectiveSpace();
+
     Lexer.PrintMessage(IDLoc, "warning: ignoring directive for now");
     EatToEndOfStatement();
     return false;
@@ -359,5 +379,133 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Section,
   }
   
   Out.SwitchSection(Ctx.GetSection(Section));
+  return false;
+}
+
+/// ParseDirectiveAscii:
+///   ::= ( .ascii | .asciiz ) [ "string" ( , "string" )* ]
+bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    for (;;) {
+      if (Lexer.isNot(asmtok::String))
+        return TokError("expected string in '.ascii' or '.asciz' directive");
+      
+      // FIXME: This shouldn't use a const char* + strlen, the string could have
+      // embedded nulls.
+      // FIXME: Should have accessor for getting string contents.
+      const char *Str = Lexer.getCurStrVal();
+      Out.EmitBytes(Str + 1, strlen(Str) - 2);
+      if (ZeroTerminated)
+        Out.EmitBytes("\0", 1);
+      
+      Lexer.Lex();
+      
+      if (Lexer.is(asmtok::EndOfStatement))
+        break;
+
+      if (Lexer.isNot(asmtok::Comma))
+        return TokError("unexpected token in '.ascii' or '.asciz' directive");
+      Lexer.Lex();
+    }
+  }
+
+  Lexer.Lex();
+  return false;
+}
+
+/// ParseDirectiveValue
+///  ::= (.byte | .short | ... ) [ expression (, expression)* ]
+bool AsmParser::ParseDirectiveValue(unsigned Size) {
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    for (;;) {
+      int64_t Expr;
+      if (ParseExpression(Expr))
+        return true;
+
+      Out.EmitValue(MCValue::get(Expr), Size);
+
+      if (Lexer.is(asmtok::EndOfStatement))
+        break;
+      
+      // FIXME: Improve diagnostic.
+      if (Lexer.isNot(asmtok::Comma))
+        return TokError("unexpected token in directive");
+      Lexer.Lex();
+    }
+  }
+
+  Lexer.Lex();
+  return false;
+}
+
+/// ParseDirectiveSpace
+///  ::= .space expression [ , expression ]
+bool AsmParser::ParseDirectiveSpace() {
+  int64_t NumBytes;
+  if (ParseExpression(NumBytes))
+    return true;
+
+  int64_t FillExpr = 0;
+  bool HasFillExpr = false;
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    if (Lexer.isNot(asmtok::Comma))
+      return TokError("unexpected token in '.space' directive");
+    Lexer.Lex();
+    
+    if (ParseExpression(FillExpr))
+      return true;
+
+    HasFillExpr = true;
+
+    if (Lexer.isNot(asmtok::EndOfStatement))
+      return TokError("unexpected token in '.space' directive");
+  }
+
+  Lexer.Lex();
+
+  if (NumBytes <= 0)
+    return TokError("invalid number of bytes in '.space' directive");
+
+  // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
+  for (uint64_t i = 0, e = NumBytes; i != e; ++i)
+    Out.EmitValue(MCValue::get(FillExpr), 1);
+
+  return false;
+}
+
+/// ParseDirectiveFill
+///  ::= .fill expression , expression , expression
+bool AsmParser::ParseDirectiveFill() {
+  int64_t NumValues;
+  if (ParseExpression(NumValues))
+    return true;
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in '.fill' directive");
+  Lexer.Lex();
+  
+  int64_t FillSize;
+  if (ParseExpression(FillSize))
+    return true;
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in '.fill' directive");
+  Lexer.Lex();
+  
+  int64_t FillExpr;
+  if (ParseExpression(FillExpr))
+    return true;
+
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.fill' directive");
+  
+  Lexer.Lex();
+
+  if (FillSize != 1 && FillSize != 2 && FillSize != 4)
+    return TokError("invalid '.fill' size, expected 1, 2, or 4");
+
+  for (uint64_t i = 0, e = NumValues; i != e; ++i)
+    Out.EmitValue(MCValue::get(FillExpr), FillSize);
+
   return false;
 }
