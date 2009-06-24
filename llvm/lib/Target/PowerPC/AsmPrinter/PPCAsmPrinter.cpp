@@ -293,20 +293,17 @@ namespace {
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
   class VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
-    DwarfWriter *DW;
-    MachineModuleInfo *MMI;
   public:
     explicit PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
                                 const TargetAsmInfo *T, CodeGenOpt::Level OL,
                                 bool V)
-      : PPCAsmPrinter(O, TM, T, OL, V), DW(0), MMI(0) {}
+      : PPCAsmPrinter(O, TM, T, OL, V){}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
     }
 
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
     bool doFinalization(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -322,14 +319,12 @@ namespace {
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
   /// OS X
   class VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
-    DwarfWriter *DW;
-    MachineModuleInfo *MMI;
     raw_ostream &OS;
   public:
     explicit PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
                                  const TargetAsmInfo *T, CodeGenOpt::Level OL,
                                  bool V)
-      : PPCAsmPrinter(O, TM, T, OL, V), DW(0), MMI(0), OS(O) {}
+      : PPCAsmPrinter(O, TM, T, OL, V), OS(O) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -637,15 +632,6 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
-  bool Result = AsmPrinter::doInitialization(M);
-  DW = getAnalysisIfAvailable<DwarfWriter>();
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  assert(MMI);
-  SwitchToSection(TAI->getTextSection());
-  return Result;
-}
-
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
 static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
@@ -848,8 +834,6 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   O << "\t.machine " << CPUDirectives[Directive] << '\n';
 
   bool Result = AsmPrinter::doInitialization(M);
-  DW = getAnalysisIfAvailable<DwarfWriter>();
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   assert(MMI);
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
@@ -1076,8 +1060,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (TAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
     // Only referenced functions get into the Personalities list.
-    const std::vector<Function *>& Personalities = MMI->getPersonalities();
-
+    const std::vector<Function *> &Personalities = MMI->getPersonalities();
     for (std::vector<Function *>::const_iterator I = Personalities.begin(),
            E = Personalities.end(); I != E; ++I)
       if (*I) GVStubs.insert("_" + (*I)->getName());

@@ -927,9 +927,6 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 /// doInitialization
 bool X86ATTAsmPrinter::doInitialization(Module &M) {
-  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling()) 
-    MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  
   if (NewAsmPrinter) {
     Context = new MCContext();
     // FIXME: Send this to "O" instead of outs().  For now, we force it to

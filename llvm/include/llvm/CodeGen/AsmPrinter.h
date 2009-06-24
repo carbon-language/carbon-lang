@@ -33,6 +33,7 @@ namespace llvm {
   class GlobalVariable;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
+  class MachineModuleInfo;
   class DwarfWriter;
   class Mangler;
   class Section;
@@ -58,9 +59,10 @@ namespace llvm {
     gcp_map_type GCMetadataPrinters;
     
   protected:
-    /// DW -This is needed because printDeclare() has to insert
-    /// DbgVariable entries into the dwarf table. This is a short term hack
-    /// that ought be fixed soon.
+    /// MMI - If available, this is a pointer to the current MachineModuleInfo.
+    MachineModuleInfo *MMI;
+    
+    /// DW - If available, this is a pointer to the current dwarf writer.
     DwarfWriter *DW;
     
     /// OptLevel - Generating code at a specific optimization level.

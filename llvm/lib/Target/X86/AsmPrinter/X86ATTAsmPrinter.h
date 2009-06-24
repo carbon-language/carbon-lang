@@ -32,7 +32,6 @@ class MCInst;
 class MCStreamer;
 
 class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
-  MachineModuleInfo *MMI;
   const X86Subtarget *Subtarget;
   
   MCContext *Context;
@@ -41,7 +40,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   explicit X86ATTAsmPrinter(raw_ostream &O, X86TargetMachine &TM,
                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
                             bool V)
-    : AsmPrinter(O, TM, T, OL, V), MMI(0) {
+    : AsmPrinter(O, TM, T, OL, V) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     Context = 0;
     Streamer = 0;

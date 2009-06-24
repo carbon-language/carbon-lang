@@ -45,8 +45,8 @@ AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T, CodeGenOpt::Level OL, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), OptLevel(OL), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
-    IsInTextSection(false)
-{
+    IsInTextSection(false) {
+  DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
   case cl::BOU_TRUE:  VerboseAsm = true;  break;
@@ -177,15 +177,14 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   SwitchToDataSection("");   // Reset back to no section.
   
-  if (TAI->doesSupportDebugInformation() 
-      || TAI->doesSupportExceptionHandling()) {
-    MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-    if (MMI) {
+  if (TAI->doesSupportDebugInformation() ||
+      TAI->doesSupportExceptionHandling()) {
+    MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+    if (MMI)
       MMI->AnalyzeModule(M);
-      DW = getAnalysisIfAvailable<DwarfWriter>();
-      if (DW)
-        DW->BeginModule(&M, MMI, O, this, TAI);
-    }
+    DW = getAnalysisIfAvailable<DwarfWriter>();
+    if (DW)
+      DW->BeginModule(&M, MMI, O, this, TAI);
   }
 
   return false;
@@ -258,6 +257,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       O << TAI->getNonexecutableStackDirective() << '\n';
 
   delete Mang; Mang = 0;
+  DW = 0; MMI = 0;
   return false;
 }
 
