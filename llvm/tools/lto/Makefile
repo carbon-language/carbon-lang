@@ -17,7 +17,6 @@ include $(LEVEL)/Makefile.config
 
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
-DONT_BUILD_RELINKED = 1
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bitreader bitwriter
 

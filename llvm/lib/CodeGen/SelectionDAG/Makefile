@@ -9,7 +9,5 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMSelectionDAG
 PARALLEL_DIRS =
-BUILD_ARCHIVE = 1
-DONT_BUILD_RELINKED = 1
 
 include $(LEVEL)/Makefile.common
