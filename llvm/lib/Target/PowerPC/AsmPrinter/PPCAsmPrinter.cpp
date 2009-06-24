@@ -746,11 +746,6 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
        I != E; ++I)
     printModuleLevelGV(I);
 
-  // TODO
-
-  // Emit initial debug information.
-  DW->EndModule();
-
   return AsmPrinter::doFinalization(M);
 }
 
@@ -1119,10 +1114,6 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << p << '\n';
     }
   }
-
-
-  // Emit initial debug information.
-  DW->EndModule();
 
   // Funny Darwin hack: This flag tells the linker that no global symbols
   // contain code that falls through to other global symbols (e.g. the obvious

@@ -192,6 +192,10 @@ bool AsmPrinter::doInitialization(Module &M) {
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
+  // Emit final debug information.
+  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
+    DW->EndModule();
+  
   // If the target wants to know about weak references, print them all.
   if (TAI->getWeakRefDirective()) {
     // FIXME: This is not lazy, it would be nice to only print weak references

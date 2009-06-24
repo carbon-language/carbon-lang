@@ -436,8 +436,5 @@ bool XCoreAsmPrinter::doFinalization(Module &M) {
     emitGlobal(I);
   }
   
-  // Emit final debug information.
-  DW->EndModule();
-
   return AsmPrinter::doFinalization(M);
 }

@@ -1172,11 +1172,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
   }
   
-  // Emit final debug information.
-  // FIXME: Sink into DoFinalization.
-  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
-    DW->EndModule();
-
   // Do common shutdown.
   bool Changed = AsmPrinter::doFinalization(M);
   

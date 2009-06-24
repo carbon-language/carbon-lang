@@ -591,9 +591,6 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
        I != E; ++I)
     printModuleLevelGV(I);
 
-  // Emit initial debug information.
-  DW->EndModule();
-
   return AsmPrinter::doFinalization(M);
 }
 
