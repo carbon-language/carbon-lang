@@ -43,19 +43,16 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 static cl::opt<bool> NewAsmPrinter("experimental-asm-printer",
                                    cl::Hidden);
 
-static std::string getPICLabelString(unsigned FnNum,
-                                     const TargetAsmInfo *TAI,
-                                     const X86Subtarget* Subtarget) {
-  std::string label;
+
+void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   if (Subtarget->isTargetDarwin())
-    label =  "\"L" + utostr_32(FnNum) + "$pb\"";
+    O << "\"L" << getFunctionNumber() << "$pb\"";
   else if (Subtarget->isTargetELF())
-    label = ".Lllvm$" + utostr_32(FnNum) + "." "$piclabel";
+    O << ".Lllvm$" << getFunctionNumber() << "." "$piclabel";
   else
     assert(0 && "Don't know how to print PIC label!\n");
-
-  return label;
 }
+
 
 static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
                                                     const TargetData *TD) {
@@ -403,7 +400,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     if (shouldPrintPLT(TM, Subtarget)) {
       std::string GOTName(TAI->getGlobalPrefix());
       GOTName+="_GLOBAL_OFFSET_TABLE_";
-      if (Name == GOTName)
+      if (Name == GOTName) {
         // HACK! Emit extra offset to PC during printing GOT offset to
         // compensate for the size of popl instruction. The resulting code
         // should look like:
@@ -411,8 +408,10 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
         // piclabel:
         //   popl %some_register
         //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
-        O << " + [.-"
-          << getPICLabelString(getFunctionNumber(), TAI, Subtarget) << ']';
+        O << " + [.-";
+        PrintPICBaseSymbol();
+        O << ']';
+      }
       
       O << "@PLT";
     }
@@ -538,8 +537,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << Name;
       }
 
-      if (TM.getRelocationModel() == Reloc::PIC_)
-        O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget);
+      if (TM.getRelocationModel() == Reloc::PIC_) {
+        O << '-';
+        PrintPICBaseSymbol();
+      }        
     } else {
       if (GV->hasDLLImportLinkage())
         O << "__imp_";
@@ -626,7 +627,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (shouldPrintPLT(TM, Subtarget)) {
       std::string GOTName(TAI->getGlobalPrefix());
       GOTName+="_GLOBAL_OFFSET_TABLE_";
-      if (Name == GOTName)
+      if (Name == GOTName) {
         // HACK! Emit extra offset to PC during printing GOT offset to
         // compensate for the size of popl instruction. The resulting code
         // should look like:
@@ -634,8 +635,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         // piclabel:
         //   popl %some_register
         //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
-        O << " + [.-"
-          << getPICLabelString(getFunctionNumber(), TAI, Subtarget) << ']';
+        O << " + [.-";
+        PrintPICBaseSymbol();
+        O << ']';
+      }
     }
 
     if (needCloseParen)
@@ -737,13 +740,19 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   if (Subtarget->isPICStyleRIPRel())
     O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << uid << '\n';
-  else
-    O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget) << '\n';
+  else {
+    O << '-';
+    PrintPICBaseSymbol();
+    O << '\n';
+  }
 }
 
+
 void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  std::string label = getPICLabelString(getFunctionNumber(), TAI, Subtarget);
-  O << label << '\n' << label << ':';
+  PrintPICBaseSymbol();
+  O << '\n';
+  PrintPICBaseSymbol();
+  O << ':';
 }
 
 
