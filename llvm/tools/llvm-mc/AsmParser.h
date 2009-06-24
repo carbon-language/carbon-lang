@@ -54,7 +54,9 @@ private:
   bool ParseX86MemOperand(X86Operand &Op);
   
   // Directive Parsing.
-  bool ParseDirectiveSection();
+  bool ParseDirectiveDarwinSection(); // Darwin specific ".section".
+  bool ParseDirectiveSectionSwitch(const char *Section,
+                                   const char *Directives = 0);
   
 };
 

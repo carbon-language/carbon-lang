@@ -196,8 +196,100 @@ bool AsmParser::ParseStatement() {
   
   // Otherwise, we have a normal instruction or directive.  
   if (IDVal[0] == '.') {
+    // FIXME: This should be driven based on a hash lookup and callback.
     if (!strcmp(IDVal, ".section"))
-      return ParseDirectiveSection();
+      return ParseDirectiveDarwinSection();
+    if (!strcmp(IDVal, ".text"))
+      // FIXME: This changes behavior based on the -static flag to the
+      // assembler.
+      return ParseDirectiveSectionSwitch("__TEXT,__text",
+                                         "regular,pure_instructions");
+    if (!strcmp(IDVal, ".const"))
+      return ParseDirectiveSectionSwitch("__TEXT,__const");
+    if (!strcmp(IDVal, ".static_const"))
+      return ParseDirectiveSectionSwitch("__TEXT,__static_const");
+    if (!strcmp(IDVal, ".cstring"))
+      return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
+    if (!strcmp(IDVal, ".literal4"))
+      return ParseDirectiveSectionSwitch("__TEXT,__literal4", "4byte_literals");
+    if (!strcmp(IDVal, ".literal8"))
+      return ParseDirectiveSectionSwitch("__TEXT,__literal8", "8byte_literals");
+    if (!strcmp(IDVal, ".literal16"))
+      return ParseDirectiveSectionSwitch("__TEXT,__literal16",
+                                         "16byte_literals");
+    if (!strcmp(IDVal, ".constructor"))
+      return ParseDirectiveSectionSwitch("__TEXT,__constructor");
+    if (!strcmp(IDVal, ".destructor"))
+      return ParseDirectiveSectionSwitch("__TEXT,__destructor");
+    if (!strcmp(IDVal, ".fvmlib_init0"))
+      return ParseDirectiveSectionSwitch("__TEXT,__fvmlib_init0");
+    if (!strcmp(IDVal, ".fvmlib_init1"))
+      return ParseDirectiveSectionSwitch("__TEXT,__fvmlib_init1");
+    if (!strcmp(IDVal, ".symbol_stub")) // FIXME: Different on PPC.
+      return ParseDirectiveSectionSwitch("__IMPORT,__jump_table,symbol_stubs",
+                                    "self_modifying_code+pure_instructions,5");
+    // FIXME: .picsymbol_stub on PPC.
+    if (!strcmp(IDVal, ".data"))
+      return ParseDirectiveSectionSwitch("__DATA,__data");
+    if (!strcmp(IDVal, ".static_data"))
+      return ParseDirectiveSectionSwitch("__DATA,__static_data");
+    if (!strcmp(IDVal, ".non_lazy_symbol_pointer"))
+      return ParseDirectiveSectionSwitch("__DATA,__nl_symbol_pointer",
+                                         "non_lazy_symbol_pointers");
+    if (!strcmp(IDVal, ".lazy_symbol_pointer"))
+      return ParseDirectiveSectionSwitch("__DATA,__la_symbol_pointer",
+                                         "lazy_symbol_pointers");
+    if (!strcmp(IDVal, ".dyld"))
+      return ParseDirectiveSectionSwitch("__DATA,__dyld");
+    if (!strcmp(IDVal, ".mod_init_func"))
+      return ParseDirectiveSectionSwitch("__DATA,__mod_init_func",
+                                         "mod_init_funcs");
+    if (!strcmp(IDVal, ".mod_term_func"))
+      return ParseDirectiveSectionSwitch("__DATA,__mod_term_func",
+                                         "mod_term_funcs");
+    if (!strcmp(IDVal, ".const_data"))
+      return ParseDirectiveSectionSwitch("__DATA,__const", "regular");
+    
+    
+    // FIXME: Verify attributes on sections.
+    if (!strcmp(IDVal, ".objc_class"))
+      return ParseDirectiveSectionSwitch("__OBJC,__class");
+    if (!strcmp(IDVal, ".objc_meta_class"))
+      return ParseDirectiveSectionSwitch("__OBJC,__meta_class");
+    if (!strcmp(IDVal, ".objc_cat_cls_meth"))
+      return ParseDirectiveSectionSwitch("__OBJC,__cat_cls_meth");
+    if (!strcmp(IDVal, ".objc_cat_inst_meth"))
+      return ParseDirectiveSectionSwitch("__OBJC,__cat_inst_meth");
+    if (!strcmp(IDVal, ".objc_protocol"))
+      return ParseDirectiveSectionSwitch("__OBJC,__protocol");
+    if (!strcmp(IDVal, ".objc_string_object"))
+      return ParseDirectiveSectionSwitch("__OBJC,__string_object");
+    if (!strcmp(IDVal, ".objc_cls_meth"))
+      return ParseDirectiveSectionSwitch("__OBJC,__cls_meth");
+    if (!strcmp(IDVal, ".objc_inst_meth"))
+      return ParseDirectiveSectionSwitch("__OBJC,__inst_meth");
+    if (!strcmp(IDVal, ".objc_cls_refs"))
+      return ParseDirectiveSectionSwitch("__OBJC,__cls_refs");
+    if (!strcmp(IDVal, ".objc_message_refs"))
+      return ParseDirectiveSectionSwitch("__OBJC,__message_refs");
+    if (!strcmp(IDVal, ".objc_symbols"))
+      return ParseDirectiveSectionSwitch("__OBJC,__symbols");
+    if (!strcmp(IDVal, ".objc_category"))
+      return ParseDirectiveSectionSwitch("__OBJC,__category");
+    if (!strcmp(IDVal, ".objc_class_vars"))
+      return ParseDirectiveSectionSwitch("__OBJC,__class_vars");
+    if (!strcmp(IDVal, ".objc_instance_vars"))
+      return ParseDirectiveSectionSwitch("__OBJC,__instance_vars");
+    if (!strcmp(IDVal, ".objc_module_info"))
+      return ParseDirectiveSectionSwitch("__OBJC,__module_info");
+    if (!strcmp(IDVal, ".objc_class_names"))
+      return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
+    if (!strcmp(IDVal, ".objc_meth_var_types"))
+      return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
+    if (!strcmp(IDVal, ".objc_meth_var_names"))
+      return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
+    if (!strcmp(IDVal, ".objc_selector_strs"))
+      return ParseDirectiveSectionSwitch("__OBJC,__selector_strs");
     
     
     Lexer.PrintMessage(IDLoc, "warning: ignoring directive for now");
@@ -225,8 +317,10 @@ bool AsmParser::ParseStatement() {
 }
 
 /// ParseDirectiveSection:
-///   ::= .section identifier
-bool AsmParser::ParseDirectiveSection() {
+///   ::= .section identifier (',' identifier)*
+/// FIXME: This should actually parse out the segment, section, attributes and
+/// sizeof_stub fields.
+bool AsmParser::ParseDirectiveDarwinSection() {
   if (Lexer.isNot(asmtok::Identifier))
     return TokError("expected identifier after '.section' directive");
   
@@ -252,3 +346,18 @@ bool AsmParser::ParseDirectiveSection() {
   return false;
 }
 
+bool AsmParser::ParseDirectiveSectionSwitch(const char *Section,
+                                            const char *Directives) {
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in section switching directive");
+  Lexer.Lex();
+  
+  std::string SectionStr = Section;
+  if (Directives && Directives[0]) {
+    SectionStr += ","; 
+    SectionStr += Directives;
+  }
+  
+  Out.SwitchSection(Ctx.GetSection(Section));
+  return false;
+}
