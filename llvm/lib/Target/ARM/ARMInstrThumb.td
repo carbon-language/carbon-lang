@@ -128,7 +128,7 @@ PseudoInst<(outs), (ins i32imm:$amt),
 }
 
 let isNotDuplicable = 1 in
-def tPICADD : TIt<(outs tGPR:$dst), (ins tGPR:$lhs, pclabel:$cp),
+def tPICADD : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, pclabel:$cp),
                   "$cp:\n\tadd $dst, pc",
                   [(set tGPR:$dst, (ARMpic_add tGPR:$lhs, imm:$cp))]>;
 

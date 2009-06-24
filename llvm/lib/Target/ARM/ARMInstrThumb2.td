@@ -315,6 +315,33 @@ multiclass T2I_cmp_is<string opc, PatFrag opnode> {
 }
 
 //===----------------------------------------------------------------------===//
+//  Miscellaneous Instructions.
+//
+
+let isNotDuplicable = 1 in
+def t2PICADD : T2I<(outs tGPR:$dst), (ins tGPR:$lhs, pclabel:$cp),
+                   "$cp:\n\tadd $dst, pc",
+                   [(set tGPR:$dst, (ARMpic_add tGPR:$lhs, imm:$cp))]>;
+
+
+// LEApcrel - Load a pc-relative address into a register without offending the
+// assembler.
+def t2LEApcrel : T2I<(outs GPR:$dst), (ins i32imm:$label, pred:$p),
+                   !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
+                                         "${:private}PCRELL${:uid}+8))\n"),
+                              !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                         "add$p $dst, pc, #PCRELV${:uid}")),
+                   []>;
+
+def t2LEApcrelJT : T2I<(outs GPR:$dst),
+                       (ins i32imm:$label, i32imm:$id, pred:$p),
+          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
+                                         "${:private}PCRELL${:uid}+8))\n"),
+                              !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                         "add$p $dst, pc, #PCRELV${:uid}")),
+                   []>;
+
+//===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.
 //
 
@@ -492,6 +519,12 @@ def : Thumb2Pat<(ARMcmpNZ  GPR:$src, t2_so_imm_neg:$imm),
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
+
+// ConstantPool, GlobalAddress, and JumpTable
+def : Thumb2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;
+def : Thumb2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
+def : Thumb2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+                (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Large immediate handling.
 
