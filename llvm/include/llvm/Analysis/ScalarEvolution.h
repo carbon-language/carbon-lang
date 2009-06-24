@@ -44,8 +44,8 @@ namespace llvm {
   class SCEVUnknown;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
-  /// are reference-counted opaque objects that the client is not allowed to
-  /// do much with directly.
+  /// are opaque objects that the client is not allowed to do much with
+  /// directly.
   ///
   class SCEV {
     const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
@@ -305,8 +305,9 @@ namespace llvm {
     /// try to evaluate a few iterations of the loop until we get the exit
     /// condition gets a value of ExitWhen (true or false).  If we cannot
     /// evaluate the trip count of the loop, return CouldNotCompute.
-    const SCEV* ComputeBackedgeTakenCountExhaustively(const Loop *L, Value *Cond,
-                                                     bool ExitWhen);
+    const SCEV* ComputeBackedgeTakenCountExhaustively(const Loop *L,
+                                                      Value *Cond,
+                                                      bool ExitWhen);
 
     /// HowFarToZero - Return the number of times a backedge comparing the
     /// specified value to zero will execute.  If not computable, return
@@ -542,10 +543,11 @@ namespace llvm {
     /// is deleted.
     void forgetLoopBackedgeTakenCount(const Loop *L);
 
-    /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
-    /// guaranteed to end in (at every loop iteration).  It is, at the same time,
-    /// the minimum number of times S is divisible by 2.  For example, given {4,+,8}
-    /// it returns 2.  If S is guaranteed to be 0, it returns the bitwidth of S.
+    /// GetMinTrailingZeros - Determine the minimum number of zero bits that S
+    /// is guaranteed to end in (at every loop iteration).  It is, at the same
+    /// time, the minimum number of times S is divisible by 2.  For example,
+    /// given {4,+,8} it returns 2.  If S is guaranteed to be 0, it returns the
+    /// bitwidth of S.
     uint32_t GetMinTrailingZeros(const SCEV* S);
 
     /// GetMinLeadingZeros - Determine the minimum number of zero bits that S is
