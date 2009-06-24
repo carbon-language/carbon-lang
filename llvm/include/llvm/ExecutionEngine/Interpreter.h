@@ -18,9 +18,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include <cstdlib>
 
-namespace llvm {
-  extern void LinkInInterpreter();
-}
+extern "C" void LLVMLinkInInterpreter();
 
 namespace {
   struct ForceInterpreterLinking {
@@ -32,7 +30,7 @@ namespace {
       if (std::getenv("bar") != (char*) -1)
         return;
 
-      llvm::LinkInInterpreter();
+      LLVMLinkInInterpreter();
     }
   } ForceInterpreterLinking;
 }

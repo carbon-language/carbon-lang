@@ -60,9 +60,7 @@ static struct RegisterJIT {
 
 }
 
-namespace llvm {
-  void LinkInJIT() {
-  }
+extern "C" void LLVMLinkInJIT() {
 }
 
 

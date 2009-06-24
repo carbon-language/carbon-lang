@@ -18,9 +18,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include <cstdlib>
 
-namespace llvm {
-  extern void LinkInJIT();
-}
+extern "C" void LLVMLinkInJIT();
 
 namespace {
   struct ForceJITLinking {
@@ -32,7 +30,7 @@ namespace {
       if (std::getenv("bar") != (char*) -1)
         return;
 
-      llvm::LinkInJIT();
+      LLVMLinkInJIT();
     }
   } ForceJITLinking;
 }

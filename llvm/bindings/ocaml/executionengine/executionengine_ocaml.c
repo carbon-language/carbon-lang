@@ -16,6 +16,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "llvm-c/ExecutionEngine.h"
+#include "llvm-c/Target.h"
 #include "caml/alloc.h"
 #include "caml/custom.h"
 #include "caml/fail.h"
@@ -23,6 +24,12 @@
 #include <string.h>
 #include <assert.h>
 
+/* Force the LLVM interpreter, JIT, and native target to be linked in. */
+void llvm_initialize(void) {
+  LLVMLinkInInterpreter();
+  LLVMLinkInJIT();
+  LLVMInitializeNativeTarget();
+}
 
 /* Can't use the recommended caml_named_value mechanism for backwards
    compatibility reasons. This is largely equivalent. */

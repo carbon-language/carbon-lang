@@ -29,10 +29,7 @@ static struct RegisterInterp {
 
 }
 
-namespace llvm {
-  void LinkInInterpreter() {
-  }
-}
+extern "C" void LLVMLinkInInterpreter() { }
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
