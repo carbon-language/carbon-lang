@@ -33,6 +33,7 @@ class ProfileInfoLoader {
   std::vector<unsigned>    BlockCounts;
   std::vector<unsigned>    EdgeCounts;
   std::vector<unsigned>    BBTrace;
+  bool Warned;
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.

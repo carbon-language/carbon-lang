@@ -73,7 +73,8 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 //
 ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
                                      const std::string &Filename,
-                                     Module &TheModule) : M(TheModule) {
+                                     Module &TheModule) : 
+                              M(TheModule), Warned(false) {
   FILE *F = fopen(Filename.c_str(), "r");
   if (F == 0) {
     cerr << ToolName << ": Error opening '" << Filename << "': ";
@@ -200,7 +201,6 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
         Counts.back().second += EdgeCounts[i].second;
         unsigned SuccNum = EdgeCounts[i].first.second;
         if (SuccNum >= TI->getNumSuccessors()) {
-          static bool Warned = false;
           if (!Warned) {
             cerr << "WARNING: profile info doesn't seem to match"
                  << " the program!\n";
