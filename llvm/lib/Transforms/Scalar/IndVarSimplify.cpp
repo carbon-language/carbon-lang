@@ -230,13 +230,16 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
   BasicBlock *BlockToInsertInto;
+  BasicBlock::iterator InsertPt;
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() == 1)
+  if (ExitBlocks.size() == 1) {
     BlockToInsertInto = ExitBlocks[0];
-  else
+    InsertPt = BlockToInsertInto->getFirstNonPHI();
+  } else {
     BlockToInsertInto = Preheader;
-  BasicBlock::iterator InsertPt = BlockToInsertInto->getFirstNonPHI();
+    InsertPt = BlockToInsertInto->getTerminator();
+  }
 
   std::map<Instruction*, Value*> ExitValues;
 
