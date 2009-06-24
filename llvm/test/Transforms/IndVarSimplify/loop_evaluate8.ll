@@ -1,10 +1,12 @@
-; RUN: llvm-as < %s | opt -indvars
-; PR4436
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep select
+
+; This loop has backedge-taken-count zero. Indvars shouldn't expand any
+; instructions to compute a trip count.
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32"
 target triple = "i386-pc-linux-gnu"
 
-define i8* @string_expandtabs(i32 %n, i8* %m) nounwind {
+define i8* @string_expandtabs() nounwind {
 entry:
 	br i1 undef, label %bb33, label %bb1
 
@@ -22,11 +24,11 @@ bb19:		; preds = %bb30
 
 bb20:		; preds = %bb19
 	%0 = load i32* undef, align 4		; <i32> [#uses=1]
-	%1 = sub i32 %0, %n		; <i32> [#uses=1]
+	%1 = sub i32 %0, undef		; <i32> [#uses=1]
 	br label %bb23
 
 bb21:		; preds = %bb23
-	%2 = icmp ult i8* %q.0, %m		; <i1> [#uses=1]
+	%2 = icmp ult i8* %q.0, undef		; <i1> [#uses=1]
 	br i1 %2, label %bb22, label %overflow2
 
 bb22:		; preds = %bb21

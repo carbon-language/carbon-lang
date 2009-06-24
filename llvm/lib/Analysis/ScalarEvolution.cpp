@@ -1690,10 +1690,14 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV*> &Ops) {
       LHSC = cast<SCEVConstant>(Ops[0]);
     }
 
-    // If we are left with a constant -inf, strip it off.
+    // If we are left with a constant minimum-int, strip it off.
     if (cast<SCEVConstant>(Ops[0])->getValue()->isMinValue(true)) {
       Ops.erase(Ops.begin());
       --Idx;
+    } else if (cast<SCEVConstant>(Ops[0])->getValue()->isMaxValue(true)) {
+      // If we have an smax with a constant maximum-int, it will always be
+      // maximum-int.
+      return Ops[0];
     }
   }
 
@@ -1777,10 +1781,14 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV*> &Ops) {
       LHSC = cast<SCEVConstant>(Ops[0]);
     }
 
-    // If we are left with a constant zero, strip it off.
+    // If we are left with a constant minimum-int, strip it off.
     if (cast<SCEVConstant>(Ops[0])->getValue()->isMinValue(false)) {
       Ops.erase(Ops.begin());
       --Idx;
+    } else if (cast<SCEVConstant>(Ops[0])->getValue()->isMaxValue(false)) {
+      // If we have an umax with a constant maximum-int, it will always be
+      // maximum-int.
+      return Ops[0];
     }
   }
 
