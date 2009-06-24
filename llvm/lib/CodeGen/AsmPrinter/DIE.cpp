@@ -126,7 +126,6 @@ void DIE::Profile(FoldingSetNodeID &ID) {
 
 #ifndef NDEBUG
 void DIE::print(std::ostream &O, unsigned IncIndent) {
-  static unsigned IndentCount = 0;
   IndentCount += IncIndent;
   const std::string Indent(IndentCount, ' ');
   bool isBlock = Abbrev.getTag() == 0;

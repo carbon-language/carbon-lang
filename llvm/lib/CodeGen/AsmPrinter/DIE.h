@@ -141,9 +141,13 @@ namespace llvm {
 
     /// Abstract compile unit.
     CompileUnit *AbstractCU;
+    
+    // Private data for print()
+    mutable unsigned IndentCount;
   public:
     explicit DIE(unsigned Tag)
-      : Abbrev(Tag, dwarf::DW_CHILDREN_no), Offset(0), Size(0) {}
+      : Abbrev(Tag, dwarf::DW_CHILDREN_no), Offset(0),
+        Size(0), IndentCount(0) {}
     virtual ~DIE();
 
     // Accessors.
