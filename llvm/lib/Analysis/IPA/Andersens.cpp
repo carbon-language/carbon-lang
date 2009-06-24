@@ -65,6 +65,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/System/Atomic.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/DenseSet.h"
@@ -284,7 +285,8 @@ namespace {
 
       // Timestamp a node (used for work list prioritization)
       void Stamp() {
-        Timestamp = Counter++;
+        Timestamp = Counter;
+        sys::AtomicIncrement(&Counter);
       }
 
       bool isRep() const {
