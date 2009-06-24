@@ -1157,8 +1157,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     O << '\n';
 
-    // Print global value stubs.
-    bool InStubSection = false;
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
     if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
@@ -1166,11 +1164,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
         if (Personalities[i] == 0)
           continue;
-        if (!InStubSection) {
-          SwitchToDataSection(
-                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
-          InStubSection = true;
-        }
         std::string Name = Mang->getValueName(Personalities[i]);
         decorateName(Name, Personalities[i]);
         GVStubs.insert(Name);
@@ -1178,7 +1171,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     // Output stubs for external and common global variables.
-    if (!InStubSection && !GVStubs.empty())
+    if (!GVStubs.empty())
       SwitchToDataSection(
                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
     for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
