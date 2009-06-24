@@ -1867,10 +1867,11 @@ const SCEV* ScalarEvolution::getUMinExpr(const SCEV* LHS,
 }
 
 const SCEV* ScalarEvolution::getUnknown(Value *V) {
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-    return getConstant(CI);
-  if (isa<ConstantPointerNull>(V))
-    return getIntegerSCEV(0, V->getType());
+  // Don't attempt to do anything other than create a SCEVUnknown object
+  // here.  createSCEV only calls getUnknown after checking for all other
+  // interesting possibilities, and any other code that calls getUnknown
+  // is doing so in order to hide a value from SCEV canonicalization.
+
   SCEVUnknown *&Result = SCEVUnknowns[V];
   if (Result == 0) Result = new SCEVUnknown(V);
   return Result;
@@ -1948,19 +1949,11 @@ const SCEV* ScalarEvolution::getSCEV(Value *V) {
   return S;
 }
 
-/// getIntegerSCEV - Given an integer or FP type, create a constant for the
+/// getIntegerSCEV - Given a SCEVable type, create a constant for the
 /// specified signed integer value and return a SCEV for the constant.
 const SCEV* ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
-  Ty = getEffectiveSCEVType(Ty);
-  Constant *C;
-  if (Val == 0)
-    C = Constant::getNullValue(Ty);
-  else if (Ty->isFloatingPoint())
-    C = ConstantFP::get(APFloat(Ty==Type::FloatTy ? APFloat::IEEEsingle :
-                                APFloat::IEEEdouble, Val));
-  else
-    C = ConstantInt::get(Ty, Val);
-  return getUnknown(C);
+  const IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
+  return getConstant(ConstantInt::get(ITy, Val));
 }
 
 /// getNegativeSCEV - Return a SCEV corresponding to -V = -1*V
@@ -2429,6 +2422,12 @@ const SCEV* ScalarEvolution::createSCEV(Value *V) {
     Opcode = I->getOpcode();
   else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
     Opcode = CE->getOpcode();
+  else if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+    return getConstant(CI);
+  else if (isa<ConstantPointerNull>(V))
+    return getIntegerSCEV(0, V->getType());
+  else if (isa<UndefValue>(V))
+    return getIntegerSCEV(0, V->getType());
   else
     return getUnknown(V);
 

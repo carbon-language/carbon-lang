@@ -462,7 +462,7 @@ namespace llvm {
     /// widening.
     const SCEV* getTruncateOrNoop(const SCEV* V, const Type *Ty);
 
-    /// getIntegerSCEV - Given an integer or FP type, create a constant for the
+    /// getIntegerSCEV - Given a SCEVable type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
     const SCEV* getIntegerSCEV(int Val, const Type *Ty);
 
