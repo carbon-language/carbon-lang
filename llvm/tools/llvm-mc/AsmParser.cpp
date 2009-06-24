@@ -179,7 +179,7 @@ bool AsmParser::ParseStatement() {
   
   // If we have an identifier, handle it as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  std::string IDVal = Lexer.getCurStrVal();
+  const char *IDVal = Lexer.getCurStrVal();
   
   // Consume the identifier, see what is after it.
   if (Lexer.Lex() == asmtok::Colon) {

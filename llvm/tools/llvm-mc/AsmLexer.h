@@ -55,20 +55,24 @@ class AsmLexer {
   
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
+  // A llvm::StringSet<>, which provides uniqued and null-terminated strings.
+  void *TheStringSet;
   
   // Information about the current token.
   const char *TokStart;
   asmtok::TokKind CurKind;
-  std::string CurStrVal;  // This is valid for Identifier.
+  const char *CurStrVal;  // This is valid for Identifier.
   int64_t CurIntVal;
   
   /// CurBuffer - This is the current buffer index we're lexing from as managed
   /// by the SourceMgr object.
   int CurBuffer;
   
+  void operator=(const AsmLexer&); // DO NOT IMPLEMENT
+  AsmLexer(const AsmLexer&);       // DO NOT IMPLEMENT
 public:
   AsmLexer(SourceMgr &SrcMgr);
-  ~AsmLexer() {}
+  ~AsmLexer();
   
   asmtok::TokKind Lex() {
     return CurKind = LexToken();
@@ -78,7 +82,7 @@ public:
   bool is(asmtok::TokKind K) const { return CurKind == K; }
   bool isNot(asmtok::TokKind K) const { return CurKind != K; }
   
-  const std::string &getCurStrVal() const {
+  const char *getCurStrVal() const {
     assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register ||
             CurKind == asmtok::String) &&
            "This token doesn't have a string value");
