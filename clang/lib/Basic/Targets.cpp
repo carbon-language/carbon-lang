@@ -930,7 +930,7 @@ public:
   WindowsX86_32TargetInfo(const std::string& triple)
     : X86_32TargetInfo(triple) {
     TLSSupported = false;
-    WCharType = SignedShort;
+    WCharType = UnsignedShort;
     WCharWidth = WCharAlign = 16;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
