@@ -5548,8 +5548,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     else
       Constructor->setUsed(true);
   } 
-  
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+  else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates
     if (!Function->getBody(Context)) {
       if (Function->getInstantiatedFromMemberFunction())
