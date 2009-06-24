@@ -113,7 +113,7 @@ namespace llvm {
 ///                  allocator supports it).
 /// @return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, llvm::MCContext &C,
-                          size_t Alignment) throw () {
+                          size_t Alignment = 16) throw () {
   return C.Allocate(Bytes, Alignment);
 }
 /// @brief Placement delete companion to the new above.

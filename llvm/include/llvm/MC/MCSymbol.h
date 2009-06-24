@@ -23,6 +23,10 @@ namespace llvm {
   public:
     MCSymbol(MCAtom *_Atom, const char *_Name, bool _IsTemporary) 
       : Atom(_Atom), Name(_Name), IsTemporary(_IsTemporary) {}
+
+    MCAtom *getAtom() { return Atom; }
+
+    const std::string &getName() { return Name; }
   };
 
 } // end namespace llvm

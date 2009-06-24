@@ -19,6 +19,8 @@ namespace llvm {
 
   public:
     MCSection(const char *_Name) : Name(_Name) {}
+
+    const std::string &getName() const { return Name; }
   };
 
 } // end namespace llvm

@@ -17,6 +17,8 @@ namespace llvm {
 
   public:
     MCAtom(MCSection *_Section) : Section(_Section) {}
+
+    MCSection *getSection() { return Section; }
   };
 
 } // end namespace llvm

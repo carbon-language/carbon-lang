@@ -84,7 +84,7 @@ namespace llvm {
     // the symbol and make the printer smart enough to add the right symbols?
     // This should work as long as the order of attributes in the file doesn't
     // matter.
-    virtual void EmitSymbolAttribute(MCSymbol *Symbol, 
+    virtual void EmitSymbolAttribute(MCSymbol *Symbol,
                                      SymbolAttr Attribute) = 0;
 
     /// EmitBytes - Emit @param Length bytes starting at @param Data into the
@@ -116,7 +116,7 @@ namespace llvm {
   /// createAsmStreamer - Create a machine code streamer which will print out
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
-  inline MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS) { return 0; }
+  MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS);
 
   // FIXME: These two may end up getting rolled into a single
   // createObjectStreamer interface, which implements the assembler backend, and

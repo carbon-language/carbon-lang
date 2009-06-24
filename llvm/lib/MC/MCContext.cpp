@@ -26,13 +26,13 @@ MCSection *MCContext::GetSection(const char *Name) {
   MCSection *&Entry = Sections[Name];
   
   if (!Entry)
-    Entry = new (this) MCSection(Name);
+    Entry = new (*this) MCSection(Name);
 
   return Entry;
 }
     
 MCAtom *MCContext::CreateAtom(MCSection *Section) {
-  return new (this) MCAtom(Section);
+  return new (*this) MCAtom(Section);
 }
 
 MCSymbol *MCContext::CreateSymbol(MCAtom *Atom, const char *Name) {
@@ -41,18 +41,18 @@ MCSymbol *MCContext::CreateSymbol(MCAtom *Atom, const char *Name) {
   // Create and bind the symbol, and ensure that names are unique.
   MCSymbol *&Entry = Symbols[Name];
   assert(!Entry && "Duplicate symbol definition!");
-  return Entry = new (this) MCSymbol(Atom, Name, false);
+  return Entry = new (*this) MCSymbol(Atom, Name, false);
 }
 
 MCSymbol *MCContext::CreateTemporarySymbol(MCAtom *Atom, const char *Name) {
   // If unnamed, just create a symbol.
   if (Name[0] == '\0')
-    new (this) MCSymbol(Atom, "", true);
+    new (*this) MCSymbol(Atom, "", true);
     
   // Otherwise create as usual.
   MCSymbol *&Entry = Symbols[Name];
   assert(!Entry && "Duplicate symbol definition!");
-  return Entry = new (this) MCSymbol(Atom, Name, true);
+  return Entry = new (*this) MCSymbol(Atom, Name, true);
 }
 
 MCSymbol *MCContext::LookupSymbol(const char *Name) const {
