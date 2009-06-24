@@ -52,6 +52,10 @@ private:
   bool ParseX86InstOperands(MCInst &Inst);
   bool ParseX86Operand(X86Operand &Op);
   bool ParseX86MemOperand(X86Operand &Op);
+  
+  // Directive Parsing.
+  bool ParseDirectiveSection();
+  
 };
 
 } // end namespace llvm

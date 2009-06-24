@@ -196,6 +196,10 @@ bool AsmParser::ParseStatement() {
   
   // Otherwise, we have a normal instruction or directive.  
   if (IDVal[0] == '.') {
+    if (!strcmp(IDVal, ".section"))
+      return ParseDirectiveSection();
+    
+    
     Lexer.PrintMessage(IDLoc, "warning: ignoring directive for now");
     EatToEndOfStatement();
     return false;
@@ -207,7 +211,7 @@ bool AsmParser::ParseStatement() {
     return true;
   
   if (Lexer.isNot(asmtok::EndOfStatement))
-    return TokError("unexpected token in operand list");
+    return TokError("unexpected token in argument list");
 
   // Eat the end of statement marker.
   Lexer.Lex();
@@ -219,3 +223,32 @@ bool AsmParser::ParseStatement() {
   // Skip to end of line for now.
   return false;
 }
+
+/// ParseDirectiveSection:
+///   ::= .section identifier
+bool AsmParser::ParseDirectiveSection() {
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected identifier after '.section' directive");
+  
+  std::string Section = Lexer.getCurStrVal();
+  Lexer.Lex();
+  
+  // Accept a comma separated list of modifiers.
+  while (Lexer.is(asmtok::Comma)) {
+    Lexer.Lex();
+    
+    if (Lexer.isNot(asmtok::Identifier))
+      return TokError("expected identifier in '.section' directive");
+    Section += ',';
+    Section += Lexer.getCurStrVal();
+    Lexer.Lex();
+  }
+  
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.section' directive");
+  Lexer.Lex();
+
+  Out.SwitchSection(Ctx.GetSection(Section.c_str()));
+  return false;
+}
+
