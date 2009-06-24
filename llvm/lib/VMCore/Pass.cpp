@@ -20,6 +20,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Atomic.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/Threading.h"
 #include <algorithm>
 #include <map>
@@ -187,6 +188,7 @@ public:
 }
 
 static std::vector<PassRegistrationListener*> *Listeners = 0;
+static sys::SmartMutex<true> ListenersLock;
 
 // FIXME: This should use ManagedStatic to manage the pass registrar.
 // Unfortunately, we can't do this, because passes are registered with static
@@ -231,6 +233,7 @@ void PassInfo::registerPass() {
   getPassRegistrar()->RegisterPass(*this);
 
   // Notify any listeners.
+  sys::SmartScopedLock<true> Lock(&ListenersLock);
   if (Listeners)
     for (std::vector<PassRegistrationListener*>::iterator
            I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
@@ -283,12 +286,14 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
 // PassRegistrationListener ctor - Add the current object to the list of
 // PassRegistrationListeners...
 PassRegistrationListener::PassRegistrationListener() {
+  sys::SmartScopedLock<true> Lock(&ListenersLock);
   if (!Listeners) Listeners = new std::vector<PassRegistrationListener*>();
   Listeners->push_back(this);
 }
 
 // dtor - Remove object from list of listeners...
 PassRegistrationListener::~PassRegistrationListener() {
+  sys::SmartScopedLock<true> Lock(&ListenersLock);
   std::vector<PassRegistrationListener*>::iterator I =
     std::find(Listeners->begin(), Listeners->end(), this);
   assert(Listeners && I != Listeners->end() &&
