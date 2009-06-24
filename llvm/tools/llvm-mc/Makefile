@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-mc
-LINK_COMPONENTS := support
+LINK_COMPONENTS := support MC
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

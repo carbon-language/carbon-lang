@@ -18,13 +18,16 @@
 
 namespace llvm {
 class MCInst;
+class MCStreamer;
   
 class AsmParser {
   AsmLexer Lexer;
+  MCStreamer &Out;
+  
   struct X86Operand;
   
 public:
-  AsmParser(SourceMgr &SM) : Lexer(SM) {}
+  AsmParser(SourceMgr &SM, MCStreamer &OutStr) : Lexer(SM), Out(OutStr) {}
   ~AsmParser() {}
   
   bool Run();
