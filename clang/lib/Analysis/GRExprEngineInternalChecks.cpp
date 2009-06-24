@@ -672,7 +672,6 @@ public:
       return NULL;
 
     if (!StoreSite) {      
-      GRStateManager &StateMgr = BRC.getStateManager();
       const ExplodedNode<GRState> *Node = N, *Last = NULL;
 
       for ( ; Node ; Last = Node, Node = Node->getFirstPred()) {
@@ -686,7 +685,7 @@ public:
               }
         }
         
-        if (StateMgr.GetSVal(Node->getState(), R) != V)
+        if (Node->getState()->getSVal(R) != V)
           break;
       }
 

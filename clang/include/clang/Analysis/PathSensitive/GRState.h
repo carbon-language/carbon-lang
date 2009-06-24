@@ -559,26 +559,6 @@ public:
   void iterBindings(const GRState* state, StoreManager::BindingsHandler& F) {
     StoreMgr->iterBindings(state->getStore(), F);
   }
-  
-  SVal GetSVal(const GRState* state, const MemRegion* R) {
-    return StoreMgr->Retrieve(state, loc::MemRegionVal(R));
-  }  
-
-  SVal GetSValAsScalarOrLoc(const GRState* state, const MemRegion *R) {
-    // We only want to do fetches from regions that we can actually bind
-    // values.  For example, SymbolicRegions of type 'id<...>' cannot
-    // have direct bindings (but their can be bindings on their subregions).
-    if (!R->isBoundable())
-      return UnknownVal();
-    
-    if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-      QualType T = TR->getValueType(getContext());
-      if (Loc::IsLocType(T) || T->isIntegerType())
-        return GetSVal(state, R);
-    }
-  
-    return UnknownVal();
-  }
 
   const GRState* getPersistentState(GRState& Impl);
 
@@ -764,11 +744,7 @@ inline SVal GRState::getSVal(Loc LV, QualType T) const {
 }
 
 inline SVal GRState::getSVal(const MemRegion* R) const {
-  return Mgr->GetSVal(this, R);
-}
-
-inline SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
-  return Mgr->GetSValAsScalarOrLoc(this, R);
+  return Mgr->StoreMgr->Retrieve(this, loc::MemRegionVal(R));
 }
   
 inline BasicValueFactory &GRState::getBasicVals() const {

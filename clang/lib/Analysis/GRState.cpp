@@ -68,6 +68,22 @@ const GRState *GRState::unbindLoc(Loc LV) const {
   return Mgr->getPersistentState(NewSt);    
 }
 
+SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
+  // We only want to do fetches from regions that we can actually bind
+  // values.  For example, SymbolicRegions of type 'id<...>' cannot
+  // have direct bindings (but their can be bindings on their subregions).
+  if (!R->isBoundable())
+    return UnknownVal();
+
+  if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
+    QualType T = TR->getValueType(Mgr->getContext());
+    if (Loc::IsLocType(T) || T->isIntegerType())
+      return getSVal(R);
+  }
+
+  return UnknownVal();
+}
+
 const GRState* GRStateManager::getInitialState() {
   GRState StateImpl(this, EnvMgr.getInitialEnvironment(), 
                     StoreMgr->getInitialStore(),
