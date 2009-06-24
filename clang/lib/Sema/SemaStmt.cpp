@@ -835,7 +835,6 @@ static bool IsReturnCopyElidable(ASTContext &Ctx, QualType RetType,
 
 Action::OwningStmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, FullExprArg rex) {
-  bool RetValExprIsValid = !rex->isInvalid();
   Expr *RetValExp = rex->takeAs<Expr>();
   if (CurBlock)
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);

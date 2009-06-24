@@ -1807,6 +1807,15 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else if (SC == VarDecl::None)
       SC = VarDecl::Static;
   }
+  if (SC == VarDecl::Static) {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC)) {
+      if (RD->isLocalClass())
+        Diag(D.getIdentifierLoc(), 
+             diag::err_static_data_member_not_allowed_in_local_class)
+          << Name << RD->getDeclName();
+    }
+  }
+        
     
   // The variable can not 
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 

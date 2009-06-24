@@ -1608,6 +1608,8 @@ def err_reference_to_local_var_in_enclosing_function : Error<
   "reference to local variable %0 declared in enclosed function %1">;
 def note_local_variable_declared_here : Note<
   "%0 declared here">;
+def err_static_data_member_not_allowed_in_local_class : Error<
+  "static data member %0 not allowed in local class %1">; 
   
 // C++ derived classes
 def err_base_clause_on_union : Error<"unions cannot have base classes">;
