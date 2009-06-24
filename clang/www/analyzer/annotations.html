@@ -174,14 +174,11 @@ use 'cf_returns_retained'.</p>
   return [[NSString alloc] initWithCString:"flag a leak"];
 }
 @end
-
-<span class="command">$ clang --analyze test.m</span>
-$ clang --analyze test.m
-test.m:21:10: warning: Potential leak of an object allocated on line 21
-  return [[NSString alloc] initWithCString:"flag a leak"];
-         ^
-1 diagnostic generated.
 </pre>
+
+<p>Running <tt>scan-build</tt> on this source file produces the following output:</p>
+
+<img src="images/example_ns_returns_retained.png">
 
 <h4 id="attr_cf_returns_retained">Attribute 'cf_returns_retained'
 (Clang-specific)</h4>
