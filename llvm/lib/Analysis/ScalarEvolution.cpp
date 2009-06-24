@@ -2402,6 +2402,38 @@ ScalarEvolution::GetMinSignBits(const SCEV* S) {
             getTypeSizeInBits(C->getOperand()->getType()));
   }
 
+  if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
+    unsigned BitWidth = getTypeSizeInBits(A->getType());
+
+    // Special case decrementing a value (ADD X, -1):
+    if (const SCEVConstant *CRHS = dyn_cast<SCEVConstant>(A->getOperand(0)))
+      if (CRHS->isAllOnesValue()) {
+        SmallVector<const SCEV *, 4> OtherOps(A->op_begin() + 1, A->op_end());
+        const SCEV *OtherOpsAdd = getAddExpr(OtherOps);
+        unsigned LZ = GetMinLeadingZeros(OtherOpsAdd);
+
+        // If the input is known to be 0 or 1, the output is 0/-1, which is all
+        // sign bits set.
+        if (LZ == BitWidth - 1)
+          return BitWidth;
+
+        // If we are subtracting one from a positive number, there is no carry
+        // out of the result.
+        if (LZ > 0)
+          return GetMinSignBits(OtherOpsAdd);
+      }
+
+    // Add can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    unsigned Min = BitWidth;
+    for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
+      unsigned N = GetMinSignBits(A->getOperand(i));
+      Min = std::min(Min, N) - 1;
+      if (Min == 0) return 1;
+    }
+    return 1;
+  }
+
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
     return ComputeNumSignBits(U->getValue(), TD);
