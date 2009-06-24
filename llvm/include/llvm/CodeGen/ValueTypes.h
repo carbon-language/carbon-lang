@@ -76,6 +76,7 @@ namespace llvm {
       // This is the current maximum for LAST_VALUETYPE.
       // Affects ValueTypeActions in TargetLowering.h.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
+      // This value must be a multiple of 32.
       MAX_ALLOWED_VALUETYPE = 64,
 
       // iPTRAny - An int value the size of the pointer of the current

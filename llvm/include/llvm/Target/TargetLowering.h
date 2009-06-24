@@ -173,8 +173,8 @@ public:
     /// ValueTypeActions - This is a bitvector that contains two bits for each
     /// value type, where the two bits correspond to the LegalizeAction enum.
     /// This can be queried with "getTypeAction(VT)".
-    /// dimension by (MVT::MAX_ALLOWED_LAST_VALUETYPE/32) * 2
-    uint32_t ValueTypeActions[4];
+    /// dimension by (MVT::MAX_ALLOWED_VALUETYPE/32) * 2
+    uint32_t ValueTypeActions[(MVT::MAX_ALLOWED_VALUETYPE/32)*2];
   public:
     ValueTypeActionImpl() {
       ValueTypeActions[0] = ValueTypeActions[1] = 0;
@@ -353,10 +353,13 @@ public:
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT VT) const {
     if (VT.isExtended()) return Expand;
-    assert(Op < array_lengthof(OpActions) &&
-           (unsigned)VT.getSimpleVT() < sizeof(OpActions[0])*8 &&
+    assert(Op < array_lengthof(OpActions[0]) &&
+           (unsigned)VT.getSimpleVT() < sizeof(OpActions[0][0])*8 &&
            "Table isn't big enough!");
-    return (LegalizeAction)((OpActions[Op] >> (2*VT.getSimpleVT())) & 3);
+    unsigned I = (unsigned) VT.getSimpleVT();
+    unsigned J = I & 31;
+    I = I >> 5;
+    return (LegalizeAction)((OpActions[I][Op] >> (J*2) ) & 3);
   }
 
   /// isOperationLegalOrCustom - Return true if the specified operation is
@@ -944,10 +947,13 @@ protected:
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT VT,
                           LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(OpActions[0])*8 &&
-           Op < array_lengthof(OpActions) && "Table isn't big enough!");
-    OpActions[Op] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
-    OpActions[Op] |= (uint64_t)Action << VT.getSimpleVT()*2;
+    assert((unsigned)VT.getSimpleVT() < sizeof(OpActions[0][0])*8 &&
+           Op < array_lengthof(OpActions[0]) && "Table isn't big enough!");
+    unsigned I = (unsigned) VT.getSimpleVT();
+    unsigned J = I & 31;
+    I = I >> 5;
+    OpActions[I][Op] &= ~(uint64_t(3UL) << (J*2));
+    OpActions[I][Op] |= (uint64_t)Action << (J*2);
   }
   
   /// setLoadExtAction - Indicate that the specified load with extension does
@@ -1570,7 +1576,9 @@ private:
   /// Most operations are Legal (aka, supported natively by the target), but
   /// operations that are not should be described.  Note that operations on
   /// non-legal value types are not described here.
-  uint64_t OpActions[ISD::BUILTIN_OP_END];
+  /// This array is accessed using VT.getSimpleVT(), so it is subject to
+  /// the MVT::MAX_ALLOWED_VALUETYPE * 2 bits.
+  uint64_t OpActions[MVT::MAX_ALLOWED_VALUETYPE/(sizeof(uint64_t)*4)][ISD::BUILTIN_OP_END];
   
   /// LoadExtActions - For each load of load extension type and each value type,
   /// keep a LegalizeAction that indicates how instruction selection should deal
