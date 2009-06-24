@@ -150,7 +150,9 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
 /// isIdenticalTo - Return true if this operand is identical to the specified
 /// operand.
 bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
-  if (getType() != Other.getType()) return false;
+  if (getType() != Other.getType() ||
+      getTargetFlags() != Other.getTargetFlags())
+    return false;
   
   switch (getType()) {
   default: assert(0 && "Unrecognized operand type");
@@ -205,70 +207,72 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     }
 
     if (getSubReg() != 0) {
-      OS << ":" << getSubReg();
+      OS << ':' << getSubReg();
     }
 
     if (isDef() || isKill() || isDead() || isImplicit() || isEarlyClobber()) {
-      OS << "<";
+      OS << '<';
       bool NeedComma = false;
       if (isImplicit()) {
-        if (NeedComma) OS << ",";
+        if (NeedComma) OS << ',';
         OS << (isDef() ? "imp-def" : "imp-use");
         NeedComma = true;
       } else if (isDef()) {
-        if (NeedComma) OS << ",";
+        if (NeedComma) OS << ',';
         if (isEarlyClobber())
           OS << "earlyclobber,";
         OS << "def";
         NeedComma = true;
       }
       if (isKill() || isDead()) {
-        if (NeedComma) OS << ",";
+        if (NeedComma) OS << ',';
         if (isKill())  OS << "kill";
         if (isDead())  OS << "dead";
       }
-      OS << ">";
+      OS << '>';
     }
     break;
   case MachineOperand::MO_Immediate:
     OS << getImm();
     break;
   case MachineOperand::MO_FPImmediate:
-    if (getFPImm()->getType() == Type::FloatTy) {
+    if (getFPImm()->getType() == Type::FloatTy)
       OS << getFPImm()->getValueAPF().convertToFloat();
-    } else {
+    else
       OS << getFPImm()->getValueAPF().convertToDouble();
-    }
     break;
   case MachineOperand::MO_MachineBasicBlock:
     OS << "mbb<"
        << ((Value*)getMBB()->getBasicBlock())->getName()
-       << "," << (void*)getMBB() << ">";
+       << "," << (void*)getMBB() << '>';
     break;
   case MachineOperand::MO_FrameIndex:
-    OS << "<fi#" << getIndex() << ">";
+    OS << "<fi#" << getIndex() << '>';
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     OS << "<cp#" << getIndex();
     if (getOffset()) OS << "+" << getOffset();
-    OS << ">";
+    OS << '>';
     break;
   case MachineOperand::MO_JumpTableIndex:
-    OS << "<jt#" << getIndex() << ">";
+    OS << "<jt#" << getIndex() << '>';
     break;
   case MachineOperand::MO_GlobalAddress:
     OS << "<ga:" << ((Value*)getGlobal())->getName();
     if (getOffset()) OS << "+" << getOffset();
-    OS << ">";
+    OS << '>';
     break;
   case MachineOperand::MO_ExternalSymbol:
     OS << "<es:" << getSymbolName();
     if (getOffset()) OS << "+" << getOffset();
-    OS << ">";
+    OS << '>';
     break;
   default:
     assert(0 && "Unrecognized operand type");
   }
+  
+  if (unsigned TF = getTargetFlags())
+    OS << "[TF=" << TF << ']';
 }
 
 //===----------------------------------------------------------------------===//
@@ -1104,13 +1108,13 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
 
   // If not found, this means an alias of one of the operands is dead. Add a
   // new implicit operand if required.
-  if (!Found && AddIfNotFound) {
-    addOperand(MachineOperand::CreateReg(IncomingReg,
-                                         true  /*IsDef*/,
-                                         true  /*IsImp*/,
-                                         false /*IsKill*/,
-                                         true  /*IsDead*/));
-    return true;
-  }
-  return Found;
+  if (Found || !AddIfNotFound)
+    return Found;
+    
+  addOperand(MachineOperand::CreateReg(IncomingReg,
+                                       true  /*IsDef*/,
+                                       true  /*IsImp*/,
+                                       false /*IsKill*/,
+                                       true  /*IsDead*/));
+  return true;
 }

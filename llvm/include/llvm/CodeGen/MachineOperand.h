@@ -47,7 +47,14 @@ public:
 private:
   /// OpKind - Specify what kind of operand this is.  This discriminates the
   /// union.
-  MachineOperandType OpKind : 8;
+  unsigned char OpKind; // MachineOperandType
+  
+  /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
+  /// indicates the MO_Register has no subReg.
+  unsigned char SubReg;
+  
+  /// TargetFlags - This is a set of target-specific operand flags.
+  unsigned char TargetFlags;
   
   /// IsDef/IsImp/IsKill/IsDead flags - These are only valid for MO_Register
   /// operands.
@@ -73,10 +80,6 @@ private:
   /// model the GCC inline asm '&' constraint modifier.
   bool IsEarlyClobber : 1;
 
-  /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
-  /// indicates the MO_Register has no subReg.
-  unsigned char SubReg;
-  
   /// ParentMI - This is the instruction that this operand is embedded into. 
   /// This is valid for all operand types, when the operand is in an instr.
   MachineInstr *ParentMI;
@@ -105,7 +108,9 @@ private:
     } OffsetedInfo;
   } Contents;
   
-  explicit MachineOperand(MachineOperandType K) : OpKind(K), ParentMI(0) {}
+  explicit MachineOperand(MachineOperandType K) : OpKind(K), ParentMI(0) {
+    TargetFlags = 0;
+  }
 public:
   MachineOperand(const MachineOperand &M) {
     *this = M;
@@ -115,7 +120,12 @@ public:
   
   /// getType - Returns the MachineOperandType for this operand.
   ///
-  MachineOperandType getType() const { return OpKind; }
+  MachineOperandType getType() const { return (MachineOperandType)OpKind; }
+  
+  unsigned char getTargetFlags() const { return TargetFlags; }
+  void setTargetFlags(unsigned char F) { TargetFlags = F; }
+  void addTargetFlag(unsigned char F) { TargetFlags |= F; }
+  
 
   /// getParent - Return the instruction that this operand belongs to.
   ///
@@ -404,6 +414,7 @@ public:
     SubReg   = MO.SubReg;
     ParentMI = MO.ParentMI;
     Contents = MO.Contents;
+    TargetFlags = MO.TargetFlags;
     return *this;
   }
 
