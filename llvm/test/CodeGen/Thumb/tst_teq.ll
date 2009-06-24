@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep tst
-; RUN: llvm-as < %s | llc -march=arm | grep teq
+; RUN: llvm-as < %s | llc -march=thumb | grep tst
 
 define i32 @f(i32 %a) {
 entry:

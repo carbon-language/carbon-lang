@@ -1,25 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 > %t
-; RUN: grep fcvtsd %t
-; RUN: grep fcvtds %t
-; RUN: grep ftosizs %t
-; RUN: grep ftouizs %t
-; RUN: grep ftosizd %t
-; RUN: grep ftouizd %t
-; RUN: grep fsitos %t
-; RUN: grep fsitod %t
-; RUN: grep fuitos %t
-; RUN: grep fuitod %t
-; RUN: llvm-as < %s | llc -march=arm > %t
-; RUN: grep truncdfsf2 %t
-; RUN: grep extendsfdf2 %t
-; RUN: grep fixsfsi %t
-; RUN: grep fixunssfsi %t
-; RUN: grep fixdfsi %t
-; RUN: grep fixunsdfsi %t
-; RUN: grep floatsisf %t
-; RUN: grep floatsidf %t
-; RUN: grep floatunsisf %t
-; RUN: grep floatunsidf %t
+; RUN: llvm-as < %s | llc -march=thumb
 
 define float @f1(double %x) {
 entry:
