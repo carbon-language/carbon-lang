@@ -477,7 +477,8 @@ namespace llvm {
   {
 
     template<typename GraphType>
-    static std::string getNodeLabel(const Node* N, const GraphType&)
+    static std::string getNodeLabel(const Node* N, const GraphType&, 
+                                    bool ShortNames)
     {
       if (N->ToolPtr)
         if (N->ToolPtr->IsJoin())

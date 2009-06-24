@@ -31,12 +31,6 @@
 #include <fstream>
 using namespace llvm;
 
-/// CFGOnly flag - This is used to control whether or not the CFG graph printer
-/// prints out the contents of basic blocks or not.  This is acceptable because
-/// this code is only really used for debugging purposes.
-///
-static bool CFGOnly = false;
-
 namespace llvm {
 template<>
 struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
@@ -45,12 +39,13 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   }
 
   static std::string getNodeLabel(const BasicBlock *Node,
-                                  const Function *Graph) {
-    if (CFGOnly && !Node->getName().empty())
+                                  const Function *Graph,
+                                  bool ShortNames) {
+    if (ShortNames && !Node->getName().empty())
       return Node->getName() + ":";
 
     std::ostringstream Out;
-    if (CFGOnly) {
+    if (ShortNames) {
       WriteAsOperand(Out, Node, false);
       return Out.str();
     }
@@ -117,9 +112,7 @@ namespace {
     CFGOnlyViewer() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      CFGOnly = true;
       F.viewCFG();
-      CFGOnly = false;
       return false;
     }
 
@@ -168,14 +161,20 @@ static RegisterPass<CFGPrinter>
 P1("dot-cfg", "Print CFG of function to 'dot' file", false, true);
 
 namespace {
-  struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
+  struct VISIBILITY_HIDDEN CFGOnlyPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    CFGOnlyPrinter() : CFGPrinter(&ID) {}
+    CFGOnlyPrinter() : FunctionPass(&ID) {}
+    explicit CFGOnlyPrinter(void *pid) : FunctionPass(pid) {}
     virtual bool runOnFunction(Function &F) {
-      bool OldCFGOnly = CFGOnly;
-      CFGOnly = true;
-      CFGPrinter::runOnFunction(F);
-      CFGOnly = OldCFGOnly;
+      std::string Filename = "cfg." + F.getName() + ".dot";
+      cerr << "Writing '" << Filename << "'...";
+      std::ofstream File(Filename.c_str());
+
+      if (File.good())
+        WriteGraph(File, (const Function*)&F, true);
+      else
+        cerr << "  error opening file for writing!";
+      cerr << "\n";
       return false;
     }
     void print(std::ostream &OS, const Module* = 0) const {}
@@ -206,9 +205,7 @@ void Function::viewCFG() const {
 /// his can make the graph smaller.
 ///
 void Function::viewCFGOnly() const {
-  CFGOnly = true;
-  viewCFG();
-  CFGOnly = false;
+  ViewGraph(this, "cfg" + getName(), true);
 }
 
 FunctionPass *llvm::createCFGPrinterPass () {

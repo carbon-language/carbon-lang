@@ -59,7 +59,8 @@ namespace llvm {
     
 
     static std::string getNodeLabel(const SUnit *Node,
-                                    const ScheduleDAG *Graph);
+                                    const ScheduleDAG *Graph,
+                                    bool ShortNames);
     static std::string getNodeAttributes(const SUnit *N,
                                          const ScheduleDAG *Graph) {
       return "shape=Mrecord";
@@ -73,7 +74,8 @@ namespace llvm {
 }
 
 std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
-                                                       const ScheduleDAG *G) {
+                                                       const ScheduleDAG *G,
+                                                       bool ShortNames) {
   return G->getGraphNodeLabel(SU);
 }
 
@@ -84,11 +86,11 @@ void ScheduleDAG::viewGraph() {
 // This code is only for debugging!
 #ifndef NDEBUG
   if (BB->getBasicBlock())
-    ViewGraph(this, "dag." + MF.getFunction()->getName(),
+    ViewGraph(this, "dag." + MF.getFunction()->getName(), false,
               "Scheduling-Units Graph for " + MF.getFunction()->getName() + ':' +
               BB->getBasicBlock()->getName());
   else
-    ViewGraph(this, "dag." + MF.getFunction()->getName(),
+    ViewGraph(this, "dag." + MF.getFunction()->getName(), false,
               "Scheduling-Units Graph for " + MF.getFunction()->getName());
 #else
   cerr << "ScheduleDAG::viewGraph is only available in debug builds on "

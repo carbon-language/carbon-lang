@@ -94,7 +94,8 @@ namespace llvm {
     
 
     static std::string getNodeLabel(const SDNode *Node,
-                                    const SelectionDAG *Graph);
+                                    const SelectionDAG *Graph,
+                                    bool ShortNames);
     static std::string getNodeAttributes(const SDNode *N,
                                          const SelectionDAG *Graph) {
 #ifndef NDEBUG
@@ -120,7 +121,8 @@ namespace llvm {
 }
 
 std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
-                                                        const SelectionDAG *G) {
+                                                        const SelectionDAG *G,
+                                                        bool ShortNames) {
   std::string Op = Node->getOperationName(G);
 
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Node)) {
@@ -262,7 +264,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 void SelectionDAG::viewGraph(const std::string &Title) {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName(),
+  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName(), false,
             Title);
 #else
   cerr << "SelectionDAG::viewGraph is only available in debug builds on "
@@ -393,7 +395,8 @@ std::string ScheduleDAGSDNodes::getGraphNodeLabel(const SUnit *SU) const {
     for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
-      O << DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(), DAG);
+      O << DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(),
+                                                       DAG, false);
       FlaggedNodes.pop_back();
       if (!FlaggedNodes.empty())
         O << "\n    ";
