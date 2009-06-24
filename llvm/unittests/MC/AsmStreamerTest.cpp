@@ -72,4 +72,32 @@ b:\n\
 ");
 }
 
+TEST(AsmStreamer, Align) {
+  StringAsmStreamer S;
+  MCSection *Sec0 = S.getContext().GetSection("foo");
+  S.getStreamer().SwitchSection(Sec0);
+  S.getStreamer().EmitValueToAlignment(4);
+  S.getStreamer().EmitValueToAlignment(4, /*Value=*/12, /*ValueSize=*/2);
+  S.getStreamer().EmitValueToAlignment(8, /*Value=*/12, /*ValueSize=*/4, 
+                                       /*MaxBytesToEmit=*/24);
+  EXPECT_EQ(S.getString(), ".section foo\n\
+.p2align 2, 0\n\
+.p2alignw 2, 12\n\
+.p2alignl 3, 12, 24\n\
+");
+}
+
+TEST(AsmStreamer, Org) {
+  StringAsmStreamer S;
+  MCSection *Sec0 = S.getContext().GetSection("foo");
+  S.getStreamer().SwitchSection(Sec0);
+  MCSymbol *A = S.getContext().CreateSymbol("a");
+  S.getStreamer().EmitLabel(A);
+  S.getStreamer().EmitValueToOffset(MCValue::get(A, 0, 4), 32);
+  EXPECT_EQ(S.getString(), ".section foo\n\
+a:\n\
+.org a + 4, 32\n\
+");
+}
+
 }

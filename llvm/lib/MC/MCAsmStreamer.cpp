@@ -44,6 +44,13 @@ namespace {
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
 
+    virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
+                                      unsigned ValueSize = 1,
+                                      unsigned MaxBytesToEmit = 0);
+
+    virtual void EmitValueToOffset(const MCValue &Offset, 
+                                   unsigned char Value = 0);
+    
     virtual void EmitInstruction(const MCInst &Inst);
 
     virtual void Finish();
@@ -142,6 +149,36 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
   }
 
   OS << ' ' << Value << '\n';
+}
+
+void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+                                         unsigned ValueSize,
+                                         unsigned MaxBytesToEmit) {
+  unsigned Pow2 = Log2_32(ByteAlignment);
+  assert((1U << Pow2) == ByteAlignment && "Invalid alignment!");
+
+  switch (ValueSize) {
+  default:
+    assert(0 && "Invalid size for machine code value!");
+  case 8:
+    assert(0 && "Unsupported alignment size!");
+  case 1: OS << ".p2align"; break;
+  case 2: OS << ".p2alignw"; break;
+  case 4: OS << ".p2alignl"; break;
+  }
+
+  OS << ' ' << Pow2;
+
+  OS << ", " << Value;
+  if (MaxBytesToEmit) 
+    OS << ", " << MaxBytesToEmit;
+  OS << '\n';
+}
+
+void MCAsmStreamer::EmitValueToOffset(const MCValue &Offset, 
+                                      unsigned char Value) {
+  // FIXME: Verify that Offset is associated with the current section.
+  OS << ".org " << Offset << ", " << (unsigned) Value << '\n';
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
