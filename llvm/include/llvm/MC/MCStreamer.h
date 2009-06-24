@@ -11,7 +11,6 @@
 #define LLVM_MC_MCSTREAMER_H
 
 namespace llvm {
-  class MCAtom;
   class MCContext;
   class MCValue;
   class MCInst;

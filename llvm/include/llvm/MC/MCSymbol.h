@@ -13,20 +13,19 @@
 #include <string>
 
 namespace llvm {
-  class MCAtom;
-
   class MCSymbol {
-    MCAtom *Atom;
+    MCSection *Section;
     std::string Name;
     unsigned IsTemporary : 1;
 
   public:
-    MCSymbol(MCAtom *_Atom, const char *_Name, bool _IsTemporary) 
-      : Atom(_Atom), Name(_Name), IsTemporary(_IsTemporary) {}
+    MCSymbol(const char *_Name, bool _IsTemporary) 
+      : Section(0), Name(_Name), IsTemporary(_IsTemporary) {}
 
-    MCAtom *getAtom() { return Atom; }
+    MCSection *getSection() const { return Section; }
+    void setSection(MCSection *Value) { Section = Value; }
 
-    const std::string &getName() { return Name; }
+    const std::string &getName() const { return Name; }
   };
 
 } // end namespace llvm

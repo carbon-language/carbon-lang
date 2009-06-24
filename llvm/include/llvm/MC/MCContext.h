@@ -15,7 +15,6 @@
 #include "llvm/Support/Allocator.h"
 
 namespace llvm {
-  class MCAtom;
   class MCValue;
   class MCSection;
   class MCSymbol;
@@ -47,14 +46,10 @@ namespace llvm {
     /// GetSection - Get or create a new section with the given @param Name.
     MCSection *GetSection(const char *Name);
     
-    /// CreateAtom - Create a new atom inside @param Section.
-    MCAtom *CreateAtom(MCSection *Section);
-
-    /// CreateSymbol - Create a new symbol inside @param Atom with the specified
-    /// @param Name.
+    /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *CreateSymbol(MCAtom *Atom, const char *Name);
+    MCSymbol *CreateSymbol(const char *Name);
 
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @param Name.  If it exists, return it.  If not, create a forward
@@ -63,13 +58,13 @@ namespace llvm {
     /// @param Name - The symbol name, which must be unique across all symbols.
     MCSymbol *GetOrCreateSymbol(const char *Name);
     
-    /// CreateTemporarySymbol - Create a new temporary symbol inside @param Atom
-    /// with the specified @param Name.
+    /// CreateTemporarySymbol - Create a new temporary symbol with the specified
+    /// @param Name.
     ///
     /// @param Name - The symbol name, for debugging purposes only, temporary
     /// symbols do not surive assembly. If non-empty the name must be unique
     /// across all symbols.
-    MCSymbol *CreateTemporarySymbol(MCAtom *Atom, const char *Name = "");
+    MCSymbol *CreateTemporarySymbol(const char *Name = "");
 
     /// LookupSymbol - Get the symbol for @param Name, or null.
     MCSymbol *LookupSymbol(const char *Name) const;

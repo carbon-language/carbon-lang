@@ -9,7 +9,6 @@
 
 #include "llvm/MC/MCStreamer.h"
 
-#include "llvm/MC/MCAtom.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
@@ -82,20 +81,26 @@ void MCAsmStreamer::SwitchSection(MCSection *Section) {
 }
 
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
-  // FIXME: We need to enforce that we aren't printing atoms which are more
-  // complicated than the assembler understands.
-  //assert(Symbol->getAtom()->getSection() == CurSection && 
-  //       "The label for a symbol must match its section!");
+  assert(Symbol->getSection() == 0 && "Cannot emit a symbol twice!");
+  assert(CurSection && "Cannot emit before setting section!");
+  assert(!getContext().GetSymbolValue(Symbol) && 
+         "Cannot emit symbol which was directly assigned to!");
+
   OS << Symbol->getName() << ":\n";
+  Symbol->setSection(CurSection);
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
                                    bool MakeAbsolute) {
+  assert(!Symbol->getSection() && "Cannot assign to a label!");
+
   if (MakeAbsolute) {
     OS << ".set " << Symbol->getName() << ", " << Value << '\n';
   } else {
     OS << Symbol->getName() << " = " << Value << '\n';
   }
+
+  getContext().SetSymbolValue(Symbol, Value);
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol, 
@@ -119,12 +124,13 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 }
 
 void MCAsmStreamer::EmitBytes(const char *Data, unsigned Length) {
-  for (unsigned i = 0; i != Length; ++i) {
+  assert(CurSection && "Cannot emit contents before setting section!");
+  for (unsigned i = 0; i != Length; ++i)
     OS << ".byte " << (unsigned) Data[i] << '\n';
-  }
 }
 
 void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
+  assert(CurSection && "Cannot emit contents before setting section!");
   // Need target hooks to know how to print this.
   switch (Size) {
   default:
@@ -139,6 +145,7 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
+  assert(CurSection && "Cannot emit contents before setting section!");
   // FIXME: Implement.
   OS << "# FIXME: Implement instruction printing!\n";
 }

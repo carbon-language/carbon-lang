@@ -53,10 +53,8 @@ TEST(AsmStreamer, Sections) {
 TEST(AsmStreamer, Values) {
   StringAsmStreamer S;
   MCSection *Sec0 = S.getContext().GetSection("foo");
-  MCSymbol *A = S.getContext().CreateSymbol(S.getContext().CreateAtom(Sec0),
-                                         "a");
-  MCSymbol *B = S.getContext().CreateSymbol(S.getContext().CreateAtom(Sec0),
-                                            "b");
+  MCSymbol *A = S.getContext().CreateSymbol("a");
+  MCSymbol *B = S.getContext().CreateSymbol("b");
   S.getStreamer().SwitchSection(Sec0);
   S.getStreamer().EmitLabel(A);
   S.getStreamer().EmitLabel(B);
