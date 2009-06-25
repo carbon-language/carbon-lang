@@ -1860,14 +1860,16 @@ public:
 
 class JumpTableSDNode : public SDNode {
   int JTI;
+  unsigned char TargetFlags;
   friend class SelectionDAG;
-  JumpTableSDNode(int jti, MVT VT, bool isTarg)
+  JumpTableSDNode(int jti, MVT VT, bool isTarg, unsigned char TF)
     : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable,
-      DebugLoc::getUnknownLoc(), getSDVTList(VT)), JTI(jti) {
+      DebugLoc::getUnknownLoc(), getSDVTList(VT)), JTI(jti), TargetFlags(TF) {
   }
 public:
 
   int getIndex() const { return JTI; }
+  unsigned char getTargetFlags() const { return TargetFlags; }
 
   static bool classof(const JumpTableSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1883,40 +1885,27 @@ class ConstantPoolSDNode : public SDNode {
   } Val;
   int Offset;  // It's a MachineConstantPoolValue if top bit is set.
   unsigned Alignment;  // Minimum alignment requirement of CP (not log2 value).
+  unsigned char TargetFlags;
   friend class SelectionDAG;
-  ConstantPoolSDNode(bool isTarget, Constant *c, MVT VT, int o=0)
+  ConstantPoolSDNode(bool isTarget, Constant *c, MVT VT, int o, unsigned Align,
+                     unsigned char TF)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
              DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Offset(o), Alignment(0) {
-    assert((int)Offset >= 0 && "Offset is too large");
-    Val.ConstVal = c;
-  }
-  ConstantPoolSDNode(bool isTarget, Constant *c, MVT VT, int o, unsigned Align)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Offset(o), Alignment(Align) {
+             getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
-                     MVT VT, int o=0)
+                     MVT VT, int o, unsigned Align, unsigned char TF)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
              DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Offset(o), Alignment(0) {
-    assert((int)Offset >= 0 && "Offset is too large");
-    Val.MachineCPVal = v;
-    Offset |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
-  }
-  ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
-                     MVT VT, int o, unsigned Align)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Offset(o), Alignment(Align) {
+             getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
     Offset |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
   }
 public:
+  
 
   bool isMachineConstantPoolEntry() const {
     return (int)Offset < 0;
@@ -1939,6 +1928,7 @@ public:
   // Return the alignment of this constant pool object, which is either 0 (for
   // default alignment) or the desired value.
   unsigned getAlignment() const { return Alignment; }
+  unsigned char getTargetFlags() const { return TargetFlags; }
 
   const Type *getType() const;
 

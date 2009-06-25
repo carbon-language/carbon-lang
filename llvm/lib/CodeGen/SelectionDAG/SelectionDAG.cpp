@@ -415,6 +415,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   case ISD::JumpTable:
   case ISD::TargetJumpTable:
     ID.AddInteger(cast<JumpTableSDNode>(N)->getIndex());
+    ID.AddInteger(cast<JumpTableSDNode>(N)->getTargetFlags());
     break;
   case ISD::ConstantPool:
   case ISD::TargetConstantPool: {
@@ -425,6 +426,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
       CP->getMachineCPVal()->AddSelectionDAGCSEId(ID);
     else
       ID.AddPointer(CP->getConstVal());
+    ID.AddInteger(CP->getTargetFlags());
     break;
   }
   case ISD::CALL: {
@@ -1015,16 +1017,20 @@ SDValue SelectionDAG::getFrameIndex(int FI, MVT VT, bool isTarget) {
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget){
+SDValue SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget,
+                                   unsigned char TargetFlags) {
+  assert((TargetFlags == 0 || isTarget) &&
+         "Cannot set target flags on target-independent jump tables");
   unsigned Opc = isTarget ? ISD::TargetJumpTable : ISD::JumpTable;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(JTI);
+  ID.AddInteger(TargetFlags);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<JumpTableSDNode>();
-  new (N) JumpTableSDNode(JTI, VT, isTarget);
+  new (N) JumpTableSDNode(JTI, VT, isTarget, TargetFlags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -1032,7 +1038,10 @@ SDValue SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget){
 
 SDValue SelectionDAG::getConstantPool(Constant *C, MVT VT,
                                       unsigned Alignment, int Offset,
-                                      bool isTarget) {
+                                      bool isTarget, 
+                                      unsigned char TargetFlags) {
+  assert((TargetFlags == 0 || isTarget) &&
+         "Cannot set target flags on target-independent globals");
   if (Alignment == 0)
     Alignment = TLI.getTargetData()->getPrefTypeAlignment(C->getType());
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
@@ -1041,11 +1050,12 @@ SDValue SelectionDAG::getConstantPool(Constant *C, MVT VT,
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   ID.AddPointer(C);
+  ID.AddInteger(TargetFlags);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<ConstantPoolSDNode>();
-  new (N) ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment);
+  new (N) ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment, TargetFlags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -1054,7 +1064,10 @@ SDValue SelectionDAG::getConstantPool(Constant *C, MVT VT,
 
 SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
                                       unsigned Alignment, int Offset,
-                                      bool isTarget) {
+                                      bool isTarget,
+                                      unsigned char TargetFlags) {
+  assert((TargetFlags == 0 || isTarget) &&
+         "Cannot set target flags on target-independent globals");
   if (Alignment == 0)
     Alignment = TLI.getTargetData()->getPrefTypeAlignment(C->getType());
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
@@ -1063,11 +1076,12 @@ SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   C->AddSelectionDAGCSEId(ID);
+  ID.AddInteger(TargetFlags);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<ConstantPoolSDNode>();
-  new (N) ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment);
+  new (N) ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment, TargetFlags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -5502,6 +5516,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     OS << "<" << FIDN->getIndex() << ">";
   } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(this)) {
     OS << "<" << JTDN->getIndex() << ">";
+    if (unsigned char TF = JTDN->getTargetFlags())
+      OS << " [TF=" << TF << ']';
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     int offset = CP->getOffset();
     if (CP->isMachineConstantPoolEntry())
@@ -5512,6 +5528,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
       OS << " + " << offset;
     else
       OS << " " << offset;
+    if (unsigned char TF = CP->getTargetFlags())
+      OS << " [TF=" << TF << ']';
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
     OS << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
