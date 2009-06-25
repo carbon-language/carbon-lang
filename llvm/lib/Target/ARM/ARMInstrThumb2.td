@@ -169,16 +169,14 @@ multiclass T2I_bin_irs<string opc, PatFrag opnode> {
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 
-/// T2I_rbin_irs - Same as T2I_bin_irs except the order of operands are reversed.
-multiclass T2I_rbin_irs<string opc, PatFrag opnode> {
+/// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are
+/// reversed. It doesn't define the 'rr' form since it's handled by its
+/// T2I_bin_irs counterpart.
+multiclass T2I_rbin_is<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
                 opc, " $dst, $rhs, $lhs",
                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
-   // register
-   def rr : T2I<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs),
-                opc, " $dst, $rhs, $lhs",
-                [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
                 opc, " $dst, $rhs, $lhs",
@@ -204,25 +202,6 @@ multiclass T2I_bin_s_irs<string opc, PatFrag opnode> {
 }
 }
 
-/// T2I_rbin_s_irs - Same as T2I_bin_s_irs except the order of operands are
-/// reversed.
-let Defs = [CPSR] in {
-multiclass T2I_rbin_s_irs<string opc, PatFrag opnode> {
-   // shifted imm
-   def ri : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
-                !strconcat(opc, "s"), " $dst, $rhs, $lhs",
-                [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
-   // register
-   def rr : T2I<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs),
-                !strconcat(opc, "s"), " $dst, $rhs, $lhs",
-                [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
-   // shifted register
-   def rs : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
-                !strconcat(opc, "s"), " $dst, $rhs, $lhs",
-                [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>;
-}
-}
-
 /// T2I_bin_ii12rs - Defines a set of (op reg, {so_imm|imm0_4095|r|so_reg})
 /// patterns for a binary operation that produces a value.
 multiclass T2I_bin_ii12rs<string opc, PatFrag opnode> {
@@ -244,38 +223,55 @@ multiclass T2I_bin_ii12rs<string opc, PatFrag opnode> {
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 
-/// T2I_bin_c_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
-//  binary operation that produces a value and set the carry bit. It can also
-/// optionally set CPSR.
-let Uses = [CPSR] in {
-multiclass T2I_bin_c_irs<string opc, PatFrag opnode> {
+/// T2I_bin_cs_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
+/// binary operation that produces a value and use and define the carry bit.
+/// It's not predicable.
+let Defs = [CPSR], Uses = [CPSR] in {
+multiclass T2I_bin_cs_irs<string opc, PatFrag opnode> {
    // shifted imm
-   def ri : T2XI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs, cc_out:$s),
-                 !strconcat(opc, "${s} $dst, $lhs, $rhs"),
+   def ri : T2XI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs),
+                 !strconcat(opc, "s $dst, $lhs, $rhs"),
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>;
    // register
-   def rr : T2XI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs, cc_out:$s),
-                 !strconcat(opc, "${s} $dst, $lhs, $rhs"),
+   def rr : T2XI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
+                 !strconcat(opc, "s $dst, $lhs, $rhs"),
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
    // shifted register
-   def rs : T2XI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs, cc_out:$s),
-                 !strconcat(opc, "${s} $dst, $lhs, $rhs"),
+   def rs : T2XI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
+                 !strconcat(opc, "s $dst, $lhs, $rhs"),
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 }
 
-/// T2I_rbin_c_irs - Same as T2I_bin_c_irs except the order of operands are
-/// reversed.
-let Uses = [CPSR] in {
-multiclass T2I_rbin_c_irs<string opc, PatFrag opnode> {
+/// T2I_rbin_cs_is - Same as T2I_bin_cs_irs except the order of operands are
+/// reversed. It doesn't define the 'rr' form since it's handled by its
+/// T2I_bin_cs_irs counterpart.
+let Defs = [CPSR], Uses = [CPSR] in {
+multiclass T2I_rbin_cs_is<string opc, PatFrag opnode> {
+   // shifted imm
+   def ri : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
+                 !strconcat(opc, "s $dst, $rhs, $lhs"),
+                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
+   // register
+   def rr : T2XI<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs),
+                 !strconcat(opc, "s $dst, $rhs, $lhs"),
+                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
+   // shifted register
+   def rs : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
+                 !strconcat(opc, "s $dst, $rhs, $lhs"),
+                 [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>;
+}
+}
+
+/// T2I_rbin_s_is - Same as T2I_bin_s_irs except the order of operands are
+/// reversed. It doesn't define the 'rr' form since it's handled by its
+/// T2I_bin_s_irs counterpart.
+let Defs = [CPSR] in {
+multiclass T2I_rbin_s_is<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs, cc_out:$s),
                  !strconcat(opc, "${s} $dst, $rhs, $lhs"),
                  [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
-   // register
-   def rr : T2XI<(outs GPR:$dst), (ins GPR:$rhs, GPR:$lhs, cc_out:$s),
-                 !strconcat(opc, "${s} $dst, $rhs, $lhs"),
-                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs, cc_out:$s),
                  !strconcat(opc, "${s} $dst, $rhs, $lhs"),
@@ -386,17 +382,17 @@ defm t2ADD  : T2I_bin_ii12rs<"add", BinOpFrag<(add  node:$LHS, node:$RHS)>>;
 defm t2SUB  : T2I_bin_ii12rs<"sub", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
 // ADD and SUB with 's' bit set. No 12-bit immediate (T4) variants.
-defm t2ADDS : T2I_bin_s_irs<"add",  BinOpFrag<(addc node:$LHS, node:$RHS)>>;
-defm t2SUBS : T2I_bin_s_irs<"sub",  BinOpFrag<(subc node:$LHS, node:$RHS)>>;
+defm t2ADDS : T2I_bin_s_irs <"add",  BinOpFrag<(addc node:$LHS, node:$RHS)>>;
+defm t2SUBS : T2I_bin_s_irs <"sub",  BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 // FIXME: predication support
-defm t2ADC  : T2I_bin_c_irs<"adc",  BinOpFrag<(adde node:$LHS, node:$RHS)>>;
-defm t2SBC  : T2I_bin_c_irs<"sbc",  BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+defm t2ADC  : T2I_bin_cs_irs<"adc", BinOpFrag<(adde node:$LHS, node:$RHS)>>;
+defm t2SBC  : T2I_bin_cs_irs<"sbc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // RSB, RSC
-defm t2RSB  : T2I_rbin_irs  <"rsb", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
-defm t2RSBS : T2I_rbin_c_irs<"rsb", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
-defm t2RSC  : T2I_rbin_s_irs<"rsc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+defm t2RSB  : T2I_rbin_is   <"rsb", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
+defm t2RSBS : T2I_rbin_s_is <"rsb", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
+defm t2RSC  : T2I_rbin_cs_is<"rsc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 def : Thumb2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
