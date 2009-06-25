@@ -1132,12 +1132,14 @@ void TokenizeCmdline(const std::string& CmdLine, StrVector& Out) {
   enum TokenizerState
   { Normal, SpecialCommand, InsideSpecialCommand, InsideQuotationMarks }
   cur_st  = Normal;
+
+  if (CmdLine.empty())
+    return;
   Out.push_back("");
 
   std::string::size_type B = CmdLine.find_first_not_of(Delimiters),
     E = CmdLine.size();
-  if (B == std::string::npos)
-    throw "Empty command-line string!";
+
   for (; B != E; ++B) {
     char cur_ch = CmdLine[B];
 
@@ -1278,7 +1280,7 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
   TokenizeCmdline(InitPtrToString(CmdLine), StrVec);
 
   if (StrVec.empty())
-    throw "Tool " + ToolName + " has empty command line!";
+    throw "Tool '" + ToolName + "' has empty command line!";
 
   StrVector::const_iterator I = StrVec.begin(), E = StrVec.end();
 
