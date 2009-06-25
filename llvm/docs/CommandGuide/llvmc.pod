@@ -65,8 +65,11 @@ name. Hidden option, useful for debugging LLVMC plugins.
 
 =item B<--save-temps>
 
-Write temporary files to the current directory and do not delete them
-on exit. Hidden option, useful for debugging.
+Write temporary files to the current directory and do not delete them on
+exit. This option can also take an argument: the I<--save-temps=obj> switch will
+write files into the directory specified with the I<-o> option. The
+I<--save-temps=cwd> and I<--save-temps> switches are both synonyms for the
+default behaviour.
 
 =item B<--help>
 

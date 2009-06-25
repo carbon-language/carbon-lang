@@ -92,6 +92,12 @@ configuration libraries:
 
 * ``-v`` - Enable verbose mode, i.e. print out all executed commands.
 
+* ``--save-temps`` - Write temporary files to the current directory and do not
+  delete them on exit. This option can also take an argument: the
+  ``--save-temps=obj`` switch will write files into the directory specified with
+  the ``-o`` option. The ``--save-temps=cwd`` and ``--save-temps`` switches are
+  both synonyms for the default behaviour.
+
 * ``--check-graph`` - Check the compilation for common errors like mismatched
   output/input language names, multiple default edges and cycles. Because of
   plugins, these checks can't be performed at compile-time. Exit with code zero
@@ -107,9 +113,6 @@ configuration libraries:
   to the file used by the ``--view-graph`` option). The ``-o`` option can be
   used to set the output file name. Hidden option, useful for debugging LLVMC
   plugins.
-
-* ``--save-temps`` - Write temporary files to the current directory
-  and do not delete them on exit. Hidden option, useful for debugging.
 
 * ``--help``, ``--help-hidden``, ``--version`` - These options have
   their standard meaning.
