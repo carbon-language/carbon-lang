@@ -19,7 +19,6 @@
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
 #include <cstdlib>
-#include <map>
 using namespace llvm;
 
 #define BUILD_OFormatI(Op, RA, LIT, FUN, RC) \
@@ -237,11 +236,6 @@ static long getLower16(long l)
 
 void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
                             unsigned NumRelocs, unsigned char* GOTBase) {
-  //because gpdist are paired and relative to the pc of the first inst,
-  //we need to have some state
-
-  static std::map<std::pair<void*, int>, void*> gpdistmap;
-
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
     long idx = 0;
