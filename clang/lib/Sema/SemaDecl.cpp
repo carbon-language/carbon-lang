@@ -2385,6 +2385,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       && !NewFD->isInvalidDecl())
     RegisterLocallyScopedExternCDecl(NewFD, PrevDecl, S);
 
+  // Set this FunctionDecl's range up to the right paren.
+  NewFD->setLocEnd(D.getSourceRange().getEnd());
+
   return NewFD;
 }
 
