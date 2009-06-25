@@ -26,6 +26,7 @@ add_clang_library(clangFrontend
   PlistDiagnostics.cpp
   PrintParserCallbacks.cpp
   PrintPreprocessedOutput.cpp
+  ResolveLocation.cpp
   RewriteBlocks.cpp
   RewriteMacros.cpp
   RewriteObjC.cpp
