@@ -1496,7 +1496,7 @@ bool ExtVectorElementExpr::containsDuplicateElements() const {
     return false;
   
   // Advance past s-char prefix on hex swizzles.
-  if (*compStr == 's') {
+  if (*compStr == 's' || *compStr == 'S') {
     compStr++;
     length--;
   }
@@ -1514,7 +1514,7 @@ bool ExtVectorElementExpr::containsDuplicateElements() const {
 void ExtVectorElementExpr::getEncodedElementAccess(
                                   llvm::SmallVectorImpl<unsigned> &Elts) const {
   const char *compStr = Accessor->getName();
-  if (*compStr == 's')
+  if (*compStr == 's' || *compStr == 'S')
     compStr++;
  
   bool isHi =   !strcmp(compStr, "hi");

@@ -1905,7 +1905,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
 
   // This flag determines whether or not CompName has an 's' char prefix,
   // indicating that it is a string of hex values to be used as vector indices.
-  bool HexSwizzle = *compStr == 's';
+  bool HexSwizzle = *compStr == 's' || *compStr == 'S';
 
   // Check that we've found one of the special components, or that the component
   // names must come from the same set.
