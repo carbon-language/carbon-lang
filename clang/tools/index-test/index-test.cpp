@@ -17,8 +17,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//   -Wfatal-errors
-//   -ftabstop=width
+//   -point-at  [file:column:line]
+//       Point at a declaration/statement/expression. If no other operation is
+//       specified, prints some info about it.
 //
 //===----------------------------------------------------------------------===//
 
@@ -111,12 +112,6 @@ int main(int argc, char **argv) {
   }
   
   if (Point.D) {
-    if (PointAtLocation.empty()) {
-      llvm::errs() << "'-print-point-info' should be used together "
-                      "with '-point-at'\n";
-      return 1;
-    }
-    
     llvm::raw_ostream &OS = llvm::outs();
     assert(Point.D && "If no node was found we should have exited with error");
     OS << "Declaration node at point: " << Point.D->getDeclKindName() << " ";
