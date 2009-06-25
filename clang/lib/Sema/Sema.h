@@ -1598,6 +1598,16 @@ public:
   void DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                      CXXConstructorDecl *Constructor,
                                      unsigned TypeQuals);
+  
+  /// DefineImplicitOverloadedAssign - Checks for feasibility of
+  /// defining implicit this overloaded assignment operator.
+  void DefineImplicitOverloadedAssign(SourceLocation CurrentLocation, 
+                                      CXXMethodDecl *MethodDecl);
+  
+  /// getAssignOperatorMethod - Returns the default copy assignmment operator
+  /// for the class.
+  CXXMethodDecl *getAssignOperatorMethod(ParmVarDecl *Decl,
+                                         CXXRecordDecl *ClassDecl);  
 
   /// MaybeBindToTemporary - If the passed in expression has a record type with
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise

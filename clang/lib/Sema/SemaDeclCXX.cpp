@@ -1942,6 +1942,94 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     Constructor->setUsed();  
 }
 
+void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
+                                          CXXMethodDecl *MethodDecl) {
+  assert((MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
+          MethodDecl->getOverloadedOperator() == OO_Equal &&
+          !MethodDecl->isUsed()) &&
+         "DefineImplicitOverloadedAssign - call it for implicit assignment op");
+  
+  CXXRecordDecl *ClassDecl
+    = cast<CXXRecordDecl>(MethodDecl->getDeclContext());
+  assert(ClassDecl && "DefineImplicitOverloadedAssign - invalid constructor");
+  
+  // C++[class.copy] p210
+  // Before the implicitly-declared copy assignment operator for a class is
+  // implicitly defined, all implicitly-declared copy assignment operators
+  // for its direct base classes and its nonstatic data members shall have
+  // been implicitly defined.
+  bool err = false;
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+    if (CXXMethodDecl *BaseAssignOpMethod = 
+          getAssignOperatorMethod(MethodDecl->getParamDecl(0), BaseClassDecl))
+      MarkDeclarationReferenced(CurrentLocation, BaseAssignOpMethod);
+  }
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
+       Field != ClassDecl->field_end(Context);
+       ++Field) {
+    QualType FieldType = Context.getCanonicalType((*Field)->getType());
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (CXXMethodDecl *FieldAssignOpMethod = 
+          getAssignOperatorMethod(MethodDecl->getParamDecl(0), FieldClassDecl))
+        MarkDeclarationReferenced(CurrentLocation, FieldAssignOpMethod);
+    }
+    else if (FieldType->isReferenceType()) {
+      Diag(ClassDecl->getLocation(), diag::err_unintialized_member_for_assign) 
+      << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getNameAsCString();
+      Diag((*Field)->getLocation(), diag::note_declared_at);
+      Diag(CurrentLocation, diag::note_first_required_here);
+      err = true;
+    }
+    else if (FieldType.isConstQualified()) {
+      Diag(ClassDecl->getLocation(), diag::err_unintialized_member_for_assign) 
+      << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getNameAsCString();
+      Diag((*Field)->getLocation(), diag::note_declared_at);
+      Diag(CurrentLocation, diag::note_first_required_here);
+      err = true;
+    }
+  }
+  if (!err)
+    MethodDecl->setUsed();    
+}
+
+CXXMethodDecl *
+Sema::getAssignOperatorMethod(ParmVarDecl *ParmDecl,
+                              CXXRecordDecl *ClassDecl) {
+  QualType LHSType = Context.getTypeDeclType(ClassDecl);
+  QualType RHSType(LHSType);
+  // If class's assignment operator argument is const/volatile qualified,
+  // look for operator = (const/volatile B&). Otherwise, look for 
+  // operator = (B&).
+  if (ParmDecl->getType().isConstQualified())
+    RHSType.addConst();
+  if (ParmDecl->getType().isVolatileQualified())
+    RHSType.addVolatile();
+  ExprOwningPtr<Expr> LHS(this,  new (Context) DeclRefExpr(ParmDecl, 
+                                                          LHSType, 
+                                                          SourceLocation()));
+  ExprOwningPtr<Expr> RHS(this,  new (Context) DeclRefExpr(ParmDecl, 
+                                                          RHSType, 
+                                                          SourceLocation()));
+  Expr *Args[2] = { &*LHS, &*RHS };
+  OverloadCandidateSet CandidateSet;
+  AddMemberOperatorCandidates(clang::OO_Equal, SourceLocation(), Args, 2, 
+                              CandidateSet);
+  OverloadCandidateSet::iterator Best;
+  if (BestViableFunction(CandidateSet, 
+                         ClassDecl->getLocation(), Best) == OR_Success)
+    return cast<CXXMethodDecl>(Best->Function);
+  assert(false &&
+         "getAssignOperatorMethod - copy assignment operator method not found");
+  return 0;
+}
+
 void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                    CXXConstructorDecl *CopyConstructor,
                                    unsigned TypeQuals) {

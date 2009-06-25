@@ -5547,7 +5547,13 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     // FIXME: more checking for other implicits go here.
     else
       Constructor->setUsed(true);
-  } 
+  } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(D)) {
+    if (MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
+        MethodDecl->getOverloadedOperator() == OO_Equal) {
+      if (!MethodDecl->isUsed())
+        DefineImplicitOverloadedAssign(Loc, MethodDecl);
+    }
+  }
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates
     if (!Function->getBody(Context)) {

@@ -584,6 +584,12 @@ def err_defining_default_ctor : Error<
   "%2 does not have any default constructor">;
 def note_previous_class_decl : Note<
   "%0 declared here">;
+def err_unintialized_member_for_assign : Error<
+  "cannot define the implicit default assignment operator for %0, because "
+  "non-static %select{reference|const}1 member %2 can't use default "
+  "assignment operator">;
+def note_first_required_here : Note<
+  "synthesized method is first required here">;
 def err_unintialized_member : Error<
   "cannot define the implicit default constructor for %0, because "
   "%select{reference|const}1 member %2 cannot be default-initialized">;
