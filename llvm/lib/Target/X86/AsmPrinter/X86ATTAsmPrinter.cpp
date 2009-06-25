@@ -415,7 +415,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
         //   call .piclabel
         // piclabel:
         //   popl %some_register
-        //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
+        //   addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
         O << " + [.-";
         PrintPICBaseSymbol();
         O << ']';
@@ -643,7 +643,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         //   call .piclabel
         // piclabel:
         //   popl %some_register
-        //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
+        //   addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
         O << " + [.-";
         PrintPICBaseSymbol();
         O << ']';
