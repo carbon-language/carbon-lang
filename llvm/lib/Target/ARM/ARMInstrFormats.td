@@ -773,20 +773,51 @@ class Thumb1Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb1Only];
 }
 
-// T2I - Thumb2 instruction.
-
-class Thumb2I<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
-             string asm, string cstr, list<dag> pattern>
+// Thumb2I - Thumb2 instruction. Almost all Thumb2 instructions are predicable.
+class Thumb2I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+              string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
-  let OutOperandList = outs;
-  let InOperandList = ins;
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ops pred:$p));
+  let AsmString = !strconcat(opc, !strconcat("${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb, HasThumb2];
+}
+
+// Same as Thumb2I except it can optionally modify CPSR. Note it's modeled as
+// an input operand since by default it's a zero register. It will
+// become an implicit def once it's "flipped".
+// FIXME: This uses unified syntax so {s} comes before {p}. We should make it
+// more consistent.
+class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+               string opc, string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ops pred:$p, cc_out:$s));
+  let AsmString   = !strconcat(opc, !strconcat("${s}${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb, HasThumb2];
+}
+
+// Special cases
+class Thumb2XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+               string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
   let AsmString   = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb, HasThumb2];
 }
 
-class T2I<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb2I<outs, ins, AddrModeNone, Size4Bytes, asm, "", pattern>;
+class T2I<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeNone, Size4Bytes, opc, asm, "", pattern>;
+
+class T2sI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb2sI<oops, iops, AddrModeNone, Size4Bytes, opc, asm, "", pattern>;
+
+class T2XI<dag oops, dag iops, string asm, list<dag> pattern>
+  : Thumb2XI<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;
 
 // Thumb2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
 class Thumb2Pat<dag pattern, dag result> : Pat<pattern, result> {
