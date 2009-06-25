@@ -262,6 +262,7 @@ asmtok::TokKind AsmLexer::LexToken() {
   case '*': return asmtok::Star;
   case ',': return asmtok::Comma;
   case '$': return asmtok::Dollar;
+  case '=': return asmtok::Equal;
   case '|': return asmtok::Pipe;
   case '^': return asmtok::Caret;
   case '&': return asmtok::Amp;

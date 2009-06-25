@@ -43,6 +43,7 @@ private:
   
   void EatToEndOfStatement();
   
+  bool ParseAssignment(const char *Name, bool IsDotSet);
   bool ParseExpression(int64_t &Res);
   bool ParsePrimaryExpr(int64_t &Res);
   bool ParseBinOpRHS(unsigned Precedence, int64_t &Res);
@@ -61,6 +62,7 @@ private:
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveFill(); // ".fill"
   bool ParseDirectiveSpace(); // ".space"
+  bool ParseDirectiveSet(); // ".set"
   
 };
 

@@ -182,7 +182,8 @@ bool AsmParser::ParseStatement() {
   const char *IDVal = Lexer.getCurStrVal();
   
   // Consume the identifier, see what is after it.
-  if (Lexer.Lex() == asmtok::Colon) {
+  switch (Lexer.Lex()) {
+  case asmtok::Colon:
     // identifier ':'   -> Label.
     Lexer.Lex();
     
@@ -192,6 +193,15 @@ bool AsmParser::ParseStatement() {
     Out.EmitLabel(Ctx.GetOrCreateSymbol(IDVal));
     
     return ParseStatement();
+
+  case asmtok::Equal:
+    // identifier '=' ... -> assignment statement
+    Lexer.Lex();
+
+    return ParseAssignment(IDVal, false);
+
+  default: // Normal instruction or directive.
+    break;
   }
   
   // Otherwise, we have a normal instruction or directive.  
@@ -209,7 +219,8 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".static_const"))
       return ParseDirectiveSectionSwitch("__TEXT,__static_const");
     if (!strcmp(IDVal, ".cstring"))
-      return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
+      return ParseDirectiveSectionSwitch("__TEXT,__cstring", 
+                                         "cstring_literals");
     if (!strcmp(IDVal, ".literal4"))
       return ParseDirectiveSectionSwitch("__TEXT,__literal4", "4byte_literals");
     if (!strcmp(IDVal, ".literal8"))
@@ -291,6 +302,10 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".objc_selector_strs"))
       return ParseDirectiveSectionSwitch("__OBJC,__selector_strs");
     
+    // Assembler features
+    if (!strcmp(IDVal, ".set"))
+      return ParseDirectiveSet();
+
     // Data directives
 
     if (!strcmp(IDVal, ".ascii"))
@@ -334,6 +349,40 @@ bool AsmParser::ParseStatement() {
   
   // Skip to end of line for now.
   return false;
+}
+
+bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
+  int64_t Value;
+  if (ParseExpression(Value))
+    return true;
+  
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in assignment");
+
+  // Eat the end of statement marker.
+  Lexer.Lex();
+
+  // Get the symbol for this name.
+  // FIXME: Handle '.'.
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  Out.EmitAssignment(Sym, MCValue::get(Value), IsDotSet);
+
+  return false;
+}
+
+/// ParseDirectiveSet:
+///   ::= .set identifier ',' expression
+bool AsmParser::ParseDirectiveSet() {
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected identifier after '.set' directive");
+
+  const char *Name = Lexer.getCurStrVal();
+  
+  if (Lexer.Lex() != asmtok::Comma)
+    return TokError("unexpected token in '.set'");
+  Lexer.Lex();
+
+  return ParseAssignment(Name, true);
 }
 
 /// ParseDirectiveSection:
