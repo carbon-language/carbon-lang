@@ -20,4 +20,6 @@ macro(tablegen ofn)
     COMMENT "Building ${ofn}..."
     )
   set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn})
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} 
+    PROPERTIES GENERATED 1)
 endmacro(tablegen)

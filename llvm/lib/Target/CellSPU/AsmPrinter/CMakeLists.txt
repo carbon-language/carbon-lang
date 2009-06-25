@@ -6,3 +6,4 @@ include_directories(
 add_llvm_library(LLVMCellSPUAsmPrinter
   SPUAsmPrinter.cpp
   )
+add_dependencies(LLVMCellSPUAsmPrinter CellSPUCodeGenTable_gen)

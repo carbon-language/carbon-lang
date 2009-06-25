@@ -6,3 +6,4 @@ include_directories(
 add_llvm_library(LLVMIA64AsmPrinter
   IA64AsmPrinter.cpp
   )
+add_dependencies(LLVMIA64AsmPrinter IA64CodeGenTable_gen)
