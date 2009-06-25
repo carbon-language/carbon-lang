@@ -341,6 +341,21 @@ def t2LEApcrelJT : T2I<(outs GPR:$dst),
                                          "add$p $dst, pc, #PCRELV${:uid}")),
                    []>;
 
+// ADD rd, sp, #so_imm
+def t2ADDrSPi : T2I<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
+                    "add $dst, $sp, $imm",
+                    []>;
+
+// ADD rd, sp, #imm12
+def t2ADDrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, i32imm:$imm),
+                    "addw $dst, $sp, $imm",
+                    []>;
+
+def t2ADDrSPs : T2I<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
+                    "addw $dst, $sp, $rhs",
+                    []>;
+
+
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.
 //
