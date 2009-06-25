@@ -108,7 +108,7 @@ static RegisterPass<LoopRotate> X("loop-rotate", "Rotate Loops");
 Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 
 /// Rotate Loop L as many times as possible. Return true if
-/// loop is rotated at least once.
+/// the loop is rotated at least once.
 bool LoopRotate::runOnLoop(Loop *Lp, LPPassManager &LPM) {
 
   bool RotatedOneLoop = false;
@@ -132,15 +132,15 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   OrigPreHeader = L->getLoopPreheader();
   OrigLatch = L->getLoopLatch();
 
-  // If loop has only one block then there is not much to rotate.
+  // If the loop has only one block then there is not much to rotate.
   if (L->getBlocks().size() == 1)
     return false;
 
   assert(OrigHeader && OrigLatch && OrigPreHeader &&
          "Loop is not in canonical form");
 
-  // If loop header is not one of the loop exit block then
-  // either this loop is already rotated or it is not 
+  // If the loop header is not one of the loop exiting blocks then
+  // either this loop is already rotated or it is not
   // suitable for loop rotation transformations.
   if (!L->isLoopExit(OrigHeader))
     return false;
@@ -189,19 +189,19 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   assert(L->contains(NewHeader) && !L->contains(Exit) && 
          "Unable to determine loop header and exit blocks");
   
-  // This code assumes that new header has exactly one predecessor.  Remove any
-  // single entry PHI nodes in it.
+  // This code assumes that the new header has exactly one predecessor.
+  // Remove any single-entry PHI nodes in it.
   assert(NewHeader->getSinglePredecessor() &&
          "New header doesn't have one pred!");
   FoldSingleEntryPHINodes(NewHeader);
 
-  // Copy PHI nodes and other instructions from original header
-  // into original pre-header. Unlike original header, original pre-header is
-  // not a member of loop. 
+  // Copy PHI nodes and other instructions from the original header
+  // into the original pre-header. Unlike the original header, the original
+  // pre-header is not a member of the loop.
   //
-  // New loop header is one and only successor of original header that 
+  // The new loop header is the one and only successor of original header that
   // is inside the loop. All other original header successors are outside 
-  // the loop. Copy PHI Nodes from original header into new loop header. 
+  // the loop. Copy PHI Nodes from the original header into the new loop header.
   // Add second incoming value, from original loop pre-header into these phi 
   // nodes. If a value defined in original header is used outside original 
   // header then new loop header will need new phi nodes with two incoming 
@@ -218,8 +218,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // are directly propagated.
     Value *NPV = PN->getIncomingValueForBlock(OrigPreHeader);
 
-    // Create new PHI node with two incoming values for NewHeader.
-    // One incoming value is from OrigLatch (through OrigHeader) and 
+    // Create a new PHI node with two incoming values for NewHeader.
+    // One incoming value is from OrigLatch (through OrigHeader) and the
     // second incoming value is from original pre-header.
     PHINode *NH = PHINode::Create(PN->getType(), PN->getName(),
                                   NewHeader->begin());
@@ -334,8 +334,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
         // Add second incoming argument from new Pre header.
         UPhi->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
       } else {
-        // Used outside Exit block. Create a new PHI node from exit block
-        // to receive value from ne new header ane pre header.
+        // Used outside Exit block. Create a new PHI node in the exit block
+        // to receive the value from the new header and pre-header.
         PHINode *PN = PHINode::Create(U->getType(), U->getName(),
                                       Exit->begin());
         PN->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
@@ -367,8 +367,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 }
 
 /// Make sure all Exit block PHINodes have required incoming values.
-/// If incoming value is constant or defined outside the loop then
-/// PHINode may not have an entry for original pre-header. 
+/// If an incoming value is constant or defined outside the loop then
+/// PHINode may not have an entry for the original pre-header.
 void LoopRotate::updateExitBlock() {
 
   for (BasicBlock::iterator I = Exit->begin(), E = Exit->end();
