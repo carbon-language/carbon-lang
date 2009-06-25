@@ -315,13 +315,15 @@ enum LangKind {
   langkind_objc,
   langkind_objc_cpp,
   langkind_objcxx,
-  langkind_objcxx_cpp
+  langkind_objcxx_cpp,
+  langkind_ocl
 };
 
 static llvm::cl::opt<LangKind>
 BaseLang("x", llvm::cl::desc("Base language to compile"),
          llvm::cl::init(langkind_unspecified),
    llvm::cl::values(clEnumValN(langkind_c,     "c",            "C"),
+                    clEnumValN(langkind_ocl,   "cl",           "OpenCL C"),
                     clEnumValN(langkind_cxx,   "c++",          "C++"),
                     clEnumValN(langkind_objc,  "objective-c",  "Objective C"),
                     clEnumValN(langkind_objcxx,"objective-c++","Objective C++"),
@@ -432,6 +434,8 @@ static LangKind GetLanguage(const std::string &Filename) {
   else if (Ext == "C" || Ext == "cc" || Ext == "cpp" || Ext == "CPP" ||
            Ext == "c++" || Ext == "cp" || Ext == "cxx")
     return langkind_cxx;
+  else if (Ext == "cl")
+    return langkind_ocl;
   else
     return langkind_c;
 }
@@ -479,6 +483,12 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
   case langkind_objcxx:
     Options.ObjC1 = Options.ObjC2 = 1;
     Options.CPlusPlus = 1;
+    break;
+  case langkind_ocl:
+    Options.OpenCL = 1;
+    Options.AltiVec = 1;
+    Options.CXXOperatorNames = 1;
+    Options.LaxVectorConversions = 1;
     break;
   }
   
@@ -664,6 +674,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     // Based on the base language, pick one.
     switch (LK) {
     case lang_unspecified: assert(0 && "Unknown base language");
+    case langkind_ocl:
+      LangStd = lang_c99;
+      break;
     case langkind_c:
     case langkind_asm_cpp:
     case langkind_c_cpp:
@@ -1622,7 +1635,7 @@ public:
                                            PrintSourceRangeInfo,
                                            PrintDiagnosticOption,
                                            !NoDiagnosticsFixIt,
-					   MessageLength));
+                                           MessageLength));
   }
   
   virtual void setLangOptions(const LangOptions *LO) {

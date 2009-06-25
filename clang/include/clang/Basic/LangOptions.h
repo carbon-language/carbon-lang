@@ -43,6 +43,7 @@ public:
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned WritableStrings   : 1;  // Allow writable strings
   unsigned LaxVectorConversions : 1;
+  unsigned AltiVec           : 1;  // Support AltiVec-style vector initializers.
   unsigned Exceptions        : 1;  // Support exception handling.
 
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
@@ -80,6 +81,10 @@ public:
   unsigned AccessControl     : 1; // Whether C++ access control should 
                                   // be enabled.
   unsigned CharIsSigned      : 1; // Whether char is a signed or unsigned type
+
+  unsigned OpenCL            : 1; // OpenCL C99 language extensions.
+
+
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -111,6 +116,7 @@ public:
     Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
+    AltiVec = OpenCL = 0;
     
     SymbolVisibility = (unsigned) Default;
     
