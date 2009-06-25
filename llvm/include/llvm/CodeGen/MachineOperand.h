@@ -371,9 +371,11 @@ public:
     Op.SubReg = SubReg;
     return Op;
   }
-  static MachineOperand CreateMBB(MachineBasicBlock *MBB) {
+  static MachineOperand CreateMBB(MachineBasicBlock *MBB,
+                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_MachineBasicBlock);
     Op.setMBB(MBB);
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
   static MachineOperand CreateFI(unsigned Idx) {
@@ -381,27 +383,35 @@ public:
     Op.setIndex(Idx);
     return Op;
   }
-  static MachineOperand CreateCPI(unsigned Idx, int Offset) {
+  static MachineOperand CreateCPI(unsigned Idx, int Offset,
+                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_ConstantPoolIndex);
     Op.setIndex(Idx);
     Op.setOffset(Offset);
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateJTI(unsigned Idx) {
+  static MachineOperand CreateJTI(unsigned Idx,
+                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_JumpTableIndex);
     Op.setIndex(Idx);
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateGA(GlobalValue *GV, int64_t Offset) {
+  static MachineOperand CreateGA(GlobalValue *GV, int64_t Offset,
+                                 unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_GlobalAddress);
     Op.Contents.OffsetedInfo.Val.GV = GV;
     Op.setOffset(Offset);
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateES(const char *SymName, int64_t Offset = 0) {
+  static MachineOperand CreateES(const char *SymName, int64_t Offset = 0,
+                                 unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_ExternalSymbol);
     Op.Contents.OffsetedInfo.Val.SymbolName = SymName;
     Op.setOffset(Offset);
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
   const MachineOperand &operator=(const MachineOperand &MO) {

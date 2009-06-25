@@ -74,8 +74,9 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
-    MI->addOperand(MachineOperand::CreateMBB(MBB));
+  const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB,
+                                    unsigned char TargetFlags = 0) const {
+    MI->addOperand(MachineOperand::CreateMBB(MBB, TargetFlags));
     return *this;
   }
 
@@ -85,25 +86,29 @@ public:
   }
 
   const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx,
-                                                  int Offset = 0) const {
-    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset));
+                                                  int Offset = 0,
+                                          unsigned char TargetFlags = 0) const {
+    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset, TargetFlags));
     return *this;
   }
 
-  const MachineInstrBuilder &addJumpTableIndex(unsigned Idx) const {
-    MI->addOperand(MachineOperand::CreateJTI(Idx));
+  const MachineInstrBuilder &addJumpTableIndex(unsigned Idx,
+                                          unsigned char TargetFlags = 0) const {
+    MI->addOperand(MachineOperand::CreateJTI(Idx, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
-                                              int64_t Offset = 0) const {
-    MI->addOperand(MachineOperand::CreateGA(GV, Offset));
+                                              int64_t Offset = 0,
+                                          unsigned char TargetFlags = 0) const {
+    MI->addOperand(MachineOperand::CreateGA(GV, Offset, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addExternalSymbol(const char *FnName,
-                                               int64_t Offset = 0) const {
-    MI->addOperand(MachineOperand::CreateES(FnName, Offset));
+                                               int64_t Offset = 0,
+                                          unsigned char TargetFlags = 0) const {
+    MI->addOperand(MachineOperand::CreateES(FnName, Offset, TargetFlags));
     return *this;
   }
 
@@ -126,13 +131,17 @@ public:
     if (MO.isFI())
       return addFrameIndex(MO.getIndex());
     if (MO.isGlobal())
-      return addGlobalAddress(MO.getGlobal(), MO.getOffset());
+      return addGlobalAddress(MO.getGlobal(), MO.getOffset(),
+                              MO.getTargetFlags());
     if (MO.isCPI())
-      return addConstantPoolIndex(MO.getIndex(), MO.getOffset());
+      return addConstantPoolIndex(MO.getIndex(), MO.getOffset(),
+                                  MO.getTargetFlags());
     if (MO.isSymbol())
-      return addExternalSymbol(MO.getSymbolName());
+      return addExternalSymbol(MO.getSymbolName(), MO.getOffset(),
+                               MO.getTargetFlags());
     if (MO.isJTI())
-      return addJumpTableIndex(MO.getIndex());
+      return addJumpTableIndex(MO.getIndex(),
+                               MO.getTargetFlags());
 
     assert(0 && "Unknown operand for MachineInstrBuilder::AddOperand!");
     return *this;
