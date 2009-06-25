@@ -63,6 +63,7 @@ private:
   bool ParseDirectiveFill(); // ".fill"
   bool ParseDirectiveSpace(); // ".space"
   bool ParseDirectiveSet(); // ".set"
+  bool ParseDirectiveOrg(); // ".org"
   
 };
 

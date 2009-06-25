@@ -324,6 +324,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveValue(8);
     if (!strcmp(IDVal, ".fill"))
       return ParseDirectiveFill();
+    if (!strcmp(IDVal, ".org"))
+      return ParseDirectiveOrg();
     if (!strcmp(IDVal, ".space"))
       return ParseDirectiveSpace();
 
@@ -331,7 +333,6 @@ bool AsmParser::ParseStatement() {
     EatToEndOfStatement();
     return false;
   }
-
 
   MCInst Inst;
   if (ParseX86InstOperands(Inst))
@@ -555,6 +556,34 @@ bool AsmParser::ParseDirectiveFill() {
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)
     Out.EmitValue(MCValue::get(FillExpr), FillSize);
+
+  return false;
+}
+
+/// ParseDirectiveOrg
+///  ::= .org expression [ , expression ]
+bool AsmParser::ParseDirectiveOrg() {
+  int64_t Offset;
+  if (ParseExpression(Offset))
+    return true;
+
+  // Parse optional fill expression.
+  int64_t FillExpr = 0;
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    if (Lexer.isNot(asmtok::Comma))
+      return TokError("unexpected token in '.org' directive");
+    Lexer.Lex();
+    
+    if (ParseExpression(FillExpr))
+      return true;
+
+    if (Lexer.isNot(asmtok::EndOfStatement))
+      return TokError("unexpected token in '.org' directive");
+  }
+
+  Lexer.Lex();
+  
+  Out.EmitValueToOffset(MCValue::get(Offset), FillExpr);
 
   return false;
 }
