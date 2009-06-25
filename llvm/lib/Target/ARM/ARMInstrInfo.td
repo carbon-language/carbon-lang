@@ -103,6 +103,8 @@ def HasThumb2 : Predicate<"Subtarget->hasThumb2()">;
 def IsARM     : Predicate<"!Subtarget->isThumb()">;
 def IsDarwin    : Predicate<"Subtarget->isTargetDarwin()">;
 def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
+def CarryDefIsUnused : Predicate<"N.getNode()->hasNUsesOfValue(0, 1)">;
+def CarryDefIsUsed   : Predicate<"N.getNode()->hasAnyUseOfValue(1)">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
@@ -430,19 +432,40 @@ multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                   Requires<[IsARM, HasV6]>;
 }
 
-/// AI1_bin_cs_irs - A binary operation that both uses and defines CPSR. It's
-/// currently not predicable.
-let Defs = [CPSR], Uses = [CPSR] in {
-multiclass AI1_bin_cs_irs<bits<4> opcod, string opc, PatFrag opnode> {
-  def ri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
+/// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
+let Uses = [CPSR] in {
+multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode> {
+  def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
+                DPFrm, opc, " $dst, $a, $b",
+               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
+               Requires<[IsARM, CarryDefIsUnused]>;
+  def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                DPFrm, opc, " $dst, $a, $b",
+               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
+               Requires<[IsARM, CarryDefIsUnused]>;
+  def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
+                DPSoRegFrm, opc, " $dst, $a, $b",
+               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
+               Requires<[IsARM, CarryDefIsUnused]>;
+  // Carry setting variants
+  def Sri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                 DPFrm, !strconcat(opc, "s $dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
-  def rr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
+               Requires<[IsARM, CarryDefIsUsed]> {
+                 let Defs = [CPSR];
+               }
+  def Srr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, !strconcat(opc, "s $dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
-  def rs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
+               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
+               Requires<[IsARM, CarryDefIsUsed]> {
+                 let Defs = [CPSR];
+               }
+  def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, !strconcat(opc, "s $dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
+               Requires<[IsARM, CarryDefIsUsed]> {
+                 let Defs = [CPSR];
+               }
 }
 }
 
@@ -910,11 +933,10 @@ defm ADDS : AI1_bin_s_irs<0b0100, "add",
 defm SUBS : AI1_bin_s_irs<0b0010, "sub",
                           BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
-// FIXME: Do not allow ADCS / SBCS to be predicated for now.
-defm ADCS : AI1_bin_cs_irs<0b0101, "adc",
-                           BinOpFrag<(adde node:$LHS, node:$RHS)>>;
-defm SBCS : AI1_bin_cs_irs<0b0110, "sbc",
-                           BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+defm ADC : AI1_adde_sube_irs<0b0101, "adc",
+                             BinOpFrag<(adde node:$LHS, node:$RHS)>>;
+defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
+                             BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // These don't define reg/reg forms, because they are handled above.
 def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
@@ -935,14 +957,27 @@ def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                  [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>;
 }
 
-// FIXME: Do not allow RSC to be predicated for now.
+let Uses = [CPSR] in {
+def RSCri : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
+                 DPFrm, "rsc", " $dst, $a, $b",
+                 [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>,
+                 Requires<[IsARM, CarryDefIsUnused]>;
+def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
+                 DPSoRegFrm, "rsc", " $dst, $a, $b",
+                 [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>,
+                 Requires<[IsARM, CarryDefIsUnused]>;
+}
+
+// FIXME: Allow these to be predicated.
 let Defs = [CPSR], Uses = [CPSR] in {
 def RSCSri : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                   DPFrm, "rscs $dst, $a, $b",
-                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>;
+                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>,
+                  Requires<[IsARM, CarryDefIsUnused]>;
 def RSCSrs : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                   DPSoRegFrm, "rscs $dst, $a, $b",
-                  [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>;
+                  [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>,
+                  Requires<[IsARM, CarryDefIsUnused]>;
 }
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
