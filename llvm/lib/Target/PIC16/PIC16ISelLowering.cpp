@@ -97,6 +97,16 @@ static const char *getIntrinsicName(unsigned opcode) {
   case RTLIB::SUB_F32: Basename = "sub.f32"; break;
   case RTLIB::MUL_F32: Basename = "mul.f32"; break;
   case RTLIB::DIV_F32: Basename = "div.f32"; break;
+
+  // Floating point comparison
+  case RTLIB::O_F32: Basename = "unordered.f32"; break;
+  case RTLIB::UO_F32: Basename = "unordered.f32"; break;
+  case RTLIB::OLE_F32: Basename = "le.f32"; break;
+  case RTLIB::OGE_F32: Basename = "ge.f32"; break;
+  case RTLIB::OLT_F32: Basename = "lt.f32"; break;
+  case RTLIB::OGT_F32: Basename = "gt.f32"; break;
+  case RTLIB::OEQ_F32: Basename = "eq.f32"; break;
+  case RTLIB::UNE_F32: Basename = "neq.f32"; break;
   }
   
   std::string prefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
@@ -186,6 +196,25 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setLibcallName(RTLIB::SUB_F32, getIntrinsicName(RTLIB::SUB_F32));
   setLibcallName(RTLIB::MUL_F32, getIntrinsicName(RTLIB::MUL_F32));
   setLibcallName(RTLIB::DIV_F32, getIntrinsicName(RTLIB::DIV_F32));
+
+  // Floationg point comparison
+  setLibcallName(RTLIB::UO_F32, getIntrinsicName(RTLIB::UO_F32));
+  setLibcallName(RTLIB::OLE_F32, getIntrinsicName(RTLIB::OLE_F32));
+  setLibcallName(RTLIB::OGE_F32, getIntrinsicName(RTLIB::OGE_F32));
+  setLibcallName(RTLIB::OLT_F32, getIntrinsicName(RTLIB::OLT_F32));
+  setLibcallName(RTLIB::OGT_F32, getIntrinsicName(RTLIB::OGT_F32));
+  setLibcallName(RTLIB::OEQ_F32, getIntrinsicName(RTLIB::OEQ_F32));
+  setLibcallName(RTLIB::UNE_F32, getIntrinsicName(RTLIB::UNE_F32));
+
+  // Return value comparisons of floating point calls. 
+  setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::UO_F32, ISD::SETNE);
+  setCmpLibcallCC(RTLIB::O_F32, ISD::SETEQ);
 
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i16, Custom);
