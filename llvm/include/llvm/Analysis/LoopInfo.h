@@ -281,6 +281,16 @@ public:
     }
   }
 
+  /// getUniqueExitBlock - If getUniqueExitBlocks would return exactly one
+  /// block, return that block. Otherwise return null.
+  BlockT *getUniqueExitBlock() const {
+    SmallVector<BlockT*, 8> UniqueExitBlocks;
+    getUniqueExitBlocks(UniqueExitBlocks);
+    if (UniqueExitBlocks.size() == 1)
+      return UniqueExitBlocks[0];
+    return 0;
+  }
+
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
   /// from outside of the loop.  If this is the case, the block branching to the
