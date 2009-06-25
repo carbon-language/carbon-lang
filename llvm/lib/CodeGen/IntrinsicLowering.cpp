@@ -668,7 +668,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // by the lowerinvoke pass.  In both cases, the right thing to do is to
     // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp: {
-    static Constant *SetjmpFCache = 0;
     Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin() + 1, CI->op_end(),
                                Type::Int32Ty, SetjmpFCache);
     if (CI->getType() != Type::VoidTy)
@@ -681,7 +680,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
      break;
 
   case Intrinsic::longjmp: {
-    static Constant *LongjmpFCache = 0;
     ReplaceCallWith("longjmp", CI, CI->op_begin() + 1, CI->op_end(),
                     Type::VoidTy, LongjmpFCache);
     break;
@@ -689,7 +687,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::siglongjmp: {
     // Insert the call to abort
-    static Constant *AbortFCache = 0;
     ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), 
                     Type::VoidTy, AbortFCache);
     break;
@@ -728,7 +725,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::stacksave:
   case Intrinsic::stackrestore: {
-    static bool Warned = false;
     if (!Warned)
       cerr << "WARNING: this target does not support the llvm.stack"
            << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
@@ -783,7 +779,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;   // Strip out annotate intrinsic
     
   case Intrinsic::memcpy: {
-    static Constant *MemcpyFCache = 0;
     const IntegerType *IntPtr = TD.getIntPtrType();
     Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
                                         /* isSigned */ false);
@@ -796,7 +791,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::memmove: {
-    static Constant *MemmoveFCache = 0;
     const IntegerType *IntPtr = TD.getIntPtrType();
     Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
                                         /* isSigned */ false);
@@ -809,7 +803,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::memset: {
-    static Constant *MemsetFCache = 0;
     const IntegerType *IntPtr = TD.getIntPtrType();
     Value *Size = Builder.CreateIntCast(CI->getOperand(3), IntPtr,
                                         /* isSigned */ false);
@@ -824,57 +817,36 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::sqrt: {
-    static Constant *sqrtFCache = 0;
-    static Constant *sqrtDCache = 0;
-    static Constant *sqrtLDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, sqrtFCache, sqrtDCache, sqrtLDCache,
                                "sqrtf", "sqrt", "sqrtl");
     break;
   }
   case Intrinsic::log: {
-    static Constant *logFCache = 0;
-    static Constant *logDCache = 0;
-    static Constant *logLDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, logFCache, logDCache, logLDCache,
                                "logf", "log", "logl");
     break;
   }
   case Intrinsic::log2: {
-    static Constant *log2FCache = 0;
-    static Constant *log2DCache = 0;
-    static Constant *log2LDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, log2FCache, log2DCache, log2LDCache,
                                "log2f", "log2", "log2l");
     break;
   }
   case Intrinsic::log10: {
-    static Constant *log10FCache = 0;
-    static Constant *log10DCache = 0;
-    static Constant *log10LDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, log10FCache, log10DCache, log10LDCache,
                                "log10f", "log10", "log10l");
     break;
   }
   case Intrinsic::exp: {
-    static Constant *expFCache = 0;
-    static Constant *expDCache = 0;
-    static Constant *expLDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, expFCache, expDCache, expLDCache,
                                "expf", "exp", "expl");
     break;
   }
   case Intrinsic::exp2: {
-    static Constant *exp2FCache = 0;
-    static Constant *exp2DCache = 0;
-    static Constant *exp2LDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, exp2FCache, exp2DCache, exp2LDCache,
                                "exp2f", "exp2", "exp2l");
     break;
   }
   case Intrinsic::pow: {
-    static Constant *powFCache = 0;
-    static Constant *powDCache = 0;
-    static Constant *powLDCache = 0;
     ReplaceFPIntrinsicWithCall(CI, powFCache, powDCache, powLDCache,
                                "powf", "pow", "powl");
     break;
