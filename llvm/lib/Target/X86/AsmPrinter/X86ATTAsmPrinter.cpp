@@ -405,24 +405,14 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     
     O << Name;
     
-    if (shouldPrintPLT(TM, Subtarget)) {
-      std::string GOTName(TAI->getGlobalPrefix());
-      GOTName+="_GLOBAL_OFFSET_TABLE_";
-      if (Name == GOTName) {
-        // HACK! Emit extra offset to PC during printing GOT offset to
-        // compensate for the size of popl instruction. The resulting code
-        // should look like:
-        //   call .piclabel
-        // piclabel:
-        //   popl %some_register
-        //   addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
-        O << " + [.-";
-        PrintPICBaseSymbol();
-        O << ']';
-      }
-      
-      O << "@PLT";
+    if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
+      O << " + [.-";
+      PrintPICBaseSymbol();
+      O << ']';
     }
+    
+    if (shouldPrintPLT(TM, Subtarget))
+      O << "@PLT";
     
     if (needCloseParen)
       O << ')';
@@ -633,21 +623,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     O << Name;
 
-    if (shouldPrintPLT(TM, Subtarget)) {
-      std::string GOTName(TAI->getGlobalPrefix());
-      GOTName+="_GLOBAL_OFFSET_TABLE_";
-      if (Name == GOTName) {
-        // HACK! Emit extra offset to PC during printing GOT offset to
-        // compensate for the size of popl instruction. The resulting code
-        // should look like:
-        //   call .piclabel
-        // piclabel:
-        //   popl %some_register
-        //   addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
-        O << " + [.-";
-        PrintPICBaseSymbol();
-        O << ']';
-      }
+    if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
+      O << " + [.-";
+      PrintPICBaseSymbol();
+      O << ']';
     }
 
     if (needCloseParen)

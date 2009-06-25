@@ -71,7 +71,18 @@ namespace X86 {
 namespace X86II {
   enum {
     //===------------------------------------------------------------------===//
-    // Instruction types.  These are the standard/most common forms for X86
+    // X86 Specific MachineOperand flags.
+    
+    MO_NO_FLAG = 0,
+    
+    /// MO_GOT_ABSOLUTE_ADDRESS - On a symbol operand, this represents a
+    /// relocation of:
+    ///    $SYMBOL_LABEL + [. - PICBASELABEL]
+    MO_GOT_ABSOLUTE_ADDRESS = 1,
+    
+    
+    //===------------------------------------------------------------------===//
+    // Instruction encodings.  These are the standard/most common forms for X86
     // instructions.
     //
 
