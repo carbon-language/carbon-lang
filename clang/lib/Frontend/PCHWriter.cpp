@@ -531,6 +531,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.PascalStrings);  // Allow Pascal strings
   Record.push_back(LangOpts.WritableStrings);  // Allow writable strings
   Record.push_back(LangOpts.LaxVectorConversions);
+  Record.push_back(LangOpts.AltiVec);
   Record.push_back(LangOpts.Exceptions);  // Support exception handling.
 
   Record.push_back(LangOpts.NeXTRuntime); // Use NeXT runtime.
@@ -568,6 +569,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.getGCMode());
   Record.push_back(LangOpts.getVisibilityMode());
   Record.push_back(LangOpts.InstantiationDepth);
+  Record.push_back(LangOpts.OpenCL);
   Stream.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
 }
 

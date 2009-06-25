@@ -1631,6 +1631,7 @@ bool PCHReader::ParseLanguageOptions(
     PARSE_LANGOPT(PascalStrings);
     PARSE_LANGOPT(WritableStrings);
     PARSE_LANGOPT(LaxVectorConversions);
+    PARSE_LANGOPT(AltiVec);
     PARSE_LANGOPT(Exceptions);
     PARSE_LANGOPT(NeXTRuntime);
     PARSE_LANGOPT(Freestanding);
@@ -1654,6 +1655,7 @@ bool PCHReader::ParseLanguageOptions(
     LangOpts.setVisibilityMode((LangOptions::VisibilityMode)Record[Idx]);
     ++Idx;
     PARSE_LANGOPT(InstantiationDepth);
+    PARSE_LANGOPT(OpenCL);
   #undef PARSE_LANGOPT
 
     return Listener->ReadLanguageOptions(LangOpts);
