@@ -66,7 +66,8 @@ namespace {
     KEYCXX = 4,
     KEYCXX0X = 8,
     KEYGNU = 16,
-    KEYMS = 32
+    KEYMS = 32,
+    BOOLSUPPORT = 64
   };
 }
 
@@ -88,6 +89,7 @@ static void AddKeyword(const char *Keyword, unsigned KWLen,
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
   else if (LangOpts.GNUMode && (Flags & KEYGNU)) AddResult = 1;
   else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
+  else if (LangOpts.OpenCL && (Flags & BOOLSUPPORT)) AddResult = 2;
 
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;
