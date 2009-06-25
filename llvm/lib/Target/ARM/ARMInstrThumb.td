@@ -132,6 +132,24 @@ def tPICADD : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, pclabel:$cp),
                   "$cp:\n\tadd $dst, pc",
                   [(set tGPR:$dst, (ARMpic_add tGPR:$lhs, imm:$cp))]>;
 
+// PC relative add.
+def tADDrPCi : T1I<(outs tGPR:$dst), (ins i32imm:$rhs),
+                  "add $dst, pc, $rhs * 4", []>;
+
+// ADD rd, sp, #imm8
+// FIXME: hard code sp?
+def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs),
+                  "add $dst, $sp, $rhs * 4 @ addrspi", []>;
+
+// ADD sp, sp, #imm7
+// FIXME: hard code sp?
+def tADDspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
+                  "add $dst, $rhs * 4", []>;
+
+// FIXME: Make use of the following?
+// ADD rm, sp, rm
+// ADD sp, rm
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
 //
@@ -302,15 +320,6 @@ def tADDrr : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
 let neverHasSideEffects = 1 in
 def tADDhirr : T1It<(outs tGPR:$dst), (ins GPR:$lhs, GPR:$rhs),
                    "add $dst, $rhs @ addhirr", []>;
-
-def tADDrPCi : T1I<(outs tGPR:$dst), (ins i32imm:$rhs),
-                  "add $dst, pc, $rhs * 4", []>;
-
-def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs),
-                  "add $dst, $sp, $rhs * 4 @ addrspi", []>;
-
-def tADDspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
-                  "add $dst, $rhs * 4", []>;
 
 let isCommutable = 1 in
 def tAND : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
