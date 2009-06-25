@@ -1056,6 +1056,8 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
 
 DecltypeType::DecltypeType(Expr *E, QualType can)
   : Type(Decltype, can, E->isTypeDependent()), E(E) {
+  assert(can->isDependentType() == E->isTypeDependent() &&
+         "type dependency mismatch!");
   assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
