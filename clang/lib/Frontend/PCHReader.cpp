@@ -71,6 +71,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_BENIGN(WritableStrings);
   PARSE_LANGOPT_IMPORTANT(LaxVectorConversions, 
                           diag::warn_pch_lax_vector_conversions);
+  PARSE_LANGOPT_IMPORTANT(AltiVec, diag::warn_pch_altivec);
   PARSE_LANGOPT_IMPORTANT(Exceptions, diag::warn_pch_exceptions);
   PARSE_LANGOPT_IMPORTANT(NeXTRuntime, diag::warn_pch_objc_runtime);
   PARSE_LANGOPT_IMPORTANT(Freestanding, diag::warn_pch_freestanding);
@@ -105,6 +106,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   }
   PARSE_LANGOPT_BENIGN(getVisibilityMode());
   PARSE_LANGOPT_BENIGN(InstantiationDepth);
+  PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
 #undef PARSE_LANGOPT_IRRELEVANT
 #undef PARSE_LANGOPT_BENIGN
 

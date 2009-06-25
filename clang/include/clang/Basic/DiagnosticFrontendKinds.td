@@ -60,6 +60,12 @@ def warn_pch_heinous_extensions : Error<
 def warn_pch_lax_vector_conversions : Error<
     "lax vector conversions were %select{disabled|enabled}0 in PCH file but "
     "are currently %select{disabled|enabled}1">;
+def warn_pch_altivec : Error<
+    "AltiVec initializers were %select{disabled|enabled}0 in PCH file but "
+    "are currently %select{disabled|enabled}1">;
+def warn_pch_opencl : Error<
+    "OpenCL language extensions were %select{disabled|enabled}0 in PCH file "
+    "but are currently %select{disabled|enabled}1">;
 def warn_pch_exceptions : Error<
     "exceptions were %select{disabled|enabled}0 in PCH file but "
     "are currently %select{disabled|enabled}1">;
