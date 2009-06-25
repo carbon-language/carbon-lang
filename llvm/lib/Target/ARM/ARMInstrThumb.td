@@ -294,7 +294,7 @@ def tPUSH : TI<(outs), (ins reglist:$src1, variable_ops),
 //  Arithmetic Instructions.
 //
 
-// Add with carry
+// Add with carry 
 let isCommutable = 1 in
 def tADC : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                "adc $dst, $rhs",
