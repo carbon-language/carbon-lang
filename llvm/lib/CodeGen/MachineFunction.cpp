@@ -124,25 +124,28 @@ MachineFunction::MachineFunction(const Function *F,
                   MachineFrameInfo(*TM.getFrameInfo());
   ConstantPool = new (Allocator.Allocate<MachineConstantPool>())
                      MachineConstantPool(TM.getTargetData());
-  
+
   // Set up jump table.
   const TargetData &TD = *TM.getTargetData();
   bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
   unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
-  unsigned Alignment = IsPic ? TD.getABITypeAlignment(Type::Int32Ty)
-                             : TD.getPointerABIAlignment();
+  unsigned TyAlignment = IsPic ? TD.getABITypeAlignment(Type::Int32Ty)
+                               : TD.getPointerABIAlignment();
   JumpTableInfo = new (Allocator.Allocate<MachineJumpTableInfo>())
-                      MachineJumpTableInfo(EntrySize, Alignment);
+                      MachineJumpTableInfo(EntrySize, TyAlignment);
 }
 
 MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
   InstructionRecycler.clear(Allocator);
   BasicBlockRecycler.clear(Allocator);
-  if (RegInfo)
-    RegInfo->~MachineRegisterInfo();        Allocator.Deallocate(RegInfo);
+  if (RegInfo) {
+    RegInfo->~MachineRegisterInfo();
+    Allocator.Deallocate(RegInfo);
+  }
   if (MFInfo) {
-    MFInfo->~MachineFunctionInfo();       Allocator.Deallocate(MFInfo);
+    MFInfo->~MachineFunctionInfo();
+    Allocator.Deallocate(MFInfo);
   }
   FrameInfo->~MachineFrameInfo();         Allocator.Deallocate(FrameInfo);
   ConstantPool->~MachineConstantPool();   Allocator.Deallocate(ConstantPool);
