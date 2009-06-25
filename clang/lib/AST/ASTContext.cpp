@@ -1666,6 +1666,9 @@ QualType ASTContext::getTypeOfType(QualType tofType) {
 /// getDecltypeForExpr - Given an expr, will return the decltype for that
 /// expression, according to the rules in C++0x [dcl.type.simple]p4
 static QualType getDecltypeForExpr(const Expr *e, ASTContext &Context) {
+  if (e->isTypeDependent())
+    return Context.DependentTy;
+  
   // If e is an id expression or a class member access, decltype(e) is defined
   // as the type of the entity named by e.
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(e)) {
