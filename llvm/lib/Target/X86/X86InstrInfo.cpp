@@ -3190,9 +3190,8 @@ unsigned X86InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   bool IsPIC = (TM.getRelocationModel() == Reloc::PIC_);
   bool Is64BitMode = TM.getSubtargetImpl()->is64Bit();
   unsigned Size = GetInstSizeWithDesc(*MI, &Desc, IsPIC, Is64BitMode);
-  if (Desc.getOpcode() == X86::MOVPC32r) {
+  if (Desc.getOpcode() == X86::MOVPC32r)
     Size += GetInstSizeWithDesc(*MI, &get(X86::POP32r), IsPIC, Is64BitMode);
-  }
   return Size;
 }
 

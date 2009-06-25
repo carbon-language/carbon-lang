@@ -118,34 +118,7 @@ public:
   }
 
   const MachineInstrBuilder &addOperand(const MachineOperand &MO) const {
-    if (MO.isReg())
-      return addReg(MO.getReg(),
-                    (MO.isDef() ? RegState::Define : 0) |
-                    (MO.isImplicit() ? RegState::Implicit : 0) |
-                    (MO.isKill() ? RegState::Kill : 0) |
-                    (MO.isDead() ? RegState::Dead : 0) |
-                    (MO.isEarlyClobber() ? RegState::EarlyClobber : 0),
-                    MO.getSubReg());
-    if (MO.isImm())
-      return addImm(MO.getImm());
-    if (MO.isFI())
-      return addFrameIndex(MO.getIndex());
-    if (MO.isGlobal())
-      return addGlobalAddress(MO.getGlobal(), MO.getOffset(),
-                              MO.getTargetFlags());
-    if (MO.isMBB())
-      return addMBB(MO.getMBB(), MO.getTargetFlags());
-    if (MO.isCPI())
-      return addConstantPoolIndex(MO.getIndex(), MO.getOffset(),
-                                  MO.getTargetFlags());
-    if (MO.isSymbol())
-      return addExternalSymbol(MO.getSymbolName(), MO.getOffset(),
-                               MO.getTargetFlags());
-    if (MO.isJTI())
-      return addJumpTableIndex(MO.getIndex(),
-                               MO.getTargetFlags());
-
-    assert(0 && "Unknown operand for MachineInstrBuilder::AddOperand!");
+    MI->addOperand(MO);
     return *this;
   }
 };
