@@ -133,6 +133,8 @@ public:
     if (MO.isGlobal())
       return addGlobalAddress(MO.getGlobal(), MO.getOffset(),
                               MO.getTargetFlags());
+    if (MO.isMBB())
+      return addMBB(MO.getMBB());
     if (MO.isCPI())
       return addConstantPoolIndex(MO.getIndex(), MO.getOffset(),
                                   MO.getTargetFlags());

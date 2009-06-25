@@ -109,7 +109,7 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
 
   // If this insn is not going to access any memory, return.
   const TargetInstrDesc &TID = TII->get(MI->getOpcode());
-  if (! (TID.isCall() || TID.mayLoad() || TID.mayStore()))
+  if (!(TID.isBranch() || TID.isCall() || TID.mayLoad() || TID.mayStore()))
     return false;
 
   // Scan for the memory address operand.
@@ -119,8 +119,9 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
   for (unsigned i = 0; i < NumOperands; i++) {
     MachineOperand Op = MI->getOperand(i);
     if (Op.getType() ==  MachineOperand::MO_GlobalAddress ||
-        Op.getType() ==  MachineOperand::MO_ExternalSymbol) {
-      // We found one mem operand. Next one should be BS.
+        Op.getType() ==  MachineOperand::MO_ExternalSymbol || 
+        Op.getType() ==  MachineOperand::MO_MachineBasicBlock) {
+      // We found one mem operand. Next one may be BS.
       MemOpPos = i;
       break;
     }
@@ -133,7 +134,8 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
   MachineOperand &Op = MI->getOperand(MemOpPos);
 
   // If this is a pagesel material, handle it first.
-  if (MI->getOpcode() == PIC16::CALL) {
+  if (MI->getOpcode() == PIC16::CALL ||
+      MI->getOpcode() == PIC16::br_uncond) {
     DebugLoc dl = MI->getDebugLoc();
     BuildMI(*MBB, MI, dl, TII->get(PIC16::pagesel)).
       addOperand(Op);
