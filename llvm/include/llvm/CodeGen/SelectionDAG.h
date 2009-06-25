@@ -278,10 +278,12 @@ public:
     return getConstantFP(Val, VT, true);
   }
   SDValue getGlobalAddress(const GlobalValue *GV, MVT VT,
-                           int64_t offset = 0, bool isTargetGA = false);
+                           int64_t offset = 0, bool isTargetGA = false,
+                           unsigned char TargetFlags = 0);
   SDValue getTargetGlobalAddress(const GlobalValue *GV, MVT VT,
-                                 int64_t offset = 0) {
-    return getGlobalAddress(GV, VT, offset, true);
+                                 int64_t offset = 0,
+                                 unsigned char TargetFlags = 0) {
+    return getGlobalAddress(GV, VT, offset, true, TargetFlags);
   }
   SDValue getFrameIndex(int FI, MVT VT, bool isTarget = false);
   SDValue getTargetFrameIndex(int FI, MVT VT) {

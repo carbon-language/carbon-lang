@@ -1819,13 +1819,15 @@ public:
 class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
   int64_t Offset;
+  unsigned char TargetFlags;
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT VT,
-                      int64_t o = 0);
+                      int64_t o, unsigned char TargetFlags);
 public:
 
   GlobalValue *getGlobal() const { return TheGlobal; }
   int64_t getOffset() const { return Offset; }
+  unsigned char getTargetFlags() const { return TargetFlags; }
   // Return the address space this GlobalAddress belongs to.
   unsigned getAddressSpace() const;
 

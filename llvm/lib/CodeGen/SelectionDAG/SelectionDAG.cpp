@@ -361,6 +361,9 @@ static void AddNodeIDNode(FoldingSetNodeID &ID,
 /// the NodeID data.
 static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   switch (N->getOpcode()) {
+  case ISD::TargetExternalSymbol:
+  case ISD::ExternalSymbol:
+    assert(0 && "Should only be used on nodes with operands");
   default: break;  // Normal nodes don't need extra info.
   case ISD::ARG_FLAGS:
     ID.AddInteger(cast<ARG_FLAGSSDNode>(N)->getArgFlags().getRawBits());
@@ -381,6 +384,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
     ID.AddPointer(GA->getGlobal());
     ID.AddInteger(GA->getOffset());
+    ID.AddInteger(GA->getTargetFlags());
     break;
   }
   case ISD::BasicBlock:
@@ -958,9 +962,11 @@ SDValue SelectionDAG::getConstantFP(double Val, MVT VT, bool isTarget) {
 
 SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                        MVT VT, int64_t Offset,
-                                       bool isTargetGA) {
-  unsigned Opc;
-
+                                       bool isTargetGA,
+                                       unsigned char TargetFlags) {
+  assert((TargetFlags == 0 || isTargetGA) &&
+         "Cannot set target flags on target-independent globals");
+  
   // Truncate (with sign-extension) the offset value to the pointer size.
   unsigned BitWidth = TLI.getPointerTy().getSizeInBits();
   if (BitWidth < 64)
@@ -973,6 +979,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
       GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
   }
 
+  unsigned Opc;
   if (GVar && GVar->isThreadLocal())
     Opc = isTargetGA ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress;
   else
@@ -982,11 +989,12 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddPointer(GV);
   ID.AddInteger(Offset);
+  ID.AddInteger(TargetFlags);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<GlobalAddressSDNode>();
-  new (N) GlobalAddressSDNode(isTargetGA, GV, VT, Offset);
+  new (N) GlobalAddressSDNode(isTargetGA, GV, VT, Offset, TargetFlags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -4914,14 +4922,15 @@ HandleSDNode::~HandleSDNode() {
 }
 
 GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
-                                         MVT VT, int64_t o)
+                                         MVT VT, int64_t o, unsigned char TF)
   : SDNode(isa<GlobalVariable>(GA) &&
            cast<GlobalVariable>(GA)->isThreadLocal() ?
            // Thread Local
            (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
            // Non Thread Local
            (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
-           DebugLoc::getUnknownLoc(), getSDVTList(VT)), Offset(o) {
+           DebugLoc::getUnknownLoc(), getSDVTList(VT)),
+    Offset(o), TargetFlags(TF) {
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
 
@@ -5487,6 +5496,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
       OS << " + " << offset;
     else
       OS << " " << offset;
+    if (unsigned char TF = GADN->getTargetFlags())
+      OS << " [TF=" << TF << ']';
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
     OS << "<" << FIDN->getIndex() << ">";
   } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(this)) {
@@ -5517,6 +5528,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     OS << "'" << ES->getSymbol() << "'";
+    if (unsigned char TF = GADN->getTargetFlags())
+      OS << " [TF=" << TF << ']';
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
       OS << "<" << M->getValue() << ">";
