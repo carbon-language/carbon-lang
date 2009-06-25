@@ -30,7 +30,7 @@ void* ThreadLocalImpl::getInstance() { return data; }
 }
 #else
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_MUTEX_LOCK)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_GETSPECIFIC)
 
 #include <cassert>
 #include <pthread.h>

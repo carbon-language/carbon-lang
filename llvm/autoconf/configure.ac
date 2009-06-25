@@ -829,6 +829,9 @@ if test "$ENABLE_THREADS" -eq 1 ; then
   AC_SEARCH_LIBS(pthread_rwlock_init,pthread,
                  AC_DEFINE([HAVE_PTHREAD_RWLOCK_INIT],[1],
                  [Have pthread_rwlock_init]))
+  AC_SEARCH_LIBS(pthread_getspecific,pthread,
+                 AC_DEFINE([HAVE_PTHREAD_GETSPECIFIC],[1],
+                 [Have pthread_getspecific]))
 fi
 
 dnl Allow extra x86-disassembler library
