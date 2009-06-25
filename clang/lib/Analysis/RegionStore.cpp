@@ -303,6 +303,8 @@ public:
   ///       return symbolic
   SVal Retrieve(const GRState *state, Loc L, QualType T = QualType());
 
+  SVal RetrieveElement(const GRState* state, const ElementRegion* R);
+
   SVal RetrieveField(const GRState* state, const FieldRegion* R);
 
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
@@ -841,6 +843,9 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
     return RetrieveField(state, FR);
 
+  if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
+    return RetrieveElement(state, ER);
+
   // FIXME: We should eventually handle funny addressing.  e.g.:
   //
   //   int x = ...;
@@ -873,37 +878,6 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (state->contains<RegionKills>(R))
     return UnknownVal();
 
-  // Check if the region is an element region of a string literal.
-  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-    if (const StringRegion *StrR=dyn_cast<StringRegion>(ER->getSuperRegion())) {
-      const StringLiteral *Str = StrR->getStringLiteral();
-      SVal Idx = ER->getIndex();
-      if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
-        int64_t i = CI->getValue().getSExtValue();
-        char c;
-        if (i == Str->getByteLength())
-          c = '\0';
-        else
-          c = Str->getStrData()[i];
-        const llvm::APSInt &V = getBasicVals().getValue(c, getContext().CharTy);
-        return nonloc::ConcreteInt(V);
-      }
-    }
-  }
-
-  // If the region is an element or field, it may have a default value.
-  if (isa<ElementRegion>(R) || isa<FieldRegion>(R)) {
-    const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
-    const SVal* D = state->get<RegionDefaultValue>(SuperR);
-    if (D) {
-      // If the default value is symbolic, we need to create a new symbol.
-      if (D->hasConjuredSymbol())
-        return ValMgr.getRegionValueSymbolVal(R);
-      else
-        return *D;
-    }
-  }
-  
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
     const MemRegion *SR = IVR->getSuperRegion();
 
@@ -958,6 +932,59 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // All other integer values are symbolic.
   if (Loc::IsLocType(RTy) || RTy->isIntegerType())
     return ValMgr.getRegionValueSymbolVal(R, RTy);
+  else
+    return UnknownVal();
+}
+
+SVal RegionStoreManager::RetrieveElement(const GRState* state,
+                                         const ElementRegion* R) {
+  // Check if the region has a binding.
+  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  const SVal* V = B.lookup(R);
+  if (V)
+    return *V;
+
+  // Check if the region is killed.
+  if (state->contains<RegionKills>(R))
+    return UnknownVal();
+
+  // Check if the region is an element region of a string literal.
+  if (const StringRegion *StrR=dyn_cast<StringRegion>(R->getSuperRegion())) {
+    const StringLiteral *Str = StrR->getStringLiteral();
+    SVal Idx = R->getIndex();
+    if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
+      int64_t i = CI->getValue().getSExtValue();
+      char c;
+      if (i == Str->getByteLength())
+        c = '\0';
+      else
+        c = Str->getStrData()[i];
+      return ValMgr.makeIntVal(c, getContext().CharTy);
+    }
+  }
+
+  const MemRegion* SuperR = R->getSuperRegion();
+  const SVal* D = state->get<RegionDefaultValue>(SuperR);
+
+  if (D) {
+    if (D->hasConjuredSymbol())
+      return ValMgr.getRegionValueSymbolVal(R);
+    else
+      return *D;
+  }
+
+  if (R->hasHeapOrStackStorage())
+    return UndefinedVal();
+
+  QualType Ty = R->getValueType(getContext());
+
+  // If the region is already cast to another type, use that type to create the
+  // symbol value.
+  if (const QualType *p = state->get<RegionCasts>(R))
+    Ty = (*p)->getAsPointerType()->getPointeeType();
+
+  if (Loc::IsLocType(Ty) || Ty->isIntegerType())
+    return ValMgr.getRegionValueSymbolVal(R, Ty);
   else
     return UnknownVal();
 }
