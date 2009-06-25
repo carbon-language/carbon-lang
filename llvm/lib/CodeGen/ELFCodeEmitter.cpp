@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 
@@ -103,21 +104,28 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
     break;
   }
 
+  // Emit constant pool to appropriate section(s)
+  emitConstantPool(MF.getConstantPool());
+
   // Relocations
   // -----------
-  // If we have emitted any relocations to function-specific objects such as 
+  // If we have emitted any relocations to function-specific objects such as
   // basic blocks, constant pools entries, or jump tables, record their
   // addresses now so that we can rewrite them with the correct addresses
   // later.
   for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = Relocations[i];
     intptr_t Addr;
-    if (MR.isBasicBlock()) {
+    if (MR.isGlobalValue()) {
+      EW.PendingGlobals.insert(MR.getGlobalValue());
+    } else if (MR.isBasicBlock()) {
       Addr = getMachineBasicBlockAddress(MR.getBasicBlock());
       MR.setConstantVal(ES->SectionIdx);
       MR.setResultPointer((void*)Addr);
-    } else if (MR.isGlobalValue()) {
-      EW.PendingGlobals.insert(MR.getGlobalValue());
+    } else if (MR.isConstantPoolIndex()) {
+      Addr = getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+      MR.setConstantVal(CPSections[MR.getConstantPoolIndex()]);
+      MR.setResultPointer((void*)Addr);
     } else {
       assert(0 && "Unhandled relocation type");
     }
@@ -126,6 +134,38 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   Relocations.clear();
 
   return false;
+}
+
+/// emitConstantPool - For each constant pool entry, figure out which section
+/// the constant should live in and emit the constant
+void ELFCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
+  const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
+  if (CP.empty()) return;
+
+  // TODO: handle PIC codegen
+  assert(TM.getRelocationModel() != Reloc::PIC_ &&
+         "PIC codegen not yet handled for elf constant pools!");
+
+  const TargetAsmInfo *TAI = TM.getTargetAsmInfo();
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    MachineConstantPoolEntry CPE = CP[i];
+
+    // Get the right ELF Section for this constant pool entry
+    std::string CstPoolName =
+      TAI->SelectSectionForMachineConst(CPE.getType())->getName();
+    ELFSection &CstPoolSection =
+      EW.getConstantPoolSection(CstPoolName, CPE.getAlignment());
+
+    // Record the constant pool location and the section index
+    CPLocations.push_back(CstPoolSection.size());
+    CPSections.push_back(CstPoolSection.SectionIdx);
+
+    if (CPE.isMachineConstantPoolEntry())
+      assert("CPE.isMachineConstantPoolEntry not supported yet");
+
+    // Emit the constant to constant pool section
+    EW.EmitGlobalConstant(CPE.Val.ConstVal, CstPoolSection);
+  }
 }
 
 } // end namespace llvm

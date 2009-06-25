@@ -31,6 +31,14 @@ namespace llvm {
     /// emitted.
     std::vector<MachineRelocation> Relocations;
 
+    /// CPLocations - This is a map of constant pool indices to offsets from the
+    /// start of the section for that constant pool index.
+    std::vector<uintptr_t> CPLocations;
+
+    /// CPSections - This is a map of constant pool indices to the MachOSection
+    /// containing the constant pool entry for that index.
+    std::vector<unsigned> CPSections;
+
     /// MBBLocations - This vector is a mapping from MBB ID's to their address.
     /// It is filled in by the StartMachineBasicBlock callback and queried by
     /// the getMachineBasicBlockAddress callback.
@@ -62,9 +70,10 @@ namespace llvm {
     }
 
     virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {
-      assert(0 && "CP not implementated yet!");
-      return 0;
+      assert(CPLocations.size() > Index && "CP not emitted!");
+      return CPLocations[Index];
     }
+
     virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const {
       assert(0 && "JT not implementated yet!");
       return 0;
@@ -85,6 +94,10 @@ namespace llvm {
       assert(0 && "emit Label not implementated yet!");
       abort();
     }
+
+    /// emitConstantPool - For each constant pool entry, figure out which section
+    /// the constant should live in and emit the constant.
+    void emitConstantPool(MachineConstantPool *MCP);
 
     virtual void setModuleInfo(llvm::MachineModuleInfo* MMI) { }
 

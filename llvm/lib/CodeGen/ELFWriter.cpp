@@ -389,6 +389,24 @@ bool ELFWriter::doFinalization(Module &M) {
   if (TAI->getNonexecutableStackDirective())
     getNonExecStackSection();
 
+  // Emit a symbol for each section created until now
+  for (std::map<std::string, ELFSection*>::iterator I = SectionLookup.begin(),
+       E = SectionLookup.end(); I != E; ++I) {
+    ELFSection *ES = I->second;
+
+    // Skip null section
+    if (ES->SectionIdx == 0) continue;
+
+    ELFSym SectionSym(0);
+    SectionSym.SectionIdx = ES->SectionIdx;
+    SectionSym.Size = 0;
+    SectionSym.setBind(ELFSym::STB_LOCAL);
+    SectionSym.setType(ELFSym::STT_SECTION);
+
+    // Local symbols go in the list front
+    SymbolList.push_front(SectionSym);
+  }
+
   // Emit string table
   EmitStringTable();
 
@@ -451,15 +469,25 @@ void ELFWriter::EmitRelocations() {
 
       // Constant addend used to compute the value to be stored 
       // into the relocatable field
-      int64_t Addend = TEW->getAddendForRelTy(RelType);
+      int64_t Addend = 0;
 
       // There are several machine relocations types, and each one of
       // them needs a different approach to retrieve the symbol table index.
       if (MR.isGlobalValue()) {
         const GlobalValue *G = MR.getGlobalValue();
         SymIdx = GblSymLookup[G];
+        Addend = TEW->getAddendForRelTy(RelType);
       } else {
-        assert(0 && "dunno how to handle other relocation types");
+        unsigned SectionIdx = MR.getConstantVal();
+        // TODO: use a map for this.
+        for (std::list<ELFSym>::iterator I = SymbolList.begin(),
+             E = SymbolList.end(); I != E; ++I)
+          if ((SectionIdx == I->SectionIdx) &&
+              (I->getType() == ELFSym::STT_SECTION)) {
+            SymIdx = I->SymTabIdx;
+            break;
+          }
+        Addend = (uint64_t)MR.getResultPointer();
       }
 
       // Get the relocation entry and emit to the relocation section
@@ -540,7 +568,8 @@ void ELFWriter::EmitStringTable() {
        E = SymbolList.end(); I != E; ++I) {
 
     // Use the name mangler to uniquify the LLVM symbol.
-    std::string Name = Mang->getValueName(I->GV);
+    std::string Name;
+    if (I->GV) Name.append(Mang->getValueName(I->GV));
 
     if (Name.empty()) {
       I->NameIdx = 0;
@@ -589,7 +618,11 @@ void ELFWriter::EmitSymbolTable() {
     EmitSymbol(SymTab, *I);
 
     // Record the symbol table index for each global value
-    GblSymLookup[I->GV] = Index;
+    if (I->GV)
+      GblSymLookup[I->GV] = Index;
+
+    // Keep track on the symbol index into the symbol table
+    I->SymTabIdx = Index;
   }
 
   SymTab.Info = FirstNonLocalSymbol;

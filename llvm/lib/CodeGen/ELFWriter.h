@@ -147,6 +147,12 @@ namespace llvm {
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
     }
 
+    /// Get a constant pool section based on the section name returned by TAI
+    ELFSection &getConstantPoolSection(std::string SName, unsigned Align) {
+      return getSection(SName, ELFSection::SHT_PROGBITS,
+                        ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC, Align);
+    }
+
     /// Return the relocation section of section 'S'. 'RelA' is true
     /// if the relocation section contains entries with addends.
     ELFSection &getRelocSection(std::string SName, bool RelA) {

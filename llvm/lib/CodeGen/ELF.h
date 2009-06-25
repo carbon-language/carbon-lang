@@ -144,6 +144,9 @@ namespace llvm {
     uint8_t Other;
     unsigned short SectionIdx;
 
+    // Symbol index into the Symbol table
+    unsigned SymTabIdx;
+
     enum { 
       STB_LOCAL = 0,
       STB_GLOBAL = 1,
@@ -168,7 +171,8 @@ namespace llvm {
     ELFSym(const GlobalValue *gv) : GV(gv), IsCommon(false), IsBss(false),
                                     IsConstant(false), NameIdx(0), Value(0),
                                     Size(0), Info(0), Other(STV_DEFAULT),
-                                    SectionIdx(ELFSection::SHN_UNDEF) {
+                                    SectionIdx(ELFSection::SHN_UNDEF),
+                                    SymTabIdx(0) {
       if (!GV)
         return;
 
@@ -189,6 +193,10 @@ namespace llvm {
 
     unsigned getBind() {
       return (Info >> 4) & 0xf;
+    }
+
+    unsigned getType() {
+      return Info & 0xf;
     }
 
     void setBind(unsigned X) {
