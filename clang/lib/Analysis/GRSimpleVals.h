@@ -69,12 +69,6 @@ public:
                                    GRStmtNodeBuilder<GRState>& Builder,
                                    ObjCMessageExpr* ME,
                                    ExplodedNode<GRState>* Pred);
-  
-  
-  
-  static void GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
-                                     ExplodedNode<GRState>* N);
-  
 protected:
   
   // Equality (==, !=) operators for Locs.  
