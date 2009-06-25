@@ -310,8 +310,8 @@ public:
   SDValue getBasicBlock(MachineBasicBlock *MBB, DebugLoc dl);
   SDValue getExternalSymbol(const char *Sym, MVT VT);
   SDValue getExternalSymbol(const char *Sym, DebugLoc dl, MVT VT);
-  SDValue getTargetExternalSymbol(const char *Sym, MVT VT);
-  SDValue getTargetExternalSymbol(const char *Sym, DebugLoc dl, MVT VT);
+  SDValue getTargetExternalSymbol(const char *Sym, MVT VT,
+                                  unsigned char TargetFlags = 0);
   SDValue getArgFlags(ISD::ArgFlagsTy Flags);
   SDValue getValueType(MVT);
   SDValue getRegister(unsigned Reg, MVT VT);
@@ -862,7 +862,8 @@ private:
   std::vector<SDNode*> ValueTypeNodes;
   std::map<MVT, SDNode*, MVT::compareRawBits> ExtendedValueTypeNodes;
   StringMap<SDNode*> ExternalSymbols;
-  StringMap<SDNode*> TargetExternalSymbols;
+  
+  std::map<std::pair<std::string, unsigned char>,SDNode*> TargetExternalSymbols;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {

@@ -632,10 +632,13 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::ExternalSymbol:
     Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
-  case ISD::TargetExternalSymbol:
-    Erased =
-      TargetExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
+  case ISD::TargetExternalSymbol: {
+    ExternalSymbolSDNode *ESN = cast<ExternalSymbolSDNode>(N);
+    Erased = TargetExternalSymbols.erase(
+               std::pair<std::string,unsigned char>(ESN->getSymbol(),
+                                                    ESN->getTargetFlags()));
     break;
+  }
   case ISD::VALUETYPE: {
     MVT VT = cast<VTSDNode>(N)->getVT();
     if (VT.isExtended()) {
@@ -1108,16 +1111,19 @@ SDValue SelectionDAG::getExternalSymbol(const char *Sym, MVT VT) {
   SDNode *&N = ExternalSymbols[Sym];
   if (N) return SDValue(N, 0);
   N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
-  new (N) ExternalSymbolSDNode(false, Sym, VT);
+  new (N) ExternalSymbolSDNode(false, Sym, 0, VT);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT VT) {
-  SDNode *&N = TargetExternalSymbols[Sym];
+SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT VT,
+                                              unsigned char TargetFlags) {
+  SDNode *&N =
+    TargetExternalSymbols[std::pair<std::string,unsigned char>(Sym,
+                                                               TargetFlags)];
   if (N) return SDValue(N, 0);
   N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
-  new (N) ExternalSymbolSDNode(true, Sym, VT);
+  new (N) ExternalSymbolSDNode(true, Sym, TargetFlags, VT);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }

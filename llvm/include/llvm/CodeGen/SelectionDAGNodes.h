@@ -2101,15 +2101,18 @@ public:
 
 class ExternalSymbolSDNode : public SDNode {
   const char *Symbol;
+  unsigned char TargetFlags;
+  
   friend class SelectionDAG;
-  ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT VT)
+  ExternalSymbolSDNode(bool isTarget, const char *Sym, unsigned char TF, MVT VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
              DebugLoc::getUnknownLoc(),
-             getSDVTList(VT)), Symbol(Sym) {
+             getSDVTList(VT)), Symbol(Sym), TargetFlags(TF) {
   }
 public:
 
   const char *getSymbol() const { return Symbol; }
+  unsigned char getTargetFlags() const { return TargetFlags; }
 
   static bool classof(const ExternalSymbolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
