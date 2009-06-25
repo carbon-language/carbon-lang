@@ -295,8 +295,7 @@ static inline bool shouldPrintGOT(TargetMachine &TM, const X86Subtarget* ST) {
 }
 
 static inline bool shouldPrintPLT(TargetMachine &TM, const X86Subtarget* ST) {
-  return ST->isTargetELF() && TM.getRelocationModel() == Reloc::PIC_ &&
-      (ST->isPICStyleRIPRel() || ST->isPICStyleGOT());
+  return ST->isTargetELF() && TM.getRelocationModel() == Reloc::PIC_;
 }
 
 static inline bool shouldPrintStub(TargetMachine &TM, const X86Subtarget* ST) {
@@ -331,6 +330,8 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     }
     
     if (shouldPrintStub(TM, Subtarget)) {
+      // DARWIN/X86-32 in != static mode.
+      
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
       if (GV->isDeclaration() || GV->isWeakForLinker()) {
@@ -361,9 +362,8 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
         O << Name;
       }
     } else {
-      if (GV->hasDLLImportLinkage()) {
+      if (GV->hasDLLImportLinkage())
         O << "__imp_";
-      }
       O << Name;
       
       if (shouldPrintPLT(TM, Subtarget)) {
@@ -390,7 +390,9 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     Name += MO.getSymbolName();
     // Print function stub suffix unless it's Mac OS X 10.5 and up.
     if (shouldPrintStub(TM, Subtarget) && 
+        // DARWIN/X86-32 in != static mode.
         !(Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9)) {
+      
       FnStubs.insert(Name);
       printSuffixedName(Name, "$stub");
       return;
@@ -514,6 +516,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     }
 
     if (shouldPrintStub(TM, Subtarget)) {
+      // DARWIN/X86-32 in != static mode.
+
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
       if (GV->isDeclaration() || GV->isWeakForLinker()) {
