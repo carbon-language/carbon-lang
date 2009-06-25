@@ -31,8 +31,10 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -4977,14 +4979,17 @@ void SDNode::Profile(FoldingSetNodeID &ID) const {
   AddNodeIDNode(ID, this);
 }
 
+static ManagedStatic<std::set<MVT, MVT::compareRawBits> > EVTs;
+static MVT VTs[MVT::LAST_VALUETYPE];
+static ManagedStatic<sys::SmartMutex<true> > VTMutex;
+
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
 const MVT *SDNode::getValueTypeList(MVT VT) {
+  sys::SmartScopedLock<true> Lock(&*VTMutex);
   if (VT.isExtended()) {
-    static std::set<MVT, MVT::compareRawBits> EVTs;
-    return &(*EVTs.insert(VT).first);
+    return &(*EVTs->insert(VT).first);
   } else {
-    static MVT VTs[MVT::LAST_VALUETYPE];
     VTs[VT.getSimpleVT()] = VT;
     return &VTs[VT.getSimpleVT()];
   }
