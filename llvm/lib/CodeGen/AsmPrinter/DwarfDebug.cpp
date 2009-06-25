@@ -1371,9 +1371,12 @@ bool DwarfDebug::ConstructSubprograms() {
   return Result;
 }
 
-/// SetDebugInfo - Create global DIEs and emit initial debug info sections.
-/// This is inovked by the target AsmPrinter.
-void DwarfDebug::SetDebugInfo(MachineModuleInfo *mmi) {
+  /// BeginModule - Emit all Dwarf sections that should come prior to the
+  /// content. Create global DIEs and emit initial debug info sections.
+  /// This is inovked by the target AsmPrinter.
+void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
+  this->M = M;
+
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 

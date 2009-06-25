@@ -149,16 +149,11 @@ public:
   DwarfException(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
   virtual ~DwarfException();
 
-  /// SetModuleInfo - Set machine module information when it's known that pass
-  /// manager has created it.  Set by the target AsmPrinter.
-  void SetModuleInfo(MachineModuleInfo *mmi) {
-    MMI = mmi;
-  }
-
   /// BeginModule - Emit all exception information that should come prior to the
   /// content.
-  void BeginModule(Module *M) {
-    this->M = M;
+  void BeginModule(Module *m, MachineModuleInfo *mmi) {
+    this->M = m;
+    this->MMI = mmi;
   }
 
   /// EndModule - Emit all exception information that should come after the

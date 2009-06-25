@@ -42,10 +42,8 @@ void DwarfWriter::BeginModule(Module *M,
                               const TargetAsmInfo *T) {
   DE = new DwarfException(OS, A, T);
   DD = new DwarfDebug(OS, A, T);
-  DE->BeginModule(M);
-  DD->BeginModule(M);
-  DD->SetDebugInfo(MMI);
-  DE->SetModuleInfo(MMI);
+  DE->BeginModule(M, MMI);
+  DD->BeginModule(M, MMI);
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.

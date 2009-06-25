@@ -486,15 +486,9 @@ public:
   /// be emitted.
   bool ShouldEmitDwarfDebug() const { return shouldEmit; }
 
-  /// SetDebugInfo - Create global DIEs and emit initial debug info sections.
-  /// This is inovked by the target AsmPrinter.
-  void SetDebugInfo(MachineModuleInfo *mmi);
-
   /// BeginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void BeginModule(Module *M) {
-    this->M = M;
-  }
+  void BeginModule(Module *M, MachineModuleInfo *MMI);
 
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///
