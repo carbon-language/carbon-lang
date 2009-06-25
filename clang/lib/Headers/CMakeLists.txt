@@ -31,7 +31,7 @@ foreach( f ${files} )
     COMMENT "Copying clang's ${f}...")
 endforeach( f )
 
-add_custom_target(clang_headers ALL
+add_custom_target(clang-headers ALL
   DEPENDS ${files})
 
 install(FILES ${files}
