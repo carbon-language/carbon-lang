@@ -329,6 +329,9 @@ public:
   /// template parameter pack.
   bool isTemplateParameterPack() const;
 
+  /// \brief Whether this declaration is a function or function template.
+  bool isFunctionOrFunctionTemplate() const;
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
   static DeclContext *castToDeclContext(const Decl *);

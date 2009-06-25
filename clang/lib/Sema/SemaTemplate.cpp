@@ -79,7 +79,7 @@ TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
       for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
                                                   FEnd = Ovl->function_end();
            F != FEnd; ++F) {
-        if ((*F)->getDescribedFunctionTemplate()) {
+        if (isa<FunctionTemplateDecl>(*F)) {
           TemplateResult = TemplateTy::make(Ovl);
           return TNK_Function_template;
         }
@@ -1809,8 +1809,8 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
       !isa<TemplateTemplateParmDecl>(Template)) {
     assert(isa<FunctionTemplateDecl>(Template) && 
            "Only function templates are possible here");
-    Diag(Arg->getSourceRange().getBegin(), 
-         diag::note_template_arg_refers_here_func)
+    Diag(Arg->getLocStart(), diag::err_template_arg_not_class_template);
+    Diag(Template->getLocation(), diag::note_template_arg_refers_here_func)
       << Template;
   }
 
@@ -2527,7 +2527,13 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
   DeclPtrTy DP = HandleDeclarator(ParentScope, D, 
                                   move(TemplateParameterLists),
                                   /*IsFunctionDefinition=*/true);
-  return ActOnStartOfFunctionDef(FnBodyScope, DP);  
+  FunctionTemplateDecl *FunctionTemplate 
+    = cast_or_null<FunctionTemplateDecl>(DP.getAs<Decl>());
+  if (FunctionTemplate)
+    return ActOnStartOfFunctionDef(FnBodyScope, 
+                      DeclPtrTy::make(FunctionTemplate->getTemplatedDecl()));
+
+  return DeclPtrTy();
 }
 
 // Explicit instantiation of a class template specialization

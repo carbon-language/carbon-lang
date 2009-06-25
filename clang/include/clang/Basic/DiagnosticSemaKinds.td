@@ -704,14 +704,15 @@ def err_template_arg_must_be_expr : Error<
 def err_template_arg_nontype_ambig : Error<
   "template argument for non-type template parameter is treated as type %0">;
 def err_template_arg_must_be_template : Error<
-  "template argument for template template parameter must be a template">;
+  "template argument for template template parameter must be a class template">;
 def err_template_arg_local_type : Error<"template argument uses local type %0">;
 def err_template_arg_unnamed_type : Error<
   "template argument uses unnamed type">;
 def note_template_unnamed_type_here : Note<
   "unnamed type used in template argument was declared here">;
 def err_template_arg_not_class_template : Error<
-  "template argument does not refer to a class template">;
+  "template argument does not refer to a class template or template "
+  "template parameter">;
 def note_template_arg_refers_here_func : Note<
   "template argument refers to function template %0, here">;
 def err_template_arg_template_params_mismatch : Error<

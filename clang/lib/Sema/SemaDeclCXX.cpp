@@ -1625,7 +1625,8 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
            Conv = Conversions->function_begin(),
            ConvEnd = Conversions->function_end();
          Conv != ConvEnd; ++Conv) {
-      if (*Conv == Conversion->getPreviousDeclaration()) {
+      if (*Conv 
+            == cast_or_null<NamedDecl>(Conversion->getPreviousDeclaration())) {
         *Conv = Conversion;
         return DeclPtrTy::make(Conversion);
       }

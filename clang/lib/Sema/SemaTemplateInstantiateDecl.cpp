@@ -44,6 +44,7 @@ namespace {
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
+    Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
     Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
@@ -61,6 +62,7 @@ namespace {
     // Helper functions for instantiating methods.
     QualType InstantiateFunctionType(FunctionDecl *D,
                              llvm::SmallVectorImpl<ParmVarDecl *> &Params);
+    bool InitFunctionInstantiation(FunctionDecl *New, FunctionDecl *Tmpl);
     bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
   };
 }
@@ -291,12 +293,47 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   return Record;
 }
 
-Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
-  // Only handle actual methods; we'll deal with constructors,
-  // destructors, etc. separately.
-  if (D->getKind() != Decl::CXXMethod)
+Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
+  // FIXME: Look for existing specializations (explicit or otherwise).
+  
+  Sema::LocalInstantiationScope Scope(SemaRef);
+  
+  llvm::SmallVector<ParmVarDecl *, 4> Params;
+  QualType T = InstantiateFunctionType(D, Params);
+  if (T.isNull())
     return 0;
+  
+  // Build the instantiated method declaration.
+  FunctionDecl *Function
+    = FunctionDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
+                           D->getDeclName(), T, D->getStorageClass(),
+                           D->isInline(), D->hasWrittenPrototype(),
+                           D->getTypeSpecStartLoc());
+  
+  // FIXME: friend functions
+  
+  // Attach the parameters
+  for (unsigned P = 0; P < Params.size(); ++P)
+    Params[P]->setOwningFunction(Function);
+  Function->setParams(SemaRef.Context, Params.data(), Params.size());
+  
+  if (InitFunctionInstantiation(Function, D))
+    Function->setInvalidDecl();
+  
+  bool Redeclaration = false;
+  bool OverloadableAttrRequired = false;
+  NamedDecl *PrevDecl = 0;
+  SemaRef.CheckFunctionDeclaration(Function, PrevDecl, Redeclaration,
+                                   /*FIXME:*/OverloadableAttrRequired);
+  
 
+  // FIXME: link this to the function template from which it was instantiated.
+  
+  return Function;
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
+  // FIXME: Look for existing, explicit specializations.
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
@@ -340,6 +377,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
+  // FIXME: Look for existing, explicit specializations.
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
@@ -387,6 +425,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
+  // FIXME: Look for existing, explicit specializations.
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
@@ -418,6 +457,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
+  // FIXME: Look for existing, explicit specializations.
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
@@ -557,6 +597,18 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
                                    D->getLocation(), D->getDeclName());
 }
 
+/// \brief Initializes the common fields of an instantiation function 
+/// declaration (New) from the corresponding fields of its template (Tmpl).
+///
+/// \returns true if there was an error
+bool 
+TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New, 
+                                                    FunctionDecl *Tmpl) {
+  if (Tmpl->isDeleted())
+    New->setDeleted();
+  return false;
+}
+
 /// \brief Initializes common fields of an instantiated method
 /// declaration (New) from the corresponding fields of its template
 /// (Tmpl).
@@ -565,6 +617,9 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
 bool 
 TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New, 
                                                   CXXMethodDecl *Tmpl) {
+  if (InitFunctionInstantiation(New, Tmpl))
+    return true;
+  
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   New->setAccess(Tmpl->getAccess());
   if (Tmpl->isVirtualAsWritten()) {
@@ -573,8 +628,6 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
     Record->setPOD(false);
     Record->setPolymorphic(true);
   }
-  if (Tmpl->isDeleted())
-    New->setDeleted();
   if (Tmpl->isPure()) {
     New->setPure();
     Record->setAbstract(true);

@@ -319,16 +319,16 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
         return;
       }
     }
-  } else if (isa<FunctionDecl>(D) &&
-             AllowOverloadingOfFunction(D, Context)) {
-    // We are pushing the name of a function, which might be an
-    // overloaded name.
-    FunctionDecl *FD = cast<FunctionDecl>(D);
+  } else if ((isa<FunctionDecl>(D) &&
+              AllowOverloadingOfFunction(D, Context)) ||
+             isa<FunctionTemplateDecl>(D)) {
+    // We are pushing the name of a function or function template,
+    // which might be an overloaded name.
     IdentifierResolver::iterator Redecl
-      = std::find_if(IdResolver.begin(FD->getDeclName()),
+      = std::find_if(IdResolver.begin(D->getDeclName()),
                      IdResolver.end(),
                      std::bind1st(std::mem_fun(&NamedDecl::declarationReplaces),
-                                  FD));
+                                  D));
     if (Redecl != IdResolver.end() &&
         S->isDeclScope(DeclPtrTy::make(*Redecl))) {
       // There is already a declaration of a function on our
@@ -655,7 +655,12 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
          "Cannot merge with an overloaded function declaration");
 
   // Verify the old decl was also a function.
-  FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
+  FunctionDecl *Old = 0;
+  if (FunctionTemplateDecl *OldFunctionTemplate 
+        = dyn_cast<FunctionTemplateDecl>(OldD))
+    Old = OldFunctionTemplate->getTemplatedDecl();
+  else 
+    Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
@@ -2304,8 +2309,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
   // Finally, we know we have the right number of parameters, install them.
   NewFD->setParams(Context, Params.data(), Params.size());
-
-  
     
   // If name lookup finds a previous declaration that is not in the
   // same scope as the new declaration, this may still be an
@@ -2388,6 +2391,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Set this FunctionDecl's range up to the right paren.
   NewFD->setLocEnd(D.getSourceRange().getEnd());
 
+  if (FunctionTemplate && NewFD->isInvalidDecl())
+    FunctionTemplate->setInvalidDecl();
+  
+  if (FunctionTemplate)
+    return FunctionTemplate;
+  
   return NewFD;
 }
 
@@ -2516,7 +2525,11 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
       if (MergeFunctionDecl(NewFD, OldDecl))
         return NewFD->setInvalidDecl();
 
-      NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
+      if (FunctionTemplateDecl *OldTemplateDecl
+            = dyn_cast<FunctionTemplateDecl>(OldDecl))
+        NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
+      else
+        NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
     }
   }
 

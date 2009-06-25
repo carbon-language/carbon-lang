@@ -717,6 +717,162 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   return TDK_Success;
 }
 
+/// \brief Perform template argument deduction from a function call
+/// (C++ [temp.deduct.call]).
+///
+/// \param FunctionTemplate the function template for which we are performing
+/// template argument deduction.
+///
+/// \param Args the function call arguments
+///
+/// \param NumArgs the number of arguments in Args
+///
+/// \param Specialization if template argument deduction was successful,
+/// this will be set to the function template specialization produced by 
+/// template argument deduction.
+///
+/// \param Info the argument will be updated to provide additional information
+/// about template argument deduction.
+///
+/// \returns the result of template argument deduction.
+///
+/// FIXME: We will also need to pass in any explicitly-specified template
+/// arguments.
+Sema::TemplateDeductionResult
+Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                              Expr **Args, unsigned NumArgs,
+                              FunctionDecl *&Specialization,
+                              TemplateDeductionInfo &Info) {
+  FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
+  
+  // C++ [temp.deduct.call]p1:
+  //   Template argument deduction is done by comparing each function template
+  //   parameter type (call it P) with the type of the corresponding argument
+  //   of the call (call it A) as described below.
+  unsigned CheckArgs = NumArgs;
+  if (NumArgs < Function->getNumParams())
+    return TDK_TooFewArguments;
+  else if (NumArgs > Function->getNumParams()) {
+    const FunctionProtoType *Proto 
+      = Function->getType()->getAsFunctionProtoType();
+    if (!Proto->isVariadic())
+      return TDK_TooManyArguments;
+    
+    CheckArgs = Function->getNumParams();
+  }
+  
+  SFINAETrap Trap(*this);
+  llvm::SmallVector<TemplateArgument, 4> Deduced;
+  Deduced.resize(FunctionTemplate->getTemplateParameters()->size());  
+  TemplateParameterList *TemplateParams
+    = FunctionTemplate->getTemplateParameters();
+  for (unsigned I = 0; I != CheckArgs; ++I) {
+    QualType ParamType = Function->getParamDecl(I)->getType();
+    QualType ArgType = Args[I]->getType();
+
+    // C++ [temp.deduct.call]p2:
+    //   If P is not a reference type:
+    QualType CanonParamType = Context.getCanonicalType(ParamType);
+    if (!isa<ReferenceType>(CanonParamType)) {
+      //   - If A is an array type, the pointer type produced by the 
+      //     array-to-pointer standard conversion (4.2) is used in place of 
+      //     A for type deduction; otherwise,
+      if (ArgType->isArrayType())
+        ArgType = Context.getArrayDecayedType(ArgType);
+      //   - If A is a function type, the pointer type produced by the 
+      //     function-to-pointer standard conversion (4.3) is used in place 
+      //     of A for type deduction; otherwise,
+      else if (ArgType->isFunctionType())
+        ArgType = Context.getPointerType(ArgType);
+      else {
+        // - If A is a cv-qualified type, the top level cv-qualifiers of A’s
+        //   type are ignored for type deduction.
+        QualType CanonArgType = Context.getCanonicalType(ArgType);
+        if (CanonArgType.getCVRQualifiers())
+          ArgType = CanonArgType.getUnqualifiedType();
+      }
+    }
+    
+    // C++0x [temp.deduct.call]p3:
+    //   If P is a cv-qualified type, the top level cv-qualifiers of P’s type
+    //   are ignored for type deduction. 
+    if (CanonParamType.getCVRQualifiers())
+      ParamType = CanonParamType.getUnqualifiedType();
+    if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
+      //   [...] If P is a reference type, the type referred to by P is used 
+      //   for type deduction. 
+      ParamType = ParamRefType->getPointeeType();
+      
+      //   [...] If P is of the form T&&, where T is a template parameter, and 
+      //   the argument is an lvalue, the type A& is used in place of A for 
+      //   type deduction.
+      if (isa<RValueReferenceType>(ParamRefType) &&
+          ParamRefType->getAsTemplateTypeParmType() &&
+          Args[I]->isLvalue(Context) == Expr::LV_Valid)
+        ArgType = Context.getLValueReferenceType(ArgType);
+    }
+    
+    // C++0x [temp.deduct.call]p4:
+    //   In general, the deduction process attempts to find template argument
+    //   values that will make the deduced A identical to A (after the type A
+    //   is transformed as described above). [...]
+    //
+    // FIXME: we'll pass down a flag to indicate when these cases may apply,
+    // and then deal with them in the code that deduces template
+    // arguments from a type.
+    if (TemplateDeductionResult Result
+        = ::DeduceTemplateArguments(Context, TemplateParams,
+                                    ParamType, ArgType, Info, Deduced))
+      return Result;
+    
+    // FIXME: C++ [temp.deduct.call] paragraphs 6-9 deal with function
+    // pointer parameters. 
+  }
+
+  InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(), 
+                             FunctionTemplate, Deduced.data(), Deduced.size());
+  if (Inst)
+    return TDK_InstantiationDepth;
+  
+  // C++ [temp.deduct.type]p2:
+  //   [...] or if any template argument remains neither deduced nor
+  //   explicitly specified, template argument deduction fails.
+  TemplateArgumentListBuilder Builder(TemplateParams, Deduced.size());
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+    if (Deduced[I].isNull()) {
+      Decl *Param 
+      = const_cast<Decl *>(TemplateParams->getParam(I));
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
+        Info.Param = TTP;
+      else if (NonTypeTemplateParmDecl *NTTP 
+               = dyn_cast<NonTypeTemplateParmDecl>(Param))
+        Info.Param = NTTP;
+      else
+        Info.Param = cast<TemplateTemplateParmDecl>(Param);
+      return TDK_Incomplete;
+    }
+    
+    Builder.Append(Deduced[I]);
+  }
+  
+  // Form the template argument list from the deduced template arguments.
+  TemplateArgumentList *DeducedArgumentList 
+    = new (Context) TemplateArgumentList(Context, Builder, /*TakeArgs=*/true);
+  Info.reset(DeducedArgumentList);
+  
+  // Substitute the deduced template arguments into the function template 
+  // declaration to produce the function template specialization.
+  Specialization = cast_or_null<FunctionDecl>(
+                         InstantiateDecl(FunctionTemplate->getTemplatedDecl(),
+                                         FunctionTemplate->getDeclContext(),
+                                         *DeducedArgumentList));
+  
+  if (!Specialization || Trap.hasErrorOccurred())
+    return TDK_SubstitutionFailure;
+
+  return TDK_Success;
+}
+
 static void 
 MarkDeducedTemplateParameters(Sema &SemaRef,
                               const TemplateArgument &TemplateArg,

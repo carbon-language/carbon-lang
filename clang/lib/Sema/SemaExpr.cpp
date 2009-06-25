@@ -2605,11 +2605,16 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                                                 CommaLocs, RParenLoc));
 
     // Determine whether this is a call to a member function.
-    if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(Fn->IgnoreParens()))
-      if (isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
-          isa<CXXMethodDecl>(MemExpr->getMemberDecl()))
+    if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(Fn->IgnoreParens())) {
+      NamedDecl *MemDecl = MemExpr->getMemberDecl();
+      if (isa<OverloadedFunctionDecl>(MemDecl) ||
+          isa<CXXMethodDecl>(MemDecl) ||
+          (isa<FunctionTemplateDecl>(MemDecl) &&
+           isa<CXXMethodDecl>(
+                cast<FunctionTemplateDecl>(MemDecl)->getTemplatedDecl())))
         return Owned(BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
                                                CommaLocs, RParenLoc));
+    }
   }
 
   // If we're directly calling a function, get the appropriate declaration.
@@ -2645,13 +2650,19 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   }
 
   OverloadedFunctionDecl *Ovl = 0;
+  FunctionTemplateDecl *FunctionTemplate = 0;
   if (DRExpr) {
     FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
+    if ((FunctionTemplate = dyn_cast<FunctionTemplateDecl>(DRExpr->getDecl())))
+      FDecl = FunctionTemplate->getTemplatedDecl();
+    else
+      FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
     Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
     NDecl = dyn_cast<NamedDecl>(DRExpr->getDecl());
   }
 
-  if (Ovl || (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
+  if (Ovl || FunctionTemplate || 
+      (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
     // We don't perform ADL for implicit declarations of builtins.
     if (FDecl && FDecl->getBuiltinID(Context) && FDecl->isImplicit())
       ADL = false;
@@ -2660,7 +2671,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     if (!getLangOptions().CPlusPlus)
       ADL = false;
 
-    if (Ovl || ADL) {
+    if (Ovl || FunctionTemplate || ADL) {
       FDecl = ResolveOverloadedCallFn(Fn, DRExpr? DRExpr->getDecl() : 0,
                                       UnqualifiedName, LParenLoc, Args,
                                       NumArgs, CommaLocs, RParenLoc, ADL);

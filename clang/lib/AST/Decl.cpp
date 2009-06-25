@@ -269,6 +269,14 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
     // For function declarations, we keep track of redeclarations.
     return FD->getPreviousDeclaration() == OldD;
 
+  // For function templates, the underlying function declarations are linked.
+  if (const FunctionTemplateDecl *FunctionTemplate
+        = dyn_cast<FunctionTemplateDecl>(this))
+    if (const FunctionTemplateDecl *OldFunctionTemplate
+          = dyn_cast<FunctionTemplateDecl>(OldD))
+      return FunctionTemplate->getTemplatedDecl()
+               ->declarationReplaces(OldFunctionTemplate->getTemplatedDecl());
+  
   // For method declarations, we keep track of redeclarations.
   if (isa<ObjCMethodDecl>(this))
     return false;

@@ -125,21 +125,30 @@ MaybeConstructOverloadSet(ASTContext &Context,
   assert(!isa<OverloadedFunctionDecl>(*I) && 
          "Cannot have an overloaded function");
 
-  if (isa<FunctionDecl>(*I)) {
+  if ((*I)->isFunctionOrFunctionTemplate()) {
     // If we found a function, there might be more functions. If
     // so, collect them into an overload set.
     DeclIterator Last = I;
     OverloadedFunctionDecl *Ovl = 0;
-    for (++Last; Last != IEnd && isa<FunctionDecl>(*Last); ++Last) {
+    for (++Last; 
+         Last != IEnd && (*Last)->isFunctionOrFunctionTemplate(); 
+         ++Last) {
       if (!Ovl) {
         // FIXME: We leak this overload set. Eventually, we want to stop
         // building the declarations for these overload sets, so there will be
         // nothing to leak.
         Ovl = OverloadedFunctionDecl::Create(Context, (*I)->getDeclContext(),
                                              (*I)->getDeclName());
-        Ovl->addOverload(cast<FunctionDecl>(*I));
+        if (isa<FunctionDecl>(*I))
+          Ovl->addOverload(cast<FunctionDecl>(*I));
+        else
+          Ovl->addOverload(cast<FunctionTemplateDecl>(*I));
       }
-      Ovl->addOverload(cast<FunctionDecl>(*Last));
+
+      if (isa<FunctionDecl>(*Last))
+        Ovl->addOverload(cast<FunctionDecl>(*Last));
+      else
+        Ovl->addOverload(cast<FunctionTemplateDecl>(*Last));
     }
     
     // If we had more than one function, we built an overload
@@ -206,7 +215,7 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
       if (TagDecl *TD = dyn_cast<TagDecl>(ND)) {
         TagFound = Context.getCanonicalDecl(TD);
         TagNames += FoundDecls.insert(TagFound)?  1 : 0;
-      } else if (isa<FunctionDecl>(ND))
+      } else if (ND->isFunctionOrFunctionTemplate())
         Functions += FoundDecls.insert(ND)? 1 : 0;
       else
         FoundDecls.insert(ND);
@@ -334,10 +343,10 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
   LookupResult Result;
   Result.Context = &Context;
 
-  if (F != L && isa<FunctionDecl>(*F)) {
+  if (F != L && (*F)->isFunctionOrFunctionTemplate()) {
     IdentifierResolver::iterator Next = F;
     ++Next;
-    if (Next != L && isa<FunctionDecl>(*Next)) {
+    if (Next != L && (*Next)->isFunctionOrFunctionTemplate()) {
       Result.StoredKind = OverloadedDeclFromIdResolver;
       Result.First = F.getAsOpaqueValue();
       Result.Last = L.getAsOpaqueValue();
@@ -363,10 +372,10 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
   LookupResult Result;
   Result.Context = &Context;
 
-  if (F != L && isa<FunctionDecl>(*F)) {
+  if (F != L && (*F)->isFunctionOrFunctionTemplate()) {
     DeclContext::lookup_iterator Next = F;
     ++Next;
-    if (Next != L && isa<FunctionDecl>(*Next)) {
+    if (Next != L && (*Next)->isFunctionOrFunctionTemplate()) {
       Result.StoredKind = OverloadedDeclFromDeclContext;
       Result.First = reinterpret_cast<uintptr_t>(F);
       Result.Last = reinterpret_cast<uintptr_t>(L);
@@ -1083,7 +1092,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
   // Lookup in a base class succeeded; return these results.
 
   // If we found a function declaration, return an overload set.
-  if (isa<FunctionDecl>(*Paths.front().Decls.first))
+  if ((*Paths.front().Decls.first)->isFunctionOrFunctionTemplate())
     return LookupResult::CreateLookupResult(Context, 
                         Paths.front().Decls.first, Paths.front().Decls.second);
 
@@ -1489,7 +1498,9 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
     for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin(),
                                                 FuncEnd = Ovl->function_end();
          Func != FuncEnd; ++Func) {
-      FunctionDecl *FDecl = cast<FunctionDecl>(*Func);
+      FunctionDecl *FDecl = dyn_cast<FunctionDecl>(*Func);
+      if (!FDecl)
+        FDecl = cast<FunctionTemplateDecl>(*Func)->getTemplatedDecl();
 
       // Add the namespace in which this function was defined. Note
       // that, if this is a member function, we do *not* consider the

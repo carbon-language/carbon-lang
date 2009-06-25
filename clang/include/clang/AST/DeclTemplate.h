@@ -957,6 +957,10 @@ public:
   virtual void Destroy(ASTContext& C);
 };
 
+/// Implementation of inline functions that require the template declarations
+inline AnyFunctionDecl::AnyFunctionDecl(FunctionTemplateDecl *FTD) 
+  : Function(FTD) { }
+
 } /* end of namespace clang */
 
 #endif

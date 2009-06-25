@@ -420,6 +420,15 @@ OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) OverloadedFunctionDecl(DC, N);
 }
 
+void OverloadedFunctionDecl::addOverload(FunctionTemplateDecl *FTD) {
+  Functions.push_back(FTD);
+  
+  // An overloaded function declaration always has the location of
+  // the most-recently-added function declaration.
+  if (FTD->getLocation().isValid())
+    this->setLocation(FTD->getLocation());  
+}
+
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC, 
                                          SourceLocation L,

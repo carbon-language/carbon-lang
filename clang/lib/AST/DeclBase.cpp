@@ -96,6 +96,10 @@ bool Decl::isTemplateParameterPack() const {
   return false;
 }
 
+bool Decl::isFunctionOrFunctionTemplate() const {
+  return isa<FunctionDecl>(this) || isa<FunctionTemplateDecl>(this);
+}
+
 //===----------------------------------------------------------------------===//
 // PrettyStackTraceDecl Implementation
 //===----------------------------------------------------------------------===//

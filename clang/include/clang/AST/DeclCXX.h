@@ -27,6 +27,40 @@ class CXXConversionDecl;
 class CXXMethodDecl;
 class ClassTemplateSpecializationDecl;
 
+/// \brief Represents any kind of function declaration, whether it is a 
+/// concrete function or a function template.
+class AnyFunctionDecl {
+  NamedDecl *Function;
+  
+public:
+  AnyFunctionDecl(FunctionDecl *FD) : Function(FD) { }
+  AnyFunctionDecl(FunctionTemplateDecl *FTD);
+  
+  /// \brief Implicily converts any function or function template into a 
+  /// named declaration.
+  operator NamedDecl *() const { return Function; }
+  
+  /// \brief Retrieve the underlying function or function template.
+  NamedDecl *get() const { return Function; }
+};
+  
+} // end namespace clang
+
+namespace llvm {
+  /// Implement simplify_type for AnyFunctionDecl, so that we can dyn_cast from 
+  /// AnyFunctionDecl to any function or function template declaration.
+  template<> struct simplify_type<const ::clang::AnyFunctionDecl> {
+    typedef ::clang::NamedDecl* SimpleType;
+    static SimpleType getSimplifiedValue(const ::clang::AnyFunctionDecl &Val) {
+      return Val;
+    }
+  };
+  template<> struct simplify_type< ::clang::AnyFunctionDecl>
+  : public simplify_type<const ::clang::AnyFunctionDecl> {};
+} // end namespace llvm
+
+namespace clang {
+  
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
 /// name and occur within the same scope.
@@ -43,15 +77,15 @@ protected:
 
   /// Functions - the set of overloaded functions contained in this
   /// overload set.
-  llvm::SmallVector<FunctionDecl *, 4> Functions;
+  llvm::SmallVector<AnyFunctionDecl, 4> Functions;
 
   // FIXME: This should go away when we stop using
   // OverloadedFunctionDecl to store conversions in CXXRecordDecl.
   friend class CXXRecordDecl;
 
 public:
-  typedef llvm::SmallVector<FunctionDecl *, 4>::iterator function_iterator;
-  typedef llvm::SmallVector<FunctionDecl *, 4>::const_iterator
+  typedef llvm::SmallVector<AnyFunctionDecl, 4>::iterator function_iterator;
+  typedef llvm::SmallVector<AnyFunctionDecl, 4>::const_iterator
     function_const_iterator;
 
   static OverloadedFunctionDecl *Create(ASTContext &C, DeclContext *DC,
@@ -71,30 +105,18 @@ public:
       this->setLocation(FD->getLocation());
   }
 
+  /// addOverload - Add an overloaded function template FTD to this set of
+  /// overloaded functions.
+  void addOverload(FunctionTemplateDecl *FTD);
+  
   function_iterator function_begin() { return Functions.begin(); }
   function_iterator function_end() { return Functions.end(); }
   function_const_iterator function_begin() const { return Functions.begin(); }
   function_const_iterator function_end() const { return Functions.end(); }
 
-  /// getNumFunctions - the number of overloaded functions stored in
+  /// \brief Returns the number of overloaded functions stored in
   /// this set.
-  unsigned getNumFunctions() const { return Functions.size(); }
-
-  /// getFunction - retrieve the ith function in the overload set.
-  const FunctionDecl *getFunction(unsigned i) const {
-    assert(i < getNumFunctions() && "Illegal function #");
-    return Functions[i];
-  }
-  FunctionDecl *getFunction(unsigned i) {
-    assert(i < getNumFunctions() && "Illegal function #");
-    return Functions[i];
-  }
-
-  // getDeclContext - Get the context of these overloaded functions.
-  DeclContext *getDeclContext() {
-    assert(getNumFunctions() > 0 && "Context of an empty overload set");
-    return getFunction(0)->getDeclContext();
-  }
+  unsigned size() const { return Functions.size(); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 

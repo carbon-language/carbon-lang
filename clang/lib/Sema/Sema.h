@@ -697,6 +697,11 @@ public:
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversions = false,
                           bool ForceRValue = false);
+  void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                    Expr **Args, unsigned NumArgs,
+                                    OverloadCandidateSet& CandidateSet,
+                                    bool SuppressUserConversions = false,
+                                    bool ForceRValue = false);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
@@ -2204,7 +2209,13 @@ public:
     /// into a non-deduced context produced a type or value that
     /// produces a type that does not match the original template
     /// arguments provided.
-    TDK_NonDeducedMismatch
+    TDK_NonDeducedMismatch,
+    /// \brief When performing template argument deduction for a function 
+    /// template, there were too many call arguments.
+    TDK_TooManyArguments,
+    /// \brief When performing template argument deduction for a class 
+    /// template, there were too few call arguments.
+    TDK_TooFewArguments
   };
 
   /// \brief Provides information about an attempted template argument
@@ -2284,6 +2295,12 @@ public:
                           const TemplateArgumentList &TemplateArgs,
                           TemplateDeductionInfo &Info);
                    
+  TemplateDeductionResult
+  DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                          Expr **Args, unsigned NumArgs,
+                          FunctionDecl *&Specialization,
+                          TemplateDeductionInfo &Info);
+  
   void MarkDeducedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                      llvm::SmallVectorImpl<bool> &Deduced);
           
