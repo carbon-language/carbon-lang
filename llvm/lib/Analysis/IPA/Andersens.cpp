@@ -285,8 +285,8 @@ namespace {
 
       // Timestamp a node (used for work list prioritization)
       void Stamp() {
-        Timestamp = Counter;
-        sys::AtomicIncrement(&Counter);
+        Timestamp = sys::AtomicIncrement(&Counter);
+        --Timestamp;
       }
 
       bool isRep() const {
