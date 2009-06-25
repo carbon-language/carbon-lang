@@ -61,7 +61,7 @@ namespace {
 }
 
 /// Allow printing values directly to a raw_ostream.
-inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
+static inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
   if (Value.getSymA()) {
     os << Value.getSymA()->getName();
     if (Value.getSymB())
@@ -74,6 +74,16 @@ inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
   }
 
   return os;
+}
+
+static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
+  assert(Bytes && "Invalid size!");
+  return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
+}
+
+static inline MCValue truncateToSize(const MCValue &Value, unsigned Bytes) {
+  return MCValue::get(Value.getSymA(), Value.getSymB(), 
+                      truncateToSize(Value.getCst(), Bytes));
 }
 
 void MCAsmStreamer::SwitchSection(MCSection *Section) {
@@ -148,7 +158,7 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
   case 8: OS << ".quad"; break;
   }
 
-  OS << ' ' << Value << '\n';
+  OS << ' ' << truncateToSize(Value, Size) << '\n';
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
@@ -169,7 +179,7 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 
   OS << ' ' << Pow2;
 
-  OS << ", " << Value;
+  OS << ", " << truncateToSize(Value, ValueSize);
   if (MaxBytesToEmit) 
     OS << ", " << MaxBytesToEmit;
   OS << '\n';
