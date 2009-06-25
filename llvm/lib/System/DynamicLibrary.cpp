@@ -12,20 +12,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/DynamicLibrary.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/System/RWMutex.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
 #include <cstring>
 #include <map>
 
 // Collection of symbol name/value pairs to be searched prior to any libraries.
-std::map<std::string, void *> &g_symbols() {
-  static std::map<std::string, void *> symbols;
-  return symbols;
-}
+static std::map<std::string, void*> symbols;
+static llvm::sys::SmartRWMutex<true> SymbolsLock;
+
 
 void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
                                           void *symbolValue) {
-  g_symbols()[symbolName] = symbolValue;
+  llvm::sys::SmartScopedWriter<true> Writer(&SymbolsLock);
+  symbols[symbolName] = symbolValue;
 }
 
 // It is not possible to use ltdl.c on VC++ builds as the terms of its LGPL
@@ -57,6 +59,7 @@ static std::vector<void *> OpenedHandles;
 DynamicLibrary::DynamicLibrary() {}
 
 DynamicLibrary::~DynamicLibrary() {
+  SmartScopedWriter<true> Writer(&SymbolsLock);
   while(!OpenedHandles.empty()) {
     void *H = OpenedHandles.back();   OpenedHandles.pop_back(); 
     dlclose(H);
@@ -65,6 +68,7 @@ DynamicLibrary::~DynamicLibrary() {
 
 bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
                                             std::string *ErrMsg) {
+  SmartScopedWriter<true> Writer(&SymbolsLock);                                              
   void *H = dlopen(Filename, RTLD_LAZY|RTLD_GLOBAL);
   if (H == 0) {
     if (ErrMsg)
@@ -77,20 +81,28 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   //  check_ltdl_initialization();
-
+  
   // First check symbols added via AddSymbol().
-  std::map<std::string, void *>::iterator I = g_symbols().find(symbolName);
-  if (I != g_symbols().end())
+  SymbolsLock.reader_acquire();
+  std::map<std::string, void *>::iterator I = symbols.find(symbolName);
+  std::map<std::string, void *>::iterator E = symbols.end();
+  SymbolsLock.reader_release();
+  
+  if (I != E)
     return I->second;
 
+  SymbolsLock.writer_acquire();
   // Now search the libraries.
   for (std::vector<void *>::iterator I = OpenedHandles.begin(),
        E = OpenedHandles.end(); I != E; ++I) {
     //lt_ptr ptr = lt_dlsym(*I, symbolName);
     void *ptr = dlsym(*I, symbolName);
-    if (ptr)
+    if (ptr) {
+      SymbolsLock.writer_release();
       return ptr;
+    }
   }
+  SymbolsLock.writer_release();
 
 #define EXPLICIT_SYMBOL(SYM) \
    extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
