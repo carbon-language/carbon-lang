@@ -1911,7 +1911,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (!FieldClassDecl->hasTrivialConstructor())
+      if (!FieldClassDecl->hasTrivialConstructor()) {
         if (CXXConstructorDecl *FieldCtor = 
             FieldClassDecl->getDefaultConstructor(Context))
           MarkDeclarationReferenced(CurrentLocation, FieldCtor);
@@ -1924,6 +1924,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
           err = true;
         }
       }
+    }
     else if (FieldType->isReferenceType()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
         << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getNameAsCString();
