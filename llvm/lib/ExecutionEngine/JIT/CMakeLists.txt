@@ -7,5 +7,6 @@ add_llvm_library(LLVMJIT
   JITDwarfEmitter.cpp
   JITEmitter.cpp
   JITMemoryManager.cpp
+  MacOSJITEventListener.cpp
   TargetSelect.cpp
   )
