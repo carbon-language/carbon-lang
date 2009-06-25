@@ -113,14 +113,10 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
     break;
     
   case PCHReader::Failure:
-    // Unrecoverable failure: don't even try to process the input
-    // file.
+  case PCHReader::IgnorePCH:
     if (ErrMsg)
       *ErrMsg = "Could not load PCH file";
     return NULL;
-
-  case PCHReader::IgnorePCH:
-    assert(0 && "Is there a validation that should not have happened ?");
   }
   
   // PCH loaded successfully. Now create the preprocessor.
