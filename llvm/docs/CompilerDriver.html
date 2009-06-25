@@ -109,6 +109,11 @@ until the next -x option.</li>
 <li><tt class="docutils literal"><span class="pre">-load</span> <span class="pre">PLUGIN_NAME</span></tt> - Load the specified plugin DLL. Example:
 <tt class="docutils literal"><span class="pre">-load</span> <span class="pre">$LLVM_DIR/Release/lib/LLVMCSimple.so</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">-v</span></tt> - Enable verbose mode, i.e. print out all executed commands.</li>
+<li><tt class="docutils literal"><span class="pre">--save-temps</span></tt> - Write temporary files to the current directory and do not
+delete them on exit. This option can also take an argument: the
+<tt class="docutils literal"><span class="pre">--save-temps=obj</span></tt> switch will write files into the directory specified with
+the <tt class="docutils literal"><span class="pre">-o</span></tt> option. The <tt class="docutils literal"><span class="pre">--save-temps=cwd</span></tt> and <tt class="docutils literal"><span class="pre">--save-temps</span></tt> switches are
+both synonyms for the default behaviour.</li>
 <li><tt class="docutils literal"><span class="pre">--check-graph</span></tt> - Check the compilation for common errors like mismatched
 output/input language names, multiple default edges and cycles. Because of
 plugins, these checks can't be performed at compile-time. Exit with code zero
@@ -122,8 +127,6 @@ directory with the compilation graph description in Graphviz format (identical
 to the file used by the <tt class="docutils literal"><span class="pre">--view-graph</span></tt> option). The <tt class="docutils literal"><span class="pre">-o</span></tt> option can be
 used to set the output file name. Hidden option, useful for debugging LLVMC
 plugins.</li>
-<li><tt class="docutils literal"><span class="pre">--save-temps</span></tt> - Write temporary files to the current directory
-and do not delete them on exit. Hidden option, useful for debugging.</li>
 <li><tt class="docutils literal"><span class="pre">--help</span></tt>, <tt class="docutils literal"><span class="pre">--help-hidden</span></tt>, <tt class="docutils literal"><span class="pre">--version</span></tt> - These options have
 their standard meaning.</li>
 </ul>
