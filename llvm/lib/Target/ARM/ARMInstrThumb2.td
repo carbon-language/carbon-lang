@@ -434,6 +434,9 @@ def : Thumb2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
 
 defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
 
+def : Thumb2Pat<(t2_so_imm_not:$src),
+                (t2MVNi t2_so_imm_not:$src)>;
+
 // A8.6.17  BFC - Bitfield clear
 // FIXME: Also available in ARM mode.
 let Constraints = "$src = $dst" in
