@@ -943,7 +943,7 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     return SourceLocation();
   
   unsigned FilePos = Content->SourceLineCache[Line - 1];
-  const char *Buf = Content->getBuffer()->getBufferStart();
+  const char *Buf = Content->getBuffer()->getBufferStart() + FilePos;
   unsigned BufLength = Content->getBuffer()->getBufferEnd() - Buf;
   unsigned i = 0;
 
