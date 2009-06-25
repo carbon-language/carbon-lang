@@ -35,12 +35,12 @@ ThreadLocalImpl::~ThreadLocalImpl() {
   delete tls;
 }
 
-void* ThreadLocalImpl::getInstance() {
+const void* ThreadLocalImpl::getInstance() {
   DWORD* tls = static_cast<DWORD*>(data);
   return TlsGetValue(*tls);
 }
 
-void ThreadLocalImpl::setInstance(void* d){
+void ThreadLocalImpl::setInstance(const void* d){
   DWORD* tls = static_cast<DWORD*>(data);
   int errorcode = TlsSetValue(*tls, d);
   assert(errorcode == 0);

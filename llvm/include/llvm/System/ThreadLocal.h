@@ -24,8 +24,8 @@ namespace llvm {
     public:
       ThreadLocalImpl();
       virtual ~ThreadLocalImpl();
-      void setInstance(void* d);
-      void* getInstance();
+      void setInstance(const void* d);
+      const void* getInstance();
     };
     
     template<class T>

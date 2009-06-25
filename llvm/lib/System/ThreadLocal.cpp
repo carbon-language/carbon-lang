@@ -25,8 +25,8 @@ namespace llvm {
 using namespace sys;
 ThreadLocalImpl::ThreadLocalImpl() { }
 ThreadLocalImpl::~ThreadLocalImpl() { }
-void ThreadLocalImpl::setInstance(void* d) { data = d; }
-void* ThreadLocalImpl::getInstance() { return data; }
+void ThreadLocalImpl::setInstance(const void* d) { data = const_cast<void*>(d);}
+const void* ThreadLocalImpl::getInstance() { return data; }
 }
 #else
 
@@ -53,13 +53,13 @@ ThreadLocalImpl::~ThreadLocalImpl() {
   delete key;
 }
 
-void ThreadLocalImpl::setInstance(void* d) {
+void ThreadLocalImpl::setInstance(const void* d) {
   pthread_key_t* key = static_cast<pthread_key_t*>(data);
   int errorcode = pthread_setspecific(*key, d);
   assert(errorcode == 0);
 }
 
-void* ThreadLocalImpl::getInstance() {
+const void* ThreadLocalImpl::getInstance() {
   pthread_key_t* key = static_cast<pthread_key_t*>(data);
   return pthread_getspecific(*key);
 }
