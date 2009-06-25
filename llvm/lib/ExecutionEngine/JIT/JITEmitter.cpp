@@ -24,8 +24,9 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRelocation.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -411,136 +412,6 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 }
 
 //===----------------------------------------------------------------------===//
-// Function Index Support
-
-// On MacOS we generate an index of currently JIT'd functions so that
-// performance tools can determine a symbol name and accurate code range for a
-// PC value.  Because performance tools are generally asynchronous, the code
-// below is written with the hope that it could be interrupted at any time and
-// have useful answers.  However, we don't go crazy with atomic operations, we
-// just do a "reasonable effort".
-#ifdef __APPLE__ 
-#define ENABLE_JIT_SYMBOL_TABLE 0
-#endif
-
-/// JitSymbolEntry - Each function that is JIT compiled results in one of these
-/// being added to an array of symbols.  This indicates the name of the function
-/// as well as the address range it occupies.  This allows the client to map
-/// from a PC value to the name of the function.
-struct JitSymbolEntry {
-  const char *FnName;   // FnName - a strdup'd string.
-  void *FnStart;
-  intptr_t FnSize;
-};
-
-
-struct JitSymbolTable {
-  /// NextPtr - This forms a linked list of JitSymbolTable entries.  This
-  /// pointer is not used right now, but might be used in the future.  Consider
-  /// it reserved for future use.
-  JitSymbolTable *NextPtr;
-  
-  /// Symbols - This is an array of JitSymbolEntry entries.  Only the first
-  /// 'NumSymbols' symbols are valid.
-  JitSymbolEntry *Symbols;
-  
-  /// NumSymbols - This indicates the number entries in the Symbols array that
-  /// are valid.
-  unsigned NumSymbols;
-  
-  /// NumAllocated - This indicates the amount of space we have in the Symbols
-  /// array.  This is a private field that should not be read by external tools.
-  unsigned NumAllocated;
-};
-
-#if ENABLE_JIT_SYMBOL_TABLE 
-JitSymbolTable *__jitSymbolTable;
-#endif
-
-static void AddFunctionToSymbolTable(const char *FnName, 
-                                     void *FnStart, intptr_t FnSize) {
-  assert(FnName != 0 && FnStart != 0 && "Bad symbol to add");
-  JitSymbolTable **SymTabPtrPtr = 0;
-#if !ENABLE_JIT_SYMBOL_TABLE
-  return;
-#else
-  SymTabPtrPtr = &__jitSymbolTable;
-#endif
-  
-  // If this is the first entry in the symbol table, add the JitSymbolTable
-  // index.
-  if (*SymTabPtrPtr == 0) {
-    JitSymbolTable *New = new JitSymbolTable();
-    New->NextPtr = 0;
-    New->Symbols = 0;
-    New->NumSymbols = 0;
-    New->NumAllocated = 0;
-    *SymTabPtrPtr = New;
-  }
-  
-  JitSymbolTable *SymTabPtr = *SymTabPtrPtr;
-  
-  // If we have space in the table, reallocate the table.
-  if (SymTabPtr->NumSymbols >= SymTabPtr->NumAllocated) {
-    // If we don't have space, reallocate the table.
-    unsigned NewSize = std::max(64U, SymTabPtr->NumAllocated*2);
-    JitSymbolEntry *NewSymbols = new JitSymbolEntry[NewSize];
-    JitSymbolEntry *OldSymbols = SymTabPtr->Symbols;
-    
-    // Copy the old entries over.
-    memcpy(NewSymbols, OldSymbols, SymTabPtr->NumSymbols*sizeof(OldSymbols[0]));
-    
-    // Swap the new symbols in, delete the old ones.
-    SymTabPtr->Symbols = NewSymbols;
-    SymTabPtr->NumAllocated = NewSize;
-    delete [] OldSymbols;
-  }
-  
-  // Otherwise, we have enough space, just tack it onto the end of the array.
-  JitSymbolEntry &Entry = SymTabPtr->Symbols[SymTabPtr->NumSymbols];
-  Entry.FnName = strdup(FnName);
-  Entry.FnStart = FnStart;
-  Entry.FnSize = FnSize;
-  ++SymTabPtr->NumSymbols;
-}
-
-static void RemoveFunctionFromSymbolTable(void *FnStart) {
-  assert(FnStart && "Invalid function pointer");
-  JitSymbolTable **SymTabPtrPtr = 0;
-#if !ENABLE_JIT_SYMBOL_TABLE
-  return;
-#else
-  SymTabPtrPtr = &__jitSymbolTable;
-#endif
-  
-  JitSymbolTable *SymTabPtr = *SymTabPtrPtr;
-  JitSymbolEntry *Symbols = SymTabPtr->Symbols;
-  
-  // Scan the table to find its index.  The table is not sorted, so do a linear
-  // scan.
-  unsigned Index;
-  for (Index = 0; Symbols[Index].FnStart != FnStart; ++Index)
-    assert(Index != SymTabPtr->NumSymbols && "Didn't find function!");
-  
-  // Once we have an index, we know to nuke this entry, overwrite it with the
-  // entry at the end of the array, making the last entry redundant.
-  const char *OldName = Symbols[Index].FnName;
-  Symbols[Index] = Symbols[SymTabPtr->NumSymbols-1];
-  free((void*)OldName);
-  
-  // Drop the number of symbols in the table.
-  --SymTabPtr->NumSymbols;
-
-  // Finally, if we deleted the final symbol, deallocate the table itself.
-  if (SymTabPtr->NumSymbols != 0) 
-    return;
-  
-  *SymTabPtrPtr = 0;
-  delete [] Symbols;
-  delete SymTabPtr;
-}
-
-//===----------------------------------------------------------------------===//
 // JITEmitter code.
 //
 namespace {
@@ -616,11 +487,8 @@ namespace {
     // in the JITResolver's ExternalFnToStubMap.
     StringMap<void *> ExtFnStubs;
 
-    // MCI - A pointer to a MachineCodeInfo object to update with information.
-    MachineCodeInfo *MCI;
-
   public:
-    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0), MCI(0) {
+    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -715,10 +583,6 @@ namespace {
     }
     
     JITMemoryManager *getMemMgr(void) const { return MemMgr; }
-
-    void setMachineCodeInfo(MachineCodeInfo *mci) {
-      MCI = mci;
-    }
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
@@ -1157,20 +1021,15 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
   // Invalidate the icache if necessary.
   sys::Memory::InvalidateInstructionCache(FnStart, FnEnd-FnStart);
-  
-  // Add it to the JIT symbol table if the host wants it.
-  AddFunctionToSymbolTable(F.getFunction()->getNameStart(),
-                           FnStart, FnEnd-FnStart);
+
+  JITEvent_EmittedFunctionDetails Details;
+  TheJIT->NotifyFunctionEmitted(*F.getFunction(), FnStart, FnEnd-FnStart,
+                                Details);
 
   DOUT << "JIT: Finished CodeGen of [" << (void*)FnStart
        << "] Function: " << F.getFunction()->getName()
        << ": " << (FnEnd-FnStart) << " bytes of text, "
        << Relocations.size() << " relocations\n";
-
-  if (MCI) {
-    MCI->setAddress(FnStart);
-    MCI->setSize(FnEnd-FnStart);
-  }
 
   Relocations.clear();
   ConstPoolAddresses.clear();
@@ -1495,13 +1354,6 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   return JE->getJITResolver().getFunctionStub(F);
 }
 
-void JIT::registerMachineCodeInfo(MachineCodeInfo *mc) {
-  assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
-  JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
-
-  JE->setMachineCodeInfo(mc);
-}
-
 void JIT::updateFunctionStub(Function *F) {
   // Get the empty stub we generated earlier.
   assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
@@ -1609,10 +1461,9 @@ void JIT::freeMachineCodeForFunction(Function *F) {
   void *OldPtr = updateGlobalMapping(F, 0);
 
   if (OldPtr)
-    RemoveFunctionFromSymbolTable(OldPtr);
+    TheJIT->NotifyFreeingMachineCode(*F, OldPtr);
 
   // Free the actual memory for the function body and related stuff.
   assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");
   cast<JITEmitter>(JCE)->deallocateMemForFunction(F);
 }
-

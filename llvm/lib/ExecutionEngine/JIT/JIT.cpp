@@ -20,8 +20,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -507,6 +508,40 @@ GenericValue JIT::runFunction(Function *F,
   return runFunction(Stub, std::vector<GenericValue>());
 }
 
+void JIT::RegisterJITEventListener(JITEventListener *L) {
+  if (L == NULL)
+    return;
+  MutexGuard locked(lock);
+  EventListeners.push_back(L);
+}
+void JIT::UnregisterJITEventListener(JITEventListener *L) {
+  if (L == NULL)
+    return;
+  MutexGuard locked(lock);
+  std::vector<JITEventListener*>::reverse_iterator I=
+      std::find(EventListeners.rbegin(), EventListeners.rend(), L);
+  if (I != EventListeners.rend()) {
+    std::swap(*I, EventListeners.back());
+    EventListeners.pop_back();
+  }
+}
+void JIT::NotifyFunctionEmitted(
+    const Function &F,
+    void *Code, size_t Size,
+    const JITEvent_EmittedFunctionDetails &Details) {
+  MutexGuard locked(lock);
+  for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
+    EventListeners[I]->NotifyFunctionEmitted(F, Code, Size, Details);
+  }
+}
+
+void JIT::NotifyFreeingMachineCode(const Function &F, void *OldPtr) {
+  MutexGuard locked(lock);
+  for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
+    EventListeners[I]->NotifyFreeingMachineCode(F, OldPtr);
+  }
+}
+
 /// runJITOnFunction - Run the FunctionPassManager full of
 /// just-in-time compilation passes on F, hopefully filling in
 /// GlobalAddress[F] with the address of F's machine code.
@@ -514,11 +549,23 @@ GenericValue JIT::runFunction(Function *F,
 void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
   MutexGuard locked(lock);
 
-  registerMachineCodeInfo(MCI);
+  class MCIListener : public JITEventListener {
+    MachineCodeInfo *const MCI;
+   public:
+    MCIListener(MachineCodeInfo *mci) : MCI(mci) {}
+    virtual void NotifyFunctionEmitted(const Function &,
+                                       void *Code, size_t Size,
+                                       const EmittedFunctionDetails &) {
+      MCI->setAddress(Code);
+      MCI->setSize(Size);
+    }
+  };
+  MCIListener MCIL(MCI);
+  RegisterJITEventListener(&MCIL);
 
   runJITOnFunctionUnlocked(F, locked);
 
-  registerMachineCodeInfo(0);
+  UnregisterJITEventListener(&MCIL);
 }
 
 void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
@@ -709,3 +756,6 @@ void JIT::addPendingFunction(Function *F) {
   MutexGuard locked(lock);
   jitstate->getPendingFunctions(locked).push_back(F);
 }
+
+
+JITEventListener::~JITEventListener() {}

@@ -1,4 +1,4 @@
-##===- unittests/Makefile ----------------------------------*- Makefile -*-===##
+##===- unittests/ExecutionEngine/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,11 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
+LEVEL = ../..
 
 include $(LEVEL)/Makefile.config
 
-LIBRARYNAME = UnitTestMain
-BUILD_ARCHIVE = 1
-CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/
-CPP.Flags += -Wno-variadic-macros
-
-PARALLEL_DIRS = ADT ExecutionEngine Support VMCore MC
+PARALLEL_DIRS = JIT
 
 include $(LEVEL)/Makefile.common
 

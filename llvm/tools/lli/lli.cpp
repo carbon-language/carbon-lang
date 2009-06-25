@@ -18,9 +18,10 @@
 #include "llvm/Type.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
-#include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -148,6 +149,8 @@ int main(int argc, char **argv, char * const *envp) {
     std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
     exit(1);
   }
+
+  EE->RegisterJITEventListener(createMacOSJITEventListener());
 
   if (NoLazyCompilation)
     EE->DisableLazyCompilation();

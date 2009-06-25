@@ -29,13 +29,14 @@ class Constant;
 class Function;
 class GlobalVariable;
 class GlobalValue;
-class Module;
-class ModuleProvider;
-class TargetData;
-class Type;
-class MutexGuard;
+class JITEventListener;
 class JITMemoryManager;
 class MachineCodeInfo;
+class Module;
+class ModuleProvider;
+class MutexGuard;
+class TargetData;
+class Type;
 
 class ExecutionEngineState {
 private:
@@ -276,7 +277,14 @@ public:
   virtual void *getOrEmitGlobalVariable(const GlobalVariable *GV) {
     return getPointerToGlobal((GlobalValue*)GV);
   }
-  
+
+  /// Registers a listener to be called back on various events within
+  /// the JIT.  See JITEventListener.h for more details.  Does not
+  /// take ownership of the argument.  The argument may be NULL, in
+  /// which case these functions do nothing.
+  virtual void RegisterJITEventListener(JITEventListener *L) {}
+  virtual void UnregisterJITEventListener(JITEventListener *L) {}
+
   /// DisableLazyCompilation - If called, the JIT will abort if lazy compilation
   /// is ever attempted.
   void DisableLazyCompilation(bool Disabled = true) {

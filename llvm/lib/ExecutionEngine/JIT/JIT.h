@@ -20,10 +20,11 @@
 namespace llvm {
 
 class Function;
-class TargetMachine;
-class TargetJITInfo;
+class JITEvent_EmittedFunctionDetails;
 class MachineCodeEmitter;
 class MachineCodeInfo;
+class TargetJITInfo;
+class TargetMachine;
 
 class JITState {
 private:
@@ -52,6 +53,7 @@ class JIT : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
   JITCodeEmitter *JCE;     // JCE object
+  std::vector<JITEventListener*> EventListeners;
 
   JITState *jitstate;
 
@@ -157,9 +159,18 @@ public:
   // Run the JIT on F and return information about the generated code
   void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0);
 
+  virtual void RegisterJITEventListener(JITEventListener *L);
+  virtual void UnregisterJITEventListener(JITEventListener *L);
+  /// These functions correspond to the methods on JITEventListener.  They
+  /// iterate over the registered listeners and call the corresponding method on
+  /// each.
+  void NotifyFunctionEmitted(
+      const Function &F, void *Code, size_t Size,
+      const JITEvent_EmittedFunctionDetails &Details);
+  void NotifyFreeingMachineCode(const Function &F, void *OldPtr);
+
 private:
   static JITCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
-  void registerMachineCodeInfo(MachineCodeInfo *MCI);
   void runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked);
   void updateFunctionStub(Function *F);
   void updateDlsymStubTable();
