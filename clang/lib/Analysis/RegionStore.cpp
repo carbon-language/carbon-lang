@@ -302,7 +302,9 @@ public:
   ///     else
   ///       return symbolic
   SVal Retrieve(const GRState *state, Loc L, QualType T = QualType());
-  
+
+  SVal RetrieveField(const GRState* state, const FieldRegion* R);
+
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
   /// struct copy: 
   /// struct s x, y; 
@@ -836,6 +838,9 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   const TypedRegion *R = cast<TypedRegion>(MR);
   assert(R && "bad region");
 
+  if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
+    return RetrieveField(state, FR);
+
   // FIXME: We should eventually handle funny addressing.  e.g.:
   //
   //   int x = ...;
@@ -953,6 +958,52 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // All other integer values are symbolic.
   if (Loc::IsLocType(RTy) || RTy->isIntegerType())
     return ValMgr.getRegionValueSymbolVal(R, RTy);
+  else
+    return UnknownVal();
+}
+
+SVal RegionStoreManager::RetrieveField(const GRState* state, 
+                                       const FieldRegion* R) {
+  QualType Ty = R->getValueType(getContext());
+
+  // Check if the region has a binding.
+  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  const SVal* V = B.lookup(R);
+  if (V)
+    return *V;
+
+  // Check if the region is killed.
+  if (state->contains<RegionKills>(R))
+    return UnknownVal();
+
+  const MemRegion* SuperR = R->getSuperRegion();
+  const SVal* D = state->get<RegionDefaultValue>(SuperR);
+  if (D) {
+    if (D->hasConjuredSymbol())
+      return ValMgr.getRegionValueSymbolVal(R);
+
+    if (D->isZeroConstant())
+      return ValMgr.makeZeroVal(Ty);
+
+    if (D->isUnknown())
+      return *D;
+
+    assert(0 && "Unknown default value");
+  }
+
+  if (R->hasHeapOrStackStorage())
+    return UndefinedVal();
+
+  // If the region is already cast to another type, use that type to create the
+  // symbol value.
+  if (const QualType *p = state->get<RegionCasts>(R)) {
+    QualType tmp = *p;
+    Ty = tmp->getAsPointerType()->getPointeeType();
+  }
+
+  // All other integer values are symbolic.
+  if (Loc::IsLocType(Ty) || Ty->isIntegerType())
+    return ValMgr.getRegionValueSymbolVal(R, Ty);
   else
     return UnknownVal();
 }
@@ -1179,15 +1230,8 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   }
 
   // There may be fewer values in the initialize list than the fields of struct.
-  while (FI != FE) {
-    QualType FTy = (*FI)->getType();
-    if (FTy->isIntegerType()) {
-      FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
-      state = Bind(state, ValMgr.makeLoc(FR), ValMgr.makeZeroVal(FTy));
-    }
-
-    ++FI;
-  }
+  if (FI != FE)
+    state = setDefaultValue(state, R, ValMgr.makeIntVal(0, false));
 
   return state;
 }
