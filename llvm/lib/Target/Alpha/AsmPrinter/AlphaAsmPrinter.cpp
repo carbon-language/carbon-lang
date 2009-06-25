@@ -17,6 +17,7 @@
 #include "AlphaInstrInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
+#include "llvm/MDNode.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -222,6 +223,8 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
+  if (isa<MDNode>(C))
+    return;
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
