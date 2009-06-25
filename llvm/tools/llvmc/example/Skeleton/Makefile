@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 # Change this so that $(BASE_LEVEL)/Makefile.common refers to
-# $LLVM_DIR/Makefile.common.
+# $LLVM_DIR/Makefile.common or $YOUR_LLVM_BASED_PROJECT/Makefile.common.
 export LLVMC_BASE_LEVEL = ../../../..
 
 # Change this to the name of your LLVMC-based driver.
