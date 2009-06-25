@@ -45,7 +45,8 @@ AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T, CodeGenOpt::Level OL, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), OptLevel(OL), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
-    IsInTextSection(false), LastMI(0), LastFn(0), Counter(~0U) {
+    IsInTextSection(false), LastMI(0), LastFn(0), Counter(~0U),
+    PrevDLT(0, ~0U, ~0U) {
   DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
@@ -1338,7 +1339,6 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
 void AsmPrinter::processDebugLoc(DebugLoc DL) {
   if (TAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
     if (!DL.isUnknown()) {
-      static DebugLocTuple PrevDLT(0, ~0U, ~0U);
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
 
       if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT)

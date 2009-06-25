@@ -114,6 +114,9 @@ namespace llvm {
     mutable const MachineInstr *LastMI;
     mutable const Function *LastFn;
     mutable unsigned Counter;
+    
+    // Private state for processDebugLock()
+    mutable DebugLocTuple PrevDLT;
 
   protected:
     explicit AsmPrinter(raw_ostream &o, TargetMachine &TM,
