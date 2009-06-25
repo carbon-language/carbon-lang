@@ -103,25 +103,6 @@ namespace clang {
 }
 
 //===----------------------------------------------------------------------===//
-// Region "killsets".
-//===----------------------------------------------------------------------===//
-//
-// RegionStore lazily adds value bindings to regions when the analyzer handles
-//  assignment statements.  Killsets track which default values have been
-//  killed, thus distinguishing between "unknown" values and default
-//  values. Regions are added to killset only when they are assigned "unknown"
-//  directly, otherwise we should have their value in the region bindings.
-//
-namespace { class VISIBILITY_HIDDEN RegionKills {}; }
-static int RegionKillsIndex = 0;
-namespace clang {
-  template<> struct GRStateTrait<RegionKills>
-  : public GRStatePartialTrait< llvm::ImmutableSet<const MemRegion*> > {
-    static void* GDMIndex() { return &RegionKillsIndex; }
-  };
-}
-
-//===----------------------------------------------------------------------===//
 // Regions with default values.
 //===----------------------------------------------------------------------===//
 //
@@ -874,10 +855,6 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (V)
     return *V;
 
-  // Check if the region is in killset.
-  if (state->contains<RegionKills>(R))
-    return UnknownVal();
-
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
     const MemRegion *SR = IVR->getSuperRegion();
 
@@ -944,10 +921,6 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   if (V)
     return *V;
 
-  // Check if the region is killed.
-  if (state->contains<RegionKills>(R))
-    return UnknownVal();
-
   // Check if the region is an element region of a string literal.
   if (const StringRegion *StrR=dyn_cast<StringRegion>(R->getSuperRegion())) {
     const StringLiteral *Str = StrR->getStringLiteral();
@@ -998,10 +971,6 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   const SVal* V = B.lookup(R);
   if (V)
     return *V;
-
-  // Check if the region is killed.
-  if (state->contains<RegionKills>(R))
-    return UnknownVal();
 
   const MemRegion* SuperR = R->getSuperRegion();
   const SVal* D = state->get<RegionDefaultValue>(SuperR);
@@ -1114,12 +1083,7 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
   
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   
-  if (V.isUnknown()) {
-    B = RBFactory.Remove(B, R);         // Remove the binding.
-    state = state->add<RegionKills>(R);  // Add the region to the killset.
-  } 
-  else
-    B = RBFactory.Add(B, R, V);
+  B = RBFactory.Add(B, R, V);
   
   return state->makeWithStore(B.getRoot());
 }
@@ -1266,20 +1230,17 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
 const GRState *RegionStoreManager::KillStruct(const GRState *state,
                                               const TypedRegion* R){
 
-  // (1) Kill the struct region because it is assigned "unknown".
-  // (2) Set the default value of the struct region to "unknown".
-  state = state->add<RegionKills>(R)->set<RegionDefaultValue>(R, UnknownVal());
-  Store store = state->getStore();
-  RegionBindingsTy B = GetRegionBindings(store);
+  // Set the default value of the struct region to "unknown".
+  state = state->set<RegionDefaultValue>(R, UnknownVal());
 
   // Remove all bindings for the subregions of the struct.
+  Store store = state->getStore();
+  RegionBindingsTy B = GetRegionBindings(store);
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     if (const SubRegion* subRegion = dyn_cast<SubRegion>(R))
       if (subRegion->isSubRegionOf(R))
         store = Remove(store, ValMgr.makeLoc(subRegion));
-    // FIXME: Maybe we should also remove the bindings for the "views" of the
-    // subregions.
   }
 
   return state->makeWithStore(store);
