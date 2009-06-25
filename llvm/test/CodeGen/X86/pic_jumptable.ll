@@ -6,7 +6,7 @@
 
 declare void @_Z3bari(i32)
 
-define linkonce void @_Z3fooILi1EEvi(i32 %Y) {
+define linkonce void @_Z3fooILi1EEvi(i32 %Y) nounwind {
 entry:
 	%Y_addr = alloca i32		; <i32*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
