@@ -49,7 +49,7 @@ ThreadLocalImpl::ThreadLocalImpl() : data(0) {
 ThreadLocalImpl::~ThreadLocalImpl() {
   pthread_key_t* key = static_cast<pthread_key_t*>(data);
   int errorcode = pthread_key_delete(*key);
-  assert(errorcode = 0);
+  assert(errorcode == 0);
   delete key;
 }
 
