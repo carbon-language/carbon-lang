@@ -11,15 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CompilerDriver/BuiltinOptions.h"
 #include "llvm/CompilerDriver/Tool.h"
 
 #include "llvm/System/Path.h"
-#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace llvmc;
-
-extern cl::opt<std::string> OutputFilename;
 
 namespace {
   sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,
@@ -39,7 +37,7 @@ namespace {
     // NOTE: makeUnique always *creates* a unique temporary file,
     // which is good, since there will be no races. However, some
     // tools do not like it when the output file already exists, so
-    // they have to be placated with -f or something like that.
+    // they need to be placated with -f or something like that.
     Out.makeUnique(true, NULL);
     return Out;
   }
@@ -52,7 +50,7 @@ sys::Path Tool::OutFilename(const sys::Path& In,
   sys::Path Out;
 
   if (StopCompilation) {
-    if (!OutputFilename.empty()) {
+    if (!OutputFilename.empty() && SaveTemps != SaveTempsEnum::Obj ) {
       Out.set(OutputFilename);
     }
     else if (IsJoin()) {

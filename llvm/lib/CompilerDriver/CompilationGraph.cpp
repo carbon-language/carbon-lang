@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CompilerDriver/BuiltinOptions.h"
 #include "llvm/CompilerDriver/CompilationGraph.h"
 #include "llvm/CompilerDriver/Error.h"
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/GraphWriter.h"
 
@@ -29,9 +29,6 @@
 
 using namespace llvm;
 using namespace llvmc;
-
-extern cl::list<std::string> InputFilenames;
-extern cl::list<std::string> Languages;
 
 namespace llvmc {
 
@@ -477,7 +474,7 @@ namespace llvm {
   {
 
     template<typename GraphType>
-    static std::string getNodeLabel(const Node* N, const GraphType&, 
+    static std::string getNodeLabel(const Node* N, const GraphType&,
                                     bool ShortNames)
     {
       if (N->ToolPtr)

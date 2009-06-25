@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CompilerDriver/Action.h"
+#include "llvm/CompilerDriver/BuiltinOptions.h"
 
-#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Program.h"
 
 #include <iostream>
@@ -21,9 +21,6 @@
 
 using namespace llvm;
 using namespace llvmc;
-
-extern cl::opt<bool> DryRun;
-extern cl::opt<bool> VerboseMode;
 
 namespace {
   int ExecuteProgram(const std::string& name,

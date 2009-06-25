@@ -17,6 +17,7 @@
 #ifndef LLVM_INCLUDE_COMPILER_DRIVER_MAIN_INC
 #define LLVM_INCLUDE_COMPILER_DRIVER_MAIN_INC
 
+#include "llvm/CompilerDriver/BuiltinOptions.h"
 #include "llvm/CompilerDriver/CompilationGraph.h"
 #include "llvm/CompilerDriver/Error.h"
 #include "llvm/CompilerDriver/ForceLinkage.h"
@@ -58,27 +59,56 @@ cl::opt<bool> WriteGraph("write-graph",
 cl::opt<bool> ViewGraph("view-graph",
                          cl::desc("Show compilation graph in GhostView"),
                          cl::Hidden);
-cl::opt<bool> SaveTemps("save-temps",
-                         cl::desc("Keep temporary files"),
-                         cl::Hidden);
+
+cl::opt<SaveTempsEnum::Values> SaveTemps
+("save-temps", cl::desc("Keep temporary files"),
+ cl::init(SaveTempsEnum::Unset),
+ cl::values(clEnumValN(SaveTempsEnum::Obj, "obj",
+                       "Save files in the directory specified with -o"),
+            clEnumValN(SaveTempsEnum::Cwd, "cwd",
+                       "Use current working directory"),
+            clEnumValN(SaveTempsEnum::Obj, "", "Same as 'cwd'"),
+            clEnumValEnd),
+ cl::ValueOptional);
 
 namespace {
+
+  sys::Path getTempDir() {
+    sys::Path tempDir;
+
+    // GCC 4.5-style -save-temps handling.
+    if (SaveTemps == SaveTempsEnum::Unset) {
+      tempDir = sys::Path::GetTemporaryDirectory();
+    }
+    else if (SaveTemps == SaveTempsEnum::Obj && !OutputFilename.empty()) {
+      tempDir = OutputFilename;
+
+      if (!tempDir.exists()) {
+        std::string ErrMsg;
+        if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
+          throw std::runtime_error(ErrMsg);
+      }
+    }
+    // else if (SaveTemps == Cwd) -> use current dir (leave tempDir empty)
+
+    return tempDir;
+  }
+
   /// BuildTargets - A small wrapper for CompilationGraph::Build.
   int BuildTargets(CompilationGraph& graph, const LanguageMap& langMap) {
     int ret;
-    const sys::Path& tempDir = SaveTemps
-      ? sys::Path("")
-      : sys::Path(sys::Path::GetTemporaryDirectory());
+    const sys::Path& tempDir = getTempDir();
 
     try {
       ret = graph.Build(tempDir, langMap);
     }
     catch(...) {
-      tempDir.eraseFromDisk(true);
+      if (SaveTemps == SaveTempsEnum::Unset)
+        tempDir.eraseFromDisk(true);
       throw;
     }
 
-    if (!SaveTemps)
+    if (SaveTemps == SaveTempsEnum::Unset)
       tempDir.eraseFromDisk(true);
     return ret;
   }
