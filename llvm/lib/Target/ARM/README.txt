@@ -96,20 +96,7 @@ Which would be better.  This occurs in png decode.
 //===---------------------------------------------------------------------===//
 
 More load / store optimizations:
-1) Look past instructions without side-effects (not load, store, branch, etc.)
-   when forming the list of loads / stores to optimize.
-
-2) Smarter register allocation?
-We are probably missing some opportunities to use ldm / stm. Consider:
-
-ldr r5, [r0]
-ldr r4, [r0, #4]
-
-This cannot be merged into a ldm. Perhaps we will need to do the transformation
-before register allocation. Then teach the register allocator to allocate a
-chunk of consecutive registers.
-
-3) Better representation for block transfer? This is from Olden/power:
+1) Better representation for block transfer? This is from Olden/power:
 
 	fldd d0, [r4]
 	fstd d0, [r4, #+32]
@@ -123,7 +110,7 @@ chunk of consecutive registers.
 If we can spare the registers, it would be better to use fldm and fstm here.
 Need major register allocator enhancement though.
 
-4) Can we recognize the relative position of constantpool entries? i.e. Treat
+2) Can we recognize the relative position of constantpool entries? i.e. Treat
 
 	ldr r0, LCPI17_3
 	ldr r1, LCPI17_4
@@ -147,13 +134,7 @@ L6:
 	.long	-858993459
 	.long	1074318540
 
-5) Can we make use of ldrd and strd? Instead of generating ldm / stm, use
-ldrd/strd instead if there are only two destination registers that form an
-odd/even pair. However, we probably would pay a penalty if the address is not
-aligned on 8-byte boundary. This requires more information on load / store
-nodes (and MI's?) then we currently carry.
-
-6) struct copies appear to be done field by field 
+3) struct copies appear to be done field by field 
 instead of by words, at least sometimes:
 
 struct foo { int x; short s; char c1; char c2; };
@@ -313,11 +294,6 @@ See McCat/18-imp/ComputeBoundingBoxes for an example.
 
 //===---------------------------------------------------------------------===//
 
-Register scavenging is now implemented.  The example in the previous version
-of this document produces optimal code at -O2.
-
-//===---------------------------------------------------------------------===//
-
 Pre-/post- indexed load / stores:
 
 1) We should not make the pre/post- indexed load/store transform if the base ptr
@@ -350,20 +326,6 @@ time.
    patterns instead of C++ instruction selection code.
 
 5) Use FLDM / FSTM to emulate indexed FP load / store.
-
-//===---------------------------------------------------------------------===//
-
-We should add i64 support to take advantage of the 64-bit load / stores.
-We can add a pseudo i64 register class containing pseudo registers that are
-register pairs. All other ops (e.g. add, sub) would be expanded as usual.
-
-We need to add pseudo instructions (i.e. gethi / getlo) to extract i32 registers
-from the i64 register. These are single moves which can be eliminated if the
-destination register is a sub-register of the source. We should implement proper
-subreg support in the register allocator to coalesce these away.
-
-There are other minor issues such as multiple instructions for a spill / restore
-/ move.
 
 //===---------------------------------------------------------------------===//
 
@@ -465,12 +427,6 @@ More register scavenging work:
 1. Use the register scavenger to track frame index materialized into registers
    (those that do not fit in addressing modes) to allow reuse in the same BB.
 2. Finish scavenging for Thumb.
-3. We know some spills and restores are unnecessary. The issue is once live
-   intervals are merged, they are not never split. So every def is spilled
-   and every use requires a restore if the register allocator decides the
-   resulting live interval is not assigned a physical register. It may be
-   possible (with the help of the scavenger) to turn some spill / restore
-   pairs into register copies.
 
 //===---------------------------------------------------------------------===//
 
