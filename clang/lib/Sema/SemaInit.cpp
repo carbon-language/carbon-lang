@@ -200,10 +200,9 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       
       if (InitEntity)
         return Diag(InitLoc, diag::err_cannot_initialize_decl)
-        << InitEntity << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
-        << Init->getType() << Init->getSourceRange();
-      else
-        return Diag(InitLoc, diag::err_cannot_initialize_decl_noname)
+          << InitEntity << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
+          << Init->getType() << Init->getSourceRange();
+      return Diag(InitLoc, diag::err_cannot_initialize_decl_noname)
         << DeclType << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
         << Init->getType() << Init->getSourceRange();
     }
@@ -211,7 +210,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
     // C99 6.7.8p16.
     if (DeclType->isArrayType())
       return Diag(Init->getLocStart(), diag::err_array_init_list_required)
-      << Init->getSourceRange();
+        << Init->getSourceRange();
     
     return CheckSingleInitializer(Init, DeclType, DirectInit, *this);
   } 

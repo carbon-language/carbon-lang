@@ -121,16 +121,18 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       if (DeclLoc.isInvalid())
         DeclLoc = DS.getSourceRange().getBegin();
 
-      if (getLangOptions().CPlusPlus && !getLangOptions().Microsoft)
+      if (getLangOptions().CPlusPlus && !getLangOptions().Microsoft) {
         Diag(DeclLoc, diag::err_missing_type_specifier)
           << DS.getSourceRange();
-      else
+        
+        // When this occurs in C++ code, often something is very broken with the
+        // value being declared, poison it as invalid so we don't get chains of
+        // errors.
+        isInvalid = true;
+      } else {
         Diag(DeclLoc, diag::ext_missing_type_specifier)
           << DS.getSourceRange();
-
-      // FIXME: If we could guarantee that the result would be well-formed, it
-      // would be useful to have a code insertion hint here. However, after
-      // emitting this warning/error, we often emit other errors.
+      }
     }
       
     // FALL THROUGH.  
