@@ -43,6 +43,7 @@ ThreadLocalImpl::ThreadLocalImpl() : data(0) {
   pthread_key_t* key = new pthread_key_t;
   int errorcode = pthread_key_create(key, NULL);
   assert(errorcode == 0);
+  (void) errorcode;
   data = key;
 }
 
@@ -50,6 +51,7 @@ ThreadLocalImpl::~ThreadLocalImpl() {
   pthread_key_t* key = static_cast<pthread_key_t*>(data);
   int errorcode = pthread_key_delete(*key);
   assert(errorcode == 0);
+  (void) errorcode;
   delete key;
 }
 
@@ -57,6 +59,7 @@ void ThreadLocalImpl::setInstance(const void* d) {
   pthread_key_t* key = static_cast<pthread_key_t*>(data);
   int errorcode = pthread_setspecific(*key, d);
   assert(errorcode == 0);
+  (void) errorcode;
 }
 
 const void* ThreadLocalImpl::getInstance() {
