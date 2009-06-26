@@ -580,43 +580,37 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (needCloseParen)
       O << ')';
     
+    bool isRIPRelative = false;
+
     switch (MO.getTargetFlags()) {
     default:
       assert(0 && "Unknown target flag on GV operand");
     case X86II::MO_NO_FLAG:
+      // FIXME: RIP THIS CHECKING CODE OUT EVENTUALLY.
+      if (isThreadLocal)
+        assert(0 && "Not lowered right");
+      break;
+    case X86II::MO_TLSGD:
+      O << "@TLSGD";
+      break;
+    case X86II::MO_GOTTPOFF:
+      O << "@GOTTPOFF";
+      assert(!NotRIPRel);
+      isRIPRelative = true;
+      break;
+    case X86II::MO_INDNTPOFF:
+      O << "@INDNTPOFF";
+      break;
+    case X86II::MO_TPOFF:
+      O << "@TPOFF";
+      break;
+    case X86II::MO_NTPOFF:
+      O << "@NTPOFF";
       break;
     }
     
-    
-    bool isRIPRelative = false;
     if (isThreadLocal) {
-      TLSModel::Model model = getTLSModel(GVar, TM.getRelocationModel());
-      switch (model) {
-      case TLSModel::GeneralDynamic:
-        O << "@TLSGD";
-        break;
-      case TLSModel::LocalDynamic:
-        // O << "@TLSLD"; // local dynamic not implemented
-        O << "@TLSGD";
-        break;
-      case TLSModel::InitialExec:
-        if (Subtarget->is64Bit()) {
-          assert (!NotRIPRel);
-          O << "@GOTTPOFF";
-          isRIPRelative = true;
-        } else {
-          O << "@INDNTPOFF";
-        }
-        break;
-      case TLSModel::LocalExec:
-        if (Subtarget->is64Bit())
-          O << "@TPOFF";
-        else
-          O << "@NTPOFF";
-        break;
-      default:
-        assert (0 && "Unknown TLS model");
-      }
+      // DEAD
     } else if (isMemOp) {
       if (shouldPrintGOT(TM, Subtarget)) {
         if (Subtarget->GVRequiresExtraLoad(GV, TM, false))

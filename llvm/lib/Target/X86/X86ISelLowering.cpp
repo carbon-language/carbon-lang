@@ -19,6 +19,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -4390,12 +4391,14 @@ X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue
 GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
-           SDValue *InFlag, const MVT PtrVT, unsigned ReturnReg) {
+           SDValue *InFlag, const MVT PtrVT, unsigned ReturnReg,
+           unsigned char OperandFlags) {
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   DebugLoc dl = GA->getDebugLoc();
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
                                            GA->getValueType(0),
-                                           GA->getOffset());
+                                           GA->getOffset(),
+                                           OperandFlags);
   if (InFlag) {
     SDValue Ops[] = { Chain,  TGA, *InFlag };
     Chain = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
@@ -4419,14 +4422,15 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                                  PtrVT), InFlag);
   InFlag = Chain.getValue(1);
 
-  return GetTLSADDR(DAG, Chain, GA, &InFlag, PtrVT, X86::EAX);
+  return GetTLSADDR(DAG, Chain, GA, &InFlag, PtrVT, X86::EAX, X86II::MO_TLSGD);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 64 bit
 static SDValue
 LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                 const MVT PtrVT) {
-  return GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT, X86::RAX);
+  return GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT,
+                    X86::RAX, X86II::MO_TLSGD);
 }
 
 // Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
@@ -4444,10 +4448,19 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   SDValue ThreadPointer = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Base,
                                       NULL, 0);
 
+  unsigned char OperandFlags = 0;
+  if (model == TLSModel::InitialExec) {
+    OperandFlags = is64Bit ? X86II::MO_GOTTPOFF : X86II::MO_INDNTPOFF;
+  } else {
+    assert(model == TLSModel::LocalExec);
+    OperandFlags = is64Bit ? X86II::MO_TPOFF : X86II::MO_NTPOFF;
+  }
+      
+  
   // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
   // exec)
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
-                                           GA->getOffset());
+                                           GA->getOffset(), OperandFlags);
   SDValue Offset = DAG.getNode(X86ISD::Wrapper, dl, PtrVT, TGA);
 
   if (model == TLSModel::InitialExec)
@@ -4466,30 +4479,29 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
   assert(Subtarget->isTargetELF() &&
          "TLS not implemented for non-ELF targets");
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
-  GlobalValue *GV = GA->getGlobal();
-  TLSModel::Model model =
-    getTLSModel (GV, getTargetMachine().getRelocationModel());
-  if (Subtarget->is64Bit()) {
-    switch (model) {
-    case TLSModel::GeneralDynamic:
-    case TLSModel::LocalDynamic: // not implemented
+  const GlobalValue *GV = GA->getGlobal();
+  
+  // If GV is an alias then use the aliasee for determining
+  // thread-localness.
+  if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+    GV = GA->resolveAliasedGlobal(false);
+  
+  TLSModel::Model model = getTLSModel(GV,
+                                      getTargetMachine().getRelocationModel());
+  
+  switch (model) {
+  case TLSModel::GeneralDynamic:
+  case TLSModel::LocalDynamic: // not implemented
+    if (Subtarget->is64Bit())
       return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
-
-    case TLSModel::InitialExec:
-    case TLSModel::LocalExec:
-      return LowerToTLSExecModel(GA, DAG, getPointerTy(), model, true);
-    }
-  } else {
-    switch (model) {
-    case TLSModel::GeneralDynamic:
-    case TLSModel::LocalDynamic: // not implemented
-      return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
-
-    case TLSModel::InitialExec:
-    case TLSModel::LocalExec:
-      return LowerToTLSExecModel(GA, DAG, getPointerTy(), model, false);
-    }
+    return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
+    
+  case TLSModel::InitialExec:
+  case TLSModel::LocalExec:
+    return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
+                               Subtarget->is64Bit());
   }
+  
   assert(0 && "Unreachable");
   return SDValue();
 }
