@@ -486,8 +486,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << MO.getIndex();
 
+    printOffset(MO.getOffset());
+
     switch (MO.getTargetFlags()) {
-      default:
+    default:
       assert(0 && "Unknown target flag on constant pool operand");
     case X86II::MO_NO_FLAG:
       // FIXME: REMOVE EVENTUALLY.
@@ -506,8 +508,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << "@GOTOFF";
       break;
     }
-    
-    printOffset(MO.getOffset());
 
     if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
       O << "(%rip)";
@@ -579,6 +579,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     if (needCloseParen)
       O << ')';
+    
+    switch (MO.getTargetFlags()) {
+    default:
+      assert(0 && "Unknown target flag on GV operand");
+    case X86II::MO_NO_FLAG:
+      break;
+    }
+    
     
     bool isRIPRelative = false;
     if (isThreadLocal) {
