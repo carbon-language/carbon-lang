@@ -62,7 +62,7 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   static std::string getPrettyName(unsigned reg);
   
 private:
-  int curgpdist;
+  mutable int curgpdist;
 };
 
 } // end namespace llvm

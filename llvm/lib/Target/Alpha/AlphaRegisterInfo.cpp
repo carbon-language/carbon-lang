@@ -54,7 +54,7 @@ static long getLower16(long l)
 
 AlphaRegisterInfo::AlphaRegisterInfo(const TargetInstrInfo &tii)
   : AlphaGenRegisterInfo(Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP),
-    TII(tii)
+    TII(tii), curgpdist(0)
 {
 }
 
@@ -205,8 +205,6 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl = (MBBI != MBB.end() ?
                  MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
   bool FP = hasFP(MF);
-
-  static int curgpdist = 0;
 
   //handle GOP offset
   BuildMI(MBB, MBBI, dl, TII.get(Alpha::LDAHg), Alpha::R29)
