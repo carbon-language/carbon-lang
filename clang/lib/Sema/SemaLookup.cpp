@@ -394,7 +394,9 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
   if (ObjCCompatibleAliasDecl *Alias 
         = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
     D = Alias->getClassInterface();
-  
+  if (UsingDecl *UD = dyn_cast_or_null<UsingDecl>(D))
+    D = UD->getTargetDecl();
+
   Result.StoredKind = SingleDecl;
   Result.First = reinterpret_cast<uintptr_t>(D);
   Result.Last = 0;
