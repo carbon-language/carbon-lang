@@ -304,9 +304,18 @@ sub GetDir {
 sub RunLoggedCommand {
   my $Command = shift;
   my $Log = shift;
+  my $Title = shift;
   if ($TEELOGS) {
+      if ($VERBOSE) {
+          print "$Title\n";
+          print "$Command 2>&1 | tee $Log\n";
+      }
       system "$Command 2>&1 | tee $Log";
   } else {
+      if ($VERBOSE) {
+          print "$Title\n";
+          print "$Command 2>&1 > $Log\n";
+      }
       system "$Command 2>&1 > $Log";
   }
 }
@@ -314,10 +323,19 @@ sub RunLoggedCommand {
 sub RunAppendingLoggedCommand {
   my $Command = shift;
   my $Log = shift;
+  my $Title = shift;
   if ($TEELOGS) {
+      if ($VERBOSE) {
+          print "$Title\n";
+          print "$Command 2>&1 | tee -a $Log\n";
+      }
       system "$Command 2>&1 | tee -a $Log";
   } else {
-      system "$Command 2>&1 > $Log";
+      if ($VERBOSE) {
+          print "$Title\n";
+          print "$Command 2>&1 > $Log\n";
+      }
+      system "$Command 2>&1 >> $Log";
   }
 }
 
@@ -565,34 +583,25 @@ if (!$NOCHECKOUT) {
 ##############################################################
 if (!$NOCHECKOUT) {
   ChangeDir( $BuildDir, "checkout directory" );
-  if ( $VERBOSE ) { print "CHECKOUT STAGE:\n"; }
   if ($USESVN) {
       my $SVNCMD = "$NICE svn co --non-interactive $SVNURL";
       my $SVNCMD2 = "$NICE svn co --non-interactive $TestSVNURL";
-      if ($VERBOSE) {
-        print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-              "$SVNCMD2/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
-      }
       RunLoggedCommand("( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-                       "$SVNCMD2/test-suite/trunk llvm-test )", $COLog);
+                       "$SVNCMD2/test-suite/trunk llvm-test )", $COLog,
+                       "CHECKOUT LLVM");
       if ($WITHCLANG) {
         my $SVNCMD = "$NICE svn co --non-interactive $SVNURL/cfe/trunk";
-        if ($VERBOSE) {
-          print "( time -p cd llvm/tools ; $SVNCMD clang ) > $COLog 2>&1\n"; 
-        }
-        RunLoggedCommand("( time -p cd llvm/tools ; $SVNCMD clang )", $COLog);
+        RunLoggedCommand("( time -p cd llvm/tools ; $SVNCMD clang )", $COLog,
+                         "CHECKOUT CLANG");
       }
   } else {
     my $CVSOPT = "";
     $CVSOPT = "-z3" # Use compression if going over ssh.
       if $CVSRootDir =~ /^:ext:/;
     my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co -P $CVSCOOPT";
-    if ($VERBOSE) {
-      print "( time -p $CVSCMD llvm; cd llvm/projects ; " .
-            "$CVSCMD llvm-test ) > $COLog 2>&1\n";
-    }
     RunLoggedCommand("( time -p $CVSCMD llvm; cd llvm/projects ; " .
-                     "$CVSCMD llvm-test )", $COLog);
+                     "$CVSCMD llvm-test )", $COLog,
+                     "CHECKOUT LLVM-TEST");
   }
 }
 ChangeDir( $LLVMSrcDir , "llvm source directory") ;
@@ -748,21 +757,11 @@ my $UserUpdateList = join "\n", sort keys %UsersUpdated;
 ##############################################################
 if (!$NOCHECKOUT && !$NOBUILD) {
   my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
-  if ( $VERBOSE ) {
-    print "CONFIGURE STAGE:\n";
-    print "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) " .
-          "> $BuildLog 2>&1\n";
-  }
   RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
-                   $BuildLog);
-  if ( $VERBOSE ) {
-    print "BUILD STAGE:\n";
-    print "(time -p $NICE $MAKECMD clean) >> $BuildLog 2>&1\n";
-    print "(time -p $NICE $MAKECMD $MAKEOPTS) >> $BuildLog 2>&1\n";
-  }
+                   $BuildLog, "CONFIGURE");
   # Build the entire tree, capturing the output into $BuildLog
-  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD clean)", $BuildLog);
-  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog);
+  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
+  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
 }
 
 ##############################################################
@@ -842,14 +841,9 @@ if (!$BuildError) {
 my $DejangnuTestResults=""; # String containing the results of the dejagnu
 my $dejagnu_output = "$DejagnuTestsLog";
 if (!$NODEJAGNU) {
-  if($VERBOSE) {
-    print "DEJAGNU FEATURE/REGRESSION TEST STAGE:\n";
-    print "(time -p $MAKECMD $MAKEOPTS check) > $dejagnu_output 2>&1\n";
-  }
-
   #Run the feature and regression tests, results are put into testrun.sum
   #Full log in testrun.log
-  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $dejagnu_output);
+  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $dejagnu_output, "DEJAGNU");
 
   #Copy the testrun.log and testrun.sum to our webdir
   CopyFile("test/testrun.log", $DejagnuLog);
@@ -928,7 +922,7 @@ sub TestDirectory {
             "TEST=nightly > $ProgramTestLog 2>&1\n";
     }
     RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-                     "TEST=nightly", $ProgramTestLog);
+                     "TEST=nightly", $ProgramTestLog, "TEST DIRECTORY $SubDir");
     $llcbeta_options=`$MAKECMD print-llcbeta-option`;
   }
 
@@ -961,21 +955,12 @@ sub TestDirectory {
 #
 ##############################################################
 if (!$BuildError) {
-  if ( $VERBOSE ) {
-     print "SingleSource TEST STAGE\n";
-  }
   ($SingleSourceProgramsTable, $llcbeta_options) =
     TestDirectory("SingleSource");
   WriteFile "$Prefix-SingleSource-Performance.txt", $SingleSourceProgramsTable;
-  if ( $VERBOSE ) {
-    print "MultiSource TEST STAGE\n";
-  }
   ($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
   WriteFile "$Prefix-MultiSource-Performance.txt", $MultiSourceProgramsTable;
   if ( ! $NOEXTERNALS ) {
-    if ( $VERBOSE ) {
-      print "External TEST STAGE\n";
-    }
     ($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
     WriteFile "$Prefix-External-Performance.txt", $ExternalProgramsTable;
     system "cat $Prefix-SingleSource-Tests.txt " .
