@@ -47,11 +47,12 @@ namespace {
     ///
     typedef std::map<const Value *, unsigned> ValueMapTy;
     ValueMapTy NumberForBB;
+    unsigned BBNumber;
   public:
     explicit SparcAsmPrinter(raw_ostream &O, TargetMachine &TM,
                              const TargetAsmInfo *T, CodeGenOpt::Level OL,
                              bool V)
-      : AsmPrinter(O, TM, T, OL, V) {}
+      : AsmPrinter(O, TM, T, OL, V), BBNumber(0) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";
@@ -102,7 +103,6 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // BBNumber is used here so that a given Printer will never give two
   // BBs the same name. (If you have a better way, please let me know!)
-  static unsigned BBNumber = 0;
 
   O << "\n\n";
 
