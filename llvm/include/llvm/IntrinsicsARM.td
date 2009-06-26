@@ -313,4 +313,13 @@ let TargetPrefix = "arm" in {
   def int_arm_neon_vst4f : Intrinsic<[llvm_void_ty],
                                      [llvm_ptr_ty, llvm_anyfloat_ty],
                                      [IntrWriteArgMem]>;
+
+  // Vector Table Lookup
+  def int_arm_neon_vtbl : Intrinsic<[llvm_v8i8_ty],
+                                    [llvm_anyint_ty, llvm_v8i8_ty],
+                                    [IntrNoMem]>;
+  // Vector Table Extension
+  def int_arm_neon_vtbx : Intrinsic<[llvm_v8i8_ty],
+                                    [llvm_anyint_ty, llvm_v8i8_ty],
+                                    [IntrNoMem]>;
 }
