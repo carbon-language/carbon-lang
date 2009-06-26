@@ -320,6 +320,6 @@ let TargetPrefix = "arm" in {
                                     [IntrNoMem]>;
   // Vector Table Extension
   def int_arm_neon_vtbx : Intrinsic<[llvm_v8i8_ty],
-                                    [llvm_anyint_ty, llvm_v8i8_ty],
-                                    [IntrNoMem]>;
+                                    [llvm_v8i8_ty, llvm_anyint_ty,
+                                     llvm_v8i8_ty], [IntrNoMem]>;
 }
