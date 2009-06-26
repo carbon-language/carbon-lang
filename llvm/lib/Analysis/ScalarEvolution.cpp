@@ -327,12 +327,22 @@ SCEVAddRecExpr::replaceSymbolicValuesWithConcrete(const SCEV *Sym,
 
 
 bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
-  // This recurrence is invariant w.r.t to QueryLoop iff QueryLoop doesn't
-  // contain L and if the start is invariant.
   // Add recurrences are never invariant in the function-body (null loop).
-  return QueryLoop &&
-         !QueryLoop->contains(L->getHeader()) &&
-         getOperand(0)->isLoopInvariant(QueryLoop);
+  if (!QueryLoop)
+    return false;
+
+  // This recurrence is variant w.r.t. QueryLoop if QueryLoop contains L.
+  if (QueryLoop->contains(L->getHeader()))
+    return false;
+
+  // This recurrence is variant w.r.t. QueryLoop if any of its operands
+  // are variant.
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (!getOperand(i)->isLoopInvariant(QueryLoop))
+      return false;
+
+  // Otherwise it's loop-invariant.
+  return true;
 }
 
 
