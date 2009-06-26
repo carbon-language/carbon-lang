@@ -355,13 +355,16 @@ include "ARMInstrFormats.td"
 
 /// AsI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
-multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode> {
+multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
+                        bit Commutable = 0> {
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                opc, " $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
+    let isCommutable = Commutable;
+  }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
@@ -370,13 +373,16 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 /// AI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CSPR register.
 let Defs = [CPSR] in {
-multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode> {
+multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
+                         bit Commutable = 0> {
   def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                opc, "s $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
+    let isCommutable = Commutable;
+  }
   def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
@@ -387,13 +393,16 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode> {
 /// patterns. Similar to AsI1_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
 let Defs = [CPSR] in {
-multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
+multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
+                       bit Commutable = 0> {
   def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, " $a, $b",
                [(opnode GPR:$a, so_imm:$b)]>;
   def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm,
                opc, " $a, $b",
-               [(opnode GPR:$a, GPR:$b)]>;
+               [(opnode GPR:$a, GPR:$b)]> {
+    let isCommutable = Commutable;
+  }
   def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, " $a, $b",
                [(opnode GPR:$a, so_reg:$b)]>;
@@ -434,7 +443,8 @@ multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
 
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
 let Uses = [CPSR] in {
-multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode> {
+multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
+                             bit Commutable = 0> {
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                 DPFrm, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
@@ -442,7 +452,9 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
-               Requires<[IsARM, CarryDefIsUnused]>;
+               Requires<[IsARM, CarryDefIsUnused]> {
+    let isCommutable = Commutable;
+  }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
@@ -453,19 +465,19 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode> {
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
                  let Defs = [CPSR];
-               }
+  }
   def Srr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, !strconcat(opc, "s $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
                  let Defs = [CPSR];
-               }
+  }
   def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, !strconcat(opc, "s $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
                  let Defs = [CPSR];
-               }
+  }
 }
 }
 
@@ -923,7 +935,7 @@ defm UXTAH : AI_bin_rrot<0b01101111, "uxtah",
 //
 
 defm ADD  : AsI1_bin_irs<0b0100, "add",
-                         BinOpFrag<(add  node:$LHS, node:$RHS)>>;
+                         BinOpFrag<(add  node:$LHS, node:$RHS)>, 1>;
 defm SUB  : AsI1_bin_irs<0b0010, "sub",
                          BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
@@ -934,7 +946,7 @@ defm SUBS : AI1_bin_s_irs<0b0010, "sub",
                           BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 defm ADC : AI1_adde_sube_irs<0b0101, "adc",
-                             BinOpFrag<(adde node:$LHS, node:$RHS)>>;
+                             BinOpFrag<(adde node:$LHS, node:$RHS)>, 1>;
 defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
                              BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
@@ -1001,11 +1013,11 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 //
 
 defm AND   : AsI1_bin_irs<0b0000, "and",
-                          BinOpFrag<(and node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
 defm ORR   : AsI1_bin_irs<0b1100, "orr",
-                          BinOpFrag<(or  node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
 defm EOR   : AsI1_bin_irs<0b0001, "eor",
-                          BinOpFrag<(xor node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
@@ -1027,6 +1039,7 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //  Multiply Instructions.
 //
 
+let isCommutable = 1 in
 def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                     "mul", " $dst, $a, $b",
                    [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
@@ -1037,6 +1050,7 @@ def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 
 // Extra precision multiplies with low / high results
 let neverHasSideEffects = 1 in {
+let isCommutable = 1 in {
 def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
                                (ins GPR:$a, GPR:$b),
                     "smull", " $ldst, $hdst, $a, $b", []>;
@@ -1044,6 +1058,7 @@ def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
 def UMULL : AsMul1I<0b0000100, (outs GPR:$ldst, GPR:$hdst),
                                (ins GPR:$a, GPR:$b),
                     "umull", " $ldst, $hdst, $a, $b", []>;
+}
 
 // Multiply + accumulate
 def SMLAL : AsMul1I<0b0000111, (outs GPR:$ldst, GPR:$hdst),
@@ -1294,9 +1309,9 @@ defm CMN  : AI1_cmp_irs<0b1011, "cmn",
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
-                        BinOpFrag<(ARMcmpNZ (and node:$LHS, node:$RHS), 0)>>;
+                        BinOpFrag<(ARMcmpNZ (and node:$LHS, node:$RHS), 0)>, 1>;
 defm TEQ  : AI1_cmp_irs<0b1001, "teq",
-                        BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0)>>;
+                        BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0)>, 1>;
 
 defm CMPnz : AI1_cmp_irs<0b1010, "cmp",
                          BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
