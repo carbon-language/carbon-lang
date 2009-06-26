@@ -17,8 +17,6 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
-#include "llvm/Module.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
