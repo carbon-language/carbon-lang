@@ -48,4 +48,13 @@ void test_f2(int i, const int ci, volatile int vi) {
   A<volatile int> a2 = f2(vi);
 }
 
-// FIXME: the next two bullets require a bit of effort.
+//   - The transformed A can be another pointer or pointer to member type that 
+//     can be converted to the deduced A via a qualification conversion (4.4).
+template<typename T> A<T> f3(T * * const * const);
+
+void test_f3(int ***ip, volatile int ***vip) {
+  A<int> a0 = f3(ip);
+  A<volatile int> a1 = f3(vip);
+}
+                             
+// FIXME: the next bullet requires a lot of effort.

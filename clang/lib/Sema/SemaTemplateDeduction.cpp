@@ -18,6 +18,31 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/Compiler.h"
+
+namespace clang {
+  /// \brief Various flags that control template argument deduction.
+  ///
+  /// These flags can be bitwise-OR'd together.
+  enum TemplateDeductionFlags {
+    /// \brief No template argument deduction flags, which indicates the
+    /// strictest results for template argument deduction (as used for, e.g.,
+    /// matching class template partial specializations).
+    TDF_None = 0,
+    /// \brief Within template argument deduction from a function call, we are
+    /// matching with a parameter type for which the original parameter was
+    /// a reference.
+    TDF_ParamWithReferenceType = 0x1,
+    /// \brief Within template argument deduction from a function call, we
+    /// are matching in a case where we ignore cv-qualifiers.
+    TDF_IgnoreQualifiers = 0x02,
+    /// \brief Within template argument deduction from a function call,
+    /// we are matching in a case where we can perform template argument
+    /// deduction from a derived class of the argument type.
+    /// FIXME: this is completely unsupported right now.
+    TDF_DerivedClass = 0x04
+  };
+}
+
 using namespace clang;
 
 static Sema::TemplateDeductionResult
@@ -171,8 +196,8 @@ DeduceTemplateArguments(ASTContext &Context,
 ///
 /// \param Deduced the deduced template arguments
 ///
-/// \param ParamTypeWasReference if true, the original parameter type was
-/// a reference type (C++0x [temp.deduct.type]p4 bullet 1).
+/// \param TDF bitwise OR of the TemplateDeductionFlags bits that describe
+/// how template argument deduction is performed. 
 ///
 /// \returns the result of template argument deduction so far. Note that a
 /// "success" result means that template argument deduction has not yet failed,
@@ -183,7 +208,7 @@ DeduceTemplateArguments(ASTContext &Context,
                         QualType ParamIn, QualType ArgIn,
                         Sema::TemplateDeductionInfo &Info,
                         llvm::SmallVectorImpl<TemplateArgument> &Deduced,
-                        bool ParamTypeWasReference = false) {
+                        unsigned TDF) {
   // We only want to look at the canonical types, since typedefs and
   // sugar are not part of template argument deduction.
   QualType Param = Context.getCanonicalType(ParamIn);
@@ -193,7 +218,7 @@ DeduceTemplateArguments(ASTContext &Context,
   //   - If the original P is a reference type, the deduced A (i.e., the type
   //     referred to by the reference) can be more cv-qualified than the 
   //     transformed A.
-  if (ParamTypeWasReference) {
+  if (TDF & TDF_ParamWithReferenceType) {
     unsigned ExtraQualsOnParam 
       = Param.getCVRQualifiers() & ~Arg.getCVRQualifiers();
     Param.setCVRQualifiers(Param.getCVRQualifiers() & ~ExtraQualsOnParam);
@@ -216,7 +241,7 @@ DeduceTemplateArguments(ASTContext &Context,
 
     // The argument type can not be less qualified than the parameter
     // type.
-    if (Param.isMoreQualifiedThan(Arg)) {
+    if (Param.isMoreQualifiedThan(Arg) && !(TDF & TDF_IgnoreQualifiers)) {
       Info.Param = cast<TemplateTypeParmDecl>(TemplateParams->getParam(Index));
       Info.FirstArg = Deduced[Index];
       Info.SecondArg = TemplateArgument(SourceLocation(), Arg);
@@ -252,10 +277,16 @@ DeduceTemplateArguments(ASTContext &Context,
   Info.FirstArg = TemplateArgument(SourceLocation(), ParamIn);
   Info.SecondArg = TemplateArgument(SourceLocation(), ArgIn);
 
-  if ((ParamTypeWasReference && Param.isMoreQualifiedThan(Arg)) ||
-      (!ParamTypeWasReference && 
-       (Param.getCVRQualifiers() != Arg.getCVRQualifiers())))
-    return Sema::TDK_NonDeducedMismatch;
+  // Check the cv-qualifiers on the parameter and argument types.
+  if (!(TDF & TDF_IgnoreQualifiers)) {
+    if (TDF & TDF_ParamWithReferenceType) {
+      if (Param.isMoreQualifiedThan(Arg))
+        return Sema::TDK_NonDeducedMismatch;
+    } else {
+      if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
+        return Sema::TDK_NonDeducedMismatch;  
+    }
+  }
 
   switch (Param->getTypeClass()) {
     // No deduction possible for these types
@@ -271,7 +302,8 @@ DeduceTemplateArguments(ASTContext &Context,
       return DeduceTemplateArguments(Context, TemplateParams,
                                    cast<PointerType>(Param)->getPointeeType(),
                                      PointerArg->getPointeeType(),
-                                     Info, Deduced);
+                                     Info, Deduced, 
+                                     TDF & TDF_IgnoreQualifiers);
     }
       
     //     T &
@@ -283,7 +315,7 @@ DeduceTemplateArguments(ASTContext &Context,
       return DeduceTemplateArguments(Context, TemplateParams,
                            cast<LValueReferenceType>(Param)->getPointeeType(),
                                      ReferenceArg->getPointeeType(),
-                                     Info, Deduced);
+                                     Info, Deduced, 0);
     }
 
     //     T && [C++0x]
@@ -295,7 +327,7 @@ DeduceTemplateArguments(ASTContext &Context,
       return DeduceTemplateArguments(Context, TemplateParams,
                            cast<RValueReferenceType>(Param)->getPointeeType(),
                                      ReferenceArg->getPointeeType(),
-                                     Info, Deduced);
+                                     Info, Deduced, 0);
     }
       
     //     T [] (implied, but not stated explicitly)
@@ -308,7 +340,7 @@ DeduceTemplateArguments(ASTContext &Context,
       return DeduceTemplateArguments(Context, TemplateParams,
                      Context.getAsIncompleteArrayType(Param)->getElementType(),
                                      IncompleteArrayArg->getElementType(),
-                                     Info, Deduced);
+                                     Info, Deduced, 0);
     }
 
     //     T [integer-constant]
@@ -326,7 +358,7 @@ DeduceTemplateArguments(ASTContext &Context,
       return DeduceTemplateArguments(Context, TemplateParams,
                                      ConstantArrayParm->getElementType(),
                                      ConstantArrayArg->getElementType(),
-                                     Info, Deduced);
+                                     Info, Deduced, 0);
     }
 
     //     type [i]
@@ -342,7 +374,7 @@ DeduceTemplateArguments(ASTContext &Context,
             = DeduceTemplateArguments(Context, TemplateParams,
                                       DependentArrayParm->getElementType(),
                                       ArrayArg->getElementType(),
-                                      Info, Deduced))
+                                      Info, Deduced, 0))
         return Result;
           
       // Determine the array bound is something we can deduce.
@@ -398,7 +430,7 @@ DeduceTemplateArguments(ASTContext &Context,
             = DeduceTemplateArguments(Context, TemplateParams,
                                       FunctionProtoParam->getResultType(),
                                       FunctionProtoArg->getResultType(),
-                                      Info, Deduced))
+                                      Info, Deduced, 0))
         return Result;
       
       for (unsigned I = 0, N = FunctionProtoParam->getNumArgs(); I != N; ++I) {
@@ -407,7 +439,7 @@ DeduceTemplateArguments(ASTContext &Context,
               = DeduceTemplateArguments(Context, TemplateParams,
                                         FunctionProtoParam->getArgType(I),
                                         FunctionProtoArg->getArgType(I),
-                                        Info, Deduced))
+                                        Info, Deduced, 0))
           return Result;
       }
       
@@ -516,13 +548,14 @@ DeduceTemplateArguments(ASTContext &Context,
             = DeduceTemplateArguments(Context, TemplateParams,
                                       MemPtrParam->getPointeeType(),
                                       MemPtrArg->getPointeeType(),
-                                      Info, Deduced))
+                                      Info, Deduced,
+                                      TDF & TDF_IgnoreQualifiers))
         return Result;
 
       return DeduceTemplateArguments(Context, TemplateParams,
                                      QualType(MemPtrParam->getClass(), 0),
                                      QualType(MemPtrArg->getClass(), 0),
-                                     Info, Deduced);
+                                     Info, Deduced, 0);
     }
 
     //     (clang extension)
@@ -540,7 +573,7 @@ DeduceTemplateArguments(ASTContext &Context,
       return DeduceTemplateArguments(Context, TemplateParams,
                                      BlockPtrParam->getPointeeType(),
                                      BlockPtrArg->getPointeeType(), Info,
-                                     Deduced);
+                                     Deduced, 0);
     }
 
     case Type::TypeOfExpr:
@@ -571,9 +604,8 @@ DeduceTemplateArguments(ASTContext &Context,
       
   case TemplateArgument::Type: 
     assert(Arg.getKind() == TemplateArgument::Type && "Type/value mismatch");
-    return DeduceTemplateArguments(Context, TemplateParams,
-                                   Param.getAsType(), 
-                                   Arg.getAsType(), Info, Deduced);
+    return DeduceTemplateArguments(Context, TemplateParams, Param.getAsType(),
+                                   Arg.getAsType(), Info, Deduced, 0);
 
   case TemplateArgument::Declaration:
     // FIXME: Implement this check
@@ -921,14 +953,23 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //   In general, the deduction process attempts to find template argument
     //   values that will make the deduced A identical to A (after the type A
     //   is transformed as described above). [...]
-    //
-    // FIXME: we'll pass down a flag to indicate when these cases may apply,
-    // and then deal with them in the code that deduces template
-    // arguments from a type.
+    unsigned TDF = 0;
+    
+    //     - If the original P is a reference type, the deduced A (i.e., the
+    //       type referred to by the reference) can be more cv-qualified than
+    //       the transformed A.
+    if (ParamWasReference)
+      TDF |= TDF_ParamWithReferenceType;
+    //     - The transformed A can be another pointer or pointer to member 
+    //       type that can be converted to the deduced A via a qualification 
+    //       conversion (4.4).
+    if (ArgType->isPointerType() || ArgType->isMemberPointerType())
+      TDF |= TDF_IgnoreQualifiers;
+    // FIXME: derived -> base checks
     if (TemplateDeductionResult Result
         = ::DeduceTemplateArguments(Context, TemplateParams,
                                     ParamType, ArgType, Info, Deduced,
-                                    ParamWasReference))
+                                    TDF))
       return Result;
     
     // FIXME: C++ [temp.deduct.call] paragraphs 6-9 deal with function
