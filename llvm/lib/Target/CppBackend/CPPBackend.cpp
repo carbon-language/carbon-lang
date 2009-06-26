@@ -1834,7 +1834,9 @@ namespace {
                               const std::string& mName) {
     nl(Out) << "Module* " << fname << "() {";
     nl(Out,1) << "// Module Construction";
-    nl(Out) << "Module* mod = new Module(\"" << mName << "\");";
+    nl(Out) << "Module* mod = new Module(\"";
+    printEscapedString(mName);
+    Out << "\");";
     if (!TheModule->getTargetTriple().empty()) {
       nl(Out) << "mod->setDataLayout(\"" << TheModule->getDataLayout() << "\");";
     }
@@ -1867,7 +1869,9 @@ namespace {
   void CppWriter::printContents(const std::string& fname,
                                 const std::string& mName) {
     Out << "\nModule* " << fname << "(Module *mod) {\n";
-    Out << "\nmod->setModuleIdentifier(\"" << mName << "\");\n";
+    Out << "\nmod->setModuleIdentifier(\"";
+    printEscapedString(mName);
+    Out << "\");\n";
     printModuleBody();
     Out << "\nreturn mod;\n";
     Out << "\n}\n";
