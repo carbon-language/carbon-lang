@@ -657,7 +657,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   printVisibility(name, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
-  if (isa<MDNode>(C))
+  if (isa<MDNode>(C) || isa<MDString>(C))
     return;
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);

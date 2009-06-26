@@ -484,7 +484,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
   O << "\n\n";
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
-  if (isa<MDNode>(C))
+  if (isa<MDNode>(C) || isa<MDString>(C))
     return;
   const Type *CTy = C->getType();
   unsigned Size = TD->getTypeAllocSize(CTy);

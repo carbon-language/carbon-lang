@@ -254,7 +254,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   O << "\n\n";
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
-  if (isa<MDNode>(C))
+  if (isa<MDNode>(C) || isa<MDString>(C))
     return;
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = TD->getPreferredAlignment(GVar);
