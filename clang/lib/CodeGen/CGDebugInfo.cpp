@@ -50,24 +50,6 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
 /// one if necessary. This returns null for invalid source locations.
 llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
-
-  // Each input file is encoded as a separate compile unit in LLVM
-  // debugging information output. However, many target specific tool chains
-  // prefer to encode only one compile unit in an object file. In this 
-  // situation, the LLVM code generator will include  debugging information
-  // entities in the compile unit that is marked as main compile unit. The 
-  // code generator accepts maximum one main compile unit per module. If a
-  // module does not contain any main compile unit then the code generator 
-  // will emit multiple compile units in the output object file. Create main
-  // compile unit if there is not one available.
-  const LangOptions &LO = M->getLangOptions();
-  if (isMainCompileUnitCreated == false) {
-    if (LO.getMainFileName()) {
-      createCompileUnit(LO.getMainFileName(), true /* isMain */);
-      isMainCompileUnitCreated = true;
-    }
-  }
-
   // Get source file information.
   const char *FileName =  "<unknown>";
   SourceManager &SM = M->getContext().getSourceManager();
@@ -90,26 +72,25 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     AbsFileName = tmp;
   }
 
-  // There is only one main source file at a time whose compile unit
-  // is already created.
-  Unit = createCompileUnit(FileName, false /* isMain */);
-  return Unit;
-}
-
-/// createCompileUnit - Create a new unit for the given file.
-llvm::DICompileUnit CGDebugInfo::createCompileUnit(const char *FileName,
-                                                   bool isMain) {
-
-  // Get absolute path name.
-  llvm::sys::Path AbsFileName(FileName);
-  if (!AbsFileName.isAbsolute()) {
-    llvm::sys::Path tmp = llvm::sys::Path::GetCurrentDirectory();
-    tmp.appendComponent(FileName);
-    AbsFileName = tmp;
+  // See if thie compile unit is representing main source file. Each source
+  // file has corresponding compile unit. There is only one main source
+  // file at a time.
+  bool isMain = false;
+  const LangOptions &LO = M->getLangOptions();
+  const char *MainFileName = LO.getMainFileName();
+  if (isMainCompileUnitCreated == false) {
+    if (MainFileName) {
+      if (!strcmp(AbsFileName.getLast().c_str(), MainFileName))
+        isMain = true;
+    } else {
+      if (Loc.isValid() && SM.isFromMainFile(Loc))
+        isMain = true;
+    }
+    if (isMain)
+      isMainCompileUnitCreated = true;
   }
 
   unsigned LangTag;
-  const LangOptions &LO = M->getLangOptions();
   if (LO.CPlusPlus) {
     if (LO.ObjC1)
       LangTag = llvm::dwarf::DW_LANG_ObjC_plus_plus;
@@ -133,12 +114,11 @@ llvm::DICompileUnit CGDebugInfo::createCompileUnit(const char *FileName,
     RuntimeVers = LO.ObjCNonFragileABI ? 2 : 1;
   
   // Create new compile unit.
-  return DebugFactory.CreateCompileUnit(LangTag, AbsFileName.getLast(),
-                                        AbsFileName.getDirname(), 
-                                        Producer, isMain, isOptimized,
-                                        Flags, RuntimeVers);
+  return Unit = DebugFactory.CreateCompileUnit(LangTag, AbsFileName.getLast(),
+                                               AbsFileName.getDirname(), 
+                                               Producer, isMain, isOptimized,
+                                               Flags, RuntimeVers);
 }
-
 
 /// CreateType - Get the Basic type from the cache or create a new
 /// one if necessary.

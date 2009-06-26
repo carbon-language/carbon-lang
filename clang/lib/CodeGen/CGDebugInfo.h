@@ -111,9 +111,7 @@ private:
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
                    CGBuilderTy &Builder);
   
-  /// createCompileUnit - Create a new unit for the given file.
-  llvm::DICompileUnit createCompileUnit(const char *FileName, bool isMain);
-
+  
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.
   llvm::DICompileUnit getOrCreateCompileUnit(SourceLocation Loc);
