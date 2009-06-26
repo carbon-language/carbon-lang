@@ -22,18 +22,19 @@
 #include "ARMJITInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMISelLowering.h"
+#include "ThumbInstrInfo.h"
 
 namespace llvm {
 
 class Module;
 
-class ARMTargetMachine : public LLVMTargetMachine {
+class ARMBaseTargetMachine : public LLVMTargetMachine {
+protected:
   ARMSubtarget        Subtarget;
-  const TargetData    DataLayout;       // Calculates type size & alignment
-  ARMInstrInfo        InstrInfo;
+
+private:
   ARMFrameInfo        FrameInfo;
   ARMJITInfo          JITInfo;
-  ARMTargetLowering   TLInfo;
   InstrItineraryData  InstrItins;
   Reloc::Model        DefRelocModel;    // Reloc model before it's overridden.
 
@@ -41,26 +42,18 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
-                                            ARMTargetMachine &tm,
+                                            ARMBaseTargetMachine &tm,
                                             CodeGenOpt::Level OptLevel,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  ARMTargetMachine(const Module &M, const std::string &FS, bool isThumb = false);
+  ARMBaseTargetMachine(const Module &M, const std::string &FS, bool isThumb);
 
-  virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
-  virtual const ARMRegisterInfo  *getRegisterInfo() const {
-    return &InstrInfo.getRegisterInfo();
-  }
-  virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual       ARMTargetLowering *getTargetLowering() const {
-    return const_cast<ARMTargetLowering*>(&TLInfo);
-  }
-  virtual const InstrItineraryData getInstrItineraryData() const {  
+  virtual const InstrItineraryData getInstrItineraryData() const {
     return InstrItins;
   }
 
@@ -94,11 +87,49 @@ public:
                                     JITCodeEmitter &MCE);
 };
 
+/// ARMTargetMachine - ARM target machine.
+///
+class ARMTargetMachine : public ARMBaseTargetMachine {
+  ARMInstrInfo        InstrInfo;
+  const TargetData    DataLayout;       // Calculates type size & alignment
+  ARMTargetLowering   TLInfo;
+public:
+  ARMTargetMachine(const Module &M, const std::string &FS);
+
+  virtual const ARMRegisterInfo  *getRegisterInfo() const {
+    return &InstrInfo.getRegisterInfo();
+  }
+
+  virtual       ARMTargetLowering *getTargetLowering() const {
+    return const_cast<ARMTargetLowering*>(&TLInfo);
+  }
+
+  virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
+
+  static unsigned getJITMatchQuality();
+  static unsigned getModuleMatchQuality(const Module &M);
+};
+
 /// ThumbTargetMachine - Thumb target machine.
 ///
-class ThumbTargetMachine : public ARMTargetMachine {
+class ThumbTargetMachine : public ARMBaseTargetMachine {
+  ThumbInstrInfo      InstrInfo;
+  const TargetData    DataLayout;       // Calculates type size & alignment
+  ARMTargetLowering   TLInfo;
 public:
   ThumbTargetMachine(const Module &M, const std::string &FS);
+
+  virtual const ARMRegisterInfo  *getRegisterInfo() const {
+    return &InstrInfo.getRegisterInfo();
+  }
+
+  virtual       ARMTargetLowering *getTargetLowering() const {
+    return const_cast<ARMTargetLowering*>(&TLInfo);
+  }
+
+  virtual const ThumbInstrInfo   *getInstrInfo() const { return &InstrInfo; }
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);

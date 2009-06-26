@@ -43,7 +43,7 @@ const char *const llvm::arm_asm_table[] = {
   0,0
 };
 
-ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
+ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMBaseTargetMachine &TM):
   ARMTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
@@ -55,7 +55,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   SupportsDebugInformation = true;
 }
 
-ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
+ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
   ARMTargetAsmInfo<ELFTargetAsmInfo>(TM) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 

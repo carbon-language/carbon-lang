@@ -1138,7 +1138,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
-                                             ARMTargetMachine &tm,
+                                             ARMBaseTargetMachine &tm,
                                              CodeGenOpt::Level OptLevel,
                                              bool verbose) {
   return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
@@ -1147,7 +1147,7 @@ FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
 namespace {
   static struct Register {
     Register() {
-      ARMTargetMachine::registerAsmPrinter(createARMCodePrinterPass);
+      ARMBaseTargetMachine::registerAsmPrinter(createARMCodePrinterPass);
     }
   } Registrator;
 }

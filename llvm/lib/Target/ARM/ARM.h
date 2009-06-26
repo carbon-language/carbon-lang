@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-class ARMTargetMachine;
+class ARMBaseTargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
 class JITCodeEmitter;
@@ -28,8 +28,8 @@ class raw_ostream;
 
 // Enums corresponding to ARM condition codes
 namespace ARMCC {
-  // The CondCodes constants map directly to the 4-bit encoding of the 
-  // condition field for predicated instructions. 
+  // The CondCodes constants map directly to the 4-bit encoding of the
+  // condition field for predicated instructions.
   enum CondCodes {
     EQ,
     NE,
@@ -47,7 +47,7 @@ namespace ARMCC {
     LE,
     AL
   };
-  
+
   inline static CondCodes getOppositeCondition(CondCodes CC){
     switch (CC) {
     default: assert(0 && "Unknown condition code");
@@ -90,17 +90,17 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
   }
 }
 
-FunctionPass *createARMISelDag(ARMTargetMachine &TM);
+FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM);
 FunctionPass *createARMCodePrinterPass(raw_ostream &O,
-                                       ARMTargetMachine &TM,
+                                       ARMBaseTargetMachine &TM,
                                        CodeGenOpt::Level OptLevel,
                                        bool Verbose);
-FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
+FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 
-FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
+FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
-FunctionPass *createARMJITCodeEmitterPass(ARMTargetMachine &TM, 
+FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
                                           JITCodeEmitter &JCE);
 
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);

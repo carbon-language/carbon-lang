@@ -176,11 +176,11 @@ namespace {
 
 namespace llvm {
 
-FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
+FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
                                        MachineCodeEmitter &MCE) {
   return new Emitter<MachineCodeEmitter>(TM, MCE);
 }
-FunctionPass *createARMJITCodeEmitterPass(ARMTargetMachine &TM,
+FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
                                           JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
 }

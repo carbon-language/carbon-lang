@@ -41,14 +41,14 @@ static const unsigned arm_dsubreg_1 = 6;
 ///
 namespace {
 class ARMDAGToDAGISel : public SelectionDAGISel {
-  ARMTargetMachine &TM;
+  ARMBaseTargetMachine &TM;
 
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const ARMSubtarget *Subtarget;
 
 public:
-  explicit ARMDAGToDAGISel(ARMTargetMachine &tm)
+  explicit ARMDAGToDAGISel(ARMBaseTargetMachine &tm)
     : SelectionDAGISel(tm), TM(tm),
     Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }
@@ -1002,6 +1002,6 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 /// createARMISelDag - This pass converts a legalized DAG into a
 /// ARM-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createARMISelDag(ARMTargetMachine &TM) {
+FunctionPass *llvm::createARMISelDag(ARMBaseTargetMachine &TM) {
   return new ARMDAGToDAGISel(TM);
 }

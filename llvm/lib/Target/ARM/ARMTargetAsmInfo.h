@@ -26,7 +26,7 @@ namespace llvm {
 
   template <class BaseTAI>
   struct ARMTargetAsmInfo : public BaseTAI {
-    explicit ARMTargetAsmInfo(const ARMTargetMachine &TM) : BaseTAI(TM) {
+    explicit ARMTargetAsmInfo(const ARMBaseTargetMachine &TM) : BaseTAI(TM) {
       BaseTAI::AsmTransCBE = arm_asm_table;
 
       BaseTAI::AlignmentIsInBytes = false;
@@ -51,11 +51,11 @@ namespace llvm {
   EXTERN_TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
 
   struct ARMDarwinTargetAsmInfo : public ARMTargetAsmInfo<DarwinTargetAsmInfo> {
-    explicit ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM);
+    explicit ARMDarwinTargetAsmInfo(const ARMBaseTargetMachine &TM);
   };
 
   struct ARMELFTargetAsmInfo : public ARMTargetAsmInfo<ELFTargetAsmInfo> {
-    explicit ARMELFTargetAsmInfo(const ARMTargetMachine &TM);
+    explicit ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM);
   };
 
 } // namespace llvm

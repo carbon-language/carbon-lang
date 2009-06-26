@@ -51,14 +51,14 @@ namespace ARMII {
     Size8Bytes    = 2,
     Size4Bytes    = 3,
     Size2Bytes    = 4,
-    
+
     // IndexMode - Unindex, pre-indexed, or post-indexed. Only valid for load
-    // and store ops 
+    // and store ops
     IndexModeShift = 7,
     IndexModeMask  = 3 << IndexModeShift,
     IndexModePre   = 1,
     IndexModePost  = 2,
-    
+
     //===------------------------------------------------------------------===//
     // Misc flags.
 
@@ -146,10 +146,12 @@ namespace ARMII {
   };
 }
 
-class ARMInstrInfo : public TargetInstrInfoImpl {
+class ARMBaseInstrInfo : public TargetInstrInfoImpl {
   const ARMRegisterInfo RI;
+protected:
+  // Can be only subclassed.
+  explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
 public:
-  explicit ARMInstrInfo(const ARMSubtarget &STI);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
@@ -157,17 +159,6 @@ public:
   ///
   virtual const ARMRegisterInfo &getRegisterInfo() const { return RI; }
 
-  /// Return true if the instruction is a register to register move and return
-  /// the source and dest operands and their sub-register indices by reference.
-  virtual bool isMoveInstr(const MachineInstr &MI,
-                           unsigned &SrcReg, unsigned &DstReg,
-                           unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
-
-  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
-  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
-  
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 
@@ -184,6 +175,54 @@ public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const;
+
+  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops) const;
+
+  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
+  virtual
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+
+  // Predication support.
+  virtual bool isPredicated(const MachineInstr *MI) const;
+
+  ARMCC::CondCodes getPredicate(const MachineInstr *MI) const {
+    int PIdx = MI->findFirstPredOperandIdx();
+    return PIdx != -1 ? (ARMCC::CondCodes)MI->getOperand(PIdx).getImm()
+                      : ARMCC::AL;
+  }
+
+  virtual
+  bool PredicateInstruction(MachineInstr *MI,
+                            const SmallVectorImpl<MachineOperand> &Pred) const;
+
+  virtual
+  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                         const SmallVectorImpl<MachineOperand> &Pred2) const;
+
+  virtual bool DefinesPredicate(MachineInstr *MI,
+                                std::vector<MachineOperand> &Pred) const;
+
+  /// GetInstSize - Returns the size of the specified MachineInstr.
+  ///
+  virtual unsigned GetInstSizeInBytes(const MachineInstr* MI) const;
+};
+
+class ARMInstrInfo : public ARMBaseInstrInfo {
+public:
+  explicit ARMInstrInfo(const ARMSubtarget &STI);
+
+  /// Return true if the instruction is a register to register move and return
+  /// the source and dest operands and their sub-register indices by reference.
+  virtual bool isMoveInstr(const MachineInstr &MI,
+                           unsigned &SrcReg, unsigned &DstReg,
+                           unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+
+  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                                       int &FrameIndex) const;
+  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
+                                      int &FrameIndex) const;
+
   virtual bool copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator I,
                             unsigned DestReg, unsigned SrcReg,
@@ -208,13 +247,7 @@ public:
                                SmallVectorImpl<MachineOperand> &Addr,
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
-  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator MI,
-                                 const std::vector<CalleeSavedInfo> &CSI) const;
-  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                 const std::vector<CalleeSavedInfo> &CSI) const;
-  
+
   virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                               MachineInstr* MI,
                                            const SmallVectorImpl<unsigned> &Ops,
@@ -226,37 +259,6 @@ public:
                                               MachineInstr* LoadMI) const {
     return 0;
   }
-
-  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
-                                    const SmallVectorImpl<unsigned> &Ops) const;
-  
-  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
-  virtual
-  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
-
-  // Predication support.
-  virtual bool isPredicated(const MachineInstr *MI) const;
-
-  ARMCC::CondCodes getPredicate(const MachineInstr *MI) const {
-    int PIdx = MI->findFirstPredOperandIdx();
-    return PIdx != -1 ? (ARMCC::CondCodes)MI->getOperand(PIdx).getImm() 
-                      : ARMCC::AL;
-  }
-
-  virtual
-  bool PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const;
-
-  virtual
-  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                         const SmallVectorImpl<MachineOperand> &Pred2) const;
-
-  virtual bool DefinesPredicate(MachineInstr *MI,
-                                std::vector<MachineOperand> &Pred) const;
-    
-  /// GetInstSize - Returns the size of the specified MachineInstr.
-  ///
-  virtual unsigned GetInstSizeInBytes(const MachineInstr* MI) const;
 };
 
 }
