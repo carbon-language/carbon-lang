@@ -460,21 +460,10 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   void ConstructCompileUnit(GlobalVariable *GV);
 
-  /// ConstructCompileUnits - Create a compile unit DIEs.
-  void ConstructCompileUnits();
+  void ConstructGlobalVariableDIE(GlobalVariable *GV);
 
-  bool ConstructGlobalVariableDIE(GlobalVariable *GV);
+  void ConstructSubprogram(GlobalVariable *GV);
 
-  /// ConstructGlobalVariableDIEs - Create DIEs for each of the externally 
-  /// visible global variables. Return true if at least one global DIE is
-  /// created.
-  bool ConstructGlobalVariableDIEs();
-
-  bool ConstructSubprogram(GlobalVariable *GV);
-
-  /// ConstructSubprograms - Create DIEs for each of the externally visible
-  /// subprograms. Return true if at least one subprogram DIE is created.
-  bool ConstructSubprograms();
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

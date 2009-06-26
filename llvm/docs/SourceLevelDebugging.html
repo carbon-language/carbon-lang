@@ -24,7 +24,6 @@
   <ol>
     <li><a href="#debug_info_descriptors">Debug information descriptors</a>
     <ul>
-      <li><a href="#format_anchors">Anchor descriptors</a></li>
       <li><a href="#format_compile_units">Compile unit descriptors</a></li>
       <li><a href="#format_global_variables">Global variable descriptors</a></li>
       <li><a href="#format_subprograms">Subprogram descriptors</a></li>
@@ -331,58 +330,6 @@ height="369">
    262144.)</a></p>
 
 <p>The details of the various descriptors follow.</p>  
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="format_anchors">Anchor descriptors</a>
-</div>
-
-<div class="doc_text">
-
-<div class="doc_code">
-<pre>
-%<a href="#format_anchors">llvm.dbg.anchor.type</a> = type {
-  i32,   ;; Tag = 0 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
-  i32    ;; Tag of descriptors grouped by the anchor
-}
-</pre>
-</div>
-
-<p>One important aspect of the LLVM debug representation is that it allows the
-   LLVM debugger to efficiently index all of the global objects without having
-   to scan the program.  To do this, all of the global objects use "anchor"
-   descriptors with designated names.  All of the global objects of a particular
-   type (e.g., compile units) contain a pointer to the anchor.  This pointer
-   allows a debugger to use def-use chains to find all global objects of that
-   type.</p>
-
-<p>The following names are recognized as anchors by LLVM:</p>
-
-<div class="doc_code">
-<pre>
-%<a href="#format_compile_units">llvm.dbg.compile_units</a> = linkonce constant %<a href="#format_anchors">llvm.dbg.anchor.type</a> {
-  i32 0,
-  i32 17
-} ;; DW_TAG_compile_unit
-%<a href="#format_global_variables">llvm.dbg.global_variables</a> = linkonce constant %<a href="#format_anchors">llvm.dbg.anchor.type</a> {
-  i32 0,
-  i32 52
-} ;; DW_TAG_variable
-%<a href="#format_subprograms">llvm.dbg.subprograms</a> = linkonce constant %<a href="#format_anchors">llvm.dbg.anchor.type</a> {
-  i32 0,
-  i32 46
-} ;; DW_TAG_subprogram
-</pre>
-</div>
-
-<p>Using anchors in this way (where the compile unit descriptor points to the
-   anchors, as opposed to having a list of compile unit descriptors) allows for
-   the standard dead global elimination and merging passes to automatically
-   remove unused debugging information.  If the globals were kept track of
-   through lists, there would always be an object pointing to the descriptors,
-   thus would never be deleted.</p>
 
 </div>
 

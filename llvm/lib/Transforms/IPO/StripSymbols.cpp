@@ -26,6 +26,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -210,7 +211,25 @@ bool StripDebugInfo(Module &M) {
   SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
   findUsedValues(M, llvmUsedValues);
 
-  // Delete all dbg variables.
+  SmallVector<GlobalVariable *, 2> CUs;
+  SmallVector<GlobalVariable *, 4> GVs;
+  SmallVector<GlobalVariable *, 4> SPs;
+  CollectDebugInfoAnchors(M, CUs, GVs, SPs);
+  // These anchors use LinkOnce linkage so that the optimizer does not
+  // remove them accidently. Set InternalLinkage for all these debug
+  // info anchors.
+  for (SmallVector<GlobalVariable *, 2>::iterator I = CUs.begin(),
+         E = CUs.end(); I != E; ++I)
+    (*I)->setLinkage(GlobalValue::InternalLinkage);
+  for (SmallVector<GlobalVariable *, 4>::iterator I = GVs.begin(),
+         E = GVs.end(); I != E; ++I)
+    (*I)->setLinkage(GlobalValue::InternalLinkage);
+  for (SmallVector<GlobalVariable *, 4>::iterator I = SPs.begin(),
+         E = SPs.end(); I != E; ++I)
+    (*I)->setLinkage(GlobalValue::InternalLinkage);
+
+
+ // Delete all dbg variables.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
        I != E; ++I) {
     GlobalVariable *GV = dyn_cast<GlobalVariable>(I);

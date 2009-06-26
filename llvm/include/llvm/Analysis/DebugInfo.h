@@ -17,9 +17,12 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
+#include "llvm/Module.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Dwarf.h"
 
 namespace llvm {
@@ -78,15 +81,6 @@ namespace llvm {
 
     /// dump - print descriptor.
     void dump() const;
-  };
-
-  /// DIAnchor - A wrapper for various anchor descriptors.
-  class DIAnchor : public DIDescriptor {
-  public:
-    explicit DIAnchor(GlobalVariable *GV = 0)
-      : DIDescriptor(GV, dwarf::DW_TAG_anchor) {}
-
-    unsigned getAnchorTag() const { return getUnsignedField(1); }
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -411,7 +405,6 @@ namespace llvm {
   class DIFactory {
     Module &M;
     // Cached values for uniquing and faster lookups.
-    DIAnchor CompileUnitAnchor, SubProgramAnchor, GlobalVariableAnchor;
     const Type *EmptyStructPtr; // "{}*".
     Function *StopPointFn;   // llvm.dbg.stoppoint
     Function *FuncStartFn;   // llvm.dbg.func.start
@@ -425,18 +418,6 @@ namespace llvm {
     void operator=(const DIFactory&); // DO NOT IMPLEMENT
   public:
     explicit DIFactory(Module &m);
-
-    /// GetOrCreateCompileUnitAnchor - Return the anchor for compile units,
-    /// creating a new one if there isn't already one in the module.
-    DIAnchor GetOrCreateCompileUnitAnchor();
-
-    /// GetOrCreateSubprogramAnchor - Return the anchor for subprograms,
-    /// creating a new one if there isn't already one in the module.
-    DIAnchor GetOrCreateSubprogramAnchor();
-
-    /// GetOrCreateGlobalVariableAnchor - Return the anchor for globals,
-    /// creating a new one if there isn't already one in the module.
-    DIAnchor GetOrCreateGlobalVariableAnchor();
 
     /// GetOrCreateArray - Create an descriptor for an array of descriptors. 
     /// This implicitly uniques the arrays created.
@@ -540,7 +521,6 @@ namespace llvm {
   private:
     Constant *GetTagConstant(unsigned TAG);
     Constant *GetStringConstant(const std::string &String);
-    DIAnchor GetOrCreateAnchor(unsigned TAG, const char *Name);
 
     /// getCastToEmpty - Return the descriptor as a Constant* with type '{}*'.
     Constant *getCastToEmpty(DIDescriptor D);
@@ -563,6 +543,13 @@ namespace llvm {
 
   bool getLocationInfo(const Value *V, std::string &DisplayName, std::string &Type, 
                        unsigned &LineNo, std::string &File, std::string &Dir); 
+
+  /// CollectDebugInfoAnchors - Collect debugging information anchors.
+  void CollectDebugInfoAnchors(Module &M,
+                               SmallVector<GlobalVariable *, 2> &CompileUnits,
+                               SmallVector<GlobalVariable *, 4> &GlobalVars,
+                               SmallVector<GlobalVariable *, 4> &Subprograms);
+
 } // end namespace llvm
 
 #endif

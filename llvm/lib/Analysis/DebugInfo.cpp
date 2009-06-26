@@ -367,70 +367,9 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
   return Slot = ConstantExpr::getBitCast(StrGV, DestTy);
 }
 
-/// GetOrCreateAnchor - Look up an anchor for the specified tag and name.  If it
-/// already exists, return it.  If not, create a new one and return it.
-DIAnchor DIFactory::GetOrCreateAnchor(unsigned TAG, const char *Name) {
-  const Type *EltTy = StructType::get(Type::Int32Ty, Type::Int32Ty, NULL);
-  
-  // Otherwise, create the global or return it if already in the module.
-  Constant *C = M.getOrInsertGlobal(Name, EltTy);
-  assert(isa<GlobalVariable>(C) && "Incorrectly typed anchor?");
-  GlobalVariable *GV = cast<GlobalVariable>(C);
-  
-  // If it has an initializer, it is already in the module.
-  if (GV->hasInitializer()) 
-    return SubProgramAnchor = DIAnchor(GV);
-  
-  GV->setLinkage(GlobalValue::LinkOnceAnyLinkage);
-  GV->setSection("llvm.metadata");
-  GV->setConstant(true);
-  M.addTypeName("llvm.dbg.anchor.type", EltTy);
-  
-  // Otherwise, set the initializer.
-  Constant *Elts[] = {
-    GetTagConstant(dwarf::DW_TAG_anchor),
-    ConstantInt::get(Type::Int32Ty, TAG)
-  };
-  
-  GV->setInitializer(ConstantStruct::get(Elts, 2));
-  return DIAnchor(GV);
-}
-
-
-
 //===----------------------------------------------------------------------===//
 // DIFactory: Primary Constructors
 //===----------------------------------------------------------------------===//
-
-/// GetOrCreateCompileUnitAnchor - Return the anchor for compile units,
-/// creating a new one if there isn't already one in the module.
-DIAnchor DIFactory::GetOrCreateCompileUnitAnchor() {
-  // If we already created one, just return it.
-  if (!CompileUnitAnchor.isNull())
-    return CompileUnitAnchor;
-  return CompileUnitAnchor = GetOrCreateAnchor(dwarf::DW_TAG_compile_unit,
-                                               "llvm.dbg.compile_units");
-}
-
-/// GetOrCreateSubprogramAnchor - Return the anchor for subprograms,
-/// creating a new one if there isn't already one in the module.
-DIAnchor DIFactory::GetOrCreateSubprogramAnchor() {
-  // If we already created one, just return it.
-  if (!SubProgramAnchor.isNull())
-    return SubProgramAnchor;
-  return SubProgramAnchor = GetOrCreateAnchor(dwarf::DW_TAG_subprogram,
-                                              "llvm.dbg.subprograms");
-}
-
-/// GetOrCreateGlobalVariableAnchor - Return the anchor for globals,
-/// creating a new one if there isn't already one in the module.
-DIAnchor DIFactory::GetOrCreateGlobalVariableAnchor() {
-  // If we already created one, just return it.
-  if (!GlobalVariableAnchor.isNull())
-    return GlobalVariableAnchor;
-  return GlobalVariableAnchor = GetOrCreateAnchor(dwarf::DW_TAG_variable,
-                                                  "llvm.dbg.global_variables");
-}
 
 /// GetOrCreateArray - Create an descriptor for an array of descriptors. 
 /// This implicitly uniques the arrays created.
@@ -494,7 +433,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                            unsigned RunTimeVer) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
-    getCastToEmpty(GetOrCreateCompileUnitAnchor()),
+    Constant::getNullValue(EmptyStructPtr),
     ConstantInt::get(Type::Int32Ty, LangID),
     GetStringConstant(Filename),
     GetStringConstant(Directory),
@@ -509,7 +448,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
   
   M.addTypeName("llvm.dbg.compile_unit.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
-                                          GlobalValue::InternalLinkage,
+                                          GlobalValue::LinkOnceAnyLinkage,
                                           Init, "llvm.dbg.compile_unit", &M);
   GV->setSection("llvm.metadata");
   return DICompileUnit(GV);
@@ -655,7 +594,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
-    getCastToEmpty(GetOrCreateSubprogramAnchor()),
+    Constant::getNullValue(EmptyStructPtr),
     getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
@@ -671,7 +610,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
   
   M.addTypeName("llvm.dbg.subprogram.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
-                                          GlobalValue::InternalLinkage,
+                                          GlobalValue::LinkOnceAnyLinkage,
                                           Init, "llvm.dbg.subprogram", &M);
   GV->setSection("llvm.metadata");
   return DISubprogram(GV);
@@ -687,7 +626,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
-    getCastToEmpty(GetOrCreateGlobalVariableAnchor()),
+    Constant::getNullValue(EmptyStructPtr),
     getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
@@ -704,7 +643,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
   
   M.addTypeName("llvm.dbg.global_variable.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
-                                          GlobalValue::InternalLinkage,
+                                          GlobalValue::LinkOnceAnyLinkage,
                                           Init, "llvm.dbg.global_variable", &M);
   GV->setSection("llvm.metadata");
   return DIGlobalVariable(GV);
@@ -954,6 +893,36 @@ namespace llvm {
     Unit.getDirectory(Dir);
     return true;
   }
+
+  /// CollectDebugInfoAnchors - Collect debugging information anchors.
+  void CollectDebugInfoAnchors(Module &M,
+                               SmallVector<GlobalVariable *, 2> &CUs,
+                               SmallVector<GlobalVariable *, 4> &GVs,
+                               SmallVector<GlobalVariable *, 4> &SPs) {
+
+    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
+       GVI != E; GVI++) {
+      GlobalVariable *GV = GVI;
+      if (GV->hasName() && strncmp(GV->getNameStart(), "llvm.dbg", 8) == 0
+          && GV->isConstant() && GV->hasInitializer()) {
+        DICompileUnit C(GV);
+        if (C.isNull() == false) {
+          CUs.push_back(GV);
+          continue;
+        }
+        DIGlobalVariable G(GV);
+        if (G.isNull() == false) {
+          GVs.push_back(GV);
+          continue;
+        }
+        DISubprogram S(GV);
+        if (S.isNull() == false) {
+          SPs.push_back(GV);
+          continue;
+        }
+      }
+    }
+  }
 }
 
 /// dump - Print descriptor.
@@ -1077,3 +1046,4 @@ void DIVariable::dump() const {
   getType().dump();
   cerr << "\n";
 }
+

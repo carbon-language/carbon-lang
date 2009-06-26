@@ -1242,27 +1242,7 @@ void DwarfDebug::ConstructCompileUnit(GlobalVariable *GV) {
   CompileUnits.push_back(Unit);
 }
 
-/// ConstructCompileUnits - Create a compile unit DIEs.
-void DwarfDebug::ConstructCompileUnits() {
-  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.compile_units");
-  if (!Root)
-    return;
-  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
-         "Malformed compile unit descriptor anchor type");
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  assert(RootC->hasNUsesOrMore(1) &&
-         "Malformed compile unit descriptor anchor type");
-
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI)
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI) {
-      GlobalVariable *GV = cast<GlobalVariable>(*UUI);
-      ConstructCompileUnit(GV);
-    }
-}
-
-bool DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
+void DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
   DIGlobalVariable DI_GV(GV);
   CompileUnit *DW_Unit = MainCU;
   if (!DW_Unit)
@@ -1271,7 +1251,7 @@ bool DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
   // Check for pre-existence.
   DIE *&Slot = DW_Unit->getDieMapSlotFor(DI_GV.getGV());
   if (Slot)
-    return false;
+    return;
 
   DIE *VariableDie = CreateGlobalVariableDIE(DW_Unit, DI_GV);
 
@@ -1292,33 +1272,10 @@ bool DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
   // Expose as global. FIXME - need to check external flag.
   std::string Name;
   DW_Unit->AddGlobal(DI_GV.getName(Name), VariableDie);
-  return true;
+  return;
 }
 
-/// ConstructGlobalVariableDIEs - Create DIEs for each of the externally visible
-/// global variables. Return true if at least one global DIE is created.
-bool DwarfDebug::ConstructGlobalVariableDIEs() {
-  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.global_variables");
-  if (!Root)
-    return false;
-
-  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
-         "Malformed global variable descriptor anchor type");
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  assert(RootC->hasNUsesOrMore(1) &&
-         "Malformed global variable descriptor anchor type");
-
-  bool Result = false;
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI)
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI)
-      Result |= ConstructGlobalVariableDIE(cast<GlobalVariable>(*UUI));
-
-  return Result;
-}
-
-bool DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
+void DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
   DISubprogram SP(GV);
   CompileUnit *Unit = MainCU;
   if (!Unit)
@@ -1327,12 +1284,12 @@ bool DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
   // Check for pre-existence.
   DIE *&Slot = Unit->getDieMapSlotFor(GV);
   if (Slot)
-    return false;
+    return;
 
   if (!SP.isDefinition())
     // This is a method declaration which will be handled while constructing
     // class type.
-    return false;
+    return;
 
   DIE *SubprogramDie = CreateSubprogramDIE(Unit, SP);
 
@@ -1345,30 +1302,7 @@ bool DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
   // Expose as global.
   std::string Name;
   Unit->AddGlobal(SP.getName(Name), SubprogramDie);
-  return true;
-}
-
-/// ConstructSubprograms - Create DIEs for each of the externally visible
-/// subprograms. Return true if at least one subprogram DIE is created.
-bool DwarfDebug::ConstructSubprograms() {
-  GlobalVariable *Root = M->getGlobalVariable("llvm.dbg.subprograms");
-  if (!Root)
-    return false;
-
-  assert(Root->hasLinkOnceLinkage() && Root->hasOneUse() &&
-         "Malformed subprogram descriptor anchor type");
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  assert(RootC->hasNUsesOrMore(1) &&
-         "Malformed subprogram descriptor anchor type");
-
-  bool Result = false;
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI)
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI)
-      Result |= ConstructSubprogram(cast<GlobalVariable>(*UUI));
-
-  return Result;
+  return;
 }
 
   /// BeginModule - Emit all Dwarf sections that should come prior to the
@@ -1380,8 +1314,15 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
+  SmallVector<GlobalVariable *, 2> CUs;
+  SmallVector<GlobalVariable *, 4> GVs;
+  SmallVector<GlobalVariable *, 4> SPs;
+  CollectDebugInfoAnchors(*M, CUs, GVs, SPs);
+
   // Create all the compile unit DIEs.
-  ConstructCompileUnits();
+  for (SmallVector<GlobalVariable *, 2>::iterator I = CUs.begin(),
+         E = CUs.end(); I != E; ++I) 
+    ConstructCompileUnit(*I);
 
   if (CompileUnits.empty()) {
     if (TimePassesIsEnabled)
@@ -1390,20 +1331,24 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
     return;
   }
 
-  // Create DIEs for each of the externally visible global variables.
-  bool globalDIEs = ConstructGlobalVariableDIEs();
-
-  // Create DIEs for each of the externally visible subprograms.
-  bool subprogramDIEs = ConstructSubprograms();
-
   // If there is not any debug info available for any global variables and any
   // subprograms then there is not any debug info to emit.
-  if (!globalDIEs && !subprogramDIEs) {
+  if (GVs.empty() && SPs.empty()) {
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
 
     return;
   }
+
+  // Create DIEs for each of the externally visible global variables.
+  for (SmallVector<GlobalVariable *, 4>::iterator I = GVs.begin(),
+         E = GVs.end(); I != E; ++I) 
+    ConstructGlobalVariableDIE(*I);
+
+  // Create DIEs for each of the externally visible subprograms.
+  for (SmallVector<GlobalVariable *, 4>::iterator I = SPs.begin(),
+         E = SPs.end(); I != E; ++I) 
+    ConstructSubprogram(*I);
 
   MMI = mmi;
   shouldEmit = true;
