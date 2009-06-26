@@ -22,6 +22,10 @@ include Makefile.tests
 # DejaGNU testing support
 #===------------------------------------------------------------------------===#
 
+ifneq ($(GREP_OPTIONS),)
+$(warning GREP_OPTIONS environment variable may interfere with test results)
+endif
+
 ifdef VERBOSE
 RUNTESTFLAGS := $(VERBOSE)
 endif

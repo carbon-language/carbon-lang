@@ -78,26 +78,7 @@ required to build LLVM, plus the following:</p>
 <dd>Expect is required by DejaGNU.</dd>
 <dt><a href="http://www.tcl.tk/software/tcltk/">tcl</a></dt>
 <dd>Tcl is required by DejaGNU. </dd>
-
-<ul>
-<li><tt>./configure --with-f2c=$DIR</tt><br>
-This will specify a new <tt>$DIR</tt> for the above-described search
-process.  This will only work if the binary, header, and library are in their
-respective subdirectories of <tt>$DIR</tt>.</li>
-
-<li><tt>./configure --with-f2c-bin=/binary/path --with-f2c-inc=/include/path
---with-f2c-lib=/lib/path</tt><br>
-This allows you to specify the F2C components separately.  Note: if you choose
-this route, you MUST specify all three components, and you need to only specify
-<em>directories</em> where the files are located; do NOT include the
-filenames themselves on the <tt>configure</tt> line.</li>
-</ul></dd>
 </dl>
-
-<p>Darwin (Mac OS X) developers can simplify the installation of Expect and tcl
-by using fink.  <tt>fink install expect</tt> will install both. Alternatively,
-Darwinports users can use <tt>sudo port install expect</tt> to install Expect
-and tcl.</p>
 
 </div>
 
@@ -122,14 +103,17 @@ tests" and are in the <tt>llvm</tt> module in subversion under the
 
 <div class="doc_text">
 
-<p>Code fragments are small pieces of code that test a specific feature of LLVM
-or trigger a specific bug in LLVM.  They are usually written in LLVM assembly
-language, but can be written in other languages if the test targets a particular
-language front end. These tests are driven by the DejaGNU testing framework,
-which is hidden behind a few simple makefiles.</p>
+<p>Code fragments are small pieces of code that test a specific
+feature of LLVM or trigger a specific bug in LLVM.  They are usually
+written in LLVM assembly language, but can be written in other
+languages if the test targets a particular language front end (and the
+appropriate <tt>--with-llvmgcc</tt> options were used
+at <tt>configure</tt> time of the <tt>llvm</tt> module). These tests
+are driven by the DejaGNU testing framework, which is hidden behind a
+few simple makefiles.</p>
 
-<p>These code fragments are not complete programs. The code generated from them is
-never executed to determine correct behavior.</p> 
+<p>These code fragments are not complete programs. The code generated
+from them is never executed to determine correct behavior.</p>
 
 <p>These code fragment tests are located in the <tt>llvm/test</tt>
 directory.</p>
@@ -251,9 +235,17 @@ programs), first checkout and setup the <tt>test-suite</tt> module:</p>
 % cd ..
 % ./configure --with-llvmgccdir=$LLVM_GCC_DIR
 </pre>
-<p>where <tt>$LLVM_GCC_DIR</tt> is the directory where you <em>installed</em>
-llvm-gcc, not it's src or obj dir.</p>
 </div>
+
+<p>where <tt>$LLVM_GCC_DIR</tt> is the directory where
+you <em>installed</em> llvm-gcc, not it's src or obj
+dir. The <tt>--with-llvmgccdir</tt> option assumes that
+the <tt>llvm-gcc-4.2</tt> module was configured with
+<tt>--program-prefix=llvm-</tt>, and therefore that the C and C++
+compiler drivers are called <tt>llvm-gcc</tt> and <tt>llvm-g++</tt>
+respectively.  If this is not the case,
+use <tt>--with-llvmgcc</tt>/<tt>--with-llvmgxx</tt> to specify each
+executable's location.</p>
 
 <p>Then, run the entire test suite by running make in the <tt>test-suite</tt>
 directory:</p>
@@ -447,6 +439,11 @@ that subdirectory.</p>
 ... | grep {i32\\*}
 </pre>
 </div>
+
+<p>If your system includes GNU <tt>grep</tt>, make sure
+that <tt>GREP_OPTIONS</tt> is not set in your environment. Otherwise,
+you may get invalid results (both false positives and false
+negatives).</p>
 
 </div>
 
@@ -745,6 +742,8 @@ test suite creates temporary files during execution.</p>
 <p>Note that the second and third steps only need to be done once. After you
 have the suite checked out and configured, you don't need to do it again (unless
 the test code or configure script changes).</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
