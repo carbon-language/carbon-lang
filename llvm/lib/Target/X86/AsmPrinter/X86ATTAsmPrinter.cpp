@@ -637,23 +637,17 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    bool needCloseParen = false;
-    std::string Name(TAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-
-    // Print function stub suffix unless it's Mac OS X 10.5 and up.
-    if (!isMemOp)
-      O << '$';
-    else if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-
-    O << Name;
-
+    /// NOTE: MO_ExternalSymbol in a non-pcrel_imm context is *only* generated
+    /// by _GLOBAL_OFFSET_TABLE_ on X86-32.  All others are call operands, which
+    /// are pcrel_imm's.
+    assert(!Subtarget->is64Bit() && !Subtarget->isPICStyleRIPRel());
+    // These are never used as memory operands.
+    assert(!(Modifier && !strcmp(Modifier, "mem")));
+    
+    O << '$';
+    O << TAI->getGlobalPrefix();
+    O << MO.getSymbolName();
+    
     if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
       O << " + [.-";
       PrintPICBaseSymbol();
@@ -662,12 +656,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       assert(MO.getTargetFlags() == X86II::MO_NO_FLAG &&
              "Unknown operand flag for external symbol");
     }
-
-    if (needCloseParen)
-      O << ')';
-
-    if (Subtarget->isPICStyleRIPRel())
-      O << "(%rip)";
     return;
   }
   default:
