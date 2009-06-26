@@ -807,6 +807,52 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
     break;
   }
 
+  if (T == Context.UndeducedAutoTy) {
+    int Error = -1;
+    
+    switch (D.getContext()) {
+    case Declarator::KNRTypeListContext:
+      assert(0 && "K&R type lists aren't allowed in C++");
+      break;
+    default:
+      printf("context: %d\n", D.getContext());
+      assert(0);
+    case Declarator::PrototypeContext:
+      Error = 0; // Function prototype
+      break;
+    case Declarator::MemberContext:
+      switch (cast<TagDecl>(CurContext)->getTagKind()) {
+      case TagDecl::TK_enum: assert(0 && "unhandled tag kind"); break;
+      case TagDecl::TK_struct: Error = 1; /* Struct member */ break;
+      case TagDecl::TK_union:  Error = 2; /* Union member */ break;
+      case TagDecl::TK_class:  Error = 3; /* Class member */ break;
+      }  
+      break;
+    case Declarator::CXXCatchContext:
+      Error = 4; // Exception declaration
+      break;
+    case Declarator::TemplateParamContext:
+      Error = 5; // Template parameter
+      break;
+    case Declarator::BlockLiteralContext:
+      Error = 6;  // Block literal
+      break;
+    case Declarator::FileContext:
+    case Declarator::BlockContext:
+    case Declarator::ForContext:
+    case Declarator::ConditionContext:
+    case Declarator::TypeNameContext:
+      break;
+    }
+
+    if (Error != -1) {
+      Diag(D.getDeclSpec().getTypeSpecTypeLoc(), diag::err_auto_not_allowed)
+        << Error;
+      T = Context.IntTy;
+      D.setInvalidType(true);
+    }
+  }
+  
   // The name we're declaring, if any.
   DeclarationName Name;
   if (D.getIdentifier())

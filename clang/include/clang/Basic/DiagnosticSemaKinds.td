@@ -403,6 +403,9 @@ def err_auto_variable_cannot_appear_in_own_initializer : Error<
   "variable %0 declared with 'auto' type cannot appear in its own initializer">;
 def err_illegal_decl_array_of_auto : Error<
   "'%0' declared as array of 'auto'">;
+def err_auto_not_allowed : Error<
+  "'auto' not allowed in %select{function prototype|struct member|union member"
+  "|class member|exception declaration|template parameter|block literal}0">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
