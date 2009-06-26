@@ -1,4 +1,3 @@
-// RUN: clang-cc -analyze -checker-simple -analyzer-store=region -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify -triple x86_64-apple-darwin9 %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify -triple i686-apple-darwin9 %s
 

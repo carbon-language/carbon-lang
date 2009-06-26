@@ -138,7 +138,7 @@ public:
 
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
-                         Loc lhs, NonLoc rhs) {
+                         Loc lhs, NonLoc rhs, QualType resultTy) {
     return UnknownVal();
   }
   

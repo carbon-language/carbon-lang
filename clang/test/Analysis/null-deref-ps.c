@@ -1,7 +1,7 @@
-// RUN: clang-cc -analyze -std=gnu99 -checker-simple -verify %s &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-simple -verify %s   -analyzer-constraints=range &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-simple -analyzer-store=region -analyzer-purge-dead=false -verify %s &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic &&
+// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic &&
+// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -analyzer-purge-dead=false -verify %s &&
+// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 #include<stdint.h>
 #include <assert.h>

@@ -18,15 +18,14 @@ add_clang_library(clangAnalysis
   GRCoreEngine.cpp
   GRExprEngine.cpp
   GRExprEngineInternalChecks.cpp
-  GRSimpleVals.cpp
   GRState.cpp
-  GRTransferFuncs.cpp
   LiveVariables.cpp
   MemRegion.cpp
   PathDiagnostic.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
   SimpleConstraintManager.cpp
+  SimpleSValuator.cpp
   Store.cpp
   SVals.cpp
   SymbolManager.cpp

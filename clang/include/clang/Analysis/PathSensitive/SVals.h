@@ -254,12 +254,12 @@ public:
   }
   
   // Transfer functions for binary/unary operations on ConcreteInts.
-  SVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  SVal evalBinOp(ValueManager &ValMgr, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
   
-  ConcreteInt EvalComplement(BasicValueFactory& BasicVals) const;
+  ConcreteInt evalComplement(ValueManager &ValMgr) const;
   
-  ConcreteInt EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U) const;
+  ConcreteInt evalMinus(ValueManager &ValMgr) const;
   
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {

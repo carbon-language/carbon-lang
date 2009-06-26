@@ -87,13 +87,17 @@ public:
     return nonloc::ConcreteInt(BasicVals.getZeroWithPtrWidth(false));
   }
 
-  NonLoc makeIntVal(const IntegerLiteral* I) {
+  nonloc::ConcreteInt makeIntVal(const IntegerLiteral* I) {
     return nonloc::ConcreteInt(BasicVals.getValue(I->getValue(),
                                         I->getType()->isUnsignedIntegerType()));
   }
 
-  NonLoc makeIntVal(const llvm::APSInt& V) {
+  nonloc::ConcreteInt makeIntVal(const llvm::APSInt& V) {
     return nonloc::ConcreteInt(BasicVals.getValue(V));
+  }
+  
+  loc::ConcreteInt makeIntLocVal(const llvm::APSInt &v) {
+    return loc::ConcreteInt(BasicVals.getValue(v));
   }
 
   NonLoc makeIntVal(const llvm::APInt& V, bool isUnsigned) {

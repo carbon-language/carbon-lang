@@ -1,4 +1,3 @@
-// RUN: clang-cc -analyze -checker-simple -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 

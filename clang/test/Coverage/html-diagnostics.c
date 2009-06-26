@@ -1,5 +1,5 @@
 // RUN: rm -rf %t &&
-// RUN: clang-cc --html-diags=%t -checker-simple %s
+// RUN: clang-cc --html-diags=%t -checker-cfref %s
 
 void f0(int x) {
   int *p = &x;

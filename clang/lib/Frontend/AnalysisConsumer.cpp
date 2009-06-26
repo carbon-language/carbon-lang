@@ -469,10 +469,6 @@ static void ActionCheckerCFRef(AnalysisManager& mgr) {
  }
 }
 
-static void ActionCheckerSimple(AnalysisManager& mgr) {
-  ActionGRExprEngine(mgr, MakeGRSimpleValsTF());
-}
-
 static void ActionDisplayLiveVariables(AnalysisManager& mgr) {
   if (LiveVariables* L = mgr.getLiveVariables()) {
     mgr.DisplayFunction();  

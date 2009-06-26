@@ -20,6 +20,7 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/Analysis/PathSensitive/SValuator.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
@@ -66,6 +67,9 @@ protected:
   
   /// ValMgr - Object that manages/creates SVals.
   ValueManager &ValMgr;
+  
+  /// SVator - SValuator object that creates SVals from expressions.
+  llvm::OwningPtr<SValuator> SVator;
   
   /// EntryNode - The immediate predecessor node.
   NodeTy* EntryNode;
@@ -603,41 +607,32 @@ protected:
       return X;
     
     if (isa<Loc>(X))
-      return getTF().EvalCast(*this, cast<Loc>(X), CastT);
+      return SVator->EvalCast(cast<Loc>(X), CastT);
     else
-      return getTF().EvalCast(*this, cast<NonLoc>(X), CastT);
+      return SVator->EvalCast(cast<NonLoc>(X), CastT);
   }
   
-  SVal EvalMinus(UnaryOperator* U, SVal X) {
-    return X.isValid() ? getTF().EvalMinus(*this, U, cast<NonLoc>(X)) : X;
+  SVal EvalMinus(SVal X) {
+    return X.isValid() ? SVator->EvalMinus(cast<NonLoc>(X)) : X;
   }
   
   SVal EvalComplement(SVal X) {
-    return X.isValid() ? getTF().EvalComplement(*this, cast<NonLoc>(X)) : X;
+    return X.isValid() ? SVator->EvalComplement(cast<NonLoc>(X)) : X;
   }
   
 public:
   
-  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, NonLoc R, QualType T) {
-    return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L, R, T)
-                       : R;
+  SVal EvalBinOp(BinaryOperator::Opcode op, NonLoc L, NonLoc R, QualType T) {
+    return SVator->EvalBinOpNN(op, L, R, T);
   }
 
-  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, SVal R, QualType T) {
-    return R.isValid() ? getTF().DetermEvalBinOpNN(*this, Op, L,
-                                                   cast<NonLoc>(R), T) : R;
+  SVal EvalBinOp(BinaryOperator::Opcode op, NonLoc L, SVal R, QualType T) {
+    return R.isValid() ? SVator->EvalBinOpNN(op, L, cast<NonLoc>(R), T) : R;
   }
   
-  void EvalBinOp(ExplodedNodeSet<GRState>& Dst, Expr* Ex,
-                 BinaryOperator::Opcode Op, NonLoc L, NonLoc R,
-                 ExplodedNode<GRState>* Pred, QualType T);
-  
-  void EvalBinOp(GRStateSet& OStates, const GRState* St, Expr* Ex,
-                 BinaryOperator::Opcode Op, NonLoc L, NonLoc R, QualType T);  
-  
-  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op, SVal L,SVal R,
-                 QualType T);
-  
+  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode op,
+                 SVal lhs, SVal rhs, QualType T);
+
 protected:
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, SVal L, NodeTy* Pred);

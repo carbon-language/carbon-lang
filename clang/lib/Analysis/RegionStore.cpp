@@ -780,7 +780,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     //
     nonloc::ConcreteInt OffConverted(getBasicVals().Convert(Base->getValue(),
                                                            Offset->getValue()));
-    SVal NewIdx = Base->EvalBinOp(getBasicVals(), Op, OffConverted);
+    SVal NewIdx = Base->evalBinOp(ValMgr, Op, OffConverted);
     const MemRegion* NewER =
       MRMgr.getElementRegion(ER->getElementType(), NewIdx,ER->getSuperRegion(),
 			     getContext());

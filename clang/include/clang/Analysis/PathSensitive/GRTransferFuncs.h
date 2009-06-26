@@ -22,20 +22,12 @@
 
 namespace clang {
   
-  class GRExprEngine;
-  class BugReporter;
-  class ObjCMessageExpr;
-  class GRStmtNodeBuilderRef;
+class GRExprEngine;
+class BugReporter;
+class ObjCMessageExpr;
+class GRStmtNodeBuilderRef;
   
 class GRTransferFuncs {
-  friend class GRExprEngine;  
-protected:
-  virtual SVal DetermEvalBinOpNN(GRExprEngine& Eng,
-                                 BinaryOperator::Opcode Op,
-                                 NonLoc L, NonLoc R, QualType T) {
-    return UnknownVal();
-  }
-  
 public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
@@ -43,33 +35,7 @@ public:
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
   virtual void RegisterChecks(BugReporter& BR) {}
   
-  // Casts.
-  
-  virtual SVal EvalCast(GRExprEngine& Engine, NonLoc V, QualType CastT) =0;  
-  virtual SVal EvalCast(GRExprEngine& Engine, Loc V, QualType CastT) = 0;
 
-  // Unary Operators.
-  
-  virtual SVal EvalMinus(GRExprEngine& Engine, UnaryOperator* U, NonLoc X) = 0;
-
-  virtual SVal EvalComplement(GRExprEngine& Engine, NonLoc X) = 0;
-
-  // Binary Operators.
-  // FIXME: We're moving back towards using GREXprEngine directly.  No need
-  // for OStates
-  virtual void EvalBinOpNN(GRStateSet& OStates, GRExprEngine& Eng,
-                           const GRState* St, Expr* Ex,
-                           BinaryOperator::Opcode Op, NonLoc L, NonLoc R,
-                           QualType T);
-  
-  virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         Loc L, Loc R) = 0;
-  
-  // Pointer arithmetic.
-  
-  virtual SVal EvalBinOp(GRExprEngine& Engine, const GRState *state,
-                         BinaryOperator::Opcode Op, Loc L, NonLoc R) = 0;
-  
   // Calls.
   
   virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
@@ -108,8 +74,7 @@ public:
                           ReturnStmt* S,
                           ExplodedNode<GRState>* Pred) {}
 
-  // Assumptions.
-  
+  // Assumptions.  
   virtual const GRState* EvalAssume(const GRState *state,
                                     SVal Cond, bool Assumption) {
     return state;

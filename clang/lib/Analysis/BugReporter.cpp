@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines BugReporter, a utility class for generating
-//  PathDiagnostics for analyses based on GRSimpleVals.
+//  PathDiagnostics.
 //
 //===----------------------------------------------------------------------===//
 

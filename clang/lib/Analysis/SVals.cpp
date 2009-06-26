@@ -188,12 +188,11 @@ bool SVal::isZeroConstant() const {
 // Transfer function dispatch for Non-Locs.
 //===----------------------------------------------------------------------===//
 
-SVal nonloc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
-                                     BinaryOperator::Opcode Op,
-                                     const nonloc::ConcreteInt& R) const {
-  
+SVal nonloc::ConcreteInt::evalBinOp(ValueManager &ValMgr,
+                                    BinaryOperator::Opcode Op,
+                                    const nonloc::ConcreteInt& R) const {  
   const llvm::APSInt* X =
-    BasicVals.EvaluateAPSInt(Op, getValue(), R.getValue());
+    ValMgr.getBasicValueFactory().EvaluateAPSInt(Op, getValue(), R.getValue());
   
   if (X)
     return nonloc::ConcreteInt(*X);
@@ -201,20 +200,13 @@ SVal nonloc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
     return UndefinedVal();
 }
 
-  // Bitwise-Complement.
-
 nonloc::ConcreteInt
-nonloc::ConcreteInt::EvalComplement(BasicValueFactory& BasicVals) const {
-  return BasicVals.getValue(~getValue()); 
+nonloc::ConcreteInt::evalComplement(ValueManager &ValMgr) const {
+  return ValMgr.makeIntVal(~getValue());
 }
 
-  // Unary Minus.
-
-nonloc::ConcreteInt
-nonloc::ConcreteInt::EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U) const {
-  assert (U->getType() == U->getSubExpr()->getType());  
-  assert (U->getType()->isIntegerType());  
-  return BasicVals.getValue(-getValue()); 
+nonloc::ConcreteInt nonloc::ConcreteInt::evalMinus(ValueManager &ValMgr) const {
+  return ValMgr.makeIntVal(-getValue());
 }
 
 //===----------------------------------------------------------------------===//

@@ -1,5 +1,3 @@
-// RUN: clang-cc -analyze -checker-simple -analyzer-store=basic -analyzer-constraints=basic %s -verify &&
-// RUN: clang-cc -analyze -checker-simple -analyzer-store=basic -analyzer-constraints=range %s -verify &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic %s -verify &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range %s -verify &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic %s -verify &&
