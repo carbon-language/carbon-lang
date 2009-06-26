@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {movw\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#65535} | Count 1
+; RUN: llvm-as < %s | llc | grep {movw\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#65535} | count 1
 
 target triple = "thumbv7-apple-darwin"
 
