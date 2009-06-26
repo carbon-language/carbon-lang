@@ -840,6 +840,17 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'P': // Don't print @PLT, but do print as memory.
       printOperand(MI, OpNo, "mem", /*NotRIPRel=*/true);
       return false;
+
+      case 'n': { // Negate the immediate or print a '-' before the operand.
+      // Note: this is a temporary solution. It should be handled target
+      // independently as part of the 'MC' work.
+      const MachineOperand &MO = MI->getOperand(OpNo);
+      if (MO.isImm()) {
+        O << -MO.getImm();
+        return false;
+      }
+      O << '-';
+    }
     }
   }
 
