@@ -280,13 +280,15 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
   } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateGA(TGA->getGlobal(),TGA->getOffset()));
+    MI->addOperand(MachineOperand::CreateGA(TGA->getGlobal(), TGA->getOffset(),
+                                            TGA->getTargetFlags()));
   } else if (BasicBlockSDNode *BBNode = dyn_cast<BasicBlockSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateMBB(BBNode->getBasicBlock()));
   } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateFI(FI->getIndex()));
   } else if (JumpTableSDNode *JT = dyn_cast<JumpTableSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateJTI(JT->getIndex()));
+    MI->addOperand(MachineOperand::CreateJTI(JT->getIndex(),
+                                             JT->getTargetFlags()));
   } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op)) {
     int Offset = CP->getOffset();
     unsigned Align = CP->getAlignment();
@@ -305,9 +307,11 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
       Idx = ConstPool->getConstantPoolIndex(CP->getMachineCPVal(), Align);
     else
       Idx = ConstPool->getConstantPoolIndex(CP->getConstVal(), Align);
-    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset));
+    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset,
+                                             CP->getTargetFlags()));
   } else if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateES(ES->getSymbol()));
+    MI->addOperand(MachineOperand::CreateES(ES->getSymbol(), 0,
+                                            ES->getTargetFlags()));
   } else {
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Flag &&
