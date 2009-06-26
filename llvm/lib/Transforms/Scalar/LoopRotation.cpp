@@ -371,12 +371,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 /// PHINode may not have an entry for the original pre-header.
 void LoopRotate::updateExitBlock() {
 
-  for (BasicBlock::iterator I = Exit->begin(), E = Exit->end();
-       I != E; ++I) {
-
-    PHINode *PN = dyn_cast<PHINode>(I);
-    if (!PN)
-      break;
+  for (BasicBlock::iterator I = Exit->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
 
     // There is already one incoming value from original pre-header block.
     if (PN->getBasicBlockIndex(OrigPreHeader) != -1)
@@ -384,7 +380,7 @@ void LoopRotate::updateExitBlock() {
 
     const RenameData *ILoopHeaderInfo;
     Value *V = PN->getIncomingValueForBlock(OrigHeader);
-    if (isa<Instruction>(V) && 
+    if (isa<Instruction>(V) &&
         (ILoopHeaderInfo = findReplacementData(cast<Instruction>(V)))) {
       assert(ILoopHeaderInfo->PreHeader && "Missing New Preheader Instruction");
       PN->addIncoming(ILoopHeaderInfo->PreHeader, OrigPreHeader);
