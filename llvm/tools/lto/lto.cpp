@@ -198,7 +198,7 @@ bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug)
 //
 bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model)
 {
-    return cg->setCodePICModel(model, sLastErrorString);
+  return cg->setCodePICModel(model, sLastErrorString);
 }
 
 //
@@ -206,7 +206,7 @@ bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model)
 //
 void lto_codegen_set_gcc_path(lto_code_gen_t cg, const char* path)
 {
-    cg->setGccPath(path);
+  cg->setGccPath(path);
 }
 
 //
@@ -224,7 +224,7 @@ void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path)
 //
 void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const char* symbol)
 {
-    cg->addMustPreserveSymbol(symbol);
+  cg->addMustPreserveSymbol(symbol);
 }
 
 
@@ -235,7 +235,7 @@ void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const char* symbol)
 //
 bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path)
 {
-   return cg->writeMergedModules(path, sLastErrorString);
+  return cg->writeMergedModules(path, sLastErrorString);
 }
 
 
@@ -250,7 +250,7 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path)
 extern const void*
 lto_codegen_compile(lto_code_gen_t cg, size_t* length)
 {
-    return cg->compile(length, sLastErrorString);
+  return cg->compile(length, sLastErrorString);
 }
 
 
@@ -262,6 +262,3 @@ lto_codegen_debug_options(lto_code_gen_t cg, const char * opt)
 {
   cg->setCodeGenDebugOptions(opt);
 }
-
-
-

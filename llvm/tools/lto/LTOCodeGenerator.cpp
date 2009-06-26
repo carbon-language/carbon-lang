@@ -111,7 +111,7 @@ bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug, std::string& errMsg)
 
 
 bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model, 
-                                                        std::string& errMsg)
+                                       std::string& errMsg)
 {
     switch (model) {
         case LTO_CODEGEN_PIC_MODEL_STATIC:
