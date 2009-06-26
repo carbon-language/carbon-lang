@@ -1860,6 +1860,9 @@ def err_selector_element_type : Error<
 def err_collection_expr_type : Error<
   "collection expression type %0 is not a valid object">;
 
+def err_invalid_conversion_between_ext_vectors : Error<
+  "invalid conversion between ext-vector type %0 and %1">;
+
 // Type
 def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
 def warn_receiver_forward_class : Warning<

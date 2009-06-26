@@ -11,9 +11,9 @@ void f()
   t3 v3;
   
   v2 = (t2)v1; // -expected-error {{invalid conversion between vector type \
-'t1' and 't2' of different size}}
-  v1 = (t1)v2; // -expected-error {{invalid conversion between vector type \
 't2' and 't1' of different size}}
+  v1 = (t1)v2; // -expected-error {{invalid conversion between vector type \
+'t1' and 't2' of different size}}
   v3 = (t3)v2;
   
   v1 = (t1)(char *)10; // -expected-error {{invalid conversion between vector \

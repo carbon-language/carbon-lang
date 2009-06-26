@@ -2876,11 +2876,14 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
     return Diag(castExpr->getLocStart(),
                 diag::err_typecheck_expect_scalar_operand)
       << castExpr->getType() << castExpr->getSourceRange();
-  } else if (castExpr->getType()->isVectorType()) {
-    if (CheckVectorCast(TyR, castExpr->getType(), castType))
+  } else if (castType->isExtVectorType()) {
+    if (CheckExtVectorCast(TyR, castType, castExpr->getType()))
       return true;
   } else if (castType->isVectorType()) {
     if (CheckVectorCast(TyR, castType, castExpr->getType()))
+      return true;
+  } else if (castExpr->getType()->isVectorType()) {
+    if (CheckVectorCast(TyR, castExpr->getType(), castType))
       return true;
   } else if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr)) {
     return Diag(castExpr->getLocStart(), diag::err_illegal_super_cast) << TyR;
@@ -2916,6 +2919,35 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
                 diag::err_invalid_conversion_between_vector_and_scalar)
       << VectorTy << Ty << R;
 
+  return false;
+}
+
+bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
+  assert(DestTy->isExtVectorType() && "Not an extended vector type!");
+  
+  // If SrcTy is also an ExtVectorType, the types must be identical unless 
+  // lax vector conversions is enabled.
+  if (SrcTy->isExtVectorType()) {
+    if (getLangOptions().LaxVectorConversions &&
+        Context.getTypeSize(DestTy) == Context.getTypeSize(SrcTy))
+      return false;
+    if (DestTy != SrcTy)
+      return Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
+      << DestTy << SrcTy << R;
+    return false;
+  }
+  
+  // If SrcTy is a VectorType, then only the total size must match.
+  if (SrcTy->isVectorType()) {
+    if (Context.getTypeSize(DestTy) != Context.getTypeSize(SrcTy))
+      return Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
+        << DestTy << SrcTy << R;
+    return false;
+  }
+
+  // All scalar -> ext vector "c-style" casts are legal; the appropriate
+  // conversion will take place first from scalar to elt type, and then
+  // splat from elt type to vector.
   return false;
 }
 

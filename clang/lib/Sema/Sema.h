@@ -3063,6 +3063,13 @@ public:
   // returns true if the cast is invalid
   bool CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
   
+  // CheckExtVectorCast - check type constraints for extended vectors. 
+  // Since vectors are an extension, there are no C standard reference for this.
+  // We allow casting between vectors and integer datatypes of the same size,
+  // or vectors and the element type of that vector.
+  // returns true if the cast is invalid
+  bool CheckExtVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
+  
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send. 
   /// \param Method - May be null.
   /// \param [out] ReturnType - The return type of the send.
