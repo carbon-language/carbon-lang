@@ -25,3 +25,5 @@ add_llvm_library(LLVMTransformUtils
   ValueMapper.cpp
   InstructionNamer.cpp
   )
+
+target_link_libraries (LLVMTransformUtils LLVMSupport)

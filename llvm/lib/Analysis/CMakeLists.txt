@@ -33,3 +33,5 @@ add_llvm_library(LLVMAnalysis
   Trace.cpp
   ValueTracking.cpp
   )
+
+target_link_libraries (LLVMAnalysis LLVMSupport)

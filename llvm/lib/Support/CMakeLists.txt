@@ -30,3 +30,5 @@ add_llvm_library(LLVMSupport
   Triple.cpp
   raw_ostream.cpp
   )
+
+target_link_libraries (LLVMSupport LLVMSystem)
