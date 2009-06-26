@@ -77,8 +77,18 @@ namespace X86II {
     
     /// MO_GOT_ABSOLUTE_ADDRESS - On a symbol operand, this represents a
     /// relocation of:
-    ///    $SYMBOL_LABEL + [. - PICBASELABEL]
+    ///    SYMBOL_LABEL + [. - PICBASELABEL]
     MO_GOT_ABSOLUTE_ADDRESS = 1,
+    
+    /// MO_PIC_BASE_OFFSET - On a symbol operand this indicates that the
+    /// immediate should get the value of the symbol minus the PIC base label:
+    ///    SYMBOL_LABEL - PICBASELABEL
+    MO_PIC_BASE_OFFSET = 2,
+
+    /// MO_GOTOFF - On a symbol operand this indicates that the immediate should
+    /// the offset to the location of the symbol name from the base of the GOT.
+    ///    SYMBOL_LABEL @GOTOFF
+    MO_GOTOFF = 3,
     
     
     //===------------------------------------------------------------------===//
