@@ -1,6 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {addw\\W*r\[0-9\],\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#4095} | count 1
-
-target triple = "thumbv7-apple-darwin"
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {addw\\W*r\[0-9\],\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#4095} | count 1
 
 define i32 @f1(i32 %a) {
     %tmp = add i32 %a, 4095
