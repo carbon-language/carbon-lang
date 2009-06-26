@@ -28,7 +28,6 @@
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
-#include <sstream>
 #endif
 
 using namespace clang;

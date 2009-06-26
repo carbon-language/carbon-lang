@@ -18,7 +18,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
-#include <sstream>
+
 using namespace clang;
 using llvm::dyn_cast;
 using llvm::isa;
