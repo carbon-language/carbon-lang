@@ -149,13 +149,35 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             }
           }
         } else { // not an identifier
+          switch (Tok.getKind()) {
+          case tok::r_paren:
           // parse a possibly empty comma separated list of expressions
-          if (Tok.is(tok::r_paren)) { 
             // __attribute__(( nonnull() ))
             ConsumeParen(); // ignore the right paren loc for now
             CurrAttr = new AttributeList(AttrName, AttrNameLoc, 
                                          0, SourceLocation(), 0, 0, CurrAttr);
-          } else { 
+            break;
+          case tok::kw_char:
+          case tok::kw_wchar_t:
+          case tok::kw_bool:
+          case tok::kw_short:
+          case tok::kw_int:
+          case tok::kw_long:
+          case tok::kw_signed:
+          case tok::kw_unsigned:
+          case tok::kw_float:
+          case tok::kw_double:
+          case tok::kw_void:
+          case tok::kw_typeof:
+            // If it's a builtin type name, eat it and expect a rparen
+            // __attribute__(( vec_type_hint(char) ))
+            ConsumeToken();
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 
+                                         0, SourceLocation(), 0, 0, CurrAttr);
+            if (Tok.is(tok::r_paren))
+              ConsumeParen();
+            break;
+          default:
             // __attribute__(( aligned(16) ))
             ExprVector ArgExprs(Actions);
             bool ArgExprsOk = true;
@@ -181,6 +203,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
                            SourceLocation(), ArgExprs.take(), ArgExprs.size(),
                            CurrAttr);
             }
+            break;
           }
         }
       } else {

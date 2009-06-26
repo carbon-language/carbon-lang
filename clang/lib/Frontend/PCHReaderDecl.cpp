@@ -489,6 +489,14 @@ Attr *PCHReader::ReadAttributes() {
       New = ::new (*Context) NonNullAttr(ArgNums.data(), Size);
       break;
     }
+        
+    case Attr::ReqdWorkGroupSize: {
+      unsigned X = Record[Idx++];
+      unsigned Y = Record[Idx++];
+      unsigned Z = Record[Idx++];
+      New = ::new (*Context) ReqdWorkGroupSizeAttr(X, Y, Z);
+      break;
+    }
 
     SIMPLE_ATTR(ObjCException);
     SIMPLE_ATTR(ObjCNSObject);

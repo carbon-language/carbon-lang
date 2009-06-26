@@ -1622,6 +1622,12 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::Regparm:
       Record.push_back(cast<RegparmAttr>(Attr)->getNumParams());
       break;
+        
+    case Attr::ReqdWorkGroupSize:
+      Record.push_back(cast<ReqdWorkGroupSizeAttr>(Attr)->getXDim());
+      Record.push_back(cast<ReqdWorkGroupSizeAttr>(Attr)->getYDim());
+      Record.push_back(cast<ReqdWorkGroupSizeAttr>(Attr)->getZDim());
+      break;
 
     case Attr::Section:
       AddString(cast<SectionAttr>(Attr)->getName(), Record);

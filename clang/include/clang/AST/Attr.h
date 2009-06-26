@@ -72,6 +72,7 @@ public:
     Packed,
     Pure,
     Regparm,
+    ReqdWorkGroupSize,   // OpenCL-specific
     Section,
     Sentinel,
     StdCall,
@@ -501,6 +502,27 @@ public:
   static bool classof(const RegparmAttr *A) { return true; }
 };
 
+class ReqdWorkGroupSizeAttr : public Attr {
+  unsigned X, Y, Z;
+public:
+  ReqdWorkGroupSizeAttr(unsigned X, unsigned Y, unsigned Z)
+  : Attr(ReqdWorkGroupSize), X(X), Y(Y), Z(Z) {}
+
+  unsigned getXDim() const { return X; }
+  unsigned getYDim() const { return Y; }
+  unsigned getZDim() const { return Z; }
+
+  virtual Attr *clone(ASTContext &C) const { 
+    return ::new (C) ReqdWorkGroupSizeAttr(X, Y, Z); 
+  }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == ReqdWorkGroupSize;
+  }
+  static bool classof(const ReqdWorkGroupSizeAttr *A) { return true; }
+};
+  
 // Checker-specific attributes.
 DEF_SIMPLE_ATTR(CFReturnsRetained);
 DEF_SIMPLE_ATTR(NSReturnsRetained);

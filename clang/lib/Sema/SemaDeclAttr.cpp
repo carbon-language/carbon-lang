@@ -915,6 +915,30 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   D->addAttr(S.Context, ::new (S.Context) DLLExportAttr());
 }
 
+static void HandleReqdWorkGroupSize(Decl *D, const AttributeList &Attr,
+                                    Sema &S) {
+  // Attribute has 3 arguments.
+  if (Attr.getNumArgs() != 3) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  unsigned WGSize[3];
+  for (unsigned i = 0; i < 3; ++i) {
+    Expr *E = static_cast<Expr *>(Attr.getArg(i));
+    llvm::APSInt ArgNum(32);
+    if (!E->isIntegerConstantExpr(ArgNum, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+        << "reqd_work_group_size" << E->getSourceRange();
+      return;
+    }
+    WGSize[i] = (unsigned) ArgNum.getZExtValue();
+  }
+  D->addAttr(S.Context, 
+             ::new (S.Context) ReqdWorkGroupSizeAttr(WGSize[0], WGSize[1],
+                                                     WGSize[2]));
+}
+
 static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // Attribute has no arguments.
   if (Attr.getNumArgs() != 1) {
@@ -1735,6 +1759,9 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D, const AttributeList &Att
   case AttributeList::AT_ns_returns_retained:
   case AttributeList::AT_cf_returns_retained:
     HandleNSReturnsRetainedAttr(D, Attr, S); break;
+
+  case AttributeList::AT_reqd_wg_size:
+    HandleReqdWorkGroupSize(D, Attr, S); break;
 
   case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;

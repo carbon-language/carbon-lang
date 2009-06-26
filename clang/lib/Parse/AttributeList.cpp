@@ -118,6 +118,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 13:
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;
     if (!memcmp(Str, "always_inline", 13)) return AT_always_inline;
+    if (!memcmp(Str, "vec_type_hint", 13)) return IgnoredAttribute;
     break;
   case 14:
     if (!memcmp(Str, "objc_exception", 14)) return AT_objc_exception;
@@ -136,6 +137,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "ns_returns_retained", 19)) return AT_ns_returns_retained;
     if (!memcmp(Str, "cf_returns_retained", 19)) return AT_cf_returns_retained;
     break;            
+  case 20:
+    if (!memcmp(Str, "reqd_work_group_size", 20)) return AT_reqd_wg_size;
   case 22:
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;

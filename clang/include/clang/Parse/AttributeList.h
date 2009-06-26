@@ -97,6 +97,7 @@ public:
     AT_warn_unused_result,
     AT_weak,
     AT_weak_import,
+    AT_reqd_wg_size,
     IgnoredAttribute,
     UnknownAttribute
   };
