@@ -300,7 +300,7 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
     // Get mangleddd name for this structure/union  element.
     std::string MangMemName = ElementName + UniqueSuffix;
     PopulateDebugInfo(DITy, TypeNo, HasAux, ElementAux, TagName);
-    short Class;
+    short Class = 0;
     if( CTy.getTag() == dwarf::DW_TAG_union_type)
       Class = PIC16Dbg::C_MOU;
     else if  (CTy.getTag() == dwarf::DW_TAG_structure_type)
