@@ -732,7 +732,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.Align = CP->getAlignment();
       AM.Disp += Offset;
       AM.isRIPRel = SymbolicAddressesAreRIPRel;
-      AM.SymbolFlags = G->getTargetFlags();
+      AM.SymbolFlags = CP->getTargetFlags();
       return false;
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(N0)) {
