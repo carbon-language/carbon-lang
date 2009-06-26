@@ -128,8 +128,8 @@ bool Constant::ContainsRelocations(unsigned Kind) const {
 }
 
 // Static constructor to create a '0' constant of arbitrary type...
+static const uint64_t zero[2] = {0, 0};
 Constant *Constant::getNullValue(const Type *Ty) {
-  static uint64_t zero[2] = {0, 0};
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
