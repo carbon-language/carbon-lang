@@ -520,10 +520,6 @@ def t2MLS: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 //  Misc. Arithmetic Instructions.
 //
 
-/////
-/// A8.6.31  CLZ
-/////
-// FIXME not firing? but ARM version does...
 def t2CLZ : T2I<(outs GPR:$dst), (ins GPR:$src),
                 "clz", " $dst, $src",
                 [(set GPR:$dst, (ctlz GPR:$src))]>;
