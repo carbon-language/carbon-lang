@@ -409,9 +409,14 @@ def t2MOVr : T2sI<(outs GPR:$dst), (ins GPR:$src),
                    "mov", " $dst, $src", []>;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def t2MOVi16 : T2sI<(outs GPR:$dst), (ins i32imm:$src),
-                    "movw", " $dst, $src",
-                    [(set GPR:$dst, imm0_65535:$src)]>;
+def t2MOVi : T2sI<(outs GPR:$dst), (ins t2_so_imm:$src),
+                   "mov", " $dst, $src",
+                   [(set GPR:$dst, t2_so_imm:$src)]>;
+
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+def t2MOVi16 : T2I<(outs GPR:$dst), (ins i32imm:$src),
+                   "movw", " $dst, $src",
+                   [(set GPR:$dst, imm0_65535:$src)]>;
 
 // FIXME: Also available in ARM mode.
 let Constraints = "$src = $dst" in
