@@ -1313,7 +1313,8 @@ bool X86DAGToDAGISel::SelectTLSADDRAddr(SDValue Op, SDValue N, SDValue &Base,
   AM.GV = GA->getGlobal();
   AM.Disp += GA->getOffset();
   AM.Base.Reg = CurDAG->getRegister(0, N.getValueType());
-  
+  AM.SymbolFlags = GA->getTargetFlags();
+
   if (N.getValueType() == MVT::i32) {
     AM.Scale = 1;
     AM.IndexReg = CurDAG->getRegister(X86::EBX, MVT::i32);
