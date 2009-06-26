@@ -1940,7 +1940,9 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     }
   }
   if (!err)
-    Constructor->setUsed();  
+    Constructor->setUsed();
+  else
+    Constructor->setInvalidDecl();
 }
 
 void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
@@ -1954,7 +1956,7 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
     = cast<CXXRecordDecl>(MethodDecl->getDeclContext());
   assert(ClassDecl && "DefineImplicitOverloadedAssign - invalid constructor");
   
-  // C++[class.copy] p210
+  // C++[class.copy] p12
   // Before the implicitly-declared copy assignment operator for a class is
   // implicitly defined, all implicitly-declared copy assignment operators
   // for its direct base classes and its nonstatic data members shall have
