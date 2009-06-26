@@ -1592,11 +1592,20 @@ public:
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
+
+  /// MarcDestructorReferenced - Prepare for calling destructor on the
+  /// constructed decl.
+  void MarcDestructorReferenced(SourceLocation Loc, QualType DeclInitType);
   
   /// DefineImplicitDefaultConstructor - Checks for feasibility of 
   /// defining this constructor as the default constructor.
   void DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                         CXXConstructorDecl *Constructor);
+  
+  /// DefineImplicitDestructor - Checks for feasibility of 
+  /// defining this destructor as the default destructor.
+  void DefineImplicitDestructor(SourceLocation CurrentLocation,
+                                        CXXDestructorDecl *Destructor);
   
   /// DefineImplicitCopyConstructor - Checks for feasibility of 
   /// defining this constructor as the copy constructor.

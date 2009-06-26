@@ -1945,6 +1945,56 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     Constructor->setInvalidDecl();
 }
 
+void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
+                                            CXXDestructorDecl *Destructor) {
+  assert((Destructor->isImplicit() && !Destructor->isUsed()) &&
+         "DefineImplicitDestructor - call it for implicit default dtor");
+  
+  CXXRecordDecl *ClassDecl
+  = cast<CXXRecordDecl>(Destructor->getDeclContext());
+  assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
+  // C++ [class.dtor] p5
+  // Before the implicitly-declared default destructor for a class is 
+  // implicitly defined, all the implicitly-declared default destructors
+  // for its base class and its non-static data members shall have been
+  // implicitly defined.
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+    if (!BaseClassDecl->hasTrivialDestructor()) {
+      if (CXXDestructorDecl *BaseDtor = 
+          const_cast<CXXDestructorDecl*>(BaseClassDecl->getDestructor(Context)))
+        MarkDeclarationReferenced(CurrentLocation, BaseDtor);
+      else
+        assert(false && 
+               "DefineImplicitDestructor - missing dtor in a base class");
+    }
+  }
+  
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(Context);
+       Field != ClassDecl->field_end(Context);
+       ++Field) {
+    QualType FieldType = Context.getCanonicalType((*Field)->getType());
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (!FieldClassDecl->hasTrivialDestructor()) {
+        if (CXXDestructorDecl *FieldDtor = 
+            const_cast<CXXDestructorDecl*>(
+                                        FieldClassDecl->getDestructor(Context)))
+          MarkDeclarationReferenced(CurrentLocation, FieldDtor);
+        else
+          assert(false && 
+          "DefineImplicitDestructor - missing dtor in class of a data member");
+      }
+    }
+  }
+  Destructor->setUsed();
+}
+
 void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
                                           CXXMethodDecl *MethodDecl) {
   assert((MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
@@ -1984,14 +2034,14 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
         MarkDeclarationReferenced(CurrentLocation, FieldAssignOpMethod);
     }
     else if (FieldType->isReferenceType()) {
-      Diag(ClassDecl->getLocation(), diag::err_unintialized_member_for_assign) 
+      Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign) 
       << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getNameAsCString();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       Diag(CurrentLocation, diag::note_first_required_here);
       err = true;
     }
     else if (FieldType.isConstQualified()) {
-      Diag(ClassDecl->getLocation(), diag::err_unintialized_member_for_assign) 
+      Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign) 
       << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getNameAsCString();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       Diag(CurrentLocation, diag::note_first_required_here);
@@ -2084,6 +2134,16 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
   VD->setInit(Context, Temp);
 }
 
+void Sema::MarcDestructorReferenced(SourceLocation Loc, QualType DeclInitType)
+{
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(
+                                  DeclInitType->getAsRecordType()->getDecl());
+  if (!ClassDecl->hasTrivialDestructor())
+    if (CXXDestructorDecl *Destructor = 
+        const_cast<CXXDestructorDecl*>(ClassDecl->getDestructor(Context)))
+      MarkDeclarationReferenced(Loc, Destructor);
+}
+
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
 /// ActOnDeclarator, when a C++ direct initializer is present.
 /// e.g: "int x(1);"
@@ -2150,6 +2210,9 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
       VDecl->setCXXDirectInitializer(true);
       InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
                                    (Expr**)Exprs.release(), NumExprs);
+      // FIXME. Must do all that is needed to destroy the object
+      // on scope exit. For now, just mark the destructor as used.
+      MarcDestructorReferenced(VDecl->getLocation(), DeclInitType);
     }
     return;
   }

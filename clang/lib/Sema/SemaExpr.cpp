@@ -5593,9 +5593,10 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       if (!Constructor->isUsed())
         DefineImplicitCopyConstructor(Loc, Constructor, TypeQuals);
     }
-    // FIXME: more checking for other implicits go here.
-    else
-      Constructor->setUsed(true);
+  } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
+    if (Destructor->isImplicit() && !Destructor->isUsed())
+      DefineImplicitDestructor(Loc, Destructor);
+    
   } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(D)) {
     if (MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
         MethodDecl->getOverloadedOperator() == OO_Equal) {
