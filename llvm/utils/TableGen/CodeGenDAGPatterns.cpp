@@ -2390,6 +2390,10 @@ void CodeGenDAGPatterns::GenerateVariants() {
       // Scan to see if an instruction or explicit pattern already matches this.
       bool AlreadyExists = false;
       for (unsigned p = 0, e = PatternsToMatch.size(); p != e; ++p) {
+        // Skip if the top level predicates do not match.
+        if (PatternsToMatch[i].getPredicates() !=
+            PatternsToMatch[p].getPredicates())
+          continue;
         // Check to see if this variant already exists.
         if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern(), DepVars)) {
           DOUT << "  *** ALREADY EXISTS, ignoring variant.\n";
