@@ -528,3 +528,5 @@ those operations and the ARMv6 scalar versions.
 
 //===---------------------------------------------------------------------===//
 
+ARM::MOVCCr is commutable (by flipping the condition). But we need to implement
+ARMInstrInfo::commuteInstruction() to support it.
