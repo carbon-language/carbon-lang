@@ -64,12 +64,21 @@ protected:
   ///
   bool HasX86_64;
 
-  /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
-  bool IsBTMemSlow;
-  
   /// HasSSE4A - True if the processor supports SSE4A instructions.
   bool HasSSE4A;
 
+  /// HasAVX - Target has AVX instructions
+  bool HasAVX;
+
+  /// HasFMA3 - Target has 3-operand fused multiply-add
+  bool HasFMA3;
+
+  /// HasFMA4 - Target has 4-operand fused multiply-add
+  bool HasFMA4;
+
+  /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
+  bool IsBTMemSlow;
+  
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
   unsigned char DarwinVers; // Is any darwin-x86 platform.
@@ -133,6 +142,9 @@ public:
   bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
+  bool hasAVX() const { return hasAVX(); }
+  bool hasFMA3() const { return HasFMA3; }
+  bool hasFMA4() const { return HasFMA4; }
 
   bool isBTMemSlow() const { return IsBTMemSlow; }
 
