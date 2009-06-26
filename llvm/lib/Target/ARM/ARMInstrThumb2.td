@@ -482,6 +482,8 @@ defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
 def : Thumb2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
                 (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
 
+// Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
+let AddedComplexity = 1 in
 defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
 
 def : Thumb2Pat<(t2_so_imm_not:$src),
