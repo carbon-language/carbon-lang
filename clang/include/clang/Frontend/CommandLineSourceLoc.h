@@ -15,6 +15,7 @@
 #define LLVM_CLANG_FRONTEND_COMMANDLINESOURCELOC_H
 
 #include "llvm/Support/CommandLine.h"
+#include <cstdio>
 
 namespace clang {
 
