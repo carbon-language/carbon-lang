@@ -97,6 +97,9 @@ bool Decl::isTemplateParameterPack() const {
 }
 
 bool Decl::isFunctionOrFunctionTemplate() const {
+  if (const UsingDecl *UD = dyn_cast<UsingDecl>(this))
+    return UD->getTargetDecl()->isFunctionOrFunctionTemplate();
+    
   return isa<FunctionDecl>(this) || isa<FunctionTemplateDecl>(this);
 }
 

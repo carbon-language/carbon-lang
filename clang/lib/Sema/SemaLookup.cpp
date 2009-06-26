@@ -139,16 +139,24 @@ MaybeConstructOverloadSet(ASTContext &Context,
         // nothing to leak.
         Ovl = OverloadedFunctionDecl::Create(Context, (*I)->getDeclContext(),
                                              (*I)->getDeclName());
-        if (isa<FunctionDecl>(*I))
-          Ovl->addOverload(cast<FunctionDecl>(*I));
+        NamedDecl *ND = (*I);
+        if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
+          ND = UD->getTargetDecl();
+
+        if (isa<FunctionDecl>(ND))
+          Ovl->addOverload(cast<FunctionDecl>(ND));
         else
-          Ovl->addOverload(cast<FunctionTemplateDecl>(*I));
+          Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
       }
 
-      if (isa<FunctionDecl>(*Last))
-        Ovl->addOverload(cast<FunctionDecl>(*Last));
+      NamedDecl *ND = (*Last);
+      if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
+        ND = UD->getTargetDecl();
+      
+      if (isa<FunctionDecl>(ND))
+        Ovl->addOverload(cast<FunctionDecl>(ND));
       else
-        Ovl->addOverload(cast<FunctionTemplateDecl>(*Last));
+        Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
     }
     
     // If we had more than one function, we built an overload

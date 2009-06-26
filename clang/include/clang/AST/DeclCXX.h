@@ -1101,17 +1101,25 @@ class UsingDecl : public NamedDecl {
 public:
   /// \brief Returns the source range that covers the nested-name-specifier
   /// preceding the namespace name.
-  SourceRange getNestedNameRange() { return(NestedNameRange); }
+  SourceRange getNestedNameRange() { return NestedNameRange; }
+  
   /// \brief Returns the source location of the target declaration name.
-  SourceLocation getTargetNameLocation() { return(TargetNameLocation); }
+  SourceLocation getTargetNameLocation() { return TargetNameLocation; }
+  
   /// \brief Returns the source location of the "using" location itself.
-  SourceLocation getUsingLocation() { return(UsingLocation); }
+  SourceLocation getUsingLocation() { return UsingLocation; }
+  
   /// \brief getTargetDecl - Returns target specified by using-decl.
-  NamedDecl *getTargetDecl() { return(TargetDecl); }
+  NamedDecl *getTargetDecl() { return TargetDecl; }
+  const NamedDecl *getTargetDecl() const { return TargetDecl; }
+  
   /// \brief Get target nested name declaration.
-  NestedNameSpecifier* getTargetNestedNameDecl() { return(TargetNestedNameDecl); }
+  NestedNameSpecifier* getTargetNestedNameDecl() { 
+    return TargetNestedNameDecl; 
+  }
+  
   /// isTypeName - Return true if using decl had 'typename'.
-  bool isTypeName() const { return(IsTypeName); }
+  bool isTypeName() const { return IsTypeName; }
 
   static UsingDecl *Create(ASTContext &C, DeclContext *DC,
       SourceLocation L, SourceRange NNR, SourceLocation TargetNL,
