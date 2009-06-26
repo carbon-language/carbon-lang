@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {adcs\\W*r\[0-9\],\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#171\\|#1179666\\|#872428544\\|#1448498774\\|#66846720} | count 5
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {adc\\W*r\[0-9\],\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#171\\|#1179666\\|#872428544\\|#1448498774\\|#66846720} | count 5
 
 ; 734439407617 = 0x000000ab00000001
 define i64 @f1(i64 %a) {
