@@ -439,7 +439,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
 
 def GR64 : RegisterClass<"X86", [i64], 64, 
                          [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
-                          RBX, R14, R15, R12, R13, RBP, RSP]> {
+                          RBX, R14, R15, R12, R13, RBP, RSP, RIP]> {
   let SubRegClassList = [GR8, GR8, GR16, GR32];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -453,9 +453,9 @@ def GR64 : RegisterClass<"X86", [i64], 64,
       if (!Subtarget.is64Bit())
         return begin();  // None of these are allocatable in 32-bit.
       if (RI->hasFP(MF)) // Does the function dedicate RBP to being a frame ptr?
-        return end()-2;  // If so, don't allocate RSP or RBP
+        return end()-3;  // If so, don't allocate RIP, RSP or RBP
       else
-        return end()-1;  // If not, just don't allocate RSP
+        return end()-2;  // If not, just don't allocate RIP or RSP
     }
   }];
 }

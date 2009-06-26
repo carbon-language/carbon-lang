@@ -658,6 +658,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << " + [.-";
       PrintPICBaseSymbol();
       O << ']';
+    } else {
+      assert(MO.getTargetFlags() == X86II::MO_NO_FLAG &&
+             "Unknown operand flag for external symbol");
     }
 
     if (needCloseParen)
