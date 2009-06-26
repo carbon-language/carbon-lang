@@ -212,6 +212,9 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
 
     case LResult::Found: {
       NamedDecl *ND = I->getAsDecl();
+      if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
+        ND = UD->getTargetDecl();
+        
       if (TagDecl *TD = dyn_cast<TagDecl>(ND)) {
         TagFound = Context.getCanonicalDecl(TD);
         TagNames += FoundDecls.insert(TagFound)?  1 : 0;
