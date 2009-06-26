@@ -1651,8 +1651,29 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV*> &Operands,
       SmallVector<const SCEV*, 4> NestedOperands(NestedAR->op_begin(),
                                                 NestedAR->op_end());
       Operands[0] = NestedAR->getStart();
-      NestedOperands[0] = getAddRecExpr(Operands, L);
-      return getAddRecExpr(NestedOperands, NestedLoop);
+      // AddRecs require their operands be loop-invariant with respect to their
+      // loops. Don't perform this transformation if it would break this
+      // requirement.
+      bool AllInvariant = true;
+      for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+        if (!Operands[i]->isLoopInvariant(L)) {
+          AllInvariant = false;
+          break;
+        }
+      if (AllInvariant) {
+        NestedOperands[0] = getAddRecExpr(Operands, L);
+        AllInvariant = true;
+        for (unsigned i = 0, e = NestedOperands.size(); i != e; ++i)
+          if (!NestedOperands[i]->isLoopInvariant(NestedLoop)) {
+            AllInvariant = false;
+            break;
+          }
+        if (AllInvariant)
+          // Ok, both add recurrences are valid after the transformation.
+          return getAddRecExpr(NestedOperands, NestedLoop);
+      }
+      // Reset Operands to its original state.
+      Operands[0] = NestedAR;
     }
   }
 
