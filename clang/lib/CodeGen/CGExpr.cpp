@@ -606,11 +606,12 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
        cast<llvm::VectorType>(Vec->getType())->getNumElements();
     if (NumDstElts == NumSrcElts) {
       // Use shuffle vector is the src and destination are the same number
-      // of elements
-      llvm::SmallVector<llvm::Constant*, 4> Mask;
+      // of elements and restore the vector mask since it is on the side
+      // it will be stored.
+      llvm::SmallVector<llvm::Constant*, 4> Mask(NumDstElts);
       for (unsigned i = 0; i != NumSrcElts; ++i) {
         unsigned InIdx = getAccessedFieldNo(i, Elts);
-        Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
+        Mask[InIdx] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       }
     
       llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
