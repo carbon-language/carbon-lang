@@ -548,7 +548,7 @@ def tSXTH  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 Requires<[IsThumb, HasV6]>;
 
 // test
-let Defs = [CPSR] in
+let isCommutable = 1, Defs = [CPSR] in
 def tTST  : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
                "tst $lhs, $rhs",
                [(ARMcmpNZ (and tGPR:$lhs, tGPR:$rhs), 0)]>;
