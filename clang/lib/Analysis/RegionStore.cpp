@@ -220,7 +220,7 @@ public:
                         QualType CastToTy);
 
   SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,Loc L,
-                 NonLoc R);
+                 NonLoc R, QualType resultTy);
 
   Store getInitialStore() { return RBFactory.GetEmptyMap().getRoot(); }
   
@@ -722,7 +722,8 @@ RegionStoreManager::CastRegion(const GRState *state, const MemRegion* R,
 //===----------------------------------------------------------------------===//
 
 SVal RegionStoreManager::EvalBinOp(const GRState *state, 
-                                   BinaryOperator::Opcode Op, Loc L, NonLoc R) {
+                                   BinaryOperator::Opcode Op, Loc L, NonLoc R,
+                                   QualType resultTy) {
   // Assume the base location is MemRegionVal.
   if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
