@@ -156,17 +156,49 @@ DeduceTemplateArguments(ASTContext &Context,
   return Sema::TDK_Success;
 }
 
+/// \brief Deduce the template arguments by comparing the parameter type and
+/// the argument type (C++ [temp.deduct.type]).
+///
+/// \param Context the AST context in which this deduction occurs.
+///
+/// \param TemplateParams the template parameters that we are deducing
+///
+/// \param ParamIn the parameter type
+///
+/// \param ArgIn the argument type
+///
+/// \param Info information about the template argument deduction itself
+///
+/// \param Deduced the deduced template arguments
+///
+/// \param ParamTypeWasReference if true, the original parameter type was
+/// a reference type (C++0x [temp.deduct.type]p4 bullet 1).
+///
+/// \returns the result of template argument deduction so far. Note that a
+/// "success" result means that template argument deduction has not yet failed,
+/// but it may still fail, later, for other reasons.
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(ASTContext &Context, 
                         TemplateParameterList *TemplateParams,
                         QualType ParamIn, QualType ArgIn,
                         Sema::TemplateDeductionInfo &Info,
-                        llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
+                        llvm::SmallVectorImpl<TemplateArgument> &Deduced,
+                        bool ParamTypeWasReference = false) {
   // We only want to look at the canonical types, since typedefs and
   // sugar are not part of template argument deduction.
   QualType Param = Context.getCanonicalType(ParamIn);
   QualType Arg = Context.getCanonicalType(ArgIn);
 
+  // C++0x [temp.deduct.call]p4 bullet 1:
+  //   - If the original P is a reference type, the deduced A (i.e., the type
+  //     referred to by the reference) can be more cv-qualified than the 
+  //     transformed A.
+  if (ParamTypeWasReference) {
+    unsigned ExtraQualsOnParam 
+      = Param.getCVRQualifiers() & ~Arg.getCVRQualifiers();
+    Param.setCVRQualifiers(Param.getCVRQualifiers() & ~ExtraQualsOnParam);
+  }
+  
   // If the parameter type is not dependent, just compare the types
   // directly.
   if (!Param->isDependentType()) {
@@ -761,7 +793,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     CheckArgs = Function->getNumParams();
   }
   
+  // Template argument deduction for function templates in a SFINAE context.
+  // Trap any errors that might occur.
   SFINAETrap Trap(*this);
+  
+  // Deduce template arguments from the function parameters.
   llvm::SmallVector<TemplateArgument, 4> Deduced;
   Deduced.resize(FunctionTemplate->getTemplateParameters()->size());  
   TemplateParameterList *TemplateParams
@@ -769,11 +805,12 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   for (unsigned I = 0; I != CheckArgs; ++I) {
     QualType ParamType = Function->getParamDecl(I)->getType();
     QualType ArgType = Args[I]->getType();
-
+    
     // C++ [temp.deduct.call]p2:
     //   If P is not a reference type:
     QualType CanonParamType = Context.getCanonicalType(ParamType);
-    if (!isa<ReferenceType>(CanonParamType)) {
+    bool ParamWasReference = isa<ReferenceType>(CanonParamType);
+    if (!ParamWasReference) {
       //   - If A is an array type, the pointer type produced by the 
       //     array-to-pointer standard conversion (4.2) is used in place of 
       //     A for type deduction; otherwise,
@@ -822,7 +859,8 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     // arguments from a type.
     if (TemplateDeductionResult Result
         = ::DeduceTemplateArguments(Context, TemplateParams,
-                                    ParamType, ArgType, Info, Deduced))
+                                    ParamType, ArgType, Info, Deduced,
+                                    ParamWasReference))
       return Result;
     
     // FIXME: C++ [temp.deduct.call] paragraphs 6-9 deal with function
