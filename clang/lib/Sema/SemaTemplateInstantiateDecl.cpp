@@ -645,16 +645,17 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 /// function.
 void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                          FunctionDecl *Function) {
-  // FIXME: make this work for function template specializations, too.
-
   if (Function->isInvalidDecl())
     return;
 
   assert(!Function->getBody(Context) && "Already instantiated!");
   
   // Find the function body that we'll be substituting.
-  const FunctionDecl *PatternDecl 
-    = Function->getInstantiatedFromMemberFunction();
+  const FunctionDecl *PatternDecl = 0;
+  if (FunctionTemplateDecl *Primary = Function->getPrimaryTemplate())
+    PatternDecl = Primary->getTemplatedDecl();
+  else 
+    PatternDecl = Function->getInstantiatedFromMemberFunction();
   Stmt *Pattern = 0;
   if (PatternDecl)
     Pattern = PatternDecl->getBody(Context, PatternDecl);

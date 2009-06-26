@@ -153,7 +153,7 @@ protected:
   NamedDecl *TemplatedDecl;
   TemplateParameterList* TemplateParams;
 };
-
+ 
 /// Declaration of a template function.
 class FunctionTemplateDecl : public TemplateDecl {
 protected:

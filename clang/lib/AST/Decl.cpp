@@ -359,6 +359,10 @@ void FunctionDecl::Destroy(ASTContext& C) {
 
   C.Deallocate(ParamInfo);
 
+  if (TemplateSpecializationInfo *Info 
+        = TemplateOrSpecialization.dyn_cast<TemplateSpecializationInfo*>())
+    C.Deallocate(Info);
+  
   Decl::Destroy(C);
 }
 
@@ -553,6 +557,20 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
     return getDeclName().getCXXOverloadedOperator();
   else
     return OO_None;
+}
+
+void 
+FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
+                                                FunctionTemplateDecl *Template,
+                                     const TemplateArgumentList *TemplateArgs) {
+  TemplateSpecializationInfo *Info 
+    = TemplateOrSpecialization.dyn_cast<TemplateSpecializationInfo*>();
+  if (!Info)
+    Info = new (Context) TemplateSpecializationInfo;
+  
+  Info->Template = Template;
+  Info->TemplateArguments = TemplateArgs;
+  TemplateOrSpecialization = Info;
 }
 
 //===----------------------------------------------------------------------===//

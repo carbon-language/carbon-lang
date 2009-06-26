@@ -25,7 +25,8 @@ class FunctionTemplateDecl;
 class Stmt;
 class CompoundStmt;
 class StringLiteral;
-
+class TemplateArgumentList;
+  
 /// TranslationUnitDecl - The top declaration context.
 class TranslationUnitDecl : public Decl, public DeclContext {
   TranslationUnitDecl()
@@ -614,10 +615,17 @@ public:
     None, Extern, Static, PrivateExtern
   };
 private:
+  /// \brief Provides information about a function template specialization, 
+  /// which is a FunctionDecl that has been explicitly specialization or
+  /// instantiated from a function template.
+  struct TemplateSpecializationInfo {
+    FunctionTemplateDecl *Template;
+    const TemplateArgumentList *TemplateArguments;
+  };
+  
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
-  /// no formals.  TODO: we could allocate this space immediately after the
-  /// FunctionDecl object to save an allocation like FunctionType does.
+  /// no formals.
   ParmVarDecl **ParamInfo;
   
   LazyDeclStmtPtr Body;
@@ -664,8 +672,12 @@ private:
   /// pointer to a FunctionTemplateDecl. For member functions
   /// of class template specializations, this will be the
   /// FunctionDecl from which the member function was instantiated.
-  llvm::PointerUnion<FunctionTemplateDecl*, FunctionDecl*>
-    TemplateOrInstantiation;
+  /// For function template specializations, this will be a 
+  /// FunctionTemplateSpecializationInfo, which contains information about
+  /// the template being specialized and the template arguments involved in 
+  /// that specialization.
+  llvm::PointerUnion3<FunctionTemplateDecl*, FunctionDecl*,
+                      TemplateSpecializationInfo*> TemplateOrSpecialization;
 
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -678,7 +690,7 @@ protected:
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
-      EndRangeLoc(L), TemplateOrInstantiation() {}
+      EndRangeLoc(L), TemplateOrSpecialization() {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -887,13 +899,13 @@ public:
   /// X<int>::A is required, it will be instantiated from the
   /// declaration returned by getInstantiatedFromMemberFunction().
   FunctionDecl *getInstantiatedFromMemberFunction() const {
-    return TemplateOrInstantiation.dyn_cast<FunctionDecl*>();
+    return TemplateOrSpecialization.dyn_cast<FunctionDecl*>();
   }
 
   /// \brief Specify that this record is an instantiation of the
   /// member function RD.
   void setInstantiationOfMemberFunction(FunctionDecl *RD) { 
-    TemplateOrInstantiation = RD;
+    TemplateOrSpecialization = RD;
   }
 
   /// \brief Retrieves the function template that is described by this
@@ -909,13 +921,54 @@ public:
   /// getDescribedFunctionTemplate() retrieves the
   /// FunctionTemplateDecl from a FunctionDecl.
   FunctionTemplateDecl *getDescribedFunctionTemplate() const {
-    return TemplateOrInstantiation.dyn_cast<FunctionTemplateDecl*>();
+    return TemplateOrSpecialization.dyn_cast<FunctionTemplateDecl*>();
   }
 
   void setDescribedFunctionTemplate(FunctionTemplateDecl *Template) {
-    TemplateOrInstantiation = Template;
+    TemplateOrSpecialization = Template;
   }
 
+  /// \brief Retrieve the primary template that this function template
+  /// specialization either specializes or was instantiated from.
+  ///
+  /// If this function declaration is not a function template specialization,
+  /// returns NULL.
+  FunctionTemplateDecl *getPrimaryTemplate() const {
+    if (TemplateSpecializationInfo *Info 
+          = TemplateOrSpecialization.dyn_cast<TemplateSpecializationInfo*>()) {
+      return Info->Template;
+    }
+    return 0;
+  }
+  
+  /// \brief Retrieve the template arguments used to produce this function
+  /// template specialization from the primary template.
+  ///
+  /// If this function declaration is not a function template specialization,
+  /// returns NULL.
+  const TemplateArgumentList *getTemplateSpecializationArgs() const {
+    if (TemplateSpecializationInfo *Info 
+          = TemplateOrSpecialization.dyn_cast<TemplateSpecializationInfo*>()) {
+      return Info->TemplateArguments;
+    }
+    return 0;
+  }
+  
+  
+  /// \brief Specify that this function declaration is actually a function
+  /// template specialization.
+  ///
+  /// \param Context the AST context in which this function resides.
+  ///
+  /// \param Template the function template that this function template
+  /// specialization specializes.
+  ///
+  /// \param TemplateArgs the template arguments that produced this
+  /// function template specialization from the template.
+  void setFunctionTemplateSpecialization(ASTContext &Context,
+                                         FunctionTemplateDecl *Template,
+                                      const TemplateArgumentList *TemplateArgs);
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;

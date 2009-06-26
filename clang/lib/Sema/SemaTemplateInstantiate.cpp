@@ -29,10 +29,18 @@ using namespace clang;
 /// instantiate the given declaration.
 const TemplateArgumentList &
 Sema::getTemplateInstantiationArgs(NamedDecl *D) {
+  // Template arguments for a class template specialization.
   if (ClassTemplateSpecializationDecl *Spec 
         = dyn_cast<ClassTemplateSpecializationDecl>(D))
     return Spec->getTemplateArgs();
 
+  // Template arguments for a function template specialization.
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D))
+    if (const TemplateArgumentList *TemplateArgs
+          = Function->getTemplateSpecializationArgs())
+      return *TemplateArgs;
+      
+  // Template arguments for a member of a class template specialization.
   DeclContext *EnclosingTemplateCtx = D->getDeclContext();
   while (!isa<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx)) {
     assert(!EnclosingTemplateCtx->isFileContext() &&
@@ -158,8 +166,11 @@ void Sema::PrintInstantiationStack() {
           << Active->InstantiationRange;
       } else {
         FunctionDecl *Function = cast<FunctionDecl>(D);
-        unsigned DiagID = diag::note_template_member_function_here;
-        // FIXME: check for a function template
+        unsigned DiagID;
+        if (Function->getPrimaryTemplate())
+          DiagID = diag::note_function_template_spec_here;
+        else
+          DiagID = diag::note_template_member_function_here;
         Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
                      DiagID)
           << Function

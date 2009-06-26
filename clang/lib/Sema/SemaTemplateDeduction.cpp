@@ -870,6 +870,10 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   if (!Specialization || Trap.hasErrorOccurred())
     return TDK_SubstitutionFailure;
 
+  // Turn the specialization into an actual function template specialization.
+  Specialization->setFunctionTemplateSpecialization(Context,
+                                                    FunctionTemplate,
+                                                    Info.take());
   return TDK_Success;
 }
 
