@@ -199,16 +199,9 @@ DeduceTemplateArguments(ASTContext &Context,
     Param.setCVRQualifiers(Param.getCVRQualifiers() & ~ExtraQualsOnParam);
   }
   
-  // If the parameter type is not dependent, just compare the types
-  // directly.
-  if (!Param->isDependentType()) {
-    if (Param == Arg)
-      return Sema::TDK_Success;
-
-    Info.FirstArg = TemplateArgument(SourceLocation(), ParamIn);
-    Info.SecondArg = TemplateArgument(SourceLocation(), ArgIn);
-    return Sema::TDK_NonDeducedMismatch;
-  }
+  // If the parameter type is not dependent, there is nothing to deduce.
+  if (!Param->isDependentType())
+    return Sema::TDK_Success;
 
   // C++ [temp.deduct.type]p9:
   //   A template type argument T, a template template argument TT or a 
@@ -259,7 +252,9 @@ DeduceTemplateArguments(ASTContext &Context,
   Info.FirstArg = TemplateArgument(SourceLocation(), ParamIn);
   Info.SecondArg = TemplateArgument(SourceLocation(), ArgIn);
 
-  if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
+  if ((ParamTypeWasReference && Param.isMoreQualifiedThan(Arg)) ||
+      (!ParamTypeWasReference && 
+       (Param.getCVRQualifiers() != Arg.getCVRQualifiers())))
     return Sema::TDK_NonDeducedMismatch;
 
   switch (Param->getTypeClass()) {
@@ -419,7 +414,7 @@ DeduceTemplateArguments(ASTContext &Context,
       return Sema::TDK_Success;
     }
      
-    //     template-name<T> (wheretemplate-name refers to a class template)
+    //     template-name<T> (where template-name refers to a class template)
     //     template-name<i>
     //     TT<T> (TODO)
     //     TT<i> (TODO)
@@ -559,7 +554,7 @@ DeduceTemplateArguments(ASTContext &Context,
   }
 
   // FIXME: Many more cases to go (to go).
-  return Sema::TDK_NonDeducedMismatch;
+  return Sema::TDK_Success;
 }
 
 static Sema::TemplateDeductionResult
@@ -656,6 +651,62 @@ DeduceTemplateArguments(ASTContext &Context,
   return Sema::TDK_Success;
 }
 
+/// \brief Determine whether two template arguments are the same.
+static bool isSameTemplateArg(ASTContext &Context, 
+                              const TemplateArgument &X,
+                              const TemplateArgument &Y) {
+  if (X.getKind() != Y.getKind())
+    return false;
+  
+  switch (X.getKind()) {
+    case TemplateArgument::Null:
+      assert(false && "Comparing NULL template argument");
+      break;
+      
+    case TemplateArgument::Type:
+      return Context.getCanonicalType(X.getAsType()) ==
+             Context.getCanonicalType(Y.getAsType());
+      
+    case TemplateArgument::Declaration:
+      return Context.getCanonicalDecl(X.getAsDecl()) ==
+             Context.getCanonicalDecl(Y.getAsDecl());
+      
+    case TemplateArgument::Integral:
+      return *X.getAsIntegral() == *Y.getAsIntegral();
+      
+    case TemplateArgument::Expression:
+      // FIXME: We assume that all expressions are distinct, but we should
+      // really check their canonical forms.
+      return false;
+      
+    case TemplateArgument::Pack:
+      if (X.pack_size() != Y.pack_size())
+        return false;
+      
+      for (TemplateArgument::pack_iterator XP = X.pack_begin(), 
+                                        XPEnd = X.pack_end(), 
+                                           YP = Y.pack_begin();
+           XP != XPEnd; ++XP, ++YP) 
+        if (!isSameTemplateArg(Context, *XP, *YP))
+          return false;
+
+      return true;
+  }
+
+  return false;
+}
+
+/// \brief Helper function to build a TemplateParameter when we don't
+/// know its type statically.
+static TemplateParameter makeTemplateParameter(Decl *D) {
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(D))
+    return TemplateParameter(TTP);
+  else if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D))
+    return TemplateParameter(NTTP);
+  
+  return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
+}
+
 /// \brief Perform template argument deduction to determine whether
 /// the given template arguments match the given class template
 /// partial specialization per C++ [temp.class.spec.match].
@@ -720,27 +771,44 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   for (unsigned I = 0, N = PartialTemplateArgs.flat_size(); I != N; ++I) {
     Decl *Param = const_cast<Decl *>(
                     ClassTemplate->getTemplateParameters()->getParam(I));
-    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
-      TemplateArgument InstArg = Instantiate(PartialTemplateArgs[I],
-                                             *DeducedArgumentList);
-      if (InstArg.getKind() != TemplateArgument::Type) {
-        Info.Param = TTP;
-        Info.FirstArg = PartialTemplateArgs[I];
-        return TDK_SubstitutionFailure;
-      }
-
-      if (Context.getCanonicalType(InstArg.getAsType())
-            != Context.getCanonicalType(TemplateArgs[I].getAsType())) {
-        Info.Param = TTP;
-        Info.FirstArg = TemplateArgs[I];
-        Info.SecondArg = InstArg;
-        return TDK_NonDeducedMismatch;
-      }
-
-      continue;
+    TemplateArgument InstArg = Instantiate(PartialTemplateArgs[I],
+                                           *DeducedArgumentList);
+    if (InstArg.isNull()) {
+      Info.Param = makeTemplateParameter(Param);
+      Info.FirstArg = PartialTemplateArgs[I];
+      return TDK_SubstitutionFailure;      
     }
-
-    // FIXME: Check template template arguments?
+    
+    if (InstArg.getKind() == TemplateArgument::Expression) {
+      // When the argument is an expression, check the expression result 
+      // against the actual template parameter to get down to the canonical
+      // template argument.
+      Expr *InstExpr = InstArg.getAsExpr();
+      if (NonTypeTemplateParmDecl *NTTP 
+            = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+        if (CheckTemplateArgument(NTTP, NTTP->getType(), InstExpr, InstArg)) {
+          Info.Param = makeTemplateParameter(Param);
+          Info.FirstArg = PartialTemplateArgs[I];
+          return TDK_SubstitutionFailure;      
+        }
+      } else if (TemplateTemplateParmDecl *TTP 
+                   = dyn_cast<TemplateTemplateParmDecl>(Param)) {
+        // FIXME: template template arguments should really resolve to decls
+        DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(InstExpr);
+        if (!DRE || CheckTemplateArgument(TTP, DRE)) {
+          Info.Param = makeTemplateParameter(Param);
+          Info.FirstArg = PartialTemplateArgs[I];
+          return TDK_SubstitutionFailure;      
+        }
+      }
+    }
+    
+    if (!isSameTemplateArg(Context, TemplateArgs[I], InstArg)) {
+      Info.Param = makeTemplateParameter(Param);
+      Info.FirstArg = TemplateArgs[I];
+      Info.SecondArg = InstArg;
+      return TDK_NonDeducedMismatch;
+    }
   }
 
   if (Trap.hasErrorOccurred())
