@@ -12,7 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CompilerDriver/Plugin.h"
-
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/System/Mutex.h"
 #include <algorithm>
 #include <vector>
 
@@ -28,6 +29,7 @@ namespace {
   static bool pluginListInitialized = false;
   typedef std::vector<const llvmc::BasePlugin*> PluginList;
   static PluginList Plugins;
+  static llvm::ManagedStatic<llvm::sys::SmartMutex<true> > PluginMutex;
 
   struct ByPriority {
     bool operator()(const llvmc::BasePlugin* lhs,
@@ -40,6 +42,7 @@ namespace {
 namespace llvmc {
 
   PluginLoader::PluginLoader() {
+    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
     if (!pluginListInitialized) {
       for (PluginRegistry::iterator B = PluginRegistry::begin(),
              E = PluginRegistry::end(); B != E; ++B)
@@ -50,6 +53,7 @@ namespace llvmc {
   }
 
   PluginLoader::~PluginLoader() {
+    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
     if (pluginListInitialized) {
       for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
            B != E; ++B)
@@ -59,12 +63,14 @@ namespace llvmc {
   }
 
   void PluginLoader::PopulateLanguageMap(LanguageMap& langMap) {
+    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
     for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
          B != E; ++B)
       (*B)->PopulateLanguageMap(langMap);
   }
 
   void PluginLoader::PopulateCompilationGraph(CompilationGraph& graph) {
+    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
     for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
          B != E; ++B)
       (*B)->PopulateCompilationGraph(graph);
