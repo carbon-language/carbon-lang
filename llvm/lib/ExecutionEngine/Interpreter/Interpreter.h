@@ -202,7 +202,7 @@ private:  // Helper functions
 
   void *getPointerToFunction(Function *F) { return (void*)F; }
 
-  void initializeExecutionEngine();
+  void initializeExecutionEngine() { }
   void initializeExternalFunctions();
   GenericValue getConstantExprValue(ConstantExpr *CE, ExecutionContext &SF);
   GenericValue getOperandValue(Value *V, ExecutionContext &SF);

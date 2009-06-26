@@ -29,7 +29,6 @@
 using namespace llvm;
 
 STATISTIC(NumDynamicInsts, "Number of dynamic instructions executed");
-static Interpreter *TheEE = 0;
 
 static cl::opt<bool> PrintVolatile("interpreter-print-volatile", cl::Hidden,
           cl::desc("make the interpreter print every volatile load and store"));
@@ -49,10 +48,6 @@ static inline uint64_t doSignExtension(uint64_t Val, const IntegerType* ITy) {
 
 static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
   SF.Values[V] = Val;
-}
-
-void Interpreter::initializeExecutionEngine() {
-  TheEE = this;
 }
 
 //===----------------------------------------------------------------------===//
@@ -815,7 +810,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
 
 void Interpreter::visitGetElementPtrInst(GetElementPtrInst &I) {
   ExecutionContext &SF = ECStack.back();
-  SetValue(&I, TheEE->executeGEPOperation(I.getPointerOperand(),
+  SetValue(&I, executeGEPOperation(I.getPointerOperand(),
                                    gep_type_begin(I), gep_type_end(I), SF), SF);
 }
 
