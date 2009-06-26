@@ -110,6 +110,8 @@ STATISTIC(NumSimple      , "Number of simple replacements");
 STATISTIC(NumBlocks      , "Number of blocks marked unreachable");
 STATISTIC(NumSnuggle     , "Number of comparisons snuggled");
 
+static const ConstantRange empty(1, false);
+
 namespace {
   class DomTreeDFS {
   public:
@@ -939,7 +941,6 @@ namespace {
       const_iterator end()   const { return RangeList.end(); }
 
       iterator find(DomTreeDFS::Node *Subtree) {
-        static ConstantRange empty(1, false);
         iterator E = end();
         iterator I = std::lower_bound(begin(), E,
                                       std::make_pair(Subtree, empty), swo);
@@ -949,7 +950,6 @@ namespace {
       }
 
       const_iterator find(DomTreeDFS::Node *Subtree) const {
-        static const ConstantRange empty(1, false);
         const_iterator E = end();
         const_iterator I = std::lower_bound(begin(), E,
                                             std::make_pair(Subtree, empty), swo);
@@ -962,7 +962,6 @@ namespace {
         assert(!CR.isEmptySet() && "Empty ConstantRange.");
         assert(!CR.isSingleElement() && "Refusing to store single element.");
 
-        static ConstantRange empty(1, false);
         iterator E = end();
         iterator I =
             std::lower_bound(begin(), E, std::make_pair(Subtree, empty), swo);
