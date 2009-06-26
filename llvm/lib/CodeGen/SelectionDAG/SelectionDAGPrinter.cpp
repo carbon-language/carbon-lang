@@ -138,10 +138,15 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       else
         Op += itostr(Offset);
     }
+    if (unsigned char TF = GADN->getTargetFlags())
+      Op += " [TF=" + utostr(TF) + "]";
+
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
   } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(Node)) {
     Op += " " + itostr(JTDN->getIndex());
+    if (unsigned char TF = JTDN->getTargetFlags())
+      Op += " [TF=" + utostr(TF) + "]";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
     if (CP->isMachineConstantPoolEntry()) {
       Op += '<';
@@ -165,6 +170,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       }
     }
     Op += " A=" + itostr(CP->getAlignment());
+    if (unsigned char TF = CP->getTargetFlags())
+      Op += " TF=" + utostr(TF);
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
