@@ -627,6 +627,12 @@ Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
+  if (Context.getCanonicalType(Ty) == Context.UndeducedAutoTy) {
+    Diag(Loc,
+         diag::err_auto_variable_cannot_appear_in_own_initializer) 
+      << D->getDeclName();
+    return ExprError();
+  }
   
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {

@@ -398,6 +398,10 @@ def err_init_reference_member_uninitialized : Error<
 def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 
+// C++0x auto
+def err_auto_variable_cannot_appear_in_own_initializer : Error<
+  "variable %0 declared with 'auto' type cannot appear in its own initializer">;
+  
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
   "Objective-C declarations may only appear in global scope">;

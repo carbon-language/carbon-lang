@@ -964,6 +964,7 @@ const char *BuiltinType::getName(bool CPlusPlus) const {
   case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
   case Dependent:         return "<dependent type>";
+  case UndeducedAuto:     return "<undeduced auto type>";
   }
 }
 
