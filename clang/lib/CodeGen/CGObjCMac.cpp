@@ -5014,16 +5014,13 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     }
   }
   else if (!IsSuper && ResultType->isFloatingType()) {
-    if (const BuiltinType *BT = ResultType->getAsBuiltinType()) {
-      BuiltinType::Kind k = BT->getKind();
-      if (k == BuiltinType::LongDouble) {
-        Fn = ObjCTypes.getMessageSendFpretFixupFn();
-        Name += "objc_msgSend_fpret_fixup";
-      } 
-      else {
-        Fn = ObjCTypes.getMessageSendFixupFn();
-        Name += "objc_msgSend_fixup";
-      }
+    if (ResultType->isSpecificBuiltinType(BuiltinType::LongDouble)) {
+      Fn = ObjCTypes.getMessageSendFpretFixupFn();
+      Name += "objc_msgSend_fpret_fixup";
+    } 
+    else {
+      Fn = ObjCTypes.getMessageSendFixupFn();
+      Name += "objc_msgSend_fixup";
     }
   }
   else {
