@@ -61,18 +61,16 @@ static void EnsureFPIntrinsicsExist(Module &M, Function *Fn,
 template <class ArgIt>
 static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                  ArgIt ArgBegin, ArgIt ArgEnd,
-                                 const Type *RetTy, Constant *&FCache) {
-  if (!FCache) {
-    // If we haven't already looked up this function, check to see if the
-    // program already contains a function with this name.
-    Module *M = CI->getParent()->getParent()->getParent();
-    // Get or insert the definition now.
-    std::vector<const Type *> ParamTys;
-    for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
-      ParamTys.push_back((*I)->getType());
-    FCache = M->getOrInsertFunction(NewFn,
-                                    FunctionType::get(RetTy, ParamTys, false));
-  }
+                                 const Type *RetTy) {
+  // If we haven't already looked up this function, check to see if the
+  // program already contains a function with this name.
+  Module *M = CI->getParent()->getParent()->getParent();
+  // Get or insert the definition now.
+  std::vector<const Type *> ParamTys;
+  for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
+    ParamTys.push_back((*I)->getType());
+  Constant* FCache = M->getOrInsertFunction(NewFn,
+                                  FunctionType::get(RetTy, ParamTys, false));
 
   IRBuilder<> Builder(CI->getParent(), CI);
   SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
@@ -624,25 +622,24 @@ static Instruction *LowerPartSet(CallInst *CI) {
   return NewCI;
 }
 
-static void ReplaceFPIntrinsicWithCall(CallInst *CI, Constant *FCache,
-                                       Constant *DCache, Constant *LDCache,
-                                       const char *Fname, const char *Dname,
+static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
+                                       const char *Dname,
                                        const char *LDname) {
   switch (CI->getOperand(1)->getType()->getTypeID()) {
   default: assert(0 && "Invalid type in intrinsic"); abort();
   case Type::FloatTyID:
     ReplaceCallWith(Fname, CI, CI->op_begin() + 1, CI->op_end(),
-                  Type::FloatTy, FCache);
+                  Type::FloatTy);
     break;
   case Type::DoubleTyID:
     ReplaceCallWith(Dname, CI, CI->op_begin() + 1, CI->op_end(),
-                  Type::DoubleTy, DCache);
+                  Type::DoubleTy);
     break;
   case Type::X86_FP80TyID:
   case Type::FP128TyID:
   case Type::PPC_FP128TyID:
     ReplaceCallWith(LDname, CI, CI->op_begin() + 1, CI->op_end(),
-                  CI->getOperand(1)->getType(), LDCache);
+                  CI->getOperand(1)->getType());
     break;
   }
 }
@@ -669,7 +666,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp: {
     Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin() + 1, CI->op_end(),
-                               Type::Int32Ty, SetjmpFCache);
+                               Type::Int32Ty);
     if (CI->getType() != Type::VoidTy)
       CI->replaceAllUsesWith(V);
     break;
@@ -681,14 +678,14 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::longjmp: {
     ReplaceCallWith("longjmp", CI, CI->op_begin() + 1, CI->op_end(),
-                    Type::VoidTy, LongjmpFCache);
+                    Type::VoidTy);
     break;
   }
 
   case Intrinsic::siglongjmp: {
     // Insert the call to abort
     ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), 
-                    Type::VoidTy, AbortFCache);
+                    Type::VoidTy);
     break;
   }
   case Intrinsic::ctpop:
@@ -786,8 +783,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Ops[0] = CI->getOperand(1);
     Ops[1] = CI->getOperand(2);
     Ops[2] = Size;
-    ReplaceCallWith("memcpy", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
-                    MemcpyFCache);
+    ReplaceCallWith("memcpy", CI, Ops, Ops+3, CI->getOperand(1)->getType());
     break;
   }
   case Intrinsic::memmove: {
@@ -798,8 +794,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Ops[0] = CI->getOperand(1);
     Ops[1] = CI->getOperand(2);
     Ops[2] = Size;
-    ReplaceCallWith("memmove", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
-                    MemmoveFCache);
+    ReplaceCallWith("memmove", CI, Ops, Ops+3, CI->getOperand(1)->getType());
     break;
   }
   case Intrinsic::memset: {
@@ -812,43 +807,35 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Ops[1] = Builder.CreateIntCast(CI->getOperand(2), Type::Int32Ty,
                                    /* isSigned */ false);
     Ops[2] = Size;
-    ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
-                    MemsetFCache);
+    ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getOperand(1)->getType());
     break;
   }
   case Intrinsic::sqrt: {
-    ReplaceFPIntrinsicWithCall(CI, sqrtFCache, sqrtDCache, sqrtLDCache,
-                               "sqrtf", "sqrt", "sqrtl");
+    ReplaceFPIntrinsicWithCall(CI, "sqrtf", "sqrt", "sqrtl");
     break;
   }
   case Intrinsic::log: {
-    ReplaceFPIntrinsicWithCall(CI, logFCache, logDCache, logLDCache,
-                               "logf", "log", "logl");
+    ReplaceFPIntrinsicWithCall(CI, "logf", "log", "logl");
     break;
   }
   case Intrinsic::log2: {
-    ReplaceFPIntrinsicWithCall(CI, log2FCache, log2DCache, log2LDCache,
-                               "log2f", "log2", "log2l");
+    ReplaceFPIntrinsicWithCall(CI, "log2f", "log2", "log2l");
     break;
   }
   case Intrinsic::log10: {
-    ReplaceFPIntrinsicWithCall(CI, log10FCache, log10DCache, log10LDCache,
-                               "log10f", "log10", "log10l");
+    ReplaceFPIntrinsicWithCall(CI, "log10f", "log10", "log10l");
     break;
   }
   case Intrinsic::exp: {
-    ReplaceFPIntrinsicWithCall(CI, expFCache, expDCache, expLDCache,
-                               "expf", "exp", "expl");
+    ReplaceFPIntrinsicWithCall(CI, "expf", "exp", "expl");
     break;
   }
   case Intrinsic::exp2: {
-    ReplaceFPIntrinsicWithCall(CI, exp2FCache, exp2DCache, exp2LDCache,
-                               "exp2f", "exp2", "exp2l");
+    ReplaceFPIntrinsicWithCall(CI, "exp2f", "exp2", "exp2l");
     break;
   }
   case Intrinsic::pow: {
-    ReplaceFPIntrinsicWithCall(CI, powFCache, powDCache, powLDCache,
-                               "powf", "pow", "powl");
+    ReplaceFPIntrinsicWithCall(CI, "powf", "pow", "powl");
     break;
   }
   case Intrinsic::flt_rounds:
