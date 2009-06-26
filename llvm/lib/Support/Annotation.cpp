@@ -68,9 +68,12 @@ AnnotationID AnnotationManager::getID(const char *Name) {  // Name -> ID
   if (I == E) {
     sys::SmartScopedWriter<true> Writer(&*AnnotationsLock);
     I = IDMap->find(Name);
-    if (I == IDMap->end())
-      (*IDMap)[Name] = IDCounter++;   // Add a new element
-    return AnnotationID(IDCounter-1);
+    if (I == IDMap->end()) {
+      unsigned newCount = sys::AtomicIncrement(&IDCounter);
+      (*IDMap)[Name] = newCount-1;   // Add a new element
+      return AnnotationID(newCount-1);
+    } else
+      return AnnotationID(I->second);
   }
   return AnnotationID(I->second);
 }
