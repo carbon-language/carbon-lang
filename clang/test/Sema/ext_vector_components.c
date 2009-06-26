@@ -5,6 +5,8 @@ typedef __attribute__(( ext_vector_type(3) )) float float3;
 typedef __attribute__(( ext_vector_type(4) )) float float4;
 typedef __attribute__(( ext_vector_type(16) )) float float16;
 
+static float4 vec4_0 = (float4)0.5f;
+
 static void test() {
     float2 vec2, vec2_2;
     float3 vec3;

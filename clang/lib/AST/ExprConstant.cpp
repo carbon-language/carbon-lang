@@ -486,12 +486,28 @@ static bool EvaluateVector(const Expr* E, APValue& Result, EvalInfo &Info) {
 
 APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
   const Expr* SE = E->getSubExpr();
+  QualType SETy = SE->getType();
+  APValue Result = APValue();
 
-  // Check for vector->vector bitcast.
-  if (SE->getType()->isVectorType())
+  // Check for vector->vector bitcast and scalar->vector splat.
+  if (SETy->isVectorType()) {
     return this->Visit(const_cast<Expr*>(SE));
+  } else if (SETy->isIntegerType()) {
+    APSInt IntResult;
+    if (EvaluateInteger(SE, IntResult, Info))
+      Result = APValue(IntResult);
+  } else if (SETy->isRealFloatingType()) {
+    APFloat F(0.0);
+    if (EvaluateFloat(SE, F, Info))
+      Result = APValue(F);
+  }
 
-  return APValue();
+  if (Result.isInt() || Result.isFloat()) {
+    unsigned NumElts = E->getType()->getAsVectorType()->getNumElements();
+    llvm::SmallVector<APValue, 4> Elts(NumElts, Result);
+    Result = APValue(&Elts[0], Elts.size());
+  }
+  return Result;
 }
 
 APValue 
