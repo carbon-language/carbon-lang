@@ -455,13 +455,25 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
       << MO.getIndex();
 
-    if (TM.getRelocationModel() == Reloc::PIC_) {
-      if (Subtarget->isPICStyleStub()) {
-        O << '-';
-        PrintPICBaseSymbol();
-      } else if (Subtarget->isPICStyleGOT()) {
-        O << "@GOTOFF";
+    switch (MO.getTargetFlags()) {
+    default:
+      assert(0 && "Unknown target flag on jump table operand");
+    case X86II::MO_NO_FLAG:
+      // FIXME: REMOVE EVENTUALLY.
+      if (TM.getRelocationModel() == Reloc::PIC_) {
+        assert(!Subtarget->isPICStyleStub() &&
+               !Subtarget->isPICStyleGOT() &&
+               "Should have operand flag!");
       }
+        
+      break;
+    case X86II::MO_PIC_BASE_OFFSET:
+      O << '-';
+      PrintPICBaseSymbol();
+      break;
+    case X86II::MO_GOTOFF:
+      O << "@GOTOFF";
+      break;
     }
 
     if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
