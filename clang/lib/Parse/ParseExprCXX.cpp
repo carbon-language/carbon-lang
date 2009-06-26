@@ -90,50 +90,6 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       continue;
     }
     
-    // nested-name-specifier:
-    //   type-name '::'
-    //   namespace-name '::'
-    //   nested-name-specifier identifier '::'
-    if (Tok.is(tok::identifier) && NextToken().is(tok::coloncolon)) {
-      // We have an identifier followed by a '::'. Lookup this name
-      // as the name in a nested-name-specifier.
-      IdentifierInfo *II = Tok.getIdentifierInfo();
-      SourceLocation IdLoc = ConsumeToken();
-      assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
-      SourceLocation CCLoc = ConsumeToken();
-      
-      if (!HasScopeSpecifier) {
-        SS.setBeginLoc(IdLoc);
-        HasScopeSpecifier = true;
-      }
-      
-      if (SS.isInvalid())
-        continue;
-      
-      SS.setScopeRep(
-        Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, *II));
-      SS.setEndLoc(CCLoc);
-      continue;
-    }
-    
-    // nested-name-specifier:
-    //   type-name '::'
-    if (Tok.is(tok::identifier) && NextToken().is(tok::less)) {
-      TemplateTy Template;
-      TemplateNameKind TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(),
-                                                    CurScope, Template, &SS);
-      if (TNK) {
-        // We have found a template name, so annotate this this token
-        // with a template-id annotation. We do not permit the
-        // template-id to be translated into a type annotation,
-        // because some clients (e.g., the parsing of class template
-        // specializations) still want to see the original template-id
-        // token.
-        AnnotateTemplateIdToken(Template, TNK, &SS, SourceLocation(), false);
-        continue;
-      }
-    }
-
     if (Tok.is(tok::annot_template_id) && NextToken().is(tok::coloncolon)) {
       // We have 
       //
@@ -175,6 +131,57 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       }
       
       assert(false && "FIXME: Only type template names supported here");
+    }
+
+
+    // The rest of the nested-name-specifier possibilities start with
+    // tok::identifier.
+    if (Tok.isNot(tok::identifier))
+      break;
+
+    IdentifierInfo &II = *Tok.getIdentifierInfo();
+
+    // nested-name-specifier:
+    //   type-name '::'
+    //   namespace-name '::'
+    //   nested-name-specifier identifier '::'
+    Token Next = NextToken();
+    if (Next.is(tok::coloncolon)) {
+      // We have an identifier followed by a '::'. Lookup this name
+      // as the name in a nested-name-specifier.
+      SourceLocation IdLoc = ConsumeToken();
+      assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
+      SourceLocation CCLoc = ConsumeToken();
+      
+      if (!HasScopeSpecifier) {
+        SS.setBeginLoc(IdLoc);
+        HasScopeSpecifier = true;
+      }
+      
+      if (SS.isInvalid())
+        continue;
+      
+      SS.setScopeRep(
+        Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II));
+      SS.setEndLoc(CCLoc);
+      continue;
+    }
+    
+    // nested-name-specifier:
+    //   type-name '<'
+    if (Next.is(tok::less)) {
+      TemplateTy Template;
+      if (TemplateNameKind TNK = Actions.isTemplateName(II, CurScope,
+                                                        Template, &SS)) {
+        // We have found a template name, so annotate this this token
+        // with a template-id annotation. We do not permit the
+        // template-id to be translated into a type annotation,
+        // because some clients (e.g., the parsing of class template
+        // specializations) still want to see the original template-id
+        // token.
+        AnnotateTemplateIdToken(Template, TNK, &SS, SourceLocation(), false);
+        continue;
+      }
     }
 
     // We don't have any tokens that form the beginning of a
