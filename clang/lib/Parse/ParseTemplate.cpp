@@ -621,7 +621,11 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
 /// replaced with a type annotation token. Otherwise, the
 /// simple-template-id is always replaced with a template-id
 /// annotation token.
-void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
+///
+/// If an unrecoverable parse error occurs and no annotation token can be
+/// formed, this function returns true.
+///
+bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                      const CXXScopeSpec *SS, 
                                      SourceLocation TemplateKWLoc,
                                      bool AllowTypeAnnotation) {
@@ -644,13 +648,18 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                                   TemplateArgIsType,
                                                   TemplateArgLocations,
                                                   RAngleLoc);
+  
+  if (Invalid) {
+    // If we failed to parse the template ID but skipped ahead to a >, we're not
+    // going to be able to form a token annotation.  Eat the '>' if present.
+    if (Tok.is(tok::greater))
+      ConsumeToken();
+    return true;
+  }
 
   ASTTemplateArgsPtr TemplateArgsPtr(Actions, TemplateArgs.data(),
                                      TemplateArgIsType.data(),
                                      TemplateArgs.size());
-
-  if (Invalid) // FIXME: How to recover from a broken template-id?
-    return; 
 
   // Build the annotation token.
   if (TNK == TNK_Type_template && AllowTypeAnnotation) {
@@ -659,8 +668,13 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                     LAngleLoc, TemplateArgsPtr,
                                     &TemplateArgLocations[0],
                                     RAngleLoc);
-    if (Type.isInvalid()) // FIXME: better recovery?
-      return;
+    if (Type.isInvalid()) {
+      // If we failed to parse the template ID but skipped ahead to a >, we're not
+      // going to be able to form a token annotation.  Eat the '>' if present.
+      if (Tok.is(tok::greater))
+        ConsumeToken();
+      return true;
+    }
 
     Tok.setKind(tok::annot_typename);
     Tok.setAnnotationValue(Type.get());
@@ -705,6 +719,7 @@ void Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
   // In case the tokens were cached, have Preprocessor replace them with the
   // annotation token.
   PP.AnnotateCachedTokens(Tok);
+  return false;
 }
 
 /// \brief Replaces a template-id annotation token with a type

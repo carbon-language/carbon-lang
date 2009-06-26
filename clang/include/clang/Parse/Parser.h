@@ -1193,7 +1193,7 @@ private:
                                TemplateArgLocationList &TemplateArgLocations,
                                         SourceLocation &RAngleLoc);
 
-  void AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
+  bool AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                const CXXScopeSpec *SS,
                                SourceLocation TemplateKWLoc = SourceLocation(),
                                bool AllowTypeAnnotation = true);

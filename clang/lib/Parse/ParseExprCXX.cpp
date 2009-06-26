@@ -85,8 +85,10 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         = Actions.ActOnDependentTemplateName(TemplateKWLoc,
                                              *Tok.getIdentifierInfo(),
                                              Tok.getLocation(), SS);
-      AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
-                              &SS, TemplateKWLoc, false);
+      if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
+                                  &SS, TemplateKWLoc, false))
+        break;
+      
       continue;
     }
     
@@ -179,7 +181,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         // because some clients (e.g., the parsing of class template
         // specializations) still want to see the original template-id
         // token.
-        AnnotateTemplateIdToken(Template, TNK, &SS, SourceLocation(), false);
+        if (AnnotateTemplateIdToken(Template, TNK, &SS, SourceLocation(),
+                                    false))
+          break;
         continue;
       }
     }

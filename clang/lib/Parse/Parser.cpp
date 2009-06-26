@@ -839,7 +839,8 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
 /// specifier, and another one to get the actual type inside
 /// ParseDeclarationSpecifiers).
 ///
-/// This returns true if the token was annotated.
+/// This returns true if the token was annotated or an unrecoverable error
+/// occurs.
 /// 
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
@@ -934,7 +935,12 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
       if (TemplateNameKind TNK 
             = Actions.isTemplateName(*Tok.getIdentifierInfo(),
                                      CurScope, Template, &SS))
-        AnnotateTemplateIdToken(Template, TNK, &SS);
+        if (AnnotateTemplateIdToken(Template, TNK, &SS)) {
+          // If an unrecoverable error occurred, we need to return true here,
+          // because the token stream is in a damaged state.  We may not return
+          // a valid identifier.
+          return Tok.isNot(tok::identifier);
+        }
     }
 
     // The current token, which is either an identifier or a
@@ -978,7 +984,8 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
 /// annotates C++ scope specifiers and template-ids.  This returns
-/// true if the token was annotated.
+/// true if the token was annotated or there was an error that could not be
+/// recovered from.
 /// 
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
