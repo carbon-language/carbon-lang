@@ -50,7 +50,8 @@ go <a href="performance-2008-10-31.html">here</a>.
 
 <p>Measurements are done by running a full build (using xcodebuild or
 make for Sketch and 176.gcc respectively) using Clang and gcc 4.2 as
-compilers.</p>
+compilers; gcc is run both with and without the new clang driver (ccc)
+in order to evaluate the overhead of the driver itself.</p>
 
 <p>In order to track the performance of various subsystems the timings
 have been broken down into separate stages where possible. This is
@@ -64,9 +65,13 @@ the build.
     non-source code resource files.</li>
   <li><tt>+ driver</tt>: Add execution of the driver, but do not execute any
     commands (by using the -### driver option).</li>
-  <li><tt>+ pch gen</tt>: Add generation of PCH files (if used).</li>
-  <li><tt>+ syntax</tt>: Add preprocessing, parsing, and semantic checking of
-    source files.</li>
+  <li><tt>+ pch gen</tt>: Add generation of PCH files.</li>
+  <li><tt>+ cpp</tt>: Add preprocessing of source files (this time is
+    include in syntax for gcc).</li>
+  <li><tt>+ parse</tt>: Add parsing of source files (this time is
+    include in syntax for gcc).</li>
+  <li><tt>+ syntax</tt>: Add semantic checking of source files (for
+    gcc, this includes preprocessing and parsing as well).</li>
   <li><tt>+ IRgen</tt>: Add generation of LLVM IR (gcc has no
     corresponding phase).</li>
   <li><tt>+ codegen</tt>: Add generation of assembler files.</li>
@@ -75,30 +80,31 @@ the build.
 </ul>
 </p>
 
-<p>This set of stages is chosen to be approximately additive, that is each
-subsequent stage simply adds some additional processing. The timings measure the
-delta of the given stage from the previous one. For example, the timings
-for <tt>+ syntax</tt> below show the difference of running with <tt>+
-syntax</tt> versus the times for <tt>+ pch gen</tt>. This amounts to a fairly
-accurate measure of only the time to perform preprocessing, parsing, and
-semantic analysis after PCH generation is done.</p>
+<p>This set of stages is chosen to be approximately additive, that is
+each subsequent stage simply adds some additional processing. The
+timings measure the delta of the given stage from the previous
+one. For example, the timings for <tt>+ syntax</tt> below show the
+difference of running with <tt>+ syntax</tt> versus running with <tt>+
+parse</tt> (for clang) or <tt>+ driver</tt> with gcc. This amounts to
+a fairly accurate measure of only the time to perform semantic
+analysis (and preprocessing/parsing, in the case of gcc).</p>
 
 <!--*************************************************************************-->
 <h2><a name="timings">Timing Results</a></h2>
 <!--*************************************************************************-->
 
 <!--=======================================================================-->
-<h3><a name="2009-06-26">2009-06-26</a></h3>
+<h3><a name="2009-03-02">2009-03-02</a></h3>
 <!--=======================================================================-->
 
-<a href="timing-data/2009-06-26/sketch.pdf">
+<a href="timing-data/2009-03-02/sketch.pdf">
 <img class="img_slide" 
-     src="timing-data/2009-06-26/sketch.png" alt="Sketch Timings"/>
+     src="timing-data/2009-03-02/sketch.png" alt="Sketch Timings"/>
 </a>
 
-<a href="timing-data/2009-06-26/176.gcc.pdf">
+<a href="timing-data/2009-03-02/176.gcc.pdf">
 <img class="img_slide" 
-     src="timing-data/2009-06-26/176.gcc.png" alt="176.gcc Timings"/>
+     src="timing-data/2009-03-02/176.gcc.png" alt="176.gcc Timings"/>
 </a>
 
 </div>
