@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {mvn\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#187\\|#11141290\\|#3422604288\\|#1114112} | Count 4
+; RUN: llvm-as < %s | llc | grep {mvn\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#187\\|#11141290\\|#3422604288\\|#1114112} | count 4
 
 target triple = "thumbv7-apple-darwin"
 
