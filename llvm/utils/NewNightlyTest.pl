@@ -504,7 +504,11 @@ sub SendData{
     WriteFile "$Prefix-sentdata.txt", $sentdata;
 
     if (!($SUBMITAUX eq "")) {
-      system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
+        system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
+    }
+
+    if (!$SUBMIT) { 
+        return "Skipped standard submit.\n";
     }
 
     # Create the content to send to the server.
@@ -1129,7 +1133,7 @@ my %hash_of_data = (
   'target_triple' => $targetTriple
 );
 
-if ($SUBMIT) {
+if ($SUBMIT || !($SUBMITAUX eq "")) {
   my $response = SendData $SUBMITSERVER,$SUBMITSCRIPT,\%hash_of_data;
   if( $VERBOSE) { print "============================\n$response"; }
 } else {
