@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++0x
+// RUN: clang-cc -fsyntax-only -verify %s -std=c++0x
 
 void f() {
   int b[5];
