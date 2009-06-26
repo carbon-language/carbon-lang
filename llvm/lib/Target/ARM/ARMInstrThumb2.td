@@ -236,12 +236,12 @@ let Uses = [CPSR] in {
 multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
    // shifted imm
    def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, "s $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>,
                  Requires<[IsThumb, HasThumb2, CarryDefIsUnused]>;
    // register
    def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, "s $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>,
                  Requires<[IsThumb, HasThumb2, CarryDefIsUnused]> {
      let isCommutable = Commutable;
