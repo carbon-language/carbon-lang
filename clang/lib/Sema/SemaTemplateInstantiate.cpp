@@ -262,88 +262,82 @@ namespace {
 
     // Declare instantiate functions for each type.
 #define TYPE(Class, Base)                                       \
-    QualType Instantiate##Class##Type(const Class##Type *T,     \
-                                      unsigned Quals) const;
+    QualType Instantiate##Class##Type(const Class##Type *T) const;
 #define ABSTRACT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
   };
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateExtQualType(const ExtQualType *T,
-                                                 unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateExtQualType(const ExtQualType *T) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ExtQualType yet");
   return QualType();
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateBuiltinType(const BuiltinType *T,
-                                                 unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateBuiltinType(const BuiltinType *T) const {
   assert(false && "Builtin types are not dependent and cannot be instantiated");
-  return QualType(T, Quals);
+  return QualType(T, 0);
 }
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateFixedWidthIntType(const FixedWidthIntType *T, unsigned Quals) const {
+InstantiateFixedWidthIntType(const FixedWidthIntType *T) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate FixedWidthIntType yet");
   return QualType();
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateComplexType(const ComplexType *T,
-                                                 unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateComplexType(const ComplexType *T) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ComplexType yet");
   return QualType();
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiatePointerType(const PointerType *T,
-                                                 unsigned Quals) const {
+TemplateTypeInstantiator::InstantiatePointerType(const PointerType *T) const {
   QualType PointeeType = Instantiate(T->getPointeeType());
   if (PointeeType.isNull())
     return QualType();
 
-  return SemaRef.BuildPointerType(PointeeType, Quals, Loc, Entity);
+  return SemaRef.BuildPointerType(PointeeType, 0, Loc, Entity);
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateBlockPointerType(const BlockPointerType *T,
-                                                      unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateBlockPointerType(
+                                            const BlockPointerType *T) const {
   QualType PointeeType = Instantiate(T->getPointeeType());
   if (PointeeType.isNull())
     return QualType();
   
-  return SemaRef.BuildBlockPointerType(PointeeType, Quals, Loc, Entity);
+  return SemaRef.BuildBlockPointerType(PointeeType, 0, Loc, Entity);
 }
 
 QualType
 TemplateTypeInstantiator::InstantiateLValueReferenceType(
-    const LValueReferenceType *T, unsigned Quals) const {
+                                        const LValueReferenceType *T) const {
   QualType ReferentType = Instantiate(T->getPointeeType());
   if (ReferentType.isNull())
     return QualType();
 
-  return SemaRef.BuildReferenceType(ReferentType, true, Quals, Loc, Entity);
+  return SemaRef.BuildReferenceType(ReferentType, true, 0, Loc, Entity);
 }
 
 QualType
 TemplateTypeInstantiator::InstantiateRValueReferenceType(
-    const RValueReferenceType *T, unsigned Quals) const {
+                                        const RValueReferenceType *T) const {
   QualType ReferentType = Instantiate(T->getPointeeType());
   if (ReferentType.isNull())
     return QualType();
 
-  return SemaRef.BuildReferenceType(ReferentType, false, Quals, Loc, Entity);
+  return SemaRef.BuildReferenceType(ReferentType, false, 0, Loc, Entity);
 }
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateMemberPointerType(const MemberPointerType *T,
-                             unsigned Quals) const {
+InstantiateMemberPointerType(const MemberPointerType *T) const {
   QualType PointeeType = Instantiate(T->getPointeeType());
   if (PointeeType.isNull())
     return QualType();
@@ -352,14 +346,13 @@ InstantiateMemberPointerType(const MemberPointerType *T,
   if (ClassType.isNull())
     return QualType();
 
-  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Quals, Loc, 
+  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, 0, Loc, 
                                         Entity);
 }
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateConstantArrayType(const ConstantArrayType *T, 
-                             unsigned Quals) const {
+InstantiateConstantArrayType(const ConstantArrayType *T) const {
   QualType ElementType = Instantiate(T->getElementType());
   if (ElementType.isNull())
     return ElementType;
@@ -394,8 +387,7 @@ InstantiateConstantArrayType(const ConstantArrayType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateIncompleteArrayType(const IncompleteArrayType *T,
-                               unsigned Quals) const {
+InstantiateIncompleteArrayType(const IncompleteArrayType *T) const {
   QualType ElementType = Instantiate(T->getElementType());
   if (ElementType.isNull())
     return ElementType;
@@ -407,8 +399,7 @@ InstantiateIncompleteArrayType(const IncompleteArrayType *T,
 
 QualType
 TemplateTypeInstantiator::
-InstantiateVariableArrayType(const VariableArrayType *T,
-                             unsigned Quals) const {
+InstantiateVariableArrayType(const VariableArrayType *T) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate VariableArrayType yet");
   return QualType();
@@ -416,8 +407,7 @@ InstantiateVariableArrayType(const VariableArrayType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateDependentSizedArrayType(const DependentSizedArrayType *T,
-                                   unsigned Quals) const {
+InstantiateDependentSizedArrayType(const DependentSizedArrayType *T) const {
   Expr *ArraySize = T->getSizeExpr();
   assert(ArraySize->isValueDependent() && 
          "dependent sized array types must have value dependent size expr");
@@ -444,8 +434,8 @@ InstantiateDependentSizedArrayType(const DependentSizedArrayType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateDependentSizedExtVectorType(const DependentSizedExtVectorType *T,
-                                   unsigned Quals) const {
+InstantiateDependentSizedExtVectorType(
+                                const DependentSizedExtVectorType *T) const {
 
   // Instantiate the element type if needed.
   QualType ElementType = T->getElementType();
@@ -473,16 +463,15 @@ InstantiateDependentSizedExtVectorType(const DependentSizedExtVectorType *T,
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateVectorType(const VectorType *T,
-                                             unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateVectorType(const VectorType *T) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate VectorType yet");
   return QualType();
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateExtVectorType(const ExtVectorType *T,
-                                                   unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateExtVectorType(
+                                              const ExtVectorType *T) const {
   // FIXME: Implement this
   assert(false && "Cannot instantiate ExtVectorType yet");
   return QualType();
@@ -490,8 +479,7 @@ TemplateTypeInstantiator::InstantiateExtVectorType(const ExtVectorType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateFunctionProtoType(const FunctionProtoType *T,
-                             unsigned Quals) const {
+InstantiateFunctionProtoType(const FunctionProtoType *T) const {
   QualType ResultType = Instantiate(T->getResultType());
   if (ResultType.isNull())
     return ResultType;
@@ -515,15 +503,13 @@ InstantiateFunctionProtoType(const FunctionProtoType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateFunctionNoProtoType(const FunctionNoProtoType *T,
-                               unsigned Quals) const {
+InstantiateFunctionNoProtoType(const FunctionNoProtoType *T) const {
   assert(false && "Functions without prototypes cannot be dependent.");
   return QualType();
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
-                                                 unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T) const {
   TypedefDecl *Typedef 
     = cast_or_null<TypedefDecl>(
                            SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
@@ -534,8 +520,8 @@ TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T,
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateTypeOfExprType(const TypeOfExprType *T,
-                                                    unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateTypeOfExprType(
+                                              const TypeOfExprType *T) const {
   // The expression in a typeof is not potentially evaluated.
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
   
@@ -548,8 +534,7 @@ TemplateTypeInstantiator::InstantiateTypeOfExprType(const TypeOfExprType *T,
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
-                                                unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T) const {
   QualType Underlying = Instantiate(T->getUnderlyingType());
   if (Underlying.isNull())
     return QualType();
@@ -558,8 +543,7 @@ TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
 }
 
 QualType
-TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T,
-                                                  unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T) const {
   // C++0x [dcl.type.simple]p4:
   //   The operand of the decltype specifier is an unevaluated operand.
   EnterExpressionEvaluationContext Unevaluated(SemaRef,
@@ -575,8 +559,7 @@ TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T,
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
-                                                unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T) const {
   RecordDecl *Record 
     = cast_or_null<RecordDecl>(SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
   if (!Record)
@@ -586,8 +569,7 @@ TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T,
 }
 
 QualType 
-TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T,
-                                              unsigned Quals) const {
+TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T) const {
   EnumDecl *Enum 
     = cast_or_null<EnumDecl>(SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
   if (!Enum)
@@ -598,26 +580,13 @@ TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateTemplateTypeParmType(const TemplateTypeParmType *T,
-                                unsigned Quals) const {
+InstantiateTemplateTypeParmType(const TemplateTypeParmType *T) const {
   if (T->getDepth() == 0) {
     // Replace the template type parameter with its corresponding
     // template argument.
     assert(TemplateArgs[T->getIndex()].getKind() == TemplateArgument::Type &&
            "Template argument kind mismatch");
-    QualType Result = TemplateArgs[T->getIndex()].getAsType();
-    if (Result.isNull() || !Quals) 
-      return Result;
-
-    // C++ [dcl.ref]p1:
-    //   [...] Cv-qualified references are ill-formed except when
-    //   the cv-qualifiers are introduced through the use of a
-    //   typedef (7.1.3) or of a template type argument (14.3), in
-    //   which case the cv-qualifiers are ignored.
-    if (Quals && Result->isReferenceType())
-      Quals = 0;
-
-    return QualType(Result.getTypePtr(), Quals | Result.getCVRQualifiers());
+    return TemplateArgs[T->getIndex()].getAsType();
   } 
 
   // The template type parameter comes from an inner template (e.g.,
@@ -627,15 +596,13 @@ InstantiateTemplateTypeParmType(const TemplateTypeParmType *T,
   return SemaRef.Context.getTemplateTypeParmType(T->getDepth() - 1,
                                                  T->getIndex(),
                                                  T->isParameterPack(),
-                                                 T->getName())
-    .getQualifiedType(Quals);
+                                                 T->getName());
 }
 
 QualType 
 TemplateTypeInstantiator::
 InstantiateTemplateSpecializationType(
-                                  const TemplateSpecializationType *T,
-                                  unsigned Quals) const {
+                                  const TemplateSpecializationType *T) const {
   llvm::SmallVector<TemplateArgument, 4> InstantiatedTemplateArgs;
   InstantiatedTemplateArgs.reserve(T->getNumArgs());
   for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
@@ -661,8 +628,7 @@ InstantiateTemplateSpecializationType(
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateQualifiedNameType(const QualifiedNameType *T, 
-                             unsigned Quals) const {
+InstantiateQualifiedNameType(const QualifiedNameType *T) const {
   // When we instantiated a qualified name type, there's no point in
   // keeping the qualification around in the instantiated result. So,
   // just instantiate the named type.
@@ -671,14 +637,14 @@ InstantiateQualifiedNameType(const QualifiedNameType *T,
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateTypenameType(const TypenameType *T, unsigned Quals) const {
+InstantiateTypenameType(const TypenameType *T) const {
   if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
     // When the typename type refers to a template-id, the template-id
     // is dependent and has enough information to instantiate the
     // result of the typename type. Since we don't care about keeping
     // the spelling of the typename type in template instantiations,
     // we just instantiate the template-id.
-    return InstantiateTemplateSpecializationType(TemplateId, Quals);
+    return InstantiateTemplateSpecializationType(TemplateId);
   }
 
   NestedNameSpecifier *NNS 
@@ -693,24 +659,22 @@ InstantiateTypenameType(const TypenameType *T, unsigned Quals) const {
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateObjCObjectPointerType(const ObjCObjectPointerType *T,
-                                 unsigned Quals) const {
+InstantiateObjCObjectPointerType(const ObjCObjectPointerType *T) const {
   assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
 
 QualType
 TemplateTypeInstantiator::
-InstantiateObjCInterfaceType(const ObjCInterfaceType *T,
-                             unsigned Quals) const {
+InstantiateObjCInterfaceType(const ObjCInterfaceType *T) const {
   assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
 
 QualType 
 TemplateTypeInstantiator::
-InstantiateObjCQualifiedInterfaceType(const ObjCQualifiedInterfaceType *T,
-                                      unsigned Quals) const {
+InstantiateObjCQualifiedInterfaceType(
+                                 const ObjCQualifiedInterfaceType *T) const {
   assert(false && "Objective-C types cannot be dependent");
   return QualType();
 }
@@ -721,17 +685,27 @@ QualType TemplateTypeInstantiator::Instantiate(QualType T) const {
   if (!T->isDependentType())
     return T;
 
+  QualType Result;
   switch (T->getTypeClass()) {
 #define TYPE(Class, Base)                                               \
   case Type::Class:                                                     \
-    return Instantiate##Class##Type(cast<Class##Type>(T.getTypePtr()),  \
-                                    T.getCVRQualifiers());
+    Result = Instantiate##Class##Type(cast<Class##Type>(T.getTypePtr()));  \
+    break;
 #define ABSTRACT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
   }
-  
-  assert(false && "Not all types have been decoded for instantiation");
-  return QualType();
+
+  // C++ [dcl.ref]p1:
+  //   [...] Cv-qualified references are ill-formed except when
+  //   the cv-qualifiers are introduced through the use of a
+  //   typedef (7.1.3) or of a template type argument (14.3), in
+  //   which case the cv-qualifiers are ignored.
+  // 
+  // The same rule applies to function types.
+  if (!Result.isNull() && T.getCVRQualifiers() &&
+      !Result->isFunctionType() && !Result->isReferenceType())
+    Result = Result.getWithAdditionalQualifiers(T.getCVRQualifiers());
+  return Result;
 }
 
 /// \brief Instantiate the type T with a given set of template arguments.

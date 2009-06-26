@@ -30,6 +30,13 @@ void test_g0() {
   B<const int, 3> b1 = g0(array1);
 }
 
+template<typename T> B<T, 0> g1(const A<T>&);
+
+void test_g1(A<float> af) {
+  B<float, 0> b0 = g1(af);
+  B<int, 0> b1 = g1(A<int>());
+}
+
 //   - If the original P is a reference type, the deduced A (i.e., the type
 //     referred to by the reference) can be more cv-qualified than the 
 //     transformed A.
