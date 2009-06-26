@@ -103,7 +103,7 @@ def HasThumb2 : Predicate<"Subtarget->hasThumb2()">;
 def IsARM     : Predicate<"!Subtarget->isThumb()">;
 def IsDarwin    : Predicate<"Subtarget->isTargetDarwin()">;
 def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
-def CarryDefIsUnused : Predicate<"N.getNode()->hasNUsesOfValue(0, 1)">;
+def CarryDefIsUnused : Predicate<"!N.getNode()->hasAnyUseOfValue(1)">;
 def CarryDefIsUsed   : Predicate<"N.getNode()->hasAnyUseOfValue(1)">;
 
 //===----------------------------------------------------------------------===//
