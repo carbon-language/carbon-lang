@@ -192,6 +192,7 @@ public:
   QualType VoidPtrTy, NullPtrTy;
   QualType OverloadTy;
   QualType DependentTy;
+  QualType UndeducedAutoTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,

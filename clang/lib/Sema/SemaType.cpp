@@ -245,6 +245,11 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = Context.getDecltypeType(E);
     break;
   }
+  case DeclSpec::TST_auto: {
+    // TypeQuals handled by caller.
+    Result = Context.UndeducedAutoTy;
+    break;
+  }
     
   case DeclSpec::TST_error:
     Result = Context.IntTy;

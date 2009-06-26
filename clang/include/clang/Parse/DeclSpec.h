@@ -83,6 +83,7 @@ public:
     TST_typeofType,
     TST_typeofExpr,
     TST_decltype,     // C++0x decltype
+    TST_auto,         // C++0x auto
     TST_error         // erroneous type
   };
   

@@ -572,7 +572,10 @@ public:
     NullPtr,  // This is the type of C++0x 'nullptr'.
 
     Overload,  // This represents the type of an overloaded function declaration.
-    Dependent  // This represents the type of a type-dependent expression.
+    Dependent, // This represents the type of a type-dependent expression.
+    
+    UndeducedAuto  // In C++0x, this represents the type of an auto variable
+                   // that has not been deduced yet.
   };
 private:
   Kind TypeKind;

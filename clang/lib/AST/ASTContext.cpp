@@ -179,6 +179,10 @@ void ASTContext::InitBuiltinTypes() {
   // expressions.
   InitBuiltinType(DependentTy,         BuiltinType::Dependent);
 
+  // Placeholder type for C++0x auto declarations whose real type has 
+  // not yet been deduced.
+  InitBuiltinType(UndeducedAutoTy, BuiltinType::UndeducedAuto);
+  
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);

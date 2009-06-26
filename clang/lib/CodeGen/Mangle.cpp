@@ -539,6 +539,9 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
     assert(false && 
            "Overloaded and dependent types shouldn't get to name mangling");
     break;
+  case BuiltinType::UndeducedAuto:
+    assert(0 && "Should not see undeduced auto here");
+    break;
   }
 }
 

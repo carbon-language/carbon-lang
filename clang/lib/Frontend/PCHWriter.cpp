@@ -1909,6 +1909,9 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     case BuiltinType::NullPtr:    ID = pch::PREDEF_TYPE_NULLPTR_ID;    break;
     case BuiltinType::Overload:   ID = pch::PREDEF_TYPE_OVERLOAD_ID;   break;
     case BuiltinType::Dependent:  ID = pch::PREDEF_TYPE_DEPENDENT_ID;  break;
+    case BuiltinType::UndeducedAuto:
+      assert(0 && "Should not see undeduced auto here");
+      break;
     }
 
     Record.push_back((ID << 3) | T.getCVRQualifiers());

@@ -926,7 +926,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_static, Loc, PrevSpec);
       break;
     case tok::kw_auto:
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec);
+      if (getLang().CPlusPlus0x)
+        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec);
+      else
+        isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec);
       break;
     case tok::kw_register:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_register, Loc, PrevSpec);
