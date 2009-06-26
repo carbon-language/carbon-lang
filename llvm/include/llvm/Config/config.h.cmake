@@ -282,6 +282,12 @@
 /* Have pthread_mutex_lock */
 #cmakedefine HAVE_PTHREAD_MUTEX_LOCK ${HAVE_PTHREAD_MUTEX_LOCK}
 
+/* Have pthread_rwlock_init */
+#cmakedefine HAVE_PTHREAD_RWLOCK_INIT ${HAVE_PTHREAD_RWLOCK_INIT}
+
+/* Have pthread_getspecific */
+#cmakedefine HAVE_PTHREAD_GETSPECIFIC ${HAVE_PTHREAD_GETSPECIFIC}
+
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #undef HAVE_RAND48
 
