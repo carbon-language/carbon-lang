@@ -84,41 +84,41 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       continue;
     }
 
+    
+    // Parse the optional 'template' keyword, then make sure we have
+    // 'identifier <' after it.
+    if (Tok.is(tok::kw_template)) {
+      SourceLocation TemplateKWLoc = ConsumeToken();
+      
+      if (Tok.isNot(tok::identifier)) {
+        Diag(Tok.getLocation(), 
+             diag::err_id_after_template_in_nested_name_spec)
+        << SourceRange(TemplateKWLoc);
+        break;
+      }
+      
+      if (NextToken().isNot(tok::less)) {
+        Diag(NextToken().getLocation(),
+             diag::err_less_after_template_name_in_nested_name_spec)
+        << Tok.getIdentifierInfo()->getName()
+        << SourceRange(TemplateKWLoc, Tok.getLocation());
+        break;
+      }
+      
+      TemplateTy Template 
+      = Actions.ActOnDependentTemplateName(TemplateKWLoc,
+                                           *Tok.getIdentifierInfo(),
+                                           Tok.getLocation(),
+                                           SS);
+      AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
+                              &SS, TemplateKWLoc, false);
+      continue;
+    }
+    
     // nested-name-specifier:
     //   type-name '::'
     //   nested-name-specifier 'template'[opt] simple-template-id '::'
-    if ((Tok.is(tok::identifier) && NextToken().is(tok::less)) ||
-        Tok.is(tok::kw_template)) {
-      // Parse the optional 'template' keyword, then make sure we have
-      // 'identifier <' after it.
-      if (Tok.is(tok::kw_template)) {
-        SourceLocation TemplateKWLoc = ConsumeToken();
-        
-        if (Tok.isNot(tok::identifier)) {
-          Diag(Tok.getLocation(), 
-               diag::err_id_after_template_in_nested_name_spec)
-            << SourceRange(TemplateKWLoc);
-          break;
-        }
-
-        if (NextToken().isNot(tok::less)) {
-          Diag(NextToken().getLocation(),
-               diag::err_less_after_template_name_in_nested_name_spec)
-            << Tok.getIdentifierInfo()->getName()
-            << SourceRange(TemplateKWLoc, Tok.getLocation());
-          break;
-        }
-
-        TemplateTy Template 
-          = Actions.ActOnDependentTemplateName(TemplateKWLoc,
-                                               *Tok.getIdentifierInfo(),
-                                               Tok.getLocation(),
-                                               SS);
-        AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
-                                &SS, TemplateKWLoc, false);
-        continue;
-      }
-
+    if (Tok.is(tok::identifier) && NextToken().is(tok::less)) {
       TemplateTy Template;
       TemplateNameKind TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(),
                                                     CurScope, Template, &SS);
@@ -172,8 +172,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
           SS.setScopeRep(0);
         SS.setEndLoc(CCLoc);
         continue;
-      } else
-        assert(false && "FIXME: Only type template names supported here");
+      }
+      
+      assert(false && "FIXME: Only type template names supported here");
     }
 
     // We don't have any tokens that form the beginning of a
