@@ -37,8 +37,7 @@ namespace clang {
     TDF_IgnoreQualifiers = 0x02,
     /// \brief Within template argument deduction from a function call,
     /// we are matching in a case where we can perform template argument
-    /// deduction from a derived class of the argument type.
-    /// FIXME: this is completely unsupported right now.
+    /// deduction from a template-id of a derived class of the argument type.
     TDF_DerivedClass = 0x04
   };
 }
@@ -299,11 +298,11 @@ DeduceTemplateArguments(ASTContext &Context,
       if (!PointerArg)
         return Sema::TDK_NonDeducedMismatch;
       
+      unsigned SubTDF = TDF & (TDF_IgnoreQualifiers | TDF_DerivedClass);
       return DeduceTemplateArguments(Context, TemplateParams,
                                    cast<PointerType>(Param)->getPointeeType(),
                                      PointerArg->getPointeeType(),
-                                     Info, Deduced, 
-                                     TDF & TDF_IgnoreQualifiers);
+                                     Info, Deduced, SubTDF);
     }
       
     //     T &
@@ -498,6 +497,11 @@ DeduceTemplateArguments(ASTContext &Context,
       const RecordType *RecordArg = dyn_cast<RecordType>(Arg);
       if (!RecordArg)
         return Sema::TDK_NonDeducedMismatch;
+
+      // FIXME: Check TDF_DerivedClass here. When this flag is set, we need
+      // to troll through the base classes of the argument and try matching
+      // all of them. Failure to match does not mean that there is a problem,
+      // of course.
 
       ClassTemplateSpecializationDecl *SpecArg 
         = dyn_cast<ClassTemplateSpecializationDecl>(RecordArg->getDecl());
@@ -849,6 +853,15 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   return TDK_Success;
 }
 
+/// \brief Determine whether the given type T is a simple-template-id type.
+static bool isSimpleTemplateIdType(QualType T) {
+  if (const TemplateSpecializationType *Spec 
+        = T->getAsTemplateSpecializationType())
+    return Spec->getTemplateName().getAsTemplateDecl() != 0;
+  
+  return false;
+}
+                   
 /// \brief Perform template argument deduction from a function call
 /// (C++ [temp.deduct.call]).
 ///
@@ -965,7 +978,17 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //       conversion (4.4).
     if (ArgType->isPointerType() || ArgType->isMemberPointerType())
       TDF |= TDF_IgnoreQualifiers;
-    // FIXME: derived -> base checks
+    //     - If P is a class and P has the form simple-template-id, then the 
+    //       transformed A can be a derived class of the deduced A. Likewise,
+    //       if P is a pointer to a class of the form simple-template-id, the
+    //       transformed A can be a pointer to a derived class pointed to by
+    //       the deduced A.
+    if (isSimpleTemplateIdType(ParamType) ||
+        (isa<PointerType>(ParamType) && 
+         isSimpleTemplateIdType(
+                              ParamType->getAsPointerType()->getPointeeType())))
+      TDF |= TDF_DerivedClass;
+    
     if (TemplateDeductionResult Result
         = ::DeduceTemplateArguments(Context, TemplateParams,
                                     ParamType, ArgType, Info, Deduced,
