@@ -75,10 +75,11 @@ namespace {
     const char *ES;
     int JT;
     unsigned Align;    // CP alignment.
+    unsigned char SymbolFlags;  // X86II::MO_*
 
     X86ISelAddressMode()
       : BaseType(RegBase), isRIPRel(false), Scale(1), IndexReg(), Disp(0),
-        Segment(), GV(0), CP(0), ES(0), JT(-1), Align(0) {
+        Segment(), GV(0), CP(0), ES(0), JT(-1), Align(0), SymbolFlags(0) {
     }
 
     bool hasSymbolicDisplacement() const {
@@ -200,14 +201,15 @@ namespace {
       // These are 32-bit even in 64-bit mode since RIP relative offset
       // is 32-bit.
       if (AM.GV)
-        Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp);
+        Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp,
+                                              AM.SymbolFlags);
       else if (AM.CP)
         Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32,
-                                             AM.Align, AM.Disp);
+                                             AM.Align, AM.Disp, AM.SymbolFlags);
       else if (AM.ES)
-        Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32);
+        Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32, AM.SymbolFlags);
       else if (AM.JT != -1)
-        Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32);
+        Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32, AM.SymbolFlags);
       else
         Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
 
@@ -720,6 +722,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.GV = GV;
       AM.Disp += Offset;
       AM.isRIPRel = isRIPRel;
+      AM.SymbolFlags = G->getTargetFlags();
       return false;
     }
   } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
@@ -729,15 +732,18 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.Align = CP->getAlignment();
       AM.Disp += Offset;
       AM.isRIPRel = SymbolicAddressesAreRIPRel;
+      AM.SymbolFlags = G->getTargetFlags();
       return false;
     }
-  } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(N0)) {
     AM.ES = S->getSymbol();
     AM.isRIPRel = SymbolicAddressesAreRIPRel;
+    AM.SymbolFlags = S->getTargetFlags();
     return false;
   } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
     AM.JT = J->getIndex();
     AM.isRIPRel = SymbolicAddressesAreRIPRel;
+    AM.SymbolFlags = J->getTargetFlags();
     return false;
   }
 
