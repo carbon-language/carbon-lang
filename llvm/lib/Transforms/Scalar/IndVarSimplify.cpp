@@ -101,15 +101,13 @@ namespace {
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
                                    SCEVExpander &Rewriter);
-    void RewriteLoopExitValues(Loop *L, const SCEV *BackedgeTakenCount);
+    void RewriteLoopExitValues(Loop *L, const SCEV *BackedgeTakenCount,
+                               SCEVExpander &Rewriter);
 
     void RewriteIVExpressions(Loop *L, const Type *LargestType,
-                              SCEVExpander &Rewriter,
-                              BasicBlock::iterator InsertPt);
+                              SCEVExpander &Rewriter);
 
-    void SinkUnusedInvariants(Loop *L, SCEVExpander &Rewriter);
-
-    void FixUsesBeforeDefs(Loop *L, SCEVExpander &Rewriter);
+    void SinkUnusedInvariants(Loop *L);
 
     void HandleFloatingPointIV(Loop *L, PHINode *PH);
   };
@@ -170,12 +168,10 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     CmpIndVar = IndVar;
   }
 
-  // Expand the code for the iteration count into the preheader of the loop.
+  // Expand the code for the iteration count.
   assert(RHS->isLoopInvariant(L) &&
          "Computed iteration count is not loop invariant!");
-  BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = Rewriter.expandCodeFor(RHS, IndVar->getType(),
-                                          Preheader->getTerminator());
+  Value *ExitCnt = Rewriter.expandCodeFor(RHS, IndVar->getType(), BI);
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
   ICmpInst::Predicate Opcode;
@@ -217,31 +213,13 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 /// able to brute-force evaluate arbitrary instructions as long as they have
 /// constant operands at the beginning of the loop.
 void IndVarSimplify::RewriteLoopExitValues(Loop *L,
-                                           const SCEV *BackedgeTakenCount) {
+                                           const SCEV *BackedgeTakenCount,
+                                           SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm());
 
-  BasicBlock *Preheader = L->getLoopPreheader();
-
-  // Scan all of the instructions in the loop, looking at those that have
-  // extra-loop users and which are recurrences.
-  SCEVExpander Rewriter(*SE);
-
-  // We insert the code into the preheader of the loop if the loop contains
-  // multiple exit blocks, or in the exit block if there is exactly one.
-  BasicBlock *BlockToInsertInto;
-  BasicBlock::iterator InsertPt;
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() == 1) {
-    BlockToInsertInto = ExitBlocks[0];
-    InsertPt = BlockToInsertInto->getFirstNonPHI();
-  } else {
-    BlockToInsertInto = Preheader;
-    InsertPt = BlockToInsertInto->getTerminator();
-  }
-
-  std::map<Instruction*, Value*> ExitValues;
 
   // Find all values that are computed inside the loop, but used outside of it.
   // Because of LCSSA, these values will only occur in LCSSA PHI Nodes.  Scan
@@ -291,11 +269,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         Changed = true;
         ++NumReplaced;
 
-        // See if we already computed the exit value for the instruction, if so,
-        // just reuse it.
-        Value *&ExitVal = ExitValues[Inst];
-        if (!ExitVal)
-          ExitVal = Rewriter.expandCodeFor(ExitValue, PN->getType(), InsertPt);
+        Value *ExitVal = Rewriter.expandCodeFor(ExitValue, PN->getType(), Inst);
 
         DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal
              << "  LoopVal = " << *Inst << "\n";
@@ -314,6 +288,15 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
           RecursivelyDeleteTriviallyDeadInstructions(PN);
           break;
         }
+      }
+      if (ExitBlocks.size() != 1) {
+        // Clone the PHI and delete the original one. This lets IVUsers and
+        // any other maps purge the original user from their records.
+        PHINode *NewPN = PN->clone();
+        NewPN->takeName(PN);
+        NewPN->insertBefore(PN);
+        PN->replaceAllUsesWith(NewPN);
+        PN->eraseFromParent();
       }
     }
   }
@@ -352,9 +335,11 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // transform them to use integer recurrences.
   RewriteNonIntegerIVs(L);
 
-  BasicBlock *Header       = L->getHeader();
   BasicBlock *ExitingBlock = L->getExitingBlock(); // may be null
   const SCEV* BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+
+  // Create a rewriter object which we'll use to transform the code with.
+  SCEVExpander Rewriter(*SE);
 
   // Check to see if this loop has a computable loop-invariant execution count.
   // If so, this means that we can compute the final value of any expressions
@@ -363,7 +348,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // the current expressions.
   //
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
-    RewriteLoopExitValues(L, BackedgeTakenCount);
+    RewriteLoopExitValues(L, BackedgeTakenCount, Rewriter);
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
@@ -394,9 +379,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       NeedCannIV = true;
   }
 
-  // Create a rewriter object which we'll use to transform the code with.
-  SCEVExpander Rewriter(*SE);
-
   // Now that we know the largest of of the induction variable expressions
   // in this loop, insert a canonical induction variable of the largest size.
   Value *IndVar = 0;
@@ -414,7 +396,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         OldCannIV = 0;
     }
 
-    IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
+    IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L, LargestType);
 
     ++NumInserted;
     Changed = true;
@@ -440,20 +422,14 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
                                           ExitingBlock, BI, Rewriter);
   }
 
-  BasicBlock::iterator InsertPt = Header->getFirstNonPHI();
-
   // Rewrite IV-derived expressions. Clears the rewriter cache.
-  RewriteIVExpressions(L, LargestType, Rewriter, InsertPt);
+  RewriteIVExpressions(L, LargestType, Rewriter);
 
-  // The Rewriter may only be used for isInsertedInstruction queries from this
-  // point on.
+  // The Rewriter may not be used from this point on.
 
   // Loop-invariant instructions in the preheader that aren't used in the
   // loop may be sunk below the loop to reduce register pressure.
-  SinkUnusedInvariants(L, Rewriter);
-
-  // Reorder instructions to avoid use-before-def conditions.
-  FixUsesBeforeDefs(L, Rewriter);
+  SinkUnusedInvariants(L);
 
   // For completeness, inform IVUsers of the IV use in the newly-created
   // loop exit test instruction.
@@ -468,8 +444,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 }
 
 void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
-                                          SCEVExpander &Rewriter,
-                                          BasicBlock::iterator InsertPt) {
+                                          SCEVExpander &Rewriter) {
   SmallVector<WeakVH, 16> DeadInsts;
 
   // Rewrite all induction variable expressions in terms of the canonical
@@ -503,6 +478,14 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
       // it can be expanded to a trivial value.
       if (!AR->isLoopInvariant(L) && !Stride->isLoopInvariant(L))
         continue;
+
+      Instruction *InsertPt = User;
+      if (PHINode *PHI = dyn_cast<PHINode>(InsertPt))
+        for (unsigned i = 0; ; ++i)
+          if (PHI->getIncomingValue(i) == Op) {
+            InsertPt = PHI->getIncomingBlock(i)->getTerminator();
+            break;
+          }
 
       // Now expand it into actual Instructions and patch it into place.
       Value *NewVal = Rewriter.expandCodeFor(AR, UseTy, InsertPt);
@@ -538,19 +521,20 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
 /// If there's a single exit block, sink any loop-invariant values that
 /// were defined in the preheader but not used inside the loop into the
 /// exit block to reduce register pressure in the loop.
-void IndVarSimplify::SinkUnusedInvariants(Loop *L, SCEVExpander &Rewriter) {
+void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
   BasicBlock *ExitBlock = L->getExitBlock();
   if (!ExitBlock) return;
 
-  Instruction *NonPHI = ExitBlock->getFirstNonPHI();
+  Instruction *InsertPt = ExitBlock->getFirstNonPHI();
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock::iterator I = Preheader->getTerminator();
   while (I != Preheader->begin()) {
     --I;
-    // New instructions were inserted at the end of the preheader. Only
-    // consider those new instructions.
-    if (!Rewriter.isInsertedInstruction(I))
+    // New instructions were inserted at the end of the preheader.
+    if (isa<PHINode>(I))
       break;
+    if (I->isTrapping())
+      continue;
     // Determine if there is a use in or before the loop (direct or
     // otherwise).
     bool UsedInLoop = false;
@@ -577,73 +561,11 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L, SCEVExpander &Rewriter) {
       --I;
     else
       Done = true;
-    ToMove->moveBefore(NonPHI);
+    ToMove->moveBefore(InsertPt);
     if (Done)
       break;
+    InsertPt = ToMove;
   }
-}
-
-/// Re-schedule the inserted instructions to put defs before uses. This
-/// fixes problems that arrise when SCEV expressions contain loop-variant
-/// values unrelated to the induction variable which are defined inside the
-/// loop. FIXME: It would be better to insert instructions in the right
-/// place so that this step isn't needed.
-void IndVarSimplify::FixUsesBeforeDefs(Loop *L, SCEVExpander &Rewriter) {
-  // Visit all the blocks in the loop in pre-order dom-tree dfs order.
-  DominatorTree *DT = &getAnalysis<DominatorTree>();
-  std::map<Instruction *, unsigned> NumPredsLeft;
-  SmallVector<DomTreeNode *, 16> Worklist;
-  Worklist.push_back(DT->getNode(L->getHeader()));
-  do {
-    DomTreeNode *Node = Worklist.pop_back_val();
-    for (DomTreeNode::iterator I = Node->begin(), E = Node->end(); I != E; ++I)
-      if (L->contains((*I)->getBlock()))
-        Worklist.push_back(*I);
-    BasicBlock *BB = Node->getBlock();
-    // Visit all the instructions in the block top down.
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      // Count the number of operands that aren't properly dominating.
-      unsigned NumPreds = 0;
-      if (Rewriter.isInsertedInstruction(I) && !isa<PHINode>(I))
-        for (User::op_iterator OI = I->op_begin(), OE = I->op_end();
-             OI != OE; ++OI)
-          if (Instruction *Inst = dyn_cast<Instruction>(OI))
-            if (L->contains(Inst->getParent()) && !NumPredsLeft.count(Inst))
-              ++NumPreds;
-      NumPredsLeft[I] = NumPreds;
-      // Notify uses of the position of this instruction, and move the
-      // users (and their dependents, recursively) into place after this
-      // instruction if it is their last outstanding operand.
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI) {
-        Instruction *Inst = cast<Instruction>(UI);
-        std::map<Instruction *, unsigned>::iterator Z = NumPredsLeft.find(Inst);
-        if (Z != NumPredsLeft.end() && Z->second != 0 && --Z->second == 0) {
-          SmallVector<Instruction *, 4> UseWorkList;
-          UseWorkList.push_back(Inst);
-          BasicBlock::iterator InsertPt = I;
-          if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt))
-            InsertPt = II->getNormalDest()->begin();
-          else
-            ++InsertPt;
-          while (isa<PHINode>(InsertPt)) ++InsertPt;
-          do {
-            Instruction *Use = UseWorkList.pop_back_val();
-            Use->moveBefore(InsertPt);
-            NumPredsLeft.erase(Use);
-            for (Value::use_iterator IUI = Use->use_begin(),
-                 IUE = Use->use_end(); IUI != IUE; ++IUI) {
-              Instruction *IUIInst = cast<Instruction>(IUI);
-              if (L->contains(IUIInst->getParent()) &&
-                  Rewriter.isInsertedInstruction(IUIInst) &&
-                  !isa<PHINode>(IUIInst))
-                UseWorkList.push_back(IUIInst);
-            }
-          } while (!UseWorkList.empty());
-        }
-      }
-    }
-  } while (!Worklist.empty());
 }
 
 /// Return true if it is OK to use SIToFPInst for an inducation variable

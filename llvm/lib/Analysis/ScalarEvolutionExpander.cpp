@@ -468,13 +468,13 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     const SCEV* Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
                                           CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(Start, Step, S->getLoop()));
-    BasicBlock::iterator SaveInsertPt = getInsertionPoint();
+    BasicBlock::iterator SaveInsertPt = InsertPt;
     BasicBlock::iterator NewInsertPt =
       next(BasicBlock::iterator(cast<Instruction>(V)));
     while (isa<PHINode>(NewInsertPt)) ++NewInsertPt;
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), 0,
                       NewInsertPt);
-    setInsertionPoint(SaveInsertPt);
+    InsertPt = SaveInsertPt;
     return V;
   }
 
@@ -652,16 +652,10 @@ Value *SCEVExpander::expandCodeFor(const SCEV* SH, const Type *Ty) {
 }
 
 Value *SCEVExpander::expand(const SCEV *S) {
-  // Check to see if we already expanded this.
-  std::map<const SCEV*, AssertingVH<Value> >::iterator I =
-    InsertedExpressions.find(S);
-  if (I != InsertedExpressions.end())
-    return I->second;
+  BasicBlock::iterator SaveInsertPt = InsertPt;
 
   // Compute an insertion point for this SCEV object. Hoist the instructions
   // as far out in the loop nest as possible.
-  BasicBlock::iterator InsertPt = getInsertionPoint();
-  BasicBlock::iterator SaveInsertPt = InsertPt;
   for (Loop *L = SE.LI->getLoopFor(InsertPt->getParent()); ;
        L = L->getParentLoop())
     if (S->isLoopInvariant(L)) {
@@ -677,12 +671,23 @@ Value *SCEVExpander::expand(const SCEV *S) {
       while (isInsertedInstruction(InsertPt)) ++InsertPt;
       break;
     }
-  setInsertionPoint(InsertPt);
 
+  // Check to see if we already expanded this here.
+  std::map<std::pair<const SCEV *, Instruction *>,
+           AssertingVH<Value> >::iterator I =
+    InsertedExpressions.find(std::make_pair(S, InsertPt));
+  if (I != InsertedExpressions.end()) {
+    InsertPt = SaveInsertPt;
+    return I->second;
+  }
+
+  // Expand the expression into instructions.
   Value *V = visit(S);
 
-  setInsertionPoint(SaveInsertPt);
-  InsertedExpressions[S] = V;
+  // Remember the expanded value for this SCEV at this location.
+  InsertedExpressions[std::make_pair(S, InsertPt)] = V;
+
+  InsertPt = SaveInsertPt;
   return V;
 }
 
@@ -696,8 +701,8 @@ SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
   assert(Ty->isInteger() && "Can only insert integer induction variables!");
   const SCEV* H = SE.getAddRecExpr(SE.getIntegerSCEV(0, Ty),
                                    SE.getIntegerSCEV(1, Ty), L);
-  BasicBlock::iterator SaveInsertPt = getInsertionPoint();
+  BasicBlock::iterator SaveInsertPt = InsertPt;
   Value *V = expandCodeFor(H, 0, L->getHeader()->begin());
-  setInsertionPoint(SaveInsertPt);
+  InsertPt = SaveInsertPt;
   return V;
 }
