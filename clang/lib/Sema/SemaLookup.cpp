@@ -139,20 +139,14 @@ MaybeConstructOverloadSet(ASTContext &Context,
         // nothing to leak.
         Ovl = OverloadedFunctionDecl::Create(Context, (*I)->getDeclContext(),
                                              (*I)->getDeclName());
-        NamedDecl *ND = (*I);
-        if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
-          ND = UD->getTargetDecl();
-
+        NamedDecl *ND = (*I)->getUnderlyingDecl();
         if (isa<FunctionDecl>(ND))
           Ovl->addOverload(cast<FunctionDecl>(ND));
         else
           Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
       }
 
-      NamedDecl *ND = (*Last);
-      if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
-        ND = UD->getTargetDecl();
-      
+      NamedDecl *ND = (*Last)->getUnderlyingDecl();
       if (isa<FunctionDecl>(ND))
         Ovl->addOverload(cast<FunctionDecl>(ND));
       else
@@ -219,9 +213,7 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
       break;
 
     case LResult::Found: {
-      NamedDecl *ND = I->getAsDecl();
-      if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
-        ND = UD->getTargetDecl();
+      NamedDecl *ND = I->getAsDecl()->getUnderlyingDecl();
         
       if (TagDecl *TD = dyn_cast<TagDecl>(ND)) {
         TagFound = Context.getCanonicalDecl(TD);
@@ -333,11 +325,8 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
 
 Sema::LookupResult
 Sema::LookupResult::CreateLookupResult(ASTContext &Context, NamedDecl *D) {
-  if (ObjCCompatibleAliasDecl *Alias 
-        = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
-    D = Alias->getClassInterface();
-  if (UsingDecl *UD = dyn_cast_or_null<UsingDecl>(D))
-    D = UD->getTargetDecl();
+  if (D)
+    D = D->getUnderlyingDecl();
   
   LookupResult Result;
   Result.StoredKind = (D && isa<OverloadedFunctionDecl>(D))?
@@ -367,12 +356,9 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
     }
   } 
 
-  Decl *D = *F;
-  if (ObjCCompatibleAliasDecl *Alias 
-        = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
-    D = Alias->getClassInterface();
-  if (UsingDecl *UD = dyn_cast_or_null<UsingDecl>(D))
-    D = UD->getTargetDecl();
+  NamedDecl *D = *F;
+  if (D)
+    D = D->getUnderlyingDecl();
 
   Result.StoredKind = SingleDecl;
   Result.First = reinterpret_cast<uintptr_t>(D);
@@ -398,13 +384,10 @@ Sema::LookupResult::CreateLookupResult(ASTContext &Context,
     }
   }
 
-  Decl *D = *F;
-  if (ObjCCompatibleAliasDecl *Alias 
-        = dyn_cast_or_null<ObjCCompatibleAliasDecl>(D))
-    D = Alias->getClassInterface();
-  if (UsingDecl *UD = dyn_cast_or_null<UsingDecl>(D))
-    D = UD->getTargetDecl();
-
+  NamedDecl *D = *F;
+  if (D)
+    D = D->getUnderlyingDecl();
+  
   Result.StoredKind = SingleDecl;
   Result.First = reinterpret_cast<uintptr_t>(D);
   Result.Last = 0;

@@ -106,6 +106,13 @@ public:
   /// \brief Determine whether this declaration has linkage.
   bool hasLinkage() const;
 
+  /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
+  /// the underlying named decl.
+  NamedDecl *getUnderlyingDecl();
+  const NamedDecl *getUnderlyingDecl() const {
+    return const_cast<NamedDecl*>(this)->getUnderlyingDecl();
+  }
+  
   static bool classof(const Decl *D) {
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }

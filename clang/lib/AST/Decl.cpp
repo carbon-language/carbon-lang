@@ -297,6 +297,19 @@ bool NamedDecl::hasLinkage() const {
   return false;
 }
 
+NamedDecl *NamedDecl::getUnderlyingDecl() {
+  NamedDecl *ND = this;
+  while (true) {
+    if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
+      ND = UD->getTargetDecl();
+    else if (ObjCCompatibleAliasDecl *AD
+              = dyn_cast<ObjCCompatibleAliasDecl>(ND))
+      return AD->getClassInterface();
+    else
+      return ND;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//
