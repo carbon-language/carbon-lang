@@ -1278,6 +1278,13 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     ParseDecltypeSpecifier(DS);
     return true;
       
+  // C++0x auto support.
+  case tok::kw_auto:
+    if (!getLang().CPlusPlus0x)
+      return false;
+
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec);
+    break;
   case tok::kw___ptr64:
   case tok::kw___w64:
   case tok::kw___cdecl:
