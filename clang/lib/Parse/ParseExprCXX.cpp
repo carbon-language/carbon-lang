@@ -59,6 +59,38 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
 
   while (true) {
     // nested-name-specifier:
+    //   nested-name-specifier 'template'[opt] simple-template-id '::'
+
+    // Parse the optional 'template' keyword, then make sure we have
+    // 'identifier <' after it.
+    if (Tok.is(tok::kw_template)) {
+      SourceLocation TemplateKWLoc = ConsumeToken();
+      
+      if (Tok.isNot(tok::identifier)) {
+        Diag(Tok.getLocation(), 
+             diag::err_id_after_template_in_nested_name_spec)
+          << SourceRange(TemplateKWLoc);
+        break;
+      }
+      
+      if (NextToken().isNot(tok::less)) {
+        Diag(NextToken().getLocation(),
+             diag::err_less_after_template_name_in_nested_name_spec)
+          << Tok.getIdentifierInfo()->getName()
+          << SourceRange(TemplateKWLoc, Tok.getLocation());
+        break;
+      }
+      
+      TemplateTy Template 
+        = Actions.ActOnDependentTemplateName(TemplateKWLoc,
+                                             *Tok.getIdentifierInfo(),
+                                             Tok.getLocation(), SS);
+      AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
+                              &SS, TemplateKWLoc, false);
+      continue;
+    }
+    
+    // nested-name-specifier:
     //   type-name '::'
     //   namespace-name '::'
     //   nested-name-specifier identifier '::'
@@ -83,41 +115,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       SS.setEndLoc(CCLoc);
       continue;
     }
-
-    
-    // Parse the optional 'template' keyword, then make sure we have
-    // 'identifier <' after it.
-    if (Tok.is(tok::kw_template)) {
-      SourceLocation TemplateKWLoc = ConsumeToken();
-      
-      if (Tok.isNot(tok::identifier)) {
-        Diag(Tok.getLocation(), 
-             diag::err_id_after_template_in_nested_name_spec)
-        << SourceRange(TemplateKWLoc);
-        break;
-      }
-      
-      if (NextToken().isNot(tok::less)) {
-        Diag(NextToken().getLocation(),
-             diag::err_less_after_template_name_in_nested_name_spec)
-        << Tok.getIdentifierInfo()->getName()
-        << SourceRange(TemplateKWLoc, Tok.getLocation());
-        break;
-      }
-      
-      TemplateTy Template 
-      = Actions.ActOnDependentTemplateName(TemplateKWLoc,
-                                           *Tok.getIdentifierInfo(),
-                                           Tok.getLocation(),
-                                           SS);
-      AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
-                              &SS, TemplateKWLoc, false);
-      continue;
-    }
     
     // nested-name-specifier:
     //   type-name '::'
-    //   nested-name-specifier 'template'[opt] simple-template-id '::'
     if (Tok.is(tok::identifier) && NextToken().is(tok::less)) {
       TemplateTy Template;
       TemplateNameKind TNK = Actions.isTemplateName(*Tok.getIdentifierInfo(),
