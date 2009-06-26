@@ -401,6 +401,8 @@ def note_uninit_reference_member : Note<
 // C++0x auto
 def err_auto_variable_cannot_appear_in_own_initializer : Error<
   "variable %0 declared with 'auto' type cannot appear in its own initializer">;
+def err_illegal_decl_array_of_auto : Error<
+  "'%0' declared as array of 'auto'">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<

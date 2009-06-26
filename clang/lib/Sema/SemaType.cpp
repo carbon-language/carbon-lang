@@ -498,6 +498,12 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     return QualType();
   } 
 
+  if (Context.getCanonicalType(T) == Context.UndeducedAutoTy) {
+    Diag(Loc,  diag::err_illegal_decl_array_of_auto) 
+      << getPrintableNameForEntity(Entity);
+    return QualType();
+  }
+  
   if (const RecordType *EltTy = T->getAsRecordType()) {
     // If the element type is a struct or union that contains a variadic
     // array, accept it as a GNU extension: C99 6.7.2.1p2.
