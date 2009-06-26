@@ -365,13 +365,11 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   SourceLocation StartLoc = ConsumeToken();
   SourceLocation LParenLoc = Tok.getLocation();
   
-    
   if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after, 
                        "decltype")) {
     SkipUntil(tok::r_paren);
     return;
   }
-  
   
   // Parse the expression
   

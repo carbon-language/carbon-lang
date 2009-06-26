@@ -560,6 +560,11 @@ TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T,
 QualType
 TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T,
                                                   unsigned Quals) const {
+  // C++0x [dcl.type.simple]p4:
+  //   The operand of the decltype specifier is an unevaluated operand.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                               Action::Unevaluated);
+  
   Sema::OwningExprResult E 
     = SemaRef.InstantiateExpr(T->getUnderlyingExpr(), TemplateArgs);
 

@@ -119,6 +119,14 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
       // FIXME: Clone the expression!
       return SemaRef.Owned(Arg.getAsExpr());
 
+    if (Arg.getKind() == TemplateArgument::Declaration) {
+      ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
+
+      // FIXME: Can VD ever have a dependent type?
+      return SemaRef.BuildDeclRefExpr(VD, VD->getType(), E->getLocation(), 
+                                      false, false);
+    }
+    
     assert(Arg.getKind() == TemplateArgument::Integral);
     QualType T = Arg.getIntegralType();
     if (T->isCharType() || T->isWideCharType())
