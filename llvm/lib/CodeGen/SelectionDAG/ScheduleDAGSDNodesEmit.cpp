@@ -30,10 +30,9 @@ using namespace llvm;
 
 /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
 /// implicit physical register output.
-void ScheduleDAGSDNodes::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
-                                         bool IsClone, bool IsCloned,
-                                         unsigned SrcReg,
-                                         DenseMap<SDValue, unsigned> &VRBaseMap) {
+void ScheduleDAGSDNodes::
+EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
+                unsigned SrcReg, DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
@@ -335,7 +334,7 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
 void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node, 
-                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
+                                        DenseMap<SDValue, unsigned> &VRBaseMap){
   unsigned VRBase = 0;
   unsigned Opc = Node->getMachineOpcode();
   
