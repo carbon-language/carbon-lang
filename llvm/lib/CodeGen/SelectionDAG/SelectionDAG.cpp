@@ -996,7 +996,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<GlobalAddressSDNode>();
-  new (N) GlobalAddressSDNode(isTargetGA, GV, VT, Offset, TargetFlags);
+  new (N) GlobalAddressSDNode(Opc, GV, VT, Offset, TargetFlags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -4935,15 +4935,9 @@ HandleSDNode::~HandleSDNode() {
   DropOperands();
 }
 
-GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
+GlobalAddressSDNode::GlobalAddressSDNode(unsigned Opc, const GlobalValue *GA,
                                          MVT VT, int64_t o, unsigned char TF)
-  : SDNode(isa<GlobalVariable>(GA) &&
-           cast<GlobalVariable>(GA)->isThreadLocal() ?
-           // Thread Local
-           (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
-           // Non Thread Local
-           (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
-           DebugLoc::getUnknownLoc(), getSDVTList(VT)),
+  : SDNode(Opc, DebugLoc::getUnknownLoc(), getSDVTList(VT)),
     Offset(o), TargetFlags(TF) {
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
