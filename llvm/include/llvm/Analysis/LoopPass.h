@@ -34,9 +34,6 @@ public:
   // runOnLoop - This method should be implemented by the subclass to perform
   // whatever action is necessary for the specified Loop.
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) = 0;
-  virtual bool runOnFunctionBody(Function &F, LPPassManager &LPM) {
-    return false;
-  }
 
   // Initialization and finalization hooks.
   virtual bool doInitialization(Loop *L, LPPassManager &LPM) {
