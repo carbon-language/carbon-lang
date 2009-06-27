@@ -1574,6 +1574,7 @@ public:
                                         const CXXScopeSpec &SS,
                                         SourceLocation IdentLoc,
                                         IdentifierInfo *TargetName,
+                                        OverloadedOperatorKind Op,
                                         AttributeList *AttrList,
                                         bool IsTypeName);
   

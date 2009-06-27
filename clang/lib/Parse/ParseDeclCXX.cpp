@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/OperatorKinds.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
@@ -274,8 +275,6 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   ParseOptionalCXXScopeSpecifier(SS);
 
   AttributeList *AttrList = 0;
-  IdentifierInfo *TargetName = 0;
-  SourceLocation IdentLoc = SourceLocation();
 
   // Check nested-name specifier.
   if (SS.isInvalid()) {
@@ -287,16 +286,32 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
     SkipUntil(tok::semi);
     return DeclPtrTy();
   }
-  if (Tok.isNot(tok::identifier)) {
+  
+  IdentifierInfo *TargetName = 0;
+  OverloadedOperatorKind Op = OO_None;
+  SourceLocation IdentLoc;
+  
+  if (Tok.is(tok::kw_operator)) {
+    IdentLoc = Tok.getLocation();
+
+    Op = TryParseOperatorFunctionId();
+    if (!Op) {
+      // If there was an invalid operator, skip to end of decl, and eat ';'.
+      SkipUntil(tok::semi);
+      return DeclPtrTy();
+    }
+  } else if (Tok.is(tok::identifier)) {
+    // Parse identifier.
+    TargetName = Tok.getIdentifierInfo();
+    IdentLoc = ConsumeToken();
+  } else {
+    // FIXME: Use a better diagnostic here.
     Diag(Tok, diag::err_expected_ident_in_using);
+
     // If there was invalid identifier, skip to end of decl, and eat ';'.
     SkipUntil(tok::semi);
     return DeclPtrTy();
   }
-  
-  // Parse identifier.
-  TargetName = Tok.getIdentifierInfo();
-  IdentLoc = ConsumeToken();
   
   // Parse (optional) attributes (most likely GNU strong-using extension).
   if (Tok.is(tok::kw___attribute))
@@ -308,7 +323,8 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                    AttrList ? "attributes list" : "namespace name", tok::semi);
 
   return Actions.ActOnUsingDeclaration(CurScope, UsingLoc, SS,
-                                      IdentLoc, TargetName, AttrList, IsTypeName);
+                                       IdentLoc, TargetName, Op,
+                                       AttrList, IsTypeName);
 }
 
 /// ParseStaticAssertDeclaration - Parse C++0x static_assert-declaratoion.

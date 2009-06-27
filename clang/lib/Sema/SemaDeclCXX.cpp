@@ -1785,18 +1785,24 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                           const CXXScopeSpec &SS,
                                           SourceLocation IdentLoc,
                                           IdentifierInfo *TargetName,
+                                          OverloadedOperatorKind Op,
                                           AttributeList *AttrList,
                                           bool IsTypeName) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
-  assert(TargetName && "Invalid TargetName.");
+  assert(TargetName || Op && "Invalid TargetName.");
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
   UsingDecl *UsingAlias = 0;
 
+  DeclarationName Name;
+  if (TargetName)
+    Name = TargetName;
+  else
+    Name = Context.DeclarationNames.getCXXOperatorName(Op);
+  
   // Lookup target name.
-  LookupResult R = LookupParsedName(S, &SS, TargetName,
-                                    LookupOrdinaryName, false);
+  LookupResult R = LookupParsedName(S, &SS, Name, LookupOrdinaryName, false);
 
   if (NamedDecl *NS = R) {
     if (IsTypeName && !isa<TypeDecl>(NS)) {

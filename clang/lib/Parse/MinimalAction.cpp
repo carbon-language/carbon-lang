@@ -48,6 +48,7 @@ Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
                                               const CXXScopeSpec &SS,
                                               SourceLocation IdentLoc,
                                               IdentifierInfo *TargetName,
+                                              OverloadedOperatorKind Op,
                                               AttributeList *AttrList,
                                               bool IsTypeName) {
   
