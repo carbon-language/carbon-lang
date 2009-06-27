@@ -25,6 +25,8 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include <iosfwd>
 
@@ -34,20 +36,12 @@ namespace llvm {
   class Type;
   class ScalarEvolution;
   class TargetData;
-  class SCEVConstant;
-  class SCEVTruncateExpr;
-  class SCEVZeroExtendExpr;
-  class SCEVCommutativeExpr;
-  class SCEVUDivExpr;
-  class SCEVSignExtendExpr;
-  class SCEVAddRecExpr;
-  class SCEVUnknown;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with
   /// directly.
   ///
-  class SCEV {
+  class SCEV : public FoldingSetNode {
     const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
 
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
@@ -57,6 +51,8 @@ namespace llvm {
   public:
     explicit SCEV(unsigned SCEVTy) : 
       SCEVType(SCEVTy) {}
+
+    virtual void Profile(FoldingSetNodeID &ID) const = 0;
 
     unsigned getSCEVType() const { return SCEVType; }
 
@@ -132,6 +128,7 @@ namespace llvm {
     SCEVCouldNotCompute();
 
     // None of these methods are valid for this object.
+    virtual void Profile(FoldingSetNodeID &ID) const;
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
@@ -182,7 +179,7 @@ namespace llvm {
 
     /// CouldNotCompute - This SCEV is used to represent unknown trip
     /// counts and things.
-    const SCEV* CouldNotCompute;
+    SCEVCouldNotCompute CouldNotCompute;
 
     /// Scalars - This is a cache of the scalars we have analyzed so far.
     ///
@@ -566,23 +563,10 @@ namespace llvm {
     void print(std::ostream *OS, const Module* M = 0) const {
       if (OS) print(*OS, M);
     }
-    
+
   private:
-    // Uniquing tables.
-    std::map<ConstantInt*, SCEVConstant*> SCEVConstants;
-    std::map<std::pair<const SCEV*, const Type*>,
-             SCEVTruncateExpr*> SCEVTruncates;
-    std::map<std::pair<const SCEV*, const Type*>,
-             SCEVZeroExtendExpr*> SCEVZeroExtends;
-    std::map<std::pair<unsigned, std::vector<const SCEV*> >,
-             SCEVCommutativeExpr*> SCEVCommExprs;
-    std::map<std::pair<const SCEV*, const SCEV*>,
-             SCEVUDivExpr*> SCEVUDivs;
-    std::map<std::pair<const SCEV*, const Type*>,
-             SCEVSignExtendExpr*> SCEVSignExtends;
-    std::map<std::pair<const Loop *, std::vector<const SCEV*> >,
-             SCEVAddRecExpr*> SCEVAddRecExprs;
-    std::map<Value*, SCEVUnknown*> SCEVUnknowns;
+    FoldingSet<SCEV> UniqueSCEVs;
+    BumpPtrAllocator SCEVAllocator;
   };
 }
 

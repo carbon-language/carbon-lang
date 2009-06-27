@@ -39,6 +39,8 @@ namespace llvm {
     explicit SCEVConstant(ConstantInt *v) :
       SCEV(scConstant), V(v) {}
   public:
+    virtual void Profile(FoldingSetNodeID &ID) const;
+
     ConstantInt *getValue() const { return V; }
 
     virtual bool isLoopInvariant(const Loop *L) const {
@@ -81,6 +83,8 @@ namespace llvm {
     SCEVCastExpr(unsigned SCEVTy, const SCEV* op, const Type *ty);
 
   public:
+    virtual void Profile(FoldingSetNodeID &ID) const;
+
     const SCEV* getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
 
@@ -200,6 +204,8 @@ namespace llvm {
       : SCEV(T), Operands(ops.begin(), ops.end()) {}
 
   public:
+    virtual void Profile(FoldingSetNodeID &ID) const;
+
     unsigned getNumOperands() const { return (unsigned)Operands.size(); }
     const SCEV* getOperand(unsigned i) const {
       assert(i < Operands.size() && "Operand index out of range!");
@@ -330,6 +336,8 @@ namespace llvm {
       : SCEV(scUDivExpr), LHS(lhs), RHS(rhs) {}
 
   public:
+    virtual void Profile(FoldingSetNodeID &ID) const;
+
     const SCEV* getLHS() const { return LHS; }
     const SCEV* getRHS() const { return RHS; }
 
@@ -389,6 +397,8 @@ namespace llvm {
     }
 
   public:
+    virtual void Profile(FoldingSetNodeID &ID) const;
+
     const SCEV* getStart() const { return Operands[0]; }
     const Loop *getLoop() const { return L; }
 
@@ -505,6 +515,8 @@ namespace llvm {
       SCEV(scUnknown), V(v) {}
       
   public:
+    virtual void Profile(FoldingSetNodeID &ID) const;
+
     Value *getValue() const { return V; }
 
     virtual bool isLoopInvariant(const Loop *L) const;
