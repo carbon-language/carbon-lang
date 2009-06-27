@@ -70,6 +70,7 @@ namespace {
     IVUsers         *IU;
     LoopInfo        *LI;
     ScalarEvolution *SE;
+    DominatorTree   *DT;
     bool Changed;
   public:
 
@@ -329,6 +330,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
+  DT = &getAnalysis<DominatorTree>();
   Changed = false;
 
   // If there are any floating-point recurrences, attempt to
@@ -479,12 +481,22 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
       if (!AR->isLoopInvariant(L) && !Stride->isLoopInvariant(L))
         continue;
 
+      // Determine the insertion point for this user. By default, insert
+      // immediately before the user. The SCEVExpander class will automatically
+      // hoist loop invariants out of the loop. For PHI nodes, there may be
+      // multiple uses, so compute the nearest common dominator for the
+      // incoming blocks.
       Instruction *InsertPt = User;
       if (PHINode *PHI = dyn_cast<PHINode>(InsertPt))
-        for (unsigned i = 0; ; ++i)
+        for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i)
           if (PHI->getIncomingValue(i) == Op) {
-            InsertPt = PHI->getIncomingBlock(i)->getTerminator();
-            break;
+            if (InsertPt == User)
+              InsertPt = PHI->getIncomingBlock(i)->getTerminator();
+            else
+              InsertPt =
+                DT->findNearestCommonDominator(InsertPt->getParent(),
+                                               PHI->getIncomingBlock(i))
+                      ->getTerminator();
           }
 
       // Now expand it into actual Instructions and patch it into place.
