@@ -4426,7 +4426,21 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
   } else {
-    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0);
+    unsigned char OpFlags = 0;
+    
+    if (Subtarget->isPICStyleRIPRel() &&
+        getTargetMachine().getRelocationModel() != Reloc::Static) {
+      if (ExtraLoadRequired)
+        OpFlags = X86II::MO_GOTPCREL;
+    } else if (Subtarget->isPICStyleGOT() &&
+               getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+      if (ExtraLoadRequired)
+        OpFlags = X86II::MO_GOT;
+      else
+        OpFlags = X86II::MO_GOTOFF;
+    }
+    
+    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0, OpFlags);
   }
   
   if (Subtarget->isPICStyleRIPRel() &&

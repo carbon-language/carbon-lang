@@ -290,10 +290,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-static inline bool shouldPrintGOT(TargetMachine &TM, const X86Subtarget* ST) {
-  return ST->isPICStyleGOT() && TM.getRelocationModel() == Reloc::PIC_;
-}
-
 static inline bool shouldPrintPLT(TargetMachine &TM, const X86Subtarget* ST) {
   return ST->isTargetELF() && TM.getRelocationModel() == Reloc::PIC_;
 }
@@ -584,42 +580,15 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (isThreadLocal)
         assert(0 && "Not lowered right");
       break;
-    case X86II::MO_TLSGD:
-      O << "@TLSGD";
-      break;
-    case X86II::MO_GOTTPOFF:
-      O << "@GOTTPOFF";
-      break;
-    case X86II::MO_INDNTPOFF:
-      O << "@INDNTPOFF";
-      break;
-    case X86II::MO_TPOFF:
-      O << "@TPOFF";
-      break;
-    case X86II::MO_NTPOFF:
-      O << "@NTPOFF";
-      break;
-    case X86II::MO_GOTPCREL:
-      O << "@GOTPCREL";
-      break;
+    case X86II::MO_TLSGD:     O << "@TLSGD";     break;
+    case X86II::MO_GOTTPOFF:  O << "@GOTTPOFF";  break;
+    case X86II::MO_INDNTPOFF: O << "@INDNTPOFF"; break;
+    case X86II::MO_TPOFF:     O << "@TPOFF";     break;
+    case X86II::MO_NTPOFF:    O << "@NTPOFF";    break;
+    case X86II::MO_GOTPCREL:  O << "@GOTPCREL";  break;
+    case X86II::MO_GOT:       O << "@GOT";       break;
+    case X86II::MO_GOTOFF:    O << "@GOTOFF";    break;
     }
-    
-    if (isThreadLocal) {
-      // DEAD
-    } else if (isMemOp) {
-      if (shouldPrintGOT(TM, Subtarget)) {
-        if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
-          O << "@GOT";
-        else
-          O << "@GOTOFF";
-      } else if (Subtarget->isPICStyleRIPRel()) {
-        if (TM.getRelocationModel() != Reloc::Static) {
-          if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
-            O << "@GOTPCREL";
-        }
-      }
-    }
-
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
