@@ -30,7 +30,7 @@ const PassInfo *const llvm::MachineLoopInfoID = &X;
 
 bool MachineLoopInfo::runOnMachineFunction(MachineFunction &) {
   releaseMemory();
-  LI->Calculate(getAnalysis<MachineDominatorTree>().getBase());    // Update
+  LI.Calculate(getAnalysis<MachineDominatorTree>().getBase());    // Update
   return false;
 }
 

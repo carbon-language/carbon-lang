@@ -70,88 +70,88 @@ inline bool LoopBase<MachineBasicBlock>::isLCSSAForm() const {
 typedef LoopBase<MachineBasicBlock> MachineLoop;
 
 class MachineLoopInfo : public MachineFunctionPass {
-  LoopInfoBase<MachineBasicBlock>* LI;
+  LoopInfoBase<MachineBasicBlock> LI;
   friend class LoopBase<MachineBasicBlock>;
-  
-  LoopInfoBase<MachineBasicBlock>& getBase() { return *LI; }
+
+  void operator=(const MachineLoopInfo &);  // do not implement
+  MachineLoopInfo(const MachineLoopInfo &); // do not implement
+
+  LoopInfoBase<MachineBasicBlock>& getBase() { return LI; }
+
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  MachineLoopInfo() : MachineFunctionPass(&ID) {
-    LI = new LoopInfoBase<MachineBasicBlock>();
-  }
-  
-  ~MachineLoopInfo() { delete LI; }
+  MachineLoopInfo() : MachineFunctionPass(&ID) {}
 
   /// iterator/begin/end - The interface to the top-level loops in the current
   /// function.
   ///
-  typedef std::vector<MachineLoop*>::const_iterator iterator;
-  inline iterator begin() const { return LI->begin(); }
-  inline iterator end() const { return LI->end(); }
-  bool empty() const { return LI->empty(); }
+  typedef LoopInfoBase<MachineBasicBlock>::iterator iterator;
+  inline iterator begin() const { return LI.begin(); }
+  inline iterator end() const { return LI.end(); }
+  bool empty() const { return LI.empty(); }
 
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.
   ///
   inline MachineLoop *getLoopFor(const MachineBasicBlock *BB) const {
-    return LI->getLoopFor(BB);
+    return LI.getLoopFor(BB);
   }
 
   /// operator[] - same as getLoopFor...
   ///
   inline const MachineLoop *operator[](const MachineBasicBlock *BB) const {
-    return LI->getLoopFor(BB);
+    return LI.getLoopFor(BB);
   }
 
   /// getLoopDepth - Return the loop nesting level of the specified block...
   ///
   inline unsigned getLoopDepth(const MachineBasicBlock *BB) const {
-    return LI->getLoopDepth(BB);
+    return LI.getLoopDepth(BB);
   }
 
   // isLoopHeader - True if the block is a loop header node
   inline bool isLoopHeader(MachineBasicBlock *BB) const {
-    return LI->isLoopHeader(BB);
+    return LI.isLoopHeader(BB);
   }
 
   /// runOnFunction - Calculate the natural loop information.
   ///
   virtual bool runOnMachineFunction(MachineFunction &F);
 
-  virtual void releaseMemory() { LI->releaseMemory(); }
+  virtual void releaseMemory() { LI.releaseMemory(); }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into
   /// another loop.
-  inline MachineLoop *removeLoop(iterator I) { return LI->removeLoop(I); }
+  inline MachineLoop *removeLoop(iterator I) { return LI.removeLoop(I); }
 
   /// changeLoopFor - Change the top-level loop that contains BB to the
   /// specified loop.  This should be used by transformations that restructure
   /// the loop hierarchy tree.
   inline void changeLoopFor(MachineBasicBlock *BB, MachineLoop *L) {
-    LI->changeLoopFor(BB, L);
+    LI.changeLoopFor(BB, L);
   }
 
   /// changeTopLevelLoop - Replace the specified loop in the top-level loops
   /// list with the indicated loop.
   inline void changeTopLevelLoop(MachineLoop *OldLoop, MachineLoop *NewLoop) {
-    LI->changeTopLevelLoop(OldLoop, NewLoop);
+    LI.changeTopLevelLoop(OldLoop, NewLoop);
   }
 
   /// addTopLevelLoop - This adds the specified loop to the collection of
   /// top-level loops.
   inline void addTopLevelLoop(MachineLoop *New) {
-    LI->addTopLevelLoop(New);
+    LI.addTopLevelLoop(New);
   }
 
   /// removeBlock - This method completely removes BB from all data structures,
   /// including all of the Loop objects it is nested in and our mapping from
   /// MachineBasicBlocks to loops.
   void removeBlock(MachineBasicBlock *BB) {
-    LI->removeBlock(BB);
+    LI.removeBlock(BB);
   }
 };
 
@@ -159,7 +159,7 @@ public:
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const MachineLoop*> {
   typedef const MachineLoop NodeType;
-  typedef std::vector<MachineLoop*>::const_iterator ChildIteratorType;
+  typedef MachineLoopInfo::iterator ChildIteratorType;
 
   static NodeType *getEntryNode(const MachineLoop *L) { return L; }
   static inline ChildIteratorType child_begin(NodeType *N) {
@@ -172,7 +172,7 @@ template <> struct GraphTraits<const MachineLoop*> {
 
 template <> struct GraphTraits<MachineLoop*> {
   typedef MachineLoop NodeType;
-  typedef std::vector<MachineLoop*>::const_iterator ChildIteratorType;
+  typedef MachineLoopInfo::iterator ChildIteratorType;
 
   static NodeType *getEntryNode(MachineLoop *L) { return L; }
   static inline ChildIteratorType child_begin(NodeType *N) {
