@@ -5540,7 +5540,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     OS << "'" << ES->getSymbol() << "'";
-    if (unsigned char TF = GADN->getTargetFlags())
+    if (unsigned char TF = ES->getTargetFlags())
       OS << " [TF=" << TF << ']';
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
