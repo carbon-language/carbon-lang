@@ -2931,19 +2931,8 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
 bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
   assert(DestTy->isExtVectorType() && "Not an extended vector type!");
   
-  // If SrcTy is also an ExtVectorType, the types must be identical unless 
-  // lax vector conversions is enabled.
-  if (SrcTy->isExtVectorType()) {
-    if (getLangOptions().LaxVectorConversions &&
-        Context.getTypeSize(DestTy) == Context.getTypeSize(SrcTy))
-      return false;
-    if (DestTy != SrcTy)
-      return Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
-      << DestTy << SrcTy << R;
-    return false;
-  }
-  
-  // If SrcTy is a VectorType, then only the total size must match.
+  // If SrcTy is a VectorType, the total size must match to explicitly cast to
+  // an ExtVectorType.
   if (SrcTy->isVectorType()) {
     if (Context.getTypeSize(DestTy) != Context.getTypeSize(SrcTy))
       return Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
