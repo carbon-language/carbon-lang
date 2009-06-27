@@ -15,16 +15,23 @@
 #define THUMBINSTRUCTIONINFO_H
 
 #include "llvm/Target/TargetInstrInfo.h"
-#include "ARMRegisterInfo.h"
 #include "ARM.h"
 #include "ARMInstrInfo.h"
+#include "ThumbRegisterInfo.h"
 
 namespace llvm {
   class ARMSubtarget;
 
 class ThumbInstrInfo : public ARMBaseInstrInfo {
+  ThumbRegisterInfo RI;
 public:
   explicit ThumbInstrInfo(const ARMSubtarget &STI);
+
+  /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
+  /// such, whenever a client has an instance of instruction info, it should
+  /// always be able to get register info as well (through this method).
+  ///
+  virtual const ThumbRegisterInfo &getRegisterInfo() const { return RI; }
 
   /// Return true if the instruction is a register to register move and return
   /// the source and dest operands and their sub-register indices by reference.
@@ -67,6 +74,9 @@ public:
   virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
+
+  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops) const;
 
   virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                               MachineInstr* MI,

@@ -14,6 +14,7 @@
 #ifndef ARMREGISTERINFO_H
 #define ARMREGISTERINFO_H
 
+#include "ARM.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "ARMGenRegisterInfo.h.inc"
 
@@ -30,21 +31,15 @@ namespace ARMRI {
   };
 }
 
-struct ARMRegisterInfo : public ARMGenRegisterInfo {
+struct ARMBaseRegisterInfo : public ARMGenRegisterInfo {
+protected:
   const TargetInstrInfo &TII;
   const ARMSubtarget &STI;
 
+  /// FramePtr - ARM physical register used as frame ptr.
+  unsigned FramePtr;
 public:
-  ARMRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
-
-  /// emitLoadConstPool - Emits a load from constpool to materialize the
-  /// specified immediate.
-  void emitLoadConstPool(MachineBasicBlock &MBB,
-                         MachineBasicBlock::iterator &MBBI,
-                         unsigned DestReg, int Val,
-                         unsigned Pred, unsigned PredReg,
-                         const TargetInstrInfo *TII, bool isThumb,
-                         DebugLoc dl) const;
+  ARMBaseRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).
@@ -55,8 +50,6 @@ public:
   static unsigned getRegisterNumbering(unsigned RegEnum, bool &isSPVFP);
 
   /// Code Generation virtual methods...
-  const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, MVT VT = MVT::Other) const;
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const*
@@ -79,24 +72,10 @@ public:
   void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const;
 
-  bool requiresRegisterScavenging(const MachineFunction &MF) const;
-
   bool hasFP(const MachineFunction &MF) const;
-
-  bool hasReservedCallFrame(MachineFunction &MF) const;
-
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;
-
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   // Debug information queries.
   unsigned getRARegister() const;
@@ -107,17 +86,48 @@ public:
   unsigned getEHHandlerRegister() const;
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-  
+
   bool isLowRegister(unsigned Reg) const;
 
 private:
-  /// FramePtr - ARM physical register used as frame ptr.
-  unsigned FramePtr;
-
   unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;
 
   unsigned getRegisterPairOdd(unsigned Reg, const MachineFunction &MF) const;
+};
 
+struct ARMRegisterInfo : public ARMBaseRegisterInfo {
+public:
+  ARMRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
+
+  /// emitLoadConstPool - Emits a load from constpool to materialize the
+  /// specified immediate.
+  void emitLoadConstPool(MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator &MBBI,
+                         unsigned DestReg, int Val,
+                         unsigned Pred, unsigned PredReg,
+                         const TargetInstrInfo *TII,
+                         DebugLoc dl) const;
+
+  /// Code Generation virtual methods...
+  bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
+
+  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
+  bool hasReservedCallFrame(MachineFunction &MF) const;
+
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
+
+  void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                           int SPAdj, RegScavenger *RS = NULL) const;
+
+  void emitPrologue(MachineFunction &MF) const;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+  void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+                    int NumBytes, ARMCC::CondCodes Pred, unsigned PredReg,
+                    const TargetInstrInfo &TII, DebugLoc dl) const;
 };
 
 } // end namespace llvm

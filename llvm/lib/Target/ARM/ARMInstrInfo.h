@@ -147,21 +147,10 @@ namespace ARMII {
 }
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
-  const ARMRegisterInfo RI;
 protected:
   // Can be only subclassed.
   explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
 public:
-
-  /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
-  /// such, whenever a client has an instance of instruction info, it should
-  /// always be able to get register info as well (through this method).
-  ///
-  virtual const ARMRegisterInfo &getRegisterInfo() const { return RI; }
-
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
-
   virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,
                                               LiveVariables *LV) const;
@@ -175,9 +164,6 @@ public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const;
-
-  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
-                                    const SmallVectorImpl<unsigned> &Ops) const;
 
   virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   virtual
@@ -209,8 +195,15 @@ public:
 };
 
 class ARMInstrInfo : public ARMBaseInstrInfo {
+  ARMRegisterInfo RI;
 public:
   explicit ARMInstrInfo(const ARMSubtarget &STI);
+
+  /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
+  /// such, whenever a client has an instance of instruction info, it should
+  /// always be able to get register info as well (through this method).
+  ///
+  virtual const ARMRegisterInfo &getRegisterInfo() const { return RI; }
 
   /// Return true if the instruction is a register to register move and return
   /// the source and dest operands and their sub-register indices by reference.
@@ -247,6 +240,12 @@ public:
                                SmallVectorImpl<MachineOperand> &Addr,
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
+
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
+
+  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops) const;
 
   virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                               MachineInstr* MI,

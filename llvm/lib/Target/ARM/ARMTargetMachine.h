@@ -120,7 +120,7 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
 public:
   ThumbTargetMachine(const Module &M, const std::string &FS);
 
-  virtual const ARMRegisterInfo  *getRegisterInfo() const {
+  virtual const ThumbRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
 

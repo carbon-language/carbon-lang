@@ -40,12 +40,11 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
 }
 
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget &STI)
-  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
-    RI(*this, STI) {
+  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)) {
 }
 
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
-  : ARMBaseInstrInfo(STI) {
+  : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
 /// Return true if the instruction is a register to register move and
@@ -133,15 +132,15 @@ unsigned ARMInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-void ARMBaseInstrInfo::reMaterialize(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I,
-                                     unsigned DestReg,
-                                     const MachineInstr *Orig) const {
+void ARMInstrInfo::reMaterialize(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator I,
+                                 unsigned DestReg,
+                                 const MachineInstr *Orig) const {
   DebugLoc dl = Orig->getDebugLoc();
   if (Orig->getOpcode() == ARM::MOVi2pieces) {
     RI.emitLoadConstPool(MBB, I, DestReg, Orig->getOperand(1).getImm(),
                          Orig->getOperand(2).getImm(),
-                         Orig->getOperand(3).getReg(), this, false, dl);
+                         Orig->getOperand(3).getReg(), this, dl);
     return;
   }
 
@@ -660,35 +659,17 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   return NewMI;
 }
 
-bool ARMBaseInstrInfo::
-canFoldMemoryOperand(const MachineInstr *MI,
-                     const SmallVectorImpl<unsigned> &Ops) const {
+bool
+ARMInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                   const SmallVectorImpl<unsigned> &Ops) const {
   if (Ops.size() != 1) return false;
 
-  unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
   default: break;
   case ARM::MOVr:
     // If it is updating CPSR, then it cannot be folded.
     return MI->getOperand(4).getReg() != ARM::CPSR;
-  case ARM::tMOVr:
-  case ARM::tMOVlor2hir:
-  case ARM::tMOVhir2lor:
-  case ARM::tMOVhir2hir: {
-    if (OpNum == 0) { // move -> store
-      unsigned SrcReg = MI->getOperand(1).getReg();
-      if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
-        // tSpill cannot take a high register operand.
-        return false;
-    } else {          // move -> load
-      unsigned DstReg = MI->getOperand(0).getReg();
-      if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
-        // tRestore cannot target a high register operand.
-        return false;
-    }
-    return true;
-  }
   case ARM::FCPYS:
   case ARM::FCPYD:
     return true;
@@ -702,7 +683,7 @@ canFoldMemoryOperand(const MachineInstr *MI,
 }
 
 bool
-  ARMBaseInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
+ARMBaseInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
 
   switch (MBB.back().getOpcode()) {

@@ -23,7 +23,7 @@
 using namespace llvm;
 
 ThumbInstrInfo::ThumbInstrInfo(const ARMSubtarget &STI)
-  : ARMBaseInstrInfo(STI) {
+  : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
 bool ThumbInstrInfo::isMoveInstr(const MachineInstr &MI,
@@ -109,6 +109,37 @@ bool ThumbInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       BuildMI(MBB, I, DL, get(ARM::tMOVr), DestReg).addReg(SrcReg);
       return true;
     }
+  }
+
+  return false;
+}
+
+bool ThumbInstrInfo::
+canFoldMemoryOperand(const MachineInstr *MI,
+                     const SmallVectorImpl<unsigned> &Ops) const {
+  if (Ops.size() != 1) return false;
+
+  unsigned OpNum = Ops[0];
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
+  default: break;
+  case ARM::tMOVr:
+  case ARM::tMOVlor2hir:
+  case ARM::tMOVhir2lor:
+  case ARM::tMOVhir2hir: {
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
+        // tSpill cannot take a high register operand.
+        return false;
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
+        // tRestore cannot target a high register operand.
+        return false;
+    }
+    return true;
+  }
   }
 
   return false;
@@ -244,7 +275,6 @@ MachineInstr *ThumbInstrInfo::
 foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                       const SmallVectorImpl<unsigned> &Ops, int FI) const {
   if (Ops.size() != 1) return NULL;
-  const ARMRegisterInfo &RI = getRegisterInfo();
 
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
