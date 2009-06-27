@@ -352,10 +352,9 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
   // Removing incoming branch from loop preheader to original header.
   // Now original header is inside the loop.
-  for (BasicBlock::iterator I = OrigHeader->begin(), E = OrigHeader->end();
-       I != E; ++I)
-    if (PHINode *PN = dyn_cast<PHINode>(I))
-      PN->removeIncomingValue(OrigPreHeader);
+  for (BasicBlock::iterator I = OrigHeader->begin();
+       (PN = dyn_cast<PHINode>(I)); ++I)
+    PN->removeIncomingValue(OrigPreHeader);
 
   // Make NewHeader as the new header for the loop.
   L->moveToHeader(NewHeader);
@@ -452,13 +451,10 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
            "Unexpected original pre-header terminator");
     OrigPH_BI->setSuccessor(1, NewPreHeader);
   }
-  
-  for (BasicBlock::iterator I = NewHeader->begin(), E = NewHeader->end();
-       I != E; ++I) {
-    PHINode *PN = dyn_cast<PHINode>(I);
-    if (!PN)
-      break;
 
+  PHINode *PN;
+  for (BasicBlock::iterator I = NewHeader->begin();
+       (PN = dyn_cast<PHINode>(I)); ++I) {
     int index = PN->getBasicBlockIndex(OrigPreHeader);
     assert(index != -1 && "Expected incoming value from Original PreHeader");
     PN->setIncomingBlock(index, NewPreHeader);
@@ -545,11 +541,10 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   BasicBlock *NExit = SplitEdge(L->getLoopLatch(), Exit, this);
 
   // Preserve LCSSA.
-  BasicBlock::iterator I = Exit->begin(), E = Exit->end();
-  PHINode *PN = NULL;
-  for (; (PN = dyn_cast<PHINode>(I)); ++I) {
+  for (BasicBlock::iterator I = Exit->begin();
+       (PN = dyn_cast<PHINode>(I)); ++I) {
     unsigned N = PN->getNumIncomingValues();
-    for (unsigned index = 0; index < N; ++index)
+    for (unsigned index = 0; index != N; ++index)
       if (PN->getIncomingBlock(index) == NExit) {
         PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName(),
                                          NExit->begin());
