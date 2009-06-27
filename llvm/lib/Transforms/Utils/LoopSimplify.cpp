@@ -312,7 +312,7 @@ ReprocessLoop:
       // update the dominator tree and dominance frontier, and delete it.
       assert(pred_begin(ExitingBlock) == pred_end(ExitingBlock));
       Changed = true;
-      L->removeBlockFromLoop(ExitingBlock);
+      LI->removeBlock(ExitingBlock);
 
       DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>();
       DomTreeNode *Node = DT->getNode(ExitingBlock);
