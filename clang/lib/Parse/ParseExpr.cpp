@@ -1172,17 +1172,18 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
-      } else if (Tok.is(tok::r_paren)) {
-        if (Ty.isInvalid())
+      } else {
+        if (Tok.isNot(tok::r_paren)) {
+          MatchRHSPunctuation(tok::r_paren, LParenLoc);
           Res = ExprError();
-        else
+        } else if (Ty.isInvalid()) {
+          Res = ExprError();
+        } else {
           Res = Actions.ActOnBuiltinOffsetOf(CurScope, StartLoc, TypeLoc, 
                                              Ty.get(), &Comps[0], 
                                              Comps.size(), ConsumeParen());
+        }
         break;
-      } else {
-        // Error occurred.
-        return ExprError();
       }
     }
     break;
