@@ -301,7 +301,7 @@ bool Emitter<CodeEmitter>::gvNeedsNonLazyPtr(const GlobalValue *GV) {
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
-                                    int DispVal, intptr_t PCAdj) {
+                                                 int DispVal, intptr_t PCAdj) {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (!RelocOp) {
@@ -371,8 +371,10 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // Is a SIB byte needed?
   if ((!Is64BitMode || DispForReloc || BaseReg != 0) &&
       IndexReg.getReg() == 0 &&
-      (BaseReg == 0 || getX86RegNum(BaseReg) != N86::ESP)) {
-    if (BaseReg == 0) {  // Just a displacement?
+      (BaseReg == 0 || BaseReg == X86::RIP ||
+       getX86RegNum(BaseReg) != N86::ESP)) {
+    if (BaseReg == 0 ||
+        BaseReg == X86::RIP) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
       
