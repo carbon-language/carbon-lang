@@ -717,6 +717,8 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
   if (E->isTypeDependent() || E->isValueDependent())
     return false;
 
+  E = E->IgnoreParenCasts();
+  
   switch (E->getStmtClass()) {
   case Stmt::ConditionalOperatorClass: {
     const ConditionalOperator *C = cast<ConditionalOperator>(E);
@@ -766,6 +768,25 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
     return false;
   }
 
+  case Stmt::CallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(E);
+    if (const ImplicitCastExpr *ICE 
+          = dyn_cast<ImplicitCastExpr>(CE->getCallee())) {
+      if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
+        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
+          if (const FormatArgAttr *FA = FD->getAttr<FormatArgAttr>(Context)) {
+            unsigned ArgIndex = FA->getFormatIdx();
+            const Expr *Arg = CE->getArg(ArgIndex - 1);
+            
+            return SemaCheckStringLiteral(Arg, TheCall, HasVAListArg, 
+                                          format_idx, firstDataArg);
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
   case Stmt::ObjCStringLiteralClass:
   case Stmt::StringLiteralClass: {
     const StringLiteral *StrE = NULL;
