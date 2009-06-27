@@ -1789,7 +1789,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                           AttributeList *AttrList,
                                           bool IsTypeName) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
-  assert(TargetName || Op && "Invalid TargetName.");
+  assert((TargetName || Op) && "Invalid TargetName.");
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
@@ -2746,7 +2746,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
                                    ParamEnd = FnDecl->param_end();
          Param != ParamEnd; ++Param) {
       QualType ParamType = (*Param)->getType().getNonReferenceType();
-      if (ParamType->isRecordType() || ParamType->isEnumeralType()) {
+      if (ParamType->isDependentType() || ParamType->isRecordType() ||
+          ParamType->isEnumeralType()) {
         ClassOrEnumParam = true;
         break;
       }
