@@ -19,6 +19,7 @@ namespace llvm {
 
 class User;
 class BasicBlock;
+class BranchInst;
 class Instruction;
 class Value;
 class Pass;
@@ -93,6 +94,12 @@ void MergeBasicBlockIntoOnlyPred(BasicBlock *BB);
 /// WARNING:  The entry node of a method may not be simplified.
 ///
 bool SimplifyCFG(BasicBlock *BB);
+
+/// FoldBranchToCommonDest - If this basic block is ONLY a setcc and a branch,
+/// and if a predecessor branches to us and one of our successors, fold the
+/// setcc into the predecessor and use logical operations to pick the right
+/// destination.
+bool FoldBranchToCommonDest(BranchInst *BI);
 
 /// DemoteRegToStack - This function takes a virtual register computed by an
 /// Instruction and replaces it with a slot in the stack frame, allocated via

@@ -1492,7 +1492,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
 /// and if a predecessor branches to us and one of our successors, fold the
 /// setcc into the predecessor and use logical operations to pick the right
 /// destination.
-static bool FoldBranchToCommonDest(BranchInst *BI) {
+bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
   if (Cond == 0) return false;

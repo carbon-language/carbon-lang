@@ -42,6 +42,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SetOperations.h"
@@ -257,6 +258,80 @@ ReprocessLoop:
       PN->replaceAllUsesWith(V);
       PN->eraseFromParent();
     }
+
+  // If this loop has muliple exits and the exits all go to the same
+  // block, attempt to merge the exits. This helps several passes, such
+  // as LoopRotation, which do not support loops with multiple exits.
+  // SimplifyCFG also does this (and this code uses the same utility
+  // function), however this code is loop-aware, where SimplifyCFG is
+  // not. That gives it the advantage of being able to hoist
+  // loop-invariant instructions out of the way to open up more
+  // opportunities, and the disadvantage of having the responsibility
+  // to preserve dominator information.
+  if (ExitBlocks.size() > 1 && L->getUniqueExitBlock()) {
+    SmallVector<BasicBlock*, 8> ExitingBlocks;
+    L->getExitingBlocks(ExitingBlocks);
+    for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
+      BasicBlock *ExitingBlock = ExitingBlocks[i];
+      if (!ExitingBlock->getSinglePredecessor()) continue;
+      BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
+      if (!BI || !BI->isConditional()) continue;
+      CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition());
+      if (!CI || CI->getParent() != ExitingBlock) continue;
+
+      // Attempt to hoist out all instructions except for the
+      // comparison and the branch.
+      bool AllInvariant = true;
+      for (BasicBlock::iterator I = ExitingBlock->begin(),
+           E = ExitingBlock->end(); I != E; ) {
+        Instruction *Inst = I++;
+        if (Inst == BI || Inst == CI)
+          continue;
+        if (Inst->isTrapping()) {
+          AllInvariant = false;
+          break;
+        }
+        for (unsigned j = 0, f = Inst->getNumOperands(); j != f; ++j)
+          if (!L->isLoopInvariant(Inst->getOperand(j))) {
+            AllInvariant = false;
+            break;
+          }
+        if (!AllInvariant)
+          break;
+        // Hoist.
+        Inst->moveBefore(L->getLoopPreheader()->getTerminator());
+      }
+      if (!AllInvariant) continue;
+
+      // The block has now been cleared of all instructions except for
+      // a comparison and a conditional branch. SimplifyCFG may be able
+      // to fold it now.
+      if (!FoldBranchToCommonDest(BI)) continue;
+
+      // Success. The block is now dead, so remove it from the loop,
+      // update the dominator tree and dominance frontier, and delete it.
+      assert(pred_begin(ExitingBlock) == pred_end(ExitingBlock));
+      Changed = true;
+      L->removeBlockFromLoop(ExitingBlock);
+
+      DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>();
+      DomTreeNode *Node = DT->getNode(ExitingBlock);
+      const std::vector<DomTreeNodeBase<BasicBlock> *> &Children =
+        Node->getChildren();
+      for (unsigned k = 0, g = Children.size(); k != g; ++k) {
+        DT->changeImmediateDominator(Children[k], Node->getIDom());
+        if (DF) DF->changeImmediateDominator(Children[k]->getBlock(),
+                                             Node->getIDom()->getBlock(),
+                                             DT);
+      }
+      DT->eraseNode(ExitingBlock);
+      if (DF) DF->removeBlock(ExitingBlock);
+
+      BI->getSuccessor(0)->removePredecessor(ExitingBlock);
+      BI->getSuccessor(1)->removePredecessor(ExitingBlock);
+      ExitingBlock->eraseFromParent();
+    }
+  }
 
   return Changed;
 }
