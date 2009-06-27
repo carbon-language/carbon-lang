@@ -157,10 +157,10 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 ///
 inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
-                         unsigned GlobalBaseReg = 0) {
+                         unsigned GlobalBaseReg, unsigned char OpFlags) {
   //FIXME: factor this
   return MIB.addReg(GlobalBaseReg).addImm(1).addReg(0)
-    .addConstantPoolIndex(CPI).addReg(0);
+    .addConstantPoolIndex(CPI, 0, OpFlags).addReg(0);
 }
 
 } // End llvm namespace

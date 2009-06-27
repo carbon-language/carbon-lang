@@ -1493,15 +1493,22 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   
   // x86-32 PIC requires a PIC base register for constant pools.
   unsigned PICBase = 0;
-  if (TM.getRelocationModel() == Reloc::PIC_ &&
-      !Subtarget->is64Bit())
-    PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+  unsigned char OpFlag = 0;
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    if (Subtarget->isPICStyleStub()) {
+      OpFlag = X86II::MO_PIC_BASE_OFFSET;
+      PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+    } else if (Subtarget->isPICStyleGOT()) {
+      OpFlag = X86II::MO_GOTOFF;
+      PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+    }
+  }
 
   // Create the load from the constant pool.
   unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
   unsigned ResultReg = createResultReg(RC);
-  addConstantPoolReference(BuildMI(MBB, DL, TII.get(Opc), ResultReg), MCPOffset,
-                           PICBase);
+  addConstantPoolReference(BuildMI(MBB, DL, TII.get(Opc), ResultReg),
+                           MCPOffset, PICBase, OpFlag);
 
   return ResultReg;
 }
