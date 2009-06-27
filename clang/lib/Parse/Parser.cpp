@@ -963,7 +963,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
   }
 
   if (SS.isEmpty())
-    return Tok.isNot(tok::identifier);
+    return Tok.isNot(tok::identifier) && Tok.isNot(tok::coloncolon);
   
   // A C++ scope specifier that isn't followed by a typename.
   // Push the current token back into the token stream (or revert it if it is
