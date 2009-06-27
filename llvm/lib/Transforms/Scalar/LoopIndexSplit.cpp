@@ -258,6 +258,9 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
     IVExitValue = ExitCondition->getOperand(0);
   if (!L->isLoopInvariant(IVExitValue))
     return false;
+  if (!IVBasedValues.count(
+        ExitCondition->getOperand(IVExitValue == ExitCondition->getOperand(0))))
+    return false;
 
   // If start value is more then exit value where induction variable
   // increments by 1 then we are potentially dealing with an infinite loop.
