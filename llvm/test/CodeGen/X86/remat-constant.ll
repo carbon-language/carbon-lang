@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-linux -relocation-model=static -aggressive-remat | grep xmm | count 2
-; XFAIL: *
+; RUN: llvm-as < %s | llc -mtriple=x86_64-linux -relocation-model=static | grep xmm | count 2
 
 declare void @bar() nounwind
 

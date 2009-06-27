@@ -18,6 +18,7 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -28,7 +29,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetAsmInfo.h"
-
 using namespace llvm;
 
 namespace {
@@ -781,6 +781,29 @@ static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
 static inline bool isGVStub(GlobalValue *GV, X86TargetMachine &TM) {
   return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
 }
+
+/// CanRematLoadWithDispOperand - Return true if a load with the specified
+/// operand is a candidate for remat: for this to be true we need to know that
+/// the load will always return the same value, even if moved.
+static bool CanRematLoadWithDispOperand(const MachineOperand &MO,
+                                        X86TargetMachine &TM) {
+  // Loads from constant pool entries can be remat'd.
+  if (MO.isCPI()) return true;
+  
+  // We can remat globals in some cases.
+  if (MO.isGlobal()) {
+    // If this is a load of a stub, not of the global, we can remat it.  This
+    // access will always return the address of the global.
+    if (isGVStub(MO.getGlobal(), TM))
+      return true;
+    
+    // If the global itself is constant, we can remat the load.
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(MO.getGlobal()))
+      if (GV->isConstant())
+        return true;
+  }
+  return false;
+}
  
 bool
 X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
@@ -802,9 +825,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
       if (MI->getOperand(1).isReg() &&
           MI->getOperand(2).isImm() &&
           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-          (MI->getOperand(4).isCPI() ||
-           (MI->getOperand(4).isGlobal() &&
-            isGVStub(MI->getOperand(4).getGlobal(), TM)))) {
+          CanRematLoadWithDispOperand(MI->getOperand(4), TM)) {
         unsigned BaseReg = MI->getOperand(1).getReg();
         if (BaseReg == 0 || BaseReg == X86::RIP)
           return true;
