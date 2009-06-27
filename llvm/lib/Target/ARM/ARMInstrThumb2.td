@@ -14,9 +14,9 @@
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
-                ComplexPattern<i32, 2, "SelectThumb2ShifterOperandReg",
+                ComplexPattern<i32, 2, "SelectT2ShifterOperandReg",
                                [shl,srl,sra,rotr]> {
-  let PrintMethod = "printSOOperand";
+  let PrintMethod = "printT2SOOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
@@ -126,8 +126,9 @@ def t2_lo16AllZero : PatLeaf<(i32 imm), [{
   return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
   }], t2_hi16>;
 
+
 //===----------------------------------------------------------------------===//
-//  Thumb2 to cover the functionality of the ARM instruction set.
+// Multiclass helpers...
 //
 
 /// T2I_un_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
@@ -359,6 +360,10 @@ multiclass T2I_cmp_is<string opc, PatFrag opnode> {
 }
 
 //===----------------------------------------------------------------------===//
+// Instructions
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions.
 //
 
@@ -399,6 +404,10 @@ def t2ADDrSPs : T2XI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
                      "addw $dst, $sp, $rhs",
                      []>;
 
+
+//===----------------------------------------------------------------------===//
+//  Load / store Instructions.
+//
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -445,10 +454,10 @@ defm t2RSBS : T2I_rbin_s_is <"rsb", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 defm t2RSC  : T2I_rsc_is    <"rsc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
-def : Thumb2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
-                (t2SUBri   GPR:$src, t2_so_imm_neg:$imm)>;
-def : Thumb2Pat<(add       GPR:$src, imm0_4095_neg:$imm),
-                (t2SUBri12 GPR:$src, imm0_4095_neg:$imm)>;
+def : T2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
+            (t2SUBri   GPR:$src, t2_so_imm_neg:$imm)>;
+def : T2Pat<(add       GPR:$src, imm0_4095_neg:$imm),
+            (t2SUBri12 GPR:$src, imm0_4095_neg:$imm)>;
 
 
 //===----------------------------------------------------------------------===//
@@ -474,20 +483,20 @@ defm t2EOR  : T2I_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 
 defm t2BIC  : T2I_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def : Thumb2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
-                (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
+def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
+            (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
 
 defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
 
-def : Thumb2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
-                (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
+def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
+            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
 defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
 
-def : Thumb2Pat<(t2_so_imm_not:$src),
-                (t2MVNi t2_so_imm_not:$src)>;
+def : T2Pat<(t2_so_imm_not:$src),
+            (t2MVNi t2_so_imm_not:$src)>;
 
 // A8.6.17  BFC - Bitfield clear
 // FIXME: Also available in ARM mode.
@@ -562,11 +571,11 @@ defm t2CMN   : T2I_cmp_is<"cmn",
 defm t2CMNnz : T2I_cmp_is<"cmn",
                           BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
 
-def : Thumb2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
-                (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
+def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
+            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
 
-def : Thumb2Pat<(ARMcmpNZ  GPR:$src, t2_so_imm_neg:$imm),
-                (t2CMNri   GPR:$src, t2_so_imm_neg:$imm)>;
+def : T2Pat<(ARMcmpNZ  GPR:$src, t2_so_imm_neg:$imm),
+            (t2CMNri   GPR:$src, t2_so_imm_neg:$imm)>;
 
 // FIXME: TST, TEQ, etc.
 
@@ -582,13 +591,12 @@ def : Thumb2Pat<(ARMcmpNZ  GPR:$src, t2_so_imm_neg:$imm),
 //
 
 // ConstantPool, GlobalAddress, and JumpTable
-def : Thumb2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;
-def : Thumb2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
-def : Thumb2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-                (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
+def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;
+def : T2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
+def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+            (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Large immediate handling.
 
-def : Thumb2Pat<(i32 imm:$src),
-                (t2MOVTi16 (t2MOVi16 (t2_lo16 imm:$src)),
-                           (t2_hi16 imm:$src))>;
+def : T2Pat<(i32 imm:$src),
+            (t2MOVTi16 (t2MOVi16 (t2_lo16 imm:$src)), (t2_hi16 imm:$src))>;

@@ -97,9 +97,7 @@ namespace {
                       const char *Modifier = 0);
     void printSOImmOperand(const MachineInstr *MI, int opNum);
     void printSOImm2PartOperand(const MachineInstr *MI, int opNum);
-    void printSOOperand(const MachineInstr *MI, int OpNum);
     void printSORegOperand(const MachineInstr *MI, int opNum);
-    void printT2SOImmOperand(const MachineInstr *MI, int opNum);
     void printAddrMode2Operand(const MachineInstr *MI, int OpNo);
     void printAddrMode2OffsetOperand(const MachineInstr *MI, int OpNo);
     void printAddrMode3Operand(const MachineInstr *MI, int OpNo);
@@ -111,6 +109,7 @@ namespace {
     void printAddrModePCOperand(const MachineInstr *MI, int OpNo,
                                 const char *Modifier = 0);
     void printBitfieldInvMaskImmOperand (const MachineInstr *MI, int OpNo);
+
     void printThumbAddrModeRROperand(const MachineInstr *MI, int OpNo);
     void printThumbAddrModeRI5Operand(const MachineInstr *MI, int OpNo,
                                       unsigned Scale);
@@ -118,6 +117,10 @@ namespace {
     void printThumbAddrModeS2Operand(const MachineInstr *MI, int OpNo);
     void printThumbAddrModeS4Operand(const MachineInstr *MI, int OpNo);
     void printThumbAddrModeSPOperand(const MachineInstr *MI, int OpNo);
+
+    void printT2SOImmOperand(const MachineInstr *MI, int opNum);
+    void printT2SOOperand(const MachineInstr *MI, int OpNum);
+
     void printPredicateOperand(const MachineInstr *MI, int opNum);
     void printSBitModifierOperand(const MachineInstr *MI, int opNum);
     void printPCLabel(const MachineInstr *MI, int opNum);
@@ -402,32 +405,10 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   printSOImm(O, ARM_AM::getSOImmVal(V2), VerboseAsm, TAI);
 }
 
-// Constant shifts so_reg is a 3-operand unit corresponding to register forms of
-// the A5.1 "Addressing Mode 1 - Data-processing operands" forms.  This
-// includes:
-// REG 0 - e.g. R5
-// REG IMM, SH_OPC - e.g. R5, LSL #3
-void ARMAsmPrinter::printSOOperand(const MachineInstr *MI, int OpNum) {
-  const MachineOperand &MO1 = MI->getOperand(OpNum);
-  const MachineOperand &MO2 = MI->getOperand(OpNum+1);
-
-  unsigned Reg = MO1.getReg();
-  assert(TargetRegisterInfo::isPhysicalRegister(Reg));
-  O << TM.getRegisterInfo()->getAsmName(Reg);
-
-  // Print the shift opc.
-  O << ", "
-    << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO2.getImm()))
-    << " ";
-
-  assert(MO2.isImm() && "Not a valid t2_so_reg value!");
-  O << "#" << ARM_AM::getSORegOffset(MO2.getImm());
-}
-
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
 // "Addressing Mode 1 - Data-processing operands" forms.  This includes:
-//    REG 0   0    - e.g. R5
-//    REG REG 0,SH_OPC     - e.g. R5, ROR R3
+//    REG 0   0           - e.g. R5
+//    REG REG 0,SH_OPC    - e.g. R5, ROR R3
 //    REG 0   IMM,SH_OPC  - e.g. R5, LSL #3
 void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO1 = MI->getOperand(Op);
@@ -449,24 +430,6 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
   } else {
     O << "#" << ARM_AM::getSORegOffset(MO3.getImm());
   }
-}
-
-static void printT2SOImm(raw_ostream &O, int64_t V) {
-  unsigned Imm = ARM_AM::getT2SOImmValDecode(V);
-  
-  // Always print the immediate directly, as the "rotate" form
-  // is deprecated in some contexts.
-  O << "#" << Imm;
-}
-
-/// printT2SOImmOperand - T2SOImm is:
-///  1. a 4-bit splat control value and 8 bit immediate value
-///  2. a 5-bit rotate amount and a non-zero 8-bit immediate value
-///     represented by a normalizedin 7-bit value (msb is always 1)
-void ARMAsmPrinter::printT2SOImmOperand(const MachineInstr *MI, int OpNum) {
-  const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isImm() && "Not a valid so_imm value!");
-  printT2SOImm(O, MO.getImm());
 }
 
 void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
@@ -695,6 +658,42 @@ void ARMAsmPrinter::printThumbAddrModeSPOperand(const MachineInstr *MI,int Op) {
     O << ", #" << ImmOffs << " * 4";
   O << "]";
 }
+
+/// printT2SOImmOperand - T2SOImm is:
+///  1. a 4-bit splat control value and 8 bit immediate value
+///  2. a 5-bit rotate amount and a non-zero 8-bit immediate value
+///     represented by a normalizedin 7-bit value (msb is always 1)
+void ARMAsmPrinter::printT2SOImmOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  assert(MO.isImm() && "Not a valid so_imm value!");
+
+  unsigned Imm = ARM_AM::getT2SOImmValDecode(MO.getImm());  
+  // Always print the immediate directly, as the "rotate" form
+  // is deprecated in some contexts.
+  O << "#" << Imm;
+}
+
+// Constant shifts t2_so_reg is a 2-operand unit corresponding to the Thumb2
+// register with shift forms.
+// REG 0   0           - e.g. R5
+// REG IMM, SH_OPC     - e.g. R5, LSL #3
+void ARMAsmPrinter::printT2SOOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
+  const MachineOperand &MO2 = MI->getOperand(OpNum+1);
+
+  unsigned Reg = MO1.getReg();
+  assert(TargetRegisterInfo::isPhysicalRegister(Reg));
+  O << TM.getRegisterInfo()->getAsmName(Reg);
+
+  // Print the shift opc.
+  O << ", "
+    << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO2.getImm()))
+    << " ";
+
+  assert(MO2.isImm() && "Not a valid t2_so_reg value!");
+  O << "#" << ARM_AM::getSORegOffset(MO2.getImm());
+}
+
 
 void ARMAsmPrinter::printPredicateOperand(const MachineInstr *MI, int opNum) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(opNum).getImm();

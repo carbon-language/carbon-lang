@@ -742,12 +742,12 @@ class TIx2<dag outs, dag ins, string asm, list<dag> pattern>
 class TJTI<dag outs, dag ins, string asm, list<dag> pattern>
   : ThumbI<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
-// ThumbPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
-class ThumbPat<dag pattern, dag result> : Pat<pattern, result> {
+// TPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
+class TPat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb];
 }
 
-class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
+class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb, HasV5T];
 }
 
@@ -769,7 +769,7 @@ class T1I<dag outs, dag ins, string asm, list<dag> pattern>
 class T1It<dag outs, dag ins, string asm, list<dag> pattern>
   : Thumb1I<outs, ins, AddrModeNone, Size2Bytes, asm, "$lhs = $dst", pattern>;
 
-class Thumb1Pat<dag pattern, dag result> : Pat<pattern, result> {
+class T1Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb1Only];
 }
 
@@ -819,8 +819,8 @@ class T2sI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
 class T2XI<dag oops, dag iops, string asm, list<dag> pattern>
   : Thumb2XI<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;
 
-// Thumb2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
-class Thumb2Pat<dag pattern, dag result> : Pat<pattern, result> {
+// T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
+class T2Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb, HasThumb2];
 }
 

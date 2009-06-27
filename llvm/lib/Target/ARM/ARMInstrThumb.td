@@ -607,35 +607,35 @@ let isCall = 1,
 //
 
 // ConstantPool, GlobalAddress
-def : ThumbPat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
-def : ThumbPat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
+def : TPat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
+def : TPat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
 // JumpTable
-def : ThumbPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-               (tLEApcrelJT tjumptable:$dst, imm:$id)>;
+def : TPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+           (tLEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Direct calls
-def : ThumbPat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>;
-def : ThumbV5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>;
+def : TPat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>;
+def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>;
 
 // Indirect calls to ARM routines
-def : ThumbV5Pat<(ARMcall tGPR:$dst), (tBLXr tGPR:$dst)>;
+def : Tv5Pat<(ARMcall tGPR:$dst), (tBLXr tGPR:$dst)>;
 
 // zextload i1 -> zextload i8
-def : ThumbPat<(zextloadi1 t_addrmode_s1:$addr),
-               (tLDRB t_addrmode_s1:$addr)>;
+def : TPat<(zextloadi1 t_addrmode_s1:$addr),
+           (tLDRB t_addrmode_s1:$addr)>;
 
 // extload -> zextload
-def : ThumbPat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
-def : ThumbPat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
-def : ThumbPat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
+def : TPat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
+def : TPat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
+def : TPat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
 
 // Large immediate handling.
 
 // Two piece imms.
-def : Thumb1Pat<(i32 thumb_immshifted:$src),
-                (tLSLri (tMOVi8 (thumb_immshifted_val imm:$src)),
-                        (thumb_immshifted_shamt imm:$src))>;
+def : T1Pat<(i32 thumb_immshifted:$src),
+            (tLSLri (tMOVi8 (thumb_immshifted_val imm:$src)),
+                    (thumb_immshifted_shamt imm:$src))>;
 
-def : Thumb1Pat<(i32 imm0_255_comp:$src),
-                (tMVN (tMOVi8 (imm_comp_XFORM imm:$src)))>;
+def : T1Pat<(i32 imm0_255_comp:$src),
+            (tMVN (tMOVi8 (imm_comp_XFORM imm:$src)))>;
