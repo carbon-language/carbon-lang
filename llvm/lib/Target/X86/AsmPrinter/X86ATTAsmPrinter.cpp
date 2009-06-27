@@ -424,6 +424,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
+  default: assert(0 && "unknown operand type!");
   case MachineOperand::MO_Register: {
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Virtual registers should not make it this far!");
@@ -450,29 +451,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
       << MO.getIndex();
-
-    switch (MO.getTargetFlags()) {
-    default:
-      assert(0 && "Unknown target flag on jump table operand");
-    case X86II::MO_NO_FLAG:
-      // FIXME: REMOVE EVENTUALLY.
-      if (TM.getRelocationModel() == Reloc::PIC_) {
-        assert(!Subtarget->isPICStyleStub() &&
-               !Subtarget->isPICStyleGOT() &&
-               "Should have operand flag!");
-      }
-        
-      break;
-    case X86II::MO_PIC_BASE_OFFSET:
-      O << '-';
-      PrintPICBaseSymbol();
-      break;
-    case X86II::MO_GOTOFF:
-      O << "@GOTOFF";
-      break;
-    }
-
-    return;
+    break;
   }
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
@@ -481,48 +460,16 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       << MO.getIndex();
 
     printOffset(MO.getOffset());
-
-    switch (MO.getTargetFlags()) {
-    default:
-      assert(0 && "Unknown target flag on constant pool operand");
-    case X86II::MO_NO_FLAG:
-      // FIXME: REMOVE EVENTUALLY.
-      if (TM.getRelocationModel() == Reloc::PIC_) {
-        assert(!Subtarget->isPICStyleStub() &&
-               !Subtarget->isPICStyleGOT() &&
-               "Should have operand flag!");
-      }
-      
-      break;
-    case X86II::MO_PIC_BASE_OFFSET:
-      O << '-';
-      PrintPICBaseSymbol();
-      break;
-    case X86II::MO_GOTOFF:
-      O << "@GOTOFF";
-      break;
-    }
-
-    return;
+    break;
   }
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp = Modifier && !strcmp(Modifier, "mem");
-    bool needCloseParen = false;
 
     const GlobalValue *GV = MO.getGlobal();
-    const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
-    if (!GVar) {
-      // If GV is an alias then use the aliasee for determining
-      // thread-localness.
-      if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-        GVar =dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
-    }
-
-    bool isThreadLocal = GVar && GVar->isThreadLocal();
-
     std::string Name = Mang->getValueName(GV);
     decorateName(Name, GV);
 
+    bool needCloseParen = false;
     if (!isMemOp)
       O << '$';
     else if (Name[0] == '$') {
@@ -572,26 +519,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (needCloseParen)
       O << ')';
     
-    switch (MO.getTargetFlags()) {
-    default:
-      assert(0 && "Unknown target flag on GV operand");
-    case X86II::MO_NO_FLAG:
-      // FIXME: RIP THIS CHECKING CODE OUT EVENTUALLY.
-      if (isThreadLocal)
-        assert(0 && "Not lowered right");
-      break;
-    case X86II::MO_TLSGD:     O << "@TLSGD";     break;
-    case X86II::MO_GOTTPOFF:  O << "@GOTTPOFF";  break;
-    case X86II::MO_INDNTPOFF: O << "@INDNTPOFF"; break;
-    case X86II::MO_TPOFF:     O << "@TPOFF";     break;
-    case X86II::MO_NTPOFF:    O << "@NTPOFF";    break;
-    case X86II::MO_GOTPCREL:  O << "@GOTPCREL";  break;
-    case X86II::MO_GOT:       O << "@GOT";       break;
-    case X86II::MO_GOTOFF:    O << "@GOTOFF";    break;
-    }
-    return;
+    break;
   }
-  case MachineOperand::MO_ExternalSymbol: {
+  case MachineOperand::MO_ExternalSymbol:
     /// NOTE: MO_ExternalSymbol in a non-pcrel_imm context is *only* generated
     /// by _GLOBAL_OFFSET_TABLE_ on X86-32.  All others are call operands, which
     /// are pcrel_imm's.
@@ -602,19 +532,31 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << '$';
     O << TAI->getGlobalPrefix();
     O << MO.getSymbolName();
-    
-    if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
-      O << " + [.-";
-      PrintPICBaseSymbol();
-      O << ']';
-    } else {
-      assert(MO.getTargetFlags() == X86II::MO_NO_FLAG &&
-             "Unknown operand flag for external symbol");
-    }
-    return;
+    break;
   }
+  
+  switch (MO.getTargetFlags()) {
   default:
-    O << "<unknown operand type>"; return;
+    assert(0 && "Unknown target flag on GV operand");
+  case X86II::MO_NO_FLAG:
+    break;
+  case X86II::MO_GOT_ABSOLUTE_ADDRESS:
+    O << " + [.-";
+    PrintPICBaseSymbol();
+    O << ']';
+    break;      
+  case X86II::MO_PIC_BASE_OFFSET:
+    O << '-';
+    PrintPICBaseSymbol();
+    break;
+  case X86II::MO_TLSGD:     O << "@TLSGD";     break;
+  case X86II::MO_GOTTPOFF:  O << "@GOTTPOFF";  break;
+  case X86II::MO_INDNTPOFF: O << "@INDNTPOFF"; break;
+  case X86II::MO_TPOFF:     O << "@TPOFF";     break;
+  case X86II::MO_NTPOFF:    O << "@NTPOFF";    break;
+  case X86II::MO_GOTPCREL:  O << "@GOTPCREL";  break;
+  case X86II::MO_GOT:       O << "@GOT";       break;
+  case X86II::MO_GOTOFF:    O << "@GOTOFF";    break;
   }
 }
 
