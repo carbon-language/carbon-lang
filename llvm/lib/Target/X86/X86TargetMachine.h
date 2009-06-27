@@ -91,12 +91,6 @@ public:
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm, JITCodeEmitter &JCE);
-
-  /// symbolicAddressesAreRIPRel - Return true if symbolic addresses are
-  /// RIP-relative on this machine, taking into consideration the relocation
-  /// model and subtarget. RIP-relative addresses cannot have a separate
-  /// base or index register.
-  bool symbolicAddressesAreRIPRel() const;
 };
 
 /// X86_32TargetMachine - X86 32-bit target machine.

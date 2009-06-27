@@ -396,8 +396,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
           // Constant-offset addressing.
           Disp += CI->getSExtValue() * S;
         } else if (IndexReg == 0 &&
-                   (!AM.GV ||
-                    !getTargetMachine()->symbolicAddressesAreRIPRel()) &&
+                   (!AM.GV || !Subtarget->isPICStyleRIPRel()) &&
                    (S == 1 || S == 2 || S == 4 || S == 8)) {
           // Scaled-index addressing.
           Scale = S;
@@ -432,7 +431,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
       return false;
 
     // RIP-relative addresses can't have additional register operands.
-    if (getTargetMachine()->symbolicAddressesAreRIPRel() &&
+    if (Subtarget->isPICStyleRIPRel() &&
         (AM.Base.Reg != 0 || AM.IndexReg != 0))
       return false;
 
@@ -482,7 +481,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
 
       // Prevent loading GV stub multiple times in same MBB.
       LocalValueMap[V] = AM.Base.Reg;
-    } else if (getTargetMachine()->symbolicAddressesAreRIPRel()) {
+    } else if (Subtarget->isPICStyleRIPRel()) {
       // Use rip-relative addressing if we can.
       AM.Base.Reg = X86::RIP;
     }
@@ -491,7 +490,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   }
 
   // If all else fails, try to materialize the value in a register.
-  if (!AM.GV || !getTargetMachine()->symbolicAddressesAreRIPRel()) {
+  if (!AM.GV || !Subtarget->isPICStyleRIPRel()) {
     if (AM.Base.Reg == 0) {
       AM.Base.Reg = getRegForValue(V);
       return AM.Base.Reg != 0;
