@@ -5,6 +5,8 @@ template<class X>struct A{typedef X Y;};
 template<class X>bool operator==(A<X>,typename A<X>::Y);
 int a(A<int> x) { return operator==(x,1); }
 
+int a0(A<int> x) { return x == 1; }
+
 // FIXME: The diagnostic here is a bit messed up
 template<class X>struct B{typedef X Y;};
 template<class X>bool operator==(B<X>*,typename B<X>::Y); // \

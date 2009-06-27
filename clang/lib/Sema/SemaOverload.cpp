@@ -2161,9 +2161,15 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
                                  bool SuppressUserConversions) {
   for (FunctionSet::const_iterator F = Functions.begin(), 
                                 FEnd = Functions.end();
-       F != FEnd; ++F)
-    AddOverloadCandidate(*F, Args, NumArgs, CandidateSet, 
-                         SuppressUserConversions);
+       F != FEnd; ++F) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*F))
+      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet, 
+                           SuppressUserConversions);
+    else
+      AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*F), Args, 
+                                   NumArgs, CandidateSet, 
+                                   SuppressUserConversions);
+  }
 }
 
 /// AddMethodCandidate - Adds the given C++ member function to the set
@@ -3405,8 +3411,11 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                    CandEnd = CandidateSet.end();
        Cand != CandEnd; ++Cand)
-    if (Cand->Function)
+    if (Cand->Function) {
       Functions.insert(Cand->Function);
+      if (FunctionTemplateDecl *FunTmpl = Cand->Function->getPrimaryTemplate())
+        Functions.insert(FunTmpl);
+    }
 
   ArgumentDependentLookup(Name, Args, NumArgs, Functions);
 
@@ -3415,15 +3424,23 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                    CandEnd = CandidateSet.end();
        Cand != CandEnd; ++Cand)
-    if (Cand->Function)
+    if (Cand->Function) {
       Functions.erase(Cand->Function);
+      if (FunctionTemplateDecl *FunTmpl = Cand->Function->getPrimaryTemplate())
+        Functions.erase(FunTmpl);
+    }
 
   // For each of the ADL candidates we found, add it to the overload
   // set.
   for (FunctionSet::iterator Func = Functions.begin(),
                           FuncEnd = Functions.end();
-       Func != FuncEnd; ++Func)
-    AddOverloadCandidate(*Func, Args, NumArgs, CandidateSet);
+       Func != FuncEnd; ++Func) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func))
+      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet);
+    else
+      AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*Func), Args, 
+                                   NumArgs, CandidateSet);
+  }
 }
 
 /// isBetterOverloadCandidate - Determines whether the first overload

@@ -32,6 +32,8 @@ class ClassTemplateSpecializationDecl;
 class AnyFunctionDecl {
   NamedDecl *Function;
   
+  AnyFunctionDecl(NamedDecl *ND) : Function(ND) { }
+  
 public:
   AnyFunctionDecl(FunctionDecl *FD) : Function(FD) { }
   AnyFunctionDecl(FunctionTemplateDecl *FTD);
@@ -42,6 +44,10 @@ public:
   
   /// \brief Retrieve the underlying function or function template.
   NamedDecl *get() const { return Function; }
+  
+  static AnyFunctionDecl getFromNamedDecl(NamedDecl *ND) { 
+    return AnyFunctionDecl(ND);
+  }
 };
   
 } // end namespace clang
@@ -57,6 +63,22 @@ namespace llvm {
   };
   template<> struct simplify_type< ::clang::AnyFunctionDecl>
   : public simplify_type<const ::clang::AnyFunctionDecl> {};
+  
+  // Provide PointerLikeTypeTraits for non-cvr pointers.
+  template<>
+  class PointerLikeTypeTraits< ::clang::AnyFunctionDecl> {
+  public:
+    static inline void *getAsVoidPointer(::clang::AnyFunctionDecl F) {
+      return F.get(); 
+    }
+    static inline ::clang::AnyFunctionDecl getFromVoidPointer(void *P) {
+      return ::clang::AnyFunctionDecl::getFromNamedDecl(
+                                      static_cast< ::clang::NamedDecl*>(P));
+    }
+    
+    enum { NumLowBitsAvailable = 2 };
+  };
+  
 } // end namespace llvm
 
 namespace clang {
@@ -91,24 +113,10 @@ public:
   static OverloadedFunctionDecl *Create(ASTContext &C, DeclContext *DC,
                                         DeclarationName N);
 
-  /// addOverload - Add an overloaded function FD to this set of
-  /// overloaded functions.
-  void addOverload(FunctionDecl *FD) {
-    assert((FD->getDeclName() == getDeclName() ||
-            isa<CXXConversionDecl>(FD) || isa<CXXConstructorDecl>(FD)) &&
-           "Overloaded functions must have the same name");
-    Functions.push_back(FD);
+  /// \brief Add a new overloaded function or function template to the set
+  /// of overloaded function templates.
+  void addOverload(AnyFunctionDecl F);
 
-    // An overloaded function declaration always has the location of
-    // the most-recently-added function declaration.
-    if (FD->getLocation().isValid())
-      this->setLocation(FD->getLocation());
-  }
-
-  /// addOverload - Add an overloaded function template FTD to this set of
-  /// overloaded functions.
-  void addOverload(FunctionTemplateDecl *FTD);
-  
   function_iterator function_begin() { return Functions.begin(); }
   function_iterator function_end() { return Functions.end(); }
   function_const_iterator function_begin() const { return Functions.begin(); }

@@ -679,7 +679,7 @@ public:
     OR_Deleted              ///< Overload resoltuion refers to a deleted function.
   };
 
-  typedef llvm::SmallPtrSet<FunctionDecl *, 16> FunctionSet;
+  typedef llvm::SmallPtrSet<AnyFunctionDecl, 16> FunctionSet;
   typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
 

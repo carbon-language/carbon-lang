@@ -1604,9 +1604,17 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
 
   for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();
        Op != OpEnd; ++Op) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op))
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op)) {
       if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
         Functions.insert(FD); // FIXME: canonical FD
+    } else if (FunctionTemplateDecl *FunTmpl 
+                 = dyn_cast<FunctionTemplateDecl>(*Op)) {
+      // FIXME: friend operators?
+      // FIXME: do we need to check IsAcceptableNonMemberOperatorCandidate, 
+      // later?
+      if (!FunTmpl->getDeclContext()->isRecord())
+        Functions.insert(FunTmpl);
+    }
   }
 }
 
@@ -1649,11 +1657,10 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     //        lookup (11.4).
     DeclContext::lookup_iterator I, E;
     for (llvm::tie(I, E) = (*NS)->lookup(Context, Name); I != E; ++I) {
-      FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
-      if (!Func)
-        break;
-
-      Functions.insert(Func);
+      if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*I))
+        Functions.insert(Func);
+      else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*I))
+        Functions.insert(FunTmpl);
     }
   }
   
@@ -1662,11 +1669,10 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     for (llvm::tie(I, E) 
            = Context.getTranslationUnitDecl()->lookup(Context, Name); 
          I != E; ++I) {
-      FunctionDecl *Func = dyn_cast<FunctionDecl>(*I);
-      if (!Func)
-        break;
-      
-      Functions.insert(Func);
+      if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*I))
+        Functions.insert(Func);
+      else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*I))
+        Functions.insert(FunTmpl);
     }
   }
 }
