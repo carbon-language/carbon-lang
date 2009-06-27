@@ -14,10 +14,9 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 
-#include "llvm/Instructions.h"
-#include "llvm/Type.h"
-#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TargetFolder.h"
 
 namespace llvm {
   /// SCEVExpander - This class uses information about analyze scalars to
@@ -32,12 +31,13 @@ namespace llvm {
       InsertedExpressions;
     std::set<Value*> InsertedValues;
 
-    BasicBlock::iterator InsertPt;
+    typedef IRBuilder<true, TargetFolder> BuilderType;
+    BuilderType Builder;
 
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
     explicit SCEVExpander(ScalarEvolution &se)
-      : SE(se) {}
+      : SE(se), Builder(TargetFolder(se.TD)) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or
@@ -53,27 +53,21 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(const SCEV* SH, const Type *Ty,
-                         BasicBlock::iterator IP) {
-      InsertPt = IP;
+    Value *expandCodeFor(const SCEV* SH, const Type *Ty, Instruction *IP) {
+      Builder.SetInsertPoint(IP->getParent(), IP);
       return expandCodeFor(SH, Ty);
     }
 
-    /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
-    /// we can to share the casts.
-    Value *InsertCastOfTo(Instruction::CastOps opcode, Value *V,
-                          const Type *Ty);
-
-    /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
-    /// which must be possible with a noop cast.
-    Value *InsertNoopCastOfTo(Value *V, const Type *Ty);
-
+  private:
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
-    Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
-                       Value *RHS, BasicBlock::iterator InsertPt);
+    Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS, Value *RHS);
 
-  private:
+    /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
+    /// which must be possible with a noop cast, doing what we can to
+    /// share the casts.
+    Value *InsertNoopCastOfTo(Value *V, const Type *Ty);
+
     /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
     /// instead of using ptrtoint+arithmetic+inttoptr.
     Value *expandAddToGEP(const SCEV* const *op_begin,
