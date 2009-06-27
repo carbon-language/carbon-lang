@@ -31,6 +31,19 @@ namespace ARMRI {
   };
 }
 
+/// isARMLowRegister - Returns true if the register is low register r0-r7.
+///
+static inline bool isARMLowRegister(unsigned Reg) {
+  using namespace ARM;
+  switch (Reg) {
+  case R0:  case R1:  case R2:  case R3:
+  case R4:  case R5:  case R6:  case R7:
+    return true;
+  default:
+    return false;
+  }
+}
+
 struct ARMBaseRegisterInfo : public ARMGenRegisterInfo {
 protected:
   const TargetInstrInfo &TII;
@@ -103,10 +116,10 @@ public:
   /// specified immediate.
   void emitLoadConstPool(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator &MBBI,
+                         const TargetInstrInfo *TII, DebugLoc dl,
                          unsigned DestReg, int Val,
-                         unsigned Pred, unsigned PredReg,
-                         const TargetInstrInfo *TII,
-                         DebugLoc dl) const;
+                         ARMCC::CondCodes Pred = ARMCC::AL,
+                         unsigned PredReg = 0) const;
 
   /// Code Generation virtual methods...
   bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
@@ -124,10 +137,6 @@ public:
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
-  void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-                    int NumBytes, ARMCC::CondCodes Pred, unsigned PredReg,
-                    const TargetInstrInfo &TII, DebugLoc dl) const;
 };
 
 } // end namespace llvm

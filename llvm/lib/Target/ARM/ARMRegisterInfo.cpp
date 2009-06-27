@@ -174,10 +174,10 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
 /// specified immediate.
 void ARMRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator &MBBI,
+                                        const TargetInstrInfo *TII, DebugLoc dl,
                                         unsigned DestReg, int Val,
-                                        unsigned Pred, unsigned PredReg,
-                                        const TargetInstrInfo *TII,
-                                        DebugLoc dl) const {
+                                        ARMCC::CondCodes Pred,
+                                        unsigned PredReg) const {
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   Constant *C = ConstantInt::get(Type::Int32Ty, Val);
@@ -186,19 +186,6 @@ void ARMRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
   BuildMI(MBB, MBBI, dl, TII->get(ARM::LDRcp), DestReg)
     .addConstantPoolIndex(Idx)
     .addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
-}
-
-/// isLowRegister - Returns true if the register is low register r0-r7.
-///
-bool ARMBaseRegisterInfo::isLowRegister(unsigned Reg) const {
-  using namespace ARM;
-  switch (Reg) {
-  case R0:  case R1:  case R2:  case R3:
-  case R4:  case R5:  case R6:  case R7:
-    return true;
-  default:
-    return false;
-  }
 }
 
 const unsigned*
@@ -558,10 +545,11 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
   }
 }
 
-void ARMRegisterInfo::
+static void
 emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-             int NumBytes, ARMCC::CondCodes Pred, unsigned PredReg,
-             const TargetInstrInfo &TII, DebugLoc dl) const {
+             const TargetInstrInfo &TII, DebugLoc dl,
+             int NumBytes,
+             ARMCC::CondCodes Pred = ARMCC::AL, unsigned PredReg = 0) {
   emitARMRegPlusImmediate(MBB, MBBI, ARM::SP, ARM::SP, NumBytes,
                           Pred, PredReg, TII, dl);
 }
@@ -589,12 +577,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
         // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
         unsigned PredReg = Old->getOperand(2).getReg();
-        emitSPUpdate(MBB, I, -Amount, Pred, PredReg, TII, dl);
+        emitSPUpdate(MBB, I, TII, dl, -Amount, Pred, PredReg);
       } else {
         // Note: PredReg is operand 3 for ADJCALLSTACKUP.
         unsigned PredReg = Old->getOperand(3).getReg();
         assert(Opc == ARM::ADJCALLSTACKUP || Opc == ARM::tADJCALLSTACKUP);
-        emitSPUpdate(MBB, I, Amount, Pred, PredReg, TII, dl);
+        emitSPUpdate(MBB, I, TII, dl, Amount, Pred, PredReg);
       }
     }
   }
@@ -926,7 +914,8 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         for (unsigned i = 0, e = UnspilledCS1GPRs.size(); i != e; ++i) {
           unsigned Reg = UnspilledCS1GPRs[i];
           // Don't spiil high register if the function is thumb
-          if (!AFI->isThumbFunction() || isLowRegister(Reg) || Reg == ARM::LR) {
+          if (!AFI->isThumbFunction() ||
+              isARMLowRegister(Reg) || Reg == ARM::LR) {
             MF.getRegInfo().setPhysRegUsed(Reg);
             AFI->setCSRegisterIsSpilled(Reg);
             if (!isReservedReg(MF, Reg))
@@ -1066,11 +1055,11 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   int FramePtrSpillFI = 0;
 
   if (VARegSaveSize)
-    emitSPUpdate(MBB, MBBI, -VARegSaveSize, ARMCC::AL, 0, TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, -VARegSaveSize);
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
-      emitSPUpdate(MBB, MBBI, -NumBytes, ARMCC::AL, 0, TII, dl);
+      emitSPUpdate(MBB, MBBI, TII, dl, -NumBytes);
     return;
   }
 
@@ -1109,7 +1098,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   // Build the new SUBri to adjust SP for integer callee-save spill area 1.
-  emitSPUpdate(MBB, MBBI, -GPRCS1Size, ARMCC::AL, 0, TII, dl);
+  emitSPUpdate(MBB, MBBI, TII, dl, -GPRCS1Size);
   movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 1, STI);
 
   // Darwin ABI requires FP to point to the stack slot that contains the
@@ -1122,11 +1111,11 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   // Build the new SUBri to adjust SP for integer callee-save spill area 2.
-  emitSPUpdate(MBB, MBBI, -GPRCS2Size, ARMCC::AL, 0, TII, dl);
+  emitSPUpdate(MBB, MBBI, TII, dl, -GPRCS2Size);
 
   // Build the new SUBri to adjust SP for FP callee-save spill area.
   movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 2, STI);
-  emitSPUpdate(MBB, MBBI, -DPRCSSize, ARMCC::AL, 0, TII, dl);
+  emitSPUpdate(MBB, MBBI, TII, dl, -DPRCSSize);
 
   // Determine starting offsets of spill areas.
   unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
@@ -1141,7 +1130,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (NumBytes) {
     // Insert it after all the callee-save spills.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::FSTD, 3, STI);
-    emitSPUpdate(MBB, MBBI, -NumBytes, ARMCC::AL, 0, TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, -NumBytes);
   }
 
   if (STI.isTargetELF() && hasFP(MF)) {
@@ -1181,7 +1170,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
-      emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, TII, dl);
+      emitSPUpdate(MBB, MBBI, TII, dl, NumBytes);
   } else {
     // Unwind MBBI to point to first LDR / FLDD.
     const unsigned *CSRegs = getCalleeSavedRegs();
@@ -1217,27 +1206,24 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
             .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
       }
     } else if (NumBytes) {
-      emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, TII, dl);
+      emitSPUpdate(MBB, MBBI, TII, dl, NumBytes);
     }
 
     // Move SP to start of integer callee save spill area 2.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
-    emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), ARMCC::AL, 0,
-                 TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to start of integer callee save spill area 1.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 2, STI);
-    emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea2Size(), ARMCC::AL, 0,
-                 TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, AFI->getGPRCalleeSavedArea2Size());
 
     // Move SP to SP upon entry to the function.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 1, STI);
-    emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea1Size(), ARMCC::AL, 0,
-                 TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, AFI->getGPRCalleeSavedArea1Size());
   }
 
   if (VARegSaveSize)
-    emitSPUpdate(MBB, MBBI, VARegSaveSize, ARMCC::AL, 0, TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, VARegSaveSize);
 
 }
 

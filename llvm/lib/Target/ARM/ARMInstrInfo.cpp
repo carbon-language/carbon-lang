@@ -138,9 +138,11 @@ void ARMInstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  const MachineInstr *Orig) const {
   DebugLoc dl = Orig->getDebugLoc();
   if (Orig->getOpcode() == ARM::MOVi2pieces) {
-    RI.emitLoadConstPool(MBB, I, DestReg, Orig->getOperand(1).getImm(),
-                         Orig->getOperand(2).getImm(),
-                         Orig->getOperand(3).getReg(), this, dl);
+    RI.emitLoadConstPool(MBB, I, this, dl,
+                         DestReg,
+                         Orig->getOperand(1).getImm(),
+                         (ARMCC::CondCodes)Orig->getOperand(2).getImm(),
+                         Orig->getOperand(3).getReg());
     return;
   }
 

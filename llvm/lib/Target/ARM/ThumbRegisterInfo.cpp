@@ -47,7 +47,6 @@ ThumbRegisterInfo::ThumbRegisterInfo(const TargetInstrInfo &tii,
 void ThumbRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator &MBBI,
                                           unsigned DestReg, int Val,
-                                          unsigned Pred, unsigned PredReg,
                                           const TargetInstrInfo *TII,
                                           DebugLoc dl) const {
   MachineFunction &MF = *MBB.getParent();
@@ -61,7 +60,7 @@ void ThumbRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
 
 const TargetRegisterClass*
 ThumbRegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, MVT VT) const {
-  if (isLowRegister(Reg))
+  if (isARMLowRegister(Reg))
     return ARM::tGPRRegisterClass;
   switch (Reg) {
    default:
@@ -104,8 +103,8 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
                               const TargetInstrInfo &TII,
                               const ThumbRegisterInfo& MRI,
                               DebugLoc dl) {
-    bool isHigh = !MRI.isLowRegister(DestReg) ||
-                  (BaseReg != 0 && !MRI.isLowRegister(BaseReg));
+    bool isHigh = !isARMLowRegister(DestReg) ||
+                  (BaseReg != 0 && !isARMLowRegister(BaseReg));
     bool isSub = false;
     // Subtract doesn't have high register version. Load the negative value
     // if either base or dest register is a high register. Also, if do not
@@ -130,7 +129,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tNEG), LdReg)
         .addReg(LdReg, RegState::Kill);
     } else
-      MRI.emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, ARMCC::AL, 0, &TII, dl);
+      MRI.emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, &TII, dl);
 
     // Emit add / sub.
     int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
@@ -229,7 +228,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   }
 
   if (DstNotEqBase) {
-    if (MRI.isLowRegister(DestReg) && MRI.isLowRegister(BaseReg)) {
+    if (isARMLowRegister(DestReg) && isARMLowRegister(BaseReg)) {
       // If both are low registers, emit DestReg = add BaseReg, max(Imm, 7)
       unsigned Chunk = (1 << 3) - 1;
       unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
@@ -277,12 +276,13 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       .addImm(((unsigned)NumBytes) & 3);
 }
 
-void ThumbRegisterInfo::
-emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-             int NumBytes, ARMCC::CondCodes Pred, unsigned PredReg,
-             const TargetInstrInfo &TII, DebugLoc dl) const {
+static void emitSPUpdate(MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator &MBBI,
+                         const TargetInstrInfo &TII, DebugLoc dl,
+                         const ThumbRegisterInfo &MRI,
+                         int NumBytes) {
   emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, ARM::SP, NumBytes, TII,
-                            *this, dl);
+                            MRI, dl);
 }
 
 void ThumbRegisterInfo::
@@ -305,12 +305,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // Replace the pseudo instruction with a new instruction...
       unsigned Opc = Old->getOpcode();
       if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
-        // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
-        emitSPUpdate(MBB, I, -Amount, ARMCC::AL, 0, TII, dl);
+        emitSPUpdate(MBB, I, TII, dl, *this, -Amount);
       } else {
-        // Note: PredReg is operand 3 for ADJCALLSTACKUP.
         assert(Opc == ARM::ADJCALLSTACKUP || Opc == ARM::tADJCALLSTACKUP);
-        emitSPUpdate(MBB, I, Amount, ARMCC::AL, 0, TII, dl);
+        emitSPUpdate(MBB, I, TII, dl, *this, Amount);
       }
     }
   }
@@ -506,7 +504,7 @@ void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,
                                  Offset, false, TII, *this, dl);
       else {
-        emitLoadConstPool(MBB, II, TmpReg, Offset, ARMCC::AL, 0, &TII, dl);
+        emitLoadConstPool(MBB, II, TmpReg, Offset, &TII, dl);
         UseRR = true;
       }
     } else
@@ -544,7 +542,7 @@ void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,
                                  Offset, false, TII, *this, dl);
       else {
-        emitLoadConstPool(MBB, II, TmpReg, Offset, ARMCC::AL, 0, &TII, dl);
+        emitLoadConstPool(MBB, II, TmpReg, Offset, &TII, dl);
         UseRR = true;
       }
     } else
@@ -598,11 +596,11 @@ void ThumbRegisterInfo::emitPrologue(MachineFunction &MF) const {
   int FramePtrSpillFI = 0;
 
   if (VARegSaveSize)
-    emitSPUpdate(MBB, MBBI, -VARegSaveSize, ARMCC::AL, 0, TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, *this, -VARegSaveSize);
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
-      emitSPUpdate(MBB, MBBI, -NumBytes, ARMCC::AL, 0, TII, dl);
+      emitSPUpdate(MBB, MBBI, TII, dl, *this, -NumBytes);
     return;
   }
 
@@ -666,7 +664,7 @@ void ThumbRegisterInfo::emitPrologue(MachineFunction &MF) const {
   NumBytes = DPRCSOffset;
   if (NumBytes) {
     // Insert it after all the callee-save spills.
-    emitSPUpdate(MBB, MBBI, -NumBytes, ARMCC::AL, 0, TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, *this, -NumBytes);
   }
 
   if (STI.isTargetELF() && hasFP(MF)) {
@@ -706,7 +704,7 @@ void ThumbRegisterInfo::emitEpilogue(MachineFunction &MF,
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
-      emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, TII, dl);
+      emitSPUpdate(MBB, MBBI, TII, dl, *this, NumBytes);
   } else {
     // Unwind MBBI to point to first LDR / FLDD.
     const unsigned *CSRegs = getCalleeSavedRegs();
@@ -738,9 +736,9 @@ void ThumbRegisterInfo::emitEpilogue(MachineFunction &MF,
           &MBB.front() != MBBI &&
           prior(MBBI)->getOpcode() == ARM::tPOP) {
         MachineBasicBlock::iterator PMBBI = prior(MBBI);
-        emitSPUpdate(MBB, PMBBI, NumBytes, ARMCC::AL, 0, TII, dl);
+        emitSPUpdate(MBB, PMBBI, TII, dl, *this, NumBytes);
       } else
-        emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, TII, dl);
+        emitSPUpdate(MBB, MBBI, TII, dl, *this, NumBytes);
     }
   }
 
@@ -749,7 +747,7 @@ void ThumbRegisterInfo::emitEpilogue(MachineFunction &MF,
     // FIXME: Verify this is still ok when R3 is no longer being reserved.
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)).addReg(ARM::R3);
 
-    emitSPUpdate(MBB, MBBI, VARegSaveSize, ARMCC::AL, 0, TII, dl);
+    emitSPUpdate(MBB, MBBI, TII, dl, *this, VARegSaveSize);
 
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX_RET_vararg)).addReg(ARM::R3);
     MBB.erase(MBBI);

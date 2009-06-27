@@ -32,7 +32,6 @@ public:
   void emitLoadConstPool(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator &MBBI,
                          unsigned DestReg, int Val,
-                         unsigned Pred, unsigned PredReg,
                          const TargetInstrInfo *TII,
                          DebugLoc dl) const;
 
@@ -55,10 +54,6 @@ public:
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
-  void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-                    int NumBytes, ARMCC::CondCodes Pred, unsigned PredReg,
-                    const TargetInstrInfo &TII, DebugLoc dl) const;
 };
 }
 

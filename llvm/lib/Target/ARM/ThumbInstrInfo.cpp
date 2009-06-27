@@ -129,12 +129,12 @@ canFoldMemoryOperand(const MachineInstr *MI,
   case ARM::tMOVhir2hir: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
-      if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
+      if (RI.isPhysicalRegister(SrcReg) && !isARMLowRegister(SrcReg))
         // tSpill cannot take a high register operand.
         return false;
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
-      if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
+      if (RI.isPhysicalRegister(DstReg) && !isARMLowRegister(DstReg))
         // tRestore cannot target a high register operand.
         return false;
     }
@@ -288,7 +288,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
-      if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
+      if (RI.isPhysicalRegister(SrcReg) && !isARMLowRegister(SrcReg))
         // tSpill cannot take a high register operand.
         break;
       NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::tSpill))
@@ -296,7 +296,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
         .addFrameIndex(FI).addImm(0);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
-      if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
+      if (RI.isPhysicalRegister(DstReg) && !isARMLowRegister(DstReg))
         // tRestore cannot target a high register operand.
         break;
       bool isDead = MI->getOperand(0).isDead();
