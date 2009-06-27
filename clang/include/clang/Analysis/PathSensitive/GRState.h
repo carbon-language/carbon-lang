@@ -508,43 +508,6 @@ public:
     return getPersistentState(NewSt);
   }
   
-private:
-
-  SVal GetBlkExprSVal(const GRState* St, const Stmt* Ex) {
-    return St->getEnvironment().GetBlkExprSVal(Ex, ValueMgr);
-  }
-  
-  const GRState* BindExpr(const GRState* St, const Stmt* Ex, SVal V,
-                          bool isBlkExpr, bool Invalidate) {
-    
-    const Environment& OldEnv = St->getEnvironment();
-    Environment NewEnv = EnvMgr.BindExpr(OldEnv, Ex, V, isBlkExpr, Invalidate);
-    
-    if (NewEnv == OldEnv)
-      return St;
-    
-    GRState NewSt = *St;
-    NewSt.Env = NewEnv;
-    return getPersistentState(NewSt);
-  }
-  
-  const GRState* BindExpr(const GRState* St, const Stmt* Ex, SVal V,
-                          bool Invalidate = true) {
-    
-    bool isBlkExpr = false;
-    
-    if (Ex == CurrentStmt) {
-      // FIXME: Should this just be an assertion?  When would we want to set
-      // the value of a block-level expression if it wasn't CurrentStmt?
-      isBlkExpr = cfg.isBlkExpr(Ex);
-      
-      if (!isBlkExpr)
-        return St;
-    }
-    
-    return BindExpr(St, Ex, V, isBlkExpr, Invalidate);
-  }
-
 public:
 
   SVal ArrayToPointer(Loc Array) {
@@ -675,16 +638,6 @@ inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD) const {
   return Mgr->StoreMgr->BindDeclWithNoInit(this, VD);
 }
   
-inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
-                                        bool Invalidate) const {
-  return Mgr->BindExpr(this, Ex, V, isBlkExpr, Invalidate);
-}
-
-inline const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
-                                        bool Invalidate) const {
-  return Mgr->BindExpr(this, Ex, V, Invalidate);
-}
-  
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
   return Mgr->StoreMgr->Bind(this, LV, V);
 }
@@ -722,11 +675,11 @@ inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
 }
   
 inline SVal GRState::getSVal(const Stmt* Ex) const {
-  return getEnvironment().GetSVal(Ex, Mgr->ValueMgr);
+  return Env.GetSVal(Ex, Mgr->ValueMgr);
 }
 
 inline SVal GRState::getBlkExprSVal(const Stmt* Ex) const {  
-  return Mgr->GetBlkExprSVal(this, Ex);
+  return Env.GetBlkExprSVal(Ex, Mgr->ValueMgr);
 }
 
 inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {

@@ -85,6 +85,37 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
   return UnknownVal();
 }
 
+
+const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
+                                 bool Invalidate) const {
+  
+  Environment NewEnv = Mgr->EnvMgr.BindExpr(Env, Ex, V, isBlkExpr, Invalidate);
+  
+  if (NewEnv == Env)
+    return this;
+  
+  GRState NewSt = *this;
+  NewSt.Env = NewEnv;
+  return Mgr->getPersistentState(NewSt);
+}
+
+const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
+                                 bool Invalidate) const {
+  
+  bool isBlkExpr = false;
+  
+  if (Ex == Mgr->CurrentStmt) {
+      // FIXME: Should this just be an assertion?  When would we want to set
+      // the value of a block-level expression if it wasn't CurrentStmt?
+    isBlkExpr = Mgr->cfg.isBlkExpr(Ex);
+    
+    if (!isBlkExpr)
+      return this;
+  }
+  
+  return bindExpr(Ex, V, isBlkExpr, Invalidate);
+}
+
 const GRState* GRStateManager::getInitialState() {
   GRState StateImpl(this, EnvMgr.getInitialEnvironment(), 
                     StoreMgr->getInitialStore(),
