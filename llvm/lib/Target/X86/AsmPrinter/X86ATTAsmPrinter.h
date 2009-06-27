@@ -75,7 +75,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   bool printInstruction(const MCInst *MI);
 
   void printOperand(const MCInst *MI, unsigned OpNo,
-                    const char *Modifier = 0, bool NotRIPRel = false);
+                    const char *Modifier = 0);
   void printMemReference(const MCInst *MI, unsigned Op);
   void printLeaMemReference(const MCInst *MI, unsigned Op);
   void printSSECC(const MCInst *MI, unsigned Op);
@@ -123,7 +123,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   // These methods are used by the tablegen'erated instruction printer.
   void printOperand(const MachineInstr *MI, unsigned OpNo,
-                    const char *Modifier = 0, bool NotRIPRel = false);
+                    const char *Modifier = 0);
   void print_pcrel_imm(const MachineInstr *MI, unsigned OpNo);
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
@@ -171,9 +171,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printMachineInstruction(const MachineInstr *MI);
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op,
-                         const char *Modifier=NULL, bool NotRIPRel = false);
+                         const char *Modifier=NULL);
   void printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                            const char *Modifier=NULL, bool NotRIPRel = false);
+                            const char *Modifier=NULL);
   void printPICJumpTableSetLabel(unsigned uid,
                                  const MachineBasicBlock *MBB) const;
   void printPICJumpTableSetLabel(unsigned uid, unsigned uid2,

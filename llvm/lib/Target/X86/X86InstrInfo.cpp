@@ -806,7 +806,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
            (MI->getOperand(4).isGlobal() &&
             isGVStub(MI->getOperand(4).getGlobal(), TM)))) {
         unsigned BaseReg = MI->getOperand(1).getReg();
-        if (BaseReg == 0)
+        if (BaseReg == 0 || BaseReg == X86::RIP)
           return true;
         // Allow re-materialization of PIC load.
         if (!ReMatPICStubLoad && MI->getOperand(4).isGlobal())

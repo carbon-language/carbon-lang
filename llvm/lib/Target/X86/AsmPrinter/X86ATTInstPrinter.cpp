@@ -65,7 +65,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
 
 
 void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                    const char *Modifier, bool NotRIPRel) {
+                                    const char *Modifier) {
   assert(Modifier == 0 && "Modifiers should not be used");
   
   const MCOperand &Op = MI->getOperand(OpNo);
@@ -93,13 +93,11 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 }
 
 void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
-  bool NotRIPRel = false;
 
   const MCOperand &BaseReg  = MI->getOperand(Op);
   const MCOperand &IndexReg = MI->getOperand(Op+2);
   const MCOperand &DispSpec = MI->getOperand(Op+3);
   
-  NotRIPRel |= IndexReg.getReg() || BaseReg.getReg();
   if (DispSpec.isImm()) {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
@@ -108,7 +106,7 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
     abort();
     //assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
     //       DispSpec.isJTI() || DispSpec.isSymbol());
-    //printOperand(MI, Op+3, "mem", NotRIPRel);
+    //printOperand(MI, Op+3, "mem");
   }
   
   if (IndexReg.getReg() || BaseReg.getReg()) {

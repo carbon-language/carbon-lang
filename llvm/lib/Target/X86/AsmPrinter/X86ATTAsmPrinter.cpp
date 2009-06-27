@@ -425,7 +425,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
 }
 
 void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
-                                    const char *Modifier, bool NotRIPRel) {
+                                    const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {
@@ -476,8 +476,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       break;
     }
 
-    if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
-      O << "(%rip)";
     return;
   }
   case MachineOperand::MO_ConstantPoolIndex: {
@@ -509,8 +507,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       break;
     }
 
-    if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
-      O << "(%rip)";
     return;
   }
   case MachineOperand::MO_GlobalAddress: {
@@ -580,8 +576,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (needCloseParen)
       O << ')';
     
-    bool isRIPRelative = false;
-
     switch (MO.getTargetFlags()) {
     default:
       assert(0 && "Unknown target flag on GV operand");
@@ -595,8 +589,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       break;
     case X86II::MO_GOTTPOFF:
       O << "@GOTTPOFF";
-      assert(!NotRIPRel);
-      isRIPRelative = true;
       break;
     case X86II::MO_INDNTPOFF:
       O << "@INDNTPOFF";
@@ -606,6 +598,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       break;
     case X86II::MO_NTPOFF:
       O << "@NTPOFF";
+      break;
+    case X86II::MO_GOTPCREL:
+      O << "@GOTPCREL";
       break;
     }
     
@@ -617,23 +612,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << "@GOT";
         else
           O << "@GOTOFF";
-      } else if (Subtarget->isPICStyleRIPRel() &&
-                 !NotRIPRel) {
+      } else if (Subtarget->isPICStyleRIPRel()) {
         if (TM.getRelocationModel() != Reloc::Static) {
           if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
             O << "@GOTPCREL";
         }
-        
-        isRIPRelative = true;
       }
     }
 
-    // Use rip when possible to reduce code size, except when
-    // index or base register are also part of the address. e.g.
-    // foo(%rip)(%rcx,%rax,4) is not legal.
-    if (isRIPRelative)
-      O << "(%rip)";
-    
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
@@ -679,25 +665,24 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
 }
 
 void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                                            const char *Modifier,
-                                            bool NotRIPRel) {
+                                            const char *Modifier) {
   MachineOperand BaseReg  = MI->getOperand(Op);
   MachineOperand IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
-  NotRIPRel |= IndexReg.getReg() || BaseReg.getReg();
   if (DispSpec.isGlobal() ||
       DispSpec.isCPI() ||
       DispSpec.isJTI() ||
       DispSpec.isSymbol()) {
-    printOperand(MI, Op+3, "mem", NotRIPRel);
+    printOperand(MI, Op+3, "mem");
   } else {
     int DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
   }
 
-  if (IndexReg.getReg() || BaseReg.getReg()) {
+  if ((IndexReg.getReg() || BaseReg.getReg()) &&
+      (Modifier == 0 || strcmp(Modifier, "no-rip"))) {
     unsigned ScaleVal = MI->getOperand(Op+1).getImm();
     unsigned BaseRegOperand = 0, IndexRegOperand = 2;
 
@@ -725,14 +710,14 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
 }
 
 void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
-                                         const char *Modifier, bool NotRIPRel){
+                                         const char *Modifier) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
   MachineOperand Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
       printOperand(MI, Op+4, Modifier);
       O << ':';
     }
-  printLeaMemReference(MI, Op, Modifier, NotRIPRel);
+  printLeaMemReference(MI, Op, Modifier);
 }
 
 void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
@@ -825,7 +810,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
-      printOperand(MI, OpNo, "mem", /*NotRIPRel=*/true);
+      printOperand(MI, OpNo, "mem");
       return false;
     case 'b': // Print QImode register
     case 'h': // Print QImode high register
@@ -838,7 +823,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return false;
 
     case 'P': // Don't print @PLT, but do print as memory.
-      printOperand(MI, OpNo, "mem", /*NotRIPRel=*/true);
+      printOperand(MI, OpNo, "mem");
       return false;
 
       case 'n': { // Negate the immediate or print a '-' before the operand.
@@ -875,7 +860,7 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
       // These only apply to registers, ignore on mem.
       break;
     case 'P': // Don't print @PLT, but do print as memory.
-      printMemReference(MI, OpNo, "mem", /*NotRIPRel=*/true);
+      printMemReference(MI, OpNo, "no-rip");
       return false;
     }
   }

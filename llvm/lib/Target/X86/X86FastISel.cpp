@@ -443,6 +443,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
 
     // Set up the basic address.
     AM.GV = GV;
+    
     if (!isCall &&
         TM.getRelocationModel() == Reloc::PIC_ &&
         !Subtarget->is64Bit())
@@ -481,7 +482,11 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
 
       // Prevent loading GV stub multiple times in same MBB.
       LocalValueMap[V] = AM.Base.Reg;
+    } else if (getTargetMachine()->symbolicAddressesAreRIPRel()) {
+      // Use rip-relative addressing if we can.
+      AM.Base.Reg = X86::RIP;
     }
+    
     return true;
   }
 
