@@ -1594,9 +1594,9 @@ public:
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
 
-  /// MarcDestructorReferenced - Prepare for calling destructor on the
+  /// MarkDestructorReferenced - Prepare for calling destructor on the
   /// constructed decl.
-  void MarcDestructorReferenced(SourceLocation Loc, QualType DeclInitType);
+  void MarkDestructorReferenced(SourceLocation Loc, QualType DeclInitType);
   
   /// DefineImplicitDefaultConstructor - Checks for feasibility of 
   /// defining this constructor as the default constructor.
