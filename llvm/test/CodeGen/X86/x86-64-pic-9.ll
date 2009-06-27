@@ -3,12 +3,12 @@
 ; RUN: grep {leaq	f(%rip),} %t1
 ; RUN: not grep GOTPCREL %t1
 
-define void ()* @g() {
+define void ()* @g() nounwind {
 entry:
 	ret void ()* @f
 }
 
-define internal void @f() {
+define internal void @f() nounwind {
 entry:
 	ret void
 }
