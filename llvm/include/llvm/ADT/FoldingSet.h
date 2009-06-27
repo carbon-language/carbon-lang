@@ -51,7 +51,7 @@ namespace llvm {
 ///    public:
 ///      MyNode(const char *N, unsigned V) : Name(N), Value(V) {}
 ///       ...
-///      void Profile(FoldingSetNodeID &ID) {
+///      void Profile(FoldingSetNodeID &ID) const {
 ///        ID.AddString(Name);
 ///        ID.AddInteger(Value);
 ///       }
