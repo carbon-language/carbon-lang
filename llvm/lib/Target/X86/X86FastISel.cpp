@@ -1145,12 +1145,10 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     return false;
   unsigned CalleeOp = 0;
   GlobalValue *GV = 0;
-  if (CalleeAM.Base.Reg != 0) {
-    assert(CalleeAM.GV == 0);
-    CalleeOp = CalleeAM.Base.Reg;
-  } else if (CalleeAM.GV != 0) {
-    assert(CalleeAM.GV != 0);
+  if (CalleeAM.GV != 0) {
     GV = CalleeAM.GV;
+  } else if (CalleeAM.Base.Reg != 0) {
+    CalleeOp = CalleeAM.Base.Reg;
   } else
     return false;
 
