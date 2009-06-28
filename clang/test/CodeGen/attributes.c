@@ -60,7 +60,7 @@ int t17() {
 extern int t18 __attribute__((weak_import));
 int t18 = 1;
 
-// RUN: grep 'define i[0-9]* @t19() nounwind {' %t &&
+// RUN: grep 'define i[0-9]* @t19()' %t &&
 extern int t19(void) __attribute__((weak_import));
 int t19(void) {
   return 10;
