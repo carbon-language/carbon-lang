@@ -157,3 +157,14 @@ struct s3 p[1];
 void f16(struct s3 *p) {
   struct s3 a = *((struct s3*) ((char*) &p[0]));
 }
+
+void inv(struct s1 *);
+
+// Invalidate the struct field.
+void f17() {
+  struct s1 t;
+  int x;
+  inv(&t);
+  if (t.e.d)
+    x = 1;
+}

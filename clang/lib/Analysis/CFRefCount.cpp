@@ -2863,14 +2863,25 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                 // For now just handle scalar fields.
                 FieldDecl *FD = *FI;
                 QualType FT = FD->getType();
-                
+                const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
+
                 if (Loc::IsLocType(FT) || 
                     (FT->isIntegerType() && FT->isScalarType())) {
-                  const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
-
                   SVal V = ValMgr.getConjuredSymbolVal(*I, FT, Count);
                   state = state->bindLoc(ValMgr.makeLoc(FR), V);
-                }                
+                }
+                else if (FT->isStructureType()) {
+                  // set the default value of the struct field to conjured
+                  // symbol. Note that the type of the symbol is irrelavant.
+                  // We cannot use the type of the struct otherwise ValMgr won't
+                  // give us the conjured symbol.
+                  StoreManager& StoreMgr = 
+                    Eng.getStateManager().getStoreManager();
+                  SVal V = ValMgr.getConjuredSymbolVal(*I, 
+                                                       Eng.getContext().IntTy,
+                                                       Count);
+                  state = StoreMgr.setDefaultValue(state, FR, V);
+                }
               }
             } else if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
               // Set the default value of the array to conjured symbol.
