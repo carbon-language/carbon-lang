@@ -319,6 +319,9 @@ SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
 }
   
 Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {    
+  if (isa<loc::ConcreteInt>(loc))
+    return store;
+
   const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
   ASTContext &C = StateMgr.getContext();
       

@@ -1074,6 +1074,9 @@ Store RegionStoreManager::Remove(Store store, Loc L) {
 }
 
 const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
+  if (isa<loc::ConcreteInt>(L))
+    return state;
+
   // If we get here, the location should be a region.
   const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
   
