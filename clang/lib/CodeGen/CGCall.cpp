@@ -392,6 +392,11 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (CompileOpts.NoImplicitFloat)
     FuncAttrs |= llvm::Attribute::NoImplicitFloat;
 
+  if (Features.StackProtector == 1)
+    FuncAttrs |= llvm::Attribute::StackProtect;
+  else if (Features.StackProtector == 2)
+    FuncAttrs |= llvm::Attribute::StackProtectReq;
+
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
   const ABIArgInfo &RetAI = FI.getReturnInfo();

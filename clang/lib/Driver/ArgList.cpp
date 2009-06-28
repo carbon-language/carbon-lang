@@ -49,6 +49,35 @@ Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1, bool Claim) const {
   return Res;
 }
 
+Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1, options::ID Id2,
+                         bool Claim) const {
+  Arg *Res = 0;
+  Arg *A0 = getLastArg(Id0, false);
+  Arg *A1 = getLastArg(Id1, false);
+  Arg *A2 = getLastArg(Id2, false);
+
+  int A0Idx = A0 ? A0->getIndex() : -1;
+  int A1Idx = A1 ? A1->getIndex() : -1;
+  int A2Idx = A2 ? A2->getIndex() : -1;
+
+  if (A0Idx > A1Idx) {
+    if (A0Idx > A2Idx)
+      Res = A0;
+    else if (A2Idx != -1)
+      Res = A2;
+  } else {
+    if (A1Idx > A2Idx)
+      Res = A1;
+    else if (A2Idx != -1)
+      Res = A2;
+  }
+
+  if (Claim && Res)
+    Res->claim();
+
+  return Res;
+}
+
 bool ArgList::hasFlag(options::ID Pos, options::ID Neg, bool Default) const {
   if (Arg *A = getLastArg(Pos, Neg))
     return A->getOption().matches(Pos);

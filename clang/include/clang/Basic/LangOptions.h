@@ -84,6 +84,10 @@ public:
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
 
+  unsigned StackProtector    : 2; // Whether stack protectors are on:
+                                  //   0 - None
+                                  //   1 - On
+                                  //   2 - All
 
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
@@ -116,7 +120,7 @@ public:
     Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
-    AltiVec = OpenCL = 0;
+    AltiVec = OpenCL = StackProtector = 0;
     
     SymbolVisibility = (unsigned) Default;
     

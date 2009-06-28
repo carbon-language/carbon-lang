@@ -498,6 +498,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fvisibility_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_fwritable_strings);
 
+  // Forward stack protector flags.
+  if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
+                               options::OPT_fstack_protector_all,
+                               options::OPT_fstack_protector)) {
+    if (A->getOption().matches(options::OPT_fno_stack_protector))
+      CmdArgs.push_back("--stack-protector=0");
+    else if (A->getOption().matches(options::OPT_fstack_protector))
+      CmdArgs.push_back("--stack-protector=1");
+    else
+      CmdArgs.push_back("--stack-protector=2");
+  }
+
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
 

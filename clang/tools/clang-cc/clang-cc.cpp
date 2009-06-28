@@ -660,6 +660,11 @@ PICLevel("pic-level", llvm::cl::desc("Value for __PIC__"));
 static llvm::cl::opt<bool>
 StaticDefine("static-define", llvm::cl::desc("Should __STATIC__ be defined"));
 
+static llvm::cl::opt<int>
+StackProtector("stack-protector",
+               llvm::cl::desc("Enable stack protectors"),
+               llvm::cl::init(-1));
+
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target,
                                        const llvm::StringMap<bool> &Features) {
@@ -813,6 +818,10 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   Options.NoInline = !OptSize && !OptLevel;
 
   Options.Static = StaticDefine;
+
+  assert(StackProtector <= 2 && "Invalid value for -stack-protector");
+  if (StackProtector != -1)
+    Options.StackProtector = StackProtector;
 
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
