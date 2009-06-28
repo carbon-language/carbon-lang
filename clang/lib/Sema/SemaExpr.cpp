@@ -3623,15 +3623,12 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
     std::swap(rhsType, lhsType);
   }
   
-  // Handle the case of an ext vector and scalar
+  // Handle the case of an ext vector and scalar.
   if (const ExtVectorType *LV = lhsType->getAsExtVectorType()) {
     QualType EltTy = LV->getElementType();
     if (EltTy->isIntegralType() && rhsType->isIntegralType()) {
       if (Context.getIntegerTypeOrder(EltTy, rhsType) >= 0) {
-        ImpCastExprToType(rex, EltTy);
-        rex = new (Context) CStyleCastExpr(lhsType, rex, lhsType,
-                                           rex->getSourceRange().getBegin(),
-                                           rex->getSourceRange().getEnd());
+        ImpCastExprToType(rex, lhsType);
         if (swapped) std::swap(rex, lex);
         return lhsType;
       }
@@ -3639,17 +3636,14 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
     if (EltTy->isRealFloatingType() && rhsType->isScalarType() &&
         rhsType->isRealFloatingType()) {
       if (Context.getFloatingTypeOrder(EltTy, rhsType) >= 0) {
-        ImpCastExprToType(rex, EltTy);
-        rex = new (Context) CStyleCastExpr(lhsType, rex, lhsType,
-                                           rex->getSourceRange().getBegin(),
-                                           rex->getSourceRange().getEnd());
+        ImpCastExprToType(rex, lhsType);
         if (swapped) std::swap(rex, lex);
         return lhsType;
       }
     }
   }
   
-  // You cannot convert between vector values of different size.
+  // Vectors of different size or scalar and non-ext-vector are errors.
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
     << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
