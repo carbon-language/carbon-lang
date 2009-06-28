@@ -40,6 +40,16 @@ static inline bool isMemRefInstr(const Value *I) {
   return isa<LoadInst>(I) || isa<StoreInst>(I);
 }
 
+static void getMemRefInstrs(
+    const Loop *L, SmallVectorImpl<Instruction*> &memrefs) {
+  for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
+      b != be; ++b)
+    for (BasicBlock::iterator i = (*b)->begin(), ie = (*b)->end();
+        i != ie; ++i)
+      if (isMemRefInstr(i))
+        memrefs.push_back(i);
+}
+
 //===----------------------------------------------------------------------===//
 //                             Dependence Testing
 //===----------------------------------------------------------------------===//
@@ -71,16 +81,30 @@ void LoopDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 static void PrintLoopInfo(
-    raw_ostream &OS, const LoopDependenceAnalysis *LDA, const Loop *L) {
+    raw_ostream &OS, LoopDependenceAnalysis *LDA, const Loop *L) {
   if (!L->empty()) return; // ignore non-innermost loops
 
   OS << "Loop at depth " << L->getLoopDepth() << ", header block: ";
   WriteAsOperand(OS, L->getHeader(), false);
   OS << "\n";
+
+  SmallVector<Instruction*, 8> memrefs;
+  getMemRefInstrs(L, memrefs);
+  OS << "  Load/store instructions: " << memrefs.size() << "\n";
+  OS << "  Pairwise dependence results:\n";
+  for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
+      end = memrefs.end(); x != end; ++x)
+    for (SmallVector<Instruction*, 8>::const_iterator y = x + 1;
+        y != end; ++y)
+      if (LDA->isDependencePair(*x, *y))
+        OS << "\t" << (x - memrefs.begin()) << "," << (y - memrefs.begin())
+           << ": " << (LDA->depends(*x, *y) ? "dependent" : "independent")
+           << "\n";
 }
 
 void LoopDependenceAnalysis::print(raw_ostream &OS, const Module*) const {
-  PrintLoopInfo(OS, this, this->L);
+  // TODO: doc why const_cast is safe
+  PrintLoopInfo(OS, const_cast<LoopDependenceAnalysis*>(this), this->L);
 }
 
 void LoopDependenceAnalysis::print(std::ostream &OS, const Module *M) const {
