@@ -21,6 +21,7 @@
 #include "llvm/Analysis/LoopDependenceAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Instructions.h"
 using namespace llvm;
 
 LoopPass *llvm::createLoopDependenceAnalysisPass() {
@@ -30,6 +31,29 @@ LoopPass *llvm::createLoopDependenceAnalysisPass() {
 static RegisterPass<LoopDependenceAnalysis>
 R("lda", "Loop Dependence Analysis", false, true);
 char LoopDependenceAnalysis::ID = 0;
+
+//===----------------------------------------------------------------------===//
+//                             Utility Functions
+//===----------------------------------------------------------------------===//
+
+static inline bool isMemRefInstr(const Value *I) {
+  return isa<LoadInst>(I) || isa<StoreInst>(I);
+}
+
+//===----------------------------------------------------------------------===//
+//                             Dependence Testing
+//===----------------------------------------------------------------------===//
+
+bool LoopDependenceAnalysis::isDependencePair(const Value *x,
+                                              const Value *y) const {
+  return isMemRefInstr(x) && isMemRefInstr(y)
+      && (isa<StoreInst>(x) || isa<StoreInst>(y));
+}
+
+bool LoopDependenceAnalysis::depends(Value *src, Value *dst) {
+  assert(isDependencePair(src, dst) && "Values form no dependence pair!");
+  return true;
+}
 
 //===----------------------------------------------------------------------===//
 //                   LoopDependenceAnalysis Implementation

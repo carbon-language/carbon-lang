@@ -28,6 +28,7 @@ namespace llvm {
 
   class AnalysisUsage;
   class ScalarEvolution;
+  class Value;
 
   class LoopDependenceAnalysis : public LoopPass {
     Loop *L;
@@ -36,6 +37,10 @@ namespace llvm {
   public:
     static char ID; // Class identification, replacement for typeinfo
     LoopDependenceAnalysis() : LoopPass(&ID) {}
+
+    /// TODO: docs
+    bool isDependencePair(const Value*, const Value*) const;
+    bool depends(Value*, Value*);
 
     bool runOnLoop(Loop*, LPPassManager&);
 
