@@ -822,12 +822,6 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   const TypedRegion *R = cast<TypedRegion>(MR);
   assert(R && "bad region");
 
-  if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return RetrieveField(state, FR);
-
-  if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
-    return RetrieveElement(state, ER);
-
   // FIXME: We should eventually handle funny addressing.  e.g.:
   //
   //   int x = ...;
@@ -848,6 +842,12 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // FIXME: handle Vector types.
   if (RTy->isVectorType())
       return UnknownVal();
+
+  if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
+    return RetrieveField(state, FR);
+
+  if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
+    return RetrieveElement(state, ER);
   
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionBindingsTy::data_type* V = B.lookup(R);
