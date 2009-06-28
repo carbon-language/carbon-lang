@@ -2940,9 +2940,13 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
     return false;
   }
 
-  // All scalar -> ext vector "c-style" casts are legal; the appropriate
+  // All non-pointer scalars can be cast to ExtVector type.  The appropriate
   // conversion will take place first from scalar to elt type, and then
   // splat from elt type to vector.
+  if (SrcTy->isPointerType())
+    return Diag(R.getBegin(),
+                diag::err_invalid_conversion_between_vector_and_scalar)
+      << DestTy << SrcTy << R;
   return false;
 }
 
@@ -3374,12 +3378,16 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return IncompatibleObjCQualifiedId;
   }
 
+  // Allow scalar to ExtVector assignments, and assignments of an ExtVector type
+  // to the same ExtVector type.
+  if (lhsType->isExtVectorType()) {
+    if (rhsType->isExtVectorType())
+      return lhsType == rhsType ? Compatible : Incompatible;
+    if (!rhsType->isVectorType() && rhsType->isArithmeticType())
+      return Compatible;
+  }
+  
   if (lhsType->isVectorType() || rhsType->isVectorType()) {
-    // For ExtVector, allow vector splats; float -> <n x float>
-    if (const ExtVectorType *LV = lhsType->getAsExtVectorType())
-      if (LV->getElementType() == rhsType)
-        return Compatible;
-
     // If we are allowing lax vector conversions, and LHS and RHS are both
     // vectors, the total size only needs to be the same. This is a bitcast;
     // no bits are changed but the result type is different.
@@ -3606,32 +3614,41 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
     }
   }
 
-  // If the lhs is an extended vector and the rhs is a scalar of the same type
-  // or a literal, promote the rhs to the vector type.
-  if (const ExtVectorType *V = lhsType->getAsExtVectorType()) {
-    QualType eltType = V->getElementType();
-
-    if ((eltType->getAsBuiltinType() == rhsType->getAsBuiltinType()) ||
-        (eltType->isIntegerType() && isa<IntegerLiteral>(rex)) ||
-        (eltType->isFloatingType() && isa<FloatingLiteral>(rex))) {
-      ImpCastExprToType(rex, lhsType);
-      return lhsType;
+  // Canonicalize the ExtVector to the LHS, remember if we swapped so we can
+  // swap back (so that we don't reverse the inputs to a subtract, for instance.
+  bool swapped = false;
+  if (rhsType->isExtVectorType()) {
+    swapped = true;
+    std::swap(rex, lex);
+    std::swap(rhsType, lhsType);
+  }
+  
+  // Handle the case of an ext vector and scalar
+  if (const ExtVectorType *LV = lhsType->getAsExtVectorType()) {
+    QualType EltTy = LV->getElementType();
+    if (EltTy->isIntegralType() && rhsType->isIntegralType()) {
+      if (Context.getIntegerTypeOrder(EltTy, rhsType) >= 0) {
+        ImpCastExprToType(rex, EltTy);
+        rex = new (Context) CStyleCastExpr(lhsType, rex, lhsType,
+                                           rex->getSourceRange().getBegin(),
+                                           rex->getSourceRange().getEnd());
+        if (swapped) std::swap(rex, lex);
+        return lhsType;
+      }
+    }
+    if (EltTy->isRealFloatingType() && rhsType->isScalarType() &&
+        rhsType->isRealFloatingType()) {
+      if (Context.getFloatingTypeOrder(EltTy, rhsType) >= 0) {
+        ImpCastExprToType(rex, EltTy);
+        rex = new (Context) CStyleCastExpr(lhsType, rex, lhsType,
+                                           rex->getSourceRange().getBegin(),
+                                           rex->getSourceRange().getEnd());
+        if (swapped) std::swap(rex, lex);
+        return lhsType;
+      }
     }
   }
-
-  // If the rhs is an extended vector and the lhs is a scalar of the same type,
-  // promote the lhs to the vector type.
-  if (const ExtVectorType *V = rhsType->getAsExtVectorType()) {
-    QualType eltType = V->getElementType();
-
-    if ((eltType->getAsBuiltinType() == lhsType->getAsBuiltinType()) ||
-        (eltType->isIntegerType() && isa<IntegerLiteral>(lex)) ||
-        (eltType->isFloatingType() && isa<FloatingLiteral>(lex))) {
-      ImpCastExprToType(lex, rhsType);
-      return rhsType;
-    }
-  }
-
+  
   // You cannot convert between vector values of different size.
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
     << lex->getType() << rex->getType()
