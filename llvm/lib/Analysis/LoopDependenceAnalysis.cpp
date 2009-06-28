@@ -43,5 +43,23 @@ bool LoopDependenceAnalysis::runOnLoop(Loop *L, LPPassManager &) {
 
 void LoopDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<ScalarEvolution>();
+  AU.addRequiredTransitive<ScalarEvolution>();
+}
+
+static void PrintLoopInfo(
+    raw_ostream &OS, const LoopDependenceAnalysis *LDA, const Loop *L) {
+  if (!L->empty()) return; // ignore non-innermost loops
+
+  OS << "Loop at depth " << L->getLoopDepth() << ", header block: ";
+  WriteAsOperand(OS, L->getHeader(), false);
+  OS << "\n";
+}
+
+void LoopDependenceAnalysis::print(raw_ostream &OS, const Module*) const {
+  PrintLoopInfo(OS, this, this->L);
+}
+
+void LoopDependenceAnalysis::print(std::ostream &OS, const Module *M) const {
+  raw_os_ostream os(OS);
+  print(os, M);
 }

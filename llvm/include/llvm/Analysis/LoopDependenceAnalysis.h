@@ -21,11 +21,12 @@
 #define LLVM_ANALYSIS_LOOP_DEPENDENCE_ANALYSIS_H
 
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Support/raw_ostream.h"
+#include <iosfwd>
 
 namespace llvm {
 
   class AnalysisUsage;
-  class LoopPass;
   class ScalarEvolution;
 
   class LoopDependenceAnalysis : public LoopPass {
@@ -39,6 +40,12 @@ namespace llvm {
     bool runOnLoop(Loop*, LPPassManager&);
 
     virtual void getAnalysisUsage(AnalysisUsage&) const;
+
+    void print(raw_ostream&, const Module* = 0) const;
+    virtual void print(std::ostream&, const Module* = 0) const;
+    void print(std::ostream *OS, const Module *M = 0) const {
+      if (OS) print(*OS, M);
+    }
   }; // class LoopDependenceAnalysis
 
 
