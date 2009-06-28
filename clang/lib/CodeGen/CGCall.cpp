@@ -392,9 +392,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (CompileOpts.NoImplicitFloat)
     FuncAttrs |= llvm::Attribute::NoImplicitFloat;
 
-  if (Features.StackProtector == 1)
+  if (Features.getStackProtectorMode() == LangOptions::SSPOn)
     FuncAttrs |= llvm::Attribute::StackProtect;
-  else if (Features.StackProtector == 2)
+  else if (Features.getStackProtectorMode() == LangOptions::SSPReq)
     FuncAttrs |= llvm::Attribute::StackProtectReq;
 
   QualType RetTy = FI.getReturnType();

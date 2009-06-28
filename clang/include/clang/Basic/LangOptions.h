@@ -84,16 +84,16 @@ public:
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
 
-  unsigned StackProtector    : 2; // Whether stack protectors are on:
-                                  //   0 - None
-                                  //   1 - On
-                                  //   2 - All
-
 private:
-  unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
-                   // this enum as unsigned because MSVC insists on making enums
-                   // signed.  Set/Query this value using accessors.  
+  unsigned GC : 2;                // Objective-C Garbage Collection modes.  We
+                                  // declare this enum as unsigned because MSVC
+                                  // insists on making enums signed.  Set/Query
+                                  // this value using accessors.
   unsigned SymbolVisibility  : 3; // Symbol's visibility.
+  unsigned StackProtector    : 2; // Whether stack protectors are on. We declare
+                                  // this enum as unsigned because MSVC insists
+                                  // on making enums signed.  Set/Query this
+                                  // value using accessors.
 
   /// The user provided name for the "main file", if non-null. This is
   /// useful in situations where the input file name does not match
@@ -104,6 +104,7 @@ public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
   enum GCMode { NonGC, GCOnly, HybridGC };
+  enum StackProtectorMode { SSPOff, SSPOn, SSPReq };
   enum VisibilityMode { 
     Default, 
     Protected, 
@@ -155,6 +156,13 @@ public:
   
   GCMode getGCMode() const { return (GCMode) GC; }
   void setGCMode(GCMode m) { GC = (unsigned) m; }
+
+  StackProtectorMode getStackProtectorMode() const {
+    return static_cast<StackProtectorMode>(StackProtector);
+  }
+  void setStackProtectorMode(StackProtectorMode m) {
+    StackProtector = static_cast<unsigned>(m);
+  }
 
   const char *getMainFileName() const { return MainFileName; }
   void setMainFileName(const char *Name) { MainFileName = Name; }

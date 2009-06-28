@@ -424,9 +424,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
           PickFP(&TI.getLongDoubleFormat(), -1/*FIXME*/, 17, 21, 33, 36));
   DefineBuiltinMacro(Buf, MacroBuf);
 
-  if (LangOpts.StackProtector == 1)
+  if (LangOpts.getStackProtectorMode() == LangOptions::SSPOn)
     DefineBuiltinMacro(Buf, "__SSP__=1");
-  else if (LangOpts.StackProtector == 2)
+  else if (LangOpts.getStackProtectorMode() == LangOptions::SSPReq)
     DefineBuiltinMacro(Buf, "__SSP_ALL__=2");
 
   // Get other target #defines.

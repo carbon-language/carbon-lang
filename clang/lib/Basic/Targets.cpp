@@ -238,7 +238,7 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
   // Blocks and stack protectors default to on for 10.6 (darwin10) and beyond.
   if (Maj > 9) {
     Opts.Blocks = 1;
-    Opts.StackProtector = 1;
+    Opts.setStackProtectorMode(LangOptions::SSPOn);
   }
 
   // Non-fragile ABI (in 64-bit mode) default to on for 10.5 (darwin9) and

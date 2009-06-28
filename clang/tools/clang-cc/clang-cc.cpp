@@ -819,9 +819,14 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   Options.Static = StaticDefine;
 
-  assert(StackProtector <= 2 && "Invalid value for -stack-protector");
-  if (StackProtector != -1)
-    Options.StackProtector = StackProtector;
+  switch (StackProtector) {
+  default:
+    assert(StackProtector <= 2 && "Invalid value for -stack-protector");
+  case -1: break;
+  case 0: Options.setStackProtectorMode(LangOptions::SSPOff); break;
+  case 1: Options.setStackProtectorMode(LangOptions::SSPOn);  break;
+  case 2: Options.setStackProtectorMode(LangOptions::SSPReq); break;
+  }
 
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
