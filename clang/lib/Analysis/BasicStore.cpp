@@ -319,54 +319,47 @@ SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
 }
   
 Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {    
-  switch (loc.getSubKind()) {      
-    case loc::MemRegionKind: {
-      const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
-      ASTContext &C = StateMgr.getContext();
+  const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
+  ASTContext &C = StateMgr.getContext();
       
-      // Special case: handle store of pointer values (Loc) to pointers via
-      // a cast to intXX_t*, void*, etc.  This is needed to handle
-      // OSCompareAndSwap32Barrier/OSCompareAndSwap64Barrier.
-      if (isa<Loc>(V) || isa<nonloc::LocAsInteger>(V))
-        if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-          // FIXME: Should check for index 0.
-          QualType T = ER->getLocationType(C);
+  // Special case: handle store of pointer values (Loc) to pointers via
+  // a cast to intXX_t*, void*, etc.  This is needed to handle
+  // OSCompareAndSwap32Barrier/OSCompareAndSwap64Barrier.
+  if (isa<Loc>(V) || isa<nonloc::LocAsInteger>(V))
+    if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+      // FIXME: Should check for index 0.
+      QualType T = ER->getLocationType(C);
         
-          if (isHigherOrderRawPtr(T, C))
-            R = ER->getSuperRegion();
-        }      
+      if (isHigherOrderRawPtr(T, C))
+        R = ER->getSuperRegion();
+    }      
       
-      if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
-        return store;
+  if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
+    return store;
       
-      // We only track bindings to self.ivar.
-      if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
-        if (IVR->getSuperRegion() != SelfRegion)
-          return store;
-      
-      if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
-        // Only convert 'V' to a location iff the underlying region type
-        // is a location as well.
-        // FIXME: We are allowing a store of an arbitrary location to
-        // a pointer.  We may wish to flag a type error here if the types
-        // are incompatible.  This may also cause lots of breakage
-        // elsewhere. Food for thought.
-        if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
-          if (TyR->isBoundable() &&
-              Loc::IsLocType(TyR->getValueType(C)))              
-            V = X->getLoc();
-        }
-      }
-
-      BindingsTy B = GetBindings(store);
-      return V.isUnknown()
-        ? VBFactory.Remove(B, R).getRoot()
-        : VBFactory.Add(B, R, V).getRoot();
-    }
-    default:
-      assert ("SetSVal for given Loc type not yet implemented.");
+  // We only track bindings to self.ivar.
+  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
+    if (IVR->getSuperRegion() != SelfRegion)
       return store;
+      
+  if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
+    // Only convert 'V' to a location iff the underlying region type
+    // is a location as well.
+    // FIXME: We are allowing a store of an arbitrary location to
+    // a pointer.  We may wish to flag a type error here if the types
+    // are incompatible.  This may also cause lots of breakage
+    // elsewhere. Food for thought.
+    if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
+      if (TyR->isBoundable() &&
+          Loc::IsLocType(TyR->getValueType(C)))              
+        V = X->getLoc();
+    }
   }
+
+  BindingsTy B = GetBindings(store);
+  return V.isUnknown()
+    ? VBFactory.Remove(B, R).getRoot()
+    : VBFactory.Add(B, R, V).getRoot();
 }
 
 Store BasicStoreManager::Remove(Store store, Loc loc) {
