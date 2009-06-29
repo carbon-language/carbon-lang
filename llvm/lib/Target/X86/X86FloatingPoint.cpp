@@ -996,7 +996,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // it is possible for FP0 to be alive after this instruction.
     if (!MI->killsRegister(X86::FP0)) {
       // Duplicate ST0
-      duplicateToTop(0, 0, I);
+      duplicateToTop(0, 7 /*temp register*/, I);
     }
     --StackTop;   // "Forget" we have something on the top of stack!
     break;
