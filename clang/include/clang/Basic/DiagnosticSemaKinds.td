@@ -398,6 +398,10 @@ def err_init_reference_member_uninitialized : Error<
 def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 
+// C++0x decltype
+def err_cannot_determine_declared_type_of_overloaded_function : Error<
+    "can't determine the declared type of an overloaded function">;
+    
 // C++0x auto
 def err_auto_variable_cannot_appear_in_own_initializer : Error<
   "variable %0 declared with 'auto' type cannot appear in its own initializer">;

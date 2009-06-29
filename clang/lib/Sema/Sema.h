@@ -406,6 +406,9 @@ public:
 
   QualType getQualifiedNameType(const CXXScopeSpec &SS, QualType T);
 
+  QualType BuildTypeofExprType(Expr *E);
+  QualType BuildDecltypeType(Expr *E);
+  
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //

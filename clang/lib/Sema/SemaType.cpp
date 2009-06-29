@@ -242,7 +242,11 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for decltype?");
     // TypeQuals handled by caller.
-    Result = Context.getDecltypeType(E);
+    Result = BuildDecltypeType(E);
+    if (Result.isNull()) {
+      Result = Context.IntTy;
+      isInvalid = true;
+    }
     break;
   }
   case DeclSpec::TST_auto: {
@@ -1462,4 +1466,17 @@ QualType Sema::getQualifiedNameType(const CXXScopeSpec &SS, QualType T) {
   NestedNameSpecifier *NNS
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   return Context.getQualifiedNameType(NNS, T);
+}
+
+QualType Sema::BuildTypeofExprType(Expr *E) {
+  return Context.getTypeOfExprType(E);
+}
+
+QualType Sema::BuildDecltypeType(Expr *E) {
+  if (E->getType() == Context.OverloadTy) {
+    Diag(E->getLocStart(), 
+         diag::err_cannot_determine_declared_type_of_overloaded_function);
+    return QualType();
+  }
+  return Context.getDecltypeType(E);
 }

@@ -530,7 +530,7 @@ TemplateTypeInstantiator::InstantiateTypeOfExprType(
   if (E.isInvalid())
     return QualType();
 
-  return SemaRef.Context.getTypeOfExprType(E.takeAs<Expr>());
+  return SemaRef.BuildTypeofExprType(E.takeAs<Expr>());
 }
 
 QualType 
@@ -555,7 +555,7 @@ TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T) const {
   if (E.isInvalid())
     return QualType();
   
-  return SemaRef.Context.getDecltypeType(E.takeAs<Expr>());
+  return SemaRef.BuildDecltypeType(E.takeAs<Expr>());
 }
 
 QualType 
