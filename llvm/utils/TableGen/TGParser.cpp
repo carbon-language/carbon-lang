@@ -1395,7 +1395,7 @@ TGParser::ParseDagArgList(Record *CurRec) {
 std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec, RecTy *EltTy) {
   std::vector<Init*> Result;
   RecTy *ItemType = EltTy;
-  int ArgN = 0;
+  unsigned int ArgN = 0;
   if (ArgsRec != 0 && EltTy == 0) {
     const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
     const RecordVal *RV = ArgsRec->getValue(TArgs[ArgN]);
@@ -1411,6 +1411,10 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec, Rec
     
     if (ArgsRec != 0 && EltTy == 0) {
       const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
+      if (ArgN >= TArgs.size()) {
+        TokError("too many template arguments");
+        return std::vector<Init*>();
+      }        
       const RecordVal *RV = ArgsRec->getValue(TArgs[ArgN]);
       assert(RV && "Template argument record not found??");
       ItemType = RV->getType();
