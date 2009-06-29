@@ -429,10 +429,30 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveValue(4);
     if (!strcmp(IDVal, ".quad"))
       return ParseDirectiveValue(8);
-    if (!strcmp(IDVal, ".fill"))
-      return ParseDirectiveFill();
+
+    // FIXME: Target hooks for IsPow2.
+    if (!strcmp(IDVal, ".align"))
+      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/1);
+    if (!strcmp(IDVal, ".align32"))
+      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
+    if (!strcmp(IDVal, ".balign"))
+      return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/1);
+    if (!strcmp(IDVal, ".balignw"))
+      return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/2);
+    if (!strcmp(IDVal, ".balignl"))
+      return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/4);
+    if (!strcmp(IDVal, ".p2align"))
+      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/1);
+    if (!strcmp(IDVal, ".p2alignw"))
+      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/2);
+    if (!strcmp(IDVal, ".p2alignl"))
+      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
+
     if (!strcmp(IDVal, ".org"))
       return ParseDirectiveOrg();
+
+    if (!strcmp(IDVal, ".fill"))
+      return ParseDirectiveFill();
     if (!strcmp(IDVal, ".space"))
       return ParseDirectiveSpace();
 
@@ -708,3 +728,77 @@ bool AsmParser::ParseDirectiveOrg() {
 
   return false;
 }
+
+/// ParseDirectiveAlign
+///  ::= {.align, ...} expression [ , expression [ , expression ]]
+bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
+  int64_t Alignment;
+  if (ParseAbsoluteExpression(Alignment))
+    return true;
+
+  SMLoc MaxBytesLoc;
+  bool HasFillExpr = false;
+  int64_t FillExpr = 0;
+  int64_t MaxBytesToFill = 0;
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    if (Lexer.isNot(asmtok::Comma))
+      return TokError("unexpected token in directive");
+    Lexer.Lex();
+
+    // The fill expression can be omitted while specifying a maximum number of
+    // alignment bytes, e.g:
+    //  .align 3,,4
+    if (Lexer.isNot(asmtok::Comma)) {
+      HasFillExpr = true;
+      if (ParseAbsoluteExpression(FillExpr))
+        return true;
+    }
+
+    if (Lexer.isNot(asmtok::EndOfStatement)) {
+      if (Lexer.isNot(asmtok::Comma))
+        return TokError("unexpected token in directive");
+      Lexer.Lex();
+
+      MaxBytesLoc = Lexer.getLoc();
+      if (ParseAbsoluteExpression(MaxBytesToFill))
+        return true;
+      
+      if (Lexer.isNot(asmtok::EndOfStatement))
+        return TokError("unexpected token in directive");
+    }
+  }
+
+  Lexer.Lex();
+
+  if (!HasFillExpr) {
+    // FIXME: Sometimes fill with nop.
+    FillExpr = 0;
+  }
+
+  // Compute alignment in bytes.
+  if (IsPow2) {
+    // FIXME: Diagnose overflow.
+    Alignment = 1 << Alignment;
+  }
+
+  // Diagnose non-sensical max bytes to fill.
+  if (MaxBytesLoc.isValid()) {
+    if (MaxBytesToFill < 1) {
+      Lexer.PrintMessage(MaxBytesLoc, "warning: alignment directive can never "
+                         "be satisfied in this many bytes, ignoring");
+      return false;
+    }
+
+    if (MaxBytesToFill >= Alignment) {
+      Lexer.PrintMessage(MaxBytesLoc, "warning: maximum bytes expression "
+                         "exceeds alignment and has no effect");
+      MaxBytesToFill = 0;
+    }
+  }
+
+  // FIXME: Target specific behavior about how the "extra" bytes are filled.
+  Out.EmitValueToAlignment(Alignment, FillExpr, ValueSize, MaxBytesToFill);
+
+  return false;
+}
+

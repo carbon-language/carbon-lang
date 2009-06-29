@@ -105,6 +105,7 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
 
   OS << Symbol->getName() << ":\n";
   Symbol->setSection(CurSection);
+  Symbol->setExternal(false);
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
@@ -164,20 +165,23 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
                                          unsigned ValueSize,
                                          unsigned MaxBytesToEmit) {
+  // Some assemblers don't support .balign, so we always emit as .p2align if
+  // this is a power of two. Otherwise we assume the client knows the target
+  // supports .balign and use that.
   unsigned Pow2 = Log2_32(ByteAlignment);
-  assert((1U << Pow2) == ByteAlignment && "Invalid alignment!");
+  bool IsPow2 = (1U << Pow2) == ByteAlignment;
 
   switch (ValueSize) {
   default:
     assert(0 && "Invalid size for machine code value!");
   case 8:
     assert(0 && "Unsupported alignment size!");
-  case 1: OS << ".p2align"; break;
-  case 2: OS << ".p2alignw"; break;
-  case 4: OS << ".p2alignl"; break;
+  case 1: OS << (IsPow2 ? ".p2align" : ".balign"); break;
+  case 2: OS << (IsPow2 ? ".p2alignw" : ".balignw"); break;
+  case 4: OS << (IsPow2 ? ".p2alignl" : ".balignl"); break;
   }
 
-  OS << ' ' << Pow2;
+  OS << ' ' << (IsPow2 ? Pow2 : ByteAlignment);
 
   OS << ", " << truncateToSize(Value, ValueSize);
   if (MaxBytesToEmit) 

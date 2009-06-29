@@ -79,6 +79,8 @@ private:
   bool ParseDirectiveSpace(); // ".space"
   bool ParseDirectiveSet(); // ".set"
   bool ParseDirectiveOrg(); // ".org"
+  // ".align{,32}", ".p2align{,w,l}"
+  bool ParseDirectiveAlign(bool IsPow2, unsigned ValueSize);
   
 };
 

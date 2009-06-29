@@ -135,7 +135,7 @@ namespace llvm {
     /// This used to implement the .align assembler directive.
     ///
     /// @param ByteAlignment - The alignment to reach. This must be a power of
-    /// two.
+    /// two on some targets.
     /// @param Value - The value to use when filling bytes.
     /// @param Size - The size of the integer (in bytes) to emit for @param
     /// Value. This must match a native machine width.
