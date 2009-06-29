@@ -157,6 +157,24 @@ let Namespace = "X86" in {
   def XMM14: Register<"xmm14">, DwarfRegNum<[31, -2, -2]>;
   def XMM15: Register<"xmm15">, DwarfRegNum<[32, -2, -2]>;
 
+  // YMM Registers, used by AVX instructions
+  def YMM0: Register<"ymm0">, DwarfRegNum<[17, 21, 21]>;
+  def YMM1: Register<"ymm1">, DwarfRegNum<[18, 22, 22]>;
+  def YMM2: Register<"ymm2">, DwarfRegNum<[19, 23, 23]>;
+  def YMM3: Register<"ymm3">, DwarfRegNum<[20, 24, 24]>;
+  def YMM4: Register<"ymm4">, DwarfRegNum<[21, 25, 25]>;
+  def YMM5: Register<"ymm5">, DwarfRegNum<[22, 26, 26]>;
+  def YMM6: Register<"ymm6">, DwarfRegNum<[23, 27, 27]>;
+  def YMM7: Register<"ymm7">, DwarfRegNum<[24, 28, 28]>;
+  def YMM8:  Register<"ymm8">,  DwarfRegNum<[25, -2, -2]>;
+  def YMM9:  Register<"ymm9">,  DwarfRegNum<[26, -2, -2]>;
+  def YMM10: Register<"ymm10">, DwarfRegNum<[27, -2, -2]>;
+  def YMM11: Register<"ymm11">, DwarfRegNum<[28, -2, -2]>;
+  def YMM12: Register<"ymm12">, DwarfRegNum<[29, -2, -2]>;
+  def YMM13: Register<"ymm13">, DwarfRegNum<[30, -2, -2]>;
+  def YMM14: Register<"ymm14">, DwarfRegNum<[31, -2, -2]>;
+  def YMM15: Register<"ymm15">, DwarfRegNum<[32, -2, -2]>;
+
   // Floating point stack registers
   def ST0 : Register<"st(0)">, DwarfRegNum<[33, 12, 11]>;
   def ST1 : Register<"st(1)">, DwarfRegNum<[34, 13, 12]>;
@@ -228,6 +246,11 @@ def : SubRegSet<4, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
                     R8,  R9,  R10, R11, R12, R13, R14, R15],
                    [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, 
                     R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
+
+def : SubRegSet<1, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,  
+                    YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
+                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, 
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
 //===----------------------------------------------------------------------===//
 // Register Class Definitions... now that we have all of the pieces, define the
@@ -755,6 +778,10 @@ def VR128 : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],128,
     }
   }];
 }
+def VR256 : RegisterClass<"X86", [ v8i32, v4i64, v8f32, v4f64],256,
+                          [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
+                           YMM8, YMM9, YMM10, YMM11,
+                           YMM12, YMM13, YMM14, YMM15]>;
 
 // Status flags registers.
 def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]> {

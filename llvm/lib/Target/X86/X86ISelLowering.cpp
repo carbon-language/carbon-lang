@@ -785,6 +785,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   if (!UseSoftFloat && Subtarget->hasAVX()) {
+    addRegisterClass(MVT::v8f32, X86::VR256RegisterClass);
+    addRegisterClass(MVT::v4f64, X86::VR256RegisterClass);
+    addRegisterClass(MVT::v8i32, X86::VR256RegisterClass);
+    addRegisterClass(MVT::v4i64, X86::VR256RegisterClass);
+
     setOperationAction(ISD::LOAD,               MVT::v8f32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v8i32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4f64, Legal);
