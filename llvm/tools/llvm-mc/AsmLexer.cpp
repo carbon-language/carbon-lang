@@ -109,8 +109,11 @@ asmtok::TokKind AsmLexer::LexPercent() {
 /// LexSlash: Slash: /
 ///           C-Style Comment: /* ... */
 asmtok::TokKind AsmLexer::LexSlash() {
-  if (*CurPtr != '*')
-    return asmtok::Slash;
+  switch (*CurPtr) {
+  case '*': break; // C style comment.
+  case '/': return ++CurPtr, LexLineComment();
+  default:  return asmtok::Slash;
+  }
 
   // C Style comment.
   ++CurPtr;  // skip the star.
@@ -129,8 +132,9 @@ asmtok::TokKind AsmLexer::LexSlash() {
   }
 }
 
-/// LexHash: Comment: #[^\n]*
-asmtok::TokKind AsmLexer::LexHash() {
+/// LexLineComment: Comment: #[^\n]*
+///                        : //[^\n]*
+asmtok::TokKind AsmLexer::LexLineComment() {
   int CurChar = getNextChar();
   while (CurChar != '\n' && CurChar != '\n' && CurChar != EOF)
     CurChar = getNextChar();
@@ -281,7 +285,7 @@ asmtok::TokKind AsmLexer::LexToken() {
     return asmtok::Exclaim;
   case '%': return LexPercent();
   case '/': return LexSlash();
-  case '#': return LexHash();
+  case '#': return LexLineComment();
   case '"': return LexQuote();
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
