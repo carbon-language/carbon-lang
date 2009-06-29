@@ -89,7 +89,7 @@ namespace llvm {
     int is() const {
       int TyNo = ::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0);
       assert(TyNo != -1 && "Type query could never succeed on PointerUnion!");
-      return Val.getInt() == TyNo;
+      return static_cast<int>(Val.getInt()) == TyNo;
     }
     
     /// get<T>() - Return the value of the specified pointer type. If the

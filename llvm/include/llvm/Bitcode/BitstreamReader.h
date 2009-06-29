@@ -324,7 +324,7 @@ public:
 
   uint64_t ReadVBR64(unsigned NumBits) {
     uint64_t Piece = Read(NumBits);
-    if ((Piece & (1U << (NumBits-1))) == 0)
+    if ((Piece & (uint64_t(1) << (NumBits-1))) == 0)
       return Piece;
 
     uint64_t Result = 0;
@@ -332,7 +332,7 @@ public:
     while (1) {
       Result |= (Piece & ((1U << (NumBits-1))-1)) << NextBit;
 
-      if ((Piece & (1U << (NumBits-1))) == 0)
+      if ((Piece & (uint64_t(1) << (NumBits-1))) == 0)
         return Result;
 
       NextBit += NumBits-1;
