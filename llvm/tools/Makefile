@@ -20,7 +20,7 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli gccas gccld llvm-extract llvm-db \
-                 bugpoint llvm-bcanalyzer llvm-stub llvmc \
+                 bugpoint llvm-bcanalyzer llvm-stub \
                  llvm-mc
 
 # Let users override the set of tools to build from the command line.
@@ -32,7 +32,7 @@ endif
 include $(LEVEL)/Makefile.config
 
 ifeq ($(ENABLE_PIC),1)
-  DIRS += lto
+  DIRS += lto llvmc
   ifdef BINUTILS_INCDIR
     DIRS += gold
   endif
