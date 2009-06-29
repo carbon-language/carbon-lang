@@ -511,11 +511,26 @@ public:
   
   /// \brief The function template from which this function template 
   /// specialization was generated.
-  FunctionTemplateDecl *Template;
+  ///
+  /// The bit will be 0 for an implicit instantiation, 1 for an explicit 
+  /// specialization.
+  llvm::PointerIntPair<FunctionTemplateDecl *, 1> Template;
   
   /// \brief The template arguments used to produce the function template
   /// specialization from the function template.
   const TemplateArgumentList *TemplateArguments;
+  
+  /// \brief Retrieve the template from which this function was specialized.
+  FunctionTemplateDecl *getTemplate() const { return Template.getPointer(); }
+  
+  /// \brief Determine whether this is an explicit specialization.
+  bool isExplicitSpecialization() const { return Template.getInt(); }
+  
+  /// \brief Set whether this is an explicit specialization or an implicit
+  /// instantiation.
+  void setExplicitSpecialization(bool ES) {
+    Template.setInt(ES);
+  }
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, TemplateArguments->getFlatArgumentList(), 

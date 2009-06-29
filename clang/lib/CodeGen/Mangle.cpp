@@ -170,7 +170,29 @@ void CXXNameMangler::mangleGuardVariable(const VarDecl *D)
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // <encoding> ::= <function name> <bare-function-type>
   mangleName(FD);
-  mangleBareFunctionType(FD->getType()->getAsFunctionType(), false);
+  
+  // Whether the mangling of a function type includes the return type depends 
+  // on the context and the nature of the function. The rules for deciding 
+  // whether the return type is included are:
+  // 
+  //   1. Template functions (names or types) have return types encoded, with
+  //   the exceptions listed below.
+  //   2. Function types not appearing as part of a function name mangling, 
+  //   e.g. parameters, pointer types, etc., have return type encoded, with the
+  //   exceptions listed below.
+  //   3. Non-template function names do not have return types encoded.
+  //
+  // The exceptions mentioned in (1) and (2) above, for which the return 
+  // type is never included, are
+  //   1. Constructors.
+  //   2. Destructors.
+  //   3. Conversion operator functions, e.g. operator int.
+  bool MangleReturnType = false;
+  if (FD->getPrimaryTemplate() &&
+      !(isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD) ||
+        isa<CXXConversionDecl>(FD)))
+    MangleReturnType = true;
+  mangleBareFunctionType(FD->getType()->getAsFunctionType(), MangleReturnType);
 }
 
 static bool isStdNamespace(const DeclContext *DC) {
@@ -252,6 +274,12 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
   case DeclarationName::CXXUsingDirective:
     assert(false && "Can't mangle a using directive name!");
     break;
+  }
+  
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
+    if (const TemplateArgumentList *TemplateArgs 
+          = Function->getTemplateSpecializationArgs())
+      mangleTemplateArgumentList(*TemplateArgs);
   }
 }
 

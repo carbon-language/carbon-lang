@@ -584,7 +584,7 @@ FunctionTemplateDecl *FunctionDecl::getPrimaryTemplate() const {
   if (FunctionTemplateSpecializationInfo *Info 
         = TemplateOrSpecialization
             .dyn_cast<FunctionTemplateSpecializationInfo*>()) {
-    return Info->Template;
+    return Info->Template.getPointer();
   }
   return 0;
 }
@@ -610,13 +610,34 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
     Info = new (Context) FunctionTemplateSpecializationInfo;
   
   Info->Function = this;
-  Info->Template = Template;
+  Info->Template.setPointer(Template);
+  Info->Template.setInt(0); // Implicit instantiation, unless told otherwise
   Info->TemplateArguments = TemplateArgs;
   TemplateOrSpecialization = Info;
   
   // Insert this function template specialization into the set of known
   // function template specialiations.
   Template->getSpecializations().InsertNode(Info, InsertPos);
+}
+
+bool FunctionDecl::isExplicitSpecialization() const {
+  // FIXME: check this property for explicit specializations of member
+  // functions of class templates.
+  FunctionTemplateSpecializationInfo *Info 
+    = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
+  if (!Info)
+    return false;
+  
+  return Info->isExplicitSpecialization();
+}
+
+void FunctionDecl::setExplicitSpecialization(bool ES) {
+  // FIXME: set this property for explicit specializations of member functions
+  // of class templates.
+  FunctionTemplateSpecializationInfo *Info 
+    = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
+  if (Info)
+    Info->setExplicitSpecialization(ES);
 }
 
 //===----------------------------------------------------------------------===//

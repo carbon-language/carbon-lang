@@ -961,7 +961,15 @@ public:
                                          FunctionTemplateDecl *Template,
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos);
-  
+
+  /// \brief Determine whether this is an explicit specialization of a 
+  /// function template or a member function of a class template.
+  bool isExplicitSpecialization() const;
+
+  /// \brief Note that this is an explicit specialization of a function template
+  /// or a member function of a class template.
+  void setExplicitSpecialization(bool ES);
+                                 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;

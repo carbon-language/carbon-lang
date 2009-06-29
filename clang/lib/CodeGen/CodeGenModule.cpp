@@ -243,12 +243,20 @@ void CodeGenModule::EmitAnnotations() {
 static CodeGenModule::GVALinkage
 GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD, 
                       const LangOptions &Features) {
+  // The kind of external linkage this function will have, if it is not
+  // inline or static.
+  CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
+  if (Context.getLangOptions().CPlusPlus &&
+      (FD->getPrimaryTemplate() || FD->getInstantiatedFromMemberFunction()) &&
+      !FD->isExplicitSpecialization())
+    External = CodeGenModule::GVA_TemplateInstantiation;
+      
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     // C++ member functions defined inside the class are always inline.
     if (MD->isInline() || !MD->isOutOfLine())
       return CodeGenModule::GVA_CXXInline;
     
-    return CodeGenModule::GVA_StrongExternal;
+    return External;
   }
   
   // "static" functions get internal linkage.
@@ -256,7 +264,7 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
     return CodeGenModule::GVA_Internal;
 
   if (!FD->isInline())
-    return CodeGenModule::GVA_StrongExternal;
+    return External;
   
   // If the inline function explicitly has the GNU inline attribute on it, or if
   // this is C89 mode, we use to GNU semantics.
@@ -273,7 +281,7 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
     if (FD->isExternGNUInline(Context))
       return CodeGenModule::GVA_C99Inline;
     // Normal inline is a strong symbol.
-    return CodeGenModule::GVA_StrongExternal;
+    return External;
   }
 
   // The definition of inline changes based on the language.  Note that we
@@ -306,7 +314,7 @@ void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
     // In C99 mode, 'inline' functions are guaranteed to have a strong
     // definition somewhere else, so we can use available_externally linkage.
     GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
-  } else if (Linkage == GVA_CXXInline) {
+  } else if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation) {
     // In C++, the compiler has to emit a definition in every translation unit
     // that references the function.  We should use linkonce_odr because
     // a) if all references in this translation unit are optimized away, we

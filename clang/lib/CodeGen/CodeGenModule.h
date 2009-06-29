@@ -373,7 +373,8 @@ public:
     GVA_Internal,
     GVA_C99Inline,
     GVA_CXXInline,
-    GVA_StrongExternal
+    GVA_StrongExternal,
+    GVA_TemplateInstantiation
   };
   
 private:
