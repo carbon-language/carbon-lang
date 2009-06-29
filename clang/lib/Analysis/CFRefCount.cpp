@@ -2796,7 +2796,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  to identify conjured symbols by an expression pair: the enclosing
         //  expression (the context) and the expression itself.  This should
         //  disambiguate conjured symbols. 
-        
+        unsigned Count = Builder.getCurrentBlockCount();
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
 
         if (R) {
@@ -2833,7 +2833,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           
           if (R->isBoundable()) {
             // Set the value of the variable to be a conjured symbol.
-            unsigned Count = Builder.getCurrentBlockCount();
+
             QualType T = R->getValueType(Ctx);
           
             if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
@@ -2894,6 +2894,15 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
               state = state->bindLoc(*MR, UnknownVal());
             }
           }
+        }
+        else if (isa<AllocaRegion>(MR->getRegion())) {
+          // Invalidate the alloca region by setting its default value to 
+          // conjured symbol. The type of the symbol is irrelavant.
+          SVal V = ValMgr.getConjuredSymbolVal(*I, Eng.getContext().IntTy, 
+                                               Count);
+          StoreManager& StoreMgr = 
+                    Eng.getStateManager().getStoreManager();
+          state = StoreMgr.setDefaultValue(state, MR->getRegion(), V);
         }
         else
           state = state->bindLoc(*MR, UnknownVal());

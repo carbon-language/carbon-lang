@@ -168,3 +168,15 @@ void f17() {
   if (t.e.d)
     x = 1;
 }
+
+void read(char*);
+
+void f18() {
+  char *q;
+  char *p = (char *) __builtin_alloca(10);
+  read(p);
+  q = p;
+  q++;
+  if (*q) { // no-warning
+  }
+}
