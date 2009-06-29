@@ -547,21 +547,6 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
       if (LHSd) {
         return new StringInit(LHSd->getDef()->getName());
       }
-
-//       VarInit *LHSv = dynamic_cast<VarInit*>(LHS);
-//       if (LHSv) {
-//         // If this is not a template arg, cast it
-//         if (!CurRec->isTemplateArg(LHSv->getName())
-//             && !CurMultiClass) {
-//           return new StringInit(LHSv->getName());
-//         }
-//         break;
-//       }
-
-//       OpInit *LHSo = dynamic_cast<OpInit*>(LHS);
-//       if (!LHSo) {
-//         return new StringInit(LHS->getAsString());
-//       }
     }
     else {
       StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
