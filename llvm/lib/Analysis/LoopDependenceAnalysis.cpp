@@ -89,7 +89,7 @@ static void PrintLoopInfo(
   OS << "\n";
 
   SmallVector<Instruction*, 8> memrefs;
-  getMemRefInstrs(L, memrefs);
+  GetMemRefInstrs(L, memrefs);
   OS << "  Load/store instructions: " << memrefs.size() << "\n";
   OS << "  Pairwise dependence results:\n";
   for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
