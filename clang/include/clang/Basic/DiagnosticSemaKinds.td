@@ -1579,6 +1579,12 @@ def err_overload_multiple_match : Error<
 def err_only_constructors_take_base_inits : Error<
   "only constructors take base initializers">;
 
+def error_multiple_mem_initialization : Error <
+  "multiple initializations given for non-static member '%0'">;
+
+def error_multiple_base_initialization : Error <
+  "multiple initializations given for base %0">;
+
 def err_mem_init_not_member_or_class : Error<
   "member initializer %0 does not name a non-static data member or base "
   "class">;

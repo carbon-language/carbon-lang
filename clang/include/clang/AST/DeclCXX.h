@@ -609,6 +609,10 @@ public:
   /// arguments.
   typedef Expr * const * arg_const_iterator;
 
+  /// getBaseOrMember - get the generic 'member' representing either the field
+  /// or a base class.
+  uintptr_t getBaseOrMember() const { return BaseOrMember; }
+  
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
   bool isBaseInitializer() const { return (BaseOrMember & 0x1) != 0; }

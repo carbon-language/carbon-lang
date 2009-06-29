@@ -766,6 +766,24 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     Diag(ColonLoc, diag::err_only_constructors_take_base_inits);
     return;
   }
+  llvm::DenseSet<uintptr_t>Members;
+  
+  for (unsigned i = 0; i < NumMemInits; i++) {
+    CXXBaseOrMemberInitializer *Member = 
+      static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
+    if (Members.count(Member->getBaseOrMember()) == 0)
+      Members.insert(Member->getBaseOrMember());
+    else {
+      if (FieldDecl *Field = Member->getMember())
+        Diag(ColonLoc, diag::error_multiple_mem_initialization)
+          << Field->getNameAsString();
+      else if (Type *BaseClass = Member->getBaseClass())
+        Diag(ColonLoc, diag::error_multiple_base_initialization)
+          << BaseClass->getDesugaredType(true);
+      else
+        assert(false && "ActOnMemInitializers - neither field or base");
+    }
+  }
 }
 
 namespace {
