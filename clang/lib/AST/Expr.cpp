@@ -41,8 +41,7 @@ CharacterLiteral* CharacterLiteral::Clone(ASTContext &C) const {
 }
 
 FloatingLiteral* FloatingLiteral::Clone(ASTContext &C) const {
-  bool exact = IsExact;
-  return new (C) FloatingLiteral(Value, &exact, getType(), Loc);
+  return new (C) FloatingLiteral(Value, IsExact, getType(), Loc);
 }
 
 ImaginaryLiteral* ImaginaryLiteral::Clone(ASTContext &C) const {

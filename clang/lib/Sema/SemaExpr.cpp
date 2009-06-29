@@ -1310,8 +1310,8 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     // isExact will be set by GetFloatValue().
     bool isExact = false;
-    Res = new (Context) FloatingLiteral(Literal.GetFloatValue(Format, &isExact),
-                                        &isExact, Ty, Tok.getLocation());
+    llvm::APFloat Val = Literal.GetFloatValue(Format, &isExact);
+    Res = new (Context) FloatingLiteral(Val, isExact, Ty, Tok.getLocation());
 
   } else if (!Literal.isIntegerLiteral()) {
     return ExprError();

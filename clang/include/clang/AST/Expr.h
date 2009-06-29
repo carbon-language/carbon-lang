@@ -467,9 +467,9 @@ class FloatingLiteral : public Expr {
   bool IsExact : 1;
   SourceLocation Loc;
 public:
-  FloatingLiteral(const llvm::APFloat &V, bool* isexact, 
+  FloatingLiteral(const llvm::APFloat &V, bool isexact, 
                   QualType Type, SourceLocation L)
-    : Expr(FloatingLiteralClass, Type), Value(V), IsExact(*isexact), Loc(L) {} 
+    : Expr(FloatingLiteralClass, Type), Value(V), IsExact(isexact), Loc(L) {} 
 
   /// \brief Construct an empty floating-point literal.
   explicit FloatingLiteral(EmptyShell Empty) 
