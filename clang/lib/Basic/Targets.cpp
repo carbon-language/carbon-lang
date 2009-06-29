@@ -75,7 +75,6 @@ static void getOpenBSDDefines(const LangOptions &Opts, bool is64Bit,
   // OpenBSD defines; list based off of gcc output
 
   Define(Defs, "__OpenBSD__", "1");
-  Define(Defs, "__KPRINTF_ATTRIBUTE__");
   DefineStd(Defs, "unix", Opts);
   Define(Defs, "__ELF__", "1");
   if (is64Bit) {
