@@ -1305,6 +1305,7 @@ void FunctionPassManagerImpl::releaseMemoryOnTheFly() {
       FPPM->getContainedPass(Index)->releaseMemory();
     }
   }
+  wasRun = false;
 }
 
 // Execute all the passes managed by this top level manager.
