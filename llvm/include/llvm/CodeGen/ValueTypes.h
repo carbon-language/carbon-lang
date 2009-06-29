@@ -52,29 +52,34 @@ namespace llvm {
 
       v2i8           =  14,   //  2 x i8
       v4i8           =  15,   //  4 x i8
-      v2i16          =  16,   //  2 x i16
-      v8i8           =  17,   //  8 x i8
-      v4i16          =  18,   //  4 x i16
-      v2i32          =  19,   //  2 x i32
-      v1i64          =  20,   //  1 x i64
-      v16i8          =  21,   // 16 x i8
-      v8i16          =  22,   //  8 x i16
-      v3i32          =  23,   //  3 x i32
-      v4i32          =  24,   //  4 x i32
-      v2i64          =  25,   //  2 x i64
+      v8i8           =  16,   //  8 x i8
+      v16i8          =  17,   // 16 x i8
+      v32i8          =  18,   // 32 x i8
+      v2i16          =  19,   //  2 x i16
+      v4i16          =  20,   //  4 x i16
+      v8i16          =  21,   //  8 x i16
+      v16i16         =  22,   // 16 x i16
+      v2i32          =  23,   //  2 x i32
+      v3i32          =  24,   //  3 x i32
+      v4i32          =  25,   //  4 x i32
+      v8i32          =  26,   //  8 x i32
+      v1i64          =  27,   //  1 x i64
+      v2i64          =  28,   //  2 x i64
+      v4i64          =  29,   //  4 x i64
 
-      v2f32          =  26,   //  2 x f32
-      v3f32          =  27,   //  3 x f32
-      v4f32          =  28,   //  4 x f32
-      v2f64          =  29,   //  2 x f64
-
+      v2f32          =  30,   //  2 x f32
+      v3f32          =  31,   //  3 x f32
+      v4f32          =  32,   //  4 x f32
+      v8f32          =  33,   //  8 x f32
+      v2f64          =  34,   //  2 x f64
+      v4f64          =  35,   //  4 x f64
+  
       FIRST_VECTOR_VALUETYPE = v2i8,
-      LAST_VECTOR_VALUETYPE  = v2f64,
+      LAST_VECTOR_VALUETYPE  = v4f64,
 
-      LAST_VALUETYPE =  30,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  36,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
-      // Affects ValueTypeActions in TargetLowering.h.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
       // This value must be a multiple of 32.
       MAX_ALLOWED_VALUETYPE = 64,
@@ -179,28 +184,34 @@ namespace llvm {
         if (NumElements == 4)  return v4i8;
         if (NumElements == 8)  return v8i8;
         if (NumElements == 16) return v16i8;
+        if (NumElements == 32) return v32i8;
         break;
       case i16:
         if (NumElements == 2)  return v2i16;
         if (NumElements == 4)  return v4i16;
         if (NumElements == 8)  return v8i16;
+        if (NumElements == 16)  return v16i16;
         break;
       case i32:
         if (NumElements == 2)  return v2i32;
         if (NumElements == 3)  return v3i32;
         if (NumElements == 4)  return v4i32;
+	if (NumElements == 8)  return v8i32;
         break;
       case i64:
         if (NumElements == 1)  return v1i64;
         if (NumElements == 2)  return v2i64;
+	if (NumElements == 4)  return v4i64;
         break;
       case f32:
         if (NumElements == 2)  return v2f32;
         if (NumElements == 3)  return v3f32;
         if (NumElements == 4)  return v4f32;
+        if (NumElements == 8)  return v8f32;
         break;
       case f64:
         if (NumElements == 2)  return v2f64;
+        if (NumElements == 4)  return v4f64;
         break;
       }
       return getExtendedVectorVT(VT, NumElements);
@@ -235,15 +246,15 @@ namespace llvm {
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
       return isSimple() ?
-             ((V >= f32 && V <= ppcf128) || (V >= v2f32 && V <= v2f64)) :
-             isExtendedFloatingPoint();
+             ((V >= f32 && V <= ppcf128) ||
+              (V >= v2f32 && V <= v4f64)) : isExtendedFloatingPoint();
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
       return isSimple() ?
              ((V >= FIRST_INTEGER_VALUETYPE && V <= LAST_INTEGER_VALUETYPE) ||
-              (V >= v2i8 && V <= v2i64)) : isExtendedInteger();
+              (V >= v2i8 && V <= v4i64)) : isExtendedInteger();
     }
 
     /// isVector - Return true if this is a vector value type.
@@ -266,6 +277,13 @@ namespace llvm {
              (V==v16i8 || V==v8i16 || V==v4i32 ||
               V==v2i64 || V==v4f32 || V==v2f64) :
              isExtended128BitVector();
+    }
+
+    /// is256BitVector - Return true if this is a 256-bit vector type.
+    inline bool is256BitVector() const {
+      return isSimple() ? 
+             (V==v8f32 || V==v4f64 || V==v32i8 || V==v16i16 || V==v8i32 ||
+              V==v4i64) : isExtended256BitVector();
     }
 
     /// isByteSized - Return true if the bit size is a multiple of 8.
@@ -322,19 +340,25 @@ namespace llvm {
       case v2i8 :
       case v4i8 :
       case v8i8 :
-      case v16i8: return i8;
+      case v16i8:
+      case v32i8: return i8;
       case v2i16:
       case v4i16:
-      case v8i16: return i16;
+      case v8i16:
+      case v16i16: return i16;
       case v2i32:
       case v3i32:
-      case v4i32: return i32;
+      case v4i32:
+      case v8i32: return i32;
       case v1i64:
-      case v2i64: return i64;
+      case v2i64:
+      case v4i64: return i64;
       case v2f32:
       case v3f32:
-      case v4f32: return f32;
-      case v2f64: return f64;
+      case v4f32:
+      case v8f32: return f32;
+      case v2f64:
+      case v4f64: return f64;
       }
     }
 
@@ -345,13 +369,19 @@ namespace llvm {
       switch (V) {
       default:
         return getExtendedVectorNumElements();
-      case v16i8: return 16;
+      case v32i8: return 32;
+      case v16i8:
+      case v16i16: return 16;
       case v8i8 :
-      case v8i16: return 8;
+      case v8i16:
+      case v8i32:
+      case v8f32: return 8;
       case v4i8:
       case v4i16:
       case v4i32:
-      case v4f32: return 4;
+      case v4i64:
+      case v4f32:
+      case v4f64: return 4;
       case v3i32:
       case v3f32: return 3;
       case v2i8:
@@ -402,6 +432,12 @@ namespace llvm {
       case v2i64:
       case v4f32:
       case v2f64: return 128;
+      case v32i8:
+      case v16i16:
+      case v8i32:
+      case v4i64:	
+      case v8f32:
+      case v4f64: return 256;
       }
     }
 
@@ -478,6 +514,7 @@ namespace llvm {
     bool isExtendedVector() const;
     bool isExtended64BitVector() const;
     bool isExtended128BitVector() const;
+    bool isExtended256BitVector() const;
     MVT getExtendedVectorElementType() const;
     unsigned getExtendedVectorNumElements() const;
     unsigned getExtendedSizeInBits() const;

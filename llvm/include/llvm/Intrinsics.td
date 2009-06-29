@@ -110,21 +110,31 @@ def llvm_anyptr_ty     : LLVMAnyPointerType<llvm_i8_ty>;          // (space)i8*
 def llvm_empty_ty      : LLVMType<OtherVT>;                       // { }
 def llvm_descriptor_ty : LLVMPointerType<llvm_empty_ty>;          // { }*
 
-def llvm_v16i8_ty      : LLVMType<v16i8>;    // 16 x i8
-def llvm_v8i16_ty      : LLVMType<v8i16>;    //  8 x i16
-def llvm_v2i64_ty      : LLVMType<v2i64>;    //  2 x i64
-def llvm_v2i32_ty      : LLVMType<v2i32>;    //  2 x i32
-def llvm_v1i64_ty      : LLVMType<v1i64>;    //  1 x i64
-def llvm_v4i32_ty      : LLVMType<v4i32>;    //  4 x i32
-def llvm_v2f32_ty      : LLVMType<v2f32>;    //  2 x float
-def llvm_v4f32_ty      : LLVMType<v4f32>;    //  4 x float
-def llvm_v2f64_ty      : LLVMType<v2f64>;    //  2 x double
-
-// MMX Vector Types
+def llvm_v2i8_ty       : LLVMType<v2i8>;     //  2 x i8
+def llvm_v4i8_ty       : LLVMType<v4i8>;     //  4 x i8
 def llvm_v8i8_ty       : LLVMType<v8i8>;     //  8 x i8
+def llvm_v16i8_ty      : LLVMType<v16i8>;    // 16 x i8
+def llvm_v32i8_ty      : LLVMType<v32i8>;    // 32 x i8
+def llvm_v2i16_ty      : LLVMType<v2i16>;    //  4 x i16
 def llvm_v4i16_ty      : LLVMType<v4i16>;    //  4 x i16
+def llvm_v8i16_ty      : LLVMType<v8i16>;    //  8 x i16
+def llvm_v16i16_ty     : LLVMType<v16i16>;   // 16 x i16
+def llvm_v2i32_ty      : LLVMType<v2i32>;    //  2 x i32
+def llvm_v4i32_ty      : LLVMType<v4i32>;    //  4 x i32
+def llvm_v8i32_ty      : LLVMType<v8i32>;    //  8 x i32
+def llvm_v1i64_ty      : LLVMType<v1i64>;    //  1 x i64
+def llvm_v2i64_ty      : LLVMType<v2i64>;    //  2 x i64
+def llvm_v4i64_ty      : LLVMType<v4i64>;    //  4 x i64
+
+def llvm_v2f32_ty      : LLVMType<v2f32>;    //  2 x float
+def llvm_v3f32_ty      : LLVMType<v3f32>;    //  3 x float
+def llvm_v4f32_ty      : LLVMType<v4f32>;    //  4 x float
+def llvm_v8f32_ty      : LLVMType<v8f32>;    //  8 x float
+def llvm_v2f64_ty      : LLVMType<v2f64>;    //  2 x double
+def llvm_v4f64_ty      : LLVMType<v4f64>;    //  4 x double
 
 def llvm_vararg_ty     : LLVMType<isVoid>;   // this means vararg here
+
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.

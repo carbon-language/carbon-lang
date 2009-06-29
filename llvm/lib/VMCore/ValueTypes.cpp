@@ -54,6 +54,10 @@ bool MVT::isExtended128BitVector() const {
   return isExtendedVector() && getSizeInBits() == 128;
 }
 
+bool MVT::isExtended256BitVector() const {
+  return isExtendedVector() && getSizeInBits() == 256;
+}
+
 MVT MVT::getExtendedVectorElementType() const {
   assert(isExtended() && "Type is not extended!");
   return MVT::getMVT(cast<VectorType>(LLVMTy)->getElementType());
@@ -101,20 +105,26 @@ std::string MVT::getMVTString() const {
   case MVT::Flag:    return "flag";
   case MVT::v2i8:    return "v2i8";
   case MVT::v4i8:    return "v4i8";
-  case MVT::v2i16:   return "v2i16";
   case MVT::v8i8:    return "v8i8";
-  case MVT::v4i16:   return "v4i16";
-  case MVT::v2i32:   return "v2i32";
-  case MVT::v1i64:   return "v1i64";
   case MVT::v16i8:   return "v16i8";
+  case MVT::v32i8:   return "v32i8";
+  case MVT::v2i16:   return "v2i16";
+  case MVT::v4i16:   return "v4i16";
   case MVT::v8i16:   return "v8i16";
-  case MVT::v4i32:   return "v4i32";
-  case MVT::v2i64:   return "v2i64";
-  case MVT::v2f32:   return "v2f32";
-  case MVT::v4f32:   return "v4f32";
-  case MVT::v2f64:   return "v2f64";
+  case MVT::v16i16:  return "v16i16";
+  case MVT::v2i32:   return "v2i32";
   case MVT::v3i32:   return "v3i32";
+  case MVT::v4i32:   return "v4i32";
+  case MVT::v8i32:   return "v8i32";
+  case MVT::v1i64:   return "v1i64";
+  case MVT::v2i64:   return "v2i64";
+  case MVT::v4i64:   return "v4i64";
+  case MVT::v2f32:   return "v2f32";
   case MVT::v3f32:   return "v3f32";
+  case MVT::v4f32:   return "v4f32";
+  case MVT::v8f32:   return "v8f32";
+  case MVT::v2f64:   return "v2f64";
+  case MVT::v4f64:   return "v4f64";
   }
 }
 
@@ -140,21 +150,27 @@ const Type *MVT::getTypeForMVT() const {
   case MVT::ppcf128: return Type::PPC_FP128Ty;
   case MVT::v2i8:    return VectorType::get(Type::Int8Ty, 2);
   case MVT::v4i8:    return VectorType::get(Type::Int8Ty, 4);
-  case MVT::v2i16:    return VectorType::get(Type::Int16Ty, 2);
   case MVT::v8i8:    return VectorType::get(Type::Int8Ty, 8);
-  case MVT::v4i16:   return VectorType::get(Type::Int16Ty, 4);
-  case MVT::v2i32:   return VectorType::get(Type::Int32Ty, 2);
-  case MVT::v1i64:   return VectorType::get(Type::Int64Ty, 1);
   case MVT::v16i8:   return VectorType::get(Type::Int8Ty, 16);
-  case MVT::v8i16:   return VectorType::get(Type::Int16Ty, 8);
-  case MVT::v4i32:   return VectorType::get(Type::Int32Ty, 4);
-  case MVT::v2i64:   return VectorType::get(Type::Int64Ty, 2);
-  case MVT::v2f32:   return VectorType::get(Type::FloatTy, 2);
-  case MVT::v4f32:   return VectorType::get(Type::FloatTy, 4);
-  case MVT::v2f64:   return VectorType::get(Type::DoubleTy, 2);
+  case MVT::v32i8:   return VectorType::get(Type::Int8Ty, 32);
+  case MVT::v2i16:   return VectorType::get(Type::Int16Ty, 2);
+  case MVT::v4i16:   return VectorType::get(Type::Int16Ty, 4);
+  case MVT::v8i16:   return VectorType::get(Type::Int16Ty, 16);
+  case MVT::v16i16:  return VectorType::get(Type::Int16Ty, 8);
+  case MVT::v2i32:   return VectorType::get(Type::Int32Ty, 2);
   case MVT::v3i32:   return VectorType::get(Type::Int32Ty, 3);
+  case MVT::v4i32:   return VectorType::get(Type::Int32Ty, 4);
+  case MVT::v8i32:   return VectorType::get(Type::Int32Ty, 8);
+  case MVT::v1i64:   return VectorType::get(Type::Int64Ty, 1);
+  case MVT::v2i64:   return VectorType::get(Type::Int64Ty, 2);
+  case MVT::v4i64:   return VectorType::get(Type::Int64Ty, 4);
+  case MVT::v2f32:   return VectorType::get(Type::FloatTy, 2);
   case MVT::v3f32:   return VectorType::get(Type::FloatTy, 3);
-  }
+  case MVT::v4f32:   return VectorType::get(Type::FloatTy, 4);
+  case MVT::v8f32:   return VectorType::get(Type::FloatTy, 8);
+  case MVT::v2f64:   return VectorType::get(Type::DoubleTy, 2);
+  case MVT::v4f64:   return VectorType::get(Type::DoubleTy, 4); 
+ }
 }
 
 /// getMVT - Return the value type corresponding to the specified type.  This
