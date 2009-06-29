@@ -108,7 +108,7 @@ private:
   asmtok::TokKind LexIdentifier();
   asmtok::TokKind LexPercent();
   asmtok::TokKind LexSlash();
-  asmtok::TokKind LexHash();
+  asmtok::TokKind LexLineComment();
   asmtok::TokKind LexDigit();
   asmtok::TokKind LexQuote();
 };
