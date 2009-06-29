@@ -1636,13 +1636,6 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
   return QualType(QType, 0);
 }
 
-/// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for the 'id' decl
-/// and the conforming protocol list.
-QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols, 
-                                            unsigned NumProtocols) {
-  return getObjCObjectPointerType(0, Protocols, NumProtocols);
-}
-
 /// getTypeOfExprType - Unlike many "get<Type>" functions, we can't unique
 /// TypeOfExprType AST's (since expression's are never shared). For example,
 /// multiple declarations that refer to "typeof(x)" all contain different

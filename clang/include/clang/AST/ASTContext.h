@@ -351,12 +351,6 @@ public:
                                          ObjCProtocolDecl **ProtocolList,
                                          unsigned NumProtocols);
   
-  /// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for a 
-  /// given 'id' and conforming protocol list.
-  QualType getObjCQualifiedIdType(ObjCProtocolDecl **ProtocolList, 
-                                  unsigned NumProtocols);
-                                  
-
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExprType(Expr *e);
   QualType getTypeOfType(QualType t);
