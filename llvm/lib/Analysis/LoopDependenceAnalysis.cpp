@@ -36,8 +36,9 @@ char LoopDependenceAnalysis::ID = 0;
 //                             Utility Functions
 //===----------------------------------------------------------------------===//
 
-static inline bool IsMemRefInstr(const Value *I) {
-  return isa<LoadInst>(I) || isa<StoreInst>(I);
+static inline bool IsMemRefInstr(const Value *V) {
+  const Instruction *I = dyn_cast<const Instruction>(V);
+  return I && (I->mayReadFromMemory() || I->mayWriteToMemory());
 }
 
 static void GetMemRefInstrs(
@@ -56,8 +57,10 @@ static void GetMemRefInstrs(
 
 bool LoopDependenceAnalysis::isDependencePair(const Value *x,
                                               const Value *y) const {
-  return IsMemRefInstr(x) && IsMemRefInstr(y)
-      && (isa<StoreInst>(x) || isa<StoreInst>(y));
+  return IsMemRefInstr(x) &&
+         IsMemRefInstr(y) &&
+         (cast<const Instruction>(x)->mayWriteToMemory() ||
+          cast<const Instruction>(y)->mayWriteToMemory());
 }
 
 bool LoopDependenceAnalysis::depends(Value *src, Value *dst) {
