@@ -218,7 +218,7 @@ static unsigned getBinOpPrecedence(asmtok::TokKind K,
 /// Res contains the LHS of the expression on input.
 bool AsmParser::ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res) {
   while (1) {
-    AsmBinaryExpr::Opcode Kind;
+    AsmBinaryExpr::Opcode Kind = AsmBinaryExpr::Add;
     unsigned TokPrec = getBinOpPrecedence(Lexer.getKind(), Kind);
     
     // If the next token is lower precedence than we are allowed to eat, return
