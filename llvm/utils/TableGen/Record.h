@@ -834,6 +834,12 @@ public:
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
   
+  /// getFieldType - This method is used to implement the FieldInit class.
+  /// Implementors of this method should return the type of the named field if
+  /// they are of record type.
+  ///
+  virtual RecTy *getFieldType(const std::string &FieldName) const;
+
   virtual std::string getAsString() const;
 };
 

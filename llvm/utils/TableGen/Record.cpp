@@ -537,52 +537,80 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   switch (getOpcode()) {
   default: assert(0 && "Unknown unop");
   case CAST: {
-    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
-    if (LHSs) {
-      std::string Name = LHSs->getValue();
+    if (getType()->getAsString() == "string") {
+      StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+      if (LHSs) {
+        return LHSs;
+      }
 
-      // From TGParser::ParseIDValue
-      if (CurRec) {
-        if (const RecordVal *RV = CurRec->getValue(Name)) {
-          if (RV->getType() != getType()) {
-            throw "type mismatch in nameconcat";
+      DefInit *LHSd = dynamic_cast<DefInit*>(LHS);
+      if (LHSd) {
+        return new StringInit(LHSd->getDef()->getName());
+      }
+
+//       VarInit *LHSv = dynamic_cast<VarInit*>(LHS);
+//       if (LHSv) {
+//         // If this is not a template arg, cast it
+//         if (!CurRec->isTemplateArg(LHSv->getName())
+//             && !CurMultiClass) {
+//           return new StringInit(LHSv->getName());
+//         }
+//         break;
+//       }
+
+//       OpInit *LHSo = dynamic_cast<OpInit*>(LHS);
+//       if (!LHSo) {
+//         return new StringInit(LHS->getAsString());
+//       }
+    }
+    else {
+      StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+      if (LHSs) {
+        std::string Name = LHSs->getValue();
+
+        // From TGParser::ParseIDValue
+        if (CurRec) {
+          if (const RecordVal *RV = CurRec->getValue(Name)) {
+            if (RV->getType() != getType()) {
+              throw "type mismatch in nameconcat";
+            }
+            return new VarInit(Name, RV->getType());
           }
-          return new VarInit(Name, RV->getType());
+
+          std::string TemplateArgName = CurRec->getName()+":"+Name;
+          if (CurRec->isTemplateArg(TemplateArgName)) {
+            const RecordVal *RV = CurRec->getValue(TemplateArgName);
+            assert(RV && "Template arg doesn't exist??");
+
+            if (RV->getType() != getType()) {
+              throw "type mismatch in nameconcat";
+            }
+
+            return new VarInit(TemplateArgName, RV->getType());
+          }
+        }
+
+        if (CurMultiClass) {
+          std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
+          if (CurMultiClass->Rec.isTemplateArg(MCName)) {
+            const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
+            assert(RV && "Template arg doesn't exist??");
+            
+            if (RV->getType() != getType()) {
+              throw "type mismatch in nameconcat";
+            }
+            
+            return new VarInit(MCName, RV->getType());
+          }
         }
         
-        std::string TemplateArgName = CurRec->getName()+":"+Name;
-        if (CurRec->isTemplateArg(TemplateArgName)) {
-          const RecordVal *RV = CurRec->getValue(TemplateArgName);
-          assert(RV && "Template arg doesn't exist??");
+        if (Record *D = Records.getDef(Name))
+          return new DefInit(D);
 
-          if (RV->getType() != getType()) {
-            throw "type mismatch in nameconcat";
-          }
-
-          return new VarInit(TemplateArgName, RV->getType());
-        }
+        cerr << "Variable not defined: '" + Name + "'\n";
+        assert(0 && "Variable not found");
+        return 0;
       }
-
-      if (CurMultiClass) {
-        std::string MCName = CurMultiClass->Rec.getName()+"::"+Name;
-        if (CurMultiClass->Rec.isTemplateArg(MCName)) {
-          const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
-          assert(RV && "Template arg doesn't exist??");
-
-          if (RV->getType() != getType()) {
-            throw "type mismatch in nameconcat";
-          }
-          
-          return new VarInit(MCName, RV->getType());
-        }
-      }
-
-      if (Record *D = Records.getDef(Name))
-        return new DefInit(D);
-
-      cerr << "Variable not defined: '" + Name + "'\n";
-      assert(0 && "Variable not found");
-      return 0;
     }
     break;
   }
@@ -652,6 +680,23 @@ std::string UnOpInit::getAsString() const {
   case LNULL: Result = "!null"; break;
   }
   return Result + "(" + LHS->getAsString() + ")";
+}
+
+RecTy *UnOpInit::getFieldType(const std::string &FieldName) const {
+  switch (getOpcode()) {
+  default: assert(0 && "Unknown unop");
+  case CAST: {
+    RecordRecTy *RecordType = dynamic_cast<RecordRecTy *>(getType());
+    if (RecordType) {
+      RecordVal *Field = RecordType->getRecord()->getValue(FieldName);
+      if (Field) {
+        return Field->getType();
+      }
+    }
+    break;
+  }
+  }
+  return 0;
 }
 
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
