@@ -621,7 +621,10 @@ def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
 def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
             (t2CMNri   GPR:$src, t2_so_imm_neg:$imm)>;
 
-// FIXME: TST, TEQ, etc.
+defm t2TST  : T2I_cmp_is<"tst",
+                         BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>>;
+defm t2TEQ  : T2I_cmp_is<"teq",
+                         BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>>;
 
 // A8.6.27  CBNZ, CBZ - Compare and branch on (non)zero.
 // Short range conditional branch. Looks awesome for loops. Need to figure
