@@ -26,6 +26,7 @@ class Stmt;
 class CompoundStmt;
 class StringLiteral;
 class TemplateArgumentList;
+class FunctionTemplateSpecializationInfo;
   
 /// TranslationUnitDecl - The top declaration context.
 class TranslationUnitDecl : public Decl, public DeclContext {
@@ -621,15 +622,8 @@ public:
   enum StorageClass {
     None, Extern, Static, PrivateExtern
   };
-private:
-  /// \brief Provides information about a function template specialization, 
-  /// which is a FunctionDecl that has been explicitly specialization or
-  /// instantiated from a function template.
-  struct TemplateSpecializationInfo {
-    FunctionTemplateDecl *Template;
-    const TemplateArgumentList *TemplateArguments;
-  };
   
+private:  
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.
@@ -684,7 +678,8 @@ private:
   /// the template being specialized and the template arguments involved in 
   /// that specialization.
   llvm::PointerUnion3<FunctionTemplateDecl*, FunctionDecl*,
-                      TemplateSpecializationInfo*> TemplateOrSpecialization;
+                      FunctionTemplateSpecializationInfo*>
+    TemplateOrSpecialization;
 
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -940,27 +935,14 @@ public:
   ///
   /// If this function declaration is not a function template specialization,
   /// returns NULL.
-  FunctionTemplateDecl *getPrimaryTemplate() const {
-    if (TemplateSpecializationInfo *Info 
-          = TemplateOrSpecialization.dyn_cast<TemplateSpecializationInfo*>()) {
-      return Info->Template;
-    }
-    return 0;
-  }
+  FunctionTemplateDecl *getPrimaryTemplate() const;
   
   /// \brief Retrieve the template arguments used to produce this function
   /// template specialization from the primary template.
   ///
   /// If this function declaration is not a function template specialization,
   /// returns NULL.
-  const TemplateArgumentList *getTemplateSpecializationArgs() const {
-    if (TemplateSpecializationInfo *Info 
-          = TemplateOrSpecialization.dyn_cast<TemplateSpecializationInfo*>()) {
-      return Info->TemplateArguments;
-    }
-    return 0;
-  }
-  
+  const TemplateArgumentList *getTemplateSpecializationArgs() const;  
   
   /// \brief Specify that this function declaration is actually a function
   /// template specialization.

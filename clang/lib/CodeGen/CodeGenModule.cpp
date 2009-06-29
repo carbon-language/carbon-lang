@@ -1477,9 +1477,19 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   if (Diags.hasErrorOccurred())
     return;
 
+  // Ignore dependent declarations.
+  if (D->getDeclContext() && D->getDeclContext()->isDependentContext())
+    return;
+  
   switch (D->getKind()) {
   case Decl::CXXMethod:
   case Decl::Function:
+    // Skip function templates
+    if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate())
+      return;
+      
+    // Fall through
+        
   case Decl::Var:
     EmitGlobal(GlobalDecl(cast<ValueDecl>(D)));
     break;

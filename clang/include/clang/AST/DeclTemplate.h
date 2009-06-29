@@ -154,9 +154,34 @@ protected:
   TemplateParameterList* TemplateParams;
 };
  
+/// \brief Provides information about a function template specialization, 
+/// which is a FunctionDecl that has been explicitly specialization or
+/// instantiated from a function template.
+class FunctionTemplateSpecializationInfo {
+public:
+  FunctionTemplateDecl *Template;
+  const TemplateArgumentList *TemplateArguments;
+};
+  
 /// Declaration of a template function.
 class FunctionTemplateDecl : public TemplateDecl {
 protected:
+  /// \brief Data that is common to all of the declarations of a given
+  /// class template.
+  struct Common {
+    /// \brief The class template specializations for this class
+    /// template, including explicit specializations and instantiations.
+    llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+    
+    /// \brief The class template partial specializations for this class
+    /// template.
+    llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> 
+    PartialSpecializations;
+    
+    /// \brief The injected-class-name type for this class template.
+    QualType InjectedClassNameType;
+  };
+  
   FunctionTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
                        TemplateParameterList *Params, NamedDecl *Decl)
     : TemplateDecl(FunctionTemplate, DC, L, Name, Params, Decl) { }
