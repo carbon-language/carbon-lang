@@ -3572,7 +3572,7 @@ const SCEV* ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
               Constant *RV = getConstantEvolutionLoopExitValue(PN,
                                                    BTCC->getValue()->getValue(),
                                                                LI);
-              if (RV) return getUnknown(RV);
+              if (RV) return getSCEV(RV);
             }
           }
 
@@ -3586,7 +3586,7 @@ const SCEV* ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
         std::pair<std::map<const Loop *, Constant *>::iterator, bool> Pair =
           Values.insert(std::make_pair(L, static_cast<Constant *>(0)));
         if (!Pair.second)
-          return Pair.first->second ? &*getUnknown(Pair.first->second) : V;
+          return Pair.first->second ? &*getSCEV(Pair.first->second) : V;
 
         std::vector<Constant*> Operands;
         Operands.reserve(I->getNumOperands());
@@ -3635,7 +3635,7 @@ const SCEV* ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
           C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                        &Operands[0], Operands.size());
         Pair.first->second = C;
-        return getUnknown(C);
+        return getSCEV(C);
       }
     }
 
