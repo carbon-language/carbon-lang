@@ -41,7 +41,7 @@ void Attr::Destroy(ASTContext &C) {
  
 
 TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
-  return new (C) TranslationUnitDecl();
+  return new (C) TranslationUnitDecl(C);
 }
 
 NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,

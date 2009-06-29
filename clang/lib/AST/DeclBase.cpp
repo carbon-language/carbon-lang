@@ -157,6 +157,22 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
   }
 }
 
+TranslationUnitDecl *Decl::getTranslationUnitDecl() {
+  DeclContext *DC = getDeclContext();
+  assert(DC && "This decl is not contained in a translation unit!");
+ 
+  while (!DC->isTranslationUnit()) {
+    DC = DC->getParent();
+    assert(DC && "This decl is not contained in a translation unit!");
+  }
+  
+  return cast<TranslationUnitDecl>(DC);
+}
+
+ASTContext &Decl::getASTContext() const {
+  return getTranslationUnitDecl()->getASTContext();  
+}
+
 unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
   switch (DeclKind) {
     default: 

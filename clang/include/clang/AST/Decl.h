@@ -30,10 +30,15 @@ class FunctionTemplateSpecializationInfo;
   
 /// TranslationUnitDecl - The top declaration context.
 class TranslationUnitDecl : public Decl, public DeclContext {
-  TranslationUnitDecl()
+  ASTContext &Ctx;
+  
+  explicit TranslationUnitDecl(ASTContext &ctx)
     : Decl(TranslationUnit, 0, SourceLocation()),
-      DeclContext(TranslationUnit) {}
+      DeclContext(TranslationUnit),
+      Ctx(ctx) {}
 public:
+  ASTContext &getASTContext() const { return Ctx; }
+  
   static TranslationUnitDecl *Create(ASTContext &C);
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == TranslationUnit; }

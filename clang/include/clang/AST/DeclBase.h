@@ -213,6 +213,13 @@ public:
   const DeclContext *getDeclContext() const {
     return const_cast<Decl*>(this)->getDeclContext();
   }
+
+  TranslationUnitDecl *getTranslationUnitDecl();
+  const TranslationUnitDecl *getTranslationUnitDecl() const {
+    return const_cast<Decl*>(this)->getTranslationUnitDecl();
+  }
+
+  ASTContext &getASTContext() const;
   
   void setAccess(AccessSpecifier AS) {
     Access = AS; 
