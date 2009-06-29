@@ -30,10 +30,11 @@ class MCValue {
   int64_t Cst;
 public:
 
-  int64_t getCst() const { return Cst; }
+  int64_t getConstant() const { return Cst; }
   MCSymbol *getSymA() const { return SymA; }
   MCSymbol *getSymB() const { return SymB; }
-  
+
+  bool isConstant() const { return !SymA && !SymB; }
   
   static MCValue get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
     MCValue R;

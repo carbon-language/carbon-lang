@@ -66,11 +66,11 @@ static inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
     os << Value.getSymA()->getName();
     if (Value.getSymB())
       os << " - " << Value.getSymB()->getName();
-    if (Value.getCst())
-      os << " + " << Value.getCst();
+    if (Value.getConstant())
+      os << " + " << Value.getConstant();
   } else {
     assert(!Value.getSymB() && "Invalid machine code value!");
-    os << Value.getCst();
+    os << Value.getConstant();
   }
 
   return os;
@@ -83,7 +83,7 @@ static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
 
 static inline MCValue truncateToSize(const MCValue &Value, unsigned Bytes) {
   return MCValue::get(Value.getSymA(), Value.getSymB(), 
-                      truncateToSize(Value.getCst(), Bytes));
+                      truncateToSize(Value.getConstant(), Bytes));
 }
 
 void MCAsmStreamer::SwitchSection(MCSection *Section) {
