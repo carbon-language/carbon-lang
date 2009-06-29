@@ -75,8 +75,8 @@ def ARMbrjt          : SDNode<"ARMISD::BR_JT", SDT_ARMBrJT,
 def ARMcmp           : SDNode<"ARMISD::CMP", SDT_ARMCmp,
                               [SDNPOutFlag]>;
 
-def ARMcmpNZ         : SDNode<"ARMISD::CMPNZ", SDT_ARMCmp,
-                              [SDNPOutFlag]>;
+def ARMcmpZ          : SDNode<"ARMISD::CMPZ", SDT_ARMCmp,
+                              [SDNPOutFlag,SDNPCommutative]>;
 
 def ARMpic_add       : SDNode<"ARMISD::PIC_ADD", SDT_ARMPICAdd>;
 
@@ -1272,19 +1272,19 @@ defm CMN  : AI1_cmp_irs<0b1011, "cmn",
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
-                        BinOpFrag<(ARMcmpNZ (and node:$LHS, node:$RHS), 0)>, 1>;
+                        BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>, 1>;
 defm TEQ  : AI1_cmp_irs<0b1001, "teq",
-                        BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0)>, 1>;
+                        BinOpFrag<(ARMcmpZ (xor node:$LHS, node:$RHS), 0)>, 1>;
 
-defm CMPnz : AI1_cmp_irs<0b1010, "cmp",
-                         BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
-defm CMNnz : AI1_cmp_irs<0b1011, "cmn",
-                         BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
+defm CMPz  : AI1_cmp_irs<0b1010, "cmp",
+                         BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
+defm CMNz  : AI1_cmp_irs<0b1011, "cmn",
+                         BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 
 def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
              (CMNri  GPR:$src, so_imm_neg:$imm)>;
 
-def : ARMPat<(ARMcmpNZ GPR:$src, so_imm_neg:$imm),
+def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
              (CMNri  GPR:$src, so_imm_neg:$imm)>;
 
 

@@ -607,18 +607,18 @@ def t2REVSH : T2I<(outs GPR:$dst), (ins GPR:$src),
 
 defm t2CMP   : T2I_cmp_is<"cmp",
                           BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
-defm t2CMPnz : T2I_cmp_is<"cmp",
-                          BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
+defm t2CMPz : T2I_cmp_is<"cmp",
+                         BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 
 defm t2CMN   : T2I_cmp_is<"cmn",
                           BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
-defm t2CMNnz : T2I_cmp_is<"cmn",
-                          BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
+defm t2CMNz : T2I_cmp_is<"cmn",
+                         BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 
 def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
             (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
 
-def : T2Pat<(ARMcmpNZ  GPR:$src, t2_so_imm_neg:$imm),
+def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
             (t2CMNri   GPR:$src, t2_so_imm_neg:$imm)>;
 
 // FIXME: TST, TEQ, etc.

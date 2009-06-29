@@ -402,7 +402,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
   case ARMISD::PIC_ADD:       return "ARMISD::PIC_ADD";
   case ARMISD::CMP:           return "ARMISD::CMP";
-  case ARMISD::CMPNZ:         return "ARMISD::CMPNZ";
+  case ARMISD::CMPZ:          return "ARMISD::CMPZ";
   case ARMISD::CMPFP:         return "ARMISD::CMPFP";
   case ARMISD::CMPFPw0:       return "ARMISD::CMPFPw0";
   case ARMISD::FMSTAT:        return "ARMISD::FMSTAT";
@@ -1592,10 +1592,8 @@ static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     break;
   case ARMCC::EQ:
   case ARMCC::NE:
-  case ARMCC::MI:
-  case ARMCC::PL:
-    // Uses only N and Z Flags
-    CompareType = ARMISD::CMPNZ;
+    // Uses only Z Flag
+    CompareType = ARMISD::CMPZ;
     break;
   }
   ARMCC = DAG.getConstant(CondCode, MVT::i32);

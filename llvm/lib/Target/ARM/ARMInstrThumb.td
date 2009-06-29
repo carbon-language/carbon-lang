@@ -362,9 +362,9 @@ let Defs = [CPSR] in {
 def tCMN : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
               "cmn $lhs, $rhs",
               [(ARMcmp tGPR:$lhs, (ineg tGPR:$rhs))]>;
-def tCMNNZ : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
-                "cmn $lhs, $rhs",
-                [(ARMcmpNZ tGPR:$lhs, (ineg tGPR:$rhs))]>;
+def tCMNZ : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
+               "cmn $lhs, $rhs",
+               [(ARMcmpZ tGPR:$lhs, (ineg tGPR:$rhs))]>;
 }
 
 // CMP immediate
@@ -372,9 +372,9 @@ let Defs = [CPSR] in {
 def tCMPi8 : T1I<(outs), (ins tGPR:$lhs, i32imm:$rhs),
                "cmp $lhs, $rhs",
                [(ARMcmp tGPR:$lhs, imm0_255:$rhs)]>;
-def tCMPNZi8 : T1I<(outs), (ins tGPR:$lhs, i32imm:$rhs),
-                 "cmp $lhs, $rhs",
-                 [(ARMcmpNZ tGPR:$lhs, imm0_255:$rhs)]>;
+def tCMPZi8 : T1I<(outs), (ins tGPR:$lhs, i32imm:$rhs),
+                "cmp $lhs, $rhs",
+                [(ARMcmpZ tGPR:$lhs, imm0_255:$rhs)]>;
 
 }
 
@@ -383,9 +383,9 @@ let Defs = [CPSR] in {
 def tCMPr : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
                "cmp $lhs, $rhs",
                [(ARMcmp tGPR:$lhs, tGPR:$rhs)]>;
-def tCMPNZr : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
-                 "cmp $lhs, $rhs",
-                 [(ARMcmpNZ tGPR:$lhs, tGPR:$rhs)]>;
+def tCMPZr : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
+                "cmp $lhs, $rhs",
+                [(ARMcmpZ tGPR:$lhs, tGPR:$rhs)]>;
 }
 
 // TODO: A7-37: CMP(3) - cmp hi regs
@@ -551,7 +551,7 @@ def tSXTH  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
 let isCommutable = 1, Defs = [CPSR] in
 def tTST  : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
                "tst $lhs, $rhs",
-               [(ARMcmpNZ (and tGPR:$lhs, tGPR:$rhs), 0)]>;
+               [(ARMcmpZ (and tGPR:$lhs, tGPR:$rhs), 0)]>;
 
 // zero-extend byte
 def tUXTB  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
