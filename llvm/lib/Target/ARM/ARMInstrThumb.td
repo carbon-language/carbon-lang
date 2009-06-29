@@ -211,68 +211,68 @@ let isBranch = 1, isTerminator = 1 in
 //
 
 let canFoldAsLoad = 1 in
-def tLDR : TI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr),
+def tLDR : T1I4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr),
                "ldr $dst, $addr",
                [(set tGPR:$dst, (load t_addrmode_s4:$addr))]>;
 
-def tLDRB : TI1<(outs tGPR:$dst), (ins t_addrmode_s1:$addr),
+def tLDRB : T1I1<(outs tGPR:$dst), (ins t_addrmode_s1:$addr),
                 "ldrb $dst, $addr",
                 [(set tGPR:$dst, (zextloadi8 t_addrmode_s1:$addr))]>;
 
-def tLDRH : TI2<(outs tGPR:$dst), (ins t_addrmode_s2:$addr),
+def tLDRH : T1I2<(outs tGPR:$dst), (ins t_addrmode_s2:$addr),
                 "ldrh $dst, $addr",
                 [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
 
-def tLDRSB : TI1<(outs tGPR:$dst), (ins t_addrmode_rr:$addr),
+def tLDRSB : T1I1<(outs tGPR:$dst), (ins t_addrmode_rr:$addr),
                  "ldrsb $dst, $addr",
                  [(set tGPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
 
-def tLDRSH : TI2<(outs tGPR:$dst), (ins t_addrmode_rr:$addr),
+def tLDRSH : T1I2<(outs tGPR:$dst), (ins t_addrmode_rr:$addr),
                  "ldrsh $dst, $addr",
                  [(set tGPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
 
 let canFoldAsLoad = 1 in
-def tLDRspi : TIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr),
+def tLDRspi : T1Is<(outs tGPR:$dst), (ins t_addrmode_sp:$addr),
                   "ldr $dst, $addr",
                   [(set tGPR:$dst, (load t_addrmode_sp:$addr))]>;
 
 // Special instruction for restore. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
 let canFoldAsLoad = 1, mayLoad = 1 in
-def tRestore : TIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr),
+def tRestore : T1Is<(outs tGPR:$dst), (ins t_addrmode_sp:$addr),
                     "ldr $dst, $addr", []>;
 
 // Load tconstpool
 let canFoldAsLoad = 1 in
-def tLDRpci : TIs<(outs tGPR:$dst), (ins i32imm:$addr),
+def tLDRpci : T1Is<(outs tGPR:$dst), (ins i32imm:$addr),
                   "ldr $dst, $addr",
                   [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1 in
-def tLDRcp  : TIs<(outs tGPR:$dst), (ins i32imm:$addr),
+def tLDRcp  : T1Is<(outs tGPR:$dst), (ins i32imm:$addr),
                   "ldr $dst, $addr", []>;
 
-def tSTR : TI4<(outs), (ins tGPR:$src, t_addrmode_s4:$addr),
+def tSTR : T1I4<(outs), (ins tGPR:$src, t_addrmode_s4:$addr),
                "str $src, $addr",
                [(store tGPR:$src, t_addrmode_s4:$addr)]>;
 
-def tSTRB : TI1<(outs), (ins tGPR:$src, t_addrmode_s1:$addr),
+def tSTRB : T1I1<(outs), (ins tGPR:$src, t_addrmode_s1:$addr),
                  "strb $src, $addr",
                  [(truncstorei8 tGPR:$src, t_addrmode_s1:$addr)]>;
 
-def tSTRH : TI2<(outs), (ins tGPR:$src, t_addrmode_s2:$addr),
+def tSTRH : T1I2<(outs), (ins tGPR:$src, t_addrmode_s2:$addr),
                  "strh $src, $addr",
                  [(truncstorei16 tGPR:$src, t_addrmode_s2:$addr)]>;
 
-def tSTRspi : TIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr),
+def tSTRspi : T1Is<(outs), (ins tGPR:$src, t_addrmode_sp:$addr),
                    "str $src, $addr",
                    [(store tGPR:$src, t_addrmode_sp:$addr)]>;
 
 let mayStore = 1 in {
 // Special instruction for spill. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
-def tSpill : TIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr),
+def tSpill : T1Is<(outs), (ins tGPR:$src, t_addrmode_sp:$addr),
                   "str $src, $addr", []>;
 }
 

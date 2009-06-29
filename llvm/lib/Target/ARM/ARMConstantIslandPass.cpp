@@ -447,20 +447,23 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
             Bits = 8;
             Scale = 4;  // +-(offset_8*4)
             break;
-          case ARMII::AddrModeT1:
+          case ARMII::AddrModeT1_1:
             Bits = 5;  // +offset_5
             break;
-          case ARMII::AddrModeT2:
+          case ARMII::AddrModeT1_2:
             Bits = 5;
             Scale = 2;  // +(offset_5*2)
             break;
-          case ARMII::AddrModeT4:
+          case ARMII::AddrModeT1_4:
             Bits = 5;
             Scale = 4;  // +(offset_5*4)
             break;
-          case ARMII::AddrModeTs:
+          case ARMII::AddrModeT1_s:
             Bits = 8;
             Scale = 4;  // +(offset_8*4)
+            break;
+          case ARMII::AddrModeT2_pc:
+            Bits = 12;  // +-offset_12
             break;
           }
 

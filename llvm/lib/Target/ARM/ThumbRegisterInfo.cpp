@@ -444,7 +444,7 @@ void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     unsigned NumBits = 0;
     unsigned Scale = 1;
     switch (AddrMode) {
-    case ARMII::AddrModeTs: {
+    case ARMII::AddrModeT1_s: {
       ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
       NumBits = (FrameReg == ARM::SP) ? 8 : 5;
@@ -472,7 +472,7 @@ void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
     bool isThumSpillRestore = Opcode == ARM::tRestore || Opcode == ARM::tSpill;
-    if (AddrMode == ARMII::AddrModeTs) {
+    if (AddrMode == ARMII::AddrModeT1_s) {
       // Thumb tLDRspi, tSTRspi. These will change to instructions that use
       // a different base register.
       NumBits = 5;
@@ -480,7 +480,7 @@ void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
     // If this is a thumb spill / restore, we will be using a constpool load to
     // materialize the offset.
-    if (AddrMode == ARMII::AddrModeTs && isThumSpillRestore)
+    if (AddrMode == ARMII::AddrModeT1_s && isThumSpillRestore)
       ImmOp.ChangeToImmediate(0);
     else {
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.

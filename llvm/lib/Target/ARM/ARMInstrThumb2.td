@@ -127,6 +127,30 @@ def t2_lo16AllZero : PatLeaf<(i32 imm), [{
   }], t2_hi16>;
 
 
+// Define Thumb2 specific addressing modes.
+
+// t2addrmode_imm12  := reg + imm12
+def t2addrmode_imm12 : Operand<i32>,
+                       ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
+  let PrintMethod = "printT2AddrModeImm12Operand";
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+}
+
+// t2addrmode_imm8  := reg - imm8
+def t2addrmode_imm8 : Operand<i32>,
+                      ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
+  let PrintMethod = "printT2AddrModeImm8Operand";
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+}
+
+// t2addrmode_so_reg  := reg + reg << imm2
+def t2addrmode_so_reg : Operand<i32>,
+                        ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
+  let PrintMethod = "printT2AddrModeSoRegOperand";
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+}
+
+
 //===----------------------------------------------------------------------===//
 // Multiclass helpers...
 //
@@ -408,6 +432,26 @@ def t2ADDrSPs : T2XI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
 //
+
+// Load
+let canFoldAsLoad = 1 in {
+def t2LDRi12 : T2Ii12<(outs GPR:$dst), (ins t2addrmode_imm12:$addr),
+                      "ldr", " $dst, $addr",
+                      [(set GPR:$dst, (load t2addrmode_imm12:$addr))]>;
+
+def t2LDRi8 : T2Ii8<(outs GPR:$dst), (ins t2addrmode_imm8:$addr),
+                    "ldr", " $dst, $addr",
+                    [(set GPR:$dst, (load t2addrmode_imm8:$addr))]>;
+
+def t2LDRs : T2Iso<(outs GPR:$dst), (ins t2addrmode_so_reg:$addr),
+                   "ldr", " $dst, $addr",
+                   [(set GPR:$dst, (load t2addrmode_so_reg:$addr))]>;
+
+// Load tconstpool
+def t2LDRpci : T2Ipc<(outs GPR:$dst), (ins i32imm:$addr),
+                     "ldr", " $dst, $addr",
+                     [(set GPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
+} // canFoldAsLoad
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

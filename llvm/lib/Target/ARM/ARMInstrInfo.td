@@ -309,43 +309,6 @@ def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
 }
 
 //===----------------------------------------------------------------------===//
-// ARM Instruction flags.  These need to match ARMInstrInfo.h.
-//
-
-// Addressing mode.
-class AddrMode<bits<4> val> {
-  bits<4> Value = val;
-}
-def AddrModeNone : AddrMode<0>;
-def AddrMode1    : AddrMode<1>;
-def AddrMode2    : AddrMode<2>;
-def AddrMode3    : AddrMode<3>;
-def AddrMode4    : AddrMode<4>;
-def AddrMode5    : AddrMode<5>;
-def AddrModeT1   : AddrMode<6>;
-def AddrModeT2   : AddrMode<7>;
-def AddrModeT4   : AddrMode<8>;
-def AddrModeTs   : AddrMode<9>;
-
-// Instruction size.
-class SizeFlagVal<bits<3> val> {
-  bits<3> Value = val;
-}
-def SizeInvalid  : SizeFlagVal<0>;  // Unset.
-def SizeSpecial  : SizeFlagVal<1>;  // Pseudo or special.
-def Size8Bytes   : SizeFlagVal<2>;
-def Size4Bytes   : SizeFlagVal<3>;
-def Size2Bytes   : SizeFlagVal<4>;
-
-// Load / store index mode.
-class IndexMode<bits<2> val> {
-  bits<2> Value = val;
-}
-def IndexModeNone : IndexMode<0>;
-def IndexModePre  : IndexMode<1>;
-def IndexModePost : IndexMode<2>;
-
-//===----------------------------------------------------------------------===//
 
 include "ARMInstrFormats.td"
 

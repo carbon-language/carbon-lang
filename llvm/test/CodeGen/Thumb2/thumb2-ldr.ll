@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm | grep {ldr r0} | count 7
-; RUN: llvm-as < %s | llc -march=arm | grep mov | grep 1
-; RUN: llvm-as < %s | llc -march=arm | not grep mvn
-; RUN: llvm-as < %s | llc -march=arm | grep ldr | grep lsl
-; RUN: llvm-as < %s | llc -march=arm | grep ldr | grep lsr
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {ldr r0} | count 7
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov | grep 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | not grep mvn
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldr | grep lsl
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep lsr | not grep ldr
 
 define i32 @f1(i32* %v) {
 entry:

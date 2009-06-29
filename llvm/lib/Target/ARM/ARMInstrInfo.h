@@ -39,10 +39,14 @@ namespace ARMII {
     AddrMode3     = 3,
     AddrMode4     = 4,
     AddrMode5     = 5,
-    AddrModeT1    = 6,
-    AddrModeT2    = 7,
-    AddrModeT4    = 8,
-    AddrModeTs    = 9,  // i8 * 4 for pc and sp relative data
+    AddrModeT1_1  = 6,
+    AddrModeT1_2  = 7,
+    AddrModeT1_4  = 8,
+    AddrModeT1_s  = 9,  // i8 * 4 for pc and sp relative data
+    AddrModeT2_i12= 10,
+    AddrModeT2_i8 = 11,
+    AddrModeT2_so = 12,
+    AddrModeT2_pc = 13, // +/- i12 for pc relative data
 
     // Size* - Flags to keep track of the size of an instruction.
     SizeShift     = 4,

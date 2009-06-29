@@ -305,7 +305,7 @@ namespace ARM_AM {
   ///     abcdefgh abcdefgh abcdefgh abcdefgh    control = 3
   /// Return -1 if none of the above apply.
   /// See ARM Reference Manual A6.3.2.
-  static inline int getT2SOImmValSplat (unsigned V) {
+  static inline int getT2SOImmValSplat(unsigned V) {
     unsigned u, Vs, Imm;
     // control = 0
     if ((V & 0xffffff00) == 0) 
