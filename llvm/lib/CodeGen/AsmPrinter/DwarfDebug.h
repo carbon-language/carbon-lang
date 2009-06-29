@@ -70,9 +70,8 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   SmallVector<CompileUnit *, 8> CompileUnits;
 
-  /// MainCU - Some platform prefers one compile unit per .o file. In such
-  /// cases, all dies are inserted in MainCU.
-  CompileUnit *MainCU;
+  /// ModuleCU - All DIEs are inserted in ModuleCU.
+  CompileUnit *ModuleCU;
 
   /// AbbreviationsSet - Used to uniquely define abbreviations.
   ///
