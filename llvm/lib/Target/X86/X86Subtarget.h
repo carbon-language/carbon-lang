@@ -142,7 +142,7 @@ public:
   bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
-  bool hasAVX() const { return hasAVX(); }
+  bool hasAVX() const { return HasAVX; }
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
 
