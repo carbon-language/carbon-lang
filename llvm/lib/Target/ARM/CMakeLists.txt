@@ -25,4 +25,5 @@ add_llvm_target(ARMCodeGen
   ARMTargetAsmInfo.cpp
   ARMTargetMachine.cpp
   ThumbInstrInfo.cpp
+  ThumbRegisterInfo.cpp
   )
