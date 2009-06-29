@@ -44,6 +44,8 @@ check_include_file(windows.h HAVE_WINDOWS_H)
 # library checks
 include(CheckLibraryExists)
 check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
+check_library_exists(pthread pthread_getspecific "" HAVE_PTHREAD_GETSPECIFIC)
+check_library_exists(pthread pthread_rwlock_init "" HAVE_PTHREAD_RWLOCK_INIT)
 check_library_exists(dl dlopen "" HAVE_LIBDL)
 
 # function checks
@@ -64,8 +66,6 @@ check_symbol_exists(mallinfo malloc.h HAVE_MALLINFO)
 check_symbol_exists(malloc_zone_statistics malloc/malloc.h
                     HAVE_MALLOC_ZONE_STATISTICS)
 check_symbol_exists(pthread_mutex_lock pthread.h HAVE_PTHREAD_MUTEX_LOCK)
-check_symbol_exists(pthread_rwlock_init pthread.h HAVE_PTHREAD_RWLOCK_INIT)
-check_symbol_exists(pthread_getspecific pthread.h HAVE_PTHREAD_GETSPECIFIC)
 check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
 
 check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
