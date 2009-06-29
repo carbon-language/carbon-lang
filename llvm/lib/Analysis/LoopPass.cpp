@@ -195,6 +195,9 @@ bool LPPassManager::runOnFunction(Function &F) {
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 
+  if (LQ.empty()) // No loops, skip calling finalizers
+    return false;
+
   // Initialization
   for (std::deque<Loop *>::const_iterator I = LQ.begin(), E = LQ.end();
        I != E; ++I) {
