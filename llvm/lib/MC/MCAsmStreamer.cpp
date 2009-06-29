@@ -25,7 +25,7 @@ namespace {
 
   public:
     MCAsmStreamer(MCContext &Context, raw_ostream &_OS)
-      : MCStreamer(Context), OS(_OS) {}
+      : MCStreamer(Context), OS(_OS), CurSection(0) {}
     ~MCAsmStreamer() {}
 
     /// @name MCStreamer Interface
