@@ -17,6 +17,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -82,12 +83,19 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
       return true;
     Res = new AsmUnaryExpr(AsmUnaryExpr::LNot, Res);
     return false;
-  case asmtok::Identifier:
+  case asmtok::Identifier: {
     // This is a label, this should be parsed as part of an expression, to
     // handle things like LFOO+4.
-    Res = new AsmSymbolRefExpr(Ctx.GetOrCreateSymbol(Lexer.getCurStrVal()));
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+
+    // If this is use of an undefined symbol then mark it external.
+    if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
+      Sym->setExternal(true);
+    
+    Res = new AsmSymbolRefExpr(Sym);
     Lexer.Lex(); // Eat identifier.
     return false;
+  }
   case asmtok::IntVal:
     Res = new AsmConstantExpr(Lexer.getCurIntVal());
     Lexer.Lex(); // Eat identifier.
@@ -270,16 +278,28 @@ bool AsmParser::ParseStatement() {
   
   // Consume the identifier, see what is after it.
   switch (Lexer.Lex()) {
-  case asmtok::Colon:
+  case asmtok::Colon: {
     // identifier ':'   -> Label.
     Lexer.Lex();
+
+    // Diagnose attempt to use a variable as a label.
+    //
+    // FIXME: Diagnostics. Note the location of the definition as a label.
+    // FIXME: This doesn't diagnose assignment to a symbol which has been
+    // implicitly marked as external.
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(IDVal);
+    if (Sym->getSection())
+      return Error(IDLoc, "invalid symbol redefinition");
+    if (Ctx.GetSymbolValue(Sym))
+      return Error(IDLoc, "symbol already used as assembler variable");
     
     // Since we saw a label, create a symbol and emit it.
     // FIXME: If the label starts with L it is an assembler temporary label.
     // Why does the client of this api need to know this?
-    Out.EmitLabel(Ctx.GetOrCreateSymbol(IDVal));
-    
+    Out.EmitLabel(Sym);
+   
     return ParseStatement();
+  }
 
   case asmtok::Equal:
     // identifier '=' ... -> assignment statement
@@ -440,6 +460,9 @@ bool AsmParser::ParseStatement() {
 }
 
 bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
+  // FIXME: Use better location, we should use proper tokens.
+  SMLoc EqualLoc = Lexer.getLoc();
+
   int64_t Value;
   if (ParseAbsoluteExpression(Value))
     return true;
@@ -450,9 +473,20 @@ bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
   // Eat the end of statement marker.
   Lexer.Lex();
 
-  // Get the symbol for this name.
+  // Diagnose assignment to a label.
+  //
+  // FIXME: Diagnostics. Note the location of the definition as a label.
+  // FIXME: This doesn't diagnose assignment to a symbol which has been
+  // implicitly marked as external.
   // FIXME: Handle '.'.
+  // FIXME: Diagnose assignment to protected identifier (e.g., register name).
   MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  if (Sym->getSection())
+    return Error(EqualLoc, "invalid assignment to symbol emitted as a label");
+  if (Sym->isExternal())
+    return Error(EqualLoc, "invalid assignment to external symbol");
+
+  // Do the assignment.
   Out.EmitAssignment(Sym, MCValue::get(Value), IsDotSet);
 
   return false;

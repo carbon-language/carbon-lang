@@ -31,6 +31,8 @@ namespace llvm {
     StringMap<MCSymbol*> Symbols;
 
     /// SymbolValues - Bindings of symbols to values.
+    //
+    // FIXME: Is there a good reason to not just put this in the MCSymbol?
     DenseMap<MCSymbol*, MCValue> SymbolValues;
 
     /// Allocator - Allocator object used for creating machine code objects.
