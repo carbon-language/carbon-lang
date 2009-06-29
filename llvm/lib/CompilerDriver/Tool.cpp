@@ -14,10 +14,16 @@
 #include "llvm/CompilerDriver/BuiltinOptions.h"
 #include "llvm/CompilerDriver/Tool.h"
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/System/Path.h"
 
 using namespace llvm;
 using namespace llvmc;
+
+// SplitString is used by derived Tool classes.
+typedef void (*SplitStringFunPtr)(const std::string&,
+                                  std::vector<std::string>&, const char*);
+SplitStringFunPtr ForceLinkageSplitString = &llvm::SplitString;
 
 namespace {
   sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,

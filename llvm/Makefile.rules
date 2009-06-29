@@ -200,6 +200,7 @@ ifdef LLVMC_PLUGIN
 LIBRARYNAME := $(patsubst %,plugin_llvmc_%,$(LLVMC_PLUGIN))
 CPP.Flags += -DLLVMC_PLUGIN_NAME=$(LLVMC_PLUGIN)
 REQUIRES_EH := 1
+LD.Flags += -lCompilerDriver
 
 # Build a dynamic library if the user runs `make` directly from the plugin
 # directory.
@@ -217,9 +218,8 @@ endif # LLVMC_PLUGIN
 ifdef LLVMC_BASED_DRIVER
 
 TOOLNAME = $(LLVMC_BASED_DRIVER)
-LLVMLIBS = CompilerDriver.a
-LINK_COMPONENTS = support system
 REQUIRES_EH := 1
+LD.Flags += -lCompilerDriver
 
 # Preprocessor magic that generates references to static variables in built-in
 # plugins.
