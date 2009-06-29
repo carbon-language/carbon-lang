@@ -917,6 +917,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SRA);
   setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::STORE);
+  setTargetDAGCombine(ISD::MEMBARRIER);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
 
@@ -8566,6 +8567,58 @@ static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+// On X86 and X86-64, atomic operations are lowered to locked instructions.
+// Locked instructions, in turn, have implicit fence semantics (all memory
+// operations are flushed before issuing the locked instruction, and the
+// are not buffered), so we can fold away the common pattern of 
+// fence-atomic-fence.
+static SDValue PerformMEMBARRIERCombine(SDNode* N, SelectionDAG &DAG) {
+  SDValue atomic = N->getOperand(0);
+  switch (atomic.getOpcode()) {
+    case ISD::ATOMIC_CMP_SWAP:
+    case ISD::ATOMIC_SWAP:
+    case ISD::ATOMIC_LOAD_ADD:
+    case ISD::ATOMIC_LOAD_SUB:
+    case ISD::ATOMIC_LOAD_AND:
+    case ISD::ATOMIC_LOAD_OR:
+    case ISD::ATOMIC_LOAD_XOR:
+    case ISD::ATOMIC_LOAD_NAND:
+    case ISD::ATOMIC_LOAD_MIN:
+    case ISD::ATOMIC_LOAD_MAX:
+    case ISD::ATOMIC_LOAD_UMIN:
+    case ISD::ATOMIC_LOAD_UMAX:
+      break;
+    default:
+      return SDValue();
+  }
+  
+  SDValue fence = atomic.getOperand(0);
+  if (fence.getOpcode() != ISD::MEMBARRIER)
+    return SDValue();
+  
+  switch (atomic.getOpcode()) {
+    case ISD::ATOMIC_CMP_SWAP:
+      return DAG.UpdateNodeOperands(atomic, fence.getOperand(0),
+                                    atomic.getOperand(1), atomic.getOperand(2),
+                                    atomic.getOperand(3));
+    case ISD::ATOMIC_SWAP:
+    case ISD::ATOMIC_LOAD_ADD:
+    case ISD::ATOMIC_LOAD_SUB:
+    case ISD::ATOMIC_LOAD_AND:
+    case ISD::ATOMIC_LOAD_OR:
+    case ISD::ATOMIC_LOAD_XOR:
+    case ISD::ATOMIC_LOAD_NAND:
+    case ISD::ATOMIC_LOAD_MIN:
+    case ISD::ATOMIC_LOAD_MAX:
+    case ISD::ATOMIC_LOAD_UMIN:
+    case ISD::ATOMIC_LOAD_UMAX:
+      return DAG.UpdateNodeOperands(atomic, fence.getOperand(0),
+                                    atomic.getOperand(1), atomic.getOperand(2));
+    default:
+      return SDValue();
+  }
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -8584,6 +8637,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
+  case ISD::MEMBARRIER:     return PerformMEMBARRIERCombine(N, DAG);
   }
 
   return SDValue();
