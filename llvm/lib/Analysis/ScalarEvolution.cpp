@@ -3521,7 +3521,6 @@ ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
     if (!CondVal) return getCouldNotCompute();
 
     if (CondVal->getValue() == uint64_t(ExitWhen)) {
-      ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
       return getConstant(Type::Int32Ty, IterationNum);
     }
