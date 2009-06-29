@@ -53,7 +53,8 @@ public:
     Darwin,
     DragonFly,
     FreeBSD,
-    Linux
+    Linux,
+    OpenBSD
   };
   
 private:
