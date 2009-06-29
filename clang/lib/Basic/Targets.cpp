@@ -886,7 +886,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getOpenBSDDefines(Opts, 0, getTargetTriple(), Defines);
+    getOpenBSDDefines(Opts, false, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
@@ -900,7 +900,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Opts, 0, getTargetTriple(), Defines);
+    getFreeBSDDefines(Opts, false, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
@@ -1021,7 +1021,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getOpenBSDDefines(Opts, 1, getTargetTriple(), Defines);
+    getOpenBSDDefines(Opts, true, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
@@ -1035,7 +1035,7 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Opts, 1, getTargetTriple(), Defines);
+    getFreeBSDDefines(Opts, true, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
