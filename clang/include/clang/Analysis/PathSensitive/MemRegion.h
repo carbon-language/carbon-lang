@@ -83,7 +83,7 @@ public:
   
   template<typename RegionTy> const RegionTy* getAs() const;
   
-  virtual bool isBoundable() const { return true; }
+  virtual bool isBoundable() const { return false; }
 
   static bool classof(const MemRegion*) { return true; }
 };
