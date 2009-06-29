@@ -69,6 +69,8 @@ public:
 
 const HostInfo *createDarwinHostInfo(const Driver &D, 
                                      const llvm::Triple& Triple);
+const HostInfo *createOpenBSDHostInfo(const Driver &D, 
+                                      const llvm::Triple& Triple);
 const HostInfo *createFreeBSDHostInfo(const Driver &D, 
                                       const llvm::Triple& Triple);
 const HostInfo *createDragonFlyHostInfo(const Driver &D, 

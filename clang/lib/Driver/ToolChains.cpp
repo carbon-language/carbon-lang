@@ -384,6 +384,36 @@ DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args) const {
   return new DerivedArgList(Args, true);
 }
 
+/// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
+
+OpenBSD::OpenBSD(const HostInfo &Host, const llvm::Triple& Triple)
+  : Generic_GCC(Host, Triple) {
+  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+  getFilePaths().push_back("/usr/lib");
+}
+
+Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::openbsd::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::openbsd::Link(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA);
+    }
+  }
+
+  return *T;
+}
+
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
 FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32)

@@ -234,6 +234,57 @@ ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
   return TC;
 }
 
+// OpenBSD Host Info
+
+/// OpenBSDHostInfo -  OpenBSD host information implementation.
+class OpenBSDHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  OpenBSDHostInfo(const Driver &D, const llvm::Triple& Triple) 
+    : HostInfo(D, Triple) {}
+  ~OpenBSDHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *getToolChain(const ArgList &Args, 
+                                  const char *ArchName) const;
+};
+
+OpenBSDHostInfo::~OpenBSDHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool OpenBSDHostInfo::useDriverDriver() const { 
+  return false;
+}
+
+ToolChain *OpenBSDHostInfo::getToolChain(const ArgList &Args, 
+                                         const char *ArchName) const {
+  assert(!ArchName && 
+         "Unexpected arch name on platform without driver driver support.");
+  
+  std::string Arch = getArchName();
+  ArchName = Arch.c_str();
+  
+  ToolChain *&TC = ToolChains[ArchName];
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+
+    TC = new toolchains::OpenBSD(*this, TCTriple);
+  }
+
+  return TC;
+}
+
 // FreeBSD Host Info
 
 /// FreeBSDHostInfo -  FreeBSD host information implementation.
@@ -414,6 +465,12 @@ const HostInfo *
 clang::driver::createDarwinHostInfo(const Driver &D,
                                     const llvm::Triple& Triple){
   return new DarwinHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createOpenBSDHostInfo(const Driver &D, 
+                                     const llvm::Triple& Triple) {
+  return new OpenBSDHostInfo(D, Triple);
 }
 
 const HostInfo *

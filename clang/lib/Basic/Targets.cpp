@@ -70,6 +70,19 @@ static void getSolarisDefines(const LangOptions &Opts, std::vector<char> &Defs) 
   Define(Defs, "__SVR4");
 }
 
+static void getOpenBSDDefines(const LangOptions &Opts, bool is64Bit,
+                              const char *Triple, std::vector<char> &Defs) {
+  // OpenBSD defines; list based off of gcc output
+
+  Define(Defs, "__OpenBSD__", "1");
+  Define(Defs, "__KPRINTF_ATTRIBUTE__");
+  DefineStd(Defs, "unix", Opts);
+  Define(Defs, "__ELF__", "1");
+  if (is64Bit) {
+    Define(Defs, "__LP64__");
+  }
+}
+
 static void getFreeBSDDefines(const LangOptions &Opts, bool is64Bit,
                               const char *Triple, std::vector<char> &Defs) {
   // FreeBSD defines; list based off of gcc output
@@ -866,6 +879,20 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 OpenBSD target
+class OpenBSDX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  OpenBSDX86_32TargetInfo(const std::string& triple) :
+      X86_32TargetInfo(triple) { }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
+    getOpenBSDDefines(Opts, 0, getTargetTriple(), Defines);
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-32 FreeBSD target
 class FreeBSDX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -982,6 +1009,20 @@ public:
            "  void* overflow_arg_area;"
            "  void* reg_save_area;"
            "} __builtin_va_list[1];";
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 OpenBSD target
+class OpenBSDX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  OpenBSDX86_64TargetInfo(const std::string &triple)
+    : X86_64TargetInfo(triple) {}
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Defines);
+    getOpenBSDDefines(Opts, 1, getTargetTriple(), Defines);
   }
 };
 } // end anonymous namespace
@@ -1457,6 +1498,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   // Additions and corrections are welcome.
   bool isDarwin = T.find("-darwin") != std::string::npos;
   bool isDragonFly = T.find("-dragonfly") != std::string::npos;
+  bool isOpenBSD = T.find("-openbsd") != std::string::npos;
   bool isFreeBSD = T.find("-freebsd") != std::string::npos;
   bool isSolaris = T.find("-solaris") != std::string::npos;
   bool isLinux = T.find("-linux") != std::string::npos;
@@ -1495,6 +1537,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new DarwinX86_64TargetInfo(T);
     if (isLinux)
       return new LinuxX86_64TargetInfo(T);
+    if (isOpenBSD)
+      return new OpenBSDX86_64TargetInfo(T);
     if (isFreeBSD)
       return new FreeBSDX86_64TargetInfo(T);
     if (isSolaris)
@@ -1515,6 +1559,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new LinuxX86_32TargetInfo(T);
     if (isDragonFly)
       return new DragonFlyX86_32TargetInfo(T);
+    if (isOpenBSD)
+      return new OpenBSDX86_32TargetInfo(T);
     if (isFreeBSD)
       return new FreeBSDX86_32TargetInfo(T);
     if (isSolaris)

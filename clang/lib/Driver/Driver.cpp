@@ -1205,6 +1205,8 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
     return createDarwinHostInfo(*this, Triple);
   case llvm::Triple::DragonFly:
     return createDragonFlyHostInfo(*this, Triple);
+  case llvm::Triple::OpenBSD:
+    return createOpenBSDHostInfo(*this, Triple);
   case llvm::Triple::FreeBSD:
     return createFreeBSDHostInfo(*this, Triple);
   case llvm::Triple::Linux:
