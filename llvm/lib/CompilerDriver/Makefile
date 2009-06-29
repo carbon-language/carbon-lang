@@ -21,11 +21,12 @@ include $(LEVEL)/Makefile.common
 
 FullLibName = $(LIBRARYNAME)$(SHLIBEXT)
 
+all-local:: $(ToolDir)/$(FullLibName)
+
 # Copy the library to the bin dir so that llvmc can find it.
-all-local::
-	$(Echo) Copying $(BuildMode) Shared Library $(FullLibName) \
-	to $(ToolDir)
-	-$(Verb) $(CP) $(LibDir)/$(FullLibName) $(ToolDir)/
+$(ToolDir)/$(FullLibName): $(LibDir)/$(FullLibName) $(ToolDir)/.dir
+	$(Echo) Copying $(BuildMode) Shared Library $(FullLibName) to $@
+	-$(Verb) $(CP) $< $@
 
 clean-local::
 	$(Echo) Removing $(BuildMode) Shared Library $(FullLibName) \
