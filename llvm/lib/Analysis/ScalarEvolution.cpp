@@ -1048,9 +1048,8 @@ CollectAddOperandsWithScales(DenseMap<const SCEV*, APInt> &M,
         SmallVector<const SCEV*, 4> MulOps(Mul->op_begin()+1, Mul->op_end());
         const SCEV* Key = SE.getMulExpr(MulOps);
         std::pair<DenseMap<const SCEV*, APInt>::iterator, bool> Pair =
-          M.insert(std::make_pair(Key, APInt()));
+          M.insert(std::make_pair(Key, NewScale));
         if (Pair.second) {
-          Pair.first->second = NewScale;
           NewOps.push_back(Pair.first->first);
         } else {
           Pair.first->second += NewScale;
@@ -1067,9 +1066,8 @@ CollectAddOperandsWithScales(DenseMap<const SCEV*, APInt> &M,
     } else {
       // An ordinary operand. Update the map.
       std::pair<DenseMap<const SCEV*, APInt>::iterator, bool> Pair =
-        M.insert(std::make_pair(Ops[i], APInt()));
+        M.insert(std::make_pair(Ops[i], Scale));
       if (Pair.second) {
-        Pair.first->second = Scale;
         NewOps.push_back(Pair.first->first);
       } else {
         Pair.first->second += Scale;
