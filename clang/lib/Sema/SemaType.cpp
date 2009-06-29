@@ -814,9 +814,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
     case Declarator::KNRTypeListContext:
       assert(0 && "K&R type lists aren't allowed in C++");
       break;
-    default:
-      printf("context: %d\n", D.getContext());
-      assert(0);
     case Declarator::PrototypeContext:
       Error = 0; // Function prototype
       break;
