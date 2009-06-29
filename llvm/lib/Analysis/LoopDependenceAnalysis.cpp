@@ -36,17 +36,17 @@ char LoopDependenceAnalysis::ID = 0;
 //                             Utility Functions
 //===----------------------------------------------------------------------===//
 
-static inline bool isMemRefInstr(const Value *I) {
+static inline bool IsMemRefInstr(const Value *I) {
   return isa<LoadInst>(I) || isa<StoreInst>(I);
 }
 
-static void getMemRefInstrs(
+static void GetMemRefInstrs(
     const Loop *L, SmallVectorImpl<Instruction*> &memrefs) {
   for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
       b != be; ++b)
     for (BasicBlock::iterator i = (*b)->begin(), ie = (*b)->end();
         i != ie; ++i)
-      if (isMemRefInstr(i))
+      if (IsMemRefInstr(i))
         memrefs.push_back(i);
 }
 
@@ -56,7 +56,7 @@ static void getMemRefInstrs(
 
 bool LoopDependenceAnalysis::isDependencePair(const Value *x,
                                               const Value *y) const {
-  return isMemRefInstr(x) && isMemRefInstr(y)
+  return IsMemRefInstr(x) && IsMemRefInstr(y)
       && (isa<StoreInst>(x) || isa<StoreInst>(y));
 }
 
