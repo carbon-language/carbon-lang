@@ -262,11 +262,23 @@ asmtok::TokKind AsmLexer::LexToken() {
   case '*': return asmtok::Star;
   case ',': return asmtok::Comma;
   case '$': return asmtok::Dollar;
-  case '=': return asmtok::Equal;
-  case '|': return asmtok::Pipe;
+  case '=': 
+    if (*CurPtr == '=')
+      return ++CurPtr, asmtok::EqualEqual;
+    return asmtok::Equal;
+  case '|': 
+    if (*CurPtr == '|')
+      return ++CurPtr, asmtok::PipePipe;
+    return asmtok::Pipe;
   case '^': return asmtok::Caret;
-  case '&': return asmtok::Amp;
-  case '!': return asmtok::Exclaim;
+  case '&': 
+    if (*CurPtr == '&')
+      return ++CurPtr, asmtok::AmpAmp;
+    return asmtok::Amp;
+  case '!': 
+    if (*CurPtr == '=')
+      return ++CurPtr, asmtok::ExclaimEqual;
+    return asmtok::Exclaim;
   case '%': return LexPercent();
   case '/': return LexSlash();
   case '#': return LexHash();
@@ -275,19 +287,18 @@ asmtok::TokKind AsmLexer::LexToken() {
   case '5': case '6': case '7': case '8': case '9':
     return LexDigit();
   case '<':
-    if (*CurPtr == '<') {
-      ++CurPtr;
-      return asmtok::LessLess;
+    switch (*CurPtr) {
+    case '<': return ++CurPtr, asmtok::LessLess;
+    case '=': return ++CurPtr, asmtok::LessEqual;
+    case '>': return ++CurPtr, asmtok::LessGreater;
+    default: return asmtok::Less;
     }
-    // Don't have any use for bare '<' yet.
-    return ReturnError(TokStart, "invalid character in input");
   case '>':
-    if (*CurPtr == '>') {
-      ++CurPtr;
-      return asmtok::GreaterGreater;
+    switch (*CurPtr) {
+    case '>': return ++CurPtr, asmtok::GreaterGreater;      
+    case '=': return ++CurPtr, asmtok::GreaterEqual;      
+    default: return asmtok::Greater;
     }
-    // Don't have any use for bare '>' yet.
-    return ReturnError(TokStart, "invalid character in input");
       
   // TODO: Quoted identifiers (objc methods etc)
   // local labels: [0-9][:]

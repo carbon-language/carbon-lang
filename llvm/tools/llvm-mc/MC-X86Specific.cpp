@@ -87,7 +87,7 @@ bool AsmParser::ParseX86Operand(X86Operand &Op) {
     // $42 -> immediate.
     Lexer.Lex();
     int64_t Val;
-    if (ParseExpression(Val))
+    if (ParseAbsoluteExpression(Val))
       return TokError("expected integer constant");
     Op = X86Operand::CreateReg(Val);
     return false;
@@ -118,7 +118,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   // it.
   int64_t Disp = 0;
   if (Lexer.isNot(asmtok::LParen)) {
-    if (ParseExpression(Disp)) return true;
+    if (ParseAbsoluteExpression(Disp)) return true;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
@@ -139,8 +139,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
       // memory operand consumed.
     } else {
       // It must be an parenthesized expression, parse it now.
-      if (ParseParenExpr(Disp) ||
-          ParseBinOpRHS(1, Disp))
+      if (ParseAbsoluteExpression(Disp))
         return true;
       
       // After parsing the base expression we could either have a parenthesized

@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsmParser.h"
+
+#include "AsmExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
@@ -57,7 +59,7 @@ void AsmParser::EatToEndOfStatement() {
 ///
 /// parenexpr ::= expr)
 ///
-bool AsmParser::ParseParenExpr(int64_t &Res) {
+bool AsmParser::ParseParenExpr(AsmExpr *&Res) {
   if (ParseExpression(Res)) return true;
   if (Lexer.isNot(asmtok::RParen))
     return TokError("expected ')' in parentheses expression");
@@ -70,28 +72,47 @@ bool AsmParser::ParseParenExpr(int64_t &Res) {
 ///  primaryexpr ::= symbol
 ///  primaryexpr ::= number
 ///  primaryexpr ::= ~,+,- primaryexpr
-bool AsmParser::ParsePrimaryExpr(int64_t &Res) {
+bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
   switch (Lexer.getKind()) {
   default:
     return TokError("unknown token in expression");
+  case asmtok::Exclaim:
+    Lexer.Lex(); // Eat the operator.
+    if (ParsePrimaryExpr(Res))
+      return true;
+    Res = new AsmUnaryExpr(AsmUnaryExpr::LNot, Res);
+    return false;
   case asmtok::Identifier:
     // This is a label, this should be parsed as part of an expression, to
-    // handle things like LFOO+4
-    Res = 0; // FIXME.
+    // handle things like LFOO+4.
+    Res = new AsmSymbolRefExpr(Ctx.GetOrCreateSymbol(Lexer.getCurStrVal()));
     Lexer.Lex(); // Eat identifier.
     return false;
   case asmtok::IntVal:
-    Res = Lexer.getCurIntVal();
+    Res = new AsmConstantExpr(Lexer.getCurIntVal());
     Lexer.Lex(); // Eat identifier.
     return false;
   case asmtok::LParen:
     Lexer.Lex(); // Eat the '('.
     return ParseParenExpr(Res);
-  case asmtok::Tilde:
-  case asmtok::Plus:
   case asmtok::Minus:
     Lexer.Lex(); // Eat the operator.
-    return ParsePrimaryExpr(Res);
+    if (ParsePrimaryExpr(Res))
+      return true;
+    Res = new AsmUnaryExpr(AsmUnaryExpr::Minus, Res);
+    return false;
+  case asmtok::Plus:
+    Lexer.Lex(); // Eat the operator.
+    if (ParsePrimaryExpr(Res))
+      return true;
+    Res = new AsmUnaryExpr(AsmUnaryExpr::Plus, Res);
+    return false;
+  case asmtok::Tilde:
+    Lexer.Lex(); // Eat the operator.
+    if (ParsePrimaryExpr(Res))
+      return true;
+    Res = new AsmUnaryExpr(AsmUnaryExpr::Not, Res);
+    return false;
   }
 }
 
@@ -102,59 +123,125 @@ bool AsmParser::ParsePrimaryExpr(int64_t &Res) {
 ///  expr ::= expr *,/,%,<<,>> expr  -> highest.
 ///  expr ::= primaryexpr
 ///
-bool AsmParser::ParseExpression(int64_t &Res) {
+bool AsmParser::ParseExpression(AsmExpr *&Res) {
+  Res = 0;
   return ParsePrimaryExpr(Res) ||
          ParseBinOpRHS(1, Res);
 }
 
-static unsigned getBinOpPrecedence(asmtok::TokKind K) {
+bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
+  AsmExpr *Expr;
+  
+  if (ParseExpression(Expr))
+    return true;
+
+  if (!Expr->EvaluateAsAbsolute(Ctx, Res))
+    return TokError("expected absolute expression");
+
+  return false;
+}
+
+static unsigned getBinOpPrecedence(asmtok::TokKind K, 
+                                   AsmBinaryExpr::Opcode &Kind) {
   switch (K) {
   default: return 0;    // not a binop.
-  case asmtok::Plus:
-  case asmtok::Minus:
+
+    // Lowest Precedence: &&, ||
+  case asmtok::AmpAmp:
+    Kind = AsmBinaryExpr::LAnd;
     return 1;
-  case asmtok::Pipe:
-  case asmtok::Caret:
-  case asmtok::Amp:
-  case asmtok::Exclaim:
+  case asmtok::PipePipe:
+    Kind = AsmBinaryExpr::LOr;
+    return 1;
+
+    // Low Precedence: +, -, ==, !=, <>, <, <=, >, >=
+  case asmtok::Plus:
+    Kind = AsmBinaryExpr::Add;
     return 2;
-  case asmtok::Star:
-  case asmtok::Slash:
-  case asmtok::Percent:
-  case asmtok::LessLess:
-  case asmtok::GreaterGreater:
+  case asmtok::Minus:
+    Kind = AsmBinaryExpr::Sub;
+    return 2;
+  case asmtok::EqualEqual:
+    Kind = AsmBinaryExpr::EQ;
+    return 2;
+  case asmtok::ExclaimEqual:
+  case asmtok::LessGreater:
+    Kind = AsmBinaryExpr::NE;
+    return 2;
+  case asmtok::Less:
+    Kind = AsmBinaryExpr::LT;
+    return 2;
+  case asmtok::LessEqual:
+    Kind = AsmBinaryExpr::LTE;
+    return 2;
+  case asmtok::Greater:
+    Kind = AsmBinaryExpr::GT;
+    return 2;
+  case asmtok::GreaterEqual:
+    Kind = AsmBinaryExpr::GTE;
+    return 2;
+
+    // Intermediate Precedence: |, &, ^
+    //
+    // FIXME: gas seems to support '!' as an infix operator?
+  case asmtok::Pipe:
+    Kind = AsmBinaryExpr::Or;
     return 3;
+  case asmtok::Caret:
+    Kind = AsmBinaryExpr::Xor;
+    return 3;
+  case asmtok::Amp:
+    Kind = AsmBinaryExpr::And;
+    return 3;
+
+    // Highest Precedence: *, /, %, <<, >>
+  case asmtok::Star:
+    Kind = AsmBinaryExpr::Mul;
+    return 4;
+  case asmtok::Slash:
+    Kind = AsmBinaryExpr::Div;
+    return 4;
+  case asmtok::Percent:
+    Kind = AsmBinaryExpr::Mod;
+    return 4;
+  case asmtok::LessLess:
+    Kind = AsmBinaryExpr::Shl;
+    return 4;
+  case asmtok::GreaterGreater:
+    Kind = AsmBinaryExpr::Shr;
+    return 4;
   }
 }
 
 
 /// ParseBinOpRHS - Parse all binary operators with precedence >= 'Precedence'.
 /// Res contains the LHS of the expression on input.
-bool AsmParser::ParseBinOpRHS(unsigned Precedence, int64_t &Res) {
+bool AsmParser::ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res) {
   while (1) {
-    unsigned TokPrec = getBinOpPrecedence(Lexer.getKind());
+    AsmBinaryExpr::Opcode Kind;
+    unsigned TokPrec = getBinOpPrecedence(Lexer.getKind(), Kind);
     
     // If the next token is lower precedence than we are allowed to eat, return
     // successfully with what we ate already.
     if (TokPrec < Precedence)
       return false;
     
-    //asmtok::TokKind BinOp = Lexer.getKind();
     Lexer.Lex();
     
     // Eat the next primary expression.
-    int64_t RHS;
+    AsmExpr *RHS;
     if (ParsePrimaryExpr(RHS)) return true;
     
     // If BinOp binds less tightly with RHS than the operator after RHS, let
     // the pending operator take RHS as its LHS.
-    unsigned NextTokPrec = getBinOpPrecedence(Lexer.getKind());
+    AsmBinaryExpr::Opcode Dummy;
+    unsigned NextTokPrec = getBinOpPrecedence(Lexer.getKind(), Dummy);
     if (TokPrec < NextTokPrec) {
       if (ParseBinOpRHS(Precedence+1, RHS)) return true;
     }
 
-    // Merge LHS/RHS: fixme use the right operator etc.
-    Res += RHS;
+    // Merge LHS and RHS according to operator.
+    Res = new AsmBinaryExpr(Kind, Res, RHS);
   }
 }
 
@@ -354,7 +441,7 @@ bool AsmParser::ParseStatement() {
 
 bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
   int64_t Value;
-  if (ParseExpression(Value))
+  if (ParseAbsoluteExpression(Value))
     return true;
   
   if (Lexer.isNot(asmtok::EndOfStatement))
@@ -433,7 +520,7 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Section,
 }
 
 /// ParseDirectiveAscii:
-///   ::= ( .ascii | .asciiz ) [ "string" ( , "string" )* ]
+///   ::= ( .ascii | .asciz ) [ "string" ( , "string" )* ]
 bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
   if (Lexer.isNot(asmtok::EndOfStatement)) {
     for (;;) {
@@ -469,7 +556,7 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
   if (Lexer.isNot(asmtok::EndOfStatement)) {
     for (;;) {
       int64_t Expr;
-      if (ParseExpression(Expr))
+      if (ParseAbsoluteExpression(Expr))
         return true;
 
       Out.EmitValue(MCValue::get(Expr), Size);
@@ -492,7 +579,7 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
 ///  ::= .space expression [ , expression ]
 bool AsmParser::ParseDirectiveSpace() {
   int64_t NumBytes;
-  if (ParseExpression(NumBytes))
+  if (ParseAbsoluteExpression(NumBytes))
     return true;
 
   int64_t FillExpr = 0;
@@ -502,7 +589,7 @@ bool AsmParser::ParseDirectiveSpace() {
       return TokError("unexpected token in '.space' directive");
     Lexer.Lex();
     
-    if (ParseExpression(FillExpr))
+    if (ParseAbsoluteExpression(FillExpr))
       return true;
 
     HasFillExpr = true;
@@ -527,7 +614,7 @@ bool AsmParser::ParseDirectiveSpace() {
 ///  ::= .fill expression , expression , expression
 bool AsmParser::ParseDirectiveFill() {
   int64_t NumValues;
-  if (ParseExpression(NumValues))
+  if (ParseAbsoluteExpression(NumValues))
     return true;
 
   if (Lexer.isNot(asmtok::Comma))
@@ -535,7 +622,7 @@ bool AsmParser::ParseDirectiveFill() {
   Lexer.Lex();
   
   int64_t FillSize;
-  if (ParseExpression(FillSize))
+  if (ParseAbsoluteExpression(FillSize))
     return true;
 
   if (Lexer.isNot(asmtok::Comma))
@@ -543,7 +630,7 @@ bool AsmParser::ParseDirectiveFill() {
   Lexer.Lex();
   
   int64_t FillExpr;
-  if (ParseExpression(FillExpr))
+  if (ParseAbsoluteExpression(FillExpr))
     return true;
 
   if (Lexer.isNot(asmtok::EndOfStatement))
@@ -564,7 +651,7 @@ bool AsmParser::ParseDirectiveFill() {
 ///  ::= .org expression [ , expression ]
 bool AsmParser::ParseDirectiveOrg() {
   int64_t Offset;
-  if (ParseExpression(Offset))
+  if (ParseAbsoluteExpression(Offset))
     return true;
 
   // Parse optional fill expression.
@@ -574,7 +661,7 @@ bool AsmParser::ParseDirectiveOrg() {
       return TokError("unexpected token in '.org' directive");
     Lexer.Lex();
     
-    if (ParseExpression(FillExpr))
+    if (ParseAbsoluteExpression(FillExpr))
       return true;
 
     if (Lexer.isNot(asmtok::EndOfStatement))

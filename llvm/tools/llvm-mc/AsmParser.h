@@ -17,6 +17,7 @@
 #include "AsmLexer.h"
 
 namespace llvm {
+class AsmExpr;
 class MCContext;
 class MCInst;
 class MCStreamer;
@@ -44,10 +45,24 @@ private:
   void EatToEndOfStatement();
   
   bool ParseAssignment(const char *Name, bool IsDotSet);
-  bool ParseExpression(int64_t &Res);
-  bool ParsePrimaryExpr(int64_t &Res);
-  bool ParseBinOpRHS(unsigned Precedence, int64_t &Res);
-  bool ParseParenExpr(int64_t &Res);
+
+  /// ParseExpression - Parse a general assembly expression.
+  ///
+  /// @param Res - The resulting expression. The pointer value is null on error.
+  /// @result - False on success.
+  bool ParseExpression(AsmExpr *&Res);
+  
+  /// ParseAbsoluteExpr - Parse an expression which must evaluate to an absolute
+  /// value.
+  ///
+  /// @param Res - The value of the absolute expression. The result is undefined
+  /// on error.
+  /// @result - False on success.
+  bool ParseAbsoluteExpression(int64_t &Res);
+
+  bool ParsePrimaryExpr(AsmExpr *&Res);
+  bool ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res);
+  bool ParseParenExpr(AsmExpr *&Res);
   
   // X86 specific.
   bool ParseX86InstOperands(MCInst &Inst);
