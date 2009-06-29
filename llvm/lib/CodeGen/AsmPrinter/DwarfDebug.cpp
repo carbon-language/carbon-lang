@@ -678,9 +678,6 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
       if (Element.getTag() == dwarf::DW_TAG_subprogram)
         ElemDie = CreateSubprogramDIE(DW_Unit,
                                       DISubprogram(Element.getGV()));
-      else if (Element.getTag() == dwarf::DW_TAG_variable) // ??
-        ElemDie = CreateGlobalVariableDIE(DW_Unit,
-                                          DIGlobalVariable(Element.getGV()));
       else
         ElemDie = CreateMemberDIE(DW_Unit,
                                   DIDerivedType(Element.getGV()));
