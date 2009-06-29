@@ -1036,14 +1036,22 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                          InstantiateDecl(FunctionTemplate->getTemplatedDecl(),
                                          FunctionTemplate->getDeclContext(),
                                          *DeducedArgumentList));
-  
-  if (!Specialization || Trap.hasErrorOccurred())
+  if (!Specialization)
     return TDK_SubstitutionFailure;
+  
+  // If the template argument list is owned by the function template 
+  // specialization, release it.
+  if (Specialization->getTemplateSpecializationArgs() == DeducedArgumentList)
+    Info.take();
 
-  // Turn the specialization into an actual function template specialization.
-  Specialization->setFunctionTemplateSpecialization(Context,
-                                                    FunctionTemplate,
-                                                    Info.take());
+  // There may have been an error that did not prevent us from constructing a
+  // declaration. Mark the declaration invalid and return with a substitution
+  // failure.
+  if (Trap.hasErrorOccurred()) {
+    Specialization->setInvalidDecl(true);
+    return TDK_SubstitutionFailure;
+  }
+  
   return TDK_Success;
 }
 

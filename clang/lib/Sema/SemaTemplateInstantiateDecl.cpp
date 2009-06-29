@@ -294,7 +294,24 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
-  // FIXME: Look for existing specializations (explicit or otherwise).
+  // Check whether there is already a function template specialization for
+  // this declaration.
+  FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
+  void *InsertPos = 0;
+  if (FunctionTemplate) {
+    llvm::FoldingSetNodeID ID;
+    FunctionTemplateSpecializationInfo::Profile(ID, 
+                                          TemplateArgs.getFlatArgumentList(),
+                                                TemplateArgs.flat_size());
+    
+    FunctionTemplateSpecializationInfo *Info 
+      = FunctionTemplate->getSpecializations().FindNodeOrInsertPos(ID, 
+                                                                   InsertPos);
+    
+    // If we already have a function template specialization, return it.
+    if (Info)
+      return Info->Function;
+  }
   
   Sema::LocalInstantiationScope Scope(SemaRef);
   
@@ -325,10 +342,15 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
   NamedDecl *PrevDecl = 0;
   SemaRef.CheckFunctionDeclaration(Function, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
-  
 
-  // FIXME: link this to the function template from which it was instantiated.
-  
+  if (FunctionTemplate) {
+    // Record this function template specialization.
+    Function->setFunctionTemplateSpecialization(SemaRef.Context,
+                                                FunctionTemplate,
+                                                &TemplateArgs,
+                                                InsertPos);
+   }
+
   return Function;
 }
 

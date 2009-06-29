@@ -81,9 +81,34 @@ FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C,
                                                    DeclContext *DC,
                                                    SourceLocation L,
                                                    DeclarationName Name,
-                                                   TemplateParameterList *Params,
+                                               TemplateParameterList *Params,
                                                    NamedDecl *Decl) {
   return new (C) FunctionTemplateDecl(DC, L, Name, Params, Decl);
+}
+
+void FunctionTemplateDecl::Destroy(ASTContext &C) {
+  if (Common *CommonPtr = CommonOrPrev.dyn_cast<Common*>()) {
+    for (llvm::FoldingSet<FunctionTemplateSpecializationInfo>::iterator
+              Spec = CommonPtr->Specializations.begin(),
+           SpecEnd = CommonPtr->Specializations.end();
+         Spec != SpecEnd; ++Spec)
+      C.Deallocate(&*Spec);
+  }
+  
+  Decl::Destroy(C);
+}
+
+FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
+  // Find the first declaration of this function template.
+  FunctionTemplateDecl *First = this;
+  while (First->getPreviousDeclaration())
+    First = First->getPreviousDeclaration();
+  
+  if (First->CommonOrPrev.isNull()) {
+    // FIXME: Allocate with the ASTContext
+    First->CommonOrPrev = new Common;
+  }
+  return First->CommonOrPrev.get<Common*>();
 }
 
 //===----------------------------------------------------------------------===//

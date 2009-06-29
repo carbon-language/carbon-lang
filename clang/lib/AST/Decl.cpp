@@ -372,11 +372,6 @@ void FunctionDecl::Destroy(ASTContext& C) {
 
   C.Deallocate(ParamInfo);
 
-  if (FunctionTemplateSpecializationInfo *Info 
-        = TemplateOrSpecialization
-            .dyn_cast<FunctionTemplateSpecializationInfo*>())
-    C.Deallocate(Info);
-  
   Decl::Destroy(C);
 }
 
@@ -564,6 +559,18 @@ bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
   return false;
 }
 
+void 
+FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
+  PreviousDeclaration = PrevDecl;
+  
+  if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
+    FunctionTemplateDecl *PrevFunTmpl 
+      = PrevDecl? PrevDecl->getDescribedFunctionTemplate() : 0;
+    assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
+    FunTmpl->setPreviousDeclaration(PrevFunTmpl);
+  }
+}
+
 /// getOverloadedOperator - Which C++ overloaded operator this
 /// function represents, if any.
 OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
@@ -595,15 +602,21 @@ FunctionDecl::getTemplateSpecializationArgs() const {
 void 
 FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
                                                 FunctionTemplateDecl *Template,
-                                     const TemplateArgumentList *TemplateArgs) {
+                                     const TemplateArgumentList *TemplateArgs,
+                                                void *InsertPos) {
   FunctionTemplateSpecializationInfo *Info 
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (!Info)
     Info = new (Context) FunctionTemplateSpecializationInfo;
   
+  Info->Function = this;
   Info->Template = Template;
   Info->TemplateArguments = TemplateArgs;
   TemplateOrSpecialization = Info;
+  
+  // Insert this function template specialization into the set of known
+  // function template specialiations.
+  Template->getSpecializations().InsertNode(Info, InsertPos);
 }
 
 //===----------------------------------------------------------------------===//

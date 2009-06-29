@@ -809,9 +809,7 @@ public:
     return PreviousDeclaration;
   }
 
-  void setPreviousDeclaration(FunctionDecl * PrevDecl) {
-    PreviousDeclaration = PrevDecl;
-  }
+  void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
   unsigned getBuiltinID(ASTContext &Context) const;
 
@@ -961,7 +959,8 @@ public:
   /// function template specialization from the template.
   void setFunctionTemplateSpecialization(ASTContext &Context,
                                          FunctionTemplateDecl *Template,
-                                      const TemplateArgumentList *TemplateArgs);
+                                      const TemplateArgumentList *TemplateArgs,
+                                         void *InsertPos);
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

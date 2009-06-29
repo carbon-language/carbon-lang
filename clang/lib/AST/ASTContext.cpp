@@ -1806,6 +1806,12 @@ Decl *ASTContext::getCanonicalDecl(Decl *D) {
     return const_cast<FunctionDecl *>(Function);
   }
 
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D)) {
+    while (FunTmpl->getPreviousDeclaration())
+      FunTmpl = FunTmpl->getPreviousDeclaration();
+    return FunTmpl;
+  }
+  
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     while (Var->getPreviousDeclaration())
       Var = Var->getPreviousDeclaration();

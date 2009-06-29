@@ -1500,6 +1500,8 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
     // No code generation needed.
   case Decl::Using:
+  case Decl::ClassTemplate:
+  case Decl::FunctionTemplate:
     break;
   case Decl::CXXConstructor:
     EmitCXXConstructors(cast<CXXConstructorDecl>(D));
