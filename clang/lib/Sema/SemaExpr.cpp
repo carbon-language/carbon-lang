@@ -4028,6 +4028,17 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     QualType RCanPointeeTy =
       Context.getCanonicalType(rType->getAsPointerType()->getPointeeType());
 
+    if (rType->isFunctionPointerType() || lType->isFunctionPointerType()) {
+      if (isRelational) {
+        Diag(Loc, diag::ext_typecheck_ordered_comparison_of_function_pointers)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      }
+    }
+    if (((!LHSIsNull || isRelational) && LCanPointeeTy->isVoidType()) !=
+        ((!RHSIsNull || isRelational) && RCanPointeeTy->isVoidType())) {
+      Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+    }
     // Simple check: if the pointee types are identical, we're done.
     if (LCanPointeeTy == RCanPointeeTy)
       return ResultTy;
@@ -4140,7 +4151,10 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   }
   if ((lType->isPointerType() || lType->isObjCQualifiedIdType()) &&
        rType->isIntegerType()) {
-    if (!RHSIsNull)
+    if (isRelational)
+      Diag(Loc, diag::ext_typecheck_ordered_comparison_of_pointer_integer)
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+    else if (!RHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(rex, lType); // promote the integer to pointer
@@ -4148,7 +4162,10 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   }
   if (lType->isIntegerType() &&
       (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
-    if (!LHSIsNull)
+    if (isRelational)
+      Diag(Loc, diag::ext_typecheck_ordered_comparison_of_pointer_integer)
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+    else if (!LHSIsNull)
       Diag(Loc, diag::ext_typecheck_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     ImpCastExprToType(lex, rType); // promote the integer to pointer

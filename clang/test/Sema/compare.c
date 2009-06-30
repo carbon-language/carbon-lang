@@ -15,3 +15,17 @@ int arrays(char (*a)[5], char(*b)[10], char(*c)[5]) {
   int d = (a == c);
   return a == b; // expected-warning {{comparison of distinct pointer types}}
 }
+
+int pointers(int *a)
+{
+  return a > 0; // expected-warning {{ordered comparison between pointer and integer}}
+  return a > (void *)0; // expected-warning {{comparison of distinct pointer types}}
+}
+
+int function_pointers(int (*a)(int), int (*b)(int))
+{
+  return a > b; // expected-warning {{ordered comparison of function pointers}}
+  return function_pointers > function_pointers; // expected-warning {{ordered comparison of function pointers}}
+  return a == (void *) 0;
+  return a == (void *) 1; // expected-warning {{comparison of distinct pointer types}}
+}

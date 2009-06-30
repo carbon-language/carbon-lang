@@ -1213,6 +1213,10 @@ def err_typecheck_sub_ptr_object : Error<
   "subtraction of pointer %0 requires pointee to be a complete object type">;
 def err_typecheck_sub_ptr_compatible : Error<
   "%0 and %1 are not pointers to compatible types">;
+def ext_typecheck_ordered_comparison_of_pointer_integer : ExtWarn<
+  "ordered comparison between pointer and integer (%0 and %1)">;
+def ext_typecheck_ordered_comparison_of_function_pointers : ExtWarn<
+  "ordered comparison of function pointers (%0 and %1)">;
 def ext_typecheck_comparison_of_pointer_integer : ExtWarn<
   "comparison between pointer and integer (%0 and %1)">;
 def ext_typecheck_comparison_of_distinct_pointers : ExtWarn<
