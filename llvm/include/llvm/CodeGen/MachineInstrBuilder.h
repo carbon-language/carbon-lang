@@ -29,7 +29,8 @@ namespace RegState {
     Implicit       = 0x4,
     Kill           = 0x8,
     Dead           = 0x10,
-    EarlyClobber   = 0x20,
+    Undef          = 0x20,
+    EarlyClobber   = 0x40,
     ImplicitDefine = Implicit | Define,
     ImplicitKill   = Implicit | Kill
   };
@@ -57,8 +58,9 @@ public:
                                              flags & RegState::Implicit,
                                              flags & RegState::Kill,
                                              flags & RegState::Dead,
-                                             SubReg,
-                                             flags & RegState::EarlyClobber));
+                                             flags & RegState::Undef,
+                                             flags & RegState::EarlyClobber,
+                                             SubReg));
     return *this;
   }
 
@@ -202,6 +204,9 @@ inline unsigned getKillRegState(bool B) {
 }
 inline unsigned getDeadRegState(bool B) {
   return B ? RegState::Dead : 0;
+}
+inline unsigned getUndefRegState(bool B) {
+  return B ? RegState::Undef : 0;
 }
 
 } // End llvm namespace

@@ -120,7 +120,7 @@ void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
 /// the specified value.  If an operand is known to be an register already,
 /// the setReg method should be used.
 void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
-                                      bool isKill, bool isDead) {
+                                      bool isKill, bool isDead, bool isUndef) {
   // If this operand is already a register operand, use setReg to update the 
   // register's use/def lists.
   if (isReg()) {
@@ -143,6 +143,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsImp = isImp;
   IsKill = isKill;
   IsDead = isDead;
+  IsUndef = isUndef;
   IsEarlyClobber = false;
   SubReg = 0;
 }
@@ -206,11 +207,11 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
         OS << "%mreg" << getReg();
     }
 
-    if (getSubReg() != 0) {
+    if (getSubReg() != 0)
       OS << ':' << getSubReg();
-    }
 
-    if (isDef() || isKill() || isDead() || isImplicit() || isEarlyClobber()) {
+    if (isDef() || isKill() || isDead() || isImplicit() || isUndef() ||
+        isEarlyClobber()) {
       OS << '<';
       bool NeedComma = false;
       if (isImplicit()) {
@@ -224,10 +225,15 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
         OS << "def";
         NeedComma = true;
       }
-      if (isKill() || isDead()) {
+      if (isKill() || isDead() || isUndef()) {
         if (NeedComma) OS << ',';
         if (isKill())  OS << "kill";
         if (isDead())  OS << "dead";
+        if (isUndef()) {
+          if (isKill() || isDead())
+            OS << ',';
+          OS << "undef";
+        }
       }
       OS << '>';
     }

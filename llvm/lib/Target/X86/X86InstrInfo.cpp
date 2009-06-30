@@ -2459,7 +2459,8 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                getDefRegState(MO.isDef()) |
                RegState::Implicit |
                getKillRegState(MO.isKill()) |
-               getDeadRegState(MO.isDead()));
+               getDeadRegState(MO.isDead()) |
+               getUndefRegState(MO.isUndef()));
   }
   // Change CMP32ri r, 0 back to TEST32rr r, r, etc.
   unsigned NewOpc = 0;

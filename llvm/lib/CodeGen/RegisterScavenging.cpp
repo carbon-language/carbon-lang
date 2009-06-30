@@ -36,7 +36,7 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
   bool SeenSuperDef = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg())
+    if (!MO.isReg() || MO.isUndef())
       continue;
     if (TRI->isSuperRegister(SubReg, MO.getReg())) {
       if (MO.isUse())
@@ -57,28 +57,22 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI,
 }
 
 /// setUsed - Set the register and its sub-registers as being used.
-void RegScavenger::setUsed(unsigned Reg, bool ImpDef) {
+void RegScavenger::setUsed(unsigned Reg) {
   RegsAvailable.reset(Reg);
-  ImplicitDefed[Reg] = ImpDef;
 
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs) {
+       unsigned SubReg = *SubRegs; ++SubRegs)
     RegsAvailable.reset(SubReg);
-    ImplicitDefed[SubReg] = ImpDef;
-  }
 }
 
 /// setUnused - Set the register and its sub-registers as being unused.
 void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
   RegsAvailable.set(Reg);
-  ImplicitDefed.reset(Reg);
 
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs)
-    if (!RedefinesSuperRegPart(MI, Reg, TRI)) {
+    if (!RedefinesSuperRegPart(MI, Reg, TRI))
       RegsAvailable.set(SubReg);
-      ImplicitDefed.reset(SubReg);
-    }
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
@@ -94,7 +88,6 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   if (!MBB) {
     NumPhysRegs = TRI->getNumRegs();
     RegsAvailable.resize(NumPhysRegs);
-    ImplicitDefed.resize(NumPhysRegs);
 
     // Create reserved registers bitvector.
     ReservedRegs = TRI->getReservedRegs(MF);
@@ -113,7 +106,6 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   ScavengeRestore = NULL;
   CurrDist = 0;
   DistanceMap.clear();
-  ImplicitDefed.reset();
 
   // All registers started out unused.
   RegsAvailable.set();
@@ -195,15 +187,13 @@ void RegScavenger::forward() {
     ScavengeRestore = NULL;
   }
 
-  bool IsImpDef = MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
-
   // Separate register operands into 3 classes: uses, defs, earlyclobbers.
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> UseMOs;
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> DefMOs;
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> EarlyClobberMOs;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || MO.getReg() == 0)
+    if (!MO.isReg() || MO.getReg() == 0 || MO.isUndef())
       continue;
     if (MO.isUse())
       UseMOs.push_back(std::make_pair(&MO,i));
@@ -221,14 +211,7 @@ void RegScavenger::forward() {
 
     assert(isUsed(Reg) && "Using an undefined register!");
 
-    // Kill of implicit_def defined registers are ignored. e.g.
-    // entry: 0x2029ab8, LLVM BB @0x1b06080, ID#0:
-    // Live Ins: %R0
-    //  %R0<def> = IMPLICIT_DEF
-    //  %R0<def> = IMPLICIT_DEF
-    //  STR %R0<kill>, %R0, %reg0, 0, 14, %reg0, Mem:ST(4,4) [0x1b06510 + 0]
-    //  %R1<def> = LDR %R0, %reg0, 24, 14, %reg0, Mem:LD(4,4) [0x1b065bc + 0]
-    if (MO.isKill() && !isReserved(Reg) && !isImplicitlyDefined(Reg)) {
+    if (MO.isKill() && !isReserved(Reg)) {
       KillRegs.set(Reg);
 
       // Mark sub-registers as used.
@@ -274,10 +257,9 @@ void RegScavenger::forward() {
     // Implicit def is allowed to "re-define" any register. Similarly,
     // implicitly defined registers can be clobbered.
     assert((isReserved(Reg) || isUnused(Reg) ||
-            IsImpDef || isImplicitlyDefined(Reg) ||
             isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
            "Re-defining a live register!");
-    setUsed(Reg, IsImpDef);
+    setUsed(Reg);
   }
 }
 
@@ -297,7 +279,7 @@ void RegScavenger::backward() {
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> EarlyClobberMOs;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || MO.getReg() == 0)
+    if (!MO.isReg() || MO.getReg() == 0 || MO.isUndef())
       continue;
     if (MO.isUse())
       UseMOs.push_back(std::make_pair(&MO,i));

@@ -905,6 +905,17 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     DOUT <<  tri_->getName(physReg) << '\n';
     // Note the register is not really in use.
     vrm_->assignVirt2Phys(cur->reg, physReg);
+    // Since the register allocator is allowed to assign this virtual register
+    // physical register that overlaps other live intervals. Mark these
+    // operands as "Undef" which means later passes, e.g. register scavenger
+    // can ignore them.
+    for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(cur->reg),
+           RE = mri_->reg_end(); RI != RE; ++RI) {
+      MachineOperand &MO = RI.getOperand();
+      MO.setIsUndef();
+      if (MO.isKill())
+        MO.setIsKill(false);
+    }
     return;
   }
 

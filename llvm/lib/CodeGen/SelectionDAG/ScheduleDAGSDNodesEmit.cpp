@@ -617,7 +617,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, true, false, false, 
-                                                   false, 0, true));
+                                                   false, false, true));
         }
         break;
       case 1:  // Use of register.

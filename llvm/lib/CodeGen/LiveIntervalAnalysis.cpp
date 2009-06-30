@@ -1782,8 +1782,12 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
       NewLIs.push_back(&getOrCreateInterval(NewVReg));
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg() == li.reg)
+        if (MO.isReg() && MO.getReg() == li.reg) {
           MO.setReg(NewVReg);
+          MO.setIsUndef();
+          if (MO.isKill())
+            MO.setIsKill(false);
+        }
       }
     }
   }

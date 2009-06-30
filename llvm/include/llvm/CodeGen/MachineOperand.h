@@ -75,6 +75,10 @@ private:
   /// This is only valid on definitions of registers.
   bool IsDead : 1;
 
+  /// IsUndef - True if this is a register def / use of "undef", i.e. register
+  /// defined by an IMPLICIT_DEF. This is only valid on registers.
+  bool IsUndef : 1;
+
   /// IsEarlyClobber - True if this MO_Register 'def' operand is written to
   /// by the MachineInstr before all input registers are read.  This is used to
   /// model the GCC inline asm '&' constraint modifier.
@@ -198,6 +202,11 @@ public:
     return IsKill;
   }
   
+  bool isUndef() const {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    return IsUndef;
+  }
+  
   bool isEarlyClobber() const {
     assert(isReg() && "Wrong MachineOperand accessor");
     return IsEarlyClobber;
@@ -248,6 +257,11 @@ public:
     IsDead = Val;
   }
 
+  void setIsUndef(bool Val = true) {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    IsUndef = Val;
+  }
+  
   void setIsEarlyClobber(bool Val = true) {
     assert(isReg() && IsDef && "Wrong MachineOperand accessor");
     IsEarlyClobber = Val;
@@ -337,7 +351,8 @@ public:
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg, bool isDef, bool isImp = false,
-                        bool isKill = false, bool isDead = false);
+                        bool isKill = false, bool isDead = false,
+                        bool isUndef = false);
   
   //===--------------------------------------------------------------------===//
   // Construction methods.
@@ -357,13 +372,15 @@ public:
   
   static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
                                   bool isKill = false, bool isDead = false,
-                                  unsigned SubReg = 0,
-                                  bool isEarlyClobber = false) {
+                                  bool isUndef = false,
+                                  bool isEarlyClobber = false,
+                                  unsigned SubReg = 0) {
     MachineOperand Op(MachineOperand::MO_Register);
     Op.IsDef = isDef;
     Op.IsImp = isImp;
     Op.IsKill = isKill;
     Op.IsDead = isDead;
+    Op.IsUndef = isUndef;
     Op.IsEarlyClobber = isEarlyClobber;
     Op.Contents.Reg.RegNo = Reg;
     Op.Contents.Reg.Prev = 0;
@@ -420,6 +437,7 @@ public:
     IsImp    = MO.IsImp;
     IsKill   = MO.IsKill;
     IsDead   = MO.IsDead;
+    IsUndef  = MO.IsUndef;
     IsEarlyClobber = MO.IsEarlyClobber;
     SubReg   = MO.SubReg;
     ParentMI = MO.ParentMI;

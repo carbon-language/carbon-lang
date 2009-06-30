@@ -356,7 +356,7 @@ static void InvalidateKills(MachineInstr &MI,
                             SmallVector<unsigned, 2> *KillRegs = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill() || MO.isUndef())
       continue;
     unsigned Reg = MO.getReg();
     if (TargetRegisterInfo::isVirtualRegister(Reg))
@@ -390,12 +390,12 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
   MachineOperand *DefOp = NULL;
   for (unsigned i = 0, e = DefMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = DefMI->getOperand(i);
-    if (MO.isReg() && MO.isDef()) {
-      if (MO.getReg() == Reg)
-        DefOp = &MO;
-      else if (!MO.isDead())
-        HasLiveDef = true;
-    }
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill() || MO.isUndef())
+      continue;
+    if (MO.getReg() == Reg)
+      DefOp = &MO;
+    else if (!MO.isDead())
+      HasLiveDef = true;
   }
   if (!DefOp)
     return false;
@@ -430,7 +430,7 @@ static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
                         std::vector<MachineOperand*> &KillOps) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse() || MO.isUndef())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0)
@@ -1289,8 +1289,7 @@ private:
           if (InvalidateRegDef(PrevMII, *MII, KillRegs[j], HasOtherDef)) {
             MachineInstr *DeadDef = PrevMII;
             if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
-              // FIXME: This assumes a remat def does not have side
-              // effects.
+              // FIXME: This assumes a remat def does not have side effects.
               VRM.RemoveMachineInstrFromMaps(DeadDef);
               MBB.erase(DeadDef);
               ++NumDRM;
@@ -1569,6 +1568,8 @@ private:
         if (MO.isImplicit())
           // If the virtual register is implicitly defined, emit a implicit_def
           // before so scavenger knows it's "defined".
+          // FIXME: This is a horrible hack done the by register allocator to
+          // remat a definition with virtual register operand.
           VirtUseOps.insert(VirtUseOps.begin(), i);
         else
           VirtUseOps.push_back(i);
@@ -1595,6 +1596,7 @@ private:
           MI.getOperand(i).setReg(RReg);
           MI.getOperand(i).setSubReg(0);
           if (VRM.isImplicitlyDefined(VirtReg))
+            // FIXME: Is this needed?
             BuildMI(MBB, &MI, MI.getDebugLoc(),
                     TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
           continue;
@@ -1604,22 +1606,16 @@ private:
         if (!MO.isUse())
           continue;  // Handle defs in the loop below (handle use&def here though)
 
-        bool AvoidReload = false;
-        if (LIs->hasInterval(VirtReg)) {
-          LiveInterval &LI = LIs->getInterval(VirtReg);
-          if (!LI.liveAt(LIs->getUseIndex(LI.beginNumber())))
-            // Must be defined by an implicit def. It should not be spilled. Note,
-            // this is for correctness reason. e.g.
-            // 8   %reg1024<def> = IMPLICIT_DEF
-            // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
-            // The live range [12, 14) are not part of the r1024 live interval since
-            // it's defined by an implicit def. It will not conflicts with live
-            // interval of r1025. Now suppose both registers are spilled, you can
-            // easily see a situation where both registers are reloaded before
-            // the INSERT_SUBREG and both target registers that would overlap.
-            AvoidReload = true;
-        }
-
+        bool AvoidReload = MO.isUndef();
+        // Check if it is defined by an implicit def. It should not be spilled.
+        // Note, this is for correctness reason. e.g.
+        // 8   %reg1024<def> = IMPLICIT_DEF
+        // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
+        // The live range [12, 14) are not part of the r1024 live interval since
+        // it's defined by an implicit def. It will not conflicts with live
+        // interval of r1025. Now suppose both registers are spilled, you can
+        // easily see a situation where both registers are reloaded before
+        // the INSERT_SUBREG and both target registers that would overlap.
         bool DoReMat = VRM.isReMaterialized(VirtReg);
         int SSorRMId = DoReMat
           ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
