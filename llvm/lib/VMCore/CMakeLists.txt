@@ -14,6 +14,7 @@ add_llvm_library(LLVMCore
   Instructions.cpp
   IntrinsicInst.cpp
   LeakDetector.cpp
+  LLVMContext.cpp
   Mangler.cpp
   Module.cpp
   ModuleProvider.cpp
