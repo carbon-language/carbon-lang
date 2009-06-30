@@ -287,7 +287,7 @@ void LocResolverBase::FixRange(SourceRange &Range) {
 void LocResolverBase::print(Decl *D) {
   llvm::raw_ostream &OS = llvm::outs();
   OS << "#### DECL ####\n";
-  D->print(OS, Ctx);
+  D->print(OS);
   OS << " <";
   D->getLocStart().print(OS, Ctx.getSourceManager());
   OS << " > - <";

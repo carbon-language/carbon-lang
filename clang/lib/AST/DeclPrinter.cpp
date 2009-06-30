@@ -74,14 +74,13 @@ namespace {
   };
 }
 
-void Decl::print(llvm::raw_ostream &Out, ASTContext &Context, 
-                 unsigned Indentation) {
-  print(Out, Context, Context.PrintingPolicy, Indentation);
+void Decl::print(llvm::raw_ostream &Out, unsigned Indentation) {
+  print(Out, getASTContext().PrintingPolicy, Indentation);
 }
 
-void Decl::print(llvm::raw_ostream &Out, ASTContext &Context, 
-                 const PrintingPolicy &Policy, unsigned Indentation) {
-  DeclPrinter Printer(Out, Context, Policy, Indentation);
+void Decl::print(llvm::raw_ostream &Out, const PrintingPolicy &Policy,
+                 unsigned Indentation) {
+  DeclPrinter Printer(Out, getASTContext(), Policy, Indentation);
   Printer.Visit(this);
 }
 
@@ -112,11 +111,10 @@ static QualType getDeclType(Decl* D) {
 }
 
 void Decl::printGroup(Decl** Begin, unsigned NumDecls,
-                      llvm::raw_ostream &Out, ASTContext &Context, 
-                      const PrintingPolicy &Policy,
+                      llvm::raw_ostream &Out, const PrintingPolicy &Policy,
                       unsigned Indentation) {
   if (NumDecls == 1) {
-    (*Begin)->print(Out, Context, Policy, Indentation);
+    (*Begin)->print(Out, Policy, Indentation);
     return;
   }
 
@@ -127,7 +125,7 @@ void Decl::printGroup(Decl** Begin, unsigned NumDecls,
 
   PrintingPolicy SubPolicy(Policy);
   if (TD && TD->isDefinition()) {
-    TD->print(Out, Context, Policy, Indentation);
+    TD->print(Out, Policy, Indentation);
     Out << " ";
     SubPolicy.SuppressTag = true;
   }
@@ -142,12 +140,12 @@ void Decl::printGroup(Decl** Begin, unsigned NumDecls,
       SubPolicy.SuppressSpecifiers = true;
     }
 
-    (*Begin)->print(Out, Context, SubPolicy, Indentation);
+    (*Begin)->print(Out, SubPolicy, Indentation);
   }
 }
 
-void Decl::dump(ASTContext &Context) {
-  print(llvm::errs(), Context);
+void Decl::dump() {
+  print(llvm::errs());
 }
 
 llvm::raw_ostream& DeclPrinter::Indent() {
@@ -158,8 +156,7 @@ llvm::raw_ostream& DeclPrinter::Indent() {
 
 void DeclPrinter::ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls) {
   this->Indent();
-  Decl::printGroup(Decls.data(), Decls.size(), Out, Context,
-                   Policy, Indentation);
+  Decl::printGroup(Decls.data(), Decls.size(), Out, Policy, Indentation);
   Out << ";\n";
   Decls.clear();
 

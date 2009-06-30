@@ -44,7 +44,7 @@ namespace {
     virtual void HandleTranslationUnit(ASTContext &Context) {
       PrintingPolicy Policy = Context.PrintingPolicy;
       Policy.Dump = Dump;
-      Context.getTranslationUnitDecl()->print(Out, Context, Policy);
+      Context.getTranslationUnitDecl()->print(Out, Policy);
     }
   };
 } // end anonymous namespace
@@ -114,7 +114,7 @@ namespace {
 
 void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    FD->print(llvm::errs(), *Context);
+    FD->print(llvm::errs());
     
     if (FD->getBodyIfAvailable()) {
       llvm::cerr << '\n';
@@ -125,7 +125,7 @@ void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   }
   
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    MD->print(llvm::errs(), *Context);
+    MD->print(llvm::errs());
     
     if (MD->getBody()) {
       llvm::cerr << '\n';

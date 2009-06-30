@@ -114,7 +114,7 @@ void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
 }
 
 void StmtPrinter::PrintRawDecl(Decl *D) {
-  D->print(OS, Context, Policy, IndentLevel);
+  D->print(OS, Policy, IndentLevel);
 }
 
 void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
@@ -123,8 +123,7 @@ void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
   for ( ; Begin != End; ++Begin) 
     Decls.push_back(*Begin);
 
-  Decl::printGroup(Decls.data(), Decls.size(), OS, Context, Policy,
-                   IndentLevel);
+  Decl::printGroup(Decls.data(), Decls.size(), OS, Policy, IndentLevel);
 }
 
 void StmtPrinter::VisitNullStmt(NullStmt *Node) {
