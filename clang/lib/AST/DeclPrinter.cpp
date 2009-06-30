@@ -361,7 +361,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     } else
       Out << ' ';
 
-    D->getBody(Context)->printPretty(Out, Context, 0, SubPolicy, Indentation);
+    D->getBody()->printPretty(Out, Context, 0, SubPolicy, Indentation);
     Out << '\n';
   }
 }

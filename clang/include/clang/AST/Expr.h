@@ -2433,9 +2433,6 @@ public:
   const Stmt *getBody() const;
   Stmt *getBody();
 
-  const Stmt *getBody(ASTContext &C) const { return getBody(); }
-  Stmt *getBody(ASTContext &C) { return getBody(); }
-
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCaretLocation(), getBody()->getLocEnd());
   }

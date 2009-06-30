@@ -211,7 +211,7 @@ void DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
   // Finally, search through the body of the function.
   if (D->isThisDeclarationADefinition()) {
     StmtLocResolver SLR(Ctx, Loc);
-    SLR.Visit(D->getBody(Ctx));
+    SLR.Visit(D->getBody());
     if (SLR.FoundIt()) {
       llvm::tie(Dcl, Stm) = SLR.getResult();
       // If we didn't find a more immediate 'parent' declaration for the

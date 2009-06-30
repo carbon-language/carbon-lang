@@ -147,7 +147,7 @@ void DocumentXML::writeDeclToXML(Decl *D)
   DeclPrinter(*this).Visit(D);
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) 
   {
-    if (Stmt *Body = FD->getBody(*Ctx)) {
+    if (Stmt *Body = FD->getBody()) {
       addSubNode("Body");
       PrintStmt(Body);
       toParent();

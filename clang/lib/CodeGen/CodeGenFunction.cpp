@@ -226,7 +226,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
   }
 
   // FIXME: Support CXXTryStmt here, too.
-  if (const CompoundStmt *S = FD->getCompoundBody(getContext())) {
+  if (const CompoundStmt *S = FD->getCompoundBody()) {
     StartFunction(FD, FD->getResultType(), Fn, Args, S->getLBracLoc());
     EmitStmt(S);
     FinishFunction(S->getRBracLoc());

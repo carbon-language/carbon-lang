@@ -146,7 +146,7 @@ public:
   
   ParentMap& getParentMap() {
     if (PM.get() == 0)
-      PM.reset(new ParentMap(getCodeDecl().getBody(getASTContext())));
+      PM.reset(new ParentMap(getCodeDecl().getBody()));
     return *PM.get();
   }
   
@@ -182,8 +182,7 @@ PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
   if (Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, getSourceManager());
 
-  return FullSourceLoc(getCodeDecl().getBodyRBrace(getASTContext()),
-                       getSourceManager());
+  return FullSourceLoc(getCodeDecl().getBodyRBrace(), getSourceManager());
 }
   
 PathDiagnosticLocation
@@ -893,7 +892,7 @@ public:
     // statement (if it doesn't already exist).
     // FIXME: Should handle CXXTryStmt if analyser starts supporting C++.
     if (const CompoundStmt *CS =
-          PDB.getCodeDecl().getCompoundBody(PDB.getASTContext()))
+          PDB.getCodeDecl().getCompoundBody())
       if (!CS->body_empty()) {
         SourceLocation Loc = (*CS->body_begin())->getLocStart();
         rawAddEdge(PathDiagnosticLocation(Loc, PDB.getSourceManager()));

@@ -146,7 +146,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->isThisDeclarationADefinition());
   if (D->isThisDeclarationADefinition())
-    Writer.AddStmt(D->getBody(Context));
+    Writer.AddStmt(D->getBody());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->isInline());
@@ -172,7 +172,7 @@ void PCHDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   // Unlike C/C++, method bodies will never be in header files. 
   Record.push_back(D->getBody() != 0);
   if (D->getBody() != 0) {
-    Writer.AddStmt(D->getBody(Context));
+    Writer.AddStmt(D->getBody());
     Writer.AddDeclRef(D->getSelfDecl(), Record);
     Writer.AddDeclRef(D->getCmdDecl(), Record);
   }

@@ -85,7 +85,7 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
   // Now scan the methods for accesses.
   for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(Ctx),
        E = D->instmeth_end(Ctx); I!=E; ++I)
-    Scan(M, (*I)->getBody(Ctx));
+    Scan(M, (*I)->getBody());
   
   // Scan for @synthesized property methods that act as setters/getters
   // to an ivar.

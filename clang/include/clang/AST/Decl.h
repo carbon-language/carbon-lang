@@ -724,11 +724,11 @@ public:
   /// function. The variant that accepts a FunctionDecl pointer will
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
-  Stmt *getBody(ASTContext &Context, const FunctionDecl *&Definition) const;
+  Stmt *getBody(const FunctionDecl *&Definition) const;
 
-  virtual Stmt *getBody(ASTContext &Context) const {
+  virtual Stmt *getBody() const {
     const FunctionDecl* Definition;
-    return getBody(Context, Definition);
+    return getBody(Definition);
   }
 
   /// \brief If the function has a body that is immediately available,
@@ -1442,8 +1442,8 @@ public:
   bool IsVariadic() const { return isVariadic; }
   void setIsVariadic(bool value) { isVariadic = value; }
   
-  CompoundStmt *getBody() const { return (CompoundStmt*) Body; }
-  Stmt *getBody(ASTContext &C) const { return (Stmt*) Body; }
+  CompoundStmt *getCompoundBody() const { return (CompoundStmt*) Body; }
+  Stmt *getBody() const { return (Stmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   // Iterator access to formal parameters.

@@ -1000,7 +1000,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                DEnd = Instantiation->decls_end(Context);
        D != DEnd; ++D) {
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
-      if (!Function->getBody(Context))
+      if (!Function->getBody())
         InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
       const VarDecl *Def = 0;

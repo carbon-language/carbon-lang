@@ -2632,7 +2632,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   
   if (!L.isValid()) {
     const Decl &D = BRC.getCodeDecl();
-    L = PathDiagnosticLocation(D.getBodyRBrace(BRC.getASTContext()), SMgr);
+    L = PathDiagnosticLocation(D.getBodyRBrace(), SMgr);
   }
   
   std::string sbuf;

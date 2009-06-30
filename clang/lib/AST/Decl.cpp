@@ -375,12 +375,11 @@ void FunctionDecl::Destroy(ASTContext& C) {
 }
 
 
-Stmt *FunctionDecl::getBody(ASTContext &Context,
-                            const FunctionDecl *&Definition) const {
+Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
     if (FD->Body) {
       Definition = FD;
-      return FD->Body.get(Context.getExternalSource());
+      return FD->Body.get(getASTContext().getExternalSource());
     }
   }
 

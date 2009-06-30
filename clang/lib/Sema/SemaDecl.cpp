@@ -3063,7 +3063,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   
   // See if this is a redefinition.
   const FunctionDecl *Definition;
-  if (FD->getBody(Context, Definition)) {
+  if (FD->getBody(Definition)) {
     Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
     Diag(Definition->getLocation(), diag::note_previous_definition);
   }

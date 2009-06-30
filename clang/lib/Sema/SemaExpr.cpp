@@ -2750,7 +2750,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       // Check if we have too few/too many template arguments, based
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
-      if (FDecl->getBody(Context, Def) && NumArgs != Def->param_size()) {
+      if (FDecl->getBody(Def) && NumArgs != Def->param_size()) {
         const FunctionProtoType *Proto =
             Def->getType()->getAsFunctionProtoType();
         if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size())) {
@@ -5607,7 +5607,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates and member functions of 
     // class templates.
-    if (!Function->getBody(Context)) {
+    if (!Function->getBody()) {
       // FIXME: distinguish between implicit instantiations of function
       // templates and explicit specializations (the latter don't get
       // instantiated, naturally).

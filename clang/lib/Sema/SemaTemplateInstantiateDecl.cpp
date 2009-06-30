@@ -670,7 +670,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Function->isInvalidDecl())
     return;
 
-  assert(!Function->getBody(Context) && "Already instantiated!");
+  assert(!Function->getBody() && "Already instantiated!");
   
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = 0;
@@ -680,7 +680,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     PatternDecl = Function->getInstantiatedFromMemberFunction();
   Stmt *Pattern = 0;
   if (PatternDecl)
-    Pattern = PatternDecl->getBody(Context, PatternDecl);
+    Pattern = PatternDecl->getBody(PatternDecl);
 
   if (!Pattern)
     return;
@@ -863,7 +863,7 @@ void Sema::PerformPendingImplicitInstantiations() {
     PendingImplicitInstantiations.pop();
     
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first))
-      if (!Function->getBody(Context))
+      if (!Function->getBody())
         InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function);
     
     // FIXME: instantiation static member variables

@@ -1102,7 +1102,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   if (D->hasAttr<DLLExportAttr>()) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       // The dllexport attribute is ignored for undefined symbols.
-      if (FD->getBody(getContext()))
+      if (FD->getBody())
         GA->setLinkage(llvm::Function::DLLExportLinkage);
     } else {
       GA->setLinkage(llvm::Function::DLLExportLinkage);
@@ -1550,7 +1550,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ObjCMethod: {
     ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(D);
     // If this is not a prototype, emit the body.
-    if (OMD->getBody(getContext()))
+    if (OMD->getBody())
       CodeGenFunction(*this).GenerateObjCMethod(OMD);
     break;
   }

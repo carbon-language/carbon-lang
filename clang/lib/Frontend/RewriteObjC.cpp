@@ -993,7 +993,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
-    SourceLocation LocEnd = OMD->getCompoundBody(*Context)->getLocStart();
+    SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
 
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
@@ -1009,7 +1009,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
-    SourceLocation LocEnd = OMD->getCompoundBody(*Context)->getLocStart();
+    SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
     
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
@@ -4554,7 +4554,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
     // FIXME: If this should support Obj-C++, support CXXTryStmt
-    if (CompoundStmt *Body = FD->getCompoundBody(*Context)) {
+    if (CompoundStmt *Body = FD->getCompoundBody()) {
       CurFunctionDef = FD;
       CollectPropertySetters(Body);
       CurrentBody = Body;
@@ -4574,7 +4574,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     return;
   }
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    if (CompoundStmt *Body = MD->getBody()) {
+    if (CompoundStmt *Body = MD->getCompoundBody()) {
       CurMethodDef = MD;
       CollectPropertySetters(Body);
       CurrentBody = Body;

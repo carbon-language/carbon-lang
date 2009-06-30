@@ -307,7 +307,7 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
           Opts.AnalyzeSpecificFunction != FD->getIdentifier()->getName())
         break;
       
-      Stmt* Body = FD->getBody(*Ctx);
+      Stmt* Body = FD->getBody();
       if (Body) HandleCode(FD, Body, FunctionActions);
       break;
     }

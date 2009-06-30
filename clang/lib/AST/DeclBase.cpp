@@ -360,12 +360,12 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
   }
 }
 
-CompoundStmt* Decl::getCompoundBody(ASTContext &Context) const {
-  return dyn_cast_or_null<CompoundStmt>(getBody(Context));
+CompoundStmt* Decl::getCompoundBody() const {
+  return dyn_cast_or_null<CompoundStmt>(getBody());
 }
 
-SourceLocation Decl::getBodyRBrace(ASTContext &Context) const {
-  Stmt *Body = getBody(Context);
+SourceLocation Decl::getBodyRBrace() const {
+  Stmt *Body = getBody();
   if (!Body)
     return SourceLocation();
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Body))
