@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llvm-as < %s | llc -march=x86
 ; PR4484
 
 declare x86_fp80 @ceil()
