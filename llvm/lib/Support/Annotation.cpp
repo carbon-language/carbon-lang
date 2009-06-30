@@ -39,7 +39,7 @@ namespace {
 }
 
 typedef std::map<const char*, unsigned, StrCmp> IDMapType;
-static unsigned IDCounter = 0;  // Unique ID counter
+static volatile sys::cas_flag IDCounter = 0;  // Unique ID counter
 
 // Static member to ensure initialiation on demand.
 static ManagedStatic<IDMapType> IDMap;

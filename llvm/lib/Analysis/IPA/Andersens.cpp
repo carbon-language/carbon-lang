@@ -211,7 +211,7 @@ namespace {
     // for each location equivalent Node.
     struct Node {
     private:
-      static unsigned Counter;
+      static volatile sys::cas_flag Counter;
 
     public:
       Value *Val;
@@ -618,7 +618,7 @@ X("anders-aa", "Andersen's Interprocedural Alias Analysis", false, true);
 static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
 // Initialize Timestamp Counter (static).
-unsigned Andersens::Node::Counter = 0;
+volatile llvm::sys::cas_flag Andersens::Node::Counter = 0;
 
 ModulePass *llvm::createAndersensPass() { return new Andersens(); }
 

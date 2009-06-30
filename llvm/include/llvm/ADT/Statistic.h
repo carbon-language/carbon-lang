@@ -34,10 +34,10 @@ class Statistic {
 public:
   const char *Name;
   const char *Desc;
-  unsigned Value;
+  volatile llvm::sys::cas_flag Value;
   bool Initialized;
 
-  unsigned getValue() const { return Value; }
+  llvm::sys::cas_flag getValue() const { return Value; }
   const char *getName() const { return Name; }
   const char *getDesc() const { return Desc; }
 
