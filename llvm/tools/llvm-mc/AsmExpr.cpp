@@ -26,6 +26,29 @@ bool AsmExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {
   return true;
 }
 
+static bool EvaluateSymbolicAdd(const MCValue &LHS, MCSymbol *RHS_A, 
+                                MCSymbol *RHS_B, int64_t RHS_Cst,
+                                MCValue &Res) {
+  // We can't add or subtract two symbols.
+  if ((LHS.getSymA() && RHS_A) ||
+      (LHS.getSymB() && RHS_B))
+    return false;
+
+  MCSymbol *A = LHS.getSymA() ? LHS.getSymA() : RHS_A;
+  MCSymbol *B = LHS.getSymB() ? LHS.getSymB() : RHS_B;
+  if (B) {
+    // If we have a negated symbol, then we must have also have a
+    // non-negated symbol, and both symbols must be in the same
+    // non-external section. We can do this check later to permit
+    // expressions which eventually fold to a representable form -- such
+    // as (a + (0 - b)) -- if necessary.
+    if (!A || !A->getSection() || A->getSection() != B->getSection())
+      return false;
+  }
+  Res = MCValue::get(A, B, LHS.getConstant() + RHS_Cst);
+  return true;
+}
+
 bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
   switch (getKind()) {
   default:
@@ -92,33 +115,17 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
       default:
         return false;
       case AsmBinaryExpr::Sub:
-        // Negate RHS and fall through.
-        RHSValue = MCValue::get(RHSValue.getSymB(), RHSValue.getSymA(), 
-                                -RHSValue.getConstant());
+        // Negate RHS and add.
+        return EvaluateSymbolicAdd(LHSValue,
+                                   RHSValue.getSymB(), RHSValue.getSymA(),
+                                   -RHSValue.getConstant(),
+                                   Res);
+
       case AsmBinaryExpr::Add:
-        // (a_0 - b_0 + cst_0) + (a_1 - b_1 + cst_1)
-
-        // We can't add or subtract two symbols.
-        if ((LHSValue.getSymA() && RHSValue.getSymB()) ||
-            (LHSValue.getSymB() && RHSValue.getSymB()))
-          return false;
-
-        MCSymbol *A = 
-          LHSValue.getSymA() ? LHSValue.getSymA() : RHSValue.getSymA();
-        MCSymbol *B = 
-          LHSValue.getSymB() ? LHSValue.getSymB() : RHSValue.getSymB();
-        if (B) {
-          // If we have a negated symbol, then we must have also have a
-          // non-negated symbol, and both symbols must be in the same
-          // non-external section. We can do this check later to permit
-          // expressions which eventually fold to a representable form -- such
-          // as (a + (0 - b)) -- if necessary.
-          if (!A || !A->getSection() || A->getSection() != B->getSection())
-            return false;
-        }
-        Res = MCValue::get(A, B, 
-                           LHSValue.getConstant() + RHSValue.getConstant());
-        return true;
+        return EvaluateSymbolicAdd(LHSValue,
+                                   RHSValue.getSymA(), RHSValue.getSymB(),
+                                   RHSValue.getConstant(),
+                                   Res);
       }
     }
 
