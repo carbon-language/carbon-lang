@@ -709,7 +709,7 @@ at the start of the loop.  In this case, the cost is probably minor: a few extra
 loads every time through the loop.  However, if the base expression is more
 complex, then the cost can rise quickly.  I've seen loops where the end
 expression was actually something like: "<tt>SomeMap[x]->end()</tt>" and map
-lookups really aren't cheap.  By writing it in the first form consistently, you
+lookups really aren't cheap.  By writing it in the second form consistently, you
 eliminate the issue entirely and don't even have to think about it.</p>
 
 <p>The second (even bigger) issue is that writing the loop in the first form
