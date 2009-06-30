@@ -124,6 +124,10 @@
 
      <li><a href="#undef">What is this "<tt>undef</tt>" thing that shows up in
          my code?</a></li>
+         
+      <li><a href="#callconvwrong">Why does instcombine + simplifycfg turn
+   a call to a function with a mismatched calling convention into "unreachable"?
+   Why not make the verifier reject it?</a></li>
   </ol>
   </li>
 </ol>
@@ -778,6 +782,143 @@ int X() { int i; return i; }
 
 <p>Is compiled to "<tt>ret i32 undef</tt>" because "<tt>i</tt>" never has a
    value specified for it.</p>
+</div>
+
+<!--=========================================================================-->
+
+<div class="question">
+<p><a name="callconvwrong">Why does instcombine + simplifycfg turn
+   a call to a function with a mismatched calling convention into "unreachable"?
+   Why not make the verifier reject it?</a></p>
+</div>
+
+<div class="answer">
+<p>This is a common problem run into by authors of front-ends that are using
+custom calling conventions: you need to make sure to set the right calling
+convention on both the function and on each call to the function.  For example,
+this code:</p>
+
+<pre class="doc_code">
+define fastcc void @foo() {
+        ret void
+}
+define void @bar() {
+        call void @foo( )
+        ret void
+}
+</pre>
+
+<p>Is optimized to:</p>
+
+<pre class="doc_code">
+define fastcc void @foo() {
+	ret void
+}
+define void @bar() {
+	unreachable
+}
+</pre>
+
+<p>... with "opt -instcombine -simplifycfg".  This often bites people because
+"all their code disappears".  Setting the calling convention on the caller and
+callee is required for indirect calls to work, so people often ask why not make
+the verifier reject this sort of thing.</p>
+
+<p>The answer is that this code has undefined behavior, but it is not illegal.
+If we made it illegal, then every transformation that could potentially create
+this would have to ensure that it doesn't, and there is valid code that can
+create this sort of construct (in dead code).  The sorts of things that can
+cause this to happen are fairly contrived, but we still need to accept them.
+Here's an example:</p>
+
+<pre class="doc_code">
+define fastcc void @foo() {
+        ret void
+}
+define internal void @bar(void()* %FP, i1 %cond) {
+        br i1 %cond, label %T, label %F
+T:  
+        call void %FP()
+        ret void
+F:
+        call fastcc void %FP()
+        ret void
+}
+define void @test() {
+        %X = or i1 false, false
+        call void @bar(void()* @foo, i1 %X)
+        ret void
+} 
+</pre>
+
+<p>In this example, "test" always passes @foo/false into bar, which ensures that
+   it is dynamically called with the right calling conv (thus, the code is
+   perfectly well defined).  If you run this through the inliner, you get this
+   (the explicit "or" is there so that the inliner doesn't dead code eliminate
+   a bunch of stuff):
+</p>
+
+<pre class="doc_code">
+define fastcc void @foo() {
+	ret void
+}
+define void @test() {
+	%X = or i1 false, false
+	br i1 %X, label %T.i, label %F.i
+T.i:
+	call void @foo()
+	br label %bar.exit
+F.i:
+	call fastcc void @foo()
+	br label %bar.exit
+bar.exit:
+	ret void
+}
+</pre>
+
+<p>Here you can see that the inlining pass made an undefined call to @foo with
+  the wrong calling convention.  We really don't want to make the inliner have
+  to know about this sort of thing, so it needs to be valid code.  In this case,
+  dead code elimination can trivially remove the undefined code.  However, if %X
+  was an input argument to @test, the inliner would produce this:
+</p>
+
+<pre class="doc_code">
+define fastcc void @foo() {
+	ret void
+}
+
+define void @test(i1 %X) {
+	br i1 %X, label %T.i, label %F.i
+T.i:
+	call void @foo()
+	br label %bar.exit
+F.i:
+	call fastcc void @foo()
+	br label %bar.exit
+bar.exit:
+	ret void
+}
+</pre>
+
+<p>The interesting thing about this is that %X <em>must</em> be false for the
+code to be well-defined, but no amount of dead code elimination will be able to
+delete the broken call as unreachable.  However, since instcombine/simplifycfg
+turns the undefined call into unreachable, we end up with a branch on a
+condition that goes to unreachable: a branch to unreachable can never happen, so
+"-inline -instcombine -simplifycfg" is able to produce:</p>
+
+<pre class="doc_code">
+define fastcc void @foo() {
+	ret void
+}
+define void @test(i1 %X) {
+F.i:
+	call fastcc void @foo()
+	ret void
+}
+</pre>
+
 </div>
 
 <!-- *********************************************************************** -->
