@@ -143,6 +143,13 @@ def t2addrmode_imm8 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
+// t2addrmode_imm8s4  := reg + (imm8 << 2)
+def t2addrmode_imm8s4 : Operand<i32>,
+                        ComplexPattern<i32, 2, "SelectT2AddrModeImm8s4", []> {
+  let PrintMethod = "printT2AddrModeImm8Operand";
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+}
+
 // t2addrmode_so_reg  := reg + reg << imm2
 def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
@@ -476,7 +483,7 @@ defm t2LDRSB : T2I_ld<"ldrsb", UnOpFrag<(sextloadi8  node:$Src)>>;
 
 let mayLoad = 1 in {
 // Load doubleword
-def t2LDRDi8 : T2Ii8s4<(outs GPR:$dst), (ins t2addrmode_imm8:$addr),
+def t2LDRDi8 : T2Ii8s4<(outs GPR:$dst), (ins t2addrmode_imm8s4:$addr),
                        "ldrd", " $dst, $addr", []>;
 def t2LDRDpci : T2Ii8s4<(outs GPR:$dst), (ins i32imm:$addr),
                        "ldrd", " $dst, $addr", []>;
@@ -526,6 +533,11 @@ def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
 defm t2STR   : T2I_st<"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
 defm t2STRB   : T2I_st<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 defm t2STRH   : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+
+// Store doubleword
+let mayLoad = 1 in
+def t2STRDi8 : T2Ii8s4<(outs), (ins GPR:$src, t2addrmode_imm8s4:$addr),
+                        "strd", " $src, $addr", []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

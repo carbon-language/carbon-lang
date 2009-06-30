@@ -100,6 +100,8 @@ public:
                              SDValue &OffImm);
   bool SelectT2AddrModeImm8(SDValue Op, SDValue N, SDValue &Base,
                             SDValue &OffImm);
+  bool SelectT2AddrModeImm8s4(SDValue Op, SDValue N, SDValue &Base,
+                              SDValue &OffImm);
   bool SelectT2AddrModeSoReg(SDValue Op, SDValue N, SDValue &Base,
                              SDValue &OffReg, SDValue &ShImm);
 
@@ -603,6 +605,31 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getZExtValue();
       if (RHSC >= 0 && RHSC < 0x100) { // 8 bits.
+        Base   = N.getOperand(0);
+        OffImm = CurDAG->getTargetConstant(-RHSC, MVT::i32);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool ARMDAGToDAGISel::SelectT2AddrModeImm8s4(SDValue Op, SDValue N,
+                                             SDValue &Base, SDValue &OffImm) {
+  if (N.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      int RHSC = (int)RHS->getZExtValue();
+      if (((RHSC & 0x3) == 0) && (RHSC < 0 && RHSC > -0x400)) { // 8 bits.
+        Base   = N.getOperand(0);
+        OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
+        return true;
+      }
+    }
+  } else if (N.getOpcode() == ISD::SUB) {
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      int RHSC = (int)RHS->getZExtValue();
+      if (((RHSC & 0x3) == 0) && (RHSC >= 0 && RHSC < 0x400)) { // 8 bits.
         Base   = N.getOperand(0);
         OffImm = CurDAG->getTargetConstant(-RHSC, MVT::i32);
         return true;
