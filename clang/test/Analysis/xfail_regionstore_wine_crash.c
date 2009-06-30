@@ -1,5 +1,4 @@
-// RUN: clang-cc -checker-cfref -analyze -analyzer-store=region -verify %s
-// XFAIL
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
 // When this test passes we should put it in the misc-ps.m test file.
 // This test fails now because RegionStoreManager::Retrieve() does correctly 

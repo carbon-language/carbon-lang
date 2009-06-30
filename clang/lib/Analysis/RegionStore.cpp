@@ -938,6 +938,8 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   }
 
   const MemRegion* SuperR = R->getSuperRegion();
+
+  // Check if the super region has a default value.
   const SVal* D = state->get<RegionDefaultValue>(SuperR);
 
   if (D) {
@@ -945,6 +947,13 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
       return ValMgr.getRegionValueSymbolVal(R);
     else
       return *D;
+  }
+
+  // Check if the super region has a binding.
+  D = B.lookup(SuperR);
+  if (D) {
+    // We do not extract the bit value from super region for now.
+    return ValMgr.makeUnknownVal();
   }
 
   if (R->hasHeapOrStackStorage())
@@ -1358,8 +1367,9 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
     IntermediateRoots.pop_back();
     
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
-      if (SymReaper.isLive(Loc, VR->getDecl()))
+      if (SymReaper.isLive(Loc, VR->getDecl())) {
         RegionRoots.push_back(VR); // This is a live "root".
+      }
     } 
     else if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
       if (SymReaper.isLive(SR->getSymbol()))
@@ -1410,9 +1420,18 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
       SVal X = *Xptr;
       UpdateLiveSymbols(X, SymReaper); // Update the set of live symbols.
       
-      // If X is a region, then add it the RegionRoots.
-      if (loc::MemRegionVal* RegionX = dyn_cast<loc::MemRegionVal>(&X))
-        RegionRoots.push_back(RegionX->getRegion());
+      // If X is a region, then add it to the RegionRoots.
+      if (const MemRegion *RX = X.getAsRegion()) {
+        RegionRoots.push_back(RX);
+
+        // Mark the super region of the RX as live.
+        // e.g.: int x; char *y = (char*) &x; if (*y) ... 
+        // 'y' => element region. 'x' is its super region.
+        // We only add one level super region for now.
+        if (const SubRegion *SR = dyn_cast<SubRegion>(RX)) {
+          RegionRoots.push_back(SR->getSuperRegion());
+        }
+      }
     }
     
     // Get the subregions of R.  These are RegionRoots as well since they
@@ -1423,6 +1442,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
     
     for (SubRegionsTy::iterator I=SR.begin(), E=SR.end(); I!=E; ++I)
       RegionRoots.push_back(*I);
+
   }
   
   // We have now scanned the store, marking reachable regions and symbols
@@ -1430,7 +1450,6 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
   // as well as update DSymbols with the set symbols that are now dead.  
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
-    
     // If this region live?  Is so, none of its symbols are dead.
     if (Marked.count(R))
       continue;
