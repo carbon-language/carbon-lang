@@ -61,67 +61,24 @@ static void DefineStd(std::vector<char> &Buf, const char *MacroName,
 //===----------------------------------------------------------------------===//
 // Defines specific to certain operating systems.
 //===----------------------------------------------------------------------===//
-
-static void getSolarisDefines(const LangOptions &Opts, std::vector<char> &Defs) {
-  DefineStd(Defs, "sun", Opts);
-  DefineStd(Defs, "unix", Opts);
-  Define(Defs, "__ELF__");
-  Define(Defs, "__svr4__");
-  Define(Defs, "__SVR4");
-}
-
-static void getOpenBSDDefines(const LangOptions &Opts, bool is64Bit,
-                              const char *Triple, std::vector<char> &Defs) {
-  // OpenBSD defines; list based off of gcc output
-
-  Define(Defs, "__OpenBSD__", "1");
-  DefineStd(Defs, "unix", Opts);
-  Define(Defs, "__ELF__", "1");
-  if (is64Bit) {
-    Define(Defs, "__LP64__");
+namespace {
+template<typename TargetInfo>
+class OSTargetInfo : public TargetInfo {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                            std::vector<char> &Defines) const=0;
+public:
+  OSTargetInfo(const std::string& triple) : TargetInfo(triple) {}
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    TargetInfo::getTargetDefines(Opts, Defines);
+    getOSDefines(Opts, TargetInfo::getTargetTriple(), Defines);
   }
+
+};
 }
 
-static void getFreeBSDDefines(const LangOptions &Opts, bool is64Bit,
-                              const char *Triple, std::vector<char> &Defs) {
-  // FreeBSD defines; list based off of gcc output
-
-  const char *FreeBSD = strstr(Triple, "-freebsd");
-  FreeBSD += strlen("-freebsd");
-  char release[] = "X";
-  release[0] = FreeBSD[0];
-  char version[] = "X00001";
-  version[0] = FreeBSD[0];
-
-  Define(Defs, "__FreeBSD__", release);
-  Define(Defs, "__FreeBSD_cc_version", version);
-  Define(Defs, "__KPRINTF_ATTRIBUTE__");
-  DefineStd(Defs, "unix", Opts);
-  Define(Defs, "__ELF__", "1");
-  if (is64Bit) {
-    Define(Defs, "__LP64__");
-  }
-}
-
-static void getDragonFlyDefines(const LangOptions &Opts,
-                                std::vector<char> &Defs) {
-  // DragonFly defines; list based off of gcc output
-  Define(Defs, "__DragonFly__");
-  Define(Defs, "__DragonFly_cc_version", "100001");
-  Define(Defs, "__ELF__");
-  Define(Defs, "__KPRINTF_ATTRIBUTE__");
-  Define(Defs, "__tune_i386__");
-  DefineStd(Defs, "unix", Opts);
-}
-
-static void getLinuxDefines(const LangOptions &Opts, std::vector<char> &Defs) {
-  // Linux defines; list based off of gcc output
-  DefineStd(Defs, "unix", Opts);
-  DefineStd(Defs, "linux", Opts);
-  Define(Defs, "__gnu_linux__");
-  Define(Defs, "__ELF__", "1");
-}
-
+namespace {
 /// getDarwinNumber - Parse the 'darwin number' out of the specific targe
 /// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
 /// not defined, return 0's.  Return true if we have -darwin in the string or
@@ -258,6 +215,148 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
   if (Maj >= 9 && Opts.ObjC1 && !strncmp(Triple, "x86_64", 6))
     Opts.ObjCNonFragileABI = 1;
 }
+
+template<typename Target>
+class DarwinTargetInfo : public Target {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                    std::vector<char> &Defines) const {
+    getDarwinDefines(Defines, Opts);
+    getDarwinOSXDefines(Defines, Triple);
+  }
+  
+  /// getDefaultLangOptions - Allow the target to specify default settings for
+  /// various language options.  These may be overridden by command line
+  /// options.
+  virtual void getDefaultLangOptions(LangOptions &Opts) {
+    TargetInfo::getDefaultLangOptions(Opts);
+    GetDarwinLanguageOptions(Opts, TargetInfo::getTargetTriple());
+  }
+public:
+  DarwinTargetInfo(const std::string& triple) :
+    Target(triple) {
+      this->TLSSupported = false;
+    }
+
+  virtual const char *getCFStringSymbolPrefix() const {
+    return "\01L_unnamed_cfstring_";
+  }
+
+  virtual const char *getStringSymbolPrefix(bool IsConstant) const {
+    return IsConstant ? "\01LC" : "\01lC";
+  }
+
+  virtual const char *getUnicodeStringSymbolPrefix() const {
+    return "__utf16_string_";
+  }
+
+  virtual const char *getUnicodeStringSection() const {
+    return "__TEXT,__ustring";
+  }
+};
+
+// DragonFlyBSD Target
+template<typename Target>
+class DragonFlyBSDTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                    std::vector<char> &Defs) const {
+    // DragonFly defines; list based off of gcc output
+    Define(Defs, "__DragonFly__");
+    Define(Defs, "__DragonFly_cc_version", "100001");
+    Define(Defs, "__ELF__");
+    Define(Defs, "__KPRINTF_ATTRIBUTE__");
+    Define(Defs, "__tune_i386__");
+    DefineStd(Defs, "unix", Opts);
+  }
+public:
+  DragonFlyBSDTargetInfo(const std::string &triple) 
+    : OSTargetInfo<Target>(triple) {}
+};
+
+// FreeBSD Target
+template<typename Target>
+class FreeBSDTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                    std::vector<char> &Defs) const {
+    // FreeBSD defines; list based off of gcc output
+
+    const char *FreeBSD = strstr(Triple, "-freebsd");
+    FreeBSD += strlen("-freebsd");
+    char release[] = "X";
+    release[0] = FreeBSD[0];
+    char version[] = "X00001";
+    version[0] = FreeBSD[0];
+
+    Define(Defs, "__FreeBSD__", release);
+    Define(Defs, "__FreeBSD_cc_version", version);
+    Define(Defs, "__KPRINTF_ATTRIBUTE__");
+    DefineStd(Defs, "unix", Opts);
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  FreeBSDTargetInfo(const std::string &triple) 
+    : OSTargetInfo<Target>(triple) {}
+};
+
+// Linux target
+template<typename Target>
+class LinuxTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                           std::vector<char> &Defs) const {
+    // Linux defines; list based off of gcc output
+    DefineStd(Defs, "unix", Opts);
+    DefineStd(Defs, "linux", Opts);
+    Define(Defs, "__gnu_linux__");
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  LinuxTargetInfo(const std::string& triple) 
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+  }
+};
+
+// OpenBSD Target
+template<typename Target>
+class OpenBSDTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                    std::vector<char> &Defs) const {
+    // OpenBSD defines; list based off of gcc output
+
+    Define(Defs, "__OpenBSD__", "1");
+    DefineStd(Defs, "unix", Opts);
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  OpenBSDTargetInfo(const std::string &triple) 
+    : OSTargetInfo<Target>(triple) {}
+};
+
+// Solaris target
+template<typename Target>
+class SolarisTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                                std::vector<char> &Defs) const {
+    DefineStd(Defs, "sun", Opts);
+    DefineStd(Defs, "unix", Opts);
+    Define(Defs, "__ELF__");
+    Define(Defs, "__svr4__");
+    Define(Defs, "__SVR4");
+  }
+public:
+  SolarisTargetInfo(const std::string& triple) 
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+    this->WCharType = this->SignedLong;
+    // FIXME: WIntType should be SignedLong
+  }
+};
+} // end anonymous namespace. 
 
 /// GetWindowsLanguageOptions - Set the default language options for Windows.
 static void GetWindowsLanguageOptions(LangOptions &Opts,
@@ -452,49 +551,6 @@ public:
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
-  }
-};
-} // end anonymous namespace.
-
-
-namespace {
-class DarwinPPCTargetInfo : public PPC32TargetInfo {
-public:
-  DarwinPPCTargetInfo(const std::string& triple) : PPC32TargetInfo(triple) {}
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    PPC32TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts);
-    getDarwinOSXDefines(Defines, getTargetTriple());
-  }
-
-  /// getDefaultLangOptions - Allow the target to specify default settings for
-  /// various language options.  These may be overridden by command line
-  /// options.
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    PPC32TargetInfo::getDefaultLangOptions(Opts);
-    GetDarwinLanguageOptions(Opts, getTargetTriple());
-  }
-};
-} // end anonymous namespace.
-
-namespace {
-class DarwinPPC64TargetInfo : public PPC64TargetInfo {
-public:
-  DarwinPPC64TargetInfo(const std::string& triple) : PPC64TargetInfo(triple) {}
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    PPC64TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts);
-    getDarwinOSXDefines(Defines, getTargetTriple());
-  }
-
-  /// getDefaultLangOptions - Allow the target to specify default settings for
-  /// various language options.  These may be overridden by command line
-  /// options.
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    PPC64TargetInfo::getDefaultLangOptions(Opts);
-    GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
 };
 } // end anonymous namespace.
@@ -830,10 +886,10 @@ public:
 } // end anonymous namespace
 
 namespace {
-// x86-32 Darwin (OS X) target
-class DarwinI386TargetInfo : public X86_32TargetInfo {
+class DarwinI386TargetInfo : public DarwinTargetInfo<X86_32TargetInfo> {
 public:
-  DarwinI386TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+  DarwinI386TargetInfo(const std::string& triple) :
+    DarwinTargetInfo<X86_32TargetInfo>(triple) {
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
     SizeType = UnsignedLong;
@@ -841,116 +897,10 @@ public:
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:128:128";
-    TLSSupported = false;
-  }
-
-  virtual const char *getStringSymbolPrefix(bool IsConstant) const {
-    return IsConstant ? "\01LC" : "\01lC";
-  }
-
-  virtual const char *getUnicodeStringSymbolPrefix() const {
-    return "__utf16_string_";
-  }
-
-  virtual const char *getUnicodeStringSection() const {
-    return "__TEXT,__ustring";
-  }
-
-  virtual const char *getCFStringSymbolPrefix() const {
-    return "\01LC";
-  }
-
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts);
-    getDarwinOSXDefines(Defines, getTargetTriple());
-  }
-
-  /// getDefaultLangOptions - Allow the target to specify default settings for
-  /// various language options.  These may be overridden by command line
-  /// options.
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    X86_32TargetInfo::getDefaultLangOptions(Opts);
-    GetDarwinLanguageOptions(Opts, getTargetTriple());
   }
 };
-} // end anonymous namespace
 
-namespace {
-// x86-32 OpenBSD target
-class OpenBSDX86_32TargetInfo : public X86_32TargetInfo {
-public:
-  OpenBSDX86_32TargetInfo(const std::string& triple) :
-      X86_32TargetInfo(triple) { }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getOpenBSDDefines(Opts, false, getTargetTriple(), Defines);
-  }
-};
 } // end anonymous namespace
-
-namespace {
-// x86-32 FreeBSD target
-class FreeBSDX86_32TargetInfo : public X86_32TargetInfo {
-public:
-  FreeBSDX86_32TargetInfo(const std::string& triple) :
-      X86_32TargetInfo(triple) { }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Opts, false, getTargetTriple(), Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-32 DragonFly target
-class DragonFlyX86_32TargetInfo : public X86_32TargetInfo {
-public:
-  DragonFlyX86_32TargetInfo(const std::string& triple) :
-      X86_32TargetInfo(triple) { }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getDragonFlyDefines(Opts, Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-32 Linux target
-class LinuxX86_32TargetInfo : public X86_32TargetInfo {
-public:
-  LinuxX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
-    UserLabelPrefix = "";
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getLinuxDefines(Opts, Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-32 Solaris target
-class SolarisX86_32TargetInfo : public X86_32TargetInfo {
-public:
-  SolarisX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
-    UserLabelPrefix = "";
-    WCharType = SignedLong;
-    // FIXME: WIntType should be SignedLong
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_32TargetInfo::getTargetDefines(Opts, Defines);
-    getSolarisDefines(Opts, Defines);
-  }
-};
-} // end anonymous namespace
-
 
 namespace {
 // x86-32 Windows target
@@ -1011,104 +961,6 @@ public:
   }
 };
 } // end anonymous namespace
-
-namespace {
-// x86-64 OpenBSD target
-class OpenBSDX86_64TargetInfo : public X86_64TargetInfo {
-public:
-  OpenBSDX86_64TargetInfo(const std::string &triple)
-    : X86_64TargetInfo(triple) {}
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getOpenBSDDefines(Opts, true, getTargetTriple(), Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-64 FreeBSD target
-class FreeBSDX86_64TargetInfo : public X86_64TargetInfo {
-public:
-  FreeBSDX86_64TargetInfo(const std::string &triple)
-    : X86_64TargetInfo(triple) {}
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Opts, true, getTargetTriple(), Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-64 Linux target
-class LinuxX86_64TargetInfo : public X86_64TargetInfo {
-public:
-  LinuxX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
-    UserLabelPrefix = "";
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getLinuxDefines(Opts, Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-64 Solaris target
-class SolarisX86_64TargetInfo : public X86_64TargetInfo {
-public:
-  SolarisX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
-    UserLabelPrefix = "";
-  }
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getSolarisDefines(Opts, Defines);
-  }
-};
-} // end anonymous namespace
-
-namespace {
-// x86-64 Darwin (OS X) target
-class DarwinX86_64TargetInfo : public X86_64TargetInfo {
-public:
-  DarwinX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
-    TLSSupported = false;
-  }
-
-  virtual const char *getStringSymbolPrefix(bool IsConstant) const {
-    return IsConstant ? "\01LC" : "\01lC";
-  }
-
-  virtual const char *getUnicodeStringSymbolPrefix() const {
-    return "__utf16_string_";
-  }
-
-  virtual const char *getUnicodeStringSection() const {
-    return "__TEXT,__ustring";
-  }
-
-  virtual const char *getCFStringSymbolPrefix() const {
-    return "\01L_unnamed_cfstring_";
-  }
-
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    X86_64TargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts);
-    getDarwinOSXDefines(Defines, getTargetTriple());
-  }
-
-  /// getDefaultLangOptions - Allow the target to specify default settings for
-  /// various language options.  These may be overridden by command line
-  /// options.
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    GetDarwinLanguageOptions(Opts, getTargetTriple());
-  }
-};
-} // end anonymous namespace.
 
 namespace {
 class ARMTargetInfo : public TargetInfo {
@@ -1214,33 +1066,20 @@ public:
 
 
 namespace {
-class DarwinARMTargetInfo : public ARMTargetInfo {
-public:
-  DarwinARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {
-    TLSSupported = false;
+class DarwinARMTargetInfo : 
+  public DarwinTargetInfo<ARMTargetInfo> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                    std::vector<char> &Defines) const {
+    getDarwinDefines(Defines, Opts);
+    getDarwinIPhoneOSDefines(Defines, Triple);
   }
 
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    ARMTargetInfo::getTargetDefines(Opts, Defines);
-    getDarwinDefines(Defines, Opts);
-    getDarwinIPhoneOSDefines(Defines, getTargetTriple());
-  }
+public:
+  DarwinARMTargetInfo(const std::string& triple) 
+    : DarwinTargetInfo<ARMTargetInfo>(triple) {}
 };
 } // end anonymous namespace.
-
-namespace {
-// arm FreeBSD target
-class FreeBSDARMTargetInfo : public ARMTargetInfo {
-public:
-  FreeBSDARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {}
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    ARMTargetInfo::getTargetDefines(Opts, Defines);
-    getFreeBSDDefines(Opts, 0, getTargetTriple(), Defines);
-  }
-};
-} // end anonymous namespace
 
 namespace {
 class SparcV8TargetInfo : public TargetInfo {
@@ -1339,21 +1178,12 @@ void SparcV8TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 } // end anonymous namespace.
 
 namespace {
-class SolarisSparcV8TargetInfo : public SparcV8TargetInfo {
+class SolarisSparcV8TargetInfo : public SolarisTargetInfo<SparcV8TargetInfo> {
 public:
   SolarisSparcV8TargetInfo(const std::string& triple) :
-      SparcV8TargetInfo(triple) {
+      SolarisTargetInfo<SparcV8TargetInfo>(triple) {
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
-    WCharType = SignedLong;
-    // FIXME: WIntType should be SignedLong
-    UserLabelPrefix = "";
-  }
-
-  virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &Defines) const {
-    SparcV8TargetInfo::getTargetDefines(Opts, Defines);
-    getSolarisDefines(Opts, Defines);
   }
 };
 } // end anonymous namespace.
@@ -1507,13 +1337,13 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   if (T.find("ppc-") == 0 || T.find("powerpc-") == 0) {
     if (isDarwin)
-      return new DarwinPPCTargetInfo(T);
+      return new DarwinTargetInfo<PPCTargetInfo>(T);
     return new PPC32TargetInfo(T);
   }
 
   if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0) {
     if (isDarwin)
-      return new DarwinPPC64TargetInfo(T);
+      return new DarwinTargetInfo<PPC64TargetInfo>(T);
     return new PPC64TargetInfo(T);
   }
 
@@ -1521,7 +1351,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     if (isDarwin)
       return new DarwinARMTargetInfo(T);
     if (isFreeBSD)
-      return new FreeBSDARMTargetInfo(T);
+      return new FreeBSDTargetInfo<ARMTargetInfo>(T);
     return new ARMTargetInfo(T);
   }
 
@@ -1533,15 +1363,15 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   if (T.find("x86_64-") == 0 || T.find("amd64-") == 0) {
     if (isDarwin)
-      return new DarwinX86_64TargetInfo(T);
+      return new DarwinTargetInfo<X86_64TargetInfo>(T);
     if (isLinux)
-      return new LinuxX86_64TargetInfo(T);
+      return new LinuxTargetInfo<X86_64TargetInfo>(T);
     if (isOpenBSD)
-      return new OpenBSDX86_64TargetInfo(T);
+      return new OpenBSDTargetInfo<X86_64TargetInfo>(T);
     if (isFreeBSD)
-      return new FreeBSDX86_64TargetInfo(T);
+      return new FreeBSDTargetInfo<X86_64TargetInfo>(T);
     if (isSolaris)
-      return new SolarisX86_64TargetInfo(T);
+      return new SolarisTargetInfo<X86_64TargetInfo>(T);
     return new X86_64TargetInfo(T);
   }
 
@@ -1555,15 +1385,15 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     if (isDarwin)
       return new DarwinI386TargetInfo(T);
     if (isLinux)
-      return new LinuxX86_32TargetInfo(T);
+      return new LinuxTargetInfo<X86_32TargetInfo>(T);
     if (isDragonFly)
-      return new DragonFlyX86_32TargetInfo(T);
+      return new DragonFlyBSDTargetInfo<X86_32TargetInfo>(T);
     if (isOpenBSD)
-      return new OpenBSDX86_32TargetInfo(T);
+      return new OpenBSDTargetInfo<X86_32TargetInfo>(T);
     if (isFreeBSD)
-      return new FreeBSDX86_32TargetInfo(T);
+      return new FreeBSDTargetInfo<X86_32TargetInfo>(T);
     if (isSolaris)
-      return new SolarisX86_32TargetInfo(T);
+      return new SolarisTargetInfo<X86_32TargetInfo>(T);
     if (isWindows)
       return new WindowsX86_32TargetInfo(T);
     return new X86_32TargetInfo(T);
