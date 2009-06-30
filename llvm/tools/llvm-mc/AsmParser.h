@@ -15,6 +15,7 @@
 #define ASMPARSER_H
 
 #include "AsmLexer.h"
+#include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
 class AsmExpr;
@@ -81,6 +82,10 @@ private:
   bool ParseDirectiveOrg(); // ".org"
   // ".align{,32}", ".p2align{,w,l}"
   bool ParseDirectiveAlign(bool IsPow2, unsigned ValueSize);
+
+  /// ParseDirectiveSymbolAttribute - Parse a directive like ".globl" which
+  /// accepts a single symbol (which should be a label or an external).
+  bool ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr);
   
 };
 

@@ -456,6 +456,32 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".space"))
       return ParseDirectiveSpace();
 
+    // Symbol attribute directives
+    if (!strcmp(IDVal, ".globl") || !strcmp(IDVal, ".global"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::Global);
+    if (!strcmp(IDVal, ".hidden"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::Hidden);
+    if (!strcmp(IDVal, ".indirect_symbol"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::IndirectSymbol);
+    if (!strcmp(IDVal, ".internal"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::Internal);
+    if (!strcmp(IDVal, ".lazy_reference"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::LazyReference);
+    if (!strcmp(IDVal, ".no_dead_strip"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::NoDeadStrip);
+    if (!strcmp(IDVal, ".private_extern"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::PrivateExtern);
+    if (!strcmp(IDVal, ".protected"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::Protected);
+    if (!strcmp(IDVal, ".reference"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::Reference);
+    if (!strcmp(IDVal, ".weak"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::Weak);
+    if (!strcmp(IDVal, ".weak_definition"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::WeakDefinition);
+    if (!strcmp(IDVal, ".weak_reference"))
+      return ParseDirectiveSymbolAttribute(MCStreamer::WeakReference);
+
     Lexer.PrintMessage(IDLoc, "warning: ignoring directive for now");
     EatToEndOfStatement();
     return false;
@@ -802,3 +828,32 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   return false;
 }
 
+/// ParseDirectiveSymbolAttribute
+///  ::= { ".globl", ".weak", ... } [ identifier ( , identifier )* ]
+bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    for (;;) {
+      if (Lexer.isNot(asmtok::Identifier))
+        return TokError("expected identifier in directive");
+      
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+      Lexer.Lex();
+
+      // If this is use of an undefined symbol then mark it external.
+      if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
+        Sym->setExternal(true);
+
+      Out.EmitSymbolAttribute(Sym, Attr);
+
+      if (Lexer.is(asmtok::EndOfStatement))
+        break;
+
+      if (Lexer.isNot(asmtok::Comma))
+        return TokError("unexpected token in directive");
+      Lexer.Lex();
+    }
+  }
+
+  Lexer.Lex();
+  return false;  
+}
