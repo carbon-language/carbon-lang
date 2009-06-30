@@ -144,11 +144,12 @@ bool AsmParser::ParseExpression(AsmExpr *&Res) {
 bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
   AsmExpr *Expr;
   
+  SMLoc StartLoc = Lexer.getLoc();
   if (ParseExpression(Expr))
     return true;
 
   if (!Expr->EvaluateAsAbsolute(Ctx, Res))
-    return TokError("expected absolute expression");
+    return Error(StartLoc, "expected absolute expression");
 
   return false;
 }
@@ -156,11 +157,12 @@ bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
 bool AsmParser::ParseRelocatableExpression(MCValue &Res) {
   AsmExpr *Expr;
   
+  SMLoc StartLoc = Lexer.getLoc();
   if (ParseExpression(Expr))
     return true;
 
   if (!Expr->EvaluateAsRelocatable(Ctx, Res))
-    return TokError("expected relocatable expression");
+    return Error(StartLoc, "expected relocatable expression");
 
   return false;
 }
@@ -525,8 +527,8 @@ bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
 
-  int64_t Value;
-  if (ParseAbsoluteExpression(Value))
+  MCValue Value;
+  if (ParseRelocatableExpression(Value))
     return true;
   
   if (Lexer.isNot(asmtok::EndOfStatement))
@@ -549,7 +551,7 @@ bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
     return Error(EqualLoc, "invalid assignment to external symbol");
 
   // Do the assignment.
-  Out.EmitAssignment(Sym, MCValue::get(Value), IsDotSet);
+  Out.EmitAssignment(Sym, Value, IsDotSet);
 
   return false;
 }
@@ -651,11 +653,11 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
 bool AsmParser::ParseDirectiveValue(unsigned Size) {
   if (Lexer.isNot(asmtok::EndOfStatement)) {
     for (;;) {
-      int64_t Expr;
-      if (ParseAbsoluteExpression(Expr))
+      MCValue Expr;
+      if (ParseRelocatableExpression(Expr))
         return true;
 
-      Out.EmitValue(MCValue::get(Expr), Size);
+      Out.EmitValue(Expr, Size);
 
       if (Lexer.is(asmtok::EndOfStatement))
         break;
@@ -746,8 +748,8 @@ bool AsmParser::ParseDirectiveFill() {
 /// ParseDirectiveOrg
 ///  ::= .org expression [ , expression ]
 bool AsmParser::ParseDirectiveOrg() {
-  int64_t Offset;
-  if (ParseAbsoluteExpression(Offset))
+  MCValue Offset;
+  if (ParseRelocatableExpression(Offset))
     return true;
 
   // Parse optional fill expression.
@@ -765,8 +767,10 @@ bool AsmParser::ParseDirectiveOrg() {
   }
 
   Lexer.Lex();
-  
-  Out.EmitValueToOffset(MCValue::get(Offset), FillExpr);
+
+  // FIXME: Only limited forms of relocatable expressions are accepted here, it
+  // has to be relative to the current section.
+  Out.EmitValueToOffset(Offset, FillExpr);
 
   return false;
 }

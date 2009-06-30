@@ -3,7 +3,13 @@
 // greps).
         
 // RUN: llvm-mc %s > %t
-        
+
+        .text
+g:
+h:
+j:
+k:      
+        .data
         .byte !1 + 2
         .byte !0
         .byte ~0
@@ -36,4 +42,14 @@
 
         .set c, 10
         .byte c + 1
+
+        d = e + 10
+        .long d
+
+        f = g - h + 5
+        .long f
+
+        i = (j + 10) - (k + 2)
+        .long i
+        
         
