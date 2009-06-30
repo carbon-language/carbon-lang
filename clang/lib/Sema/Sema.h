@@ -701,6 +701,9 @@ public:
                           bool SuppressUserConversions = false,
                           bool ForceRValue = false);
   void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                    bool HasExplicitTemplateArgs,
+                                  const TemplateArgument *ExplicitTemplateArgs,
+                                    unsigned NumExplicitTemplateArgs,
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet,
                                     bool SuppressUserConversions = false,
@@ -747,6 +750,9 @@ public:
 
   FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
                                         DeclarationName UnqualifiedName,
+                                        bool HasExplicitTemplateArgs,
+                                const TemplateArgument *ExplicitTemplateArgs,
+                                        unsigned NumExplicitTemplateArgs,
                                         SourceLocation LParenLoc,
                                         Expr **Args, unsigned NumArgs,
                                         SourceLocation *CommaLocs, 
@@ -2247,7 +2253,10 @@ public:
     TDK_TooManyArguments,
     /// \brief When performing template argument deduction for a class 
     /// template, there were too few call arguments.
-    TDK_TooFewArguments
+    TDK_TooFewArguments,
+    /// \brief The explicitly-specified template arguments were not valid
+    /// template arguments for the given template.
+    TDK_InvalidExplicitArguments
   };
 
   /// \brief Provides information about an attempted template argument
@@ -2329,6 +2338,9 @@ public:
                    
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                          bool HasExplicitTemplateArgs,
+                          const TemplateArgument *ExplicitTemplateArgs,
+                          unsigned NumExplicitTemplateArgs,
                           Expr **Args, unsigned NumArgs,
                           FunctionDecl *&Specialization,
                           TemplateDeductionInfo &Info);

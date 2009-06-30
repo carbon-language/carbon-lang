@@ -2635,8 +2635,13 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   }
 
   // If we're directly calling a function, get the appropriate declaration.
+  // Also, in C++, keep track of whether we should perform argument-dependent 
+  // lookup and whether there were any explicitly-specified template arguments.
   Expr *FnExpr = Fn;
   bool ADL = true;
+  bool HasExplicitTemplateArgs = 0;
+  const TemplateArgument *ExplicitTemplateArgs = 0;
+  unsigned NumExplicitTemplateArgs = 0;
   while (true) {
     if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(FnExpr))
       FnExpr = IcExpr->getSubExpr();
@@ -2661,6 +2666,28 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     } else if (TemplateIdRefExpr *TemplateIdRef 
                  = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
       NDecl = TemplateIdRef->getTemplateName().getAsTemplateDecl();
+      HasExplicitTemplateArgs = true;
+      ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
+      NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();
+      
+      // C++ [temp.arg.explicit]p6:
+      //   [Note: For simple function names, argument dependent lookup (3.4.2)
+      //   applies even when the function name is not visible within the 
+      //   scope of the call. This is because the call still has the syntactic
+      //   form of a function call (3.4.1). But when a function template with
+      //   explicit template arguments is used, the call does not have the
+      //   correct syntactic form unless there is a function template with 
+      //   that name visible at the point of the call. If no such name is 
+      //   visible, the call is not syntactically well-formed and 
+      //   argument-dependent lookup does not apply. If some such name is 
+      //   visible, argument dependent lookup applies and additional function
+      //   templates may be found in other namespaces.
+      //
+      // The summary of this paragraph is that, if we get to this point and the
+      // template-id was not a qualified name, then argument-dependent lookup
+      // is still possible.
+      if (TemplateIdRef->getQualifier())
+        ADL = false;
       break;
     } else {
       // Any kind of name that does not refer to a declaration (or
@@ -2692,8 +2719,12 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       ADL = false;
 
     if (Ovl || FunctionTemplate || ADL) {
-      FDecl = ResolveOverloadedCallFn(Fn, NDecl, UnqualifiedName, LParenLoc, 
-                                      Args, NumArgs, CommaLocs, RParenLoc, ADL);
+      FDecl = ResolveOverloadedCallFn(Fn, NDecl, UnqualifiedName, 
+                                      HasExplicitTemplateArgs,
+                                      ExplicitTemplateArgs,
+                                      NumExplicitTemplateArgs,
+                                      LParenLoc, Args, NumArgs, CommaLocs, 
+                                      RParenLoc, ADL);
       if (!FDecl)
         return ExprError();
 
