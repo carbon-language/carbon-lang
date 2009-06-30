@@ -616,7 +616,7 @@ public:
 
   /// getBaseOrMember - get the generic 'member' representing either the field
   /// or a base class.
-  uintptr_t getBaseOrMember() const { return BaseOrMember; }
+  void* getBaseOrMember() const { return reinterpret_cast<void*>(BaseOrMember); }
   
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.

@@ -768,28 +768,29 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     Diag(ColonLoc, diag::err_only_constructors_take_base_inits);
     return;
   }
-  llvm::DenseMap<uintptr_t, CXXBaseOrMemberInitializer *>Members;
+  llvm::DenseMap<void*, CXXBaseOrMemberInitializer *>Members;
   
   for (unsigned i = 0; i < NumMemInits; i++) {
     CXXBaseOrMemberInitializer *Member = 
       static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
     CXXBaseOrMemberInitializer *&PrevMember = Members[Member->getBaseOrMember()];
-    if (!PrevMember)
+    if (!PrevMember) {
       PrevMember = Member;
-    else {
-      if (FieldDecl *Field = Member->getMember())
-        Diag(Member->getSourceLocation(), 
-             diag::error_multiple_mem_initialization)
-        << Field->getNameAsString();
-      else if (Type *BaseClass = Member->getBaseClass())
-        Diag(Member->getSourceLocation(), 
-             diag::error_multiple_base_initialization)
-          << BaseClass->getDesugaredType(true);
-      else
-        assert(false && "ActOnMemInitializers - neither field or base");
-      Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer) 
-        << 0;
+      continue;
     }
+    if (FieldDecl *Field = Member->getMember())
+      Diag(Member->getSourceLocation(), 
+           diag::error_multiple_mem_initialization)
+      << Field->getNameAsString();
+    else {
+      Type *BaseClass = Member->getBaseClass();
+      assert(BaseClass && "ActOnMemInitializers - neither field or base");
+      Diag(Member->getSourceLocation(),  
+           diag::error_multiple_base_initialization)
+        << BaseClass->getDesugaredType(true);
+    }
+    Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
+      << 0;
   }
 }
 
