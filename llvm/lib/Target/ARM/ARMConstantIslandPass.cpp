@@ -379,6 +379,8 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         switch (Opc) {
         case ARM::tBR_JTr:
         case ARM::t2BR_JTr:
+        case ARM::t2BR_JTm:
+        case ARM::t2BR_JTadd:
           // A Thumb table jump may involve padding; for the offsets to
           // be right, functions containing these must be 4-byte aligned.
           AFI->setAlign(2U);
@@ -766,7 +768,9 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
         // following unconditional branches are removed by AnalyzeBranch.
         MachineInstr *ThumbJTMI = NULL;
         if ((prior(MBB->end())->getOpcode() == ARM::tBR_JTr)
-            || (prior(MBB->end())->getOpcode() == ARM::t2BR_JTr))
+            || (prior(MBB->end())->getOpcode() == ARM::t2BR_JTr)
+            || (prior(MBB->end())->getOpcode() == ARM::t2BR_JTm)
+            || (prior(MBB->end())->getOpcode() == ARM::t2BR_JTadd))
           ThumbJTMI = prior(MBB->end());
         if (ThumbJTMI) {
           unsigned newMIOffset = GetOffsetOf(ThumbJTMI);

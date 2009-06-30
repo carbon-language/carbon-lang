@@ -401,7 +401,8 @@ bool
   // correctness of Thumb constant islands.
   if ((SecondLastOpc == ARM::BR_JTr || SecondLastOpc==ARM::BR_JTm ||
        SecondLastOpc == ARM::BR_JTadd || SecondLastOpc==ARM::tBR_JTr ||
-       SecondLastOpc==ARM::t2BR_JTr) &&
+       SecondLastOpc == ARM::t2BR_JTr || SecondLastOpc==ARM::t2BR_JTm ||
+       SecondLastOpc == ARM::t2BR_JTadd) &&
       (LastOpc == ARM::B || LastOpc == ARM::tB || LastOpc == ARM::t2B)) {
     I = LastInst;
     if (AllowModify)
@@ -708,7 +709,9 @@ ARMBaseInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   case ARM::tBR_JTr:
   case ARM::t2BR_JTr:
   case ARM::BR_JTr:   // Jumptable branch.
+  case ARM::t2BR_JTm:
   case ARM::BR_JTm:   // Jumptable branch through mem.
+  case ARM::t2BR_JTadd:
   case ARM::BR_JTadd: // Jumptable branch add to pc.
     return true;
   default: return false;
@@ -846,8 +849,10 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case ARM::BR_JTr:
     case ARM::BR_JTm:
     case ARM::BR_JTadd:
-    case ARM::tBR_JTr:
-    case ARM::t2BR_JTr: {
+    case ARM::t2BR_JTr:
+    case ARM::t2BR_JTm:
+    case ARM::t2BR_JTadd:
+    case ARM::tBR_JTr: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
       unsigned NumOps = TID.getNumOperands();
@@ -865,8 +870,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
       return getNumJTEntries(JT, JTI) * 4 +
-        ((MI->getOpcode()==ARM::tBR_JTr || 
-          MI->getOpcode()==ARM::t2BR_JTr) ? 2 : 4);
+        ((MI->getOpcode()==ARM::tBR_JTr) ? 2 : 4);
     }
     default:
       // Otherwise, pseudo-instruction sizes are zero.
