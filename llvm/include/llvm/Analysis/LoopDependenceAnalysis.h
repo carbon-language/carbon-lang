@@ -48,9 +48,6 @@ namespace llvm {
 
     void print(raw_ostream&, const Module* = 0) const;
     virtual void print(std::ostream&, const Module* = 0) const;
-    void print(std::ostream *OS, const Module *M = 0) const {
-      if (OS) print(*OS, M);
-    }
   }; // class LoopDependenceAnalysis
 
 
