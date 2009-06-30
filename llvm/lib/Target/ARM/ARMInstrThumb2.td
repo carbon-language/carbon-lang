@@ -399,6 +399,19 @@ multiclass T2I_ld<string opc, PatFrag opnode> {
                    [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]>;
 }
 
+/// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
+multiclass T2I_st<string opc, PatFrag opnode> {
+  def i12 : T2Ii12<(outs), (ins GPR:$src, t2addrmode_imm12:$addr),
+                   opc, " $src, $addr",
+                   [(opnode GPR:$src, t2addrmode_imm12:$addr)]>;
+  def i8  : T2Ii8 <(outs), (ins GPR:$src, t2addrmode_imm8:$addr),
+                   opc, " $src, $addr",
+                   [(opnode GPR:$src, t2addrmode_imm8:$addr)]>;
+  def s   : T2Iso <(outs), (ins GPR:$src, t2addrmode_so_reg:$addr),
+                   opc, " $src, $addr",
+                   [(opnode GPR:$src, t2addrmode_so_reg:$addr)]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -508,6 +521,11 @@ def : T2Pat<(extloadi16 t2addrmode_so_reg:$addr),
             (t2LDRHs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
             (t2LDRHpci  tconstpool:$addr)>;
+
+// Store
+defm t2STR   : T2I_st<"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
+defm t2STRB   : T2I_st<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
+defm t2STRH   : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
