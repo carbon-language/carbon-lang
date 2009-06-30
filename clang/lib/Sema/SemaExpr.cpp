@@ -970,7 +970,64 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         return ExprError(Diag(Loc, diag::err_undeclared_var_use) << Name);
     }
   }
+  
+  if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    // Warn about constructs like:
+    //   if (void *X = foo()) { ... } else { X }.
+    // In the else block, the pointer is always false.
+    
+    // FIXME: In a template instantiation, we don't have scope
+    // information to check this property.
+    if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
+      Scope *CheckS = S;
+      while (CheckS) {
+        if (CheckS->isWithinElse() && 
+            CheckS->getControlParent()->isDeclScope(DeclPtrTy::make(Var))) {
+          if (Var->getType()->isBooleanType())
+            ExprError(Diag(Loc, diag::warn_value_always_false)
+                      << Var->getDeclName());
+          else
+            ExprError(Diag(Loc, diag::warn_value_always_zero)
+                      << Var->getDeclName());
+          break;
+        }
+        
+        // Move up one more control parent to check again.
+        CheckS = CheckS->getControlParent();
+        if (CheckS)
+          CheckS = CheckS->getParent();
+      }
+    }
+  } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
+    if (!getLangOptions().CPlusPlus && !Func->hasPrototype()) {
+      // C99 DR 316 says that, if a function type comes from a
+      // function definition (without a prototype), that type is only
+      // used for checking compatibility. Therefore, when referencing
+      // the function, we pretend that we don't have the full function
+      // type.
+      if (DiagnoseUseOfDecl(Func, Loc))
+        return ExprError();
 
+      QualType T = Func->getType();
+      QualType NoProtoType = T;
+      if (const FunctionProtoType *Proto = T->getAsFunctionProtoType())
+        NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
+      return BuildDeclRefExpr(Func, NoProtoType, Loc, false, false, SS);
+    }
+  }
+  
+  return BuildDeclarationNameExpr(Loc, D, HasTrailingLParen, SS, isAddressOfOperand);
+}
+
+/// \brief Complete semantic analysis for a reference to the given declaration.
+Sema::OwningExprResult
+Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
+                               bool HasTrailingLParen,
+                               const CXXScopeSpec *SS, 
+                               bool isAddressOfOperand) {
+  assert(D && "Cannot refer to a NULL declaration");
+  DeclarationName Name = D->getDeclName();
+  
   // If this is an expression of the form &Class::member, don't build an
   // implicit member ref, because we want a pointer to the member in general,
   // not any specific instance's member.
@@ -1094,50 +1151,10 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // this check when we're going to perform argument-dependent lookup
   // on this function name, because this might not be the function
   // that overload resolution actually selects.
+  bool ADL = getLangOptions().CPlusPlus && (!SS || !SS->isSet()) && 
+             HasTrailingLParen;
   if (!(ADL && isa<FunctionDecl>(VD)) && DiagnoseUseOfDecl(VD, Loc))
     return ExprError();
-
-  if (VarDecl *Var = dyn_cast<VarDecl>(VD)) {
-    // Warn about constructs like:
-    //   if (void *X = foo()) { ... } else { X }.
-    // In the else block, the pointer is always false.
-
-    // FIXME: In a template instantiation, we don't have scope
-    // information to check this property.
-    if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
-      Scope *CheckS = S;
-      while (CheckS) {
-        if (CheckS->isWithinElse() && 
-            CheckS->getControlParent()->isDeclScope(DeclPtrTy::make(Var))) {
-          if (Var->getType()->isBooleanType())
-            ExprError(Diag(Loc, diag::warn_value_always_false)
-              << Var->getDeclName());
-          else
-            ExprError(Diag(Loc, diag::warn_value_always_zero)
-              << Var->getDeclName());
-          break;
-        }
-
-        // Move up one more control parent to check again.
-        CheckS = CheckS->getControlParent();
-        if (CheckS)
-          CheckS = CheckS->getParent();
-      }
-    }
-  } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(VD)) {
-    if (!getLangOptions().CPlusPlus && !Func->hasPrototype()) {
-      // C99 DR 316 says that, if a function type comes from a
-      // function definition (without a prototype), that type is only
-      // used for checking compatibility. Therefore, when referencing
-      // the function, we pretend that we don't have the full function
-      // type.
-      QualType T = Func->getType();
-      QualType NoProtoType = T;
-      if (const FunctionProtoType *Proto = T->getAsFunctionProtoType())
-        NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
-      return BuildDeclRefExpr(VD, NoProtoType, Loc, false, false, SS);
-    }
-  }
 
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())

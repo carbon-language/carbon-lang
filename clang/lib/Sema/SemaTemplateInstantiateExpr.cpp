@@ -156,18 +156,15 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
                                                            false, false));
   }
 
-  ValueDecl *NewD 
-    = dyn_cast_or_null<ValueDecl>(SemaRef.InstantiateCurrentDeclRef(D));
-  if (!NewD)
+  NamedDecl *InstD = SemaRef.InstantiateCurrentDeclRef(D);
+  if (!InstD)
     return SemaRef.ExprError();
 
-  // FIXME: Build QualifiedDeclRefExpr?
-  QualType T = NewD->getType();
-  return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(NewD,
-                                                      T.getNonReferenceType(),
-                                                           E->getLocation(),
-                                                        T->isDependentType(),
-                                                        T->isDependentType()));
+  // FIXME: nested-name-specifier for QualifiedDeclRefExpr
+  return SemaRef.BuildDeclarationNameExpr(E->getLocation(), InstD, 
+                                          /*FIXME:*/false,
+                                          /*FIXME:*/0, 
+                                          /*FIXME:*/false);
 }
 
 Sema::OwningExprResult

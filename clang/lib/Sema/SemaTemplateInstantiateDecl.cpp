@@ -865,6 +865,6 @@ void Sema::PerformPendingImplicitInstantiations() {
       if (!Function->getBody())
         InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function);
     
-    // FIXME: instantiation static member variables
+    // FIXME: instantiate static member variables
   }
 }

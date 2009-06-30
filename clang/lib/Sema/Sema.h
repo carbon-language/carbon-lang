@@ -1401,7 +1401,11 @@ public:
                                             bool HasTrailingLParen,
                                             const CXXScopeSpec *SS,
                                             bool isAddressOfOperand = false);
-
+  OwningExprResult BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
+                                            bool HasTrailingLParen,
+                                            const CXXScopeSpec *SS, 
+                                            bool isAddressOfOperand);
+    
   virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                                tok::TokenKind Kind);
   virtual OwningExprResult ActOnNumericConstant(const Token &);
