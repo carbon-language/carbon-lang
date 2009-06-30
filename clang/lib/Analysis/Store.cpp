@@ -88,10 +88,10 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
         
         // If the super region is an element region, strip it away.
         // FIXME: Is this the right thing to do in all cases?
-        const TypedRegion *Base = isa<ElementRegion>(TR) ?
-                                  cast<TypedRegion>(TR->getSuperRegion()) : TR;
+        const MemRegion *Base = isa<ElementRegion>(TR) ? TR->getSuperRegion()
+                                                       : TR;
         ElementRegion* ER = MRMgr.getElementRegion(Pointee, Idx, Base, 
-						   StateMgr.getContext());
+                                                   StateMgr.getContext());
         return CastResult(state, ER);
       }
     }
