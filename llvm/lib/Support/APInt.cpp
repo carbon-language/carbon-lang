@@ -2178,6 +2178,12 @@ void APInt::print(raw_ostream &OS, bool isSigned) const {
   OS << S.c_str();
 }
 
+std::ostream &operator<<(std::ostream &o, const APInt &I) {
+  raw_os_ostream OS(o);
+  OS << I;
+  return o;
+}
+
 // This implements a variety of operations on a representation of
 // arbitrary precision, two's-complement, bignum integer values.
 
