@@ -1426,6 +1426,8 @@ inline raw_ostream &operator<<(raw_ostream &OS, const APInt &I) {
   return OS;
 }
 
+std::ostream &operator<<(std::ostream &o, const APInt &I);
+
 namespace APIntOps {
 
 /// @brief Determine the smaller of two APInts considered to be signed.

@@ -17,19 +17,6 @@ using namespace llvm;
 
 namespace {
 
-// Make the Google Test failure output equivalent to APInt::dump()
-std::ostream& operator<<(std::ostream &OS, const llvm::APInt& I) {
-  llvm::raw_os_ostream raw_os(OS);
-
-  SmallString<40> S, U;
-  I.toStringUnsigned(U);
-  I.toStringSigned(S);
-  raw_os << "APInt(" << I.getBitWidth()<< "b, "
-         << U.c_str() << "u " << S.c_str() << "s)";
-  raw_os.flush();
-  return OS;
-}
-
 // Test that APInt shift left works when bitwidth > 64 and shiftamt == 0
 TEST(APIntTest, ShiftLeftByZero) {
   APInt One = APInt::getNullValue(65) + 1;
