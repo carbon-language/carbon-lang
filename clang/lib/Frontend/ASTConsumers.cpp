@@ -340,8 +340,6 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   Out << "\n";
 
   // Print decls in the DeclContext.
-  // FIXME: Should not use a NULL DeclContext!
-  ASTContext *Context = 0;
   for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
        I != E; ++I) {
     for (unsigned i = 0; i < Indentation; ++i)

@@ -59,9 +59,6 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
   ObjCInterfaceDecl* ID = D->getClassInterface();
   IvarUsageMap M;
 
-
-  ASTContext &Ctx = BR.getContext();
-
   // Iterate over the ivars.
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
        I!=E; ++I) {
