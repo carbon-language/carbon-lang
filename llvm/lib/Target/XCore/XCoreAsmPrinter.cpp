@@ -277,7 +277,7 @@ emitFunctionStart(MachineFunction &MF)
     break;
   }
   // (1 << 1) byte aligned
-  EmitAlignment(1, F, 1);
+  EmitAlignment(MF.getAlignment(), F, 1);
   if (TAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << CurrentFnName << ",@function\n";
   }

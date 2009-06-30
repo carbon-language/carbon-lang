@@ -154,21 +154,13 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
   }
 }
 
-
-
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
+  unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
 
   decorateName(CurrentFnName, F);
 
   SwitchToSection(TAI->SectionForGlobal(F));
-
-  // FIXME: A function's alignment should be part of MachineFunction.  There
-  // shouldn't be a policy decision here.
-  unsigned FnAlign = 4;
-  if (F->hasFnAttr(Attribute::OptimizeForSize))
-    FnAlign = 1;
-  
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.

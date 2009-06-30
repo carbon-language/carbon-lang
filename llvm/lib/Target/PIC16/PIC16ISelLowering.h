@@ -145,6 +145,11 @@ namespace llvm {
     unsigned GetTmpSize() { return TmpSize; }
     void SetTmpSize(unsigned Size) { TmpSize = Size; }
 
+    /// getFunctionAlignment - Return the function alignment.
+    virtual unsigned getFunctionAlignment(const Function *) const {
+      // FIXME: The function never seems to be aligned.
+      return 1;
+    }
   private:
     // If the Node is a BUILD_PAIR representing a direct Address,
     // then this function will return true.

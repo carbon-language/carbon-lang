@@ -155,7 +155,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   SwitchToSection(TAI->SectionForGlobal(F));
 
-  EmitAlignment(4, F);
+  EmitAlignment(MF.getAlignment(), F);
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.

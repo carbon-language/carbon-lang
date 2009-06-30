@@ -148,6 +148,11 @@ MVT IA64TargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i1;
 }
 
+/// getFunctionAlignment - Return the function alignment.
+unsigned IA64TargetLowering::getFunctionAlignment(const Function *) const {
+  return 5;
+}
+
 void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
                                         SmallVectorImpl<SDValue> &ArgValues,
                                         DebugLoc dl) {

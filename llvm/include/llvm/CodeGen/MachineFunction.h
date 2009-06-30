@@ -111,6 +111,9 @@ class MachineFunction : private Annotation {
   // Tracks debug locations.
   DebugLocTracker DebugLocInfo;
 
+  // The alignment of the function.
+  unsigned Alignment;
+
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -147,6 +150,14 @@ public:
   ///
   MachineConstantPool *getConstantPool() { return ConstantPool; }
   const MachineConstantPool *getConstantPool() const { return ConstantPool; }
+
+  /// getAlignment - Return the alignment of the function.
+  ///
+  unsigned getAlignment() const { return Alignment; }
+
+  /// setAlignment - Set the alignment of the function.
+  ///
+  void setAlignment(unsigned A) { Alignment = A; }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for backends that would like to do so.

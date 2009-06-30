@@ -73,6 +73,9 @@ namespace llvm {
                                       MVT VT) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
+    /// getFunctionAlignment - Return the function alignment.
+    virtual unsigned getFunctionAlignment(const Function *F) const;
   };
 } // end namespace llvm
 

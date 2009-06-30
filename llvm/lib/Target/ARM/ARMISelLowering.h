@@ -197,6 +197,9 @@ namespace llvm {
       return Subtarget;
     }
 
+    /// getFunctionAlignment - Return the alignment of this function.
+    virtual unsigned getFunctionAlignment(const Function *F) const;
+
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when generating code for different targets.

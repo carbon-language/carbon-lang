@@ -1047,3 +1047,8 @@ SparcTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The Sparc target isn't yet aware of offsets.
   return false;
 }
+
+/// getFunctionAlignment - Return the function alignment.
+unsigned SparcTargetLowering::getFunctionAlignment(const Function *) const {
+  return 4;
+}

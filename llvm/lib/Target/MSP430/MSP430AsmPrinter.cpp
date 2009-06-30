@@ -97,10 +97,7 @@ void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   SwitchToSection(TAI->SectionForGlobal(F));
 
-  unsigned FnAlign = 4;
-  if (F->hasFnAttr(Attribute::OptimizeForSize))
-    FnAlign = 1;
-
+  unsigned FnAlign = MF.getAlignment();
   EmitAlignment(FnAlign, F);
 
   switch (F->getLinkage()) {

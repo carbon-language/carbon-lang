@@ -137,7 +137,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToSection(TAI->SectionForGlobal(F));
 
   // Print out labels for the function.
-  EmitAlignment(5);
+  EmitAlignment(MF.getAlignment());
   O << "\t.global\t" << CurrentFnName << '\n';
 
   printVisibility(CurrentFnName, F->getVisibility());

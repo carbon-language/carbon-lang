@@ -109,7 +109,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
   SwitchToSection(TAI->SectionForGlobal(F));
-  EmitAlignment(4, F);
+  EmitAlignment(MF.getAlignment(), F);
   O << "\t.globl\t" << CurrentFnName << '\n';
 
   printVisibility(CurrentFnName, F->getVisibility());

@@ -14,6 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/config.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -22,15 +26,12 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Config/config.h"
 #include <fstream>
 #include <sstream>
 using namespace llvm;
@@ -124,6 +125,7 @@ MachineFunction::MachineFunction(const Function *F,
                   MachineFrameInfo(*TM.getFrameInfo());
   ConstantPool = new (Allocator.Allocate<MachineConstantPool>())
                      MachineConstantPool(TM.getTargetData());
+  Alignment = TM.getTargetLowering()->getFunctionAlignment(F);
 
   // Set up jump table.
   const TargetData &TD = *TM.getTargetData();

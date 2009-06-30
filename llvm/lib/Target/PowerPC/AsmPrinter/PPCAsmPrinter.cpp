@@ -596,7 +596,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   printVisibility(CurrentFnName, F->getVisibility());
 
-  EmitAlignment(2, F);
+  EmitAlignment(MF.getAlignment(), F);
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.
@@ -773,7 +773,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   printVisibility(CurrentFnName, F->getVisibility());
 
-  EmitAlignment(F->hasFnAttr(Attribute::OptimizeForSize) ? 2 : 4, F);
+  EmitAlignment(MF.getAlignment(), F);
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.

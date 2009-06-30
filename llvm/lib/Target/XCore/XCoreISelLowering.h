@@ -84,6 +84,9 @@ namespace llvm {
     virtual bool isLegalAddressingMode(const AddrMode &AM,
                                        const Type *Ty) const;
 
+    /// getFunctionAlignment - Return the alignment of this function.
+    virtual unsigned getFunctionAlignment(const Function *F) const;
+
   private:
     const XCoreTargetMachine &TM;
     const XCoreSubtarget &Subtarget;

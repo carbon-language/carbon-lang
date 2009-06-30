@@ -127,6 +127,11 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
+/// getFunctionAlignment - Return the alignment of this function.
+unsigned MSP430TargetLowering::getFunctionAlignment(const Function *F) const {
+  return F->hasFnAttr(Attribute::OptimizeForSize) ? 1 : 4;
+}
+
 //===----------------------------------------------------------------------===//
 //                      Calling Convention Implementation
 //===----------------------------------------------------------------------===//

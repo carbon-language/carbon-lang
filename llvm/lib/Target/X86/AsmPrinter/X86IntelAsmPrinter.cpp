@@ -132,6 +132,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   unsigned CC = F->getCallingConv();
+  unsigned FnAlign = MF.getAlignment();
 
   // Populate function information map.  Actually, We don't want to populate
   // non-stdcall or non-fastcall functions' information right now.
@@ -141,10 +142,6 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   decorateName(CurrentFnName, F);
 
   SwitchToTextSection("_text", F);
-
-  unsigned FnAlign = 4;
-  if (F->hasFnAttr(Attribute::OptimizeForSize))
-    FnAlign = 1;
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");
   case Function::PrivateLinkage:

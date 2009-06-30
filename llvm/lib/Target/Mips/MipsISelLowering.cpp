@@ -154,11 +154,14 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   computeRegisterProperties();
 }
 
-
 MVT MipsTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 
+/// getFunctionAlignment - Return the function alignment.
+unsigned MipsTargetLowering::getFunctionAlignment(const Function *) const {
+  return 2;
+}
 
 SDValue MipsTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) 

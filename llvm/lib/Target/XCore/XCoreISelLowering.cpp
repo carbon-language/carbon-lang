@@ -187,6 +187,12 @@ void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
   }
 }
 
+/// getFunctionAlignment - Return the alignment of this function.
+unsigned XCoreTargetLowering::
+getFunctionAlignment(const Function *) const {
+  return 1;
+}
+
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//

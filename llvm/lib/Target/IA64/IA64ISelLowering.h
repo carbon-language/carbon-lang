@@ -70,6 +70,8 @@ namespace llvm {
     /// (currently, only "ret void")
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     
+    /// getFunctionAlignment - Return the function alignment.
+    virtual unsigned getFunctionAlignment(const Function *F) const;
   };
 }
 

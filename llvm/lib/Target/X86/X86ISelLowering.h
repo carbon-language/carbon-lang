@@ -380,7 +380,7 @@ namespace llvm {
     MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
                             bool isSrcConst, bool isSrcStr,
                             SelectionDAG &DAG) const;
-    
+
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
@@ -533,7 +533,10 @@ namespace llvm {
                    , SmallSet<Instruction*, 8> &
 #endif
                    );
-    
+
+    /// getFunctionAlignment - Return the alignment of this function.
+    virtual unsigned getFunctionAlignment(const Function *F) const;
+
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.

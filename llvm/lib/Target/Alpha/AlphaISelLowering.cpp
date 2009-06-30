@@ -181,6 +181,11 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+/// getFunctionAlignment - Return the function alignment.
+unsigned AlphaTargetLowering::getFunctionAlignment(const Function *F) const {
+  return 4;
+}
+
 static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   MVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);

@@ -1027,6 +1027,11 @@ SDValue X86TargetLowering::getPICJumpTableRelocBase(SDValue Table,
   return Table;
 }
 
+/// getFunctionAlignment - Return the alignment of this function.
+unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
+  return F->hasFnAttr(Attribute::OptimizeForSize) ? 1 : 4;
+}
+
 //===----------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//

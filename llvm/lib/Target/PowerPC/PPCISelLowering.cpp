@@ -428,11 +428,17 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-
 MVT PPCTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 
+/// getFunctionAlignment - Return the function alignment.
+unsigned PPCTargetLowering::getFunctionAlignment(const Function *F) const {
+  if (getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin())
+    return F->hasFnAttr(Attribute::OptimizeForSize) ? 2 : 4;
+  else
+    return 2;
+}
 
 //===----------------------------------------------------------------------===//
 // Node matching predicates, for use by the tblgen matching code.

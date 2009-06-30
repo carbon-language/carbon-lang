@@ -736,6 +736,9 @@ public:
   /// PIC relocation models.
   virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
+  /// getFunctionAlignment - Return the alignment of this function.
+  virtual unsigned getFunctionAlignment(const Function *) const = 0;
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //

@@ -230,7 +230,7 @@ emitFunctionStart(MachineFunction &MF)
   SwitchToSection(TAI->SectionForGlobal(F));
 
   // 2 bits aligned
-  EmitAlignment(2, F);
+  EmitAlignment(MF.getAlignment(), F);
 
   O << "\t.globl\t"  << CurrentFnName << '\n';
   O << "\t.ent\t"    << CurrentFnName << '\n';
