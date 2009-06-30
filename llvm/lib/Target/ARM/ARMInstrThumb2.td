@@ -136,7 +136,7 @@ def t2addrmode_imm12 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
-// t2addrmode_imm8  := reg - imm8
+// t2addrmode_imm8  := reg - imm8 (also reg + imm8 for some instructions)
 def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand";
@@ -383,6 +383,22 @@ multiclass T2I_cmp_is<string opc, PatFrag opnode> {
 }
 }
 
+/// T2I_ld - Defines a set of (op r, {imm12|imm8|so_reg}) load patterns.
+multiclass T2I_ld<string opc, PatFrag opnode> {
+  def i12 : T2Ii12<(outs GPR:$dst), (ins t2addrmode_imm12:$addr),
+                   opc, " $dst, $addr",
+                   [(set GPR:$dst, (opnode t2addrmode_imm12:$addr))]>;
+  def i8  : T2Ii8 <(outs GPR:$dst), (ins t2addrmode_imm8:$addr),
+                   opc, " $dst, $addr",
+                   [(set GPR:$dst, (opnode t2addrmode_imm8:$addr))]>;
+  def s   : T2Iso <(outs GPR:$dst), (ins t2addrmode_so_reg:$addr),
+                   opc, " $dst, $addr",
+                   [(set GPR:$dst, (opnode t2addrmode_so_reg:$addr))]>;
+  def pci : T2Ipc <(outs GPR:$dst), (ins i32imm:$addr),
+                   opc, " $dst, $addr",
+                   [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -434,24 +450,64 @@ def t2ADDrSPs : T2XI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 //
 
 // Load
-let canFoldAsLoad = 1 in {
-def t2LDRi12 : T2Ii12<(outs GPR:$dst), (ins t2addrmode_imm12:$addr),
-                      "ldr", " $dst, $addr",
-                      [(set GPR:$dst, (load t2addrmode_imm12:$addr))]>;
+let canFoldAsLoad = 1 in
+defm t2LDR   : T2I_ld<"ldr",  UnOpFrag<(load node:$Src)>>;
 
-def t2LDRi8 : T2Ii8<(outs GPR:$dst), (ins t2addrmode_imm8:$addr),
-                    "ldr", " $dst, $addr",
-                    [(set GPR:$dst, (load t2addrmode_imm8:$addr))]>;
+// Loads with zero extension
+defm t2LDRH  : T2I_ld<"ldrh", UnOpFrag<(zextloadi16 node:$Src)>>;
+defm t2LDRB  : T2I_ld<"ldrb", UnOpFrag<(zextloadi8  node:$Src)>>;
 
-def t2LDRs : T2Iso<(outs GPR:$dst), (ins t2addrmode_so_reg:$addr),
-                   "ldr", " $dst, $addr",
-                   [(set GPR:$dst, (load t2addrmode_so_reg:$addr))]>;
+// Loads with sign extension
+defm t2LDRSH : T2I_ld<"ldrsh", UnOpFrag<(sextloadi16 node:$Src)>>;
+defm t2LDRSB : T2I_ld<"ldrsb", UnOpFrag<(sextloadi8  node:$Src)>>;
 
-// Load tconstpool
-def t2LDRpci : T2Ipc<(outs GPR:$dst), (ins i32imm:$addr),
-                     "ldr", " $dst, $addr",
-                     [(set GPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
-} // canFoldAsLoad
+let mayLoad = 1 in {
+// Load doubleword
+def t2LDRDi8 : T2Ii8s4<(outs GPR:$dst), (ins t2addrmode_imm8:$addr),
+                       "ldrd", " $dst, $addr", []>;
+def t2LDRDpci : T2Ii8s4<(outs GPR:$dst), (ins i32imm:$addr),
+                       "ldrd", " $dst, $addr", []>;
+}
+
+// zextload i1 -> zextload i8
+def : T2Pat<(zextloadi1 t2addrmode_imm12:$addr),
+            (t2LDRBi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(zextloadi1 t2addrmode_imm8:$addr),
+            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(zextloadi1 t2addrmode_so_reg:$addr),
+            (t2LDRBs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(zextloadi1 (ARMWrapper tconstpool:$addr)),
+            (t2LDRBpci  tconstpool:$addr)>;
+
+// extload -> zextload
+// FIXME: Reduce the number of patterns by legalizing extload to zextload
+// earlier?
+def : T2Pat<(extloadi1  t2addrmode_imm12:$addr),
+            (t2LDRBi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(extloadi1  t2addrmode_imm8:$addr),
+            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(extloadi1  t2addrmode_so_reg:$addr),
+            (t2LDRBs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(extloadi1  (ARMWrapper tconstpool:$addr)),
+            (t2LDRBpci  tconstpool:$addr)>;
+
+def : T2Pat<(extloadi8  t2addrmode_imm12:$addr),
+            (t2LDRBi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(extloadi8  t2addrmode_imm8:$addr),
+            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(extloadi8  t2addrmode_so_reg:$addr),
+            (t2LDRBs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(extloadi8  (ARMWrapper tconstpool:$addr)),
+            (t2LDRBpci  tconstpool:$addr)>;
+
+def : T2Pat<(extloadi16 t2addrmode_imm12:$addr),
+            (t2LDRHi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(extloadi16 t2addrmode_imm8:$addr),
+            (t2LDRHi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(extloadi16 t2addrmode_so_reg:$addr),
+            (t2LDRHs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
+            (t2LDRHpci  tconstpool:$addr)>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

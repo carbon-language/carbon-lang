@@ -79,7 +79,8 @@ def AddrModeT1_s  : AddrMode<9>;
 def AddrModeT2_i12: AddrMode<10>;
 def AddrModeT2_i8 : AddrMode<11>;
 def AddrModeT2_so : AddrMode<12>;
-def AddrModeT2_pc  : AddrMode<13>;
+def AddrModeT2_pc : AddrMode<13>;
+def AddrModeT2_i8s4 : AddrMode<14>;
 
 // Instruction size.
 class SizeFlagVal<bits<3> val> {
@@ -856,6 +857,8 @@ class T2Iso<dag oops, dag iops, string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeT2_so, Size4Bytes, opc, asm, "", pattern>;
 class T2Ipc<dag oops, dag iops, string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeT2_pc, Size4Bytes, opc, asm, "", pattern>;
+class T2Ii8s4<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeT2_i8s4, Size4Bytes, opc, asm, "", pattern>;
 
 class T2sI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
   : Thumb2sI<oops, iops, AddrModeNone, Size4Bytes, opc, asm, "", pattern>;

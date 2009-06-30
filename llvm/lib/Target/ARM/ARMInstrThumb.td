@@ -622,13 +622,13 @@ def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>;
 def : Tv5Pat<(ARMcall tGPR:$dst), (tBLXr tGPR:$dst)>;
 
 // zextload i1 -> zextload i8
-def : TPat<(zextloadi1 t_addrmode_s1:$addr),
-           (tLDRB t_addrmode_s1:$addr)>;
+def : T1Pat<(zextloadi1 t_addrmode_s1:$addr),
+            (tLDRB t_addrmode_s1:$addr)>;
 
 // extload -> zextload
-def : TPat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
-def : TPat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
-def : TPat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
+def : T1Pat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
+def : T1Pat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
+def : T1Pat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
 
 // Large immediate handling.
 

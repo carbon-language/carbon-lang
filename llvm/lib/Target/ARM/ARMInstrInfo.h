@@ -33,20 +33,21 @@ namespace ARMII {
     // This four-bit field describes the addressing mode used.
 
     AddrModeMask  = 0xf,
-    AddrModeNone  = 0,
-    AddrMode1     = 1,
-    AddrMode2     = 2,
-    AddrMode3     = 3,
-    AddrMode4     = 4,
-    AddrMode5     = 5,
-    AddrModeT1_1  = 6,
-    AddrModeT1_2  = 7,
-    AddrModeT1_4  = 8,
-    AddrModeT1_s  = 9,  // i8 * 4 for pc and sp relative data
-    AddrModeT2_i12= 10,
-    AddrModeT2_i8 = 11,
-    AddrModeT2_so = 12,
-    AddrModeT2_pc = 13, // +/- i12 for pc relative data
+    AddrModeNone    = 0,
+    AddrMode1       = 1,
+    AddrMode2       = 2,
+    AddrMode3       = 3,
+    AddrMode4       = 4,
+    AddrMode5       = 5,
+    AddrModeT1_1    = 6,
+    AddrModeT1_2    = 7,
+    AddrModeT1_4    = 8,
+    AddrModeT1_s    = 9,  // i8 * 4 for pc and sp relative data
+    AddrModeT2_i12  = 10,
+    AddrModeT2_i8   = 11,
+    AddrModeT2_so   = 12,
+    AddrModeT2_pc   = 13, // +/- i12 for pc relative data
+    AddrModeT2_i8s4 = 14, // i8 * 4
 
     // Size* - Flags to keep track of the size of an instruction.
     SizeShift     = 4,
