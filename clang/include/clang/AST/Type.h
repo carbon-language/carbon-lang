@@ -188,7 +188,8 @@ public:
     getAsStringInternal(S, Policy);
     return S;
   }
-  void getAsStringInternal(std::string &Str, const PrintingPolicy &Policy) const;
+  void getAsStringInternal(std::string &Str,
+                           const PrintingPolicy &Policy) const;
   
   void dump(const char *s) const;
   void dump() const;
@@ -585,7 +586,7 @@ public:
       TypeKind(K) {}
   
   Kind getKind() const { return TypeKind; }
-  const char *getName(bool CPlusPlus) const;
+  const char *getName(const LangOptions &LO) const;
   
   virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   

@@ -784,6 +784,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (AccessControl)
     Options.AccessControl = 1;
   
+  // OpenCL and C++ both have bool, true, false keywords.
+  Options.Bool = Options.OpenCL | Options.CPlusPlus;
+  
   Options.MathErrno = MathErrno;
 
   Options.InstantiationDepth = TemplateDepth;

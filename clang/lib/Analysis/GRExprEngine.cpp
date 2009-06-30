@@ -3154,7 +3154,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           SourceLocation SLoc = S->getLocStart();
 
           Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
-          S->printPretty(Out);
+          LangOptions LO; // FIXME.
+          S->printPretty(Out, 0, PrintingPolicy(LO));
           
           if (SLoc.isFileID()) {        
             Out << "\\lline="
@@ -3208,7 +3209,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           SourceLocation SLoc = T->getLocStart();
          
           Out << "\\|Terminator: ";
-          E.getSrc()->printTerminator(Out);
+          LangOptions LO; // FIXME.
+          E.getSrc()->printTerminator(Out, LO);
           
           if (SLoc.isFileID()) {
             Out << "\\lline="
@@ -3223,11 +3225,12 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
             if (Label) {                        
               if (CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
                 Out << "\\lcase ";
-                C->getLHS()->printPretty(Out);
+                LangOptions LO; // FIXME.
+                C->getLHS()->printPretty(Out, 0, PrintingPolicy(LO));
               
                 if (Stmt* RHS = C->getRHS()) {
                   Out << " .. ";
-                  RHS->printPretty(Out);
+                  RHS->printPretty(Out, 0, PrintingPolicy(LO));
                 }
                 
                 Out << ":";

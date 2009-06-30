@@ -89,7 +89,7 @@ static void AddKeyword(const char *Keyword, unsigned KWLen,
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
   else if (LangOpts.GNUMode && (Flags & KEYGNU)) AddResult = 1;
   else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
-  else if (LangOpts.OpenCL && (Flags & BOOLSUPPORT)) AddResult = 2;
+  else if (LangOpts.Bool && (Flags & BOOLSUPPORT)) AddResult = 2;
 
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;

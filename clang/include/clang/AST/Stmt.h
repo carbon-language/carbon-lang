@@ -187,14 +187,14 @@ public:
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
   void dumpPretty(ASTContext& Context) const;
-  void printPretty(llvm::raw_ostream &OS, PrinterHelper *Helper = 0, 
-                   const PrintingPolicy &Policy = PrintingPolicy(),
+  void printPretty(llvm::raw_ostream &OS, PrinterHelper *Helper, 
+                   const PrintingPolicy &Policy,
                    unsigned Indentation = 0) const {
     printPretty(OS, *(ASTContext*)0, Helper, Policy, Indentation);
   }
-  void printPretty(llvm::raw_ostream &OS, ASTContext& Context,
-                   PrinterHelper *Helper = 0, 
-                   const PrintingPolicy &Policy = PrintingPolicy(),
+  void printPretty(llvm::raw_ostream &OS, ASTContext &Context,
+                   PrinterHelper *Helper, 
+                   const PrintingPolicy &Policy,
                    unsigned Indentation = 0) const;
   
   /// viewAST - Visualize an AST rooted at this Stmt* using GraphViz.  Only

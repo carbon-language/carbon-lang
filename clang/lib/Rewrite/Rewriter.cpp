@@ -218,7 +218,7 @@ bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To) {
   // Get the new text.
   std::string SStr;
   llvm::raw_string_ostream S(SStr);
-  To->printPretty(S);
+  To->printPretty(S, 0, PrintingPolicy(*LangOpts));
   const std::string &Str = S.str();
 
   ReplaceText(From->getLocStart(), Size, &Str[0], Str.size());

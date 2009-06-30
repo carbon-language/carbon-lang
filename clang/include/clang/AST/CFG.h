@@ -17,17 +17,20 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/raw_ostream.h"
 #include <list>
 #include <vector>
 #include <cassert>
 
+namespace llvm {
+  class raw_ostream;
+}
 namespace clang {
   class Stmt;
   class Expr;
   class CFG;
   class PrinterHelper;
   class BlockEdge;
+  class LangOptions;
   
 /// CFGBlock - Represents a single basic block in a source-level CFG.
 ///  It consists of:
@@ -181,9 +184,9 @@ public:
   
   unsigned getBlockID() const { return BlockID; }
   
-  void dump(const CFG* cfg) const;
-  void print(llvm::raw_ostream& OS, const CFG* cfg) const;
-  void printTerminator(llvm::raw_ostream& OS) const;
+  void dump(const CFG *cfg, const LangOptions &LO) const;
+  void print(llvm::raw_ostream &OS, const CFG* cfg, const LangOptions &LO) const;
+  void printTerminator(llvm::raw_ostream &OS, const LangOptions &LO) const;
 };
   
 
@@ -283,9 +286,9 @@ public:
   // CFG Debugging: Pretty-Printing and Visualization.
   //===--------------------------------------------------------------------===//
 
-  void viewCFG() const;
-  void print(llvm::raw_ostream& OS) const;
-  void dump() const;
+  void viewCFG(const LangOptions &LO) const;
+  void print(llvm::raw_ostream& OS, const LangOptions &LO) const;
+  void dump(const LangOptions &LO) const;
 
   //===--------------------------------------------------------------------===//
   // Internal: constructors and data.

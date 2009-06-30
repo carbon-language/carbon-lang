@@ -226,8 +226,7 @@ std::string NamedDecl::getQualifiedNameAsString() const {
     if (const ClassTemplateSpecializationDecl *Spec 
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-      PrintingPolicy Policy;
-      Policy.CPlusPlus = true;
+      PrintingPolicy Policy(getASTContext().getLangOptions());
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                            TemplateArgs.getFlatArgumentList(),

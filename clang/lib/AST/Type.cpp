@@ -938,11 +938,11 @@ bool Type::isSpecifierType() const {
   }
 }
 
-const char *BuiltinType::getName(bool CPlusPlus) const {
+const char *BuiltinType::getName(const LangOptions &LO) const {
   switch (getKind()) {
   default: assert(0 && "Unknown builtin type!");
   case Void:              return "void";
-  case Bool:              return CPlusPlus? "bool" : "_Bool";
+  case Bool:              return LO.Bool ? "bool" : "_Bool";
   case Char_S:            return "char";
   case Char_U:            return "char";
   case SChar:             return "signed char";
@@ -1160,9 +1160,9 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
 //===----------------------------------------------------------------------===//
 
 void QualType::dump(const char *msg) const {
-  PrintingPolicy Policy;
   std::string R = "identifier";
-  getAsStringInternal(R, Policy);
+  LangOptions LO;
+  getAsStringInternal(R, PrintingPolicy(LO));
   if (msg)
     fprintf(stderr, "%s: %s\n", msg, R.c_str());
   else
@@ -1174,7 +1174,8 @@ void QualType::dump() const {
 
 void Type::dump() const {
   std::string S = "identifier";
-  getAsStringInternal(S, PrintingPolicy());
+  LangOptions LO;
+  getAsStringInternal(S, PrintingPolicy(LO));
   fprintf(stderr, "%s\n", S.c_str());
 }
 
@@ -1193,7 +1194,8 @@ static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
 
 std::string QualType::getAsString() const {
   std::string S;
-  getAsStringInternal(S, PrintingPolicy());
+  LangOptions LO;
+  getAsStringInternal(S, PrintingPolicy(LO));
   return S;
 }
 
@@ -1224,11 +1226,11 @@ QualType::getAsStringInternal(std::string &S,
 void BuiltinType::getAsStringInternal(std::string &S, 
                                       const PrintingPolicy &Policy) const {
   if (S.empty()) {
-    S = getName(Policy.CPlusPlus);
+    S = getName(Policy.LangOpts);
   } else {
     // Prefix the basic type, e.g. 'int X'.
     S = ' ' + S;
-    S = getName(Policy.CPlusPlus) + S;
+    S = getName(Policy.LangOpts) + S;
   }
 }
 
@@ -1470,7 +1472,7 @@ void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy
     if (getNumArgs())
       S += ", ";
     S += "...";
-  } else if (getNumArgs() == 0 && !Policy.CPlusPlus) {
+  } else if (getNumArgs() == 0 && !Policy.LangOpts.CPlusPlus) {
     // Do not emit int() if we have a proto, emit 'int(void)'.
     S += "void";
   }

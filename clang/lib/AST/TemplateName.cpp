@@ -15,6 +15,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/Basic/LangOptions.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -59,7 +60,8 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
 }
 
 void TemplateName::dump() const {
-  PrintingPolicy Policy;
-  Policy.CPlusPlus = true;
-  print(llvm::errs(), Policy);
+  LangOptions LO;  // FIXME!
+  LO.CPlusPlus = true;
+  LO.Bool = true;
+  print(llvm::errs(), PrintingPolicy(LO));
 }

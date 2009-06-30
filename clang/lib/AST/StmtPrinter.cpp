@@ -35,7 +35,7 @@ namespace  {
 
   public:
     StmtPrinter(llvm::raw_ostream &os, ASTContext &C, PrinterHelper* helper, 
-                const PrintingPolicy &Policy = PrintingPolicy(),
+                const PrintingPolicy &Policy,
                 unsigned Indentation = 0)
       : OS(os), Context(C), IndentLevel(Indentation), Helper(helper),
         Policy(Policy) {}
@@ -861,7 +861,7 @@ void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
 }
 
 void StmtPrinter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *Node) {
-  if (Policy.CPlusPlus)
+  if (Policy.LangOpts.CPlusPlus)
     OS << "/*implicit*/" << Node->getType().getAsString(Policy) << "()";
   else {
     OS << "/*implicit*/(" << Node->getType().getAsString(Policy) << ")";
@@ -1216,7 +1216,8 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty(ASTContext& Context) const {
-  printPretty(llvm::errs(), Context, 0, PrintingPolicy());
+  printPretty(llvm::errs(), Context, 0,
+              PrintingPolicy(Context.getLangOptions()));
 }
 
 void Stmt::printPretty(llvm::raw_ostream &OS, ASTContext& Context,

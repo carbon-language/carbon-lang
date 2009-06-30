@@ -184,7 +184,8 @@ void FieldRegion::print(llvm::raw_ostream& os) const {
 }
 
 void StringRegion::print(llvm::raw_ostream& os) const {
-  Str->printPretty(os);
+  LangOptions LO; // FIXME.
+  Str->printPretty(os, 0, PrintingPolicy(LO));
 }
 
 void SymbolicRegion::print(llvm::raw_ostream& os) const {

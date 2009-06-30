@@ -38,11 +38,10 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
   ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
   FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels),
-  BuiltinInfo(builtins), ExternalSource(0) {  
+  BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
   TUDecl = TranslationUnitDecl::Create(*this);
-  PrintingPolicy.CPlusPlus = LangOpts.CPlusPlus;
 }
 
 ASTContext::~ASTContext() {

@@ -153,8 +153,6 @@ void NestedNameSpecifier::Destroy(ASTContext &Context) {
   Context.Deallocate((void *)this);
 }
 
-void NestedNameSpecifier::dump() {
-  PrintingPolicy Policy;
-  Policy.CPlusPlus = true;
-  print(llvm::errs(), Policy);
+void NestedNameSpecifier::dump(const LangOptions &LO) {
+  print(llvm::errs(), PrintingPolicy(LO));
 }

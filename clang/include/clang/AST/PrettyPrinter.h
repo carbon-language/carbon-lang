@@ -22,6 +22,7 @@ namespace clang {
 
 class Stmt;
 class TagDecl;
+class LangOptions;
 
 class PrinterHelper {
 public:
@@ -33,16 +34,15 @@ public:
 /// declarations should be printed.
 struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
-  PrintingPolicy() 
-    : Indentation(2), CPlusPlus(false), SuppressSpecifiers(false),
+  PrintingPolicy(const LangOptions &LO) 
+    : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
       SuppressTag(false), SuppressTagKind(false), Dump(false) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
 
-  /// \brief Whether we're printing C++ code (otherwise, we're
-  /// printing C code).
-  bool CPlusPlus : 1;
+  /// \brief What language we're printing.
+  const LangOptions &LangOpts;
 
   /// \brief Whether we should suppress printing of the actual specifiers for
   /// the given type or declaration.

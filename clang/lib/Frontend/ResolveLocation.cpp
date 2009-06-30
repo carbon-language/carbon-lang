@@ -299,7 +299,7 @@ void LocResolverBase::print(Decl *D) {
 void LocResolverBase::print(Stmt *Node) {
   llvm::raw_ostream &OS = llvm::outs();
   OS << "#### STMT ####\n";
-  Node->printPretty(OS, Ctx);
+  Node->printPretty(OS, Ctx, 0, PrintingPolicy(Ctx.getLangOptions()));
   OS << " <";
   Node->getLocStart().print(OS, Ctx.getSourceManager());
   OS << " > - <";

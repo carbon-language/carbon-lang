@@ -22,6 +22,7 @@ class LangOptions {
 public:
   unsigned Trigraphs         : 1;  // Trigraphs in source files.
   unsigned BCPLComment       : 1;  // BCPL-style '//' comments.
+  unsigned Bool              : 1;  // 'bool', 'true', 'false' keywords.
   unsigned DollarIdents      : 1;  // '$' allowed in identifiers.
   unsigned AsmPreprocessor   : 1;  // Preprocessor in asm mode.
   unsigned GNUMode           : 1;  // True in gnu99 mode false in c99 mode (etc)
@@ -112,7 +113,7 @@ public:
   };
   
   LangOptions() {
-    Trigraphs = BCPLComment = DollarIdents = AsmPreprocessor = 0;
+    Trigraphs = BCPLComment = Bool = DollarIdents = AsmPreprocessor = 0;
     GNUMode = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;

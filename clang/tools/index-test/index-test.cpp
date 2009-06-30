@@ -133,7 +133,8 @@ int main(int argc, char **argv) {
     if (Point.Node) {
       OS << "Statement node at point: " << Point.Node->getStmtClassName()
          << " ";
-      Point.Node->printPretty(OS, AST->getASTContext());
+      Point.Node->printPretty(OS, AST->getASTContext(), 0,
+                        PrintingPolicy(AST->getASTContext().getLangOptions()));
       OS << "\n";
     }
   }

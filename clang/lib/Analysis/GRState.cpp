@@ -166,7 +166,8 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
     else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
-    I.getKey()->printPretty(Out);
+    LangOptions LO; // FIXME.
+    I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
     Out << " : ";
     I.getData().print(Out);
   }
@@ -183,7 +184,8 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
     else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
-    I.getKey()->printPretty(Out);
+    LangOptions LO; // FIXME.
+    I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
     Out << " : ";
     I.getData().print(Out);
   }

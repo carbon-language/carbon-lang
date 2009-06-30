@@ -41,7 +41,6 @@ namespace  {
     const char *LastLocFilename;
     unsigned LastLocLine;
 
-    PrintingPolicy Policy;
   public:
     StmtDumper(SourceManager *sm, FILE *f, unsigned maxDepth)
       : SM(sm), F(f), IndentLevel(0-1), MaxDepth(maxDepth) {
@@ -226,7 +225,8 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     }
     
     std::string Name = VD->getNameAsString();
-    VD->getType().getAsStringInternal(Name, Policy);
+    VD->getType().getAsStringInternal(Name, 
+                          PrintingPolicy(VD->getASTContext().getLangOptions()));
     fprintf(F, "%s", Name.c_str());
     
     // If this is a vardecl with an initializer, emit it.

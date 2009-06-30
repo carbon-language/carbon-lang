@@ -28,6 +28,7 @@ class NamespaceDecl;
 class IdentifierInfo;
 class PrintingPolicy;
 class Type;
+class LangOptions;
 
 /// \brief Represents a C++ nested name specifier, such as
 /// "::std::vector<int>::".
@@ -175,7 +176,7 @@ public:
 
   /// \brief Dump the nested name specifier to standard output to aid
   /// in debugging.
-  void dump();
+  void dump(const LangOptions &LO);
 };
 
 }
