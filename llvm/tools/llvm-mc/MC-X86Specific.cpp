@@ -30,13 +30,12 @@ struct AsmParser::X86Operand {
     } Reg;
 
     struct {
-      // FIXME: Should be a general expression.
-      int64_t Val;
+      MCValue Val;
     } Imm;
     
     struct {
       unsigned SegReg;
-      int64_t Disp;     // FIXME: Should be a general expression.
+      MCValue Disp;
       unsigned BaseReg;
       unsigned Scale;
       unsigned ScaleReg;
@@ -49,13 +48,13 @@ struct AsmParser::X86Operand {
     Res.Reg.RegNo = RegNo;
     return Res;
   }
-  static X86Operand CreateImm(int64_t Val) {
+  static X86Operand CreateImm(MCValue Val) {
     X86Operand Res;
     Res.Kind = Immediate;
     Res.Imm.Val = Val;
     return Res;
   }
-  static X86Operand CreateMem(unsigned SegReg, int64_t Disp, unsigned BaseReg,
+  static X86Operand CreateMem(unsigned SegReg, MCValue Disp, unsigned BaseReg,
                               unsigned Scale, unsigned ScaleReg) {
     X86Operand Res;
     Res.Kind = Memory;
@@ -86,12 +85,13 @@ bool AsmParser::ParseX86Operand(X86Operand &Op) {
   case asmtok::Dollar: {
     // $42 -> immediate.
     Lexer.Lex();
-    int64_t Val;
-    if (ParseAbsoluteExpression(Val))
-      return TokError("expected integer constant");
-    Op = X86Operand::CreateReg(Val);
+    MCValue Val;
+    if (ParseRelocatableExpression(Val))
+      return true;
+    Op = X86Operand::CreateImm(Val);
     return false;
-  case asmtok::Star:
+  }
+  case asmtok::Star: {
     Lexer.Lex(); // Eat the star.
     
     if (Lexer.is(asmtok::Register)) {
@@ -116,9 +116,9 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   // of a memory operand with a missing displacement "(%ebx)" or "(,%eax)".  The
   // only way to do this without lookahead is to eat the ( and see what is after
   // it.
-  int64_t Disp = 0;
+  MCValue Disp = MCValue::get(0, 0, 0);
   if (Lexer.isNot(asmtok::LParen)) {
-    if (ParseAbsoluteExpression(Disp)) return true;
+    if (ParseRelocatableExpression(Disp)) return true;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
@@ -139,7 +139,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
       // memory operand consumed.
     } else {
       // It must be an parenthesized expression, parse it now.
-      if (ParseAbsoluteExpression(Disp))
+      if (ParseRelocatableExpression(Disp))
         return true;
       
       // After parsing the base expression we could either have a parenthesized
