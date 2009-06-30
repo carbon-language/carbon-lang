@@ -71,10 +71,15 @@ namespace {
 
 namespace llvmc {
 
+// Sometimes plugins want to condition on the value in argv[0].
+const char* ProgramName;
+
 int Main(int argc, char** argv) {
   try {
     LanguageMap langMap;
     CompilationGraph graph;
+
+    ProgramName = argv[0];
 
     cl::ParseCommandLineOptions
       (argc, argv, "LLVM Compiler Driver (Work In Progress)", true);
