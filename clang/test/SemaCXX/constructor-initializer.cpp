@@ -1,6 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 class A { 
   int m;
+   A() : A::m(17) { } // expected-error {{member initializer 'm' does not name a non-static data member or base class}}
 };
 
 class B : public A { 
@@ -74,3 +75,21 @@ class U {
                         // expected-note {{previous initialization is here}}
 };
 
+struct V {};
+struct Base {};
+struct Base1 {};
+
+struct Derived : Base, Base1, virtual V {
+  Derived ();
+};
+
+struct Current : Derived {
+  int Derived;
+  Current() : Derived(1), ::Derived(),
+                          ::Derived::Base(), // expected-error {{type '::Derived::Base' is not a direct or virtual base of 'Current'}}
+                           Derived::Base1(), // expected-error {{type 'Derived::Base1' is not a direct or virtual base of 'Current'}}
+                           Derived::V(),
+                           ::NonExisting(), // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
+                           INT::NonExisting()  {} // expected-error {{expected a class or namespace}} \
+						  // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
+};

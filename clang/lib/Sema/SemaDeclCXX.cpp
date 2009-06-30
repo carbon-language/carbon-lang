@@ -646,6 +646,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 Sema::MemInitResult 
 Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                           Scope *S,
+                          const CXXScopeSpec &SS,
                           IdentifierInfo *MemberOrBase,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
@@ -677,23 +678,24 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   //   composed of a single identifier refers to the class member. A
   //   mem-initializer-id for the hidden base class may be specified
   //   using a qualified name. ]
-  // Look for a member, first.
-  FieldDecl *Member = 0;
-  DeclContext::lookup_result Result 
-    = ClassDecl->lookup(MemberOrBase);
-  if (Result.first != Result.second)
-    Member = dyn_cast<FieldDecl>(*Result.first);
+  if (!SS.getScopeRep()) {
+    // Look for a member, first.
+    FieldDecl *Member = 0;
+    DeclContext::lookup_result Result 
+      = ClassDecl->lookup(MemberOrBase);
+    if (Result.first != Result.second)
+      Member = dyn_cast<FieldDecl>(*Result.first);
 
-  // FIXME: Handle members of an anonymous union.
+    // FIXME: Handle members of an anonymous union.
 
-  if (Member) {
-    // FIXME: Perform direct initialization of the member.
-    return new CXXBaseOrMemberInitializer(Member, (Expr **)Args, NumArgs, 
-                                          IdLoc);
+    if (Member) {
+      // FIXME: Perform direct initialization of the member.
+      return new CXXBaseOrMemberInitializer(Member, (Expr **)Args, NumArgs, 
+                                            IdLoc);
+    }
   }
-
   // It didn't name a member, so see if it names a class.
-  TypeTy *BaseTy = getTypeName(*MemberOrBase, IdLoc, S, 0/*SS*/);
+  TypeTy *BaseTy = getTypeName(*MemberOrBase, IdLoc, S, &SS);
   if (!BaseTy)
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);

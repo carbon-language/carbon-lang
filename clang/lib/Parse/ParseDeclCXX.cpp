@@ -1277,8 +1277,10 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
 ///         '::'[opt] nested-name-specifier[opt] class-name
 ///         identifier
 Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
-  // FIXME: parse '::'[opt] nested-name-specifier[opt]
-
+  // parse '::'[opt] nested-name-specifier[opt]
+  CXXScopeSpec SS;
+  ParseOptionalCXXScopeSpecifier(SS);
+  
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_member_or_base_name);
     return true;
@@ -1306,7 +1308,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
 
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  return Actions.ActOnMemInitializer(ConstructorDecl, CurScope, II, IdLoc,
+  return Actions.ActOnMemInitializer(ConstructorDecl, CurScope, SS, II, IdLoc,
                                      LParenLoc, ArgExprs.take(),
                                      ArgExprs.size(), CommaLocs.data(),
                                      RParenLoc);

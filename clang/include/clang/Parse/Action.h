@@ -1203,6 +1203,7 @@ public:
 
   virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorDecl,
                                             Scope *S,
+                                            const CXXScopeSpec &SS,
                                             IdentifierInfo *MemberOrBase,
                                             SourceLocation IdLoc,
                                             SourceLocation LParenLoc,
