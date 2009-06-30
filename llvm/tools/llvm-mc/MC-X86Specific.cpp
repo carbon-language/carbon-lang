@@ -65,10 +65,6 @@ struct AsmParser::X86Operand {
     Res.Mem.ScaleReg = ScaleReg;
     return Res;
   }
-  
-  void AddToMCInst(MCInst &I) {
-    // FIXME: Add in x86 order here.
-  }
 };
 
 bool AsmParser::ParseX86Operand(X86Operand &Op) {
@@ -195,27 +191,34 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   return false;
 }
 
+/// MatchX86Inst - Convert a parsed instruction name and operand list into a
+/// concrete instruction.
+static bool MatchX86Inst(const char *Name, 
+                         llvm::SmallVector<AsmParser::X86Operand, 3> &Operands,
+                         MCInst &Inst) {
+  return false;
+}
+
 /// ParseX86InstOperands - Parse the operands of an X86 instruction and return
 /// them as the operands of an MCInst.
-bool AsmParser::ParseX86InstOperands(MCInst &Inst) {
-  // If no operands are present, just return.
-  if (Lexer.is(asmtok::EndOfStatement))
-    return false;
+bool AsmParser::ParseX86InstOperands(const char *InstName, MCInst &Inst) {
+  llvm::SmallVector<X86Operand, 3> Operands;
 
-  // Read the first operand.
-  X86Operand Op;
-  if (ParseX86Operand(Op))
-    return true;
-  Op.AddToMCInst(Inst);
-  
-  while (Lexer.is(asmtok::Comma)) {
-    Lexer.Lex();  // Eat the comma.
-    
-    // Parse and remember the operand.
-    Op = X86Operand();
-    if (ParseX86Operand(Op))
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    // Read the first operand.
+    Operands.push_back(X86Operand());
+    if (ParseX86Operand(Operands.back()))
       return true;
-    Op.AddToMCInst(Inst);
+    
+    while (Lexer.is(asmtok::Comma)) {
+      Lexer.Lex();  // Eat the comma.
+      
+      // Parse and remember the operand.
+      Operands.push_back(X86Operand());
+      if (ParseX86Operand(Operands.back()))
+        return true;
+    }
   }
-  return false;
+
+  return MatchX86Inst(InstName, Operands, Inst);
 }

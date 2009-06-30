@@ -506,7 +506,7 @@ bool AsmParser::ParseStatement() {
   }
 
   MCInst Inst;
-  if (ParseX86InstOperands(Inst))
+  if (ParseX86InstOperands(IDVal, Inst))
     return true;
   
   if (Lexer.isNot(asmtok::EndOfStatement))

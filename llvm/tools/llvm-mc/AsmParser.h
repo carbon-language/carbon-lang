@@ -25,11 +25,13 @@ class MCStreamer;
 class MCValue;
 
 class AsmParser {
+public:
+  struct X86Operand;
+
+private:  
   AsmLexer Lexer;
   MCContext &Ctx;
   MCStreamer &Out;
-  
-  struct X86Operand;
   
 public:
   AsmParser(SourceMgr &SM, MCContext &ctx, MCStreamer &OutStr)
@@ -76,7 +78,7 @@ private:
   bool ParseParenExpr(AsmExpr *&Res);
   
   // X86 specific.
-  bool ParseX86InstOperands(MCInst &Inst);
+  bool ParseX86InstOperands(const char *InstName, MCInst &Inst);
   bool ParseX86Operand(X86Operand &Op);
   bool ParseX86MemOperand(X86Operand &Op);
   
