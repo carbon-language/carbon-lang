@@ -107,6 +107,34 @@ TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
 }
 
 Sema::OwningExprResult
+TemplateExprInstantiator::VisitTemplateIdRefExpr(TemplateIdRefExpr *E) {
+  TemplateName Template 
+    = SemaRef.InstantiateTemplateName(E->getTemplateName(), E->getTemplateNameLoc(),
+                                      TemplateArgs);
+  // FIXME: Can InstantiateTemplateName report an error?
+  
+  llvm::SmallVector<TemplateArgument, 4> InstantiatedArgs;
+  for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
+    TemplateArgument InstArg = SemaRef.Instantiate(E->getTemplateArgs()[I],
+                                                   TemplateArgs);
+    if (InstArg.isNull())
+      return SemaRef.ExprError();
+    
+    InstantiatedArgs.push_back(InstArg);
+  }
+  
+  // FIXME: It's possible that we'll find out now that the template name 
+  // actually refers to a type, in which case this is a functional cast. 
+  // Implement this!
+  
+  return SemaRef.BuildTemplateIdExpr(Template, E->getTemplateNameLoc(),
+                                     E->getLAngleLoc(),
+                                     InstantiatedArgs.data(),
+                                     InstantiatedArgs.size(),
+                                     E->getRAngleLoc());
+}
+
+Sema::OwningExprResult
 TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {

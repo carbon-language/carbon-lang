@@ -207,13 +207,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
 ///         operator-function-id
 ///         conversion-function-id                [TODO]
 ///         '~' class-name                        [TODO]
-///         template-id                           [TODO]
+///         template-id
 ///
 ///       qualified-id:
 ///         '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
 ///         '::' identifier
 ///         '::' operator-function-id
-///         '::' template-id                      [TODO]
+///         '::' template-id
 ///
 ///       nested-name-specifier:
 ///         type-name '::'
@@ -264,7 +264,7 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   //   operator-function-id
   //   conversion-function-id
   //   '~' class-name                        [TODO]
-  //   template-id                           [TODO]
+  //   template-id
   //
   switch (Tok.getKind()) {
   default:
@@ -292,6 +292,29 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
     // We already complained about a bad conversion-function-id,
     // above.
     return ExprError();
+  }
+
+  case tok::annot_template_id: {
+    TemplateIdAnnotation *TemplateId 
+      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    assert((TemplateId->Kind == TNK_Function_template ||
+            TemplateId->Kind == TNK_Dependent_template_name) &&
+           "A template type name is not an ID expression");
+
+    ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
+                                       TemplateId->getTemplateArgs(),
+                                       TemplateId->getTemplateArgIsType(),
+                                       TemplateId->NumArgs);
+    
+    OwningExprResult Result
+      = Actions.ActOnTemplateIdExpr(TemplateTy::make(TemplateId->Template),
+                                    TemplateId->TemplateNameLoc,
+                                    TemplateId->LAngleLoc,
+                                    TemplateArgsPtr,
+                                    TemplateId->getTemplateArgLocations(),
+                                    TemplateId->RAngleLoc);
+    ConsumeToken(); // Consume the template-id token
+    return move(Result);
   }
 
   } // switch.

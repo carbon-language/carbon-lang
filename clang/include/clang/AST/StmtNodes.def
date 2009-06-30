@@ -9,7 +9,7 @@
 //
 //  This file defines the AST Node info database.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #ifndef FIRST_STMT
 #define FIRST_STMT(CLASS)
@@ -123,6 +123,7 @@ EXPR(UnresolvedFunctionNameExpr , Expr)
 EXPR(UnaryTypeTraitExpr     , Expr)
 EXPR(QualifiedDeclRefExpr   , DeclRefExpr)
 EXPR(UnresolvedDeclRefExpr  , Expr)
+EXPR(TemplateIdRefExpr      , Expr)
 EXPR(CXXConstructExpr       , Expr)
 EXPR(CXXBindTemporaryExpr   , Expr)
 EXPR(CXXExprWithTemporaries , Expr)

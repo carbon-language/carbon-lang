@@ -933,6 +933,42 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   return Result.getAsOpaquePtr();
 }
 
+Sema::OwningExprResult Sema::BuildTemplateIdExpr(TemplateName Template,
+                                                 SourceLocation TemplateNameLoc,
+                                                 SourceLocation LAngleLoc,
+                                           const TemplateArgument *TemplateArgs,
+                                                 unsigned NumTemplateArgs,
+                                                 SourceLocation RAngleLoc) {
+  // FIXME: Can we do any checking at this point? I guess we could check the
+  // template arguments that we have against the template name, if the template
+  // name refers to a single template. That's not a terribly common case, 
+  // though.
+  return Owned(TemplateIdRefExpr::Create(Context, 
+                                         /*FIXME: New type?*/Context.OverloadTy,
+                                         /*FIXME: Necessary?*/0,
+                                         /*FIXME: Necessary?*/SourceRange(),
+                                         Template, TemplateNameLoc, LAngleLoc,
+                                         TemplateArgs, 
+                                         NumTemplateArgs, RAngleLoc));
+}
+
+Sema::OwningExprResult Sema::ActOnTemplateIdExpr(TemplateTy TemplateD,
+                                                 SourceLocation TemplateNameLoc,
+                                                 SourceLocation LAngleLoc,
+                                              ASTTemplateArgsPtr TemplateArgsIn,
+                                                SourceLocation *TemplateArgLocs,
+                                                 SourceLocation RAngleLoc) {
+  TemplateName Template = TemplateD.getAsVal<TemplateName>();
+  
+  // Translate the parser's template argument list in our AST format.
+  llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
+  translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
+  
+  return BuildTemplateIdExpr(Template, TemplateNameLoc, LAngleLoc,
+                             TemplateArgs.data(), TemplateArgs.size(),
+                             RAngleLoc);
+}
+
 /// \brief Form a dependent template name.
 ///
 /// This action forms a dependent template name given the template

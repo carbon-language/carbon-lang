@@ -2635,7 +2635,6 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   }
 
   // If we're directly calling a function, get the appropriate declaration.
-  DeclRefExpr *DRExpr = NULL;
   Expr *FnExpr = Fn;
   bool ADL = true;
   while (true) {
@@ -2650,13 +2649,18 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                cast<UnaryOperator>(FnExpr)->getOpcode()
                  == UnaryOperator::AddrOf) {
       FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
-    } else if ((DRExpr = dyn_cast<DeclRefExpr>(FnExpr))) {
+    } else if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(FnExpr)) {
       // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
       ADL &= !isa<QualifiedDeclRefExpr>(DRExpr);
+      NDecl = dyn_cast<NamedDecl>(DRExpr->getDecl());
       break;
     } else if (UnresolvedFunctionNameExpr *DepName
                  = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr)) {
       UnqualifiedName = DepName->getName();
+      break;
+    } else if (TemplateIdRefExpr *TemplateIdRef 
+                 = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
+      NDecl = TemplateIdRef->getTemplateName().getAsTemplateDecl();
       break;
     } else {
       // Any kind of name that does not refer to a declaration (or
@@ -2668,14 +2672,13 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
 
   OverloadedFunctionDecl *Ovl = 0;
   FunctionTemplateDecl *FunctionTemplate = 0;
-  if (DRExpr) {
-    FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
-    if ((FunctionTemplate = dyn_cast<FunctionTemplateDecl>(DRExpr->getDecl())))
+  if (NDecl) {
+    FDecl = dyn_cast<FunctionDecl>(NDecl);
+    if ((FunctionTemplate = dyn_cast<FunctionTemplateDecl>(NDecl)))
       FDecl = FunctionTemplate->getTemplatedDecl();
     else
-      FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
-    Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
-    NDecl = dyn_cast<NamedDecl>(DRExpr->getDecl());
+      FDecl = dyn_cast<FunctionDecl>(NDecl);
+    Ovl = dyn_cast<OverloadedFunctionDecl>(NDecl);
   }
 
   if (Ovl || FunctionTemplate || 
@@ -2689,16 +2692,15 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       ADL = false;
 
     if (Ovl || FunctionTemplate || ADL) {
-      FDecl = ResolveOverloadedCallFn(Fn, DRExpr? DRExpr->getDecl() : 0,
-                                      UnqualifiedName, LParenLoc, Args,
-                                      NumArgs, CommaLocs, RParenLoc, ADL);
+      FDecl = ResolveOverloadedCallFn(Fn, NDecl, UnqualifiedName, LParenLoc, 
+                                      Args, NumArgs, CommaLocs, RParenLoc, ADL);
       if (!FDecl)
         return ExprError();
 
       // Update Fn to refer to the actual function selected.
       Expr *NewFn = 0;
       if (QualifiedDeclRefExpr *QDRExpr
-            = dyn_cast_or_null<QualifiedDeclRefExpr>(DRExpr))
+            = dyn_cast<QualifiedDeclRefExpr>(FnExpr))
         NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(),
                                                    QDRExpr->getLocation(),
                                                    false, false,

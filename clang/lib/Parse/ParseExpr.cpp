@@ -777,7 +777,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
   case tok::annot_cxxscope: // [C++] id-expression: qualified-id
   case tok::kw_operator: // [C++] id-expression: operator/conversion-function-id
-                         //                      template-id
+  case tok::annot_template_id: // [C++]          template-id
     Res = ParseCXXIdExpression(isAddressOfOperand);
     return ParsePostfixExpressionSuffix(move(Res));
 

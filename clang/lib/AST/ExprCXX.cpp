@@ -13,6 +13,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 using namespace clang;
 
@@ -151,6 +152,65 @@ StmtIterator UnresolvedDeclRefExpr::child_begin() {
 
 StmtIterator UnresolvedDeclRefExpr::child_end() {
   return child_iterator();
+}
+
+TemplateIdRefExpr::TemplateIdRefExpr(QualType T,
+                                     NestedNameSpecifier *Qualifier, 
+                                     SourceRange QualifierRange,
+                                     TemplateName Template, 
+                                     SourceLocation TemplateNameLoc,
+                                     SourceLocation LAngleLoc, 
+                                     const TemplateArgument *TemplateArgs,
+                                     unsigned NumTemplateArgs,
+                                     SourceLocation RAngleLoc)
+  : Expr(TemplateIdRefExprClass, T,
+         (Template.isDependent() || 
+          TemplateSpecializationType::anyDependentTemplateArguments(
+                                              TemplateArgs, NumTemplateArgs)),
+         (Template.isDependent() ||
+          TemplateSpecializationType::anyDependentTemplateArguments(
+                                              TemplateArgs, NumTemplateArgs))),
+    Qualifier(Qualifier), QualifierRange(QualifierRange), Template(Template),
+    TemplateNameLoc(TemplateNameLoc), LAngleLoc(LAngleLoc),
+    RAngleLoc(RAngleLoc), NumTemplateArgs(NumTemplateArgs)
+    
+{ 
+  TemplateArgument *StoredTemplateArgs 
+    = reinterpret_cast<TemplateArgument *> (this+1);
+  for (unsigned I = 0; I != NumTemplateArgs; ++I)
+    new (StoredTemplateArgs + I) TemplateArgument(TemplateArgs[I]);
+}
+
+TemplateIdRefExpr *
+TemplateIdRefExpr::Create(ASTContext &Context, QualType T,
+                          NestedNameSpecifier *Qualifier, 
+                          SourceRange QualifierRange,
+                          TemplateName Template, SourceLocation TemplateNameLoc,
+                          SourceLocation LAngleLoc, 
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs, SourceLocation RAngleLoc) {
+  void *Mem = Context.Allocate(sizeof(TemplateIdRefExpr) +
+                               sizeof(TemplateArgument) * NumTemplateArgs);
+  return new (Mem) TemplateIdRefExpr(T, Qualifier, QualifierRange, Template,
+                                     TemplateNameLoc, LAngleLoc, TemplateArgs,
+                                     NumTemplateArgs, RAngleLoc);
+}
+
+void TemplateIdRefExpr::Destroy(ASTContext &Context) {
+  const TemplateArgument *TemplateArgs = getTemplateArgs();
+  for (unsigned I = 0; I != NumTemplateArgs; ++I)
+    if (Expr *E = TemplateArgs[I].getAsExpr())
+      E->Destroy(Context);
+}
+
+Stmt::child_iterator TemplateIdRefExpr::child_begin() {
+  // FIXME: Walk the expressions in the template arguments (?)
+  return Stmt::child_iterator();
+}
+
+Stmt::child_iterator TemplateIdRefExpr::child_end() {
+  // FIXME: Walk the expressions in the template arguments (?)
+  return Stmt::child_iterator();
 }
 
 bool UnaryTypeTraitExpr::EvaluateTrait() const {

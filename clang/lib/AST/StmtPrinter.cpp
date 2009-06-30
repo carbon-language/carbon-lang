@@ -490,6 +490,18 @@ void StmtPrinter::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *Node) {
   OS << Node->getDeclName().getAsString();
 }
 
+void StmtPrinter::VisitTemplateIdRefExpr(TemplateIdRefExpr *Node) {
+  if (Node->getQualifier())
+    Node->getQualifier()->print(OS, Policy);
+  Node->getTemplateName().print(OS, Policy, true);
+  OS << '<';
+  OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                      Node->getTemplateArgs(),
+                                                   Node->getNumTemplateArgs(),
+                                                              Policy);
+  OS << '>';
+}
+
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   if (Node->getBase()) {
     PrintExpr(Node->getBase());

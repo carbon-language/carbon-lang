@@ -1017,6 +1017,100 @@ public:
   virtual StmtIterator child_end();
 };
 
+/// \brief An expression that refers to a C++ template-id, such as 
+/// @c isa<FunctionDecl>. 
+class TemplateIdRefExpr : public Expr {
+  /// \brief If this template-id was qualified-id, e.g., @c std::sort<int>,
+  /// this nested name specifier contains the @c std::.
+  NestedNameSpecifier *Qualifier;
+  
+  /// \brief If this template-id was a qualified-id, e.g., @c std::sort<int>,
+  /// this covers the source code range of the @c std::.
+  SourceRange QualifierRange;
+  
+  /// \brief The actual template to which this template-id refers.
+  TemplateName Template;
+  
+  /// \brief The source location of the template name.
+  SourceLocation TemplateNameLoc;
+
+  /// \brief The source location of the left angle bracket ('<');
+  SourceLocation LAngleLoc;
+  
+  /// \brief The source location of the right angle bracket ('>');
+  SourceLocation RAngleLoc;
+  
+  /// \brief The number of template arguments in TemplateArgs.
+  unsigned NumTemplateArgs;
+  
+  TemplateIdRefExpr(QualType T,
+                    NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
+                    TemplateName Template, SourceLocation TemplateNameLoc,
+                    SourceLocation LAngleLoc, 
+                    const TemplateArgument *TemplateArgs,
+                    unsigned NumTemplateArgs,
+                    SourceLocation RAngleLoc);
+  
+public:
+  static TemplateIdRefExpr *
+  Create(ASTContext &Context, QualType T,
+         NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
+         TemplateName Template, SourceLocation TemplateNameLoc,
+         SourceLocation LAngleLoc, const TemplateArgument *TemplateArgs,
+         unsigned NumTemplateArgs, SourceLocation RAngleLoc);
+  
+  void Destroy(ASTContext &Context);
+  
+  /// \brief Retrieve the nested name specifier used to qualify the name of
+  /// this template-id, e.g., the "std::sort" in @c std::sort<int>, or NULL
+  /// if this template-id was an unqualified-id.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  
+  /// \brief Retrieve the source range describing the nested name specifier
+  /// used to qualified the name of this template-id, if the name was qualified.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+  
+  /// \brief Retrieve the name of the template referenced, e.g., "sort" in
+  /// @c std::sort<int>;
+  TemplateName getTemplateName() const { return Template; }
+  
+  /// \brief Retrieve the location of the name of the template referenced, e.g.,
+  /// the location of "sort" in @c std::sort<int>.
+  SourceLocation getTemplateNameLoc() const { return TemplateNameLoc; }
+  
+  /// \brief Retrieve the location of the left angle bracket following the 
+  /// template name ('<').
+  SourceLocation getLAngleLoc() const { return LAngleLoc; }
+  
+  /// \brief Retrieve the template arguments provided as part of this
+  /// template-id.
+  const TemplateArgument *getTemplateArgs() const { 
+    return reinterpret_cast<const TemplateArgument *>(this + 1);
+  }
+  
+  /// \brief Retrieve the number of template arguments provided as part of this
+  /// template-id.
+  unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
+    
+  /// \brief Retrieve the location of the right angle bracket following the 
+  /// template arguments ('>').
+  SourceLocation getRAngleLoc() const { return RAngleLoc; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Qualifier? QualifierRange.getBegin() : TemplateNameLoc,
+                       RAngleLoc);
+  }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == TemplateIdRefExprClass;
+  }
+  static bool classof(const TemplateIdRefExpr *) { return true; }
+};
+  
 class CXXExprWithTemporaries : public Expr {
   Stmt *SubExpr;
     

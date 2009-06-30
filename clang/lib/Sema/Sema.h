@@ -2075,6 +2075,20 @@ public:
                       SourceLocation *TemplateArgLocs,
                       SourceLocation RAngleLoc);
   
+  OwningExprResult BuildTemplateIdExpr(TemplateName Template,
+                                       SourceLocation TemplateNameLoc,
+                                       SourceLocation LAngleLoc,
+                                       const TemplateArgument *TemplateArgs,
+                                       unsigned NumTemplateArgs,
+                                       SourceLocation RAngleLoc);
+  
+  virtual OwningExprResult ActOnTemplateIdExpr(TemplateTy Template,
+                                               SourceLocation TemplateNameLoc,
+                                               SourceLocation LAngleLoc,
+                                               ASTTemplateArgsPtr TemplateArgs,
+                                               SourceLocation *TemplateArgLocs,
+                                               SourceLocation RAngleLoc);
+    
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const IdentifierInfo &Name,
                                                 SourceLocation NameLoc,
