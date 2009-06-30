@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -disable-output -analyze -lda > %t
 ; RUN: grep {instructions: 3} %t | count 1
 ; RUN: grep {0,2: dependent} %t | count 1
-; RUN: grep {1,2: dependent} %t | count 1
+; RUN: grep {1,2: independent} %t | count 1
 
 ; for (i = 0; i < 256; i++)
 ;   x[i] = x[i] + y[i]
