@@ -14,6 +14,7 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "LLVMContextImpl.h"
 
 using namespace llvm;
@@ -381,4 +382,61 @@ Constant* LLVMContext::getConstantVector(Constant* const* Vals,
 
 ConstantVector* LLVMContext::getConstantVectorAllOnes(const VectorType* Ty) {
   return ConstantVector::getAllOnesValue(Ty);
+}
+
+// FunctionType accessors
+FunctionType* LLVMContext::getFunctionType(const Type* Result,
+                                         const std::vector<const Type*>& Params,
+                                         bool isVarArg) {
+  return FunctionType::get(Result, Params, isVarArg);
+}
+                                
+// IntegerType accessors
+const IntegerType* LLVMContext::getIntegerType(unsigned NumBits) {
+  return IntegerType::get(NumBits);
+}
+  
+// OpaqueType accessors
+OpaqueType* LLVMContext::getOpaqueType() {
+  return OpaqueType::get();
+}
+
+// StructType accessors
+StructType* LLVMContext::getStructType(const std::vector<const Type*>& Params,
+                                       bool isPacked) {
+  return StructType::get(Params, isPacked);
+}
+
+// ArrayType accessors
+ArrayType* LLVMContext::getArrayType(const Type* ElementType,
+                                     uint64_t NumElements) {
+  return ArrayType::get(ElementType, NumElements);
+}
+  
+// PointerType accessors
+PointerType* LLVMContext::getPointerType(const Type* ElementType,
+                                         unsigned AddressSpace) {
+  return PointerType::get(ElementType, AddressSpace);
+}
+
+PointerType* LLVMContext::getPointerTypeUnqualified(const Type* ElementType) {
+  return PointerType::getUnqual(ElementType);
+}
+  
+// VectorType accessors
+VectorType* LLVMContext::getVectorType(const Type* ElementType,
+                                       unsigned NumElements) {
+  return VectorType::get(ElementType, NumElements);
+}
+
+VectorType* LLVMContext::getVectorTypeInteger(const VectorType* VTy) {
+  return VectorType::getInteger(VTy);  
+}
+
+VectorType* LLVMContext::getVectorTypeExtendedElement(const VectorType* VTy) {
+  return VectorType::getExtendedElementVectorType(VTy);
+}
+
+VectorType* LLVMContext::getVectorTypeTruncatedElement(const VectorType* VTy) {
+  return VectorType::getTruncatedElementVectorType(VTy);
 }
