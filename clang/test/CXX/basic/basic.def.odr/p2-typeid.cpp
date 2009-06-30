@@ -32,5 +32,5 @@ void test(X<Poly> xp, X<Poly, Poly&> xpr, X<NonPoly> xnp, X<NonPoly, NonPoly&> x
   xnpr.g(NonPoly());
 
   // Triggers an error (as it should);
-  xpr.g(Poly());
+  xpr.g(Poly()); // expected-note{{instantiation of member function}}
 }

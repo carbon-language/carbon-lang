@@ -663,10 +663,19 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 /// \brief Instantiate the definition of the given function from its
 /// template.
 ///
+/// \param PointOfInstantiation the point at which the instantiation was
+/// required. Note that this is not precisely a "point of instantiation"
+/// for the function, but it's close.
+///
 /// \param Function the already-instantiated declaration of a
-/// function.
+/// function template specialization or member function of a class template
+/// specialization.
+///
+/// \param Recursive if true, recursively instantiates any functions that
+/// are required by this instantiation.
 void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
-                                         FunctionDecl *Function) {
+                                         FunctionDecl *Function,
+                                         bool Recursive) {
   if (Function->isInvalidDecl())
     return;
 
@@ -689,6 +698,13 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Inst)
     return;
 
+  // If we're performing recursive template instantiation, create our own
+  // queue of pending implicit instantiations that we will instantiate later,
+  // while we're still within our own instantiation context.
+  std::deque<PendingImplicitInstantiation> SavedPendingImplicitInstantiations;
+  if (Recursive)
+    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+  
   ActOnStartOfFunctionDef(0, DeclPtrTy::make(Function));
 
   // Introduce a new scope where local variable instantiations will be
@@ -717,6 +733,15 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   DeclGroupRef DG(Function);
   Consumer.HandleTopLevelDecl(DG);
+  
+  if (Recursive) {
+    // Instantiate any pending implicit instantiations found during the
+    // instantiation of this template. 
+    PerformPendingImplicitInstantiations();
+    
+    // Restore the set of pending implicit instantiations.
+    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+  }
 }
 
 /// \brief Instantiate the definition of the given variable from its
@@ -859,11 +884,11 @@ NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
 void Sema::PerformPendingImplicitInstantiations() {
   while (!PendingImplicitInstantiations.empty()) {
     PendingImplicitInstantiation Inst = PendingImplicitInstantiations.front();
-    PendingImplicitInstantiations.pop();
+    PendingImplicitInstantiations.pop_front();
     
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first))
       if (!Function->getBody())
-        InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function);
+        InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true);
     
     // FIXME: instantiate static member variables
   }

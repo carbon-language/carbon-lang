@@ -5641,7 +5641,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       // instantiated, naturally).
       if (Function->getInstantiatedFromMemberFunction() ||
           Function->getPrimaryTemplate())
-        PendingImplicitInstantiations.push(std::make_pair(Function, Loc));
+        PendingImplicitInstantiations.push_back(std::make_pair(Function, Loc));
     }
     
     

@@ -29,9 +29,9 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include <deque>
 #include <list>
 #include <string>
-#include <queue>
 #include <vector>
 
 namespace llvm {
@@ -2581,7 +2581,7 @@ public:
   
   /// \brief The queue of implicit template instantiations that are required
   /// but have not yet been performed.
-  std::queue<PendingImplicitInstantiation> PendingImplicitInstantiations;
+  std::deque<PendingImplicitInstantiation> PendingImplicitInstantiations;
 
   void PerformPendingImplicitInstantiations();
   
@@ -2636,7 +2636,8 @@ public:
                                const TemplateArgumentList &TemplateArgs);
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
-                                     FunctionDecl *Function);
+                                     FunctionDecl *Function,
+                                     bool Recursive = false);
   void InstantiateVariableDefinition(VarDecl *Var);
 
   NamedDecl *InstantiateCurrentDeclRef(NamedDecl *D);
