@@ -197,6 +197,9 @@ public:
   VectorType* getVectorTypeTruncatedElement(const VectorType* VTy);
 };
 
+/// FOR BACKWARDS COMPATIBILITY - Returns a global context.
+LLVMContext* getGlobalContext();
+
 }
 
 #endif

@@ -15,9 +15,16 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "LLVMContextImpl.h"
 
 using namespace llvm;
+
+static ManagedStatic<LLVMContext> GlobalContext;
+
+LLVMContext* getGlobalContext() {
+  return &*GlobalContext;
+}
 
 LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
