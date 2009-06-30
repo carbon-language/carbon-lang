@@ -158,6 +158,9 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
 }
 
 TranslationUnitDecl *Decl::getTranslationUnitDecl() {
+  if (TranslationUnitDecl *TUD = dyn_cast<TranslationUnitDecl>(this))
+    return TUD;
+
   DeclContext *DC = getDeclContext();
   assert(DC && "This decl is not contained in a translation unit!");
  
