@@ -114,6 +114,13 @@ const SymExpr *SVal::getAsSymbolicExpression() const {
   return getAsSymbol();
 }
 
+const MemRegion *SVal::getAsRegion() const {
+  if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this))
+    return X->getRegion();
+
+  return 0;
+}
+
 bool SVal::symbol_iterator::operator==(const symbol_iterator &X) const {
   return itr == X.itr;
 }

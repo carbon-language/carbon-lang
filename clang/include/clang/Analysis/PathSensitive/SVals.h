@@ -110,6 +110,8 @@ public:
   /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
   ///  return that expression.  Otherwise return NULL.
   const SymExpr *getAsSymbolicExpression() const;
+
+  const MemRegion *getAsRegion() const;
   
   void print(llvm::raw_ostream& OS) const;
   void printStdErr() const;
