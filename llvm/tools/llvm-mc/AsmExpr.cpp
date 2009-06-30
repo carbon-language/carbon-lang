@@ -132,7 +132,8 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
     // FIXME: We need target hooks for the evaluation. It may be limited in
     // width, and gas defines the result of comparisons differently from Apple
     // as (the result is sign extended).
-    int64_t Result, LHS = LHSValue.getConstant(), RHS = RHSValue.getConstant();
+    int64_t LHS = LHSValue.getConstant(), RHS = RHSValue.getConstant();
+    int64_t Result = 0;
     switch (ABE->getOpcode()) {
     case AsmBinaryExpr::Add:  Result = LHS + RHS; break;
     case AsmBinaryExpr::And:  Result = LHS & RHS; break;
