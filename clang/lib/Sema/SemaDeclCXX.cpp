@@ -1916,8 +1916,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   // for its base class and its non-static data members shall have been
   // implicitly defined.
   bool err = false;
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
     if (!BaseClassDecl->hasTrivialConstructor()) {
@@ -1934,9 +1934,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
       }
     }
   }
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-       Field != ClassDecl->field_end();
-       ++Field) {
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); Field != E; ++Field) {
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
@@ -1989,8 +1988,8 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   // implicitly defined, all the implicitly-declared default destructors
   // for its base class and its non-static data members shall have been
   // implicitly defined.
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
     if (!BaseClassDecl->hasTrivialDestructor()) {
@@ -2003,9 +2002,8 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
     }
   }
   
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-       Field != ClassDecl->field_end();
-       ++Field) {
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); Field != E; ++Field) {
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
@@ -2035,7 +2033,6 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
   
   CXXRecordDecl *ClassDecl
     = cast<CXXRecordDecl>(MethodDecl->getDeclContext());
-  assert(ClassDecl && "DefineImplicitOverloadedAssign - invalid constructor");
   
   // C++[class.copy] p12
   // Before the implicitly-declared copy assignment operator for a class is
@@ -2043,17 +2040,16 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
   // for its direct base classes and its nonstatic data members shall have
   // been implicitly defined.
   bool err = false;
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
     if (CXXMethodDecl *BaseAssignOpMethod = 
           getAssignOperatorMethod(MethodDecl->getParamDecl(0), BaseClassDecl))
       MarkDeclarationReferenced(CurrentLocation, BaseAssignOpMethod);
   }
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-       Field != ClassDecl->field_end();
-       ++Field) {
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); Field != E; ++Field) {
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
