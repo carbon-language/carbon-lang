@@ -858,7 +858,12 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     // Emits: (tBcc:void (bb:Other):$dst, (imm:i32):$cc)
     // Pattern complexity = 6  cost = 1  size = 0
 
-    unsigned Opc = Subtarget->isThumb() ? ARM::tBcc : ARM::Bcc;
+    // Pattern: (ARMbrcond:void (bb:Other):$dst, (imm:i32):$cc)
+    // Emits: (t2Bcc:void (bb:Other):$dst, (imm:i32):$cc)
+    // Pattern complexity = 6  cost = 1  size = 0
+
+    unsigned Opc = Subtarget->isThumb() ? 
+      ((Subtarget->hasThumb2()) ? ARM::t2Bcc : ARM::tBcc) : ARM::Bcc;
     SDValue Chain = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
     SDValue N2 = Op.getOperand(2);

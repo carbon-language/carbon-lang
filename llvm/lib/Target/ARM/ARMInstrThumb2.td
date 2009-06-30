@@ -688,6 +688,28 @@ defm t2TEQ  : T2I_cmp_is<"teq",
 
 // FIXME: Conditional moves
 
+//===----------------------------------------------------------------------===//
+// Control-Flow Instructions
+//
+
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
+let isPredicable = 1 in
+def t2B   : T2XI<(outs), (ins brtarget:$target),
+                 "b $target",
+                 [(br bb:$target)]>;
+
+def t2BR_JTr : T2JTI<(outs),
+                     (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
+                     "cpy pc, $target \n\t.align\t2\n$jt",
+                     [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>;
+}
+
+// FIXME: should be able to write a pattern for ARMBrcond, but can't use
+// a two-value operand where a dag node expects two operands. :(
+let isBranch = 1, isTerminator = 1 in
+def t2Bcc : T2I<(outs), (ins brtarget:$target), 
+                "b", " $target",
+                [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

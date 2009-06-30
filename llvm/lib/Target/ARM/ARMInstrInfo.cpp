@@ -350,11 +350,11 @@ bool
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-    if (LastOpc == ARM::B || LastOpc == ARM::tB) {
+    if (LastOpc == ARM::B || LastOpc == ARM::tB || LastOpc == ARM::t2B) {
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
-    if (LastOpc == ARM::Bcc || LastOpc == ARM::tBcc) {
+    if (LastOpc == ARM::Bcc || LastOpc == ARM::tBcc || LastOpc == ARM::t2Bcc) {
       // Block ends with fall-through condbranch.
       TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(LastInst->getOperand(1));
@@ -371,10 +371,12 @@ bool
   if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
     return true;
 
-  // If the block ends with ARM::B/ARM::tB and a ARM::Bcc/ARM::tBcc, handle it.
+  // If the block ends with ARM::B/ARM::tB/ARM::t2B and a 
+  // ARM::Bcc/ARM::tBcc/ARM::t2Bcc, handle it.
   unsigned SecondLastOpc = SecondLastInst->getOpcode();
   if ((SecondLastOpc == ARM::Bcc && LastOpc == ARM::B) ||
-      (SecondLastOpc == ARM::tBcc && LastOpc == ARM::tB)) {
+      (SecondLastOpc == ARM::tBcc && LastOpc == ARM::tB) ||
+      (SecondLastOpc == ARM::t2Bcc && LastOpc == ARM::t2B)) {
     TBB =  SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(SecondLastInst->getOperand(1));
     Cond.push_back(SecondLastInst->getOperand(2));
@@ -384,8 +386,9 @@ bool
 
   // If the block ends with two unconditional branches, handle it.  The second
   // one is not executed, so remove it.
-  if ((SecondLastOpc == ARM::B || SecondLastOpc==ARM::tB) &&
-      (LastOpc == ARM::B || LastOpc == ARM::tB)) {
+  if ((SecondLastOpc == ARM::B || SecondLastOpc==ARM::tB || 
+       SecondLastOpc==ARM::t2B) &&
+      (LastOpc == ARM::B || LastOpc == ARM::tB || LastOpc == ARM::t2B)) {
     TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     if (AllowModify)
@@ -397,8 +400,9 @@ bool
   // branch. The branch folder can create these, and we must get rid of them for
   // correctness of Thumb constant islands.
   if ((SecondLastOpc == ARM::BR_JTr || SecondLastOpc==ARM::BR_JTm ||
-       SecondLastOpc == ARM::BR_JTadd || SecondLastOpc==ARM::tBR_JTr) &&
-      (LastOpc == ARM::B || LastOpc == ARM::tB)) {
+       SecondLastOpc == ARM::BR_JTadd || SecondLastOpc==ARM::tBR_JTr ||
+       SecondLastOpc==ARM::t2BR_JTr) &&
+      (LastOpc == ARM::B || LastOpc == ARM::tB || LastOpc == ARM::t2B)) {
     I = LastInst;
     if (AllowModify)
       I->eraseFromParent();
@@ -413,8 +417,10 @@ bool
 unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  int BOpc   = AFI->isThumbFunction() ? ARM::tB : ARM::B;
-  int BccOpc = AFI->isThumbFunction() ? ARM::tBcc : ARM::Bcc;
+  int BOpc   = AFI->isThumbFunction() ? 
+    (AFI->isThumb2Function() ? ARM::t2B : ARM::tB) : ARM::B;
+  int BccOpc = AFI->isThumbFunction() ? 
+    (AFI->isThumb2Function() ? ARM::t2Bcc : ARM::tBcc) : ARM::Bcc;
 
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin()) return 0;
@@ -445,8 +451,10 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   DebugLoc dl = DebugLoc::getUnknownLoc();
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  int BOpc   = AFI->isThumbFunction() ? ARM::tB : ARM::B;
-  int BccOpc = AFI->isThumbFunction() ? ARM::tBcc : ARM::Bcc;
+  int BOpc   = AFI->isThumbFunction() ? 
+    (AFI->isThumb2Function() ? ARM::t2B : ARM::tB) : ARM::B;
+  int BccOpc = AFI->isThumbFunction() ? 
+    (AFI->isThumb2Function() ? ARM::t2Bcc : ARM::tBcc) : ARM::Bcc;
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
@@ -695,8 +703,10 @@ ARMBaseInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   case ARM::tBX_RET_vararg:
   case ARM::tPOP_RET:
   case ARM::B:
-  case ARM::tB:       // Uncond branch.
+  case ARM::tB:
+  case ARM::t2B:      // Uncond branch.
   case ARM::tBR_JTr:
+  case ARM::t2BR_JTr:
   case ARM::BR_JTr:   // Jumptable branch.
   case ARM::BR_JTm:   // Jumptable branch through mem.
   case ARM::BR_JTadd: // Jumptable branch add to pc.
@@ -721,8 +731,9 @@ bool ARMBaseInstrInfo::
 PredicateInstruction(MachineInstr *MI,
                      const SmallVectorImpl<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
-  if (Opc == ARM::B || Opc == ARM::tB) {
-    MI->setDesc(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
+  if (Opc == ARM::B || Opc == ARM::tB || Opc == ARM::t2B) {
+    MI->setDesc(get((Opc == ARM::B) ? ARM::Bcc :
+                    ((Opc == ARM::tB) ? ARM::tBcc : ARM::t2Bcc)));
     MI->addOperand(MachineOperand::CreateImm(Pred[0].getImm()));
     MI->addOperand(MachineOperand::CreateReg(Pred[1].getReg(), false));
     return true;
@@ -835,7 +846,8 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case ARM::BR_JTr:
     case ARM::BR_JTm:
     case ARM::BR_JTadd:
-    case ARM::tBR_JTr: {
+    case ARM::tBR_JTr:
+    case ARM::t2BR_JTr: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
       unsigned NumOps = TID.getNumOperands();
@@ -853,7 +865,8 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
       return getNumJTEntries(JT, JTI) * 4 +
-             (MI->getOpcode()==ARM::tBR_JTr ? 2 : 4);
+        ((MI->getOpcode()==ARM::tBR_JTr || 
+          MI->getOpcode()==ARM::t2BR_JTr) ? 2 : 4);
     }
     default:
       // Otherwise, pseudo-instruction sizes are zero.

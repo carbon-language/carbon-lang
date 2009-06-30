@@ -124,6 +124,7 @@ namespace {
     const TargetInstrInfo *TII;
     ARMFunctionInfo *AFI;
     bool isThumb;
+    bool isThumb2;
   public:
     static char ID;
     ARMConstantIslands() : MachineFunctionPass(&ID) {}
@@ -213,6 +214,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   TII = Fn.getTarget().getInstrInfo();
   AFI = Fn.getInfo<ARMFunctionInfo>();
   isThumb = AFI->isThumbFunction();
+  isThumb2 = AFI->isThumb2Function();
 
   HasFarJump = false;
 
@@ -376,6 +378,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         int UOpc = Opc;
         switch (Opc) {
         case ARM::tBR_JTr:
+        case ARM::t2BR_JTr:
           // A Thumb table jump may involve padding; for the offsets to
           // be right, functions containing these must be 4-byte aligned.
           AFI->setAlign(2U);
@@ -400,6 +403,16 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           break;
         case ARM::tB:
           Bits = 11;
+          Scale = 2;
+          break;
+        case ARM::t2Bcc:
+          isCond = true;
+          UOpc = ARM::t2B;
+          Bits = 20;
+          Scale = 2;
+          break;
+        case ARM::t2B:
+          Bits = 24;
           Scale = 2;
           break;
         }
@@ -575,7 +588,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
   // correspond to anything in the source.
   BuildMI(OrigBB, DebugLoc::getUnknownLoc(),
-          TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewBB);
+          TII->get(isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B)).addMBB(NewBB);
   NumSplit++;
 
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
@@ -719,7 +732,8 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
   MachineBasicBlock *Succ = *MBB->succ_begin();
   MachineBasicBlock *Pred = *MBB->pred_begin();
   MachineInstr *PredMI = &Pred->back();
-  if (PredMI->getOpcode() == ARM::B || PredMI->getOpcode() == ARM::tB)
+  if (PredMI->getOpcode() == ARM::B || PredMI->getOpcode() == ARM::tB
+      || PredMI->getOpcode() == ARM::t2B)
     return PredMI->getOperand(0).getMBB() == Succ;
   return false;
 }
@@ -751,7 +765,8 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
         // Thumb jump tables require padding.  They should be at the end;
         // following unconditional branches are removed by AnalyzeBranch.
         MachineInstr *ThumbJTMI = NULL;
-        if (prior(MBB->end())->getOpcode() == ARM::tBR_JTr)
+        if ((prior(MBB->end())->getOpcode() == ARM::tBR_JTr)
+            || (prior(MBB->end())->getOpcode() == ARM::t2BR_JTr))
           ThumbJTMI = prior(MBB->end());
         if (ThumbJTMI) {
           unsigned newMIOffset = GetOffsetOf(ThumbJTMI);
@@ -842,7 +857,16 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
 /// getUnconditionalBrDisp - Returns the maximum displacement that can fit in
 /// the specific unconditional branch instruction.
 static inline unsigned getUnconditionalBrDisp(int Opc) {
-  return (Opc == ARM::tB) ? ((1<<10)-1)*2 : ((1<<23)-1)*4;
+  switch (Opc) {
+  case ARM::tB:
+    return ((1<<10)-1)*2;
+  case ARM::t2B:
+    return ((1<<23)-1)*2;
+  default:
+    break;
+  }
+  
+  return ((1<<23)-1)*4;
 }
 
 /// AcceptWater - Small amount of common code factored out of the following.
@@ -938,7 +962,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     // range, but if the preceding conditional branch is out of range, the
     // targets will be exchanged, and the altered branch may be out of
     // range, so the machinery has to know about it.
-    int UncondBr = isThumb ? ARM::tB : ARM::B;
+    int UncondBr = isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B;
     BuildMI(UserMBB, DebugLoc::getUnknownLoc(),
             TII->get(UncondBr)).addMBB(*NewMBB);
     unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
@@ -1168,7 +1192,7 @@ bool
 ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *MBB = MI->getParent();
-  assert(isThumb && "Expected a Thumb function!");
+  assert(isThumb && !isThumb2 && "Expected a Thumb-1 function!");
 
   // Use BL to implement far jump.
   Br.MaxDisp = (1 << 21) * 2;

@@ -801,6 +801,10 @@ class T1I4<dag outs, dag ins, string asm, list<dag> pattern>
   : Thumb1I<outs, ins, AddrModeT1_4, Size2Bytes, asm, "", pattern>;
 class T1Is<dag outs, dag ins, string asm, list<dag> pattern>
   : Thumb1I<outs, ins, AddrModeT1_s, Size2Bytes, asm, "", pattern>;
+class T1Ix2<dag outs, dag ins, string asm, list<dag> pattern>
+  : Thumb1I<outs, ins, AddrModeNone, Size4Bytes, asm, "", pattern>;
+class T1JTI<dag outs, dag ins, string asm, list<dag> pattern>
+  : Thumb1I<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
 // Two-address instructions
 class T1It<dag outs, dag ins, string asm, list<dag> pattern>
@@ -865,6 +869,8 @@ class T2sI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
 
 class T2XI<dag oops, dag iops, string asm, list<dag> pattern>
   : Thumb2XI<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;
+class T2JTI<dag oops, dag iops, string asm, list<dag> pattern>
+  : Thumb2XI<oops, iops, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
 // T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
 class T2Pat<dag pattern, dag result> : Pat<pattern, result> {

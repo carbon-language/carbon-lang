@@ -187,23 +187,24 @@ let isCall = 1,
 let isBranch = 1, isTerminator = 1 in {
   let isBarrier = 1 in {
     let isPredicable = 1 in
-    def tB   : TI<(outs), (ins brtarget:$target), "b $target",
-                  [(br bb:$target)]>;
+    def tB   : T1I<(outs), (ins brtarget:$target), "b $target",
+                   [(br bb:$target)]>;
 
   // Far jump
-  def tBfar : TIx2<(outs), (ins brtarget:$target), "bl $target\t@ far jump",[]>;
+  def tBfar : T1Ix2<(outs), (ins brtarget:$target), 
+                    "bl $target\t@ far jump",[]>;
 
-  def tBR_JTr : TJTI<(outs),
-                     (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
-                     "cpy pc, $target \n\t.align\t2\n$jt",
-                     [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>;
+  def tBR_JTr : T1JTI<(outs),
+                      (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
+                      "cpy pc, $target \n\t.align\t2\n$jt",
+                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>;
   }
 }
 
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use
 // a two-value operand where a dag node expects two operands. :(
 let isBranch = 1, isTerminator = 1 in
-  def tBcc : TI<(outs), (ins brtarget:$target, pred:$cc), "b$cc $target",
+  def tBcc : T1I<(outs), (ins brtarget:$target, pred:$cc), "b$cc $target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 
 //===----------------------------------------------------------------------===//
