@@ -22,13 +22,17 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+void AsmParser::Warning(SMLoc L, const char *Msg) {
+  Lexer.PrintMessage(L, Msg, "warning");
+}
+
 bool AsmParser::Error(SMLoc L, const char *Msg) {
-  Lexer.PrintMessage(L, Msg);
+  Lexer.PrintMessage(L, Msg, "error");
   return true;
 }
 
 bool AsmParser::TokError(const char *Msg) {
-  Lexer.PrintMessage(Lexer.getLoc(), Msg);
+  Lexer.PrintMessage(Lexer.getLoc(), Msg, "error");
   return true;
 }
 
@@ -482,7 +486,7 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".weak_reference"))
       return ParseDirectiveSymbolAttribute(MCStreamer::WeakReference);
 
-    Lexer.PrintMessage(IDLoc, "warning: ignoring directive for now");
+    Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
     return false;
   }
@@ -810,14 +814,14 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   // Diagnose non-sensical max bytes to fill.
   if (MaxBytesLoc.isValid()) {
     if (MaxBytesToFill < 1) {
-      Lexer.PrintMessage(MaxBytesLoc, "warning: alignment directive can never "
-                         "be satisfied in this many bytes, ignoring");
+      Warning(MaxBytesLoc, "alignment directive can never be satisfied in this "
+              "many bytes, ignoring");
       return false;
     }
 
     if (MaxBytesToFill >= Alignment) {
-      Lexer.PrintMessage(MaxBytesLoc, "warning: maximum bytes expression "
-                         "exceeds alignment and has no effect");
+      Warning(MaxBytesLoc, "maximum bytes expression exceeds alignment and "
+              "has no effect");
       MaxBytesToFill = 0;
     }
   }

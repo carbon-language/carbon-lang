@@ -42,14 +42,15 @@ SMLoc AsmLexer::getLoc() const {
   return SMLoc::getFromPointer(TokStart);
 }
 
-void AsmLexer::PrintMessage(SMLoc Loc, const std::string &Msg) const {
-  SrcMgr.PrintMessage(Loc, Msg);
+void AsmLexer::PrintMessage(SMLoc Loc, const std::string &Msg, 
+                            const char *Type) const {
+  SrcMgr.PrintMessage(Loc, Msg, Type);
 }
 
 /// ReturnError - Set the error to the specified string at the specified
 /// location.  This is defined to always return asmtok::Error.
 asmtok::TokKind AsmLexer::ReturnError(const char *Loc, const std::string &Msg) {
-  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg);
+  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg, "error");
   return asmtok::Error;
 }
 

@@ -97,7 +97,7 @@ public:
   
   SMLoc getLoc() const;
   
-  void PrintMessage(SMLoc Loc, const std::string &Msg) const;
+  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
   
 private:
   int getNextChar();

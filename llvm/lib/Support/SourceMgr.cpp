@@ -90,7 +90,8 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc) const {
 }
 
 
-void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg) const {
+void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg, 
+                             const char *Type) const {
   raw_ostream &OS = errs();
   
   // First thing to do: find the current buffer containing the specified
@@ -103,9 +104,12 @@ void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg) const {
   MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
   
   
-  OS << "Parsing " << CurMB->getBufferIdentifier() << ":"
+  OS << CurMB->getBufferIdentifier() << ":"
      << FindLineNumber(Loc, CurBuf) << ": ";
-  
+
+  if (Type)
+    OS << Type << ": ";
+
   OS << Msg << "\n";
   
   // Scan backward to find the start of the line.

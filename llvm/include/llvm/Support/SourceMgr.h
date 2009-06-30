@@ -111,7 +111,10 @@ public:
   
   /// PrintMessage - Emit a message about the specified location with the
   /// specified string.
-  void PrintMessage(SMLoc Loc, const std::string &Msg) const;
+  ///
+  /// @param Type - If non-null, the kind of message (e.g., "error") which is
+  /// prefixed to the message.
+  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
   
 private:
   void PrintIncludeStack(SMLoc IncludeLoc) const;

@@ -39,7 +39,8 @@ public:
   
 private:
   bool ParseStatement();
-  
+
+  void Warning(SMLoc L, const char *Msg);
   bool Error(SMLoc L, const char *Msg);
   bool TokError(const char *Msg);
   
