@@ -12,121 +12,22 @@
 //  supported please refer to the tools' manual page or run the tool
 //  with the --help option.
 //
+//  This file provides the default entry point for the driver executable.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_INCLUDE_COMPILER_DRIVER_MAIN_INC
 #define LLVM_INCLUDE_COMPILER_DRIVER_MAIN_INC
 
-#include "llvm/CompilerDriver/BuiltinOptions.h"
-#include "llvm/CompilerDriver/CompilationGraph.h"
-#include "llvm/CompilerDriver/Error.h"
 #include "llvm/CompilerDriver/ForceLinkage.h"
-#include "llvm/CompilerDriver/Plugin.h"
 
-#include "llvm/System/Path.h"
-
-#include <iostream>
-#include <stdexcept>
-#include <string>
-
-namespace cl = llvm::cl;
-namespace sys = llvm::sys;
-using namespace llvmc;
-
-namespace {
-
-  sys::Path getTempDir() {
-    sys::Path tempDir;
-
-    // GCC 4.5-style -save-temps handling.
-    if (SaveTemps == SaveTempsEnum::Unset) {
-      tempDir = sys::Path::GetTemporaryDirectory();
-    }
-    else if (SaveTemps == SaveTempsEnum::Obj && !OutputFilename.empty()) {
-      tempDir = OutputFilename;
-
-      if (!tempDir.exists()) {
-        std::string ErrMsg;
-        if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
-          throw std::runtime_error(ErrMsg);
-      }
-    }
-    // else if (SaveTemps == Cwd) -> use current dir (leave tempDir empty)
-
-    return tempDir;
-  }
-
-  /// BuildTargets - A small wrapper for CompilationGraph::Build.
-  int BuildTargets(CompilationGraph& graph, const LanguageMap& langMap) {
-    int ret;
-    const sys::Path& tempDir = getTempDir();
-
-    try {
-      ret = graph.Build(tempDir, langMap);
-    }
-    catch(...) {
-      if (SaveTemps == SaveTempsEnum::Unset)
-        tempDir.eraseFromDisk(true);
-      throw;
-    }
-
-    if (SaveTemps == SaveTempsEnum::Unset)
-      tempDir.eraseFromDisk(true);
-    return ret;
-  }
+namespace llvmc {
+  int Main(int argc, char** argv);
 }
 
 int main(int argc, char** argv) {
-  try {
-    ForceLinkage();
-
-    LanguageMap langMap;
-    CompilationGraph graph;
-
-    cl::ParseCommandLineOptions
-      (argc, argv, "LLVM Compiler Driver (Work In Progress)", true);
-
-    PluginLoader Plugins;
-    Plugins.PopulateLanguageMap(langMap);
-    Plugins.PopulateCompilationGraph(graph);
-
-    if (CheckGraph) {
-      int ret = graph.Check();
-      if (!ret)
-        std::cerr << "check-graph: no errors found.\n";
-
-      return ret;
-    }
-
-    if (ViewGraph) {
-      graph.viewGraph();
-      if (!WriteGraph)
-        return 0;
-    }
-
-    if (WriteGraph) {
-      graph.writeGraph(OutputFilename.empty()
-                       ? std::string("compilation-graph.dot")
-                       : OutputFilename);
-      return 0;
-    }
-
-    if (InputFilenames.empty()) {
-      throw std::runtime_error("no input files");
-    }
-
-    return BuildTargets(graph, langMap);
-  }
-  catch(llvmc::error_code& ec) {
-    return ec.code();
-  }
-  catch(const std::exception& ex) {
-    std::cerr << argv[0] << ": " << ex.what() << '\n';
-  }
-  catch(...) {
-    std::cerr << argv[0] << ": unknown error!\n";
-  }
-  return 1;
+  llvmc::ForceLinkage();
+  return llvmc::Main(argc, argv);
 }
 
 #endif // LLVM_INCLUDE_COMPILER_DRIVER_MAIN_INC
