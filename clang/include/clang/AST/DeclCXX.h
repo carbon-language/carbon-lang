@@ -588,15 +588,20 @@ class CXXBaseOrMemberInitializer {
   /// Args - The arguments used to initialize the base or member.
   Expr **Args;
   unsigned NumArgs;
+  
+  /// IdLoc - Location of the id in ctor-initializer list.
+  SourceLocation IdLoc;
 
 public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit 
-  CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs);
+  CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
+                             SourceLocation L);
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit 
-  CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs);
+  CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
+                             SourceLocation L);
 
   /// ~CXXBaseOrMemberInitializer - Destroy the base or member initializer.
   ~CXXBaseOrMemberInitializer();
@@ -653,6 +658,8 @@ public:
       return 0;
   }
 
+  SourceLocation getSourceLocation() const { return IdLoc; }
+  
   /// begin() - Retrieve an iterator to the first initializer argument.
   arg_iterator       begin()       { return Args; }
   /// begin() - Retrieve an iterator to the first initializer argument.

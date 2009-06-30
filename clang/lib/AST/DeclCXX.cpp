@@ -294,8 +294,9 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
 }
 
 CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs) 
-  : Args(0), NumArgs(0) {
+CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
+                           SourceLocation L) 
+  : Args(0), NumArgs(0), IdLoc(L) {
   BaseOrMember = reinterpret_cast<uintptr_t>(BaseType.getTypePtr());
   assert((BaseOrMember & 0x01) == 0 && "Invalid base class type pointer");
   BaseOrMember |= 0x01;
@@ -309,8 +310,9 @@ CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs)
 }
 
 CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs)
-  : Args(0), NumArgs(0) {
+CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
+                           SourceLocation L)
+  : Args(0), NumArgs(0), IdLoc(L) {
   BaseOrMember = reinterpret_cast<uintptr_t>(Member);
   assert((BaseOrMember & 0x01) == 0 && "Invalid member pointer");  
 
