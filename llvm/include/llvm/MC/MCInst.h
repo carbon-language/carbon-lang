@@ -31,7 +31,7 @@ class MCOperand {
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
     kMBBLabel,                ///< Basic block label.
-    kMCValue
+    kMCValue                  ///< Relocatable immediate operand.
   };
   unsigned char Kind;
   
@@ -49,9 +49,11 @@ public:
   MCOperand() : Kind(kInvalid) {}
   MCOperand(const MCOperand &RHS) { *this = RHS; }
 
+  bool isValid() const { return Kind != kInvalid; }
   bool isReg() const { return Kind == kRegister; }
   bool isImm() const { return Kind == kImmediate; }
   bool isMBBLabel() const { return Kind == kMBBLabel; }
+  bool isMCValue() const { return Kind == kMCValue; }
   
   /// getReg - Returns the register number.
   unsigned getReg() const {
@@ -82,6 +84,15 @@ public:
     assert(isMBBLabel() && "Wrong accessor");
     return MBBLabel.BlockNo; 
   }
+
+  const MCValue &getMCValue() const {
+    assert(isMCValue() && "This is not an MCValue");
+    return MCValueVal;
+  }
+  void setMCValue(const MCValue &Val) {
+    assert(isMCValue() && "This is not an MCValue");
+    MCValueVal = Val;
+  }
   
   void MakeReg(unsigned Reg) {
     Kind = kRegister;
@@ -95,6 +106,10 @@ public:
     Kind = kMBBLabel;
     MBBLabel.FunctionNo = Fn;
     MBBLabel.BlockNo = MBB;
+  }
+  void MakeMCValue(const MCValue &Val) {
+    Kind = kMCValue;
+    MCValueVal = Val;
   }
 };
 
@@ -119,7 +134,6 @@ public:
   void addOperand(const MCOperand &Op) {
     Operands.push_back(Op);
   }
-  
 };
 
 
