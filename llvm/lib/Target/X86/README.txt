@@ -1932,23 +1932,3 @@ Replacing an icmp+select with a shift should always be considered profitable in
 instcombine.
 
 //===---------------------------------------------------------------------===//
-
-It looks like we don't have patterns (or they aren't matching) for adc with
-immediate:
-
-define i64 @f1(i64 %a) nounwind {
-   %tmp = sub i64 %a, 734439407618
-   ret i64 %tmp
-}
-$ llvm-as < t.ll | llc -march=x86
-
-_f1:
-	movl	4(%esp), %eax
-	addl	$4294967294, %eax
-	movl	$4294967124, %edx
-	adcl	8(%esp), %edx
-	ret
-
-There is no need to clobber %edx there.
-
-//===---------------------------------------------------------------------===//
