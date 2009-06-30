@@ -71,9 +71,8 @@ impossible for LLVMC to choose the right linker in that case::
     $ ./a.out
     hello
 
-By default, LLVMC uses ``llvm-gcc`` to compile the source code. It is
-also possible to choose the work-in-progress ``clang`` compiler with
-the ``-clang`` option.
+By default, LLVMC uses ``llvm-gcc`` to compile the source code. It is also
+possible to choose the ``clang`` compiler with the ``-clang`` option.
 
 
 Predefined options
