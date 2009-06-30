@@ -216,14 +216,9 @@ SVal BasicStoreManager::getLValueElement(const GRState *state,
         return Base;
       }
       
-      
-      if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-        BaseR = TR;
+      if (isa<TypedRegion>(R) || isa<SymbolicRegion>(R)) {
+        BaseR = R;
         break;
-      }
-      
-      if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
-        BaseR = SR;
       }
       
       break;
@@ -241,9 +236,10 @@ SVal BasicStoreManager::getLValueElement(const GRState *state,
       return Base;
   }
   
-  if (BaseR)  
+  if (BaseR) { 
     return ValMgr.makeLoc(MRMgr.getElementRegion(elementType, UnknownVal(),
                                                  BaseR, getContext()));
+  }
   else
     return UnknownVal();
 }
