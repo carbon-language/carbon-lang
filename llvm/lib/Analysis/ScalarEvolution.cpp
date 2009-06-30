@@ -110,7 +110,9 @@ char ScalarEvolution::ID = 0;
 //===----------------------------------------------------------------------===//
 // Implementation of the SCEV class.
 //
+
 SCEV::~SCEV() {}
+
 void SCEV::dump() const {
   print(errs());
   errs() << '\n';
@@ -386,7 +388,6 @@ bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   // Otherwise it's loop-invariant.
   return true;
 }
-
 
 void SCEVAddRecExpr::print(raw_ostream &OS) const {
   OS << "{" << *Operands[0];
@@ -743,6 +744,7 @@ const SCEV* ScalarEvolution::getTruncateExpr(const SCEV* Op,
          "This is not a conversion to a SCEVable type!");
   Ty = getEffectiveSCEVType(Ty);
 
+  // Fold if the operand is constant.
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return getConstant(
       cast<ConstantInt>(ConstantExpr::getTrunc(SC->getValue(), Ty)));
@@ -787,6 +789,7 @@ const SCEV* ScalarEvolution::getZeroExtendExpr(const SCEV* Op,
          "This is not a conversion to a SCEVable type!");
   Ty = getEffectiveSCEVType(Ty);
 
+  // Fold if the operand is constant.
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
     const Type *IntTy = getEffectiveSCEVType(Ty);
     Constant *C = ConstantExpr::getZExt(SC->getValue(), IntTy);
@@ -882,6 +885,7 @@ const SCEV* ScalarEvolution::getSignExtendExpr(const SCEV* Op,
          "This is not a conversion to a SCEVable type!");
   Ty = getEffectiveSCEVType(Ty);
 
+  // Fold if the operand is constant.
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
     const Type *IntTy = getEffectiveSCEVType(Ty);
     Constant *C = ConstantExpr::getSExt(SC->getValue(), IntTy);
@@ -4241,7 +4245,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
     // The maximum backedge count is similar, except using the minimum start
     // value and the maximum end value.
-    const SCEV* MaxBECount = getBECount(MinStart, MaxEnd, Step);;
+    const SCEV* MaxBECount = getBECount(MinStart, MaxEnd, Step);
 
     return BackedgeTakenInfo(BECount, MaxBECount);
   }
