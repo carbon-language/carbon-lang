@@ -22,7 +22,8 @@ class AsmExpr;
 class MCContext;
 class MCInst;
 class MCStreamer;
-  
+class MCValue;
+
 class AsmParser {
   AsmLexer Lexer;
   MCContext &Ctx;
@@ -53,14 +54,22 @@ private:
   /// @param Res - The resulting expression. The pointer value is null on error.
   /// @result - False on success.
   bool ParseExpression(AsmExpr *&Res);
-  
-  /// ParseAbsoluteExpr - Parse an expression which must evaluate to an absolute
-  /// value.
+
+  /// ParseAbsoluteExpression - Parse an expression which must evaluate to an
+  /// absolute value.
   ///
   /// @param Res - The value of the absolute expression. The result is undefined
   /// on error.
   /// @result - False on success.
   bool ParseAbsoluteExpression(int64_t &Res);
+
+  /// ParseRelocatableExpression - Parse an expression which must be
+  /// relocatable.
+  ///
+  /// @param Res - The relocatable expression value. The result is undefined on
+  /// error.  
+  /// @result - False on success.
+  bool ParseRelocatableExpression(MCValue &Res);
 
   bool ParsePrimaryExpr(AsmExpr *&Res);
   bool ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res);

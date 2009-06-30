@@ -13,6 +13,8 @@
 #include <string>
 
 namespace llvm {
+  class MCSection;
+
   class MCSymbol {
     MCSection *Section;
     std::string Name;

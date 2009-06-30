@@ -16,6 +16,7 @@
 namespace llvm {
 class MCContext;
 class MCSymbol;
+class MCValue;
 
 class AsmExpr {
 public:
@@ -39,9 +40,16 @@ public:
 
   /// EvaluateAsAbsolute - Try to evaluate the expression to an absolute value.
   ///
-  /// @param Res - The absolute value if evaluation succeeds.
+  /// @param Res - The absolute value, if evaluation succeeds.
   /// @result - True on success.
   bool EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const;
+
+  /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
+  /// value.
+  ///
+  /// @param Res - The relocatable value, if evaluation succeeds.
+  /// @result - True on success.
+  bool EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const;
 
   static bool classof(const AsmExpr *) { return true; }
 };

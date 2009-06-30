@@ -153,6 +153,18 @@ bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
   return false;
 }
 
+bool AsmParser::ParseRelocatableExpression(MCValue &Res) {
+  AsmExpr *Expr;
+  
+  if (ParseExpression(Expr))
+    return true;
+
+  if (!Expr->EvaluateAsRelocatable(Ctx, Res))
+    return TokError("expected relocatable expression");
+
+  return false;
+}
+
 static unsigned getBinOpPrecedence(asmtok::TokKind K, 
                                    AsmBinaryExpr::Opcode &Kind) {
   switch (K) {

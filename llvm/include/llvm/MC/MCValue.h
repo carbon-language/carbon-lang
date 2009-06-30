@@ -15,6 +15,8 @@
 #define LLVM_MC_MCVALUE_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/MC/MCSymbol.h"
+#include <cassert>
 
 namespace llvm {
 class MCSymbol;
@@ -22,6 +24,9 @@ class MCSymbol;
 /// MCValue - This represents an "assembler immediate".  In its most general
 /// form, this can hold "SymbolA - SymbolB + imm64".  Not all targets supports
 /// relocations of this general form, but we need to represent this anyway.
+///
+/// In the general form, SymbolB can only be defined if SymbolA is, and both
+/// must be in the same (non-external) section.
 ///
 /// Note that this class must remain a simple POD value class, because we need
 /// it to live in unions etc.
@@ -35,9 +40,21 @@ public:
   MCSymbol *getSymB() const { return SymB; }
 
   bool isConstant() const { return !SymA && !SymB; }
-  
+
+  /// getAssociatedSection - For relocatable values, return the section the
+  /// value is associated with.
+  ///
+  /// @result - The value's associated section, or null for external or constant
+  /// values.
+  MCSection *getAssociatedSection() const {
+    return SymA ? SymA->getSection() : 0;
+  }
+
   static MCValue get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
     MCValue R;
+    assert((!SymB || (SymA && SymA->getSection() && 
+                      SymA->getSection() == SymB->getSection())) &&
+           "Invalid relocatable MCValue!");
     R.Cst = Val;
     R.SymA = SymA;
     R.SymB = SymB;
