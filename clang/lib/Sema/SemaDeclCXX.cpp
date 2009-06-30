@@ -782,7 +782,14 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   for (unsigned i = 0; i < NumMemInits; i++) {
     CXXBaseOrMemberInitializer *Member = 
       static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
-    CXXBaseOrMemberInitializer *&PrevMember = Members[Member->getBaseOrMember()];
+    void *KeyToMember = Member->getBaseOrMember();
+    // For fields injected into the class via declaration of an anonymous union,
+    // use its anonymous union class declaration as the unique key.
+    if (FieldDecl *Field = Member->getMember())
+      if (Field->getDeclContext()->isRecord() &&
+          cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion())
+        KeyToMember = static_cast<void *>(Field->getDeclContext());
+    CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
     if (!PrevMember) {
       PrevMember = Member;
       continue;
