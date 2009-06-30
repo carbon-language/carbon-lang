@@ -485,7 +485,7 @@ public:
   void DiagnoseUnusedParameters(InputIterator Param, InputIterator ParamEnd) {
     for (; Param != ParamEnd; ++Param) {
       if (!(*Param)->isUsed() && (*Param)->getDeclName() && 
-          !(*Param)->template hasAttr<UnusedAttr>(Context))
+          !(*Param)->template hasAttr<UnusedAttr>())
         Diag((*Param)->getLocation(), diag::warn_unused_parameter)
           << (*Param)->getDeclName();
     }

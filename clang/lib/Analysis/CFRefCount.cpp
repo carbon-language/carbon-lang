@@ -1248,15 +1248,15 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(RetTy)) {
-    if (FD->getAttr<NSReturnsRetainedAttr>(Ctx)) {
+    if (FD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
     }
-    else if (FD->getAttr<CFReturnsRetainedAttr>(Ctx)) {
+    else if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
   }
   else if (RetTy->getAsPointerType()) {
-    if (FD->getAttr<CFReturnsRetainedAttr>(Ctx)) {
+    if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
   }
@@ -1270,10 +1270,10 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
 
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(MD->getResultType())) {
-    if (MD->getAttr<NSReturnsRetainedAttr>(Ctx)) {
+    if (MD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
     }
-    else if (MD->getAttr<CFReturnsRetainedAttr>(Ctx)) {
+    else if (MD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
   }

@@ -520,7 +520,7 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     
     // If the declaration had any attributes, write them now.
     if (D->hasAttrs())
-      WriteAttributeRecord(D->getAttrs(Context));
+      WriteAttributeRecord(D->getAttrs());
 
     // Flush any expressions that were written as part of this declaration.
     FlushStmts();

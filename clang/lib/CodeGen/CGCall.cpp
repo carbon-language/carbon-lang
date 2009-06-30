@@ -377,13 +377,13 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   // FIXME: handle sseregparm someday...
   if (TargetDecl) {
-    if (TargetDecl->hasAttr<NoThrowAttr>(getContext()))
+    if (TargetDecl->hasAttr<NoThrowAttr>())
       FuncAttrs |= llvm::Attribute::NoUnwind;
-    if (TargetDecl->hasAttr<NoReturnAttr>(getContext()))
+    if (TargetDecl->hasAttr<NoReturnAttr>())
       FuncAttrs |= llvm::Attribute::NoReturn;
-    if (TargetDecl->hasAttr<ConstAttr>(getContext()))
+    if (TargetDecl->hasAttr<ConstAttr>())
       FuncAttrs |= llvm::Attribute::ReadNone;
-    else if (TargetDecl->hasAttr<PureAttr>(getContext()))
+    else if (TargetDecl->hasAttr<PureAttr>())
       FuncAttrs |= llvm::Attribute::ReadOnly;
   }
 
@@ -438,7 +438,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   signed RegParm = 0;
   if (TargetDecl)
     if (const RegparmAttr *RegParmAttr 
-          = TargetDecl->getAttr<RegparmAttr>(getContext()))
+          = TargetDecl->getAttr<RegparmAttr>())
       RegParm = RegParmAttr->getNumParams();
 
   unsigned PointerWidth = getContext().Target.getPointerWidth(0);

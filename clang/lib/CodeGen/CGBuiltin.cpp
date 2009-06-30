@@ -522,7 +522,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BIsqrtf:
   case Builtin::BIsqrtl: {
     // Rewrite sqrt to intrinsic if allowed.
-    if (!FD->hasAttr<ConstAttr>(getContext()))
+    if (!FD->hasAttr<ConstAttr>())
       break;
     Value *Arg0 = EmitScalarExpr(E->getArg(0));
     const llvm::Type *ArgType = Arg0->getType();
@@ -534,7 +534,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BIpowf:
   case Builtin::BIpowl: {
     // Rewrite sqrt to intrinsic if allowed.
-    if (!FD->hasAttr<ConstAttr>(getContext()))
+    if (!FD->hasAttr<ConstAttr>())
       break;
     Value *Base = EmitScalarExpr(E->getArg(0));
     Value *Exponent = EmitScalarExpr(E->getArg(1));

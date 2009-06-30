@@ -242,8 +242,8 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
   }
 }
 
-void Decl::addAttr(ASTContext &Context, Attr *NewAttr) {
-  Attr *&ExistingAttr = Context.getDeclAttrs(this);
+void Decl::addAttr(Attr *NewAttr) {
+  Attr *&ExistingAttr = getASTContext().getDeclAttrs(this);
 
   NewAttr->setNext(ExistingAttr);
   ExistingAttr = NewAttr;
@@ -251,19 +251,19 @@ void Decl::addAttr(ASTContext &Context, Attr *NewAttr) {
   HasAttrs = true;
 }
 
-void Decl::invalidateAttrs(ASTContext &Context) {
+void Decl::invalidateAttrs() {
   if (!HasAttrs) return;
   
   HasAttrs = false;
-  Context.eraseDeclAttrs(this);
+  getASTContext().eraseDeclAttrs(this);
 }
 
-const Attr *Decl::getAttrsImpl(ASTContext &Context) const {
+const Attr *Decl::getAttrsImpl() const {
   assert(HasAttrs && "getAttrs() should verify this!"); 
-  return Context.getDeclAttrs(this);
+  return getASTContext().getDeclAttrs(this);
 }
 
-void Decl::swapAttrs(ASTContext &Context, Decl *RHS) {
+void Decl::swapAttrs(Decl *RHS) {
   bool HasLHSAttr = this->HasAttrs;
   bool HasRHSAttr = RHS->HasAttrs;
   
@@ -272,7 +272,9 @@ void Decl::swapAttrs(ASTContext &Context, Decl *RHS) {
   
   // If 'this' has no attrs, swap the other way.
   if (!HasLHSAttr)
-    return RHS->swapAttrs(Context, this);
+    return RHS->swapAttrs(this);
+  
+  ASTContext &Context = getASTContext();
   
   // Handle the case when both decls have attrs.
   if (HasRHSAttr) {
@@ -292,7 +294,7 @@ void Decl::Destroy(ASTContext &C) {
   // Free attributes for this decl.
   if (HasAttrs) {
     C.getDeclAttrs(this)->Destroy(C);
-    invalidateAttrs(C);
+    invalidateAttrs();
     HasAttrs = false;
   }
   

@@ -77,11 +77,11 @@ JumpScopeChecker::JumpScopeChecker(Stmt *Body, Sema &s) : S(s) {
   
 /// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
 /// diagnostic that should be emitted if control goes over it. If not, return 0.
-static unsigned GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
+static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (VD->getType()->isVariablyModifiedType())
       return diag::note_protected_by_vla;
-    if (VD->hasAttr<CleanupAttr>(Context))
+    if (VD->hasAttr<CleanupAttr>())
       return diag::note_protected_by_cleanup;
   } else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
@@ -125,7 +125,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
       for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
            I != E; ++I) {
         // If this decl causes a new scope, push and switch to it.
-        if (unsigned Diag = GetDiagForGotoScopeDecl(this->S.Context, *I)) {
+        if (unsigned Diag = GetDiagForGotoScopeDecl(*I)) {
           Scopes.push_back(GotoScope(ParentScope, Diag, (*I)->getLocation()));
           ParentScope = Scopes.size()-1;
         }

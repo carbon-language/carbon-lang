@@ -39,7 +39,7 @@ using namespace clang;
 /// referenced), false otherwise.
 bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   // See if the decl is deprecated.
-  if (D->getAttr<DeprecatedAttr>(Context)) {
+  if (D->getAttr<DeprecatedAttr>()) {
     // Implementing deprecated stuff requires referencing deprecated
     // stuff. Don't warn if we are implementing a deprecated
     // construct.
@@ -48,7 +48,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
     if (NamedDecl *ND = getCurFunctionOrMethodDecl()) {
       // If this reference happens *in* a deprecated function or method, don't
       // warn.
-      isSilenced = ND->getAttr<DeprecatedAttr>(Context);
+      isSilenced = ND->getAttr<DeprecatedAttr>();
       
       // If this is an Objective-C method implementation, check to see if the
       // method was deprecated on the declaration, not the definition.
@@ -61,7 +61,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
           MD = Impl->getClassInterface()->getMethod(Context, 
                                                     MD->getSelector(),
                                                     MD->isInstanceMethod());
-          isSilenced |= MD && MD->getAttr<DeprecatedAttr>(Context);
+          isSilenced |= MD && MD->getAttr<DeprecatedAttr>();
         }
       }
     }
@@ -80,7 +80,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   }
 
   // See if the decl is unavailable
-  if (D->getAttr<UnavailableAttr>(Context)) {
+  if (D->getAttr<UnavailableAttr>()) {
     Diag(Loc, diag::warn_unavailable) << D->getDeclName();
     Diag(D->getLocation(), diag::note_unavailable_here) << 0;
   }
@@ -95,7 +95,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
 void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                                  Expr **Args, unsigned NumArgs)
 {
-  const SentinelAttr *attr = D->getAttr<SentinelAttr>(Context);
+  const SentinelAttr *attr = D->getAttr<SentinelAttr>();
   if (!attr) 
     return;
   int sentinelPos = attr->getSentinel();
@@ -1158,7 +1158,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     MarkDeclarationReferenced(Loc, VD);
     QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.
-    if (VD->getAttr<BlocksAttr>(Context))
+    if (VD->getAttr<BlocksAttr>())
       return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, true));
     // This is to record that a 'const' was actually synthesize and added.
     bool constAdded = !ExprTy.isConstQualified();
@@ -3489,7 +3489,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
   // If the ArgType is a Union type, we want to handle a potential 
   // transparent_union GCC extension.
   const RecordType *UT = ArgType->getAsUnionType();
-  if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>(Context))
+  if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>())
     return Incompatible;
 
   // The field to initialize within the transparent union.
@@ -5226,7 +5226,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     CurBlock->hasPrototype = true;
     CurBlock->isVariadic = false;
     // Check for a valid sentinel attribute on this block.
-    if (CurBlock->TheDecl->getAttr<SentinelAttr>(Context)) {
+    if (CurBlock->TheDecl->getAttr<SentinelAttr>()) {
       Diag(ParamInfo.getAttributes()->getLoc(), 
            diag::warn_attribute_sentinel_not_variadic) << 1;
       // FIXME: remove the attribute.
@@ -5275,7 +5275,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   // Check for a valid sentinel attribute on this block.
   if (!CurBlock->isVariadic && 
-      CurBlock->TheDecl->getAttr<SentinelAttr>(Context)) {
+      CurBlock->TheDecl->getAttr<SentinelAttr>()) {
     Diag(ParamInfo.getAttributes()->getLoc(), 
          diag::warn_attribute_sentinel_not_variadic) << 1;
     // FIXME: remove the attribute.

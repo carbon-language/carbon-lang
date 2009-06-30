@@ -84,7 +84,7 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     
     SourceLocation Loc;
     SourceRange R1, R2;
-    if (!E->isUnusedResultAWarning(Loc, R1, R2, Context))
+    if (!E->isUnusedResultAWarning(Loc, R1, R2))
       continue;
 
     Diag(Loc, diag::warn_unused_expr) << R1 << R2;
@@ -766,7 +766,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   }
   QualType FnRetType = CurBlock->ReturnType;
 
-  if (CurBlock->TheDecl->hasAttr<NoReturnAttr>(Context)) {
+  if (CurBlock->TheDecl->hasAttr<NoReturnAttr>()) {
     Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr)
       << getCurFunctionOrMethodDecl()->getDeclName();
     return StmtError();
@@ -842,7 +842,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, FullExprArg rex) {
   QualType FnRetType;
   if (const FunctionDecl *FD = getCurFunctionDecl()) {
     FnRetType = FD->getResultType();
-    if (FD->hasAttr<NoReturnAttr>(Context))
+    if (FD->hasAttr<NoReturnAttr>())
       Diag(ReturnLoc, diag::warn_noreturn_function_has_return_expr)
         << getCurFunctionOrMethodDecl()->getDeclName();
   } else if (ObjCMethodDecl *MD = getCurMethodDecl())

@@ -225,7 +225,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
   unsigned Align = Target.getCharWidth();
 
-  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>(*this))
+  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
     Align = std::max(Align, AA->getAlignment());
 
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
@@ -448,7 +448,7 @@ ASTContext::getTypeInfo(const Type *T) {
 
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
-    if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>(*this)) {
+    if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>()) {
       Align = Aligned->getAlignment();
       Width = getTypeSize(Typedef->getUnderlyingType().getTypePtr());
     } else
@@ -512,7 +512,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
 
   // FIXME: Should this override struct packing? Probably we want to
   // take the minimum?
-  if (const PackedAttr *PA = FD->getAttr<PackedAttr>(Context))
+  if (const PackedAttr *PA = FD->getAttr<PackedAttr>())
     FieldPacking = PA->getAlignment();
   
   if (const Expr *BitWidthExpr = FD->getBitWidth()) {
@@ -532,7 +532,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
     FieldAlign = FieldInfo.second;
     if (FieldPacking)
       FieldAlign = std::min(FieldAlign, FieldPacking);
-    if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>(Context))
+    if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
       FieldAlign = std::max(FieldAlign, AA->getAlignment());
     
     // Check if we need to add padding to give the field the correct
@@ -572,7 +572,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
     // is smaller than the specified packing?
     if (FieldPacking)
       FieldAlign = std::min(FieldAlign, std::max(8U, FieldPacking));
-    if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>(Context))
+    if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
       FieldAlign = std::max(FieldAlign, AA->getAlignment());
     
     // Round up the current record size to the field's alignment boundary.
@@ -738,10 +738,10 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   }
 
   unsigned StructPacking = 0;
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>(*this))
+  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
     StructPacking = PA->getAlignment();
 
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>(*this))
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
                                     AA->getAlignment()));
 
@@ -790,10 +790,10 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   bool IsUnion = D->isUnion();
 
   unsigned StructPacking = 0;
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>(*this))
+  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
     StructPacking = PA->getAlignment();
 
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>(*this))
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
                                     AA->getAlignment()));
 
@@ -2832,7 +2832,7 @@ QualType ASTContext::getFromTargetType(unsigned Type) const {
 bool ASTContext::isObjCNSObjectType(QualType Ty) const {
   if (TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
     if (TypedefDecl *TD = TDT->getDecl())
-      if (TD->getAttr<ObjCNSObjectAttr>(*const_cast<ASTContext*>(this)))
+      if (TD->getAttr<ObjCNSObjectAttr>())
         return true;
   }
   return false;  
