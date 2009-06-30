@@ -52,4 +52,11 @@ k:
         i = (j + 10) - (k + 2)
         .long i
         
+        l = m - n + 4
+        
+        .text
+m:
+n:
+        nop
+        
         

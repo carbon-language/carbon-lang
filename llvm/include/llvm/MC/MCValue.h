@@ -26,7 +26,8 @@ class MCSymbol;
 /// relocations of this general form, but we need to represent this anyway.
 ///
 /// In the general form, SymbolB can only be defined if SymbolA is, and both
-/// must be in the same (non-external) section.
+/// must be in the same (non-external) section. The latter constraint is not
+/// enforced, since a symbol's section may not be known at construction.
 ///
 /// Note that this class must remain a simple POD value class, because we need
 /// it to live in unions etc.
@@ -52,9 +53,7 @@ public:
 
   static MCValue get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
     MCValue R;
-    assert((!SymB || (SymA && SymA->getSection() && 
-                      SymA->getSection() == SymB->getSection())) &&
-           "Invalid relocatable MCValue!");
+    assert((!SymB || SymA) && "Invalid relocatable MCValue!");
     R.Cst = Val;
     R.SymA = SymA;
     R.SymB = SymB;

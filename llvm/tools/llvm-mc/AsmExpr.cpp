@@ -37,12 +37,11 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS, MCSymbol *RHS_A,
   MCSymbol *A = LHS.getSymA() ? LHS.getSymA() : RHS_A;
   MCSymbol *B = LHS.getSymB() ? LHS.getSymB() : RHS_B;
   if (B) {
-    // If we have a negated symbol, then we must have also have a
-    // non-negated symbol, and both symbols must be in the same
-    // non-external section. We can do this check later to permit
-    // expressions which eventually fold to a representable form -- such
+    // If we have a negated symbol, then we must have also have a non-negated
+    // symbol in order to encode the expression. We can do this check later to
+    // permit expressions which eventually fold to a representable form -- such
     // as (a + (0 - b)) -- if necessary.
-    if (!A || !A->getSection() || A->getSection() != B->getSection())
+    if (!A)
       return false;
   }
   Res = MCValue::get(A, B, LHS.getConstant() + RHS_Cst);
