@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+//  This file implements LLVMContext, as a wrapper around the opaque
+// class LLVMContextImpl.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"

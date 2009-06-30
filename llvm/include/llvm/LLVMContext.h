@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file declares LLVMContext, a container of "global" state in LLVM, such
+// as the global type and constant uniquing tables.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LLVMCONTEXT_H
 #define LLVM_LLVMCONTEXT_H
@@ -35,6 +40,11 @@ class APInt;
 class APFloat;
 class Value;
 
+/// This is an important class for using LLVM in a threaded context.  It
+/// (opaquely) owns and manages the core "global" data of LLVM's core 
+/// infrastructure, including the type and constant uniquing tables.
+/// LLVMContext itself provides no locking guarantees, so you should be careful
+/// to have one context per thread.
 class LLVMContext {
   LLVMContextImpl* pImpl;
 public:
