@@ -76,6 +76,10 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
     O << "XMMWORD PTR ";
     printMemReference(MI, OpNo);
   }
+  void printi256mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "YMMWORD PTR ";
+    printMemReference(MI, OpNo);
+  }
   void printf32mem(const MachineInstr *MI, unsigned OpNo) {
     O << "DWORD PTR ";
     printMemReference(MI, OpNo);
@@ -90,6 +94,10 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   }
   void printf128mem(const MachineInstr *MI, unsigned OpNo) {
     O << "XMMWORD PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printf256mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "YMMWORD PTR ";
     printMemReference(MI, OpNo);
   }
   void printlea32mem(const MachineInstr *MI, unsigned OpNo) {

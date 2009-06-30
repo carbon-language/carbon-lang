@@ -140,6 +140,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printi128mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
+  void printi256mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
   void printf32mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
@@ -150,6 +153,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
     printMemReference(MI, OpNo);
   }
   void printf128mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  void printf256mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
   void printlea32mem(const MachineInstr *MI, unsigned OpNo) {
