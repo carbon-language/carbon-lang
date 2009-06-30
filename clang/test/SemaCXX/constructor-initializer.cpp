@@ -54,3 +54,15 @@ class H : A {
 
 H::H() : A(10) { }
 
+
+class  X {};
+class Y {};
+
+struct S : Y, virtual X {
+  S (); 
+};
+
+struct Z : S { 
+  Z() : S(), X(), E()  {} // expected-error {{type 'class E' is not a direct or virtual base of 'Z'}}
+};
+

@@ -750,6 +750,15 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   if (DirectBaseSpec && VirtualBaseSpec)
     return Diag(IdLoc, diag::err_base_init_direct_and_virtual)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
+  // C++ [base.class.init]p2:
+  // Unless the mem-initializer-id names a nonstatic data membeer of the
+  // constructor's class ot a direst or virtual base of that class, the
+  // mem-initializer is ill-formed.
+  if (!DirectBaseSpec && !VirtualBaseSpec)
+    return Diag(IdLoc, diag::err_not_direct_base_or_virtual)
+    << BaseType << ClassDecl->getNameAsCString()
+    << SourceRange(IdLoc, RParenLoc);
+    
 
   return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs, 
                                         IdLoc);
