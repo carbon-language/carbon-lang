@@ -700,7 +700,7 @@ A convenient way to do this is like so:</p>
 semantics: if the container (a basic block in this case) is being mutated, then
 "<tt>BB->end()</tt>" may change its value every time through the loop and the
 second loop may not in fact be correct.  If you actually do depend on this
-behavior, please write the loop in the second form and add a comment indicating
+behavior, please write the loop in the first form and add a comment indicating
 that you did it intentionally.</p>
 
 <p>Why do we prefer the second form (when correct)?  Writing the loop in the
@@ -712,7 +712,7 @@ expression was actually something like: "<tt>SomeMap[x]->end()</tt>" and map
 lookups really aren't cheap.  By writing it in the first form consistently, you
 eliminate the issue entirely and don't even have to think about it.</p>
 
-<p>The second (even bigger) issue is that writing the loop in the second form
+<p>The second (even bigger) issue is that writing the loop in the first form
 hints to the reader that the loop is mutating the container (a fact that a
 comment would handily confirm!).  If you write the loop in the second form, it
 is immediately obvious without even looking at the body of the loop that the
