@@ -16,9 +16,9 @@
 #include "llvm/CompilerDriver/Error.h"
 #include "llvm/CompilerDriver/Plugin.h"
 
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
-#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -91,7 +91,7 @@ int Main(int argc, char** argv) {
     if (CheckGraph) {
       int ret = graph.Check();
       if (!ret)
-        std::cerr << "check-graph: no errors found.\n";
+        llvm::errs() << "check-graph: no errors found.\n";
 
       return ret;
     }
@@ -119,10 +119,10 @@ int Main(int argc, char** argv) {
     return ec.code();
   }
   catch(const std::exception& ex) {
-    std::cerr << argv[0] << ": " << ex.what() << '\n';
+    llvm::errs() << argv[0] << ": " << ex.what() << '\n';
   }
   catch(...) {
-    std::cerr << argv[0] << ": unknown error!\n";
+    llvm::errs() << argv[0] << ": unknown error!\n";
   }
   return 1;
 }

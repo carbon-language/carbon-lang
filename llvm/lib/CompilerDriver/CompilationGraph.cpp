@@ -18,10 +18,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <iterator>
 #include <limits>
 #include <queue>
@@ -346,8 +346,8 @@ int CompilationGraph::CheckLanguageNames() const {
 
         if (!N2.ToolPtr) {
           ++ret;
-          std::cerr << "Error: there is an edge from '" << N1.ToolPtr->Name()
-                    << "' back to the root!\n\n";
+          errs() << "Error: there is an edge from '" << N1.ToolPtr->Name()
+                 << "' back to the root!\n\n";
           continue;
         }
 
@@ -363,17 +363,17 @@ int CompilationGraph::CheckLanguageNames() const {
 
         if (!eq) {
           ++ret;
-          std::cerr << "Error: Output->input language mismatch in the edge '" <<
-            N1.ToolPtr->Name() << "' -> '" << N2.ToolPtr->Name() << "'!\n";
-
-          std::cerr << "Expected one of { ";
+          errs() << "Error: Output->input language mismatch in the edge '"
+                 << N1.ToolPtr->Name() << "' -> '" << N2.ToolPtr->Name()
+                 << "'!\n"
+                 << "Expected one of { ";
 
           InLangs = N2.ToolPtr->InputLanguages();
           for (;*InLangs; ++InLangs) {
-            std::cerr << '\'' << *InLangs << (*(InLangs+1) ? "', " : "'");
+            errs() << '\'' << *InLangs << (*(InLangs+1) ? "', " : "'");
           }
 
-          std::cerr << " }, but got '" << OutLang << "'!\n\n";
+          errs() << " }, but got '" << OutLang << "'!\n\n";
         }
 
       }
@@ -406,9 +406,8 @@ int CompilationGraph::CheckMultipleDefaultEdges() const {
       }
       else if (EdgeWeight == MaxWeight) {
         ++ret;
-        std::cerr
-          << "Error: there are multiple maximal edges stemming from the '"
-          << N.ToolPtr->Name() << "' node!\n\n";
+        errs() << "Error: there are multiple maximal edges stemming from the '"
+               << N.ToolPtr->Name() << "' node!\n\n";
         break;
       }
     }
@@ -440,9 +439,9 @@ int CompilationGraph::CheckCycles() {
   }
 
   if (deleted != NodesMap.size()) {
-    std::cerr << "Error: there are cycles in the compilation graph!\n"
-              << "Try inspecting the diagram produced by "
-      "'llvmc --view-graph'.\n\n";
+    errs() << "Error: there are cycles in the compilation graph!\n"
+           << "Try inspecting the diagram produced by "
+           << "'llvmc --view-graph'.\n\n";
     return 1;
   }
 
@@ -518,9 +517,9 @@ void CompilationGraph::writeGraph(const std::string& OutputFilename) {
   std::ofstream O(OutputFilename.c_str());
 
   if (O.good()) {
-    std::cerr << "Writing '"<< OutputFilename << "' file...";
+    errs() << "Writing '"<< OutputFilename << "' file...";
     llvm::WriteGraph(O, this);
-    std::cerr << "done.\n";
+    errs() << "done.\n";
     O.close();
   }
   else {

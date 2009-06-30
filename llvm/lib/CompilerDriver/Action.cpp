@@ -13,10 +13,8 @@
 
 #include "llvm/CompilerDriver/Action.h"
 #include "llvm/CompilerDriver/BuiltinOptions.h"
-
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Program.h"
-
-#include <iostream>
 #include <stdexcept>
 
 using namespace llvm;
@@ -58,15 +56,15 @@ namespace {
   }
 
   void print_string (const std::string& str) {
-    std::cerr << str << ' ';
+    errs() << str << ' ';
   }
 }
 
 int llvmc::Action::Execute() const {
   if (DryRun || VerboseMode) {
-    std::cerr << Command_ << " ";
+    errs() << Command_ << " ";
     std::for_each(Args_.begin(), Args_.end(), print_string);
-    std::cerr << '\n';
+    errs() << '\n';
   }
   if (DryRun)
     return 0;
